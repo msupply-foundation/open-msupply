@@ -1,4 +1,11 @@
-import { batch, createRoot, createSignal } from 'solid-js';
+import {
+  batch,
+  children,
+  createRoot,
+  createSignal,
+  Match,
+  Switch,
+} from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
 import v2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
@@ -432,6 +439,66 @@ describe('when the source changes', () => {
   };
   const ready = (form: DocumentForm<Encounter>) =>
     vi.waitFor(() => expect(form.status()).toBe('ready'), { timeout: 5000 });
+
+  // A form body mounted on 'ready', as every screen mounts one: each mount
+  // records the weight the draft held as it mounted.
+  const mountOn = (form: DocumentForm<Encounter>) =>
+    createRoot(d => {
+      const previous = dispose;
+      dispose = () => {
+        d();
+        previous?.();
+      };
+      const mounts: (number | undefined)[] = [];
+      const Body = () => {
+        mounts.push(weight(form));
+        return null;
+      };
+      children(() => (
+        <Switch>
+          <Match when={form.status() === 'ready'}>
+            <Body />
+          </Match>
+        </Switch>
+      ));
+      return mounts;
+    });
+
+  it("mounts the form on the document's data, not on an empty draft", async () => {
+    const { form } = follow(
+      { 'encounter/a': async () => encounter('encounter/a', 70) },
+      { kind: 'existing', name: 'encounter/a' }
+    );
+    const mounts = mountOn(form);
+    await ready(form);
+    expect(mounts).toEqual([70]);
+  });
+
+  it("keeps the form mounted through saves, a new document's first included", async () => {
+    const { form, go } = follow(
+      { 'encounter/created': async () => encounter('encounter/created', 80) },
+      newEncounter(80),
+      { created: 'encounter/created' }
+    );
+    const mounts = mountOn(form);
+    await ready(form);
+    expect(await form.save()).toBeDefined();
+    // The screen follows the first save to the saved record.
+    go({ kind: 'existing', name: 'encounter/created' });
+    form.draft.set('extension.demo.notes' as never, 'changed' as never);
+    expect(await form.save()).toBeDefined();
+    expect(calls(UpdateFormEncounter)).toHaveLength(1);
+    expect(form.status()).toBe('ready');
+    expect(mounts).toEqual([80]);
+  });
+
+  it('saves nothing before the draft is seeded', async () => {
+    const { form } = follow({}, newEncounter(80));
+    expect(form.status()).toBe('loading');
+    expect(form.canSave()).toBe(false);
+    expect(await form.save()).toBeUndefined();
+    expect(calls(InsertFormEncounter)).toHaveLength(0);
+  });
 
   it('starts a new document afresh after an existing one, and inserts it', async () => {
     const { form, go } = follow(

@@ -142,6 +142,11 @@ export interface CreateDocumentFormOptions {
 export type DocumentFormStatus = 'idle' | 'loading' | 'ready' | 'not-found';
 
 export interface DocumentForm<T> {
+  /**
+   * 'ready' once the document and form library have loaded and the draft is
+   * seeded from them, so a form mounted on 'ready' reads the document's data
+   * from its first render.
+   */
   status: Accessor<DocumentFormStatus>;
   /** The loaded form library, to render its fields and default forms from. */
   library: Accessor<FormLibrary | undefined>;
@@ -173,8 +178,9 @@ export interface DocumentForm<T> {
   saveError: Accessor<string | undefined>;
   /**
    * Arms validation and, when the draft is valid, saves it. Resolves with the
-   * saved version, or undefined when nothing was saved (invalid, refused, or a
-   * failure the app's global error handling already reported).
+   * saved version, or undefined when nothing was saved (not yet ready,
+   * invalid, refused, or a failure the app's global error handling already
+   * reported).
    */
   save: () => Promise<FormDocumentFragment | undefined>;
   /** Drops the edits, back to the last saved version or the new seed. */
@@ -400,7 +406,9 @@ export const createDocumentForm = <T extends object>(
     return s?.kind === 'new' ? s.registry : undefined;
   });
 
-  const status = createMemo((): DocumentFormStatus => {
+  // How far the source's inputs have arrived. `status` holds 'ready' back
+  // until the draft is seeded from them.
+  const loadStatus = createMemo((): DocumentFormStatus => {
     const s = options.source();
     if (!s) return 'idle';
     if (!gated(library)) return 'loading';
@@ -499,16 +507,20 @@ export const createDocumentForm = <T extends object>(
     extraErrors: options.extraErrors,
   });
 
+  // The source the draft was last seeded for.
+  const [seededFor, setSeededFor] = createSignal<string>();
+
   // Seed the draft once per document version: on load, after each save (the
   // saved version is the new baseline), afresh when the source changes, and
   // when Edit leaves an archived form for the migrated current one.
   let seededKey: string | undefined;
   createEffect(() => {
-    if (status() === 'idle') {
+    if (loadStatus() === 'idle') {
       seededKey = undefined;
+      setSeededFor(undefined);
       return;
     }
-    if (status() !== 'ready') return;
+    if (loadStatus() !== 'ready') return;
     const doc = document();
     const key = `${currentKey()}|${doc?.id ?? 'unsaved'}|${version().kind}`;
     if (key === seededKey) return;
@@ -517,7 +529,27 @@ export const createDocumentForm = <T extends object>(
       const seed = seedFor() ?? { data: {}, unresolved: {} };
       setSaveError(undefined);
       controller.reset(seed.data as T, seed.unresolved);
+      setSeededFor(currentKey());
     });
+  });
+
+  // Whether the draft holds the source's data. A screen mounts its form body
+  // on 'ready', in the same update that loads the inputs and before the
+  // seeding effect runs, so a form reading the draft as it mounts would read
+  // it empty. Once seeded, the source stays seeded across its own re-seeds
+  // (a save, Edit), including a first save turning a new source into the
+  // saved one: dropping to loading there would remount a live form.
+  const seeded = (): boolean => {
+    const at = seededFor();
+    if (at === undefined) return false;
+    if (at === currentKey()) return true;
+    const s = saved();
+    return s !== undefined && s.key === at && standsForSource(s);
+  };
+
+  const status = createMemo((): DocumentFormStatus => {
+    const loading = loadStatus();
+    return loading === 'ready' && !seeded() ? 'loading' : loading;
   });
 
   const isNew = () => options.source() !== undefined && !document();
@@ -542,7 +574,7 @@ export const createDocumentForm = <T extends object>(
   const isDirty = () => controller.isDirty() || coordinator.dirty();
 
   const save = async () => {
-    if (saving() || readingOnly()) return undefined;
+    if (status() !== 'ready' || saving() || readingOnly()) return undefined;
     controller.validation.arm();
     const r = registry();
     if (!r || !controller.validation.valid()) return undefined;
@@ -602,6 +634,7 @@ export const createDocumentForm = <T extends object>(
     isDirty,
     // A migrated document may be saved untouched: the save re-pins it.
     canSave: () =>
+      status() === 'ready' &&
       !readingOnly() &&
       (isNew() || isDirty() || version().kind === 'migrated'),
     validation: controller.validation,

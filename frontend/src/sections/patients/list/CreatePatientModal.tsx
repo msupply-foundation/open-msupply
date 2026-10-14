@@ -555,7 +555,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           confirms="plain"
           data-testid="dialog-button-ok"
           loading={busy()}
-          disabled={!registry()}
+          disabled={!registry() || (onDocumentPath() && !readyDocument())}
           onClick={() => void save()}
         >
           {t('button.save')}
