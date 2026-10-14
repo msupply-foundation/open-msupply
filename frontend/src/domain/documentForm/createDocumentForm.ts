@@ -151,6 +151,11 @@ export interface DocumentForm<T> {
   status: Accessor<DocumentFormStatus>;
   /** The loaded form library, to render its fields and default forms from. */
   library: Accessor<FormLibrary | undefined>;
+  /**
+   * True when the form library's code failed to load (offline): `status`
+   * stays loading, and the screen says so rather than spinning.
+   */
+  libraryFailed: Accessor<boolean>;
   draft: Draft<T>;
   /**
    * The form's own part in the save (FormParticipation), for the plugin form
@@ -631,6 +636,7 @@ export const createDocumentForm = <T extends object>(
   return {
     status,
     library: () => gated(library),
+    libraryFailed: () => library.state === 'errored',
     draft: controller.draft,
     coordinator,
     registry,

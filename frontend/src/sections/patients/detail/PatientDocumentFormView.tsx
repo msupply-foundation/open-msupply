@@ -1,4 +1,4 @@
-import { Show, type Component } from 'solid-js';
+import { Show, untrack, type Component, type JSX } from 'solid-js';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { Stack } from '../../../ui/layout/Stack/Stack';
@@ -7,6 +7,9 @@ import { DocumentKeptValues } from '../../../domain/documentForm/DocumentKeptVal
 import { DocumentVersionNotice } from '../../../domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '../../../plugins/DocumentFormRegion';
 import type { Patient } from '../../../plugin-sdk/documents';
+import type { Draft } from '../../../domain/documentForm/draft';
+import type { FormLibrary } from '../../../domain/documentForm/createDocumentForm';
+import { withoutEmptyExtension } from './patientDocumentSeed';
 
 export interface PatientDocumentFormViewProps {
   patientId: string;
@@ -23,6 +26,20 @@ export interface PatientDocumentFormViewProps {
  * shows a patient's document in it, and the create wizard's last step a new
  * one.
  */
+/*
+ * The host's default patient form, as the region's fallback: where no plugin
+ * form renders, or one failed. It draws none of a deployment's own fields, so
+ * it takes out an `extension` still empty as it mounts, after the draft is
+ * seeded (withoutEmptyExtension).
+ */
+const DefaultForm = (props: {
+  draft: Draft<Patient>;
+  Form: FormLibrary['DefaultPatientForm'];
+}): JSX.Element => {
+  untrack(() => withoutEmptyExtension(props.draft));
+  return <props.Form draft={props.draft} />;
+};
+
 export const PatientDocumentFormView: Component<
   PatientDocumentFormViewProps
 > = props => {
@@ -49,7 +66,9 @@ export const PatientDocumentFormView: Component<
                 patientId: props.patientId,
                 documentName: props.form.document()?.name,
               }}
-              fallback={() => <Default draft={props.form.draft} />}
+              fallback={() => (
+                <DefaultForm draft={props.form.draft} Form={Default} />
+              )}
               archivedVersion={archivedVersion()}
               currentSchemaId={props.form.registry()?.formSchemaId}
             />

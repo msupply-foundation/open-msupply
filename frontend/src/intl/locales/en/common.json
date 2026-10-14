@@ -643,6 +643,8 @@
   "error.pack-size-must-be-greater-than-zero": "Pack size must be greater than zero",
   "error.pack-variant-exists": "Pack variant with the same pack size already exists for item",
   "error.password-required": "Password is required",
+  "error.patient-form-not-loaded": "The patient form could not be loaded. Check the connection and reload the page.",
+  "error.patient-form-settings-not-read": "This store's patient form settings could not be read.",
   "error.permission-denied": "Permission denied",
   "error.permission-denied.detail": "You do not have permission to do that. Missing permission: {{ permissions }}.",
   "error.permission-denied.generic": "You do not have permission to do that.",
