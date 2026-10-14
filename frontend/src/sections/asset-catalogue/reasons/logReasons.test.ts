@@ -28,7 +28,7 @@ describe('OMS-REG-CAT-03.18 — a blank or spaces-only reason is missing', () =>
   });
 });
 
-describe('OMS-REG-CAT-03.2–.9 / .19 / .34 — a reason for each of the seven statuses', () => {
+describe('OMS-REG-CAT-03.2–.9 / .19 / .35 — a reason for each of the seven statuses', () => {
   it("offers the seven statuses in the server's order", () => {
     expect(statusOptions().map(o => o.value)).toEqual([
       'DECOMMISSIONED',
