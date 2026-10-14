@@ -56,7 +56,7 @@ export interface DocumentFormRegionProps<S extends DocumentFormSlotId> {
   /**
    * The form's part in the record's save, from the form host's coordinator
    * (`createDocumentForm`'s `coordinator.participationFor`): passed to a slot
-   * whose props carry `form`, the encounter's. Called once per mounted form,
+   * whose props carry `form`, the encounter's and the enrolment's. Called once per mounted form,
    * under its owner, so a form that leaves releases its handlers.
    */
   participation?: (key: string) => FormParticipation;
