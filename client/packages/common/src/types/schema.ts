@@ -11537,6 +11537,8 @@ export type SyncFileReferenceNode = {
   status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
   totalBytes: Scalars['Int']['output'];
+  user?: Maybe<UserNode>;
+  userId?: Maybe<Scalars['String']['output']>;
 };
 
 export enum SyncFileReferenceNodeStatus {
