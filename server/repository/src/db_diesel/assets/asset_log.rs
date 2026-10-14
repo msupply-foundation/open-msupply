@@ -1,13 +1,15 @@
 use super::super::user_row::user_account;
 use super::asset_log_row::{AssetLogRow, asset_log};
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{IntoBoxed, sql},
+    prelude::*,
+    sql_types::Text,
+};
 
 use crate::asset_log_row::{AssetLogStatus, AssetLogType, latest_asset_log};
 use crate::{
     DBType, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
-    diesel_macros::{
-        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
-    },
+    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -107,7 +109,9 @@ impl<'a> AssetLogRepository<'a> {
                     apply_sort!(query, sort, asset_log::log_datetime);
                 }
                 AssetLogSortField::Status => {
-                    apply_sort_no_case!(query, sort, asset_log::status);
+                    // By the status text, as SQLite does. Postgres would order
+                    // its enum by declaration order, which reads as random.
+                    apply_sort!(query, sort, sql::<Text>("CAST(asset_log.status AS TEXT)"));
                 }
             }
         } else {
@@ -215,7 +219,7 @@ impl AssetLogType {
 #[cfg(test)]
 mod tests {
     use crate::{
-        EqualFilter, Pagination,
+        EqualFilter, Pagination, Sort,
         assets::asset_log::{AssetLogFilter, AssetLogRepository},
         mock::{MockDataInserts, mock_asset_log_c, mock_asset_logs},
         test_db,
@@ -262,5 +266,24 @@ mod tests {
             .unwrap();
 
         assert_eq!(logs_sorted_by_datetime[0], mock_asset_log_c());
+    }
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, timestamp) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_asset_log_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_asset_log_sort", MockDataInserts::none()).await;
+        let repo = AssetLogRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [AssetLogSortField::Status, AssetLogSortField::LogDatetime] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
+        }
     }
 }
