@@ -16,6 +16,7 @@ mod add_stock_campaign_change_activity_log_type;
 mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
 mod backfill_purchase_order_custom_fields;
+mod inactivate_kept_name_store_joins;
 mod prescription_request_occupation_prominent;
 mod refresh_who_pqs_catalogue;
 mod remove_charges_from_purchase_order;
@@ -53,6 +54,7 @@ impl Migration for V3_04_00 {
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
             Box::new(add_inactive_to_name_store_join::Migrate),
+            Box::new(inactivate_kept_name_store_joins::Migrate),
         ]
     }
 }
