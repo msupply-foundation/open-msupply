@@ -65,21 +65,19 @@ export const documentUploadMetadata: PageMetadata = {
     {
       id: 'document-upload-versioned',
       title: 'Versioned',
-      searchTerms: ['version', 'created by', 'modified', 'history'],
+      searchTerms: ['version', 'uploaded by', 'history'],
     },
   ],
 };
 
 // A versioned list (the purchase order Documents tab): one row per file name,
-// the latest upload carrying the group's facts and its earlier versions.
+// the latest upload with its earlier versions beneath it, each its own upload.
 const VERSIONED_DOCUMENTS: DocumentFile[] = [
   {
     id: 'po-3',
     fileName: 'Official-purchase-order.pdf',
-    createdBy: 'alice',
-    createdDatetime: '2026-06-10',
-    modifiedBy: 'carol',
-    modifiedDatetime: '2026-06-24',
+    uploadedBy: 'carol',
+    createdDatetime: '2026-06-24',
     version: 3,
     totalBytes: 620 * 1024,
     url: '#',
@@ -87,7 +85,7 @@ const VERSIONED_DOCUMENTS: DocumentFile[] = [
       {
         id: 'po-2',
         fileName: 'Official-purchase-order.pdf',
-        createdBy: 'bob',
+        uploadedBy: 'bob',
         createdDatetime: '2026-06-17',
         version: 2,
         totalBytes: 610 * 1024,
@@ -96,7 +94,7 @@ const VERSIONED_DOCUMENTS: DocumentFile[] = [
       {
         id: 'po-1',
         fileName: 'Official-purchase-order.pdf',
-        createdBy: 'alice',
+        uploadedBy: 'alice',
         createdDatetime: '2026-06-10',
         version: 1,
         totalBytes: 590 * 1024,
@@ -107,10 +105,8 @@ const VERSIONED_DOCUMENTS: DocumentFile[] = [
   {
     id: 'quote-1',
     fileName: 'Supplier-quote.xlsx',
-    createdBy: 'carol',
+    uploadedBy: 'carol',
     createdDatetime: '2026-06-12',
-    modifiedBy: 'carol',
-    modifiedDatetime: '2026-06-12',
     version: 1,
     totalBytes: 88 * 1024,
     url: '#',
@@ -190,8 +186,8 @@ export const DocumentUploadShowcase = () => {
           title="Versioned — one row per document, earlier versions beneath"
         >
           <Lead>
-            <code>versioned</code> swaps the upload date for Created by ·
-            Created · Modified by · Modified · Version. The caller groups
+            <code>versioned</code> adds Uploaded by and Version beside the
+            upload date, each row reading its own upload. The caller groups
             same-named uploads (a record's documents module knows what makes two
             uploads one document — <code>groupDocumentVersions</code> in{' '}
             <code>domain/syncFiles</code>); the panel presents the latest and

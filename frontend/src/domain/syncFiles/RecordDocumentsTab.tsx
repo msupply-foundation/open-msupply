@@ -37,9 +37,9 @@ export interface RecordDocumentsTabProps {
   canDelete?: boolean;
   /**
    * Treat same-named uploads as versions of one document: one row per file
-   * name showing its latest version, who first attached it and when, who last
-   * changed it and when, and its version number, with the earlier
-   * versions reachable from the row (spec/purchase-orders rules § documents
+   * name showing its latest version, who uploaded it and when, and its
+   * version number, with the earlier versions reachable from the row — each
+   * with its own uploader and moment (spec/purchase-orders rules § documents
    * and the activity log). Default false: every upload is its own row.
    */
   versioned?: boolean;
@@ -90,26 +90,22 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
     id: document.id,
     fileName: document.fileName,
     createdDatetime: document.createdDatetime,
+    uploadedBy: document.user?.username,
     totalBytes: document.totalBytes,
     url: syncFileUrl(props.tableName, props.recordId, document.id),
     canDelete: props.canDelete !== false,
   });
 
-  // One row per document. Versioned: the latest upload of each name carries
-  // the group's derived facts and its earlier versions; every version keeps
-  // its own uploader and upload moment so the expanded list reads per upload.
+  // One row per document. Versioned: the latest upload of each name is the
+  // row, numbered, with its earlier versions beneath it; every version keeps
+  // its own uploader and upload moment so each row reads per upload.
   const rows = (): DocumentFile[] =>
     props.versioned
       ? groupDocumentVersions(props.documents).map(group => ({
           ...toFile(group.latest),
-          createdBy: group.createdBy,
-          createdDatetime: group.createdDatetime,
-          modifiedBy: group.modifiedBy,
-          modifiedDatetime: group.modifiedDatetime,
           version: group.version,
           previousVersions: group.previous.map(previous => ({
             ...toFile(previous.document),
-            createdBy: previous.document.user?.username,
             version: previous.version,
           })),
         }))

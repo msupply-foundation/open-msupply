@@ -33,14 +33,10 @@ export interface DocumentFile {
   url?: string;
   /** Whether this row shows a delete action (default true). */
   canDelete?: boolean;
-  /** Versioned list: who first attached the document (the "Created by"
-   * column); on a previous-version row, who uploaded that version. */
-  createdBy?: string | null;
-  /** Versioned list: who uploaded the latest version (the "Modified by"
-   * column). Unread on a previous-version row. */
-  modifiedBy?: string | null;
-  /** Versioned list: when the document last changed — its latest upload. */
-  modifiedDatetime?: string | null;
+  /** Versioned list: who uploaded this version (the "Uploaded by" column —
+   * the latest version's uploader on a document's row, that version's on a
+   * previous-version row). */
+  uploadedBy?: string | null;
   /** Versioned list: this row's version number (1 = the first upload). */
   version?: number;
   /** Versioned list: the earlier versions of this document, newest first,
@@ -70,11 +66,11 @@ export interface DocumentUploadPanelProps {
   listHeading?: string;
   /**
    * Each row is a document with versions rather than a single upload: the
-   * list gains Created by, Created, Modified by, Modified and Version columns
-   * (reading the rows' version fields), and a row with `previousVersions` can
-   * be expanded to list them. The caller does the grouping (a record's
-   * documents module knows what makes two uploads one document); the panel
-   * only presents it.
+   * list gains Uploaded by and Version columns (reading the rows' version
+   * fields; the date is the row's own upload), and a row with
+   * `previousVersions` can be expanded to list them. The caller does the
+   * grouping (a record's documents module knows what makes two uploads one
+   * document); the panel only presents it.
    */
   versioned?: boolean;
 }
@@ -149,9 +145,9 @@ export const confirmDeleteMessage = (
  * action. Opening is fully determined by the row's url + fileName, so the panel
  * owns that too.
  *
- * `versioned` swaps the single "Date uploaded" for the document-versions
- * columns — who first attached it and when, who last changed it and when, the
- * version — and lets a row unfold its earlier versions beneath it — the same
+ * `versioned` adds the document-versions columns — who uploaded the row's
+ * version and when, and the version number — and lets a row unfold its
+ * earlier versions beneath it — the same
  * grid, so every version's cells line up under the document's. Which rows
  * are unfolded is the panel's own transient state, keyed by FILE NAME: a
  * versioned row is one document, and its name is the one thing that survives
@@ -288,18 +284,16 @@ export const DocumentUploadPanel = (
       <span class={styles.meta}>
         <span
           class={styles.user}
-          data-label={label('label.created-by', row.document.createdBy)}
+          data-label={label('label.uploaded-by', row.document.uploadedBy)}
         >
-          {row.document.createdBy ?? ''}
+          {row.document.uploadedBy ?? ''}
         </span>
         <span
           class={styles.date}
-          data-label={label('label.created', row.document.createdDatetime)}
+          data-label={label('label.uploaded', row.document.createdDatetime)}
         >
           {date(row.document.createdDatetime)}
         </span>
-        <span class={styles.user} />
-        <span class={styles.date} />
         <span
           class={styles.version}
           data-label={label('label.version', row.document.version)}
@@ -358,10 +352,8 @@ export const DocumentUploadPanel = (
               when={local.versioned}
               fallback={<span>{t('label.date-uploaded')}</span>}
             >
-              <span>{t('label.created-by')}</span>
-              <span>{t('label.created')}</span>
-              <span>{t('label.modified-by')}</span>
-              <span>{t('label.modified')}</span>
+              <span>{t('label.uploaded-by')}</span>
+              <span>{t('label.uploaded')}</span>
               <span>{t('label.version')}</span>
             </Show>
             <span>{t('label.size')}</span>
@@ -397,42 +389,27 @@ export const DocumentUploadPanel = (
                           <span
                             class={styles.user}
                             data-label={label(
-                              'label.created-by',
-                              document.createdBy
+                              'label.uploaded-by',
+                              document.uploadedBy
                             )}
                           >
-                            {document.createdBy ?? ''}
+                            {document.uploadedBy ?? ''}
                           </span>
                           <span
                             class={styles.date}
                             data-label={label(
-                              'label.created',
+                              'label.uploaded',
                               document.createdDatetime
                             )}
                           >
                             {date(document.createdDatetime)}
                           </span>
                           <span
-                            class={styles.user}
-                            data-label={label(
-                              'label.modified-by',
-                              document.modifiedBy
-                            )}
-                          >
-                            {document.modifiedBy ?? ''}
-                          </span>
-                          <span
-                            class={styles.date}
-                            data-label={label(
-                              'label.modified',
-                              document.modifiedDatetime
-                            )}
-                          >
-                            {date(document.modifiedDatetime)}
-                          </span>
-                          <span
                             class={styles.version}
-                            data-label={label('label.version', document.version)}
+                            data-label={label(
+                              'label.version',
+                              document.version
+                            )}
                           >
                             {document.version ?? ''}
                             {/* The unfold sits with the version number: the

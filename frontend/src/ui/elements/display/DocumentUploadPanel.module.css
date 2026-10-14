@@ -22,15 +22,6 @@
   padding: 1rem;
 }
 
-/* A versioned list needs more room than the plain one: its fixed tracks alone
-   claim ~43rem, and the 48rem cap left the list 46rem — under the 52rem at
-   which it stacks, so the column layout below could never apply and the
-   stacked line was the ONLY layout a versioned list ever had. Sized so the
-   list clears that threshold with a usable name column. */
-.panel[data-versioned] {
-  max-width: 58rem;
-}
-
 /* Section heading above the upload zone / file list ("Upload documents",
    "Uploaded documents"). Type style comes from <Text variant="heading">; the
    panel owns only the spacing below it and its colour. */
@@ -50,14 +41,13 @@
   flex-direction: column;
 }
 
-/* Versioned list: file name, then who first attached it and when, who last
-   changed it and when, its version (with the unfold beside it), its size.
-   The fixed tracks claim more of the width, so the name is the only flexible
-   one — as in the plain list, and its own narrow fallback below stacks the
-   metadata under it once the room runs out. */
+/* Versioned list: file name, then who uploaded the row's version and when,
+   its version (with the unfold beside it), its size. The fixed tracks claim
+   more of the width, so the name is the only flexible one — as in the plain
+   list, and its own narrow fallback below stacks the metadata under it once
+   the room runs out. */
 .list[data-versioned] {
-  --doc-grid: 1.75rem minmax(0, 1fr) 6.5rem 5.5rem 6.5rem 5.5rem 4.5rem 4.5rem
-    2rem;
+  --doc-grid: 1.75rem minmax(0, 1fr) 6.5rem 5.5rem 4.5rem 4.5rem 2rem;
 }
 
 .headerRow,
@@ -194,15 +184,14 @@
 }
 
 /*
- * The versioned list stacks sooner. Its fixed tracks — icon, two users, two
- * dates, version, size, action, and the eight gaps — claim 43.25rem before
- * the name gets anything, so the plain list's 30rem threshold would leave the
- * name at zero width across a 30–43.25rem column (the #692 failure again).
- * 52rem keeps the name at least ~8.75rem wide before the grouped metadata
- * drops under it as one wrapping line — seven cells in seven columns would
- * leave the name nothing.
+ * The versioned list stacks sooner. Its fixed tracks — icon, user, date,
+ * version, size, action, and the six gaps — claim 29.25rem before the name
+ * gets anything, so the plain list's 30rem threshold would leave the name at
+ * zero width across a 30rem column (the #692 failure again). 38rem keeps the
+ * name at least ~8.75rem wide before the grouped metadata drops under it as
+ * one wrapping line.
  */
-@container (max-width: 52rem) {
+@container (max-width: 38rem) {
   .list[data-versioned] .headerRow {
     display: none;
   }
@@ -233,18 +222,12 @@
     grid-column: 2;
   }
 
-  /* A version row's blank Modified cells hold a grid column open at full
-     width; in the flowing line they would only leave a double gap. */
-  .list[data-versioned] .meta > :empty {
-    display: none;
-  }
-
-  /* No column headings here, so each cell names itself: two users, two dates
-     and a bare version number read as nothing without one. From the
+  /* No column headings here, so each cell names itself: a user, a date and
+     a bare version number read as nothing without one. From the
      attribute, so the copy stays translated (set only where the cell has a
      value, so an unrecorded uploader shows neither label nor value). */
   .list[data-versioned] .meta > [data-label]::before {
-    content: attr(data-label) ": ";
+    content: attr(data-label) ': ';
   }
 
   .list[data-versioned] .rowAction {

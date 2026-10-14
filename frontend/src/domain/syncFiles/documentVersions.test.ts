@@ -3,12 +3,12 @@ import { groupDocumentVersions } from './documentVersions';
 
 // Anchors: spec/purchase-orders/cases/OMS-FUN-PO-04.
 //   .28 — a file uploaded under a listed document's name is a new version of
-//         it: one row, the new upload's version number, Modified = the new
-//         upload, Created and Created by unchanged
+//         it: one row, the new upload's version number, Uploaded by and
+//         Uploaded the new upload's, the earlier upload beneath it unchanged
 //   .29 — a document's earlier versions are reachable from its row
 //   .30 — removing a version renumbers the ones above it, and the newest
 //         remaining is current
-//   .31 — a document names the user who attached it
+//   .31 — each version names the user who uploaded it
 // (rules.md § documents and the activity log.)
 
 const doc = (
@@ -24,18 +24,10 @@ const doc = (
 });
 
 describe('groupDocumentVersions', () => {
-  it('keeps a document with one upload as its own latest, created and modified together', () => {
+  it('keeps a document with one upload as its own latest, version 1', () => {
     const only = doc('a', 'po.pdf', '2026-09-01T10:00:00Z', 'alice');
     const [group] = groupDocumentVersions([only]);
-    expect(group).toMatchObject({
-      latest: only,
-      version: 1,
-      previous: [],
-      createdDatetime: '2026-09-01T10:00:00Z',
-      modifiedDatetime: '2026-09-01T10:00:00Z',
-      createdBy: 'alice',
-      modifiedBy: 'alice',
-    });
+    expect(group).toEqual({ latest: only, version: 1, previous: [] });
   });
 
   it('.28 folds same-named uploads into one document whose latest is the newest', () => {
@@ -45,14 +37,11 @@ describe('groupDocumentVersions', () => {
     const groups = groupDocumentVersions([v2, v1, v3]);
     expect(groups).toHaveLength(1);
     const [group] = groups;
+    // The row reads the latest upload's uploader and moment; the first
+    // upload keeps its own beneath it, unchanged.
     expect(group!.latest).toBe(v3);
     expect(group!.version).toBe(3);
-    // Modified and Modified by move with the latest upload; Created and
-    // Created by stay with the first.
-    expect(group!.modifiedDatetime).toBe('2026-09-04T10:00:00Z');
-    expect(group!.modifiedBy).toBe('carol');
-    expect(group!.createdDatetime).toBe('2026-09-01T10:00:00Z');
-    expect(group!.createdBy).toBe('alice');
+    expect(group!.previous.map(v => v.document)).toEqual([v2, v1]);
   });
 
   it('.29 lists the earlier versions newest first, each under its own number', () => {
@@ -87,7 +76,6 @@ describe('groupDocumentVersions', () => {
     const [after] = groupDocumentVersions([v1]);
     expect(after!.latest).toBe(v1);
     expect(after!.version).toBe(1);
-    expect(after!.modifiedDatetime).toBe('2026-09-01T10:00:00Z');
   });
 
   it('keeps differently named files as separate documents, in first-seen order', () => {
@@ -102,10 +90,12 @@ describe('groupDocumentVersions', () => {
     expect(groups[0]!.latest).toBe(a2);
   });
 
-  it('.31 leaves Created by blank for a document attached before uploaders were recorded', () => {
+  it('.31 keeps each version with its own uploader, none for one attached before uploaders were recorded', () => {
     const legacy = doc('a', 'po.pdf', '2026-01-01T10:00:00Z');
-    const [group] = groupDocumentVersions([legacy]);
-    expect(group!.createdBy).toBeUndefined();
+    const recent = doc('b', 'po.pdf', '2026-09-01T10:00:00Z', 'alice');
+    const [group] = groupDocumentVersions([legacy, recent]);
+    expect(group!.latest.user?.username).toBe('alice');
+    expect(group!.previous[0]!.document.user).toBeNull();
   });
 
   it('numbers by upload moment, a file without one first and the id breaking a tie', () => {
