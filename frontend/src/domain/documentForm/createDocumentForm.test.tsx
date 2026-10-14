@@ -492,6 +492,21 @@ describe('when the source changes', () => {
     expect(mounts).toEqual([80]);
   });
 
+  it('leaves a note with no text out of the save', async () => {
+    const { form } = follow(
+      { 'encounter/a': async () => encounter('encounter/a', 70) },
+      { kind: 'existing', name: 'encounter/a' }
+    );
+    await ready(form);
+    form.draft.set('notes' as never, [{ text: '' }, { text: 'Seen' }] as never);
+    expect(await form.save()).toBeDefined();
+    const [, variables] = calls(UpdateFormEncounter)[0] as [
+      unknown,
+      { input: { data: { notes?: unknown } } },
+    ];
+    expect(variables.input.data.notes).toEqual([{ text: 'Seen' }]);
+  });
+
   it('saves nothing before the draft is seeded', async () => {
     const { form } = follow({}, newEncounter(80));
     expect(form.status()).toBe('loading');

@@ -163,7 +163,11 @@ export interface DateOfBirthControlProps {
   required?: boolean;
   error?: string;
   disabled?: boolean;
-  /** `data-testid` for the date; the age takes it with `-age` added. */
+  /**
+   * `data-testid` for the date; the age takes it with `-age` added, and the
+   * estimated-from-age tooltip with `-estimated-info` (`dob-estimated-info`
+   * without one).
+   */
   testId?: string;
 }
 
@@ -226,7 +230,11 @@ export const DateOfBirthControl = (
           <Show when={estimated()}>
             <InfoTooltip
               text={t('messages.dob-estimated-from-age')}
-              triggerTestId="dob-estimated-info"
+              triggerTestId={
+                props.testId
+                  ? `${props.testId}-estimated-info`
+                  : 'dob-estimated-info'
+              }
             />
           </Show>
         }

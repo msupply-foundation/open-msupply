@@ -50,6 +50,7 @@ import {
   type MigrationStep,
   type UnresolvedValue,
 } from './migration';
+import { withoutEmptyNotes } from './notes';
 import { getAt } from './paths';
 import {
   FormDocumentByName,
@@ -600,7 +601,8 @@ export const createDocumentForm = <T extends object>(
       patientId: options.patientId(),
       registry: r,
       parent: document()?.id,
-      data: controller.snapshot(),
+      // A note left with no text stays in the list while the form is open.
+      data: withoutEmptyNotes(controller.snapshot()),
     });
     setSaving(false);
     if (result.kind === 'refused') {
