@@ -723,6 +723,7 @@ export enum AssetLogStatusNodeType {
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
+  NotInstalled = 'NOT_INSTALLED',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
 }
