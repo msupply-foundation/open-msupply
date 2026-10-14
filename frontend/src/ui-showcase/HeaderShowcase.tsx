@@ -60,11 +60,11 @@ const CATEGORIES = [
 
 // Weighted variant: the prescription header's field mix — two person-name
 // pickers, a program and a prominent custom field around a fixed-format date —
-// the mix the weights exist for (#782): the date's text ("30 Jul 2026") asks
-// for ~74px and can never grow, while a 26-character patient name needs ~220px
-// of value room before it stops truncating. The pickers are the real header's
-// control — a Combobox, whose magnifier / clear / chevron chrome eats ~90px of
-// the slot before any name renders.
+// the mix the weights exist for (#782): the date's text ("30/07/2026") asks
+// for under 80px and can never grow, while a 26-character patient name needs
+// ~220px of value room before it stops truncating. The pickers are the real
+// header's control — a Combobox, whose magnifier / clear / chevron chrome eats
+// ~90px of the slot before any name renders.
 const PATIENTS = [
   'MOHAMED, DJIBRIL ABDULLAHI',
   'ADAMS, Cerys',
@@ -299,7 +299,6 @@ export const HeaderShowcase = () => {
                 <DateField
                   label="Received"
                   size="small"
-                  format="dd MMM yyyy"
                   value="2026-05-19"
                   disabled
                 />
@@ -397,7 +396,6 @@ export const HeaderShowcase = () => {
                   <DateField
                     label="Date"
                     size="small"
-                    format="dd MMM yyyy"
                     value={prescribed()}
                     onChange={setPrescribed}
                   />
@@ -490,7 +488,6 @@ export const HeaderShowcase = () => {
                 <DateField
                   label="Received"
                   size="small"
-                  format="dd MMM yyyy"
                   value={received()}
                   error={receivedError()}
                   onChange={setReceived}

@@ -6,14 +6,14 @@ import type {
 } from './logReasons.generated';
 
 // The log reasons' pure rules (spec/asset-catalogue › rules § log reasons,
-// S3/S4): the six statuses and their names, the editor's draft and its one
+// S3/S4): the seven statuses and their names, the editor's draft and its one
 // check, and the insert a draft becomes.
 
 export type LogReasonRow =
   AssetLogReasonsResult['assetLogReasons']['nodes'][number];
 export type AssetLogStatus = LogReasonRow['assetLogStatus'];
 
-/** The six statuses, in the order every surface lists them — the Asset
+/** The seven statuses, in the order every surface lists them — the Asset
  *  domain module's, shared with the equipment register. */
 export const STATUSES: readonly AssetLogStatus[] = ASSET_STATUSES;
 

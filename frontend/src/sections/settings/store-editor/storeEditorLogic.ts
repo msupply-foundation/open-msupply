@@ -551,3 +551,19 @@ export const buildPreferencesInput = (
 
   return Object.keys(input).length > 0 ? input : undefined;
 };
+
+/*
+ * The whole preferences-save variables. The two store ids are deliberately
+ * different: the top-level `storeId` is the SIGNED-IN store, the one the
+ * server checks EDIT_CENTRAL_DATA against; the edited store rides only inside
+ * the payload. From the facility register the edited store is usually one the
+ * administrator can't sign in to, so authorising against it is refused (#1442).
+ */
+export const buildPreferencesVariables = (
+  draft: PreferenceDraft,
+  signedInStoreId: string,
+  editedStoreId: string
+): UpsertStorePreferencesVariables | undefined => {
+  const input = buildPreferencesInput(draft, editedStoreId);
+  return input && { storeId: signedInStoreId, input };
+};

@@ -3073,6 +3073,7 @@
   "status.new": "Créé",
   "status.not-functioning": "En panne",
   "status.not-in-use": "Non-utilisé",
+  "status.not-installed": "Non-installé",
   "status.picked": "Prélevé",
   "status.received": "Reçu",
   "status.scheduled": "Planifié",

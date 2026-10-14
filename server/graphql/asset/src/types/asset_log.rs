@@ -36,6 +36,7 @@ pub enum AssetLogStatusNodeType {
     NotFunctioning,
     Decommissioned,
     Unserviceable,
+    NotInstalled,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]

@@ -4,6 +4,7 @@ import {
   asStatusList,
   asWarnParts,
   buildPreferencesInput,
+  buildPreferencesVariables,
   canEditPreferences,
   filterStoreCatalogue,
   groupStorePreferences,
@@ -585,5 +586,23 @@ describe('buildPreferencesInput (SET-05.37)', () => {
       blindStocktake: [{ storeId: 'store-a', value: false }],
       secondThresholdForExpiringItems: [{ storeId: 'store-a', value: 0 }],
     });
+  });
+});
+
+describe('buildPreferencesVariables (SET-05.37, MNG-02.30)', () => {
+  // #1442 — from the facility register the edited store is one the
+  // administrator usually can't sign in to; authorising against it is refused
+  // (Forbidden, EditCentralData), so the signed-in store authorises the write.
+  it('authorises against the signed-in store while every entry names the edited one', () => {
+    expect(
+      buildPreferencesVariables({ blindStocktake: true }, 'central', 'remote')
+    ).toEqual({
+      storeId: 'central',
+      input: { blindStocktake: [{ storeId: 'remote', value: true }] },
+    });
+  });
+
+  it('returns undefined when nothing is staged, so the save skips the call', () => {
+    expect(buildPreferencesVariables({}, 'central', 'remote')).toBeUndefined();
   });
 });

@@ -1,16 +1,16 @@
 use crate::PluginOrRepositoryError;
 use crate::item_stats::get_item_stats;
-use crate::location::query::get_available_volume_by_location_type;
+use crate::location::query::{get_available_volume_by_location_type, restricted_location_type_id};
 use crate::pricing::item_price::{ItemPriceLookup, get_pricing_for_items};
 use crate::requisition::common::get_indicative_price_pref;
 use crate::requisition::request_requisition::{ForecastInputs, order_demand};
 use crate::service_provider::ServiceContext;
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, ItemRowRepository, LineForecast, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionLineRow, RequisitionRow,
+    EqualFilter, ItemRow, ItemRowRepository, LineForecast, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionRow,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use util::uuid::uuid;
 
 pub struct GenerateSuggestedQuantity {
@@ -62,13 +62,14 @@ pub fn generate_requisition_lines(
         .map(|i| i.item_id.to_string())
         .collect::<Vec<String>>();
 
-    // Item names are denormalised onto the requisition line. Source them from
-    // the item table rather than from stock data — stockless items have no
-    // stock_on_hand row, which previously left item_name empty (#11843).
-    let item_name_by_id: HashMap<String, String> = ItemRowRepository::new(&ctx.connection)
+    // Item names (denormalised onto the requisition line) and location type
+    // restrictions come from the item table rather than from stock data —
+    // stockless items have no stock_on_hand row, which previously left
+    // item_name empty (#11843).
+    let item_by_id: HashMap<String, ItemRow> = ItemRowRepository::new(&ctx.connection)
         .find_many_by_id(&item_ids)?
         .into_iter()
-        .map(|item| (item.id, item.name))
+        .map(|item| (item.id.clone(), item))
         .collect();
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
@@ -81,8 +82,15 @@ pub fn generate_requisition_lines(
     } else {
         None
     };
-    let available_volumes =
-        get_available_volume_by_location_type(&ctx.connection, store_id, &item_ids)?;
+    let location_type_ids: Vec<String> = item_by_id
+        .values()
+        .filter_map(restricted_location_type_id)
+        .map(str::to_string)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let available_volume_by_type =
+        get_available_volume_by_location_type(&ctx.connection, store_id, &location_type_ids)?;
 
     // Each new line takes its default forecast, against the lines already on the order
     let existing_lines: Vec<RequisitionLineRow> = RequisitionLineRepository::new(&ctx.connection)
@@ -119,18 +127,20 @@ pub fn generate_requisition_lines(
                     min_months_of_stock: requisition_row.min_months_of_stock,
                     max_months_of_stock: requisition_row.max_months_of_stock,
                 });
-                let available_volume_by_type = available_volumes
-                    .get(&item_stats.item_id)
-                    .cloned()
-                    .unwrap_or_default();
+                let item = item_by_id.get(&item_stats.item_id);
+                // The line records its item's location type only where the
+                // store has locations of that type to report volume for: the
+                // supplier's response line reads a location type without a
+                // volume as no capacity left
+                let (location_type_id, available_volume) = item
+                    .and_then(restricted_location_type_id)
+                    .and_then(|id| Some((id.to_string(), *available_volume_by_type.get(id)?)))
+                    .unzip();
 
                 Ok(RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
-                    item_name: item_name_by_id
-                        .get(&item_stats.item_id)
-                        .cloned()
-                        .unwrap_or_default(),
+                    item_name: item.map(|item| item.name.clone()).unwrap_or_default(),
                     item_id: item_stats.item_id.clone(),
                     suggested_quantity,
                     available_stock_on_hand,
@@ -145,8 +155,8 @@ pub fn generate_requisition_lines(
                     } else {
                         None
                     },
-                    available_volume: available_volume_by_type.available_volume,
-                    location_type_id: available_volume_by_type.restricted_location_type_id,
+                    available_volume,
+                    location_type_id,
                     forecast_data: forecast.data_json(),
                     forecast_method: forecast.method,
                     forecast_monthly_consumption: forecast.monthly_consumption,

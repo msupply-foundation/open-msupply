@@ -11,8 +11,8 @@ import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  DEFAULT_DATE_FORMAT,
   dateToIsoDate,
+  defaultDateFormat,
   formatIsoDate,
   formatPlaceholder,
   isoDateToDate,
@@ -34,8 +34,10 @@ export interface DateFieldProps {
   /** Latest selectable date, ISO `YYYY-MM-DD`. Later dates unselectable. */
   max?: string;
   /**
-   * Display + typed-entry format, e.g. `dd/MM/yyyy`, `dd MMM yyyy` (default),
-   * `MM/dd/yyyy`, `yyyy-MM-dd`. Tokens: d/dd, M/MM/MMM/MMMM, yy/yyyy.
+   * Display + typed-entry format, e.g. `dd/MM/yyyy`, `dd MMM yyyy`,
+   * `MM/dd/yyyy`, `yyyy-MM-dd`. Tokens: d/dd, M/MM/MMM/MMMM, yy/yyyy. Defaults
+   * to the app language's numeric short date (`dd/MM/yyyy` in English), the
+   * same pattern read-only dates render with (#774).
    */
   format?: string;
   helperText?: string;
@@ -73,7 +75,7 @@ export interface DateFieldProps {
 export const DateField = (props: DateFieldProps) => {
   const autoId = createUniqueId();
   const id = () => props.id ?? autoId;
-  const fmt = () => props.format ?? DEFAULT_DATE_FORMAT;
+  const fmt = () => props.format ?? defaultDateFormat();
 
   // Local text buffer for typing; resynced from the external value only when
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
