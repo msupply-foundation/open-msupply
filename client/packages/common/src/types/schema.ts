@@ -8568,6 +8568,12 @@ export type ProgramIndicatorSortInput = {
 
 export type ProgramNode = {
   __typename: 'ProgramNode';
+  /**
+   * The context the program's documents (its enrolments and encounters)
+   * belong to: what a document registry entry's `contextId` names. Often,
+   * but not always, the program's own id.
+   */
+  contextId: Scalars['String']['output'];
   elmisCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   isImmunisation: Scalars['Boolean']['output'];
