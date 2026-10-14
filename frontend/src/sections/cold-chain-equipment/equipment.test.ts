@@ -29,14 +29,15 @@ describe('OMS-REG-CCE-06.31 / .32 — only a cold room records a temperature map
   });
 });
 
-describe('the six functional statuses', () => {
-  it('offers exactly the six the schema declares', () => {
+describe('the seven functional statuses', () => {
+  it('offers exactly the seven the schema declares', () => {
     expect([...ASSET_STATUSES].sort()).toEqual(
       [
         'DECOMMISSIONED',
         'FUNCTIONING',
         'FUNCTIONING_BUT_NEEDS_ATTENTION',
         'NOT_FUNCTIONING',
+        'NOT_INSTALLED',
         'NOT_IN_USE',
         'UNSERVICEABLE',
       ].sort()
@@ -54,6 +55,17 @@ describe('the six functional statuses', () => {
     expect(statusTone('FUNCTIONING')).toBe('success');
     expect(statusTone('FUNCTIONING_BUT_NEEDS_ATTENTION')).toBe('warning');
     expect(statusTone('NOT_FUNCTIONING')).toBe('error');
+  });
+
+  it('names Not installed apart from Not in use, toned as neither working nor broken', () => {
+    // Delivered but not yet commissioned is a deployment backlog; installed
+    // but idle is spare capacity — two statuses, two names (rules § functional
+    // status).
+    expect(statusLabelKey('NOT_INSTALLED')).toBe('status.not-installed');
+    expect(statusLabelKey('NOT_INSTALLED')).not.toBe(
+      statusLabelKey('NOT_IN_USE')
+    );
+    expect(statusTone('NOT_INSTALLED')).toBe('neutral');
   });
 
   it('reads the status names off the catalog, not from enum casing', () => {

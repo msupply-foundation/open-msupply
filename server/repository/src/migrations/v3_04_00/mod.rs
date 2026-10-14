@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_code_to_location_type;
 mod add_line_total_to_purchase_order_line;
+mod add_not_installed_status_to_asset_status_enum;
 mod add_uploader_to_sync_file_reference;
 mod prescription_request_occupation_prominent;
 
@@ -21,6 +22,7 @@ impl Migration for V3_04_00 {
         vec![
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
+            Box::new(add_not_installed_status_to_asset_status_enum::Migrate),
             Box::new(add_uploader_to_sync_file_reference::Migrate),
             Box::new(prescription_request_occupation_prominent::Migrate),
         ]

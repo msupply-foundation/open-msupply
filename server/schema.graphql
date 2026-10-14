@@ -606,6 +606,7 @@ enum AssetLogStatusNodeType {
 	NOT_FUNCTIONING
 	DECOMMISSIONED
 	UNSERVICEABLE
+	NOT_INSTALLED
 }
 
 enum AssetLogTypeNodeType {
