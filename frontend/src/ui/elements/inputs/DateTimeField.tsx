@@ -13,8 +13,8 @@ import type { FocusTarget } from '../../utils/createFocusTarget';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  DEFAULT_DATE_FORMAT,
   dateToIsoDate,
+  defaultDateFormat,
   formatIsoDate,
   formatPlaceholder,
   hhmmToTime,
@@ -88,7 +88,7 @@ export interface DateTimeFieldProps {
 export const DateTimeField = (props: DateTimeFieldProps) => {
   const autoId = createUniqueId();
   const dateId = () => props.id ?? autoId; // label focuses the date input
-  const fmt = () => props.format ?? DEFAULT_DATE_FORMAT;
+  const fmt = () => props.format ?? defaultDateFormat();
 
   const parts = () => utcToLocalParts(props.value);
   const [dateText, setDateText] = createSignal(

@@ -87295,7 +87295,7 @@
     "id": "prescription_request_occupation__scope_prescription_request",
     "custom_field_id": "prescription_request_occupation",
     "scope": "prescription_request",
-    "display_mode": "VISIBLE",
+    "display_mode": "PROMINENT",
     "sort_order": "3",
     "deleted_datetime": null
    },

@@ -21,6 +21,10 @@ export type SaveGlobalTableConfigsVariables = {
   input: {
     allowTrackingOfStockByDonor?: boolean | null;
     authorisePurchaseOrder?: boolean | null;
+    authorisePurchaseOrderStoreOverride?: Array<{
+    storeId: string;
+    value?: boolean | null;
+  }> | null;
     customTranslations?: unknown | null;
     customTranslationsV2?: unknown | null;
     genderOptions?: Array<"FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY"> | null;

@@ -55,6 +55,7 @@ export type AuthTokenQuery = {
             }
           | { __typename: 'CentralSyncRequired'; description: string }
           | { __typename: 'InvalidCredentials'; description: string }
+          | { __typename: 'MaintenanceMode'; description: string }
           | { __typename: 'NoSiteAccess'; description: string };
       };
 };

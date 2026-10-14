@@ -20,6 +20,7 @@ import {
   type BatchInboundShipmentVariables,
   type BatchResultFragment,
 } from './inboundShipmentDetail.generated';
+import { deleteRefusalMessage } from './inboundShipmentStatus';
 
 // Update/batch helpers for the inbound-shipment detail view. Every mutation is
 // TWINNED (plain vs `...External`): the external variant is required whenever
@@ -224,7 +225,9 @@ const summariseBatch = (batch: BatchResultFragment): BatchOutcome => {
 export const deleteInboundShipment = async (
   storeId: string,
   isExternal: boolean,
-  id: string
+  id: string,
+  /** The shipment's status — names the cause of a typed refusal. */
+  status: string
 ): Promise<{
   ok: boolean;
   message?: string;
@@ -258,7 +261,7 @@ export const deleteInboundShipment = async (
       ? result.data.deleteInboundShipmentExternal
       : result.data.deleteInboundShipment;
   if (response.__typename === 'DeleteResponse') return { ok: true };
-  return { ok: false, message: response.error.description };
+  return { ok: false, message: deleteRefusalMessage(response.error, status) };
 };
 
 // Bulk-add empty stock lines from a master list (spec OMS-REG-ISH-01.10).

@@ -13,11 +13,20 @@ pub struct StorePrefUpdate<T> {
     pub value: T,
 }
 
+/// One store's edit of a global preference it may override. `None` clears the
+/// store's row so the store follows the global value again.
+#[derive(Debug, PartialEq, Clone)]
+pub struct StoreOverrideUpdate<T> {
+    pub store_id: String,
+    pub value: Option<T>,
+}
+
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_purchase_order_store_override: Option<Vec<StoreOverrideUpdate<bool>>>,
     /// Legacy v1 custom translations (flat, applied to all languages). Edited
     /// directly via the "legacy" namespace in the v2 editor; not auto-derived.
     pub custom_translations: Option<BTreeMap<String, String>>,
@@ -76,6 +85,7 @@ pub fn upsert_preferences(
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         authorise_purchase_order: authorise_purchase_order_input,
+        authorise_purchase_order_store_override: authorise_purchase_order_store_override_input,
         custom_translations: custom_translations_input,
         custom_translations_v2: custom_translations_v2_input,
         gender_options: gender_options_input,
@@ -189,6 +199,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = authorise_purchase_order_input {
                 authorise_purchase_order.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = authorise_purchase_order_store_override_input {
+                upsert_store_override_input(connection, authorise_purchase_order, input)?;
             }
 
             if let Some(input) = gender_options_input {
@@ -408,6 +422,22 @@ fn upsert_store_input<P: Preference>(
 ) -> Result<(), UpsertPreferenceError> {
     for update in input.into_iter() {
         preference.upsert(connection, update.value, Some(update.store_id))?;
+    }
+    Ok(())
+}
+
+/// Apply each store's override edit: a value pins it for that store, no value
+/// drops the store's row so it follows the global value again.
+fn upsert_store_override_input<P: Preference>(
+    connection: &StorageConnection,
+    preference: P,
+    input: Vec<StoreOverrideUpdate<P::Value>>,
+) -> Result<(), UpsertPreferenceError> {
+    for update in input.into_iter() {
+        match update.value {
+            Some(value) => preference.upsert(connection, value, Some(update.store_id))?,
+            None => preference.clear_store_override(connection, update.store_id)?,
+        }
     }
     Ok(())
 }

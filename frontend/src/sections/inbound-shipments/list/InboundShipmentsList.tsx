@@ -218,18 +218,23 @@ const InboundShipmentsList: Component = () => {
   // id is selected — it was on the page at that moment — and travels with the
   // id until it leaves the selection. ONE signal, not an id list beside a scope
   // map: there is then no invariant to keep, and no id that could reach the
-  // wire with a guessed scope.
+  // wire with a guessed scope. The row's status travels the same way, so a
+  // refused delete can say the shipment is Verified (deleteRefusalMessage).
   const [selection, setSelection] = createSignal<InboundSelection[]>([]);
   const selectedIds = createMemo(() => selection().map(s => s.id));
   const onSelectionChange = (ids: string[]) => {
-    const known = new Map(selection().map(s => [s.id, s.scope]));
+    const known = new Map(selection().map(s => [s.id, s]));
     setSelection(
-      ids.map(id => ({
-        id,
-        scope:
-          known.get(id) ??
-          scopeOf(rows().find(r => r.id === id)?.purchaseOrderId),
-      }))
+      ids.map(id => {
+        const kept = known.get(id);
+        if (kept) return kept;
+        const row = rows().find(r => r.id === id);
+        return {
+          id,
+          scope: scopeOf(row?.purchaseOrderId),
+          status: row?.status ?? '',
+        };
+      })
     );
   };
   const clearSelection = () => setSelection([]);
