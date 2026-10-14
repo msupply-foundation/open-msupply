@@ -4,6 +4,7 @@ import {
   Match,
   Show,
   Switch,
+  untrack,
   type JSX,
 } from 'solid-js';
 import { reportPermissionDenied } from '@/api/graphql';
@@ -22,8 +23,22 @@ import { createDocumentForm } from '@/domain/documentForm/createDocumentForm';
 import { DocumentKeptValues } from '@/domain/documentForm/DocumentKeptValues';
 import { DocumentVersionNotice } from '@/domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '@/plugins/DocumentFormRegion';
-import { documentFormVersioning } from '@/plugins/documentFormSlot';
+import {
+  documentFormFor,
+  documentFormVersioning,
+} from '@/plugins/documentFormSlot';
+import { pathLabel } from '@/domain/documentForm/draft';
+import type { JsonSchema } from '@/domain/documentForm/schemaNode';
 import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
+
+// What the default enrolment form asks for (ui-surface S4), and what the
+// enrolment carries without asking (its store).
+const DEFAULT_FORM_FIELDS = new Set([
+  'enrolmentDatetime',
+  'programEnrolmentId',
+  'notes',
+  'storeId',
+]);
 
 /** What the modal opens: a program to enrol in, or a saved enrolment. */
 export type EnrolmentTarget =
@@ -101,6 +116,28 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     return v.kind === 'archived' ? v.version : undefined;
   };
 
+  // On the default form, what the program's own form schema requires that the
+  // default form doesn't ask for (rules § the default form): with any, the
+  // enrolment can't be saved here, so it says so and offers no Save.
+  const unasked = createMemo((): string[] => {
+    const r = form.registry();
+    const library = form.library();
+    if (!r || !library || form.status() !== 'ready') return [];
+    if (form.version().kind !== 'current') return [];
+    if (documentFormFor('programEnrolment.form', r.documentType).occupant) {
+      return [];
+    }
+    const data = untrack(() => form.draft.data);
+    return library
+      .validateDocument(r.formSchemaId, r.jsonSchema as JsonSchema, data)
+      .filter(
+        e =>
+          e.keyword === 'required' &&
+          !DEFAULT_FORM_FIELDS.has(e.path.split('.')[0] ?? '')
+      )
+      .map(e => e.path);
+  });
+
   const [confirmDiscard, setConfirmDiscard] = createSignal(false);
   const close = () => {
     if (form.isDirty()) setConfirmDiscard(true);
@@ -157,16 +194,18 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
             >
               {t('button.cancel')}
             </Button>
-            <Button
-              icon={<SaveIcon />}
-              confirms="plain"
-              data-testid="dialog-button-ok"
-              loading={form.saving()}
-              disabled={form.status() !== 'ready' || !form.canSave()}
-              onClick={() => void save()}
-            >
-              {t('button.save')}
-            </Button>
+            <Show when={unasked().length === 0}>
+              <Button
+                icon={<SaveIcon />}
+                confirms="plain"
+                data-testid="dialog-button-ok"
+                loading={form.saving()}
+                disabled={form.status() !== 'ready' || !form.canSave()}
+                onClick={() => void save()}
+              >
+                {t('button.save')}
+              </Button>
+            </Show>
           </>
         }
       >
@@ -179,6 +218,13 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
               const Default = lib().DefaultEnrolmentForm;
               return (
                 <Stack>
+                  <Show when={unasked().length > 0}>
+                    <Alert severity="warning" testId="enrolment-form-missing">
+                      {t('messages.enrolment-form-not-installed', {
+                        fields: unasked().map(pathLabel).join(', '),
+                      })}
+                    </Alert>
+                  </Show>
                   <DocumentVersionNotice
                     version={form.version()}
                     onEdit={form.edit}
@@ -196,10 +242,14 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
                     currentSchemaId={form.registry()?.formSchemaId}
                   />
                   <DocumentKeptValues values={form.kept()} />
-                  <FormErrorSummary
-                    errors={form.validation.visible()}
-                    testId="enrolment-error-summary"
-                  />
+                  {/* With the not-installed notice up there's no Save to
+                      correct anything for: the notice says it all. */}
+                  <Show when={unasked().length === 0}>
+                    <FormErrorSummary
+                      errors={form.validation.visible()}
+                      testId="enrolment-error-summary"
+                    />
+                  </Show>
                 </Stack>
               );
             }}

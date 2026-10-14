@@ -34,7 +34,9 @@ const shown: {
   details?: string;
   discard?: ConfirmProps;
   hostOptions?: Record<string, unknown>;
-} = { alerts: [] };
+  buttons: { 'data-testid'?: string }[];
+  summaries: number;
+} = { alerts: [], buttons: [], summaries: 0 };
 
 // Reads a JSX child the stand-ins returned, so a banner renders when shown.
 const resolve = (value: unknown): unknown =>
@@ -69,16 +71,48 @@ vi.mock('@/ui/elements/feedback/ConfirmDialog', () => ({
   },
 }));
 vi.mock('@/ui/elements/feedback/Spinner', () => ({ Spinner: () => 'spinner' }));
-vi.mock('@/ui/elements/buttons/Button', () => ({ Button: () => 'button' }));
+vi.mock('@/ui/layout/Stack/Stack', () => ({
+  Stack: (p: { children: unknown }) => p.children,
+}));
+vi.mock('@/ui/layout/Form/FormErrorSummary', () => ({
+  FormErrorSummary: () => {
+    shown.summaries++;
+    return 'summary';
+  },
+}));
+vi.mock('@/domain/documentForm/DocumentVersionNotice', () => ({
+  DocumentVersionNotice: () => 'version notice',
+}));
+vi.mock('@/domain/documentForm/DocumentKeptValues', () => ({
+  DocumentKeptValues: () => 'kept values',
+}));
+vi.mock('@/ui/elements/buttons/Button', () => ({
+  Button: (p: { 'data-testid'?: string }) => {
+    shown.buttons.push(p);
+    return 'button';
+  },
+}));
 vi.mock('@/ui/icons', () => ({ SaveIcon: () => '', XCircleIcon: () => '' }));
 vi.mock('@/intl', () => ({ t: (key: string) => key }));
 vi.mock('@/api/graphql', () => ({ reportPermissionDenied: vi.fn() }));
 vi.mock('@/plugins/DocumentFormRegion', () => ({
   DocumentFormRegion: () => 'form',
 }));
+const [pluginForm, setPluginForm] = createSignal(false);
 vi.mock('@/plugins/documentFormSlot', () => ({
   documentFormVersioning: () => undefined,
+  documentFormFor: () => ({
+    occupant: pluginForm() ? { id: 'demo.enrolment-form' } : undefined,
+    diagnostics: [],
+  }),
 }));
+// What the program's own form schema finds missing in the enrolment.
+let missing: string[] = [];
+const library = {
+  DefaultEnrolmentForm: () => 'default form',
+  validateDocument: () =>
+    missing.map(path => ({ path, keyword: 'required', message: '' })),
+};
 
 const [dirty, setDirty] = createSignal(false);
 const [saveError, setSaveError] = createSignal<string>();
@@ -88,8 +122,13 @@ vi.mock('@/domain/documentForm/createDocumentForm', () => ({
     shown.hostOptions = options;
     return {
       status: () => 'ready',
-      library: () => undefined,
-      registry: () => ({ name: 'TB Program', documentType: 'TBProgram' }),
+      library: () => library,
+      registry: () => ({
+        name: 'TB Program',
+        documentType: 'TBProgram',
+        formSchemaId: 'tb_v1',
+        jsonSchema: {},
+      }),
       document: () => undefined,
       draft: {},
       isDirty: dirty,
@@ -115,6 +154,9 @@ afterEach(() => {
   dispose?.();
   dispose = undefined;
   shown.alerts = [];
+  shown.buttons = [];
+  missing = [];
+  setPluginForm(false);
   delete shown.details;
   setDirty(false);
   setSaveError(undefined);
@@ -255,5 +297,53 @@ describe('OMS-REG-PAT-04.16 – .19 — leaving with unsaved changes', () => {
     shown.discard?.onClose();
     expect(shown.discard?.open).toBe(false);
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("OMS-REG-PAT-04.52 — a program whose form the default form can't stand in for", () => {
+  const save = () =>
+    shown.buttons.filter(b => b['data-testid'] === 'dialog-button-ok');
+  const body = () => {
+    shown.alerts = [];
+    shown.buttons = [];
+    shown.summaries = 0;
+    resolve(shown.dialog?.children);
+    resolve(shown.dialog?.actions);
+  };
+
+  it("says the program's own form isn't installed, naming what it asks for, and offers no Save", () => {
+    missing = ['status', 'extension.riskGroup'];
+    open();
+    body();
+    const notice = shown.alerts.find(
+      a => a.testId === 'enrolment-form-missing'
+    );
+    expect(notice?.severity).toBe('warning');
+    expect(resolve(notice?.children)).toBe(
+      'messages.enrolment-form-not-installed'
+    );
+    expect(save()).toHaveLength(0);
+    expect(shown.summaries).toBe(0);
+  });
+
+  it('a field the default form asks for is not one it lacks', () => {
+    missing = ['enrolmentDatetime'];
+    open();
+    body();
+    expect(shown.alerts.some(a => a.testId === 'enrolment-form-missing')).toBe(
+      false
+    );
+    expect(save()).toHaveLength(1);
+  });
+
+  it("with the program's own form loaded, there is nothing to say", () => {
+    missing = ['status'];
+    setPluginForm(true);
+    open();
+    body();
+    expect(shown.alerts.some(a => a.testId === 'enrolment-form-missing')).toBe(
+      false
+    );
+    expect(save()).toHaveLength(1);
   });
 });

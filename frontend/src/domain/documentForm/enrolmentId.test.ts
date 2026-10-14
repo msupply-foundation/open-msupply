@@ -14,14 +14,21 @@ vi.mock('../../api/graphql', () => ({
 import { drawFreeEnrolmentId, isEnrolmentIdFree } from './enrolmentId';
 import { EnrolmentsHoldingId } from './enrolmentId.generated';
 
-const holders = (...names: string[]) => ({
+const holders = (...held: [name: string, id: string][]) => ({
   kind: 'success',
-  data: { programEnrolments: { nodes: names.map(name => ({ name })) } },
+  data: {
+    programEnrolments: {
+      nodes: held.map(([name, programEnrolmentId]) => ({
+        name,
+        programEnrolmentId,
+      })),
+    },
+  },
 });
 
 afterEach(() => graphqlFetch.mockReset());
 
-describe('OMS-REG-PAT-04.36 / .38 — whether an enrolment ID is free', () => {
+describe('OMS-REG-PAT-04.36 / .38 / .55 — whether an enrolment ID is free', () => {
   it('asks across every program: the check carries no program type', async () => {
     graphqlFetch.mockResolvedValue(holders());
     await isEnrolmentIdFree('store', 'GRY-0001', undefined);
@@ -37,22 +44,48 @@ describe('OMS-REG-PAT-04.36 / .38 — whether an enrolment ID is free', () => {
   });
 
   it('is not free when another enrolment, of any program, holds it (.36)', async () => {
-    graphqlFetch.mockResolvedValue(holders('p/other/HIVCareProgram'));
+    graphqlFetch.mockResolvedValue(
+      holders(['p/other/HIVCareProgram', 'GRY-0001'])
+    );
     expect(await isEnrolmentIdFree('store', 'GRY-0001', 'p/me/TBProgram')).toBe(
       false
     );
   });
 
-  it('is free when the first holder is this enrolment itself (.38)', async () => {
-    graphqlFetch.mockResolvedValue(holders('p/me/TBProgram'));
+  it('ignores case: gry-0001 is a duplicate of GRY-0001 (.55)', async () => {
+    graphqlFetch.mockResolvedValue(
+      holders(['p/other/HIVCareProgram', 'GRY-0001'])
+    );
+    expect(await isEnrolmentIdFree('store', 'gry-0001', undefined)).toBe(false);
+  });
+
+  it('ignores surrounding spaces in what is held (.55)', async () => {
+    graphqlFetch.mockResolvedValue(
+      holders(['p/other/HIVCareProgram', ' gry-0001 '])
+    );
+    expect(await isEnrolmentIdFree('store', 'GRY-0001', undefined)).toBe(false);
+  });
+
+  it('a longer ID that merely contains it is no duplicate', async () => {
+    graphqlFetch.mockResolvedValue(
+      holders(['p/other/HIVCareProgram', 'GRY-00012'])
+    );
+    expect(await isEnrolmentIdFree('store', 'GRY-0001', undefined)).toBe(true);
+  });
+
+  it('is free when its only holder is this enrolment itself (.38)', async () => {
+    graphqlFetch.mockResolvedValue(holders(['p/me/TBProgram', 'GRY-0001']));
     expect(await isEnrolmentIdFree('store', 'GRY-0001', 'p/me/TBProgram')).toBe(
       true
     );
   });
 
-  it('counts only the first holder, as the current app does', async () => {
+  it('any other holder counts, whichever sorts first', async () => {
     graphqlFetch.mockResolvedValue(
-      holders('p/other/HIVCareProgram', 'p/me/TBProgram')
+      holders(
+        ['p/me/TBProgram', 'GRY-0001'],
+        ['p/other/HIVCareProgram', 'GRY-0001']
+      )
     );
     expect(await isEnrolmentIdFree('store', 'GRY-0001', 'p/me/TBProgram')).toBe(
       false
@@ -60,7 +93,7 @@ describe('OMS-REG-PAT-04.36 / .38 — whether an enrolment ID is free', () => {
   });
 
   it('a new enrolment (no name yet) holds nothing', async () => {
-    graphqlFetch.mockResolvedValue(holders('p/other/TBProgram'));
+    graphqlFetch.mockResolvedValue(holders(['p/other/TBProgram', 'GRY-0001']));
     expect(await isEnrolmentIdFree('store', 'GRY-0001', undefined)).toBe(false);
   });
 

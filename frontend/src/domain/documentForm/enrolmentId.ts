@@ -7,12 +7,15 @@
 import { graphqlFetch } from '../../api/graphql';
 import { EnrolmentsHoldingId } from './enrolmentId.generated';
 
+/** An ID as the duplicate check compares it: unpadded, any case. */
+const comparable = (id: string): string => id.trim().toLowerCase();
+
 /**
  * Whether no OTHER enrolment holds `id`. The check spans every program the
- * user may view, and only its first (oldest) holder counts, as in the current
- * app: the ID is free when nobody holds it, or when that first holder is this
- * enrolment itself (`documentName`, undefined until the first save). Undefined
- * when the check could not be made; the failure is reported globally.
+ * user may view, and ignores case and surrounding spaces: "gry-0005" is a
+ * duplicate of "GRY-0005". An enrolment's own saved ID (`documentName`,
+ * undefined until the first save) is never its duplicate. Undefined when the
+ * check could not be made; the failure is reported globally.
  */
 export const isEnrolmentIdFree = async (
   storeId: string,
@@ -21,8 +24,12 @@ export const isEnrolmentIdFree = async (
 ): Promise<boolean | undefined> => {
   const result = await graphqlFetch(EnrolmentsHoldingId, { storeId, id });
   if (result.kind !== 'success') return undefined;
-  const first = result.data.programEnrolments.nodes[0];
-  return first === undefined || first.name === documentName;
+  const wanted = comparable(id);
+  return result.data.programEnrolments.nodes.every(
+    holder =>
+      comparable(holder.programEnrolmentId ?? '') !== wanted ||
+      holder.name === documentName
+  );
 };
 
 // A bound on the redraws, so a format that keeps landing on held IDs cannot

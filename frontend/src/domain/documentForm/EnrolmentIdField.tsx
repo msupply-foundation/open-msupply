@@ -65,6 +65,17 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
   const [confirming, setConfirming] = createSignal(false);
   const label = () => props.label ?? t('label.enrolment-patient-id');
 
+  // The enrolment takes the ID without surrounding spaces (rules § typing an
+  // ID, and duplicates), while the box keeps exactly what is being typed, so
+  // a space typed between two parts survives the keystroke. The typed text
+  // shows only while it still stands for the ID the enrolment holds: any
+  // change underneath (a generated ID, a discard) shows instead.
+  const [typed, setTyped] = createSignal<string>();
+  const text = () => {
+    const value = typed();
+    return value !== undefined && value.trim() === held() ? value : held();
+  };
+
   // What is typed goes into the enrolment at once, so what is saved is what
   // the box shows. A typed ID another enrolment holds fails the field, which
   // blocks the save until the ID is changed (rules § typing an ID, and
@@ -130,21 +141,23 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
   // Replacing an ID the user can see discards it and spends a number that is
   // never given back, so it asks first; an empty field generates at once.
   const onGenerate = () => {
-    if (held().trim() !== '') setConfirming(true);
+    if (held() !== '') setConfirming(true);
     else void generate('set');
   };
 
   const onInput = (value: string) => {
     checkRun++;
-    d().set('programEnrolmentId', value || undefined);
+    setTyped(value);
+    const id = value.trim();
+    d().set('programEnrolmentId', id || undefined);
     d().setError('programEnrolmentId', undefined);
-    if (value === '') {
+    if (id === '') {
       check.cancel();
       releaseSave();
       return;
     }
     holdSave();
-    check(value);
+    check(id);
   };
 
   return (
@@ -152,7 +165,7 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
       <FormRow>
         <TextField
           label={label()}
-          value={held()}
+          value={text()}
           readOnly={props.allowTyping !== true}
           required={d().schemaFor('programEnrolmentId')?.required ?? false}
           error={d().errorFor('programEnrolmentId')}

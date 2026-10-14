@@ -61,6 +61,10 @@ import {
 } from './programs/programsApi';
 import { ProgramPickerDialog } from '@/sections/program-enrolment/ProgramPickerDialog';
 import {
+  fetchImmunisationContexts,
+  programsToOffer,
+} from '@/sections/program-enrolment/programEnrolmentApi';
+import {
   EnrolmentModal,
   type EnrolmentTarget,
 } from '@/sections/program-enrolment/EnrolmentModal';
@@ -232,6 +236,21 @@ const PatientDetailView: Component = () => {
   const registries = () => gated(registriesData) ?? [];
   const enrolmentRegistries = () =>
     registries().filter(r => r.category === 'PROGRAM_ENROLMENT');
+  // New program from the Vaccinations tab offers only immunisation programs
+  // (spec/program-enrolment rules § enrolling a patient); until their
+  // contexts are read, or if the read fails, it offers every program.
+  const [immunisationContexts] = createResource(
+    () => (hasProgramModule() ? params.storeId : undefined),
+    fetchImmunisationContexts
+  );
+  const [pickerImmunisationOnly, setPickerImmunisationOnly] =
+    createSignal(false);
+  const pickerRegistries = () =>
+    programsToOffer(
+      enrolmentRegistries(),
+      pickerImmunisationOnly(),
+      gated(immunisationContexts)
+    );
   const enrolledTypes = () => new Set(enrolments().map(e => e.type));
   const encounterRegistries = () => {
     const contexts = new Set(enrolments().map(e => e.contextId));
@@ -305,8 +324,10 @@ const PatientDetailView: Component = () => {
     return 'new-program';
   };
   const runCreate = (action: string) => {
-    if (action === 'new-program') setPickerOpen(true);
-    else if (action === 'new-encounter' && canAddEncounter()) {
+    if (action === 'new-program') {
+      setPickerImmunisationOnly(activeTab() === 'vaccinations');
+      setPickerOpen(true);
+    } else if (action === 'new-encounter' && canAddEncounter()) {
       setCreateEncounterOpen(true);
     } else if (action === 'add-insurance' && canAddInsurance()) {
       setInsuranceState({});
@@ -587,7 +608,7 @@ const PatientDetailView: Component = () => {
 
               <ProgramPickerDialog
                 open={pickerOpen()}
-                registries={enrolmentRegistries()}
+                registries={pickerRegistries()}
                 enrolledTypes={enrolledTypes()}
                 onPick={registry => {
                   setPickerOpen(false);

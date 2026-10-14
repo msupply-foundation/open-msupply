@@ -6996,6 +6996,12 @@ type ProgramNode {
 	id: String!
 	name: String!
 	isImmunisation: Boolean!
+	"""
+	The context the program's documents (its enrolments and encounters)
+	belong to: what a document registry entry's `contextId` names. Often,
+	but not always, the program's own id.
+	"""
+	contextId: String!
 	vaccineCourses: [VaccineCourseNode!]
 	elmisCode: String
 }

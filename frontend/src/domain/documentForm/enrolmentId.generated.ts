@@ -11,10 +11,11 @@ export type EnrolmentsHoldingIdResult = {
   programEnrolments: ({
   nodes: Array<{
   name: string;
+  programEnrolmentId: string | null;
 }>;
 });
 };
 
 export const EnrolmentsHoldingId = {
-  query: "query enrolmentsHoldingId($storeId: String!, $id: String!) {\n  programEnrolments(\n    storeId: $storeId\n    filter: {programEnrolmentId: {equalTo: $id}}\n    sort: {key: enrolmentDatetime, desc: false}\n  ) {\n    ... on ProgramEnrolmentConnector {\n      nodes {\n        name\n      }\n    }\n  }\n}",
+  query: "query enrolmentsHoldingId($storeId: String!, $id: String!) {\n  programEnrolments(storeId: $storeId, filter: {programEnrolmentId: {like: $id}}) {\n    ... on ProgramEnrolmentConnector {\n      nodes {\n        name\n        programEnrolmentId\n      }\n    }\n  }\n}",
 } as TypedDocument<EnrolmentsHoldingIdResult, EnrolmentsHoldingIdVariables>;

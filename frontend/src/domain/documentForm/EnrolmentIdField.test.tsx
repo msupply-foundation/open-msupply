@@ -288,6 +288,56 @@ describe('OMS-REG-PAT-04.33 / .34 — typing an ID', () => {
   });
 });
 
+describe('OMS-REG-PAT-04.54 — surrounding spaces are not part of the ID', () => {
+  it('the enrolment takes the ID without them; the box keeps what was typed', () => {
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      allowTyping: true,
+    });
+    type(' CARD-77 ');
+    expect(controller.draft.get('programEnrolmentId')).toBe('CARD-77');
+    expect(shown.text?.value).toBe(' CARD-77 ');
+  });
+
+  it('a space typed between two parts survives the keystroke', () => {
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      allowTyping: true,
+    });
+    type('CARD ');
+    expect(shown.text?.value).toBe('CARD ');
+    type('CARD 7');
+    expect(controller.draft.get('programEnrolmentId')).toBe('CARD 7');
+  });
+
+  it('only spaces leave the enrolment with no ID', () => {
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      allowTyping: true,
+    });
+    type('   ');
+    expect(controller.draft.get('programEnrolmentId')).toBeUndefined();
+  });
+
+  it('a generated ID replaces what was typed', async () => {
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      allowTyping: true,
+    });
+    type(' CARD-77 ');
+    shown.button?.onClick();
+    shown.confirm?.onConfirm();
+    await vi.waitFor(() =>
+      expect(controller.draft.get('programEnrolmentId')).toBe('GRY-0001')
+    );
+    expect(shown.text?.value).toBe('GRY-0001');
+  });
+});
+
 describe('OMS-REG-PAT-04.36 / .37 / .51 — a typed ID another enrolment holds', () => {
   it('is flagged at the field once typing pauses (.36)', async () => {
     held.add('HELD-1');
