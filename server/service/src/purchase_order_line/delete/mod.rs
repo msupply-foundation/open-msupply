@@ -1,7 +1,9 @@
+use std::collections::BTreeSet;
+
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::{
-    ActivityLogType, NumberRowRepository, NumberRowType, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, RepositoryError, StorageConnection,
+    ActivityLogType, NumberRowRepository, NumberRowType, PurchaseOrderLineRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 mod test;
@@ -16,54 +18,84 @@ pub enum DeletePurchaseOrderLineError {
     DatabaseError(RepositoryError),
 }
 
+pub type DeletePurchaseOrderLineOutcome = (String, Result<String, DeletePurchaseOrderLineError>);
+
 pub fn delete_purchase_order_line(
     ctx: &ServiceContext,
     id: String,
 ) -> Result<String, DeletePurchaseOrderLineError> {
-    let purchase_order_line_id = ctx
-        .connection
+    delete_purchase_order_lines(ctx, vec![id])?
+        .pop()
+        .map(|(_, outcome)| outcome)
+        .unwrap_or(Err(
+            DeletePurchaseOrderLineError::PurchaseOrderLineDoesNotExist,
+        ))
+}
+
+/// Deletes every line it can in one transaction and renumbers each order once.
+pub fn delete_purchase_order_lines(
+    ctx: &ServiceContext,
+    ids: Vec<String>,
+) -> Result<Vec<DeletePurchaseOrderLineOutcome>, RepositoryError> {
+    ctx.connection
         .transaction_sync(
-            |connection| -> Result<String, DeletePurchaseOrderLineError> {
-                let purchase_order_line = validate(&id, connection)?;
+            |connection| -> Result<Vec<DeletePurchaseOrderLineOutcome>, RepositoryError> {
+                let line_repo = PurchaseOrderLineRowRepository::new(connection);
+                let mut purchase_order_ids = BTreeSet::new();
+                let mut outcomes = Vec::with_capacity(ids.len());
 
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::PurchaseOrderLineDeleted,
-                    Some(purchase_order_line.purchase_order_id.clone()),
-                    None,
-                    None,
-                )?;
+                for id in ids {
+                    let outcome = match validate(&id, connection) {
+                        Ok(line) => {
+                            activity_log_entry(
+                                ctx,
+                                ActivityLogType::PurchaseOrderLineDeleted,
+                                Some(line.purchase_order_id.clone()),
+                                None,
+                                None,
+                            )?;
+                            line_repo.delete(&id)?;
+                            purchase_order_ids.insert(line.purchase_order_id);
+                            Ok(id.clone())
+                        }
+                        Err(DeletePurchaseOrderLineError::DatabaseError(error)) => {
+                            return Err(error);
+                        }
+                        Err(error) => Err(error),
+                    };
+                    outcomes.push((id, outcome));
+                }
 
-                PurchaseOrderLineRowRepository::new(connection).delete(&id)?;
-                renumber_lines(connection, &ctx.store_id, &purchase_order_line)?;
+                for purchase_order_id in purchase_order_ids {
+                    renumber_lines(connection, &ctx.store_id, &purchase_order_id)?;
+                }
 
-                Ok(id)
+                Ok(outcomes)
             },
         )
-        .map_err(|error| error.to_inner_error())?;
-    Ok(purchase_order_line_id)
+        .map_err(|error| error.to_inner_error())
 }
 
 fn renumber_lines(
     connection: &StorageConnection,
     store_id: &str,
-    deleted: &PurchaseOrderLineRow,
+    purchase_order_id: &str,
 ) -> Result<(), RepositoryError> {
     let line_repo = PurchaseOrderLineRowRepository::new(connection);
-    let lines = line_repo
-        .find_many_by_purchase_order_ids(std::slice::from_ref(&deleted.purchase_order_id))?;
+    let mut lines = line_repo.find_many_by_purchase_order_ids(&[purchase_order_id.to_string()])?;
+    lines.sort_by_key(|line| line.line_number);
 
-    for mut line in lines
-        .into_iter()
-        .filter(|line| line.line_number > deleted.line_number)
-    {
-        line.line_number -= 1;
-        line_repo.upsert_one(&line)?;
+    for (index, mut line) in lines.into_iter().enumerate() {
+        let line_number = index as i64 + 1;
+        if line.line_number != line_number {
+            line.line_number = line_number;
+            line_repo.upsert_one(&line)?;
+        }
     }
 
     // Drop the counter so the next insert resumes from the highest remaining line number
     let number_repo = NumberRowRepository::new(connection);
-    let number_type = NumberRowType::PurchaseOrderLine(deleted.purchase_order_id.clone());
+    let number_type = NumberRowType::PurchaseOrderLine(purchase_order_id.to_string());
     if let Some(number_row) = number_repo.find_one_by_type_and_store(&number_type, store_id)? {
         number_repo.delete(&number_row.id)?;
     }
