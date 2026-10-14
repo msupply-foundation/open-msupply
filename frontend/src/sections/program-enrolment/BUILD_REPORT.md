@@ -96,7 +96,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 | `.39` default form: typed ID, no Generate          | — (unchanged)                                                                                 | —                                                                                                                                 |
 | `.40`–`.50` status history and closing             | pending #1491                                                                                 | —                                                                                                                                 |
 
-The unit tests mock the GraphQL edge. `C2`'s real-backend half is the deterministic suite (#1492), which has none of these anchors yet.
+The unit tests mock the GraphQL edge. The real-backend half is the deterministic suite below.
 
 ## Gaps closed after the first exploratory run (2026-10-15)
 
@@ -110,12 +110,26 @@ The run ([`exploratory/workflows/program-enrolment.md`](../../../exploratory/wor
 - **Left on purpose:** status words as stored (with #1491), and the generic permission-denied message (the app-wide modal).
 - **Also:** the patients workflow no longer calls a Programs row a no-op, and `spec/PROGRESS.md` ticks the Workflow cell.
 
+## The deterministic suite (#1492, 2026-10-15)
+
+[`e2e/specs/program-enrolment-regression.spec.ts`](../../../e2e/specs/program-enrolment-regression.spec.ts), run with `pnpm e2e:local program-enrolment-regression`: 21 tests covering every anchor in `.1`–`.42` and `.51`–`.55` except `.4`, all passing.
+
+- **Fixtures** ([`server/data/e2e/README.md`](../../../../server/data/e2e/README.md)): the `ENRL` clinic (a dispensary with the program module on) and five enrolment registries. They are named so that name order differs from id order, so the picker's sort can be seen. Patients and enrolments are made per test over the API.
+- **The ID programs' form** is a plugin the suite serves itself, per page, by answering plugin discovery and the bundle request. Nothing is installed on the server, and each test gets its own ID format and number counter.
+- **Out of scope:**
+  - `.4`, covered by `ProgramPickerDialog.test.tsx`;
+  - `.43`–`.50`, pending #1491.
+- **A finding, resolved in the spec:** `.28` said a not-found enrolment has no Save; the app keeps Save, disabled. The app's other editors with a not-found state do the same (the immunisation course editor, the patient Details tab), so `.28` was reworded (`ENR-20261015-F3`, spec README decision 11).
+- **Test ids added:** `dialog-button-cancel` on the picker's and the enrolment's Cancel, plus `enrolment-form-missing` and the suite's own `e2e-enrolment-plugin-form`, all in [`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md).
+- **Checks:**
+  - Each test was made to fail once on purpose: 22 out of 22 went red at the assertion that was changed.
+  - The only expectation that moved after a run was the date field's format. It shows the entry format `DD MMM YYYY`, per ui-standards › inputs, not the table's `DD/MM/YYYY`. That was a mistake in how I wrote the test, not an app bug.
+
 ## Left for later
 
 - **Product re-check of generate-on-open** (decided 2026-10-14, [spec README § status](../../../spec/program-enrolment/README.md#status)). Every opened new enrolment draws a counter number, cancelled or not. The live run spent GRY-0001 that way.
 - **Djibouti's own enrolment ID field** (`EnrolmentIdField.tsx` on `custom-forms/misc-open-tasks`, not on this base) should move onto the host field when that branch lands.
 - **#1491**: status history through the form library's list control (#1148), and closing.
-- **#1492**: the e2e suite, whose datafile needs a dispensary store with the program module on and an enrolment program; **#1493**: exploratory.
 
 ## Probe residue
 

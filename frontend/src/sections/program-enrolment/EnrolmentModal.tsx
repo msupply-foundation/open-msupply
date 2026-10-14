@@ -190,6 +190,7 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
               variant="secondary"
               icon={<XCircleIcon />}
               confirms="cancel"
+              data-testid="dialog-button-cancel"
               onClick={close}
             >
               {t('button.cancel')}

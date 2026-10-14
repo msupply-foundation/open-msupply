@@ -71,6 +71,7 @@ const ProgramPickerBody = (props: ProgramPickerDialogProps): JSX.Element => {
             variant="secondary"
             icon={<XCircleIcon />}
             confirms="cancel"
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
