@@ -611,6 +611,9 @@ export const createDocumentForm = <T extends object>(
     }
     if (result.kind === 'reported') return undefined;
     if (key) setSaved({ key, document: result.document });
+    // Saved means clean, whatever a form's controls declared: one that has
+    // left the form since cannot clear its own.
+    if (key === currentKey()) coordinator.clearDirty();
     const after = await coordinator.runAfterSave({ recordId: result.recordId });
     // The document is saved either way; what a handler failed to do is shown.
     if (after.kind === 'failed' && key === currentKey()) {

@@ -46,6 +46,7 @@ import {
   type FormDocumentFragment,
 } from './documentForm.generated';
 import type { Encounter } from '../../plugin-sdk/documents';
+import type { FormParticipation } from '../../plugin-sdk/types';
 
 const V1 = 'demo_program_DemoEncounter_v1_test';
 const V2 = 'demo_program_DemoEncounter_v2_test';
@@ -267,15 +268,21 @@ describe('opening a document pinned to an earlier version', () => {
  * counts with the draft's.
  */
 describe("the form's part in the save", () => {
-  // A participant as a plugin form holds one: under its own owner.
-  const participate = (form: DocumentForm<Encounter>) =>
+  // A participant as a plugin form holds one: under its own owner, where it
+  // registers its steps, as a form does when it mounts.
+  const participate = (
+    form: DocumentForm<Encounter>,
+    register: (participant: FormParticipation) => void = () => {}
+  ) =>
     createRoot(d => {
       const previous = dispose;
       dispose = () => {
         d();
         previous?.();
       };
-      return form.coordinator.participationFor('plugin.form');
+      const participant = form.coordinator.participationFor('plugin.form');
+      register(participant);
+      return participant;
     });
 
   const ready = async () => {
@@ -289,9 +296,11 @@ describe("the form's part in the save", () => {
 
   it('stops the save when a before-save step throws, writing nothing', async () => {
     const form = await ready();
-    participate(form).onBeforeSave(() => {
-      throw new Error('No stock to give');
-    });
+    participate(form, p =>
+      p.onBeforeSave(() => {
+        throw new Error('No stock to give');
+      })
+    );
     expect(await form.save()).toBeUndefined();
     expect(saves()).toHaveLength(0);
     expect(form.saveError()).toBe('No stock to give');
@@ -301,12 +310,13 @@ describe("the form's part in the save", () => {
   it('runs the before-save step first and the after-save step with the record', async () => {
     const form = await ready();
     const order: string[] = [];
-    const participant = participate(form);
-    participant.onBeforeSave(async () => {
-      order.push(`before:${saves().length}`);
-    });
-    participant.onAfterSave(context => {
-      order.push(`after:${saves().length}:${context.recordId}`);
+    participate(form, p => {
+      p.onBeforeSave(async () => {
+        order.push(`before:${saves().length}`);
+      });
+      p.onAfterSave(context => {
+        order.push(`after:${saves().length}:${context.recordId}`);
+      });
     });
     expect(await form.save()).toBeDefined();
     expect(order).toEqual(['before:0', 'after:1:encounter-1']);
@@ -315,9 +325,11 @@ describe("the form's part in the save", () => {
 
   it('shows what an after-save step failed to do, the document saved', async () => {
     const form = await ready();
-    participate(form).onAfterSave(() => {
-      throw new Error('Could not refresh');
-    });
+    participate(form, p =>
+      p.onAfterSave(() => {
+        throw new Error('Could not refresh');
+      })
+    );
     expect(await form.save()).toBeDefined();
     expect(saves()).toHaveLength(1);
     expect(form.saveError()).toBe('Could not refresh');
@@ -340,6 +352,25 @@ describe("the form's part in the save", () => {
     expect(await form.save()).toBeUndefined();
     expect(form.saveError()).toBe('Too many');
     expect(saves()).toHaveLength(0);
+  });
+
+  it("clears the form's dirty state once saved, and lets an after-save step set it again", async () => {
+    const form = await ready();
+    let stillUnsaved = false;
+    const participant = participate(form, p =>
+      p.onAfterSave(() => {
+        if (stillUnsaved) p.setDirty(true);
+      })
+    );
+    participant.setDirty(true);
+    expect(await form.save()).toBeDefined();
+    await vi.waitFor(() => expect(form.isDirty()).toBe(false));
+
+    participant.setDirty(true);
+    stillUnsaved = true;
+    form.draft.set('extension.demo.notes' as never, 'changed' as never);
+    expect(await form.save()).toBeDefined();
+    expect(form.coordinator.dirty()).toBe(true);
   });
 });
 

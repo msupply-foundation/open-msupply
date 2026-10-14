@@ -186,10 +186,6 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
     // Before the host takes the draft to save, so the record names it.
     d().set(props.path, id);
   });
-  props.form.onAfterSave(() => {
-    // What was entered is written as the prescription, or saved with nothing.
-    props.form.setDirty(false);
-  });
   /* eslint-enable solid/reactivity */
 
   const given = () => {
