@@ -23,7 +23,7 @@ query sdkItemBatches($storeId: String!, $itemId: String!) {
 }
 
 # A prescription as a form shows it once written: its number, when it was
-# made and where, and what it gives.
+# made, and what it gives. Only the entered store's are found.
 query sdkPrescriptionSummary($storeId: String!, $id: String!) {
   invoice(storeId: $storeId, id: $id) {
     __typename
@@ -33,10 +33,6 @@ query sdkPrescriptionSummary($storeId: String!, $id: String!) {
       status
       createdDatetime
       pickedDatetime
-      store {
-        __typename
-        id
-      }
       lines {
         __typename
         nodes {

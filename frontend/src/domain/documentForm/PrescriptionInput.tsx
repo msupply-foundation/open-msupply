@@ -4,23 +4,28 @@
  * reproductive health encounter's contraceptive method). Built on the SDK's
  * prescription data functions and the core library.
  *
- * Until the record's prescription is written: an item search, limited to one
+ * While the record names no prescription: an item search, limited to one
  * category when the form names one (the method chosen), then the item's
- * batches with a quantity to give from each, in units. Picking an item writes
- * a new prescription id at the control's path, the one value it stores, as
- * the old client does. The prescription itself is written just before the
- * record is saved, through the form's participation: it is created for the
- * patient with the batches given (those left at zero are left out) and
- * marked picked, and a failure stops the save with its message. Nothing is
- * written when no quantity was entered. Changing the category before then
- * drops the picked item.
+ * batches with a quantity to give from each, in units. The prescription is
+ * written just before the record is saved, through the form's participation:
+ * it is created for the patient with the batches given (those left at zero
+ * are left out) and marked picked, and a failure stops the save with its
+ * message. Only once it is written does its id go to the control's path, the
+ * one value the control stores, so the record never names a prescription
+ * that does not exist. Nothing is written when no quantity was entered, and
+ * changing the category, or the control leaving the form, before then drops
+ * what was entered.
  *
- * Once the prescription exists: what it gave and when, with a link to it when
- * it was made in this store.
+ * Once the record names one: what it gave and when, with a link to it. A
+ * record naming one this store cannot find (made in another store, or never
+ * written) or cannot read says so, and never offers the search: picking an
+ * item there would give the stock a second time.
  */
 import {
   For,
+  Match,
   Show,
+  Switch,
   createEffect,
   createMemo,
   createSignal,
@@ -28,6 +33,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { formatNumber, localisedDate, t } from '../../intl';
+import { unitsToLens } from '../allocation/units';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { Table } from '../../ui/elements/table/Table';
@@ -76,36 +82,41 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
   props: PrescriptionInputProps<T, P>
 ): JSX.Element => {
   const d = () => props.draft as unknown as UntypedIdDraft;
-  const prescriptionId = () => {
+  // The prescription the record names.
+  const namedId = () => {
     const id = d().get(props.path);
     return typeof id === 'string' && id !== '' ? id : undefined;
   };
-  const summary = usePrescriptionSummary(prescriptionId);
 
   const [item, setItem] = createSignal<ItemOption>();
   // Units to give from each batch, by stock line id.
   const [units, setUnits] = createSignal<Record<string, number>>({});
   const batches = useItemBatches(() => item()?.id);
+  // The id the prescription is written under: chosen when an item is picked,
+  // kept across a retried save.
+  const [pendingId, setPendingId] = createSignal<string>();
+  // Set once the prescription is written, so it is not written again and
+  // what it gave shows, even when the record's own save then fails.
+  const [written, setWritten] = createSignal(false);
+
+  const shownId = () => namedId() ?? (written() ? pendingId() : undefined);
+  const summary = usePrescriptionSummary(shownId);
 
   const clear = () => {
     setItem(undefined);
     setUnits({});
+    setPendingId(undefined);
     props.form.setDirty(false);
   };
-  // A new category, or the id cleared (the edits discarded), starts again.
+  // A new category starts again.
   createEffect(
     on(
       () => props.itemCategoryName,
       () => {
-        if (!summary.data()) clear();
+        if (shownId() === undefined) clear();
       },
       { defer: true }
     )
-  );
-  createEffect(
-    on(prescriptionId, id => {
-      if (id === undefined) clear();
-    })
   );
 
   /*
@@ -126,16 +137,27 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
     }
     setItem(picked);
     setUnits({});
-    d().set(props.path, generateUUID());
+    setPendingId(generateUUID());
   };
 
+  // In packs, as the server takes them and the prescription screen converts.
   const packsToGive = () =>
     (batches.data() ?? []).flatMap(batch => {
       const given = units()[batch.id] ?? 0;
       return given > 0
-        ? [{ stockLineId: batch.id, numberOfPacks: given / batch.packSize }]
+        ? [
+            {
+              stockLineId: batch.id,
+              numberOfPacks: unitsToLens(given, {
+                kind: 'packs',
+                size: batch.packSize,
+              }),
+            },
+          ]
         : [];
     });
+  const unitsGiven = () =>
+    Object.values(units()).reduce((total, given) => total + given, 0);
 
   /*
    * solid/reactivity is disabled for the registration below, as the CIV
@@ -145,22 +167,28 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
    */
   /* eslint-disable solid/reactivity */
   props.form.onBeforeSave(async () => {
-    const id = prescriptionId();
-    const chosen = item();
-    const lines = packsToGive();
-    if (!id || !chosen || lines.length === 0 || summary.data()) return;
-    const result = await createPrescription({
-      id,
-      patientId: props.patientId,
-      itemId: chosen.id,
-      lines,
-    });
-    if (result.kind === 'failed') throw new Error(result.message);
+    if (namedId()) return;
+    const id = pendingId();
+    if (!written()) {
+      const chosen = item();
+      const lines = packsToGive();
+      if (!id || !chosen || lines.length === 0) return;
+      const result = await createPrescription({
+        id,
+        patientId: props.patientId,
+        itemId: chosen.id,
+        lines,
+        prescribedQuantity: unitsGiven(),
+      });
+      if (result.kind === 'failed') throw new Error(result.message);
+      setWritten(true);
+    }
+    // Before the host takes the draft to save, so the record names it.
+    d().set(props.path, id);
   });
   props.form.onAfterSave(() => {
-    // What was entered is saved, or written as the prescription.
+    // What was entered is written as the prescription, or saved with nothing.
     props.form.setDirty(false);
-    if (item()) summary.refetch();
   });
   /* eslint-enable solid/reactivity */
 
@@ -175,117 +203,119 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
     });
   };
 
-  // A record that names a prescription shows nothing until the read says
-  // whether it has been written, rather than the search for a moment.
-  const settled = () => !(summary.loading() && !summary.data() && !item());
-
   return (
-    <Show when={settled()}>
-      <Show
-        when={summary.data()}
-        fallback={
-          <Stack>
-            <Show when={searchFor()} keyed>
-              {query => (
-                <ItemSearch
-                  label={t('label.create-prescription')}
-                  storeId={currentStoreId() ?? ''}
-                  categoryName={query.category}
-                  value={item()?.id}
-                  selectedItem={item()}
-                  onSelect={pick}
-                  disabled={d().readOnly()}
-                />
-              )}
-            </Show>
-            <Show when={item()}>
-              {chosen => (
-                <Stack>
-                  <Alert severity="info">
-                    {t('messages.prescription-will-be-created')}
-                  </Alert>
-                  <LabelledValue label={t('label.item')} variant="field">
-                    {chosen().name}
-                  </LabelledValue>
-                  <Table label={chosen().name} density="comfortable">
-                    <thead>
-                      <tr>
-                        <th>{t('label.expiry')}</th>
-                        <th>{t('label.batch')}</th>
-                        <th data-numeric>{t('label.available-units')}</th>
-                        <th data-numeric data-control>
-                          {t('label.issued')}
-                        </th>
+    <Show
+      when={shownId() === undefined}
+      fallback={
+        <Switch>
+          <Match when={summary.data()}>
+            {found => (
+              <Alert severity="success">
+                <HStack justify="between" wrap>
+                  <span>{given()}</span>
+                  <RecordLink
+                    path={prescriptionDetailPath(found().id)}
+                    testId={props.testId ? `${props.testId}-link` : undefined}
+                  >
+                    {t('button.view-prescription')}
+                  </RecordLink>
+                </HStack>
+              </Alert>
+            )}
+          </Match>
+          <Match when={summary.outcome() === 'not-found'}>
+            <Alert severity="info">
+              {t('messages.prescription-not-in-store')}
+            </Alert>
+          </Match>
+          <Match when={summary.outcome() === 'unreadable'}>
+            <Alert severity="error">{t('error.prescription-not-read')}</Alert>
+          </Match>
+        </Switch>
+      }
+    >
+      <Stack>
+        <Show when={searchFor()} keyed>
+          {query => (
+            <ItemSearch
+              label={t('label.create-prescription')}
+              storeId={currentStoreId() ?? ''}
+              categoryName={query.category}
+              value={item()?.id}
+              selectedItem={item()}
+              onSelect={pick}
+              disabled={d().readOnly()}
+            />
+          )}
+        </Show>
+        <Show when={item()}>
+          {chosen => (
+            <Stack>
+              <Alert severity="info">
+                {t('messages.prescription-will-be-created')}
+              </Alert>
+              <LabelledValue label={t('label.item')} variant="field">
+                {chosen().name}
+              </LabelledValue>
+              <Table label={chosen().name} density="comfortable">
+                <thead>
+                  <tr>
+                    <th>{t('label.expiry')}</th>
+                    <th>{t('label.batch')}</th>
+                    <th data-numeric>{t('label.available-units')}</th>
+                    <th data-numeric data-control>
+                      {t('label.issued')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <For each={batches.data() ?? []}>
+                    {batch => (
+                      <tr
+                        data-testid={
+                          props.testId
+                            ? `${props.testId}-batch-${batch.id}`
+                            : undefined
+                        }
+                      >
+                        <td>
+                          {batch.expiryDate
+                            ? localisedDate(batch.expiryDate)
+                            : ''}
+                        </td>
+                        <td>{batch.batch ?? ''}</td>
+                        <td data-numeric>
+                          {formatNumber(batch.availablePacks * batch.packSize)}
+                        </td>
+                        <td data-control>
+                          <NumberField
+                            label={`${batch.batch ?? ''} ${t('label.issued')}`}
+                            hideLabel
+                            size="small"
+                            min={0}
+                            max={batch.availablePacks * batch.packSize}
+                            value={units()[batch.id]}
+                            disabled={d().readOnly()}
+                            onChange={value => {
+                              setUnits(all => ({
+                                ...all,
+                                [batch.id]: value ?? 0,
+                              }));
+                              props.form.setDirty(
+                                Object.values(units()).some(u => u > 0)
+                              );
+                            }}
+                          />
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      <For each={batches.data() ?? []}>
-                        {batch => (
-                          <tr
-                            data-testid={
-                              props.testId
-                                ? `${props.testId}-batch-${batch.id}`
-                                : undefined
-                            }
-                          >
-                            <td>
-                              {batch.expiryDate
-                                ? localisedDate(batch.expiryDate)
-                                : ''}
-                            </td>
-                            <td>{batch.batch ?? ''}</td>
-                            <td data-numeric>
-                              {formatNumber(
-                                batch.availablePacks * batch.packSize
-                              )}
-                            </td>
-                            <td data-control>
-                              <NumberField
-                                label={`${batch.batch ?? ''} ${t('label.issued')}`}
-                                hideLabel
-                                size="small"
-                                min={0}
-                                max={batch.availablePacks * batch.packSize}
-                                value={units()[batch.id]}
-                                disabled={d().readOnly()}
-                                onChange={value => {
-                                  setUnits(all => ({
-                                    ...all,
-                                    [batch.id]: value ?? 0,
-                                  }));
-                                  props.form.setDirty(
-                                    Object.values(units()).some(u => u > 0)
-                                  );
-                                }}
-                              />
-                            </td>
-                          </tr>
-                        )}
-                      </For>
-                    </tbody>
-                  </Table>
-                </Stack>
-              )}
-            </Show>
-          </Stack>
-        }
-      >
-        {written => (
-          <Alert severity="success">
-            <HStack justify="between" wrap>
-              <span>{given()}</span>
-              <Show when={written().madeHere}>
-                <RecordLink
-                  path={prescriptionDetailPath(written().id)}
-                  testId={props.testId ? `${props.testId}-link` : undefined}
-                >
-                  {t('button.view-prescription')}
-                </RecordLink>
-              </Show>
-            </HStack>
-          </Alert>
-        )}
-      </Show>
+                    )}
+                  </For>
+                </tbody>
+              </Table>
+            </Stack>
+          )}
+        </Show>
+      </Stack>
     </Show>
   );
 };
