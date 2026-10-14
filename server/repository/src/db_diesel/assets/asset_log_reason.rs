@@ -4,7 +4,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     asset_log_row::AssetLogStatus,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -88,7 +88,7 @@ impl<'a> AssetLogReasonRepository<'a> {
                     apply_sort_no_case!(query, sort, asset_log_reason::reason);
                 }
                 AssetLogReasonSortField::AssetLogStatus => {
-                    apply_sort_no_case!(query, sort, asset_log_reason::asset_log_status);
+                    apply_sort!(query, sort, asset_log_reason::asset_log_status);
                 }
             }
         } else {
@@ -133,4 +133,32 @@ fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetLogR
         apply_string_filter!(query, reason, asset_log_reason::reason);
     }
     query.filter(asset_log_reason::deleted_datetime.is_null())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, timestamp) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_asset_log_reason_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_asset_log_reason_sort", MockDataInserts::none()).await;
+        let repo = AssetLogReasonRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [
+                AssetLogReasonSortField::AssetLogStatus,
+                AssetLogReasonSortField::Reason,
+            ] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
+        }
+    }
 }
