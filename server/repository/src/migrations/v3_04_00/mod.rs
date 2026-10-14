@@ -47,7 +47,15 @@ mod test {
             id -> Text,
             code -> Text,
             sub_catalogue -> Text,
+            asset_catalogue_type_id -> Text,
             properties -> Nullable<Text>,
+        }
+    }
+
+    table! {
+        asset_catalogue_type (id) {
+            id -> Text,
+            name -> Text,
         }
     }
 
@@ -171,6 +179,19 @@ mod test {
         (id, sub_catalogue, properties)
     }
 
+    fn type_of(connection: &StorageConnection, code: &str) -> String {
+        let type_id: String = asset_catalogue_item::table
+            .filter(asset_catalogue_item::code.eq(code))
+            .select(asset_catalogue_item::asset_catalogue_type_id)
+            .first(connection.lock().connection())
+            .unwrap();
+        asset_catalogue_type::table
+            .filter(asset_catalogue_type::id.eq(type_id))
+            .select(asset_catalogue_type::name)
+            .first(connection.lock().connection())
+            .unwrap()
+    }
+
     fn count_in(connection: &StorageConnection, sub_catalogue: &str) -> i64 {
         asset_catalogue_item::table
             .filter(asset_catalogue_item::sub_catalogue.eq(sub_catalogue))
@@ -179,9 +200,10 @@ mod test {
             .unwrap()
     }
 
-    /// The WHO PQS refresh (#1285): new products are added, withdrawn ones are
-    /// relabelled rather than removed, a code the site already holds is left
-    /// alone, and WHO PQS cold rooms move to a 20-year lifespan.
+    /// The WHO PQS refresh (#1285): new products are added, under new types where
+    /// they need one, withdrawn ones are relabelled rather than removed, a code the
+    /// site already holds is left alone, freeze-free cold boxes move to their own
+    /// type, and WHO PQS cold rooms move to a 20-year lifespan.
     #[actix_rt::test]
     async fn migration_3_04_00_who_pqs_catalogue() {
         let previous_version = V3_02_00.version();
@@ -231,6 +253,25 @@ mod test {
         assert_eq!(sub_catalogue, "WHO PQS");
         assert_eq!(properties["hold_over_time"], 90.5);
         assert_eq!(properties["expected_lifespan"], 10);
+
+        assert_eq!(type_of(&connection, "E003/141"), "Other");
+        assert_eq!(
+            type_of(&connection, "E004/090"),
+            "Cold box - long range - freeze-free"
+        );
+        assert_eq!(
+            type_of(&connection, "E004/085"),
+            "Cold box - short range - freeze-free"
+        );
+        // Filed until now as freeze-free vaccine carriers
+        assert_eq!(
+            type_of(&connection, "E004/057"),
+            "Cold box - long range - freeze-free"
+        );
+        assert_eq!(
+            type_of(&connection, "E004/064"),
+            "Cold box - short range - freeze-free"
+        );
 
         let (id, sub_catalogue, _) = catalogue_item(&connection, "E003/140");
         assert_eq!(

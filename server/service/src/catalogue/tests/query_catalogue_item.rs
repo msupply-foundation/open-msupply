@@ -258,7 +258,7 @@ mod query_catalogue_item {
                 }),
             )
             .unwrap();
-        assert_eq!(result.count, 4);
+        assert_eq!(result.count, 2);
         assert_eq!(result.rows[0].code, "E003/125");
 
         // add query which combines special-type filters which conflict
