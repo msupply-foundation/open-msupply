@@ -471,25 +471,25 @@ export const parseFormsDeclaration = (
     }
   });
   /*
-   * A schema id names one version on the server, so a deployment's id is
-   * declared once in the whole plugin. Copying a version block to another
-   * type and keeping its id would otherwise pass until install refused the
-   * second version as a conflicting schema.
+   * A type's versions are told apart by their ids, so a deployment's id is
+   * declared once per type. Two types may share one, as two registry entries
+   * may share a schema row: checkFormVersions refuses that only where the
+   * two schemas differ, as install does.
    */
-  const declaredAt = new Map<string, string>();
   for (const entry of documentTypes) {
+    const declaredAt = new Map<string, number>();
     entry.versions.forEach((version, i) => {
       if (version.id === undefined) return;
-      const place = `${entry.documentType} v${i + 1}`;
       const first = declaredAt.get(version.id);
-      if (first) {
+      if (first !== undefined) {
         problems.push(
-          `${where}: version id "${version.id}" is declared on ${first} and ` +
-            `on ${place} — a schema id names one version, so give each its ` +
+          `${where}: version id "${version.id}" is declared on ` +
+            `${entry.documentType} v${first} and on ${entry.documentType} ` +
+            `v${i + 1} — a schema id names one version, so give each its ` +
             "deployment's own id"
         );
       } else {
-        declaredAt.set(version.id, place);
+        declaredAt.set(version.id, i + 1);
       }
     });
   }

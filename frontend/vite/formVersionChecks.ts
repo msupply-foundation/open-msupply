@@ -7,6 +7,7 @@ import {
   BASE_DOCUMENT_TYPES,
   BASE_SCHEMA_DIR,
   FORMS_DECLARATION,
+  canonicalJson,
   typeDir,
   type DocumentTypeDeclaration,
   type FormsDeclaration,
@@ -139,7 +140,7 @@ interface HostModules {
     oldSchema: unknown,
     newSchema: unknown,
     step: Step
-  ) => { path: string; changes: string[] }[];
+  ) => { path: string; changes: string[]; keywords: string[] }[];
   nextStep: (
     steps: readonly Step[],
     at: number,
@@ -201,12 +202,12 @@ const validate = (
   host: HostModules,
   schema: Record<string, unknown>,
   data: unknown,
-  accepted: (path: string) => boolean = () => false
+  accepted: (path: string, keyword: string) => boolean = () => false
 ): string | undefined => {
   const id = `check:${createHash('sha256').update(JSON.stringify(schema)).digest('hex')}`;
   const errors = host
     .validateDocument(id, schema, data)
-    .filter(error => !accepted(error.path));
+    .filter(error => !accepted(error.path, error.keyword));
   if (errors.length === 0) return undefined;
   return errors
     .map(error => `${error.path || '(the document)'} (${error.keyword})`)
@@ -574,10 +575,11 @@ const checkMigrations = async (
   /*
    * Every narrowing on each version's hop towards the current one, as the
    * coverage loop above takes them, must be acknowledged on a version the hop
-   * reaches. Collected across the hops, so an acknowledgement is unused only
-   * when no hop narrows its path.
+   * reaches. Collected across the hops, with the keywords each narrows by,
+   * so an acknowledgement is unused only when no hop narrows its path, and a
+   * fixture failing there is accepted only for those keywords.
    */
-  const acknowledged = new Set<string>();
+  const acknowledged = new Map<string, Set<string>>();
   const ackKey = (version: number, path: string) => `${version}\0${path}`;
   for (let at = 1; at < current; at += 1) {
     const step = host.nextStep(steps, at, current);
@@ -587,17 +589,21 @@ const checkMigrations = async (
       schemas[target - 1],
       step ?? { from: at }
     );
-    for (const { path, changes } of narrowings) {
-      let ackAt: number | undefined;
+    for (const { path, changes, keywords } of narrowings) {
+      // Every version the hop reaches that acknowledges it: a step across
+      // several versions makes each one's acknowledgement this narrowing's.
+      let found = false;
       for (let version = at + 1; version <= target; version += 1) {
-        if (entry.versions[version - 1].tightens?.[path] !== undefined) {
-          ackAt = version;
+        if (entry.versions[version - 1].tightens?.[path] === undefined) {
+          continue;
         }
+        found = true;
+        const key = ackKey(version, path);
+        const held = acknowledged.get(key) ?? new Set<string>();
+        for (const keyword of keywords) held.add(keyword);
+        acknowledged.set(key, held);
       }
-      if (ackAt !== undefined) {
-        acknowledged.add(ackKey(ackAt, path));
-        continue;
-      }
+      if (found) continue;
       problems.push(
         `${formsFile}: ${entry.documentType} v${at} → v${target}: ${path} ` +
           `${changes.join(', and ')}, so a document v${at} saved may not ` +
@@ -617,8 +623,8 @@ const checkMigrations = async (
       if (i === 0 || acknowledged.has(ackKey(i + 1, path))) continue;
       problems.push(
         `${formsFile}: ${entry.documentType} v${i + 1}: "tightens" names ` +
-          `${path}, which v${i + 1} does not narrow — remove it, or fix the ` +
-          'path'
+          `${path}, which no hop into v${i + 1} narrows — remove it, or fix ` +
+          'the path'
       );
     }
   });
@@ -637,24 +643,33 @@ const checkMigrations = async (
   const fits = (
     version: number,
     data: unknown,
-    accepted?: (path: string) => boolean
+    accepted?: (path: string, keyword: string) => boolean
   ) =>
     compiles[version - 1]
       ? validate(host, schemas[version - 1], data, accepted)
       : undefined;
   /*
    * Where a version after the fixture's acknowledges a narrowing, the
-   * fixture failing there is what the acknowledgement accepts. An error
-   * names an array's item by its index (`contactDetails.0.region`), a
-   * narrowing by `[]`.
+   * fixture failing there by the narrowing's own keyword is what the
+   * acknowledgement accepts; failing there another way (a migration writing
+   * the wrong type) is not. An error names an array's item by its index
+   * (`contactDetails.0.region`), a narrowing by `[]`.
    */
   const acceptedAfter = (version: number) => {
-    const paths = new Set(
-      entry.versions
-        .slice(version)
-        .flatMap(later => Object.keys(later.tightens ?? {}))
-    );
-    return (path: string) => paths.has(path.replace(/\.\d+(?=\.|$)/g, '[]'));
+    const keywordsAt = new Map<string, Set<string>>();
+    entry.versions.forEach((later, i) => {
+      if (i + 1 <= version) return;
+      for (const path of Object.keys(later.tightens ?? {})) {
+        const keywords = acknowledged.get(ackKey(i + 1, path));
+        if (!keywords) continue;
+        const held = keywordsAt.get(path) ?? new Set<string>();
+        for (const keyword of keywords) held.add(keyword);
+        keywordsAt.set(path, held);
+      }
+    });
+    return (path: string, keyword: string) =>
+      keywordsAt.get(path.replace(/\.\d+(?=\.|$)/g, '[]'))?.has(keyword) ??
+      false;
   };
 
   const checkFixture = (fixture: string, version: number) => {
@@ -755,11 +770,48 @@ const checkMigrations = async (
  * to do; empty when its versions fit together. A type whose schema files
  * cannot be read is skipped: the emit and the pack report those.
  */
+/*
+ * A deployment's schema id declared on two types, as two registry entries
+ * may share one schema row, names one schema on the server: install refuses
+ * the second where its content differs, so the build does too.
+ */
+const sharedSchemaIdProblems = (
+  pluginDir: string,
+  declaration: FormsDeclaration
+): string[] => {
+  const problems: string[] = [];
+  const first = new Map<string, { place: string; content: string }>();
+  for (const entry of declaration.documentTypes) {
+    entry.versions.forEach((version, i) => {
+      if (version.id === undefined) return;
+      const file = join(typeDir(pluginDir, entry), version.file);
+      if (!existsSync(file)) return;
+      const schema = readJson(file, problems);
+      if (schema === undefined) return;
+      const place = `${entry.documentType} v${i + 1}`;
+      const content = canonicalJson(schema);
+      const earlier = first.get(version.id);
+      if (!earlier) {
+        first.set(version.id, { place, content });
+      } else if (earlier.content !== content) {
+        problems.push(
+          `${join(pluginDir, FORMS_DECLARATION)}: version id ` +
+            `"${version.id}" is declared on ${earlier.place} and on ` +
+            `${place} with different schemas — one id names one schema on ` +
+            'the server, so install would refuse the second'
+        );
+      }
+    });
+  }
+  return problems;
+};
+
 export const checkFormVersions = async (
   pluginDir: string,
   declaration: FormsDeclaration
 ): Promise<string[]> => {
   const problems: string[] = [];
+  problems.push(...sharedSchemaIdProblems(pluginDir, declaration));
   for (const entry of declaration.documentTypes) {
     const dir = typeDir(pluginDir, entry);
     // Read only at pack time otherwise, so a missing or broken one would pass

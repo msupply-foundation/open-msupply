@@ -751,6 +751,67 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       ]);
     });
 
+    it('refuses a fixture failing at an acknowledged path another way', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/fixtures/v1.json': {
+          extension: { demo: { code: 'A-1' } },
+        },
+        // A migration bug: a number where the version wants six digits.
+        'forms/Visit/migrations.ts': `
+          export const migrations = [
+            {
+              from: 1,
+              transform: data => {
+                data.extension.demo.code = 42;
+              },
+            },
+          ];
+        `,
+      });
+      const declaration = declare({
+        versions: versions({ 'extension.demo.code': 'six-digit codes' }),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([
+        expect.stringMatching(
+          /fixtures\/v1\.json: migrated from v1 to v2, it does not validate .*extension\.demo\.code \(type\)/
+        ),
+      ]);
+    });
+
+    it('takes an acknowledgement on each version a step crosses as used', async () => {
+      const dir = fixture({
+        'forms/Visit/v1.json': schema({ code: { type: 'string' } }),
+        'forms/Visit/v2.json': schema({
+          code: { type: 'string', maxLength: 10 },
+        }),
+        'forms/Visit/v3.json': schema({
+          code: { type: 'string', maxLength: 5 },
+        }),
+        'forms/Visit/fixtures/v1.json': { extension: { demo: {} } },
+        'forms/Visit/fixtures/v2.json': { extension: { demo: {} } },
+        'forms/Visit/migrations.ts': `
+          export const migrations = [{ from: 1, to: 3 }];
+        `,
+      });
+      const declaration = declare({
+        versions: [
+          { file: 'v1.json' },
+          {
+            file: 'v2.json',
+            tightens: { 'extension.demo.code': 'ten characters' },
+          },
+          {
+            file: 'v3.json',
+            source: 'type.ts',
+            type: 'Visit',
+            tightens: { 'extension.demo.code': 'five characters' },
+          },
+        ],
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([]);
+    });
+
     it('names an acknowledgement of a field the version does not narrow', async () => {
       const dir = fixture(files);
       const declaration = declare({
@@ -761,7 +822,47 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       });
       expect(await checkFormVersions(dir, declaration)).toEqual([
         `${formsJson(dir)}: Visit v2: "tightens" names extension.demo.cod, ` +
-          'which v2 does not narrow — remove it, or fix the path',
+          'which no hop into v2 narrows — remove it, or fix the path',
+      ]);
+    });
+  });
+
+  describe('a schema id two types share', () => {
+    const shared = (checkupSchema: unknown) => {
+      const dir = fixture({
+        'forms/Visit/v1.json': v2,
+        'forms/Checkup/v1.json': checkupSchema,
+      });
+      const entry = (documentType: string) => ({
+        documentType,
+        category: 'Custom',
+        name: documentType,
+        programKey: 'demo',
+        versions: [
+          { file: 'v1.json', source: 'type.ts', type: documentType, id: 'one' },
+        ],
+      });
+      const declaration = parseFormsDeclaration(
+        {
+          programKeys: ['demo'],
+          documentTypes: [entry('Visit'), entry('Checkup')],
+        },
+        'forms.json'
+      );
+      return { dir, declaration };
+    };
+
+    it('passes where both declare the same schema', async () => {
+      const { dir, declaration } = shared(v2);
+      expect(await checkFormVersions(dir, declaration)).toEqual([]);
+    });
+
+    it('names it where the schemas differ, as install would refuse', async () => {
+      const { dir, declaration } = shared(v1);
+      expect(await checkFormVersions(dir, declaration)).toEqual([
+        `${join(dir, 'forms/forms.json')}: version id "one" is declared on ` +
+          'Visit v1 and on Checkup v1 with different schemas — one id names ' +
+          'one schema on the server, so install would refuse the second',
       ]);
     });
   });

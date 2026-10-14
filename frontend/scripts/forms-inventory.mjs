@@ -306,6 +306,12 @@ const report = () => {
       say(
         `\n**\`${type}\` has ${entries.length} registry entries**; a take-over expects one.`
       );
+  const bySchema = Object.groupBy(registry, r => r.form_schema_id);
+  for (const [schemaId, entries] of Object.entries(bySchema))
+    if (entries.length > 1)
+      say(
+        `\n**${entries.length} registry entries share the schema \`${schemaId}\`**: ${entries.map(r => `\`${r.document_type}\``).join(', ')}. A plugin taking them over declares that id on each, with the same schema file.`
+      );
 
   say('\n## Schema versions the records are on\n');
   say(
