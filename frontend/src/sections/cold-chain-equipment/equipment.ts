@@ -1,14 +1,14 @@
 import type { AssetRowFragment } from './equipment.generated';
 
 // Cold chain — Equipment (spec/cold-chain-equipment): the vertical's shared
-// domain vocabulary — the class it is pinned to, the six functional statuses,
+// domain vocabulary — the class it is pinned to, the seven functional statuses,
 // and how each is labelled and toned. Framework-free so every mapping is
 // unit-testable in node without a DOM.
 
 export type AssetRow = AssetRowFragment;
 // The status enum, non-null: `statusLog.status` is nullable on the wire
 // (a historical row may carry none), but a status the app names is always one
-// of the six.
+// of the seven.
 export type AssetStatus = NonNullable<
   NonNullable<AssetRow['statusLog']>['status']
 >;
@@ -35,15 +35,15 @@ export const COLD_ROOM_CATEGORY_ID = '7db32eb6-5929-4dd1-a5e9-01e36baa73ad';
 export const isColdRoom = (categoryId: string | null | undefined): boolean =>
   categoryId === COLD_ROOM_CATEGORY_ID;
 
-// The six functional statuses and their names are the Asset domain module's,
+// The seven functional statuses and their names are the Asset domain module's,
 // shared with the asset catalogue's log reasons (kdd/domain-modules).
 export { ASSET_STATUSES, statusLabelKey } from '@/domain/asset';
 
 /**
- * Each status's tone. Six statuses, three meanings: working, working-but-watch,
- * and out of service. The tone never carries the meaning alone — every surface
- * that shows a status shows its NAME beside the tone (ui-surface § cross-
- * cutting, ui-standards/accessibility).
+ * Each status's tone. Seven statuses, three meanings: working,
+ * working-but-watch, and out of service. The tone never carries the meaning
+ * alone — every surface that shows a status shows its NAME beside the tone
+ * (ui-surface § cross-cutting, ui-standards/accessibility).
  */
 export type StatusTone = 'success' | 'warning' | 'error' | 'neutral';
 
@@ -53,6 +53,7 @@ const STATUS_TONES: Record<AssetStatus, StatusTone> = {
   NOT_FUNCTIONING: 'error',
   UNSERVICEABLE: 'error',
   NOT_IN_USE: 'neutral',
+  NOT_INSTALLED: 'neutral',
   DECOMMISSIONED: 'neutral',
 };
 

@@ -1,5 +1,5 @@
 use crate::{
-    location::query::get_available_volume_by_location_type,
+    location::query::{get_available_volume_by_location_type, restricted_location_type_id},
     requisition::{
         common::check_requisition_row_exists,
         request_requisition::{
@@ -55,16 +55,11 @@ pub fn update_request_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (requisition_line_row, requisition_row, new_forecast) =
+            let (requisition_line, requisition_row, new_forecast) =
                 validate(connection, &ctx.store_id, &input)?;
             let method_changed = new_forecast.is_some();
-            let updated_requisition_line_row = generate(
-                ctx,
-                requisition_line_row,
-                &requisition_row,
-                new_forecast,
-                input,
-            )?;
+            let updated_requisition_line_row =
+                generate(ctx, requisition_line, &requisition_row, new_forecast, input)?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
@@ -90,7 +85,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisitionLine,
-) -> Result<(RequisitionLineRow, RequisitionRow, Option<LineForecast>), OutError> {
+) -> Result<(RequisitionLine, RequisitionRow, Option<LineForecast>), OutError> {
     let requisition_line = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
     let requisition_line_row = requisition_line.clone().requisition_line_row;
@@ -179,12 +174,16 @@ fn validate(
         }
     }
 
-    Ok((requisition_line_row, requisition_row, new_forecast))
+    Ok((requisition_line, requisition_row, new_forecast))
 }
 
 fn generate(
     ctx: &ServiceContext,
-    existing: RequisitionLineRow,
+    RequisitionLine {
+        requisition_line_row: existing,
+        item_row,
+        ..
+    }: RequisitionLine,
     requisition_row: &RequisitionRow,
     new_forecast: Option<LineForecast>,
     UpdateRequestRequisitionLine {
@@ -200,21 +199,26 @@ fn generate(
         apply_forecast(&mut existing, forecast, requisition_row);
     }
 
-    let available_volume_by_type = get_available_volume_by_location_type(
-        &ctx.connection,
-        &ctx.store_id,
-        &[existing.item_id.clone()],
-    )?
-    .get(&existing.item_id)
-    .cloned()
-    .unwrap_or_default();
+    // The line records its item's location type only where the store has
+    // locations of that type to report volume for (see generate_requisition_lines)
+    let (location_type_id, available_volume) = match restricted_location_type_id(&item_row) {
+        Some(id) => get_available_volume_by_location_type(
+            &ctx.connection,
+            &ctx.store_id,
+            &[id.to_string()],
+        )?
+        .get(id)
+        .map(|volume| (id.to_string(), *volume)),
+        None => None,
+    }
+    .unzip();
 
     Ok(RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
-        available_volume: available_volume_by_type.available_volume,
-        location_type_id: available_volume_by_type.restricted_location_type_id.clone(),
+        available_volume,
+        location_type_id,
         ..existing
     })
 }

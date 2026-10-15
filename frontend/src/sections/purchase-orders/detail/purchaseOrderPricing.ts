@@ -12,8 +12,8 @@ import type {
 // come off the node (the server's `purchase_order_stats` view sums the lines'
 // stored totals), and the FINAL COST — the discounted total plus the five
 // additional charges — exists nowhere on the wire (contract ⚠️ the five charges
-// reach no total on the server). The side panel is the only place it appears,
-// so this module is the one place it is computed.
+// reach no total on the server). The totals band and the side panel both show
+// it, so this module is the one place it is computed.
 
 type Quantities = Pick<
   PurchaseOrderDetailLineFragment,
@@ -73,8 +73,30 @@ export const chargesTotal = (node: Charges): number =>
 
 /**
  * The figure users read as the order's final cost: the discounted total PLUS
- * the charges. The only place it appears is the side panel's last pricing row.
+ * the charges. No field on the wire carries it.
  */
 export const finalCost = (
   node: Charges & Pick<PurchaseOrderInfoFragment, 'orderTotalAfterDiscount'>
 ): number => node.orderTotalAfterDiscount + chargesTotal(node);
+
+/**
+ * The totals band's four figures, left to right. `supplierDiscountAmount` is
+ * the server's own resolution of the stored percentage against the subtotal,
+ * so the band's arithmetic reads across.
+ */
+export const orderTotals = (
+  node: Charges &
+    Pick<
+      PurchaseOrderInfoFragment,
+      | 'orderTotalBeforeDiscount'
+      | 'orderTotalAfterDiscount'
+      | 'supplierDiscountAmount'
+      | 'supplierDiscountPercentage'
+    >
+) => ({
+  subtotal: node.orderTotalBeforeDiscount,
+  discount: node.supplierDiscountAmount,
+  discountPercentage: node.supplierDiscountPercentage ?? 0,
+  charges: chargesTotal(node),
+  total: finalCost(node),
+});

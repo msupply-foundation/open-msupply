@@ -35,7 +35,7 @@ import { StoreGpsBlock } from './StoreGpsBlock';
 import { StorePropertyField } from './StorePropertyField';
 import { StorePreferencesPanel } from './StorePreferencesPanel';
 import {
-  buildPreferencesInput,
+  buildPreferencesVariables,
   canEditAnything,
   canEditPreferences,
   coordinate,
@@ -255,15 +255,19 @@ export const StoreEditorModal = (props: {
       );
     }
     // The per-preference write — staged preferences only, each entry naming
-    // the edited store (contract § The store editor, wire traps). Skipped
-    // entirely when nothing is staged.
-    const preferencesInput = canEditPrefs()
-      ? buildPreferencesInput(prefDraft(), props.facilityStoreId)
+    // the edited store, authorised against the signed-in one (contract § The
+    // store editor, wire traps). Skipped entirely when nothing is staged.
+    const preferencesVariables = canEditPrefs()
+      ? buildPreferencesVariables(
+          prefDraft(),
+          props.storeId,
+          props.facilityStoreId
+        )
       : undefined;
-    if (!failed && preferencesInput) {
+    if (!failed && preferencesVariables) {
       const result = await graphqlFetch(
         UpsertStorePreferences,
-        { storeId: props.facilityStoreId, input: preferencesInput },
+        preferencesVariables,
         { background: true, returnGraphqlErrors: true }
       );
       failed = !(
@@ -284,7 +288,7 @@ export const StoreEditorModal = (props: {
       // register the subject is some other store on the server: nothing live
       // changed, and refetching names a DIFFERENT store to the global context,
       // which is how a register save would silently re-point the whole app.
-      if (preferencesInput && props.facilityStoreId === props.storeId)
+      if (preferencesVariables && props.facilityStoreId === props.storeId)
         void refetchStoreContext(props.storeId);
       onDone();
     }

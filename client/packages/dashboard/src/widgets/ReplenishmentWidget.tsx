@@ -7,10 +7,10 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
+  useAuthContext,
   useCallbackWithPermission,
   useNavigate,
   useNotification,
-  usePreferences,
   useToggle,
   Widget,
 } from '@openmsupply-client/common';
@@ -47,9 +47,12 @@ export const ReplenishmentWidget = ({
   const { error: errorNotification } = useNotification();
   const formatNumber = useFormatNumber();
   const navigate = useNavigate();
-  const { useProcurementFunctionality } = usePreferences();
+  const { userHasPermission } = useAuthContext();
+  const canReadExternalInbound = userHasPermission(
+    UserPermission.InboundShipmentExternalQuery
+  );
   const inboundInternal = useInboundInternalCounts();
-  const inboundExternal = useInboundExternalCounts(useProcurementFunctionality);
+  const inboundExternal = useInboundExternalCounts(canReadExternalInbound);
   const internalOrder = useInternalOrderCounts();
 
   const inboundInternalPanelContext = `${widgetContext}-inbound-shipments-internal`;
@@ -154,7 +157,7 @@ export const ReplenishmentWidget = ({
         .addPart(AppRoute.InboundShipment)
         .build()}
     />,
-    ...(useProcurementFunctionality
+    ...(canReadExternalInbound
       ? [
           <StatsPanel
             key={inboundExternalPanelContext}

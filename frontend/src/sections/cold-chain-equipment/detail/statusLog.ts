@@ -178,7 +178,7 @@ export type LogEventFilter = 'all' | 'status' | 'mapping';
  * The history read's kind filter.
  *
  * There is no "has a status" predicate on the wire, so narrowing to status
- * entries enumerates all six statuses (contract › temperature mapping) —
+ * entries enumerates all seven statuses (contract › temperature mapping) —
  * `type: STATUS_UPDATE` would also match the historical rows that carry no
  * type at all.
  */

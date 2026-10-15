@@ -47,5 +47,5 @@ Note that neither of these two new "resources" exist already in mSupply, so if y
 
 - Create a new supplier return in your OMS data file if there isn't one already, and make a note of its `ID` so that you can add it to your `test-config.json`
 - Preview with `show-report`
-- Generate with `build-reports`
+- Generate with `node scripts/reports/build-reports.mjs`
 - Upload with `upsert-reports` and test from the OMS supplier return

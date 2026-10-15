@@ -11,7 +11,7 @@ use repository::{
     CursorAndLimit, QueryWithData, SyncBufferRepository, SyncBufferRowInsert, SyncFileReferenceRow,
     SyncFileReferenceRowRepository, SyncVersions,
 };
-use repository::{SyncFileDirection, SyncFileStatus};
+use repository::{SyncFileDirection, SyncFileStatus, migrations::Version};
 use util::format_error;
 
 use crate::{
@@ -20,8 +20,11 @@ use crate::{
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
         CentralServerConfig,
-        api::{CommonSyncRecord, validate_site_auth},
+        api::{CommonSyncRecord, SyncApiSettings, validate_site_auth},
         api_v6::SiteStatusV6,
+        sync_api_pause::{
+            SYNC_API_PAUSED_MESSAGE, is_sync_api_paused, remote_knows_sync_api_paused,
+        },
         synchroniser::integrate_and_translate_sync_buffer,
         translations::{ToSyncRecordTranslationType, all_translators},
     },
@@ -39,6 +42,16 @@ use super::{
 // See ../README.md for when to increment versions!
 static MIN_VERSION: u32 = 0;
 static MAX_VERSION: u32 = 5;
+
+/// `SyncApiPaused`, or for a remote too old to read it the same news as an `OtherServerError`
+/// (see `FIRST_VERSION_WITH_SYNC_API_PAUSED`)
+fn sync_api_paused_error(sync_v5_settings: &SyncApiSettings) -> SyncParsedErrorV6 {
+    if remote_knows_sync_api_paused(&Version::from_str(&sync_v5_settings.app_version)) {
+        SyncParsedErrorV6::SyncApiPaused
+    } else {
+        SyncParsedErrorV6::OtherServerError(SYNC_API_PAUSED_MESSAGE.to_string())
+    }
+}
 
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
@@ -66,6 +79,11 @@ pub async fn pull(
     }
 
     let ctx = service_provider.basic_context()?;
+
+    // Checked after version compatibility, so a remote that must upgrade is still told so
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&sync_v5_settings));
+    }
     let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
@@ -152,6 +170,10 @@ pub async fn push(
     }
 
     let ctx = service_provider.basic_context()?;
+
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&sync_v5_settings));
+    }
     let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
@@ -377,6 +399,10 @@ pub async fn patient_pull(
     }
 
     let ctx = service_provider.basic_context()?;
+
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&sync_v5_settings));
+    }
     let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
@@ -464,8 +490,12 @@ pub async fn get_site_status(
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let is_integrating = is_integrating(response.site_id);
+    let is_sync_api_paused = is_sync_api_paused(&ctx.connection)?;
 
-    Ok(SiteStatusV6 { is_integrating })
+    Ok(SiteStatusV6 {
+        is_integrating,
+        is_sync_api_paused,
+    })
 }
 
 fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
@@ -524,6 +554,10 @@ pub async fn download_file(
     }
 
     let ctx = service_provider.basic_context()?;
+
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&sync_v5_settings));
+    }
     validate_site_auth(&ctx, &sync_v5_settings)
         .await
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
@@ -577,6 +611,10 @@ pub async fn upload_file(
     }
 
     let ctx = service_provider.basic_context()?;
+
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&sync_v5_settings));
+    }
     validate_site_auth(&ctx, &sync_v5_settings)
         .await
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
@@ -598,17 +636,11 @@ pub async fn upload_file(
                     file_name: file_part.file_name.clone().unwrap_or("unknown".to_string()),
                     table_name,
                     record_id,
-                    uploaded_bytes: 0,
-                    downloaded_bytes: 0,
                     total_bytes: 0, // Will be updated later
                     status: SyncFileStatus::Done,
-                    error: None,
-                    mime_type: None,
-                    retries: 0,
-                    retry_at: None,
                     direction: SyncFileDirection::Upload,
                     created_datetime: Utc::now().naive_utc(),
-                    deleted_datetime: None,
+                    ..Default::default()
                 },
                 _ => {
                     return Err(Error::SyncFileNotFound(file_id.clone()));
@@ -741,6 +773,111 @@ mod tests {
                 matches!(error, SyncParsedErrorV6::TableNotAuthoredBySite(rejected) if rejected == table_name)
             );
         }
+    }
+
+    /// A paused central refuses record traffic before it spends a round trip validating the
+    /// site against legacy mSupply (the legacy URL here is unreachable on purpose).
+    #[actix_rt::test]
+    async fn v6_data_endpoints_refuse_while_sync_api_paused() {
+        use super::{patient_pull, pull, push};
+        use crate::{
+            sync::{
+                api::SyncApiSettings,
+                api_v6::{
+                    SyncBatchV6, SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6,
+                },
+                sync_api_pause::SYNC_API_PAUSED_MESSAGE,
+                test_util_set_is_central_server,
+            },
+            test_helpers::{ServiceTestContext, setup_all_and_service_provider},
+        };
+        use repository::{KeyType, KeyValueStoreRepository, mock::MockDataInserts};
+
+        let ServiceTestContext {
+            service_provider,
+            connection,
+            ..
+        } = setup_all_and_service_provider(
+            "v6_data_endpoints_refuse_while_sync_api_paused",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+
+        let settings_for = |app_version: &str| SyncApiSettings {
+            server_url: "http://0.0.0.0:0".to_string(),
+            username: "site".to_string(),
+            password_sha256: "password".to_string(),
+            site_uuid: "uuid".to_string(),
+            app_version: app_version.to_string(),
+            app_name: "test".to_string(),
+            sync_version: "5".to_string(),
+        };
+        // Pinned, not the package version: that only reaches 3.03 on the release branch
+        let settings = || settings_for("3.03.00");
+
+        let pulled = pull(
+            &service_provider,
+            SyncPullRequestV6 {
+                cursor: 0,
+                batch_size: 10,
+                sync_v5_settings: settings(),
+                is_initialised: true,
+                sync_v6_version: 5,
+            },
+        )
+        .await;
+        assert!(matches!(pulled, Err(SyncParsedErrorV6::SyncApiPaused)));
+
+        // A remote too old to read `SyncApiPaused` is told in a form it can show
+        let old_remote_pulled = pull(
+            &service_provider,
+            SyncPullRequestV6 {
+                cursor: 0,
+                batch_size: 10,
+                sync_v5_settings: settings_for("3.02.00"),
+                is_initialised: true,
+                sync_v6_version: 5,
+            },
+        )
+        .await;
+        assert_eq!(
+            old_remote_pulled.err().map(|error| error.to_string()),
+            Some(
+                SyncParsedErrorV6::OtherServerError(SYNC_API_PAUSED_MESSAGE.to_string())
+                    .to_string()
+            )
+        );
+
+        let patient_pulled = patient_pull(
+            &service_provider,
+            SyncPatientPullRequestV6 {
+                cursor: 0,
+                batch_size: 10,
+                sync_v5_settings: settings(),
+                sync_v6_version: 5,
+                fetch_patient_id: "patient".to_string(),
+            },
+        )
+        .await;
+        assert!(matches!(
+            patient_pulled,
+            Err(SyncParsedErrorV6::SyncApiPaused)
+        ));
+
+        let pushed = push(
+            service_provider,
+            SyncPushRequestV6 {
+                batch: SyncBatchV6::default(),
+                sync_v5_settings: settings(),
+                sync_v6_version: 5,
+            },
+        )
+        .await;
+        assert!(matches!(pushed, Err(SyncParsedErrorV6::SyncApiPaused)));
     }
 
     /// A batch of the tables sites really do push must pass untouched.

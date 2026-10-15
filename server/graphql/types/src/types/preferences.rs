@@ -147,10 +147,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.order_in_packs)
     }
 
-    pub async fn use_procurement_functionality(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_procurement_functionality)
-    }
-
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
         self.load_preference(&self.preferences.sort_by_vvm_status_then_expiry)
     }
@@ -390,7 +386,6 @@ pub enum PreferenceKey {
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
-    UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,

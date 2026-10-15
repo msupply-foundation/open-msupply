@@ -119,8 +119,9 @@ services:
       # is what the dashboard shows as "by ...".
       oms.actor: ${OMS_ACTOR:-}
 
-      # Which sample dataset the database was seeded from - `e2e`,
-      # `reference1` - or `none` for one that started empty. Carried forward
+      # Which dataset the database was seeded from - `e2e`, `reference1`, one
+      # of the Launchpad's (publish-dataset.yaml) by name - or `none` for one
+      # that started empty. Carried forward
       # like the owner, since only the deploy that creates the database knows.
       # Like the owner, nothing decides anything on it: the dashboard reads it
       # to say how to log in. Empty means a database from before the label.

@@ -2496,7 +2496,6 @@
   "preference.sortByVvmStatusThenExpiry": "مرتب‌ سازی دسته‌ های موجود بر اساس وضعیت VVM سپس انقضا",
   "preference.storeCustomColour": "رنگ سفارشی پاورقی صفحه (کد hex، مثلاً #000000 برای مشکی)",
   "preference.syncRecordsDisplayThreshold": "حد ریکورد های همگام سازی شده برای نمایش",
-  "preference.useProcurementFunctionality": "استفاده از کاربرد تدارکات",
   "preference.useSimplifiedMobileUi": "استفاده ساده از UI مبایل",
   "preference.warnWhenMissingRecentStocktake": "هشدار به کاربران هنگام ایجاد سفارش داخلی اگر شمارش فزیکی اخیری وجود نداشته باشد",
   "preference.warnWhenMissingRecentStocktake.description": "اخطاریه دیتا های شمارش فیزیکی یا خیلی قدیمی است یا تعداد واکسین‌ها و مواد خشک کمتر از حداقل است. بنابراین این شمارش برای محاسبه موجودی واکسین ها و مواد خشک معتبر نیست",

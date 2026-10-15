@@ -5,7 +5,8 @@
 
 use crate::preference::{CanChangeTargetMonthsOfStock, Preference};
 use repository::{
-    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
+    EqualFilter, NameFilter, NameRepository, NameRowRepository, RepositoryError, StorageConnection,
+    StoreRowRepository,
 };
 use serde_json::{Map, Value};
 
@@ -57,11 +58,18 @@ pub(crate) fn store_properties(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<Map<String, Value>, RepositoryError> {
-    name_properties(
-        connection,
-        store_id,
-        NameFilter::new().store(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_string()))),
-    )
+    // The store's own name row, read directly: the name query would also build
+    // every name visible in the store on SQLite (#1355). As before, a disabled
+    // store's properties are ignored.
+    Ok(StoreRowRepository::new(connection)
+        .find_one_by_id(store_id)?
+        .filter(|store| !store.is_disabled)
+        .map(|store| NameRowRepository::new(connection).find_one_oms_fields_by_id(&store.name_id))
+        .transpose()?
+        .flatten()
+        .and_then(|name| name.properties)
+        .and_then(|json| serde_json::from_str(&json).ok())
+        .unwrap_or_default())
 }
 
 /// The store's supply interval and safety buffer, None when its facility record carries no

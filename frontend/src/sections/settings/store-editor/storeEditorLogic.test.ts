@@ -4,6 +4,7 @@ import {
   asStatusList,
   asWarnParts,
   buildPreferencesInput,
+  buildPreferencesVariables,
   canEditPreferences,
   filterStoreCatalogue,
   groupStorePreferences,
@@ -357,18 +358,16 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => 
     valueType: StorePreference['valueType'] = 'BOOLEAN'
   ): StorePreference => ({ key, valueType, value: false, storeOverride: null });
   // A slice of the served order: the purchase-order preferences sit apart
-  // (rows 1, 5 and 15) among unrelated rows.
+  // (rows 1 and 14) among unrelated rows.
   const served: StorePreference[] = [
     pref('authorisePurchaseOrder'),
     pref('blindStocktake'),
-    pref('useProcurementFunctionality'),
     pref('disableManualReturns'),
     pref('externalInboundShipmentLinesMustBeAuthorised'),
     pref('firstThresholdForExpiringItems', 'INTEGER'),
   ];
   const LABELS: Partial<Record<StorePreference['key'], string>> = {
     blindStocktake: 'Enable blind stock take',
-    useProcurementFunctionality: 'Use procurement functionality',
     disableManualReturns: 'Disable manual returns',
     externalInboundShipmentLinesMustBeAuthorised:
       'Inbound shipment (external) lines must be authorised',
@@ -389,7 +388,6 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => 
     expect(groups[0]?.labelKey).toBe('label.procurement');
     expect(groups[0]?.members.map(p => p.key)).toEqual([
       'authorisePurchaseOrder',
-      'useProcurementFunctionality',
       'externalInboundShipmentLinesMustBeAuthorised',
     ]);
   });
@@ -403,7 +401,7 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => 
       'authorise'
     );
     expect(filtered.ungrouped).toEqual([]);
-    expect(filtered.groups[0]?.members).toHaveLength(3);
+    expect(filtered.groups[0]?.members).toHaveLength(2);
   });
 });
 
@@ -585,5 +583,23 @@ describe('buildPreferencesInput (SET-05.37)', () => {
       blindStocktake: [{ storeId: 'store-a', value: false }],
       secondThresholdForExpiringItems: [{ storeId: 'store-a', value: 0 }],
     });
+  });
+});
+
+describe('buildPreferencesVariables (SET-05.37, MNG-02.30)', () => {
+  // #1442 — from the facility register the edited store is one the
+  // administrator usually can't sign in to; authorising against it is refused
+  // (Forbidden, EditCentralData), so the signed-in store authorises the write.
+  it('authorises against the signed-in store while every entry names the edited one', () => {
+    expect(
+      buildPreferencesVariables({ blindStocktake: true }, 'central', 'remote')
+    ).toEqual({
+      storeId: 'central',
+      input: { blindStocktake: [{ storeId: 'remote', value: true }] },
+    });
+  });
+
+  it('returns undefined when nothing is staged, so the save skips the call', () => {
+    expect(buildPreferencesVariables({}, 'central', 'remote')).toBeUndefined();
   });
 });

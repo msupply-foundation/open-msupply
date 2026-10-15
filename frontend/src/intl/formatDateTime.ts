@@ -162,6 +162,25 @@ export const customDate = (
 export const exportDate = (value: Date | string | number): string =>
   format(toDate(value), 'P', { locale: dateFnsLocale() });
 
+/**
+ * The app language's NUMERIC short-date pattern — the `P` that
+ * {@link localisedDate} renders — in the token vocabulary the date fields
+ * format and parse with (`dd`, `MM`, `yyyy` plus literal separators):
+ * `dd/MM/yyyy` for English, French, Spanish, Portuguese and Arabic,
+ * `dd.MM.yyyy` for Russian, `yyyy/MM/dd` for Dari and Pashto. It is what a
+ * date field shows and accepts by default (#774), so a date keeps the same
+ * component order and separators typed into a field as in the table cell
+ * beside it (the cell may render its digits in the language's own numerals —
+ * Arabic, Dari and Pashto — where the field keeps Latin digits). date-fns writes
+ * an unpadded year as a lone `y`, which the fields' tokeniser does not know, so
+ * a year of any width is widened to the four-digit token. Reads the locale, so
+ * a field re-renders its text and hint when the language changes.
+ */
+export const localeDateFormat = (): string =>
+  dateFnsLocale()
+    .formatLong.date({ width: 'short' })
+    .replace(/y+/g, y => (y.length === 2 ? 'yy' : 'yyyy'));
+
 /*
  * The BCP-47 tag to hand Intl for a supported language. Mirrors the date-fns
  * substitutions above, so the two formatters never disagree about which

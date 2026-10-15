@@ -361,6 +361,15 @@ impl BaseSubscriptions {
 #[derive(MergedSubscription, Default, Clone)]
 pub struct Subscriptions(pub BaseSubscriptions, pub SyncStatusSubscriptions);
 
+/// The SDL `remote_server_cli export-graphql-schema` writes to the committed
+/// pin, server/schema.graphql. One function for the exporter and the test that
+/// checks the pin, so the two can't disagree about what "the schema" is.
+pub fn operational_schema_sdl() -> String {
+    OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
+        .finish()
+        .sdl()
+}
+
 /// Upper bound on GraphQL query complexity — async-graphql's field-count
 /// metric: every selected field costs `1 + child_complexity`, fragment spreads
 /// and inline fragments are expanded in place, `__typename` is free, and the
@@ -1054,6 +1063,47 @@ mod tests {
             worst.0,
             MAX_QUERY_COMPLEXITY,
             worst.1,
+        );
+    }
+
+    // Both front ends and mcp/ generate from the committed server/schema.graphql
+    // rather than a live server, so a server change that skips re-exporting it
+    // leaves every client type-checking against a schema the server no longer
+    // serves. Checked here rather than by a CI job of its own because the
+    // server test run has already built everything the export needs.
+    #[test]
+    fn committed_schema_matches_server() {
+        let pin_path = repo_root().join("server/schema.graphql");
+        let committed = std::fs::read_to_string(&pin_path)
+            .unwrap_or_else(|e| panic!("reading {}: {}", pin_path.display(), e))
+            // A Windows checkout with autocrlf still holds the same schema.
+            .replace("\r\n", "\n");
+        let exported = super::operational_schema_sdl();
+
+        if committed == exported {
+            return;
+        }
+
+        let first_difference = committed
+            .lines()
+            .zip(exported.lines())
+            .position(|(c, e)| c != e)
+            .unwrap_or_else(|| committed.lines().count().min(exported.lines().count()));
+        panic!(
+            "server/schema.graphql is out of date with the server's GraphQL types \
+             (first difference at line {}: committed {:?}, server {:?}).\n\
+             Re-export it with `cargo run --bin remote_server_cli -- export-graphql-schema` \
+             in ./server, then regenerate the clients from it: `pnpm codegen` in ./frontend \
+             and `yarn gql-codegen` in ./client.",
+            first_difference + 1,
+            committed
+                .lines()
+                .nth(first_difference)
+                .unwrap_or("<end of file>"),
+            exported
+                .lines()
+                .nth(first_difference)
+                .unwrap_or("<end of file>"),
         );
     }
 }
