@@ -788,14 +788,19 @@ const StockLineDetailView: Component = () => {
                 }}
               />
               {/* Full repack → offer navigation to the new line (spec
-                  OMS-REG-SMV-08.21). OK navigates, then every close path clears
-                  the signal — the detail route component is reused across
-                  :stockLineId changes, so a signal left set would reopen this
-                  over the new line. */}
+                  OMS-REG-SMV-08.21). The repack is already saved when this
+                  opens, so it is a notice with a choice of where to go — Stay
+                  or Go to new line — not an "Are you sure?" whose Cancel would
+                  read as undoing it (#1222). Go navigates, then every close
+                  path clears the signal — the detail route component is reused
+                  across :stockLineId changes, so a signal left set would reopen
+                  this over the new line. */}
               <ConfirmDialog
                 open={repackedToLineId() !== undefined}
-                title={t('heading.are-you-sure')}
-                message={t('messages.all-packs-repacked')}
+                title={t('title.repack-complete')}
+                message={t('messages.full-repack-go-to-new-line')}
+                confirmLabel={t('button.go-to-new-line')}
+                cancelLabel={t('button.stay')}
                 onConfirm={() => {
                   const id = repackedToLineId();
                   if (id) navigate(`/${params.storeId}/inventory/stock/${id}`);
