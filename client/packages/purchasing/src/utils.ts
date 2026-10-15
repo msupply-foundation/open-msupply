@@ -21,6 +21,7 @@ const purchaseOrderStatusTranslation: Record<
   CONFIRMED: 'label.ready-to-send',
   SENT: 'label.sent',
   FINALISED: 'label.finalised',
+  CANCELLED: 'label.cancelled',
 };
 
 const purchaseOrderLineStatusTranslation: Record<
@@ -71,12 +72,19 @@ export const getDeliveryStatusTranslator =
     );
   };
 
+// Finalised or Cancelled: the two terminal states, closed to every change
+export const isPurchaseOrderClosed = (
+  status: PurchaseOrderNodeStatus
+): boolean =>
+  status === PurchaseOrderNodeStatus.Finalised ||
+  status === PurchaseOrderNodeStatus.Cancelled;
+
 export const isPurchaseOrderDisabled = (
   purchaseOrder: PurchaseOrderFragment | PurchaseOrderRowFragment
 ): boolean => {
   return (
     purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
+    isPurchaseOrderClosed(purchaseOrder.status)
   );
 };
 
@@ -125,8 +133,8 @@ export const isFieldDisabled = (
   status: PurchaseOrderNodeStatus,
   groupKey: StatusGroup
 ): boolean => {
-  // Early return: if status is finalised, always disable the field
-  if (status === PurchaseOrderNodeStatus.Finalised) {
+  // Early return: a finalised or cancelled order always disables the field
+  if (isPurchaseOrderClosed(status)) {
     return true;
   }
 

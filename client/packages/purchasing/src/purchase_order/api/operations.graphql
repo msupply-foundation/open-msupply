@@ -74,6 +74,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   requestedDeliveryDate
   requestApprovalDatetime
   finalisedDatetime
+  cancelledDatetime
   documents {
     __typename
     nodes {
