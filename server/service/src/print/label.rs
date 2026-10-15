@@ -26,6 +26,11 @@ pub fn get_asset_label(data: AssetLabelData) -> String {
 
     // You can use an online image to ZPL convertor, such as the one at labelary.com/viewer.html, to convert the logo from an image to the ZPL code that the printer needs.
 
+    // Each text line is a one-line ^TB block: unlike ^FB, which prints
+    // overflowing lines on top of each other, ^TB clips what doesn't fit, so a
+    // long store name can't run into the logo or off the label. This lives in a
+    // Rust comment rather than a ^FX one: a ^FX comment ends at the next ^ or ~,
+    // so naming a command inside one makes the printer run it.
     format!(
         r#"
         ^XA
@@ -35,9 +40,6 @@ pub fn get_asset_label(data: AssetLabelData) -> String {
         ^FO18,18
         ^BXN,11,200
         ^FD{}^FS
-        ^FX Each text line is a one-line ^TB block: unlike ^FB, which prints
-        ^FX overflowing lines on top of each other, ^TB clips what doesn't fit,
-        ^FX so a long store name can't run into the logo or off the label.
         ^FO277,18^A0,30,24^TBN,310,30^FD{}^FS
         ^FO277,58^A0,30,24^TBN,310,30^FD{}^FS
         ^FO277,98^A0,30,24^TBN,310,30^FD{}^FS
@@ -223,6 +225,20 @@ mod tests {
         let number = zpl.find("^FDKEN-0042^FS").expect("asset number printed");
         let date = zpl.find("^FD14/10/2026^FS").expect("date printed");
         assert!(store < number && number < date);
+    }
+
+    #[test]
+    fn test_asset_label_fx_comments_contain_no_commands() {
+        // A ^FX comment runs only to the next ^ or ~, so either inside one is
+        // executed by the printer as a command.
+        let zpl = get_asset_label(asset_label_data(Some("General Store")));
+        for comment in zpl.split("^FX").skip(1) {
+            let line = comment.lines().next().unwrap_or_default();
+            assert!(
+                !line.contains('^') && !line.contains('~'),
+                "^FX comment contains a command: {line}"
+            );
+        }
     }
 
     #[test]
