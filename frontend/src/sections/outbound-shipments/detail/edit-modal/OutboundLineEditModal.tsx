@@ -529,9 +529,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // allocate's ordering — with rows holding nothing allocatable sunk to
     // the bottom (OMS-REG-SMV-11.37). Snapshot the seeded allocation first: the
     // on-hold manual exception and the sinking both judge it (OMS-REG-SMV-11.35/.36).
-    const sorted = [...data.draftLines].sort((a, b) =>
-      fillOrderCompare(a, b, allocationPrefs())
-    );
+    // Each row is COPIED before it reaches the draft store: the store writes
+    // edits into the objects it holds, and graphqlFetch hands back the same
+    // parsed response when the server's answer is unchanged — so seeding the
+    // raw rows would write a cancelled edit into that shared response, and the
+    // next open would show it as if it were saved.
+    const sorted = data.draftLines
+      .map(line => ({ ...line }))
+      .sort((a, b) => fillOrderCompare(a, b, allocationPrefs()));
     seededPacksById = new Map(
       sorted.map(line => [line.id, line.numberOfPacks])
     );
