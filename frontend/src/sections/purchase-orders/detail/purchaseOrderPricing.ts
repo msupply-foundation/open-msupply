@@ -40,9 +40,7 @@ const expectedUnits = (line: Quantities): number =>
 export const linePacks = (line: Quantities): number =>
   line.requestedPackSize > 0 ? expectedUnits(line) / line.requestedPackSize : 0;
 
-type Discount = {
-  supplierDiscountPercentage?: PurchaseOrderInfoFragment['supplierDiscountPercentage'];
-};
+type Discount = Pick<PurchaseOrderInfoFragment, 'supplierDiscountPercentage'>;
 
 /**
  * The share of a figure left once the order's supplier discount is taken off

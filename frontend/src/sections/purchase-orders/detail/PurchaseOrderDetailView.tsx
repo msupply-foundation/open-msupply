@@ -35,6 +35,7 @@ import {
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  sumBy,
   type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
@@ -267,6 +268,7 @@ const PurchaseOrderDetailView: Component = () => {
     }
   );
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const lineCost = (line: Line) => line.lineTotalAfterSupplierDiscount;
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
 
   // ── The whole line set (gates, cascades, the finalise warning) ────────────
@@ -692,19 +694,10 @@ const PurchaseOrderDetailView: Component = () => {
       // pricing and totals). Its footer sums the rows ON SCREEN — the page,
       // which is what a paginated table can total; the order's whole figures
       // are the side panel's Subtotal and Final cost rows.
-      c: {
-        accessor: line => line.lineTotalAfterSupplierDiscount,
-        id: 'lineCost',
-      },
+      c: { accessor: lineCost, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
-      footer: () =>
-        money(
-          rows().reduce(
-            (sum, line) => sum + line.lineTotalAfterSupplierDiscount,
-            0
-          )
-        ),
+      footer: () => money(sumBy(rows(), lineCost)),
     },
     {
       c: { key: 'requestedDeliveryDate' },

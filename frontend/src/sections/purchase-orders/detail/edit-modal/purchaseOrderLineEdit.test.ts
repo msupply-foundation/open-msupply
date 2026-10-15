@@ -45,9 +45,7 @@ const line = (
   receivedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
   pricePerPackAfterDiscount: 6,
-  // The stored total: 10 packs at 6.00, as the server wrote it — and the
-  // same with no supplier discount to apportion.
-  lineTotal: 60,
+  // The stored total: 10 packs at 6.00, with no supplier discount to apportion.
   lineTotalAfterSupplierDiscount: 60,
   requestedDeliveryDate: '2026-10-01',
   expectedDeliveryDate: null,

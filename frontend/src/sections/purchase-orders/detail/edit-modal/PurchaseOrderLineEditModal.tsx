@@ -85,7 +85,7 @@ export interface PurchaseOrderLineEditModalProps {
     status: PurchaseOrderStatus;
     currencyCode: string | undefined;
     requestedDeliveryDate: string | null | undefined;
-    supplierDiscountPercentage: number | null | undefined;
+    supplierDiscountPercentage: number | null;
   };
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;

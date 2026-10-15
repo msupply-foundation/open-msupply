@@ -9,6 +9,7 @@ import {
 import {
   getCellDefinition,
   getNumberCell,
+  sumBy,
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -83,11 +84,9 @@ export const InboundFinancialPanel: Component<{
   // The three footer totals are pure over the rows — none depends on the rate
   // — so they are memoised here rather than re-summed on every columns()
   // rebuild (which also fires on rate / currency-code changes).
-  const sum = (fn: (line: Line) => number) =>
-    props.rows.reduce((total, line) => total + fn(line), 0);
-  const totalPo = createMemo(() => sum(lineTotalPo));
-  const totalLocal = createMemo(() => sum(lineTotalLocal));
-  const totalAdjusted = createMemo(() => sum(adjustedTotalLocal));
+  const totalPo = createMemo(() => sumBy(props.rows, lineTotalPo));
+  const totalLocal = createMemo(() => sumBy(props.rows, lineTotalLocal));
+  const totalAdjusted = createMemo(() => sumBy(props.rows, adjustedTotalLocal));
 
   const sortedRows = () =>
     [...props.rows].sort(

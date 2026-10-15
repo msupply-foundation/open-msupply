@@ -354,9 +354,10 @@ fn generate_cost_price_update_for_lines(
     };
 
     let po_line_repo = PurchaseOrderLineRowRepository::new(connection);
-    let purchase_order = PurchaseOrderRowRepository::new(connection)
+    let supplier_discount_factor = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(purchase_order_id)?
-        .unwrap_or_default();
+        .map(|order| order.supplier_discount_factor())
+        .unwrap_or(1.0);
 
     // First pass: gather PO prices and compute total goods in local currency
     struct LineInfo {
@@ -372,7 +373,7 @@ fn generate_cost_price_update_for_lines(
         let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
         let po_price_local = if let Some(po_line_id) = po_line_id {
             if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
-                po_line.price_per_pack_after_supplier_discount(&purchase_order) * safe_rate
+                po_line.price_per_pack_after_discount * supplier_discount_factor * safe_rate
             } else {
                 // No PO line found, keep current cost price
                 row.cost_price_per_pack

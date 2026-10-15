@@ -22,7 +22,8 @@ pub fn add_from_purchase_order(
         .find_one_by_id(&purchase_order_id)?
         .ok_or(InsertInboundShipmentError::PurchaseOrderDoesNotExist)?;
     let exchange_rate = purchase_order.foreign_exchange_rate;
-    let donor_id = purchase_order.donor_id.clone();
+    let supplier_discount_factor = purchase_order.supplier_discount_factor();
+    let donor_id = purchase_order.donor_id;
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -55,15 +56,14 @@ pub fn add_from_purchase_order(
         let number_of_packs = purchase_order_line.packs_for_units(remaining_units);
 
         let foreign_total = if total_units > 0.0 && number_of_packs > 0.0 {
-            purchase_order_line.line_total_after_supplier_discount(&purchase_order)
-                * remaining_units
+            purchase_order_line.line_total * supplier_discount_factor * remaining_units
                 / total_units
         } else {
             0.0
         };
         let local_total = foreign_total * exchange_rate;
-        let cost_price_per_pack = purchase_order_line
-            .price_per_pack_after_supplier_discount(&purchase_order)
+        let cost_price_per_pack = purchase_order_line.price_per_pack_after_discount
+            * supplier_discount_factor
             * exchange_rate;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
