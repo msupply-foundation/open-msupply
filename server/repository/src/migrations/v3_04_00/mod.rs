@@ -42,6 +42,17 @@ mod test {
         }
     }
 
+    table! {
+        changelog (cursor) {
+            cursor -> BigInt,
+            table_name -> Text,
+            record_id -> Text,
+            row_action -> Text,
+            store_id -> Nullable<Text>,
+            source_site_id -> Nullable<Integer>,
+        }
+    }
+
     fn run(connection: &StorageConnection, sql: &str) {
         sql_query(sql)
             .execute(connection.lock().connection())
@@ -148,7 +159,8 @@ mod test {
     /// The Not functioning reasons match UNICEF's list: the temperature
     /// reason moves over from Not in use under its new name, and the two
     /// missing reasons are added alongside the existing ones. "Other" is the
-    /// only one that requires a comment.
+    /// only one that requires a comment. The three changed rows get changelog
+    /// rows stamped with the central site id, so central can send them out.
     #[actix_rt::test]
     async fn migration_3_04_00_asset_log_reasons() {
         use crate::{AssetLogReasonRowRepository, asset_log_row::AssetLogStatus};
@@ -162,6 +174,11 @@ mod test {
             ..Default::default()
         })
         .await;
+
+        run(
+            &connection,
+            "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', 42)",
+        );
 
         migrate(
             &connection,
@@ -212,5 +229,26 @@ mod test {
             .map(|row| row.reason)
             .collect();
         assert_eq!(comments_required, vec!["Other"]);
+
+        let mut changelog_rows = changelog::table
+            .filter(changelog::table_name.eq("asset_log_reason"))
+            .select((
+                changelog::record_id,
+                changelog::row_action,
+                changelog::store_id,
+                changelog::source_site_id,
+            ))
+            .load::<(String, String, Option<String>, Option<i32>)>(connection.lock().connection())
+            .unwrap();
+        changelog_rows.sort();
+        let central = |id: &str| (id.to_string(), "UPSERT".to_string(), None, Some(42));
+        assert_eq!(
+            changelog_rows,
+            vec![
+                central("2f734462-c76d-4b08-b8d2-40b250538d46"),
+                central("646c80b2-2ff7-4c50-916b-18ff3df5cfb5"),
+                central("ba800d96-2cf6-44e8-8fbb-41fedb154265"),
+            ]
+        );
     }
 }
