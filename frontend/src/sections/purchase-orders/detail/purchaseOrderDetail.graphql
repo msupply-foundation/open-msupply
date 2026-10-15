@@ -107,10 +107,11 @@ query purchaseOrder($storeId: String!, $id: String!) {
 # One line of the General tab's table (spec S7 § line columns). Number of packs
 # carries no field of its own — it is derived from the quantity and the pack
 # size (rules § pricing and totals), so purchaseOrderPricing.ts computes it from
-# exactly those fields. Line cost DOES: `lineTotal` is the stored figure the
-# server writes on every insert and update (unrounded — the display rounds),
-# and the same figure it hands an inbound shipment raised against the line — so
-# the column reads it rather than multiplying price by packs itself (contract §
+# exactly those fields. Line cost DOES: `lineTotalAfterSupplierDiscount` is the
+# stored `lineTotal` the server writes on every insert and update (unrounded —
+# the display rounds) with the order's supplier discount apportioned to it, and
+# the same figure it hands an inbound shipment raised against the line — so the
+# column reads it rather than multiplying price by packs itself (contract §
 # pricing and totals).
 #
 # The same row is what a row click hands the line editor (spec S10), so it also
@@ -142,9 +143,13 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   shippedNumberOfUnits
   pricePerPackBeforeDiscount
   pricePerPackAfterDiscount
-  # The line's stored cost — written unrounded, the one figure the table,
-  # the order's totals and the shipment raised against the line all agree on.
+  # The line's stored cost — written unrounded, net of the line's own discount
+  # and gross of the supplier's; the order's subtotal sums it.
   lineTotal
+  # The same figure with the order's supplier discount apportioned to the line
+  # — the one the table, the discounted order total and the shipment raised
+  # against the line all agree on.
+  lineTotalAfterSupplierDiscount
   requestedDeliveryDate
   expectedDeliveryDate
   supplierItemCode

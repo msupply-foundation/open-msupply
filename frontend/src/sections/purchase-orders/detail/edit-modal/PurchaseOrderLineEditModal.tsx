@@ -73,6 +73,7 @@ export interface PurchaseOrderLineEditModalProps {
     status: PurchaseOrderStatus;
     currencyCode: string | undefined;
     requestedDeliveryDate: string | null | undefined;
+    supplierDiscountPercentage: number | null | undefined;
   };
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;
@@ -529,10 +530,11 @@ const LineEditContent = (
               valueAlign="end"
               valueTestId="total-cost-value"
             >
-              {/* A PREVIEW of what the server will store as the line's total
-                on save (its own rule, packs × the after-discount price) — the
-                draft has no stored figure yet. */}
-              {money(projectedLineCost(draft()!))}
+              {/* A PREVIEW of the line cost the table will show on save (the
+                server's own rule, packs × the after-discount price, with the
+                order's supplier discount apportioned) — the draft has no
+                stored figure yet. */}
+              {money(projectedLineCost(draft()!, props.order))}
             </FieldRow>
           </div>
 
