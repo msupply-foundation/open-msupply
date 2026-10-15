@@ -80,4 +80,10 @@ describe('formatCurrency', () => {
     expect(formatCurrency(2, null)).toBe('$2.00');
     expect(formatCurrency(2)).toBe('$2.00');
   });
+
+  it('widens to maxDecimals only as far as the figure needs', () => {
+    expect(formatCurrency(3.4, 'USD', 6)).toBe('$3.40');
+    expect(formatCurrency(0.034, 'USD', 6)).toBe('$0.034');
+    expect(formatCurrency(0.1234567, 'USD', 6)).toBe('$0.123457');
+  });
 });

@@ -13,8 +13,8 @@ use crate::{
 };
 use repository::{
     BarcodeRow, InvoiceLineRow, InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow,
-    RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
-    vvm_status::vvm_status_log_row::VVMStatusLogRow,
+    PurchaseOrderRowRepository, RepositoryError, StockLineRow, StockLineRowRepository,
+    StorageConnection, vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 
 use super::InsertStockInLine;
@@ -182,8 +182,16 @@ fn generate_line(
         currency_id,
         &currency_rate,
     )?;
-    // default to invoice_row donor_id if none supplied on insert
-    let donor_id = donor_id.or(default_donor_id);
+    // Default to the shipment's donor, then the linked purchase order's
+    let donor_id = match donor_id.or(default_donor_id) {
+        Some(donor_id) => Some(donor_id),
+        None => match &purchase_order_id {
+            Some(po_id) => PurchaseOrderRowRepository::new(connection)
+                .find_one_by_id(po_id)?
+                .and_then(|po| po.donor_id),
+            None => None,
+        },
+    };
 
     // set to pending for external inbound shipments when the preference is enabled
     let add_status =
@@ -216,7 +224,7 @@ fn generate_line(
         note,
         item_variant_id,
         vvm_status_id,
-        donor_id: donor_id,
+        donor_id,
         manufacturer_id,
         campaign_id,
         program_id,

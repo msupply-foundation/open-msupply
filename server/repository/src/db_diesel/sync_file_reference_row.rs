@@ -47,6 +47,7 @@ table! {
         error -> Nullable<Text>,
         created_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
+        user_id -> Nullable<Text>,
     }
 }
 
@@ -88,6 +89,8 @@ pub struct SyncFileReferenceRow {
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub user_id: Option<String>,
 }
 
 /// Subset of `SyncFileReferenceRow` that crosses sync. Anything not listed here
@@ -111,6 +114,8 @@ pub struct SyncFileReferenceWire {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub deleted_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub user_id: Option<String>,
 }
 
 impl SyncFileReferenceWire {
@@ -126,6 +131,7 @@ impl SyncFileReferenceWire {
             error: row.error.clone(),
             created_datetime: row.created_datetime,
             deleted_datetime: row.deleted_datetime,
+            user_id: row.user_id.clone(),
         }
     }
 
@@ -142,6 +148,7 @@ impl SyncFileReferenceWire {
             error: self.error,
             created_datetime: self.created_datetime,
             deleted_datetime: self.deleted_datetime,
+            user_id: self.user_id,
             // Local-only fields preserved from the existing row.
             uploaded_bytes: local.uploaded_bytes,
             downloaded_bytes: local.downloaded_bytes,

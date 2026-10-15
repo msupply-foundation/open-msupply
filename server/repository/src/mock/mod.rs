@@ -1089,6 +1089,13 @@ pub fn insert_mock_data(
             }
         }
 
+        // Before invoices and stock lines, which reference campaigns
+        if inserts.campaigns {
+            let repo = CampaignRowRepository::new(connection);
+            for row in &mock_data.campaigns {
+                repo.upsert_one(row).unwrap();
+            }
+        }
         if inserts.currencies {
             let repo = crate::CurrencyRowRepository::new(connection);
             for row in &mock_data.currencies {
@@ -1514,12 +1521,6 @@ pub fn insert_mock_data(
         if inserts.vvm_statuses {
             let repo = VVMStatusRowRepository::new(connection);
             for row in &mock_data.vvm_statuses {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-        if inserts.campaigns {
-            let repo = CampaignRowRepository::new(connection);
-            for row in &mock_data.campaigns {
                 repo.upsert_one(row).unwrap();
             }
         }
