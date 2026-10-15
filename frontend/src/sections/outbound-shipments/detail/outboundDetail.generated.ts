@@ -516,6 +516,11 @@ export type AllocateOutboundLineResult = {
   batch: string | null;
 }>;
 };
+  skippedOtherCampaignStockLines: {
+  nodes: Array<{
+  batch: string | null;
+}>;
+};
   issuedExpiringSoonStockLines: {
   nodes: Array<{
   batch: string | null;
@@ -533,7 +538,7 @@ export type AllocateOutboundLineResult = {
 };
 
 export const AllocateOutboundLine = {
-  query: "mutation allocateOutboundLine($storeId: String!, $lineId: String!) {\n  allocateOutboundShipmentUnallocatedLine(storeId: $storeId, lineId: $lineId) {\n    __typename\n    ... on AllocateOutboundShipmentUnallocatedLineNode {\n      inserts {\n        totalCount\n      }\n      updates {\n        totalCount\n      }\n      deletes {\n        id\n      }\n      skippedExpiredStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n      skippedOnHoldStockLines {\n        nodes {\n          batch\n        }\n      }\n      skippedUnusableVvmStatusLines {\n        nodes {\n          batch\n        }\n      }\n      issuedExpiringSoonStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n    }\n    ... on AllocateOutboundShipmentUnallocatedLineError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "mutation allocateOutboundLine($storeId: String!, $lineId: String!) {\n  allocateOutboundShipmentUnallocatedLine(storeId: $storeId, lineId: $lineId) {\n    __typename\n    ... on AllocateOutboundShipmentUnallocatedLineNode {\n      inserts {\n        totalCount\n      }\n      updates {\n        totalCount\n      }\n      deletes {\n        id\n      }\n      skippedExpiredStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n      skippedOnHoldStockLines {\n        nodes {\n          batch\n        }\n      }\n      skippedUnusableVvmStatusLines {\n        nodes {\n          batch\n        }\n      }\n      skippedOtherCampaignStockLines {\n        nodes {\n          batch\n        }\n      }\n      issuedExpiringSoonStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n    }\n    ... on AllocateOutboundShipmentUnallocatedLineError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<AllocateOutboundLineResult, AllocateOutboundLineVariables>;
 
 export type UpdateOutboundUnallocatedLineVariables = {

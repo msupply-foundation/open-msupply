@@ -1421,6 +1421,7 @@ const OutboundDetailView: Component = () => {
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
+                campaignId={current().campaign?.id ?? null}
                 customerIsStore={current().otherParty.store != null}
                 // Gates the editor's supplier-comment field: only a shipment
                 // raised from a customer requisition has a requested quantity

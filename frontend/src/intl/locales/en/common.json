@@ -1719,6 +1719,7 @@
   "label.no-unallocated-rows-selected": "All of the selected rows are already allocated",
   "label.non-catalogue": "Non-catalogue",
   "label.none": "None",
+  "label.not-for-this-campaign": "Not for this campaign",
   "label.not-a-date": "not a date",
   "label.not-counted": "Not counted",
   "label.not-delivered": "Not delivered",
