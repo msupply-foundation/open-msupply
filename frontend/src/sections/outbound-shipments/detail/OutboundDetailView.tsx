@@ -1349,7 +1349,7 @@ const OutboundDetailView: Component = () => {
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={editable() ? openRow : undefined}
+                  onRowClick={openRow}
                   rowTint={lineRowTint}
                   // Same predicate on both channels: the tint colours the
                   // row, the bar makes the unfinished lines legible down one
