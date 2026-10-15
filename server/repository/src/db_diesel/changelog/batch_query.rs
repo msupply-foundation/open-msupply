@@ -42,6 +42,7 @@ pub enum Row {
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
     TemperatureBreach(TemperatureBreachRow),
+    TemperatureDailySummary(TemperatureDailySummaryRow),
     TemperatureLog(TemperatureLogRow),
     VVMStatusLog(VVMStatusLogRow),
     Requisition(RequisitionRow),
@@ -399,6 +400,13 @@ fn fetch_rows_for_table(
             ChangelogTableName::TemperatureBreach => {
                 for r in TemperatureBreachRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::TemperatureBreach(r));
+                }
+            }
+            ChangelogTableName::TemperatureDailySummary => {
+                for r in
+                    TemperatureDailySummaryRowRepository::new(connection).find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::TemperatureDailySummary(r));
                 }
             }
             ChangelogTableName::TemperatureLog => {

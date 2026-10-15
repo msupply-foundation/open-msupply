@@ -158,6 +158,7 @@ diesel_string_enum! {
         SyncMessage,
         SystemLog,
         TemperatureBreach,
+        TemperatureDailySummary,
         TemperatureLog,
         Unit,
         UserAccount,

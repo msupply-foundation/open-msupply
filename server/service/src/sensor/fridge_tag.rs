@@ -7,7 +7,8 @@ use repository::{
     SensorType, StorageConnection, TemperatureBreach, TemperatureBreachConfig,
     TemperatureBreachConfigFilter, TemperatureBreachConfigRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachFilter, TemperatureBreachRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLog,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType,
+    TemperatureDailySummaryRow, TemperatureDailySummaryRowRepository, TemperatureLog,
     TemperatureLogFilter, TemperatureLogRepository, TemperatureLogRow, TemperatureLogRowRepository,
 };
 use serde::Serialize;
@@ -116,27 +117,56 @@ fn sensor_add_log_if_new(
     }
 }
 
+// Fridge-tag alarms were imported as cumulative breaches before being correctly typed as
+// consecutive (they are single-event alarms)
+fn previous_fridge_tag_breach_type(
+    breach_type: &TemperatureBreachType,
+) -> Option<TemperatureBreachType> {
+    match breach_type {
+        TemperatureBreachType::ColdConsecutive => Some(TemperatureBreachType::ColdCumulative),
+        TemperatureBreachType::HotConsecutive => Some(TemperatureBreachType::HotCumulative),
+        _ => None,
+    }
+}
+
 fn sensor_add_breach_if_new(
     connection: &StorageConnection,
     sensor_row: &SensorRow,
     temperature_breach: &temperature_sensor::TemperatureBreach,
     breach_config: &temperature_sensor::TemperatureBreachConfig,
+    is_fridge_tag: bool,
 ) -> Result<Option<TemperatureBreachRow>, RepositoryError> {
     let breach_row_type = get_breach_row_type(&temperature_breach.breach_type);
-    let temperature_breach_option = get_matching_sensor_breach(
+    let mut temperature_breach_option = get_matching_sensor_breach(
         connection,
         &sensor_row.id,
         temperature_breach.start_timestamp,
         &breach_row_type,
     )?;
 
+    // A breach still ongoing at the last import is imported again, so pick it up if it was
+    // imported under the previous type, rather than adding it again as a new breach
+    if temperature_breach_option.is_none() && is_fridge_tag {
+        if let Some(previous_type) = previous_fridge_tag_breach_type(&breach_row_type) {
+            temperature_breach_option = get_matching_sensor_breach(
+                connection,
+                &sensor_row.id,
+                temperature_breach.start_timestamp,
+                &previous_type,
+            )?;
+        }
+    }
+
     let temperature_breach_upsert = match temperature_breach_option {
         Some(existing_breach) => {
             let existing_breach_row = existing_breach.temperature_breach_row;
-            if existing_breach_row.end_datetime == Some(temperature_breach.end_timestamp) {
+            if existing_breach_row.end_datetime == Some(temperature_breach.end_timestamp)
+                && existing_breach_row.r#type == breach_row_type
+            {
                 return Ok(None);
             }
             let breach = TemperatureBreachRow {
+                r#type: breach_row_type,
                 end_datetime: Some(temperature_breach.end_timestamp),
                 duration_milliseconds: temperature_breach.duration.num_milliseconds() as i32,
                 ..existing_breach_row
@@ -168,6 +198,37 @@ fn sensor_add_breach_if_new(
     TemperatureBreachRowRepository::new(connection).upsert_one(&temperature_breach_upsert)?;
 
     Ok(Some(temperature_breach_upsert))
+}
+
+fn sensor_add_daily_summary(
+    connection: &StorageConnection,
+    sensor_row: &SensorRow,
+    daily_summary: &temperature_sensor::DailySummary,
+) -> Result<(), RepositoryError> {
+    let duration_milliseconds =
+        |duration: Option<chrono::Duration>| duration.map(|d| d.num_milliseconds() as i32);
+    let repository = TemperatureDailySummaryRowRepository::new(connection);
+
+    // Update the day's existing summary if there is one, as the summary of the day being
+    // recorded when the sensor was last read will have been incomplete
+    let id = repository
+        .find_id_by_sensor_and_date(&sensor_row.id, daily_summary.date)?
+        .unwrap_or_else(uuid);
+
+    repository.upsert_one(&TemperatureDailySummaryRow {
+        id,
+        store_id: sensor_row.store_id.clone(),
+        sensor_id: sensor_row.id.clone(),
+        location_id: sensor_row.location_id.clone(),
+        date: daily_summary.date,
+        minimum_temperature: daily_summary.minimum_temperature,
+        maximum_temperature: daily_summary.maximum_temperature,
+        average_temperature: daily_summary.average_temperature,
+        hot_duration_milliseconds: duration_milliseconds(daily_summary.hot_duration),
+        cold_duration_milliseconds: duration_milliseconds(daily_summary.cold_duration),
+        hot_threshold: daily_summary.hot_threshold,
+        cold_threshold: daily_summary.cold_threshold,
+    })
 }
 
 fn sensor_add_breach_config_if_new(
@@ -271,6 +332,7 @@ fn sensor_add_if_new(
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
+    pub sensor_id: String,
     new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
@@ -397,6 +459,9 @@ fn integrate_sensor_data(
         .context("Sensor could not be inserted or found in database")?
         .sensor_row;
 
+    // Only Fridge-tags record daily summaries (checked before filtering, which may remove them all)
+    let is_fridge_tag = temperature_sensor.daily_summaries.is_some();
+
     // Filter sensor data by previous last connected time
     let last_connected = sensor_row.last_connection_datetime;
     let temperature_sensor =
@@ -430,7 +495,10 @@ fn integrate_sensor_data(
         )
         .max();
 
+    let temperature_sensor_daily_summaries = temperature_sensor.daily_summaries.unwrap_or_default();
+
     let result = ReadSensor {
+        sensor_id: sensor_row.id.clone(),
         new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
@@ -440,6 +508,10 @@ fn integrate_sensor_data(
 
     for temperature_sensor_log in temperature_sensor_logs {
         sensor_add_log_if_new(connection, &sensor_row, &temperature_sensor_log)?;
+    }
+
+    for daily_summary in temperature_sensor_daily_summaries.iter() {
+        sensor_add_daily_summary(connection, &sensor_row, daily_summary)?;
     }
 
     // Add consecutive then cumulative breaches, order is important because breach and log association
@@ -456,6 +528,7 @@ fn integrate_sensor_data(
                 &sensor_row,
                 &temperature_sensor_breach,
                 temperature_sensor_config,
+                is_fridge_tag,
             )?;
 
             if let Some(upserted_breach) = upserted_breach {
@@ -509,8 +582,8 @@ mod test {
     use chrono::{Duration, NaiveDate, NaiveDateTime};
     use repository::{
         Pagination, Sort, TemperatureBreachFilter, TemperatureBreachRepository,
-        TemperatureBreachRow, TemperatureBreachType, TemperatureLogRepository,
-        TemperatureLogSortField,
+        TemperatureBreachRow, TemperatureBreachType, TemperatureDailySummaryRowRepository,
+        TemperatureLogRepository, TemperatureLogSortField,
         mock::{MockDataInserts, mock_store_a, mock_store_b},
     };
     use temperature_sensor as ts;
@@ -665,6 +738,7 @@ mod test {
             name: "sensor1_name".to_string(),
             last_connected_timestamp: None,
             log_interval: None,
+            daily_summaries: None,
         };
 
         // INTERGRATE MOCK DATA
@@ -899,5 +973,103 @@ mod test {
         // New issue need to resolve this one...
         // sensor.store_id is used in some places instead of this store_id
         //assert!(integrate_sensor_data(&connection, &mock_store_b().id, data.clone()).is_err());
+    }
+
+    #[actix_rt::test]
+    async fn fridge_tag_daily_summaries_and_previous_breach_type() {
+        let ServiceTestContext { connection, .. } = setup_all_and_service_provider(
+            "fridge_tag_daily_summaries_and_previous_breach_type",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let day_1 = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let day_2 = NaiveDate::from_ymd_opt(2024, 1, 2).unwrap();
+        let breach_start = day_2.and_hms_opt(2, 0, 0).unwrap();
+
+        let daily_summary = |date, average_temperature, hot_minutes| ts::DailySummary {
+            date,
+            minimum_temperature: Some(2.0),
+            maximum_temperature: Some(12.0),
+            average_temperature: Some(average_temperature),
+            hot_duration: Some(Duration::minutes(hot_minutes)),
+            cold_duration: Some(Duration::zero()),
+            hot_threshold: Some(8.0),
+            cold_threshold: Some(-0.5),
+        };
+        let breach = |breach_type, end_hour| ts::TemperatureBreach {
+            breach_type,
+            start_timestamp: breach_start,
+            end_timestamp: day_2.and_hms_opt(end_hour, 0, 0).unwrap(),
+            duration: Duration::hours(end_hour as i64 - 2),
+            acknowledged: false,
+        };
+        let config = |breach_type| ts::TemperatureBreachConfig {
+            breach_type,
+            maximum_temperature: 8.0,
+            minimum_temperature: -273.0,
+            duration: Duration::minutes(600),
+        };
+        let sensor = |breaches, configs, daily_summaries| ts::Sensor {
+            sensor_type: ts::SensorType::Berlinger,
+            serial: "fridge_tag_serial".to_string(),
+            name: "Fridge-tag 2".to_string(),
+            last_connected_timestamp: None,
+            log_interval: None,
+            breaches: Some(breaches),
+            configs: Some(configs),
+            logs: None,
+            daily_summaries: Some(daily_summaries),
+        };
+
+        // An import from before alarms were typed as consecutive, while day 2 was in progress
+        integrate_sensor_data(
+            &connection,
+            &mock_store_a().id,
+            sensor(
+                vec![breach(ts::BreachType::HotCumulative, 12)],
+                vec![config(ts::BreachType::HotCumulative)],
+                vec![daily_summary(day_1, 4.5, 0), daily_summary(day_2, 6.0, 300)],
+            ),
+        )
+        .unwrap();
+
+        // The next import has the breach as consecutive, and day 2 complete
+        integrate_sensor_data(
+            &connection,
+            &mock_store_a().id,
+            sensor(
+                vec![breach(ts::BreachType::HotConsecutive, 14)],
+                vec![config(ts::BreachType::HotConsecutive)],
+                vec![daily_summary(day_1, 4.5, 0), daily_summary(day_2, 7.5, 720)],
+            ),
+        )
+        .unwrap();
+
+        // The breach is updated & retyped, not added again
+        let breaches = TemperatureBreachRepository::new(&connection)
+            .query_by_filter(TemperatureBreachFilter::new())
+            .unwrap();
+        assert_eq!(breaches.len(), 1);
+        let breach_row = &breaches[0].temperature_breach_row;
+        assert_eq!(breach_row.r#type, TemperatureBreachType::HotConsecutive);
+        assert_eq!(
+            breach_row.end_datetime,
+            Some(day_2.and_hms_opt(14, 0, 0).unwrap())
+        );
+
+        // One summary per day, with day 2 updated
+        let daily_summaries = TemperatureDailySummaryRowRepository::new(&connection)
+            .find_many_by_sensor_id(&breach_row.sensor_id)
+            .unwrap();
+        assert_eq!(daily_summaries.len(), 2);
+        assert_eq!(daily_summaries[0].date, day_1);
+        assert_eq!(daily_summaries[1].date, day_2);
+        assert_eq!(daily_summaries[1].average_temperature, Some(7.5));
+        assert_eq!(
+            daily_summaries[1].hot_duration_milliseconds,
+            Some(720 * 60 * 1000)
+        );
+        assert_eq!(daily_summaries[1].store_id, mock_store_a().id);
     }
 }

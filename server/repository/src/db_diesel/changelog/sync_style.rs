@@ -202,6 +202,14 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: true,
             },
+            // OMS-native (no legacy 4D counterpart): a sensor's own daily summary, recorded
+            // alongside its logs & breaches, so synced the same way but over v7 only.
+            TemperatureDailySummary => SyncStyle {
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
+                transport: V7_ONLY,
+                multi_device_site: true,
+            },
             VVMStatusLog => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
