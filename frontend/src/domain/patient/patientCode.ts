@@ -35,6 +35,25 @@ export const composePatientCode = (storeName: string, number: number): string =>
   String(number).padStart(NUMBER_PAD.length, '0');
 
 /**
+ * Whether a code the generator makes for the store could satisfy the schema's
+ * `pattern` for the code: a deployment whose codes are, say, six digits gets no
+ * Generate, since every code it would make is refused. Tested on the shape of
+ * the first code; no pattern, or one that is not a valid expression, refuses
+ * nothing. Matched with the `u` flag, as the schema validator matches it.
+ */
+export const generatedCodeFits = (
+  storeName: string,
+  pattern: string | undefined
+): boolean => {
+  if (pattern === undefined) return true;
+  try {
+    return new RegExp(pattern, 'u').test(composePatientCode(storeName, 1));
+  } catch {
+    return true;
+  }
+};
+
+/**
  * Whether another patient already holds `code`. `excludePatientId` is the
  * patient being edited, whose own code is not a collision.
  *

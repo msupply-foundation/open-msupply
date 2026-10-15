@@ -6,9 +6,11 @@ import enrolmentV1 from '../../../plugins/examples/demo_program/forms/DemoProgra
 import type { Encounter } from '../../plugin-sdk/documents';
 import { createDraft, pathLabel } from './draft';
 import {
+  autocompleteSelection,
   dateTimeToDay,
   dayToDateTime,
   selectOptions,
+  textFieldError,
   type SelectInputProps,
 } from './fields';
 import { withFirstNoteText } from './notes';
@@ -19,8 +21,11 @@ import {
   pointerToPath,
   setAt,
   type EnumPath,
+  type EnumArrayPath,
+  type NotesPath,
   type NumberPath,
   type Path,
+  type PathValue,
   type TextPath,
 } from './paths';
 import { baseSchemaFor } from './baseSchemas';
@@ -40,6 +45,33 @@ interface DemoEncounter extends Encounter {
     };
   };
 }
+
+// A document with an array of objects and an array of plain values: the two
+// kinds of array a path meets.
+interface Lists {
+  tags?: string[];
+  blocks?: { phone?: string; address?: string }[];
+  methods?: ('DIU' | 'POP')[];
+  method?: 'DIU' | 'POP';
+}
+
+const listsSchema: JsonSchema = {
+  type: 'object',
+  properties: {
+    tags: { type: 'array', items: { type: 'string' } },
+    blocks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', pattern: '^[0-9]{8}$' },
+          address: { type: 'string' },
+        },
+        required: ['phone'],
+      },
+    },
+  },
+};
 
 const encounterSchema = encounterV2 as JsonSchema;
 const enrolmentSchema = enrolmentV1 as JsonSchema;
@@ -66,8 +98,16 @@ const typeChecks = () => {
   const wrongKind: TextPath<DemoEncounter> = 'extension.demo.vitals.weightKg';
   // @ts-expect-error: an enum is not free text either.
   const enumAsText: TextPath<DemoEncounter> = 'extension.demo.regimen';
-  // @ts-expect-error: paths stop at arrays.
-  const intoArray: Path<DemoEncounter> = 'notes.0.text';
+  const firstNote: TextPath<DemoEncounter> = 'notes.0.text';
+  const firstItem: Path<DemoEncounter> = 'notes.0';
+  // @ts-expect-error: only an array's first item has a path.
+  const secondNote: Path<DemoEncounter> = 'notes.1.text';
+  const tags: Path<Lists> = 'tags';
+  // @ts-expect-error: an array of plain values is a leaf.
+  const firstTag: Path<Lists> = 'tags.0';
+  const phone: PathValue<Lists, 'blocks.0.phone'> = '55501234';
+  // @ts-expect-error: a first-item path's value is that field's type.
+  const phoneAsNumber: PathValue<Lists, 'blocks.0.phone'> = 55501234;
   type RegimenOptions = SelectInputProps<
     DemoEncounter,
     'extension.demo.regimen'
@@ -82,6 +122,18 @@ const typeChecks = () => {
   const retired: RegimenRetired = ['FIRST_LINE'];
   // @ts-expect-error: only a value the enum allows can be retired.
   const retiredTypo: RegimenRetired = ['FIRST_LIN'];
+  const notes: NotesPath<DemoEncounter> = 'notes';
+  // @ts-expect-error: a single note is not the list.
+  const oneNote: NotesPath<DemoEncounter> = 'notes.0';
+  // @ts-expect-error: free text called notes is not a list of notes.
+  const textNotes: NotesPath<DemoEncounter> = 'extension.demo.notes';
+  // @ts-expect-error: an array of other objects is not a list of notes.
+  const blocks: NotesPath<Lists> = 'blocks';
+  const methods: EnumArrayPath<Lists> = 'methods';
+  // @ts-expect-error: a list of free text is not a list of enum values.
+  const freeTags: EnumArrayPath<Lists> = 'tags';
+  // @ts-expect-error: one enum value is not a list of them.
+  const oneMethod: EnumArrayPath<Lists> = 'method';
   return [
     text,
     date,
@@ -93,11 +145,24 @@ const typeChecks = () => {
     typo,
     wrongKind,
     enumAsText,
-    intoArray,
+    firstNote,
+    firstItem,
+    secondNote,
+    tags,
+    firstTag,
+    phone,
+    phoneAsNumber,
     labelled,
     unlabelled,
     retired,
     retiredTypo,
+    notes,
+    oneNote,
+    textNotes,
+    blocks,
+    methods,
+    freeTags,
+    oneMethod,
   ];
 };
 
@@ -171,9 +236,53 @@ describe('selectOptions', () => {
   });
 });
 
+describe('autocompleteSelection', () => {
+  const levels = [
+    { value: 'PRIMARY', label: 'Primary school' },
+    { value: 'OTHER', label: 'Other' },
+  ];
+
+  it("shows a listed value under its option's label", () => {
+    expect(autocompleteSelection(levels, 'OTHER')).toEqual({
+      value: 'OTHER',
+      label: 'Other',
+    });
+  });
+
+  it('shows a value the list leaves out as stored, rather than blank', () => {
+    // An earlier list's value: the record keeps showing what it holds.
+    expect(autocompleteSelection(levels, 'ELEMENTARY')).toEqual({
+      value: 'ELEMENTARY',
+      label: 'ELEMENTARY',
+    });
+  });
+
+  it('shows nothing for no value', () => {
+    expect(autocompleteSelection(levels, undefined)).toBeUndefined();
+  });
+});
+
+describe('textFieldError', () => {
+  it("names the field's example under a pattern failure, as the old client did", () => {
+    expect(
+      textFieldError('error.document-invalid-format', 'pattern', '112334')
+    ).toBe('error.document-invalid-format-example');
+  });
+
+  it("keeps the draft's message for any other failure, or with no example", () => {
+    expect(textFieldError('error.field-required', 'required', '112334')).toBe(
+      'error.field-required'
+    );
+    expect(
+      textFieldError('error.document-invalid-format', 'pattern', undefined)
+    ).toBe('error.document-invalid-format');
+    expect(textFieldError(undefined, 'pattern', '112334')).toBeUndefined();
+  });
+});
+
 describe('paths', () => {
   it('type checks hold', () => {
-    expect(typeChecks()).toHaveLength(15);
+    expect(typeChecks()).toHaveLength(28);
   });
 
   it('reads through missing parents as undefined', () => {
@@ -222,6 +331,45 @@ describe('paths', () => {
     expect(doc).toEqual({ a: 1 });
   });
 
+  it('creates an array and its first item for a path into the first item', () => {
+    const doc: Record<string, unknown> = {};
+    setAt(doc, 'blocks.0.phone', '55501234');
+    expect(doc).toEqual({ blocks: [{ phone: '55501234' }] });
+    expect(getAt(doc, 'blocks.0.phone')).toBe('55501234');
+  });
+
+  it('writes into the first item, keeping the rest of the array', () => {
+    const doc: Record<string, unknown> = {
+      blocks: [{ address: 'a' }, { phone: '2' }],
+    };
+    setAt(doc, 'blocks.0.phone', '1');
+    expect(doc).toEqual({
+      blocks: [{ address: 'a', phone: '1' }, { phone: '2' }],
+    });
+  });
+
+  it('drops an emptied only item, and the array with it', () => {
+    const doc: Record<string, unknown> = { keep: 1, blocks: [{ phone: '1' }] };
+    setAt(doc, 'blocks.0.phone', undefined);
+    expect(doc).toEqual({ keep: 1 });
+  });
+
+  it('keeps an emptied first item in its place when others follow', () => {
+    const doc: Record<string, unknown> = {
+      blocks: [{ phone: '1' }, { phone: '2' }],
+    };
+    setAt(doc, 'blocks.0.phone', undefined);
+    expect(doc).toEqual({ blocks: [{}, { phone: '2' }] });
+  });
+
+  it('removes an item written as undefined', () => {
+    const doc: Record<string, unknown> = {
+      blocks: [{ phone: '1' }, { phone: '2' }],
+    };
+    setAt(doc, 'blocks.0', undefined);
+    expect(doc).toEqual({ blocks: [{ phone: '2' }] });
+  });
+
   it('converts AJV pointers, unescaping', () => {
     expect(pointerToPath('/extension/demo/notes')).toBe('extension.demo.notes');
     expect(pointerToPath('')).toBe('');
@@ -237,6 +385,13 @@ describe('paths', () => {
     ).toBe(true);
     expect(deepEqual(normalise({ a: 1 }), normalise({ a: 2 }))).toBe(false);
   });
+
+  it('treats an empty array as absent, and keeps an array with items whole', () => {
+    expect(deepEqual(normalise({ a: 1, e: [] }), normalise({ a: 1 }))).toBe(
+      true
+    );
+    expect(normalise({ e: [{}, { f: 1 }] })).toEqual({ e: [{}, { f: 1 }] });
+  });
 });
 
 describe('fieldSchemaInfo', () => {
@@ -245,6 +400,7 @@ describe('fieldSchemaInfo', () => {
       required: true,
       format: 'date-time',
       enum: undefined,
+      pattern: undefined,
     });
     expect(fieldSchemaInfo(encounterSchema, 'endDatetime')?.required).toBe(
       false
@@ -263,8 +419,36 @@ describe('fieldSchemaInfo', () => {
     ).toBe('date-time');
   });
 
+  it("reads a text field's pattern", () => {
+    const schema: JsonSchema = {
+      allOf: [{ $ref: '#/definitions/Coded' }],
+      definitions: {
+        Coded: {
+          type: 'object',
+          properties: { code: { type: 'string', pattern: '^[0-9]{6}$' } },
+        },
+      },
+    };
+    expect(fieldSchemaInfo(schema, 'code')?.pattern).toBe('^[0-9]{6}$');
+    expect(fieldSchemaInfo(encounterSchema, 'status')?.pattern).toBeUndefined();
+  });
+
   it('is undefined for a path the schema does not have', () => {
     expect(fieldSchemaInfo(encounterSchema, 'extension.other')).toBeUndefined();
+  });
+
+  it("reads a first item's field from the array's items, through $ref", () => {
+    const patient = baseSchemaFor('PATIENT')?.jsonSchema as JsonSchema;
+    expect(fieldSchemaInfo(patient, 'contactDetails.0.phone')).toEqual({
+      required: false,
+      format: undefined,
+      enum: undefined,
+      pattern: undefined,
+    });
+    expect(fieldSchemaInfo(patient, 'contactDetails.0.other')).toBeUndefined();
+    expect(fieldSchemaInfo(patient, 'firstName.0')).toBeUndefined();
+    expect(fieldSchemaInfo(listsSchema, 'blocks.0.phone')?.required).toBe(true);
+    expect(fieldSchemaInfo(listsSchema, 'blocks.0')?.required).toBe(false);
   });
 });
 
@@ -367,6 +551,19 @@ describe('createDraft', () => {
     });
   });
 
+  it('is not dirty once an emptied array is gone, and saves the document as it is', () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      c.reset({ ...validEncounter, notes: [] } as DemoEncounter);
+      expect(c.snapshot().notes).toEqual([]);
+      c.draft.set('notes.0.text' as never, 'Seen' as never);
+      expect(c.isDirty()).toBe(true);
+      c.draft.set('notes.0.text' as never, undefined as never);
+      expect(c.isDirty()).toBe(false);
+      dispose();
+    });
+  });
+
   it('keeps a missing value quiet until armed; a bad value shows at once', () => {
     createRoot(dispose => {
       const c = draftFor();
@@ -380,6 +577,50 @@ describe('createDraft', () => {
       expect(c.draft.errorFor('startDatetime')).toBe(
         'error.document-invalid-date-time'
       );
+      dispose();
+    });
+  });
+
+  it('lists the paths of the errors on show, for a summary of several fields', () => {
+    createRoot(dispose => {
+      const c = createDraft<Lists>({
+        schema: () => ({ id: 'lists-v1', jsonSchema: listsSchema }),
+        validate: () => validateDocument,
+      });
+      c.reset({});
+      expect(c.draft.visibleErrorPaths()).toEqual([]);
+      c.draft.set('blocks.0.address', 'Rue de Venise');
+      // The missing phone waits for a save attempt, as its field's error does.
+      expect(c.draft.visibleErrorPaths()).toEqual([]);
+      c.validation.arm();
+      expect(c.draft.visibleErrorPaths()).toEqual(['blocks.0.phone']);
+      c.draft.set('blocks.0.phone', '55501234');
+      expect(c.draft.visibleErrorPaths()).toEqual([]);
+      dispose();
+    });
+  });
+
+  it('writes, reads and reports a field in the first item of an array', () => {
+    createRoot(dispose => {
+      const c = createDraft<Lists>({
+        schema: () => ({ id: 'lists-v1', jsonSchema: listsSchema }),
+        validate: () => validateDocument,
+      });
+      c.reset({});
+      c.draft.set('blocks.0.phone', '555');
+      expect(c.draft.get('blocks.0.phone')).toBe('555');
+      expect(c.snapshot()).toEqual({ blocks: [{ phone: '555' }] });
+      // AJV's pointer `/blocks/0/phone` names the same path the field binds.
+      expect(c.draft.errorFor('blocks.0.phone')).toBe(
+        'error.document-invalid-format'
+      );
+      expect(c.draft.failedRule('blocks.0.phone')).toBe('pattern');
+      c.draft.set('blocks.0.phone', '55501234');
+      expect(c.draft.errorFor('blocks.0.phone')).toBeUndefined();
+      expect(c.draft.failedRule('blocks.0.phone')).toBeUndefined();
+      c.draft.set('blocks.0.phone', undefined);
+      expect(c.snapshot()).toEqual({});
+      expect(c.isDirty()).toBe(false);
       dispose();
     });
   });
@@ -502,6 +743,25 @@ describe('the base schema behind a thin registry schema', () => {
         format: 'date-time',
         enum: undefined,
       });
+      dispose();
+    });
+  });
+
+  it("keeps the registry schema's pattern over the base type's field", () => {
+    const coded = {
+      id: 'coded',
+      jsonSchema: {
+        type: 'object',
+        properties: { code: { type: 'string', pattern: '^[0-9]{6}$' } },
+      },
+    };
+    createRoot(dispose => {
+      const c = createDraft<{ code?: string }>({
+        schema: () => coded,
+        baseSchema: () => baseSchemaFor('PATIENT'),
+        validate: () => validateDocument,
+      });
+      expect(c.draft.schemaFor('code')?.pattern).toBe('^[0-9]{6}$');
       dispose();
     });
   });

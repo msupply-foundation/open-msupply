@@ -1,6 +1,7 @@
 import {
   createMemo,
   createResource,
+  createSignal,
   Match,
   Show,
   Suspense,
@@ -25,9 +26,15 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '../../ui/elements/feedback/Dialog';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../ui/elements/buttons/StandardButtons';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
 import { SaveIcon, XCircleIcon } from '../../ui/icons';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
+import { suggestsVisited, visitedFields } from '../../domain/encounter/visited';
 import {
   EncounterClinicianField,
   EncounterStatusField,
@@ -56,13 +63,12 @@ const fetchEncounterRecord = async (variables: {
 };
 
 /*
- * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI:
- * the host record screen; implementation-plan H7). The host owns the route,
- * the frame, the toolbar and the save; the body is the plugin form
- * contributed for the encounter's type, or the host's default encounter form
- * (DocumentFormRegion). The toolbar's visit date, clinician and status and the
- * body's fields edit one draft, the document form host's, saved in one go by
- * Save.
+ * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI: the
+ * host record screen). The host owns the route, the frame, the toolbar and the
+ * save; the body is the plugin form contributed for the encounter's type, or
+ * the host's default encounter form (DocumentFormRegion). The toolbar's visit
+ * date, clinician and status and the body's fields edit one draft, the document
+ * form host's, saved in one go by Save.
  *
  * Opened from a patient's Encounters row, and after "New encounter" creates
  * one whose visit is under way. Every read is non-suspending: the screen
@@ -72,6 +78,11 @@ const fetchEncounterRecord = async (variables: {
  * form host resolves it (DocumentVersionNotice above the body): read-only in
  * its archived form, with Edit to bring it into the current one, or in the
  * current form after migration.
+ *
+ * Save on an encounter still Pending whose visit date has passed asks first
+ * whether to record it as visited (domain/encounter/visited.ts): Save keeps
+ * it Pending; Save as visited sets the status and, where none is recorded,
+ * the end time.
  *
  * TO-DO: write this screen's spec (implementation-plan H26).
  */
@@ -115,6 +126,27 @@ const EncounterDetailView: Component = () => {
     isDirty: form.isDirty,
     onDiscard: form.discard,
   });
+
+  const [askingVisited, setAskingVisited] = createSignal(false);
+  const onSave = () => {
+    const saved = form.document()?.data as Partial<Encounter> | undefined;
+    if (suggestsVisited(saved, draft.data.status, new Date())) {
+      setAskingVisited(true);
+    } else {
+      void form.save();
+    }
+  };
+  const saveAsIs = () => {
+    setAskingVisited(false);
+    void form.save();
+  };
+  const saveAsVisited = () => {
+    const fields = visitedFields(draft.data.endDatetime, new Date());
+    draft.set('status', fields.status);
+    draft.set('endDatetime', fields.endDatetime);
+    setAskingVisited(false);
+    void form.save();
+  };
 
   const typeName = () => form.registry()?.name ?? record()?.type ?? '';
   const crumbs = () => {
@@ -201,7 +233,7 @@ const EncounterDetailView: Component = () => {
                       data-testid="save-button"
                       loading={form.saving()}
                       disabled={!form.canSave() || form.saving()}
-                      onClick={() => void form.save()}
+                      onClick={onSave}
                     >
                       {t('button.save')}
                     </Button>
@@ -226,6 +258,7 @@ const EncounterDetailView: Component = () => {
                       patientId: record()?.patientId ?? '',
                       documentName: form.document()?.name,
                     }}
+                    participation={form.coordinator.participationFor}
                     fallback={() => <Default draft={draft} />}
                     archivedVersion={archivedVersion()}
                     currentSchemaId={form.registry()?.formSchemaId}
@@ -261,6 +294,34 @@ const EncounterDetailView: Component = () => {
                     </Suspense>
                   </ContentContainer>
                 )}
+              </Show>
+              <Show when={askingVisited()}>
+                <Dialog
+                  open
+                  onClose={() => setAskingVisited(false)}
+                  title={t('messages.save-encounter-as-visited')}
+                  testId="save-as-visited-dialog"
+                  actions={
+                    <>
+                      <CancelButton
+                        data-testid="dialog-button-cancel"
+                        onClick={() => setAskingVisited(false)}
+                      />
+                      <DialogSaveButton
+                        data-testid="dialog-button-save"
+                        onClick={saveAsIs}
+                      />
+                      <Button
+                        variant="primary"
+                        confirms="continuing"
+                        data-testid="dialog-button-save-as-visited"
+                        onClick={saveAsVisited}
+                      >
+                        {t('button-save-as-visited')}
+                      </Button>
+                    </>
+                  }
+                />
               </Show>
               <ConfirmDialog
                 open={leaveGuard.open()}

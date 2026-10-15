@@ -38,12 +38,12 @@ export interface CreateEncounterDialogProps {
 }
 
 /*
- * "New encounter" (implementation-plan H8, the old client's create dialog):
- * the type, the visit date, the clinician and a note, written as a Scheduled
- * encounter the moment Create is pressed. The caller then opens the
- * encounter, or, for a visit in the future, stays on the patient: that is how
- * a follow-up is scheduled. The encounter's own form is on its record screen;
- * nothing of it is asked for here.
+ * "New encounter" (the old client's create dialog): the type, the visit date,
+ * the clinician and a note, written as a Scheduled encounter the moment Create
+ * is pressed. The caller then opens the encounter, or, for a visit in the
+ * future, stays on the patient: that is how a follow-up is scheduled. The
+ * encounter's own form is on its record screen; nothing of it is asked for
+ * here.
  */
 export const CreateEncounterDialog = (
   props: CreateEncounterDialogProps

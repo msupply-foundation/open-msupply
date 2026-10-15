@@ -683,7 +683,6 @@ export const DetailTableShowcase = () => {
               <DateField
                 label={t('label.received')}
                 size="small"
-                format="dd MMM yyyy"
                 value="2026-05-19"
                 disabled
               />

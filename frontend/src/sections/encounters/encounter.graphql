@@ -1,9 +1,8 @@
-# The encounter record screen's header facts (kdd/custom-forms
-# implementation-plan H7): who the encounter is for, its program and its
-# document's name, which the document form host loads the document by. The
-# document itself, draft and all, is the form host's (domain/documentForm).
-# Deleted encounters are included, so a link to one opens rather than
-# answering not-found.
+# The encounter record screen's header facts: who the encounter is for, its
+# program and its document's name, which the document form host loads the
+# document by. The document itself, draft and all, is the form host's
+# (domain/documentForm). Deleted encounters are included, so a link to one opens
+# rather than answering not-found.
 
 fragment EncounterRecord on EncounterNode {
   __typename

@@ -1,4 +1,11 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
@@ -6,6 +13,9 @@ import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { recordPrefersOldUi } from '../preferredFrontend';
 import { serverVersion, serverVersionDiffers } from '../api/serverInfo';
+import { graphqlFetch } from '../api/graphql';
+import { gated } from '../api/gated';
+import { IsMaintenanceMode } from '../api/auth.generated';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -19,6 +29,8 @@ import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import { createDocumentTitle } from '../documentTitle';
 import styles from '../ui/styles/LoginInitLayout.module.css';
+
+const MAINTENANCE_RECHECK_MS = 30_000;
 
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see kdd/page-composition) composed with
@@ -63,6 +75,37 @@ export const LoginPage: Component = () => {
   });
   const [submitState, setSubmitState] = createSignal<SubmitState>({
     kind: 'idle',
+  });
+
+  // Central maintenance mode (#840): only server administrators can log in, so
+  // say so before anyone tries — including a user just signed out by the
+  // switch, who lands here on their next request. Unauthenticated; a failed
+  // read shows nothing (a refused login still carries the server's message).
+  // Gated so the read never suspends the page (kdd/solid-reactivity-pitfalls).
+  const [maintenanceData, { refetch: refetchMaintenance }] = createResource(
+    async () => {
+      const result = await graphqlFetch(
+        IsMaintenanceMode,
+        {},
+        { background: true }
+      );
+      return result.kind === 'success' && result.data.isMaintenanceMode;
+    }
+  );
+  const maintenanceMode = () => gated(maintenanceData) ?? false;
+
+  // While the notice shows, re-read the flag every so often and when the
+  // window regains focus, so a user waiting here sees it clear once the mode
+  // is turned off without reloading.
+  createEffect(() => {
+    if (!maintenanceMode()) return;
+    const recheck = () => void refetchMaintenance();
+    const timer = setInterval(recheck, MAINTENANCE_RECHECK_MS);
+    window.addEventListener('focus', recheck);
+    onCleanup(() => {
+      clearInterval(timer);
+      window.removeEventListener('focus', recheck);
+    });
   });
 
   // Only decides WHERE the version line renders — see versionLine() below.
@@ -151,6 +194,11 @@ export const LoginPage: Component = () => {
               {t('login.form-heading')}
             </h2>
             <AppLogo class={styles.logo} />
+            <Show when={maintenanceMode()}>
+              <Alert severity="warning" testId="login-maintenance-mode">
+                {t('login.maintenance-mode')}
+              </Alert>
+            </Show>
             <TextField
               label={t('heading.username')}
               type="text"

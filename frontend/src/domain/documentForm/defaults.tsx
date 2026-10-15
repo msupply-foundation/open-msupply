@@ -1,9 +1,9 @@
 /*
  * The host's default forms for the base types (kdd/custom-forms/specs.md §
- * Forms in the UI; implementation-plan H6): what an enrolment or encounter
- * renders when no plugin form exists for its document type. A program with
- * no plugin, or one whose plugin is not written yet, still enrols patients
- * and records encounters through these.
+ * Forms in the UI): what an enrolment or encounter renders when no plugin form
+ * exists for its document type. A program with no plugin, or one whose plugin
+ * is not written yet, still enrols patients and records encounters through
+ * these.
  *
  * They edit only base-type fields, so they work for every document type of
  * their category, and a type's own extension fields are left in the document

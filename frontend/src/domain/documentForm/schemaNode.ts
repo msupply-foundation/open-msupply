@@ -1,9 +1,9 @@
 /*
  * What the schema says about one field path: whether it is required, its
- * `format` and its `enum` values. The form library reads this rather than
- * taking it as props, so the required asterisk, how a date is stored and
- * which values a select offers come from the one data contract the server
- * validates against (kdd/custom-forms/specs.md § Data, storage and
+ * `format`, its `enum` values and its `pattern`. The form library reads this
+ * rather than taking it as props, so the required asterisk, how a date is
+ * stored and which values a select offers come from the one data contract
+ * the server validates against (kdd/custom-forms/specs.md § Data, storage and
  * validation), and a form cannot disagree with it.
  *
  * Emitted schemas are `ts-json-schema-generator` output: a root `allOf` of a
@@ -21,6 +21,8 @@ export interface FieldSchemaInfo {
   required: boolean;
   format?: string;
   enum?: readonly string[];
+  /** The `pattern` a text value must match. */
+  pattern?: string;
 }
 
 const asSchema = (v: unknown): JsonSchema | undefined =>
@@ -87,6 +89,15 @@ export const fieldSchemaInfo = (
   let node: JsonSchema = root;
   let required = false;
   for (const key of keys) {
+    // An array's item (`contactDetails.0`): its facts are the `items`
+    // schema's, and an item is never required within its array.
+    if (/^\d+$/.test(key)) {
+      const items = asSchema(resolveRef(root, node)['items']);
+      if (!items) return undefined;
+      required = false;
+      node = items;
+      continue;
+    }
     const { properties, required: req } = flatten(root, node);
     const next = properties[key];
     if (!next) return undefined;
@@ -97,9 +108,12 @@ export const fieldSchemaInfo = (
   const format =
     typeof leaf['format'] === 'string' ? leaf['format'] : undefined;
   const values = leaf['enum'];
+  const pattern =
+    typeof leaf['pattern'] === 'string' ? leaf['pattern'] : undefined;
   return {
     required,
     format,
+    pattern,
     enum: Array.isArray(values)
       ? values.filter((v): v is string => typeof v === 'string')
       : undefined,

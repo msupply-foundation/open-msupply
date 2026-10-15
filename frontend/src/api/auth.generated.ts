@@ -97,3 +97,13 @@ export type LogoutResult = {
 export const Logout = {
   query: "query logout {\n  logout {\n    ... on Logout {\n      __typename\n      userId\n    }\n  }\n}",
 } as TypedDocument<LogoutResult, LogoutVariables>;
+
+export type IsMaintenanceModeVariables = Record<string, never>;
+
+export type IsMaintenanceModeResult = {
+  isMaintenanceMode: boolean;
+};
+
+export const IsMaintenanceMode = {
+  query: "query isMaintenanceMode {\n  isMaintenanceMode\n}",
+} as TypedDocument<IsMaintenanceModeResult, IsMaintenanceModeVariables>;

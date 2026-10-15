@@ -18,12 +18,11 @@ export interface ProgramPickerDialogProps {
 }
 
 /*
- * The first step of "New program" (implementation-plan H8, as the old
- * client's program search): the programs the registry offers, one to enrol
- * in. A program the patient is already enrolled in stays listed, disabled and
- * marked, rather than hidden, so the list reads the same for every patient;
- * the server refuses a second enrolment in any case. Picking opens the
- * enrolment form.
+ * The first step of "New program" (as the old client's program search): the
+ * programs the registry offers, one to enrol in. A program the patient is
+ * already enrolled in stays listed, disabled and marked, rather than hidden, so
+ * the list reads the same for every patient; the server refuses a second
+ * enrolment in any case. Picking opens the enrolment form.
  */
 export const ProgramPickerDialog = (
   props: ProgramPickerDialogProps

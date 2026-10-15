@@ -49,6 +49,12 @@ export interface SaveCoordinator {
   participationFor: (key: string) => FormParticipation;
   /** True when any contribution has declared itself dirty. Reactive. */
   dirty: () => boolean;
+  /**
+   * Clears every contribution's dirty state: the host's record is saved, and
+   * with it whatever a contribution's before-save handlers wrote. An
+   * after-save handler may declare it dirty again.
+   */
+  clearDirty: () => void;
   /** The first invalid contribution field's message, if any. Reactive. */
   invalidMessage: () => string | undefined;
   runBeforeSave: () => Promise<BeforeSaveOutcome>;
@@ -120,6 +126,7 @@ export const createSaveCoordinator = (): SaveCoordinator => {
   return {
     participationFor,
     dirty: () => dirtyKeys().size > 0,
+    clearDirty: () => setDirtyKeys(new Set()),
     invalidMessage: () => {
       for (const entry of validity().values())
         if (!entry.valid) return entry.message ?? '';

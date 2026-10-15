@@ -1,5 +1,12 @@
+import { createRoot } from 'solid-js';
 import { describe, expect, it } from 'vitest';
-import { seedPatientDocument } from './patientDocumentSeed';
+import { createDraft } from '../../../domain/documentForm/draft';
+import type { Patient } from '../../../plugin-sdk/documents';
+import {
+  seedNewPatientDocument,
+  seedPatientDocument,
+  withoutEmptyExtension,
+} from './patientDocumentSeed';
 import type { PatientResult } from './patient.generated';
 
 type PatientNode = NonNullable<PatientResult['patient']>;
@@ -79,5 +86,88 @@ describe('seedPatientDocument (a name row, as the first document)', () => {
     expect(seed.firstName).toBe('');
     expect(seed.lastName).toBe('');
     expect(seed.code).toBeUndefined();
+  });
+});
+
+// The create wizard's last step on the document path (spec/patients › effects
+// of creation): the first step's fields carried into the new document.
+describe('seedNewPatientDocument', () => {
+  const fields = {
+    firstName: 'Amina',
+    lastName: 'Hassan',
+    dateOfBirth: null,
+    gender: null,
+    address: '',
+    phone: '',
+  };
+
+  it('carries the names under the minted id, and nothing left empty', () => {
+    expect(seedNewPatientDocument('patient-9', fields)).toEqual({
+      id: 'patient-9',
+      firstName: 'Amina',
+      lastName: 'Hassan',
+      extension: {},
+    });
+  });
+
+  it('carries the date of birth and gender when given', () => {
+    expect(
+      seedNewPatientDocument('patient-9', {
+        ...fields,
+        dateOfBirth: '1990-04-02',
+        gender: 'FEMALE',
+      })
+    ).toMatchObject({ dateOfBirth: '1990-04-02', gender: 'FEMALE' });
+  });
+
+  it('puts the address and phone in the first contact block', () => {
+    expect(
+      seedNewPatientDocument('patient-9', {
+        ...fields,
+        address: ' Rue de Venise ',
+        phone: '77889900',
+      }).contactDetails
+    ).toEqual([{ address1: 'Rue de Venise', phone: '77889900' }]);
+    expect(
+      seedNewPatientDocument('patient-9', { ...fields, phone: '77889900' })
+        .contactDetails
+    ).toEqual([{ phone: '77889900' }]);
+  });
+
+  // As the old client's create starts every new patient, so a field the
+  // deployment requires inside `extension` is required from the start of a
+  // plugin's patient form.
+  it('starts an empty extension', () => {
+    expect(seedNewPatientDocument('patient-9', fields).extension).toEqual({});
+  });
+});
+
+// The host's default patient form takes it out as it mounts
+// (PatientDocumentFormView), since it draws none of the fields inside it.
+describe('withoutEmptyExtension', () => {
+  const draftOf = (seed: Patient) =>
+    createRoot(dispose => {
+      const c = createDraft<Patient>({
+        schema: () => undefined,
+        validate: () => undefined,
+      });
+      c.reset(seed);
+      withoutEmptyExtension(c.draft);
+      return { draft: c.draft, dispose };
+    });
+
+  it('takes out an empty extension', () => {
+    const { draft, dispose } = draftOf({ id: 'p', extension: {} } as Patient);
+    expect(draft.get('extension')).toBeUndefined();
+    dispose();
+  });
+
+  it('leaves an extension that holds values', () => {
+    const { draft, dispose } = draftOf({
+      id: 'p',
+      extension: { nationality: 'Djiboutienne' },
+    } as Patient);
+    expect(draft.get('extension')).toEqual({ nationality: 'Djiboutienne' });
+    dispose();
   });
 });
