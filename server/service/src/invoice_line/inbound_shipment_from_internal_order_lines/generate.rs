@@ -65,6 +65,7 @@ fn generate_line(
     InvoiceRow {
         id: invoice_id,
         tax_percentage,
+        campaign_id,
         ..
     }: InvoiceRow,
 ) -> InvoiceLineRow {
@@ -100,7 +101,8 @@ fn generate_line(
         transfer_comment: None,
         vvm_status_id: None,
         reason_option_id: None,
-        campaign_id: None,
+        // The shipment's default campaign (issue #996)
+        campaign_id,
         program_id: None,
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,

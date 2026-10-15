@@ -178,7 +178,7 @@ Moving a deployment between versions far apart — especially backwards — usua
 
 Add the **`deploy`** label to a pull request and every push to it builds an image and brings up a server of its own at `https://pr-<number>.<DEPLOY_DOMAIN>`. Remove the label, or close the PR, and the server and its database are removed. A comment on the PR carries the link and is rewritten on each push; the link itself never changes.
 
-Previews run as a **central server**. They are always seeded, so they cannot sync and could never be a realistic remote site, and central gives them the central-only setup — stores, global preferences, items — that trying a change out often needs. To review something that only behaves differently on a remote site, start a [named deployment](#named-deployments) of the branch with `central: remote` instead.
+Previews run as a **central server**. They start seeded, so they cannot sync and could never be a realistic remote site, and central gives them the central-only features that trying a change out often needs. Resetting one to **Empty** on the dashboard makes it a fresh central server instead, ready for remote sites to sync to. To review something that only behaves differently on a remote site, start a [named deployment](#named-deployments) of the branch with `central: remote` instead.
 
 Previews build the `debug` profile, unlike named deployments, which build `release`. A preview is the containerised equivalent of checking the branch out and running it, so that matches what a reviewer would get locally — it compiles faster, runs slower and is not stripped, which is reason enough never to benchmark a preview or quote its image size.
 

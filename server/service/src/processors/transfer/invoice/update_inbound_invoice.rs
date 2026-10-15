@@ -139,6 +139,9 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             currency_id: outbound_invoice_row.currency_id.clone(),
             currency_rate: outbound_invoice_row.currency_rate,
             expected_delivery_date: outbound_invoice_row.expected_delivery_date,
+            // Safe to overwrite: the receiver can't edit the inbound while
+            // it's Picked or Shipped, so there's no campaign of theirs to lose
+            campaign_id: outbound_invoice_row.campaign_id.clone(),
 
             ..inbound_invoice.invoice_row.clone()
         };

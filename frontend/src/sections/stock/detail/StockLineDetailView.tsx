@@ -734,6 +734,7 @@ const StockLineDetailView: Component = () => {
                               storeId={params.storeId}
                               itemId={l().itemId}
                               campaignId={edit.campaignId ?? undefined}
+                              campaignName={l().campaign?.name}
                               programId={edit.programId ?? undefined}
                               placeholder={t('label.none')}
                               onChange={v => {

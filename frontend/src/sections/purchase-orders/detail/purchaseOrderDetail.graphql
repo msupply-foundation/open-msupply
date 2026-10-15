@@ -143,8 +143,11 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   requestedPackSize
   requestedNumberOfUnits
   adjustedNumberOfUnits
-  # Written by the shipment, never here.
+  # Both written by the shipment, never here: shipped counts every unit the
+  # supplier has sent, received only those on a shipment marked received or
+  # verified (contract § listing outstanding lines).
   shippedNumberOfUnits
+  receivedNumberOfUnits
   pricePerPackBeforeDiscount
   pricePerPackAfterDiscount
   # The line's stored cost — written unrounded, the one figure the table,

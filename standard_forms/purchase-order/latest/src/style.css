@@ -47,6 +47,13 @@ body > table {
   display: flex;
   justify-content: space-between;
 }
+.heading_message {
+  font-family: Tahoma;
+  font-size: 10pt;
+  text-align: center;
+  padding: 6pt 0;
+}
+
 .body_column_label th {
   border-bottom: 0.5px solid black;
   text-align: start;
