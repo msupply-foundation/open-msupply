@@ -7002,6 +7002,14 @@ type PurchaseOrderLineNode {
 	pricePerPackBeforeDiscount: Float!
 	pricePerPackAfterDiscount: Float!
 	lineTotal: Float!
+	"""
+	The pack price with the order's supplier discount apportioned to the line
+	"""
+	pricePerPackAfterSupplierDiscount: Float!
+	"""
+	The line's stored total with the order's supplier discount apportioned to it
+	"""
+	lineTotalAfterSupplierDiscount: Float!
 	comment: String
 	supplierItemCode: String
 	item: ItemNode!

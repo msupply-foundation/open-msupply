@@ -51,6 +51,16 @@ impl PurchaseOrderLineNode {
     pub async fn line_total(&self) -> f64 {
         self.row().line_total
     }
+    /// The pack price with the order's supplier discount apportioned to the line
+    pub async fn price_per_pack_after_supplier_discount(&self) -> f64 {
+        self.purchase_order_line
+            .price_per_pack_after_supplier_discount()
+    }
+    /// The line's stored total with the order's supplier discount apportioned to it
+    pub async fn line_total_after_supplier_discount(&self) -> f64 {
+        self.purchase_order_line
+            .line_total_after_supplier_discount()
+    }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }

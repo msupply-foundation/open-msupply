@@ -33,6 +33,7 @@ pub struct PurchaseOrderLine {
     pub purchase_order_line_row: PurchaseOrderLineRow,
     pub item_row: ItemRow,
     pub purchase_order_line_stats_row: PurchaseOrderLineStatsRow,
+    pub purchase_order_row: PurchaseOrderRow,
 }
 
 #[derive(Clone, Default)]
@@ -330,12 +331,32 @@ impl PurchaseOrderLineRow {
     pub fn calculate_line_total(&self) -> f64 {
         self.price_per_pack_after_discount * self.number_of_packs()
     }
+
+    /// The pack price once the order's supplier discount is apportioned to the line.
+    pub fn price_per_pack_after_supplier_discount(&self, order: &PurchaseOrderRow) -> f64 {
+        self.price_per_pack_after_discount * order.supplier_discount_factor()
+    }
+
+    /// The stored line total once the order's supplier discount is apportioned to the line.
+    pub fn line_total_after_supplier_discount(&self, order: &PurchaseOrderRow) -> f64 {
+        self.line_total * order.supplier_discount_factor()
+    }
 }
 
 impl PurchaseOrderLine {
     pub fn outstanding_number_of_units(&self) -> f64 {
         self.purchase_order_line_row.expected_number_of_units()
             - self.purchase_order_line_stats_row.received_number_of_units
+    }
+
+    pub fn price_per_pack_after_supplier_discount(&self) -> f64 {
+        self.purchase_order_line_row
+            .price_per_pack_after_supplier_discount(&self.purchase_order_row)
+    }
+
+    pub fn line_total_after_supplier_discount(&self) -> f64 {
+        self.purchase_order_line_row
+            .line_total_after_supplier_discount(&self.purchase_order_row)
     }
 }
 
@@ -389,12 +410,19 @@ impl PurchaseOrderLineFilter {
 }
 
 fn to_domain(
-    (purchase_order_line_row, item_row, _, purchase_order_line_stats_row, _supplier): PurchaseOrderLineJoin,
+    (
+        purchase_order_line_row,
+        item_row,
+        purchase_order_row,
+        purchase_order_line_stats_row,
+        _supplier,
+    ): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,
         purchase_order_line_stats_row,
+        purchase_order_row,
     }
 }
 
