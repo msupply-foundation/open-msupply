@@ -65,7 +65,7 @@ sudo mkdir -p /opt/omsupply/bundles
 sudo chown "$USER:$(id -gn)" /opt/omsupply/bundles
 ```
 
-- `/opt/omsupply/bundles` is a host directory rather than a docker volume so no prune, `down -v` or reinstalled daemon can take it. The workflows refuse to run without it rather than let docker create an empty one. A box that still has the old `oms-bundles` volume gets it copied in by the first workflow that finds the directory empty; `docker volume rm oms-bundles` once the dashboard shows everything. See `.github/scripts/bundle-store.sh`.
+- `/opt/omsupply/bundles` is a host directory rather than a docker volume so no prune, `down -v` or reinstalled daemon can take it. The workflows refuse to run without it rather than let docker create an empty one. See `.github/scripts/bundle-store.sh`.
 
 - `/cache/target` is split **per runner name** by the workflow: cargo locks a target dir, so lanes sharing one would serialise.
 - `/cache/sccache` is reserved for the containerised check jobs; nothing writes to it yet.
