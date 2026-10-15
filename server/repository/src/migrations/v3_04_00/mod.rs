@@ -147,7 +147,8 @@ mod test {
 
     /// The Not functioning reasons match UNICEF's list: the temperature
     /// reason moves over from Not in use under its new name, and the two
-    /// missing reasons are added alongside the existing ones.
+    /// missing reasons are added alongside the existing ones. "Other" is the
+    /// only one that requires a comment.
     #[actix_rt::test]
     async fn migration_3_04_00_asset_log_reasons() {
         use crate::{AssetLogReasonRowRepository, asset_log_row::AssetLogStatus};
@@ -201,5 +202,15 @@ mod test {
                 "Unknown",
             ]
         );
+
+        let comments_required: Vec<String> = AssetLogReasonRowRepository::new(&connection)
+            .find_all()
+            .unwrap()
+            .into_iter()
+            .filter(|row| row.asset_log_status == AssetLogStatus::NotFunctioning)
+            .filter(|row| row.comments_required)
+            .map(|row| row.reason)
+            .collect();
+        assert_eq!(comments_required, vec!["Other"]);
     }
 }
