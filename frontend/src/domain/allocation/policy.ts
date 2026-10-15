@@ -24,13 +24,25 @@ export interface AllocationPreferences {
    *  (outbound, prescriptions) resolve and pass it; omitted behaves as off
    *  (plain FEFO). */
   sortByVvmStatusThenExpiry?: boolean;
+  /**
+   * The campaign the record issues for, when the consumer matches campaigns
+   * (outbound): auto-distribution then fills only batches of that campaign,
+   * and `null` (a routine shipment) fills only batches with no campaign.
+   * Omitted = no campaign matching (prescriptions). Never bars manual entry.
+   */
+  issueCampaignId?: string | null;
 }
 
 /**
  * Why a batch is barred — the skip-category vocabulary shared by every
  * allocation report (spec/stock-allocation/contract.md § warning vocabulary).
  */
-export type BarReason = 'on-hold' | 'expired' | 'unusable-vvm';
+export type BarReason =
+  | 'on-hold'
+  | 'expired'
+  | 'unusable-vvm'
+  /** Auto-distribution only: the batch's campaign isn't the record's. */
+  | 'other-campaign';
 
 /**
  * The structural batch fields barring reads
@@ -61,6 +73,8 @@ export interface BarrableBatch {
    * (VVM data only exists on vaccine stock in practice).
    */
   isVaccineItem?: boolean;
+  /** The batch's campaign — read only under `issueCampaignId`. */
+  campaign?: { id: string } | null;
 }
 
 // The expiry guard compares calendar DAYS (`today + threshold` vs the
@@ -136,7 +150,11 @@ export const barReasons = (
  *   preference only WIDENS the cutoff by its threshold (and separately bars
  *   manual entry, barReasons above);
  * - **unusable VVM is never auto-allocated**, preference or no preference
- *   (_manage VVM status_ only gates the manual bar and the grid column).
+ *   (_manage VVM status_ only gates the manual bar and the grid column);
+ * - **another campaign's stock is never auto-allocated** when the consumer
+ *   passes `issueCampaignId` — a routine record (null) skips all campaign
+ *   stock. Such a batch reports only `other-campaign`, never its other
+ *   reasons.
  *
  * A batch excluded here but not in barReasons stays manually issuable.
  */
@@ -145,6 +163,14 @@ export const autoAllocateBarReasons = (
   prefs: AllocationPreferences,
   today: Date = new Date()
 ): BarReason[] => {
+  // Another campaign's batch is skipped for that reason alone, before its
+  // other states are looked at — as the server's allocate does — so a held or
+  // expired batch the record could never use isn't reported as held or expired.
+  if (
+    prefs.issueCampaignId !== undefined &&
+    (batch.campaign?.id ?? null) !== prefs.issueCampaignId
+  )
+    return ['other-campaign'];
   const reasons: BarReason[] = [];
   if (batch.stockLineOnHold || batch.location?.onHold) reasons.push('on-hold');
   const threshold = prefs.expiredStockPreventIssue

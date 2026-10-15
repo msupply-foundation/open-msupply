@@ -98,8 +98,16 @@ export const setHomeCurrency = (code: string | null | undefined): void => {
  * A money figure in the given currency (ISO 4217) at that currency's minor
  * units, with its narrow symbol in the active locale (or its code, for the
  * CODE_LABELLED currencies). No code: the store's home currency.
+ *
+ * `maxDecimals` widens the precision for a figure stored finer than the
+ * currency's minor units (a unit price): it keeps the minor units and shows
+ * further decimals only as far as the figure needs — "$3.40", "$0.034".
  */
-export const formatCurrency = (value: number, code?: string | null): string => {
+export const formatCurrency = (
+  value: number,
+  code?: string | null,
+  maxDecimals?: number
+): string => {
   const currency = code ?? homeCurrency();
   const { decimals } = getCurrencyInfo(currency, locale());
   return formatNumber(value, {
@@ -107,6 +115,6 @@ export const formatCurrency = (value: number, code?: string | null): string => {
     currency,
     currencyDisplay: resolveDisplay(currency, 'narrowSymbol'),
     minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    maximumFractionDigits: Math.max(decimals, maxDecimals ?? decimals),
   });
 };
