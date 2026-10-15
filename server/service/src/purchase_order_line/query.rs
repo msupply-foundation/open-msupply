@@ -70,11 +70,8 @@ pub fn calculate_units_in_other_purchase_orders(
                 .id(EqualFilter::not_equal_to(
                     exclude_purchase_order_id.to_string(),
                 ))
-                .status(EqualFilter::equal_any(vec![
-                    PurchaseOrderStatus::RequestApproval,
-                    PurchaseOrderStatus::Confirmed,
-                    PurchaseOrderStatus::Sent,
-                ])),
+                // Only a SENT order has put stock on order
+                .status(EqualFilter::equal_to(PurchaseOrderStatus::Sent)),
         )
         .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed));
 
@@ -94,6 +91,7 @@ pub fn calculate_units_in_other_purchase_orders(
 
 #[cfg(test)]
 mod test {
+    use super::calculate_units_in_other_purchase_orders;
     use crate::service_provider::ServiceProvider;
     use repository::mock::{mock_item_a, mock_item_b, mock_name_a, mock_name_c, mock_store_a};
     use repository::{
@@ -458,5 +456,102 @@ mod test {
                 line_b.id.clone()
             ]
         );
+    }
+
+    /// Only a SENT order has put stock on order: lines on orders still being
+    /// drafted, approved or already finalised contribute nothing, and nor do
+    /// closed lines on a sent order.
+    #[actix_rt::test]
+    async fn units_in_other_purchase_orders_counts_sent_orders_only() {
+        let (_, connection, _, _) = setup_all(
+            "units_in_other_purchase_orders_counts_sent_orders_only",
+            MockDataInserts::none().stores().items(),
+        )
+        .await;
+
+        let purchase_order_repo = PurchaseOrderRowRepository::new(&connection);
+        let line_repo = PurchaseOrderLineRowRepository::new(&connection);
+        let statuses = [
+            ("po_new", repository::PurchaseOrderStatus::New, 10.0),
+            (
+                "po_approval",
+                repository::PurchaseOrderStatus::RequestApproval,
+                20.0,
+            ),
+            (
+                "po_approved",
+                repository::PurchaseOrderStatus::Confirmed,
+                40.0,
+            ),
+            ("po_sent", repository::PurchaseOrderStatus::Sent, 80.0),
+            (
+                "po_finalised",
+                repository::PurchaseOrderStatus::Finalised,
+                160.0,
+            ),
+            (
+                "po_cancelled",
+                repository::PurchaseOrderStatus::Cancelled,
+                320.0,
+            ),
+        ];
+        for (number, (id, status, units)) in statuses.into_iter().enumerate() {
+            purchase_order_repo
+                .upsert_one(&PurchaseOrderRow {
+                    id: id.to_string(),
+                    store_id: mock_store_a().id,
+                    supplier_name_id: mock_name_c().id,
+                    created_datetime: chrono::Utc::now().naive_utc(),
+                    status,
+                    purchase_order_number: number as i64 + 1,
+                    ..Default::default()
+                })
+                .unwrap();
+            line_repo
+                .upsert_one(&PurchaseOrderLineRow {
+                    id: format!("{id}_line"),
+                    purchase_order_id: id.to_string(),
+                    store_id: mock_store_a().id,
+                    line_number: 1,
+                    item_id: mock_item_a().id,
+                    item_name: mock_item_a().name,
+                    requested_number_of_units: units,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        // A closed line on a sent order is no longer on order either.
+        line_repo
+            .upsert_one(&PurchaseOrderLineRow {
+                id: "po_sent_closed_line".to_string(),
+                purchase_order_id: "po_sent".to_string(),
+                store_id: mock_store_a().id,
+                line_number: 2,
+                item_id: mock_item_a().id,
+                item_name: mock_item_a().name,
+                requested_number_of_units: 1000.0,
+                status: repository::PurchaseOrderLineStatus::Closed,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let on_order = calculate_units_in_other_purchase_orders(
+            &connection,
+            &mock_item_a().id,
+            "some_other_order",
+            Some(&mock_store_a().id),
+        )
+        .unwrap();
+        assert_eq!(on_order, 80.0);
+
+        // The order being edited never counts itself.
+        let on_order = calculate_units_in_other_purchase_orders(
+            &connection,
+            &mock_item_a().id,
+            "po_sent",
+            Some(&mock_store_a().id),
+        )
+        .unwrap();
+        assert_eq!(on_order, 0.0);
     }
 }
