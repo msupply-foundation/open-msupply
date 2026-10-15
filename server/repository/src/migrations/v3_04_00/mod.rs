@@ -7,6 +7,7 @@ mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
 mod add_plugin_ownership_to_document_registry;
 mod prescription_request_occupation_prominent;
+mod requeue_plugin_rows_for_upgraded_sites;
 
 pub(crate) struct V3_04_00;
 
@@ -27,6 +28,7 @@ impl Migration for V3_04_00 {
             Box::new(prescription_request_occupation_prominent::Migrate),
             Box::new(add_campaign_id_to_invoice::Migrate),
             Box::new(add_plugin_ownership_to_document_registry::Migrate),
+            Box::new(requeue_plugin_rows_for_upgraded_sites::Migrate),
         ]
     }
 }
