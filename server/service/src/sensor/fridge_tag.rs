@@ -332,7 +332,6 @@ fn sensor_add_if_new(
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
-    pub sensor_id: String,
     new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
@@ -498,7 +497,6 @@ fn integrate_sensor_data(
     let temperature_sensor_daily_summaries = temperature_sensor.daily_summaries.unwrap_or_default();
 
     let result = ReadSensor {
-        sensor_id: sensor_row.id.clone(),
         new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
