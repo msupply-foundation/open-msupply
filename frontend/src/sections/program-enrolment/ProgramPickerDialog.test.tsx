@@ -1,4 +1,4 @@
-import { createRoot } from 'solid-js';
+import { createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
@@ -168,5 +168,31 @@ describe('OMS-REG-PAT-04.5 / .6 / .7 — choosing, enrolling and cancelling', ()
     shown.onChange?.(TB.id);
     enrol()?.onClick();
     expect(onPick).toHaveBeenCalledWith(TB);
+  });
+});
+
+describe('OMS-REG-PAT-04.53 — a pick the list has since dropped', () => {
+  it('leaves Enrol disabled', () => {
+    // The Vaccinations tab's list narrows once the immunisation programs
+    // arrive; a program picked before then may no longer be listed.
+    const [registries, setRegistries] = createSignal([TB, HIV]);
+    createRoot(d => {
+      dispose = d;
+      return ProgramPickerDialog({
+        open: true,
+        get registries() {
+          return registries();
+        },
+        enrolledTypes: new Set(),
+        onPick: vi.fn(),
+        onClose: vi.fn(),
+      });
+    });
+    const enrol = () =>
+      shown.buttons.find(b => b['data-testid'] === 'program-picker-enrol');
+    shown.onChange?.(HIV.id);
+    expect(enrol()?.disabled).toBe(false);
+    setRegistries([TB]);
+    expect(enrol()?.disabled).toBe(true);
   });
 });

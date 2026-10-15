@@ -19,6 +19,7 @@ interface TextProps {
 }
 interface ButtonProps {
   disabled: boolean;
+  loading: boolean;
   onClick: () => void;
 }
 interface ConfirmProps {
@@ -58,7 +59,13 @@ vi.mock('../../intl', () => ({
   t: (key: string, vars?: Record<string, unknown>) =>
     vars ? `${key} ${JSON.stringify(vars)}` : key,
 }));
-vi.mock('../../store/storeContext', () => ({ currentStoreId: () => 'store' }));
+// Whether the user may edit documents at this store (drawing a number needs it).
+let canEditDocuments = true;
+vi.mock('../../store/storeContext', () => ({
+  currentStoreId: () => 'store',
+  hasPermission: (permission: string) =>
+    permission === 'DOCUMENT_MUTATE' && canEditDocuments,
+}));
 
 const held = new Set<string>();
 // When set, a check waits for it: a slow server.
@@ -80,6 +87,7 @@ afterEach(() => {
   dispose?.();
   dispose = undefined;
   held.clear();
+  canEditDocuments = true;
   delete shown.text;
   delete shown.button;
   delete shown.confirm;
@@ -338,7 +346,7 @@ describe('OMS-REG-PAT-04.54 — surrounding spaces are not part of the ID', () =
   });
 });
 
-describe('OMS-REG-PAT-04.36 / .37 / .51 — a typed ID another enrolment holds', () => {
+describe('OMS-REG-PAT-04.36 / .37 / .51 / .60 — a typed ID another enrolment holds', () => {
   it('is flagged at the field once typing pauses (.36)', async () => {
     held.add('HELD-1');
     mount({
@@ -354,7 +362,7 @@ describe('OMS-REG-PAT-04.36 / .37 / .51 — a typed ID another enrolment holds',
     expect(shown.text?.value).toBe('HELD-1');
   });
 
-  it('blocks the save while flagged; what is saved is what is shown (.37)', async () => {
+  it('blocks the save while flagged; changed to a free ID, it saves what is shown (.37, .60)', async () => {
     held.add('HELD-1');
     const { controller } = mount({
       data: { ...NEW, programEnrolmentId: 'GRY-0042' },
@@ -414,5 +422,92 @@ describe('OMS-REG-PAT-04.36 / .37 / .51 — a typed ID another enrolment holds',
     await vi.waitFor(() => expect(shown.text?.error).toBeDefined());
     type('HELD-12');
     expect(shown.text?.error).toBeUndefined();
+  });
+});
+
+// An ID drawn on request, answered when the test says.
+const slowDraw = () => {
+  let answer: ((id: string | undefined) => void) | undefined;
+  const generate = vi.fn(
+    () => new Promise<string | undefined>(r => (answer = r))
+  );
+  return { generate, answer: (id: string | undefined) => answer?.(id) };
+};
+
+describe("OMS-REG-PAT-04.56 / .57 — while a new enrolment's ID is being drawn", () => {
+  it('a save waits for the ID, and then has it (.56)', async () => {
+    const draw = slowDraw();
+    const { controller } = mount({ data: NEW, generate: draw.generate });
+    expect(controller.busy()).toBe(true);
+    const settled = controller.settled();
+    draw.answer('GRY-0007');
+    await settled;
+    expect(controller.draft.get('programEnrolmentId')).toBe('GRY-0007');
+    expect(controller.busy()).toBe(false);
+  });
+
+  it('the box cannot be typed in until the ID arrives (.57)', async () => {
+    const draw = slowDraw();
+    mount({ data: NEW, generate: draw.generate, allowTyping: true });
+    expect(shown.text?.readOnly).toBe(true);
+    draw.answer('GRY-0007');
+    await vi.waitFor(() => expect(shown.text?.readOnly).toBe(false));
+    expect(shown.text?.value).toBe('GRY-0007');
+  });
+
+  it('a draw that arrives after the field was reseeded is dropped', async () => {
+    // Generate pressed on a saved enrolment, then the edit is discarded
+    // (reseeded) before the draw answers: the draw no longer applies.
+    const draw = slowDraw();
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      generate: draw.generate,
+    });
+    shown.button?.onClick();
+    shown.confirm?.onConfirm();
+    controller.reset({ ...NEW, programEnrolmentId: 'KEPT-1' });
+    draw.answer('GRY-0007');
+    // Let the draw finish its own steps (the duplicate check), whether or
+    // not a save would wait on it.
+    await vi.waitFor(() => expect(shown.button?.loading).toBe(false));
+    await controller.settled();
+    expect(controller.draft.get('programEnrolmentId')).toBe('KEPT-1');
+  });
+
+  it('a failed draw leaves the field empty, and nothing waits on it', async () => {
+    const draw = slowDraw();
+    const { controller } = mount({ data: NEW, generate: draw.generate });
+    draw.answer(undefined);
+    await controller.settled();
+    expect(controller.draft.get('programEnrolmentId')).toBeUndefined();
+    expect(controller.busy()).toBe(false);
+  });
+});
+
+describe('OMS-REG-PAT-04.58 — a generated ID the field gives up on', () => {
+  it('keeps it, flagged as a duplicate, and the save is refused', async () => {
+    // A format whose number part does not move: every draw is the same, held.
+    held.add('FIXED-1');
+    const { controller } = mount({
+      data: NEW,
+      generate: vi.fn(async () => 'FIXED-1'),
+    });
+    await vi.waitFor(() =>
+      expect(controller.draft.get('programEnrolmentId')).toBe('FIXED-1')
+    );
+    expect(shown.text?.error).toBe('error.duplicated-id {"id":"FIXED-1"}');
+    expect(controller.validation.valid()).toBe(false);
+  });
+});
+
+describe("OMS-REG-PAT-04.59 — without the store's document edit permission", () => {
+  it('a new enrolment opens with no ID drawn, and Generate is still offered', async () => {
+    canEditDocuments = false;
+    const { generate } = mount({ data: NEW });
+    await Promise.resolve();
+    expect(generate).not.toHaveBeenCalled();
+    expect(shown.text?.value).toBe('');
+    expect(shown.button?.disabled).toBe(false);
   });
 });

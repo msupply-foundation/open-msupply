@@ -4,7 +4,6 @@ import {
   Match,
   Show,
   Switch,
-  untrack,
   type JSX,
 } from 'solid-js';
 import { reportPermissionDenied } from '@/api/graphql';
@@ -116,9 +115,13 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     return v.kind === 'archived' ? v.version : undefined;
   };
 
-  // On the default form, what the program's own form schema requires that the
-  // default form doesn't ask for (rules § the default form): with any, the
-  // enrolment can't be saved here, so it says so and offers no Save.
+  // On the default form, the answers the program's own form schema requires
+  // that the enrolment doesn't hold and the default form doesn't ask for
+  // (rules § the default form): with any, the enrolment can't be saved here,
+  // so it says so and offers no Save. Read against the draft, tracked: an
+  // enrolment saved elsewhere with those answers opens without the notice,
+  // and the default form can't change them, so the answer moves only when
+  // the draft is seeded.
   const unasked = createMemo((): string[] => {
     const r = form.registry();
     const library = form.library();
@@ -127,9 +130,12 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     if (documentFormFor('programEnrolment.form', r.documentType).occupant) {
       return [];
     }
-    const data = untrack(() => form.draft.data);
     return library
-      .validateDocument(r.formSchemaId, r.jsonSchema as JsonSchema, data)
+      .validateDocument(
+        r.formSchemaId,
+        r.jsonSchema as JsonSchema,
+        form.draft.data
+      )
       .filter(
         e =>
           e.keyword === 'required' &&
@@ -139,7 +145,10 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
   });
 
   const [confirmDiscard, setConfirmDiscard] = createSignal(false);
+  // Nothing closes the enrolment while a save is under way: it would go on
+  // saving behind the closed dialog (ui-surface S3 › Saving).
   const close = () => {
+    if (form.saving()) return;
     if (form.isDirty()) setConfirmDiscard(true);
     else props.onClose();
   };
@@ -186,15 +195,19 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
         }
         actions={
           <>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              confirms="cancel"
-              data-testid="dialog-button-cancel"
-              onClick={close}
-            >
-              {t('button.cancel')}
-            </Button>
+            {/* Hidden while a save is in flight, back once it resolves
+                (controls › dialog chrome). */}
+            <Show when={!form.saving()}>
+              <Button
+                variant="secondary"
+                icon={<XCircleIcon />}
+                confirms="cancel"
+                data-testid="dialog-button-cancel"
+                onClick={close}
+              >
+                {t('button.cancel')}
+              </Button>
+            </Show>
             <Show when={unasked().length === 0}>
               <Button
                 icon={<SaveIcon />}

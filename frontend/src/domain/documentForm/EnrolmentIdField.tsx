@@ -14,7 +14,7 @@ import { TextField } from '../../ui/elements/inputs/TextField';
 import { Button } from '../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { createDebounced } from '../../ui/utils/createDebounced';
-import { currentStoreId } from '../../store/storeContext';
+import { currentStoreId, hasPermission } from '../../store/storeContext';
 import type { ProgramEnrolment } from '../../plugin-sdk/documents';
 import type { FormRecordView } from '../../plugin-sdk/types';
 import type { Draft } from './draft';
@@ -115,27 +115,50 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
   );
 
   // `fill` on open, so a generated ID is not an edit (rules § leaving with
-  // unsaved changes); `set` when the user asks for one.
+  // unsaved changes); `set` when the user asks for one. While the ID is being
+  // drawn a save waits for it, and the box can't be typed in, so the draw
+  // never lands on top of typing (rules § generating).
   const generate = async (write: 'fill' | 'set') => {
     if (generating()) return;
     setGenerating(true);
+    // A check still running on what was typed no longer speaks for the box.
+    check.cancel();
+    checkRun++;
+    holdSave();
+    const before = held();
     const storeId = currentStoreId() ?? '';
     const ownName = props.record.documentName;
-    const id = await drawFreeEnrolmentId(props.generate, candidate =>
+    const drawn = await drawFreeEnrolmentId(props.generate, candidate =>
       isEnrolmentIdFree(storeId, candidate, ownName)
     );
     setGenerating(false);
-    if (id === undefined) return;
-    check.cancel();
-    checkRun++;
-    d()[write]('programEnrolmentId', id);
-    d().setError('programEnrolmentId', undefined);
+    // A failed draw leaves the field as it was; so does one the field has
+    // moved on from meanwhile (a discard reseeded it).
+    if (drawn !== undefined && held() === before) {
+      d()[write]('programEnrolmentId', drawn.id);
+      // A draw that gave up on a held ID keeps it, flagged as the duplicate
+      // it is, so the save is refused as for a typed one.
+      d().setError(
+        'programEnrolmentId',
+        drawn.held ? t('error.duplicated-id', { id: drawn.id }) : undefined,
+        label()
+      );
+    }
     releaseSave();
   };
 
   // A new enrolment opens with its ID already generated (rules § generating).
+  // Drawing a number needs the store's document edit permission; without it
+  // the field opens empty rather than raising a refusal before anything was
+  // asked of it, and the save is refused as any of that user's would be.
   onMount(() => {
-    if (openedNew && held() === '' && !disabled()) void generate('fill');
+    if (
+      openedNew &&
+      held() === '' &&
+      !disabled() &&
+      hasPermission('DOCUMENT_MUTATE')
+    )
+      void generate('fill');
   });
 
   // Replacing an ID the user can see discards it and spends a number that is
@@ -166,7 +189,7 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
         <TextField
           label={label()}
           value={text()}
-          readOnly={props.allowTyping !== true}
+          readOnly={props.allowTyping !== true || generating()}
           required={d().schemaFor('programEnrolmentId')?.required ?? false}
           error={d().errorFor('programEnrolmentId')}
           disabled={disabled()}

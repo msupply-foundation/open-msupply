@@ -106,15 +106,20 @@ vi.mock('@/plugins/documentFormSlot', () => ({
     diagnostics: [],
   }),
 }));
-// What the program's own form schema finds missing in the enrolment.
+// What the program's own form schema requires; the enrolment's data answers
+// some of it.
 let missing: string[] = [];
+let draftData: Record<string, unknown> = {};
 const library = {
   DefaultEnrolmentForm: () => 'default form',
-  validateDocument: () =>
-    missing.map(path => ({ path, keyword: 'required', message: '' })),
+  validateDocument: (_id: string, _schema: unknown, data: unknown) =>
+    missing
+      .filter(path => (data as Record<string, unknown>)?.[path] === undefined)
+      .map(path => ({ path, keyword: 'required', message: '' })),
 };
 
 const [dirty, setDirty] = createSignal(false);
+const [saving, setSaving] = createSignal(false);
 const [saveError, setSaveError] = createSignal<string>();
 const [newerVersion, setNewerVersion] = createSignal(false);
 vi.mock('@/domain/documentForm/createDocumentForm', () => ({
@@ -130,10 +135,14 @@ vi.mock('@/domain/documentForm/createDocumentForm', () => ({
         jsonSchema: {},
       }),
       document: () => undefined,
-      draft: {},
+      draft: {
+        get data() {
+          return draftData;
+        },
+      },
       isDirty: dirty,
       canSave: () => true,
-      saving: () => false,
+      saving,
       saveError,
       newerVersion,
       version: () => ({ kind: 'current' }),
@@ -156,24 +165,28 @@ afterEach(() => {
   shown.alerts = [];
   shown.buttons = [];
   missing = [];
+  draftData = {};
   setPluginForm(false);
+  setSaving(false);
   delete shown.details;
   setDirty(false);
   setSaveError(undefined);
   setNewerVersion(false);
 });
 
-const open = () => {
+const open = (saved = false) => {
   const onClose = vi.fn();
   createRoot(d => {
     dispose = d;
     const view = EnrolmentModal({
       storeId: 'store',
       patientId: 'patient',
-      target: {
-        kind: 'new',
-        registry: { documentType: 'TBProgram' } as FormRegistryFragment,
-      },
+      target: saved
+        ? { kind: 'existing', documentName: 'p/patient/TBProgram' }
+        : {
+            kind: 'new',
+            registry: { documentType: 'TBProgram' } as FormRegistryFragment,
+          },
       onClose,
       onSaved: () => undefined,
     });
@@ -345,5 +358,49 @@ describe("OMS-REG-PAT-04.52 — a program whose form the default form can't stan
       false
     );
     expect(save()).toHaveLength(1);
+  });
+});
+
+describe('OMS-REG-PAT-04.62 — an enrolment that already holds its program\'s answers', () => {
+  it('opens on the default form with no notice, and Save offered', () => {
+    missing = ['status'];
+    draftData = { enrolmentDatetime: '2026-10-01T00:00:00Z', status: 'ACTIVE' };
+    open(true);
+    shown.alerts = [];
+    shown.buttons = [];
+    resolve(shown.dialog?.children);
+    resolve(shown.dialog?.actions);
+    expect(shown.alerts.some(a => a.testId === 'enrolment-form-missing')).toBe(
+      false
+    );
+    expect(
+      shown.buttons.filter(b => b['data-testid'] === 'dialog-button-ok')
+    ).toHaveLength(1);
+  });
+});
+
+describe('OMS-REG-PAT-04.61 — while a save is under way', () => {
+  const cancel = () => {
+    shown.buttons = [];
+    resolve(shown.dialog?.actions);
+    return shown.buttons.filter(b => b['data-testid'] === 'dialog-button-cancel');
+  };
+
+  it('Cancel is hidden, and back once the save resolves', () => {
+    open();
+    expect(cancel()).toHaveLength(1);
+    setSaving(true);
+    expect(cancel()).toHaveLength(0);
+    setSaving(false);
+    expect(cancel()).toHaveLength(1);
+  });
+
+  it('nothing closes the enrolment, changed or not', () => {
+    const { onClose } = open();
+    setDirty(true);
+    setSaving(true);
+    shown.dialog?.onClose();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(shown.discard?.open).toBe(false);
   });
 });

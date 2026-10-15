@@ -36,25 +36,39 @@ export const isEnrolmentIdFree = async (
 // spin. Each draw spends a counter number, never given back.
 const MAX_DRAWS = 20;
 
+/** A drawn ID, and whether another enrolment holds it. */
+export interface DrawnEnrolmentId {
+  id: string;
+  /**
+   * The draw gave up on a held ID: a draw repeated the one before (a format
+   * whose number part does not move), or every draw allowed was held. The
+   * field keeps it, flagged as a duplicate, so the save is refused until the
+   * ID is changed (rules § generating).
+   */
+  held: boolean;
+}
+
 /**
  * Draws IDs from the program's format until one no other enrolment holds,
  * skipping each held one. Stops early on a draw that repeats the previous
- * one, keeping it, as the current app does: a format whose number part does
- * not move would otherwise draw for ever. A check that could not be made
- * keeps the candidate. Undefined when a draw fails (the program's format
+ * one, as the current app does: a format whose number part does not move
+ * would otherwise draw for ever. A check that could not be made keeps the
+ * candidate as free. Undefined when a draw fails (the program's format
  * reported it).
  */
 export const drawFreeEnrolmentId = async (
   generate: () => Promise<string | undefined>,
   isFree: (id: string) => Promise<boolean | undefined>
-): Promise<string | undefined> => {
+): Promise<DrawnEnrolmentId | undefined> => {
   let previous: string | undefined;
   for (let draw = 0; draw < MAX_DRAWS; draw++) {
     const candidate = await generate();
     if (candidate === undefined) return undefined;
-    if (candidate === previous) return candidate;
-    if ((await isFree(candidate)) !== false) return candidate;
+    // `previous` is only ever a held ID, so a repeat of it is held too.
+    if (candidate === previous) return { id: candidate, held: true };
+    if ((await isFree(candidate)) !== false)
+      return { id: candidate, held: false };
     previous = candidate;
   }
-  return previous;
+  return previous === undefined ? undefined : { id: previous, held: true };
 };

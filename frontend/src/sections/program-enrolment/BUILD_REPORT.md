@@ -26,7 +26,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
   - **How it is reached:** the SDK exports it as a lazy wrapper, `EnrolmentIdField` with `EnrolmentIdFieldProps`. The demo program's enrolment form now places it in place of its own Generate button. Two demo plugin strings are gone, `heading.replace-enrolment-id` and `message.replace-enrolment-id`.
 - **Engine:** `Draft.fill(path, value)` writes as part of the starting state, so the generated ID is not an edit (rules § leaving with unsaved changes). `Draft.setError(path, message, label?)` fails a field from the form's own check, like a schema error, and is cleared when the draft is seeded again. `Draft.wait(work)` makes a save wait: `save()` awaits the work only when some is pending, so a form with none saves as before. `SaveOutcome.refused` carries `forbidden` with the permission names.
 - **Wiring:** `PatientDetailView` imports the two components from here. Its TO-DO now covers only New encounter and the encounter screens (H26, #789).
-- **Locale:** one new key, `messages.enrolment-changed-since-opened`, in `en/` only.
+- **Locale:** two new keys, `messages.enrolment-changed-since-opened` and `messages.enrolment-form-not-installed`, in `en/` only.
 - **Test ids** ([`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md)): `enrolment-save-error`, `enrolment-newer-version`, `enrolment-id`, `enrolment-id-generate`.
 
 ## Spec refinements the build exposed (made on this branch)
@@ -94,6 +94,13 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 | `.55` duplicates ignore case                       | `enrolmentId.test.ts`                                                                         | ✅ `" gry-0005 "` flagged; `GRY-00051` not                                                                                        |
 | `.38` its own ID is not a duplicate                | `enrolmentId.test.ts`                                                                         | —                                                                                                                                 |
 | `.39` default form: typed ID, no Generate          | — (unchanged)                                                                                 | —                                                                                                                                 |
+| `.56` Save waits for the drawn ID                  | `EnrolmentIdField.test.tsx`; e2e                                                              | —                                                                                                                                 |
+| `.57` no typing while drawing                      | `EnrolmentIdField.test.tsx`; e2e                                                              | —                                                                                                                                 |
+| `.58` a given-up draw is flagged                   | `enrolmentId.test.ts`, `EnrolmentIdField.test.tsx`; e2e                                       | ✅ reproduced by the review before the fix                                                                                        |
+| `.59` no draw without permission                   | `EnrolmentIdField.test.tsx`                                                                   | —                                                                                                                                 |
+| `.60` a fixed ID saves as shown                    | `EnrolmentIdField.test.tsx`; e2e                                                              | —                                                                                                                                 |
+| `.61` no closing while saving                      | `EnrolmentModal.test.tsx`; e2e                                                                | —                                                                                                                                 |
+| `.62` an enrolment holding the answers             | `EnrolmentModal.test.tsx`; e2e                                                                | ✅ by the review (`rev1517-pa`)                                                                                                   |
 | `.40`–`.50` status history and closing             | pending #1491                                                                                 | —                                                                                                                                 |
 
 The unit tests mock the GraphQL edge. The real-backend half is the deterministic suite below.
@@ -112,12 +119,13 @@ The run ([`exploratory/workflows/program-enrolment.md`](../../../exploratory/wor
 
 ## The deterministic suite (#1492, 2026-10-15)
 
-[`e2e/specs/program-enrolment-regression.spec.ts`](../../../e2e/specs/program-enrolment-regression.spec.ts), run with `pnpm e2e:local program-enrolment-regression`: 21 tests covering every anchor in `.1`–`.42` and `.51`–`.55` except `.4`, all passing.
+[`e2e/specs/program-enrolment-regression.spec.ts`](../../../e2e/specs/program-enrolment-regression.spec.ts), run with `pnpm e2e:local program-enrolment-regression`: 25 tests covering every anchor in `.1`–`.42` and `.51`–`.62` except `.4` and `.59`, all passing.
 
 - **Fixtures** ([`server/data/e2e/README.md`](../../../../server/data/e2e/README.md)): the `ENRL` clinic (a dispensary with the program module on) and five enrolment registries. They are named so that name order differs from id order, so the picker's sort can be seen. Patients and enrolments are made per test over the API.
 - **The ID programs' form** is a plugin the suite serves itself, per page, by answering plugin discovery and the bundle request. Nothing is installed on the server, and each test gets its own ID format and number counter.
 - **Out of scope:**
   - `.4`, covered by `ProgramPickerDialog.test.tsx`;
+  - `.59`, covered by `EnrolmentIdField.test.tsx` (no user in the datafile may open an enrolment at a program-module store without the store's document edit permission);
   - `.43`–`.50`, pending #1491.
 - **A finding, resolved in the spec:** `.28` said a not-found enrolment has no Save; the app keeps Save, disabled. The app's other editors with a not-found state do the same (the immunisation course editor, the patient Details tab), so `.28` was reworded (`ENR-20261015-F3`, spec README decision 11).
 - **Test ids added:** `dialog-button-cancel` on the picker's and the enrolment's Cancel, plus `enrolment-form-missing` and the suite's own `e2e-enrolment-plugin-form`, all in [`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md).
@@ -125,9 +133,23 @@ The run ([`exploratory/workflows/program-enrolment.md`](../../../exploratory/wor
   - Each test was made to fail once on purpose: 22 out of 22 went red at the assertion that was changed.
   - The only expectation that moved after a run was the date field's format. It shows the entry format `DD MMM YYYY`, per ui-standards › inputs, not the table's `DD/MM/YYYY`. That was a mistake in how I wrote the test, not an app bug.
 
+## Fixes from the independent reviews (2026-10-15)
+
+An independent review of each PR found four bugs in the ID field and the dialog's save path, all reproduced in a browser, and gaps in the spec around generating on open. Spec README decisions 12–14 record the rulings; the case gains `.56`–`.62`.
+
+- **A Save pressed while the ID was still being drawn saved no ID.** The field now holds the save (`draft.wait`) for the whole draw (`.56`).
+- **Typing during that draw was overwritten**, and the form then read as unchanged. The box is read-only while drawing (`.57`), and a draw that answers after the field moved on (a discard) is dropped.
+- **Cancel stayed active during a save, and the save went on after the dialog closed.** Cancel is hidden while saving, as controls › dialog chrome says, and nothing closes the dialog until the save resolves (`.61`).
+- **A draw that gave up on a held ID wrote it unflagged.** `drawFreeEnrolmentId` now says whether its ID is held, and the field flags it, so the save is refused as for a typed duplicate (`.58`).
+- **No ID is drawn on open for a user without the store's document edit permission** (`hasPermission('DOCUMENT_MUTATE')`), so they meet no refusal before acting (`.59`).
+- **Smaller:**
+  - the not-installed notice now reads the draft openly (the old `untrack` did nothing), and an enrolment already holding the answers is tested (`.62`);
+  - the picker's Enrol needs a pick that is still listed, as the Vaccinations tab's list narrows when the immunisation programs arrive.
+- **Tests:** each new unit and e2e test failed on the code before the fix, except `.62`, which already held and is now pinned.
+
 ## Left for later
 
-- **Product re-check of generate-on-open** (decided 2026-10-14, [spec README § status](../../../spec/program-enrolment/README.md#status)). Every opened new enrolment draws a counter number, cancelled or not. The live run spent GRY-0001 that way.
+- **Product re-check of generate-on-open** (decided 2026-10-14, [spec README § status](../../../spec/program-enrolment/README.md#status)). Every opened new enrolment draws a counter number, cancelled or not. The live run spent GRY-0001 that way. A format that reads the enrolment (Djibouti's carries the enrolment year) draws from what the form holds as it opens, so a backdated enrolment keeps the year it was opened in unless Generate is pressed again.
 - **Djibouti's own enrolment ID field** (`EnrolmentIdField.tsx` on `custom-forms/misc-open-tasks`, not on this base) should move onto the host field when that branch lands.
 - **#1491**: status history through the form library's list control (#1148), and closing.
 

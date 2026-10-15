@@ -115,31 +115,33 @@ describe('OMS-REG-PAT-04.35 — drawing a free enrolment ID', () => {
     const generate = sequence('GRY-0001', 'GRY-0002', 'GRY-0003');
     const held = new Set(['GRY-0001', 'GRY-0002']);
     const id = await drawFreeEnrolmentId(generate, async c => !held.has(c));
-    expect(id).toBe('GRY-0003');
+    expect(id).toEqual({ id: 'GRY-0003', held: false });
     expect(generate).toHaveBeenCalledTimes(3);
   });
 
   it('keeps the first draw when it is free', async () => {
     const generate = sequence('GRY-0001', 'GRY-0002');
-    expect(await drawFreeEnrolmentId(generate, async () => true)).toBe(
-      'GRY-0001'
-    );
+    expect(await drawFreeEnrolmentId(generate, async () => true)).toEqual({
+      id: 'GRY-0001',
+      held: false,
+    });
     expect(generate).toHaveBeenCalledTimes(1);
   });
 
-  it('stops on a draw that repeats the one before, keeping it', async () => {
+  it('stops on a draw that repeats the one before, keeping it as held', async () => {
     const generate = sequence('FIXED', 'FIXED', 'OTHER');
-    expect(await drawFreeEnrolmentId(generate, async () => false)).toBe(
-      'FIXED'
-    );
+    expect(await drawFreeEnrolmentId(generate, async () => false)).toEqual({
+      id: 'FIXED',
+      held: true,
+    });
     expect(generate).toHaveBeenCalledTimes(2);
   });
 
-  it('keeps a candidate whose check could not be made', async () => {
+  it('keeps a candidate whose check could not be made, as free', async () => {
     const generate = sequence('GRY-0001');
-    expect(await drawFreeEnrolmentId(generate, async () => undefined)).toBe(
-      'GRY-0001'
-    );
+    expect(
+      await drawFreeEnrolmentId(generate, async () => undefined)
+    ).toEqual({ id: 'GRY-0001', held: false });
   });
 
   it('gives nothing when a draw fails', async () => {
@@ -149,11 +151,11 @@ describe('OMS-REG-PAT-04.35 — drawing a free enrolment ID', () => {
     );
   });
 
-  it('stops after a bounded number of draws', async () => {
+  it('stops after a bounded number of draws, keeping the last as held', async () => {
     let n = 0;
     const generate = vi.fn(async () => `GRY-${++n}`);
     const id = await drawFreeEnrolmentId(generate, async () => false);
     expect(generate).toHaveBeenCalledTimes(20);
-    expect(id).toBe('GRY-20');
+    expect(id).toEqual({ id: 'GRY-20', held: true });
   });
 });

@@ -79,7 +79,9 @@ const ProgramPickerBody = (props: ProgramPickerDialogProps): JSX.Element => {
           <Button
             confirms="plain"
             data-testid="program-picker-enrol"
-            disabled={picked() === undefined}
+            // A pick the list has since dropped (the Vaccinations tab's list
+            // narrows once the immunisation programs arrive) is no pick.
+            disabled={!props.registries.some(r => r.id === picked())}
             onClick={enrol}
           >
             {t('button.enrol')}
