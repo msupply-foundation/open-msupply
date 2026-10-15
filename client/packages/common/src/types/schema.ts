@@ -723,6 +723,7 @@ export enum AssetLogStatusNodeType {
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
+  NotInstalled = 'NOT_INSTALLED',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
 }
@@ -5343,6 +5344,12 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  campaign?: Maybe<CampaignNode>;
+  /**
+   * The shipment's campaign (null = none): the default for new inbound
+   * lines, or the campaign an outbound shipment issues for.
+   */
+  campaignId?: Maybe<Scalars['String']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   chargesForeignCurrency: Scalars['Float']['output'];
   chargesLocalCurrency: Scalars['Float']['output'];
@@ -12105,6 +12112,12 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  /**
+   * The shipment's default campaign (null = none): lines added from a
+   * master list or internal order take it, and the line editor prefills
+   * new batches with it.
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
   chargesForeignCurrency?: InputMaybe<Scalars['Float']['input']>;
   chargesLocalCurrency?: InputMaybe<Scalars['Float']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
@@ -12304,6 +12317,8 @@ export type UpdateOutboundShipmentError = {
 
 export type UpdateOutboundShipmentInput = {
   backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The campaign this shipment issues for (null = routine). */
+  campaignId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;

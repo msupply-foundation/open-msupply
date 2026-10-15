@@ -2918,6 +2918,7 @@
   "status.new": "New",
   "status.not-functioning": "Not Functioning",
   "status.not-in-use": "Not in use",
+  "status.not-installed": "Not installed",
   "status.picked": "Picked",
   "status.received": "Received",
   "status.scheduled": "Scheduled",

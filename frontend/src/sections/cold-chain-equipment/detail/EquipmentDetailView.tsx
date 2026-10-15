@@ -25,7 +25,21 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import { PrinterIcon, TrashIcon, XCircleIcon } from '@/ui/icons';
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  PrinterIcon,
+  TrashIcon,
+  XCircleIcon,
+} from '@/ui/icons';
+import { createFlash } from '@/ui/utils/createFlash';
+import { PRINT_LABEL_ASSET_URL } from '@/config';
+import {
+  LabelPrintOutcomeDialog,
+  printLabels,
+  printOutcomeReport,
+  type LabelPrintOutcome,
+} from '@/domain/labelPrinter';
 import { ActivityLogPanel } from '@/domain/activityLog';
 import { createConfirmOnLeave } from '@/domain/confirmOnLeave';
 import {
@@ -45,6 +59,7 @@ import { SummaryTab } from './SummaryTab';
 import { DetailsTab } from './DetailsTab';
 import { StatusHistoryTab } from './StatusHistoryTab';
 import { DocumentsTab } from './DocumentsTab';
+import { buildAssetLabel } from './assetLabel';
 import { StatusActions } from './StatusActions';
 
 // S2 — the equipment detail screen (spec/cold-chain-equipment, ui-surface S2).
@@ -73,6 +88,13 @@ const EquipmentDetailView: Component = () => {
   // changing anything the tab reads its filters from, so the tab is told
   // separately (OMS-REG-CCE-06.18).
   const [historyVersion, setHistoryVersion] = createSignal(0);
+  const [printing, setPrinting] = createSignal(false);
+  // The print outcome reported ON the control (ui-standards/controls § action
+  // feedback): a label leaves the app, so nothing else on screen tells printed
+  // from not. The flash reverts on its own timer; the failure detail is held
+  // separately so its dialog stays open until the user closes it.
+  const printFlash = createFlash<'done' | 'failed'>();
+  const [printOutcome, setPrintOutcome] = createSignal<LabelPrintOutcome>();
 
   // Back to whichever list this asset was opened from — the two destinations
   // are the same tree, so the parent path is the one to return to.
@@ -184,6 +206,26 @@ const EquipmentDetailView: Component = () => {
     setConfirmingDelete(true);
   };
 
+  // Print the asset's label (ui-surface S2, OMS-REG-CCE-01.5). Not gated on a
+  // configured printer: an unconfigured one is an outcome the dialog explains,
+  // as it is for prescriptions (settings rules § Devices — label printer).
+  const printLabel = async () => {
+    const record = asset();
+    if (!record || printing()) return;
+    setPrinting(true);
+    try {
+      const outcome = await printLabels(
+        PRINT_LABEL_ASSET_URL,
+        buildAssetLabel(record, new Date())
+      );
+      const { flash } = printOutcomeReport(outcome);
+      if (flash) printFlash.show(flash);
+      setPrintOutcome(outcome);
+    } finally {
+      setPrinting(false);
+    }
+  };
+
   const tabs = (): TabDef[] => [
     { value: 'summary', label: t('label.summary') },
     { value: 'details', label: t('label.details') },
@@ -252,19 +294,26 @@ const EquipmentDetailView: Component = () => {
                         setHistoryVersion(version => version + 1);
                       }}
                     />
-                    {/* Disabled, and saying why: the label endpoint needs a
-                        configured label printer, which is a setting the user
-                        CAN change — so the control stays visible and explains
-                        itself rather than dying silently under a click
-                        (ui-standards/controls § blocked affordances). */}
                     <Button
                       variant="secondary"
-                      icon={<PrinterIcon />}
-                      disabled
-                      title={t('error.label-printer-not-configured')}
+                      icon={
+                        printFlash.value() === 'done' ? (
+                          <CheckIcon />
+                        ) : printFlash.value() === 'failed' ? (
+                          <AlertCircleIcon />
+                        ) : (
+                          <PrinterIcon />
+                        )
+                      }
+                      loading={printing()}
+                      onClick={() => void printLabel()}
                       data-testid="print-label-button"
                     >
-                      {t('button.print-asset-label')}
+                      {printFlash.value() === 'done'
+                        ? t('message.print-success')
+                        : printFlash.value() === 'failed'
+                          ? t('message.print-failed')
+                          : t('button.print-asset-label')}
                     </Button>
                   </HeaderButtons>
                   {/* The catalogue item's identity — absent entirely for a
@@ -412,6 +461,11 @@ const EquipmentDetailView: Component = () => {
                 confirmVariant="danger"
                 message={t('messages.confirm-delete-assets_one', { count: 1 })}
                 onConfirm={() => void remove()}
+              />
+              {/* The other half of the print report — see printLabel. */}
+              <LabelPrintOutcomeDialog
+                outcome={printOutcome()}
+                onClose={() => setPrintOutcome(undefined)}
               />
             </Page>
           </Tabs>

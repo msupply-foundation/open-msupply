@@ -105,7 +105,7 @@ describe('the additional charges', () => {
   });
 });
 
-describe('OMS-FUN-PO-07.11 — the totals band’s four figures', () => {
+describe('OMS-FUN-PO-07.12 — the totals band’s four figures', () => {
   const node = {
     agentCommission: 1,
     documentCharge: 2,
