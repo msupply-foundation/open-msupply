@@ -11,13 +11,14 @@ use super::{
     patient_schema::{ContactDetails, SchemaGender, SchemaPatient},
 };
 
-// create name_store_join if not existing
+// create name_store_join if not existing. An existing join is left as it is,
+// inactive included: saving a patient doesn't change their visibility in the store
 pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
     name_id: &str,
     name_store_join_id: Option<String>,
-) -> Result<String, RepositoryError> {
+) -> Result<NameStoreJoinRow, RepositoryError> {
     let existing = NameStoreJoinRepository::new(con)
         .query_by_filter(
             NameStoreJoinFilter::new()
@@ -26,19 +27,41 @@ pub fn create_patient_name_store_join(
         )?
         .pop();
     if let Some(existing) = existing {
-        return Ok(existing.name_store_join.id);
+        return Ok(existing.name_store_join);
     }
 
-    let id = name_store_join_id.unwrap_or_else(uuid);
-    NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
-        id: id.clone(),
+    let row = NameStoreJoinRow {
+        id: name_store_join_id.unwrap_or_else(uuid),
         name_id: name_id.to_string(),
         store_id: store_id.to_string(),
         name_is_customer: true,
         name_is_supplier: false,
         inactive: false,
-    })?;
-    Ok(id)
+    };
+    NameStoreJoinRepository::new(con).upsert_one(&row)?;
+    Ok(row)
+}
+
+/// Makes the patient visible in the store: creates the name_store_join, or sets
+/// an inactive one active (#1494). For deliberately adding a patient to a store
+/// (fetching them from central); the join's changelog row takes the change to
+/// the store's site and to OG
+pub fn activate_patient_name_store_join(
+    con: &StorageConnection,
+    store_id: &str,
+    name_id: &str,
+    name_store_join_id: Option<String>,
+) -> Result<String, RepositoryError> {
+    let join = create_patient_name_store_join(con, store_id, name_id, name_store_join_id)?;
+
+    if join.inactive {
+        NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
+            inactive: false,
+            ..join.clone()
+        })?;
+    }
+
+    Ok(join.id)
 }
 
 /// Callback called when a patient document has been updated
@@ -511,5 +534,57 @@ mod test {
         assert_eq!(name_row_update, name_row_update_2);
         let updated_patient_2 = patient_draft_document(&name_row_update, updated_patient.clone());
         assert_eq!(updated_patient_2, updated_patient);
+    }
+
+    /// Fetching a patient into a store reactivates an inactive join; a patient
+    /// save leaves it inactive (#1494)
+    #[actix_rt::test]
+    async fn test_activate_patient_name_store_join() {
+        use super::{activate_patient_name_store_join, create_patient_name_store_join};
+        use repository::{NameStoreJoinRepository, NameStoreJoinRow};
+
+        let (_, connection, _, _) = setup_all(
+            "test_activate_patient_name_store_join",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let repo = NameStoreJoinRepository::new(&connection);
+        repo.upsert_one_without_changelog(&NameStoreJoinRow {
+            id: "inactive_join".to_string(),
+            store_id: "store_a".to_string(),
+            name_id: "testId".to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+            inactive: true,
+        })
+        .unwrap();
+        let is_inactive = || {
+            repo.find_one_by_id("inactive_join")
+                .unwrap()
+                .unwrap()
+                .inactive
+        };
+
+        // A save keeps the existing join, still inactive
+        let join = create_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
+        assert_eq!(join.id, "inactive_join");
+        assert!(join.inactive);
+        assert!(is_inactive());
+
+        // Fetching the patient into the store makes it active
+        let id = activate_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
+        assert_eq!(id, "inactive_join");
+        assert!(!is_inactive());
+
+        // With no join, one is created active
+        let id = activate_patient_name_store_join(
+            &connection,
+            "store_b",
+            "testId",
+            Some("new_join".to_string()),
+        )
+        .unwrap();
+        assert_eq!(id, "new_join");
+        assert!(!repo.find_one_by_id("new_join").unwrap().unwrap().inactive);
     }
 }

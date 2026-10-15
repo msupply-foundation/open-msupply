@@ -126,8 +126,8 @@ pub(crate) fn apply_name_merge(
     // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
     // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
     //
-    // We must also consider nsj.name_is_customer and nsj.name_is_supplier.
-    // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
+    // We must also consider nsj.name_is_customer, nsj.name_is_supplier and nsj.inactive.
+    // The remaining NSJ that we keep must logically OR the customer and supplier fields with the deleted NSJs', and is active if either is.
     // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
     let store_repo = StoreRepository::new(connection);
     let store = store_repo.query_one(
@@ -161,19 +161,23 @@ pub(crate) fn apply_name_merge(
             if let Some(nsj_keep) = name_store_joins_for_keep.iter().find(|nsj_keep| {
                 nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
             }) {
-                // We must also consider nsj_delete.name_is_customer and nsj_delete.name_is_supplier.
-                // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
+                // We must also consider nsj_delete.name_is_customer, nsj_delete.name_is_supplier
+                // and nsj_delete.inactive. The remaining NSJ that we keep must logically OR the
+                // customer and supplier fields with the deleted NSJs', and is active if either is.
                 // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
                 if (!nsj_keep.name_store_join.name_is_customer
                     && nsj_delete.name_store_join.name_is_customer)
                     || (!nsj_keep.name_store_join.name_is_supplier
                         && nsj_delete.name_store_join.name_is_supplier)
+                    || (nsj_keep.name_store_join.inactive && !nsj_delete.name_store_join.inactive)
                 {
                     operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
                         name_is_customer: nsj_keep.name_store_join.name_is_customer
                             || nsj_delete.name_store_join.name_is_customer,
                         name_is_supplier: nsj_keep.name_store_join.name_is_supplier
                             || nsj_delete.name_store_join.name_is_supplier,
+                        inactive: nsj_keep.name_store_join.inactive
+                            && nsj_delete.name_store_join.inactive,
                         ..nsj_keep.name_store_join.clone()
                     }));
                 }
@@ -251,4 +255,80 @@ pub(crate) fn apply_clinician_merge(
         .collect();
 
     Ok(MergeOutcome::Operations(operations))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    /// A kept join is active if either merged join was: a store that could see
+    /// either patient still sees the merged one (#1494)
+    #[actix_rt::test]
+    async fn name_merge_keeps_join_active_if_either_is() {
+        let (_, connection, _, _) = setup_all(
+            "name_merge_keeps_join_active_if_either_is",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let join = |id: &str, name_id: &str, store_id: &str, inactive: bool| NameStoreJoinRow {
+            id: id.to_string(),
+            name_id: name_id.to_string(),
+            store_id: store_id.to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+            inactive,
+        };
+        // store_a: the kept patient's join is inactive, the merged one's active
+        let keep_in_store_a = join("keep_in_store_a", "testId", "store_a", true);
+        let delete_in_store_a = join("delete_in_store_a", "patient2", "store_a", false);
+        // store_b: both inactive
+        let keep_in_store_b = join("keep_in_store_b", "testId", "store_b", true);
+        let delete_in_store_b = join("delete_in_store_b", "patient2", "store_b", true);
+        let repo = NameStoreJoinRepository::new(&connection);
+        for row in [
+            &keep_in_store_a,
+            &delete_in_store_a,
+            &keep_in_store_b,
+            &delete_in_store_b,
+        ] {
+            repo.upsert_one_without_changelog(row).unwrap();
+        }
+
+        let MergeOutcome::Operations(operations) = apply_name_merge(
+            &connection,
+            &MergeMessageBody {
+                merge_id_to_keep: "testId".to_string(),
+                merge_id_to_delete: "patient2".to_string(),
+            },
+        )
+        .unwrap() else {
+            panic!("expected merge operations");
+        };
+
+        // IntegrationOperation has no PartialEq, so compare the debug output
+        let operations: Vec<String> = operations.iter().map(|op| format!("{op:?}")).collect();
+        let join_upserts: Vec<&String> = operations
+            .iter()
+            .filter(|op| op.starts_with("Upsert(NameStoreJoinRow "))
+            .collect();
+        assert_eq!(
+            join_upserts,
+            vec![&format!(
+                "{:?}",
+                IntegrationOperation::upsert(NameStoreJoinRow {
+                    inactive: false,
+                    ..keep_in_store_a
+                })
+            )]
+        );
+        for deleted in ["delete_in_store_a", "delete_in_store_b"] {
+            let delete = format!(
+                "{:?}",
+                IntegrationOperation::delete(NameStoreJoinRowDelete(deleted.to_string()))
+            );
+            assert!(operations.contains(&delete), "{delete} in {operations:?}");
+        }
+    }
 }
