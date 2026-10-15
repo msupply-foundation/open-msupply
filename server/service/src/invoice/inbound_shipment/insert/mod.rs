@@ -628,4 +628,121 @@ mod test {
         );
         assert!(close(line.total_after_tax, line.total_before_tax));
     }
+
+    /// The order's supplier discount is apportioned to every seeded line: its
+    /// cost (and sell) price and its totals are the order line's figures net of
+    /// the discount, so the shipment's value reconciles with the discounted order.
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_applies_supplier_discount() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "discount_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "discount_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn po() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "discount_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                currency_id: Some(currency_b().id),
+                foreign_exchange_rate: currency_b().rate,
+                supplier_discount_percentage: Some(10.0),
+                ..Default::default()
+            }
+        }
+
+        // 100 units at pack size 10, 6.00 a pack after the line's own discount.
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "discount_po_line".to_string(),
+                purchase_order_id: po().id,
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                requested_pack_size: 10.0,
+                requested_number_of_units: 100.0,
+                price_per_pack_after_discount: 6.0,
+                line_total: 60.0,
+                status: PurchaseOrderLineStatus::Sent,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_applies_supplier_discount",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po())
+            .unwrap();
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&po_line())
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        service_provider
+            .invoice_service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "discount_new".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some(po().id),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("discount_new")
+            .unwrap()
+            .unwrap();
+        let lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id("discount_new")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        let line = &lines[0];
+
+        // 10% off 6.00 a pack is 5.40; 10% off the stored 60.00 is 54.00
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        assert_eq!(line.number_of_packs, 10.0);
+        assert!(
+            close(line.cost_price_per_pack, 5.4 * invoice.currency_rate),
+            "cost should be the discounted pack price at the rate, got {}",
+            line.cost_price_per_pack
+        );
+        assert!(close(line.sell_price_per_pack, line.cost_price_per_pack));
+        assert!(
+            close(line.foreign_currency_price_before_tax.unwrap(), 54.0),
+            "foreign total should be the discounted stored total, got {:?}",
+            line.foreign_currency_price_before_tax
+        );
+        assert!(close(line.total_before_tax, 54.0 * invoice.currency_rate));
+        assert!(close(line.total_after_tax, line.total_before_tax));
+    }
 }

@@ -2,7 +2,8 @@ use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
     EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
+    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRow,
+    PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -16,11 +17,15 @@ pub fn add_from_purchase_order(
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
 
-    // Get the PO's exchange rate to convert prices from PO currency to store currency
-    let exchange_rate = PurchaseOrderRowRepository::new(connection)
+    // The order's exchange rate converts PO-currency prices to the store's currency,
+    // and its supplier discount is apportioned to every line it ships
+    let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&purchase_order_id)?
-        .map(|po| po.foreign_exchange_rate)
-        .unwrap_or(1.0);
+        .unwrap_or(PurchaseOrderRow {
+            foreign_exchange_rate: 1.0,
+            ..Default::default()
+        });
+    let exchange_rate = purchase_order.foreign_exchange_rate;
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -53,11 +58,16 @@ pub fn add_from_purchase_order(
         let number_of_packs = purchase_order_line.packs_for_units(remaining_units);
 
         let foreign_total = if total_units > 0.0 && number_of_packs > 0.0 {
-            purchase_order_line.line_total * remaining_units / total_units
+            purchase_order_line.line_total_after_supplier_discount(&purchase_order)
+                * remaining_units
+                / total_units
         } else {
             0.0
         };
         let local_total = foreign_total * exchange_rate;
+        let cost_price_per_pack = purchase_order_line
+            .price_per_pack_after_supplier_discount(&purchase_order)
+            * exchange_rate;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -72,8 +82,8 @@ pub fn add_from_purchase_order(
             manufacture_date: None,
             purchase_order_line_id: Some(purchase_order_line.id.clone()),
             pack_size: purchase_order_line.requested_pack_size,
-            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
-            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            cost_price_per_pack,
+            sell_price_per_pack: cost_price_per_pack,
             total_before_tax: local_total,
             total_after_tax: local_total,
             tax_percentage: None,
