@@ -114,6 +114,12 @@ export interface InboundShipmentLineEditModalProps {
    */
   purchaseOrderId?: string;
   /**
+   * The donor a new batch starts with — the shipment's default donor, else the
+   * linked purchase order's (spec rules → default donor, OMS-REG-REPL-09.26).
+   * The user may still change or clear it before saving.
+   */
+  defaultDonor?: { id: string; name: string };
+  /**
    * The shipment's default campaign (null = none): every NEW batch starts
    * with it, and the user can change or clear it per batch. Existing lines
    * keep their own.
@@ -505,9 +511,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setLoadingLines(false);
   };
 
-  // A blank batch carrying the shipment's default campaign (issue #996).
+  // Every new batch starts with the inherited donor (OMS-REG-REPL-09.13/.26)
+  // and the shipment's default campaign (issue #996), shown before save
+  // rather than only once the server has applied them.
   const newBatch = (): DraftBatch => ({
     ...emptyBatch(),
+    donorId: props.defaultDonor?.id ?? null,
+    donorName: props.defaultDonor?.name ?? null,
     campaignId: props.campaign?.id ?? null,
     campaignName: props.campaign?.name ?? null,
   });
