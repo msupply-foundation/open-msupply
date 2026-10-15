@@ -27,7 +27,8 @@
             "requestedPackSize": 1000,
             "supplierItemCode": null,
             "lineCost": "9.50",
-            "requestedNumberOfPacks": 10
+            "requestedNumberOfPacks": 10,
+            "adjustedUnits": ""
           },
           {
             "comment": "Second PO comment dolutegravir.",
@@ -43,7 +44,8 @@
             "requestedPackSize": 11,
             "supplierItemCode": null,
             "lineCost": "43.56",
-            "requestedNumberOfPacks": 22
+            "requestedNumberOfPacks": 22,
+            "adjustedUnits": ""
           },
           {
             "comment": "Third PO comment salbutamol.",
@@ -59,12 +61,21 @@
             "requestedPackSize": 5,
             "supplierItemCode": null,
             "lineCost": "245.00",
-            "requestedNumberOfPacks": 50
+            "requestedNumberOfPacks": 50,
+            "adjustedUnits": ""
           }
         ]
       },
       "number": 3,
       "orderTotalAfterDiscount": 298.06,
+      "orderTotalBeforeDiscount": 298.06,
+      "supplierDiscountAmount": 0,
+      "agentCommission": 10,
+      "documentCharge": null,
+      "communicationsCharge": 2.5,
+      "insuranceCharge": null,
+      "freightCharge": 50.5,
+      "additionalFees": 63,
       "status": "CONFIRMED",
       "store": {
         "logo": null,

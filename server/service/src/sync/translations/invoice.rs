@@ -134,6 +134,9 @@ pub struct TransactRowOmsFields {
     pub charges_local_currency: f64,
     #[serde(default)]
     pub charges_foreign_currency: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -665,6 +668,7 @@ impl SyncTranslation for InvoiceTranslation {
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
             custom_fields,
+            campaign_id: fk_check(oms_fields.campaign_id, "campaign_id", FkField::Campaign)?,
             // Prescription requests are OMS-native and v7-only, so OG has no
             // column for this and no site that holds one uses this translator
             // (a v7 site syncs invoices as rows). Nothing is read off the wire —
@@ -812,6 +816,7 @@ impl SyncTranslation for InvoiceTranslation {
                     custom_fields,
                     // OMS-native and v7-only — never pushed to OG
                     prescription_request_id: _,
+                    campaign_id,
                 },
             name_row,
             clinician_row,
@@ -899,6 +904,7 @@ impl SyncTranslation for InvoiceTranslation {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
                 charges_foreign_currency,
+                campaign_id,
             }),
         };
 

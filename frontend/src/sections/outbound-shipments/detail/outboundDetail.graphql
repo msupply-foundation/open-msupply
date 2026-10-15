@@ -34,6 +34,11 @@ fragment OutboundInfo on InvoiceNode {
     id
     method
   }
+  # The campaign the shipment issues for (null = routine).
+  campaign {
+    id
+    name
+  }
   user {
     username
     email
@@ -345,6 +350,11 @@ mutation allocateOutboundLine($storeId: String!, $lineId: String!) {
         }
       }
       skippedUnusableVvmStatusLines {
+        nodes {
+          batch
+        }
+      }
+      skippedOtherCampaignStockLines {
         nodes {
           batch
         }

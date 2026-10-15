@@ -2803,7 +2803,6 @@
   "preference.sortByVvmStatusThenExpiry": "Classificar os lotes disponíveis pelo status do VVM e depois pela validade",
   "preference.storeCustomColour": "Cor personalizada do rodapé da página (código hexadecimal, por exemplo, #000000 para preto)",
   "preference.syncRecordsDisplayThreshold": "Limiar de exibição de registos de sincronização",
-  "preference.useProcurementFunctionality": "Utilizar a função de acquisições",
   "preference.useSimplifiedMobileUi": "Utilizar UI móvel simplificada",
   "preference.warnWhenMissingRecentStocktake": "Avisar os utilizadores, ao criarem um pedido interno, caso não exista um inventário recente",
   "preference.warnWhenMissingRecentStocktake.description": "Mostrar um aviso quando os dados do inventário forem mais antigos do que o prazo máximo especificado ou quando os inventários recentes tiverem menos do que o número mínimo de artigos, pelo que não são considerados inventários válidos para o cálculo dos níveis de stock.",

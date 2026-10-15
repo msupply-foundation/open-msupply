@@ -5,6 +5,7 @@ import {
   AlertCircleIcon,
   AlertTriangleIcon,
   CircleDashedIcon,
+  InfoIcon,
   PauseIcon,
 } from '@/ui/icons';
 import type { getCellDefinition } from '@/ui/elements/table/tableHelpers';
@@ -14,8 +15,8 @@ import type { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 // item name) and the line editor's grid (beside the batch value): word chips
 // carrying each line state — Expired / Near expiry (tiered, both red), On
 // hold (amber), and — on the detail table — Not issued (amber, the row the
-// screen marks as still needing work). Every applicable badge shows (expired
-// AND held → both).
+// screen marks as still needing work); the line editor adds Not for this
+// campaign (neutral). Every applicable badge shows (expired AND held → both).
 // Table view only — cards carry the same states as their after-the-title
 // chips (the [data-row-badges] CSS in DataTable.module.css hides the
 // cluster there).
@@ -33,6 +34,12 @@ export const RowStatusBadges = (props: {
    * cell's "Unallocated", which says the same thing in the same row.
    */
   notIssued?: boolean;
+  /**
+   * The line editor's batch is skipped by auto-allocation because its
+   * campaign isn't the shipment's — the reason its auto-allocation tick is
+   * missing. The value is the badge's tooltip, naming the batch's campaign.
+   */
+  otherCampaign?: string;
 }) => (
   <span data-row-badges>
     <Show when={props.notIssued}>
@@ -66,6 +73,17 @@ export const RowStatusBadges = (props: {
         tone="warning"
         icon={<PauseIcon />}
       />
+    </Show>
+    <Show when={props.otherCampaign}>
+      {tooltip => (
+        <span title={tooltip()}>
+          <StatusBadge
+            label={t('label.not-for-this-campaign')}
+            testId="row-badge-other-campaign"
+            icon={<InfoIcon />}
+          />
+        </span>
+      )}
     </Show>
   </span>
 );

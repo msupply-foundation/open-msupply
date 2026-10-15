@@ -53,6 +53,9 @@ export type PurchaseOrderInfoFragment = {
   fileName: string;
   createdDatetime: string;
   totalBytes: number;
+  user: {
+  username: string;
+} | null;
 }>;
 };
 };
@@ -75,6 +78,7 @@ export type PurchaseOrderDetailLineFragment = {
   requestedNumberOfUnits: number;
   adjustedNumberOfUnits: number | null;
   shippedNumberOfUnits: number;
+  receivedNumberOfUnits: number;
   pricePerPackBeforeDiscount: number;
   pricePerPackAfterDiscount: number;
   lineTotal: number;
@@ -106,7 +110,7 @@ export type PurchaseOrderResult = {
 };
 
 export const PurchaseOrder = {
-  query: "query purchaseOrder($storeId: String!, $id: String!) {\n  purchaseOrder(storeId: $storeId, id: $id) {\n    __typename\n    ... on PurchaseOrderNode {\n      ...PurchaseOrderInfo\n    }\n    ... on RecordNotFound {\n      description\n    }\n  }\n}\n\nfragment PurchaseOrderInfo on PurchaseOrderNode {\n  id\n  number\n  status\n  createdDatetime\n  requestApprovalDatetime\n  confirmedDatetime\n  sentDatetime\n  finalisedDatetime\n  supplier {\n    id\n    name\n    code\n  }\n  reference\n  currencyId\n  currency {\n    id\n    code\n  }\n  foreignExchangeRate\n  requestedDeliveryDate\n  authorisingOfficer1\n  authorisingOfficer2\n  additionalInstructions\n  supplierAgent\n  headingMessage\n  freightConditions\n  agentCommission\n  documentCharge\n  communicationsCharge\n  insuranceCharge\n  freightCharge\n  orderTotalBeforeDiscount\n  orderTotalAfterDiscount\n  supplierDiscountPercentage\n  supplierDiscountAmount\n  donor {\n    id\n    name\n  }\n  shippingMethod\n  comment\n  contractSignedDate\n  advancePaidDate\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n}",
+  query: "query purchaseOrder($storeId: String!, $id: String!) {\n  purchaseOrder(storeId: $storeId, id: $id) {\n    __typename\n    ... on PurchaseOrderNode {\n      ...PurchaseOrderInfo\n    }\n    ... on RecordNotFound {\n      description\n    }\n  }\n}\n\nfragment PurchaseOrderInfo on PurchaseOrderNode {\n  id\n  number\n  status\n  createdDatetime\n  requestApprovalDatetime\n  confirmedDatetime\n  sentDatetime\n  finalisedDatetime\n  supplier {\n    id\n    name\n    code\n  }\n  reference\n  currencyId\n  currency {\n    id\n    code\n  }\n  foreignExchangeRate\n  requestedDeliveryDate\n  authorisingOfficer1\n  authorisingOfficer2\n  additionalInstructions\n  supplierAgent\n  headingMessage\n  freightConditions\n  agentCommission\n  documentCharge\n  communicationsCharge\n  insuranceCharge\n  freightCharge\n  orderTotalBeforeDiscount\n  orderTotalAfterDiscount\n  supplierDiscountPercentage\n  supplierDiscountAmount\n  donor {\n    id\n    name\n  }\n  shippingMethod\n  comment\n  contractSignedDate\n  advancePaidDate\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      user {\n        username\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderResult, PurchaseOrderVariables>;
 
 export type PurchaseOrderDetailLinesVariables = {
@@ -178,7 +182,7 @@ export type PurchaseOrderDetailLinesResult = {
 };
 
 export const PurchaseOrderDetailLines = {
-  query: "query purchaseOrderDetailLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...PurchaseOrderDetailLine\n      }\n    }\n  }\n}\n\nfragment PurchaseOrderDetailLine on PurchaseOrderLineNode {\n  id\n  lineNumber\n  status\n  item {\n    id\n    code\n    name\n    unitName\n    stats(storeId: $storeId) {\n      stockOnHand\n    }\n  }\n  unit\n  requestedPackSize\n  requestedNumberOfUnits\n  adjustedNumberOfUnits\n  shippedNumberOfUnits\n  pricePerPackBeforeDiscount\n  pricePerPackAfterDiscount\n  lineTotal\n  requestedDeliveryDate\n  expectedDeliveryDate\n  supplierItemCode\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  comment\n  note\n  unitsOrderedInOthers\n}",
+  query: "query purchaseOrderDetailLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...PurchaseOrderDetailLine\n      }\n    }\n  }\n}\n\nfragment PurchaseOrderDetailLine on PurchaseOrderLineNode {\n  id\n  lineNumber\n  status\n  item {\n    id\n    code\n    name\n    unitName\n    stats(storeId: $storeId) {\n      stockOnHand\n    }\n  }\n  unit\n  requestedPackSize\n  requestedNumberOfUnits\n  adjustedNumberOfUnits\n  shippedNumberOfUnits\n  receivedNumberOfUnits\n  pricePerPackBeforeDiscount\n  pricePerPackAfterDiscount\n  lineTotal\n  requestedDeliveryDate\n  expectedDeliveryDate\n  supplierItemCode\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  comment\n  note\n  unitsOrderedInOthers\n}",
 } as TypedDocument<PurchaseOrderDetailLinesResult, PurchaseOrderDetailLinesVariables>;
 
 export type PurchaseOrderLineSetVariables = {

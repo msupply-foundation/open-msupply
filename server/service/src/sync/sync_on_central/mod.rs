@@ -636,17 +636,11 @@ pub async fn upload_file(
                     file_name: file_part.file_name.clone().unwrap_or("unknown".to_string()),
                     table_name,
                     record_id,
-                    uploaded_bytes: 0,
-                    downloaded_bytes: 0,
                     total_bytes: 0, // Will be updated later
                     status: SyncFileStatus::Done,
-                    error: None,
-                    mime_type: None,
-                    retries: 0,
-                    retry_at: None,
                     direction: SyncFileDirection::Upload,
                     created_datetime: Utc::now().naive_utc(),
-                    deleted_datetime: None,
+                    ..Default::default()
                 },
                 _ => {
                     return Err(Error::SyncFileNotFound(file_id.clone()));

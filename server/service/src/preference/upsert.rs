@@ -55,7 +55,6 @@ pub struct UpsertPreferences {
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub order_in_packs: Option<Vec<StorePrefUpdate<bool>>>,
-    pub use_procurement_functionality: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
@@ -114,7 +113,6 @@ pub fn upsert_preferences(
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
-        use_procurement_functionality: show_purchase_orders_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
@@ -171,7 +169,6 @@ pub fn upsert_preferences(
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
         order_in_packs,
-        use_procurement_functionality,
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
         disable_manual_returns,
@@ -305,10 +302,6 @@ pub fn upsert_preferences(
 
             if let Some(inputs) = order_in_packs_input {
                 upsert_store_input(connection, order_in_packs, inputs)?;
-            }
-
-            if let Some(inputs) = show_purchase_orders_input {
-                upsert_store_input(connection, use_procurement_functionality, inputs)?;
             }
 
             if let Some(inputs) = sort_by_vvm_status_then_expiry_input {

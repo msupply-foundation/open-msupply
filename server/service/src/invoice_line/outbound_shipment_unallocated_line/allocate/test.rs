@@ -5,8 +5,9 @@ mod test {
     use repository::{
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
         PreferenceRow, PreferenceRowRepository, StockLine, StockLineRow,
+        campaign_row::CampaignRow,
         mock::{
-            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_name_a,
+            MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_item_b, mock_name_a,
             mock_outbound_shipment_a_invoice_lines, mock_store_a, mock_store_b,
             mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
             mock_vvm_status_c_level3_unusable,
@@ -433,6 +434,146 @@ mod test {
                 ..Default::default()
             }
         );
+    }
+
+    #[actix_rt::test]
+    async fn allocate_unallocated_line_matches_campaign() {
+        // Deleted: a delete only removes the campaign as a future choice, so
+        // stock already tagged with it is still that campaign's stock
+        fn campaign_b() -> CampaignRow {
+            CampaignRow {
+                id: "campaign_b".to_string(),
+                name: "Campaign B".to_string(),
+                deleted_datetime: Some(chrono::Utc::now().naive_utc()),
+                ..Default::default()
+            }
+        }
+
+        fn invoice(id: &str, campaign_id: Option<String>) -> InvoiceRow {
+            InvoiceRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                campaign_id,
+                ..Default::default()
+            }
+        }
+        fn campaign_invoice() -> InvoiceRow {
+            invoice("campaign_invoice", Some(mock_campaign_a().id))
+        }
+        fn routine_invoice() -> InvoiceRow {
+            invoice("routine_invoice", None)
+        }
+
+        fn line(id: &str, invoice_id: String) -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: id.to_string(),
+                invoice_id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 5.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        // Earliest expiry first, so FEFO alone would pick campaign B then routine
+        fn stock_line(id: &str, day: u32, campaign_id: Option<String>) -> StockLineRow {
+            StockLineRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 10.0,
+                total_number_of_packs: 10.0,
+                expiry_date: Some(date_now_with_offset(Duration::days(100 + day as i64))),
+                campaign_id,
+                ..Default::default()
+            }
+        }
+        fn stock_line_campaign_b() -> StockLineRow {
+            stock_line("stock_line_campaign_b", 1, Some(campaign_b().id))
+        }
+        fn stock_line_routine() -> StockLineRow {
+            stock_line("stock_line_routine", 2, None)
+        }
+        fn stock_line_campaign_a() -> StockLineRow {
+            stock_line("stock_line_campaign_a", 3, Some(mock_campaign_a().id))
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "allocate_unallocated_line_matches_campaign",
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .names()
+                .units()
+                .currencies(),
+            MockData {
+                campaigns: vec![mock_campaign_a(), campaign_b()],
+                invoices: vec![campaign_invoice(), routine_invoice()],
+                invoice_lines: vec![
+                    line("campaign_line", campaign_invoice().id),
+                    line("routine_line", routine_invoice().id),
+                ],
+                stock_lines: vec![
+                    stock_line_campaign_a(),
+                    stock_line_routine(),
+                    stock_line_campaign_b(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        let skipped_ids = |lines: &Vec<StockLine>| {
+            lines
+                .iter()
+                .map(|l| l.stock_line_row.id.clone())
+                .collect::<Vec<_>>()
+        };
+
+        // A routine shipment never takes campaign stock
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, "routine_line".to_string())
+            .unwrap();
+        assert_eq!(result.inserts.len(), 1);
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(stock_line_routine().id)
+        );
+        assert_eq!(
+            skipped_ids(&result.skipped_other_campaign_stock_lines),
+            // Campaign A expires after the routine batch, which already filled
+            // the line, so it is never reached
+            vec![stock_line_campaign_b().id]
+        );
+
+        // A campaign shipment only takes its own campaign's stock
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, "campaign_line".to_string())
+            .unwrap();
+        assert_eq!(result.inserts.len(), 1);
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(stock_line_campaign_a().id)
+        );
+        assert_eq!(
+            result.inserts[0].invoice_line_row.campaign_id,
+            Some(mock_campaign_a().id)
+        );
+        assert_eq!(
+            skipped_ids(&result.skipped_other_campaign_stock_lines),
+            vec![stock_line_campaign_b().id, stock_line_routine().id]
+        );
+        assert_eq!(result.inserts[0].invoice_line_row.number_of_packs, 5.0);
     }
 
     #[actix_rt::test]

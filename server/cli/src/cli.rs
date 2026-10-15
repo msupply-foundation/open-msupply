@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
@@ -471,15 +470,9 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema = OperationalSchema::build(
-                Queries::new(),
-                Mutations::new(),
-                Subscriptions::default(),
-            )
-            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
-                schema.sdl(),
+                graphql::operational_schema_sdl(),
             )?;
             info!("Schema exported in schema.graphql");
         }
