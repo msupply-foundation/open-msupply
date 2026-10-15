@@ -28,6 +28,11 @@ pub fn validate(
         .find_one_by_id(&line.purchase_order_id)?
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
+    // A cancelled order is closed to every line change
+    if purchase_order.status == PurchaseOrderStatus::Cancelled {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
+    }
+
     // Check if the user is trying to update the expected delivery date on a finalised PO
     if input.expected_delivery_date.is_some()
         && purchase_order.status == PurchaseOrderStatus::Finalised
