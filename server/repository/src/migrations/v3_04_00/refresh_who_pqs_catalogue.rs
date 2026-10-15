@@ -191,6 +191,60 @@ impl MigrationFragment for Migrate {
             )?;
         }
 
+        // Every site runs this fragment, but sites don't upgrade together, and an
+        // asset's catalogue item and an item's type are foreign-key checked on
+        // pull: equipment registered against a new item that reaches a site
+        // without it integrates with the item cleared, and stays that way after
+        // the site upgrades. So every type and item added or changed above also
+        // gets a changelog row, letting an upgraded central send the refresh to
+        // remotes that haven't upgraded. Stamped with the central server's site
+        // id, as `prescription_request_occupation_prominent` does, so a remote
+        // running this fragment never pushes them back.
+        sql!(
+            connection,
+            r##"
+            INSERT INTO changelog (table_name, record_id, row_action, source_site_id)
+            SELECT 'asset_catalogue_type', id, 'UPSERT', COALESCE(
+                (SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID'),
+                0
+            )
+            FROM asset_catalogue_type
+            WHERE id IN ('f242a852-1964-5f02-bda3-180c201cfa2e', '0478156c-a2bd-5cbf-b328-ae87973f0482', '7f53b6d5-c45f-5b4d-9a81-c88ef7d2779f');
+
+            INSERT INTO changelog (table_name, record_id, row_action, source_site_id)
+            SELECT 'asset_catalogue_item', id, 'UPSERT', COALESCE(
+                (SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID'),
+                0
+            )
+            FROM asset_catalogue_item
+            WHERE (sub_catalogue IN ('WHO PQS', 'WHO PQS (withdrawn)') AND code IN (
+                'E003/002', 'E003/003', 'E003/007', 'E003/011', 'E003/022', 'E003/030', 'E003/035', 'E003/037',
+                'E003/040', 'E003/040e', 'E003/042', 'E003/043', 'E003/044', 'E003/045', 'E003/048', 'E003/048e',
+                'E003/049', 'E003/050', 'E003/051', 'E003/052', 'E003/055', 'E003/057', 'E003/058', 'E003/059',
+                'E003/059e', 'E003/066', 'E003/067', 'E003/068', 'E003/069', 'E003/069e', 'E003/070', 'E003/072',
+                'E003/073', 'E003/074', 'E003/074e', 'E003/075', 'E003/075e', 'E003/076', 'E003/076e', 'E003/077',
+                'E003/078', 'E003/079', 'E003/079e', 'E003/080', 'E003/081', 'E003/082', 'E003/083', 'E003/084',
+                'E003/084e', 'E003/085', 'E003/087', 'E003/087e', 'E003/088', 'E003/088e', 'E003/089', 'E003/089e',
+                'E003/090', 'E003/091', 'E003/092', 'E003/093', 'E003/095', 'E003/096', 'E003/097', 'E003/097e',
+                'E003/098', 'E003/098e', 'E003/100', 'E003/101', 'E003/102', 'E003/102e', 'E003/103', 'E003/106',
+                'E003/106e', 'E003/107', 'E003/107e', 'E003/108', 'E003/108e', 'E003/109', 'E003/109e', 'E003/110',
+                'E003/110e', 'E003/111', 'E003/112', 'E003/112e', 'E003/113', 'E003/113e', 'E003/114', 'E003/114e',
+                'E003/115', 'E003/115e', 'E003/116', 'E003/116e', 'E003/117', 'E003/117e', 'E003/118', 'E003/118e',
+                'E003/119', 'E003/120', 'E003/120e', 'E003/121', 'E003/122', 'E003/122e', 'E003/123', 'E003/124',
+                'E003/129', 'E003/129e', 'E003/131', 'E003/131e', 'E003/132', 'E003/132e', 'E003/133', 'E003/135',
+                'E003/135e', 'E003/136', 'E003/136e', 'E003/137', 'E003/137e', 'E003/139', 'E003/139e', 'E003/140',
+                'E003/141', 'E003/142', 'E003/143', 'E003/144', 'E003/145', 'E003/146', 'E003/147', 'E003/148',
+                'E003/149', 'E003/150', 'E003/151', 'E003/152', 'E003/153', 'E003/154', 'E003/155', 'E003/156',
+                'E003/157', 'E003/158', 'E003/159', 'E003/160', 'E003/161', 'E003/162', 'E003/163', 'E003/164',
+                'E003/165', 'E003/166', 'E003/167', 'E003/168', 'E003/169', 'E003/170', 'E003/171', 'E003/172',
+                'E004/057', 'E004/060', 'E004/061', 'E004/064', 'E004/072', 'E004/073', 'E004/074', 'E004/075',
+                'E004/076', 'E004/077', 'E004/078', 'E004/079', 'E004/080', 'E004/081', 'E004/082', 'E004/083',
+                'E004/084', 'E004/085', 'E004/086', 'E004/089', 'E004/090', 'E004/091', 'E004/092'
+            ))
+            OR (asset_category_id = '{COLD_ROOMS_AND_FREEZER_ROOMS_UUID}' AND sub_catalogue = 'WHO PQS');
+            "##
+        )?;
+
         Ok(())
     }
 }

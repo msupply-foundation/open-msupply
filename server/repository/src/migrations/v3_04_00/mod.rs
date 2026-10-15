@@ -209,9 +209,23 @@ mod test {
     /// The WHO PQS refresh (#1285): new products are added, under new types where
     /// they need one, withdrawn ones are relabelled rather than removed, a code the
     /// site already holds is left alone, freeze-free cold boxes move to their own
-    /// type, and WHO PQS cold rooms move to a 20-year lifespan.
+    /// type, and WHO PQS cold rooms move to a 20-year lifespan. Every type and
+    /// item it adds or changes gets a changelog row stamped with the central
+    /// site id, so central can send the refresh out; untouched rows get none.
     #[actix_rt::test]
     async fn migration_3_04_00_who_pqs_catalogue() {
+        // Declared here rather than beside the module's other tables, so it
+        // doesn't collide with another test's own `changelog` declaration.
+        table! {
+            changelog (cursor) {
+                cursor -> BigInt,
+                table_name -> Text,
+                record_id -> Text,
+                store_id -> Nullable<Text>,
+                source_site_id -> Nullable<Integer>,
+            }
+        }
+
         let previous_version = V3_02_00.version();
         let version = V3_04_00.version();
 
@@ -233,6 +247,10 @@ mod test {
             r#"INSERT INTO asset_catalogue_item (id, sub_catalogue, code, asset_class_id, asset_category_id, asset_catalogue_type_id, manufacturer, model, properties) VALUES ('site_cold_room', 'General', 'SITE-CR', 'fad280b6-8384-41af-84cf-c7b6b4526ef0', '7db32eb6-5929-4dd1-a5e9-01e36baa73ad', '9a4ad0dd-138a-41b2-81df-08772635085e', 'Local', 'Room', '{"expected_lifespan":15}');"#,
         );
         assert_eq!(count_in(&connection, "WHO PQS"), 168);
+        run(
+            &connection,
+            "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', 42);",
+        );
 
         migrate(
             &connection,
@@ -289,5 +307,42 @@ mod test {
         assert_eq!(properties["expected_lifespan"], 20);
         let (_, _, properties) = catalogue_item(&connection, "SITE-CR");
         assert_eq!(properties["expected_lifespan"], 15);
+
+        let changelog_rows = |table_name: &str| {
+            changelog::table
+                .filter(changelog::table_name.eq(table_name.to_string()))
+                .select((
+                    changelog::record_id,
+                    changelog::store_id,
+                    changelog::source_site_id,
+                ))
+                .load::<(String, Option<String>, Option<i32>)>(connection.lock().connection())
+                .unwrap()
+        };
+        let types = changelog_rows("asset_catalogue_type");
+        let items = changelog_rows("asset_catalogue_item");
+        assert!(
+            types
+                .iter()
+                .chain(items.iter())
+                .all(|(_, store_id, site_id)| store_id.is_none() && *site_id == Some(42)),
+            "changelog rows are central rows, stamped with the central site id"
+        );
+        assert_eq!(types.len(), 3);
+
+        let announced = |code: &str| {
+            let (id, _, _) = catalogue_item(&connection, code);
+            items
+                .iter()
+                .filter(|(record_id, _, _)| *record_id == id)
+                .count()
+        };
+        assert_eq!(announced("E003/141"), 1, "new");
+        assert_eq!(announced("E003/002"), 1, "withdrawn");
+        assert_eq!(announced("E004/057"), 1, "retyped");
+        assert_eq!(announced("E001/001-C"), 1, "cold room lifespan");
+        assert_eq!(announced("E003/071"), 0, "untouched");
+        assert_eq!(announced("E003/140"), 0, "the site's own import");
+        assert_eq!(announced("SITE-CR"), 0, "the site's own cold room");
     }
 }

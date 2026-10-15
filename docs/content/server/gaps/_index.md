@@ -27,7 +27,7 @@ This one is more re-usable...
 `refresh_who_pqs_catalogue.py` is the script to use for later refreshes. It was first used in October 2026 (#1285).
 It compares the WHO PQS CCE master data workbook with the catalogue a database already holds and writes:
 
-- a migration fragment that adds the products WHO have prequalified since the last refresh and moves the products WHO no longer list, or have suspended, to the `WHO PQS (withdrawn)` sub-catalogue. Nothing is deleted, because withdrawn equipment is still installed and in service.
+- a migration fragment that adds the products WHO have prequalified since the last refresh and moves the products WHO no longer list, or have suspended, to the `WHO PQS (withdrawn)` sub-catalogue. Nothing is deleted, because withdrawn equipment is still installed and in service. Every site runs the fragment, and it also writes changelog rows for each type and item it adds or changes, so an upgraded central sends the refresh to remotes that haven't upgraded yet.
 - a CSV listing every change, with the reason each type was chosen.
 
 ```bash
