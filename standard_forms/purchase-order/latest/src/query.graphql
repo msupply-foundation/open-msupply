@@ -19,6 +19,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
         address2
       }
       number
+      headingMessage
       lines {
         nodes {
           lineNumber
