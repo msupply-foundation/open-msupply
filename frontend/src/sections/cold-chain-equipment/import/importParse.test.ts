@@ -493,6 +493,7 @@ describe('OMS-REG-CCE-07.8 — an unreadable status falls back to Functioning', 
   it('matches a status by its own label, case-insensitively', () => {
     expect(parseImportStatus('status.not-in-use')).toBe('NOT_IN_USE');
     expect(parseImportStatus('STATUS.NOT-IN-USE')).toBe('NOT_IN_USE');
+    expect(parseImportStatus('status.not-installed')).toBe('NOT_INSTALLED');
   });
 
   it('falls back for a blank or unmatched value', () => {

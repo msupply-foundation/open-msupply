@@ -7,6 +7,7 @@ import {
   canDelete,
   canEnterSentDate,
   canRecordPostSendingDates,
+  canSetExpectedDate,
   currentStep,
   isOpenToChange,
   ladderFor,
@@ -150,6 +151,13 @@ describe('what may be changed, and when', () => {
     expect(canRecordPostSendingDates('CONFIRMED')).toBe(true);
     expect(canRecordPostSendingDates('SENT')).toBe(true);
     expect(canRecordPostSendingDates('FINALISED')).toBe(false);
+  });
+
+  it('keeps the expected delivery date open until the order is Finalised (OMS-REG-PO-01.24)', () => {
+    expect(canSetExpectedDate('NEW')).toBe(true);
+    expect(canSetExpectedDate('CONFIRMED')).toBe(true);
+    expect(canSetExpectedDate('SENT')).toBe(true);
+    expect(canSetExpectedDate('FINALISED')).toBe(false);
   });
 
   it('allows line authoring, deletion and attachments on their own windows', () => {

@@ -23,6 +23,10 @@ import {
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
+  syncPaused,
+  syncBlocked,
+  maintenanceMode,
+  syncApiPaused,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
@@ -71,7 +75,13 @@ export const SyncModal: Component<{
       centralServer: isCentralServer(),
     })
   );
-  const statusKind = () => statusLineKind(overview(), pushQueueCount());
+  const statusKind = () =>
+    statusLineKind(
+      overview(),
+      pushQueueCount(),
+      syncPaused(),
+      maintenanceMode()
+    );
 
   // SYNC-03.22: fetch once on open when nothing is cached (no initial
   // subscription frame — contract.md § Records to push). Fires exactly once per
@@ -179,6 +189,10 @@ export const SyncModal: Component<{
             variant="primary"
             icon={<SyncIcon />}
             loading={busy()}
+            // Disabled, not merely no-op, while paused: the server refuses
+            // the trigger, so the control must read as unavailable. Not in
+            // maintenance mode, where the server forces the run (#840).
+            disabled={syncBlocked()}
             onClick={syncNow}
             data-testid="sync-now-button"
           >
@@ -197,6 +211,16 @@ export const SyncModal: Component<{
             <Match when={statusKind() === 'syncing'}>
               <p class={styles.statusLine} data-testid="sync-status-line">
                 {t('sync-info.syncing')}
+              </p>
+            </Match>
+            <Match when={statusKind() === 'maintenance'}>
+              <p class={styles.statusLine} data-testid="sync-status-line">
+                {t('sync-info.maintenance')}
+              </p>
+            </Match>
+            <Match when={statusKind() === 'paused'}>
+              <p class={styles.statusLine} data-testid="sync-status-line">
+                {t('sync-info.paused')}
               </p>
             </Match>
             <Match when={statusKind() === 'records-to-push'}>
@@ -236,6 +260,33 @@ export const SyncModal: Component<{
           </Show>
         </div>
 
+        {/* Paused notice — who can lift it. Shown whenever paused, even beside
+            a run still finishing, so the user knows nothing follows it. */}
+        <Show
+          when={!maintenanceMode()}
+          fallback={
+            <Alert severity="warning" testId="sync-maintenance-alert">
+              {t('messages.sync-maintenance-mode')}
+            </Alert>
+          }
+        >
+          <Show when={syncPaused()}>
+            <Alert severity="warning" testId="sync-paused-alert">
+              {t('messages.sync-paused')}
+            </Alert>
+          </Show>
+        </Show>
+
+        {/* Central only: the sync API pause. This modal reports central's own
+            runs, which the API pause doesn't stop, so without this nothing
+            outside Settings says remote sites are being refused. Maintenance
+            mode holds the pause and has its own notice, as in Settings. */}
+        <Show when={syncApiPaused() && !maintenanceMode()}>
+          <Alert severity="warning" testId="sync-api-paused-alert">
+            {t('messages.sync-api-paused-modal')}
+          </Alert>
+        </Show>
+
         {/* Error panel — only when the latest run errored (SYNC-03.28). */}
         <Show when={overview()?.error}>
           {err => {
@@ -245,7 +296,7 @@ export const SyncModal: Component<{
               return h ? t(h) : undefined;
             };
             return (
-              <Alert severity="error">
+              <Alert severity={errorSummary().severity ?? 'error'}>
                 <div>{t(errorSummary().summary)}</div>
                 <ErrorDetails detail={err().fullError} hint={hintText()} />
               </Alert>

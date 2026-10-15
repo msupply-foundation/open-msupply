@@ -128,6 +128,17 @@ export const canRecordPostSendingDates = (
 ): boolean => status !== 'FINALISED';
 
 /**
+ * The expected delivery date is our estimate of when the goods will actually
+ * arrive, and most of what moves it — the supplier confirming, a shipment
+ * slipping, freight or customs — happens AFTER the order is sent. So it stays
+ * open on a Sent order and closes only once the order is Finalised, where the
+ * domain refuses it too (rules § what may be changed, and when). The requested
+ * date, the agreed date it is measured against, keeps the authoring window.
+ */
+export const canSetExpectedDate = (status: PurchaseOrderStatus): boolean =>
+  status !== 'FINALISED';
+
+/**
  * The sent date may be entered by hand in every state before Sent; from then
  * on the panel reads it, and entering Sent stamps the actual moment over it.
  */

@@ -12,7 +12,10 @@ import type { BarReason, IssueWarning } from '../../../../domain/allocation';
 
 /** The ported label key each barred category is reported under. */
 export type SkipReasonLabel =
-  'label.on-hold' | 'label.expired' | 'label.unusable-vvm-status';
+  | 'label.on-hold'
+  | 'label.expired'
+  | 'label.unusable-vvm-status'
+  | 'label.not-for-this-campaign';
 
 export type IssueWarningMessage =
   | { key: 'messages.over-allocated'; quantity: number; issueQuantity: number }
@@ -29,6 +32,8 @@ const skipReasonLabel = (reason: BarReason): SkipReasonLabel => {
       return 'label.expired';
     case 'unusable-vvm':
       return 'label.unusable-vvm-status';
+    case 'other-campaign':
+      return 'label.not-for-this-campaign';
   }
 };
 

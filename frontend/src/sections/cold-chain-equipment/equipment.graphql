@@ -220,7 +220,7 @@ query assetById($storeId: String!, $assetId: String!) {
 
 # The status history (S2.3). Ordered by datetime descending; the kind filter is
 # the caller's — there is no "has a status" predicate, so narrowing to status
-# entries enumerates all six statuses (contract › temperature mapping).
+# entries enumerates all seven statuses (contract › temperature mapping).
 query assetLogsList(
   $storeId: String!
   $filter: AssetLogFilterInput

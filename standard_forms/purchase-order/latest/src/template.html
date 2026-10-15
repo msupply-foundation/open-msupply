@@ -2,6 +2,10 @@
   {% include "style.css" %}
 </style>
 
+{% if data.purchaseOrder.headingMessage %}
+<div class="heading_message">{{ data.purchaseOrder.headingMessage }}</div>
+{% endif %}
+
 <table class="body_section">
   <thead>
     <tr class="body_column_label">
@@ -41,6 +45,21 @@
 </table>
 
 <table class="right-aligned-table">
+  <tr excel-type="total-row">
+    <td>{{ t(k="label.cost-subtotal", f="Subtotal")}}:</td>
+    <td>{{ data.purchaseOrder.orderTotalBeforeDiscount | round(precision=2) }} {{ data.purchaseOrder.currency.code
+    }}</td>
+  </tr>
+  <tr excel-type="total-row">
+    <td>{{ t(k="label.additional-fees", f="Additional fees")}}:</td>
+    <td>{{ data.purchaseOrder.additionalFees | round(precision=2) }} {{ data.purchaseOrder.currency.code
+    }}</td>
+  </tr>
+  <tr excel-type="total-row">
+    <td>{{ t(k="label.supplier-discount", f="Supplier discount")}}:</td>
+    <td>{{ data.purchaseOrder.supplierDiscountAmount | round(precision=2) }} {{ data.purchaseOrder.currency.code
+    }}</td>
+  </tr>
   <tr excel-type="total-row">
     <td>{{ t(k="heading.total-cost", f="Total cost")}}:</td>
     <td>{{ data.purchaseOrder.orderTotalAfterDiscount *

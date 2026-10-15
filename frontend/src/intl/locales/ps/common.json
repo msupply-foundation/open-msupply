@@ -2489,7 +2489,6 @@
   "preference.sortByVvmStatusThenExpiry": "د VVM حالت له مخې موجودې بستې ترتیب کړئ بیا پای ته ورسید",
   "preference.storeCustomColour": "د پاڼې فوټر دودیز رنګ (د هیکس کوډ، د مثال په توګه #000000 تور لپاره)",
   "preference.syncRecordsDisplayThreshold": "همغږي ریکارډونه د ښودلو حد",
-  "preference.useProcurementFunctionality": "د تدارکاتو فعالیت وکاروئ",
   "preference.useSimplifiedMobileUi": "ساده ګرځنده UI وکاروئ",
   "preference.warnWhenMissingRecentStocktake": "کاروونکو ته خبرداری ورکړئ کله چې داخلي نظم رامینځته کړئ که چیرې وروستی ذخیره شتون نلري",
   "preference.warnWhenMissingRecentStocktake.description": "یو خبرداری ښکاره کړئ کله چې د سټاک ډیټا د ټاکل شوي اعظمي عمر څخه زوړ وي یا وروستي سټاک د لږترلږه توکو څخه کم وي نو د سټاک کچې محاسبه کولو لپاره معتبر سټاک ټیک نه ګڼل کیږي.",

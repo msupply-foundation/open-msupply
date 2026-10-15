@@ -9,7 +9,8 @@ import {
   AppNavLink,
   AppNavSection,
   UserStoreNodeFragment,
-  usePreferences,
+  useAuthContext,
+  UserPermission,
   useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -26,8 +27,10 @@ export const ReplenishmentNav = ({
   );
   const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
-  const { useProcurementFunctionality } = usePreferences();
-  const useProcurement = useProcurementFunctionality;
+  const { userHasPermission } = useAuthContext();
+  const canReadPurchaseOrders = userHasPermission(
+    UserPermission.PurchaseOrderQuery
+  );
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const pluginLinks = usePluginNavLinksForCategory(AppRoute.Replenishment);
 
@@ -42,7 +45,7 @@ export const ReplenishmentNav = ({
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={useProcurement && !isExtraSmallScreen}
+            visible={canReadPurchaseOrders && !isExtraSmallScreen}
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.PurchaseOrder)
               .build()}

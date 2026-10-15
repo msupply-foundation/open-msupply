@@ -794,6 +794,10 @@ const LineEditContent = (
                       hideLabel
                       min={0}
                       decimalLimit={2}
+                      // Doses step a whole unit at a time: a one-dose step
+                      // rounds straight back up to the unit it left, so
+                      // ArrowDown would never move.
+                      step={entryMode() === 'doses' ? doses() : 1}
                       data-testid="requested-quantity-input"
                       ref={requestedField.ref}
                       disabled={disabled() || saving()}

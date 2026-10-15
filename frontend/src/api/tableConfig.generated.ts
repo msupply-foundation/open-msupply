@@ -65,10 +65,6 @@ export type SaveGlobalTableConfigsVariables = {
     storeId: string;
     value: boolean;
   }> | null;
-    useProcurementFunctionality?: Array<{
-    storeId: string;
-    value: boolean;
-  }> | null;
     sortByVvmStatusThenExpiry?: Array<{
     storeId: string;
     value: boolean;

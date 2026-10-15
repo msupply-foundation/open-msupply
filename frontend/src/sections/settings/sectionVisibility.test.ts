@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   showBarcodeScannerRows,
   showPrintViaUsbRow,
+  showCentralSyncControls,
   showThemeAndLogoRows,
   visibleSections,
 } from './sectionVisibility';
@@ -87,5 +88,17 @@ describe('the Print via USB row is desktop-only (SET-05.41)', () => {
 
   it('shows the row everywhere else', () => {
     expect(showPrintViaUsbRow(false)).toBe(true);
+  });
+});
+
+// Issues #717, #840 — maintenance mode, Pause sync API and Pause processors are
+// central controls: only a Server Admin on a central server sees them (the
+// server enforces the same on every call).
+describe('Central sync controls visibility', () => {
+  it('needs both central server and Server Admin', () => {
+    expect(showCentralSyncControls(adminCentral)).toBe(true);
+    expect(showCentralSyncControls(adminRemote)).toBe(false);
+    expect(showCentralSyncControls(nonAdminCentral)).toBe(false);
+    expect(showCentralSyncControls(nonAdmin)).toBe(false);
   });
 });

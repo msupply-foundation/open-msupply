@@ -424,7 +424,7 @@ export type CardGroup<T, G extends string> = {
    *
    * **N is a consequence of the group's own fields, not a house number.** Work it
    * out, don't guess: the finest track has to be coarse enough that the widest
-   * field which MUST fit (usually a date, ~11rem for `DD MMM YYYY` plus its
+   * field which MUST fit (usually a date, ~11rem for its all-caps hint plus its
    * trigger) can be reached by a whole number of tracks, and N has to divide into
    * each row's intended field grouping. Two worked examples, both on a ~41rem
    * panel:

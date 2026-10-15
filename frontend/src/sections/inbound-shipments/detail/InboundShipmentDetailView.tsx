@@ -1348,7 +1348,7 @@ const InboundShipmentDetailView: Component = () => {
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={isDisabled() ? undefined : openRow}
+                  onRowClick={openRow}
                   // A line the last bulk op failed reads in the error tone
                   // (spec S8 → per-line indicators).
                   rowTone={line =>
@@ -1452,6 +1452,12 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                defaultDonor={
+                  node().defaultDonor ??
+                  node().purchaseOrder?.donor ??
+                  undefined
+                }
+                campaign={node().campaign ?? null}
                 // Gates the editor's internal-order banner, on the same rule as
                 // the Units requested column so the two can't disagree.
                 requisitionId={
@@ -1469,6 +1475,7 @@ const InboundShipmentDetailView: Component = () => {
                 // merely coincide, and reading one as the other is how this
                 // field came to be editable on transfers.
                 shippedLocked={sourceLinked()}
+                readOnly={isDisabled()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

@@ -34,7 +34,6 @@ export type NavCapability =
   | 'dispensary'
   | 'programModule'
   | 'vaccineModule'
-  | 'procurement'
   | 'central'
   | 'centralAdmin';
 
@@ -99,7 +98,6 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'purchase-order',
         path: 'replenishment/purchase-order',
-        gate: 'procurement',
         permission: 'PURCHASE_ORDER_QUERY',
       },
       {

@@ -7,6 +7,7 @@
 export { campaignsResource, type Campaign } from './campaignsResource';
 export { campaignKindLabel, type CampaignKind } from './campaignKind';
 export { NONE_OPTION } from './noneOption';
+export { CampaignSelect, type CampaignSelectProps } from './CampaignSelect';
 export {
   fetchItemPrograms,
   fetchSharedItemPrograms,
