@@ -93,6 +93,11 @@ fragment InboundInfo on InvoiceNode {
     id
     method
   }
+  # The shipment's default campaign — new lines start with it.
+  campaign {
+    id
+    name
+  }
   pricing {
     totalBeforeTax
     totalAfterTax

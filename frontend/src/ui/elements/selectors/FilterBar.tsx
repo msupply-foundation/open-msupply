@@ -11,6 +11,7 @@ import {
 } from '../../icons';
 import { t } from '../../../intl';
 import { createDebounced } from '../../utils/createDebounced';
+import { usePortalMount } from '../../utils/portalMount';
 import {
   createFocusTargets,
   type FocusTarget,
@@ -466,6 +467,7 @@ const FiltersMenu = (props: {
   // and after which nothing else re-takes focus. An Escape/outside
   // dismissal (no pick) keeps the normal restore (keyboard a11y).
   let pickedKey: string | undefined;
+  const portalMount = usePortalMount();
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       {/* The spec's dashed "Add filter" pill (ui-standards § tables →
@@ -482,7 +484,9 @@ const FiltersMenu = (props: {
         <FilterIcon class={styles.triggerIcon} />
         <span class={styles.triggerLabel}>{t('label.add-filter')}</span>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      {/* Mounts into a containing dialog's top-layer box, where a <body>
+          portal would paint behind it and sit inert (ui/utils/portalMount). */}
+      <DropdownMenu.Portal mount={portalMount?.()}>
         <DropdownMenu.Content
           class={styles.content}
           onCloseAutoFocus={event => {
@@ -787,6 +791,7 @@ export interface FilterSelectProps<V extends string> {
 export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
   const chipFocus = useChipFocus();
   const current = () => props.options.find(o => o.value === props.value);
+  const portalMount = usePortalMount();
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       <DropdownMenu.Trigger
@@ -798,7 +803,7 @@ export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
         <span>{current()?.label ?? ''}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      <DropdownMenu.Portal mount={portalMount?.()}>
         <DropdownMenu.Content class={styles.content}>
           <Show when={props.options.length > 0} fallback={<NoOptions />}>
             <DropdownMenu.RadioGroup
@@ -920,6 +925,7 @@ export const FilterMultiSelect = <V extends string>(props: {
     const without = props.values.filter(v => v !== value);
     props.onChange(checked ? [...without, value] : [...without]);
   };
+  const portalMount = usePortalMount();
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       <DropdownMenu.Trigger
@@ -931,7 +937,7 @@ export const FilterMultiSelect = <V extends string>(props: {
         <span>{summary()}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      <DropdownMenu.Portal mount={portalMount?.()}>
         <DropdownMenu.Content class={styles.content}>
           <Show when={props.options.length > 0} fallback={<NoOptions />}>
             <For each={props.options}>

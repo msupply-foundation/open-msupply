@@ -1217,6 +1217,9 @@ const OutboundDetailView: Component = () => {
                       onChangeCustomer={customerId =>
                         void changeCustomer(customerId)
                       }
+                      onChangeCampaign={campaignId =>
+                        void saveField({ campaignId: { value: campaignId } })
+                      }
                       onSaveCustomFields={patch =>
                         void saveField({ customFields: patch })
                       }
