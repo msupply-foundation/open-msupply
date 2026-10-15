@@ -197,7 +197,9 @@ fragment InboundLine on InvoiceLineNode {
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits
-    pricePerPackAfterDiscount
+    # The order line's pack price with the supplier discount apportioned — the
+    # figure the shipment's cost was seeded from.
+    pricePerPackAfterSupplierDiscount
   }
 }
 

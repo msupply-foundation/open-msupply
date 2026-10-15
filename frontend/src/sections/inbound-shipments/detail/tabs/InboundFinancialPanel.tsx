@@ -69,10 +69,11 @@ export const InboundFinancialPanel: Component<{
   const localCode = () => homeCurrency();
 
   // Per-line derivations (contract → Financial), pure over the line only —
-  // the PO price per pack comes straight off the PO line; the rate-dependent
-  // per-pack conversion is built inside columns() from a captured rate (below).
+  // the PO price per pack comes straight off the PO line, net of the order's
+  // supplier discount; the rate-dependent per-pack conversion is built inside
+  // columns() from a captured rate (below).
   const poPricePerPack = (line: Line) =>
-    line.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0;
+    line.purchaseOrderLine?.pricePerPackAfterSupplierDiscount ?? 0;
   // The two line totals read the line's stored figures (see the header note).
   const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
   const lineTotalLocal = (line: Line) => line.totalBeforeTax;
