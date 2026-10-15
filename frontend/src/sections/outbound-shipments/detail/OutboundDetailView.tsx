@@ -38,10 +38,7 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import {
-  useIsNavOverlay,
-  useIsShortViewport,
-} from '../../../ui/utils/createMediaQuery';
+import { useFoldTotalsIntoBar } from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -387,19 +384,14 @@ const OutboundDetailView: Component = () => {
 
   // Where the totals live is a "which element renders" decision, so it is the
   // one responsive mechanism that touches JS (src/ui/CLAUDE.md #7): a band of
-  // its own above the bar on a wide screen, and ON the bar below the
-  // navOverlay line — tablet portrait and down, where the shipment's lines are
-  // worth more than a row of chrome and the bar has the room. Rendered by a
-  // function, not a stored element: the two footer faces each need their own
-  // instance, and one element can't be in two places.
-  const narrowViewport = useIsNavOverlay();
-  // …and the same trade on a SHORT one. The rule was written for tablet
-  // portrait, but a landscape tablet is the case that needs it most: wide
-  // enough that the width query never fires, short enough that a third stacked
-  // bar under the table costs a row of the thing the user came to work on.
-  // Measured at 1434×742, chrome took 52% of the screen.
-  const shortViewport = useIsShortViewport();
-  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
+  // its own above the bar on a wide screen, and ON the bar once the viewport
+  // is narrow or short — the latter being the case that needs it most, since a
+  // landscape tablet is wide enough that the width query never fires and short
+  // enough that a third stacked bar costs a row of the thing the user came to
+  // work on (measured at 1434×742, chrome took 52% of the screen).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Rendered by a function, not a stored element: the two footer faces each
+  // need their own instance, and one element can't be in two places.
   const inlineTotals = () => (
     <Show when={foldTotalsIntoBar()}>
       <OutboundTotalsStrip
