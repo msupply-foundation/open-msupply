@@ -57,6 +57,7 @@ pub(crate) fn generate(
         currency_rate: input_currency_rate,
         expected_delivery_date: input_expected_delivery_date,
         shipping_method_id,
+        campaign_id: input_campaign_id,
         backdated_datetime: input_backdated_datetime,
         custom_fields: input_custom_fields,
     }: UpdateOutboundShipment,
@@ -93,6 +94,9 @@ pub(crate) fn generate(
     update_invoice.shipping_method_id = shipping_method_id
         .map(|s| s.value)
         .unwrap_or(update_invoice.shipping_method_id);
+    update_invoice.campaign_id = input_campaign_id
+        .map(|c| c.value)
+        .unwrap_or(update_invoice.campaign_id);
     update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
         update_invoice.custom_fields,
         input_custom_fields,

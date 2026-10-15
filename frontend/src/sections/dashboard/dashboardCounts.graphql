@@ -24,7 +24,7 @@ query inboundShipmentCounts($storeId: String!) {
 }
 
 # External inbound shipments (with a purchase-order link): same three
-# counts, fetched only while the procurement preference shows the panel — OMS-REG-DB-01.36.
+# counts, fetched only while the external read shows the panel — OMS-REG-DB-01.36.
 query inboundShipmentExternalCounts($storeId: String!) {
   inboundShipmentExternalCounts(storeId: $storeId) {
     created {

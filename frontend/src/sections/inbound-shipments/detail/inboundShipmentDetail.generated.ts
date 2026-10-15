@@ -59,6 +59,10 @@ export type InboundInfoFragment = {
   number: number;
   reference: string | null;
   orderTotalAfterDiscount: number;
+  donor: {
+  id: string;
+  name: string;
+} | null;
   currency: {
   id: string;
   code: string;
@@ -76,6 +80,10 @@ export type InboundInfoFragment = {
   shippingMethod: {
   id: string;
   method: string;
+} | null;
+  campaign: {
+  id: string;
+  name: string;
 } | null;
   pricing: {
   totalBeforeTax: number;
@@ -306,7 +314,7 @@ export type InboundShipmentResult = {
 };
 
 export const InboundShipment = {
-  query: "query inboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
+  query: "query inboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    donor {\n      id\n      name\n    }\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  campaign {\n    id\n    name\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
 } as TypedDocument<InboundShipmentResult, InboundShipmentVariables>;
 
 export type FullInboundShipmentVariables = {
@@ -334,7 +342,7 @@ export type FullInboundShipmentResult = {
 };
 
 export const FullInboundShipment = {
-  query: "query fullInboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...InboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  transferComment\n  requisitionLine {\n    id\n    requestedQuantity\n  }\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
+  query: "query fullInboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...InboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    donor {\n      id\n      name\n    }\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  campaign {\n    id\n    name\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  transferComment\n  requisitionLine {\n    id\n    requestedQuantity\n  }\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
 } as TypedDocument<FullInboundShipmentResult, FullInboundShipmentVariables>;
 
 export type InboundShipmentByNumberVariables = {
@@ -648,6 +656,9 @@ export type UpdateInboundShipmentVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
     customFields?: unknown | null;
   };
 };
@@ -666,7 +677,7 @@ export type UpdateInboundShipmentResult = {
 };
 
 export const UpdateInboundShipment = {
-  query: "mutation updateInboundShipment($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipment(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
+  query: "mutation updateInboundShipment($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipment(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    donor {\n      id\n      name\n    }\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  campaign {\n    id\n    name\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
 } as TypedDocument<UpdateInboundShipmentResult, UpdateInboundShipmentVariables>;
 
 export type UpdateInboundShipmentExternalVariables = {
@@ -691,6 +702,9 @@ export type UpdateInboundShipmentExternalVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
     customFields?: unknown | null;
   };
 };
@@ -709,7 +723,7 @@ export type UpdateInboundShipmentExternalResult = {
 };
 
 export const UpdateInboundShipmentExternal = {
-  query: "mutation updateInboundShipmentExternal($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipmentExternal(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
+  query: "mutation updateInboundShipmentExternal($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipmentExternal(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    donor {\n      id\n      name\n    }\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  campaign {\n    id\n    name\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}",
 } as TypedDocument<UpdateInboundShipmentExternalResult, UpdateInboundShipmentExternalVariables>;
 
 export type BatchInboundShipmentVariables = {
@@ -854,6 +868,9 @@ export type BatchInboundShipmentVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
     customFields?: unknown | null;
   }> | null;
     deleteInboundShipments?: Array<{
@@ -1013,6 +1030,9 @@ export type BatchInboundShipmentExternalVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
     customFields?: unknown | null;
   }> | null;
     deleteInboundShipments?: Array<{

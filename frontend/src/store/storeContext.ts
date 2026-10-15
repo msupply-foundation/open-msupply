@@ -119,7 +119,7 @@ const stockPreferences = () => {
 // is unresolved so a gated column/control never flashes in before the
 // preference is known. Reactive — a post-sync refetch re-gates in place.
 // `donorTracking`/`vvm`/`vaccinesInDoses` overlap the stocktake gates; the
-// inbound-only ones (procurement, authorisation, foreign currency, backdating,
+// inbound-only ones (authorisation, foreign currency, backdating,
 // pack-to-one, manual internal-order linking) ride the same guard-3 query.
 // `invoiceStatusOptions` empty means UNRESTRICTED (every status offered until
 // the real value resolves — the permissive default, as in outbound/
@@ -132,7 +132,6 @@ const inboundShipmentPreferences = () => {
     manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
     manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
     allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
-    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
     externalInboundShipmentLinesMustBeAuthorised:
       prefs?.externalInboundShipmentLinesMustBeAuthorised ?? false,
     backdatingEnabled: prefs?.backdating?.shipmentsEnabled ?? false,
@@ -303,14 +302,6 @@ const hasVaccineModule = (): boolean =>
 const hasProgramModule = (): boolean =>
   storeContext()?.storePreferences?.omProgramModule ?? false;
 
-// Whether the entered store has the procurement function enabled
-// (PreferencesNode.useProcurementFunctionality). Gates the Purchase Orders
-// DESTINATION (spec/navigation › registry); inboundShipmentPreferences reads
-// the same field for the from-PO creation option. Safe default OFF while
-// unresolved.
-const hasProcurement = (): boolean =>
-  storeContext()?.preferences?.useProcurementFunctionality ?? false;
-
 // The NAME of the store the user has currently entered — the prefix source for
 // a generated patient code (spec/patients § generating a code). Read off the
 // me/login response's store list, the same place `isDispensary` reads
@@ -321,14 +312,11 @@ const currentStoreName = (): string => {
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
 };
 
-// The purchase-order vertical's gates (spec/purchase-orders rules §
-// availability, § the status lifecycle): the per-store procurement preference
-// that decides whether the destination exists at all, and whether the approval
-// state is part of the ladder. Both live on the global PreferencesNode.
+// Whether the approval state is part of the purchase-order ladder
+// (spec/purchase-orders rules § the status lifecycle).
 const purchaseOrderPreferences = () => {
   const prefs = storeContext()?.preferences;
   return {
-    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
     authorisePurchaseOrder: prefs?.authorisePurchaseOrder ?? false,
   };
 };
@@ -393,7 +381,6 @@ export {
   storeCustomColour,
   hasVaccineModule,
   hasProgramModule,
-  hasProcurement,
   purchaseOrderPreferences,
   hasPermission,
   guardCentralDataEdit,

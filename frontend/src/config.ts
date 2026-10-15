@@ -24,6 +24,11 @@ export const CUSTOM_TRANSLATIONS_URL = '/custom-translations';
 // payloads. Proxied to the backend in dev (see vite.config.ts).
 export const PRINT_LABEL_PRESCRIPTION_URL = '/print/label-prescription';
 
+// Cold chain asset labels (spec/cold-chain-equipment § S2 Print asset label):
+// the same REST shape, POSTing one label's payload. The route is named for the
+// QR code it once printed; the label now carries a DataMatrix.
+export const PRINT_LABEL_ASSET_URL = '/print/label-qr';
+
 // Support tools (spec/settings/contract.md § Support) — REST, not GraphQL.
 // GET /support/database vacuums the server database in place, then streams
 // the file (session-cookie auth, SERVER_ADMIN checked in the handler).

@@ -419,22 +419,18 @@ fn create_stopgap_row(
     let record_id = require_metadata(meta, "record_id")?;
     let file_name = require_metadata(meta, "file_name")?;
 
+    // The uploader and version number are the origin site's; its row overwrites
+    // this one on sync, so the defaults stand in until then.
     let row = SyncFileReferenceRow {
         id: file_id.to_string(),
         file_name,
         table_name,
         record_id,
-        uploaded_bytes: 0,
-        downloaded_bytes: 0,
         total_bytes: upload_length as i32,
         status: SyncFileStatus::New,
-        error: None,
-        mime_type: None,
-        retries: 0,
-        retry_at: None,
         direction: SyncFileDirection::Upload,
         created_datetime: Utc::now().naive_utc(),
-        deleted_datetime: None,
+        ..Default::default()
     };
     SyncFileReferenceRowRepository::new(&ctx.connection)
         .upsert_without_changelog(&row)

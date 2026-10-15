@@ -145,14 +145,14 @@ export const packSizeEntered = (
 });
 
 /**
- * One input, two labels (spec S10 § middle): Order quantity (Packs) while
+ * One input, two labels (spec S10 § quantity): Requested packs while
  * drafting, Adjusted packs once Ready for sending or Sent — and, the spec's
- * one exception, Order quantity (Packs) again on a Finalised order.
+ * one exception, Requested packs again on a Finalised order.
  */
 export const packsLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
   status === 'CONFIRMED' || status === 'SENT'
     ? 'label.adjusted-packs'
-    : 'label.order-quantity-in-packs';
+    : 'label.requested-packs';
 
 /** The read-only Adjusted units row appears once the order is past approval. */
 export const showsAdjustedUnits = (status: PurchaseOrderStatus): boolean =>
@@ -200,6 +200,17 @@ export const repriced = (changed: keyof Prices, prices: Prices): Prices => {
   };
 };
 
+/**
+ * The after-discount price of one unit (spec S10 § pricing): the pack price
+ * over the pack size, zero where there is no pack size to divide by.
+ */
+export const pricePerUnit = (
+  draft: Pick<LineDraft, 'pricePerPackAfterDiscount' | 'requestedPackSize'>
+): number =>
+  draft.requestedPackSize > 0
+    ? draft.pricePerPackAfterDiscount / draft.requestedPackSize
+    : 0;
+
 // ─── Dates ──────────────────────────────────────────────────────────────────
 
 /**
@@ -228,8 +239,14 @@ export type LineGates = {
   packs: boolean;
   /** Pack size, both prices, the supplier's code and the manufacturer. */
   drafting: boolean;
-  /** Both delivery dates. */
-  dates: boolean;
+  /** The requested delivery date — the agreed date, fixed once Sent. */
+  requestedDate: boolean;
+  /**
+   * The expected delivery date — our estimate of arrival, which keeps moving
+   * after the order is sent, so it stays open until the order is Finalised
+   * (OMS-REG-PO-01.24).
+   */
+  expectedDate: boolean;
   /** The comment for the supplier and the internal note. */
   text: boolean;
   /** Never: nothing here changes a line's status (OMS-FUN-PO-02.22). */
@@ -239,9 +256,10 @@ export type LineGates = {
 /**
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
- * fields close from Ready for sending; the dates close once Sent; the packs
- * follow the quantity rule — requested while drafting, adjusted with the
- * authorise permission from Ready for sending.
+ * fields close from Ready for sending; the requested date closes once Sent
+ * while the expected date stays open; the packs follow the quantity rule —
+ * requested while drafting, adjusted with the authorise permission from Ready
+ * for sending.
  */
 export const lineGates = (options: {
   status: PurchaseOrderStatus;
@@ -256,7 +274,8 @@ export const lineGates = (options: {
     item: options.addMode,
     packs: open && (isDrafting(options.status) || options.canAuthorise),
     drafting,
-    dates: open && options.status !== 'SENT',
+    requestedDate: open && options.status !== 'SENT',
+    expectedDate: open,
     text: open,
     status: false,
   };
@@ -333,11 +352,12 @@ export const insertInput = (
   unit: facts.unitName,
 });
 
-// ─── The ordered-elsewhere figure ───────────────────────────────────────────
+// ─── Units figures ──────────────────────────────────────────────────────────
 
-/** The ordered-elsewhere figure: unit name, or "units" (OMS-FUN-PO-02.19). */
-export const orderedElsewhere = (
-  units: number,
-  unitName: string | null
-): string =>
+/**
+ * A units figure followed by the item's unit name, or "units" where it has
+ * none (spec S10 § quantity) — the ordered-elsewhere figure (OMS-FUN-PO-02.19),
+ * stock on hand and the line's own requested and adjusted units.
+ */
+export const unitsFigure = (units: number, unitName: string | null): string =>
   `${roundedText(units)} ${unitName || tPlural('label.units-plural', units)}`;
