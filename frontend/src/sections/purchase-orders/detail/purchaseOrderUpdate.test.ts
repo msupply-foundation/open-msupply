@@ -275,6 +275,12 @@ describe('cascadedDateFields', () => {
       ['requestedDeliveryDate']
     );
   });
+
+  it('sends the expected date alone past the authoring window (OMS-REG-PO-01.25)', () => {
+    expect(cascadedDateFields(agreeing, 'expectedDeliveryDate', false)).toEqual(
+      ['expectedDeliveryDate']
+    );
+  });
 });
 
 describe('deliveryDatesVary', () => {

@@ -39,7 +39,7 @@ import { ExportOutstandingLinesAction } from './actions';
 // The outstanding-lines list (spec/purchase-orders S5) — every line the store
 // is still waiting for, across all its orders, and the way to the order behind
 // one. Reached only from S1's Outstanding lines action: it has no menu entry,
-// and it sits behind the same procurement gate as S1, applied to the route by
+// and it sits behind the same read-permission gate as S1, applied to the route by
 // the navigation registry rather than by this screen.
 //
 // READ-ONLY: no create action, no row selection, no bulk-action bar, no action

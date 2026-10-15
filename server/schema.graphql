@@ -273,6 +273,11 @@ type AllocateOutboundShipmentUnallocatedLineNode {
 	skippedExpiredStockLines: StockLineConnector!
 	skippedOnHoldStockLines: StockLineConnector!
 	skippedUnusableVvmStatusLines: StockLineConnector!
+	"""
+	Batches of a different campaign than the shipment's (or any campaign,
+	on a shipment with none).
+	"""
+	skippedOtherCampaignStockLines: StockLineConnector!
 	issuedExpiringSoonStockLines: StockLineConnector!
 }
 
@@ -6568,7 +6573,6 @@ enum PreferenceKey {
 	manageVaccinesInDoses
 	manageVvmStatusForStock
 	orderInPacks
-	useProcurementFunctionality
 	sortByVvmStatusThenExpiry
 	useSimplifiedMobileUi
 	disableManualReturns
@@ -6646,7 +6650,6 @@ type PreferencesNode {
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
 	orderInPacks: Boolean!
-	useProcurementFunctionality: Boolean!
 	sortByVvmStatusThenExpiry: Boolean!
 	useSimplifiedMobileUi: Boolean!
 	disableManualReturns: Boolean!
@@ -9659,6 +9662,8 @@ type SyncFileReferenceNode {
 	createdDatetime: DateTime!
 	error: String
 	status: SyncFileReferenceNodeStatus!
+	userId: String
+	user: UserNode
 }
 
 enum SyncFileReferenceNodeStatus {
@@ -11285,7 +11290,6 @@ input UpsertPreferencesInput {
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]
 	orderInPacks: [BoolStorePrefInput!]
-	useProcurementFunctionality: [BoolStorePrefInput!]
 	sortByVvmStatusThenExpiry: [BoolStorePrefInput!]
 	useSimplifiedMobileUi: [BoolStorePrefInput!]
 	disableManualReturns: [BoolStorePrefInput!]

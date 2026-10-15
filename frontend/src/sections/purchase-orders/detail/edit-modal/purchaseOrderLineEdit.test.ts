@@ -42,6 +42,7 @@ const line = (
   requestedNumberOfUnits: 100,
   adjustedNumberOfUnits: null,
   shippedNumberOfUnits: 0,
+  receivedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
   pricePerPackAfterDiscount: 6,
   // The stored total: 10 packs at 6.00, as the server wrote it.
@@ -174,7 +175,8 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     });
     expect(gates.packs).toBe(true);
     expect(gates.drafting).toBe(true);
-    expect(gates.dates).toBe(true);
+    expect(gates.requestedDate).toBe(true);
+    expect(gates.expectedDate).toBe(true);
     expect(gates.text).toBe(true);
   });
 
@@ -197,14 +199,15 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     expect(authorised.packs).toBe(true);
   });
 
-  it('closes the dates once Sent and keeps the texts open', () => {
+  it('closes the requested date once Sent, keeping the expected date and the texts open (OMS-REG-PO-01.24, .26)', () => {
     const gates = lineGates({
       status: 'SENT',
       lineStatus: 'SENT',
       addMode: false,
       canAuthorise: true,
     });
-    expect(gates.dates).toBe(false);
+    expect(gates.requestedDate).toBe(false);
+    expect(gates.expectedDate).toBe(true);
     expect(gates.text).toBe(true);
   });
 
@@ -220,7 +223,8 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       });
       expect(gates.packs).toBe(false);
       expect(gates.drafting).toBe(false);
-      expect(gates.dates).toBe(false);
+      expect(gates.requestedDate).toBe(false);
+      expect(gates.expectedDate).toBe(false);
       expect(gates.text).toBe(false);
     }
   });

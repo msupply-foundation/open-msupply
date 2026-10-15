@@ -534,7 +534,7 @@ const LineEditContent = (
                 heading="group"
               >
                 <Show
-                  when={gates().dates}
+                  when={gates().requestedDate}
                   fallback={
                     <LabelledValue
                       label={t('label.requested')}
@@ -557,7 +557,7 @@ const LineEditContent = (
                   />
                 </Show>
                 <Show
-                  when={gates().dates}
+                  when={gates().expectedDate}
                   fallback={
                     <LabelledValue
                       label={t('label.expected')}
