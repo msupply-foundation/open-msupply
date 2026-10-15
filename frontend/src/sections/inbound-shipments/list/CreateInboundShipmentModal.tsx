@@ -29,6 +29,11 @@ import {
 } from '../inboundShipmentScope';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
+import {
+  DEFAULT_LINK_PURCHASE_ORDER_FILTER,
+  type LinkPurchaseOrderFilter,
+} from './linkPurchaseOrderFilters';
+import { stripEmpty } from '../../../typeHelpers';
 
 // The inbound-shipment create flow (spec S2). A sequence of modal steps,
 // branching on which create action was taken:
@@ -155,15 +160,23 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
   };
 
   // ── From a purchase order ─────────────────────────────────────────────────
-  // The store's Sent purchase orders (spec S2 / OMS-REG-REPL-02.33). Fetched on
-  // open; non-suspending read so the modal shows a spinner rather than tripping
-  // a boundary.
+  // The store's Sent purchase orders (spec S2 / OMS-REG-REPL-02.33), narrowed
+  // by the modal's supplier / number / sent-date filters (.38) — server-side,
+  // with Sent pinned on top of whatever the bar holds. Refetched on each filter
+  // edit; the state-gated read keeps the open modal from suspending (and so
+  // remounting) while a refetch is in flight.
+  const [poFilter, setPoFilter] = createSignal<LinkPurchaseOrderFilter>(
+    DEFAULT_LINK_PURCHASE_ORDER_FILTER
+  );
   const [poData] = createResource(
-    () => (props.mode === 'fromPurchaseOrder' ? params.storeId : undefined),
-    async storeId => {
+    () =>
+      props.mode === 'fromPurchaseOrder'
+        ? { storeId: params.storeId, filter: stripEmpty(poFilter()) }
+        : undefined,
+    async ({ storeId, filter }) => {
       const result = await graphqlFetch(SentPurchaseOrders, {
         storeId,
-        filter: { status: { equalTo: 'SENT' } },
+        filter: { ...filter, status: { equalTo: 'SENT' } },
       });
       if (result.kind !== 'success') return [];
       return result.data.purchaseOrders.__typename === 'PurchaseOrderConnector'
@@ -171,7 +184,10 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         : [];
     }
   );
-  const purchaseOrders = () => poData.latest ?? [];
+  const purchaseOrders = () =>
+    poData.state === 'ready' || poData.state === 'refreshing'
+      ? (poData.latest ?? [])
+      : [];
 
   const createFromPo = async (purchaseOrderId: string, addLines: boolean) => {
     const po = purchaseOrders().find(p => p.id === purchaseOrderId);
@@ -263,6 +279,8 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         onClose={props.onClose}
         orders={purchaseOrders()}
         loading={poData.loading}
+        filter={poFilter()}
+        onFilterChange={setPoFilter}
         busy={creating()}
         error={errorMessage()}
         onSelect={(id, addLines) => void createFromPo(id, addLines)}
