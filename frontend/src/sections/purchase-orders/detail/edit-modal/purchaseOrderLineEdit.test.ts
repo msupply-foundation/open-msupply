@@ -127,7 +127,7 @@ describe('OMS-FUN-PO-02.12 / .25 — which quantity the packs write', () => {
     });
   });
 
-  it('writes the adjusted quantity alone from Ready for sending', () => {
+  it('writes the adjusted quantity alone from Approved', () => {
     expect(packsEntered('CONFIRMED', draft(), 20)).toEqual({
       adjustedNumberOfUnits: 200,
     });
@@ -146,7 +146,7 @@ describe('OMS-FUN-PO-02.12 / .25 — which quantity the packs write', () => {
 });
 
 describe('OMS-FUN-PO-02.12 — one input, two labels', () => {
-  it('reads Requested packs while drafting and Adjusted packs once Ready for sending', () => {
+  it('reads Requested packs while drafting and Adjusted packs once Approved', () => {
     expect(packsLabelKey('NEW')).toBe('label.requested-packs');
     expect(packsLabelKey('REQUEST_APPROVAL')).toBe('label.requested-packs');
     expect(packsLabelKey('CONFIRMED')).toBe('label.adjusted-packs');
@@ -180,7 +180,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     expect(gates.text).toBe(true);
   });
 
-  it('needs the authorise permission for the adjusted quantity from Ready for sending', () => {
+  it('needs the authorise permission for the adjusted quantity from Approved', () => {
     const plain = lineGates({
       status: 'CONFIRMED',
       lineStatus: 'NEW',

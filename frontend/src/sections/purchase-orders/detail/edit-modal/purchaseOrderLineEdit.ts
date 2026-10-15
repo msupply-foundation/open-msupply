@@ -5,7 +5,7 @@ import type {
   PurchaseOrderDetailLineFragment,
   UpdatePurchaseOrderLineVariables,
 } from '../purchaseOrderDetail.generated';
-import { isDrafting } from '../purchaseOrderLadder';
+import { isClosed, isDrafting } from '../purchaseOrderLadder';
 import { linePacks } from '../purchaseOrderPricing';
 
 // The line editor's arithmetic and gates (spec/purchase-orders rules §
@@ -115,7 +115,7 @@ export const newLineDraft = (
 
 /**
  * Which quantity a units figure writes (OMS-FUN-PO-02.12, .25): both, equal, while
- * drafting; the adjusted one alone from Ready for sending.
+ * drafting; the adjusted one alone from Approved.
  */
 export const quantityPatch = (
   status: PurchaseOrderStatus,
@@ -146,7 +146,7 @@ export const packSizeEntered = (
 
 /**
  * One input, two labels (spec S10 § quantity): Requested packs while
- * drafting, Adjusted packs once Ready for sending or Sent — and, the spec's
+ * drafting, Adjusted packs once Approved or Sent — and, the spec's
  * one exception, Requested packs again on a Finalised order.
  */
 export const packsLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
@@ -256,7 +256,7 @@ export type LineGates = {
 /**
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
- * fields close from Ready for sending; the requested date closes once Sent
+ * fields close from Approved; the requested date closes once Sent
  * while the expected date stays open; the packs follow the quantity rule —
  * requested while drafting, adjusted with the authorise permission from Ready
  * for sending.
@@ -267,8 +267,7 @@ export const lineGates = (options: {
   addMode: boolean;
   canAuthorise: boolean;
 }): LineGates => {
-  const open =
-    options.lineStatus !== 'CLOSED' && options.status !== 'FINALISED';
+  const open = options.lineStatus !== 'CLOSED' && !isClosed(options.status);
   const drafting = open && isDrafting(options.status);
   return {
     item: options.addMode,

@@ -251,7 +251,7 @@ const OutstandingLinesList: Component = () => {
       size: remToPx(14),
     },
     {
-      // The moment the ORDER became Ready for sending.
+      // The moment the ORDER became Approved.
       c: {
         accessor: row => row.purchaseOrder?.confirmedDatetime,
         id: 'confirmedDatetime',
