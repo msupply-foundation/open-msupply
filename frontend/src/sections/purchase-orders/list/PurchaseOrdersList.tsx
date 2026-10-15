@@ -60,12 +60,11 @@ import {
 // vertical (stocktakes): URL-backed filter/sort/pagination, the shared
 // DataTable, a selection footer with bulk delete, and no page CSS.
 //
-// The whole DESTINATION is gated on the store's procurement functionality
+// The whole DESTINATION is gated on the purchase-order read permission
 // (rules § availability). That gate is the navigation registry's, applied by
 // the shell to the menu, the palette AND the route alike (navConfig
-// `gate: 'procurement'`), so this screen carries no gate of its own — and,
-// unlike the reference app, opening the address directly does not render it
-// (README defect 7).
+// `permission: 'PURCHASE_ORDER_QUERY'`), so this screen carries no gate of its
+// own.
 
 type Row = PurchaseOrderRowFragment;
 

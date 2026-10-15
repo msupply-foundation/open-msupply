@@ -73,13 +73,18 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   comment
   contractSignedDate
   advancePaidDate
-  # Documents tab (S12) — the shared sync-file list over the order.
+  # Documents tab (S12) — the shared sync-file list over the order, grouped
+  # by file name on the client into versions, which are numbered by their
+  # place in that name's upload order; the uploader is each row's "Created by".
   documents {
     nodes {
       id
       fileName
       createdDatetime
       totalBytes
+      user {
+        username
+      }
     }
   }
   # targetMonths is deliberately NOT read: it arrives only by synchronisation,

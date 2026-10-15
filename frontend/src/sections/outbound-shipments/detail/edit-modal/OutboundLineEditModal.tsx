@@ -23,6 +23,7 @@ import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import {
   CancelButton,
+  DialogCloseButton,
   DialogSaveButton,
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
@@ -237,6 +238,11 @@ interface OutboundLineEditModalProps {
   /** NEW shipments may create placeholders (rules.md § placeholder lines). */
   isNew: boolean;
   /**
+   * The shipment's campaign (null = routine): auto-allocation fills only
+   * batches of the same campaign. Manual entry is never restricted.
+   */
+  campaignId: string | null;
+  /**
    * The item this open STARTS on (a row click) → UPDATE mode (the picker
    * locks). Omitted for "Add item" → add mode. The modal tracks its own
    * current item as the user advances with "OK & next".
@@ -277,9 +283,9 @@ interface OutboundLineEditModalProps {
    */
   fromCustomerRequisition: boolean;
   /**
-   * Whether the shipment is still editable (rules.md § editability). The
-   * detail view only opens this editor while it is, but the supplier-comment
-   * field mirrors the gate rather than assuming it (OMS-REG-DIST-03.42).
+   * Whether the shipment is still editable (rules.md § editability). When it
+   * isn't, a row opens the read-only view: issued batches only, no input, a
+   * lone Close (OMS-REG-DIST-03.45/.46).
    */
   editable: boolean;
   /** A save committed — the view refetches the lines page. */
@@ -684,6 +690,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     expiredStockIssueThreshold: prefs().expiredStockIssueThreshold,
     manageVvmStatusForStock: prefs().manageVvmStatusForStock,
     sortByVvmStatusThenExpiry: prefs().sortByVvmStatusThenExpiry,
+    issueCampaignId: props.campaignId,
   });
   // TWO bar rules (rules.md § barred batches): the pref-gated ISSUE bar
   // (manual entry disabled, row dimmed — OMS-REG-SMV-11.26/.31) vs the stricter,
@@ -721,6 +728,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds.has(line.id);
   const rowDisabled = (line: DraftLine): boolean =>
     isBarred(line) || isNonAllocatable(line);
+  const inputsDisabled = (line: DraftLine): boolean =>
+    !props.editable || rowDisabled(line);
   // Calendar-expired batch (D112) — the card's error tone + Expired badge.
   // Display-only; the bar predicates own the preference/threshold logic.
   const lineExpired = (line: DraftLine): boolean =>
@@ -757,6 +766,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // both divergence records carry the matching edit (spec/PROCESS.md).
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
+  // Auto-allocation skips this batch for its campaign — badged so the missing
+  // tick has a visible reason (the Campaign/program column sits far right).
+  const lineOtherCampaign = (line: DraftLine): boolean =>
+    lineAutoBarReasons(line).includes('other-campaign');
   // The tick column's predicate ("will be used in auto-allocation"): auto-
   // fillable AND, under the packs lens, of the selected pack size (the old
   // app's canAutoAllocate contract).
@@ -780,9 +793,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // empty build. Spreading tracks the array's shape, not each row's nested
   // fields, so per-pack edits still mutate in place without rebuilding the grid
   // (no remount / focus loss — kdd/solid-reactivity-pitfalls).
-  const draftRows = createMemo(() => [...draft]);
+  // The read-only view lists only the batches this shipment issued.
+  const draftRows = createMemo(() =>
+    props.editable ? [...draft] : draft.filter(line => line.numberOfPacks > 0)
+  );
   const issuedUnits = createMemo(() => sumIssuedUnits(draft));
-  const distinctPackSizes = createMemo(() => packSizesIn(draft));
+  const distinctPackSizes = createMemo(() => packSizesIn(draftRows()));
 
   const unitName = () => item()?.unitName ?? t('label.unit');
 
@@ -1133,7 +1149,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         textLabel: () => t('description.used-in-auto-allocation'),
       },
       cell: info => (
-        <Show when={willAutoAllocate(info.row.original)}>
+        <Show when={props.editable && willAutoAllocate(info.row.original)}>
           <Popover
             // Two renderings, one per view (DataTable.module.css § flag
             // cells): the bare check in the grid, a green StatusBadge chip
@@ -1218,6 +1234,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               expired={lineExpired(line)}
               nearExpiry={lineNearExpiry(line)}
               held={lineHeld(line)}
+              otherCampaign={
+                lineOtherCampaign(line)
+                  ? `${t('label.campaign-only')}: ${line.campaign?.name ?? t('label.none')}`
+                  : undefined
+              }
             />
           </span>
         );
@@ -1251,7 +1272,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                   label={t('label.vvm-status')}
                   hideLabel
                   size="small"
-                  disabled={rowDisabled(line)}
+                  disabled={inputsDisabled(line)}
                   value={line.vvmStatus?.id}
                   onChange={status => setVvmStatus(line.id, status)}
                 />
@@ -1430,7 +1451,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 : line.availablePacks
             }
             decimalLimit={2}
-            disabled={rowDisabled(line)}
+            disabled={inputsDisabled(line)}
             value={
               (dosesView()
                 ? packsToDoses(
@@ -1493,7 +1514,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                   size="small"
                   min={0}
                   decimalLimit={2}
-                  disabled={rowDisabled(line)}
+                  disabled={inputsDisabled(line)}
                   value={line.receivedNumberOfPacks ?? undefined}
                   onChange={value => setReceived(line.id, value ?? null)}
                 />
@@ -1614,6 +1635,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         () => <AlertTriangleIcon />
       ),
     },
+    {
+      // Other-campaign flag, CARD-ONLY — the companion to the table's "Not for
+      // this campaign" badge beside the batch code, which cards hide.
+      c: { accessor: lineOtherCampaign, id: 'otherCampaign' },
+      header: () => t('label.not-for-this-campaign'),
+      ...getFlagCell(
+        t('label.not-for-this-campaign'),
+        {
+          headerPosition: 'badge',
+          hideOnTable: true,
+          hideFromColumnSettings: true,
+        },
+        undefined,
+        () => <InfoIcon />
+      ),
+    },
   ];
 
   return (
@@ -1648,7 +1685,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The sibling line editors already read this way — requisitions and
       // internal orders hide theirs too, and inbound's / stocktakes' title slot
       // is the item selector itself, so none of them paints a text heading (#872).
-      title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      title={
+        !props.editable
+          ? t('heading.view-line')
+          : updateMode()
+            ? t('heading.edit-line')
+            : t('button.add-item')
+      }
       titleHidden
       actionsLead={
         // The footer's message slot, sharing the buttons' row rather than
@@ -1691,7 +1734,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </Switch>
       }
       actions={
-        <>
+        <Show
+          when={props.editable}
+          fallback={
+            <DialogCloseButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
+          }
+        >
           <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
@@ -1729,7 +1780,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               onClick={onOkNext}
             />
           </Show>
-        </>
+        </Show>
       }
     >
       {/* The header row (spec S4, D76): Item picker · Issue + Allocate-in ·
@@ -1782,13 +1833,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 data-testid="issue-quantity-input"
                 ref={issueField.ref}
                 value={issueValue()}
-                disabled={saving()}
+                disabled={saving() || !props.editable}
                 onChange={onIssueChange}
               />
               <Select
                 label={t('label.units')}
                 testId="allocate-in-select"
                 value={allocateInValue()}
+                disabled={!props.editable}
                 options={[
                   { value: 'units', label: unitName() },
                   // The doses lens (OMS-REG-SMV-11.19/.20): vaccine items under the
@@ -1820,17 +1872,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               Issue's and Units' (the registry's read-only labelled value at
               variant="field": read-only reads from the ABSENCE of an input box,
               never from a different label treatment). #872, Ling's mockup. */}
-            <div class={styles.availableStat}>
-              <LabelledValue label={t('label.available')} variant="field">
-                {/* The value takes an input's height so this label lands on the
+            <Show when={props.editable}>
+              <div class={styles.availableStat}>
+                <LabelledValue label={t('label.available')} variant="field">
+                  {/* The value takes an input's height so this label lands on the
                     same line as Issue's and Units': a labelled value is shorter
                     than a labelled input, and the row's end-alignment would
                     otherwise drop its label below theirs. */}
-                <span class={styles.availableValue}>
-                  <Num value={availableUnits()} /> {unitName()}
-                </span>
-              </LabelledValue>
-            </div>
+                  <span class={styles.availableValue}>
+                    <Num value={availableUnits()} /> {unitName()}
+                  </span>
+                </LabelledValue>
+              </div>
+            </Show>
             {/* The supplier comment (spec S4) — this store's reason for
                 sending a different quantity than the customer asked for.
                 Labelled plain "Comment" here: this store IS the supplier, so

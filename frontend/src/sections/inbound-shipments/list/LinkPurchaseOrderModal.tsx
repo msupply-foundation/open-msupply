@@ -22,7 +22,7 @@ import styles from './LinkPurchaseOrderModal.module.css';
 import type { LinkPurchaseOrderRowFragment } from './createInboundShipment.generated';
 
 // The from-a-purchase-order create step (spec S2 → Link purchase order modal),
-// offered when the store's procurement preference is on. A rich, contextful
+// offered to a user who may read purchase orders. A rich, contextful
 // table of the store's Sent purchase orders — NOT a bare dropdown — so the user
 // can pick the right one by supplier / number / sent date / reference /
 // comment. Finding the order is the first thing a user does here (they usually

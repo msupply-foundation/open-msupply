@@ -226,7 +226,7 @@ async fn upload_sync_file(
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
     // Access to the file UUID should normally only be exposed to users with access from the frontend
-    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+    let user = validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
         InternalError::new(
             "You need to be logged in",
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -242,16 +242,21 @@ async fn upload_sync_file(
     let mut static_file_ids: Vec<String> = vec![];
 
     for f in file {
-        let static_file =
-            upload_sync_file_inner(&service_provider, &settings, path_inner.clone(), f)
-                .await
-                .map_err(|error| {
-                    log::error!("Error while uploading file: {}", format_error(&error));
-                    InternalError::new(
-                        "Error uploading file, please check server logs",
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                    )
-                })?;
+        let static_file = upload_sync_file_inner(
+            &service_provider,
+            &settings,
+            path_inner.clone(),
+            f,
+            &user.user_id,
+        )
+        .await
+        .map_err(|error| {
+            log::error!("Error while uploading file: {}", format_error(&error));
+            InternalError::new(
+                "Error uploading file, please check server logs",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        })?;
 
         static_file_ids.push(static_file.id);
     }
@@ -272,6 +277,7 @@ async fn upload_sync_file_inner(
     settings: &Settings,
     (table_name, record_id): (String, String),
     file: TempFile,
+    user_id: &str,
 ) -> Result<StaticFile, UploadFileError> {
     let db_connection = service_provider.connection()?;
 
@@ -286,9 +292,7 @@ async fn upload_sync_file_inner(
         None,
     )?;
 
-    let repo = SyncFileReferenceRowRepository::new(&db_connection);
-
-    repo.upsert_one(&SyncFileReferenceRow {
+    SyncFileReferenceRowRepository::new(&db_connection).upsert_one(&SyncFileReferenceRow {
         id: static_file.id.clone(),
         file_name: static_file.name.clone(),
         table_name,
@@ -300,6 +304,7 @@ async fn upload_sync_file_inner(
         deleted_datetime: None,
         status: SyncFileStatus::New,
         direction: SyncFileDirection::Upload,
+        user_id: Some(user_id.to_string()),
         ..Default::default()
     })?;
 
@@ -458,6 +463,18 @@ mod test {
         )
     }
 
+    /// A DB-backed provider plus settings pointing at a throwaway file tree, for
+    /// the upload tests. The `TempDir` is returned so it outlives the test.
+    async fn upload_harness(db_name: &str) -> (ServiceProvider, Settings, tempfile::TempDir) {
+        use repository::{mock::MockDataInserts, test_db::setup_all};
+
+        let (_, _, connection_manager, _) = setup_all(db_name, MockDataInserts::none()).await;
+        let base_dir = tempfile::tempdir().unwrap();
+        let mut settings = test_settings();
+        settings.server.base_dir = base_dir.path().to_str().unwrap().to_string();
+        (ServiceProvider::new(connection_manager), settings, base_dir)
+    }
+
     fn temp_file(name: &str, size: usize) -> TempFile {
         TempFile {
             file: tempfile::NamedTempFile::new().unwrap(),
@@ -521,5 +538,38 @@ mod test {
             std::str::from_utf8(&body).unwrap(),
             "'big.pdf' exceeds the maximum file size of 50MB"
         );
+    }
+
+    /// The upload is what stamps the uploader
+    /// (spec/purchase-orders OMS-FUN-PO-04 `.28`).
+    #[actix_rt::test]
+    async fn upload_stamps_the_uploader() {
+        let (service_provider, settings, _base_dir) =
+            upload_harness("upload_sync_file_stamps_uploader").await;
+        let record = ("purchase_order".to_string(), "po1".to_string());
+
+        let upload = async |name: &str, user_id: &str| {
+            upload_sync_file_inner(
+                &service_provider,
+                &settings,
+                record.clone(),
+                temp_file(name, 1),
+                user_id,
+            )
+            .await
+            .unwrap()
+        };
+
+        let first = upload("po.pdf", "user1").await;
+        // The same name again is a new version of the document, its own reference.
+        let second = upload("po.pdf", "user2").await;
+
+        let connection = service_provider.connection().unwrap();
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+        let uploader = |file: &StaticFile| repo.find_one_by_id(&file.id).unwrap().unwrap().user_id;
+
+        assert_ne!(first.id, second.id, "each upload is its own reference");
+        assert_eq!(uploader(&first), Some("user1".to_string()));
+        assert_eq!(uploader(&second), Some("user2".to_string()));
     }
 }

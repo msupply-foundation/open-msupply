@@ -1349,7 +1349,7 @@ const OutboundDetailView: Component = () => {
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={editable() ? openRow : undefined}
+                  onRowClick={openRow}
                   rowTint={lineRowTint}
                   // Same predicate on both channels: the tint colours the
                   // row, the bar makes the unfinished lines legible down one
@@ -1421,6 +1421,7 @@ const OutboundDetailView: Component = () => {
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
+                campaignId={current().campaign?.id ?? null}
                 customerIsStore={current().otherParty.store != null}
                 // Gates the editor's supplier-comment field: only a shipment
                 // raised from a customer requisition has a requested quantity

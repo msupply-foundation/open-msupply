@@ -357,6 +357,11 @@ export type AllocateOutboundShipmentUnallocatedLineNode = {
   issuedExpiringSoonStockLines: StockLineConnector;
   skippedExpiredStockLines: StockLineConnector;
   skippedOnHoldStockLines: StockLineConnector;
+  /**
+   * Batches of a different campaign than the shipment's (or any campaign,
+   * on a shipment with none).
+   */
+  skippedOtherCampaignStockLines: StockLineConnector;
   skippedUnusableVvmStatusLines: StockLineConnector;
   updates: InvoiceLineConnector;
 };
@@ -8134,7 +8139,6 @@ export enum PreferenceKey {
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
-  UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
@@ -8217,7 +8221,6 @@ export type PreferencesNode = {
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
-  useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
@@ -11728,6 +11731,8 @@ export type SyncFileReferenceNode = {
   status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
   totalBytes: Scalars['Int']['output'];
+  user?: Maybe<UserNode>;
+  userId?: Maybe<Scalars['String']['output']>;
 };
 
 export enum SyncFileReferenceNodeStatus {
@@ -13506,7 +13511,6 @@ export type UpsertPreferencesInput = {
   transferStockToInternalCustomersAtCostPrice?: InputMaybe<
     Scalars['Boolean']['input']
   >;
-  useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<
     Array<WarnWhenMissingRecentStocktakeInput>

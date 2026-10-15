@@ -6,6 +6,7 @@ mod add_code_to_location_type;
 mod add_forecast_method_to_requisition_line;
 mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
+mod add_uploader_to_sync_file_reference;
 mod prescription_request_occupation_prominent;
 
 pub(crate) struct V3_04_00;
@@ -24,6 +25,7 @@ impl Migration for V3_04_00 {
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
             Box::new(add_not_installed_status_to_asset_status_enum::Migrate),
+            Box::new(add_uploader_to_sync_file_reference::Migrate),
             Box::new(prescription_request_occupation_prominent::Migrate),
             Box::new(add_campaign_id_to_invoice::Migrate),
             Box::new(add_forecast_method_to_requisition_line::Migrate),

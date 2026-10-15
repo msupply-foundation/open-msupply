@@ -37,7 +37,7 @@ export type PrescriptionWarningMessage =
       issueQuantity: number;
     };
 
-const skipMessageKey = (reason: BarReason): SkipMessageKey => {
+const skipMessageKey = (reason: BarReason): SkipMessageKey | null => {
   switch (reason) {
     // The on-hold arm completes the shared vocabulary, but prescriptions
     // never reports it — held stock is hidden from the grid and its
@@ -48,6 +48,10 @@ const skipMessageKey = (reason: BarReason): SkipMessageKey => {
       return 'messages.stock-expired';
     case 'unusable-vvm':
       return 'messages.stock-unusable-vvm';
+    // Prescriptions don't match campaigns (no issueCampaignId), so this never
+    // arises here.
+    case 'other-campaign':
+      return null;
   }
 };
 
@@ -64,7 +68,10 @@ export const issueWarningMessages = (
   derived.flatMap((warning): PrescriptionWarningMessage[] => {
     switch (warning.kind) {
       case 'skipped-barred':
-        return warning.reasons.map(reason => ({ key: skipMessageKey(reason) }));
+        return warning.reasons.flatMap(reason => {
+          const key = skipMessageKey(reason);
+          return key ? [{ key }] : [];
+        });
       case 'partial-packs':
         return [
           {
