@@ -42,6 +42,7 @@ const line = (
   requestedNumberOfUnits: 100,
   adjustedNumberOfUnits: null,
   shippedNumberOfUnits: 0,
+  receivedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
   pricePerPackAfterDiscount: 6,
   // The stored total: 10 packs at 6.00, as the server wrote it.

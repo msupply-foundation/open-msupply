@@ -155,16 +155,17 @@ const DEFAULT_URL_STATE: DetailUrlState = {
   first: DEFAULT_PAGE_SIZE,
 };
 
-// Hidden by default, keyed by column id: the two spec S7 names (pack size and
-// SOH), and on a narrow viewport four more that a card cannot carry.
+// Hidden by default, keyed by column id: pack size, and the two planning
+// inputs spec S7 keeps off the default layout (SOH and On order), plus on a
+// narrow viewport three more that a card cannot carry.
 const DEFAULT_HIDDEN: Record<string, boolean> = {
   packSize: false,
   stockOnHand: false,
+  onOrder: false,
 };
 const NARROW_HIDDEN: Record<string, boolean> = {
   ...DEFAULT_HIDDEN,
   unitName: false,
-  onOrder: false,
   requestedDeliveryDate: false,
   expectedDeliveryDate: false,
 };
@@ -637,6 +638,14 @@ const PurchaseOrderDetailView: Component = () => {
       c: { key: 'shippedNumberOfUnits' },
       sortKey: 'shippedNumberOfUnits',
       header: () => t('label.shipped-units'),
+      ...getNumberCell(),
+      cell: exactQuantity,
+      size: remToPx(8),
+    },
+    {
+      c: { key: 'receivedNumberOfUnits' },
+      sortKey: 'receivedNumberOfUnits',
+      header: () => t('label.received-units'),
       ...getNumberCell(),
       cell: exactQuantity,
       size: remToPx(8),
