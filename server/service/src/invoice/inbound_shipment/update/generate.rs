@@ -80,6 +80,9 @@ pub(crate) fn generate(
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
     update_invoice.default_donor_id = input_donor_id.clone();
+    if let Some(campaign_id) = patch.campaign_id.clone() {
+        update_invoice.campaign_id = campaign_id.value;
+    }
     update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
         update_invoice.custom_fields,
         patch.custom_fields.clone(),

@@ -7,14 +7,15 @@ import {
   lineChanges,
   lineGates,
   newLineDraft,
-  orderedElsewhere,
   packsEntered,
   packSizeEntered,
   packsLabelKey,
+  pricePerUnit,
   PRICE_DECIMALS,
   repriced,
   requestedDateEntered,
   showsAdjustedUnits,
+  unitsFigure,
   type LineDraft,
 } from './purchaseOrderLineEdit';
 import { linePacks, projectedLineCost } from '../purchaseOrderPricing';
@@ -41,6 +42,7 @@ const line = (
   requestedNumberOfUnits: 100,
   adjustedNumberOfUnits: null,
   shippedNumberOfUnits: 0,
+  receivedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
   pricePerPackAfterDiscount: 6,
   // The stored total: 10 packs at 6.00, as the server wrote it — and the
@@ -97,7 +99,7 @@ describe('OMS-FUN-PO-02.18 / .19 — the figures the editor shows come from the 
   // No dictionary is loaded under node, so the translated word is asserted as
   // its key (the ladder tests do the same).
   it('falls back to a bare “units” where the item has none', () => {
-    expect(orderedElsewhere(5, null)).toBe('5 label.units-plural');
+    expect(unitsFigure(5, null)).toBe('5 label.units-plural');
   });
 });
 
@@ -146,17 +148,15 @@ describe('OMS-FUN-PO-02.12 / .25 — which quantity the packs write', () => {
 });
 
 describe('OMS-FUN-PO-02.12 — one input, two labels', () => {
-  it('reads Order quantity (Packs) while drafting and Adjusted packs once Ready for sending', () => {
-    expect(packsLabelKey('NEW')).toBe('label.order-quantity-in-packs');
-    expect(packsLabelKey('REQUEST_APPROVAL')).toBe(
-      'label.order-quantity-in-packs'
-    );
+  it('reads Requested packs while drafting and Adjusted packs once Ready for sending', () => {
+    expect(packsLabelKey('NEW')).toBe('label.requested-packs');
+    expect(packsLabelKey('REQUEST_APPROVAL')).toBe('label.requested-packs');
     expect(packsLabelKey('CONFIRMED')).toBe('label.adjusted-packs');
     expect(packsLabelKey('SENT')).toBe('label.adjusted-packs');
   });
 
-  it('reads Order quantity (Packs) on a Finalised order', () => {
-    expect(packsLabelKey('FINALISED')).toBe('label.order-quantity-in-packs');
+  it('reads Requested packs on a Finalised order', () => {
+    expect(packsLabelKey('FINALISED')).toBe('label.requested-packs');
   });
 
   it('shows the Adjusted units row only past Ready for approval', () => {
@@ -177,7 +177,8 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     });
     expect(gates.packs).toBe(true);
     expect(gates.drafting).toBe(true);
-    expect(gates.dates).toBe(true);
+    expect(gates.requestedDate).toBe(true);
+    expect(gates.expectedDate).toBe(true);
     expect(gates.text).toBe(true);
   });
 
@@ -200,14 +201,15 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     expect(authorised.packs).toBe(true);
   });
 
-  it('closes the dates once Sent and keeps the texts open', () => {
+  it('closes the requested date once Sent, keeping the expected date and the texts open (OMS-REG-PO-01.24, .26)', () => {
     const gates = lineGates({
       status: 'SENT',
       lineStatus: 'SENT',
       addMode: false,
       canAuthorise: true,
     });
-    expect(gates.dates).toBe(false);
+    expect(gates.requestedDate).toBe(false);
+    expect(gates.expectedDate).toBe(true);
     expect(gates.text).toBe(true);
   });
 
@@ -223,7 +225,8 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       });
       expect(gates.packs).toBe(false);
       expect(gates.drafting).toBe(false);
-      expect(gates.dates).toBe(false);
+      expect(gates.requestedDate).toBe(false);
+      expect(gates.expectedDate).toBe(false);
       expect(gates.text).toBe(false);
     }
   });
@@ -345,11 +348,25 @@ describe('OMS-FUN-PO-07.3 — the editor previews the line’s total cost', () =
     ).toBe(30);
   });
 
-  // OMS-FUN-PO-07.11 — the order's supplier discount reaches the preview too
+  // OMS-FUN-PO-07.16 — the order's supplier discount reaches the preview too
   it('takes the order’s supplier discount off the preview', () => {
     expect(projectedLineCost(draft(), { supplierDiscountPercentage: 25 })).toBe(
       45
     );
+  });
+});
+
+describe('OMS-FUN-PO-07.11 — the editor shows the per-unit price', () => {
+  it('divides the after-discount pack price by the pack size', () => {
+    expect(
+      pricePerUnit({ pricePerPackAfterDiscount: 3.4, requestedPackSize: 100 })
+    ).toBeCloseTo(0.034);
+  });
+
+  it('is zero where the pack size is zero', () => {
+    expect(
+      pricePerUnit({ pricePerPackAfterDiscount: 3.4, requestedPackSize: 0 })
+    ).toBe(0);
   });
 });
 

@@ -2,8 +2,7 @@ use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
     EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRow,
-    PurchaseOrderRowRepository,
+    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -21,11 +20,9 @@ pub fn add_from_purchase_order(
     // and its supplier discount is apportioned to every line it ships
     let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&purchase_order_id)?
-        .unwrap_or(PurchaseOrderRow {
-            foreign_exchange_rate: 1.0,
-            ..Default::default()
-        });
+        .ok_or(InsertInboundShipmentError::PurchaseOrderDoesNotExist)?;
     let exchange_rate = purchase_order.foreign_exchange_rate;
+    let donor_id = purchase_order.donor_id.clone();
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -94,7 +91,7 @@ pub fn add_from_purchase_order(
             foreign_currency_price_before_tax: Some(foreign_total),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_id: donor_id.clone(),
             manufacturer_id: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,

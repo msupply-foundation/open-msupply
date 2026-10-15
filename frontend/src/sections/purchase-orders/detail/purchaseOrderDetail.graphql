@@ -73,13 +73,18 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   comment
   contractSignedDate
   advancePaidDate
-  # Documents tab (S12) — the shared sync-file list over the order.
+  # Documents tab (S12) — the shared sync-file list over the order, grouped
+  # by file name on the client into versions, which are numbered by their
+  # place in that name's upload order; the uploader is each row's "Created by".
   documents {
     nodes {
       id
       fileName
       createdDatetime
       totalBytes
+      user {
+        username
+      }
     }
   }
   # targetMonths is deliberately NOT read: it arrives only by synchronisation,
@@ -139,8 +144,11 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   requestedPackSize
   requestedNumberOfUnits
   adjustedNumberOfUnits
-  # Written by the shipment, never here.
+  # Both written by the shipment, never here: shipped counts every unit the
+  # supplier has sent, received only those on a shipment marked received or
+  # verified (contract § listing outstanding lines).
   shippedNumberOfUnits
+  receivedNumberOfUnits
   pricePerPackBeforeDiscount
   pricePerPackAfterDiscount
   # The line's stored cost — written unrounded, net of the line's own discount

@@ -116,8 +116,8 @@ mod test {
         PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
         PurchaseOrderRow, PurchaseOrderRowRepository,
         mock::{
-            MockData, MockDataInserts, currency_a, currency_b, mock_inbound_shipment_c,
-            mock_item_a, mock_name_a, mock_name_linked_to_store_join,
+            MockData, MockDataInserts, currency_a, currency_b, mock_donor_a,
+            mock_inbound_shipment_c, mock_item_a, mock_name_a, mock_name_linked_to_store_join,
             mock_name_not_linked_to_store, mock_store_a, mock_store_linked_to_name,
             mock_user_account_a,
         },
@@ -479,6 +479,135 @@ mod test {
             invoice.currency_rate, 1.0,
             "Invoice without PO should have currency_rate 1.0"
         );
+    }
+
+    /// The order's donor becomes the shipment's default donor and is stamped on
+    /// every line seeded from the order; an order without a donor sets neither.
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_carries_po_donor() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "po_donor_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "po_donor_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn po(id: &str, donor_id: Option<String>) -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                donor_id,
+                foreign_exchange_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn po_line(id: &str, purchase_order_id: &str) -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: id.to_string(),
+                purchase_order_id: purchase_order_id.to_string(),
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                requested_pack_size: 1.0,
+                requested_number_of_units: 10.0,
+                status: PurchaseOrderLineStatus::Sent,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_carries_po_donor",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let po_repo = PurchaseOrderRowRepository::new(&connection);
+        let po_line_repo = PurchaseOrderLineRowRepository::new(&connection);
+        po_repo
+            .upsert_one(&po("po_with_donor", Some(mock_donor_a().id)))
+            .unwrap();
+        po_line_repo
+            .upsert_one(&po_line("po_with_donor_line", "po_with_donor"))
+            .unwrap();
+        po_repo.upsert_one(&po("po_without_donor", None)).unwrap();
+        po_line_repo
+            .upsert_one(&po_line("po_without_donor_line", "po_without_donor"))
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+        let invoice_repo = InvoiceRowRepository::new(&connection);
+        let line_repo = InvoiceLineRowRepository::new(&connection);
+
+        service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "from_po_with_donor".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some("po_with_donor".to_string()),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = invoice_repo
+            .find_one_by_id("from_po_with_donor")
+            .unwrap()
+            .unwrap();
+        assert_eq!(invoice.default_donor_id, Some(mock_donor_a().id));
+        let lines = line_repo
+            .find_many_by_invoice_id("from_po_with_donor")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].donor_id, Some(mock_donor_a().id));
+
+        service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "from_po_without_donor".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some("po_without_donor".to_string()),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = invoice_repo
+            .find_one_by_id("from_po_without_donor")
+            .unwrap()
+            .unwrap();
+        assert_eq!(invoice.default_donor_id, None);
+        let lines = line_repo
+            .find_many_by_invoice_id("from_po_without_donor")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].donor_id, None);
     }
 
     /// Seeding lines from a purchase order takes each line's STORED total,

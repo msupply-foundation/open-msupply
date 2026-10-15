@@ -59,7 +59,13 @@ sudo chown -R "$USER:$(id -gn)" /cache
 # Where each deployment's machine-id lives - see "Deployment state" below.
 sudo mkdir -p /opt/omsupply/deployments
 sudo chown "$USER:$(id -gn)" /opt/omsupply/deployments
+
+# The Launchpad's store: plugin bundles, report bundles, schemas.
+sudo mkdir -p /opt/omsupply/bundles
+sudo chown "$USER:$(id -gn)" /opt/omsupply/bundles
 ```
+
+- `/opt/omsupply/bundles` is a host directory rather than a docker volume so no prune, `down -v` or reinstalled daemon can take it. The workflows refuse to run without it rather than let docker create an empty one. See `.github/scripts/bundle-store.sh`.
 
 - `/cache/target` is split **per runner name** by the workflow: cargo locks a target dir, so lanes sharing one would serialise.
 - `/cache/sccache` is reserved for the containerised check jobs; nothing writes to it yet.
@@ -189,6 +195,7 @@ Each is its own compose project — one container running the server and its own
 | `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept; must exist and be writable by the runner user |
 | `DEPLOY_REFERENCE_FILE` | `e2e` | the dataset a new deployment is seeded from. `reference1` does not load on current servers. |
 | `DEPLOY_SHARED_DAEMON` | unset | see above |
+| `DEPLOY_BUNDLES_DIR` | `/opt/omsupply/bundles` | the Launchpad's store of plugin bundles, report bundles and schemas; must exist |
 | `BUNDLE_RETAIN_DAYS` | `30` | how long a branch's plugin bundles are kept on the dashboard — see [Plugin bundles](#plugin-bundles) |
 
 ### Deployment state
@@ -314,9 +321,9 @@ They come from **`publish-bundles.yaml`**:
 - **RC branches and release tags** release a version the same way, once the branch has this workflow. RC branches cut before it can be published by running the workflow by hand from `develop` on the RC; a plugin whose halves still disagree there (CIV before 3.0.0) is skipped with a warning and the rest publish.
 - **Pre-releases:** build a branch from the dashboard's Plugins page (its **Build from a branch** button, or **Build plugin bundles** on a server's own page, for anyone with write access), or run the workflow by hand from Actions. The Plugins page shows builds in flight and any that failed in the last day. Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **Compatibility** is recorded beside each version, not as part of it. Today it is derived from the version (the server loads a plugin whose major.minor is at most its own) and from the frontend half's host runtime; see `compatOf` in `.github/scripts/publish-bundles.mjs`.
-- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **`oms-bundles` volume**: `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only. Both this workflow and `docker-deploy-services.yaml` create the volume if it is missing, so there is nothing to set up by hand.
+- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only.
 
-**The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost volume, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
+**The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost store, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
 
 ### Report bundles
 
@@ -328,9 +335,19 @@ They come from **`publish-reports.yaml`**:
 - **Branch builds:** the Reports page's **Build from a branch** button (for anyone with write access), or the workflow run by hand. The newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **A client that fails to build** keeps its last bundle for that ref, and the run warns; the other clients still publish. A client removed from the tree loses its bundle for that ref.
 - **Version bumps still matter.** A server installs a report by its id (`<code>_<version>_<is_custom>`) and keeps one it already has, so a report changed without a new version never reaches servers that had it. The store remembers the first `develop`/RC/tag build of each report version, and a later build that changes it is flagged on the page ("needs a version bump") and warned about in the run, naming the ref it differs from. Reports are compared as built, so a bundler or dependency change flags every report it changes. Two reports in one client with the same id are flagged too ("shares an id"): only one of them installs.
-- **How:** the build runs `scripts/reports/build-reports.mjs --each private/reports/clients` on the `build` lane, in a pinned `node` container (pnpm's store in `/cache/pnpm`), as `build-standard-reports.yaml` does. A short job on the `deploy` lane then runs `publish-reports.mjs` in a throwaway `node` container, which writes into the same **`oms-bundles` volume** as the plugin bundles, under `reports/`, and takes the same lock. Nothing to set up by hand.
+- **How:** the build runs `scripts/reports/build-reports.mjs --each private/reports/clients` on the `build` lane, in a pinned `node` container (pnpm's store in `/cache/pnpm`), as `build-standard-reports.yaml` does. A short job on the `deploy` lane then runs `publish-reports.mjs` in a throwaway `node` container, which writes into the same **Launchpad store** as the plugin bundles, under `reports/`, and takes the same lock.
 
 The store is a cache here too: the report build is reproducible, so anything lost is rebuilt by running the workflow on the commit it came from. The run builds the ref's reports with its own copy of the bundler, so that works for any ref from the move to pnpm (#1444) on; nothing older can be built.
+
+### Datasets
+
+A new server, or one being reset, can start with more than the small sample data built into the image (`e2e`, `reference1`): any postgres custom-format dump (`pg_dump -Fc`) of an open-mSupply database added to the Launchpad, such as the reference system's (<https://reference.msupply.foundation>, 3 months, 12 months or 3 years of a fictional country's supply chain) or an anonymised client database.
+
+- **Adding one:** run **`publish-dataset.yaml`** by hand with a name (e.g. `reference-3-months`), the dump's URL - or `file:///path` for one you have copied onto the box - a label and a line of description. It downloads the dump into the store under `datasets/<name>/`, and reads the open-mSupply version it was taken at and its users straight out of it with `pg_restore` — nothing is restored. It must be a custom-format dump without privileges (`pg_dump -Fc --no-owner --no-privileges`); anything else is refused. Restoring any dump runs the SQL it holds, so only add dumps from somewhere you trust. Adding a name that exists replaces it; removing one (`remove`) deletes its file. Servers started from either keep their data.
+- **Choosing one:** the new-server form lists every dataset under **With example data**, and a server's **Reset data** has the same list, so a reset can switch data. Migrations only go forward, so a dataset is offered only to versions at least as new as the one it was taken at; the others are listed greyed out with why. A branch, a pull request or develop not yet deployed counts as current.
+- **Logins:** every user's password is set to `pass` as the server is seeded, as in the sample data, whatever the dump's own passwords were. A server's **Log in** card lists the dataset's users.
+- **How it is seeded:** `docker-deploy.yaml` restores the dump in a one-off container of the server's own image, on its new database volume, before the server first starts: the image's `entry-postgres.sh` restores it (images from v3.2 can), its migrations run, every password becomes `pass`, then `refresh-dates` (which also turns outgoing sync off) - see `.github/scripts/seed-from-dump.sh`. A seed that fails removes the volume, so the next deploy starts again rather than keeping a half-restored database.
+- **Kept until removed.** Unlike the bundles and schemas, a dataset is not reproducible from the repository, so nothing prunes it — and nothing backs it up either, beyond the host directory being outside docker. Mind the disk: the 3-year reference database is 440 MB as a dump, and every server seeded from it holds its own copy, restored.
 
 ## Verifying
 

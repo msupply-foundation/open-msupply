@@ -1,18 +1,26 @@
 import { createMemo, createSignal, onCleanup, Show, type JSX } from 'solid-js';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
-import { t } from '@/intl';
-import { formatCurrency } from '@/intl/currency';
+import { formatCurrency, roundedText, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import {
+  StatusBadge,
+  type StatusBadgeProps,
+} from '@/ui/elements/feedback/StatusBadge';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { Select } from '@/ui/elements/selectors/Select';
+import { formatIsoDate } from '@/ui/elements/inputs/dateTimeConvert';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
+import { Num } from '@/ui/elements/typography/Num';
+import { Text } from '@/ui/elements/typography/Text';
+import { FormColumns } from '@/ui/layout/Form/FormColumns';
+import { FormColumn } from '@/ui/layout/Form/FormColumn';
+import { FormSection } from '@/ui/layout/Form/FormSection';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import {
   CancelButton,
   DialogSaveButton,
@@ -22,7 +30,11 @@ import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '@/domain/item';
 import { NameSearch } from '@/domain/name';
 import { linePacks, projectedLineCost } from '../purchaseOrderPricing';
-import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
+import {
+  poLineStatusLabel,
+  type PurchaseOrderLineStatus,
+  type PurchaseOrderStatus,
+} from '../../purchaseOrderStatus';
 import type { PurchaseOrderDetailLineFragment } from '../purchaseOrderDetail.generated';
 import {
   insertPurchaseOrderLine,
@@ -36,20 +48,20 @@ import {
   lineChanges,
   lineGates,
   newLineDraft,
-  orderedElsewhere,
   packsEntered,
   packSizeEntered,
   packsLabelKey,
   PRICE_DECIMALS,
+  pricePerUnit,
   repriced,
   requestedDateEntered,
   showsAdjustedUnits,
+  unitsFigure,
   type LineDraft,
   type LineFacts,
   type Prices,
 } from './purchaseOrderLineEdit';
 import styles from './PurchaseOrderLineEditModal.module.css';
-import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor (spec/purchase-orders S10): one surface that both adds a
 // line and edits one. Nothing is saved until the confirming action; an
@@ -102,7 +114,19 @@ export const PurchaseOrderLineEditModal = (
   </Show>
 );
 
-const LINE_STATUSES = ['NEW', 'SENT', 'CLOSED'] as const;
+// The line's state as a badge — neutral while drafting, informational once
+// sent to the supplier, settled once closed.
+const LINE_STATUS_TONE: Record<
+  PurchaseOrderLineStatus,
+  StatusBadgeProps['tone']
+> = {
+  NEW: 'neutral',
+  SENT: 'info',
+  CLOSED: 'success',
+};
+
+// What a closed field with no value reads as (spec S10).
+const EMPTY = '—';
 
 const LineEditContent = (
   props: PurchaseOrderLineEditModalProps
@@ -275,6 +299,11 @@ const LineEditContent = (
 
   const currency = () => props.order.currencyCode;
   const money = (value: number) => formatCurrency(value, currency());
+  // A read-only price: the currency's precision, widened as far as the stored
+  // six decimals only where the figure needs it (spec S10 § pricing).
+  const price = (value: number) =>
+    formatCurrency(value, currency(), PRICE_DECIMALS);
+  const dateText = (value: string | null) => formatIsoDate(value) || EMPTY;
 
   return (
     <Dialog
@@ -326,280 +355,467 @@ const LineEditContent = (
       }
     >
       <div class={styles.top}>
-        <ItemSearch
-          label={t('label.item')}
-          storeId={props.storeId}
-          class={styles.itemSearch}
-          width="full"
-          // Items barred from ordering are kept out of the chooser (rules §
-          // choosing the item).
-          orderableOnly
-          focusTarget={itemSearch}
-          placeholder={t('placeholder.enter-an-item-code-or-name')}
-          value={facts()?.itemId}
-          selectedItem={
-            facts()
-              ? {
-                  id: facts()!.itemId,
-                  code: facts()!.itemCode,
-                  name: facts()!.itemName,
-                }
-              : undefined
+        {/* Opened from a row the item is fixed, so it reads as a heading;
+            adding, the lookup stays live (rules § choosing the item). */}
+        <Show
+          when={props.initialLine ? facts() : undefined}
+          fallback={
+            <ItemSearch
+              label={t('label.item')}
+              storeId={props.storeId}
+              class={styles.itemSearch}
+              width="full"
+              // Items barred from ordering are kept out of the chooser (rules §
+              // choosing the item).
+              orderableOnly
+              focusTarget={itemSearch}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+              value={facts()?.itemId}
+              selectedItem={
+                facts()
+                  ? {
+                      id: facts()!.itemId,
+                      code: facts()!.itemCode,
+                      name: facts()!.itemName,
+                    }
+                  : undefined
+              }
+              clearable={false}
+              disabled={closed(gates().item) || loading()}
+              onSelect={item => item && void pickItem(item)}
+            />
           }
-          clearable={false}
-          disabled={closed(gates().item) || loading()}
-          onSelect={item => item && void pickItem(item)}
-        />
-        {/* Disabled in every state: nothing on this screen changes a line's
-            status (rules § line status). */}
-        <FieldRow label={t('label.status')} labelWidth="auto">
-          <Select
-            label={t('label.status')}
-            hideLabel
-            width="compact"
-            testId="line-status-select"
-            value={facts()?.status ?? 'NEW'}
-            options={LINE_STATUSES.map(value => ({
-              value,
-              label: t(`status.${value.toLowerCase()}` as 'status.new'),
-            }))}
-            disabled={!gates().status}
-          />
-        </FieldRow>
+        >
+          {line => (
+            <Text
+              variant="heading"
+              level={3}
+              class={styles.itemHeading}
+              data-testid="line-item-heading"
+            >
+              {line().itemCode} {line().itemName}
+            </Text>
+          )}
+        </Show>
+        <Show when={facts()}>
+          {line => (
+            <div class={styles.topEnd}>
+              <Show when={!props.initialLine}>
+                <span class={styles.summary} data-testid="line-item-summary">
+                  {t('label.in-stock-on-order-elsewhere', {
+                    stockOnHand: unitsFigure(
+                      line().stockOnHand,
+                      line().unitName
+                    ),
+                    onOrder: roundedText(line().unitsOrderedInOthers),
+                  })}
+                </span>
+              </Show>
+              {/* Read-only in every state: nothing on this screen changes a
+                  line's status (rules § line status). */}
+              <LabelledValue
+                label={t('label.line-status')}
+                layout="inline"
+                variant="field"
+              >
+                <StatusBadge
+                  label={poLineStatusLabel(line().status)}
+                  tone={LINE_STATUS_TONE[line().status]}
+                  testId="line-status-value"
+                />
+              </LabelledValue>
+            </div>
+          )}
+        </Show>
       </div>
 
       <Show when={facts() && draft()}>
-        <div class={styles.grid}>
-          <div class={styles.column}>
-            <FieldRow
-              label={t('label.line-number')}
-              readOnly
-              valueAlign="end"
-              valueTestId="line-number-value"
-            >
-              {String(facts()!.lineNumber)}
-            </FieldRow>
-            <FieldRow
-              label={t('label.stock-on-hand')}
-              readOnly
-              valueAlign="end"
-              valueTestId="stock-on-hand-value"
-            >
-              <Num value={facts()!.stockOnHand} />
-            </FieldRow>
-            <FieldRow
-              label={t('label.unit')}
-              readOnly
-              valueAlign="end"
-              valueTestId="unit-value"
-            >
-              {facts()!.unitName ?? '-'}
-            </FieldRow>
-            <FieldRow label={t('label.supplier-item-code')}>
-              <TextField
-                label={t('label.supplier-item-code')}
-                hideLabel
-                data-testid="supplier-item-code-input"
-                value={draft()!.supplierItemCode}
-                disabled={closed(gates().drafting)}
-                onInput={e =>
-                  patch({ supplierItemCode: e.currentTarget.value })
-                }
-              />
-            </FieldRow>
-            <FieldRow label={t('label.manufacturer')}>
-              <NameSearch
-                label={t('label.manufacturer')}
-                hideLabel
-                storeId={props.storeId}
-                role="manufacturer"
-                width="full"
-                inputTestId="manufacturer-search-input"
-                selected={draft()!.manufacturer ?? undefined}
-                disabled={closed(gates().drafting)}
-                onSelect={name =>
-                  patch({
-                    manufacturer: name
-                      ? { id: name.id, name: name.name }
-                      : null,
-                  })
-                }
-              />
-            </FieldRow>
-          </div>
-
-          <div class={styles.column}>
-            <FieldRow label={t(packsLabelKey(status()))}>
-              <NumberField
-                label={t(packsLabelKey(status()))}
-                hideLabel
-                min={0}
-                decimalLimit={10}
-                data-testid="packs-input"
-                ref={packsField.ref}
-                value={linePacks(draft()!)}
-                disabled={closed(gates().packs)}
-                onChange={value =>
-                  patch(packsEntered(status(), draft()!, value ?? 0))
-                }
-              />
-            </FieldRow>
-            <FieldRow label={t('label.pack-size')}>
-              <NumberField
-                label={t('label.pack-size')}
-                hideLabel
-                min={0}
-                decimalLimit={2}
-                data-testid="pack-size-input"
-                value={draft()!.requestedPackSize}
-                disabled={closed(gates().drafting)}
-                onChange={value =>
-                  patch(packSizeEntered(status(), draft()!, value ?? 0))
-                }
-              />
-            </FieldRow>
-            <FieldRow
-              label={t('label.order-quantity-in-unit', {
-                unit: facts()!.unitName ?? t('label.units'),
-              })}
-              readOnly
-              valueAlign="end"
-              valueTestId="requested-units-value"
-            >
-              <Num value={draft()!.requestedNumberOfUnits} />
-            </FieldRow>
-            <Show when={showsAdjustedUnits(status())}>
-              <FieldRow
-                label={t('label.adjusted-units-in-unit', {
-                  unit: facts()!.unitName ?? t('label.units'),
-                })}
-                readOnly
-                valueAlign="end"
-                valueTestId="adjusted-units-value"
+        <FormColumns class={styles.columns}>
+          <FormColumn minWidth="16rem">
+            <InsetPanel>
+              <FormSection
+                title={t('label.quantity')}
+                headingLevel="h3"
+                heading="group"
               >
-                {draft()!.adjustedNumberOfUnits == null ? (
-                  '-'
-                ) : (
-                  <Num value={draft()!.adjustedNumberOfUnits!} />
-                )}
-              </FieldRow>
-            </Show>
-            <FieldRow label={t('label.price-per-pack-before-discount')}>
-              <CurrencyField
-                label={t('label.price-per-pack-before-discount')}
-                hideLabel
-                currency={currency()}
-                decimalLimit={PRICE_DECIMALS}
-                data-testid="price-before-discount-input"
-                value={draft()!.pricePerPackBeforeDiscount}
-                disabled={closed(gates().drafting)}
-                onChange={value =>
-                  setPrice('pricePerPackBeforeDiscount', value)
-                }
-              />
-            </FieldRow>
-            <FieldRow label={t('label.discount-percentage')}>
-              <NumberField
-                label={t('label.discount-percentage')}
-                hideLabel
-                min={0}
-                max={100}
-                decimalLimit={2}
-                endAdornment="%"
-                data-testid="discount-percentage-input"
-                value={draft()!.discountPercentage}
-                disabled={closed(gates().drafting)}
-                onChange={value => setPrice('discountPercentage', value)}
-              />
-            </FieldRow>
-            <FieldRow label={t('label.price-per-pack-after-discount')}>
-              <CurrencyField
-                label={t('label.price-per-pack-after-discount')}
-                hideLabel
-                currency={currency()}
-                decimalLimit={PRICE_DECIMALS}
-                data-testid="price-after-discount-input"
-                value={draft()!.pricePerPackAfterDiscount}
-                disabled={closed(gates().drafting)}
-                onChange={value => setPrice('pricePerPackAfterDiscount', value)}
-              />
-            </FieldRow>
-            <FieldRow
-              label={t('label.total-cost')}
-              readOnly
-              valueAlign="end"
-              valueTestId="total-cost-value"
-            >
-              {/* A PREVIEW of the line cost the table will show on save (the
-                server's own rule, packs × the after-discount price, with the
-                order's supplier discount apportioned) — the draft has no
-                stored figure yet. */}
-              {money(projectedLineCost(draft()!, props.order))}
-            </FieldRow>
-          </div>
+                <Show
+                  when={gates().packs}
+                  fallback={
+                    <LabelledValue
+                      label={t(packsLabelKey(status()))}
+                      variant="field"
+                      data-testid="packs-value"
+                    >
+                      <Num value={linePacks(draft()!)} />
+                    </LabelledValue>
+                  }
+                >
+                  <NumberField
+                    label={t(packsLabelKey(status()))}
+                    min={0}
+                    decimalLimit={10}
+                    data-testid="packs-input"
+                    disabled={saving()}
+                    ref={packsField.ref}
+                    value={linePacks(draft()!)}
+                    onChange={value =>
+                      patch(packsEntered(status(), draft()!, value ?? 0))
+                    }
+                  />
+                </Show>
+                <Show
+                  when={gates().drafting}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.pack-size')}
+                      variant="field"
+                      data-testid="pack-size-value"
+                    >
+                      <Num value={draft()!.requestedPackSize} />
+                    </LabelledValue>
+                  }
+                >
+                  <NumberField
+                    label={t('label.pack-size')}
+                    min={0}
+                    decimalLimit={2}
+                    data-testid="pack-size-input"
+                    disabled={saving()}
+                    value={draft()!.requestedPackSize}
+                    onChange={value =>
+                      patch(packSizeEntered(status(), draft()!, value ?? 0))
+                    }
+                  />
+                </Show>
+                <Show
+                  when={showsAdjustedUnits(status())}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.requested-units')}
+                      variant="field"
+                      data-testid="requested-units-value"
+                    >
+                      {unitsFigure(
+                        draft()!.requestedNumberOfUnits,
+                        facts()!.unitName
+                      )}
+                    </LabelledValue>
+                  }
+                >
+                  <LabelledValue
+                    label={t('label.adjusted-units')}
+                    variant="field"
+                    data-testid="adjusted-units-value"
+                  >
+                    {draft()!.adjustedNumberOfUnits == null
+                      ? EMPTY
+                      : unitsFigure(
+                          draft()!.adjustedNumberOfUnits!,
+                          facts()!.unitName
+                        )}
+                  </LabelledValue>
+                  <LabelledValue
+                    label={t('label.originally-requested')}
+                    variant="field"
+                    data-testid="requested-units-value"
+                  >
+                    {unitsFigure(
+                      draft()!.requestedNumberOfUnits,
+                      facts()!.unitName
+                    )}
+                  </LabelledValue>
+                </Show>
+              </FormSection>
+            </InsetPanel>
 
-          <div class={styles.column}>
-            <FieldRow label={t('label.requested-delivery-date')}>
-              <DateField
-                label={t('label.requested-delivery-date')}
-                hideLabel
-                width="full"
-                testId="line-requested-delivery-date-field"
-                value={draft()!.requestedDeliveryDate}
-                disabled={closed(gates().dates)}
-                onChange={value => patch(requestedDateEntered(draft()!, value))}
-              />
-            </FieldRow>
-            <FieldRow label={t('label.expected-delivery-date')}>
-              <DateField
-                label={t('label.expected-delivery-date')}
-                hideLabel
-                width="full"
-                testId="line-expected-delivery-date-field"
-                value={draft()!.expectedDeliveryDate}
-                disabled={closed(gates().dates)}
-                onChange={value => patch({ expectedDeliveryDate: value })}
-              />
-            </FieldRow>
-            <FieldRow
-              label={t('label.comment-for-supplier')}
-              align="first-line"
-            >
-              <TextArea
-                label={t('label.comment-for-supplier')}
-                hideLabel
-                rows={3}
-                data-testid="line-comment-field"
-                value={draft()!.comment}
-                disabled={closed(gates().text)}
-                onInput={e => patch({ comment: e.currentTarget.value })}
-              />
-            </FieldRow>
-            <FieldRow label={t('label.note-internal')} align="first-line">
-              <TextArea
-                label={t('label.note-internal')}
-                hideLabel
-                rows={3}
-                data-testid="line-note-field"
-                value={draft()!.note}
-                disabled={closed(gates().text)}
-                onInput={e => patch({ note: e.currentTarget.value })}
-              />
-            </FieldRow>
-          </div>
-        </div>
-      </Show>
+            <InsetPanel>
+              <FormSection
+                title={t('label.delivery-dates')}
+                headingLevel="h3"
+                heading="group"
+              >
+                <Show
+                  when={gates().requestedDate}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.requested')}
+                      variant="field"
+                      data-testid="line-requested-delivery-date-value"
+                    >
+                      {dateText(draft()!.requestedDeliveryDate)}
+                    </LabelledValue>
+                  }
+                >
+                  <DateField
+                    label={t('label.requested')}
+                    width="full"
+                    testId="line-requested-delivery-date-field"
+                    disabled={saving()}
+                    value={draft()!.requestedDeliveryDate}
+                    onChange={value =>
+                      patch(requestedDateEntered(draft()!, value))
+                    }
+                  />
+                </Show>
+                <Show
+                  when={gates().expectedDate}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.expected')}
+                      variant="field"
+                      data-testid="line-expected-delivery-date-value"
+                    >
+                      {dateText(draft()!.expectedDeliveryDate)}
+                    </LabelledValue>
+                  }
+                >
+                  <DateField
+                    label={t('label.expected')}
+                    width="full"
+                    testId="line-expected-delivery-date-field"
+                    disabled={saving()}
+                    value={draft()!.expectedDeliveryDate}
+                    onChange={value => patch({ expectedDeliveryDate: value })}
+                  />
+                </Show>
+              </FormSection>
+            </InsetPanel>
+          </FormColumn>
 
-      <Show when={facts()}>
-        {line => (
-          <LabelledValue
-            label={t('label.ordered-in-others')}
-            layout="inline"
-            data-testid="ordered-in-others-value"
-          >
-            {orderedElsewhere(line().unitsOrderedInOthers, line().unitName)}
-          </LabelledValue>
-        )}
+          <FormColumn minWidth="16rem">
+            <InsetPanel>
+              <FormSection
+                title={t('label.pricing')}
+                headingLevel="h3"
+                heading="group"
+              >
+                <Show
+                  when={gates().drafting}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.per-pack-before-discount')}
+                      variant="field"
+                      data-testid="price-before-discount-value"
+                    >
+                      {price(draft()!.pricePerPackBeforeDiscount)}
+                    </LabelledValue>
+                  }
+                >
+                  <CurrencyField
+                    label={t('label.per-pack-before-discount')}
+                    currency={currency()}
+                    decimalLimit={PRICE_DECIMALS}
+                    data-testid="price-before-discount-input"
+                    disabled={saving()}
+                    value={draft()!.pricePerPackBeforeDiscount}
+                    onChange={value =>
+                      setPrice('pricePerPackBeforeDiscount', value)
+                    }
+                  />
+                </Show>
+                <Show
+                  when={gates().drafting}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.discount')}
+                      variant="field"
+                      data-testid="discount-percentage-value"
+                    >
+                      {`${roundedText(draft()!.discountPercentage, 2)}%`}
+                    </LabelledValue>
+                  }
+                >
+                  <NumberField
+                    label={t('label.discount')}
+                    min={0}
+                    max={100}
+                    decimalLimit={2}
+                    endAdornment="%"
+                    data-testid="discount-percentage-input"
+                    disabled={saving()}
+                    value={draft()!.discountPercentage}
+                    onChange={value => setPrice('discountPercentage', value)}
+                  />
+                </Show>
+                <Show
+                  when={gates().drafting}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.per-pack-after-discount')}
+                      variant="field"
+                      data-testid="price-after-discount-value"
+                    >
+                      {price(draft()!.pricePerPackAfterDiscount)}
+                    </LabelledValue>
+                  }
+                >
+                  <CurrencyField
+                    label={t('label.per-pack-after-discount')}
+                    currency={currency()}
+                    decimalLimit={PRICE_DECIMALS}
+                    data-testid="price-after-discount-input"
+                    disabled={saving()}
+                    value={draft()!.pricePerPackAfterDiscount}
+                    onChange={value =>
+                      setPrice('pricePerPackAfterDiscount', value)
+                    }
+                  />
+                </Show>
+                <LabelledValue
+                  label={t('label.per-unit-after-discount')}
+                  variant="field"
+                  data-testid="price-per-unit-value"
+                >
+                  {price(pricePerUnit(draft()!))}
+                </LabelledValue>
+                <LabelledValue
+                  label={t('label.line-total')}
+                  variant="field"
+                  data-testid="total-cost-value"
+                >
+                  {/* A PREVIEW of the line cost the table will show on save
+                    (the server's own rule, packs × the after-discount price,
+                    with the order's supplier discount apportioned) — the draft
+                    has no stored figure yet. */}
+                  {money(projectedLineCost(draft()!, props.order))}
+                </LabelledValue>
+              </FormSection>
+            </InsetPanel>
+          </FormColumn>
+
+          <FormColumn minWidth="16rem">
+            <InsetPanel>
+              <FormSection
+                title={t('label.item')}
+                headingLevel="h3"
+                heading="group"
+              >
+                <Show
+                  when={gates().drafting}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.supplier-item-code')}
+                      variant="field"
+                      data-testid="supplier-item-code-value"
+                    >
+                      {draft()!.supplierItemCode || EMPTY}
+                    </LabelledValue>
+                  }
+                >
+                  <TextField
+                    label={t('label.supplier-item-code')}
+                    data-testid="supplier-item-code-input"
+                    disabled={saving()}
+                    value={draft()!.supplierItemCode}
+                    onInput={e =>
+                      patch({ supplierItemCode: e.currentTarget.value })
+                    }
+                  />
+                </Show>
+                <Show
+                  when={gates().drafting}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.manufacturer')}
+                      variant="field"
+                      data-testid="manufacturer-value"
+                    >
+                      {draft()!.manufacturer?.name || EMPTY}
+                    </LabelledValue>
+                  }
+                >
+                  <NameSearch
+                    label={t('label.manufacturer')}
+                    storeId={props.storeId}
+                    role="manufacturer"
+                    width="full"
+                    inputTestId="manufacturer-search-input"
+                    disabled={saving()}
+                    selected={draft()!.manufacturer ?? undefined}
+                    onSelect={name =>
+                      patch({
+                        manufacturer: name
+                          ? { id: name.id, name: name.name }
+                          : null,
+                      })
+                    }
+                  />
+                </Show>
+                {/* Adding, these two sit in the top row's summary instead. */}
+                <Show when={props.initialLine}>
+                  <LabelledValue
+                    label={t('label.stock-on-hand')}
+                    variant="field"
+                    data-testid="stock-on-hand-value"
+                  >
+                    {unitsFigure(facts()!.stockOnHand, facts()!.unitName)}
+                  </LabelledValue>
+                  <LabelledValue
+                    label={t('label.on-order-elsewhere')}
+                    variant="field"
+                    data-testid="ordered-in-others-value"
+                  >
+                    {unitsFigure(
+                      facts()!.unitsOrderedInOthers,
+                      facts()!.unitName
+                    )}
+                  </LabelledValue>
+                </Show>
+              </FormSection>
+            </InsetPanel>
+
+            <InsetPanel>
+              <FormSection
+                title={t('label.notes')}
+                headingLevel="h3"
+                heading="group"
+              >
+                <Show
+                  when={gates().text}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.comment-for-supplier')}
+                      variant="field"
+                      data-testid="line-comment-value"
+                    >
+                      {draft()!.comment || EMPTY}
+                    </LabelledValue>
+                  }
+                >
+                  <TextArea
+                    label={t('label.comment-for-supplier')}
+                    rows={3}
+                    data-testid="line-comment-field"
+                    value={draft()!.comment}
+                    disabled={saving()}
+                    onInput={e => patch({ comment: e.currentTarget.value })}
+                  />
+                </Show>
+                <Show
+                  when={gates().text}
+                  fallback={
+                    <LabelledValue
+                      label={t('label.note-internal')}
+                      variant="field"
+                      data-testid="line-note-value"
+                    >
+                      {draft()!.note || EMPTY}
+                    </LabelledValue>
+                  }
+                >
+                  <TextArea
+                    label={t('label.note-internal')}
+                    rows={3}
+                    data-testid="line-note-field"
+                    value={draft()!.note}
+                    disabled={saving()}
+                    onInput={e => patch({ note: e.currentTarget.value })}
+                  />
+                </Show>
+              </FormSection>
+            </InsetPanel>
+          </FormColumn>
+        </FormColumns>
       </Show>
     </Dialog>
   );

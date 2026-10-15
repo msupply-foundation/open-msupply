@@ -3,6 +3,7 @@ import {
   chargesTotal,
   finalCost,
   linePacks,
+  orderTotals,
   projectedLineCost,
   supplierDiscountFactor,
 } from './purchaseOrderPricing';
@@ -73,7 +74,7 @@ describe('OMS-FUN-PO-07.3 — a line’s cost', () => {
   });
 });
 
-describe('OMS-FUN-PO-07.11 — the supplier discount apportioned to a line', () => {
+describe('OMS-FUN-PO-07.16 — the supplier discount apportioned to a line', () => {
   // The contract's live figures: a 25% supplier discount on a 60.00 subtotal
   // gives a discounted total of 45.00 — and the one line that makes up that
   // subtotal reads 45.00 too, so the lines reconcile with the order.
@@ -132,5 +133,49 @@ describe('the additional charges', () => {
   it('gives a line-less order a final cost of its charges alone', () => {
     // Every figure on an order with no lines reads as zero rather than absent.
     expect(finalCost({ ...charges, orderTotalAfterDiscount: 0 })).toBe(31);
+  });
+});
+
+describe('OMS-FUN-PO-07.12 — the totals band’s four figures', () => {
+  const node = {
+    agentCommission: 1,
+    documentCharge: 2,
+    communicationsCharge: 4,
+    insuranceCharge: 8,
+    freightCharge: 16,
+    orderTotalBeforeDiscount: 60,
+    orderTotalAfterDiscount: 45,
+    supplierDiscountAmount: 15,
+    supplierDiscountPercentage: 25,
+  };
+
+  it('reads across as subtotal − discount + charges = order total', () => {
+    const totals = orderTotals(node);
+    expect(totals.subtotal).toBe(60);
+    expect(totals.discount).toBe(15);
+    expect(totals.charges).toBe(31);
+    expect(totals.total).toBe(76);
+    expect(totals.subtotal - totals.discount + totals.charges).toBe(
+      totals.total
+    );
+  });
+
+  it('carries the stored percentage, which is what the label names', () => {
+    expect(orderTotals(node).discountPercentage).toBe(25);
+    expect(
+      orderTotals({ ...node, supplierDiscountPercentage: null })
+        .discountPercentage
+    ).toBe(0);
+  });
+
+  it('is the undiscounted total itself where no supplier discount is set', () => {
+    const undiscounted = orderTotals({
+      ...node,
+      orderTotalAfterDiscount: 60,
+      supplierDiscountAmount: 0,
+      supplierDiscountPercentage: null,
+    });
+    expect(undiscounted.discount).toBe(0);
+    expect(undiscounted.total).toBe(91);
   });
 });

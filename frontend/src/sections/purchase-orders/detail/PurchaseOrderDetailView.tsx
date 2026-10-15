@@ -4,6 +4,7 @@ import {
   createSignal,
   Show,
   Suspense,
+  type Accessor,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
@@ -42,6 +43,7 @@ import {
 } from '@/ui/elements/table/Pagination';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { remToPx } from '@/ui/utils/rem';
+import { useFoldTotalsIntoBar } from '@/ui/utils/createMediaQuery';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { createAddAction } from '@/ui/utils/keyActions';
@@ -91,6 +93,7 @@ import {
 import { PurchaseOrderDetailToolbar } from './PurchaseOrderDetailToolbar';
 import { PurchaseOrderSidePanel } from './PurchaseOrderSidePanel';
 import { PurchaseOrderStatusFooter } from './PurchaseOrderStatusFooter';
+import { PurchaseOrderTotalsStrip } from './PurchaseOrderTotalsStrip';
 import { PurchaseOrderDetailsTab } from './tabs/PurchaseOrderDetailsTab';
 import { PurchaseOrderShipmentsTab } from './tabs/PurchaseOrderShipmentsTab';
 import { PurchaseOrderDocumentsTab } from './tabs/PurchaseOrderDocumentsTab';
@@ -98,6 +101,7 @@ import {
   canAttachDocuments,
   canAuthorLines,
   canCloseLines,
+  canSetExpectedDate,
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
@@ -155,16 +159,17 @@ const DEFAULT_URL_STATE: DetailUrlState = {
   first: DEFAULT_PAGE_SIZE,
 };
 
-// Hidden by default, keyed by column id: the two spec S7 names (pack size and
-// SOH), and on a narrow viewport four more that a card cannot carry.
+// Hidden by default, keyed by column id: pack size, and the two planning
+// inputs spec S7 keeps off the default layout (SOH and On order), plus on a
+// narrow viewport three more that a card cannot carry.
 const DEFAULT_HIDDEN: Record<string, boolean> = {
   packSize: false,
   stockOnHand: false,
+  onOrder: false,
 };
 const NARROW_HIDDEN: Record<string, boolean> = {
   ...DEFAULT_HIDDEN,
   unitName: false,
-  onOrder: false,
   requestedDeliveryDate: false,
   expectedDeliveryDate: false,
 };
@@ -467,11 +472,13 @@ const PurchaseOrderDetailView: Component = () => {
   // expected date has no order-level field at all. The other date follows only
   // where the lines still agree on it (rules § the two delivery dates), and
   // the order's requested date moves whenever it does; one re-read covers all.
+  // Past the authoring window only the expected date is still open, and it
+  // then travels alone — the agreed requested date is not dragged with it.
   const cascadeDate = async (
     field: DeliveryDateField,
     date: string
   ): Promise<SaveFieldResult> => {
-    const fields = cascadedDateFields(lineSet(), field);
+    const fields = cascadedDateFields(lineSet(), field, !isDisabled());
     const orderWrite = fields.includes('requestedDeliveryDate')
       ? await updatePurchaseOrder(params.storeId, {
           id: params.id,
@@ -515,6 +522,17 @@ const PurchaseOrderDetailView: Component = () => {
     setBlockedLines([]);
     refetchAll();
   };
+
+  // Where height is scarce the band gives way to the order total alone, on
+  // the bar the screen already has (spec S7 § totals band).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Takes the node accessor as an argument because `node` is the <Show>'s own
+  // binding below, not in scope here.
+  const inlineTotals = (node: Accessor<PurchaseOrderInfoFragment>) => (
+    <Show when={foldTotalsIntoBar()}>
+      <PurchaseOrderTotalsStrip inline node={node()} lineCount={lineCount()} />
+    </Show>
+  );
 
   const linePagination = (): PaginationProps => ({
     offset: query().offset,
@@ -637,6 +655,14 @@ const PurchaseOrderDetailView: Component = () => {
       c: { key: 'shippedNumberOfUnits' },
       sortKey: 'shippedNumberOfUnits',
       header: () => t('label.shipped-units'),
+      ...getNumberCell(),
+      cell: exactQuantity,
+      size: remToPx(8),
+    },
+    {
+      c: { key: 'receivedNumberOfUnits' },
+      sortKey: 'receivedNumberOfUnits',
+      header: () => t('label.received-units'),
       ...getNumberCell(),
       cell: exactQuantity,
       size: remToPx(8),
@@ -791,6 +817,7 @@ const PurchaseOrderDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled()}
+                      expectedDateDisabled={!canSetExpectedDate(status())}
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
                       datesVary={field => deliveryDatesVary(lineSet(), field)}
@@ -803,55 +830,67 @@ const PurchaseOrderDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
-                  when={selectedIds().length > 0}
-                  fallback={
-                    <PurchaseOrderStatusFooter
+                <>
+                  {/* Above BOTH footer faces — an order-level fact, so a
+                      row selection doesn't take it away. */}
+                  <Show when={!foldTotalsIntoBar()}>
+                    <PurchaseOrderTotalsStrip
                       node={node()}
-                      authorisationRequired={prefs().authorisePurchaseOrder}
                       lineCount={lineCount()}
-                      emptyLineCount={emptyLineCount()}
-                      stockStillOwed={stockStillOwed()}
-                      pagination={linePagination()}
-                      onMove={onMove}
                     />
-                  }
-                >
-                  {/* Selecting lines swaps the ladder for the bulk-action bar
-                      (spec S7 § line-selection actions). Each action carries
-                      its own window: removal while drafting, closing for
-                      receipt on a Sent order only. The two bulk delivery-date
-                      actions belong to S15, which this pass does not build. */}
-                  <ContentFooter testId="actions-footer">
-                    <strong data-testid="selected-rows-count">
-                      {selectedIds().length} {t('label.selected')}
-                    </strong>
-                    <DeleteLinesAction
-                      storeId={params.storeId}
-                      selectedIds={selectedIds}
-                      disabled={!canAuthorLines(status())}
-                      onChanged={onLinesChanged}
-                    />
-                    <CloseLinesAction
-                      storeId={params.storeId}
-                      selectedIds={selectedIds}
-                      disabled={!canCloseLines(status())}
-                      onChanged={onLinesChanged}
-                    />
-                    {/* The pager rides the selection face too: ticking a row
-                        must not strip the way to the rest of the lines. */}
-                    <Pagination {...linePagination()} inBar />
-                    <ContentFooterActions>
-                      <Button
-                        variant="secondary"
-                        icon={<CloseIcon />}
-                        onClick={() => setSelectedIds([])}
-                      >
-                        {t('label.clear-selection')}
-                      </Button>
-                    </ContentFooterActions>
-                  </ContentFooter>
-                </Show>
+                  </Show>
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <PurchaseOrderStatusFooter
+                        node={node()}
+                        authorisationRequired={prefs().authorisePurchaseOrder}
+                        lineCount={lineCount()}
+                        emptyLineCount={emptyLineCount()}
+                        stockStillOwed={stockStillOwed()}
+                        pagination={linePagination()}
+                        totals={inlineTotals(node)}
+                        onMove={onMove}
+                      />
+                    }
+                  >
+                    {/* Selecting lines swaps the ladder for the bulk-action bar
+                        (spec S7 § line-selection actions). Each action carries
+                        its own window: removal while drafting, closing for
+                        receipt on a Sent order only. The two bulk delivery-date
+                        actions belong to S15, which this pass does not build. */}
+                    <ContentFooter testId="actions-footer">
+                      {inlineTotals(node)}
+                      <strong data-testid="selected-rows-count">
+                        {selectedIds().length} {t('label.selected')}
+                      </strong>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canAuthorLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      <CloseLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canCloseLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      {/* The pager rides the selection face too: ticking a row
+                          must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<CloseIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="general">

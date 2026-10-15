@@ -273,6 +273,11 @@ type AllocateOutboundShipmentUnallocatedLineNode {
 	skippedExpiredStockLines: StockLineConnector!
 	skippedOnHoldStockLines: StockLineConnector!
 	skippedUnusableVvmStatusLines: StockLineConnector!
+	"""
+	Batches of a different campaign than the shipment's (or any campaign,
+	on a shipment with none).
+	"""
+	skippedOtherCampaignStockLines: StockLineConnector!
 	issuedExpiringSoonStockLines: StockLineConnector!
 }
 
@@ -4668,6 +4673,12 @@ type InvoiceNode {
 	diagnosis: DiagnosisNode
 	programId: String
 	program: ProgramNode
+	"""
+	The shipment's campaign (null = none): the default for new inbound
+	lines, or the campaign an outbound shipment issues for.
+	"""
+	campaignId: String
+	campaign: CampaignNode
 	store: StoreNode!
 	nameInsuranceJoinId: String
 	insurancePolicy: InsurancePolicyNode
@@ -6394,7 +6405,6 @@ enum PreferenceKey {
 	manageVaccinesInDoses
 	manageVvmStatusForStock
 	orderInPacks
-	useProcurementFunctionality
 	sortByVvmStatusThenExpiry
 	useSimplifiedMobileUi
 	disableManualReturns
@@ -6472,7 +6482,6 @@ type PreferencesNode {
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
 	orderInPacks: Boolean!
-	useProcurementFunctionality: Boolean!
 	sortByVvmStatusThenExpiry: Boolean!
 	useSimplifiedMobileUi: Boolean!
 	disableManualReturns: Boolean!
@@ -9483,6 +9492,8 @@ type SyncFileReferenceNode {
 	createdDatetime: DateTime!
 	error: String
 	status: SyncFileReferenceNodeStatus!
+	userId: String
+	user: UserNode
 }
 
 enum SyncFileReferenceNodeStatus {
@@ -10035,6 +10046,12 @@ input UpdateInboundShipmentInput {
 	defaultDonor: UpdateDonorInput
 	receivedDatetime: DateTime
 	"""
+	The shipment's default campaign (null = none): lines added from a
+	master list or internal order take it, and the line editor prefills
+	new batches with it.
+	"""
+	campaignId: NullableStringUpdate
+	"""
 	Patch of customFields key -> value (JSON object) merged into the
 	invoice's custom properties; a `null` value clears that key, keys absent
 	from the patch are left unchanged.
@@ -10220,6 +10237,10 @@ input UpdateOutboundShipmentInput {
 	currencyRate: Float
 	expectedDeliveryDate: NullableDateUpdate
 	shippingMethodId: NullableStringUpdate
+	"""
+	The campaign this shipment issues for (null = routine).
+	"""
+	campaignId: NullableStringUpdate
 	backdatedDatetime: DateTime
 	"""
 	Patch of customFields key -> value (JSON object) merged into the
@@ -11099,7 +11120,6 @@ input UpsertPreferencesInput {
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]
 	orderInPacks: [BoolStorePrefInput!]
-	useProcurementFunctionality: [BoolStorePrefInput!]
 	sortByVvmStatusThenExpiry: [BoolStorePrefInput!]
 	useSimplifiedMobileUi: [BoolStorePrefInput!]
 	disableManualReturns: [BoolStorePrefInput!]

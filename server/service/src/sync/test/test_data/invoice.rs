@@ -244,6 +244,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         oms_fields: Some(TransactRowOmsFields {
             charges_local_currency: 15.5,
             charges_foreign_currency: 20.0,
+            campaign_id: None,
         }),
     }
 }
@@ -457,6 +458,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -731,6 +733,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -957,6 +960,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -1182,6 +1186,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -1404,6 +1409,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -1637,6 +1643,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
