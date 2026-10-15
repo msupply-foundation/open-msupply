@@ -985,6 +985,7 @@ mod test {
 
         let day_1 = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
         let day_2 = NaiveDate::from_ymd_opt(2024, 1, 2).unwrap();
+        let day_3 = NaiveDate::from_ymd_opt(2024, 1, 3).unwrap();
         let breach_start = day_2.and_hms_opt(2, 0, 0).unwrap();
 
         let daily_summary = |date, average_temperature, hot_minutes| ts::DailySummary {
@@ -997,11 +998,11 @@ mod test {
             hot_threshold: Some(8.0),
             cold_threshold: Some(-0.5),
         };
-        let breach = |breach_type, end_hour| ts::TemperatureBreach {
+        let breach = |breach_type, end_timestamp: NaiveDateTime| ts::TemperatureBreach {
             breach_type,
             start_timestamp: breach_start,
-            end_timestamp: day_2.and_hms_opt(end_hour, 0, 0).unwrap(),
-            duration: Duration::hours(end_hour as i64 - 2),
+            end_timestamp,
+            duration: end_timestamp - breach_start,
             acknowledged: false,
         };
         let config = |breach_type| ts::TemperatureBreachConfig {
@@ -1010,11 +1011,11 @@ mod test {
             minimum_temperature: -273.0,
             duration: Duration::minutes(600),
         };
-        let sensor = |breaches, configs, daily_summaries| ts::Sensor {
+        let sensor = |last_connected_timestamp, breaches, configs, daily_summaries| ts::Sensor {
             sensor_type: ts::SensorType::Berlinger,
             serial: "fridge_tag_serial".to_string(),
             name: "Fridge-tag 2".to_string(),
-            last_connected_timestamp: None,
+            last_connected_timestamp,
             log_interval: None,
             breaches: Some(breaches),
             configs: Some(configs),
@@ -1022,26 +1023,35 @@ mod test {
             daily_summaries: Some(daily_summaries),
         };
 
-        // An import from before alarms were typed as consecutive, while day 2 was in progress
+        // An import from before alarms were typed as consecutive, read on the evening of day 2
+        // with the breach ongoing. The last connected time is stored in UTC, so for a site west
+        // of UTC it's already day 3.
+        let first_read = day_3.and_hms_opt(1, 0, 0).unwrap();
         integrate_sensor_data(
             &connection,
             &mock_store_a().id,
             sensor(
-                vec![breach(ts::BreachType::HotCumulative, 12)],
+                Some(first_read),
+                vec![breach(ts::BreachType::HotCumulative, first_read)],
                 vec![config(ts::BreachType::HotCumulative)],
                 vec![daily_summary(day_1, 4.5, 0), daily_summary(day_2, 6.0, 300)],
             ),
         )
         .unwrap();
 
-        // The next import has the breach as consecutive, and day 2 complete
+        // The next import has the breach as consecutive, and day 2 complete. It's filtered from
+        // the first read, which still keeps day 2 although the first read was on day 3 in UTC.
         integrate_sensor_data(
             &connection,
             &mock_store_a().id,
             sensor(
-                vec![breach(ts::BreachType::HotConsecutive, 14)],
+                Some(day_3.and_hms_opt(4, 0, 0).unwrap()),
+                vec![breach(
+                    ts::BreachType::HotConsecutive,
+                    day_3.and_hms_opt(3, 0, 0).unwrap(),
+                )],
                 vec![config(ts::BreachType::HotConsecutive)],
-                vec![daily_summary(day_1, 4.5, 0), daily_summary(day_2, 7.5, 720)],
+                vec![daily_summary(day_1, 9.9, 0), daily_summary(day_2, 7.5, 720)],
             ),
         )
         .unwrap();
@@ -1055,15 +1065,16 @@ mod test {
         assert_eq!(breach_row.r#type, TemperatureBreachType::HotConsecutive);
         assert_eq!(
             breach_row.end_datetime,
-            Some(day_2.and_hms_opt(14, 0, 0).unwrap())
+            Some(day_3.and_hms_opt(3, 0, 0).unwrap())
         );
 
-        // One summary per day, with day 2 updated
+        // One summary per day, with day 2 updated (day 1 was filtered out of the second import)
         let daily_summaries = TemperatureDailySummaryRowRepository::new(&connection)
             .find_many_by_sensor_id(&breach_row.sensor_id)
             .unwrap();
         assert_eq!(daily_summaries.len(), 2);
         assert_eq!(daily_summaries[0].date, day_1);
+        assert_eq!(daily_summaries[0].average_temperature, Some(4.5));
         assert_eq!(daily_summaries[1].date, day_2);
         assert_eq!(daily_summaries[1].average_temperature, Some(7.5));
         assert_eq!(

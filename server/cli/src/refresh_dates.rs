@@ -358,8 +358,13 @@ impl<'a> RefreshDatesRepository<'a> {
 
     fn update_dates(
         &self,
-        dates: Vec<(IdAndDate, TableAndFieldName)>,
+        mut dates: Vec<(IdAndDate, TableAndFieldName)>,
     ) -> Result<(), RepositoryError> {
+        // Dates only ever move forward, so update the latest first: a date unique per row
+        // (e.g. temperature_daily_summary's sensor & date) would otherwise collide with the
+        // row still on the date it's moving to
+        dates.sort_by(|a, b| b.0.d.cmp(&a.0.d));
+
         for (
             IdAndDate { id, d },
             TableAndFieldName {
@@ -835,5 +840,69 @@ mod tests {
                 defined_row
             );
         }
+    }
+
+    #[actix_rt::test]
+    async fn refresh_dates_of_consecutive_daily_summaries() {
+        use repository::{
+            TemperatureDailySummaryRow, TemperatureDailySummaryRowRepository, mock::mock_sensor_1,
+            test_db::setup_all,
+        };
+
+        let (_, connection, _, _) = setup_all(
+            "refresh_dates_of_consecutive_daily_summaries",
+            MockDataInserts::none().stores().sensors(),
+        )
+        .await;
+
+        // A sensor has a summary for every day, unique on (sensor_id, date)
+        let summary_repo = TemperatureDailySummaryRowRepository::new(&connection);
+        for day in 1..=3 {
+            summary_repo
+                ._upsert_one(&TemperatureDailySummaryRow {
+                    id: format!("summary{day}"),
+                    sensor_id: mock_sensor_1().id,
+                    store_id: mock_sensor_1().store_id,
+                    date: NaiveDate::from_ymd_opt(2024, 1, day).unwrap(),
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        // Shifting the dates by a day moves each onto the date of the next (passed in ascending
+        // order, as they would be read)
+        RefreshDatesRepository::new(&connection)
+            .update_dates(
+                (1..=3)
+                    .map(|day| {
+                        (
+                            IdAndDate {
+                                id: format!("summary{day}"),
+                                d: NaiveDate::from_ymd_opt(2024, 1, day + 1).unwrap(),
+                            },
+                            TableAndFieldName {
+                                table_name: "temperature_daily_summary",
+                                field_name: "date",
+                            },
+                        )
+                    })
+                    .collect(),
+            )
+            .unwrap();
+
+        let dates: Vec<NaiveDate> = summary_repo
+            .find_many_by_sensor_id(&mock_sensor_1().id)
+            .unwrap()
+            .into_iter()
+            .map(|summary| summary.date)
+            .collect();
+        assert_eq!(
+            dates,
+            vec![
+                NaiveDate::from_ymd_opt(2024, 1, 2).unwrap(),
+                NaiveDate::from_ymd_opt(2024, 1, 3).unwrap(),
+                NaiveDate::from_ymd_opt(2024, 1, 4).unwrap(),
+            ]
+        );
     }
 }
