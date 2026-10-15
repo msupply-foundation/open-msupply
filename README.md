@@ -82,6 +82,7 @@ Force-pushes of already-published history, newest first.
 
 | Date       | Refs                                | Reason                                                                                                                                                                                                          |
 | ---------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-15 | `develop`, `main`, `v3.01.00`, `v3.01.01`, `v3.2.0`, `v3.02.01`, `v3.3.00` | The rewriting of commit SHAs quoted in commit messages was made repeatable, so these refs got new SHAs from `v3.01.00` onwards. File contents are unchanged, and every tag up to `v3.00.01` is untouched. |
 | 2026-09-22 | `develop`, `main`, all release tags | Cutover to the mirror: `develop` and `main` were replaced with filtered history from the private monorepo, so every commit has a new SHA. The previous public history is preserved unchanged on `pre-monorepo`. |
 
 <!--
