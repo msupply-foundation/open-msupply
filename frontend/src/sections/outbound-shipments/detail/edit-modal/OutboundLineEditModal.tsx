@@ -1261,7 +1261,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               held={lineHeld(line)}
               otherCampaign={
                 lineOtherCampaign(line)
-                  ? `${t('label.campaign-only')}: ${line.campaign?.name ?? t('label.none')}`
+                  ? `${t('label.activity')}: ${line.campaign?.name ?? t('label.none')}`
                   : undefined
               }
             />
