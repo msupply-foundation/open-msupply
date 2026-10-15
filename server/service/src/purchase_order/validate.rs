@@ -8,7 +8,8 @@ pub(crate) fn purchase_order_is_editable(purchase_order: &PurchaseOrderRow) -> b
         PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval => true,
         PurchaseOrderStatus::Confirmed
         | PurchaseOrderStatus::Sent
-        | PurchaseOrderStatus::Finalised => false,
+        | PurchaseOrderStatus::Finalised
+        | PurchaseOrderStatus::Cancelled => false,
     }
 }
 
@@ -17,7 +18,8 @@ pub(crate) fn can_edit_requested_quantity(purchase_order: &PurchaseOrderRow) -> 
         PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval => true,
         PurchaseOrderStatus::Confirmed
         | PurchaseOrderStatus::Sent
-        | PurchaseOrderStatus::Finalised => false,
+        | PurchaseOrderStatus::Finalised
+        | PurchaseOrderStatus::Cancelled => false,
     }
 }
 
@@ -32,7 +34,7 @@ pub(crate) fn can_edit_adjusted_quantity(
             | PurchaseOrderStatus::RequestApproval
             | PurchaseOrderStatus::Confirmed
             | PurchaseOrderStatus::Sent => true,
-            PurchaseOrderStatus::Finalised => false,
+            PurchaseOrderStatus::Finalised | PurchaseOrderStatus::Cancelled => false,
         }
     } else {
         // Adjusted quantity is updated from REQUESTED QUANTITY in New and Request Approval statuses
@@ -41,7 +43,8 @@ pub(crate) fn can_edit_adjusted_quantity(
             PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval => true,
             PurchaseOrderStatus::Confirmed
             | PurchaseOrderStatus::Sent
-            | PurchaseOrderStatus::Finalised => false,
+            | PurchaseOrderStatus::Finalised
+            | PurchaseOrderStatus::Cancelled => false,
         }
     }
 }

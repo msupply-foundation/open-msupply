@@ -54,5 +54,6 @@ pub fn generate(
         supplier_discount_percentage: None,
         request_approval_datetime: None,
         finalised_datetime: None,
+        cancelled_datetime: None,
     })
 }
