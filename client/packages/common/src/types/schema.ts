@@ -8619,10 +8619,14 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
+  /** The line's stored total with the order's supplier discount apportioned to it */
+  lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
+  /** The pack price with the order's supplier discount apportioned to the line */
+  pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
