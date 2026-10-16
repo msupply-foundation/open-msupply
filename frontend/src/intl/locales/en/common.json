@@ -1839,6 +1839,7 @@
   "label.po-currency": "PO currency",
   "label.po-line-number": "PO line number",
   "label.po-num": "PO-{{number}}",
+  "label.po-price-before-discount": "PO price before discount",
   "label.po-price-per-pack": "PO price per pack",
   "label.po-quantity": "PO quantity",
   "label.po-sent": "PO sent",

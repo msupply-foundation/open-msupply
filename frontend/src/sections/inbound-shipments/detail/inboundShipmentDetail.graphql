@@ -205,6 +205,7 @@ fragment InboundLine on InvoiceLineNode {
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits
+    pricePerPackBeforeDiscount
     pricePerPackAfterDiscount
   }
 }
