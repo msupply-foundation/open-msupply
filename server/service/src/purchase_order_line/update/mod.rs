@@ -6,8 +6,12 @@ use repository::{
 
 use crate::{
     NullableUpdate,
-    activity_log::activity_log_entry,
-    purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
+    activity_log::activity_log_entry_with_diff_keeping,
+    purchase_order_line::{
+        insert::PackSizeCodeCombination,
+        log::{LINE_IDENTITY_KEYS, item_code, line_log_detail},
+        query::get_purchase_order_line,
+    },
     service_provider::ServiceContext,
 };
 
@@ -60,26 +64,44 @@ pub fn update_purchase_order_line(
     let purchase_order_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let current_purchase_order_line = validate(&input, connection)?;
+            let (current_purchase_order_line, item) = validate(&input, connection)?;
 
-            let updated_purchase_order_line = generate(current_purchase_order_line, input)?;
+            let updated_purchase_order_line =
+                generate(current_purchase_order_line.clone(), &item, input)?;
 
             PurchaseOrderLineRowRepository::new(connection)
                 .upsert_one(&updated_purchase_order_line)?;
 
-            let activity_type =
-                if updated_purchase_order_line.status == PurchaseOrderLineStatus::Closed {
-                    ActivityLogType::PurchaseOrderLineStatusClosed
-                } else {
-                    ActivityLogType::PurchaseOrderLineUpdated
-                };
+            let activity_type = if current_purchase_order_line.status
+                != PurchaseOrderLineStatus::Closed
+                && updated_purchase_order_line.status == PurchaseOrderLineStatus::Closed
+            {
+                ActivityLogType::PurchaseOrderLineStatusClosed
+            } else {
+                ActivityLogType::PurchaseOrderLineUpdated
+            };
 
-            activity_log_entry(
+            let current_item_code = if current_purchase_order_line.item_id == item.id {
+                Some(item.code.clone())
+            } else {
+                item_code(connection, &current_purchase_order_line.item_id)?
+            };
+            // Writes nothing when no field changed
+            activity_log_entry_with_diff_keeping(
                 ctx,
                 activity_type,
                 Some(updated_purchase_order_line.purchase_order_id.clone()),
-                None,
-                None,
+                Some(&line_log_detail(
+                    connection,
+                    &current_purchase_order_line,
+                    current_item_code,
+                )?),
+                &line_log_detail(
+                    connection,
+                    &updated_purchase_order_line,
+                    Some(item.code.clone()),
+                )?,
+                LINE_IDENTITY_KEYS,
             )?;
 
             get_purchase_order_line(ctx, Some(store_id), &updated_purchase_order_line.id)

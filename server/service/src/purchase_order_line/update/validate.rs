@@ -6,15 +6,16 @@ use crate::{
     },
 };
 use repository::{
-    EqualFilter, ItemRowRepository, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
-    Pagination, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
-    PurchaseOrderLineStatus, PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
+    EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
+    ItemStoreJoinRowRepositoryTrait, Pagination, PurchaseOrderLineFilter,
+    PurchaseOrderLineRepository, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
 };
 
 pub fn validate(
     input: &UpdatePurchaseOrderLineInput,
     connection: &StorageConnection,
-) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
+) -> Result<(PurchaseOrderLineRow, ItemRow), UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
         .query_by_filter(
             PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
@@ -115,5 +116,5 @@ pub fn validate(
         );
     }
 
-    Ok(line)
+    Ok((line, item))
 }
