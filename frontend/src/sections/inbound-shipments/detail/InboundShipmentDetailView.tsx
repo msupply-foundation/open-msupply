@@ -1321,7 +1321,7 @@ const InboundShipmentDetailView: Component = () => {
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={isDisabled() ? undefined : openRow}
+                  onRowClick={openRow}
                   // A line the last bulk op failed reads in the error tone
                   // (spec S8 → per-line indicators).
                   rowTone={line =>
@@ -1448,6 +1448,7 @@ const InboundShipmentDetailView: Component = () => {
                 // merely coincide, and reading one as the other is how this
                 // field came to be editable on transfers.
                 shippedLocked={sourceLinked()}
+                readOnly={isDisabled()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

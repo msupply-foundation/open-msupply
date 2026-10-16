@@ -15,7 +15,6 @@ import {
 
 const line = (over: Partial<Parameters<typeof projectedLineCost>[0]> = {}) => ({
   requestedNumberOfUnits: 100,
-  adjustedNumberOfUnits: null,
   requestedPackSize: 10,
   pricePerPackAfterDiscount: 6,
   ...over,
@@ -24,16 +23,8 @@ const line = (over: Partial<Parameters<typeof projectedLineCost>[0]> = {}) => ({
 const undiscounted = { supplierDiscountPercentage: null };
 
 describe('a line’s packs', () => {
-  it('divides the expected quantity by the pack size', () => {
+  it('divides the requested quantity by the pack size', () => {
     expect(linePacks(line())).toBe(10);
-  });
-
-  it('follows the adjusted quantity when there is one', () => {
-    expect(linePacks(line({ adjustedNumberOfUnits: 50 }))).toBe(5);
-  });
-
-  it('takes an adjusted quantity of zero over the requested one', () => {
-    expect(linePacks(line({ adjustedNumberOfUnits: 0 }))).toBe(0);
   });
 
   it('is zero at a pack size of zero, not an infinity', () => {
@@ -57,7 +48,7 @@ describe('OMS-FUN-PO-07.3 — a line’s cost', () => {
   it('projects an unsaved draft’s cost as packs times the after-discount price', () => {
     expect(projectedLineCost(line(), undiscounted)).toBe(60);
     expect(
-      projectedLineCost(line({ adjustedNumberOfUnits: 50 }), undiscounted)
+      projectedLineCost(line({ requestedNumberOfUnits: 50 }), undiscounted)
     ).toBe(30);
   });
 

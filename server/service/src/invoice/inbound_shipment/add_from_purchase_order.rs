@@ -50,7 +50,7 @@ pub fn add_from_purchase_order(
         let purchase_order_line_stats = purchase_order_line.purchase_order_line_stats_row;
         let purchase_order_line = purchase_order_line.purchase_order_line_row;
 
-        let total_units = purchase_order_line.expected_number_of_units();
+        let total_units = purchase_order_line.requested_number_of_units;
         let remaining_units =
             (total_units - purchase_order_line_stats.shipped_number_of_units).max(0.0);
         let number_of_packs = purchase_order_line.packs_for_units(remaining_units);

@@ -91,9 +91,6 @@ impl PurchaseOrderLineNode {
     pub async fn requested_number_of_units(&self) -> f64 {
         self.row().requested_number_of_units
     }
-    pub async fn adjusted_number_of_units(&self) -> &Option<f64> {
-        &self.row().adjusted_number_of_units
-    }
     pub async fn shipped_number_of_units(&self) -> f64 {
         self.stats().shipped_number_of_units
     }

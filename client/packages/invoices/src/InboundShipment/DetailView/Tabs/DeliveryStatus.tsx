@@ -17,7 +17,6 @@ interface DeliveryStatusRow {
   thisDeliveryUnits: number;
   inTransitNumberOfUnits: number;
   receivedNumberOfUnits: number;
-  adjustedNumberOfUnits?: number | null;
   requestedNumberOfUnits: number;
 }
 
@@ -51,7 +50,6 @@ export const DeliveryTab = () => {
           thisDeliveryUnits: units,
           inTransitNumberOfUnits: pol?.inTransitNumberOfUnits ?? 0,
           receivedNumberOfUnits: pol?.receivedNumberOfUnits ?? 0,
-          adjustedNumberOfUnits: pol?.adjustedNumberOfUnits,
           requestedNumberOfUnits: pol?.requestedNumberOfUnits ?? 0,
         });
       }
@@ -111,8 +109,7 @@ export const DeliveryTab = () => {
       {
         id: 'remainingToDeliver',
         accessorFn: row => {
-          const poQuantity =
-            row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits;
+          const poQuantity = row.requestedNumberOfUnits;
           const thisDelivery = isShipped ? 0 : row.thisDeliveryUnits;
           const previousDeliveries = isReceivedOrVerified
             ? row.receivedNumberOfUnits - row.thisDeliveryUnits
@@ -129,8 +126,7 @@ export const DeliveryTab = () => {
       },
       {
         id: 'poQuantity',
-        accessorFn: row =>
-          row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits,
+        accessorFn: row => row.requestedNumberOfUnits,
         header: t('label.po-quantity'),
         columnType: ColumnType.Number,
       },

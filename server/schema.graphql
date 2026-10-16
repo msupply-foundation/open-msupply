@@ -1086,19 +1086,11 @@ type CannotDeleteRequisitionWithLines implements DeleteRequestRequisitionErrorIn
 	description: String!
 }
 
-type CannotEditAdjustedQuantity implements PurchaseOrderLineError {
-	description: String!
-}
-
 type CannotEditInvoice implements DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & DeletePrescriptionErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface {
 	description: String!
 }
 
 type CannotEditPurchaseOrder implements AddToPurchaseOrderFromMasterListErrorInterface & InsertPurchaseOrderLineErrorInterface & PurchaseOrderLineError {
-	description: String!
-}
-
-type CannotEditQuantityBelowReceived implements PurchaseOrderLineError {
 	description: String!
 }
 
@@ -6996,7 +6988,7 @@ input PurchaseOrderLineFilterInput {
 	id: EqualFilterStringInput
 	purchaseOrderId: EqualFilterStringInput
 	status: EqualFilterPurchaseOrderLineStatusInput
-	receivedLessThanAdjusted: Boolean
+	receivedLessThanRequested: Boolean
 	supplierName: StringFilterInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
 	itemName: StringFilterInput
@@ -7025,7 +7017,6 @@ type PurchaseOrderLineNode {
 	stockOnHandInUnits: Float!
 	requestedPackSize: Float!
 	requestedNumberOfUnits: Float!
-	adjustedNumberOfUnits: Float
 	shippedNumberOfUnits: Float!
 	inTransitNumberOfUnits: Float!
 	receivedNumberOfUnits: Float!
@@ -7060,7 +7051,6 @@ enum PurchaseOrderLineSortFieldInput {
 	purchaseOrderNumber
 	supplierName
 	purchaseOrderConfirmedDatetime
-	adjustedNumberOfUnits
 	receivedNumberOfUnits
 	outstandingNumberOfUnits
 }
@@ -10579,7 +10569,6 @@ input UpdatePurchaseOrderLineInput {
 	itemId: String
 	requestedPackSize: Float
 	requestedNumberOfUnits: Float
-	adjustedNumberOfUnits: Float
 	requestedDeliveryDate: NullableDateUpdate
 	expectedDeliveryDate: NullableDateUpdate
 	pricePerPackBeforeDiscount: Float

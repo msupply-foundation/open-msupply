@@ -180,7 +180,7 @@ export const outstandingLinesToCsv = (
     t('label.item-name'),
     t('label.purchase-order-confirmed'),
     t('label.expected-delivery-date'),
-    t('label.adjusted-units-expected'),
+    t('label.requested-units'),
     t('label.shipped-units'),
     t('label.outstanding-units'),
   ];
@@ -194,9 +194,9 @@ export const outstandingLinesToCsv = (
     node.item?.name,
     Formatter.csvDateString(node.purchaseOrder?.confirmedDatetime),
     Formatter.csvDateString(node.expectedDeliveryDate),
-    node.adjustedNumberOfUnits,
+    node.requestedNumberOfUnits,
     node.shippedNumberOfUnits,
-    (node.adjustedNumberOfUnits ?? 0) - (node.shippedNumberOfUnits ?? 0),
+    (node.requestedNumberOfUnits ?? 0) - (node.shippedNumberOfUnits ?? 0),
   ]);
 
   return Formatter.csv({ fields, data });

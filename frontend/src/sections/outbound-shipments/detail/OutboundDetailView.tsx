@@ -1030,7 +1030,17 @@ const OutboundDetailView: Component = () => {
           ]
         : []),
       {
-        c: { key: 'sellPricePerPack' },
+        // Price of ONE unit — pack sell price ÷ pack size; blank on a
+        // placeholder (spec § line table col 15). The id stays
+        // `sellPricePerPack` so the cell test id and saved column settings
+        // carry over.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack / line.packSize,
+          id: 'sellPricePerPack',
+        },
         header: () => t('label.unit-sell-price'),
         ...getCellDefinition('sellPricePerPack'),
       },
@@ -1349,7 +1359,7 @@ const OutboundDetailView: Component = () => {
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={editable() ? openRow : undefined}
+                  onRowClick={openRow}
                   rowTint={lineRowTint}
                   // Same predicate on both channels: the tint colours the
                   // row, the bar makes the unfinished lines legible down one

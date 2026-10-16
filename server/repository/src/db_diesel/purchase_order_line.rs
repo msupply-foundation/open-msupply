@@ -9,7 +9,6 @@ use crate::{
     DateFilter, EqualFilter, Pagination, PurchaseOrderFilter, PurchaseOrderLineRow,
     PurchaseOrderLineStatsRow, PurchaseOrderLineStatus, PurchaseOrderRepository, PurchaseOrderRow,
     Sort, StringFilter,
-    diesel_extensions::double_coalesce,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
         apply_sort_no_case, apply_string_filter, apply_string_or_filter,
@@ -44,7 +43,7 @@ pub struct PurchaseOrderLineFilter {
     pub requested_pack_size: Option<EqualFilter<f64>>,
     pub item_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<PurchaseOrderLineStatus>>,
-    pub received_less_than_adjusted: Option<bool>,
+    pub received_less_than_requested: Option<bool>,
     pub purchase_order: Option<PurchaseOrderFilter>,
     pub supplier_name: Option<StringFilter>,
     pub purchase_order_number: Option<EqualFilter<i64>>,
@@ -67,7 +66,6 @@ pub enum PurchaseOrderLineSortField {
     PurchaseOrderNumber,
     SupplierName,
     PurchaseOrderConfirmedDatetime,
-    AdjustedNumberOfUnits,
     ReceivedNumberOfUnits,
     OutstandingNumberOfUnits,
 }
@@ -167,13 +165,6 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 PurchaseOrderLineSortField::PurchaseOrderConfirmedDatetime => {
                     apply_sort_asc_nulls_first!(query, sort, purchase_order::confirmed_datetime);
                 }
-                PurchaseOrderLineSortField::AdjustedNumberOfUnits => {
-                    apply_sort_asc_nulls_first!(
-                        query,
-                        sort,
-                        purchase_order_line::adjusted_number_of_units
-                    );
-                }
                 PurchaseOrderLineSortField::ReceivedNumberOfUnits => {
                     apply_sort!(
                         query,
@@ -219,16 +210,9 @@ fn query() -> _ {
 }
 
 #[diesel::dsl::auto_type]
-fn expected_number_of_units() -> _ {
-    double_coalesce::coalesce(
-        purchase_order_line::adjusted_number_of_units,
-        purchase_order_line::requested_number_of_units,
-    )
-}
-
-#[diesel::dsl::auto_type]
 fn outstanding_number_of_units() -> _ {
-    expected_number_of_units() - purchase_order_line_stats::received_number_of_units
+    purchase_order_line::requested_number_of_units
+        - purchase_order_line_stats::received_number_of_units
 }
 
 type BoxedPurchaseOrderLineQuery = IntoBoxed<'static, query, DBType>;
@@ -244,7 +228,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             requested_pack_size,
             item_id,
             status,
-            received_less_than_adjusted,
+            received_less_than_requested,
             purchase_order,
             supplier_name,
             purchase_order_number,
@@ -263,19 +247,19 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
         );
         apply_equal_filter!(query, item_id, purchase_order_line::item_id);
         apply_equal_filter!(query, status, purchase_order_line::status);
-        match received_less_than_adjusted {
+        match received_less_than_requested {
             Some(true) => {
                 query = query.filter(
                     purchase_order_line_stats::received_number_of_units
                         .nullable()
-                        .lt(expected_number_of_units().nullable()),
+                        .lt(purchase_order_line::requested_number_of_units.nullable()),
                 )
             }
             Some(false) => {
                 query = query.filter(
                     purchase_order_line_stats::received_number_of_units
                         .nullable()
-                        .ge(expected_number_of_units().nullable()),
+                        .ge(purchase_order_line::requested_number_of_units.nullable()),
                 )
             }
             None => {}
@@ -311,11 +295,6 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
 }
 
 impl PurchaseOrderLineRow {
-    pub fn expected_number_of_units(&self) -> f64 {
-        self.adjusted_number_of_units
-            .unwrap_or(self.requested_number_of_units)
-    }
-
     pub fn packs_for_units(&self, units: f64) -> f64 {
         if self.requested_pack_size > 0.0 {
             units / self.requested_pack_size
@@ -325,7 +304,7 @@ impl PurchaseOrderLineRow {
     }
 
     pub fn number_of_packs(&self) -> f64 {
-        self.packs_for_units(self.expected_number_of_units())
+        self.packs_for_units(self.requested_number_of_units)
     }
 
     pub fn calculate_line_total(&self) -> f64 {
@@ -335,7 +314,7 @@ impl PurchaseOrderLineRow {
 
 impl PurchaseOrderLine {
     pub fn outstanding_number_of_units(&self) -> f64 {
-        self.purchase_order_line_row.expected_number_of_units()
+        self.purchase_order_line_row.requested_number_of_units
             - self.purchase_order_line_stats_row.received_number_of_units
     }
 }
@@ -374,8 +353,8 @@ impl PurchaseOrderLineFilter {
         self
     }
 
-    pub fn received_less_than_adjusted(mut self, value: bool) -> Self {
-        self.received_less_than_adjusted = Some(value);
+    pub fn received_less_than_requested(mut self, value: bool) -> Self {
+        self.received_less_than_requested = Some(value);
         self
     }
 

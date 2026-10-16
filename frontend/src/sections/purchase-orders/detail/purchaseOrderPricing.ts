@@ -19,18 +19,11 @@ import type {
 
 type Quantities = Pick<
   PurchaseOrderDetailLineFragment,
-  'requestedNumberOfUnits' | 'adjustedNumberOfUnits' | 'requestedPackSize'
+  'requestedNumberOfUnits' | 'requestedPackSize'
 >;
 
 /**
- * The quantity the order expects of a line: its adjusted quantity where it
- * carries one, its requested quantity otherwise.
- */
-const expectedUnits = (line: Quantities): number =>
-  line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
-
-/**
- * A line's packs — the expected quantity over its pack size. A pack size of
+ * A line's packs — the requested quantity over its pack size. A pack size of
  * zero yields 0, not an infinity: the server writes such a line's total as 0
  * and the line contributes nothing to the order's total, so the column that
  * reads across to Line cost must agree with it (rules § pricing and totals,
@@ -38,7 +31,9 @@ const expectedUnits = (line: Quantities): number =>
  * unchanged).
  */
 export const linePacks = (line: Quantities): number =>
-  line.requestedPackSize > 0 ? expectedUnits(line) / line.requestedPackSize : 0;
+  line.requestedPackSize > 0
+    ? line.requestedNumberOfUnits / line.requestedPackSize
+    : 0;
 
 type Discount = Pick<PurchaseOrderInfoFragment, 'supplierDiscountPercentage'>;
 
