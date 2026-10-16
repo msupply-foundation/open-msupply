@@ -2092,6 +2092,7 @@
   "label.supplier-comment": "Supplier comment",
   "label.supplier-discount": "Supplier discount",
   "label.supplier-discount-amount": "Supplier discount amount",
+  "label.supplier-discount-applied": "Supplier discount (applied)",
   "label.supplier-discount-percentage": "Supplier discount percentage",
   "label.supplier-item-code": "Supplier item code",
   "label.supplier-name": "Supplier name",

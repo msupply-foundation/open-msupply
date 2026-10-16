@@ -290,7 +290,7 @@ export const InboundShipmentSidePanel: Component<
           <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
             {percentage => (
               <FieldRow
-                label={t('label.supplier-discount')}
+                label={t('label.supplier-discount-applied')}
                 readOnly
                 valueTestId="supplier-discount-value"
               >
