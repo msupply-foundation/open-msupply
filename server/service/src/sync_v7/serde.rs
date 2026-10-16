@@ -8,7 +8,7 @@ use util::json_without_nulls;
 
 use crate::sync_v7::{
     translations::{
-        invoice_line::translate_invoice_line, store::translate_store,
+        invoice_line::translate_invoice_line, name::translate_name, store::translate_store,
         sync_file_reference::translate_sync_file_reference,
         temperature_log::translate_temperature_log,
     },
@@ -178,10 +178,12 @@ pub(crate) fn deserialize(
         ChangelogTableName::TemperatureLog => {
             return translate_temperature_log(connection, changelog_insert, data);
         }
+        ChangelogTableName::Name => {
+            return translate_name(connection, changelog_insert, data, sync_context);
+        }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
-        ChangelogTableName::Name => from_value::<NameRow>(data),
         ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
