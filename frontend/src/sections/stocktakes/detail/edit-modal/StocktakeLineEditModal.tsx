@@ -1678,6 +1678,7 @@ const StocktakeLineEditContent = (
             itemId={line.item.id}
             disabled={!line.countThisLine}
             campaignId={line.campaign?.id}
+            campaignName={line.campaign?.name}
             programId={line.program?.id}
             placeholder={t('label.none')}
             onChange={choice => {

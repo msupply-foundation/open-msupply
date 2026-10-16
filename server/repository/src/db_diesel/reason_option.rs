@@ -5,7 +5,7 @@ use super::{
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
@@ -64,7 +64,7 @@ impl<'a> ReasonOptionRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ReasonOptionSortField::ReasonOptionType => {
-                    apply_sort_no_case!(query, sort, reason_option::type_)
+                    apply_sort!(query, sort, reason_option::type_)
                 }
                 ReasonOptionSortField::Reason => {
                     apply_sort_no_case!(query, sort, reason_option::reason)
@@ -134,6 +134,34 @@ impl ReasonOptionType {
         EqualFilter {
             equal_any: Some(values),
             ..Default::default()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, timestamp) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_reason_option_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_reason_option_sort", MockDataInserts::none()).await;
+        let repo = ReasonOptionRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [
+                ReasonOptionSortField::ReasonOptionType,
+                ReasonOptionSortField::Reason,
+            ] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
         }
     }
 }
