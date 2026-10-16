@@ -452,9 +452,10 @@ mod update {
             Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
 
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
+        let mut lines = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_many_by_purchase_order_ids(std::slice::from_ref(&purchase_order_id))
             .unwrap();
+        lines.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
         assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
