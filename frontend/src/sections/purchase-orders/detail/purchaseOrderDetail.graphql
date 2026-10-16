@@ -142,7 +142,6 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   unit
   requestedPackSize
   requestedNumberOfUnits
-  adjustedNumberOfUnits
   # Both written by the shipment, never here: shipped counts every unit the
   # supplier has sent, received only those on a shipment marked received or
   # verified (contract § listing outstanding lines).

@@ -641,16 +641,6 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(8),
     },
     {
-      // An ABSENT value until set — blank, not 0, which would be a different
-      // fact (ui-standards/tables.md § absent values).
-      c: { key: 'adjustedNumberOfUnits' },
-      sortKey: 'adjustedNumberOfUnits',
-      header: () => t('label.adjusted-units'),
-      ...getNumberCell(),
-      cell: exactQuantity,
-      size: remToPx(8),
-    },
-    {
       // Written by the shipment, never here.
       c: { key: 'shippedNumberOfUnits' },
       sortKey: 'shippedNumberOfUnits',
@@ -1003,7 +993,6 @@ const PurchaseOrderDetailView: Component = () => {
                 }}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}
-                canAuthorise={hasPermission('PURCHASE_ORDER_AUTHORISE')}
                 initialLine={editor()?.line}
                 hasNext={hasNextLine}
                 nextLine={nextLine}

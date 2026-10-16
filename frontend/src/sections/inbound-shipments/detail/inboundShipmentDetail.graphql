@@ -202,7 +202,6 @@ fragment InboundLine on InvoiceLineNode {
     lineNumber
     requestedPackSize
     requestedNumberOfUnits
-    adjustedNumberOfUnits
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits

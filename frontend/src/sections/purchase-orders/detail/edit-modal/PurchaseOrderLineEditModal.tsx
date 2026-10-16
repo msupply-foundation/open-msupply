@@ -50,12 +50,10 @@ import {
   newLineDraft,
   packsEntered,
   packSizeEntered,
-  packsLabelKey,
   PRICE_DECIMALS,
   pricePerUnit,
   repriced,
   requestedDateEntered,
-  showsAdjustedUnits,
   unitsFigure,
   type LineDraft,
   type LineFacts,
@@ -90,7 +88,6 @@ export interface PurchaseOrderLineEditModalProps {
   latestExpectedDate: string | undefined;
   /** How many lines the order has — a new line's number is the next. */
   lineCount: number;
-  canAuthorise: boolean;
   /** An existing line → edit mode; omitted → add mode. */
   initialLine?: Line;
   /** Whether a line follows this one in the table's current order. */
@@ -224,7 +221,6 @@ const LineEditContent = (
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
       addMode: !props.initialLine,
-      canAuthorise: props.canAuthorise,
     })
   );
   const closed = (open: boolean) => !open || saving();
@@ -438,10 +434,10 @@ const LineEditContent = (
                 heading="group"
               >
                 <Show
-                  when={gates().packs}
+                  when={gates().drafting}
                   fallback={
                     <LabelledValue
-                      label={t(packsLabelKey(status()))}
+                      label={t('label.requested-packs')}
                       variant="field"
                       data-testid="packs-value"
                     >
@@ -450,7 +446,7 @@ const LineEditContent = (
                   }
                 >
                   <NumberField
-                    label={t(packsLabelKey(status()))}
+                    label={t('label.requested-packs')}
                     min={0}
                     decimalLimit={10}
                     data-testid="packs-input"
@@ -458,7 +454,7 @@ const LineEditContent = (
                     ref={packsField.ref}
                     value={linePacks(draft()!)}
                     onChange={value =>
-                      patch(packsEntered(status(), draft()!, value ?? 0))
+                      patch(packsEntered(draft()!, value ?? 0))
                     }
                   />
                 </Show>
@@ -482,48 +478,20 @@ const LineEditContent = (
                     disabled={saving()}
                     value={draft()!.requestedPackSize}
                     onChange={value =>
-                      patch(packSizeEntered(status(), draft()!, value ?? 0))
+                      patch(packSizeEntered(draft()!, value ?? 0))
                     }
                   />
                 </Show>
-                <Show
-                  when={showsAdjustedUnits(status())}
-                  fallback={
-                    <LabelledValue
-                      label={t('label.requested-units')}
-                      variant="field"
-                      data-testid="requested-units-value"
-                    >
-                      {unitsFigure(
-                        draft()!.requestedNumberOfUnits,
-                        facts()!.unitName
-                      )}
-                    </LabelledValue>
-                  }
+                <LabelledValue
+                  label={t('label.requested-units')}
+                  variant="field"
+                  data-testid="requested-units-value"
                 >
-                  <LabelledValue
-                    label={t('label.adjusted-units')}
-                    variant="field"
-                    data-testid="adjusted-units-value"
-                  >
-                    {draft()!.adjustedNumberOfUnits == null
-                      ? EMPTY
-                      : unitsFigure(
-                          draft()!.adjustedNumberOfUnits!,
-                          facts()!.unitName
-                        )}
-                  </LabelledValue>
-                  <LabelledValue
-                    label={t('label.originally-requested')}
-                    variant="field"
-                    data-testid="requested-units-value"
-                  >
-                    {unitsFigure(
-                      draft()!.requestedNumberOfUnits,
-                      facts()!.unitName
-                    )}
-                  </LabelledValue>
-                </Show>
+                  {unitsFigure(
+                    draft()!.requestedNumberOfUnits,
+                    facts()!.unitName
+                  )}
+                </LabelledValue>
               </FormSection>
             </InsetPanel>
 
