@@ -3024,7 +3024,6 @@
   "preference.sortByVvmStatusThenExpiry": "ຈັດລຳດັບຊຸດທີ່ມີໃຫ້ໃຊ້ຕາມສະຖານະ VVM ແລ້ວຕາມວັນໝົດອາຍຸ",
   "preference.storeCustomColour": "ສີກຳນົດເອງຂອງແຖບລຸ່ມໜ້າ (ລະຫັດ hex, ຕົວຢ່າງ #000000 ສຳລັບສີດຳ)",
   "preference.syncRecordsDisplayThreshold": "ຂີດຈຳກັດການສະແດງລາຍການຂໍ້ມູນຊິງຄ໌",
-  "preference.useProcurementFunctionality": "ໃຊ້ຄຸນສົມບັດການຈັດຊື້ຈັດຈ້າງ",
   "preference.useSimplifiedMobileUi": "ໃຊ້ໜ້າຈໍມືຖືແບບງ່າຍ",
   "preference.warnWhenMissingRecentStocktake": "ເຕືອນຜູ້ໃຊ້ໃນເວລາສ້າງໃບສັ່ງຊື້ພາຍໃນ ຖ້າບໍ່ມີການກວດນັບສະຕ໋ອກຫຼ້າສຸດ",
   "preference.warnWhenMissingRecentStocktake.description": "ສະແດງຄຳເຕືອນເມື່ອຂໍ້ມູນການກວດນັບສະຕ໋ອກເກົ່າກວ່າອາຍຸສູງສຸດທີ່ກຳນົດ ຫຼື ການກວດນັບສະຕ໋ອກຫຼ້າສຸດມີລາຍການໜ້ອຍກວ່າຈຳນວນຕ່ຳສຸດ ຈຶ່ງບໍ່ຖືວ່າເປັນການກວດນັບສະຕ໋ອກທີ່ໃຊ້ໄດ້ສຳລັບການຄິດໄລ່ລະດັບສະຕ໋ອກ.",
