@@ -16,8 +16,6 @@ pub struct LineLogDetail {
     pack_size: f64,
     requested_units: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
-    adjusted_units: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     requested_delivery_date: Option<NaiveDate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     expected_delivery_date: Option<NaiveDate>,
@@ -65,7 +63,6 @@ pub fn line_log_detail(
         status: line.status.clone(),
         pack_size: line.requested_pack_size,
         requested_units: line.requested_number_of_units,
-        adjusted_units: line.adjusted_number_of_units,
         requested_delivery_date: line.requested_delivery_date,
         expected_delivery_date: line.expected_delivery_date,
         price_per_pack_before_discount: line.price_per_pack_before_discount,

@@ -322,7 +322,6 @@ mod update {
                 "item-name": mock_item_a().name,
                 "pack-size": 5.0,
                 "requested-units": 0.0,
-                "adjusted-units": null,
             })
         );
         assert_eq!(
@@ -332,7 +331,6 @@ mod update {
                 "item-name": mock_item_d().name,
                 "pack-size": 10.0,
                 "requested-units": 5.0,
-                "adjusted-units": 5.0,
             })
         );
         // The line's identity leads, so the entry reads line-first
@@ -353,7 +351,6 @@ mod update {
                     requested_pack_size: Some(10.0),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
         assert_eq!(updated_logs().len(), 1);
@@ -370,7 +367,6 @@ mod update {
                     }),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
         service
@@ -382,7 +378,6 @@ mod update {
                     expected_delivery_date: Some(NullableUpdate { value: None }),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
         let logs = updated_logs();
@@ -462,7 +457,6 @@ mod update {
                     status: Some(PurchaseOrderLineStatus::Closed),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
         assert_eq!(logs_of(ActivityLogType::PurchaseOrderLineStatusClosed), 1);
@@ -479,7 +473,6 @@ mod update {
                     }),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
         assert_eq!(logs_of(ActivityLogType::PurchaseOrderLineStatusClosed), 1);
