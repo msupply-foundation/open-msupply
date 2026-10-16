@@ -71,9 +71,6 @@ import styles from './PurchaseOrderLineEditModal.module.css';
 
 type Line = PurchaseOrderDetailLineFragment;
 
-export type LineLookup =
-  { kind: 'line'; line: Line } | { kind: 'none' } | { kind: 'failed' };
-
 export interface PurchaseOrderLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -94,8 +91,6 @@ export interface PurchaseOrderLineEditModalProps {
   hasNext: (lineId: string) => boolean;
   /** The line after this one in the table's current order, paging if needed. */
   nextLine: (lineId: string) => Promise<Line | undefined>;
-  /** The order's existing line for an item, if any (OMS-FUN-PO-02.23). */
-  findLineForItem: (itemId: string) => Promise<LineLookup>;
   /** A save landed — the parent re-reads the page, the set and the node. */
   onSaved: () => void;
 }
@@ -163,28 +158,15 @@ const LineEditContent = (
   if (props.initialLine)
     seed(factsFromLine(props.initialLine), draftFromLine(props.initialLine));
 
-  // An item already on the order loads its existing line (OMS-FUN-PO-02.23);
-  // otherwise the line it would become (rules § what a new line is born as),
-  // with the item's own figures read live: its stock on hand now and its
-  // units on order across the store's other purchase orders.
+  // A picked item is always a new line, even one already on the order
+  // (OMS-FUN-PO-02.23) — the line it would become (rules § what a new line is
+  // born as), with the item's own figures read live: its stock on hand now and
+  // its units on order across the store's other purchase orders.
   const pickItem = async (item: ItemOption) => {
     const token = ++pickToken;
     const stale = () => disposed || token !== pickToken;
     setLoading(true);
     setErrorMessage(undefined);
-    const lookup = await props.findLineForItem(item.id);
-    if (stale()) return;
-    if (lookup.kind === 'failed') {
-      setLoading(false);
-      setErrorMessage(t('error.unable-to-load-data'));
-      return;
-    }
-    if (lookup.kind === 'line') {
-      setLoading(false);
-      seed(factsFromLine(lookup.line), draftFromLine(lookup.line));
-      packsField.focus();
-      return;
-    }
     const result = await graphqlFetch(PurchaseOrderLineItemFacts, {
       storeId: props.storeId,
       itemId: item.id,
