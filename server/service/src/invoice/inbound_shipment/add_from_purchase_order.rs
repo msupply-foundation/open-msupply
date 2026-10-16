@@ -16,11 +16,12 @@ pub fn add_from_purchase_order(
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
 
-    // Get the PO's exchange rate to convert prices from PO currency to store currency
-    let exchange_rate = PurchaseOrderRowRepository::new(connection)
+    let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&purchase_order_id)?
-        .map(|po| po.foreign_exchange_rate)
-        .unwrap_or(1.0);
+        .ok_or(InsertInboundShipmentError::PurchaseOrderDoesNotExist)?;
+    // Exchange rate converts prices from PO currency to store currency
+    let exchange_rate = purchase_order.foreign_exchange_rate;
+    let donor_id = purchase_order.donor_id;
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -84,7 +85,7 @@ pub fn add_from_purchase_order(
             foreign_currency_price_before_tax: Some(foreign_total),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_id: donor_id.clone(),
             manufacturer_id: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,

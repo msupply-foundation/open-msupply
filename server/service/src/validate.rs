@@ -139,25 +139,19 @@ pub fn check_other_party(
     Ok(other_party)
 }
 
+/// Whether the other party is a store that has been disabled. Reads the store
+/// directly rather than through the name query: that also joins each name to its
+/// name_store_join, which on SQLite builds every name visible in the store first,
+/// and this check runs for every line of a batch (#1355). A store's disabled state
+/// doesn't depend on who asks, so the asking store isn't needed.
 pub fn check_other_party_store_is_disabled(
     connection: &StorageConnection,
-    store_id: &str,
+    _store_id: &str,
     other_party_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let mut results = NameRepository::new(connection).query_by_filter(
-        store_id,
-        NameFilter::new()
-            .id(EqualFilter::equal_to(other_party_id.to_string()))
-            .include_disabled(true),
-    )?;
-
-    let name = results
-        .iter()
-        .find(|name| name.name_store_join_row.is_some())
-        .cloned()
-        .or_else(|| results.pop());
-
-    Ok(name.map(|name| name.is_disabled()).unwrap_or(false))
+    Ok(StoreRowRepository::new(connection)
+        .find_one_by_name_id(other_party_id)?
+        .is_some_and(|store| store.is_disabled))
 }
 
 pub fn check_property_key_does_not_exist(
@@ -177,5 +171,39 @@ pub fn check_property_key_does_not_exist(
 impl From<RepositoryError> for OtherPartyErrors {
     fn from(error: RepositoryError) -> Self {
         Self::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        StoreRow, StoreRowRepository,
+        mock::{MockDataInserts, mock_name_a, mock_name_store_b, mock_store_a, mock_store_b},
+        test_db::setup_all,
+    };
+
+    use super::check_other_party_store_is_disabled;
+
+    #[actix_rt::test]
+    async fn other_party_store_is_disabled() {
+        let (_, connection, _, _) =
+            setup_all("other_party_store_is_disabled", MockDataInserts::all()).await;
+        let is_disabled = |other_party_id: &str| {
+            check_other_party_store_is_disabled(&connection, &mock_store_a().id, other_party_id)
+                .unwrap()
+        };
+
+        assert!(!is_disabled(&mock_name_store_b().id));
+        // A name that isn't a store, and one that doesn't exist
+        assert!(!is_disabled(&mock_name_a().id));
+        assert!(!is_disabled("unknown_name"));
+
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                is_disabled: true,
+                ..mock_store_b()
+            })
+            .unwrap();
+        assert!(is_disabled(&mock_name_store_b().id));
     }
 }

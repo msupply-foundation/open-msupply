@@ -4,6 +4,7 @@ use crate::{
         sync_buffer::{
             write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
         },
+        synchroniser::INTEGRATION_BATCH_SIZE,
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
 };
@@ -339,25 +340,15 @@ fn validate_translate_integrate_inner<'a>(
     // stale Delete that arrived in an earlier pull batch than its re-create
     // Upsert — are marked Ignored here; the upserts-then-deletes phase split
     // below would otherwise apply them out of arrival order and a stale
-    // delete would wipe the newer record.
-    let keys = repo.pending_keys(
+    // delete would wipe the newer record. Done in SQL, so the pending keys
+    // never come into memory (#1284).
+    repo.ignore_superseded_pending(
         source_site_id,
         SyncVersion::V7,
         reference_id,
         &integration_tables,
+        "Superseded by a newer sync buffer row for the same record",
     )?;
-    let key_refs: Vec<(&str, &str, i32)> = keys
-        .iter()
-        .map(|k| (k.table_name.as_str(), k.record_id.as_str(), k.cursor))
-        .collect();
-    for cursor in superseded_cursors(&key_refs) {
-        write_sync_buffer_ignored(
-            connection,
-            cursor,
-            datetime_now(),
-            "Superseded by a newer sync buffer row for the same record",
-        )?;
-    }
 
     let mut total = repo.count_pending(
         source_site_id,
@@ -378,49 +369,70 @@ fn validate_translate_integrate_inner<'a>(
      -> Result<(), RepositoryError> {
         log::debug!("Integrating table {table} with action {action}");
 
-        let rows = repo.pending_ordered_by_cursor(PendingQuery {
-            source_site_id,
-            sync_version: SyncVersion::V7,
-            reference_id,
-            table_name: table.as_ref(),
-            action: action.clone(),
-            direction,
-            limit: i64::MAX,
-        })?;
+        let mut had_store_records = false;
 
-        log::debug!("Number of records to integrate  {}", rows.len());
+        // `INTEGRATION_BATCH_SIZE` rows at a time, so memory stays bounded however much is
+        // pending (#1284). Every row fetched is marked integrated (success, error or ignored)
+        // before the next fetch, so each fetch moves on, and the loop ends once none are left.
+        // Deletes come highest cursor first, so each batch takes the highest that remain.
+        loop {
+            let rows = repo.pending_ordered_by_cursor(PendingQuery {
+                source_site_id,
+                sync_version: SyncVersion::V7,
+                reference_id,
+                table_name: table.as_ref(),
+                action: action.clone(),
+                direction,
+                limit: INTEGRATION_BATCH_SIZE,
+            })?;
 
-        let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
+            log::debug!("Number of records to integrate  {}", rows.len());
 
-        for row in &rows {
-            let started = datetime_now();
-            let one_result = if wrap_record_in_tx {
-                connection
-                    .transaction_sync_etc(
-                        |sub| validate_translate_integrate_one(sub, row, &sync_context),
-                        false,
-                    )
-                    .map_err(|e| e.to_inner_error())
-            } else {
-                validate_translate_integrate_one(connection, row, &sync_context)
-            };
-            match one_result {
-                Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
-                Err(e @ Error::ValidationError(_)) => {
-                    write_sync_buffer_ignored(connection, row.cursor, started, &format_error(&e))?;
-                }
-                Err(e) => {
-                    write_sync_buffer_error(connection, row.cursor, started, &format_error(&e))?;
-                }
+            if rows.is_empty() {
+                break;
             }
+            had_store_records |= *table == ChangelogTableName::Store;
 
-            total -= 1;
+            for row in &rows {
+                let started = datetime_now();
+                let one_result = if wrap_record_in_tx {
+                    connection
+                        .transaction_sync_etc(
+                            |sub| validate_translate_integrate_one(sub, row, &sync_context),
+                            false,
+                        )
+                        .map_err(|e| e.to_inner_error())
+                } else {
+                    validate_translate_integrate_one(connection, row, &sync_context)
+                };
+                match one_result {
+                    Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
+                    Err(e @ Error::ValidationError(_)) => {
+                        write_sync_buffer_ignored(
+                            connection,
+                            row.cursor,
+                            started,
+                            &format_error(&e),
+                        )?;
+                    }
+                    Err(e) => {
+                        write_sync_buffer_error(
+                            connection,
+                            row.cursor,
+                            started,
+                            &format_error(&e),
+                        )?;
+                    }
+                }
 
-            if let Some(logger) = logger.as_mut()
-                && total / PROGRESS_INTERVAL <= last_progress
-            {
-                logger.progress(total)?;
-                last_progress -= 1;
+                total -= 1;
+
+                if let Some(logger) = logger.as_mut()
+                    && total / PROGRESS_INTERVAL <= last_progress
+                {
+                    logger.progress(total)?;
+                    last_progress -= 1;
+                }
             }
         }
 
@@ -683,6 +695,37 @@ mod test {
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Success));
         assert_eq!(error, None);
+    }
+
+    #[actix_rt::test]
+    async fn integrate_fetches_in_batches() {
+        // #1284: rows are fetched `INTEGRATION_BATCH_SIZE` at a time. One more than a
+        // batch must still all integrate, the extra one in a second fetch.
+        let connection = setup("integrate_fetches_in_batches", MockDataInserts::none()).await;
+
+        let rows: Vec<SyncBufferRowInsert> = (0..=INTEGRATION_BATCH_SIZE)
+            .map(|i| {
+                let id = format!("u{i}");
+                buffer_row(&id, SyncAction::Upsert, unit_data(&id))
+            })
+            .collect();
+        SyncBufferRepository::new(&connection)
+            .insert_many(&rows)
+            .unwrap();
+
+        integrate(&connection, None);
+
+        let pending = SyncBufferRepository::new(&connection)
+            .count_pending(SOURCE_SITE_ID, SyncVersion::V7, None, None)
+            .unwrap();
+        assert_eq!(pending, 0);
+        let last = format!("u{INTEGRATION_BATCH_SIZE}");
+        assert!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id(&last)
+                .unwrap()
+                .is_some()
+        );
     }
 
     #[actix_rt::test]

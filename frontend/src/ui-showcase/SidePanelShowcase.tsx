@@ -34,6 +34,7 @@ import {
   SectionTOC,
   type AnatomyNode,
 } from './common';
+import { localisedDate } from '../intl';
 import type { PageMetadata } from './metadata';
 import styles from './SidePanelShowcase.module.css';
 
@@ -197,7 +198,7 @@ const InboundPanelContent = () => {
           <span>b.mwangi</span>
         </FieldRow>
         <FieldRow label="Created">
-          <span>24 Jul 2026</span>
+          <span>{localisedDate('2026-07-24')}</span>
         </FieldRow>
         <FieldRow label="Colour">
           <ColourTagPicker colour={colour()} onSelect={setColour} />
@@ -328,7 +329,7 @@ const InboundPanelContent = () => {
           <span>Air freight</span>
         </FieldRow>
         <FieldRow label="Expected delivery date">
-          <span>05 Aug 2026</span>
+          <span>{localisedDate('2026-08-05')}</span>
         </FieldRow>
         <FieldRow label="Transport reference">
           <span>TRN-88213</span>
@@ -408,7 +409,7 @@ const OutboundPanelContent = () => {
           </HStack>
         </FieldRow>
         <FieldRow label="Created">
-          <Text variant="body">22 Jul 2026</Text>
+          <Text variant="body">{localisedDate('2026-07-22')}</Text>
         </FieldRow>
         <FieldRow label="Picked date">
           <DateField
@@ -416,7 +417,6 @@ const OutboundPanelContent = () => {
             hideLabel
             size="small"
             width="compact"
-            format="dd/MM/yyyy"
             value={pickedDate()}
             onChange={setPickedDate}
           />
@@ -446,7 +446,10 @@ const OutboundPanelContent = () => {
       >
         <Text variant="body">
           <Popover trigger="Requisition" openOnHover placement="top">
-            <p>Customer requisition created on 20 Jul 2026 by a.patel</p>
+            <p>
+              Customer requisition created on {localisedDate('2026-07-20')} by
+              a.patel
+            </p>
           </Popover>{' '}
           <RecordLink href="/demo" kind="io">
             #IO-000098
@@ -580,7 +583,6 @@ const OutboundPanelContent = () => {
             hideLabel
             size="small"
             width="compact"
-            format="dd/MM/yyyy"
             value={expectedDelivery()}
             onChange={setExpectedDelivery}
           />

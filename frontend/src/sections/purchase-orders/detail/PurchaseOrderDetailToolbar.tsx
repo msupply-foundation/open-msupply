@@ -23,6 +23,13 @@ export interface PurchaseOrderDetailToolbarProps {
   node: PurchaseOrderInfoFragment;
   /** True once the order is Sent or Finalised — every field but the comment. */
   disabled: boolean;
+  /**
+   * The expected delivery date alone outlives that window: it tracks when the
+   * goods will really arrive, so it stays open on a Sent order and closes only
+   * on a Finalised one (rules § the two delivery dates are not the order's
+   * alone).
+   */
+  expectedDateDisabled: boolean;
   edit: PurchaseOrderFieldEdit;
   /**
    * The latest expected delivery date across the order's lines, or undefined.
@@ -182,7 +189,9 @@ export const PurchaseOrderDetailToolbar: Component<
           date where the lines agree on those too — with no confirmation; once
           the lines differ on it the user has set them per line, so a change
           here is refused with a notice and writes nothing (rules § the two
-          delivery dates are not the order's alone). */}
+          delivery dates are not the order's alone). Past the authoring window
+          the expected date travels alone: the requested date is closed by
+          then, and is not dragged along. */}
       <DateField
         label={t('label.requested-delivery-date')}
         size="small"
@@ -208,7 +217,7 @@ export const PurchaseOrderDetailToolbar: Component<
         testId="expected-delivery-date-field"
         value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
         error={dateErrors.expectedDeliveryDate}
-        disabled={props.disabled || props.lineCount === 0}
+        disabled={props.expectedDateDisabled || props.lineCount === 0}
         onChange={value => value && onDateChange('expectedDeliveryDate', value)}
       />
 

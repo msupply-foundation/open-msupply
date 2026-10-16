@@ -5,6 +5,7 @@
 // spec/stocktakes S4).
 export { campaignsResource, type Campaign } from './campaignsResource';
 export { fetchItemPrograms, type ItemProgram } from './itemProgramsResource';
+export { CampaignSelect, type CampaignSelectProps } from './CampaignSelect';
 export {
   CampaignOrProgramSelect,
   type CampaignOrProgramSelectProps,

@@ -16,6 +16,8 @@ const line = (
   receivedNumberOfPacks: null,
   reasonOption: null,
   vvmStatus: null,
+  campaign: null,
+  program: null,
   ...over,
 });
 
@@ -33,6 +35,8 @@ describe('toSaveLineInputs', () => {
         receivedNumberOfPacks: 3,
         reasonOptionId: 'r1',
         vvmStatusId: null,
+        campaignId: null,
+        programId: null,
         transferComment: null,
       },
     ]);
@@ -50,6 +54,17 @@ describe('toSaveLineInputs', () => {
       }),
     ]);
     expect(input?.vvmStatusId).toBe('v1');
+  });
+
+  it("echoes the batch's campaign and programme — omitted ids STRIP them (contract wire trap)", () => {
+    const [input] = toSaveLineInputs([
+      line({
+        campaign: { id: 'c1', name: 'Measles' },
+        program: { id: 'p1', name: 'EPI' },
+      }),
+    ]);
+    expect(input?.campaignId).toBe('c1');
+    expect(input?.programId).toBe('p1');
   });
 
   it('a status-less line sends null, not a fabricated id', () => {

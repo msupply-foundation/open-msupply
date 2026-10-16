@@ -5,6 +5,7 @@ import {
   on,
   Show,
   type Component,
+  type JSX,
 } from 'solid-js';
 import { t } from '@/intl';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
@@ -54,6 +55,9 @@ export interface PurchaseOrderStatusFooterProps {
    * of chrome.
    */
   pagination: PaginationProps;
+  /** The order's totals, folded into this bar where the band above it has no
+   *  room (see PurchaseOrderTotalsStrip's `inline`). */
+  totals?: JSX.Element;
   /** Commit the move; resolves to the server's verdict. */
   onMove: (status: PurchaseOrderStatus) => Promise<{
     ok: boolean;
@@ -139,6 +143,8 @@ export const PurchaseOrderStatusFooter: Component<
 
   return (
     <ContentFooter>
+      {props.totals}
+
       <StatusIndicator
         recordId={props.node.id}
         steps={steps()}

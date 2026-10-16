@@ -2,8 +2,9 @@ use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        CentralServerConfig, repair_source_site_id::repair_source_site_id,
-        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep,
+        CentralServerConfig, maintenance_mode::integration_uses_transaction,
+        repair_source_site_id::repair_source_site_id, sync_buffer::get_sync_buffer_for_table,
+        sync_status::logger::SyncStep,
     },
 };
 use log::warn;
@@ -35,7 +36,13 @@ use super::{
     translations::{SyncTranslators, all_translators, pull_integration_order},
 };
 
-const INTEGRATION_BATCH_SIZE: i64 = 10_000;
+/// Pending sync buffer rows fetched per query during integration (v5/v6 and v7), so memory stays
+/// bounded however much is pending.
+pub(crate) const INTEGRATION_BATCH_SIZE: i64 = 10_000;
+/// Without the outer integration transaction, how many buffer rows commit together. Small enough
+/// to release SQLite's write lock regularly, large enough that commits are not the bottleneck on
+/// Postgres (one WAL flush per chunk rather than per record).
+const INTEGRATION_COMMIT_SIZE: usize = 500;
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 
@@ -318,11 +325,18 @@ impl SynchroniserV5V6 {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
+        // Without the outer transaction only in maintenance mode (#840), or while initialising
+        // with `disable_integration_transaction` set. See `integration_uses_transaction`.
+        let use_transaction = integration_uses_transaction(
+            &ctx.connection,
+            is_initialised,
+            self.settings.disable_integration_transaction,
+        )?;
         let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
             &self.service_provider,
             logger,
             central_sync_server_id,
-            !self.settings.disable_integration_transaction,
+            use_transaction,
         )
         .await?;
 
@@ -411,35 +425,7 @@ pub(crate) fn run_post_sync_triggers(
         service_provider.ledger_fix_trigger.trigger();
     }
 
-    ctx.processors_trigger
-        .trigger_requisition_transfer_processors();
-    ctx.processors_trigger.trigger_invoice_transfer_processors();
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::ContactFormEmail);
-
-    // This should be before plugin processor below, in case there is a processor error, need to be able
-    // to sync new plugin version to avoid bricking the app
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::LoadPlugin);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::AssignRequisitionNumber);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::AssignPrescriptionNumber);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::PrescriptionRequestStatus);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::Plugins);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::RequisitionAutoFinalise);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::MergeSyncMessage);
+    ctx.processors_trigger.trigger_all();
 }
 
 /// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.
@@ -507,12 +493,12 @@ pub fn integrate_and_translate_sync_buffer(
     RepositoryError,
 > {
     // Integration is done inside a transaction, to make sure all records are available at the same time
-    // and maintain logical data integrity. During initialisation nested transactions cause significant
-    // reduction in speed of this operation, since the system is not available during initialisation we don't need
-    // overall transaction to enforce logical data integrity:
-    // - initialised: create outer transaction and sub transaction for every upsert and every delete
-    //               (sub transaction is needed to 'skip' errors in postgres, see IntegrationRecords.integrate)
-    // - not initialised: no transactions at all
+    // and maintain logical data integrity, with a sub transaction for every upsert and every delete
+    // (needed to 'skip' errors in postgres, see IntegrationRecords.integrate).
+    //
+    // Without `use_transaction` (see `integration_uses_transaction`: maintenance mode, or initialising
+    // with `disable_integration_transaction`) there is no outer transaction, and each
+    // INTEGRATION_COMMIT_SIZE chunk commits in its own transaction instead (see `process_action`).
 
     // Closure, to be run in a transaction or without a transaction
     let mut integrate_and_translate = |connection: &StorageConnection| -> Result<
@@ -615,6 +601,7 @@ impl<'a> SyncBufferIntegrator<'a> {
         let mut integrator = TranslationAndIntegration::new(self.connection);
         for table in self.table_order {
             loop {
+                let fetch_started = Instant::now();
                 let records = get_sync_buffer_for_table(
                     self.connection,
                     action.clone(),
@@ -622,12 +609,32 @@ impl<'a> SyncBufferIntegrator<'a> {
                     self.source_site_id,
                     INTEGRATION_BATCH_SIZE,
                 )?;
+                let fetch_time = fetch_started.elapsed();
                 if records.is_empty() {
                     break;
                 }
                 let batch_size = records.len() as u64;
-                let batch_errors =
-                    integrator.translate_and_integrate_sync_records(&records, self.translators)?;
+                let integrate_started = Instant::now();
+                // One transaction per `INTEGRATION_COMMIT_SIZE` chunk of the fetched batch.
+                // Inside the outer integration transaction this reuses it and changes nothing.
+                // Without it (maintenance mode, or initialising with
+                // `disable_integration_transaction`) each chunk commits on its own, instead of a
+                // WAL flush for every record and every buffer mark, which on Postgres made
+                // integration commit-bound. A failing write does not abort the chunk: its record
+                // is marked errored and the chunk carries on. On Postgres each write (a row and
+                // its changelog row) is a savepoint inside it; SQLite only undoes the failing
+                // statement. Either way the record's earlier writes are not undone (#847). A crash loses at most the chunk in progress, and
+                // its buffer marks roll back with it, so those rows are pending again.
+                let mut batch_errors = 0;
+                for chunk in records.chunks(INTEGRATION_COMMIT_SIZE) {
+                    batch_errors += self
+                        .connection
+                        .transaction_sync(|_| {
+                            integrator.translate_and_integrate_sync_records(chunk, self.translators)
+                        })
+                        .map_err(|error| error.to_inner_error())?;
+                }
+                let integrate_time = integrate_started.elapsed();
                 self.done_so_far += batch_size;
                 self.total_errored += batch_errors;
 
@@ -637,12 +644,16 @@ impl<'a> SyncBufferIntegrator<'a> {
                 } else {
                     0.0
                 };
+                // Fetch vs integrate split for this batch, to tell a slow buffer query from slow
+                // translation and upserts. The rec/s window also covers the progress write.
                 log::info!(
-                    "Integration progress - table: {table}, integrated: {}, total: {}, errored: {} ({:.1} rec/s)",
+                    "Integration progress - table: {table}, integrated: {}, total: {}, errored: {} ({:.1} rec/s; fetch {:.2}s, integrate {:.2}s)",
                     self.done_so_far,
                     self.total_pending,
                     self.total_errored,
                     rec_per_sec,
+                    fetch_time.as_secs_f64(),
+                    integrate_time.as_secs_f64(),
                 );
                 self.last_progress_time = Instant::now();
 
@@ -667,6 +678,58 @@ mod tests {
     use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     use super::*;
+
+    /// Without the outer transaction each batch commits on its own (maintenance mode, #840).
+    /// Both shapes must integrate the same rows and mark a failing one as an error, rather than
+    /// the failure aborting its batch.
+    #[actix_rt::test]
+    async fn integration_with_and_without_the_outer_transaction_agree() {
+        use crate::sync::test::test_data::unit;
+        use repository::{IntegrationResult, SyncBufferRowInsert, UnitRowRepository};
+
+        for use_transaction in [true, false] {
+            let ServiceTestContext { connection, .. } = setup_all_and_service_provider(
+                &format!("integration_with_and_without_outer_transaction_{use_transaction}"),
+                MockDataInserts::none(),
+            )
+            .await;
+
+            let good = unit::test_pull_upsert_records();
+            let mut rows: Vec<SyncBufferRowInsert> = good
+                .iter()
+                .map(|record| SyncBufferRowInsert::from(record.sync_buffer_row.clone()))
+                .collect();
+            // Missing every required field, so translation fails for this row alone.
+            rows.push(SyncBufferRowInsert {
+                record_id: "broken_unit".to_string(),
+                data: repository::SyncRecordData(serde_json::json!({ "ID": "broken_unit" })),
+                ..rows[0].clone()
+            });
+            SyncBufferRepository::new(&connection)
+                .insert_many(&rows)
+                .unwrap();
+
+            integrate_and_translate_sync_buffer(&connection, None, 0, use_transaction).unwrap();
+
+            for record in &good {
+                assert!(
+                    UnitRowRepository::new(&connection)
+                        .find_one_by_id(&record.sync_buffer_row.record_id)
+                        .unwrap()
+                        .is_some(),
+                    "use_transaction={use_transaction}: {} not integrated",
+                    record.sync_buffer_row.record_id
+                );
+            }
+            let buffer = SyncBufferRepository::new(&connection).get_all().unwrap();
+            assert!(buffer.iter().all(|row| row.is_integrated));
+            let broken = buffer
+                .iter()
+                .find(|row| row.record_id == "broken_unit")
+                .unwrap();
+            assert_eq!(broken.integration_result, Some(IntegrationResult::Error));
+        }
+    }
 
     #[actix_rt::test]
     async fn test_disabled_sync() {

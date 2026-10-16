@@ -180,6 +180,22 @@ const hasIntroducedStock = (status: string): boolean =>
 export const deleteRemovesStock = (status: string): boolean =>
   hasIntroducedStock(status) && status !== 'VERIFIED';
 
+// What a TYPED delete refusal tells the user (rules → deletion). The server
+// answers `CannotEditInvoice` for two causes — the shipment is Verified, or its
+// supplier's linked store has been disabled (delete/validate.rs) — and its
+// description, "Cannot edit invoice", names neither. The finalised check runs
+// first, so a Verified shipment's refusal is always the finalised one and can
+// say so (INB-20261005-F2, issue #1140). Any other status keeps the server's
+// own text: the status the caller holds may be stale, and since status only
+// moves forward, VERIFIED is the one reading that can't be.
+export const deleteRefusalMessage = (
+  error: { __typename: string; description: string },
+  status: string
+): string =>
+  error.__typename === 'CannotEditInvoice' && status === 'VERIFIED'
+    ? t('messages.cant-delete-verified-shipment')
+    : error.description;
+
 // Whether the status footer offers an advance — a SEPARATE, deliberately looser
 // gate than `isEditable`. An advance travels through updateInboundShipment, so
 // reusing the edit gate would strand a Shipped shipment with no route to
