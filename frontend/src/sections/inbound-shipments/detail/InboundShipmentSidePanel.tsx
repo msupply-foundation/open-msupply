@@ -286,18 +286,6 @@ export const InboundShipmentSidePanel: Component<
               </FieldRow>
             )}
           </Show>
-          {/* The discount the order's prices were seeded net of. */}
-          <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
-            {percentage => (
-              <FieldRow
-                label={t('label.supplier-discount-applied')}
-                readOnly
-                valueTestId="supplier-discount-value"
-              >
-                {`${formatNumber(percentage(), { maximumFractionDigits: 2 })}%`}
-              </FieldRow>
-            )}
-          </Show>
           <Show when={props.node.requisition}>
             {req => (
               <FieldRow label={t('internal-order')}>
@@ -322,6 +310,18 @@ export const InboundShipmentSidePanel: Component<
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
         <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
+        {/* The discount the order's prices were seeded net of — the sub-total below already reflects it. */}
+        <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
+          {percentage => (
+            <FieldRow
+              label={t('label.supplier-discount-applied')}
+              readOnly
+              valueTestId="supplier-discount-value"
+            >
+              {`${formatNumber(percentage(), { maximumFractionDigits: 2 })}%`}
+            </FieldRow>
+          )}
+        </Show>
         <FieldRow label={t('label.sub-total')}>
           <span>{formatCurrency(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
