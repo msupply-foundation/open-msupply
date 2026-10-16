@@ -71,6 +71,7 @@ fragment InboundInfo on InvoiceNode {
     number
     reference
     orderTotalAfterDiscount
+    supplierDiscountPercentage
     donor {
       id
       name

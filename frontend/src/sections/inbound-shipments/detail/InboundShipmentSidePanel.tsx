@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
 import { formatCurrency } from '../../../intl/currency';
+import { formatNumber } from '../../../intl/formatNumber';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import {
@@ -282,6 +283,18 @@ export const InboundShipmentSidePanel: Component<
                 >
                   {poLabel(po().number)}
                 </RecordLink>
+              </FieldRow>
+            )}
+          </Show>
+          {/* The discount the order's prices were seeded net of. */}
+          <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
+            {percentage => (
+              <FieldRow
+                label={t('label.supplier-discount')}
+                readOnly
+                valueTestId="supplier-discount-value"
+              >
+                {`${formatNumber(percentage(), { maximumFractionDigits: 2 })}%`}
               </FieldRow>
             )}
           </Show>
