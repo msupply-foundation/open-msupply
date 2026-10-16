@@ -879,7 +879,6 @@ mod update {
                         }),
                         ..Default::default()
                     },
-                    Some(true),
                 ),
             Err(crate::purchase_order_line::update::UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine)
         );
