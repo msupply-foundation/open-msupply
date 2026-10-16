@@ -104,8 +104,8 @@ mod test {
     }
 
     /// The backfill writes every existing line's total on the same rule the
-    /// service uses from then on: after-discount price × (adjusted-or-requested
-    /// units over pack size), and 0 for a zero pack size.
+    /// service uses from then on: after-discount price × (requested units over
+    /// pack size), and 0 for a zero pack size.
     #[actix_rt::test]
     async fn migration_3_04_00() {
         let previous_version = V3_02_00.version();
@@ -153,7 +153,7 @@ mod test {
 
         // 100 units at pack size 10 = 10 packs at 6.00 → 60.00
         insert_line(&connection, "pol_requested", 10.0, 100.0, None, 6.0);
-        // An adjusted quantity takes precedence: 50 units = 5 packs at 6.00 → 30.00
+        // An adjusted quantity is ignored: still 10 packs at 6.00 → 60.00
         insert_line(&connection, "pol_adjusted", 10.0, 100.0, Some(50.0), 6.0);
         // A zero pack size contributes nothing, whatever the quantity or price
         insert_line(&connection, "pol_zero_pack", 0.0, 50.0, None, 5.0);
@@ -174,7 +174,7 @@ mod test {
         assert_eq!(
             rows,
             vec![
-                ("pol_adjusted".to_string(), 30.0),
+                ("pol_adjusted".to_string(), 60.0),
                 ("pol_requested".to_string(), 60.0),
                 ("pol_zero_pack".to_string(), 0.0),
             ]

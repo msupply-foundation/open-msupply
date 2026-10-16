@@ -31,7 +31,6 @@ mod update {
             .unwrap();
         let service = service_provider.purchase_order_line_service;
         let purchase_order_service = service_provider.purchase_order_service;
-        let mut user_permission;
 
         // Create a purchase order line
         service
@@ -60,7 +59,6 @@ mod update {
 
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)
         );
@@ -91,7 +89,6 @@ mod update {
                     requested_pack_size: Some(5.0),
                     ..Default::default()
                 },
-                None
             ),
             Err(
                 UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
@@ -114,7 +111,6 @@ mod update {
                     status: Some(PurchaseOrderLineStatus::Sent),
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
         );
@@ -142,7 +138,6 @@ mod update {
                     status: Some(PurchaseOrderLineStatus::New),
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
         );
@@ -158,32 +153,11 @@ mod update {
                     requested_number_of_units: Some(5.0),
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
 
-        // Cannot change adjusted quantity on a confirmed order if the user does not have permission
-        user_permission = false;
-
-        assert_eq!(
-            service.update_purchase_order_line(
-                &context,
-                &mock_store_a().id.clone(),
-                UpdatePurchaseOrderLineInput {
-                    id: "purchase_order_line_id_1".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
-                    adjusted_number_of_units: Some(5.0),
-                    ..Default::default()
-                },
-                Some(user_permission)
-            ),
-            Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity)
-        );
-
-        // Cannot change adjusted quantity to less than received quantity
-        user_permission = true;
-
+        // A shipped line blocks finalising until its inbound shipment is verified
         let line = PurchaseOrderLineRow {
             id: "purchase_order_line_received".to_string(),
             purchase_order_id: mock_purchase_order_a().id.clone(),
@@ -191,8 +165,7 @@ mod update {
             line_number: 2,
             item_id: mock_item_b().id,
             requested_pack_size: 2.0,
-            requested_number_of_units: 10.0,
-            adjusted_number_of_units: Some(20.0),
+            requested_number_of_units: 20.0,
             ..Default::default()
         };
 
@@ -227,21 +200,6 @@ mod update {
             .upsert_one(&invoice_line)
             .unwrap();
 
-        assert_eq!(
-            service.update_purchase_order_line(
-                &context,
-                &mock_store_a().id.clone(),
-                UpdatePurchaseOrderLineInput {
-                    id: "purchase_order_line_received".to_string(),
-                    item_id: Some(mock_item_b().id),
-                    adjusted_number_of_units: Some(14.0),
-                    ..Default::default()
-                },
-                Some(user_permission)
-            ),
-            Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived)
-        );
-
         // Cannot finalise PO when inbound shipments are not verified
         assert_eq!(
             purchase_order_service.update_purchase_order(
@@ -264,7 +222,7 @@ mod update {
             })
             .unwrap();
 
-        // Cannot change adjusted quantity on a finalised purchase order, even if the user has permission
+        // Cannot change requested quantity on a finalised purchase order
         purchase_order_service
             .update_purchase_order(
                 &context,
@@ -284,12 +242,11 @@ mod update {
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     item_id: Some(mock_item_a().id.to_string()),
-                    adjusted_number_of_units: Some(5.0),
+                    requested_number_of_units: Some(5.0),
                     ..Default::default()
                 },
-                Some(user_permission)
             ),
-            Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity)
+            Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
     }
 
@@ -319,7 +276,6 @@ mod update {
             .unwrap();
 
         // Update the purchase order line
-        // The adjusted quantity will also update even without authorisation permissions
         let result = service
             .update_purchase_order_line(
                 &context,
@@ -329,10 +285,8 @@ mod update {
                     item_id: Some(mock_item_d().id.to_string()),
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
-                    adjusted_number_of_units: Some(5.0),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 
@@ -353,8 +307,8 @@ mod update {
     }
 
     /// The stored total is recomputed on every update from the merged figures:
-    /// the adjusted quantity takes precedence over the requested one, a price
-    /// change moves it, and a zero pack size zeroes it.
+    /// a quantity change moves it, a price change moves it, and a zero pack
+    /// size zeroes it.
     #[actix_rt::test]
     async fn update_purchase_order_line_recomputes_line_total() {
         let (_, _, connection_manager, _) = setup_all(
@@ -405,14 +359,13 @@ mod update {
                         id: "po_line_total".to_string(),
                         ..input
                     },
-                    None,
                 )
                 .unwrap();
         };
 
-        // The adjusted quantity takes precedence: 50 units = 10 packs at 6.00
+        // A quantity change moves it: 50 units = 10 packs at 6.00
         update(UpdatePurchaseOrderLineInput {
-            adjusted_number_of_units: Some(50.0),
+            requested_number_of_units: Some(50.0),
             ..Default::default()
         });
         assert_eq!(line_total(), 60.0);
