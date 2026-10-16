@@ -23,7 +23,8 @@ mod update {
     use crate::{
         preference::{AuthorisePurchaseOrder, Preference},
         purchase_order_line::{
-            insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
+            insert::InsertPurchaseOrderLineInput,
+            update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
         },
         sync::test_util_set_is_central_server,
     };
@@ -418,7 +419,6 @@ mod update {
                     status: Some(PurchaseOrderLineStatus::Closed),
                     ..Default::default()
                 },
-                Some(true),
             )
             .unwrap();
 
@@ -436,85 +436,36 @@ mod update {
             ActivityLogType::PurchaseOrderLineStatusClosed
         );
 
-        // Edit the adjusted quantity on line B
-        service_provider
-            .purchase_order_line_service
-            .update_purchase_order_line(
-                &context,
-                store_id,
-                UpdatePurchaseOrderLineInput {
-                    id: "purchase_order_line_b".to_string(),
-                    adjusted_number_of_units: Some(12.0),
-                    ..Default::default()
-                },
-                Some(true),
-            )
-            .unwrap();
-
-        // Line A remains Closed and line B will now be at New status
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
-            .unwrap();
-
-        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
-        assert_eq!(lines[1].status, PurchaseOrderLineStatus::New);
-
-        // Test activity log created
-        let edited_line_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew)
-            .collect();
-
-        assert_eq!(edited_line_logs.len(), 1);
+        // A sent line's quantity can't be edited, so the order stays Sent
         assert_eq!(
-            edited_line_logs[0].r#type,
-            ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew
+            service_provider
+                .purchase_order_line_service
+                .update_purchase_order_line(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderLineInput {
+                        id: "purchase_order_line_b".to_string(),
+                        requested_number_of_units: Some(12.0),
+                        ..Default::default()
+                    },
+                ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
 
-        // The purchase order status will now be Confirmed
+        let mut lines = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_many_by_purchase_order_ids(std::slice::from_ref(&purchase_order_id))
+            .unwrap();
+        lines.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
+        assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+
         let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
             .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
 
-        assert_eq!(purchase_order.status, PurchaseOrderStatus::Confirmed);
-
-        // Test activity log created
-        let po_status_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed)
-            .collect();
-
-        assert_eq!(po_status_logs.len(), 1);
-        assert_eq!(
-            po_status_logs[0].r#type,
-            ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
-        );
-
-        // Send the purchase order again
-        service
-            .update_purchase_order(
-                &context,
-                store_id,
-                UpdatePurchaseOrderInput {
-                    id: purchase_order_id.clone(),
-                    status: Some(PurchaseOrderStatus::Sent),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // Line A is still Closed and line B is now Sent
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
-            .unwrap();
-
-        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
-        assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+        assert_eq!(purchase_order.status, PurchaseOrderStatus::Sent);
     }
 
     #[actix_rt::test]

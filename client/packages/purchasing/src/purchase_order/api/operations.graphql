@@ -120,7 +120,6 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedNumberOfUnits
   shippedNumberOfUnits
   receivedNumberOfUnits
-  adjustedNumberOfUnits
   pricePerPackAfterDiscount
   pricePerPackBeforeDiscount
   manufacturer(storeId: $storeId) {
@@ -423,10 +422,6 @@ mutation updatePurchaseOrderLine(
         }
         ... on ItemCannotBeOrdered {
           ...ItemCannotBeOrdered
-        }
-        ... on CannotEditQuantityBelowReceived {
-          __typename
-          description
         }
       }
     }

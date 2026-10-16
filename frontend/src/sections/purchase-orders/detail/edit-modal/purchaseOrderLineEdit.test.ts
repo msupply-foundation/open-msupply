@@ -9,12 +9,10 @@ import {
   newLineDraft,
   packsEntered,
   packSizeEntered,
-  packsLabelKey,
   pricePerUnit,
   PRICE_DECIMALS,
   repriced,
   requestedDateEntered,
-  showsAdjustedUnits,
   unitsFigure,
   type LineDraft,
 } from './purchaseOrderLineEdit';
@@ -40,7 +38,6 @@ const line = (
   unit: 'tablet',
   requestedPackSize: 10,
   requestedNumberOfUnits: 100,
-  adjustedNumberOfUnits: null,
   shippedNumberOfUnits: 0,
   receivedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
@@ -70,7 +67,6 @@ describe('OMS-FUN-PO-02.7 / .24 — what a new line is born as', () => {
     );
     expect(born.requestedPackSize).toBe(100);
     expect(born.requestedNumberOfUnits).toBe(0);
-    expect(born.adjustedNumberOfUnits).toBeNull();
     expect(born.pricePerPackBeforeDiscount).toBe(0);
     expect(born.pricePerPackAfterDiscount).toBe(0);
     expect(born.requestedDeliveryDate).toBe('2026-10-01');
@@ -106,97 +102,50 @@ describe('OMS-FUN-PO-07.4 — packs are units over pack size', () => {
   it('shows the requested quantity in packs', () => {
     expect(linePacks(draft())).toBe(10);
   });
-
-  it('shows the adjusted quantity once there is one', () => {
-    expect(linePacks(draft({ adjustedNumberOfUnits: 50 }))).toBe(5);
-  });
 });
 
-describe('OMS-FUN-PO-02.12 / .25 — which quantity the packs write', () => {
-  it('writes requested and adjusted alike while New', () => {
-    expect(packsEntered('NEW', draft(), 20)).toEqual({
+describe('OMS-FUN-PO-02.12 — the packs write the requested quantity', () => {
+  it('writes packs × pack size as the requested units', () => {
+    expect(packsEntered(draft(), 20)).toEqual({
       requestedNumberOfUnits: 200,
-      adjustedNumberOfUnits: 200,
-    });
-  });
-
-  it('writes both while Ready for approval', () => {
-    expect(packsEntered('REQUEST_APPROVAL', draft(), 3)).toEqual({
-      requestedNumberOfUnits: 30,
-      adjustedNumberOfUnits: 30,
-    });
-  });
-
-  it('writes the adjusted quantity alone from Approved', () => {
-    expect(packsEntered('CONFIRMED', draft(), 20)).toEqual({
-      adjustedNumberOfUnits: 200,
-    });
-    expect(packsEntered('SENT', draft(), 20)).toEqual({
-      adjustedNumberOfUnits: 200,
     });
   });
 
   it('a new pack size keeps the packs and moves the units', () => {
-    expect(packSizeEntered('NEW', draft(), 25)).toEqual({
+    expect(packSizeEntered(draft(), 25)).toEqual({
       requestedPackSize: 25,
       requestedNumberOfUnits: 250,
-      adjustedNumberOfUnits: 250,
     });
-  });
-});
-
-describe('OMS-FUN-PO-02.12 — one input, two labels', () => {
-  it('reads Requested packs while drafting and Adjusted packs once Approved', () => {
-    expect(packsLabelKey('NEW')).toBe('label.requested-packs');
-    expect(packsLabelKey('REQUEST_APPROVAL')).toBe('label.requested-packs');
-    expect(packsLabelKey('CONFIRMED')).toBe('label.adjusted-packs');
-    expect(packsLabelKey('SENT')).toBe('label.adjusted-packs');
-  });
-
-  it('reads Requested packs on a Finalised order', () => {
-    expect(packsLabelKey('FINALISED')).toBe('label.requested-packs');
-  });
-
-  it('shows the Adjusted units row only past Ready for approval', () => {
-    expect(showsAdjustedUnits('NEW')).toBe(false);
-    expect(showsAdjustedUnits('REQUEST_APPROVAL')).toBe(false);
-    expect(showsAdjustedUnits('CONFIRMED')).toBe(true);
-    expect(showsAdjustedUnits('FINALISED')).toBe(true);
   });
 });
 
 describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () => {
-  it('opens the packs as the requested quantity while drafting, whoever the user is', () => {
+  it('opens the quantity while drafting', () => {
+    for (const status of ['NEW', 'REQUEST_APPROVAL'] as const) {
+      const gates = lineGates({ status, lineStatus: 'NEW', addMode: false });
+      expect(gates.drafting).toBe(true);
+    }
+  });
+
+  it('opens the dates and texts while drafting', () => {
     const gates = lineGates({
       status: 'NEW',
       lineStatus: 'NEW',
       addMode: false,
-      canAuthorise: false,
     });
-    expect(gates.packs).toBe(true);
-    expect(gates.drafting).toBe(true);
     expect(gates.requestedDate).toBe(true);
     expect(gates.expectedDate).toBe(true);
     expect(gates.text).toBe(true);
   });
 
-  it('needs the authorise permission for the adjusted quantity from Approved', () => {
-    const plain = lineGates({
-      status: 'CONFIRMED',
-      lineStatus: 'NEW',
-      addMode: false,
-      canAuthorise: false,
-    });
-    expect(plain.packs).toBe(false);
-    expect(plain.drafting).toBe(false);
-    const authorised = lineGates({
-      ...plain,
-      status: 'SENT',
-      lineStatus: 'SENT',
-      addMode: false,
-      canAuthorise: true,
-    });
-    expect(authorised.packs).toBe(true);
+  it('fixes the quantity from Approved', () => {
+    expect(
+      lineGates({ status: 'CONFIRMED', lineStatus: 'NEW', addMode: false })
+        .drafting
+    ).toBe(false);
+    expect(
+      lineGates({ status: 'SENT', lineStatus: 'SENT', addMode: false }).drafting
+    ).toBe(false);
   });
 
   it('closes the requested date once Sent, keeping the expected date and the texts open (OMS-REG-PO-01.24, .26)', () => {
@@ -204,7 +153,6 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       status: 'SENT',
       lineStatus: 'SENT',
       addMode: false,
-      canAuthorise: true,
     });
     expect(gates.requestedDate).toBe(false);
     expect(gates.expectedDate).toBe(true);
@@ -219,9 +167,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       const gates = lineGates({
         ...options,
         addMode: false,
-        canAuthorise: true,
       });
-      expect(gates.packs).toBe(false);
       expect(gates.drafting).toBe(false);
       expect(gates.requestedDate).toBe(false);
       expect(gates.expectedDate).toBe(false);
@@ -235,7 +181,6 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
         status: 'NEW',
         lineStatus: 'NEW',
         addMode: true,
-        canAuthorise: false,
       }).item
     ).toBe(true);
     expect(
@@ -243,7 +188,6 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
         status: 'NEW',
         lineStatus: 'NEW',
         addMode: false,
-        canAuthorise: false,
       }).item
     ).toBe(false);
   });
@@ -261,7 +205,6 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
           status,
           lineStatus: 'NEW',
           addMode: false,
-          canAuthorise: true,
         }).status
       ).toBe(false);
   });
@@ -338,7 +281,7 @@ describe('OMS-FUN-PO-07.3 — the editor previews the line’s total cost', () =
   // then reads the stored figure (`lineTotal`) rather than recomputing it.
   it('previews the after-discount price times the packs authored', () => {
     expect(projectedLineCost(draft())).toBe(60);
-    expect(projectedLineCost(draft({ adjustedNumberOfUnits: 50 }))).toBe(30);
+    expect(projectedLineCost(draft({ requestedNumberOfUnits: 50 }))).toBe(30);
   });
 });
 
@@ -391,13 +334,11 @@ describe('OMS-FUN-PO-02.26 — an untouched line saves nothing', () => {
         draft(),
         draft({
           requestedNumberOfUnits: 200,
-          adjustedNumberOfUnits: 200,
           comment: 'urgent',
         })
       )
     ).toEqual({
       requestedNumberOfUnits: 200,
-      adjustedNumberOfUnits: 200,
       comment: { value: 'urgent' },
     });
   });
@@ -426,7 +367,7 @@ describe('OMS-FUN-PO-02.26 — an untouched line saves nothing', () => {
 });
 
 describe('OMS-FUN-PO-02.1 / .7 — a new line’s insert', () => {
-  it('names the item, the order and the whole draft, with no adjusted quantity', () => {
+  it('names the item, the order and the whole draft', () => {
     const input = insertInput(
       'new-id',
       'order-1',
@@ -452,6 +393,5 @@ describe('OMS-FUN-PO-02.1 / .7 — a new line’s insert', () => {
       note: null,
       unit: 'tablet',
     });
-    expect(input).not.toHaveProperty('adjustedNumberOfUnits');
   });
 });
