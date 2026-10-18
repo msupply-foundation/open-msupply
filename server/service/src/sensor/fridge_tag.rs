@@ -528,13 +528,18 @@ fn integrate_sensor_data(
         sensor_add_log_if_new(connection, &sensor_row, &temperature_sensor_log)?;
     }
 
-    for daily_summary in temperature_sensor_daily_summaries.iter() {
-        sensor_add_daily_summary(
-            connection,
-            &sensor_row,
-            daily_summary,
-            temperature_sensor.last_connected_timestamp,
-        )?;
+    // Without a read time we can't tell how much of the latest day (which may have been in
+    // progress) its summary covers, so leave it for a later read
+    let last_connected = temperature_sensor.last_connected_timestamp;
+    let latest_date = temperature_sensor_daily_summaries
+        .iter()
+        .map(|daily_summary| daily_summary.date)
+        .max();
+    for daily_summary in temperature_sensor_daily_summaries
+        .iter()
+        .filter(|daily_summary| last_connected.is_some() || Some(daily_summary.date) != latest_date)
+    {
+        sensor_add_daily_summary(connection, &sensor_row, daily_summary, last_connected)?;
     }
 
     // Add consecutive then cumulative breaches, order is important because breach and log association
@@ -561,7 +566,9 @@ fn integrate_sensor_data(
     }
 
     // Finally, update sensor's last connected time if this read is later (an older file uploaded
-    // later mustn't move it back, or the next import would bring in data already imported)
+    // later mustn't move it back, or the next import would bring in data already imported).
+    // None orders before any time, so a sensor's first read time is set, and a file without one
+    // doesn't clear it.
     if temperature_sensor.last_connected_timestamp > sensor_row.last_connection_datetime {
         SensorRowRepository::new(connection).upsert_one(&SensorRow {
             last_connection_datetime: temperature_sensor.last_connected_timestamp,
@@ -1128,5 +1135,79 @@ mod test {
         assert_eq!(summaries[1].store_id, mock_store_a().id);
         assert_eq!(summaries[2].start_datetime, utc(day_3, 0));
         assert_eq!(summaries[2].end_datetime, second_read);
+
+        // A later read's summary of day 2 covers as much of it, so still applies
+        let third_read = utc(day_3, 10);
+        integrate_sensor_data(
+            &connection,
+            &mock_store_a().id,
+            sensor(
+                Some(third_read),
+                vec![],
+                vec![],
+                vec![daily_summary(day_2, 8.0, 720), daily_summary(day_3, 5.5, 0)],
+            ),
+        )
+        .unwrap();
+        let summaries = TemperatureSummaryRowRepository::new(&connection)
+            .find_many_by_sensor_id(&breach_row.sensor_id)
+            .unwrap();
+        assert_eq!(summaries.len(), 3);
+        assert_eq!(summaries[1].end_datetime, utc(day_3, 0));
+        assert_eq!(summaries[1].average_temperature, Some(8.0));
+        assert_eq!(summaries[2].end_datetime, third_read);
+        assert_eq!(summaries[2].average_temperature, Some(5.5));
+    }
+
+    #[actix_rt::test]
+    async fn fridge_tag_daily_summaries_without_read_time() {
+        let ServiceTestContext { connection, .. } = setup_all_and_service_provider(
+            "fridge_tag_daily_summaries_without_read_time",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let day_1 = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let day_2 = NaiveDate::from_ymd_opt(2024, 1, 2).unwrap();
+        let utc = |date: NaiveDate| {
+            resolve_localtime(&date.and_hms_opt(0, 0, 0).unwrap(), "test").unwrap()
+        };
+        let daily_summary = |date| ts::DailySummary {
+            date,
+            minimum_temperature: Some(2.0),
+            maximum_temperature: Some(6.0),
+            average_temperature: Some(4.0),
+            hot_duration: None,
+            cold_duration: None,
+            hot_threshold: None,
+            cold_threshold: None,
+        };
+
+        let sensor_id = integrate_sensor_data(
+            &connection,
+            &mock_store_a().id,
+            ts::Sensor {
+                sensor_type: ts::SensorType::Berlinger,
+                serial: "fridge_tag_serial".to_string(),
+                name: "Fridge-tag 2".to_string(),
+                last_connected_timestamp: None,
+                log_interval: None,
+                breaches: None,
+                configs: None,
+                logs: None,
+                daily_summaries: Some(vec![daily_summary(day_1), daily_summary(day_2)]),
+            },
+        )
+        .unwrap()
+        .new_sensor_id
+        .unwrap();
+
+        // Day 2 may have been in progress, so only the complete day 1 is added
+        let summaries = TemperatureSummaryRowRepository::new(&connection)
+            .find_many_by_sensor_id(&sensor_id)
+            .unwrap();
+        assert_eq!(summaries.len(), 1);
+        assert_eq!(summaries[0].start_datetime, utc(day_1));
+        assert_eq!(summaries[0].end_datetime, utc(day_2));
     }
 }

@@ -122,6 +122,18 @@ mod test {
         )
         .unwrap();
         assert_eq!(row.id, "device_b_summary_2");
+
+        // As does a summary of a different period starting at the same time
+        let (row, _) = translate(
+            &connection,
+            &TemperatureSummaryRow {
+                period: TemperatureSummaryPeriod::Other("WEEK".to_string()),
+                end_datetime: datetime(8, 0),
+                ..incoming("device_b_week_summary", 24, 5.0)
+            },
+        )
+        .unwrap();
+        assert_eq!(row.id, "device_b_week_summary");
     }
 
     #[actix_rt::test]
