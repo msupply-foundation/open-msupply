@@ -10,8 +10,8 @@ use crate::sync_v7::{
     translations::{
         invoice_line::translate_invoice_line, store::translate_store,
         sync_file_reference::translate_sync_file_reference,
-        temperature_daily_summary::translate_temperature_daily_summary,
         temperature_log::translate_temperature_log,
+        temperature_summary::translate_temperature_summary,
     },
     validate_translate_integrate::{SyncContext, create_changelog},
 };
@@ -55,7 +55,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::StocktakeLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::TemperatureBreach(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::TemperatureLog(r) => serde_json::to_value(r).map_err(map_serde_err),
-        Row::TemperatureDailySummary(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::TemperatureSummary(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::VVMStatusLog(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Requisition(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::RequisitionLine(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -180,8 +180,8 @@ pub(crate) fn deserialize(
         ChangelogTableName::TemperatureLog => {
             return translate_temperature_log(connection, changelog_insert, data);
         }
-        ChangelogTableName::TemperatureDailySummary => {
-            return translate_temperature_daily_summary(connection, changelog_insert, data);
+        ChangelogTableName::TemperatureSummary => {
+            return translate_temperature_summary(connection, changelog_insert, data);
         }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),

@@ -688,7 +688,7 @@ impl TemperatureBreachRow {
     }
 }
 
-impl TemperatureDailySummaryRow {
+impl TemperatureSummaryRow {
     pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
@@ -696,7 +696,7 @@ impl TemperatureDailySummaryRow {
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureDailySummary,
+            table_name: ChangelogTableName::TemperatureSummary,
             record_id: self.id.clone(),
             row_action: action,
             store_id: Some(self.store_id.clone()),

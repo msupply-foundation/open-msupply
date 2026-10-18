@@ -1,15 +1,15 @@
 use super::update::update_sensor_logs_for_breach;
 use anyhow::Context;
-use chrono::{Local, LocalResult, NaiveDateTime, TimeZone};
+use chrono::{Local, LocalResult, NaiveDateTime, NaiveTime, TimeZone};
 use repository::{DatetimeFilter, EqualFilter, StringFilter};
 use repository::{
     RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
     SensorType, StorageConnection, TemperatureBreach, TemperatureBreachConfig,
     TemperatureBreachConfigFilter, TemperatureBreachConfigRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachFilter, TemperatureBreachRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType,
-    TemperatureDailySummaryRow, TemperatureDailySummaryRowRepository, TemperatureLog,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLog,
     TemperatureLogFilter, TemperatureLogRepository, TemperatureLogRow, TemperatureLogRowRepository,
+    TemperatureSummaryPeriod, TemperatureSummaryRow, TemperatureSummaryRowRepository,
 };
 use serde::Serialize;
 use std::path::PathBuf;
@@ -204,23 +204,31 @@ fn sensor_add_daily_summary(
     connection: &StorageConnection,
     sensor_row: &SensorRow,
     daily_summary: &temperature_sensor::DailySummary,
+    last_connected: Option<NaiveDateTime>,
 ) -> Result<(), RepositoryError> {
     let duration_milliseconds =
         |duration: Option<chrono::Duration>| duration.map(|d| d.num_milliseconds() as i32);
-    let repository = TemperatureDailySummaryRowRepository::new(connection);
+    let repository = TemperatureSummaryRowRepository::new(connection);
 
-    // Update the day's existing summary if there is one, as the summary of the day being
-    // recorded when the sensor was last read will have been incomplete
-    let id = repository
-        .find_id_by_sensor_and_date(&sensor_row.id, daily_summary.date)?
-        .unwrap_or_else(uuid);
+    // The day runs from the sensor's local midnight to the next, but the summary only covers it
+    // up to when the sensor was read if the day was still in progress
+    let local_midnight = |date: chrono::NaiveDate| {
+        let midnight = date.and_time(NaiveTime::MIN);
+        resolve_localtime(&midnight, "Daily summary").unwrap_or(midnight)
+    };
+    let start_datetime = local_midnight(daily_summary.date);
+    let end_of_day = local_midnight(daily_summary.date + chrono::Duration::days(1));
+    let end_datetime =
+        last_connected.map_or(end_of_day, |last_connected| last_connected.min(end_of_day));
 
-    repository.upsert_one(&TemperatureDailySummaryRow {
-        id,
+    let mut row = TemperatureSummaryRow {
+        id: uuid(),
         store_id: sensor_row.store_id.clone(),
         sensor_id: sensor_row.id.clone(),
         location_id: sensor_row.location_id.clone(),
-        date: daily_summary.date,
+        period: TemperatureSummaryPeriod::Day,
+        start_datetime,
+        end_datetime,
         minimum_temperature: daily_summary.minimum_temperature,
         maximum_temperature: daily_summary.maximum_temperature,
         average_temperature: daily_summary.average_temperature,
@@ -228,7 +236,19 @@ fn sensor_add_daily_summary(
         cold_duration_milliseconds: duration_milliseconds(daily_summary.cold_duration),
         hot_threshold: daily_summary.hot_threshold,
         cold_threshold: daily_summary.cold_threshold,
-    })
+    };
+
+    // Update the day's existing summary if there is one, as it may have been in progress when the
+    // sensor was last read. Unless it covers more of the day than this one: this is then from an
+    // older read (e.g. an older file uploaded later), so would replace data with less of it.
+    if let Some(existing) = repository.find_one_for_same_period(&row)? {
+        if row.end_datetime < existing.end_datetime {
+            return Ok(());
+        }
+        row.id = existing.id;
+    }
+
+    repository.upsert_one(&row)
 }
 
 fn sensor_add_breach_config_if_new(
@@ -509,7 +529,12 @@ fn integrate_sensor_data(
     }
 
     for daily_summary in temperature_sensor_daily_summaries.iter() {
-        sensor_add_daily_summary(connection, &sensor_row, daily_summary)?;
+        sensor_add_daily_summary(
+            connection,
+            &sensor_row,
+            daily_summary,
+            temperature_sensor.last_connected_timestamp,
+        )?;
     }
 
     // Add consecutive then cumulative breaches, order is important because breach and log association
@@ -535,8 +560,9 @@ fn integrate_sensor_data(
         }
     }
 
-    // Finally, update sensor's last connected time if it has changed
-    if sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
+    // Finally, update sensor's last connected time if this read is later (an older file uploaded
+    // later mustn't move it back, or the next import would bring in data already imported)
+    if temperature_sensor.last_connected_timestamp > sensor_row.last_connection_datetime {
         SensorRowRepository::new(connection).upsert_one(&SensorRow {
             last_connection_datetime: temperature_sensor.last_connected_timestamp,
             ..sensor_row
@@ -572,16 +598,16 @@ fn sort_breaches_by_type(
 #[cfg(test)]
 mod test {
 
-    use super::integrate_sensor_data;
+    use super::{integrate_sensor_data, resolve_localtime};
     use crate::{
         sensor::fridge_tag::breach_sort_weight,
         test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use chrono::{Duration, NaiveDate, NaiveDateTime};
     use repository::{
-        Pagination, Sort, TemperatureBreachFilter, TemperatureBreachRepository,
-        TemperatureBreachRow, TemperatureBreachType, TemperatureDailySummaryRowRepository,
-        TemperatureLogRepository, TemperatureLogSortField,
+        Pagination, SensorRowRepository, Sort, TemperatureBreachFilter,
+        TemperatureBreachRepository, TemperatureBreachRow, TemperatureBreachType,
+        TemperatureLogRepository, TemperatureLogSortField, TemperatureSummaryRowRepository,
         mock::{MockDataInserts, mock_store_a, mock_store_b},
     };
     use temperature_sensor as ts;
@@ -984,7 +1010,14 @@ mod test {
         let day_1 = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
         let day_2 = NaiveDate::from_ymd_opt(2024, 1, 2).unwrap();
         let day_3 = NaiveDate::from_ymd_opt(2024, 1, 3).unwrap();
-        let breach_start = day_2.and_hms_opt(2, 0, 0).unwrap();
+        // Times are passed in as they would be after reading the file: the sensor's local time
+        // converted to UTC (the server's time zone is taken to be the sensor's)
+        let utc = |date: NaiveDate, hour| {
+            resolve_localtime(&date.and_hms_opt(hour, 0, 0).unwrap(), "test").unwrap()
+        };
+        let breach_start = utc(day_2, 2);
+        let first_read = utc(day_2, 18);
+        let second_read = utc(day_3, 4);
 
         let daily_summary = |date, average_temperature, hot_minutes| ts::DailySummary {
             date,
@@ -1020,39 +1053,46 @@ mod test {
             logs: None,
             daily_summaries: Some(daily_summaries),
         };
-
         // An import from before alarms were typed as consecutive, read on the evening of day 2
-        // with the breach ongoing. The last connected time is stored in UTC, so for a site west
-        // of UTC it's already day 3.
-        let first_read = day_3.and_hms_opt(1, 0, 0).unwrap();
+        // with the breach ongoing
+        let first_file = sensor(
+            Some(first_read),
+            vec![breach(ts::BreachType::HotCumulative, first_read)],
+            vec![config(ts::BreachType::HotCumulative)],
+            vec![daily_summary(day_1, 4.5, 0), daily_summary(day_2, 6.0, 300)],
+        );
+        let sensor_id = integrate_sensor_data(&connection, &mock_store_a().id, first_file.clone())
+            .unwrap()
+            .new_sensor_id
+            .unwrap();
+
+        // Day 2 was in progress at the first read
+        let summaries = TemperatureSummaryRowRepository::new(&connection)
+            .find_many_by_sensor_id(&sensor_id)
+            .unwrap();
+        assert_eq!(summaries.len(), 2);
+        assert_eq!(summaries[1].start_datetime, utc(day_2, 0));
+        assert_eq!(summaries[1].end_datetime, first_read);
+
+        // The next import has the breach as consecutive, day 2 complete and day 3 in progress
         integrate_sensor_data(
             &connection,
             &mock_store_a().id,
             sensor(
-                Some(first_read),
-                vec![breach(ts::BreachType::HotCumulative, first_read)],
-                vec![config(ts::BreachType::HotCumulative)],
-                vec![daily_summary(day_1, 4.5, 0), daily_summary(day_2, 6.0, 300)],
+                Some(second_read),
+                vec![breach(ts::BreachType::HotConsecutive, utc(day_3, 3))],
+                vec![config(ts::BreachType::HotConsecutive)],
+                vec![
+                    daily_summary(day_1, 4.5, 0),
+                    daily_summary(day_2, 7.5, 720),
+                    daily_summary(day_3, 5.0, 0),
+                ],
             ),
         )
         .unwrap();
 
-        // The next import has the breach as consecutive, and day 2 complete. It's filtered from
-        // the first read, which still keeps day 2 although the first read was on day 3 in UTC.
-        integrate_sensor_data(
-            &connection,
-            &mock_store_a().id,
-            sensor(
-                Some(day_3.and_hms_opt(4, 0, 0).unwrap()),
-                vec![breach(
-                    ts::BreachType::HotConsecutive,
-                    day_3.and_hms_opt(3, 0, 0).unwrap(),
-                )],
-                vec![config(ts::BreachType::HotConsecutive)],
-                vec![daily_summary(day_1, 9.9, 0), daily_summary(day_2, 7.5, 720)],
-            ),
-        )
-        .unwrap();
+        // The first file uploaded again later changes nothing: its day 2 is from an older read
+        integrate_sensor_data(&connection, &mock_store_a().id, first_file).unwrap();
 
         // The breach is updated & retyped, not added again
         let breaches = TemperatureBreachRepository::new(&connection)
@@ -1061,24 +1101,32 @@ mod test {
         assert_eq!(breaches.len(), 1);
         let breach_row = &breaches[0].temperature_breach_row;
         assert_eq!(breach_row.r#type, TemperatureBreachType::HotConsecutive);
-        assert_eq!(
-            breach_row.end_datetime,
-            Some(day_3.and_hms_opt(3, 0, 0).unwrap())
-        );
+        assert_eq!(breach_row.end_datetime, Some(utc(day_3, 3)));
 
-        // One summary per day, with day 2 updated (day 1 was filtered out of the second import)
-        let daily_summaries = TemperatureDailySummaryRowRepository::new(&connection)
+        // The older read didn't move the sensor's last connected time back
+        let sensor_row = SensorRowRepository::new(&connection)
+            .find_one_by_id(&breach_row.sensor_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(sensor_row.last_connection_datetime, Some(second_read));
+
+        // One summary per day: day 2 completed by the second read, day 3 in progress at it
+        let summaries = TemperatureSummaryRowRepository::new(&connection)
             .find_many_by_sensor_id(&breach_row.sensor_id)
             .unwrap();
-        assert_eq!(daily_summaries.len(), 2);
-        assert_eq!(daily_summaries[0].date, day_1);
-        assert_eq!(daily_summaries[0].average_temperature, Some(4.5));
-        assert_eq!(daily_summaries[1].date, day_2);
-        assert_eq!(daily_summaries[1].average_temperature, Some(7.5));
+        assert_eq!(summaries.len(), 3);
+        assert_eq!(summaries[0].start_datetime, utc(day_1, 0));
+        assert_eq!(summaries[0].end_datetime, utc(day_2, 0));
+        assert_eq!(summaries[0].average_temperature, Some(4.5));
+        assert_eq!(summaries[1].start_datetime, utc(day_2, 0));
+        assert_eq!(summaries[1].end_datetime, utc(day_3, 0));
+        assert_eq!(summaries[1].average_temperature, Some(7.5));
         assert_eq!(
-            daily_summaries[1].hot_duration_milliseconds,
+            summaries[1].hot_duration_milliseconds,
             Some(720 * 60 * 1000)
         );
-        assert_eq!(daily_summaries[1].store_id, mock_store_a().id);
+        assert_eq!(summaries[1].store_id, mock_store_a().id);
+        assert_eq!(summaries[2].start_datetime, utc(day_3, 0));
+        assert_eq!(summaries[2].end_datetime, second_read);
     }
 }
