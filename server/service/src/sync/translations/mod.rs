@@ -64,6 +64,7 @@ pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
 pub(crate) mod purchase_order;
+pub(crate) mod purchase_order_category;
 pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
 pub(crate) mod report;
@@ -132,6 +133,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         unit::boxed(),
         category::boxed(),
         transaction_category::boxed(),
+        purchase_order_category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
         site::boxed(),
