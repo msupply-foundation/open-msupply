@@ -84,8 +84,10 @@ import type { ProgramEnrolment } from '../../plugin-sdk/documents';
 
 let dispose: (() => void) | undefined;
 afterEach(() => {
+  vi.useRealTimers();
   dispose?.();
   dispose = undefined;
+  slowCheck = undefined;
   held.clear();
   canEditDocuments = true;
   delete shown.text;
@@ -262,6 +264,8 @@ describe('OMS-REG-PAT-04.33 / .34 — typing an ID', () => {
   });
 
   it('a check still running when typing resumes never overwrites what is typed', async () => {
+    // The pause before a check is the clock's, so the test moves the clock.
+    vi.useFakeTimers();
     let release: (() => void) | undefined;
     slowCheck = new Promise<void>(r => (release = r));
     const { controller } = mount({
@@ -271,16 +275,19 @@ describe('OMS-REG-PAT-04.33 / .34 — typing an ID', () => {
     });
     type('AB');
     // The check for "AB" starts once typing pauses, and is held open…
-    await new Promise(r => setTimeout(r, 650));
+    await vi.runOnlyPendingTimersAsync();
     type('ABC');
     // …then answers while "ABC" waits its turn.
     release?.();
     slowCheck = undefined;
-    await new Promise(r => setTimeout(r, 50));
+    await vi.advanceTimersByTimeAsync(0);
     expect(shown.text?.value).toBe('ABC');
-    await vi.waitFor(() =>
-      expect(controller.draft.get('programEnrolmentId')).toBe('ABC')
-    );
+    expect(controller.draft.get('programEnrolmentId')).toBe('ABC');
+    // "ABC" is checked in its turn, and stands.
+    await vi.runOnlyPendingTimersAsync();
+    await controller.settled();
+    expect(controller.draft.get('programEnrolmentId')).toBe('ABC');
+    expect(shown.text?.value).toBe('ABC');
   });
 
   it('a cleared ID leaves the enrolment with none', async () => {
@@ -349,16 +356,15 @@ describe('OMS-REG-PAT-04.54 — surrounding spaces are not part of the ID', () =
 describe('OMS-REG-PAT-04.36 / .37 / .51 / .60 — a typed ID another enrolment holds', () => {
   it('is flagged at the field once typing pauses (.36)', async () => {
     held.add('HELD-1');
-    mount({
+    const { controller } = mount({
       data: { ...NEW, programEnrolmentId: 'GRY-0042' },
       documentName: 'p/patient/DemoProgramEnrolment',
       allowTyping: true,
     });
     type('HELD-1');
     expect(shown.text?.error).toBeUndefined();
-    await vi.waitFor(() =>
-      expect(shown.text?.error).toBe('error.duplicated-id {"id":"HELD-1"}')
-    );
+    await controller.settled(); // the pause, and the check after it
+    expect(shown.text?.error).toBe('error.duplicated-id {"id":"HELD-1"}');
     expect(shown.text?.value).toBe('HELD-1');
   });
 
@@ -371,7 +377,8 @@ describe('OMS-REG-PAT-04.36 / .37 / .51 / .60 — a typed ID another enrolment h
     });
     type('HELD-1');
     expect(controller.draft.get('programEnrolmentId')).toBe('HELD-1');
-    await vi.waitFor(() => expect(shown.text?.error).toBeDefined());
+    await controller.settled();
+    expect(shown.text?.error).toBeDefined();
     expect(controller.validation.valid()).toBe(false);
     // Fixing it lifts the block.
     type('FREE-1');
@@ -413,13 +420,14 @@ describe('OMS-REG-PAT-04.36 / .37 / .51 / .60 — a typed ID another enrolment h
 
   it('typing again clears the flag', async () => {
     held.add('HELD-1');
-    mount({
+    const { controller } = mount({
       data: { ...NEW, programEnrolmentId: 'GRY-0042' },
       documentName: 'p/patient/DemoProgramEnrolment',
       allowTyping: true,
     });
     type('HELD-1');
-    await vi.waitFor(() => expect(shown.text?.error).toBeDefined());
+    await controller.settled();
+    expect(shown.text?.error).toBeDefined();
     type('HELD-12');
     expect(shown.text?.error).toBeUndefined();
   });
