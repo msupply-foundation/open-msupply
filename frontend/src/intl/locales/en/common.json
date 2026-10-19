@@ -1266,6 +1266,7 @@
   "label.custom-field-scope-patient": "Patients",
   "label.custom-field-scope-prescription": "Dispensing",
   "label.custom-field-scope-prescription-request": "Prescriptions",
+  "label.custom-field-scope-purchase-order": "Purchase orders",
   "label.custom-field-scope-supplier": "Suppliers",
   "label.custom-field-scope-supplier-return": "Supplier return",
   "label.custom-field-type-boolean": "Boolean",

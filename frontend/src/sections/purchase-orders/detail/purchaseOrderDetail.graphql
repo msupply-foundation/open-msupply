@@ -46,6 +46,8 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   supplierAgent
   headingMessage
   freightConditions
+  # Custom fields tab.
+  customFields
   # Side panel (S9) — pricing, other, dates.
   #
   # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
