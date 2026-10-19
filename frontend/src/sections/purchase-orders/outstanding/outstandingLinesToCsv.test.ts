@@ -25,7 +25,7 @@ const row = (
   },
   item: { name: 'Amoxicillin 250mg' },
   expectedDeliveryDate: '2026-10-15',
-  adjustedNumberOfUnits: 120,
+  requestedNumberOfUnits: 120,
   receivedNumberOfUnits: 45,
   outstandingNumberOfUnits: 75,
   ...over,
@@ -44,7 +44,7 @@ describe('OMS-FUN-PO-14.11 — outstanding-lines CSV export', () => {
       'label.item-name',
       'label.purchase-order-confirmed',
       'label.expected-delivery-date',
-      'label.adjusted-units-expected',
+      'label.requested-units',
       'label.total-received',
       'label.outstanding-units',
     ]);
@@ -70,7 +70,7 @@ describe('OMS-FUN-PO-14.11 — outstanding-lines CSV export', () => {
     ]);
   });
 
-  it('leaves an absent adjusted quantity, reference, date or party empty', () => {
+  it('leaves an absent reference, date or party empty', () => {
     const [, line] = outstandingLinesToCsv([
       row({
         purchaseOrder: {
@@ -82,10 +82,7 @@ describe('OMS-FUN-PO-14.11 — outstanding-lines CSV export', () => {
           supplier: null,
         },
         expectedDeliveryDate: null,
-        // No adjusted quantity: the expected figure is then the line's
-        // requested quantity, which is not a column — so the cell is blank,
-        // never 0 (ui-standards § absent values).
-        adjustedNumberOfUnits: null,
+        requestedNumberOfUnits: 12,
         receivedNumberOfUnits: 0,
         outstandingNumberOfUnits: 12,
       }),
@@ -99,7 +96,7 @@ describe('OMS-FUN-PO-14.11 — outstanding-lines CSV export', () => {
       'Amoxicillin 250mg',
       '',
       '',
-      '',
+      '12',
       '0',
       '12',
     ]);

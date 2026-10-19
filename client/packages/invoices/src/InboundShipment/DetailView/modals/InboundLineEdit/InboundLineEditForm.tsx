@@ -81,8 +81,7 @@ export const InboundLineEditForm = ({
 
   const remainingUnits =
     hasPurchaseOrder && selectedPOLine
-      ? (selectedPOLine.adjustedNumberOfUnits ??
-          selectedPOLine.requestedNumberOfUnits) -
+      ? selectedPOLine.requestedNumberOfUnits -
         (selectedPOLine.shippedNumberOfUnits ?? 0)
       : null;
 

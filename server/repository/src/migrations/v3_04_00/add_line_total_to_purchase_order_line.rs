@@ -21,11 +21,11 @@ impl MigrationFragment for Migrate {
             r#"
                 UPDATE purchase_order_line
                 SET line_total = price_per_pack_after_discount
-                        * COALESCE(adjusted_number_of_units, requested_number_of_units)
+                        * requested_number_of_units
                         / requested_pack_size
                 WHERE requested_pack_size > 0
                   AND price_per_pack_after_discount <> 0
-                  AND COALESCE(adjusted_number_of_units, requested_number_of_units) <> 0;
+                  AND requested_number_of_units <> 0;
             "#,
         )?;
 
