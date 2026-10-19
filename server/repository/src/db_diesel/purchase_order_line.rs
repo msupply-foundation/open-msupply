@@ -1,5 +1,5 @@
 use super::{
-    DBType, ItemRow, RepositoryError, StorageConnection,
+    DBType, ItemRow, ItemType, RepositoryError, StorageConnection,
     item_row::item,
     name_row::{NameRow, name},
     purchase_order_line_row::purchase_order_line,
@@ -248,12 +248,15 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
         apply_equal_filter!(query, item_id, purchase_order_line::item_id);
         apply_equal_filter!(query, status, purchase_order_line::status);
         match received_less_than_requested {
+            // A service line is never outstanding: it is not received like stock
             Some(true) => {
-                query = query.filter(
-                    purchase_order_line_stats::received_number_of_units
-                        .nullable()
-                        .lt(purchase_order_line::requested_number_of_units.nullable()),
-                )
+                query = query
+                    .filter(
+                        purchase_order_line_stats::received_number_of_units
+                            .nullable()
+                            .lt(purchase_order_line::requested_number_of_units.nullable()),
+                    )
+                    .filter(item::type_.ne(ItemType::Service))
             }
             Some(false) => {
                 query = query.filter(

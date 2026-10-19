@@ -455,4 +455,65 @@ mod test {
             ]
         );
     }
+
+    /// The outstanding-lines filter leaves service lines out altogether.
+    #[actix_rt::test]
+    async fn outstanding_lines_leave_out_service_lines() {
+        use repository::mock::mock_item_service_item;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "outstanding_lines_leave_out_service_lines",
+            MockDataInserts::none().stores().names().items(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.purchase_order_line_service;
+
+        let order = PurchaseOrderRow {
+            id: "po_outstanding_service".to_string(),
+            store_id: mock_store_a().id,
+            supplier_name_id: mock_name_a().id,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            status: repository::PurchaseOrderStatus::Sent,
+            purchase_order_number: 20,
+            ..Default::default()
+        };
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&order)
+            .unwrap();
+        // Neither line has anything received
+        for (id, line_number, item_id) in [
+            ("po_outstanding_stock", 1, mock_item_a().id),
+            ("po_outstanding_freight", 2, mock_item_service_item().id),
+        ] {
+            PurchaseOrderLineRowRepository::new(&connection)
+                .upsert_one(&PurchaseOrderLineRow {
+                    id: id.to_string(),
+                    purchase_order_id: order.id.clone(),
+                    store_id: mock_store_a().id,
+                    line_number,
+                    item_id,
+                    requested_number_of_units: 1.0,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let outstanding = service
+            .get_purchase_order_lines(
+                &context,
+                Some(&mock_store_a().id),
+                None,
+                Some(PurchaseOrderLineFilter::new().received_less_than_requested(true)),
+                None,
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|line| line.purchase_order_line_row.id)
+            .collect::<Vec<String>>();
+        assert_eq!(outstanding, vec!["po_outstanding_stock".to_string()]);
+    }
 }
