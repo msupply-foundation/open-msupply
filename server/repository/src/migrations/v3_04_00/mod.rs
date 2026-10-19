@@ -18,6 +18,7 @@ mod add_uploader_to_sync_file_reference;
 mod backfill_purchase_order_custom_fields;
 mod inactivate_kept_name_store_joins;
 mod prescription_request_occupation_prominent;
+mod recreate_joins_for_deleted_patients;
 mod refresh_who_pqs_catalogue;
 mod remove_charges_from_purchase_order;
 mod update_default_asset_log_reasons;
@@ -55,6 +56,7 @@ impl Migration for V3_04_00 {
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
             Box::new(add_inactive_to_name_store_join::Migrate),
             Box::new(inactivate_kept_name_store_joins::Migrate),
+            Box::new(recreate_joins_for_deleted_patients::Migrate),
         ]
     }
 }
