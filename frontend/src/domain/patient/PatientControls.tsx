@@ -22,7 +22,7 @@ import {
 } from './gender';
 import { generatedCodeFits, generatePatientCode } from './patientCode';
 import { ageFromDob, ageMonthsAndDays, dobFromAge } from './age';
-import styles from './PatientControls.module.css';
+import fieldAction from '../documentForm/FieldAction.module.css';
 
 /*
  * The patient form's controls (spec/patients S3 Details; S2 step ③), each over
@@ -117,7 +117,7 @@ export const PatientCodeControl = (
         />
         <Show when={canGenerate()}>
           <Button
-            class={styles.generate}
+            class={fieldAction.action}
             variant="secondary"
             data-testid={props.testId && `${props.testId}-generate`}
             disabled={props.disabled}

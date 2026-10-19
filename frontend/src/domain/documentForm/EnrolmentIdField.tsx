@@ -19,7 +19,7 @@ import type { ProgramEnrolment } from '../../plugin-sdk/documents';
 import type { FormRecordView } from '../../plugin-sdk/types';
 import type { Draft } from './draft';
 import { drawFreeEnrolmentId, isEnrolmentIdFree } from './enrolmentId';
-import styles from './EnrolmentIdField.module.css';
+import fieldAction from './FieldAction.module.css';
 
 export interface EnrolmentIdFieldProps<
   T extends ProgramEnrolment = ProgramEnrolment,
@@ -197,7 +197,7 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
           data-testid={testId()}
         />
         <Button
-          class={styles.generate}
+          class={fieldAction.action}
           variant="secondary"
           disabled={disabled()}
           loading={generating()}
