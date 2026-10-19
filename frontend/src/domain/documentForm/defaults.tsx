@@ -21,8 +21,11 @@ import type {
   ProgramEnrolment,
 } from '../../plugin-sdk/documents';
 import type { Draft } from './draft';
+import type { FormRegistryFragment } from './documentForm.generated';
 import { DateInput, DateTimeInput, TextInput } from './fields';
 import { withFirstNoteText } from './notes';
+import type { JsonSchema } from './schemaNode';
+import { validateDocument } from './validation';
 
 interface NoteBoxProps {
   label: string;
@@ -57,6 +60,15 @@ export interface DefaultFormProps<T> {
   draft: Draft<T>;
 }
 
+// What the default enrolment form asks for (spec/program-enrolment
+// ui-surface S4): the form below places these, and the check after it counts
+// them as asked.
+const ENROLMENT_FORM_PATHS = {
+  date: 'enrolmentDatetime',
+  id: 'programEnrolmentId',
+  notes: 'notes',
+} as const;
+
 /** The enrolment form for any ProgramEnrolment type without a plugin form. */
 export const DefaultEnrolmentForm = (
   props: DefaultFormProps<ProgramEnrolment>
@@ -64,25 +76,54 @@ export const DefaultEnrolmentForm = (
   <Stack>
     <DateInput
       draft={props.draft}
-      path="enrolmentDatetime"
+      path={ENROLMENT_FORM_PATHS.date}
       label={t('label.enrolment-datetime')}
       testId="enrolment-datetime"
     />
     <TextInput
       draft={props.draft}
-      path="programEnrolmentId"
+      path={ENROLMENT_FORM_PATHS.id}
       label={t('label.enrolment-patient-id')}
       testId="enrolment-patient-id"
     />
     <NoteBox
       label={t('label.notes')}
       notes={props.draft.data.notes}
-      onChange={notes => props.draft.set('notes', notes)}
+      onChange={notes => props.draft.set(ENROLMENT_FORM_PATHS.notes, notes)}
       disabled={props.draft.readOnly()}
       testId="enrolment-notes"
     />
   </Stack>
 );
+
+// What an enrolment holds without the form asking: the store it was made at.
+const ENROLMENT_UNASKED_PATHS = ['storeId'];
+
+/**
+ * What the program's own form rules require that an enrolment on the default
+ * form doesn't hold and can't be given there (rules § the default form): the
+ * paths of the required answers outside what the form asks for and what the
+ * enrolment holds without asking. Empty when the default form can stand in
+ * for the program's own.
+ */
+export const unaskedEnrolmentAnswers = (
+  registry: Pick<FormRegistryFragment, 'formSchemaId' | 'jsonSchema'>,
+  data: unknown
+): string[] => {
+  const covered = new Set<string>([
+    ...Object.values(ENROLMENT_FORM_PATHS),
+    ...ENROLMENT_UNASKED_PATHS,
+  ]);
+  return validateDocument(
+    registry.formSchemaId,
+    registry.jsonSchema as JsonSchema,
+    data
+  )
+    .filter(
+      e => e.keyword === 'required' && !covered.has(e.path.split('.')[0] ?? '')
+    )
+    .map(e => e.path);
+};
 
 /*
  * The encounter form body for any Encounter type without a plugin form. The

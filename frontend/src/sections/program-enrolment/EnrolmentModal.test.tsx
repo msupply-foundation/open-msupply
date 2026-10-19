@@ -106,18 +106,20 @@ vi.mock('@/plugins/documentFormSlot', () => ({
     diagnostics: [],
   }),
 }));
-// What the program's own form schema requires; the enrolment's data answers
-// some of it.
+// What the program's own form rules require beyond the default form; the
+// enrolment's data answers some of it. Which answers count as asked is the
+// library's (defaults.test.tsx).
 let missing: string[] = [];
 let draftData: Record<string, unknown> = {};
 const library = {
   DefaultEnrolmentForm: () => 'default form',
-  validateDocument: (_id: string, _schema: unknown, data: unknown) =>
-    missing
-      .filter(path => (data as Record<string, unknown>)?.[path] === undefined)
-      .map(path => ({ path, keyword: 'required', message: '' })),
+  unaskedEnrolmentAnswers: (_registry: unknown, data: unknown) =>
+    missing.filter(
+      path => (data as Record<string, unknown>)?.[path] === undefined
+    ),
 };
 
+const [status, setStatus] = createSignal('ready');
 const [dirty, setDirty] = createSignal(false);
 const [saving, setSaving] = createSignal(false);
 const [saveError, setSaveError] = createSignal<string>();
@@ -126,7 +128,7 @@ vi.mock('@/domain/documentForm/createDocumentForm', () => ({
   createDocumentForm: (options: Record<string, unknown>) => {
     shown.hostOptions = options;
     return {
-      status: () => 'ready',
+      status,
       library: () => library,
       registry: () => ({
         name: 'TB Program',
@@ -167,6 +169,7 @@ afterEach(() => {
   missing = [];
   draftData = {};
   setPluginForm(false);
+  setStatus('ready');
   setSaving(false);
   delete shown.details;
   setDirty(false);
@@ -313,16 +316,20 @@ describe('OMS-REG-PAT-04.16 – .19 — leaving with unsaved changes', () => {
   });
 });
 
+// The footer's buttons, and the body's notices, as the dialog would render
+// them.
+const byTestId = (id: string) =>
+  shown.buttons.filter(b => b['data-testid'] === id);
+const save = () => byTestId('dialog-button-save');
+const body = () => {
+  shown.alerts = [];
+  shown.buttons = [];
+  shown.summaries = 0;
+  resolve(shown.dialog?.children);
+  resolve(shown.dialog?.actions);
+};
+
 describe("OMS-REG-PAT-04.52 — a program whose form the default form can't stand in for", () => {
-  const save = () =>
-    shown.buttons.filter(b => b['data-testid'] === 'dialog-button-ok');
-  const body = () => {
-    shown.alerts = [];
-    shown.buttons = [];
-    shown.summaries = 0;
-    resolve(shown.dialog?.children);
-    resolve(shown.dialog?.actions);
-  };
 
   it("says the program's own form isn't installed, naming what it asks for, and offers no Save", () => {
     missing = ['status', 'extension.riskGroup'];
@@ -339,8 +346,7 @@ describe("OMS-REG-PAT-04.52 — a program whose form the default form can't stan
     expect(shown.summaries).toBe(0);
   });
 
-  it('a field the default form asks for is not one it lacks', () => {
-    missing = ['enrolmentDatetime'];
+  it('with nothing it lacks, there is nothing to say', () => {
     open();
     body();
     expect(shown.alerts.some(a => a.testId === 'enrolment-form-missing')).toBe(
@@ -366,16 +372,26 @@ describe('OMS-REG-PAT-04.62 — an enrolment that already holds its program\'s a
     missing = ['status'];
     draftData = { enrolmentDatetime: '2026-10-01T00:00:00Z', status: 'ACTIVE' };
     open(true);
-    shown.alerts = [];
-    shown.buttons = [];
-    resolve(shown.dialog?.children);
-    resolve(shown.dialog?.actions);
+    body();
     expect(shown.alerts.some(a => a.testId === 'enrolment-form-missing')).toBe(
       false
     );
+    expect(save()).toHaveLength(1);
+  });
+});
+
+describe('OMS-REG-PAT-04.28 — an enrolment that no longer exists', () => {
+  it('says the record is not found, with Cancel only and no Save', () => {
+    open(true);
+    setStatus('not-found');
+    body();
     expect(
-      shown.buttons.filter(b => b['data-testid'] === 'dialog-button-ok')
-    ).toHaveLength(1);
+      shown.alerts.some(
+        a => resolve(a.children) === 'messages.record-not-found'
+      )
+    ).toBe(true);
+    expect(save()).toHaveLength(0);
+    expect(byTestId('dialog-button-cancel')).toHaveLength(1);
   });
 });
 
@@ -383,7 +399,7 @@ describe('OMS-REG-PAT-04.61 — while a save is under way', () => {
   const cancel = () => {
     shown.buttons = [];
     resolve(shown.dialog?.actions);
-    return shown.buttons.filter(b => b['data-testid'] === 'dialog-button-cancel');
+    return byTestId('dialog-button-cancel');
   };
 
   it('Cancel is hidden, and back once the save resolves', () => {

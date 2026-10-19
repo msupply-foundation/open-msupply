@@ -10,6 +10,8 @@ export interface RadioOption {
    * as one sentence ("Full stocktake — count every item in your store").
    */
   description?: string;
+  /** `data-testid` for the description, so a test can read it on its own. */
+  descriptionTestId?: string;
   disabled?: boolean;
   /**
    * `data-testid` for the radio input (locale-stable test hook,
@@ -146,7 +148,12 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
               <div class={styles.text}>
                 <span class={styles.label}>{option.label}</span>
                 <Show when={option.description}>
-                  <span class={styles.description}>{option.description}</span>
+                  <span
+                    class={styles.description}
+                    data-testid={option.descriptionTestId}
+                  >
+                    {option.description}
+                  </span>
                 </Show>
               </div>
             </label>

@@ -13,8 +13,10 @@ import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import { Button } from '@/ui/elements/buttons/Button';
-import { SaveIcon, XCircleIcon } from '@/ui/icons';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '@/ui/elements/buttons/StandardButtons';
 import { FormErrorSummary } from '@/ui/layout/Form/FormErrorSummary';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import type { ProgramEnrolment } from '@/plugin-sdk/documents';
@@ -27,17 +29,7 @@ import {
   documentFormVersioning,
 } from '@/plugins/documentFormSlot';
 import { pathLabel } from '@/domain/documentForm/draft';
-import type { JsonSchema } from '@/domain/documentForm/schemaNode';
 import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
-
-// What the default enrolment form asks for (ui-surface S4), and what the
-// enrolment carries without asking (its store).
-const DEFAULT_FORM_FIELDS = new Set([
-  'enrolmentDatetime',
-  'programEnrolmentId',
-  'notes',
-  'storeId',
-]);
 
 /** What the modal opens: a program to enrol in, or a saved enrolment. */
 export type EnrolmentTarget =
@@ -130,18 +122,7 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     if (documentFormFor('programEnrolment.form', r.documentType).occupant) {
       return [];
     }
-    return library
-      .validateDocument(
-        r.formSchemaId,
-        r.jsonSchema as JsonSchema,
-        form.draft.data
-      )
-      .filter(
-        e =>
-          e.keyword === 'required' &&
-          !DEFAULT_FORM_FIELDS.has(e.path.split('.')[0] ?? '')
-      )
-      .map(e => e.path);
+    return library.unaskedEnrolmentAnswers(r, form.draft.data);
   });
 
   const [confirmDiscard, setConfirmDiscard] = createSignal(false);
@@ -198,27 +179,23 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
             {/* Hidden while a save is in flight, back once it resolves
                 (controls › dialog chrome). */}
             <Show when={!form.saving()}>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                confirms="cancel"
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={close}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             </Show>
-            <Show when={unasked().length === 0}>
-              <Button
-                icon={<SaveIcon />}
-                confirms="plain"
-                data-testid="dialog-button-ok"
+            {/* No Save for an enrolment that no longer exists, nor for one
+                the default form can't complete: neither could ever be saved
+                from here (controls § blocked affordances). */}
+            <Show
+              when={form.status() !== 'not-found' && unasked().length === 0}
+            >
+              <DialogSaveButton
+                data-testid="dialog-button-save"
                 loading={form.saving()}
                 disabled={form.status() !== 'ready' || !form.canSave()}
                 onClick={() => void save()}
-              >
-                {t('button.save')}
-              </Button>
+              />
             </Show>
           </>
         }

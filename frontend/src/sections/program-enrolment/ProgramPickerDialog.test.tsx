@@ -1,4 +1,4 @@
-import { createRoot, createSignal } from 'solid-js';
+import { createRoot, createSignal, mapArray } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
@@ -26,6 +26,9 @@ interface ButtonProps {
 const shown: {
   title?: string;
   options?: () => Option[];
+  /** One stand-in radio per option, made as `<For>` makes them: a new one
+   * only for an option object it hasn't seen. */
+  radios?: () => { option: Option }[];
   onChange?: (value: string) => void;
   notice?: unknown;
   buttons: ButtonProps[];
@@ -40,6 +43,10 @@ vi.mock('@/ui/elements/feedback/Dialog', () => ({
 vi.mock('@/ui/elements/inputs/RadioGroup', () => ({
   RadioGroup: (p: { options: Option[]; onChange: (v: string) => void }) => {
     shown.options = () => p.options;
+    shown.radios = mapArray(
+      () => p.options,
+      option => ({ option })
+    );
     shown.onChange = p.onChange;
     return 'radios';
   },
@@ -56,7 +63,7 @@ vi.mock('@/ui/elements/buttons/Button', () => ({
     return 'button';
   },
 }));
-vi.mock('@/ui/icons', () => ({ XCircleIcon: () => 'icon' }));
+vi.mock('@/ui/icons', () => ({ SaveIcon: () => 'icon' }));
 vi.mock('@/intl', () => ({ t: (key: string) => key }));
 
 import { ProgramPickerDialog } from './ProgramPickerDialog';
@@ -84,6 +91,7 @@ afterEach(() => {
   dispose = undefined;
   shown.buttons = [];
   delete shown.options;
+  delete shown.radios;
   delete shown.notice;
 });
 
@@ -171,10 +179,11 @@ describe('OMS-REG-PAT-04.5 / .6 / .7 — choosing, enrolling and cancelling', ()
   });
 });
 
-describe('OMS-REG-PAT-04.53 — a pick the list has since dropped', () => {
+describe('OMS-REG-PAT-04.53 / .5 — a pick the list has since dropped', () => {
   it('leaves Enrol disabled', () => {
     // The Vaccinations tab's list narrows once the immunisation programs
-    // arrive; a program picked before then may no longer be listed.
+    // arrive (.53); a program picked before then may no longer be listed, so
+    // there is no pick to enrol in (.5).
     const [registries, setRegistries] = createSignal([TB, HIV]);
     createRoot(d => {
       dispose = d;
@@ -194,5 +203,57 @@ describe('OMS-REG-PAT-04.53 — a pick the list has since dropped', () => {
     expect(enrol()?.disabled).toBe(false);
     setRegistries([TB]);
     expect(enrol()?.disabled).toBe(true);
+  });
+});
+
+describe('OMS-REG-PAT-04.53 — the list re-deriving while the picker is open', () => {
+  it('keeps each radio still listed, so none remounts and focus stays put', () => {
+    // The Vaccinations tab's list re-derives as the immunisation programs
+    // arrive: the same programs, as new objects.
+    const [registries, setRegistries] = createSignal([TB, HIV, UNNAMED]);
+    createRoot(d => {
+      dispose = d;
+      return ProgramPickerDialog({
+        open: true,
+        get registries() {
+          return registries();
+        },
+        enrolledTypes: new Set(),
+        onPick: vi.fn(),
+        onClose: vi.fn(),
+      });
+    });
+    const radio = (label: string) =>
+      shown.radios?.().find(r => r.option.label === label);
+    const tb = radio('TB Program');
+    const hiv = radio('HIV Care & Treatment');
+    expect(tb).toBeDefined();
+
+    setRegistries([{ ...TB }, { ...HIV }]);
+    expect(radio('TB Program')).toBe(tb);
+    expect(radio('HIV Care & Treatment')).toBe(hiv);
+    expect(radio('AnteNatalProgram')).toBeUndefined();
+  });
+
+  it('a program whose mark changes takes its new state', () => {
+    const [enrolled, setEnrolled] = createSignal<ReadonlySet<string>>(
+      new Set()
+    );
+    createRoot(d => {
+      dispose = d;
+      return ProgramPickerDialog({
+        open: true,
+        registries: [TB, HIV],
+        get enrolledTypes() {
+          return enrolled();
+        },
+        onPick: vi.fn(),
+        onClose: vi.fn(),
+      });
+    });
+    setEnrolled(new Set(['TBProgram']));
+    expect(shown.options?.().find(o => o.label === 'TB Program')).toMatchObject(
+      { disabled: true, description: 'label.enrolled' }
+    );
   });
 });

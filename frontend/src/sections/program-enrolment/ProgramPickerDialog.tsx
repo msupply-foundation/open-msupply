@@ -1,10 +1,10 @@
-import { createSignal, Show, type JSX } from 'solid-js';
+import { createMemo, createSignal, Show, type JSX } from 'solid-js';
 import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
-import { RadioGroup } from '@/ui/elements/inputs/RadioGroup';
-import { XCircleIcon } from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { RadioGroup, type RadioOption } from '@/ui/elements/inputs/RadioGroup';
 import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
 
 export interface ProgramPickerDialogProps {
@@ -42,17 +42,41 @@ const byName = (a: FormRegistryFragment, b: FormRegistryFragment): number =>
 const ProgramPickerBody = (props: ProgramPickerDialogProps): JSX.Element => {
   const [picked, setPicked] = createSignal<string>();
   // In name order (PAT-04 `.1`); the server lists them by id.
-  const options = () =>
-    [...props.registries].sort(byName).map(r => {
+  //
+  // The radios are keyed by option object, so a program keeps its option
+  // object while nothing about it changes. The list re-derives while the
+  // picker is open (the Vaccinations tab's narrows once the immunisation
+  // programs arrive), and a fresh object each time would remount every radio,
+  // dropping focus (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction).
+  let kept = new Map<string, RadioOption>();
+  const options = createMemo(() => {
+    const next = new Map<string, RadioOption>();
+    const list = [...props.registries].sort(byName).map(r => {
       const enrolled = props.enrolledTypes.has(r.documentType);
-      return {
-        value: r.id,
-        label: programName(r),
-        description: enrolled ? t('label.enrolled') : undefined,
-        disabled: enrolled,
-        testId: `program-option-${r.documentType}`,
-      };
+      const testId = `program-option-${r.documentType}`;
+      const label = programName(r);
+      const before = kept.get(r.id);
+      const option =
+        before &&
+        before.label === label &&
+        before.disabled === enrolled &&
+        before.testId === testId
+          ? before
+          : {
+              value: r.id,
+              label,
+              description: enrolled ? t('label.enrolled') : undefined,
+              descriptionTestId: enrolled ? `${testId}-enrolled` : undefined,
+              disabled: enrolled,
+              testId,
+            };
+      next.set(r.id, option);
+      return option;
     });
+    kept = next;
+    return list;
+  });
   const enrol = () => {
     const registry = props.registries.find(r => r.id === picked());
     if (registry) props.onPick(registry);
@@ -67,15 +91,10 @@ const ProgramPickerBody = (props: ProgramPickerDialogProps): JSX.Element => {
       testId="program-picker"
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            confirms="cancel"
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           <Button
             confirms="plain"
             data-testid="program-picker-enrol"
