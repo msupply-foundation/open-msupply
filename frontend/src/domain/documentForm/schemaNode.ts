@@ -25,12 +25,13 @@ export interface FieldSchemaInfo {
   pattern?: string;
 }
 
-const asSchema = (v: unknown): JsonSchema | undefined =>
+export const asSchema = (v: unknown): JsonSchema | undefined =>
   v !== null && typeof v === 'object' && !Array.isArray(v)
     ? (v as JsonSchema)
     : undefined;
 
-const resolveRef = (root: JsonSchema, node: JsonSchema): JsonSchema => {
+/** A node with its `$ref` chain followed, its own keywords kept. */
+export const resolveRef = (root: JsonSchema, node: JsonSchema): JsonSchema => {
   let current = node;
   // A chain of references (a definition that is itself a $ref) ends in a few
   // steps; the bound stops a cycle from hanging the form.
@@ -49,7 +50,7 @@ const resolveRef = (root: JsonSchema, node: JsonSchema): JsonSchema => {
  * A node's own properties and required list merged with its `allOf` members',
  * so a type emitted as `allOf: [{ $ref }]` reads as one object.
  */
-const flatten = (
+export const flatten = (
   root: JsonSchema,
   node: JsonSchema
 ): { properties: Record<string, JsonSchema>; required: Set<string> } => {

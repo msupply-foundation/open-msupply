@@ -71,6 +71,7 @@ export const PatientDocumentFormView: Component<
               )}
               archivedVersion={archivedVersion()}
               currentSchemaId={props.form.registry()?.formSchemaId}
+              recorded={props.form.recorded()}
             />
             <DocumentKeptValues values={props.form.kept()} />
             <FormErrorSummary

@@ -18,7 +18,10 @@
  * version where there is one, until Edit; otherwise, and after Edit, in the
  * current form with its migrations run on the loaded data, the values they
  * clear held against their paths. A save re-pins it to the current version;
- * closing writes nothing. A version the plugin does not list opens read-only.
+ * closing writes nothing. A document no form can open (a version the plugin
+ * does not list, one it lists but cannot bring to the current version, or one
+ * on an earlier version of a type no plugin form renders) opens read-only, as
+ * recorded, for the fallback renderer (`recorded`; DocumentAsRecorded.tsx).
  */
 import {
   createEffect,
@@ -101,8 +104,28 @@ export type DocumentVersion =
   | { kind: 'archived'; version: number }
   /** In the current form, migrated from its version in memory. */
   | { kind: 'migrated'; version: number }
-  /** Pinned to a version the plugin does not list: read-only. */
-  | { kind: 'unknown' };
+  /**
+   * Pinned to a version the plugin does not list (a site with a newer plugin
+   * wrote it), or to any but the current one where its form declares no
+   * versions. This and the two below open read-only, as recorded, in the
+   * fallback renderer.
+   */
+  | { kind: 'unknown' }
+  /**
+   * Pinned to a version the plugin lists but cannot migrate to the current
+   * one: a later one, or the plugin in the browser and the one installed
+   * differ.
+   */
+  | { kind: 'unreachable'; version: number }
+  /** Pinned to an earlier version of a type no plugin form renders. */
+  | { kind: 'unavailable' };
+
+/** The document as it was recorded, for the fallback renderer. */
+export interface RecordedDocument {
+  /** The JSON Schema the document is pinned to. */
+  schema: JsonSchema;
+  data: object;
+}
 
 /** A value a migration kept, listed read-only under its author's label. */
 export interface KeptValue {
@@ -115,9 +138,13 @@ const CURRENT: DocumentVersion = { kind: 'current' };
 
 const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
   a.kind === b.kind &&
-  (a.kind === 'archived' || a.kind === 'migrated'
+  (a.kind === 'archived' || a.kind === 'migrated' || a.kind === 'unreachable'
     ? a.version === (b as typeof a).version
     : true);
+
+/** The versions no form opens: shown as recorded, by the fallback renderer. */
+const asRecorded = (v: DocumentVersion): boolean =>
+  v.kind === 'unknown' || v.kind === 'unreachable' || v.kind === 'unavailable';
 
 export interface CreateDocumentFormOptions {
   storeId: Accessor<string>;
@@ -140,6 +167,13 @@ export interface CreateDocumentFormOptions {
    * registry reactively.
    */
   versioning?: (documentType: string) => FormVersioning | undefined;
+  /**
+   * Whether a plugin form renders a document type, versioned or not: a
+   * document on an earlier version of a type none renders has no form that
+   * can open it. Read inside a memo, like `versioning`. Absent, no plugin form
+   * renders any type.
+   */
+  hasPluginForm?: (documentType: string) => boolean;
   /**
    * Takes a save the server refuses as Forbidden, with the permission names
    * it gives, in place of showing it as `saveError`: the screen routes it to
@@ -193,6 +227,12 @@ export interface DocumentForm<T> {
   validation: FormValidation;
   /** The document's schema version against the current one. */
   version: Accessor<DocumentVersion>;
+  /**
+   * The document as it was recorded, while no form can open it (`version` is
+   * unknown, unreachable or unavailable): the body renders it through the
+   * fallback renderer in place of any form.
+   */
+  recorded: Accessor<RecordedDocument | undefined>;
   /** Leaves an archived form for the current one, migrating the document. */
   edit: () => void;
   /** Values the type's migrations keep that the document holds. */
@@ -470,12 +510,19 @@ export const createDocumentForm = <T extends object>(
       const r = registry();
       const v = versioning();
       const pinned = doc?.schema?.id;
-      if (!doc || !r || !v || !pinned || pinned === r.formSchemaId) {
-        return CURRENT;
+      if (!doc || !r || !pinned || pinned === r.formSchemaId) return CURRENT;
+      // A form that declares no versions knows only the current one.
+      if (!v) {
+        return options.hasPluginForm?.(r.documentType)
+          ? { kind: 'unknown' }
+          : { kind: 'unavailable' };
       }
       const at = v.versions.indexOf(pinned) + 1;
       const current = v.versions.indexOf(r.formSchemaId) + 1;
-      if (at === 0 || current === 0 || at > current) return { kind: 'unknown' };
+      if (at === 0) return { kind: 'unknown' };
+      if (current === 0 || at > current) {
+        return { kind: 'unreachable', version: at };
+      }
       if (v.archived.includes(at) && editing() !== doc.id) {
         return { kind: 'archived', version: at };
       }
@@ -487,7 +534,7 @@ export const createDocumentForm = <T extends object>(
 
   // Read as it was recorded: against its own schema, with nothing to fix.
   const readingOnly = () =>
-    version().kind === 'archived' || version().kind === 'unknown';
+    version().kind === 'archived' || asRecorded(version());
 
   /** The draft's starting point for the document as it stands. */
   const seedFor = ():
@@ -597,7 +644,10 @@ export const createDocumentForm = <T extends object>(
 
   const kept = createMemo((): readonly KeptValue[] => {
     const steps = versioning();
-    if (!steps || version().kind === 'archived') return [];
+    // The fallback renderer shows every value the document holds already.
+    if (!steps || version().kind === 'archived' || asRecorded(version())) {
+      return [];
+    }
     const data = controller.draft.data;
     return keptFields(steps.migrations).flatMap(field => {
       const value = getAt(data, field.path);
@@ -605,6 +655,17 @@ export const createDocumentForm = <T extends object>(
         ? []
         : [{ path: field.path, label: field.label(), value }];
     });
+  });
+
+  const recorded = createMemo((): RecordedDocument | undefined => {
+    const pinned = document()?.schema;
+    if (!pinned || !asRecorded(version()) || status() !== 'ready') {
+      return undefined;
+    }
+    return {
+      schema: pinned.jsonSchema as JsonSchema,
+      data: controller.draft.data,
+    };
   });
 
   const edit = () => {
@@ -716,6 +777,7 @@ export const createDocumentForm = <T extends object>(
       (isNew() || isDirty() || version().kind === 'migrated'),
     validation: controller.validation,
     version,
+    recorded,
     edit,
     kept,
     saving,

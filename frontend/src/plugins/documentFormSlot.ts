@@ -15,11 +15,14 @@ import { contributionId, visibleContributions } from './PluginSlot';
  * and the current form after migration; the form host works that out from the
  * contribution's versioning (`documentFormVersioning`, createDocumentForm.ts).
  *
+ * A document no form can open (pinned to a version the plugin form does not
+ * list or cannot migrate, or to an earlier version of a type no plugin form
+ * renders) renders read-only through the fallback renderer instead
+ * (DocumentAsRecorded.tsx); the form host decides which (`recorded`,
+ * createDocumentForm.ts).
+ *
  * Pure over its candidate list, like the dashboard body's resolver
  * (sections/dashboard/bodyRegion.ts), so the rule is testable as data.
- *
- * TO-DO: the read-only fallback renderer after the default form, for a
- * document no form can show (implementation-plan H12).
  */
 
 /** A plugin form as the host renders it. */
@@ -111,3 +114,13 @@ export const documentFormVersioning = (
     archived: Object.keys(occupant.archived ?? {}).map(Number),
   };
 };
+
+/**
+ * Whether a plugin form renders a document type in this store, versioned or
+ * not, for the form host. Reads the registry, so the caller calls it inside a
+ * memo.
+ */
+export const hasDocumentForm = (
+  slot: DocumentFormSlotId,
+  documentType: string
+): boolean => documentFormFor(slot, documentType).occupant !== undefined;

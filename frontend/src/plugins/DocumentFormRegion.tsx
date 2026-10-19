@@ -16,7 +16,9 @@
  *
  * A document on an earlier schema version renders in the plugin's archived
  * form for that version when the form host says so (`archivedVersion`;
- * kdd/custom-forms/specs.md § Opening an older document).
+ * kdd/custom-forms/specs.md § Opening an older document), and one no form can
+ * open renders read-only through the fallback renderer, from the schema it is
+ * pinned to (`recorded`; § Forms in the UI, form resolution).
  */
 import {
   createComponent,
@@ -35,6 +37,8 @@ import type {
   FormRecordView,
   SlotPropsMap,
 } from '../plugin-sdk/types';
+import { DocumentAsRecorded } from '../domain/documentForm/DocumentAsRecorded';
+import type { RecordedDocument } from '../domain/documentForm/createDocumentForm';
 import { Spinner } from '../ui/elements/feedback/Spinner';
 import { createRegionDiagnostics, recordPluginDiagnostic } from './diagnostics';
 import { documentFormFor, type DocumentFormOccupant } from './documentFormSlot';
@@ -53,6 +57,12 @@ export interface DocumentFormRegionProps<S extends DocumentFormSlotId> {
   fallback: () => JSX.Element;
   /** The version whose archived form renders, read-only; else the current. */
   archivedVersion?: number;
+  /**
+   * The document as recorded, while no form can open it (the form host's
+   * `recorded`): it renders through the fallback renderer in place of any
+   * form.
+   */
+  recorded?: RecordedDocument;
   /**
    * The form's part in the record's save, from the form host's coordinator
    * (`createDocumentForm`'s `coordinator.participationFor`): passed to a slot
@@ -149,7 +159,7 @@ export const DocumentFormRegion = <S extends DocumentFormSlotId>(
     });
   });
 
-  return (
+  const pluginOrDefault = (): JSX.Element => (
     <Show when={rendered()} keyed fallback={props.fallback()}>
       {form => (
         <ErrorBoundary
@@ -174,6 +184,14 @@ export const DocumentFormRegion = <S extends DocumentFormSlotId>(
             } as SlotPropsMap[S])}
           </Suspense>
         </ErrorBoundary>
+      )}
+    </Show>
+  );
+
+  return (
+    <Show when={props.recorded} fallback={pluginOrDefault()}>
+      {recorded => (
+        <DocumentAsRecorded schema={recorded().schema} data={recorded().data} />
       )}
     </Show>
   );

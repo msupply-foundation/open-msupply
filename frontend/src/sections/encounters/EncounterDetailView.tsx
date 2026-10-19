@@ -44,7 +44,10 @@ import { createDocumentForm } from '../../domain/documentForm/createDocumentForm
 import { DocumentKeptValues } from '../../domain/documentForm/DocumentKeptValues';
 import { DocumentVersionNotice } from '../../domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
-import { documentFormVersioning } from '../../plugins/documentFormSlot';
+import {
+  documentFormVersioning,
+  hasDocumentForm,
+} from '../../plugins/documentFormSlot';
 import type { Encounter } from '../../plugin-sdk/documents';
 import { VaccinationCardRegion } from '../vaccination-card';
 import { fetchEncounterRecord } from './encounterRecord';
@@ -100,6 +103,7 @@ const EncounterDetailView: Component = () => {
     source,
     labels: encounterVisitLabels,
     versioning: type => documentFormVersioning('encounter.form', type),
+    hasPluginForm: type => hasDocumentForm('encounter.form', type),
   });
   const archivedVersion = () => {
     const v = form.version();
@@ -253,6 +257,7 @@ const EncounterDetailView: Component = () => {
                     fallback={() => <Default draft={draft} />}
                     archivedVersion={archivedVersion()}
                     currentSchemaId={form.registry()?.formSchemaId}
+                    recorded={form.recorded()}
                   />
                   <DocumentKeptValues values={form.kept()} />
                   <FormErrorSummary

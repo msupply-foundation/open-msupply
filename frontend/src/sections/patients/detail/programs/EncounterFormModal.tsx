@@ -26,7 +26,10 @@ import {
   encounterVisitLabels,
 } from '../../../../domain/encounter/EncounterVisitFields';
 import { DocumentFormRegion } from '../../../../plugins/DocumentFormRegion';
-import { documentFormVersioning } from '../../../../plugins/documentFormSlot';
+import {
+  documentFormVersioning,
+  hasDocumentForm,
+} from '../../../../plugins/documentFormSlot';
 import type { FormRegistryFragment } from '../../../../domain/documentForm/documentForm.generated';
 
 export interface EncounterFormModalProps {
@@ -91,6 +94,7 @@ const EncounterFormModalBody = (props: BodyProps): JSX.Element => {
     source,
     labels: encounterVisitLabels,
     versioning: type => documentFormVersioning('encounter.form', type),
+    hasPluginForm: type => hasDocumentForm('encounter.form', type),
   });
 
   const [confirmDiscard, setConfirmDiscard] = createSignal(false);
@@ -165,6 +169,7 @@ const EncounterFormModalBody = (props: BodyProps): JSX.Element => {
                     participation={form.coordinator.participationFor}
                     fallback={() => <Default draft={form.draft} />}
                     currentSchemaId={props.registry.formSchemaId}
+                    recorded={form.recorded()}
                   />
                   <FormErrorSummary
                     errors={form.validation.visible()}

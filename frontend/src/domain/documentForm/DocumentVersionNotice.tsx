@@ -3,7 +3,8 @@
  * schema version (kdd/custom-forms/specs.md § Opening an older document), and
  * the Edit action that leaves an archived form for the current one. Rendered
  * by the screens that mount the document form host, above the form body;
- * nothing for a document on the current version.
+ * nothing for a document on the current version. Each version no form can
+ * open, shown as recorded by the fallback renderer, says why.
  */
 import { Match, Switch, type JSX } from 'solid-js';
 import { t } from '../../intl';
@@ -51,6 +52,20 @@ export const DocumentVersionNotice = (
     <Match when={props.version.kind === 'unknown'}>
       <Alert severity="warning" testId="document-version-notice">
         {t('messages.document-unknown-version')}
+      </Alert>
+    </Match>
+    <Match when={props.version.kind === 'unreachable' && props.version} keyed>
+      {v => (
+        <Alert severity="warning" testId="document-version-notice">
+          {t('messages.document-unreachable-version', {
+            version: String(v.version),
+          })}
+        </Alert>
+      )}
+    </Match>
+    <Match when={props.version.kind === 'unavailable'}>
+      <Alert severity="warning" testId="document-version-notice">
+        {t('messages.document-form-unavailable')}
       </Alert>
     </Match>
   </Switch>
