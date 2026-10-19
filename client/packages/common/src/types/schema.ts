@@ -197,6 +197,7 @@ export enum ActivityLogNodeType {
   StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
+  StockCampaignChange = 'STOCK_CAMPAIGN_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
   StockLineEdit = 'STOCK_LINE_EDIT',
@@ -387,6 +388,11 @@ export type AlreadyInitialised = InitialiseAsCentralServerErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type AmcForecastNode = {
+  __typename: 'AmcForecastNode';
+  averageMonthlyConsumption: Scalars['Float']['output'];
+};
+
 export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
   __typename: 'AncillaryCycleDetected';
   description: Scalars['String']['output'];
@@ -427,6 +433,8 @@ export type AncillaryItemNode = {
   ancillaryItemId: Scalars['String']['output'];
   /** Right-hand side of the stored `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['output'];
+  /** Ordered against the principal's quantity net of its wastage rate */
+  excludePrincipalWastage: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   /** The principal item — the item this ancillary supply should be ordered alongside. */
   item?: Maybe<ItemNode>;
@@ -440,6 +448,32 @@ export type AncillaryMaxDepthExceeded = UpsertAncillaryItemErrorInterface & {
   actual: Scalars['Int']['output'];
   description: Scalars['String']['output'];
   max: Scalars['Int']['output'];
+};
+
+export type AncillaryRatioForecastNode = {
+  __typename: 'AncillaryRatioForecastNode';
+  /** One per principal line on the order */
+  principals: Array<AncillaryRatioPrincipalNode>;
+};
+
+export type AncillaryRatioPrincipalNode = {
+  __typename: 'AncillaryRatioPrincipalNode';
+  ancillaryQuantity: Scalars['Float']['output'];
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  /**
+   * The configured ratio: `itemQuantity` principal units to `ancillaryQuantity`
+   * ancillary units, as on `AncillaryItemNode`
+   */
+  itemQuantity: Scalars['Float']['output'];
+  /** This principal's share of the line's monthly demand */
+  monthlyConsumption: Scalars['Float']['output'];
+  /** The principal line's monthly demand */
+  principalMonthlyConsumption: Scalars['Float']['output'];
+  /** The principal's monthly demand net of the deducted wastage */
+  principalUsableConsumption: Scalars['Float']['output'];
+  /** The principal's wastage rate (%) deducted before the ratio applies; 0 when none */
+  wastageRate: Scalars['Float']['output'];
 };
 
 /**
@@ -1262,6 +1296,11 @@ export type CampaignFilterInput = {
   name?: InputMaybe<StringFilterInput>;
 };
 
+export enum CampaignKindNode {
+  Campaign = 'CAMPAIGN',
+  Routine = 'ROUTINE',
+}
+
 export type CampaignMutations = {
   __typename: 'CampaignMutations';
   deleteCampaign: DeleteCampaignResponse;
@@ -1285,6 +1324,7 @@ export type CampaignNode = {
   __typename: 'CampaignNode';
   endDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  kind: CampaignKindNode;
   name: Scalars['String']['output'];
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
@@ -1327,6 +1367,12 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotChangeTargetMonthsOfStock =
+  UpdateRequestRequisitionErrorInterface & {
+    __typename: 'CannotChangeTargetMonthsOfStock';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
   __typename: 'CannotDeleteCentralSite';
   description: Scalars['String']['output'];
@@ -1365,11 +1411,6 @@ export type CannotDeleteRequisitionWithLines =
     description: Scalars['String']['output'];
   };
 
-export type CannotEditAdjustedQuantity = PurchaseOrderLineError & {
-  __typename: 'CannotEditAdjustedQuantity';
-  description: Scalars['String']['output'];
-};
-
 export type CannotEditInvoice =
   AddToInboundShipmentFromMasterListErrorInterface &
     AddToOutboundShipmentFromMasterListErrorInterface &
@@ -1405,11 +1446,6 @@ export type CannotEditPurchaseOrder =
       __typename: 'CannotEditPurchaseOrder';
       description: Scalars['String']['output'];
     };
-
-export type CannotEditQuantityBelowReceived = PurchaseOrderLineError & {
-  __typename: 'CannotEditQuantityBelowReceived';
-  description: Scalars['String']['output'];
-};
 
 export type CannotEditRequestedQuantity = PurchaseOrderLineError & {
   __typename: 'CannotEditRequestedQuantity';
@@ -3532,6 +3568,52 @@ export type FloatStorePrefInput = {
   value: Scalars['Float']['input'];
 };
 
+/**
+ * The inputs and steps behind a line's monthly demand, one member per method. None holds
+ * a months-of-stock figure: the requisition's thresholds supply those.
+ */
+export type ForecastBreakdownNode =
+  | AmcForecastNode
+  | AncillaryRatioForecastNode
+  | PopulationForecastNode;
+
+/** Where a requisition line's monthly demand comes from. */
+export enum ForecastMethodNode {
+  /** The line's average monthly consumption */
+  Amc = 'AMC',
+  /** The order's principal lines' monthly demand × the configured ancillary ratios */
+  AncillaryRatio = 'ANCILLARY_RATIO',
+  /** The vaccine courses covering the item, for the store's population served */
+  Population = 'POPULATION',
+}
+
+export type ForecastMethodNotAvailable =
+  RequisitionLineForecastPreviewErrorInterface &
+    UpdateRequestRequisitionLineErrorInterface & {
+      __typename: 'ForecastMethodNotAvailable';
+      description: Scalars['String']['output'];
+      unavailableReason: ForecastMethodUnavailableReasonNode;
+    };
+
+export type ForecastMethodOptionNode = {
+  __typename: 'ForecastMethodOptionNode';
+  isAvailable: Scalars['Boolean']['output'];
+  method: ForecastMethodNode;
+  /** Null when available */
+  unavailableReason?: Maybe<ForecastMethodUnavailableReasonNode>;
+};
+
+export enum ForecastMethodUnavailableReasonNode {
+  /** The store's facility record carries no population served */
+  NoPopulationServed = 'NO_POPULATION_SERVED',
+  /** No line on the order is a principal of the item */
+  NoPrincipalOnOrder = 'NO_PRINCIPAL_ON_ORDER',
+  /** No vaccine course covers the item */
+  NoVaccineCourse = 'NO_VACCINE_COURSE',
+  /** The population-based forecasting preference is off */
+  PopulationPreferenceOff = 'POPULATION_PREFERENCE_OFF',
+}
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -4655,7 +4737,13 @@ export type InsertRequestRequisitionInput = {
   /** Defaults to 2 weeks from now */
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  maxMonthsOfStock: Scalars['Float']['input'];
+  /**
+   * Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+   * facility record carries no supply interval. Ignored, the store's supply interval +
+   * safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+   * preference is off and it has a supply interval
+   */
+  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock: Scalars['Float']['input'];
   otherPartyId: Scalars['String']['input'];
   theirReference?: InputMaybe<Scalars['String']['input']>;
@@ -7959,6 +8047,30 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PopulationForecastCourseNode = {
+  __typename: 'PopulationForecastCourseNode';
+  annualTargetDoses: Scalars['Float']['output'];
+  courseName: Scalars['String']['output'];
+  coverageRate: Scalars['Float']['output'];
+  /** Null when the course targets the whole population */
+  demographicName?: Maybe<Scalars['String']['output']>;
+  dosesPerUnit: Scalars['Float']['output'];
+  lossFactor: Scalars['Float']['output'];
+  monthlyDoses: Scalars['Float']['output'];
+  monthlyUnits: Scalars['Float']['output'];
+  numberOfDoses: Scalars['Int']['output'];
+  targetPopulation: Scalars['Float']['output'];
+  wastageRate: Scalars['Float']['output'];
+};
+
+export type PopulationForecastNode = {
+  __typename: 'PopulationForecastNode';
+  /** One per covering course-and-demographic */
+  courses: Array<PopulationForecastCourseNode>;
+  /** Null on a forecast converted from an older site's data */
+  populationServed?: Maybe<Scalars['Float']['output']>;
+};
+
 /** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
 export type PreferenceDescriptionContext = {
   storeId?: InputMaybe<Scalars['String']['input']>;
@@ -7992,6 +8104,7 @@ export enum PreferenceKey {
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
   BlindStocktake = 'blindStocktake',
+  CanChangeTargetMonthsOfStock = 'canChangeTargetMonthsOfStock',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
@@ -8029,7 +8142,6 @@ export enum PreferenceKey {
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
-  UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
@@ -8071,6 +8183,7 @@ export type PreferencesNode = {
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
   blindStocktake: Scalars['Boolean']['output'];
+  canChangeTargetMonthsOfStock: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
@@ -8111,7 +8224,6 @@ export type PreferencesNode = {
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
-  useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
@@ -8617,14 +8729,13 @@ export type PurchaseOrderLineFilterInput = {
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
+  receivedLessThanRequested?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
   supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -8632,10 +8743,14 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
+  /** The line's stored total with the order's supplier discount apportioned to it */
+  lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
+  /** The pack price with the order's supplier discount apportioned to the line */
+  pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
@@ -8663,7 +8778,6 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
-  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
@@ -8983,6 +9097,12 @@ export type Queries = {
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
+  /**
+   * An item's request line as the line editor's draft would save it, under a chosen
+   * forecast method, without saving anything: the line already on the order, or the one
+   * adding the item would create
+   */
+  requisitionLineForecastPreview: RequisitionLineForecastPreviewResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
@@ -9651,6 +9771,11 @@ export type QueriesRequisitionLineChartArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesRequisitionLineForecastPreviewArgs = {
+  input: RequisitionLineForecastPreviewInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesRequisitionsArgs = {
   filter?: InputMaybe<RequisitionFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -9930,6 +10055,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
   RequisitionLineChartErrorInterface &
+  RequisitionLineForecastPreviewErrorInterface &
   RequisitionLineStatsErrorInterface &
   ScannedDataParseErrorInterface &
   SupplyRequestedQuantityErrorInterface &
@@ -10201,6 +10327,48 @@ export type RequisitionLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type RequisitionLineForecastPreviewError = {
+  __typename: 'RequisitionLineForecastPreviewError';
+  error: RequisitionLineForecastPreviewErrorInterface;
+};
+
+export type RequisitionLineForecastPreviewErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type RequisitionLineForecastPreviewInput = {
+  /**
+   * The activity to preview the line as held for — its stock on hand, and the suggestion
+   * computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+   * `{ value: null }` previews it as held for nothing in particular
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
+  /**
+   * Null keeps the line's own method: an existing line's stored one, or the default a
+   * new line would take
+   */
+  forecastMethod?: InputMaybe<ForecastMethodNode>;
+  itemId: Scalars['String']['input'];
+  requisitionId: Scalars['String']['input'];
+};
+
+export type RequisitionLineForecastPreviewNode = {
+  __typename: 'RequisitionLineForecastPreviewNode';
+  availableStockOnHand: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
+  forecastBreakdown: ForecastBreakdownNode;
+  forecastMethod: ForecastMethodNode;
+  forecastMethodOptions: Array<ForecastMethodOptionNode>;
+  forecastMonthlyConsumption: Scalars['Float']['output'];
+  suggestedQuantity: Scalars['Float']['output'];
+  /** The requisition's target months × the monthly demand */
+  targetStock: Scalars['Float']['output'];
+};
+
+export type RequisitionLineForecastPreviewResponse =
+  | RequisitionLineForecastPreviewError
+  | RequisitionLineForecastPreviewNode;
+
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
   additionInUnits: Scalars['Float']['output'];
@@ -10219,11 +10387,24 @@ export type RequisitionLineNode = {
   availableStockOnHand: Scalars['Float']['output'];
   availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
-  forecastTotalDoses?: Maybe<Scalars['Float']['output']>;
-  forecastTotalUnits?: Maybe<Scalars['Float']['output']>;
+  /** The inputs and steps behind the line's monthly demand */
+  forecastBreakdown: ForecastBreakdownNode;
+  /** Where the line's monthly demand comes from */
+  forecastMethod: ForecastMethodNode;
+  /**
+   * Every forecast method, an unavailable one with its reason. Empty on a response
+   * requisition's line, whose forecast is the customer's.
+   */
+  forecastMethodOptions: Array<ForecastMethodOptionNode>;
+  /**
+   * The line's monthly demand in units: what its suggested quantity, months of stock and
+   * target stock work from, whatever its forecast method
+   */
+  forecastMonthlyConsumption: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
@@ -10262,7 +10443,8 @@ export type RequisitionLineNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Float']['output'];
-  vaccineCourses?: Maybe<Scalars['String']['output']>;
+  /** The requisition's target months × the line's monthly demand */
+  targetStock: Scalars['Float']['output'];
 };
 
 export type RequisitionLineNodeItemStatsArgs = {
@@ -10344,6 +10526,12 @@ export type RequisitionNode = {
    */
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
+  /**
+   * The ordering store's supply interval and safety buffer (from its facility record) as
+   * they stand now, null when it carries no supply interval. A general
+   * order's default target months of stock.
+   */
+  supplyIntervalAndBuffer?: Maybe<SupplyIntervalAndBufferNode>;
   theirReference?: Maybe<Scalars['String']['output']>;
   type: RequisitionNodeType;
   /**
@@ -11446,6 +11634,13 @@ export type SupplierReturnLineNode = {
   stockLineId: Scalars['String']['output'];
 };
 
+export type SupplyIntervalAndBufferNode = {
+  __typename: 'SupplyIntervalAndBufferNode';
+  /** Zero when the facility record carries none */
+  safetyBufferMonths: Scalars['Float']['output'];
+  supplyIntervalMonths: Scalars['Float']['output'];
+};
+
 export type SupplyRequestedQuantityError = {
   __typename: 'SupplyRequestedQuantityError';
   error: SupplyRequestedQuantityErrorInterface;
@@ -11548,6 +11743,8 @@ export type SyncFileReferenceNode = {
   status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
   totalBytes: Scalars['Int']['output'];
+  user?: Maybe<UserNode>;
+  userId?: Maybe<Scalars['String']['output']>;
 };
 
 export enum SyncFileReferenceNodeStatus {
@@ -12691,7 +12888,6 @@ export type UpdatePurchaseOrderLineError = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
-  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
@@ -12759,7 +12955,14 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 };
 
 export type UpdateRequestRequisitionLineInput = {
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Changing the method recomputes the line's monthly demand, breakdown and suggested
+   * quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
+   * is untouched
+   */
+  forecastMethod?: InputMaybe<ForecastMethodNode>;
   id: Scalars['String']['input'];
   optionId?: InputMaybe<Scalars['String']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
@@ -13174,6 +13377,7 @@ export type UpsertAncillaryItemInput = {
   ancillaryItemId: Scalars['String']['input'];
   /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['input'];
+  excludePrincipalWastage?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   /** Left-hand side of the user-entered `x:y` ratio (principal count). */
@@ -13216,6 +13420,7 @@ export type UpsertCampaignErrorInterface = {
 export type UpsertCampaignInput = {
   endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  kind?: InputMaybe<CampaignKindNode>;
   name: Scalars['String']['input'];
   startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
@@ -13263,6 +13468,7 @@ export type UpsertPreferencesInput = {
   >;
   backdating?: InputMaybe<BackdatingInput>;
   blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
+  canChangeTargetMonthsOfStock?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;
@@ -13319,7 +13525,6 @@ export type UpsertPreferencesInput = {
   transferStockToInternalCustomersAtCostPrice?: InputMaybe<
     Scalars['Boolean']['input']
   >;
-  useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<
     Array<WarnWhenMissingRecentStocktakeInput>

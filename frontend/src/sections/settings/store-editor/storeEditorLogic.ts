@@ -416,7 +416,6 @@ export type StorePreferenceGroup = CatalogueGroup<
 const GROUP_OF: Partial<
   Record<StorePreference['key'], PreferenceGroupDef<PreferenceGroupLabelKey>>
 > = {
-  useProcurementFunctionality: PREFERENCE_GROUPS.procurement,
   authorisePurchaseOrder: PREFERENCE_GROUPS.procurement,
   externalInboundShipmentLinesMustBeAuthorised: PREFERENCE_GROUPS.procurement,
 };
@@ -465,7 +464,6 @@ const BOOL_PREFERENCE_KEYS = [
   'showIndicativePriceInRequisitions',
   'blindStocktake',
   'orderInPacks',
-  'useProcurementFunctionality',
   'sortByVvmStatusThenExpiry',
   'useSimplifiedMobileUi',
   'disableManualReturns',
@@ -477,6 +475,7 @@ const BOOL_PREFERENCE_KEYS = [
   'selectDestinationStoreForAnInternalOrder',
   'externalInboundShipmentLinesMustBeAuthorised',
   'doNotPrintPlaceholderLineLabels',
+  'canChangeTargetMonthsOfStock',
 ] as const satisfies readonly PreferenceKeyOf<boolean>[];
 const NUMBER_PREFERENCE_KEYS = [
   'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',

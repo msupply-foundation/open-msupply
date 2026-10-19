@@ -58,7 +58,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
@@ -66,6 +65,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            can_change_target_months_of_stock,
             external_inbound_shipment_lines_must_be_authorised,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
@@ -121,7 +121,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         // Store preferences
         append_if_type(blind_stocktake, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
-        append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
@@ -139,6 +138,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             &mut prefs,
             &input,
         )?;
+        append_if_type(can_change_target_months_of_stock, &mut prefs, &input)?;
         append_if_type(
             external_inbound_shipment_lines_must_be_authorised,
             &mut prefs,

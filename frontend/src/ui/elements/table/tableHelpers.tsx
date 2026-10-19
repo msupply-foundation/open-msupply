@@ -329,6 +329,10 @@ export const formatCurrencyCell = (
   code?: string | null
 ): string => (value == null ? '' : formatCurrency(value, code));
 
+// A summed footer's figure over the rows on screen.
+export const sumBy = <T,>(rows: T[], value: (row: T) => number): number =>
+  rows.reduce((total, row) => total + value(row), 0);
+
 // `currency` is read per render, so a table whose document carries its own
 // currency (a purchase order) formats every cell and aggregate in it.
 export const getCurrencyCell = <T,>(

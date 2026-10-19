@@ -22,6 +22,9 @@ pub use self::requisition::*;
 pub mod requisition_line;
 pub use self::requisition_line::*;
 
+pub mod forecast;
+pub use self::forecast::*;
+
 pub mod stock_line;
 pub use self::stock_line::*;
 

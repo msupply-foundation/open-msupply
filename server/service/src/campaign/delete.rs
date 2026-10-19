@@ -85,8 +85,7 @@ mod test {
                     UpsertCampaign {
                         id: id.to_string(),
                         name: id.to_string(),
-                        start_date: None,
-                        end_date: None,
+                        ..Default::default()
                     },
                 )
                 .unwrap();

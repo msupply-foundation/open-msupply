@@ -4,7 +4,6 @@ import {
   useUrlQueryParams,
   useEditModal,
   useTranslation,
-  CampaignNode,
   useDeleteConfirmation,
   useNotification,
   usePaginatedMaterialTable,
@@ -80,7 +79,7 @@ export const CampaignsList = () => {
     []
   );
 
-  const onRowClick = (row: CampaignNode) => {
+  const onRowClick = (row: CampaignRowFragment) => {
     const selected = data?.nodes.find(campaign => campaign.id === row.id);
     updateDraft(selected as DraftCampaign);
     onOpen();

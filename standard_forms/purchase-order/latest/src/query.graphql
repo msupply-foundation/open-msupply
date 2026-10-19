@@ -30,7 +30,6 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           }
           expectedDeliveryDate
           requestedNumberOfUnits
-          adjustedNumberOfUnits
           requestedPackSize
           pricePerPackAfterDiscount
           supplierItemCode
@@ -40,7 +39,14 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       foreignExchangeRate
       status
       confirmedDatetime
+      orderTotalBeforeDiscount
       orderTotalAfterDiscount
+      supplierDiscountAmount
+      agentCommission
+      documentCharge
+      communicationsCharge
+      insuranceCharge
+      freightCharge
       currency {
         code
       }

@@ -147,10 +147,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.order_in_packs)
     }
 
-    pub async fn use_procurement_functionality(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_procurement_functionality)
-    }
-
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
         self.load_preference(&self.preferences.sort_by_vvm_status_then_expiry)
     }
@@ -185,6 +181,10 @@ impl PreferencesNode {
                 .preferences
                 .select_destination_store_for_an_internal_order,
         )
+    }
+
+    pub async fn can_change_target_months_of_stock(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.can_change_target_months_of_stock)
     }
 
     pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
@@ -386,7 +386,6 @@ pub enum PreferenceKey {
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
-    UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
@@ -395,6 +394,7 @@ pub enum PreferenceKey {
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    CanChangeTargetMonthsOfStock,
     ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
