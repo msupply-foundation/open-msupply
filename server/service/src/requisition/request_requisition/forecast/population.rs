@@ -93,6 +93,25 @@ impl CoveringCourses {
         self.0.get(item_id).is_some_and(|groups| !groups.is_empty())
     }
 
+    /// The share of `item_id`'s demand its covering courses expect to be wasted, as a
+    /// percentage: each course's rate, weighted by its monthly units as the item's
+    /// Population forecast weights them (the population served cancels out). A rate the
+    /// forecast ignores counts as none, and an item no course covers has none.
+    pub(super) fn wastage_rate(&self, item_id: &str) -> f64 {
+        let courses = self.forecast(item_id, 1.0).courses;
+        let total: f64 = courses.iter().map(|course| course.monthly_units).sum();
+        if total <= 0.0 {
+            return 0.0;
+        }
+        courses
+            .iter()
+            .map(|course| {
+                course.monthly_units * honoured_wastage_rate(course.wastage_rate).unwrap_or(0.0)
+            })
+            .sum::<f64>()
+            / total
+    }
+
     /// The item's Population forecast for a store serving `population_served`. One
     /// contribution per covering course-and-demographic; the line's monthly demand is the
     /// sum of their monthly units.
@@ -115,19 +134,24 @@ impl CoveringCourses {
     }
 }
 
+/// Nothing validates a configured wastage rate; outside [0, 100) it has no meaningful
+/// loss factor (100% divides by zero, above it turns demand negative), so it's ignored
+fn honoured_wastage_rate(wastage_rate: f64) -> Option<f64> {
+    (0.0..100.0).contains(&wastage_rate).then_some(wastage_rate)
+}
+
 fn course_forecast(group: &CourseGroup, population_served: f64) -> PopulationForecastCourse {
     let target_population = population_served * (group.population_percentage / 100.0);
-    // Nothing validates a configured wastage rate; outside [0, 100) it has no meaningful
-    // loss factor (100% divides by zero, above it turns demand negative), so it's ignored
-    let loss_factor = if (0.0..100.0).contains(&group.wastage_rate) {
-        1.0 / (1.0 - group.wastage_rate / 100.0)
-    } else {
-        log::warn!(
-            "Ignoring wastage rate {}% on course {}",
-            group.wastage_rate,
-            group.course_name
-        );
-        1.0
+    let loss_factor = match honoured_wastage_rate(group.wastage_rate) {
+        Some(wastage_rate) => 1.0 / (1.0 - wastage_rate / 100.0),
+        None => {
+            log::warn!(
+                "Ignoring wastage rate {}% on course {}",
+                group.wastage_rate,
+                group.course_name
+            );
+            1.0
+        }
     };
     let number_of_doses = group.dose_labels.len() as i32;
     let annual_target_doses =
@@ -223,6 +247,55 @@ mod tests {
         let courses =
             CoveringCourses::load(&connection, "store_a", &["item_a".to_string()]).unwrap();
         assert!(!courses.covers("item_a"));
+        assert_eq!(courses.wastage_rate("item_a"), 0.0);
+    }
+
+    #[actix_rt::test]
+    async fn wastage_rate_is_the_store_effective_rate() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "wastage_rate_is_the_store_effective_rate",
+            MockDataInserts::all(),
+            MockData {
+                vaccine_courses: vec![mock_vaccine_course()],
+                ..Default::default()
+            },
+        )
+        .await;
+        let item_id = mock_vaccine_item_a().id;
+
+        // store_a overrides the course's 10% with 50%; store_b takes the course's own
+        let item_ids = std::slice::from_ref(&item_id);
+        let courses = CoveringCourses::load(&connection, "store_a", item_ids).unwrap();
+        assert_eq!(courses.wastage_rate(&item_id), 50.0);
+        let courses = CoveringCourses::load(&connection, "store_b", item_ids).unwrap();
+        assert_eq!(courses.wastage_rate(&item_id), 10.0);
+    }
+
+    #[test]
+    fn wastage_rate_weighs_courses_by_their_units() {
+        let group = |wastage_rate: f64, coverage_rate: f64| CourseGroup {
+            course_name: format!("Course {wastage_rate}"),
+            demographic_name: None,
+            coverage_rate,
+            wastage_rate,
+            population_percentage: 100.0,
+            vaccine_doses: 1,
+            dose_labels: HashSet::from(["Dose 1".to_string()]),
+        };
+        // Weighted by the units each course orders, wastage included: 25% coverage at a
+        // loss factor of 2 orders as much as 40% coverage at 1.25, so (50 + 20) / 2
+        let courses = CoveringCourses(HashMap::from([(
+            "item".to_string(),
+            vec![group(50.0, 25.0), group(20.0, 40.0)],
+        )]));
+        assert!((courses.wastage_rate("item") - 35.0).abs() < 1e-9);
+
+        // An ignored (out of range) rate counts as none
+        let courses = CoveringCourses(HashMap::from([(
+            "item".to_string(),
+            vec![group(150.0, 100.0)],
+        )]));
+        assert_eq!(courses.wastage_rate("item"), 0.0);
     }
 
     #[test]

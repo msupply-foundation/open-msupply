@@ -89,6 +89,8 @@ fragment RequisitionDetailLine on RequisitionLineNode {
         principalMonthlyConsumption
         itemQuantity
         ancillaryQuantity
+        wastageRate
+        principalUsableConsumption
         monthlyConsumption
       }
     }

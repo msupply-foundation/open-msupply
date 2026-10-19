@@ -8,6 +8,7 @@ import {
   forecastMethodLabel,
   populationSteps,
   principalItemLabel,
+  principalWastageDeduction,
   targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
@@ -76,11 +77,30 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
     principalMonthlyConsumption: 100,
     itemQuantity: 100,
     ancillaryQuantity: 1,
+    wastageRate: 0,
+    principalUsableConsumption: 100,
     monthlyConsumption: 1,
   };
 
   it('shows the ratio as ancillary : principal', () => {
     expect(ancillaryRatio(principal)).toBe('1 : 100');
+  });
+
+  // Rules › the Ancillary ratio method: a link that excludes the principal's
+  // wastage shows the deduction; one ordering for the wasted units shows none.
+  it('shows the wastage deducted, only when there is some', () => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+    expect(principalWastageDeduction(principal)).toBeUndefined();
+    expect(
+      principalWastageDeduction({
+        ...principal,
+        wastageRate: 50,
+        principalUsableConsumption: 50,
+        monthlyConsumption: 0.5,
+      })
+    ).toBe('− 50% wastage');
+    setDictionaries({});
   });
 
   it('names the principal item by code and name, else its id', () => {

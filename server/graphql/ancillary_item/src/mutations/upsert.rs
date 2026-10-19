@@ -20,6 +20,7 @@ pub struct UpsertAncillaryItemInput {
     pub item_quantity: f64,
     /// Right-hand side of the user-entered `x:y` ratio (ancillary count).
     pub ancillary_quantity: f64,
+    pub exclude_principal_wastage: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -108,6 +109,7 @@ impl UpsertAncillaryItemInput {
             ancillary_item_id,
             item_quantity,
             ancillary_quantity,
+            exclude_principal_wastage,
         } = self;
 
         UpsertAncillaryItem {
@@ -116,6 +118,7 @@ impl UpsertAncillaryItemInput {
             ancillary_item_id,
             item_quantity,
             ancillary_quantity,
+            exclude_principal_wastage,
         }
     }
 }

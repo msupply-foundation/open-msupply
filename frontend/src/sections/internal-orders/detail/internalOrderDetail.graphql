@@ -75,6 +75,8 @@ fragment InternalOrderLine on RequisitionLineNode {
         principalMonthlyConsumption
         itemQuantity
         ancillaryQuantity
+        wastageRate
+        principalUsableConsumption
         monthlyConsumption
       }
     }

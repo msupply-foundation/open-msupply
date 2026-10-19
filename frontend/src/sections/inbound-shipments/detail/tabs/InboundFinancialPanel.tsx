@@ -27,6 +27,9 @@ type Line = InboundLineFragment;
 const money = (value: number): string =>
   formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+const percent = (value: number): string =>
+  `${formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+
 // Header label with its currency code appended, e.g. "Line total (EUR)".
 const withCode = (label: string, code: string): string =>
   code ? `${label} (${code})` : label;
@@ -40,7 +43,9 @@ const withCode = (label: string, code: string): string =>
 // reflects the line's actual cost after the charge/rate cascade. Every money
 // column names
 // its currency in the header; the PO currency and the store's home (local)
-// currency are distinct columns, and the PO-currency + local-cost columns
+// currency are distinct columns. The PO price columns (before discount,
+// discount %, after discount) show on every shipment so a PO line discount is
+// visible on the receipt; the local-cost and PO-currency line total columns
 // appear only when the shipment is in a foreign currency.
 //
 // The three line-total columns carry summed footers; the Name column's footer
@@ -75,6 +80,12 @@ export const InboundFinancialPanel: Component<{
   // columns() from a captured rate (below).
   const poPricePerPack = (line: Line) =>
     line.purchaseOrderLine?.pricePerPackAfterSupplierDiscount ?? 0;
+  // Not stored on the PO line: the relation between its two prices.
+  const discountPercentage = (line: Line) => {
+    const before = line.purchaseOrderLine?.pricePerPackBeforeDiscount ?? 0;
+    const after = line.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0;
+    return before > 0 ? ((before - after) / before) * 100 : 0;
+  };
   // The two line totals read the line's stored figures (see the header note).
   const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
   const lineTotalLocal = (line: Line) => line.totalBeforeTax;
@@ -119,7 +130,21 @@ export const InboundFinancialPanel: Component<{
     ...(footerTotal !== undefined ? { footer: () => money(footerTotal) } : {}),
   });
 
-  // The PO-currency and local-cost columns (poPrice, packCostPrice,
+  // A PO price column: blank on a line with no PO line, rather than 0.
+  const poColumn = (
+    id: string,
+    header: string,
+    value: (line: Line) => number,
+    format: (value: number) => string = money
+  ): Column<Line, never> => ({
+    ...moneyColumn(id, header, value),
+    cell: info =>
+      info.row.original.purchaseOrderLine
+        ? format(info.getValue<number>())
+        : '',
+  });
+
+  // The local-cost and PO-currency line total columns (packCostPrice,
   // lineTotalPo) show only in a foreign currency — spread in conditionally.
   // Reading rate()/foreign()/rows here means columns() rebuilds when any of
   // them change; the per-column closures then close over plain values.
@@ -159,13 +184,24 @@ export const InboundFinancialPanel: Component<{
         header: () => t('label.unit'),
         ...getCellDefinition('unit'),
       },
+      poColumn(
+        'poPriceBeforeDiscount',
+        withCode(t('label.po-price-before-discount'), poCode()),
+        line => line.purchaseOrderLine?.pricePerPackBeforeDiscount ?? 0
+      ),
+      poColumn(
+        'discountPercentage',
+        t('label.discount'),
+        discountPercentage,
+        percent
+      ),
+      poColumn(
+        'poPrice',
+        withCode(t('label.po-price-per-pack'), poCode()),
+        poPricePerPack
+      ),
       ...(foreign()
         ? [
-            moneyColumn(
-              'poPrice',
-              withCode(t('label.po-price-per-pack'), poCode()),
-              poPricePerPack
-            ),
             moneyColumn(
               'packCostPrice',
               withCode(t('label.pack-cost-price'), localCode()),

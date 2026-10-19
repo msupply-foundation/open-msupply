@@ -332,6 +332,10 @@ type AncillaryItemNode {
 	Right-hand side of the stored `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	"""
+	Ordered against the principal's quantity net of its wastage rate
+	"""
+	excludePrincipalWastage: Boolean!
 	itemId: String!
 	ancillaryItemId: String!
 	"""
@@ -370,6 +374,14 @@ type AncillaryRatioPrincipalNode {
 	"""
 	itemQuantity: Float!
 	ancillaryQuantity: Float!
+	"""
+	The principal's wastage rate (%) deducted before the ratio applies; 0 when none
+	"""
+	wastageRate: Float!
+	"""
+	The principal's monthly demand net of the deducted wastage
+	"""
+	principalUsableConsumption: Float!
 	"""
 	This principal's share of the line's monthly demand
 	"""
@@ -11451,6 +11463,7 @@ input UpsertAncillaryItemInput {
 	Right-hand side of the user-entered `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	excludePrincipalWastage: Boolean
 }
 
 union UpsertAncillaryItemResponse = UpsertAncillaryItemError | AncillaryItemNode
