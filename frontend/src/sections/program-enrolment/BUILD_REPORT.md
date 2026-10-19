@@ -15,7 +15,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 
   Every other refusal shows "Failed to save program enrolment" (`error.failed-to-save-program-enrolment`), with the server's reason behind an `ErrorDetails` disclosure (`enrolment-save-error`). Both banners sit in the dialog's `footer` slot, above the actions rule, so the buttons stay at the inline end.
 
-- **S4 default form**: unchanged (`domain/documentForm/defaults.tsx`).
+- **S4 default form** (`domain/documentForm/defaults.tsx`): the form is unchanged. Next to it, `unaskedEnrolmentAnswers` names what a program's form rules require that the default form doesn't ask for (`.52`). It reads the form's paths from the same constant the form places, and it reaches the dialog through the form library, so the validator stays in the lazy chunk.
 - **S5 enrolment ID field** (`domain/documentForm/EnrolmentIdField.tsx`, `enrolmentId.ts`, `enrolmentId.graphql`), in the form library chunk.
   - **What it does:**
     - On a new enrolment, it generates the ID as the form opens.
@@ -27,7 +27,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 - **Engine:** `Draft.fill(path, value)` writes as part of the starting state, so the generated ID is not an edit (rules § leaving with unsaved changes). `Draft.setError(path, message, label?)` fails a field from the form's own check, like a schema error, and is cleared when the draft is seeded again. `Draft.wait(work)` makes a save wait: `save()` awaits the work only when some is pending, so a form with none saves as before. `SaveOutcome.refused` carries `forbidden` with the permission names.
 - **Wiring:** `PatientDetailView` imports the two components from here. Its TO-DO now covers only New encounter and the encounter screens (H26, #789).
 - **Locale:** two new keys, `messages.enrolment-changed-since-opened` and `messages.enrolment-form-not-installed`, in `en/` only.
-- **Test ids** ([`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md)): `enrolment-save-error`, `enrolment-newer-version`, `enrolment-id`, `enrolment-id-generate`.
+- **Test ids** ([`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md)): `enrolment-save-error`, `enrolment-newer-version`, `enrolment-id`, `enrolment-id-generate`, `program-option-<documentType>-enrolled` (the Enrolled mark, through `RadioOption.descriptionTestId`), and the standard footer's `dialog-button-save`.
 
 ## Spec refinements the build exposed (made on this branch)
 
@@ -77,7 +77,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 | `.25` still one enrolment per program              | — (the server's)                                                                              | —                                                                                                                                 |
 | `.26` a save over a newer version is refused       | `createDocumentForm.saveGuards.test.tsx`, `EnrolmentModal.test.tsx`                           | ✅ banner; the other user's version still newest                                                                                  |
 | `.27` reopening shows the newer version            | `createDocumentForm.saveGuards.test.tsx`                                                      | ✅ "OTHER-USER-1"                                                                                                                 |
-| `.28` not found                                    | — (built with H8)                                                                             | —                                                                                                                                 |
+| `.28` not found: Cancel only, no Save              | `EnrolmentModal.test.tsx`; e2e                                                                | —                                                                                                                                 |
 | `.29` generated as a new enrolment opens           | `EnrolmentIdField.test.tsx`                                                                   | ✅ GRY-0001                                                                                                                       |
 | `.30` Generate asks first; declining keeps         | `EnrolmentIdField.test.tsx`                                                                   | ✅ "Are you sure? · This will create a new ID and cannot be undone."                                                              |
 | `.31` confirming replaces                          | `EnrolmentIdField.test.tsx`                                                                   | ✅ GRY-0002 → GRY-0003                                                                                                            |
@@ -88,7 +88,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 | `.36` a typed duplicate is flagged, any program    | `enrolmentId.test.ts`, `EnrolmentIdField.test.tsx`                                            | ✅ "Duplicated ID: WIRE-DUP-1", held in another program                                                                           |
 | `.37` a flagged ID blocks the save                 | `EnrolmentIdField.test.tsx`, `createDocumentForm.saveGuards.test.tsx`, `documentForm.test.ts` | ✅ refused, "Enrolment ID: Duplicated ID: WIRE-DUP-1" in the summary; a pause on `GRY-000` then `GRY-0005` refused, nothing saved |
 | `.51` a save mid-check waits for the check         | `EnrolmentIdField.test.tsx`, `createDocumentForm.saveGuards.test.tsx`                         | ✅ Save pressed straight after typing `GRY-0005`: waited, then refused                                                            |
-| `.52` the not-installed notice, no Save            | `EnrolmentModal.test.tsx`                                                                     | ✅ HIV Care (rspec): "…The program also asks for: Status.", no Save, no error summary; an open-schema program keeps its Save      |
+| `.52` the not-installed notice, no Save            | `EnrolmentModal.test.tsx`, `defaults.test.tsx`                                                | ✅ HIV Care (rspec): "…The program also asks for: Status.", no Save, no error summary; an open-schema program keeps its Save      |
 | `.53` Vaccinations tab: immunisation programs only | `programEnrolmentApi.test.ts`                                                                 | ✅ E2E Immunisation · Rspec Immunisation (Programs tab: all six)                                                                  |
 | `.54` surrounding spaces dropped                   | `EnrolmentIdField.test.tsx`                                                                   | ✅ `" CARD 890 5 "` saved as `CARD 890 5`                                                                                         |
 | `.55` duplicates ignore case                       | `enrolmentId.test.ts`                                                                         | ✅ `" gry-0005 "` flagged; `GRY-00051` not                                                                                        |
@@ -125,13 +125,13 @@ The run ([`exploratory/workflows/program-enrolment.md`](../../../exploratory/wor
 - **The ID programs' form** is a plugin the suite serves itself, per page, by answering plugin discovery and the bundle request. Nothing is installed on the server, and each test gets its own ID format and number counter.
 - **Out of scope:**
   - `.4`, covered by `ProgramPickerDialog.test.tsx`;
-  - `.59`, covered by `EnrolmentIdField.test.tsx` (no user in the datafile may open an enrolment at a program-module store without the store's document edit permission);
+  - `.59`, covered by `EnrolmentIdField.test.tsx`, which asserts no draw and an empty field;
   - `.43`–`.50`, pending #1491.
-- **A finding, resolved in the spec:** `.28` said a not-found enrolment has no Save; the app keeps Save, disabled. The app's other editors with a not-found state do the same (the immunisation course editor, the patient Details tab), so `.28` was reworded (`ENR-20261015-F3`, spec README decision 11).
+- **A finding, resolved in the spec, then reversed in review:** `.28` said a not-found enrolment has no Save; the app kept Save, disabled, as the app's other editors with a not-found state do (the immunisation course editor, the patient Details tab), so `.28` was reworded (`ENR-20261015-F3`, spec README decision 11). The PR review (2026-10-19) applied ui-standards › controls § blocked affordances instead: nothing on the screen can bring the enrolment back, so Save is a permanently dead control and is hidden. `.28` now reads "Cancel only, no Save" (on the spec branch), and the app and the suite follow it.
 - **Test ids added:** `dialog-button-cancel` on the picker's and the enrolment's Cancel, plus `enrolment-form-missing` and the suite's own `e2e-enrolment-plugin-form`, all in [`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md).
 - **Checks:**
   - Each test was made to fail once on purpose: 22 out of 22 went red at the assertion that was changed.
-  - The only expectation that moved after a run was the date field's format. It shows the entry format `DD MMM YYYY`, per ui-standards › inputs, not the table's `DD/MM/YYYY`. That was a mistake in how I wrote the test, not an app bug.
+  - The only expectation that moved after a run was the date field's format. It shows the entry format `DD MMM YYYY`, per ui-standards › inputs, not the table's `DD/MM/YYYY`. The test had it wrong, not the app.
 
 ## Fixes from the independent reviews (2026-10-15)
 
@@ -146,6 +146,30 @@ An independent review of each PR found four bugs in the ID field and the dialog'
   - the not-installed notice now reads the draft openly (the old `untrack` did nothing), and an enrolment already holding the answers is tested (`.62`);
   - the picker's Enrol needs a pick that is still listed, as the Vaccinations tab's list narrows when the immunisation programs arrive.
 - **Tests:** each new unit and e2e test failed on the code before the fix, except `.62`, which already held and is now pinned.
+
+## Fixes from the PR review (2026-10-19)
+
+- **Dialog footers** use the standard, icon-less `CancelButton` / `DialogSaveButton` (ui-standards › controls § footer button identity). The enrolment's Save is now `dialog-button-save` (**D55**); the picker keeps its own `Enrol` (no icon).
+- **`.28`**: no Save for an enrolment that no longer exists (above).
+- **The default form's check** moved out of the dialog into the form library (`unaskedEnrolmentAnswers`, above): the dialog held a second copy of the form's paths and cast the registry's schema itself.
+- **The Generate button stretched.** A `FormRow` gives every item an equal share, so Generate beside the patient Code and beside the enrolment ID took half the row: measured in the running app at 204 px for a 95 px button in a 424 px row. The two host fields now share one rule (`domain/documentForm/FieldAction.module.css`, one comment) that keeps the button at its own size, level with the input; measured again: 95 px, the field 313 px.
+- **The picker's radios kept their identity.** The options were rebuilt on every read, and the radios are keyed by option, so a list that re-derived while open (the Vaccinations tab's, as the immunisation programs arrive) remounted every radio and dropped focus. A program now keeps its option object while nothing about it changes (kdd/solid-reactivity-pitfalls § no remounts on interaction). Test: "keeps each radio still listed, so none remounts and focus stays put", which fails on the old code.
+- **Tests:** `.58` arranges its stuck ID for real (a format whose number part does not move, still drawing from the counter) instead of answering the draw, and now also saves once the ID is changed; `.51` uses the suite's `holdOperation`; the picker's Enrolled mark has its own test id (no `xpath`); the detail tabs' column ids are in TESTIDS § Patients; the ID field's unit tests no longer sleep against the check's pause (fake timers, or `controller.settled()`).
+
+## Flags
+
+- **⛔ roles used: none.** Modal dialog `Dialog` · footer buttons `CancelButton` / `DialogSaveButton` · page-style action `Button` (Enrol, Generate) · mutually exclusive choice `RadioGroup` · inline banner `Alert` · error detail disclosure `ErrorDetails` · loading `Spinner` · confirmation dialog `ConfirmDialog` · short text `TextField` · two-up form row `FormRow` · vertical stack `Stack` · validation summary `FormErrorSummary`.
+- **Library changes, both small:** `RadioOption` gained `descriptionTestId`, so a test reads an option's mark on its own (ledger updated); and the shared trailing-button rule above, which outranks `FormRow`'s equal share.
+- **Spec gaps hit:** the sdk-contract needed `record` on `EnrolmentIdField` and a `draft.fill` (refinements 1–2 above, made on the spec branch); `.28`'s Save, settled twice (above).
+- **`⚠️ VERIFY` items encountered: none** (the spec carries none).
+- **Real-backend gaps (C2):** the deterministic suite drives every anchor in `.1`–`.42` and `.51`–`.62` against a real server except `.4` and `.59`, which rest on their colocated unit tests (`ProgramPickerDialog.test.tsx`, `EnrolmentIdField.test.tsx`). `.43`–`.50` are pending #1491.
+- **Outside this vertical, not changed:** the encounter dialogs (`CreateEncounterDialog`, `EncounterFormModal`) still compose their footers from `Button` and save through `dialog-button-ok`; they belong to the encounters work (#789).
+
+## Decisions the spec should make (candidate refinements)
+
+1. **A field with a trailing action** as a library composition. Four copies place a button beside a field in a `FormRow`, each restating the one-label-line drop that levels it with the input: the patient Code's Generate (`domain/patient/PatientControls.tsx`), the enrolment ID's (`domain/documentForm/EnrolmentIdField.tsx`), Djibouti's enrolment ID (`plugins/djibouti/forms/shared/EnrolmentIdField.tsx`) and the demo program's patient code (`plugins/examples/demo_program/forms/Patient/form.tsx`). The two host copies now share one rule; the two plugin copies inline the offset as a style and still stretch to half the row. A library composition would hold the alignment and the sizing once, and give plugins the same through the SDK. Not built here.
+2. **Not-found editors.** `.28` now hides Save, by controls § blocked affordances. The immunisation course editor and the patient Details tab still keep a disabled Save in the same state. The standard reads as covering all three; the spec should say so, so those two follow.
+3. **Generate-on-open** awaits Product's re-check (below).
 
 ## Left for later
 
