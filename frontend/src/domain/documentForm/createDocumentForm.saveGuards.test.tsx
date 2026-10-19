@@ -227,7 +227,7 @@ describe('OMS-REG-PAT-04.37 / .51 — a check a field is running decides the sav
   });
 });
 
-describe('OMS-REG-PAT-04.20 / .21 — refusals', () => {
+describe('OMS-REG-PAT-04.20 / .21 / .64 — refusals', () => {
   const NEW: DocumentFormSource = {
     kind: 'new',
     registry,
@@ -256,7 +256,7 @@ describe('OMS-REG-PAT-04.20 / .21 — refusals', () => {
     expect(onForbidden).not.toHaveBeenCalled();
   });
 
-  it('keeps the entries after a refusal (.20)', async () => {
+  it('keeps the entries after a refusal (.64)', async () => {
     graphqlFetch.mockResolvedValue(
       refused('Bad user input', 'ProgramEnrolmentExists')
     );
