@@ -39,6 +39,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 
@@ -59,6 +60,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 
@@ -80,6 +82,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 
@@ -136,6 +139,21 @@ mod query {
             Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder)
         );
 
+        // 2a - an annual start rate must be a share of the group: above 0, at most 100
+        for annual_start_rate in [0.0, -10.0, 100.1] {
+            let vaccine_course_insert_bad_start_rate = InsertVaccineCourse {
+                id: "vaccine_course_id_bad_start_rate".to_string(),
+                name: "vaccine_course_name_bad_start_rate".to_string(),
+                program_id: mock_immunisation_program_b().id.clone(),
+                annual_start_rate: Some(annual_start_rate),
+                ..Default::default()
+            };
+            assert_eq!(
+                service.insert_vaccine_course(&context, vaccine_course_insert_bad_start_rate),
+                Err(InsertVaccineCourseError::AnnualStartRateOutOfRange)
+            );
+        }
+
         // 2b - success
 
         let vaccine_course_insert_d = InsertVaccineCourse {
@@ -149,6 +167,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: true,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 
@@ -158,6 +177,8 @@ mod query {
 
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
         assert!(result.can_skip_dose);
+        // No annual start rate given: the whole group starts the course each year
+        assert_eq!(result.annual_start_rate, 100.0);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);

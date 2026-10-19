@@ -5000,6 +5000,11 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
+  /**
+   * The share (%) of the target population that starts the course each year, for
+   * population forecasting. Defaults to 100: the whole target population, every year
+   */
+  annualStartRate?: InputMaybe<Scalars['Float']['input']>;
   canSkipDose: Scalars['Boolean']['input'];
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
@@ -8042,6 +8047,8 @@ export type PluginInfoNode = {
 
 export type PopulationForecastCourseNode = {
   __typename: 'PopulationForecastCourseNode';
+  /** The share (%) of the target population starting the course each year */
+  annualStartRate: Scalars['Float']['output'];
   annualTargetDoses: Scalars['Float']['output'];
   courseName: Scalars['String']['output'];
   coverageRate: Scalars['Float']['output'];
@@ -13317,6 +13324,11 @@ export type UpdateVaccineCourseErrorInterface = {
 };
 
 export type UpdateVaccineCourseInput = {
+  /**
+   * The share (%) of the target population that starts the course each year, for
+   * population forecasting. Unchanged when omitted
+   */
+  annualStartRate?: InputMaybe<Scalars['Float']['input']>;
   canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
@@ -13864,6 +13876,11 @@ export type VaccineCourseMutationsUpdateVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
+  /**
+   * The share (%) of the target population that starts the course each year, for
+   * population forecasting
+   */
+  annualStartRate: Scalars['Float']['output'];
   canSkipDose: Scalars['Boolean']['output'];
   coverageRate: Scalars['Float']['output'];
   demographic?: Maybe<DemographicNode>;

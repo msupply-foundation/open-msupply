@@ -20,13 +20,12 @@ table! {
         use_in_gaps_calculations -> Bool,
         wastage_rate -> Double,
         deleted_datetime -> Nullable<Timestamp>,
-        can_skip_dose -> Bool
+        can_skip_dose -> Bool,
+        annual_start_rate -> Double,
     }
 }
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
-)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = vaccine_course)]
 #[diesel(treat_none_as_null = true)]
 pub struct VaccineCourseRow {
@@ -40,6 +39,33 @@ pub struct VaccineCourseRow {
     pub wastage_rate: f64,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     pub can_skip_dose: bool,
+    /// The share (%) of the target population that starts the course each year, for
+    /// population forecasting. Below 100 when the demographic isn't a yearly cohort: an
+    /// age band (women 15–49 start a course once in 35 years), or a group people re-enter
+    /// and get part of the course each time (pregnant women and Td)
+    #[serde(default = "default_annual_start_rate")]
+    pub annual_start_rate: f64,
+}
+
+fn default_annual_start_rate() -> f64 {
+    100.0
+}
+
+impl Default for VaccineCourseRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            name: Default::default(),
+            program_id: Default::default(),
+            demographic_id: Default::default(),
+            coverage_rate: Default::default(),
+            use_in_gaps_calculations: Default::default(),
+            wastage_rate: Default::default(),
+            deleted_datetime: Default::default(),
+            can_skip_dose: Default::default(),
+            annual_start_rate: default_annual_start_rate(),
+        }
+    }
 }
 pub struct VaccineCourseRowRepository<'a> {
     connection: &'a StorageConnection,

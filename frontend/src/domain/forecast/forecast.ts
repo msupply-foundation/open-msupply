@@ -1,4 +1,4 @@
-import { t, tPlural } from '../../intl';
+import { t, tPlural, type LocaleKey } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
 import { roundedText } from '../../intl/numberDisplay';
 import type {
@@ -86,13 +86,25 @@ export const courseTitle = (course: PopulationCourse): string =>
 // places — monthly demand keeps its fraction.
 export type ForecastStep = { substitution: string; result: string };
 
+// Whether step 1 carries the start-rate factor: only for a course that starts
+// less than its whole group each year, so a yearly cohort (births) reads as it
+// always has.
+const startsPartOfGroup = (course: PopulationCourse): boolean =>
+  course.annualStartRate !== 100;
+
+/** Step 1's formula wording, matching its substitution's factors. */
+export const annualTargetFormulaKey = (course: PopulationCourse): LocaleKey =>
+  startsPartOfGroup(course)
+    ? 'description.annual-target-doses-calculation-with-start-rate'
+    : 'description.annual-target-doses-calculation';
+
 export const populationSteps = (
   course: PopulationCourse
 ): [ForecastStep, ForecastStep] => [
   {
-    // 1. Annual target doses = target population × doses × (coverage/100) ×
-    // loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
+    // 1. Annual target doses = target population [× (start rate/100)] ×
+    // doses × (coverage/100) × loss factor.
+    substitution: `${formatNumber(course.targetPopulation)} × ${startsPartOfGroup(course) ? `(${formatNumber(course.annualStartRate)} / 100) × ` : ''}${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
     result: `= ${roundedText(course.annualTargetDoses)} ${t('label.doses-per-year')}`,
   },
   {

@@ -215,6 +215,10 @@ impl PopulationForecastCourseNode {
     pub async fn target_population(&self) -> f64 {
         self.course.target_population
     }
+    /// The share (%) of the target population starting the course each year
+    pub async fn annual_start_rate(&self) -> f64 {
+        self.course.annual_start_rate
+    }
     pub async fn loss_factor(&self) -> f64 {
         self.course.loss_factor
     }

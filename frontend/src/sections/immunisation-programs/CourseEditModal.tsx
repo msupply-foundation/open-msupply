@@ -31,6 +31,7 @@ import { TextField } from '@/ui/elements/inputs/TextField';
 import { FieldShell } from '@/ui/elements/inputs/FieldShell';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Checkbox } from '@/ui/elements/inputs/Checkbox';
+import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { MultiSelect } from '@/ui/elements/selectors/MultiSelect';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -57,6 +58,7 @@ import {
   doseProblem,
   draftFromCourse,
   fieldProblem,
+  forecastDosesPerYear,
   insertInput,
   insertOutcome,
   isDirty,
@@ -710,6 +712,51 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                             value={draft.wastageRate}
                             onChange={value => setDraft('wastageRate', value)}
                           />
+                        </FormRow>
+                        {/* One slot of a two-up row, so the field lines up
+                            under the coverage rate rather than running the
+                            group's full width. */}
+                        <FormRow>
+                          <NumberField
+                            label={t('label.annual-start-rate')}
+                            labelInfo={
+                              <InfoTooltip
+                                text={t('description.annual-start-rate')}
+                                label={t('label.annual-start-rate')}
+                                triggerTestId="vaccine-course-annual-start-rate-info"
+                              />
+                            }
+                            required
+                            endAdornment="%"
+                            min={0}
+                            // No `max`, as for wastage: out-of-range is a
+                            // save-time check the validation summary reports,
+                            // not a silent clamp.
+                            decimalLimit={1}
+                            data-testid="vaccine-course-annual-start-rate-input"
+                            disabled={saving()}
+                            error={fieldError('annualStartRate')}
+                            // What the population forecast will count, so a
+                            // programme can check the rate against the
+                            // doses-a-year figure it already plans with (5 Td
+                            // doses at 40% → 2).
+                            helperText={(() => {
+                              const doses = forecastDosesPerYear(draft);
+                              return doses === undefined
+                                ? undefined
+                                : t(
+                                    'messages.forecast-doses-per-person-per-year',
+                                    {
+                                      doses: Math.round(doses * 100) / 100,
+                                    }
+                                  );
+                            })()}
+                            value={draft.annualStartRate}
+                            onChange={value =>
+                              setDraft('annualStartRate', value)
+                            }
+                          />
+                          <div />
                         </FormRow>
                         <Checkbox
                           label={t('label.calculate-demand')}

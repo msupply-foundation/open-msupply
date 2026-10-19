@@ -25,6 +25,7 @@ impl ViewMigrationFragment for ViewMigration {
       vc.name AS vaccine_course_name,
       coverage_rate,
       wastage_rate,
+      annual_start_rate,
       vcd.id AS vaccine_course_dose_id,
       label AS dose_label,
       min_interval_days,

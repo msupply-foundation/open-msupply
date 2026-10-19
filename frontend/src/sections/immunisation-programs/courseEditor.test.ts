@@ -6,6 +6,7 @@ import type {
 } from './immunisationPrograms.generated';
 import {
   draftFromCourse,
+  forecastDosesPerYear,
   insertInput,
   insertOutcome,
   isDirty,
@@ -56,6 +57,7 @@ const course: CourseNode = {
   demographicId: 'grp-1',
   coverageRate: 95,
   wastageRate: 10,
+  annualStartRate: 40,
   useInGapsCalculations: true,
   canSkipDose: false,
   demographic: { id: 'grp-1', name: 'Children' },
@@ -92,7 +94,7 @@ const valid = (draft: CourseDraft): ValidCourseDraft => {
 };
 
 describe('OMS-REG-IMM-01.31 — a new course opens blank with its defaults', () => {
-  it('starts with coverage 100, wastage 0, GAPS on, skip off, nothing chosen', () => {
+  it('starts with coverage 100, wastage 0, the whole group starting each year, GAPS on, skip off, nothing chosen', () => {
     const draft = newCourseDraft('new-id', 'prog-1');
     expect(draft).toMatchObject({
       id: 'new-id',
@@ -101,6 +103,7 @@ describe('OMS-REG-IMM-01.31 — a new course opens blank with its defaults', () 
       demographicId: null,
       coverageRate: 100,
       wastageRate: 0,
+      annualStartRate: 100,
       useInGapsCalculations: true,
       canSkipDose: false,
     });
@@ -119,6 +122,7 @@ describe('OMS-REG-IMM-01.16 — an edit opens the course whole', () => {
       demographicId: 'grp-1',
       coverageRate: 95,
       wastageRate: 10,
+      annualStartRate: 40,
     });
     expect(draft.vaccineCourseItems).toHaveLength(1);
     expect(draft.vaccineCourseDoses).toHaveLength(2);
@@ -203,6 +207,51 @@ describe('OMS-REG-IMM-01.35 / OMS-REG-IMM-01.64 — the rates', () => {
     expect(
       validateDraft({ ...draftFromCourse(course), wastageRate: 100 }).ok
     ).toBe(true);
+  });
+});
+
+describe('#623 — the annual start rate', () => {
+  it('is required, and must be above 0 and at most 100', () => {
+    const base = draftFromCourse(course);
+    const problem = (annualStartRate: number | undefined) => {
+      const v = validateDraft({ ...base, annualStartRate });
+      return v.ok
+        ? undefined
+        : v.items.find(
+            item => item.kind === 'field' && item.field === 'annualStartRate'
+          );
+    };
+    expect(problem(undefined)).toMatchObject({
+      messageKey: 'messages.required-field',
+    });
+    expect(problem(0)).toMatchObject({
+      messageKey: 'error.numeric-input-error-too-small',
+    });
+    expect(problem(100.5)).toMatchObject({
+      messageKey: 'error.numeric-input-error-too-big',
+    });
+    expect(problem(0.1)).toBeUndefined();
+    expect(problem(100)).toBeUndefined();
+  });
+
+  it('reports the doses a year the forecast will count: doses × the share starting', () => {
+    // Td for pregnant women: 5 doses at 40% → 2 a year
+    const fiveDoses = Array.from({ length: 5 }, (_, i) => ({
+      ...course.vaccineCourseDoses![0]!,
+      id: `d-${i}`,
+    }));
+    expect(
+      forecastDosesPerYear({
+        annualStartRate: 40,
+        vaccineCourseDoses: fiveDoses,
+      })
+    ).toBe(2);
+    expect(
+      forecastDosesPerYear({
+        annualStartRate: undefined,
+        vaccineCourseDoses: fiveDoses,
+      })
+    ).toBeUndefined();
   });
 });
 
@@ -452,6 +501,7 @@ describe('OMS-REG-IMM-01.42 — Save is offered only once the draft differs', ()
     const base = draftFromCourse(course);
     expect(isDirty({ ...base, name: 'Measles 2' }, base)).toBe(true);
     expect(isDirty({ ...base, canSkipDose: true }, base)).toBe(true);
+    expect(isDirty({ ...base, annualStartRate: 100 }, base)).toBe(true);
     expect(isDirty({ ...base, vaccineCourseItems: [] }, base)).toBe(true);
     expect(
       isDirty(
@@ -494,6 +544,7 @@ describe('the write inputs (contract § the editor)', () => {
       demographicId: 'grp-1',
       coverageRate: 95,
       wastageRate: 10,
+      annualStartRate: 40,
       useInGapsCalculations: true,
       canSkipDose: false,
       vaccineItems: [{ id: 'm-1', itemId: 'item-1' }],
@@ -548,6 +599,7 @@ describe('the write inputs (contract § the editor)', () => {
     });
     const input = updateInput(draft);
     expect(input).not.toHaveProperty('programId');
+    expect(input.annualStartRate).toBe(40);
     expect(input.demographicId).toBeNull();
     expect(input.storeConfigs?.[0]).toEqual({
       id: 'sc-1',

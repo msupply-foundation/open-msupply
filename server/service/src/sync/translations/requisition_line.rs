@@ -558,6 +558,7 @@ mod tests {
                         coverage_rate: 100.0,
                         wastage_rate: 0.0,
                         target_population: 1200.0,
+                        annual_start_rate: 100.0,
                         loss_factor: 1.0,
                         annual_target_doses: 1200.0,
                         doses_per_unit: 1.0,

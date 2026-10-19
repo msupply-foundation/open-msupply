@@ -1,6 +1,7 @@
 use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
+mod add_annual_start_rate_to_vaccine_course;
 mod add_campaign_id_to_invoice;
 mod add_code_to_location_type;
 mod add_exclude_principal_wastage_to_ancillary_item;
@@ -35,6 +36,7 @@ impl Migration for V3_04_00 {
             Box::new(update_default_asset_log_reasons::Migrate),
             Box::new(add_forecast_method_to_requisition_line::Migrate),
             Box::new(add_exclude_principal_wastage_to_ancillary_item::Migrate),
+            Box::new(add_annual_start_rate_to_vaccine_course::Migrate),
         ]
     }
 }

@@ -54,6 +54,12 @@ impl VaccineCourseNode {
         self.row().can_skip_dose
     }
 
+    /// The share (%) of the target population that starts the course each year, for
+    /// population forecasting
+    pub async fn annual_start_rate(&self) -> f64 {
+        self.row().annual_start_rate
+    }
+
     pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {
         let demographic_id = match &self.row().demographic_id {
             Some(id) => id,

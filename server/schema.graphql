@@ -4328,6 +4328,11 @@ input InsertVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The share (%) of the target population that starts the course each year, for
+	population forecasting. Defaults to 100: the whole target population, every year
+	"""
+	annualStartRate: Float
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
@@ -6462,6 +6467,10 @@ type PopulationForecastCourseNode {
 	coverageRate: Float!
 	wastageRate: Float!
 	targetPopulation: Float!
+	"""
+	The share (%) of the target population starting the course each year
+	"""
+	annualStartRate: Float!
 	lossFactor: Float!
 	annualTargetDoses: Float!
 	dosesPerUnit: Float!
@@ -11191,6 +11200,11 @@ input UpdateVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean
+	"""
+	The share (%) of the target population that starts the course each year, for
+	population forecasting. Unchanged when omitted
+	"""
+	annualStartRate: Float
 }
 
 union UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode
@@ -11671,6 +11685,11 @@ type VaccineCourseNode {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The share (%) of the target population that starts the course each year, for
+	population forecasting
+	"""
+	annualStartRate: Float!
 	demographic: DemographicNode
 	vaccineCourseItems: [VaccineCourseItemNode!]
 	vaccineCourseDoses: [VaccineCourseDoseNode!]

@@ -1,6 +1,9 @@
 use super::{
     query::get_vaccine_course,
-    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+    validate::{
+        check_annual_start_rate_is_valid, check_dose_min_ages_are_in_order,
+        check_vaccine_course_name_exists_for_program,
+    },
 };
 use crate::{
     NullableUpdate, SingleRecordError, activity_log::activity_log_entry,
@@ -32,6 +35,7 @@ pub enum UpdateVaccineCourseError {
     CreatedRecordNotFound,
     DemographicDoesNotExist,
     VaccineDosesInUse,
+    AnnualStartRateOutOfRange,
     DatabaseError(RepositoryError),
 }
 
@@ -97,6 +101,7 @@ pub struct UpdateVaccineCourse {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: Option<bool>,
+    pub annual_start_rate: Option<f64>,
 }
 
 pub fn update_vaccine_course(
@@ -199,6 +204,12 @@ pub fn validate(
         return Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder);
     }
 
+    if let Some(annual_start_rate) = input.annual_start_rate {
+        if !check_annual_start_rate_is_valid(annual_start_rate) {
+            return Err(UpdateVaccineCourseError::AnnualStartRateOutOfRange);
+        }
+    }
+
     let (doses_in_use, doses_to_delete) =
         vaccine_course_dose_in_use_and_to_delete(connection, &input.id, &input.doses)?;
 
@@ -230,6 +241,7 @@ fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
+        annual_start_rate,
     }: UpdateVaccineCourse,
 ) -> Result<GenerateResult, RepositoryError> {
     let updated_course = VaccineCourseRow {
@@ -242,6 +254,7 @@ fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose: can_skip_dose.unwrap_or(old_row.can_skip_dose),
+        annual_start_rate: annual_start_rate.unwrap_or(old_row.annual_start_rate),
     };
 
     let items_for_course = VaccineCourseItemRepository::new(connection).query_by_filter(

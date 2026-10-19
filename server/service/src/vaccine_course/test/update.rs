@@ -40,6 +40,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 
@@ -92,6 +93,17 @@ mod query {
             Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder)
         );
 
+        // An annual start rate must be a share of the group: above 0, at most 100
+        let update = UpdateVaccineCourse {
+            id: vaccine_course_insert_a.id.clone(),
+            annual_start_rate: Some(0.0),
+            ..Default::default()
+        };
+        assert_eq!(
+            service.update_vaccine_course(&context, update),
+            Err(UpdateVaccineCourseError::AnnualStartRateOutOfRange)
+        );
+
         // 0 - Update the vaccine course with the items and doses
 
         let update = UpdateVaccineCourse {
@@ -104,6 +116,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: Some(true),
+            annual_start_rate: Some(40.0),
             store_configs: vec![],
         };
 
@@ -111,6 +124,7 @@ mod query {
         assert_eq!(result.name, "new_name");
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
         assert!(result.can_skip_dose);
+        assert_eq!(result.annual_start_rate, 40.0);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
@@ -142,9 +156,12 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_start_rate: None,
             store_configs: vec![],
         };
-        let _result = service.update_vaccine_course(&context, update).unwrap();
+        let result = service.update_vaccine_course(&context, update).unwrap();
+        // An update without an annual start rate keeps the course's
+        assert_eq!(result.annual_start_rate, 40.0);
 
         // Check there is one item for the vaccine_course
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
@@ -165,6 +182,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_start_rate: None,
             store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
@@ -196,6 +214,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_start_rate: None,
             store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
@@ -216,6 +235,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_start_rate: None,
             store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
@@ -243,6 +263,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 
@@ -264,6 +285,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_start_rate: None,
             store_configs: vec![],
         };
 

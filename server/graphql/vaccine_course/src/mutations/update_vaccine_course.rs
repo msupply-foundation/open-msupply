@@ -83,6 +83,9 @@ pub struct UpdateVaccineCourseInput {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: Option<bool>,
+    /// The share (%) of the target population that starts the course each year, for
+    /// population forecasting. Unchanged when omitted
+    pub annual_start_rate: Option<f64>,
 }
 
 impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
@@ -98,6 +101,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             use_in_gaps_calculations,
             wastage_rate,
             can_skip_dose,
+            annual_start_rate,
         }: UpdateVaccineCourseInput,
     ) -> Self {
         UpdateVaccineCourse {
@@ -140,6 +144,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             use_in_gaps_calculations,
             wastage_rate,
             can_skip_dose,
+            annual_start_rate,
         }
     }
 }
@@ -183,7 +188,8 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist
         | ServiceError::DemographicDoesNotExist
-        | ServiceError::DoseMinAgesAreNotInOrder => BadUserInput(formatted_error),
+        | ServiceError::DoseMinAgesAreNotInOrder
+        | ServiceError::AnnualStartRateOutOfRange => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)
         }

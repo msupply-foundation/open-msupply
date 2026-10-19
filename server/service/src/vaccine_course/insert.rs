@@ -1,7 +1,10 @@
 use super::{
     query::get_vaccine_course,
     update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
-    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+    validate::{
+        check_annual_start_rate_is_valid, check_dose_min_ages_are_in_order,
+        check_vaccine_course_name_exists_for_program,
+    },
 };
 use crate::{
     SingleRecordError, activity_log::activity_log_entry, common::check_program_exists,
@@ -28,6 +31,7 @@ pub enum InsertVaccineCourseError {
     ProgramDoesNotExist,
     DoseMinAgesAreNotInOrder,
     DemographicIndicatorDoesNotExist,
+    AnnualStartRateOutOfRange,
     DatabaseError(RepositoryError),
 }
 
@@ -44,6 +48,8 @@ pub struct InsertVaccineCourse {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: bool,
+    /// None starts the course at 100%: the whole target population, every year
+    pub annual_start_rate: Option<f64>,
 }
 
 pub fn insert_vaccine_course(
@@ -114,6 +120,12 @@ pub fn validate(
         return Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder);
     }
 
+    if let Some(annual_start_rate) = input.annual_start_rate {
+        if !check_annual_start_rate_is_valid(annual_start_rate) {
+            return Err(InsertVaccineCourseError::AnnualStartRateOutOfRange);
+        }
+    }
+
     Ok(())
 }
 
@@ -130,6 +142,7 @@ pub fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
+        annual_start_rate,
     }: InsertVaccineCourse,
 ) -> (VaccineCourseRow, Vec<VaccineCourseStoreConfigRow>) {
     let row = VaccineCourseRow {
@@ -142,6 +155,7 @@ pub fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose,
+        annual_start_rate: annual_start_rate.unwrap_or(100.0),
     };
 
     let store_config_rows = store_configs

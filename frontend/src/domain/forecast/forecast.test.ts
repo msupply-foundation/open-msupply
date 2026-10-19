@@ -4,6 +4,7 @@ import commonEn from '../../intl/locales/en/common.json';
 import {
   FORECAST_METHODS,
   ancillaryRatio,
+  annualTargetFormulaKey,
   courseTitle,
   forecastMethodLabel,
   populationSteps,
@@ -31,6 +32,7 @@ const measles: PopulationCourse = {
   coverageRate: 60,
   wastageRate: 50,
   targetPopulation: 10000,
+  annualStartRate: 100,
   lossFactor: 2,
   annualTargetDoses: 24000,
   dosesPerUnit: 2,
@@ -57,6 +59,42 @@ describe('OMS-REG-REPL-11.11 — each course walks annual target doses → month
     // A rounded figure in the sentence is marked (spec § display rounding).
     expect(monthly.substitution).toBe('6,666.67* / 12 / 2');
     expect(monthly.result).toContain('= 277.78*');
+  });
+});
+
+describe('#623 — a course only part of its group starts each year', () => {
+  // Td for pregnant women: 5 doses spread over about 2.5 pregnancies, so 40%
+  // of the group starts the course each year (2 doses per woman a year).
+  // 4 000 × (40 / 100) × 5 × (80 / 100) × 1 = 6 400 doses a year.
+  const td: PopulationCourse = {
+    courseName: 'Td',
+    demographicName: 'Pregnant women',
+    numberOfDoses: 5,
+    coverageRate: 80,
+    wastageRate: 0,
+    targetPopulation: 4000,
+    annualStartRate: 40,
+    lossFactor: 1,
+    annualTargetDoses: 6400,
+    dosesPerUnit: 1,
+    monthlyDoses: 533.3333333333334,
+    monthlyUnits: 533.3333333333334,
+  };
+
+  it('puts the start rate into step 1 and its formula', () => {
+    const [annual] = populationSteps(td);
+    expect(annual.substitution).toBe('4,000 × (40 / 100) × 5 × (80 / 100) × 1');
+    expect(annualTargetFormulaKey(td)).toBe(
+      'description.annual-target-doses-calculation-with-start-rate'
+    );
+  });
+
+  it('leaves a whole-group course as it was', () => {
+    const [annual] = populationSteps(measles);
+    expect(annual.substitution).toBe('10,000 × 2 × (60 / 100) × 2');
+    expect(annualTargetFormulaKey(measles)).toBe(
+      'description.annual-target-doses-calculation'
+    );
   });
 });
 

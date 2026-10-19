@@ -165,6 +165,7 @@ export type VaccineCourseForEditResult = {
   demographicId: string | null;
   coverageRate: number;
   wastageRate: number;
+  annualStartRate: number;
   useInGapsCalculations: boolean;
   canSkipDose: boolean;
   demographic: {
@@ -195,7 +196,7 @@ export type VaccineCourseForEditResult = {
 };
 
 export const VaccineCourseForEdit = {
-  query: "query vaccineCourseForEdit($id: String!) {\n  vaccineCourses(filter: {id: {equalTo: $id}}, page: {first: 1}) {\n    ... on VaccineCourseConnector {\n      __typename\n      nodes {\n        id\n        name\n        programId\n        demographicId\n        coverageRate\n        wastageRate\n        useInGapsCalculations\n        canSkipDose\n        demographic {\n          id\n          name\n        }\n        vaccineCourseItems {\n          id\n          itemId\n          name\n        }\n        vaccineCourseDoses {\n          id\n          label\n          minAgeMonths\n          maxAgeMonths\n          customAgeLabel\n          minIntervalDays\n        }\n        storeConfigs {\n          id\n          storeId\n          wastageRate\n          coverageRate\n        }\n      }\n    }\n  }\n}",
+  query: "query vaccineCourseForEdit($id: String!) {\n  vaccineCourses(filter: {id: {equalTo: $id}}, page: {first: 1}) {\n    ... on VaccineCourseConnector {\n      __typename\n      nodes {\n        id\n        name\n        programId\n        demographicId\n        coverageRate\n        wastageRate\n        annualStartRate\n        useInGapsCalculations\n        canSkipDose\n        demographic {\n          id\n          name\n        }\n        vaccineCourseItems {\n          id\n          itemId\n          name\n        }\n        vaccineCourseDoses {\n          id\n          label\n          minAgeMonths\n          maxAgeMonths\n          customAgeLabel\n          minIntervalDays\n        }\n        storeConfigs {\n          id\n          storeId\n          wastageRate\n          coverageRate\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<VaccineCourseForEditResult, VaccineCourseForEditVariables>;
 
 export type DemographicGroupsVariables = {
@@ -269,6 +270,7 @@ export type InsertVaccineCourseVariables = {
     useInGapsCalculations: boolean;
     wastageRate: number;
     canSkipDose: boolean;
+    annualStartRate?: number | null;
   };
 };
 
@@ -328,6 +330,7 @@ export type UpdateVaccineCourseVariables = {
     useInGapsCalculations: boolean;
     wastageRate: number;
     canSkipDose?: boolean | null;
+    annualStartRate?: number | null;
   };
 };
 

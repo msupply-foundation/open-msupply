@@ -32,6 +32,12 @@ pub fn check_vaccine_course_name_exists_for_program(
     Ok(result.is_empty())
 }
 
+/// A share of the target population: above 0 (a course nobody starts forecasts nothing,
+/// which is no use) and at most all of it
+pub fn check_annual_start_rate_is_valid(annual_start_rate: f64) -> bool {
+    annual_start_rate > 0.0 && annual_start_rate <= 100.0
+}
+
 pub fn check_dose_min_ages_are_in_order(doses: &Vec<VaccineCourseDoseInput>) -> bool {
     // First dose could be at 0.0 months, so we start with -0.01
     let mut prev_min_age = -0.01;
