@@ -10,8 +10,8 @@ use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
-        WarnWhenMissingRecentStocktakeData,
+        BackdatingData, StoreOverrideUpdate, StorePrefUpdate, UpsertPreferenceError,
+        UpsertPreferences, WarnWhenMissingRecentStocktakeData,
     },
 };
 
@@ -19,6 +19,15 @@ use service::{
 pub struct BoolStorePrefInput {
     pub store_id: String,
     pub value: bool,
+}
+
+/// One store's edit of a global preference it may override. A null `value`
+/// CLEARS the store's override, returning the store to the global value — the
+/// only way back once a store has pinned its own.
+#[derive(InputObject)]
+pub struct BoolStoreOverrideInput {
+    pub store_id: String,
+    pub value: Option<bool>,
 }
 
 #[derive(InputObject)]
@@ -70,6 +79,7 @@ pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_purchase_order_store_override: Option<Vec<BoolStoreOverrideInput>>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     /// v2 custom translations, shape: `language -> namespace -> key -> value`.
     /// Passed as a JSON value to avoid nested-map InputObject friction.
@@ -91,13 +101,13 @@ pub struct UpsertPreferencesInput {
     pub backdating: Option<BackdatingInput>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
+    pub decimal_places_for_numbers: Option<i32>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
-    pub use_procurement_functionality: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
@@ -105,6 +115,7 @@ pub struct UpsertPreferencesInput {
     pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub can_change_target_months_of_stock: Option<Vec<BoolStorePrefInput>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
@@ -157,6 +168,7 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
+            authorise_purchase_order_store_override,
             custom_translations,
             custom_translations_v2,
             prevent_transfers_months_before_initialisation,
@@ -176,12 +188,12 @@ impl UpsertPreferencesInput {
             backdating,
             receive_payments_from_prescriptions,
             global_logo,
+            decimal_places_for_numbers,
             // Store preferences
             blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
@@ -189,6 +201,7 @@ impl UpsertPreferencesInput {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            can_change_target_months_of_stock,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -206,6 +219,9 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             authorise_purchase_order: *authorise_purchase_order,
+            authorise_purchase_order_store_override: authorise_purchase_order_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             custom_translations: custom_translations.clone(),
             custom_translations_v2: custom_translations_v2
                 .clone()
@@ -236,6 +252,7 @@ impl UpsertPreferencesInput {
             }),
             receive_payments_from_prescriptions: *receive_payments_from_prescriptions,
             global_logo: global_logo.clone(),
+            decimal_places_for_numbers: *decimal_places_for_numbers,
             // Store preferences
             blind_stocktake: blind_stocktake
                 .as_ref()
@@ -247,9 +264,6 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             order_in_packs: order_in_packs
-                .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            use_procurement_functionality: use_procurement_functionality
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
@@ -275,6 +289,9 @@ impl UpsertPreferencesInput {
                 select_destination_store_for_an_internal_order
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            can_change_target_months_of_stock: can_change_target_months_of_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
                 number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products
                     .as_ref()
@@ -312,6 +329,15 @@ impl UpsertPreferencesInput {
             do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+        }
+    }
+}
+
+impl BoolStoreOverrideInput {
+    pub fn to_domain(&self) -> StoreOverrideUpdate<bool> {
+        StoreOverrideUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
         }
     }
 }

@@ -11,7 +11,7 @@ import {
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
 import { measureWord, t, tPlural } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -55,19 +55,25 @@ import {
   statInMode,
   saveNewLine,
   saveExistingLine,
+  previewForecastMethod,
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
-import { ForecastCalculationDisplay } from '../../../../domain/forecast';
+import {
+  ForecastBlock,
+  type ForecastMethod,
+  type SupplyIntervalAndBufferFragment,
+} from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
+import { Num } from '../../../../ui/elements/typography/Num';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
 // mode, general orders only — OMS-REG-REPL-04.63) or fill one line (edit mode,
 // any status; read-only opens with every control disabled). Panels: the item's
 // statistics, its stock movements (extended gate), the edits, and below them
-// either the read-only context charts (target-quantity breakdown + consumption
-// / stock-evolution) or, where the store forecasts and this line carries a
-// forecast, the population-forecast calculation display (OMS-REG-REPL-11.7).
+// the line's forecast (method + breakdown + the step into stock) and the
+// read-only context charts (target-quantity breakdown + consumption /
+// stock-evolution).
 
 export interface InternalOrderLineEditModalProps {
   open: boolean;
@@ -76,6 +82,12 @@ export interface InternalOrderLineEditModalProps {
   requisitionId: string;
   minMonths: number;
   maxMonths: number;
+  /**
+   * The store's supply interval and safety buffer the order's target came
+   * from, if it did — the forecast's target months then show the supply
+   * interval and safety buffer that make them up (OMS-REG-REPL-17.17).
+   */
+  targetIntervalAndBuffer?: SupplyIntervalAndBufferFragment;
   /** Read-only order → every control disabled (reads still shown). */
   editable: boolean;
   /** General order → add mode reachable; program orders can't add (OMS-REG-REPL-04.63). */
@@ -83,7 +95,6 @@ export interface InternalOrderLineEditModalProps {
   // Preference gates (spec S4 — the extra rows/columns).
   showDoses: boolean;
   showPricing: boolean;
-  showForecast: boolean;
   showExcess: boolean;
   /**
    * Customer-statistics program order → the movements panel + reason
@@ -152,6 +163,9 @@ const LineEditContent = (
   const [comment, setComment] = createSignal('');
   const [reasonId, setReasonId] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
+  // A draft method change's preview in flight (rules › choosing a method) —
+  // Save waits for it, so the method it sends is the one the editor shows.
+  const [previewingMethod, setPreviewingMethod] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
@@ -182,12 +196,27 @@ const LineEditContent = (
   // NON-suspending (the `.state` gate) — the resource first-fetches on the
   // interaction of opening/advancing, so a direct read would remount the modal
   // (kdd/solid-reactivity-pitfalls § no remounts).
-  const chartKey = () => {
-    const editorLine = line();
-    return editorLine && !editorLine.isNew
-      ? { storeId: props.storeId, lineId: editorLine.lineId }
-      : false;
-  };
+  // Keyed on the stable inputs only, compared by value: every setLine — a
+  // draft method preview included — hands the editor a new line object, and a
+  // key object rebuilt from it would otherwise refetch the chart each time.
+  type ChartKey = { storeId: string; lineId: string } | false;
+  const chartKey = createMemo<ChartKey>(
+    () => {
+      const editorLine = line();
+      return editorLine && !editorLine.isNew
+        ? { storeId: props.storeId, lineId: editorLine.lineId }
+        : false;
+    },
+    false,
+    {
+      equals: (prev, next) =>
+        prev === next ||
+        (prev !== false &&
+          next !== false &&
+          prev.storeId === next.storeId &&
+          prev.lineId === next.lineId),
+    }
+  );
   const [chart] = createResource(chartKey, async variables => {
     const result = await graphqlFetch(RequisitionLineChart, variables);
     if (result.kind !== 'success') return undefined;
@@ -198,6 +227,17 @@ const LineEditContent = (
   // The history/evolution pair shows only when the server returned series (an
   // order with no expected-delivery-date returns both null — then only the
   // target-quantity breakdown shows, spec S4 § charts).
+  // The draft previews a method other than the saved line's — the stock
+  // evolution series, projected server-side from the stored forecast, then
+  // lags the draft until it is saved.
+  const previewsOtherMethod = () => {
+    const editorLine = line();
+    return (
+      !!editorLine &&
+      !editorLine.isNew &&
+      editorLine.forecast.forecastMethod !== editorLine.ownForecastMethod
+    );
+  };
   const hasSeries = () => {
     const data = chartData();
     return !!(
@@ -243,9 +283,8 @@ const LineEditContent = (
     setErrorMessage(undefined);
     const preview = await buildAddPreview(
       props.storeId,
+      props.requisitionId,
       itemId,
-      props.minMonths,
-      props.maxMonths,
       generateUUID()
     );
     if (disposed) return;
@@ -318,9 +357,21 @@ const LineEditContent = (
 
   // A statistic (units) rendered in the active mode with its measure word,
   // inflected for the figure it suffixes ("1 pack" / "61 packs").
-  const stat = (units: number, roundUp = false): string => {
+  const stat = (units: number, roundUp = false): JSX.Element => {
     const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
-    return `${formatNumber(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
+    return (
+      <>
+        <Num value={figure} />{' '}
+        {measureWord(entryMode(), current()?.unitName ?? null, figure)}
+      </>
+    );
+  };
+
+  // A forecast figure (units) in the active mode, at the configured places —
+  // the forecast block keeps its arithmetic's fractions.
+  const forecastQuantity = (units: number): string => {
+    const figure = unitsToMode(units, entryMode(), packSize(), doses());
+    return `${roundedText(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
   };
 
   // A unit quantity re-expressed in the OTHER measure (OMS-REG-REPL-04.75):
@@ -329,10 +380,10 @@ const LineEditContent = (
   const otherMeasure = (units: number): string => {
     if (entryMode() === 'doses') {
       const unitCount = Math.round(units);
-      return `${formatNumber(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
+      return `${roundedText(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
     }
     const doseCount = Math.round(units * doses());
-    return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
 
   // The dose caption beneath the requested number (OMS-REG-REPL-04.75).
@@ -374,6 +425,31 @@ const LineEditContent = (
     if (result.kind === 'error') setErrorMessage(result.message);
     else setErrorMessage(t('error.cant-save'));
     return false;
+  };
+
+  // Picking a method is a draft edit (rules › choosing a method): the line is
+  // re-previewed under it — forecast and suggestion recomputed as the save will
+  // recompute them — leaving the draft's quantity, comment and reason as typed.
+  // Nothing is saved until Save; Cancel discards it with the rest of the draft.
+  const onMethodChange = async (method: ForecastMethod) => {
+    const editorLine = current();
+    if (!editorLine) return;
+    setPreviewingMethod(true);
+    setErrorMessage(undefined);
+    const result = await previewForecastMethod(
+      props.storeId,
+      props.requisitionId,
+      editorLine,
+      method
+    );
+    if (disposed) return;
+    setPreviewingMethod(false);
+    // The editor moved on (another item, or Save & next) while it was in
+    // flight: the preview is for a line no longer shown.
+    if (current()?.lineId !== editorLine.lineId) return;
+    if (result.kind === 'previewed') setLine(result.line);
+    else if (result.kind === 'error') setErrorMessage(result.message);
+    else setErrorMessage(t('error.unable-to-load-data'));
   };
 
   const onOk = () =>
@@ -446,7 +522,7 @@ const LineEditContent = (
   // aligned with the column.
   const StatRow = (rowProps: {
     label: string;
-    value: string;
+    value: JSX.Element;
     caption?: string;
     highlight?: boolean;
   }): JSX.Element => (
@@ -508,7 +584,9 @@ const LineEditContent = (
           />
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={!current() || saving() || !props.editable}
+            disabled={
+              !current() || saving() || previewingMethod() || !props.editable
+            }
             loading={saving()}
             onClick={onOk}
           />
@@ -517,6 +595,7 @@ const LineEditContent = (
           <Show when={current() && props.editable}>
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
+              disabled={previewingMethod()}
               loading={saving() || advancing()}
               onClick={onOkNext}
             />
@@ -582,13 +661,13 @@ const LineEditContent = (
                 <Show when={editorLine().defaultPackSize > 0}>
                   <StatRow
                     label={t('label.default-pack-size')}
-                    value={formatNumber(editorLine().defaultPackSize)}
+                    value={<Num value={editorLine().defaultPackSize} />}
                   />
                 </Show>
                 <Show when={dosesApply()}>
                   <StatRow
                     label={t('label.doses-per-unit')}
-                    value={formatNumber(editorLine().doses)}
+                    value={<Num value={editorLine().doses} />}
                   />
                 </Show>
                 <StatRow
@@ -605,26 +684,17 @@ const LineEditContent = (
                   value={stat(editorLine().averageMonthlyConsumption, true)}
                   caption={statCaption(editorLine().averageMonthlyConsumption)}
                 />
+                {/* Stock ÷ the line's forecast monthly demand — labelled so
+                  beside the measured AMC/AMD above (#12082). */}
                 <StatRow
-                  label={t('label.months-of-stock')}
-                  value={`${editorLine().monthsOfStock.toFixed(1)} ${t('label.months')}`}
-                />
-                <Show
-                  when={
-                    props.showForecast &&
-                    editorLine().forecastTotalUnits != null
+                  label={t('label.months-of-stock-forecast-demand')}
+                  value={
+                    <>
+                      <Num value={editorLine().monthsOfStock} />{' '}
+                      {t('label.months')}
+                    </>
                   }
-                >
-                  <StatRow
-                    label={t('label.target-stock-population')}
-                    value={stat(
-                      Math.ceil(editorLine().forecastTotalUnits ?? 0)
-                    )}
-                    caption={statCaption(
-                      Math.ceil(editorLine().forecastTotalUnits ?? 0)
-                    )}
-                  />
-                </Show>
+                />
                 <Show when={props.showExtended}>
                   <StatRow
                     label={t('label.short-expiry')}
@@ -666,7 +736,7 @@ const LineEditContent = (
                   />
                   <StatRow
                     label={t('label.days-out-of-stock')}
-                    value={`${formatNumber(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
+                    value={`${roundedText(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
                   />
                 </InsetPanel>
               </Show>
@@ -688,6 +758,10 @@ const LineEditContent = (
                       hideLabel
                       min={0}
                       decimalLimit={2}
+                      // Doses step a whole unit at a time: a one-dose step
+                      // rounds straight back up to the unit it left, so
+                      // ArrowDown would never move.
+                      step={entryMode() === 'doses' ? doses() : 1}
                       data-testid="requested-quantity-input"
                       ref={requestedField.ref}
                       disabled={disabled() || saving()}
@@ -782,63 +856,74 @@ const LineEditContent = (
               )}
             </Show>
 
-            {/* Below — where the store shows population-based forecasting and
-              this line carries a forecast, the calculation display stands in
-              for the charts (spec S4, OMS-REG-REPL-11.7); otherwise the read-only context
-              charts: the target-quantity breakdown (client-side from the line's
-              stats) atop the consumption-history + stock-evolution pair. The
-              pair needs a saved line's server series (chartData); absent it — an
-              add-mode draft, or an order with no expected-delivery-date — only
-              the breakdown shows. */}
-            <Show
-              when={
-                props.showForecast && editorLine().vaccineCourses.length > 0
-              }
-              fallback={
-                <div class={styles.charts}>
-                  <div class={styles.breakdown}>
-                    <h3 class={styles.chartHeading}>
-                      {t('heading.target-quantity')}
-                    </h3>
-                    <TargetQuantityBreakdown
-                      averageMonthlyConsumption={
-                        editorLine().averageMonthlyConsumption
-                      }
-                      availableStockOnHand={editorLine().availableStockOnHand}
-                      suggestedQuantity={editorLine().suggestedQuantity}
-                      thresholdMonths={props.minMonths}
-                      targetMonths={props.maxMonths}
-                    />
+            {/* Below — the draft's forecast (spec S4 › the forecast): its
+              method, the breakdown behind its monthly demand, and the step into
+              stock — the stored line's, or the server's preview of the line the
+              draft would save (an add-mode draft, or a method change). */}
+            <ForecastBlock
+              line={editorLine().forecast}
+              targetMonths={props.maxMonths}
+              targetIntervalAndBuffer={props.targetIntervalAndBuffer}
+              formatQuantity={forecastQuantity}
+              options={editorLine().forecastMethodOptions}
+              ownMethod={editorLine().ownForecastMethod}
+              disabled={disabled() || saving() || previewingMethod()}
+              onMethodChange={method => void onMethodChange(method)}
+              testId="line-forecast"
+            />
+
+            {/* Then the read-only context charts, on every line whatever its
+              forecast method: the target-quantity breakdown (client-side from
+              the line's monthly demand and stock) atop the consumption-history
+              + stock-evolution pair. The pair needs a saved line's server
+              series (chartData); absent it — an add-mode draft, or an order
+              with no expected-delivery-date — only the breakdown shows. */}
+            <div class={styles.charts}>
+              <div class={styles.breakdown}>
+                <h3 class={styles.chartHeading}>
+                  {t('heading.target-quantity')}
+                </h3>
+                <TargetQuantityBreakdown
+                  averageMonthlyConsumption={editorLine().monthlyDemand}
+                  availableStockOnHand={editorLine().availableStockOnHand}
+                  suggestedQuantity={editorLine().suggestedQuantity}
+                  thresholdMonths={props.minMonths}
+                  targetMonths={props.maxMonths}
+                  zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
+                />
+              </div>
+              <Show when={hasSeries() && chartData()}>
+                {data => (
+                  <div class={styles.chartPair}>
+                    <div class={styles.chartSection}>
+                      <h3 class={styles.chartHeading}>
+                        {t('heading.consumption-history')}
+                      </h3>
+                      <ConsumptionHistoryChart
+                        data={data().consumptionHistory?.nodes ?? []}
+                      />
+                    </div>
+                    <div class={styles.chartSection}>
+                      <h3 class={styles.chartHeading}>
+                        {t('heading.stock-evolution')}
+                      </h3>
+                      {/* The server projects the SAVED line's forecast; while
+                        the draft previews another method the chart can't
+                        follow it, so it says whose demand it draws (spec S4 ›
+                        context charts). */}
+                      <Show when={previewsOtherMethod()}>
+                        <p class={styles.chartNote}>
+                          {t('messages.stock-evolution-saved-method')}
+                        </p>
+                      </Show>
+                      <StockEvolutionChart
+                        data={data().stockEvolution?.nodes ?? []}
+                      />
+                    </div>
                   </div>
-                  <Show when={hasSeries() && chartData()}>
-                    {data => (
-                      <div class={styles.chartPair}>
-                        <div class={styles.chartSection}>
-                          <h3 class={styles.chartHeading}>
-                            {t('heading.consumption-history')}
-                          </h3>
-                          <ConsumptionHistoryChart
-                            data={data().consumptionHistory?.nodes ?? []}
-                          />
-                        </div>
-                        <div class={styles.chartSection}>
-                          <h3 class={styles.chartHeading}>
-                            {t('heading.stock-evolution')}
-                          </h3>
-                          <StockEvolutionChart
-                            data={data().stockEvolution?.nodes ?? []}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Show>
-                </div>
-              }
-            >
-              <ForecastCalculationDisplay
-                courses={editorLine().vaccineCourses}
-              />
-            </Show>
+                )}
+              </Show>
+            </div>
           </>
         )}
       </Show>

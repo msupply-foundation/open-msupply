@@ -67,6 +67,44 @@
   }
 }
 
+/* The "N stores override this setting" disclosure, trailing the row it belongs
+   to: the toggle, and the stores it names once opened.
+
+   The toggle is a Button, so its own inline padding would indent its label out
+   of the column the row labels sit in. The block is pulled back by exactly
+   that padding and the list it reveals given the same amount back, so the
+   toggle's label and the store names both line up with the labels above. */
+.note {
+  --disclosure-inset: 0.625rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin-inline-start: calc(var(--disclosure-inset) * -1);
+  padding-block-end: var(--space-2);
+}
+
+/* The stores the open disclosure names, in as many columns as fit: a store
+   name is several words, so a wrapped RUN of them needs separators, and any
+   inline separator dangles at the end of a wrapped line (or, placed before the
+   name instead, opens the next one looking like a bullet). A column each gives
+   every name its own cell — nothing to separate — and keeps a deployment where
+   dozens of stores override to a few rows rather than dozens. */
+.overrideStores {
+  /* The toggle above it is shrink-wrapped by the block's flex-start alignment;
+     the grid has to span the row to have columns to fill. */
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding-inline-start: var(--disclosure-inset);
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
 /* The AMC calculation explainer, trailing its group's rows. */
 .explainer {
   display: flex;

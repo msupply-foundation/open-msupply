@@ -42,6 +42,7 @@ pub fn generate(
         comment: Some(comment),
         default_donor_id: source_invoice.default_donor_id.clone(),
         custom_fields: source_invoice.custom_fields.clone(),
+        campaign_id: source_invoice.campaign_id.clone(),
         // Hold unchecked, linked requisition & purchase order not copied
         on_hold: false,
         requisition_id: None,

@@ -10,7 +10,6 @@ import {
   type JSX,
 } from 'solid-js';
 import { measureWord, t, tPlural } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
@@ -45,6 +44,8 @@ import {
 } from './requisitionLineEdit';
 import { RequisitionLineStats } from './RequisitionLineStats';
 import styles from './RequisitionLineEditModal.module.css';
+import { roundedText } from '@/intl/numberDisplay';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The requisition line editor (spec/requisitions S4): add an item (add mode —
 // manual non-program requisitions only) or fill one line (edit mode, any
@@ -78,7 +79,6 @@ export interface RequisitionLineEditModalProps {
   finalised: boolean;
   // Preference gates (spec S4).
   showDoses: boolean;
-  showForecast: boolean;
   showExcess: boolean;
   /** An existing line → edit mode; omitted → add mode. */
   initialLine?: RequisitionDetailLineFragment;
@@ -341,15 +341,16 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // extra-fields requisition; AMC is editable only under extra-fields.
   const showCustomerConsumption = () => props.transferred || props.showExtended;
 
-  // Target stock (population): the forecasting preference AND a forecast-
-  // carrying line (contract: non-null, non-zero forecastTotalUnits). The
-  // figure rounds to the NEAREST whole unit — not up (spec S4 § read-only
-  // figures), so it bypasses FigureRow's ceil.
-  const showTargetPopulation = () =>
-    props.showForecast && !!current()?.forecastTotalUnits;
-  const targetPopulationFigure = () =>
+  // The customer's forecast — its target stock among the supply-side rows and
+  // its method and breakdown on the Customer tab — shows on a transfer-linked
+  // line, whatever the forecasting preference (OMS-REG-DIST-05.37/.38). The
+  // target stock rounds to the NEAREST whole unit — not up (spec S4 §
+  // read-only figures), so it bypasses FigureRow's ceil.
+  const customerForecast = () =>
+    props.transferred ? (current()?.forecast ?? null) : null;
+  const customerTargetFigure = () =>
     Math.round(
-      unitsToMode(current()?.forecastTotalUnits ?? 0, entryMode(), packSize())
+      unitsToMode(customerForecast()?.targetStock ?? 0, entryMode(), packSize())
     );
 
   // The dose-equivalent caption under the Supply entry (spec S4 § supply
@@ -357,7 +358,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   const supplyDoseCaption = (): string | undefined => {
     if (!dosesApply()) return undefined;
     const doseCount = Math.round(supplyUnits() * doses());
-    return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
 
   // The draft's reason on the wire: where the editor offers the reason
@@ -498,6 +499,9 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           ? t('label.months')
           : measureWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
+      // Months (customer MOS, never editable) go to Num raw so they follow
+      // display rounding; days stay at one decimal.
+      if (rowProps.fixed === 'months') return rowProps.units;
       if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (rowProps.onChange) {
         const raw = unitsToMode(rowProps.units, entryMode(), packSize());
@@ -511,7 +515,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           when={rowProps.onChange}
           fallback={
             <span class={styles.statValue} data-testid={rowProps.testId}>
-              {formatNumber(shown())} {suffix()}
+              <Num value={shown()} /> {suffix()}
             </span>
           }
         >
@@ -552,13 +556,17 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         <Show when={packSize() > 0}>
           <HStack justify="between" gap="sm" class={styles.caption}>
             <span>{t('label.default-pack-size')}</span>
-            <span class={styles.captionValue}>{formatNumber(packSize())}</span>
+            <span class={styles.captionValue}>
+              <Num value={packSize()} />
+            </span>
           </HStack>
         </Show>
         <Show when={dosesApply()}>
           <HStack justify="between" gap="sm" class={styles.caption}>
             <span>{t('label.doses-per-unit')}</span>
-            <span class={styles.captionValue}>{formatNumber(doses())}</span>
+            <span class={styles.captionValue}>
+              <Num value={doses()} />
+            </span>
           </HStack>
         </Show>
       </Stack>
@@ -674,7 +682,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   );
 
   // Beneath the supply panel: the customer's consumption context (gated), the
-  // forecast total (gated), then the comment.
+  // customer's target stock (transfer-linked), then the comment.
   const SupplyContext = (): JSX.Element => (
     <>
       <Show when={showCustomerConsumption()}>
@@ -694,17 +702,17 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           fixed="months"
         />
       </Show>
-      <Show when={showTargetPopulation()}>
+      <Show when={customerForecast()}>
         {/* Never editable — plain text, not a disabled input (ui-standards ›
             detail-views § never-editable fields). Rounds to NEAREST (spec S4
             § read-only figures), so it bypasses FigureRow's ceil. */}
-        <FieldRow label={t('label.target-stock-population')}>
-          <span class={styles.statValue}>
-            {formatNumber(targetPopulationFigure())}{' '}
+        <FieldRow label={t('label.customer-target-stock')}>
+          <span class={styles.statValue} data-testid="customer-target-stock">
+            <Num value={customerTargetFigure()} />{' '}
             {measureWord(
               entryMode(),
               current()?.unitName ?? null,
-              targetPopulationFigure()
+              customerTargetFigure()
             )}
           </span>
         </FieldRow>
@@ -928,16 +936,14 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         </HStack>
 
         {/* The two read-only stats tabs (spec S4 § stats tabs): My store ·
-            Customer, with the volume block and the forecast calculation
-            display. */}
+            Customer, with the customer's forecast and the volume block. */}
         <RequisitionLineStats
           stats={statsNode()}
           entryMode={entryMode()}
           packSize={packSize()}
           unitName={current()?.unitName ?? null}
           finalised={props.finalised}
-          showForecast={props.showForecast}
-          courses={current()?.vaccineCourses ?? []}
+          forecast={customerForecast()}
           volume={
             volumeSnapshot()
               ? {

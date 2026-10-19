@@ -10,8 +10,6 @@ import {
   PurchaseOrderNodeStatus,
   Select,
   useCurrency,
-  useAuthContext,
-  UserPermission,
   useTranslation,
   NumInputRow,
   TextInput,
@@ -61,13 +59,8 @@ export const PurchaseOrderLineEdit = ({
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
   const showContent = !!draft?.itemId;
-  const { userHasPermission } = useAuthContext();
   const { options } = useCurrency(
     draft?.purchaseOrder?.currency?.code as Currencies
-  );
-
-  const userIsAuthorised = userHasPermission(
-    UserPermission.PurchaseOrderAuthorise
   );
 
   // Disable input components. Individual inputs can override this
@@ -183,25 +176,15 @@ export const PurchaseOrderLineEdit = ({
         showContent ? (
           <>
             <NumInputRow
-              label={t(
-                canEditRequestedQuantity
-                  ? 'label.requested-packs'
-                  : 'label.adjusted-packs'
-              )}
+              label={t('label.requested-packs')}
               value={draft?.numberOfPacks ?? 0}
-              disabled={
-                draft?.status === PurchaseOrderLineStatusNode.Closed ||
-                status === PurchaseOrderNodeStatus.Finalised ||
-                (!canEditRequestedQuantity && !userIsAuthorised)
-              }
+              disabled={disabled || !canEditRequestedQuantity}
               onChange={(value: number | undefined) => {
-                // Adjust the requested and adjusted number of units based
-                // on the number of packs * pack size
-                const adjustedPatch = calculateUnitQuantities(status, {
+                const unitsPatch = calculateUnitQuantities({
                   ...draft,
                   numberOfPacks: value,
                 });
-                update({ ...adjustedPatch, numberOfPacks: value });
+                update({ ...unitsPatch, numberOfPacks: value });
               }}
               decimalLimit={2}
               autoFocus={true}
@@ -209,17 +192,13 @@ export const PurchaseOrderLineEdit = ({
             <NumInputRow
               label={t('label.pack-size')}
               value={draft?.requestedPackSize}
-              disabled={
-                disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
-              }
+              disabled={disabled || !canEditRequestedQuantity}
               onChange={(requestedPackSize: number | undefined) => {
-                // Adjust the requested and adjusted number of units based
-                // on the number of packs * pack size
-                const adjustedPatch = calculateUnitQuantities(status, {
+                const unitsPatch = calculateUnitQuantities({
                   ...draft,
                   requestedPackSize,
                 });
-                update({ ...adjustedPatch, requestedPackSize });
+                update({ ...unitsPatch, requestedPackSize });
               }}
               decimalLimit={2}
             />
@@ -228,15 +207,6 @@ export const PurchaseOrderLineEdit = ({
               value={draft?.requestedNumberOfUnits}
               decimalLimit={2}
             />
-            {(!canEditRequestedQuantity ||
-              status == PurchaseOrderNodeStatus.Finalised) && (
-              <InfoRow
-                label={t('label.adjusted-units')}
-                value={draft?.adjustedNumberOfUnits ?? undefined}
-                decimalLimit={2}
-              />
-            )}
-
             <NumInputRow
               label={t('label.price-per-pack-before-discount')}
               value={draft?.pricePerPackBeforeDiscount}

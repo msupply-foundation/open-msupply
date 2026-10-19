@@ -59,9 +59,8 @@ query storeContext($storeId: String!) {
     expiredStockPreventIssue
     expiredStockIssueThreshold
     invoiceStatusOptions
-    # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
-    # creation option), authorisation lock, and the backdating window.
-    useProcurementFunctionality
+    # Inbound-shipment gates (spec/inbound-shipments): the authorisation lock
+    # and the backdating window.
     # Whether a purchase order passes through Ready for approval at all
     # (spec/purchase-orders rules § the status lifecycle). With it off the
     # state is absent from the ladder AND an order asked to enter it silently
@@ -76,8 +75,7 @@ query storeContext($storeId: String!) {
     }
     # Dashboard display gates + label slots (spec/dashboard › display gates):
     # the alert / look-back / expiry thresholds that show or hide the gated
-    # stats and fill their label slots. useProcurementFunctionality above also
-    # gates the dashboard's external-inbound panel.
+    # stats and fill their label slots.
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
     numberOfMonthsThresholdToShowLowStockAlertsForProducts
     numberOfMonthsThresholdToShowOverStockAlertsForProducts
@@ -88,6 +86,12 @@ query storeContext($storeId: String!) {
     # text; unset/unparseable leaves the bar's default. Set from the store
     # editor's Preferences tab (spec/settings § the store editor).
     storeCustomColour
+    # Display rounding for numbers (spec/ui-standards § tables › display
+    # rounding): the decimal places a shown figure keeps. Read globally — every
+    # table number cell and quantity readout formats through it, so it cannot
+    # ride any one screen's query. Money is NOT covered: it follows its own
+    # currency's minor units.
+    decimalPlacesForNumbers
     # Internal-orders create gate (spec/internal-orders OMS-REG-REPL-04.42/.45),
     # read by the dashboard's Order-more shortcut so it runs the same
     # recent-stocktake warning as the list's New-order button (which fetches it

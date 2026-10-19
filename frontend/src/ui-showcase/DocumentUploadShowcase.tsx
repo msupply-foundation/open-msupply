@@ -62,8 +62,56 @@ export const documentUploadMetadata: PageMetadata = {
       title: 'Empty state',
       searchTerms: ['none', 'placeholder'],
     },
+    {
+      id: 'document-upload-versioned',
+      title: 'Versioned',
+      searchTerms: ['version', 'uploaded by', 'history'],
+    },
   ],
 };
+
+// A versioned list (the purchase order Documents tab): one row per file name,
+// the latest upload with its earlier versions beneath it, each its own upload.
+const VERSIONED_DOCUMENTS: DocumentFile[] = [
+  {
+    id: 'po-3',
+    fileName: 'Official-purchase-order.pdf',
+    uploadedBy: 'carol',
+    createdDatetime: '2026-06-24',
+    version: 3,
+    totalBytes: 620 * 1024,
+    url: '#',
+    previousVersions: [
+      {
+        id: 'po-2',
+        fileName: 'Official-purchase-order.pdf',
+        uploadedBy: 'bob',
+        createdDatetime: '2026-06-17',
+        version: 2,
+        totalBytes: 610 * 1024,
+        url: '#',
+      },
+      {
+        id: 'po-1',
+        fileName: 'Official-purchase-order.pdf',
+        uploadedBy: 'alice',
+        createdDatetime: '2026-06-10',
+        version: 1,
+        totalBytes: 590 * 1024,
+        url: '#',
+      },
+    ],
+  },
+  {
+    id: 'quote-1',
+    fileName: 'Supplier-quote.xlsx',
+    uploadedBy: 'carol',
+    createdDatetime: '2026-06-12',
+    version: 1,
+    totalBytes: 88 * 1024,
+    url: '#',
+  },
+];
 
 export const DocumentUploadShowcase = () => {
   const [documents, setDocuments] = createSignal<DocumentFile[]>([
@@ -130,6 +178,29 @@ export const DocumentUploadShowcase = () => {
           <Lead>No documents yet — the zone invites the first upload.</Lead>
           <div class={styles.frame}>
             <DocumentUploadPanel documents={[]} onUpload={() => {}} />
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
+          id="document-upload-versioned"
+          title="Versioned — one row per document, earlier versions beneath"
+        >
+          <Lead>
+            <code>versioned</code> adds Uploaded by and Version beside the
+            upload date, each row reading its own upload. The caller groups
+            same-named uploads (a record's documents module knows what makes two
+            uploads one document — <code>groupDocumentVersions</code> in{' '}
+            <code>domain/syncFiles</code>); the panel presents the latest and
+            unfolds the rest from the chevron beside the version number. Each
+            earlier version opens and removes on its own. The number is a
+            version's place in the document's upload order.
+          </Lead>
+          <div class={styles.frame}>
+            <DocumentUploadPanel
+              documents={VERSIONED_DOCUMENTS}
+              versioned
+              onDelete={() => {}}
+            />
           </div>
         </DashboardCard>
       </Stack>

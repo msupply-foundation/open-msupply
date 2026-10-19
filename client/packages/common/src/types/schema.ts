@@ -357,6 +357,11 @@ export type AllocateOutboundShipmentUnallocatedLineNode = {
   issuedExpiringSoonStockLines: StockLineConnector;
   skippedExpiredStockLines: StockLineConnector;
   skippedOnHoldStockLines: StockLineConnector;
+  /**
+   * Batches of a different campaign than the shipment's (or any campaign,
+   * on a shipment with none).
+   */
+  skippedOtherCampaignStockLines: StockLineConnector;
   skippedUnusableVvmStatusLines: StockLineConnector;
   updates: InvoiceLineConnector;
 };
@@ -380,6 +385,11 @@ export type AllocateProgramNumberResponse = NumberNode;
 export type AlreadyInitialised = InitialiseAsCentralServerErrorInterface & {
   __typename: 'AlreadyInitialised';
   description: Scalars['String']['output'];
+};
+
+export type AmcForecastNode = {
+  __typename: 'AmcForecastNode';
+  averageMonthlyConsumption: Scalars['Float']['output'];
 };
 
 export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
@@ -435,6 +445,28 @@ export type AncillaryMaxDepthExceeded = UpsertAncillaryItemErrorInterface & {
   actual: Scalars['Int']['output'];
   description: Scalars['String']['output'];
   max: Scalars['Int']['output'];
+};
+
+export type AncillaryRatioForecastNode = {
+  __typename: 'AncillaryRatioForecastNode';
+  /** One per principal line on the order */
+  principals: Array<AncillaryRatioPrincipalNode>;
+};
+
+export type AncillaryRatioPrincipalNode = {
+  __typename: 'AncillaryRatioPrincipalNode';
+  ancillaryQuantity: Scalars['Float']['output'];
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  /**
+   * The configured ratio: `itemQuantity` principal units to `ancillaryQuantity`
+   * ancillary units, as on `AncillaryItemNode`
+   */
+  itemQuantity: Scalars['Float']['output'];
+  /** This principal's share of the line's monthly demand */
+  monthlyConsumption: Scalars['Float']['output'];
+  /** The principal line's monthly demand */
+  principalMonthlyConsumption: Scalars['Float']['output'];
 };
 
 /**
@@ -723,6 +755,7 @@ export enum AssetLogStatusNodeType {
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
+  NotInstalled = 'NOT_INSTALLED',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
 }
@@ -1310,6 +1343,16 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+/**
+ * One store's edit of a global preference it may override. A null `value`
+ * CLEARS the store's override, returning the store to the global value — the
+ * only way back once a store has pinned its own.
+ */
+export type BoolStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type BoolStorePrefInput = {
   storeId: Scalars['String']['input'];
   value: Scalars['Boolean']['input'];
@@ -1417,6 +1460,12 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotChangeTargetMonthsOfStock =
+  UpdateRequestRequisitionErrorInterface & {
+    __typename: 'CannotChangeTargetMonthsOfStock';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
   __typename: 'CannotDeleteCentralSite';
   description: Scalars['String']['output'];
@@ -1455,11 +1504,6 @@ export type CannotDeleteRequisitionWithLines =
     description: Scalars['String']['output'];
   };
 
-export type CannotEditAdjustedQuantity = PurchaseOrderLineError & {
-  __typename: 'CannotEditAdjustedQuantity';
-  description: Scalars['String']['output'];
-};
-
 export type CannotEditInvoice =
   AddToInboundShipmentFromMasterListErrorInterface &
     AddToOutboundShipmentFromMasterListErrorInterface &
@@ -1495,11 +1539,6 @@ export type CannotEditPurchaseOrder =
       __typename: 'CannotEditPurchaseOrder';
       description: Scalars['String']['output'];
     };
-
-export type CannotEditQuantityBelowReceived = PurchaseOrderLineError & {
-  __typename: 'CannotEditQuantityBelowReceived';
-  description: Scalars['String']['output'];
-};
 
 export type CannotEditRequestedQuantity = PurchaseOrderLineError & {
   __typename: 'CannotEditRequestedQuantity';
@@ -1566,10 +1605,38 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface &
 export type CentralGeneralMutations = {
   __typename: 'CentralGeneralMutations';
   configureNameProperties: ConfigureNamePropertiesResponse;
+  /**
+   * Turn maintenance mode on or off. On pauses sync, the sync API and processors and signs out
+   * every user who is not a server admin. Off is refused while OMS central's own sync buffer
+   * has records left to integrate.
+   */
+  setMaintenanceMode: SetMaintenanceModeResponse;
+  /**
+   * Pause or resume the transfer and general processors. Resuming triggers each one so the
+   * backlog is picked up. Returns the new state.
+   */
+  setProcessorsPaused: ProcessorsPausedNode;
+  /**
+   * Pause or resume the v6/v7 sync API remote sites sync through, e.g. during central maintenance.
+   * Returns the new state.
+   */
+  setSyncApiPaused: SyncApiPausedNode;
 };
 
 export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
   input: Array<ConfigureNamePropertyInput>;
+};
+
+export type CentralGeneralMutationsSetMaintenanceModeArgs = {
+  on: Scalars['Boolean']['input'];
+};
+
+export type CentralGeneralMutationsSetProcessorsPausedArgs = {
+  paused: Scalars['Boolean']['input'];
+};
+
+export type CentralGeneralMutationsSetSyncApiPausedArgs = {
+  paused: Scalars['Boolean']['input'];
 };
 
 export type CentralPatientNode = {
@@ -3597,6 +3664,52 @@ export type FloatStorePrefInput = {
   value: Scalars['Float']['input'];
 };
 
+/**
+ * The inputs and steps behind a line's monthly demand, one member per method. None holds
+ * a months-of-stock figure: the requisition's thresholds supply those.
+ */
+export type ForecastBreakdownNode =
+  | AmcForecastNode
+  | AncillaryRatioForecastNode
+  | PopulationForecastNode;
+
+/** Where a requisition line's monthly demand comes from. */
+export enum ForecastMethodNode {
+  /** The line's average monthly consumption */
+  Amc = 'AMC',
+  /** The order's principal lines' monthly demand × the configured ancillary ratios */
+  AncillaryRatio = 'ANCILLARY_RATIO',
+  /** The vaccine courses covering the item, for the store's population served */
+  Population = 'POPULATION',
+}
+
+export type ForecastMethodNotAvailable =
+  RequisitionLineForecastPreviewErrorInterface &
+    UpdateRequestRequisitionLineErrorInterface & {
+      __typename: 'ForecastMethodNotAvailable';
+      description: Scalars['String']['output'];
+      unavailableReason: ForecastMethodUnavailableReasonNode;
+    };
+
+export type ForecastMethodOptionNode = {
+  __typename: 'ForecastMethodOptionNode';
+  isAvailable: Scalars['Boolean']['output'];
+  method: ForecastMethodNode;
+  /** Null when available */
+  unavailableReason?: Maybe<ForecastMethodUnavailableReasonNode>;
+};
+
+export enum ForecastMethodUnavailableReasonNode {
+  /** The store's facility record carries no population served */
+  NoPopulationServed = 'NO_POPULATION_SERVED',
+  /** No line on the order is a principal of the item */
+  NoPrincipalOnOrder = 'NO_PRINCIPAL_ON_ORDER',
+  /** No vaccine course covers the item */
+  NoVaccineCourse = 'NO_VACCINE_COURSE',
+  /** The population-based forecasting preference is off */
+  PopulationPreferenceOff = 'POPULATION_PREFERENCE_OFF',
+}
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -4738,7 +4851,13 @@ export type InsertRequestRequisitionInput = {
   /** Defaults to 2 weeks from now */
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  maxMonthsOfStock: Scalars['Float']['input'];
+  /**
+   * Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+   * facility record carries no supply interval. Ignored, the store's supply interval +
+   * safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+   * preference is off and it has a supply interval
+   */
+  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock: Scalars['Float']['input'];
   otherPartyId: Scalars['String']['input'];
   theirReference?: InputMaybe<Scalars['String']['input']>;
@@ -5121,6 +5240,12 @@ export type IntegerStorePrefInput = {
   value: Scalars['Int']['input'];
 };
 
+export type IntegrationIncomplete = SetMaintenanceModeErrorInterface & {
+  __typename: 'IntegrationIncomplete';
+  description: Scalars['String']['output'];
+  pendingIntegrationRecords: Scalars['Int']['output'];
+};
+
 export type InternalError = DeleteHelpDocumentErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
@@ -5431,6 +5556,12 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  campaign?: Maybe<CampaignNode>;
+  /**
+   * The shipment's campaign (null = none): the default for new inbound
+   * lines, or the campaign an outbound shipment issues for.
+   */
+  campaignId?: Maybe<Scalars['String']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   chargesForeignCurrency: Scalars['Float']['output'];
   chargesLocalCurrency: Scalars['Float']['output'];
@@ -6247,6 +6378,23 @@ export enum LowStockStatus {
   Ok = 'OK',
 }
 
+export type MaintenanceMode = AuthTokenErrorInterface & {
+  __typename: 'MaintenanceMode';
+  description: Scalars['String']['output'];
+};
+
+/** State of central's maintenance mode. */
+export type MaintenanceModeNode = {
+  __typename: 'MaintenanceModeNode';
+  isOn: Scalars['Boolean']['output'];
+  /**
+   * Rows in OMS central's own sync buffer (pulled from the legacy mSupply central server)
+   * still waiting to be integrated. Maintenance mode cannot be turned off while this is above
+   * zero.
+   */
+  pendingIntegrationRecords: Scalars['Int']['output'];
+};
+
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
@@ -6508,6 +6656,8 @@ export type Mutations = {
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
+  /** Pause or resume sync (server admin only). See `SyncPausedNode`. */
+  setSyncPaused: SyncPausedNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateAsset: UpdateAssetResponse;
@@ -7117,6 +7267,10 @@ export type MutationsSaveOutboundShipmentItemLinesArgs = {
 export type MutationsSavePrescriptionItemLinesArgs = {
   input: SavePrescriptionLinesInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsSetSyncPausedArgs = {
+  paused: Scalars['Boolean']['input'];
 };
 
 export type MutationsSupplyRequestedQuantityArgs = {
@@ -7758,6 +7912,12 @@ export type OutboundShipmentLineInput = {
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OverridingStoreNode = {
+  __typename: 'OverridingStoreNode';
+  storeId: Scalars['String']['output'];
+  storeName: Scalars['String']['output'];
+};
+
 export type PackSizeCodeCombinationExists =
   InsertPurchaseOrderLineErrorInterface & {
     __typename: 'PackSizeCodeCombinationExists';
@@ -8056,6 +8216,30 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PopulationForecastCourseNode = {
+  __typename: 'PopulationForecastCourseNode';
+  annualTargetDoses: Scalars['Float']['output'];
+  courseName: Scalars['String']['output'];
+  coverageRate: Scalars['Float']['output'];
+  /** Null when the course targets the whole population */
+  demographicName?: Maybe<Scalars['String']['output']>;
+  dosesPerUnit: Scalars['Float']['output'];
+  lossFactor: Scalars['Float']['output'];
+  monthlyDoses: Scalars['Float']['output'];
+  monthlyUnits: Scalars['Float']['output'];
+  numberOfDoses: Scalars['Int']['output'];
+  targetPopulation: Scalars['Float']['output'];
+  wastageRate: Scalars['Float']['output'];
+};
+
+export type PopulationForecastNode = {
+  __typename: 'PopulationForecastNode';
+  /** One per covering course-and-demographic */
+  courses: Array<PopulationForecastCourseNode>;
+  /** Null on a forecast converted from an older site's data */
+  populationServed?: Maybe<Scalars['Float']['output']>;
+};
+
 /** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
 export type PreferenceDescriptionContext = {
   storeId?: InputMaybe<Scalars['String']['input']>;
@@ -8064,6 +8248,17 @@ export type PreferenceDescriptionContext = {
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
+  /**
+   * The stores that pin their own value instead of following this global
+   * one, by store name. Empty where none do; null unless this is the global
+   * listing of an overridable preference.
+   */
+  overridingStores?: Maybe<Array<OverridingStoreNode>>;
+  /**
+   * How this store arrives at `value`, for a global preference a store may
+   * override. Null for every other preference, and in the global listing.
+   */
+  storeOverride?: Maybe<StoreOverrideNode>;
   /**
    * WARNING: Type loss - holds any kind of pref value (for edit UI).
    * Use the PreferencesNode to load the strictly typed value.
@@ -8078,10 +8273,12 @@ export enum PreferenceKey {
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
   BlindStocktake = 'blindStocktake',
+  CanChangeTargetMonthsOfStock = 'canChangeTargetMonthsOfStock',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
+  DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
@@ -8114,7 +8311,6 @@ export enum PreferenceKey {
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
-  UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
@@ -8156,10 +8352,12 @@ export type PreferencesNode = {
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
   blindStocktake: Scalars['Boolean']['output'];
+  canChangeTargetMonthsOfStock: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
+  decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -8195,7 +8393,6 @@ export type PreferencesNode = {
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
-  useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
@@ -8397,6 +8594,12 @@ export type PrinterNode = {
   labelHeight: Scalars['Int']['output'];
   labelWidth: Scalars['Int']['output'];
   port: Scalars['Int']['output'];
+};
+
+/** State of central's processor pause. */
+export type ProcessorsPausedNode = {
+  __typename: 'ProcessorsPausedNode';
+  isPaused: Scalars['Boolean']['output'];
 };
 
 export type ProgramConnector = {
@@ -8703,14 +8906,13 @@ export type PurchaseOrderLineFilterInput = {
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
+  receivedLessThanRequested?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
   supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -8718,10 +8920,14 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
+  /** The line's stored total with the order's supplier discount apportioned to it */
+  lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
+  /** The pack price with the order's supplier discount apportioned to the line */
+  pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
@@ -8877,6 +9083,8 @@ export type Queries = {
   /** Queries all reports and their respective versions */
   allReportVersions: ReportsResponse;
   apiVersion: Scalars['String']['output'];
+  /** Central only: whether the transfer and general processors are paused (always false on a remote) */
+  areProcessorsPaused: Scalars['Boolean']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
   assetCategories: AssetCategoriesResponse;
@@ -8987,6 +9195,15 @@ export type Queries = {
   isCentralServer: Scalars['Boolean']['output'];
   isCentralStandalone: Scalars['Boolean']['output'];
   /**
+   * Whether central is in maintenance mode, when only server admins can log in. Available
+   * without authentication so the login screen can say so before anyone tries.
+   */
+  isMaintenanceMode: Scalars['Boolean']['output'];
+  /** Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote) */
+  isSyncApiPaused: Scalars['Boolean']['output'];
+  /** Admin pause flag (Admin > Sync settings); any signed-in user may read it. */
+  isSyncPaused: Scalars['Boolean']['output'];
+  /**
    * Proposals for the item central hasn't confirmed or removed: every store's
    * on central, this site's elsewhere
    */
@@ -9023,6 +9240,11 @@ export type Queries = {
   logFileNames: LogNode;
   logLevel: LogLevelNode;
   logout: LogoutResponse;
+  /**
+   * Central only: maintenance mode, and how much of OMS central's own sync buffer is left to
+   * integrate before it can be turned off (server admin only)
+   */
+  maintenanceMode: MaintenanceModeNode;
   masterListLines: MasterListLinesResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
@@ -9075,6 +9297,12 @@ export type Queries = {
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
+  /**
+   * An item's request line as the line editor's draft would save it, under a chosen
+   * forecast method, without saving anything: the line already on the order, or the one
+   * adding the item would create
+   */
+  requisitionLineForecastPreview: RequisitionLineForecastPreviewResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
@@ -9758,6 +9986,11 @@ export type QueriesRequisitionLineChartArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesRequisitionLineForecastPreviewArgs = {
+  input: RequisitionLineForecastPreviewInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesRequisitionsArgs = {
   filter?: InputMaybe<RequisitionFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -10037,6 +10270,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
   RequisitionLineChartErrorInterface &
+  RequisitionLineForecastPreviewErrorInterface &
   RequisitionLineStatsErrorInterface &
   ScannedDataParseErrorInterface &
   SupplyRequestedQuantityErrorInterface &
@@ -10308,6 +10542,42 @@ export type RequisitionLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type RequisitionLineForecastPreviewError = {
+  __typename: 'RequisitionLineForecastPreviewError';
+  error: RequisitionLineForecastPreviewErrorInterface;
+};
+
+export type RequisitionLineForecastPreviewErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type RequisitionLineForecastPreviewInput = {
+  /**
+   * Null keeps the line's own method: an existing line's stored one, or the default a
+   * new line would take
+   */
+  forecastMethod?: InputMaybe<ForecastMethodNode>;
+  itemId: Scalars['String']['input'];
+  requisitionId: Scalars['String']['input'];
+};
+
+export type RequisitionLineForecastPreviewNode = {
+  __typename: 'RequisitionLineForecastPreviewNode';
+  availableStockOnHand: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
+  forecastBreakdown: ForecastBreakdownNode;
+  forecastMethod: ForecastMethodNode;
+  forecastMethodOptions: Array<ForecastMethodOptionNode>;
+  forecastMonthlyConsumption: Scalars['Float']['output'];
+  suggestedQuantity: Scalars['Float']['output'];
+  /** The requisition's target months × the monthly demand */
+  targetStock: Scalars['Float']['output'];
+};
+
+export type RequisitionLineForecastPreviewResponse =
+  | RequisitionLineForecastPreviewError
+  | RequisitionLineForecastPreviewNode;
+
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
   additionInUnits: Scalars['Float']['output'];
@@ -10329,8 +10599,20 @@ export type RequisitionLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
-  forecastTotalDoses?: Maybe<Scalars['Float']['output']>;
-  forecastTotalUnits?: Maybe<Scalars['Float']['output']>;
+  /** The inputs and steps behind the line's monthly demand */
+  forecastBreakdown: ForecastBreakdownNode;
+  /** Where the line's monthly demand comes from */
+  forecastMethod: ForecastMethodNode;
+  /**
+   * Every forecast method, an unavailable one with its reason. Empty on a response
+   * requisition's line, whose forecast is the customer's.
+   */
+  forecastMethodOptions: Array<ForecastMethodOptionNode>;
+  /**
+   * The line's monthly demand in units: what its suggested quantity, months of stock and
+   * target stock work from, whatever its forecast method
+   */
+  forecastMonthlyConsumption: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
@@ -10369,7 +10651,8 @@ export type RequisitionLineNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Float']['output'];
-  vaccineCourses?: Maybe<Scalars['String']['output']>;
+  /** The requisition's target months × the line's monthly demand */
+  targetStock: Scalars['Float']['output'];
 };
 
 export type RequisitionLineNodeItemStatsArgs = {
@@ -10451,6 +10734,12 @@ export type RequisitionNode = {
    */
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
+  /**
+   * The ordering store's supply interval and safety buffer (from its facility record) as
+   * they stand now, null when it carries no supply interval. A general
+   * order's default target months of stock.
+   */
+  supplyIntervalAndBuffer?: Maybe<SupplyIntervalAndBufferNode>;
   theirReference?: Maybe<Scalars['String']['output']>;
   type: RequisitionNodeType;
   /**
@@ -10817,6 +11106,19 @@ export type SensorSortInput = {
 };
 
 export type SensorsResponse = SensorConnector;
+
+export type SetMaintenanceModeError = {
+  __typename: 'SetMaintenanceModeError';
+  error: SetMaintenanceModeErrorInterface;
+};
+
+export type SetMaintenanceModeErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type SetMaintenanceModeResponse =
+  | MaintenanceModeNode
+  | SetMaintenanceModeError;
 
 export type SetPrescribedQuantityError = {
   __typename: 'SetPrescribedQuantityError';
@@ -11401,6 +11703,20 @@ export type StoreNodeNameArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type StoreOverrideNode = {
+  __typename: 'StoreOverrideNode';
+  /**
+   * The global value this store follows, or would return to by clearing the
+   * override. Same type loss as `value`.
+   */
+  globalValue: Scalars['JSON']['output'];
+  /**
+   * Whether this store pins its own value rather than following the global
+   * one.
+   */
+  isOverridden: Scalars['Boolean']['output'];
+};
+
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   editPrescribedQuantityOnPrescription: Scalars['Boolean']['output'];
@@ -11543,6 +11859,13 @@ export type SupplierReturnLineNode = {
   stockLineId: Scalars['String']['output'];
 };
 
+export type SupplyIntervalAndBufferNode = {
+  __typename: 'SupplyIntervalAndBufferNode';
+  /** Zero when the facility record carries none */
+  safetyBufferMonths: Scalars['Float']['output'];
+  supplyIntervalMonths: Scalars['Float']['output'];
+};
+
 export type SupplyRequestedQuantityError = {
   __typename: 'SupplyRequestedQuantityError';
   error: SupplyRequestedQuantityErrorInterface;
@@ -11559,6 +11882,15 @@ export type SupplyRequestedQuantityInput = {
 export type SupplyRequestedQuantityResponse =
   | RequisitionLineConnector
   | SupplyRequestedQuantityError;
+
+/**
+ * State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync
+ * client pause) so the two can grow their own fields.
+ */
+export type SyncApiPausedNode = {
+  __typename: 'SyncApiPausedNode';
+  isPaused: Scalars['Boolean']['output'];
+};
 
 export type SyncErrorNode = {
   __typename: 'SyncErrorNode';
@@ -11585,6 +11917,7 @@ export enum SyncErrorVariant {
   SiteHasNoStore = 'SITE_HAS_NO_STORE',
   SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
+  SyncApiPaused = 'SYNC_API_PAUSED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
   V7UpgradeFailed = 'V7_UPGRADE_FAILED',
@@ -11609,6 +11942,7 @@ export enum SyncErrorVariantV7 {
   SiteIdNotSet = 'SITE_ID_NOT_SET',
   SiteIsNotV7 = 'SITE_IS_NOT_V7',
   SiteLockError = 'SITE_LOCK_ERROR',
+  SyncApiPaused = 'SYNC_API_PAUSED',
   SyncFileNotFound = 'SYNC_FILE_NOT_FOUND',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
@@ -11634,6 +11968,8 @@ export type SyncFileReferenceNode = {
   status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
   totalBytes: Scalars['Int']['output'];
+  user?: Maybe<UserNode>;
+  userId?: Maybe<Scalars['String']['output']>;
 };
 
 export enum SyncFileReferenceNodeStatus {
@@ -11646,6 +11982,18 @@ export enum SyncFileReferenceNodeStatus {
 
 export type SyncInfoUpdatedNode = {
   __typename: 'SyncInfoUpdatedNode';
+  /**
+   * Central maintenance mode (#840): only server admins are signed in, and a manual sync is
+   * forced past the sync pause.
+   */
+  isMaintenanceMode: Scalars['Boolean']['output'];
+  /**
+   * Central's sync API pause: while true central refuses remote sites' sync. Always false on
+   * a remote.
+   */
+  isSyncApiPaused: Scalars['Boolean']['output'];
+  /** Admin pause (Admin > Sync settings): while true no scheduled or manual sync runs. */
+  isSyncPaused: Scalars['Boolean']['output'];
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
   syncStatus?: Maybe<FullSyncStatusNode>;
 };
@@ -11727,6 +12075,11 @@ export type SyncMessageSortInput = {
   key: SyncMessageSortFieldInput;
 };
 
+export type SyncPausedNode = {
+  __typename: 'SyncPausedNode';
+  isPaused: Scalars['Boolean']['output'];
+};
+
 export type SyncRequestDescriptionNode =
   | AllStoreDataDescription
   | TableNameDescription;
@@ -11757,6 +12110,11 @@ export type SyncSettingsNode = {
   centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  /**
+   * Admin pause (Admin > Sync settings). While true no scheduled or manual sync runs on an
+   * initialised site; set with `setSyncPaused`.
+   */
+  isPaused: Scalars['Boolean']['output'];
   syncSiteId?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
@@ -12181,6 +12539,12 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  /**
+   * The shipment's default campaign (null = none): lines added from a
+   * master list or internal order take it, and the line editor prefills
+   * new batches with it.
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
   chargesForeignCurrency?: InputMaybe<Scalars['Float']['input']>;
   chargesLocalCurrency?: InputMaybe<Scalars['Float']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
@@ -12386,6 +12750,8 @@ export type UpdateOutboundShipmentError = {
 
 export type UpdateOutboundShipmentInput = {
   backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The campaign this shipment issues for (null = routine). */
+  campaignId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
@@ -12753,7 +13119,6 @@ export type UpdatePurchaseOrderLineError = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
-  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
@@ -12822,6 +13187,12 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 
 export type UpdateRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Changing the method recomputes the line's monthly demand, breakdown and suggested
+   * quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
+   * is untouched
+   */
+  forecastMethod?: InputMaybe<ForecastMethodNode>;
   id: Scalars['String']['input'];
   optionId?: InputMaybe<Scalars['String']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
@@ -13320,8 +13691,12 @@ export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrderStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   backdating?: InputMaybe<BackdatingInput>;
   blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
+  canChangeTargetMonthsOfStock?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;
@@ -13332,6 +13707,7 @@ export type UpsertPreferencesInput = {
    */
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
+  decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -13377,7 +13753,6 @@ export type UpsertPreferencesInput = {
   transferStockToInternalCustomersAtCostPrice?: InputMaybe<
     Scalars['Boolean']['input']
   >;
-  useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<
     Array<WarnWhenMissingRecentStocktakeInput>

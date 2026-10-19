@@ -6,11 +6,14 @@ import {
   Suspense,
   untrack,
   type Component,
+  type JSX,
 } from 'solid-js';
+import type { CellContext } from '@tanstack/solid-table';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
+import { Num } from '../../../ui/elements/typography/Num';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -92,6 +95,7 @@ import {
   InternalOrderToolbar,
   type HeaderEditFields,
 } from './InternalOrderToolbar';
+import { intervalAndBufferBehindTarget } from './targetMonths';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
@@ -216,6 +220,10 @@ const InternalOrderDetailView: Component = () => {
     desc: false,
   });
   const [supplierError, setSupplierError] = createSignal<string>();
+  // A refused target change (the store fixes it to its supply interval +
+  // safety buffer, OMS-REG-REPL-17.18) — shown as an error notice beneath the
+  // header cluster until the next target change.
+  const [targetError, setTargetError] = createSignal<string>();
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // The line editor (S4): closed, open in add mode (undefined line), or open on
   // an existing line (edit mode). One signal drives both.
@@ -349,8 +357,6 @@ const InternalOrderDetailView: Component = () => {
   const indicatorNodes = () => gated(indicators) ?? [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
-  const showForecast = () =>
-    prefs()?.displayPopulationBasedForecasting ?? false;
   const showExcess = () => prefs()?.warningForExcessRequest ?? false;
   const showDestination = () =>
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
@@ -493,7 +499,10 @@ const InternalOrderDetailView: Component = () => {
       ...patch,
     });
     if (result.kind === 'saved') mutate(() => result.node);
-    if (result.kind === 'error') setSupplierError(result.message);
+    if (result.kind === 'error') {
+      if (result.field === 'target') setTargetError(result.message);
+      else setSupplierError(result.message);
+    }
   };
 
   const changeSupplier = (supplierId: string) => {
@@ -503,9 +512,11 @@ const InternalOrderDetailView: Component = () => {
   const changeDestination = (customerId: string | null) =>
     void saveField({ destinationCustomerId: { value: customerId } });
   const changeThreshold = (months: number) =>
-    void saveField({ minMonthsOfStock: months });
-  const changeTarget = (months: number) =>
-    void saveField({ maxMonthsOfStock: months });
+    saveField({ minMonthsOfStock: months });
+  const changeTarget = (months: number) => {
+    setTargetError(undefined);
+    return saveField({ maxMonthsOfStock: months });
+  };
 
   const onSent = (node: InternalOrderInfoFragment) => mutate(() => node);
 
@@ -517,8 +528,9 @@ const InternalOrderDetailView: Component = () => {
   // The one MOS formula, shared with the SDK line view (pluginViews) so the
   // figure a plugin reads is the figure this column shows.
   const mos = (line: Line) => lineMonthsOfStock(line);
-  const targetStock = (line: Line) =>
-    line.averageMonthlyConsumption * (info()?.maxMonthsOfStock ?? 0);
+  // Target months × the line's monthly demand, whatever its forecast method
+  // (resolved server-side).
+  const targetStock = (line: Line) => line.targetStock;
   const isExcess = (line: Line) =>
     showExcess() && line.requestedQuantity - line.suggestedQuantity >= 1;
 
@@ -567,10 +579,11 @@ const InternalOrderDetailView: Component = () => {
       );
     if (lineFilter().hideOverMinimum === true) {
       const months = monthsThreshold(node);
+      // Stock against the threshold months of the line's monthly demand.
       lines = lines.filter(
         l =>
-          l.availableStockOnHand < l.averageMonthlyConsumption * months ||
-          (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
+          l.availableStockOnHand < l.forecastMonthlyConsumption * months ||
+          (l.availableStockOnHand === 0 && l.forecastMonthlyConsumption === 0)
       );
     }
     return lines;
@@ -610,12 +623,20 @@ const InternalOrderDetailView: Component = () => {
   // Dose annotation for a unit quantity on a vaccine item under the doses
   // preference — " (N ds)" (label.doses-short), value × doses-per-unit (treated
   // as 1 when the item has none, so the annotation shows for any vaccine).
-  const doseSuffix = (line: Line, value: number): string =>
-    showDoses() && line.item.isVaccine
-      ? ` (${Math.round(value * (line.item.doses || 1))} ${t('label.doses-short')})`
-      : '';
-  const numWithDoses = (line: Line, value: number) =>
-    `${Math.round(value)}${doseSuffix(line, value)}`;
+  const numWithDoses = (line: Line, value: number): JSX.Element => (
+    <>
+      <Num value={value} />
+      <Show when={showDoses() && line.item.isVaccine}>
+        {' '}
+        (<Num value={value * (line.item.doses || 1)} /> {t('label.doses-short')}
+        )
+      </Show>
+    </>
+  );
+
+  // Spread AFTER getCellDefinition, whose number cell it replaces.
+  const dosesCell = (info: CellContext<Line, unknown>): JSX.Element =>
+    numWithDoses(info.row.original, info.getValue<number>());
 
   const crumbs = (node: InternalOrderInfoFragment) => [
     {
@@ -707,70 +728,61 @@ const InternalOrderDetailView: Component = () => {
     },
     {
       c: {
-        accessor: line => numWithDoses(line, line.availableStockOnHand),
+        accessor: line => line.availableStockOnHand,
         id: COL.available,
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
       ...getCellDefinition('available'),
+      cell: dosesCell,
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
       c: {
-        accessor: line =>
-          numWithDoses(line, Math.ceil(line.averageMonthlyConsumption)),
+        accessor: line => Math.ceil(line.averageMonthlyConsumption),
         id: COL.amc,
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
       ...getCellDefinition('amc'),
+      cell: dosesCell,
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
+      // MOS: the raw figure, so the number cell applies display rounding.
+      c: { accessor: line => mos(line), id: COL.mos },
       sortKey: 'mos',
-      header: () => t('label.months-of-stock'),
+      // Stock ÷ the line's FORECAST monthly demand, so headed as such beside
+      // the measured AMC column (#12082); the published column id stays `mos`.
+      header: () => t('label.months-of-stock-forecast-demand'),
       ...getCellDefinition('mos'),
     },
     {
       c: {
-        accessor: line => numWithDoses(line, targetStock(line)),
+        accessor: line => targetStock(line),
         id: COL.targetStock,
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
       ...getCellDefinition('targetStock'),
+      cell: dosesCell,
     },
-    // Target stock (population) — gated on the forecasting preference; the
-    // stored forecast rounded up, zero on a forecast-less line.
-    ...(showForecast()
-      ? ([
-          {
-            c: {
-              accessor: line =>
-                numWithDoses(line, Math.ceil(line.forecastTotalUnits ?? 0)),
-              id: COL.targetStockPopulation,
-            },
-            header: () => t('label.target-stock-population'),
-            ...getCellDefinition('targetStockPopulation'),
-          },
-        ] satisfies Column<Line, SortKey>[])
-      : []),
     {
       c: {
-        accessor: line => numWithDoses(line, line.suggestedQuantity),
+        accessor: line => line.suggestedQuantity,
         id: COL.suggested,
       },
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
       ...getCellDefinition('suggested'),
+      cell: dosesCell,
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
       // above the suggestion carries a red alert icon (the line-table
       // counterpart of the editor banner).
       c: {
-        accessor: line => numWithDoses(line, line.requestedQuantity),
+        accessor: line => line.requestedQuantity,
         id: COL.requested,
       },
       sortKey: 'requested',
@@ -824,51 +836,57 @@ const InternalOrderDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              accessor: l => l.initialStockOnHandUnits,
               id: COL.initialSoh,
             },
             header: () => t('label.initial-stock-on-hand'),
             ...getCellDefinition('initialSoh'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.incomingUnits),
+              accessor: l => l.incomingUnits,
               id: COL.incoming,
             },
             header: () => t('label.incoming'),
             ...getCellDefinition('incoming'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.outgoingUnits),
+              accessor: l => l.outgoingUnits,
               id: COL.outgoing,
             },
             header: () => t('label.outgoing'),
             ...getCellDefinition('outgoing'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.lossInUnits),
+              accessor: l => l.lossInUnits,
               id: COL.losses,
             },
             header: () => t('label.losses'),
             ...getCellDefinition('losses'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.additionInUnits),
+              accessor: l => l.additionInUnits,
               id: COL.additions,
             },
             header: () => t('label.additions'),
             ...getCellDefinition('additions'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.expiringUnits),
+              accessor: l => l.expiringUnits,
               id: COL.shortExpiry,
             },
             header: () => t('label.short-expiry'),
             ...getCellDefinition('shortExpiry'),
+            cell: dosesCell,
           },
           {
             c: {
@@ -1184,6 +1202,13 @@ const InternalOrderDetailView: Component = () => {
                             {t('info.cannot-edit-program-requisition')}
                           </Alert>
                         </Show>
+                        <Show when={targetError()}>
+                          {message => (
+                            <Alert severity="error" compact>
+                              {message()}
+                            </Alert>
+                          )}
+                        </Show>
                       </>
                     }
                   >
@@ -1193,6 +1218,9 @@ const InternalOrderDetailView: Component = () => {
                       editable={editable()}
                       isProgram={isProgram()}
                       showDestination={showDestination()}
+                      canChangeTargetMonths={
+                        prefs()?.canChangeTargetMonthsOfStock
+                      }
                       edit={edit}
                       onChangeSupplier={changeSupplier}
                       supplierError={supplierError()}
@@ -1395,11 +1423,11 @@ const InternalOrderDetailView: Component = () => {
                 requisitionId={node().id}
                 minMonths={node().minMonthsOfStock}
                 maxMonths={node().maxMonthsOfStock}
+                targetIntervalAndBuffer={intervalAndBufferBehindTarget(node())}
                 editable={editable()}
                 canAdd={canAddLines()}
                 showDoses={showDoses()}
                 showPricing={showPricing()}
-                showForecast={showForecast()}
                 showExcess={showExcess()}
                 showExtended={showExtended()}
                 orderInPacks={orderInPacks()}

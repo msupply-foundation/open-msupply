@@ -412,6 +412,25 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   fitContent?: boolean;
 
+  /**
+   * This table is its dialog's MAIN line table — a line editor's batch grid,
+   * a picker's list. Stamps `data-dialog-table` on the root, which the Dialog
+   * reads in its full-screen state (a workbench dialog on a tablet) to run
+   * the table to the sheet's edges with no frame and no radius, and to its
+   * hairlines on the side(s) where the table ends the body
+   * (Dialog.module.css › data-fullscreen, #246). A card or sheet framed by
+   * the scrim ignores it. Leave it off a secondary table that shares the
+   * dialog with a form (a repack history, a duplicates list): that one keeps
+   * its frame. A table that is the body's only child gets the same treatment
+   * without it; saying so still records the intent.
+   *
+   * If the table sits inside the editor's OWN scroll box, spread
+   * `DIALOG_SCROLL` (from Dialog) on that box too, or the table's first and
+   * last columns are clipped instead of reaching the sheet's edge. All three
+   * hooks and the chain rule: `DialogProps.size`.
+   */
+  dialogTable?: boolean;
+
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
   // selection action bar replaces it while rows are selected, see
@@ -1478,6 +1497,9 @@ export function DataTable<T, K extends string, G extends string = never>(
       data-fit-content={
         props.fitContent && viewMode() === 'card' ? '' : undefined
       }
+      // The dialog's main line table (see `dialogTable`) — read by the
+      // Dialog's full-screen rules, nothing here.
+      data-dialog-table={props.dialogTable ? '' : undefined}
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster

@@ -149,6 +149,8 @@ export const AllocateLinesAction: Component<
           bucket.reasons.add(t('label.on-hold'));
         if (response.skippedUnusableVvmStatusLines.nodes.length)
           bucket.reasons.add(t('label.unusable-vvm-status'));
+        if (response.skippedOtherCampaignStockLines.nodes.length)
+          bucket.reasons.add(t('label.not-for-this-campaign'));
       }
       for (const node of response.issuedExpiringSoonStockLines.nodes)
         expiringSoonBatches.push(node.batch ?? '—');

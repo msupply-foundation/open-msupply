@@ -463,6 +463,22 @@ describe('cluesMarkdown', () => {
     });
     expect(md).toContain('No commit in the range touches this spec');
   });
+  it('says how much of a long range it checked, and never claims "none" for the rest', () => {
+    const key = 'x.spec.ts › y';
+    const md = cluesMarkdown({
+      regressions: [{ key }],
+      history: new Map(),
+      commits: [{ sha: 'f00', message: 'app', files: ['frontend/src/a.ts'] }],
+      range: { total: 1845, checked: 100 },
+      compareUrl: 'https://cmp',
+      earlier: new Map(),
+    });
+    expect(md).toContain(
+      "[1845 commits](https://cmp) — of the newest 100, 1 touch `frontend/src` and 0 touch the server. The other 1745 weren't checked."
+    );
+    expect(md).toContain('None of the newest 100 commits touches this spec');
+    expect(md).not.toContain('No commit in the range');
+  });
 });
 
 describe('leg-qualified keys', () => {
@@ -596,5 +612,55 @@ describe('gatherClues', () => {
     // Oldest first: the flat run 12 passed, the foldered run 11 failed.
     expect(md).toContain('`✅❌`');
     expect(md).toContain('failed 1 of the previous 2 runs');
+  });
+
+  // The compare API pages commits OLDEST first: a range longer than a page
+  // must be read from its far end, or the clues describe the wrong commits.
+  it('checks the newest commits of a range longer than one page', async () => {
+    const all = Array.from({ length: 250 }, (_, i) => ({
+      sha: `c${i}`,
+      parents: [{}],
+      commit: { message: `m${i}` },
+    }));
+    const filesOf = {
+      c5: ['server/src/old.rs'], // oldest page only — must not be counted
+      c249: ['frontend/src/new.ts'],
+      c160: ['frontend/e2e/specs/x.spec.ts'],
+    };
+    const md = await gatherClues({
+      github: {
+        ...github,
+        rest: {
+          ...github.rest,
+          repos: {
+            compareCommitsWithBasehead: async ({ page, per_page }) => ({
+              data: {
+                total_commits: all.length,
+                commits: all.slice((page - 1) * per_page, page * per_page),
+              },
+            }),
+            getCommit: async ({ ref }) => ({
+              data: {
+                files: (filesOf[ref] ?? []).map(filename => ({ filename })),
+              },
+            }),
+          },
+        },
+      },
+      owner: 'o',
+      repo: 'r',
+      key: 'develop',
+      currentRunId: 2,
+      summary: {
+        regressions: [{ key: 'x.spec.ts › y' }],
+        baselineCommit: 'aaaaaaaaaaaaaaaa',
+        commit: 'bbbbbbbbbbbbbbbb',
+      },
+      serverUrl: 'https://gh',
+    });
+    expect(md).toContain(
+      "of the newest 100, 1 touch `frontend/src` and 0 touch the server. The other 150 weren't checked."
+    );
+    expect(md).toContain('c160 m160 — `frontend/e2e/specs/x.spec.ts`');
   });
 });

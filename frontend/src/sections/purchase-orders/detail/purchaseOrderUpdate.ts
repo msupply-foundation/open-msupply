@@ -1,6 +1,7 @@
 import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
 import { t } from '../../../intl';
+import { roundedText } from '../../../intl/numberDisplay';
 import {
   AddPurchaseOrderFromMasterList,
   InsertPurchaseOrderLine,
@@ -131,7 +132,7 @@ export const insertPurchaseOrderLine = async (
       error.__typename === 'PackSizeCodeCombinationExists'
         ? t('error.purchase-order-line-duplicate', {
             code: error.itemCode,
-            packSize: error.requestedPackSize,
+            packSize: roundedText(error.requestedPackSize),
           })
         : error.description,
   };
@@ -218,15 +219,21 @@ export const deliveryDatesVary = (
  * Which line dates a change to `field` reaches: the field itself, and the
  * other date only where the lines still agree on it — per-line values already
  * set there are left alone (rules § the two delivery dates).
+ *
+ * `canSetRequestedDate` is the authoring window. The expected date outlives it,
+ * so a change made on a Sent order must not drag the agreed requested date
+ * along with it — the whole point of keeping the two apart.
  */
 export const cascadedDateFields = (
   lines: Partial<Record<DeliveryDateField, string | null>>[],
-  field: DeliveryDateField
+  field: DeliveryDateField,
+  canSetRequestedDate = true
 ): DeliveryDateField[] => {
   const other: DeliveryDateField =
     field === 'requestedDeliveryDate'
       ? 'expectedDeliveryDate'
       : 'requestedDeliveryDate';
+  if (other === 'requestedDeliveryDate' && !canSetRequestedDate) return [field];
   return deliveryDatesVary(lines, other) ? [field] : [field, other];
 };
 

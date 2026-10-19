@@ -30,7 +30,7 @@ import {
   AbsentValue,
   getCellDefinition,
   getFlagCell,
-  getNumberCell,
+  getVolumeCell,
   isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
 import {
@@ -38,10 +38,7 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import {
-  useIsNavOverlay,
-  useIsShortViewport,
-} from '../../../ui/utils/createMediaQuery';
+import { useFoldTotalsIntoBar } from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -387,19 +384,14 @@ const OutboundDetailView: Component = () => {
 
   // Where the totals live is a "which element renders" decision, so it is the
   // one responsive mechanism that touches JS (src/ui/CLAUDE.md #7): a band of
-  // its own above the bar on a wide screen, and ON the bar below the
-  // navOverlay line — tablet portrait and down, where the shipment's lines are
-  // worth more than a row of chrome and the bar has the room. Rendered by a
-  // function, not a stored element: the two footer faces each need their own
-  // instance, and one element can't be in two places.
-  const narrowViewport = useIsNavOverlay();
-  // …and the same trade on a SHORT one. The rule was written for tablet
-  // portrait, but a landscape tablet is the case that needs it most: wide
-  // enough that the width query never fires, short enough that a third stacked
-  // bar under the table costs a row of the thing the user came to work on.
-  // Measured at 1434×742, chrome took 52% of the screen.
-  const shortViewport = useIsShortViewport();
-  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
+  // its own above the bar on a wide screen, and ON the bar once the viewport
+  // is narrow or short — the latter being the case that needs it most, since a
+  // landscape tablet is wide enough that the width query never fires and short
+  // enough that a third stacked bar costs a row of the thing the user came to
+  // work on (measured at 1434×742, chrome took 52% of the screen).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Rendered by a function, not a stored element: the two footer faces each
+  // need their own instance, and one element can't be in two places.
   const inlineTotals = () => (
     <Show when={foldTotalsIntoBar()}>
       <OutboundTotalsStrip
@@ -1038,7 +1030,17 @@ const OutboundDetailView: Component = () => {
           ]
         : []),
       {
-        c: { key: 'sellPricePerPack' },
+        // Price of ONE unit — pack sell price ÷ pack size; blank on a
+        // placeholder (spec § line table col 15). The id stays
+        // `sellPricePerPack` so the cell test id and saved column settings
+        // carry over.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack / line.packSize,
+          id: 'sellPricePerPack',
+        },
         header: () => t('label.unit-sell-price'),
         ...getCellDefinition('sellPricePerPack'),
       },
@@ -1064,10 +1066,10 @@ const OutboundDetailView: Component = () => {
           id: 'volume',
         },
         header: () => t('label.volume'),
-        // Same display rounding as the column's cells (ui-standards § tables'
-        // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
-        // mismatch.
-        ...getNumberCell(),
+        // A volume's own places (ui-standards § display rounding), the same
+        // as the totals strip beneath — a footer at one precision under cells
+        // at another reads as a mismatch.
+        ...getVolumeCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
       },
@@ -1217,6 +1219,9 @@ const OutboundDetailView: Component = () => {
                       onChangeCustomer={customerId =>
                         void changeCustomer(customerId)
                       }
+                      onChangeCampaign={campaignId =>
+                        void saveField({ campaignId: { value: campaignId } })
+                      }
                       onSaveCustomFields={patch =>
                         void saveField({ customFields: patch })
                       }
@@ -1354,7 +1359,7 @@ const OutboundDetailView: Component = () => {
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={editable() ? openRow : undefined}
+                  onRowClick={openRow}
                   rowTint={lineRowTint}
                   // Same predicate on both channels: the tint colours the
                   // row, the bar makes the unfinished lines legible down one
@@ -1426,6 +1431,7 @@ const OutboundDetailView: Component = () => {
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
+                campaignId={current().campaign?.id ?? null}
                 customerIsStore={current().otherParty.store != null}
                 // Gates the editor's supplier-comment field: only a shipment
                 // raised from a customer requisition has a requested quantity

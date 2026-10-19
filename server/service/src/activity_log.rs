@@ -9,6 +9,7 @@ use repository::{
 };
 
 use repository::{PaginationOption, RepositoryError};
+use serde_json::Value;
 use util::serde_json_diff::json_diff;
 use util::uuid::uuid;
 use util::{constants::SYSTEM_USER_ID, format_error};
@@ -59,7 +60,7 @@ pub fn activity_log_entry(
         changed_from,
     };
 
-    let _change_log_id = ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
+    ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
     Ok(())
 }
 
@@ -87,7 +88,7 @@ pub fn activity_log_entry_with_store(
         changed_from,
     };
 
-    let _change_log_id = ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
+    ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
     Ok(())
 }
 
@@ -98,6 +99,17 @@ pub fn activity_log_entry_with_diff(
     old_value: Option<&impl serde::Serialize>,
     new_value: &impl serde::Serialize,
 ) -> Result<(), RepositoryError> {
+    activity_log_entry_with_diff_keeping(ctx, log_type, record_id, old_value, new_value, &[])
+}
+
+pub fn activity_log_entry_with_diff_keeping(
+    ctx: &ServiceContext,
+    log_type: ActivityLogType,
+    record_id: Option<String>,
+    old_value: Option<&impl serde::Serialize>,
+    new_value: &impl serde::Serialize,
+    keep: &[&str],
+) -> Result<(), RepositoryError> {
     // Create a diff showing only the changes
     let (changed_from, changed_to) = match old_value {
         Some(old) => {
@@ -107,7 +119,7 @@ pub fn activity_log_entry_with_diff(
             })? {
                 Some((from, to)) => (
                     Some(serde_json::to_string(&from).unwrap_or_default()),
-                    Some(serde_json::to_string(&to).unwrap_or_default()),
+                    Some(to_with_kept_keys(to, new_value, keep)),
                 ),
                 None => return Ok(()),
             }
@@ -119,6 +131,36 @@ pub fn activity_log_entry_with_diff(
     };
 
     activity_log_entry(ctx, log_type, record_id, changed_from, changed_to)
+}
+
+// Kept keys lead, in the order given, so the entry names its record first
+fn to_with_kept_keys(to: Value, new_value: &impl serde::Serialize, keep: &[&str]) -> String {
+    if keep.is_empty() {
+        return serde_json::to_string(&to).unwrap_or_default();
+    }
+    match (to, serde_json::to_value(new_value)) {
+        (Value::Object(diff), Ok(Value::Object(new_map))) => {
+            let mut entries: Vec<(String, Value)> = keep
+                .iter()
+                .filter_map(|key| new_map.get(*key).map(|v| (key.to_string(), v.clone())))
+                .collect();
+            entries.extend(
+                diff.into_iter()
+                    .filter(|(key, _)| !keep.contains(&key.as_str())),
+            );
+            serde_json::to_string(&OrderedObject(entries)).unwrap_or_default()
+        }
+        (to, _) => serde_json::to_string(&to).unwrap_or_default(),
+    }
+}
+
+/// A JSON object serialised in the order of its entries, which a `serde_json::Map` would sort.
+struct OrderedObject(Vec<(String, Value)>);
+
+impl serde::Serialize for OrderedObject {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_map(self.0.iter().map(|(key, value)| (key, value)))
+    }
 }
 
 pub fn system_activity_log_entry(
@@ -138,7 +180,7 @@ pub fn system_activity_log_entry(
         changed_to: None,
     };
 
-    let _change_log_id = ActivityLogRowRepository::new(connection).insert_one(log)?;
+    ActivityLogRowRepository::new(connection).insert_one(log)?;
     Ok(())
 }
 
@@ -181,7 +223,7 @@ pub fn system_log_entry(
         is_error: log_type.is_error(),
     };
 
-    let _change_log_id = SystemLogRowRepository::new(connection).insert_one(log)?;
+    SystemLogRowRepository::new(connection).insert_one(log)?;
     Ok(())
 }
 
@@ -216,6 +258,29 @@ pub fn system_log(
         SystemLogMessage::Message(log),
     )?;
     Ok(())
+}
+
+/// [`system_log`] on its own connection on Tokio's blocking pool, so the caller never waits on it.
+/// Must be called from within the Tokio runtime (every caller is a GraphQL resolver).
+///
+/// A system log row also writes a changelog row, so it queues behind anything holding
+/// `changelog`: for example a long integration transaction, with the changelog dedup task's
+/// `DROP INDEX` waiting behind that (open-msupply#11920). Switches whose effect must not wait for
+/// that (the sync pauses, maintenance mode) commit their flag first and record who changed it
+/// here; the entry lands once the lock clears. A failure to write it goes to the server log.
+pub fn system_log_in_background(
+    connection_manager: StorageConnectionManager,
+    log_type: SystemLogType,
+    message: String,
+) {
+    tokio::task::spawn_blocking(move || {
+        let result = connection_manager
+            .connection()
+            .and_then(|connection| system_log(&connection, log_type, &message));
+        if let Err(error) = result {
+            log::error!("Failed to write system log entry '{message}': {error:?}");
+        }
+    });
 }
 
 pub fn add_migration_results_to_system_log(

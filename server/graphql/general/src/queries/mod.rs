@@ -42,6 +42,7 @@ pub use self::name_property::*;
 pub mod custom_field;
 pub use self::custom_field::*;
 pub mod requisition_line_chart;
+pub mod requisition_line_forecast_preview;
 pub mod response_requisition_line_stats;
 pub mod sync_settings;
 pub mod sync_status;

@@ -87,8 +87,8 @@ mod test {
         InvoiceStatus, InvoiceType, RequisitionLineRow, RequisitionRow, StockLineRowRepository,
         StorePreferenceRow,
         mock::{
-            MockData, MockDataInserts, mock_item_a, mock_name_store_b, mock_outbound_shipment_e,
-            mock_store_a, mock_store_b, mock_user_account_a,
+            MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_name_store_b,
+            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
         },
         test_db::setup_all_with_data,
     };
@@ -312,6 +312,7 @@ mod test {
             InvoiceRow {
                 id: "received_invoice_linked_to_requisition".to_string(),
                 status: InvoiceStatus::Received,
+                campaign_id: Some(mock_campaign_a().id),
                 ..invoice_linked_to_requisition()
             }
         }
@@ -382,5 +383,11 @@ mod test {
             .unwrap();
         assert_eq!(stock_line.total_number_of_packs, 5.0);
         assert_eq!(stock_line.available_number_of_packs, 5.0);
+        // The line, and the stock it introduces, take the shipment's campaign
+        assert_eq!(
+            result.invoice_line_row.campaign_id,
+            Some(mock_campaign_a().id)
+        );
+        assert_eq!(stock_line.campaign_id, Some(mock_campaign_a().id));
     }
 }

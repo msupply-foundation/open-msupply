@@ -6,7 +6,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
+    ForecastMethod, RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow,
+    RequisitionRowDelete,
     requisition_row::{RequisitionStatus, RequisitionType},
 };
 use serde_json::json;
@@ -76,9 +77,9 @@ impl SyncRecordTester for RequisitionRecordTester {
             price_per_unit: None,
             available_volume: None,
             location_type_id: None,
-            forecast_total_units: None,
-            forecast_total_doses: None,
-            vaccine_courses: None,
+            forecast_method: ForecastMethod::Amc,
+            forecast_monthly_consumption: 15.0,
+            forecast_data: None,
         };
 
         let mut requisition_row_2 = base_requisition_row.clone();

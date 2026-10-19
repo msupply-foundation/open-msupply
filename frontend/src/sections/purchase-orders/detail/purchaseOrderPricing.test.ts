@@ -3,7 +3,9 @@ import {
   chargesTotal,
   finalCost,
   linePacks,
+  orderTotals,
   projectedLineCost,
+  supplierDiscountFactor,
 } from './purchaseOrderPricing';
 
 // spec/purchase-orders rules § pricing and totals. The figures in the first
@@ -13,23 +15,16 @@ import {
 
 const line = (over: Partial<Parameters<typeof projectedLineCost>[0]> = {}) => ({
   requestedNumberOfUnits: 100,
-  adjustedNumberOfUnits: null,
   requestedPackSize: 10,
   pricePerPackAfterDiscount: 6,
   ...over,
 });
 
+const undiscounted = { supplierDiscountPercentage: null };
+
 describe('a line’s packs', () => {
-  it('divides the expected quantity by the pack size', () => {
+  it('divides the requested quantity by the pack size', () => {
     expect(linePacks(line())).toBe(10);
-  });
-
-  it('follows the adjusted quantity when there is one', () => {
-    expect(linePacks(line({ adjustedNumberOfUnits: 50 }))).toBe(5);
-  });
-
-  it('takes an adjusted quantity of zero over the requested one', () => {
-    expect(linePacks(line({ adjustedNumberOfUnits: 0 }))).toBe(0);
   });
 
   it('is zero at a pack size of zero, not an infinity', () => {
@@ -45,13 +40,16 @@ describe('a line’s packs', () => {
 });
 
 describe('OMS-FUN-PO-07.3 — a line’s cost', () => {
-  // A saved line's cost is the server's STORED `lineTotal`, which the table
-  // reads straight off the row (no function to test). What IS computed here is
-  // the editor's preview of what the server will store for an unsaved draft,
-  // on the server's own rule: packs × the after-discount pack price.
+  // A saved line's cost is the server's STORED `lineTotal` with the supplier
+  // discount apportioned, which the table reads straight off the row (no
+  // function to test). What IS computed here is the editor's preview of that
+  // figure for an unsaved draft, on the server's own rule: packs × the
+  // after-discount pack price, less the order's supplier discount.
   it('projects an unsaved draft’s cost as packs times the after-discount price', () => {
-    expect(projectedLineCost(line())).toBe(60);
-    expect(projectedLineCost(line({ adjustedNumberOfUnits: 50 }))).toBe(30);
+    expect(projectedLineCost(line(), undiscounted)).toBe(60);
+    expect(
+      projectedLineCost(line({ requestedNumberOfUnits: 50 }), undiscounted)
+    ).toBe(30);
   });
 
   // A zero-pack-size line contributes NOTHING, whatever its quantity or price
@@ -63,7 +61,32 @@ describe('OMS-FUN-PO-07.3 — a line’s cost', () => {
       requestedNumberOfUnits: 50,
       pricePerPackAfterDiscount: 5,
     });
-    expect(projectedLineCost(zeroPack)).toBe(0);
+    expect(projectedLineCost(zeroPack, undiscounted)).toBe(0);
+  });
+});
+
+describe('OMS-FUN-PO-07.16 — the supplier discount apportioned to a line', () => {
+  // The contract's live figures: a 25% supplier discount on a 60.00 subtotal
+  // gives a discounted total of 45.00 — and the one line that makes up that
+  // subtotal reads 45.00 too, so the lines reconcile with the order.
+  it('takes the order’s percentage off each line’s cost', () => {
+    expect(supplierDiscountFactor({ supplierDiscountPercentage: 25 })).toBe(
+      0.75
+    );
+    expect(projectedLineCost(line(), { supplierDiscountPercentage: 25 })).toBe(
+      45
+    );
+  });
+
+  it('leaves a line whole when the order carries no discount', () => {
+    expect(supplierDiscountFactor(undiscounted)).toBe(1);
+    expect(supplierDiscountFactor({ supplierDiscountPercentage: 0 })).toBe(1);
+  });
+
+  it('takes everything off at a discount of 100', () => {
+    expect(projectedLineCost(line(), { supplierDiscountPercentage: 100 })).toBe(
+      0
+    );
   });
 });
 
@@ -101,5 +124,49 @@ describe('the additional charges', () => {
   it('gives a line-less order a final cost of its charges alone', () => {
     // Every figure on an order with no lines reads as zero rather than absent.
     expect(finalCost({ ...charges, orderTotalAfterDiscount: 0 })).toBe(31);
+  });
+});
+
+describe('OMS-FUN-PO-07.12 — the totals band’s four figures', () => {
+  const node = {
+    agentCommission: 1,
+    documentCharge: 2,
+    communicationsCharge: 4,
+    insuranceCharge: 8,
+    freightCharge: 16,
+    orderTotalBeforeDiscount: 60,
+    orderTotalAfterDiscount: 45,
+    supplierDiscountAmount: 15,
+    supplierDiscountPercentage: 25,
+  };
+
+  it('reads across as subtotal − discount + charges = order total', () => {
+    const totals = orderTotals(node);
+    expect(totals.subtotal).toBe(60);
+    expect(totals.discount).toBe(15);
+    expect(totals.charges).toBe(31);
+    expect(totals.total).toBe(76);
+    expect(totals.subtotal - totals.discount + totals.charges).toBe(
+      totals.total
+    );
+  });
+
+  it('carries the stored percentage, which is what the label names', () => {
+    expect(orderTotals(node).discountPercentage).toBe(25);
+    expect(
+      orderTotals({ ...node, supplierDiscountPercentage: null })
+        .discountPercentage
+    ).toBe(0);
+  });
+
+  it('is the undiscounted total itself where no supplier discount is set', () => {
+    const undiscounted = orderTotals({
+      ...node,
+      orderTotalAfterDiscount: 60,
+      supplierDiscountAmount: 0,
+      supplierDiscountPercentage: null,
+    });
+    expect(undiscounted.discount).toBe(0);
+    expect(undiscounted.total).toBe(91);
   });
 });

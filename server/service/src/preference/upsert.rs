@@ -13,11 +13,20 @@ pub struct StorePrefUpdate<T> {
     pub value: T,
 }
 
+/// One store's edit of a global preference it may override. `None` clears the
+/// store's row so the store follows the global value again.
+#[derive(Debug, PartialEq, Clone)]
+pub struct StoreOverrideUpdate<T> {
+    pub store_id: String,
+    pub value: Option<T>,
+}
+
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_purchase_order_store_override: Option<Vec<StoreOverrideUpdate<bool>>>,
     /// Legacy v1 custom translations (flat, applied to all languages). Edited
     /// directly via the "legacy" namespace in the v2 editor; not auto-derived.
     pub custom_translations: Option<BTreeMap<String, String>>,
@@ -39,13 +48,13 @@ pub struct UpsertPreferences {
     pub backdating: Option<BackdatingData>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
+    pub decimal_places_for_numbers: Option<i32>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub order_in_packs: Option<Vec<StorePrefUpdate<bool>>>,
-    pub use_procurement_functionality: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
     pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
@@ -53,6 +62,7 @@ pub struct UpsertPreferences {
     pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
+    pub can_change_target_months_of_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
@@ -76,6 +86,7 @@ pub fn upsert_preferences(
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         authorise_purchase_order: authorise_purchase_order_input,
+        authorise_purchase_order_store_override: authorise_purchase_order_store_override_input,
         custom_translations: custom_translations_input,
         custom_translations_v2: custom_translations_v2_input,
         gender_options: gender_options_input,
@@ -96,13 +107,13 @@ pub fn upsert_preferences(
         backdating: backdating_input,
         receive_payments_from_prescriptions: receive_payments_from_prescriptions_input,
         global_logo: global_logo_input,
+        decimal_places_for_numbers: decimal_places_for_numbers_input,
 
         // Store preferences
         blind_stocktake: blind_stocktake_input,
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
-        use_procurement_functionality: show_purchase_orders_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
         disable_manual_returns: disable_manual_returns_input,
@@ -113,6 +124,7 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
+        can_change_target_months_of_stock: can_change_target_months_of_stock_input,
         external_inbound_shipment_lines_must_be_authorised:
             external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -152,13 +164,13 @@ pub fn upsert_preferences(
         backdating,
         receive_payments_from_prescriptions,
         global_logo,
+        decimal_places_for_numbers,
 
         // Store preferences
         blind_stocktake,
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
         order_in_packs,
-        use_procurement_functionality,
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
         disable_manual_returns,
@@ -167,6 +179,7 @@ pub fn upsert_preferences(
         warning_for_excess_request,
         can_create_internal_order_from_a_requisition,
         select_destination_store_for_an_internal_order,
+        can_change_target_months_of_stock,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
         number_of_months_threshold_to_show_low_stock_alerts_for_products,
         number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -189,6 +202,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = authorise_purchase_order_input {
                 authorise_purchase_order.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = authorise_purchase_order_store_override_input {
+                upsert_store_override_input(connection, authorise_purchase_order, input)?;
             }
 
             if let Some(input) = gender_options_input {
@@ -269,6 +286,10 @@ pub fn upsert_preferences(
                 global_logo.upsert(connection, input, None)?;
             }
 
+            if let Some(input) = decimal_places_for_numbers_input {
+                decimal_places_for_numbers.upsert(connection, input, None)?;
+            }
+
             // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(inputs) = blind_stocktake_input {
                 upsert_store_input(connection, blind_stocktake, inputs)?;
@@ -284,10 +305,6 @@ pub fn upsert_preferences(
 
             if let Some(inputs) = order_in_packs_input {
                 upsert_store_input(connection, order_in_packs, inputs)?;
-            }
-
-            if let Some(inputs) = show_purchase_orders_input {
-                upsert_store_input(connection, use_procurement_functionality, inputs)?;
             }
 
             if let Some(inputs) = sort_by_vvm_status_then_expiry_input {
@@ -324,6 +341,10 @@ pub fn upsert_preferences(
                     select_destination_store_for_an_internal_order,
                     inputs,
                 )?;
+            }
+
+            if let Some(inputs) = can_change_target_months_of_stock_input {
+                upsert_store_input(connection, can_change_target_months_of_stock, inputs)?;
             }
 
             if let Some(input) = external_inbound_shipment_lines_must_be_authorised_input {
@@ -408,6 +429,22 @@ fn upsert_store_input<P: Preference>(
 ) -> Result<(), UpsertPreferenceError> {
     for update in input.into_iter() {
         preference.upsert(connection, update.value, Some(update.store_id))?;
+    }
+    Ok(())
+}
+
+/// Apply each store's override edit: a value pins it for that store, no value
+/// drops the store's row so it follows the global value again.
+fn upsert_store_override_input<P: Preference>(
+    connection: &StorageConnection,
+    preference: P,
+    input: Vec<StoreOverrideUpdate<P::Value>>,
+) -> Result<(), UpsertPreferenceError> {
+    for update in input.into_iter() {
+        match update.value {
+            Some(value) => preference.upsert(connection, value, Some(update.store_id))?,
+            None => preference.clear_store_override(connection, update.store_id)?,
+        }
     }
     Ok(())
 }

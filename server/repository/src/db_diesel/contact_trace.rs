@@ -9,7 +9,7 @@ use crate::{
     contact_trace_row::ContactTraceRow,
     diesel_macros::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
-        apply_sort_no_case, apply_string_filter,
+        apply_string_filter,
     },
 };
 
@@ -164,10 +164,10 @@ impl<'a> ContactTraceRepository<'a> {
                     apply_sort!(query, sort, contact_trace_name_link_view::last_name)
                 }
                 ContactTraceSortField::Gender => {
-                    apply_sort_no_case!(query, sort, contact_trace_name_link_view::gender)
+                    apply_sort!(query, sort, contact_trace_name_link_view::gender)
                 }
                 ContactTraceSortField::DateOfBirth => {
-                    apply_sort_no_case!(query, sort, contact_trace_name_link_view::date_of_birth)
+                    apply_sort!(query, sort, contact_trace_name_link_view::date_of_birth)
                 }
             }
         } else {
@@ -197,5 +197,39 @@ impl<'a> ContactTraceRepository<'a> {
             .collect();
 
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, date, integer) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_contact_trace_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_contact_trace_sort", MockDataInserts::none()).await;
+        let repo = ContactTraceRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [
+                ContactTraceSortField::Datetime,
+                ContactTraceSortField::PatientId,
+                ContactTraceSortField::ProgramId,
+                ContactTraceSortField::ContactTraceId,
+                ContactTraceSortField::FirstName,
+                ContactTraceSortField::LastName,
+                ContactTraceSortField::Gender,
+                ContactTraceSortField::DateOfBirth,
+            ] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
+        }
     }
 }

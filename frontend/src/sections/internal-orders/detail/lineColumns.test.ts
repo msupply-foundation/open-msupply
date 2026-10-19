@@ -60,9 +60,9 @@ afterEach(() => {
 });
 
 describe('published column ids (OMS-REG-REPL-16.2)', () => {
-  it('publishes the 25 line-table column ids, all unique', () => {
+  it('publishes the 24 line-table column ids, all unique', () => {
     const all = publishedLineColumnIds();
-    expect(all).toHaveLength(25);
+    expect(all).toHaveLength(24);
     expect(new Set(all).size).toBe(all.length);
   });
 
@@ -237,8 +237,8 @@ describe('mergeLineColumns — presentation', () => {
     );
     const column = merged.columns[1]!;
     expect(column.meta?.align).toBe('right');
-    // The host's own number cell: same alignment and same 2dp locale format a
-    // host figure gets.
+    // The host's own number cell: same alignment and the same locale format at
+    // the installation's decimal places a host figure gets.
     expect(column.cell).toBeTypeOf('function');
     expect(String(getNumberCell().meta?.align)).toBe('right');
     expect(accessed(column, { id: 'l1', value: 1 })).toBe(12345.678);

@@ -116,8 +116,8 @@ mod test {
         PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
         PurchaseOrderRow, PurchaseOrderRowRepository,
         mock::{
-            MockData, MockDataInserts, currency_a, currency_b, mock_inbound_shipment_c,
-            mock_item_a, mock_name_a, mock_name_linked_to_store_join,
+            MockData, MockDataInserts, currency_a, currency_b, mock_donor_a,
+            mock_inbound_shipment_c, mock_item_a, mock_name_a, mock_name_linked_to_store_join,
             mock_name_not_linked_to_store, mock_store_a, mock_store_linked_to_name,
             mock_user_account_a,
         },
@@ -481,6 +481,135 @@ mod test {
         );
     }
 
+    /// The order's donor becomes the shipment's default donor and is stamped on
+    /// every line seeded from the order; an order without a donor sets neither.
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_carries_po_donor() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "po_donor_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "po_donor_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn po(id: &str, donor_id: Option<String>) -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                donor_id,
+                foreign_exchange_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn po_line(id: &str, purchase_order_id: &str) -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: id.to_string(),
+                purchase_order_id: purchase_order_id.to_string(),
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                requested_pack_size: 1.0,
+                requested_number_of_units: 10.0,
+                status: PurchaseOrderLineStatus::Sent,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_carries_po_donor",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let po_repo = PurchaseOrderRowRepository::new(&connection);
+        let po_line_repo = PurchaseOrderLineRowRepository::new(&connection);
+        po_repo
+            .upsert_one(&po("po_with_donor", Some(mock_donor_a().id)))
+            .unwrap();
+        po_line_repo
+            .upsert_one(&po_line("po_with_donor_line", "po_with_donor"))
+            .unwrap();
+        po_repo.upsert_one(&po("po_without_donor", None)).unwrap();
+        po_line_repo
+            .upsert_one(&po_line("po_without_donor_line", "po_without_donor"))
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+        let invoice_repo = InvoiceRowRepository::new(&connection);
+        let line_repo = InvoiceLineRowRepository::new(&connection);
+
+        service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "from_po_with_donor".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some("po_with_donor".to_string()),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = invoice_repo
+            .find_one_by_id("from_po_with_donor")
+            .unwrap()
+            .unwrap();
+        assert_eq!(invoice.default_donor_id, Some(mock_donor_a().id));
+        let lines = line_repo
+            .find_many_by_invoice_id("from_po_with_donor")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].donor_id, Some(mock_donor_a().id));
+
+        service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "from_po_without_donor".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some("po_without_donor".to_string()),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = invoice_repo
+            .find_one_by_id("from_po_without_donor")
+            .unwrap()
+            .unwrap();
+        assert_eq!(invoice.default_donor_id, None);
+        let lines = line_repo
+            .find_many_by_invoice_id("from_po_without_donor")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].donor_id, None);
+    }
+
     /// Seeding lines from a purchase order takes each line's STORED total,
     /// pro-rated to the units still to ship, rather than multiplying price by
     /// packs again — and only the outstanding packs are added.
@@ -626,6 +755,123 @@ mod test {
             "local total should be the pro-rated total at the rate, got {}",
             line.total_before_tax
         );
+        assert!(close(line.total_after_tax, line.total_before_tax));
+    }
+
+    /// The order's supplier discount is apportioned to every seeded line: its
+    /// cost (and sell) price and its totals are the order line's figures net of
+    /// the discount, so the shipment's value reconciles with the discounted order.
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_applies_supplier_discount() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "discount_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "discount_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn po() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "discount_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                currency_id: Some(currency_b().id),
+                foreign_exchange_rate: currency_b().rate,
+                supplier_discount_percentage: Some(10.0),
+                ..Default::default()
+            }
+        }
+
+        // 100 units at pack size 10, 6.00 a pack after the line's own discount.
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "discount_po_line".to_string(),
+                purchase_order_id: po().id,
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                requested_pack_size: 10.0,
+                requested_number_of_units: 100.0,
+                price_per_pack_after_discount: 6.0,
+                line_total: 60.0,
+                status: PurchaseOrderLineStatus::Sent,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_applies_supplier_discount",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po())
+            .unwrap();
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&po_line())
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        service_provider
+            .invoice_service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "discount_new".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some(po().id),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("discount_new")
+            .unwrap()
+            .unwrap();
+        let lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id("discount_new")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        let line = &lines[0];
+
+        // 10% off 6.00 a pack is 5.40; 10% off the stored 60.00 is 54.00
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        assert_eq!(line.number_of_packs, 10.0);
+        assert!(
+            close(line.cost_price_per_pack, 5.4 * invoice.currency_rate),
+            "cost should be the discounted pack price at the rate, got {}",
+            line.cost_price_per_pack
+        );
+        assert!(close(line.sell_price_per_pack, line.cost_price_per_pack));
+        assert!(
+            close(line.foreign_currency_price_before_tax.unwrap(), 54.0),
+            "foreign total should be the discounted stored total, got {:?}",
+            line.foreign_currency_price_before_tax
+        );
+        assert!(close(line.total_before_tax, 54.0 * invoice.currency_rate));
         assert!(close(line.total_after_tax, line.total_before_tax));
     }
 }
