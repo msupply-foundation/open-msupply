@@ -42,8 +42,8 @@ const line = (
   receivedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
   pricePerPackAfterDiscount: 6,
-  // The stored total: 10 packs at 6.00, as the server wrote it.
-  lineTotal: 60,
+  // The stored total: 10 packs at 6.00, with no supplier discount to apportion.
+  lineTotalAfterSupplierDiscount: 60,
   requestedDeliveryDate: '2026-10-01',
   expectedDeliveryDate: null,
   supplierItemCode: null,
@@ -276,12 +276,24 @@ describe('OMS-FUN-PO-07.2 — the three prices settle', () => {
 });
 
 describe('OMS-FUN-PO-07.3 — the editor previews the line’s total cost', () => {
-  // The editor previews what the server will STORE on save — its own rule,
-  // the after-discount price times the packs authored. A saved line's row
-  // then reads the stored figure (`lineTotal`) rather than recomputing it.
+  // The editor previews the Line cost the table will show on save — the
+  // server's own rule, the after-discount price times the packs authored,
+  // less the order's supplier discount. A saved line's row then reads the
+  // stored figure (`lineTotalAfterSupplierDiscount`) rather than recomputing.
+  const undiscounted = { supplierDiscountPercentage: null };
+
   it('previews the after-discount price times the packs authored', () => {
-    expect(projectedLineCost(draft())).toBe(60);
-    expect(projectedLineCost(draft({ requestedNumberOfUnits: 50 }))).toBe(30);
+    expect(projectedLineCost(draft(), undiscounted)).toBe(60);
+    expect(
+      projectedLineCost(draft({ requestedNumberOfUnits: 50 }), undiscounted)
+    ).toBe(30);
+  });
+
+  // OMS-FUN-PO-07.16 — the order's supplier discount reaches the preview too
+  it('takes the order’s supplier discount off the preview', () => {
+    expect(projectedLineCost(draft(), { supplierDiscountPercentage: 25 })).toBe(
+      45
+    );
   });
 });
 

@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_campaign_id_to_invoice;
 mod add_cancelled_status_to_purchase_order;
 mod add_code_to_location_type;
+mod add_forecast_method_to_requisition_line;
 mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
 mod add_uploader_to_sync_file_reference;
@@ -32,6 +33,7 @@ impl Migration for V3_04_00 {
             Box::new(add_campaign_id_to_invoice::Migrate),
             Box::new(refresh_who_pqs_catalogue::Migrate),
             Box::new(update_default_asset_log_reasons::Migrate),
+            Box::new(add_forecast_method_to_requisition_line::Migrate),
             Box::new(add_cancelled_status_to_purchase_order::Migrate),
         ]
     }

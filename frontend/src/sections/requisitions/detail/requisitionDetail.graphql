@@ -50,14 +50,49 @@ fragment RequisitionDetailLine on RequisitionLineNode {
   reason {
     reason
   }
-  # The customer's population forecast, copied by the transfer (context only —
-  # never written from this side; rules › forecast context). Gated client-side
-  # on displayPopulationBasedForecasting + a non-null, non-zero total;
-  # vaccineCourses is the calculation display's per-course JSON
-  # (OMS-REG-DIST-05.35).
-  forecastTotalUnits
-  forecastTotalDoses
-  vaccineCourses
+  # The customer's forecast, copied by the transfer (context only — never
+  # written from this side; rules › forecast context): the same selection as
+  # domain/forecast's ForecastLine fragment, which the editor's read-only forecast
+  # block takes (OMS-REG-DIST-05.37). Shown on a transfer-linked line only.
+  forecastMethod
+  forecastMonthlyConsumption
+  targetStock
+  forecastBreakdown {
+    __typename
+    ... on AmcForecastNode {
+      averageMonthlyConsumption
+    }
+    ... on PopulationForecastNode {
+      populationServed
+      courses {
+        courseName
+        demographicName
+        numberOfDoses
+        coverageRate
+        wastageRate
+        targetPopulation
+        lossFactor
+        annualTargetDoses
+        dosesPerUnit
+        monthlyDoses
+        monthlyUnits
+      }
+    }
+    ... on AncillaryRatioForecastNode {
+      principals {
+        itemId
+        item {
+          code
+          name
+          unitName
+        }
+        principalMonthlyConsumption
+        itemQuantity
+        ancillaryQuantity
+        monthlyConsumption
+      }
+    }
+  }
   # The customer's volume snapshot on a storage-restricted transferred line
   # (rules › volume guidance; null on a manual line). availableVolume arrives
   # net of the requisition's OTHER lines' claims — the editor subtracts this

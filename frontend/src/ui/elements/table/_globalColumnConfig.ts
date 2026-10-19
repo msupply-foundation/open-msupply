@@ -226,7 +226,6 @@ export const CELL_DEF = {
   // of text box laid them out over THREE lines, so the 2-line clamp ate
   // "(AMC)". 7.5rem wraps it "Target stock / (AMC)".
   targetStock: { kind: 'number', size: 7.5 },
-  targetStockPopulation: { kind: 'number', size: 7.5 }, // "…(population)"
   suggested: { kind: 'number', size: 7 }, // "Suggested" / "quantity" + sort
   // "Requested" + sort — ONE word, so it either fits or breaks; 6.5rem left it
   // 64px of text box against a 66px word and broke it ("Requeste/d", the same

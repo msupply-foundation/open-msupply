@@ -14,6 +14,9 @@ use graphql_core::{
 use repository::{ApprovalStatusType, NameRow, Requisition, requisition_row::RequisitionRow};
 use service::{
     ListResult,
+    requisition::request_requisition::{
+        SupplyIntervalAndBuffer, name_supply_interval_and_buffer, store_supply_interval_and_buffer,
+    },
     requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
 };
 
@@ -22,6 +25,23 @@ use super::{
     program_node::ProgramNode,
 };
 use crate::types::SyncFileReferenceConnector;
+
+/// A store's supply interval and safety buffer: their sum is its general orders' default
+/// target months of stock
+pub struct SupplyIntervalAndBufferNode {
+    interval: SupplyIntervalAndBuffer,
+}
+
+#[Object]
+impl SupplyIntervalAndBufferNode {
+    pub async fn supply_interval_months(&self) -> f64 {
+        self.interval.supply_interval_months
+    }
+    /// Zero when the facility record carries none
+    pub async fn safety_buffer_months(&self) -> f64 {
+        self.interval.safety_buffer_months
+    }
+}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
@@ -327,6 +347,31 @@ impl RequisitionNode {
     /// Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn min_months_of_stock(&self) -> &f64 {
         &self.row().min_months_of_stock
+    }
+
+    /// The ordering store's supply interval and safety buffer (from its facility record) as
+    /// they stand now, null when it carries no supply interval. A general
+    /// order's default target months of stock.
+    pub async fn supply_interval_and_buffer(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<SupplyIntervalAndBufferNode>> {
+        use repository::RequisitionType;
+        let connection = ctx.service_provider().basic_context()?.connection;
+        let row = self.row();
+        let interval = match row.r#type {
+            RequisitionType::Request => {
+                store_supply_interval_and_buffer(&connection, &row.store_id)
+            }
+            // The customer orders
+            RequisitionType::Response => {
+                name_supply_interval_and_buffer(&connection, &row.store_id, &row.name_id)
+            }
+            // Legacy types, not internal orders
+            RequisitionType::Imprest | RequisitionType::StockHistory => Ok(None),
+        }
+        .map_err(|e| StandardGraphqlError::from_debug(&e))?;
+        Ok(interval.map(|interval| SupplyIntervalAndBufferNode { interval }))
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {

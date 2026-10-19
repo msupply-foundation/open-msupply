@@ -9,6 +9,7 @@ import {
 import {
   getCellDefinition,
   getNumberCell,
+  sumBy,
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
@@ -69,10 +70,11 @@ export const InboundFinancialPanel: Component<{
   const localCode = () => homeCurrency();
 
   // Per-line derivations (contract → Financial), pure over the line only —
-  // the PO price per pack comes straight off the PO line; the rate-dependent
-  // per-pack conversion is built inside columns() from a captured rate (below).
+  // the PO price per pack comes straight off the PO line, net of the order's
+  // supplier discount; the rate-dependent per-pack conversion is built inside
+  // columns() from a captured rate (below).
   const poPricePerPack = (line: Line) =>
-    line.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0;
+    line.purchaseOrderLine?.pricePerPackAfterSupplierDiscount ?? 0;
   // The two line totals read the line's stored figures (see the header note).
   const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
   const lineTotalLocal = (line: Line) => line.totalBeforeTax;
@@ -82,11 +84,9 @@ export const InboundFinancialPanel: Component<{
   // The three footer totals are pure over the rows — none depends on the rate
   // — so they are memoised here rather than re-summed on every columns()
   // rebuild (which also fires on rate / currency-code changes).
-  const sum = (fn: (line: Line) => number) =>
-    props.rows.reduce((total, line) => total + fn(line), 0);
-  const totalPo = createMemo(() => sum(lineTotalPo));
-  const totalLocal = createMemo(() => sum(lineTotalLocal));
-  const totalAdjusted = createMemo(() => sum(adjustedTotalLocal));
+  const totalPo = createMemo(() => sumBy(props.rows, lineTotalPo));
+  const totalLocal = createMemo(() => sumBy(props.rows, lineTotalLocal));
+  const totalAdjusted = createMemo(() => sumBy(props.rows, adjustedTotalLocal));
 
   const sortedRows = () =>
     [...props.rows].sort(

@@ -35,6 +35,7 @@ import {
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  sumBy,
   type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
@@ -264,6 +265,7 @@ const PurchaseOrderDetailView: Component = () => {
     }
   );
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const lineCost = (line: Line) => line.lineTotalAfterSupplierDiscount;
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
 
   // ── The whole line set (gates, cascades, the finalise warning) ────────────
@@ -650,15 +652,15 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(7),
     },
     {
-      // The line's STORED total, as the server wrote it — never re-multiplied
-      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
-      // — the page, which is what a paginated table can total; the order's
-      // whole subtotal is the side panel's Subtotal row.
-      c: { accessor: line => line.lineTotal, id: 'lineCost' },
+      // The line's STORED total with the order's supplier discount apportioned
+      // to it, as the server computes it — never re-multiplied here (rules §
+      // pricing and totals). Its footer sums the rows ON SCREEN — the page,
+      // which is what a paginated table can total; the order's whole figures
+      // are the side panel's Subtotal and Final cost rows.
+      c: { accessor: lineCost, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
-      footer: () =>
-        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
+      footer: () => money(sumBy(rows(), lineCost)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -964,6 +966,7 @@ const PurchaseOrderDetailView: Component = () => {
                   status: status(),
                   currencyCode: node().currency?.code,
                   requestedDeliveryDate: node().requestedDeliveryDate,
+                  supplierDiscountPercentage: node().supplierDiscountPercentage,
                 }}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}

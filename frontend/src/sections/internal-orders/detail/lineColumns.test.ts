@@ -60,9 +60,9 @@ afterEach(() => {
 });
 
 describe('published column ids (OMS-REG-REPL-16.2)', () => {
-  it('publishes the 25 line-table column ids, all unique', () => {
+  it('publishes the 24 line-table column ids, all unique', () => {
     const all = publishedLineColumnIds();
-    expect(all).toHaveLength(25);
+    expect(all).toHaveLength(24);
     expect(new Set(all).size).toBe(all.length);
   });
 

@@ -71,6 +71,7 @@ fragment InboundInfo on InvoiceNode {
     number
     reference
     orderTotalAfterDiscount
+    supplierDiscountPercentage
     donor {
       id
       name
@@ -205,7 +206,8 @@ fragment InboundLine on InvoiceLineNode {
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits
-    pricePerPackAfterDiscount
+    # The pack price the shipment's cost was seeded from
+    pricePerPackAfterSupplierDiscount
   }
 }
 

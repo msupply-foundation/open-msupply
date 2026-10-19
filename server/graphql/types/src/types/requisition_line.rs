@@ -1,4 +1,7 @@
-use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode};
+use super::{
+    ForecastBreakdownNode, ForecastMethodNode, ForecastMethodOptionNode, InvoiceLineConnector,
+    ItemNode, ItemStatsNode, ReasonOptionNode,
+};
 use crate::types::LocationTypeNode;
 use async_graphql::*;
 use chrono::NaiveDate;
@@ -7,14 +10,15 @@ use graphql_core::{
     ContextExt,
     loader::{
         AncillaryItemsByAncillaryIdLoader, AvailableVolumeOnRequisitionLoader,
-        AvailableVolumeOnRequisitionLoaderInput, InvoiceLineForRequisitionLine, ItemLoader,
-        ItemStatsLoaderInput, ItemsStatsForItemLoader, LinkedRequisitionLineLoader,
-        ReasonOptionLoader, RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
+        AvailableVolumeOnRequisitionLoaderInput, ForecastMethodOptionsLoader,
+        InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
+        LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
+        RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
 };
 use repository::{
-    ItemRow, RequisitionLine, RequisitionLineRow,
+    ForecastData, ItemRow, RequisitionLine, RequisitionLineRow,
     requisition_row::{RequisitionRow, RequisitionType},
 };
 use service::{item_stats::ItemStats, usize_to_u32};
@@ -367,15 +371,47 @@ impl RequisitionLineNode {
         None
     }
 
-    // Population-based forecasting fields
-    pub async fn forecast_total_doses(&self) -> &Option<f64> {
-        &self.row().forecast_total_doses
+    // Forecasting
+
+    /// Where the line's monthly demand comes from
+    pub async fn forecast_method(&self) -> ForecastMethodNode {
+        (&self.row().forecast_method).into()
     }
-    pub async fn forecast_total_units(&self) -> &Option<f64> {
-        &self.row().forecast_total_units
+
+    /// The line's monthly demand in units: what its suggested quantity, months of stock and
+    /// target stock work from, whatever its forecast method
+    pub async fn forecast_monthly_consumption(&self) -> f64 {
+        self.row().forecast_monthly_consumption
     }
-    pub async fn vaccine_courses(&self) -> &Option<String> {
-        &self.row().vaccine_courses
+
+    /// The inputs and steps behind the line's monthly demand
+    pub async fn forecast_breakdown(&self) -> ForecastBreakdownNode {
+        let row = self.row();
+        ForecastBreakdownNode::from_domain(
+            ForecastData::for_method(&row.forecast_method, row.forecast_data.as_deref()),
+            row.forecast_monthly_consumption,
+        )
+    }
+
+    /// Every forecast method, an unavailable one with its reason. Empty on a response
+    /// requisition's line, whose forecast is the customer's.
+    pub async fn forecast_method_options(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<ForecastMethodOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ForecastMethodOptionsLoader>>();
+        Ok(loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default()
+            .into_iter()
+            .map(ForecastMethodOptionNode::from_domain)
+            .collect())
+    }
+
+    /// The requisition's target months × the line's monthly demand
+    pub async fn target_stock(&self) -> f64 {
+        self.requisition_row().max_months_of_stock * self.row().forecast_monthly_consumption
     }
 }
 
