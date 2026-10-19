@@ -2,8 +2,8 @@ use crate::{
     ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
     db_diesel::{
-        changelog::changelog::RowOrId, currency_row::currency, item_link_row::item_link,
-        item_row::item, name_row::name,
+        changelog::changelog::RowOrId, currency_row::currency, custom_fields_json::JsonValue,
+        item_link_row::item_link, item_row::item, name_row::name,
     },
     diesel_macros::define_linked_tables,
 };
@@ -60,6 +60,7 @@ define_linked_tables! {
         supplier_discount_percentage -> Nullable<Double>,
         request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
     },
     links: {
         supplier_name_link_id -> supplier_name_id,
@@ -111,6 +112,7 @@ pub struct PurchaseOrderRow {
     pub supplier_discount_percentage: Option<f64>,
     pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    pub custom_fields: Option<JsonValue>,
     // Resolved from name_link - must be last to match view column order
     pub supplier_name_id: String,
     pub donor_id: Option<String>,

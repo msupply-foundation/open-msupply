@@ -7,8 +7,11 @@ use repository::{
 
 use crate::{
     NullableUpdate,
+    custom_field::check_custom_fields_patch,
     preference::{AuthorisePurchaseOrder, Preference},
-    purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
+    purchase_order::update::{
+        PURCHASE_ORDER_CUSTOM_FIELD_SCOPE, UpdatePurchaseOrderError, UpdatePurchaseOrderInput,
+    },
     validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 
@@ -31,6 +34,13 @@ pub fn validate(
     ) && !input.is_allowed_on_closed_order(current_status)
     {
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
+    }
+
+    if let Some(patch) = &input.custom_fields
+        && let Some(problem) =
+            check_custom_fields_patch(connection, PURCHASE_ORDER_CUSTOM_FIELD_SCOPE, patch)?
+    {
+        return Err(problem.into());
     }
 
     // If RequestApproval is asked for but the store doesn't require authorisation,

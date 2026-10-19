@@ -1,17 +1,28 @@
-use crate::sync::translations::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, name::NameTranslation,
-    store::StoreTranslation,
+use std::sync::LazyLock;
+
+use crate::{
+    purchase_order::update::PURCHASE_ORDER_CUSTOM_FIELD_SCOPE,
+    sync::{
+        CentralServerConfig,
+        central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes},
+        translations::{
+            FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+            name::NameTranslation,
+            store::StoreTranslation,
+            utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
+        },
+    },
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderDelete, PurchaseOrderFilter,
-    PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus, Row,
-    StorageConnection, SyncBufferRow,
+    PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatsRow,
+    PurchaseOrderStatus, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
-    date_option_to_isostring, empty_str_as_option, object_fields_as_option, zero_date_as_option,
-    zero_f64_as_none,
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+    object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -99,6 +110,16 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
+    /// Mapped to/from `custom_fields` — see [`LEGACY_PURCHASE_ORDER_OWNED_KEYS`].
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub user_field_1: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub user_field_2: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub category_ID: Option<String>,
     #[serde(default)]
     pub supplier_discount_amount: f64,
     #[serde(default)]
@@ -188,6 +209,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
             additional_instructions,
             freight_conditions,
             heading_message,
+            user_field_1,
+            user_field_2,
+            category_ID,
             oms_fields,
             delivery_method,
             requested_delivery_date,
@@ -252,6 +276,24 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
         let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
 
+        // Central refreshes the OG-owned keys; the owning remote authors its own and keeps them.
+        let existing_custom_fields = PurchaseOrderRowRepository::new(connection)
+            .find_one_by_id(&id)?
+            .and_then(|row| row.custom_fields);
+        let custom_fields = if CentralServerConfig::is_central_server() {
+            merge_legacy_custom_fields(
+                existing_custom_fields,
+                LegacyCustomFieldsBuilder::new()
+                    .option(keys::PURCHASE_ORDER_CATEGORY, category_ID.as_deref())
+                    .text(keys::PURCHASE_ORDER_USER_FIELD_1, user_field_1.as_deref())
+                    .text(keys::PURCHASE_ORDER_USER_FIELD_2, user_field_2.as_deref())
+                    .build(),
+                &LEGACY_PURCHASE_ORDER_OWNED_KEYS,
+            )
+        } else {
+            existing_custom_fields
+        };
+
         let result = PurchaseOrderRow {
             id,
             created_by,
@@ -282,6 +324,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             freight_conditions,
             request_approval_datetime,
             finalised_datetime,
+            custom_fields,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -343,6 +386,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             freight_conditions,
             request_approval_datetime,
             finalised_datetime,
+            custom_fields,
         } = purchase_order.purchase_order_row;
 
         let PurchaseOrderStatsRow {
@@ -376,6 +420,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_2,
             freight_conditions,
             additional_instructions,
+            user_field_1: custom_field_text(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_1),
+            user_field_2: custom_field_text(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_2),
+            category_ID: custom_field_text(&custom_fields, keys::PURCHASE_ORDER_CATEGORY),
             supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
                 order_total_before_discount * (percentage / 100.0)
             } else {
@@ -413,6 +460,18 @@ impl SyncTranslation for PurchaseOrderTranslation {
     ) -> Result<PushTranslateResult, anyhow::Error> {
         Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
+}
+
+/// The `custom_fields` keys the OG import owns for purchase orders.
+static LEGACY_PURCHASE_ORDER_OWNED_KEYS: LazyLock<Vec<&'static str>> =
+    LazyLock::new(|| legacy_owned_keys_for_scopes(&[PURCHASE_ORDER_CUSTOM_FIELD_SCOPE]));
+
+fn custom_field_text(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
+    custom_fields
+        .as_ref()?
+        .get(key)?
+        .as_str()
+        .map(str::to_string)
 }
 
 fn from_legacy_status(
@@ -540,5 +599,96 @@ mod tests {
 
             assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
+    }
+
+    /// Central maps the legacy category and user fields into custom_fields.
+    #[actix_rt::test]
+    async fn test_purchase_order_user_fields_map_to_custom_fields() {
+        use crate::sync::{
+            test::test_data::purchase_order as test_data, test_util_set_is_central_server,
+        };
+        use repository::mock::mock_purchase_order_a;
+
+        let translator = PurchaseOrderTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_purchase_order_user_fields_map_to_custom_fields",
+            MockDataInserts::none().purchase_order().currencies(),
+        )
+        .await;
+
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        let mut existing = repo
+            .find_one_by_id(&mock_purchase_order_a().id)
+            .unwrap()
+            .unwrap();
+        existing.custom_fields = Some(json!({
+            "oms_authored": "keep",
+            "purchase_order_user_field_2": "cleared on OG",
+        }));
+        repo.upsert_one(&existing).unwrap();
+
+        let mut record = test_data::test_pull_upsert_records()[0]
+            .sync_buffer_row
+            .clone();
+        record.record_id = existing.id.clone();
+        record.data.0["ID"] = json!(existing.id);
+        record.data.0["user_field_1"] = json!("Grant 42");
+        record.data.0["user_field_2"] = json!("");
+        record.data.0["category_ID"] = json!("PO_CAT_1");
+
+        let custom_fields = |result: PullTranslateResult| {
+            let debug = format!("{result:?}");
+            let start = debug.find("custom_fields: ").unwrap();
+            debug[start..]
+                .split(", supplier_name_id")
+                .next()
+                .unwrap()
+                .to_string()
+        };
+
+        test_util_set_is_central_server(true);
+        let on_central = custom_fields(
+            translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record,
+                )
+                .unwrap(),
+        );
+        test_util_set_is_central_server(false);
+        assert!(on_central.contains("Grant 42"), "{on_central}");
+        assert!(on_central.contains("PO_CAT_1"), "{on_central}");
+        assert!(on_central.contains("oms_authored"), "{on_central}");
+        assert!(!on_central.contains("cleared on OG"), "{on_central}");
+
+        let on_remote = custom_fields(
+            translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record,
+                )
+                .unwrap(),
+        );
+        assert!(!on_remote.contains("Grant 42"), "{on_remote}");
+        assert!(on_remote.contains("cleared on OG"), "{on_remote}");
+
+        let stored = Some(json!({
+            "purchase_order_user_field_1": "Grant 42",
+            "purchase_order_category": "PO_CAT_1",
+        }));
+        assert_eq!(
+            custom_field_text(&stored, keys::PURCHASE_ORDER_CATEGORY),
+            Some("PO_CAT_1".to_string())
+        );
+        assert_eq!(
+            custom_field_text(&stored, keys::PURCHASE_ORDER_USER_FIELD_1),
+            Some("Grant 42".to_string())
+        );
+        assert_eq!(
+            custom_field_text(&stored, keys::PURCHASE_ORDER_USER_FIELD_2),
+            None
+        );
     }
 }

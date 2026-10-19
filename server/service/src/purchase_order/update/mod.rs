@@ -7,6 +7,7 @@ use repository::{
 use crate::{
     NullableUpdate,
     activity_log::{activity_log_entry, log_type_from_purchase_order_status},
+    custom_field::CustomFieldPatchProblem,
     purchase_order::update::generate::GenerateResult,
     service_provider::ServiceContext,
 };
@@ -17,6 +18,8 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
+
+pub const PURCHASE_ORDER_CUSTOM_FIELD_SCOPE: &str = "purchase_order";
 
 #[derive(PartialEq, Debug)]
 pub enum UpdatePurchaseOrderError {
@@ -29,6 +32,11 @@ pub enum UpdatePurchaseOrderError {
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
     InboundShipmentsNotVerified,
+    UnknownCustomFieldKey(String),
+    InvalidCustomFieldValue {
+        key: String,
+        expected: repository::CustomFieldValueType,
+    },
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -56,6 +64,8 @@ pub struct UpdatePurchaseOrderInput {
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
     pub freight_conditions: Option<String>,
+    /// Merged into `purchase_order.custom_fields`; a null value deletes the key
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 impl UpdatePurchaseOrderInput {
@@ -84,6 +94,7 @@ impl UpdatePurchaseOrderInput {
             additional_instructions,
             heading_message,
             freight_conditions,
+            custom_fields: _,
         } = self;
         let post_sending_dates_allowed = matches!(status, PurchaseOrderStatus::Sent)
             || (contract_signed_date.is_none() && advance_paid_date.is_none());
@@ -163,6 +174,19 @@ pub fn update_purchase_order(
         .map_err(|error: TransactionError<UpdatePurchaseOrderError>| error.to_inner_error())?;
 
     Ok(purchase_order)
+}
+
+impl From<CustomFieldPatchProblem> for UpdatePurchaseOrderError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdatePurchaseOrderError::UnknownCustomFieldKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdatePurchaseOrderError::InvalidCustomFieldValue { key, expected }
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpdatePurchaseOrderError {

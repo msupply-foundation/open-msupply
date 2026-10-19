@@ -90,6 +90,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
         TABLE_NAME,
         PURCHASE_ORDER_1,
         PurchaseOrderRow {
+            custom_fields: None,
             id: PURCHASE_ORDER_1.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: Some("some user".to_string()),
@@ -150,6 +151,9 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_1.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            user_field_1: None,
+            user_field_2: None,
+            category_ID: None,
             name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_1.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
@@ -285,6 +289,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
         TABLE_NAME,
         PURCHASE_ORDER_2,
         PurchaseOrderRow {
+            custom_fields: None,
             id: "FA9FFB5F474E4EE998ADA2632E41E6BF".to_string(),
             store_id: "store_a".to_string(),
             created_by: Some("user_account_a".to_string()),
@@ -336,6 +341,9 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: "FA9FFB5F474E4EE998ADA2632E41E6BF".to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            user_field_1: None,
+            user_field_2: None,
+            category_ID: None,
             name_id: "donor_a".to_string(),
             id: "FA9FFB5F474E4EE998ADA2632E41E6BF".to_string(),
             creation_date: NaiveDate::from_ymd_opt(2021, 3, 15).unwrap(),
@@ -415,6 +423,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
         TABLE_NAME,
         PURCHASE_ORDER_3,
         PurchaseOrderRow {
+            custom_fields: None,
             id: PURCHASE_ORDER_3.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -455,6 +464,9 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_3.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            user_field_1: None,
+            user_field_2: None,
+            category_ID: None,
             name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_3.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
@@ -524,6 +536,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
         TABLE_NAME,
         PURCHASE_ORDER_4,
         PurchaseOrderRow {
+            custom_fields: None,
             id: PURCHASE_ORDER_4.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -563,6 +576,9 @@ fn purchase_order_4_empty_object_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_4.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            user_field_1: None,
+            user_field_2: None,
+            category_ID: None,
             name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_4.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
@@ -630,6 +646,7 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
         TABLE_NAME,
         PURCHASE_ORDER_5,
         PurchaseOrderRow {
+            custom_fields: None,
             id: PURCHASE_ORDER_5.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -651,6 +668,9 @@ fn purchase_order_5_null_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_5.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            user_field_1: None,
+            user_field_2: None,
+            category_ID: None,
             name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_5.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
@@ -716,6 +736,7 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
         TABLE_NAME,
         PURCHASE_ORDER_6,
         PurchaseOrderRow {
+            custom_fields: None,
             id: PURCHASE_ORDER_6.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -736,6 +757,9 @@ fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_6.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            user_field_1: None,
+            user_field_2: None,
+            category_ID: None,
             name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_6.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),

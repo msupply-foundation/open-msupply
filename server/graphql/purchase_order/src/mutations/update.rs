@@ -47,6 +47,8 @@ pub struct UpdateInput {
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
     pub freight_conditions: Option<String>,
+    /// Merged into the order's custom fields; a null value deletes the key
+    pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 impl UpdateInput {
@@ -75,6 +77,7 @@ impl UpdateInput {
             additional_instructions,
             heading_message,
             freight_conditions,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -102,6 +105,7 @@ impl UpdateInput {
             additional_instructions,
             heading_message,
             freight_conditions,
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }
@@ -213,7 +217,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist
-        | ServiceError::CannotEditSentPurchaseOrder => BadUserInput(formatted_error),
+        | ServiceError::CannotEditSentPurchaseOrder
+        | ServiceError::UnknownCustomFieldKey(_)
+        | ServiceError::InvalidCustomFieldValue { .. } => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

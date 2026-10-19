@@ -1,17 +1,21 @@
 use self::dataloader::DataLoader;
 use crate::types::{
     CurrencyNode, NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector,
-    UserNode,
+    UserNode, filter_custom_fields,
 };
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::ContextExt;
-use graphql_core::loader::{CurrencyByIdLoader, PurchaseOrderLinesByPurchaseOrderIdLoader};
+use graphql_core::loader::{
+    AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader,
+    PurchaseOrderLinesByPurchaseOrderIdLoader,
+};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow};
 use service::ListResult;
+use service::purchase_order::update::PURCHASE_ORDER_CUSTOM_FIELD_SCOPE;
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
@@ -146,6 +150,18 @@ impl PurchaseOrderNode {
     }
     pub async fn freight_conditions(&self) -> &Option<String> {
         &self.row().freight_conditions
+    }
+    /// Filtered to the keys visible on the purchase_order scope
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
+            return Ok(None);
+        };
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys = loader
+            .load_one(PURCHASE_ORDER_CUSTOM_FIELD_SCOPE.to_string())
+            .await?
+            .unwrap_or_default();
+        Ok(Some(filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn supplier_discount_amount(&self) -> f64 {

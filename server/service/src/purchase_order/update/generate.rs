@@ -1,5 +1,5 @@
 use super::UpdatePurchaseOrderInput;
-use crate::nullable_update;
+use crate::{custom_field::apply_custom_fields_patch, nullable_update};
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
@@ -39,6 +39,7 @@ pub fn generate(
         additional_instructions,
         heading_message,
         freight_conditions,
+        custom_fields,
     }: UpdatePurchaseOrderInput,
 ) -> Result<GenerateResult, RepositoryError> {
     let mut updated_order = purchase_order.purchase_order_row.clone();
@@ -81,6 +82,8 @@ pub fn generate(
     updated_order.supplier_agent = supplier_agent.or(updated_order.supplier_agent);
     updated_order.heading_message = heading_message.or(updated_order.heading_message);
     updated_order.freight_conditions = freight_conditions.or(updated_order.freight_conditions);
+    updated_order.custom_fields =
+        apply_custom_fields_patch(updated_order.custom_fields, custom_fields);
 
     let supplier_discount_percentage = supplier_discount_percentage
         .or(purchase_order

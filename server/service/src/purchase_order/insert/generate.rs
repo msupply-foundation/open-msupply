@@ -49,5 +49,6 @@ pub fn generate(
         supplier_discount_percentage: None,
         request_approval_datetime: None,
         finalised_datetime: None,
+        custom_fields: None,
     })
 }
