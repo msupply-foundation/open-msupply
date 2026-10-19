@@ -11,6 +11,7 @@ import { t } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
@@ -38,7 +39,7 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { packDifference } from '../inboundShipmentLine';
+import { missingBatchOrExpiry, packDifference } from '../inboundShipmentLine';
 import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
@@ -85,6 +86,11 @@ export interface LineEditPrefs {
    * (spec ui-surface col 16 / rules → authorisation is external-scope-only).
    */
   authorisation: boolean;
+  /**
+   * Prompt-for-batch-and-expiry preference (issue #992) — a save with any
+   * batch's batch or expiry left blank asks first. A prompt, never a block.
+   */
+  promptBatchExpiry: boolean;
 }
 
 export interface InboundShipmentLineEditModalProps {
@@ -913,6 +919,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const onOk = async () => {
     if (await save()) props.onClose();
   };
+
+  // Batch/expiry prompt (issue #992): with the store preference on, a save
+  // with any batch's batch or expiry left blank asks first — back to enter
+  // them, or continue with none. Holds the save the user asked for (Save or
+  // Save & next) so Continue runs exactly that one.
+  const [pendingSave, setPendingSave] = createSignal<() => Promise<void>>();
+  const guardSave = (action: () => Promise<void>) => {
+    if (props.prefs.promptBatchExpiry && missingBatchOrExpiry(rows()))
+      setPendingSave(() => action);
+    else void action();
+  };
   // Back to the add-mode item-search state — no item picked. Reached when an
   // update walk exhausts, or by "OK & next" in add mode (add another). Always
   // add mode from here on, so the selector unlocks.
@@ -1730,7 +1747,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         ]),
   ];
 
-  return (
+  // Held in a const so the batch/expiry prompt can sit beside it (a sibling
+  // dialog, not nested) without re-indenting the whole editor.
+  const editor = (
     <Dialog
       open
       dismissable={!saving()}
@@ -1880,12 +1899,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             <DialogSaveButton
               data-testid="dialog-button-ok"
               loading={saving()}
-              onClick={() => void onOk()}
+              onClick={() => guardSave(onOk)}
             />
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
               loading={saving()}
-              onClick={() => void onOkNext()}
+              onClick={() => guardSave(onOkNext)}
             />
           </Show>
         </Show>
@@ -1983,5 +2002,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </Show>
       </Show>
     </Dialog>
+  );
+
+  return (
+    <>
+      {editor}
+      <ConfirmDialog
+        open={!!pendingSave()}
+        onClose={() => setPendingSave(undefined)}
+        message={t('messages.confirm-missing-batch-and-expiry')}
+        cancelLabel={t('button.enter-batch-and-expiry')}
+        confirmLabel={t('button.continue')}
+        onConfirm={() => void pendingSave()?.()}
+      />
+    </>
   );
 };

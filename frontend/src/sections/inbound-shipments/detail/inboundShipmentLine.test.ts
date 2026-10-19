@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { packDifference } from './inboundShipmentLine';
+import { missingBatchOrExpiry, packDifference } from './inboundShipmentLine';
 
 // The Difference figure's DIRECTION (spec/inbound-shipments/ui-surface.md
 // § line table col 13, issue #562). The sign is the contract here: the
@@ -30,5 +30,31 @@ describe('packDifference', () => {
   // is the shape the reported shipment was in.
   it('compares against a declared zero rather than blanking', () => {
     expect(packDifference(80, 0)).toBe(80);
+  });
+});
+
+// The batch/expiry prompt's trigger (issue #992): blank batch OR blank expiry
+// on any batch being saved — either one alone is enough to ask.
+describe('missingBatchOrExpiry', () => {
+  const full = { batch: 'B1', expiryDate: '2027-01-31' };
+
+  it('is false when every batch has both a batch and an expiry', () => {
+    expect(missingBatchOrExpiry([full, { ...full, batch: 'B2' }])).toBe(false);
+  });
+
+  it('is true when a batch is blank', () => {
+    expect(missingBatchOrExpiry([full, { ...full, batch: '' }])).toBe(true);
+  });
+
+  it('treats a whitespace-only batch as blank', () => {
+    expect(missingBatchOrExpiry([{ ...full, batch: '  ' }])).toBe(true);
+  });
+
+  it('is true when an expiry is blank', () => {
+    expect(missingBatchOrExpiry([{ ...full, expiryDate: null }])).toBe(true);
+  });
+
+  it('is false when there is nothing to save', () => {
+    expect(missingBatchOrExpiry([])).toBe(false);
   });
 });

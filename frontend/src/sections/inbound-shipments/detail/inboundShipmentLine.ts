@@ -22,3 +22,13 @@ export const packDifference = (
   shippedNumberOfPacks == null
     ? undefined
     : numberOfPacks - shippedNumberOfPacks;
+
+/**
+ * Whether any of the batches about to be saved has no batch or no expiry date
+ * — what the "prompt for batch and expiry" store preference asks about before
+ * an inbound line save (issue #992). A whitespace-only batch counts as blank:
+ * it says nothing a receiver could trace.
+ */
+export const missingBatchOrExpiry = (
+  batches: readonly { batch: string; expiryDate: string | null }[]
+): boolean => batches.some(b => !b.batch.trim() || !b.expiryDate);

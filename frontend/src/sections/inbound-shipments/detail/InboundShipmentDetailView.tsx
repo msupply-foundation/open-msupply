@@ -1491,6 +1491,8 @@ const InboundShipmentDetailView: Component = () => {
                   doses: prefs().manageVaccinesInDoses,
                   authorisation:
                     prefs().externalInboundShipmentLinesMustBeAuthorised,
+                  promptBatchExpiry:
+                    prefs().promptForBatchAndExpiryOnInboundShipments,
                 }}
                 onSaved={onLinesChanged}
                 onRequestNext={nextItem}
