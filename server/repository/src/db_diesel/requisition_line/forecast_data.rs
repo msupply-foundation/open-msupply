@@ -56,14 +56,24 @@ pub struct AncillaryRatioPrincipal {
     /// ancillary units
     pub item_quantity: f64,
     pub ancillary_quantity: f64,
+    /// The principal's wastage rate (%) deducted from its demand before the ratio applies;
+    /// 0 when the link orders for the wasted principal units too (and on a forecast
+    /// captured by an older site, which never deducted it)
+    #[serde(default)]
+    pub wastage_rate: f64,
 }
 
 impl AncillaryRatioPrincipal {
+    /// The principal's demand net of its wastage rate
+    pub fn principal_usable_consumption(&self) -> f64 {
+        self.principal_monthly_consumption * (1.0 - self.wastage_rate / 100.0)
+    }
+
     pub fn monthly_consumption(&self) -> f64 {
         if self.item_quantity == 0.0 {
             return 0.0;
         }
-        self.principal_monthly_consumption * self.ancillary_quantity / self.item_quantity
+        self.principal_usable_consumption() * self.ancillary_quantity / self.item_quantity
     }
 }
 

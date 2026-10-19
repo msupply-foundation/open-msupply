@@ -83,12 +83,31 @@ impl ForecastInputs {
                 .push(link);
         }
 
+        // The Ancillary-ratio forecast reads each principal's wastage rate as well
+        let course_item_ids: Vec<String> = item_ids
+            .iter()
+            .cloned()
+            .chain(links_to.values().flatten().map(|link| link.item_id.clone()))
+            .collect::<HashSet<String>>()
+            .into_iter()
+            .collect();
+
         Ok(ForecastInputs {
             population_preference,
             population_served: population_served(connection, store_id)?,
-            courses: CoveringCourses::load(connection, store_id, item_ids)?,
+            courses: CoveringCourses::load(connection, store_id, &course_item_ids)?,
             links_to,
         })
+    }
+
+    /// The wastage rate a link deducts from its principal's demand: the principal's
+    /// configured rate when the link excludes it, else none.
+    fn principal_wastage_rate(&self, link: &AncillaryItemRow) -> f64 {
+        if link.exclude_principal_wastage {
+            self.courses.wastage_rate(&link.item_id)
+        } else {
+            0.0
+        }
     }
 
     /// The configured links from principals on the order to `item_id`.
@@ -186,6 +205,7 @@ impl ForecastInputs {
                             .unwrap_or_default(),
                         item_quantity: link.item_quantity,
                         ancillary_quantity: link.ancillary_quantity,
+                        wastage_rate: self.principal_wastage_rate(link),
                     })
                     .collect();
                 LineForecast {
@@ -290,6 +310,25 @@ pub fn apply_forecast(
         line.forecast_monthly_consumption,
         line.available_stock_on_hand,
     );
+}
+
+/// The wastage rate (%) of each of `item_ids` in `store_id`: the vaccine courses covering
+/// it, with the store's overrides, weighted as the item's Population forecast weights
+/// them. An item no course covers is absent.
+pub fn wastage_rates(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: &[String],
+) -> Result<HashMap<String, f64>, RepositoryError> {
+    if item_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    let courses = CoveringCourses::load(connection, store_id, item_ids)?;
+    Ok(item_ids
+        .iter()
+        .filter(|item_id| courses.covers(item_id))
+        .map(|item_id| (item_id.clone(), courses.wastage_rate(item_id)))
+        .collect())
 }
 
 /// The `population_served` property of the store's facility record.

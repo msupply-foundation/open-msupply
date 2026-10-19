@@ -433,6 +433,8 @@ export type AncillaryItemNode = {
   ancillaryItemId: Scalars['String']['output'];
   /** Right-hand side of the stored `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['output'];
+  /** Ordered against the principal's quantity net of its wastage rate */
+  excludePrincipalWastage: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   /** The principal item — the item this ancillary supply should be ordered alongside. */
   item?: Maybe<ItemNode>;
@@ -468,6 +470,10 @@ export type AncillaryRatioPrincipalNode = {
   monthlyConsumption: Scalars['Float']['output'];
   /** The principal line's monthly demand */
   principalMonthlyConsumption: Scalars['Float']['output'];
+  /** The principal's monthly demand net of the deducted wastage */
+  principalUsableConsumption: Scalars['Float']['output'];
+  /** The principal's wastage rate (%) deducted before the ratio applies; 0 when none */
+  wastageRate: Scalars['Float']['output'];
 };
 
 /**
@@ -13364,6 +13370,7 @@ export type UpsertAncillaryItemInput = {
   ancillaryItemId: Scalars['String']['input'];
   /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['input'];
+  excludePrincipalWastage?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   /** Left-hand side of the user-entered `x:y` ratio (principal count). */

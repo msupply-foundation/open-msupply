@@ -277,6 +277,14 @@ impl AncillaryRatioPrincipalNode {
     pub async fn ancillary_quantity(&self) -> f64 {
         self.principal.ancillary_quantity
     }
+    /// The principal's wastage rate (%) deducted before the ratio applies; 0 when none
+    pub async fn wastage_rate(&self) -> f64 {
+        self.principal.wastage_rate
+    }
+    /// The principal's monthly demand net of the deducted wastage
+    pub async fn principal_usable_consumption(&self) -> f64 {
+        self.principal.principal_usable_consumption()
+    }
     /// This principal's share of the line's monthly demand
     pub async fn monthly_consumption(&self) -> f64 {
         self.principal.monthly_consumption()

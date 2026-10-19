@@ -76,6 +76,9 @@ pub fn refresh_ancillary_items(
 
             let plan =
                 get_ancillary_plan(connection, &input.requisition_id).map_err(|e| match e {
+                    super::query::GetAncillaryPlanError::RequisitionDoesNotExist => {
+                        RefreshAncillaryItemsError::RequisitionDoesNotExist
+                    }
                     super::query::GetAncillaryPlanError::DatabaseError(db) => {
                         RefreshAncillaryItemsError::DatabaseError(db)
                     }
