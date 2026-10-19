@@ -651,7 +651,17 @@ export const Dialog = (props: DialogProps) => {
 
   // Solid removes the node on unmount, but close() while still connected also
   // releases the top layer + restores focus deterministically.
-  onCleanup(() => dialog.open && dialog.close());
+  //
+  // That close() still fires the element's `close` event, later, in a task of
+  // its own. By then the owner may already have opened its next dialog over
+  // the same `onClose` (a ConfirmDialog asked again at once, as a Backspace
+  // straight after a cancelled removal does), and reporting the stale event
+  // would close that one. So an unmounted dialog reports nothing.
+  let disposed = false;
+  onCleanup(() => {
+    disposed = true;
+    if (dialog.open) dialog.close();
+  });
 
   /*
    * The DIALOG TIER (KB-1) and the palette's dialog-contributed entries
@@ -803,7 +813,13 @@ export const Dialog = (props: DialogProps) => {
       }}
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
-      onClose={() => props.open && props.onClose()}
+      // The event arrives a task after the close, so one from a dialog since
+      // unmounted, or since opened again, is stale and says nothing
+      // (OMS-REG-PLG-DJ-03.30).
+      onClose={() => {
+        if (disposed || dialog.open) return;
+        if (props.open) props.onClose();
+      }}
       // Scrim-click dismiss, for a dialog that opts in (`scrimDismiss`). An
       // event whose target is the <dialog> itself hit the ::backdrop: the
       // inner .body covers the dialog box completely (the dialog has zero

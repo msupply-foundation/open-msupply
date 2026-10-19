@@ -9,7 +9,6 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
 import { t, localisedDate } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
@@ -48,19 +47,7 @@ import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
 import { documentFormVersioning } from '../../plugins/documentFormSlot';
 import type { Encounter } from '../../plugin-sdk/documents';
 import { VaccinationCardRegion } from '../vaccination-card';
-import {
-  EncounterRecord,
-  type EncounterRecordFragment,
-} from './encounter.generated';
-
-const fetchEncounterRecord = async (variables: {
-  storeId: string;
-  id: string;
-}): Promise<{ record: EncounterRecordFragment | undefined } | undefined> => {
-  const result = await graphqlFetch(EncounterRecord, variables);
-  if (result.kind !== 'success') return undefined;
-  return { record: result.data.encounters.nodes[0] };
-};
+import { fetchEncounterRecord } from './encounterRecord';
 
 /*
  * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI: the
@@ -72,7 +59,9 @@ const fetchEncounterRecord = async (variables: {
  *
  * Opened from a patient's Encounters row, and after "New encounter" creates
  * one whose visit is under way. Every read is non-suspending: the screen
- * shows its own spinner while the encounter and its document load.
+ * shows its own spinner while the encounter and its document load. A read the
+ * server refuses or that fails ends in the not-found notice, not the spinner
+ * (encounterRecord.ts).
  *
  * An encounter recorded under an earlier version of its type opens as the
  * form host resolves it (DocumentVersionNotice above the body): read-only in
@@ -182,7 +171,9 @@ const EncounterDetailView: Component = () => {
           }
         >
           <ContentContainer size="form" padded>
-            <Alert severity="error">{t('messages.record-not-found')}</Alert>
+            <Alert severity="error" testId="encounter-not-found-notice">
+              {t('messages.record-not-found')}
+            </Alert>
           </ContentContainer>
         </Page>
       </Match>

@@ -14,7 +14,7 @@ import { createSignal, type JSX } from 'solid-js';
 import { locale, t } from '../../intl';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { MultiSelect } from '../../ui/elements/selectors/MultiSelect';
-import type { Draft } from './draft';
+import { nameFieldInSummary, type Draft } from './draft';
 import type { FieldProps } from './fields';
 import type { EnumArrayPath, PathValue } from './paths';
 
@@ -63,6 +63,8 @@ export const MultiSelectInput = <T, P extends EnumArrayPath<T>>(
   props: MultiSelectInputProps<T, P>
 ): JSX.Element => {
   const d = () => props.draft as unknown as UntypedArrayDraft;
+  // The error summary names the field as it shows itself.
+  nameFieldInSummary(props);
   const labels = () => props.options as Record<string, string>;
   const selected = (): string[] => {
     const value = d().get(props.path);

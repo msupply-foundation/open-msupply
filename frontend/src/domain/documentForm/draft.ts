@@ -1,4 +1,4 @@
-import { createMemo, createSignal, type Accessor } from 'solid-js';
+import { createMemo, createSignal, onCleanup, type Accessor } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { t } from '../../intl';
 import {
@@ -20,6 +20,7 @@ import {
   type JsonSchema,
 } from './schemaNode';
 import type { UnresolvedValue } from './migration';
+import { withoutEmptyNotes } from './notes';
 import type { ValidateDocument } from './validation';
 
 /**
@@ -87,7 +88,47 @@ export interface HostDraft<T> extends Draft<T> {
    * what a summary of several fields counts (a form category's tile).
    */
   visibleErrorPaths(): readonly string[];
+  /**
+   * Tells the draft how the field at `path` shows itself, so the error
+   * summary names a failure there as the field beside it does: by its label,
+   * in the user's language, with its example in a pattern failure's message.
+   * A field calls it as it is created, through `nameFieldInSummary`; the
+   * accessor follows a change of language, and the function returned forgets
+   * the name when the field goes.
+   */
+  nameField(path: string, name: Accessor<FieldName | undefined>): () => void;
 }
+
+/** How a field shows itself, for the error summary to name it the same way. */
+export interface FieldName {
+  /** The label the field shows, already translated. */
+  label: string;
+  /** A text field's example, which its pattern failure's message names. */
+  example?: string;
+}
+
+/**
+ * Names a field to its draft for the error summary (`HostDraft.nameField`),
+ * until the field goes: a field component calls it with its own props as it
+ * is created. Its label and example are read when the summary asks, so a
+ * change of language follows; a field with no label of its own leaves the
+ * summary to the screen's name or the path. A draft that takes no names (a
+ * plugin test's stand-in) is left alone.
+ */
+export const nameFieldInSummary = (field: {
+  draft: unknown;
+  path: string;
+  label?: string;
+  example?: string;
+}): void => {
+  const name = (): FieldName | undefined =>
+    field.label === undefined
+      ? undefined
+      : { label: field.label, example: field.example };
+  const draft = field.draft as Partial<HostDraft<object>>;
+  const forget = draft.nameField?.(field.path, name);
+  if (forget) onCleanup(forget);
+};
 
 export interface DraftSchema {
   /** The form-schema id: the validator cache key and the save's schemaId. */
@@ -134,8 +175,9 @@ export interface CreateDraftOptions {
   validates?: Accessor<boolean>;
   /**
    * The error summary's names for fields the caller renders itself (a record
-   * screen's toolbar), by path. Any other path is named by pathLabel. An
-   * accessor, so translated names follow a change of language.
+   * screen's toolbar), by path. A field the form renders names itself
+   * (`nameFieldInSummary`), which wins; any other path is named by
+   * pathLabel. An accessor, so translated names follow a change of language.
    */
   labels?: Accessor<Readonly<Record<string, string>>>;
   /**
@@ -151,7 +193,8 @@ export interface CreateDraftOptions {
  * kg"), for the error summary. Every field shows its real label beside its
  * own error; the summary also lists failures the form renders no field for
  * (a required property only the schema knows about), which have no label to
- * borrow. A caller names the fields it renders itself through `labels`.
+ * borrow. A field names itself through `nameFieldInSummary`, and a caller
+ * the fields it renders itself through `labels`.
  */
 export const pathLabel = (path: string): string => {
   const leaf = path.split('.').pop() ?? path;
@@ -189,7 +232,12 @@ export const createDraft = <T extends object>(
   const labelFor = (path: string) =>
     options.labels?.()[path] ?? pathLabel(path);
 
-  const errors = createMemo((): (FieldError & { rule?: string })[] => {
+  // How each field on show names itself (draft.nameField), by path.
+  const [names, setNames] = createSignal<
+    Readonly<Record<string, Accessor<FieldName | undefined>>>
+  >({});
+
+  const checked = createMemo((): (FieldError & { rule?: string })[] => {
     version();
     if (options.validates?.() === false) return [];
     const validate = options.validate();
@@ -241,11 +289,35 @@ export const createDraft = <T extends object>(
     return found;
   });
 
+  // Every failure at a field on show takes the field's own name, so the
+  // summary reads as the field does (a plugin's label, in the user's
+  // language), and a pattern failure names the field's example as the field
+  // does. Apart from the checks, so a field coming or going re-runs no
+  // validation.
+  const errors = createMemo((): (FieldError & { rule?: string })[] => {
+    const shown = names();
+    return checked().map(e => {
+      const name = shown[e.id]?.();
+      if (name === undefined) return e;
+      const example =
+        e.rule === 'pattern' && e.message !== undefined && name.example
+          ? t('error.document-invalid-format-example', {
+              example: name.example,
+            })
+          : undefined;
+      return { ...e, label: name.label, message: example ?? e.message };
+    });
+  });
+
   const validation = createFormValidation(() => errors());
 
+  // A note with no text is no change: the save leaves it out
+  // (withoutEmptyNotes), so a note added and left empty is not something the
+  // user must save or be asked to discard.
+  const comparable = (data: unknown) => normalise(withoutEmptyNotes(data));
   const isDirty = createMemo(() => {
     version();
-    return !deepEqual(normalise(unwrap(store)), normalise(seed()));
+    return !deepEqual(comparable(unwrap(store)), comparable(seed()));
   });
 
   const draft: HostDraft<T> = {
@@ -297,6 +369,17 @@ export const createDraft = <T extends object>(
     errorFor: path => validation.errorFor(path),
     failedRule: path => errors().find(e => e.id === path)?.rule,
     visibleErrorPaths: () => validation.visible().map(e => e.id),
+    nameField: (path, name) => {
+      setNames(previous => ({ ...previous, [path]: name }));
+      return () =>
+        setNames(previous => {
+          // A field mounted again at the path since has named it anew.
+          if (previous[path] !== name) return previous;
+          const next = { ...previous };
+          delete next[path];
+          return next;
+        });
+    },
     unresolved: path => unresolvedValues()[path]?.value,
     readOnly: () => options.readOnly?.() ?? false,
   };

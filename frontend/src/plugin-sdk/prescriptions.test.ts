@@ -23,7 +23,11 @@ import {
   SdkPrescriptionSummary,
   SdkSavePrescriptionItemLines,
 } from './prescriptions.generated';
-import { createPrescription, issuableBatches } from './prescriptions';
+import {
+  createPrescription,
+  issuableBatches,
+  toPrescriptionSummaryView,
+} from './prescriptions';
 
 beforeEach(() => {
   graphqlFetch.mockReset();
@@ -195,6 +199,37 @@ describe('createPrescription', () => {
     });
     expect(reportPermissionDenied).toHaveBeenCalledTimes(1);
     expect(queries()).not.toContain(SdkSavePrescriptionItemLines);
+  });
+});
+
+// OMS-REG-PLG-DJ-03.65: a prescription given from two batches reads as the
+// whole quantity of its item, not one batch's.
+describe('toPrescriptionSummaryView', () => {
+  const line = (itemId: string, numberOfPacks: number, packSize = 1) => ({
+    __typename: 'InvoiceLineNode' as const,
+    itemId,
+    itemName: `${itemId} name`,
+    numberOfPacks,
+    packSize,
+  });
+
+  it("adds up an item's batches into one line, in units", () => {
+    const view = toPrescriptionSummaryView({
+      __typename: 'InvoiceNode',
+      id: 'rx-1',
+      invoiceNumber: 42,
+      status: 'PICKED',
+      createdDatetime: '2026-10-12T00:00:00Z',
+      pickedDatetime: null,
+      lines: {
+        __typename: 'InvoiceLineConnector',
+        nodes: [line('pop', 2), line('diu', 1), line('pop', 0.5, 2)],
+      },
+    });
+    expect(view.lines).toEqual([
+      { itemId: 'pop', itemName: 'pop name', units: 3 },
+      { itemId: 'diu', itemName: 'diu name', units: 1 },
+    ]);
   });
 });
 

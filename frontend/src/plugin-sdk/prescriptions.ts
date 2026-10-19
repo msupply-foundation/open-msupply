@@ -54,7 +54,7 @@ export interface PrescriptionSummaryView {
   readonly invoiceNumber: number;
   /** When it was made, as an RFC 3339 instant. */
   readonly createdDatetime: string;
-  /** Each item it gives, in units. */
+  /** Each item it gives, once per item, in units over all its batches. */
   readonly lines: readonly {
     readonly itemId: string;
     readonly itemName: string;
@@ -154,19 +154,36 @@ const readSummary = async (
     : { kind: 'not-found' };
 };
 
-/** The summary a prescription read gives, in the SDK's view. */
+/**
+ * The summary a prescription read gives, in the SDK's view. The prescription
+ * holds a line per batch given; the view has one per item, with the units of
+ * all its batches added up, in the order the items first appear.
+ */
 export const toPrescriptionSummaryView = (
   invoice: InvoiceNode
-): PrescriptionSummaryView => ({
-  id: invoice.id,
-  invoiceNumber: invoice.invoiceNumber,
-  createdDatetime: invoice.createdDatetime,
-  lines: invoice.lines.nodes.map(line => ({
-    itemId: line.itemId,
-    itemName: line.itemName,
-    units: line.numberOfPacks * line.packSize,
-  })),
-});
+): PrescriptionSummaryView => {
+  const byItem = new Map<
+    string,
+    { itemId: string; itemName: string; units: number }
+  >();
+  for (const line of invoice.lines.nodes) {
+    const units = line.numberOfPacks * line.packSize;
+    const item = byItem.get(line.itemId);
+    if (item) item.units += units;
+    else
+      byItem.set(line.itemId, {
+        itemId: line.itemId,
+        itemName: line.itemName,
+        units,
+      });
+  }
+  return {
+    id: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+    createdDatetime: invoice.createdDatetime,
+    lines: [...byItem.values()],
+  };
+};
 
 /**
  * A prescription by id, read reactively: paused while the id is `undefined`,

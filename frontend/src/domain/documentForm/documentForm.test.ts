@@ -582,6 +582,27 @@ describe('createDraft', () => {
     });
   });
 
+  // OMS-REG-PLG-DJ-02.67: a note added and left empty is no change, as the
+  // save leaves it out; once it has text it is one.
+  it('is not dirty for a note with no text', () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      const written = { text: 'Seen', created: '2025-01-01T00:00:00Z' };
+      c.reset({ ...validEncounter, notes: [written] } as DemoEncounter);
+      c.draft.set('notes', [written, { text: '' }]);
+      expect(c.isDirty()).toBe(false);
+      // Typed, then cleared: stamped, but still no text.
+      c.draft.set('notes', [
+        written,
+        { text: '', created: '2025-02-02T00:00:00Z' },
+      ]);
+      expect(c.isDirty()).toBe(false);
+      c.draft.set('notes', [written, { text: 'More' }]);
+      expect(c.isDirty()).toBe(true);
+      dispose();
+    });
+  });
+
   // OMS-REG-PAT-04.37 / .51: a field's own check (a duplicate ID) fails the
   // field like a schema error, and a save waits for a check still running.
   it("fails a field from the form's own check, and waits on its work", async () => {

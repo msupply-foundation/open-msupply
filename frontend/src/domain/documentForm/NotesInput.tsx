@@ -207,7 +207,7 @@ export const NotesInput = <T, P extends NotesPath<T>>(
             size="small"
             icon={<PlusCircleIcon />}
             onClick={add}
-            data-testid={props.testId && `${props.testId}-add`}
+            data-testid={props.testId ? `${props.testId}-add` : undefined}
           >
             {t('button.add-note')}
           </Button>
@@ -239,7 +239,9 @@ export const NotesInput = <T, P extends NotesPath<T>>(
                       }}
                       onInput={e => write(item().index, e.currentTarget.value)}
                       data-testid={
-                        props.testId && `${props.testId}-${position}-text`
+                        props.testId
+                          ? `${props.testId}-${position}-text`
+                          : undefined
                       }
                     />
                     <HStack justify="end">
@@ -249,7 +251,9 @@ export const NotesInput = <T, P extends NotesPath<T>>(
                         icon={<TrashIcon />}
                         onClick={() => askToRemove(item())}
                         data-testid={
-                          props.testId && `${props.testId}-${position}-remove`
+                          props.testId
+                            ? `${props.testId}-${position}-remove`
+                            : undefined
                         }
                       >
                         {t('label.remove')}

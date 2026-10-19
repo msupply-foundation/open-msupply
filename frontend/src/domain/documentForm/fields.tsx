@@ -12,6 +12,10 @@
  * form is explicit composition (kdd/explicit-composition): it renders each
  * field by name, in the order it wants, with nothing generated from the
  * schema.
+ *
+ * Each field also tells the draft its label (and a text field its example)
+ * as it is created, so the error summary names a failure there as the field
+ * itself does, in the user's language (draft.ts nameFieldInSummary).
  */
 import type { JSX } from 'solid-js';
 import { TextField } from '../../ui/elements/inputs/TextField';
@@ -27,7 +31,7 @@ import { Divider } from '../../ui/elements/display/Divider';
 import { DateOfBirthControl } from '../patient/PatientControls';
 import { utcToLocalDay } from '../../ui/elements/inputs/dateTimeConvert';
 import { t } from '../../intl';
-import type { Draft, HostDraft } from './draft';
+import { nameFieldInSummary, type Draft, type HostDraft } from './draft';
 import type {
   BooleanPath,
   EnumPath,
@@ -99,6 +103,7 @@ export const TextInput = <T, P extends TextPath<T>>(
   props: TextInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   return (
     <TextField
       label={props.label}
@@ -131,6 +136,7 @@ export const TextAreaInput = <T, P extends TextPath<T>>(
   props: TextAreaInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   return (
     <TextArea
       label={props.label}
@@ -165,6 +171,7 @@ export const NumberInput = <T, P extends NumberPath<T>>(
   props: NumberInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   return (
     <NumberField
       label={props.label}
@@ -231,6 +238,7 @@ export const DateInput = <T, P extends TextPath<T>>(
   props: DateInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   const isDateTime = () =>
     d().schemaFor(props.path as never)?.format === 'date-time';
   const value = () => {
@@ -268,6 +276,7 @@ export const DateTimeInput = <T, P extends TextPath<T>>(
   props: DateTimeInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   return (
     <DateTimeField
       label={props.label}
@@ -325,6 +334,7 @@ export const SelectInput = <T, P extends EnumPath<T>>(
   props: SelectInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   const labels = () => props.options as Record<string, string>;
   const options = () =>
     selectOptions(
@@ -398,6 +408,7 @@ export const AutocompleteInput = <T, P extends TextPath<T>>(
   props: AutocompleteInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   const value = () => d().get(props.path) as string | undefined;
   const isRequired = () => required(d(), props.path);
   return (
@@ -432,6 +443,7 @@ export const CheckboxInput = <T, P extends BooleanPath<T>>(
   props: CheckboxInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   return (
     <Checkbox
       label={props.label}
@@ -495,6 +507,7 @@ export const DateOfBirthInput = <T, P extends TextPath<T>>(
   props: DateOfBirthInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
+  nameFieldInSummary(props);
   return (
     <DateOfBirthControl
       label={props.label}

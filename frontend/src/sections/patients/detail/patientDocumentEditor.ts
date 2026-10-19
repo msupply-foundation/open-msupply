@@ -153,17 +153,43 @@ export const createPatientDocumentEditor = (
       : undefined;
   }, fetchPatientDocumentDraft);
 
-  const source = createMemo((): DocumentFormSource | undefined => {
-    const registry = params.registry();
-    const node = params.node();
-    if (!registry || !node) return undefined;
-    if (node.document) {
-      const read = gated(draftData);
-      if (!read) return undefined;
-      return { kind: 'existing', name: node.document.name, seed: read.draft };
-    }
-    return { kind: 'new', registry, data: seedPatientDocument(node) };
-  });
+  // The source, with the patient it was made for. While the draft is still
+  // being read, the source already shown for this patient stays in place. A
+  // first save re-reads the patient, which now has a document; dropping the
+  // source there would take the form down and mount a new one
+  // (sdk-contract § Props update in place, OMS-REG-PLG-05.10). The form's
+  // saved version stands for the record until the draft arrives.
+  type PatientSource = { patientId: string; source: DocumentFormSource };
+  const sourceFor = createMemo(
+    (prev: PatientSource | undefined): PatientSource | undefined => {
+      const registry = params.registry();
+      const node = params.node();
+      if (!registry || !node) return undefined;
+      if (node.document) {
+        const read = gated(draftData);
+        if (read) {
+          return {
+            patientId: node.id,
+            source: {
+              kind: 'existing',
+              name: node.document.name,
+              seed: read.draft,
+            },
+          };
+        }
+        // A failed read has answered too: it shows no form, as before.
+        const answered =
+          draftData.state === 'ready' || draftData.state === 'errored';
+        return !answered && prev?.patientId === node.id ? prev : undefined;
+      }
+      return {
+        patientId: node.id,
+        source: { kind: 'new', registry, data: seedPatientDocument(node) },
+      };
+    },
+    undefined
+  );
+  const source = () => sourceFor()?.source;
 
   const {
     form: documentForm,

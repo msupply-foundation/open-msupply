@@ -13,7 +13,7 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
 import { currentStoreName } from '../../store/storeContext';
 import { PatientSearch } from './PatientSearch';
-import { minimalPatientOption } from './patientResource';
+import { minimalPatientOption, type PatientOption } from './patientResource';
 import {
   genderLabel,
   genderOptions,
@@ -119,7 +119,7 @@ export const PatientCodeControl = (
           <Button
             class={fieldAction.action}
             variant="secondary"
-            data-testid={props.testId && `${props.testId}-generate`}
+            data-testid={props.testId ? `${props.testId}-generate` : undefined}
             disabled={props.disabled}
             loading={generating()}
             onClick={onGenerate}
@@ -251,7 +251,10 @@ export const DateOfBirthControl = (
             max={MAX_AGE}
             value={age()}
             disabled={props.disabled}
-            data-testid={props.testId && `${props.testId}-age`}
+            // A ternary, not `&&`: on a component's prop the Solid compiler
+            // turns `a && b` into `!!a && b`, which hands over `false` with
+            // no test id and renders data-testid="false".
+            data-testid={props.testId ? `${props.testId}-age` : undefined}
             onChange={value => {
               const dob = value === undefined ? null : dobFromAge(value);
               setAgeSource(
@@ -310,16 +313,35 @@ export interface NextOfKinControlProps {
   disabled?: boolean;
 }
 
+/*
+ * A next of kin recorded by name alone, with no patient matched (as the old
+ * client could store one), has no patient to select. It shows as an option
+ * under this key, which no patient id can be, so the stored name still reads
+ * in the field (OMS-REG-PLG-DJ-01.37). Picking that option again changes
+ * nothing; clearing it, or picking a patient, replaces it.
+ */
+export const NAME_ONLY_NEXT_OF_KIN = 'next-of-kin:name-only';
+
+/** The option the picker shows for a next of kin, if any. */
+export const nextOfKinOption = (
+  id: string | null,
+  name: string
+): PatientOption | undefined => {
+  if (id) return minimalPatientOption(id, name);
+  return name ? minimalPatientOption(NAME_ONLY_NEXT_OF_KIN, name) : undefined;
+};
+
 /** The next of kin, picked from the store's patients. */
 export const NextOfKinControl = (props: NextOfKinControlProps): JSX.Element => (
   <PatientSearch
     label={props.label ?? t('label.next-of-kin')}
     storeId={props.storeId}
     disabled={props.disabled}
-    selected={props.id ? minimalPatientOption(props.id, props.name) : undefined}
-    onSelect={patient =>
-      props.onChange(patient?.id ?? null, patient?.name ?? '')
-    }
+    selected={nextOfKinOption(props.id, props.name)}
+    onSelect={patient => {
+      if (patient?.id === NAME_ONLY_NEXT_OF_KIN) return;
+      props.onChange(patient?.id ?? null, patient?.name ?? '');
+    }}
   />
 );
 

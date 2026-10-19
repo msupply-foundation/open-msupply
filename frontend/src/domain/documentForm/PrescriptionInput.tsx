@@ -19,7 +19,8 @@
  * Once the record names one: what it gave and when, with a link to it. A
  * record naming one this store cannot find (made in another store, or never
  * written) or cannot read says so, and never offers the search: picking an
- * item there would give the stock a second time.
+ * item there would give the stock a second time. A read that failed offers
+ * Retry.
  */
 import {
   For,
@@ -34,6 +35,7 @@ import {
 } from 'solid-js';
 import { formatNumber, localisedDate, t } from '../../intl';
 import { unitsToLens } from '../allocation';
+import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { Table } from '../../ui/elements/table/Table';
@@ -52,6 +54,7 @@ import { RecordLink } from '../../plugin-sdk/recordLink';
 import type { FormParticipation } from '../../plugin-sdk/types';
 import { ItemSearch } from '../item/ItemSearch';
 import type { ItemOption } from '../item/itemResource';
+import { createControlDirty } from './controlDirty';
 import type { Draft } from './draft';
 import type { TextPath } from './paths';
 
@@ -102,11 +105,18 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
   const shownId = () => namedId() ?? (written() ? pendingId() : undefined);
   const summary = usePrescriptionSummary(shownId);
 
+  // Units entered make the form changed. They go when the category changes
+  // or the control leaves the form (the method cleared), and the form is
+  // changed by them no longer. `form` is one stable object for the form's
+  // life, so reading it once here is safe.
+  // eslint-disable-next-line solid/reactivity
+  const markDirty = createControlDirty(props.form);
+
   const clear = () => {
     setItem(undefined);
     setUnits({});
     setPendingId(undefined);
-    props.form.setDirty(false);
+    markDirty(false);
   };
   // A new category starts again.
   createEffect(
@@ -225,7 +235,18 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
             </Alert>
           </Match>
           <Match when={summary.outcome() === 'unreadable'}>
-            <Alert severity="error">{t('error.prescription-not-read')}</Alert>
+            <Alert severity="error">
+              {t('error.prescription-not-read')}{' '}
+              <Button
+                variant="secondary"
+                size="small"
+                disabled={summary.loading()}
+                onClick={() => summary.refetch()}
+                data-testid={props.testId ? `${props.testId}-retry` : undefined}
+              >
+                {t('button.retry')}
+              </Button>
+            </Alert>
           </Match>
         </Switch>
       }
@@ -297,7 +318,7 @@ export const PrescriptionInput = <T, P extends TextPath<T>>(
                                 ...all,
                                 [batch.id]: value ?? 0,
                               }));
-                              props.form.setDirty(
+                              markDirty(
                                 Object.values(units()).some(u => u > 0)
                               );
                             }}

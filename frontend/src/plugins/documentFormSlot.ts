@@ -20,11 +20,6 @@ import { contributionId, visibleContributions } from './PluginSlot';
  *
  * TO-DO: the read-only fallback renderer after the default form, for a
  * document no form can show (implementation-plan H12).
- *
- * TO-DO: name a plugin form's fields in the error summary in the user's
- * language, from keys in the plugin's catalogue that its contribution declares,
- * joined into the `labels` the screen passes the form host. `pathLabel` names
- * them from their paths.
  */
 
 /** A plugin form as the host renders it. */

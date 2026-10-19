@@ -26,7 +26,7 @@ import { FormSection } from '../../ui/layout/Form/FormSection';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { currentStoreId } from '../../store/storeContext';
 import type { Patient } from '../../plugin-sdk/documents';
-import type { Draft } from '../documentForm/draft';
+import { nameFieldInSummary, type Draft } from '../documentForm/draft';
 import {
   DateOfBirthControl,
   DeceasedControls,
@@ -67,6 +67,23 @@ const disabled = (field: {
 const required = (draft: Draft<Patient>, path: 'code' | 'code2') =>
   draft.schemaFor(path)?.required ?? false;
 
+/*
+ * A field given a plugin's own label names its path by that label in the
+ * error summary, as the field shows it (draft.ts nameFieldInSummary); with
+ * none, the summary keeps the screen's name for it.
+ */
+const nameInSummary = <T extends Patient>(
+  field: LabelledPatientFieldProps<T>,
+  path: keyof Patient & string
+) =>
+  nameFieldInSummary({
+    draft: field.draft,
+    path,
+    get label() {
+      return field.label;
+    },
+  });
+
 /**
  * The patient code, with the host's generator beside it where the codes it
  * makes fit the schema's pattern for the code.
@@ -75,6 +92,7 @@ export const PatientCodeField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'code');
   return (
     <PatientCodeControl
       label={props.label}
@@ -96,6 +114,7 @@ export const PatientCode2Field = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'code2');
   return (
     <TextField
       label={props.label ?? t('label.code2')}
@@ -113,6 +132,7 @@ export const PatientFirstNameField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'firstName');
   return (
     <TextField
       label={props.label ?? t('label.first-name')}
@@ -134,6 +154,7 @@ export const PatientLastNameField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'lastName');
   return (
     <TextField
       label={props.label ?? t('label.last-name')}
@@ -157,6 +178,7 @@ export const PatientDateOfBirthField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'dateOfBirth');
   return (
     <DateOfBirthControl
       label={props.label}
@@ -178,6 +200,7 @@ export const PatientGenderField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'gender');
   return (
     <GenderControl
       label={props.label}
@@ -241,6 +264,7 @@ export const PatientNextOfKinField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
+  nameInSummary(props, 'nextOfKin');
   return (
     <NextOfKinControl
       label={props.label}

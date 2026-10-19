@@ -17,7 +17,7 @@ import { createDebounced } from '../../ui/utils/createDebounced';
 import { currentStoreId, hasPermission } from '../../store/storeContext';
 import type { ProgramEnrolment } from '../../plugin-sdk/documents';
 import type { FormRecordView } from '../../plugin-sdk/types';
-import type { Draft } from './draft';
+import { nameFieldInSummary, type Draft } from './draft';
 import { drawFreeEnrolmentId, isEnrolmentIdFree } from './enrolmentId';
 import fieldAction from './FieldAction.module.css';
 
@@ -64,6 +64,16 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
   const [generating, setGenerating] = createSignal(false);
   const [confirming, setConfirming] = createSignal(false);
   const label = () => props.label ?? t('label.enrolment-patient-id');
+  // The error summary names the field by its label, as for a library field.
+  nameFieldInSummary({
+    get draft() {
+      return d();
+    },
+    path: 'programEnrolmentId',
+    get label() {
+      return label();
+    },
+  });
 
   // The enrolment takes the ID without surrounding spaces (rules § typing an
   // ID, and duplicates), while the box keeps exactly what is being typed, so
