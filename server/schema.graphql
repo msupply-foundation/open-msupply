@@ -123,6 +123,7 @@ enum ActivityLogNodeType {
 	VVM_STATUS_LOG_UPDATED
 	VOLUME_PER_PACK_CHANGED
 	STOCK_LINE_EDIT
+	STOCK_CAMPAIGN_CHANGE
 	PURCHASE_ORDER_CREATED
 	PURCHASE_ORDER_REQUEST_APPROVAL
 	PURCHASE_ORDER_UNAUTHORISED
@@ -1055,6 +1056,11 @@ input CampaignFilterInput {
 	name: StringFilterInput
 }
 
+enum CampaignKindNode {
+	CAMPAIGN
+	ROUTINE
+}
+
 type CampaignMutations {
 	upsertCampaign(input: UpsertCampaignInput!): UpsertCampaignResponse!
 	deleteCampaign(input: DeleteCampaignInput!): DeleteCampaignResponse!
@@ -1066,6 +1072,7 @@ type CampaignNode {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode!
 }
 
 enum CampaignSortFieldInput {
@@ -8350,6 +8357,12 @@ input RequisitionLineForecastPreviewInput {
 	new line would take
 	"""
 	forecastMethod: ForecastMethodNode
+	"""
+	The activity to preview the line as held for — its stock on hand, and the suggestion
+	computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+	`{ value: null }` previews it as held for nothing in particular
+	"""
+	campaignId: NullableStringUpdate
 }
 
 type RequisitionLineForecastPreviewNode {
@@ -8437,6 +8450,7 @@ type RequisitionLineNode {
 	daysOutOfStock: Float!
 	optionId: String
 	reason: ReasonOptionNode
+	campaign: CampaignNode
 	availableStockOnHand: Float!
 	requisitionNumber: Int!
 	requisitionId: String!
@@ -10848,6 +10862,7 @@ input UpdateRequestRequisitionLineInput {
 	is untouched
 	"""
 	forecastMethod: ForecastMethodNode
+	campaignId: NullableStringUpdate
 }
 
 union UpdateRequestRequisitionLineResponse = UpdateRequestRequisitionLineError | RequisitionLineNode
@@ -11264,6 +11279,7 @@ input UpsertCampaignInput {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode
 }
 
 union UpsertCampaignResponse = UpsertCampaignError | CampaignNode

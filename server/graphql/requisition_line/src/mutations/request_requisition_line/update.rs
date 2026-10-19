@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     ContextExt,
+    generic_inputs::NullableUpdateInput,
     simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
@@ -10,6 +11,7 @@ use graphql_types::{
 };
 use repository::RequisitionLine;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{
         UpdateRequestRequisitionLine as ServiceInput,
@@ -28,6 +30,7 @@ pub struct UpdateInput {
     /// quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
     /// is untouched
     pub forecast_method: Option<ForecastMethodNode>,
+    pub campaign_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Interface)]
@@ -94,6 +97,7 @@ impl UpdateInput {
             comment,
             option_id,
             forecast_method,
+            campaign_id,
         } = self;
 
         ServiceInput {
@@ -102,6 +106,9 @@ impl UpdateInput {
             comment,
             option_id,
             forecast_method: forecast_method.map(ForecastMethodNode::into),
+            campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
+                value: campaign_id.value,
+            }),
         }
     }
 }
@@ -138,6 +145,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             ));
         }
         // Standard Graphql Errors
+        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionLineDoesNotExist => InternalError(formatted_error),
@@ -398,6 +406,7 @@ mod test {
                     comment: Some("comment".to_string()),
                     option_id: None,
                     forecast_method: Some(ForecastMethod::AncillaryRatio),
+                    campaign_id: None,
                 }
             );
             Ok(RequisitionLine {

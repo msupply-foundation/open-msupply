@@ -140,6 +140,7 @@ pub fn generate_requisition_lines(
                 Ok(RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
+                    campaign_id: None,
                     item_name: item.map(|item| item.name.clone()).unwrap_or_default(),
                     item_id: item_stats.item_id.clone(),
                     suggested_quantity,

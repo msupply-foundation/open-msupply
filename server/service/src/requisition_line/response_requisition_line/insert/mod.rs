@@ -64,6 +64,7 @@ pub fn insert_response_requisition_line(
             };
             let new_requisition_line_row = RequisitionLineRow {
                 id: input.id.clone(),
+                campaign_id: None,
                 item_id: item_row.id.clone(),
                 item_name: item_row.name.clone(),
                 requisition_id: requisition_row.id,

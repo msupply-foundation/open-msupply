@@ -131,7 +131,12 @@ export const CELL_DEF = {
   user: { kind: 'shortText' }, // acting user's username (log / ledger tables)
   reason: { kind: 'shortText' }, // a line's variance reason (requisitions)
   donor: { kind: 'shortText' },
-  campaign: { kind: 'shortText' }, // a campaign OR program name
+  activity: { kind: 'shortText' }, // the Activity field (a campaign name)
+  program: { kind: 'shortText' },
+  // A record's own kind — a short enum label (the Activity register's
+  // Campaign / Routine; the plugin list's). The outer `kind` is the column
+  // key, the inner one its cell kind.
+  kind: { kind: 'shortText' },
   approvalComment: { kind: 'shortText' },
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },
