@@ -46,6 +46,7 @@ define_linked_tables! {
         forecast_method -> Text,
         forecast_monthly_consumption -> Double,
         forecast_data -> Nullable<Text>,
+        campaign_id -> Nullable<Text>,
     },
     links: {
         item_link_id -> item_id,
@@ -123,6 +124,7 @@ pub struct RequisitionLineRow {
     /// The method's breakdown as JSON, keyed by method (see the service's `forecast`
     /// module). Holds no months-of-stock figure: the requisition's thresholds supply those.
     pub forecast_data: Option<String>,
+    pub campaign_id: Option<String>,
     // Resolved from item_link - must be last to match view column order.
     // Serialized as `item_link_id` to preserve the backend plugin JSON contract
     // (e.g. TransformRequestRequisitionLines) after the #11668 item_link rename.
