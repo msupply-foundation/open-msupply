@@ -494,3 +494,101 @@ impl EncounterNode {
         }))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use async_graphql::{EmptyMutation, Object};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
+    use repository::{
+        Encounter, EncounterRow, ProgramEnrolmentRow,
+        mock::{
+            MockData, MockDataInserts, context_immunisation_program, mock_immunisation_program_b,
+            mock_patient,
+        },
+    };
+    use serde_json::json;
+
+    use super::EncounterNode;
+
+    fn encounter_row() -> EncounterRow {
+        EncounterRow {
+            id: "encounter_in_program_b".to_string(),
+            program_id: mock_immunisation_program_b().id,
+            patient_id: mock_patient().id,
+            ..Default::default()
+        }
+    }
+
+    /// The patient's enrolment in `immunisation_program_b`. The patient is
+    /// also enrolled in `immunisation_program` (from the mocks), which shares
+    /// the same context.
+    fn enrolment_row() -> ProgramEnrolmentRow {
+        ProgramEnrolmentRow {
+            id: "enrolment_in_program_b".to_string(),
+            program_id: mock_immunisation_program_b().id,
+            patient_id: mock_patient().id,
+            ..Default::default()
+        }
+    }
+
+    /// An encounter's enrolment is found by its program, not by taking the
+    /// program id as a context id (#1502). `immunisation_program_b` sits in
+    /// the `immunisation_program` context, so its id is not a context id.
+    #[actix_rt::test]
+    async fn encounter_program_enrolment_for_a_program_whose_context_differs() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> EncounterNode {
+                EncounterNode {
+                    store_id: "store_a".to_string(),
+                    encounter: Encounter {
+                        row: encounter_row(),
+                        program_row: mock_immunisation_program_b(),
+                        patient_row: mock_patient(),
+                        clinician_row: None,
+                    },
+                    allowed_ctx: vec![context_immunisation_program().id],
+                }
+            }
+        }
+
+        assert_ne!(
+            mock_immunisation_program_b().id,
+            mock_immunisation_program_b().context_id
+        );
+
+        let (_, _, _, settings) = setup_graphql_test_with_data(
+            TestQuery,
+            EmptyMutation,
+            "encounter_program_enrolment_for_a_program_whose_context_differs",
+            MockDataInserts::all(),
+            MockData {
+                encounters: vec![encounter_row()],
+                program_enrolments: vec![enrolment_row()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let query = r#"
+        query {
+            testQuery {
+                programEnrolment {
+                    id
+                }
+            }
+        }
+        "#;
+        let expected = json!({
+            "testQuery": {
+                "programEnrolment": {
+                    "id": enrolment_row().id,
+                }
+            }
+        });
+        assert_graphql_query!(&settings, query, &None, &expected, None);
+    }
+}

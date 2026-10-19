@@ -304,16 +304,18 @@ pub enum FormPluginInstallError {
     #[error("Only one Patient entry is allowed per deployment, and {0} already exists")]
     OnlyOnePatientEntryAllowed(String),
     #[error(
-        "Cannot move key \"{program_key}\" to another program: {count} {document_type} \
-         document(s) on this server are saved under its current program (context \
-         {context_id}), and install does not move saved records. (Documents not yet synced to \
-         this server are not counted, so none here does not mean none anywhere.)"
+        "Cannot move key \"{program_key}\" to another program: {count} document(s) of its \
+         types on this server are saved under its current program (context {context_id}): \
+         {by_type}. Install does not move saved records. (Documents not yet synced to this \
+         server are not counted, so none here does not mean none anywhere.)"
     )]
     ProgramChangeBlocked {
         program_key: String,
-        document_type: String,
         context_id: String,
+        /// Every document of the key's types under its current program.
         count: i64,
+        /// The same documents per type, as "2 DemoProgramEnrolment, 3 DemoEncounter".
+        by_type: String,
     },
     #[error(
         "Schema {0} is already installed with different content; a published schema version \
@@ -666,20 +668,27 @@ fn install_document_type(
     }
 
     // Saved records carry their own copy of the program, so re-pointing the
-    // entry would strand them under the old one.
+    // entry would strand them under the old one. The refusal counts the
+    // documents of every type of the key, not only this one, since the whole
+    // key moves.
     if let Some((row, _)) = &existing {
         if row.context_id != context_id {
-            let count = DocumentRepository::new(connection).count(Some(
-                DocumentFilter::new()
-                    .r#type(EqualFilter::equal_to(document_type.to_string()))
-                    .context_id(EqualFilter::equal_to(row.context_id.to_string())),
-            ))?;
+            let counts = documents_under_context(
+                connection,
+                &key_document_types(connection, sidecar, declaration)?,
+                &row.context_id,
+            )?;
+            let count: i64 = counts.iter().map(|(_, count)| count).sum();
             if count > 0 {
                 return Err(Error::ProgramChangeBlocked {
                     program_key: declaration.program_key.clone().unwrap_or_default(),
-                    document_type: document_type.clone(),
                     context_id: row.context_id.clone(),
                     count,
+                    by_type: counts
+                        .iter()
+                        .map(|(document_type, count)| format!("{count} {document_type}"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
                 });
             }
         }
@@ -758,6 +767,58 @@ fn install_document_type(
         schemas_added,
         ui_schemas_updated,
     })
+}
+
+/// The document types that move with a declaration's program key: every type
+/// the bundle declares under the key, then any the plugin already has entries
+/// for under it. A type with no key (Patient) moves alone.
+fn key_document_types(
+    connection: &StorageConnection,
+    sidecar: &FormPluginSidecar,
+    declaration: &DocumentTypeDeclaration,
+) -> Result<Vec<String>, RepositoryError> {
+    let Some(key) = &declaration.program_key else {
+        return Ok(vec![declaration.document_type.clone()]);
+    };
+    let mut document_types: Vec<String> = sidecar
+        .document_types
+        .iter()
+        .filter(|d| d.program_key.as_ref() == Some(key))
+        .map(|d| d.document_type.clone())
+        .collect();
+    let mut owned: Vec<String> = DocumentRegistryRowRepository::new(connection)
+        .find_many_by_plugin_code(&sidecar.plugin_code)?
+        .into_iter()
+        .filter(|row| row.program_key.as_ref() == Some(key))
+        .map(|row| row.document_type)
+        .filter(|document_type| !document_types.contains(document_type))
+        .collect();
+    owned.sort();
+    owned.dedup();
+    document_types.extend(owned);
+    Ok(document_types)
+}
+
+/// How many documents of each type are saved under a context, by each
+/// document's latest version, leaving out the types with none.
+fn documents_under_context(
+    connection: &StorageConnection,
+    document_types: &[String],
+    context_id: &str,
+) -> Result<Vec<(String, i64)>, RepositoryError> {
+    let repo = DocumentRepository::new(connection);
+    let mut counts = Vec::new();
+    for document_type in document_types {
+        let count = repo.count(Some(
+            DocumentFilter::new()
+                .r#type(EqualFilter::equal_to(document_type.to_string()))
+                .context_id(EqualFilter::equal_to(context_id.to_string())),
+        ))?;
+        if count > 0 {
+            counts.push((document_type.clone(), count));
+        }
+    }
+    Ok(counts)
 }
 
 /// The install refusals that depend on nothing the installer chooses: the
@@ -1086,7 +1147,10 @@ fn install_schema_versions(
 
 #[cfg(test)]
 mod test {
-    use std::collections::{HashMap, HashSet};
+    use std::{
+        collections::{HashMap, HashSet},
+        slice,
+    };
 
     use chrono::Utc;
     use repository::{
@@ -1800,11 +1864,82 @@ mod test {
             error,
             Error::ProgramChangeBlocked {
                 program_key: "demo".to_string(),
-                document_type: "DemoEncounter".to_string(),
                 context_id: "program_b".to_string(),
                 count: 1,
+                by_type: "1 DemoEncounter".to_string(),
             }
         );
+    }
+
+    #[actix_rt::test]
+    async fn a_refused_program_change_counts_every_type_of_the_key() {
+        let connection = setup("form_plugin_program_change_every_type").await;
+        let sidecar = demo_sidecar();
+        install_form_plugins(
+            &connection,
+            slice::from_ref(&sidecar),
+            &options(&[("demo", "program_b")], &[]),
+        )
+        .unwrap();
+
+        // Documents of two of the key's types under its program...
+        for n in 1..=2 {
+            save_document(
+                &connection,
+                &format!("enrolment_{n}"),
+                "DemoProgramEnrolment",
+                "demo_program_DemoProgramEnrolment_v1_hash",
+                "program_b",
+                DocumentStatus::Active,
+            );
+        }
+        for n in 1..=3 {
+            save_document(
+                &connection,
+                &format!("encounter_{n}"),
+                "DemoEncounter",
+                "demo_program_DemoEncounter_v2_hash",
+                "program_b",
+                DocumentStatus::Active,
+            );
+        }
+        // ...and ones that don't move with the key: another type under the
+        // same program, and one of its types under another program.
+        save_document(
+            &connection,
+            "other_type",
+            "OtherEncounter",
+            "demo_program_DemoEncounter_v2_hash",
+            "program_b",
+            DocumentStatus::Active,
+        );
+        save_document(
+            &connection,
+            "elsewhere",
+            "DemoEncounter",
+            "demo_program_DemoEncounter_v2_hash",
+            "program_a",
+            DocumentStatus::Active,
+        );
+
+        let error = install_form_plugins(
+            &connection,
+            &[sidecar],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error,
+            Error::ProgramChangeBlocked {
+                program_key: "demo".to_string(),
+                context_id: "program_b".to_string(),
+                count: 5,
+                by_type: "2 DemoProgramEnrolment, 3 DemoEncounter".to_string(),
+            }
+        );
+        assert!(error.to_string().contains(": 5 document(s) of its types"));
+        assert_eq!(entry(&connection, "DemoEncounter").context_id, "program_b");
     }
 
     fn save_document(
