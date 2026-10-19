@@ -8,7 +8,8 @@ use util::json_without_nulls;
 
 use crate::sync_v7::{
     translations::{
-        invoice_line::translate_invoice_line, name::translate_name, store::translate_store,
+        invoice_line::translate_invoice_line, name::translate_name,
+        requisition_line::translate_requisition_line, store::translate_store,
         sync_file_reference::translate_sync_file_reference,
         temperature_log::translate_temperature_log,
     },
@@ -181,6 +182,9 @@ pub(crate) fn deserialize(
         ChangelogTableName::Name => {
             return translate_name(connection, changelog_insert, data, sync_context);
         }
+        ChangelogTableName::RequisitionLine => {
+            return translate_requisition_line(changelog_insert, data);
+        }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
@@ -213,7 +217,6 @@ pub(crate) fn deserialize(
         ChangelogTableName::TemperatureBreach => from_value::<TemperatureBreachRow>(data),
         ChangelogTableName::VVMStatusLog => from_value::<VVMStatusLogRow>(data),
         ChangelogTableName::Requisition => from_value::<RequisitionRow>(data),
-        ChangelogTableName::RequisitionLine => from_value::<RequisitionLineRow>(data),
         ChangelogTableName::AssetCatalogueItem => from_value::<AssetCatalogueItemRow>(data),
         ChangelogTableName::AssetCatalogueType => from_value::<AssetTypeRow>(data),
         ChangelogTableName::AssetCategory => from_value::<AssetCategoryRow>(data),

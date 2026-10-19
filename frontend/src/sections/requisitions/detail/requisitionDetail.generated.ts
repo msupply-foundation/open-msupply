@@ -18,6 +18,10 @@ export type RequisitionDetailLineFragment = {
   stockOnHand: number;
 };
   availableStockOnHand: number;
+  campaign: {
+  id: string;
+  name: string;
+} | null;
   initialStockOnHandUnits: number;
   incomingUnits: number;
   outgoingUnits: number;
@@ -30,9 +34,48 @@ export type RequisitionDetailLineFragment = {
   reason: {
   reason: string;
 } | null;
-  forecastTotalUnits: number | null;
-  forecastTotalDoses: number | null;
-  vaccineCourses: string | null;
+  forecastMethod: "AMC" | "POPULATION" | "ANCILLARY_RATIO";
+  forecastMonthlyConsumption: number;
+  targetStock: number;
+  forecastBreakdown: ({
+  __typename: "AmcForecastNode";
+} & {
+  averageMonthlyConsumption: number;
+}) | ({
+  __typename: "PopulationForecastNode";
+} & {
+  populationServed: number | null;
+  courses: Array<{
+  courseName: string;
+  demographicName: string | null;
+  numberOfDoses: number;
+  coverageRate: number;
+  wastageRate: number;
+  targetPopulation: number;
+  lossFactor: number;
+  annualTargetDoses: number;
+  dosesPerUnit: number;
+  monthlyDoses: number;
+  monthlyUnits: number;
+}>;
+}) | ({
+  __typename: "AncillaryRatioForecastNode";
+} & {
+  principals: Array<{
+  itemId: string;
+  item: {
+  code: string;
+  name: string;
+  unitName: string | null;
+} | null;
+  principalMonthlyConsumption: number;
+  itemQuantity: number;
+  ancillaryQuantity: number;
+  wastageRate: number;
+  principalUsableConsumption: number;
+  monthlyConsumption: number;
+}>;
+});
   availableVolumeAtLocationType: {
   locationType: {
   name: string;
@@ -131,7 +174,7 @@ export type RequisitionDetailResult = {
 };
 
 export const RequisitionDetail = {
-  query: "query requisitionDetail($storeId: String!, $id: String!) {\n  requisition(storeId: $storeId, id: $id) {\n    __typename\n    ... on RequisitionNode {\n      ...RequisitionInfo\n    }\n    ... on RecordNotFound {\n      __typename\n    }\n  }\n}\n\nfragment RequisitionInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  programName\n  program {\n    id\n  }\n  orderType\n  period {\n    id\n    name\n  }\n  approvalStatus\n  linkedRequisition {\n    id\n  }\n  isEmergency\n  createdDatetime\n  finalisedDatetime\n  user {\n    username\n    email\n  }\n  linesRemainingToSupply {\n    totalCount\n  }\n  shipments {\n    totalCount\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      recordId\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...RequisitionDetailLine\n    }\n  }\n}\n\nfragment RequisitionDetailLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  itemStats {\n    stockOnHand\n  }\n  availableStockOnHand\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  averageMonthlyConsumption\n  optionId\n  reason {\n    reason\n  }\n  forecastTotalUnits\n  forecastTotalDoses\n  vaccineCourses\n  availableVolumeAtLocationType {\n    locationType {\n      name\n    }\n    availableVolume\n    itemVolumePerUnit\n  }\n  suggestedQuantity\n  requestedQuantity\n  approvedQuantity\n  approvalComment\n  supplyQuantity\n  alreadyIssued\n  remainingQuantityToSupply\n  pricePerUnit\n}",
+  query: "query requisitionDetail($storeId: String!, $id: String!) {\n  requisition(storeId: $storeId, id: $id) {\n    __typename\n    ... on RequisitionNode {\n      ...RequisitionInfo\n    }\n    ... on RecordNotFound {\n      __typename\n    }\n  }\n}\n\nfragment RequisitionInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  programName\n  program {\n    id\n  }\n  orderType\n  period {\n    id\n    name\n  }\n  approvalStatus\n  linkedRequisition {\n    id\n  }\n  isEmergency\n  createdDatetime\n  finalisedDatetime\n  user {\n    username\n    email\n  }\n  linesRemainingToSupply {\n    totalCount\n  }\n  shipments {\n    totalCount\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      recordId\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...RequisitionDetailLine\n    }\n  }\n}\n\nfragment RequisitionDetailLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  itemStats {\n    stockOnHand\n  }\n  availableStockOnHand\n  campaign {\n    id\n    name\n  }\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  averageMonthlyConsumption\n  optionId\n  reason {\n    reason\n  }\n  forecastMethod\n  forecastMonthlyConsumption\n  targetStock\n  forecastBreakdown {\n    __typename\n    ... on AmcForecastNode {\n      averageMonthlyConsumption\n    }\n    ... on PopulationForecastNode {\n      populationServed\n      courses {\n        courseName\n        demographicName\n        numberOfDoses\n        coverageRate\n        wastageRate\n        targetPopulation\n        lossFactor\n        annualTargetDoses\n        dosesPerUnit\n        monthlyDoses\n        monthlyUnits\n      }\n    }\n    ... on AncillaryRatioForecastNode {\n      principals {\n        itemId\n        item {\n          code\n          name\n          unitName\n        }\n        principalMonthlyConsumption\n        itemQuantity\n        ancillaryQuantity\n        wastageRate\n        principalUsableConsumption\n        monthlyConsumption\n      }\n    }\n  }\n  availableVolumeAtLocationType {\n    locationType {\n      name\n    }\n    availableVolume\n    itemVolumePerUnit\n  }\n  suggestedQuantity\n  requestedQuantity\n  approvedQuantity\n  approvalComment\n  supplyQuantity\n  alreadyIssued\n  remainingQuantityToSupply\n  pricePerUnit\n}",
 } as TypedDocument<RequisitionDetailResult, RequisitionDetailVariables>;
 
 export type CreateShipmentFromRequisitionVariables = {
@@ -198,7 +241,7 @@ export type UpdateRequisitionResult = {
 };
 
 export const UpdateRequisition = {
-  query: "mutation updateRequisition($storeId: String!, $input: UpdateResponseRequisitionInput!) {\n  updateResponseRequisition(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionNode {\n      ...RequisitionInfo\n    }\n    ... on UpdateResponseRequisitionError {\n      error {\n        __typename\n        description\n        ... on OrderingTooManyItems {\n          maxItemsInEmergencyOrder\n        }\n        ... on RequisitionReasonsNotProvided {\n          errors {\n            requisitionLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment RequisitionInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  programName\n  program {\n    id\n  }\n  orderType\n  period {\n    id\n    name\n  }\n  approvalStatus\n  linkedRequisition {\n    id\n  }\n  isEmergency\n  createdDatetime\n  finalisedDatetime\n  user {\n    username\n    email\n  }\n  linesRemainingToSupply {\n    totalCount\n  }\n  shipments {\n    totalCount\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      recordId\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...RequisitionDetailLine\n    }\n  }\n}\n\nfragment RequisitionDetailLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  itemStats {\n    stockOnHand\n  }\n  availableStockOnHand\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  averageMonthlyConsumption\n  optionId\n  reason {\n    reason\n  }\n  forecastTotalUnits\n  forecastTotalDoses\n  vaccineCourses\n  availableVolumeAtLocationType {\n    locationType {\n      name\n    }\n    availableVolume\n    itemVolumePerUnit\n  }\n  suggestedQuantity\n  requestedQuantity\n  approvedQuantity\n  approvalComment\n  supplyQuantity\n  alreadyIssued\n  remainingQuantityToSupply\n  pricePerUnit\n}",
+  query: "mutation updateRequisition($storeId: String!, $input: UpdateResponseRequisitionInput!) {\n  updateResponseRequisition(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionNode {\n      ...RequisitionInfo\n    }\n    ... on UpdateResponseRequisitionError {\n      error {\n        __typename\n        description\n        ... on OrderingTooManyItems {\n          maxItemsInEmergencyOrder\n        }\n        ... on RequisitionReasonsNotProvided {\n          errors {\n            requisitionLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment RequisitionInfo on RequisitionNode {\n  id\n  requisitionNumber\n  status\n  colour\n  theirReference\n  comment\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      isDisabled\n    }\n  }\n  destinationCustomer(storeId: $storeId) {\n    id\n    name\n  }\n  programName\n  program {\n    id\n  }\n  orderType\n  period {\n    id\n    name\n  }\n  approvalStatus\n  linkedRequisition {\n    id\n  }\n  isEmergency\n  createdDatetime\n  finalisedDatetime\n  user {\n    username\n    email\n  }\n  linesRemainingToSupply {\n    totalCount\n  }\n  shipments {\n    totalCount\n    nodes {\n      id\n      invoiceNumber\n      createdDatetime\n      user {\n        username\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      recordId\n    }\n  }\n  lines {\n    totalCount\n    nodes {\n      ...RequisitionDetailLine\n    }\n  }\n}\n\nfragment RequisitionDetailLine on RequisitionLineNode {\n  id\n  itemId\n  itemName\n  comment\n  item {\n    code\n    unitName\n    defaultPackSize\n    doses\n    isVaccine\n  }\n  itemStats {\n    stockOnHand\n  }\n  availableStockOnHand\n  campaign {\n    id\n    name\n  }\n  initialStockOnHandUnits\n  incomingUnits\n  outgoingUnits\n  lossInUnits\n  additionInUnits\n  expiringUnits\n  daysOutOfStock\n  averageMonthlyConsumption\n  optionId\n  reason {\n    reason\n  }\n  forecastMethod\n  forecastMonthlyConsumption\n  targetStock\n  forecastBreakdown {\n    __typename\n    ... on AmcForecastNode {\n      averageMonthlyConsumption\n    }\n    ... on PopulationForecastNode {\n      populationServed\n      courses {\n        courseName\n        demographicName\n        numberOfDoses\n        coverageRate\n        wastageRate\n        targetPopulation\n        lossFactor\n        annualTargetDoses\n        dosesPerUnit\n        monthlyDoses\n        monthlyUnits\n      }\n    }\n    ... on AncillaryRatioForecastNode {\n      principals {\n        itemId\n        item {\n          code\n          name\n          unitName\n        }\n        principalMonthlyConsumption\n        itemQuantity\n        ancillaryQuantity\n        wastageRate\n        principalUsableConsumption\n        monthlyConsumption\n      }\n    }\n  }\n  availableVolumeAtLocationType {\n    locationType {\n      name\n    }\n    availableVolume\n    itemVolumePerUnit\n  }\n  suggestedQuantity\n  requestedQuantity\n  approvedQuantity\n  approvalComment\n  supplyQuantity\n  alreadyIssued\n  remainingQuantityToSupply\n  pricePerUnit\n}",
 } as TypedDocument<UpdateRequisitionResult, UpdateRequisitionVariables>;
 
 export type AddRequisitionFromMasterListVariables = {

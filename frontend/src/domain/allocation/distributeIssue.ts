@@ -82,13 +82,20 @@ export const distributeIssue = (
     ? Math.max(0, requestedUnits)
     : 0;
   const skippedReasons = new Set<BarReason>();
+  // Other-campaign batches are common (a store holding any campaign stock
+  // has them on every routine issue), so unlike the rare bar categories they
+  // are reported only when the fill actually passed them over — see below.
+  const otherCampaignIndexes: number[] = [];
 
   const fillable: DistributableLine[] = [];
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
     packsById.set(line.id, 0);
     if (line.barred.length > 0) {
       if (line.availablePacks > 0)
-        for (const reason of line.barred) skippedReasons.add(reason);
+        for (const reason of line.barred) {
+          if (reason === 'other-campaign') otherCampaignIndexes.push(index);
+          else skippedReasons.add(reason);
+        }
       continue;
     }
     if (line.availablePacks <= 0 || line.packSize <= 0) continue;
@@ -166,6 +173,20 @@ export const distributeIssue = (
       wholePackGapUnits += (Math.ceil(packs) - packs) * line.packSize;
     }
     wholePackGapUnits = round9(wholePackGapUnits);
+  }
+
+  // An other-campaign batch counts as passed over when the request came up
+  // short, or when it sorts ahead of the last batch the fill used — the same
+  // rule the server's allocate applies, so the two report alike.
+  if (otherCampaignIndexes.length > 0) {
+    const lastUsedIndex = lines.findLastIndex(
+      line => (packsById.get(line.id) ?? 0) > 0
+    );
+    if (
+      remaining > 0 ||
+      otherCampaignIndexes.some(index => index < lastUsedIndex)
+    )
+      skippedReasons.add('other-campaign');
   }
 
   return {

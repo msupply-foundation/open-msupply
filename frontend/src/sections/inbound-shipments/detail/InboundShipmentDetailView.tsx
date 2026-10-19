@@ -171,7 +171,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   donor: false,
   manufacturer: false,
   manufactureDate: false,
-  campaignProgram: false,
+  program: false,
+  activity: false,
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
@@ -358,6 +359,23 @@ const InboundShipmentDetailView: Component = () => {
       .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
   };
 
+  // The items of the selected lines — the bulk program picker's narrowing, so
+  // it offers what those items are in rather than every program in the store
+  // (the line editor's rule, applied to a selection). Distinct ids; the fetch
+  // dedupes too, but the count is what the dialog's message counts.
+  // Read from the loaded page, as selectedVolume is — a selection carried
+  // across a page change contributes only the items still on screen.
+  const selectedItemIds = (): string[] => {
+    const ids = new Set(selectedIds());
+    return [
+      ...new Set(
+        rows()
+          .filter(r => ids.has(r.id))
+          .map(r => r.itemId)
+      ),
+    ];
+  };
+
   // Volume-aware: inbound places received stock at a location, so the picker
   // shows each location's % used and offers the All / Empty / Available filter
   // (same picker as stocktakes). A plain (non-cached) read, so the figures are
@@ -422,6 +440,13 @@ const InboundShipmentDetailView: Component = () => {
   // comment for the rule and why the PO half comes from the scope.
   const sourceLinked = () =>
     hasSourceLink(isExternal(), current()?.linkedShipment);
+  const foreignCurrency = () => {
+    const node = current();
+    const currency = node?.currency;
+    return node && currency && !currency.isHomeCurrency
+      ? { code: currency.code, rate: node.currencyRate }
+      : undefined;
+  };
   // The rule, and why a PO-linked shipment is excluded, lives in
   // ./internalOrderContext.
   const showsOrderContext = () =>
@@ -1042,20 +1067,28 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.manufacture-date'),
         ...getCellDefinition('manufactureDate'),
       },
-      // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
-      // only; a line carries a campaign OR a program (mutually exclusive).
+      // Program and Campaign (spec S1 line-table cols 26-27 / L3) — manual
+      // shipments only. Two independent fields, so two columns: one combined
+      // column would hide the program on a line carrying both.
       ...(isManual
         ? [
             {
               c: {
-                accessor: line =>
-                  line.campaign?.name ?? line.program?.name ?? '',
-                id: 'campaignProgram',
+                accessor: line => line.program?.name ?? '',
+                id: 'program',
               },
-              header: () => t('label.campaign'),
-              // The `campaign` preset (a campaign OR program name), as the
-              // stocktake line table uses — not the `name` text sink.
-              ...getCellDefinition('campaign'),
+              header: () => t('label.program'),
+              ...getCellDefinition('program'),
+            } satisfies Column<Line, SortKey>,
+            {
+              c: {
+                accessor: line => line.campaign?.name ?? '',
+                id: 'activity',
+              },
+              header: () => t('label.activity'),
+              // The `campaign` preset, as the stocktake line table uses — not
+              // the `name` text sink.
+              ...getCellDefinition('activity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -1258,6 +1291,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
+                      selectedItemIds={selectedItemIds}
                       disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
@@ -1321,7 +1355,7 @@ const InboundShipmentDetailView: Component = () => {
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={isDisabled() ? undefined : openRow}
+                  onRowClick={openRow}
                   // A line the last bulk op failed reads in the error tone
                   // (spec S8 → per-line indicators).
                   rowTone={line =>
@@ -1425,6 +1459,12 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                defaultDonor={
+                  node().defaultDonor ??
+                  node().purchaseOrder?.donor ??
+                  undefined
+                }
+                campaign={node().campaign ?? null}
                 // Gates the editor's internal-order banner, on the same rule as
                 // the Units requested column so the two can't disagree.
                 requisitionId={
@@ -1435,6 +1475,7 @@ const InboundShipmentDetailView: Component = () => {
                 // store (spec rules → header fields / OMS-REG-REPL-09.12). A
                 // manual internal-supplier shipment keeps cost editable.
                 costLocked={sourceLinked()}
+                foreignCurrency={foreignCurrency()}
                 // Packs shipped / Shipped pack size are the SENDING side's
                 // record of what left its shelf, so the receiver may read them
                 // but not retype them. Passed separately from costLocked even
@@ -1442,6 +1483,7 @@ const InboundShipmentDetailView: Component = () => {
                 // merely coincide, and reading one as the other is how this
                 // field came to be editable on transfers.
                 shippedLocked={sourceLinked()}
+                readOnly={isDisabled()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

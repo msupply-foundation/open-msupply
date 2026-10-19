@@ -71,6 +71,11 @@ fragment InboundInfo on InvoiceNode {
     number
     reference
     orderTotalAfterDiscount
+    supplierDiscountPercentage
+    donor {
+      id
+      name
+    }
     currency {
       id
       code
@@ -88,6 +93,11 @@ fragment InboundInfo on InvoiceNode {
   shippingMethod {
     id
     method
+  }
+  # The shipment's default campaign — new lines start with it.
+  campaign {
+    id
+    name
   }
   pricing {
     totalBeforeTax
@@ -193,11 +203,13 @@ fragment InboundLine on InvoiceLineNode {
     lineNumber
     requestedPackSize
     requestedNumberOfUnits
-    adjustedNumberOfUnits
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits
+    pricePerPackBeforeDiscount
     pricePerPackAfterDiscount
+    # The pack price the shipment's cost was seeded from
+    pricePerPackAfterSupplierDiscount
   }
 }
 

@@ -108,7 +108,6 @@ pub struct UpsertPreferencesInput {
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
-    pub use_procurement_functionality: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
@@ -116,6 +115,7 @@ pub struct UpsertPreferencesInput {
     pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub can_change_target_months_of_stock: Option<Vec<BoolStorePrefInput>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
@@ -194,7 +194,6 @@ impl UpsertPreferencesInput {
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
@@ -202,6 +201,7 @@ impl UpsertPreferencesInput {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            can_change_target_months_of_stock,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -266,9 +266,6 @@ impl UpsertPreferencesInput {
             order_in_packs: order_in_packs
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            use_procurement_functionality: use_procurement_functionality
-                .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
@@ -292,6 +289,9 @@ impl UpsertPreferencesInput {
                 select_destination_store_for_an_internal_order
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            can_change_target_months_of_stock: can_change_target_months_of_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
                 number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products
                     .as_ref()

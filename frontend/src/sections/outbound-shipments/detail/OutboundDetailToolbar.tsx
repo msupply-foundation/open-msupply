@@ -3,6 +3,7 @@ import { t } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
 import { NameSearch } from '../../../domain/name';
+import { ActivitySelect } from '../../../domain/campaign';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
 import type { OutboundNode } from './outboundUpdate';
 import type { OutboundFieldEdit } from './outboundEdit';
@@ -31,6 +32,8 @@ export interface OutboundDetailToolbarProps {
   /** A rejected customer change, surfaced on the lookup itself. */
   customerError?: string;
   onChangeCustomer: (customerId: string) => void;
+  /** Saves the shipment's campaign (null = routine). */
+  onChangeCampaign: (campaignId: string | null) => void;
   /** Prominent custom fields save through the same field-save path. */
   onSaveCustomFields: (patch: Record<string, unknown>) => void;
 }
@@ -98,6 +101,21 @@ export const OutboundDetailToolbar: Component<
             props.edit.setField('theirReference', e.currentTarget.value)
           }
           onBlur={() => props.edit.flush()}
+        />
+      </FormRowItem>
+
+      {/* The activity this shipment issues for — a Routine entry or a
+          campaign. Lines keep their batch's own activity — this never retags
+          stock — and auto-allocation only takes batches held for the same
+          activity (none takes only batches held for none). */}
+      <FormRowItem weight={1} minWidth="8rem" maxWidth="16rem">
+        <ActivitySelect
+          size="small"
+          inputTestId="outbound-campaign-input"
+          campaignId={props.node.campaign?.id}
+          campaign={props.node.campaign}
+          disabled={props.disabled}
+          onChange={campaign => props.onChangeCampaign(campaign?.id ?? null)}
         />
       </FormRowItem>
 

@@ -13,10 +13,10 @@ export type AssetLogReasonsVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     assetLogStatus?: {
-    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
-    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
+    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
+    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
   } | null;
     reason?: {
     equalTo?: string | null;
@@ -36,7 +36,7 @@ export type AssetLogReasonsResult = {
   totalCount: number;
   nodes: Array<{
   id: string;
-  assetLogStatus: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE";
+  assetLogStatus: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED";
   reason: string;
   commentsRequired: boolean;
 }>;
@@ -50,7 +50,7 @@ export const AssetLogReasons = {
 export type InsertAssetLogReasonVariables = {
   input: {
     id: string;
-    assetLogStatus: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE";
+    assetLogStatus: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED";
     reason: string;
     commentsRequired: boolean;
   };

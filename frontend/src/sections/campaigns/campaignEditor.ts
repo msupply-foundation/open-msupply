@@ -19,16 +19,21 @@ import type {
  */
 export type CampaignDraft = UpsertCampaignVariables['input'];
 
-/** A blank editor (spec: New campaign opens blank — `.10`). */
+/**
+ * A blank editor (spec: New activity opens blank — `.10`). Kind opens on
+ * Campaign, which is also what the server defaults an omitted kind to.
+ */
 export const newCampaignDraft = (id: string): CampaignDraft => ({
   id,
   name: '',
+  kind: 'CAMPAIGN',
 });
 
-/** An edit opens the chosen campaign's current name and dates (`.14`). */
+/** An edit opens the chosen activity's current kind, name and dates (`.14`). */
 export const draftFromCampaign = (campaign: Campaign): CampaignDraft => ({
   id: campaign.id,
   name: campaign.name,
+  kind: campaign.kind,
   startDate: campaign.startDate,
   endDate: campaign.endDate,
 });
@@ -58,6 +63,10 @@ export const canSaveCampaign = (draft: CampaignDraft): boolean =>
 export const campaignInput = (draft: CampaignDraft): CampaignDraft => ({
   id: draft.id,
   name: draft.name.trim(),
+  // Kind travels every time too — the editor owns the field and the user has
+  // just answered it. Omitting it would be safe (the server keeps the stored
+  // kind), but it would also drop the answer.
+  kind: draft.kind ?? 'CAMPAIGN',
   startDate: draft.startDate || undefined,
   endDate: draft.endDate || undefined,
 });
