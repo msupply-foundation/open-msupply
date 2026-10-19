@@ -81,6 +81,8 @@ export type EditorLine = {
   requestedQuantity: number;
   comment: string;
   reasonId: string | null;
+  /** The line's Activity: its campaign id and name, or null for routine. */
+  campaign: { id: string; name: string } | null;
   /**
    * The stored variance reason's TEXT (the id above is what the editor writes).
    * Carried so the line's published plugin view can be built from the editor's
@@ -192,13 +194,20 @@ const withPreview = (
   forecastMethodOptions: preview.forecastMethodOptions,
 });
 
-// The draft's line for an item under `method` (null → the line's own), saving
-// nothing (rules › choosing a method).
+// The draft's line for an item under `method` (null → the line's own) and held
+// for `campaignId` (null → nothing in particular), saving nothing (rules ›
+// choosing a method, rules › choosing an activity).
+//
+// The activity is sent on EVERY preview, as the save sends it: a preview that
+// left it out would re-scope the line's stock back to the STORED activity, so
+// changing the method after picking one would quietly undo the pick's effect on
+// the figures.
 const fetchForecastPreview = async (
   storeId: string,
   requisitionId: string,
   itemId: string,
-  method: ForecastMethod | null
+  method: ForecastMethod | null,
+  campaignId: string | null
 ): Promise<
   | { kind: 'previewed'; preview: ForecastPreview }
   | { kind: 'error'; message: string }
@@ -206,7 +215,12 @@ const fetchForecastPreview = async (
 > => {
   const result = await graphqlFetch(InternalOrderLineForecastPreview, {
     storeId,
-    input: { requisitionId, itemId, forecastMethod: method },
+    input: {
+      requisitionId,
+      itemId,
+      forecastMethod: method,
+      campaignId: { value: campaignId },
+    },
   });
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.requisitionLineForecastPreview;
@@ -236,10 +250,36 @@ export const previewForecastMethod = async (
     storeId,
     requisitionId,
     line.itemId,
-    method
+    method,
+    line.campaign?.id ?? null
   );
   if (result.kind !== 'previewed') return result;
   return { kind: 'previewed', line: withPreview(line, result.preview) };
+};
+
+// A draft activity change (rules › choosing an activity): the line re-previewed
+// as held for `campaign` — its stock on hand narrowed to that campaign's stock,
+// and the suggestion recomputed against it, as the save will recompute them.
+// The draft's own method travels too, so picking an activity never reverts a
+// method the user has already changed. Nothing is saved.
+export const previewActivity = async (
+  storeId: string,
+  requisitionId: string,
+  line: EditorLine,
+  campaign: { id: string; name: string } | null
+): Promise<ForecastPreviewResult> => {
+  const result = await fetchForecastPreview(
+    storeId,
+    requisitionId,
+    line.itemId,
+    line.forecast.forecastMethod,
+    campaign?.id ?? null
+  );
+  if (result.kind !== 'previewed') return result;
+  return {
+    kind: 'previewed',
+    line: { ...withPreview(line, result.preview), campaign },
+  };
 };
 
 // --- Add-mode line preview read ---------------------------------------------
@@ -255,7 +295,8 @@ export const buildAddPreview = async (
 ): Promise<EditorLine | undefined> => {
   const [result, forecast] = await Promise.all([
     graphqlFetch(InternalOrderItemStats, { storeId, itemId }),
-    fetchForecastPreview(storeId, requisitionId, itemId, null),
+    // A new line starts held for nothing in particular, as its insert would
+    fetchForecastPreview(storeId, requisitionId, itemId, null, null),
   ]);
   if (result.kind !== 'success' || forecast.kind !== 'previewed')
     return undefined;
@@ -283,6 +324,8 @@ export const buildAddPreview = async (
       comment: '',
       reasonId: null,
       reason: null,
+      // A new line starts routine; the editor's Activity picker sets it.
+      campaign: null,
       isNew: true,
       ownForecastMethod: forecast.preview.forecastMethod,
     },
@@ -327,6 +370,7 @@ export const editorLineFromLine = (
   comment: line.comment ?? '',
   reasonId: line.optionId,
   reason: line.reason?.reason ?? null,
+  campaign: line.campaign ?? null,
   isNew: false,
 });
 
@@ -365,6 +409,12 @@ type Draft = {
   // Omitted (undefined) where the order has no reason surface; null/string
   // where it does — null clears the stored reason (D30).
   optionId?: string | null;
+  /**
+   * The line's Activity — its campaign id, or null for routine. Always sent,
+   * on a program order as on a standard one: the wire wraps it so null is a
+   * clear rather than "leave alone".
+   */
+  campaignId: string | null;
 };
 
 // ADD (OMS-REG-REPL-04.65): the draft's first save realises the create — insert
@@ -391,6 +441,7 @@ export const saveNewLine = async (
           requestedQuantity: draft.requestedQuantity,
           comment: draft.comment,
           optionId: draft.optionId,
+          campaignId: { value: draft.campaignId },
           forecastMethod: line.forecast.forecastMethod,
         },
       ],
@@ -431,6 +482,7 @@ export const saveExistingLine = async (
       requestedQuantity: draft.requestedQuantity,
       comment: draft.comment,
       optionId: draft.optionId,
+      campaignId: { value: draft.campaignId },
       forecastMethod: line.forecast.forecastMethod,
     },
   });

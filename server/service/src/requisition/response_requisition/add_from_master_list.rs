@@ -145,6 +145,7 @@ fn generate(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
+                campaign_id: None,
                 item_id: item.item_row.id.clone(),
                 item_name: item.item_row.name,
                 snapshot_datetime: Some(Utc::now().naive_utc()),

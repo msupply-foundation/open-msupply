@@ -51,6 +51,9 @@ export type AddInternalOrderLineVariables = {
     comment?: string | null;
     optionId?: string | null;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   }> | null;
     deleteRequestRequisitionLines?: Array<{
     id: string;
@@ -151,6 +154,9 @@ export type UpdateInternalOrderLineVariables = {
     comment?: string | null;
     optionId?: string | null;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   };
 };
 
@@ -182,6 +188,9 @@ export type InternalOrderLineForecastPreviewVariables = {
     requisitionId: string;
     itemId: string;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   };
 };
 

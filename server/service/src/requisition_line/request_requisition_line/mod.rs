@@ -1,3 +1,6 @@
+mod activity_stock;
+pub use self::activity_stock::*;
+
 mod insert;
 pub use self::insert::*;
 
