@@ -39,25 +39,19 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   }
   foreignExchangeRate
   requestedDeliveryDate
-  # Details heading (S8) — correspondence fields and the five charges.
+  # Details heading (S8) — correspondence fields.
   authorisingOfficer1
   authorisingOfficer2
   additionalInstructions
   supplierAgent
   headingMessage
   freightConditions
-  agentCommission
-  documentCharge
-  communicationsCharge
-  insuranceCharge
-  freightCharge
   # Side panel (S9) — pricing, other, dates.
   #
   # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
   # every line discount: the only discount it precedes is the supplier's
-  # (contract ⚠️ the field called "before discount"). Neither total includes
-  # the five charges, and NO field carries the final cost — the panel sums the
-  # charges itself and adds them (contract § pricing and totals).
+  # (contract ⚠️ the field called "before discount"). The final cost is
+  # `orderTotalAfterDiscount` (contract § pricing and totals).
   orderTotalBeforeDiscount
   orderTotalAfterDiscount
   # Two views of ONE stored figure: the percentage is stored, the amount is

@@ -933,12 +933,7 @@ const PurchaseOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="details">
-                <PurchaseOrderDetailsTab
-                  node={node()}
-                  disabled={isDisabled()}
-                  edit={edit}
-                  onSaveField={saveField}
-                />
+                <PurchaseOrderDetailsTab disabled={isDisabled()} edit={edit} />
               </TabPanel>
               <TabPanel value="documents">
                 <PurchaseOrderDocumentsTab

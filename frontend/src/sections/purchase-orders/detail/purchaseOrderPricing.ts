@@ -9,13 +9,9 @@ import type {
 // A line's cost is the server's stored `lineTotal` with the order's supplier
 // discount apportioned to it, read straight off the row as
 // `lineTotalAfterSupplierDiscount` (rules § pricing and totals) — nothing here
-// recomputes it for a saved line. Above the lines, three figures exist and none
-// is stored: the subtotal and the discounted total come off the node (the
-// server's `purchase_order_stats` view sums the lines' stored totals), and the
-// FINAL COST — the discounted total plus the five additional charges — exists
-// nowhere on the wire (contract ⚠️ the five charges reach no total on the
-// server). The totals band and the side panel both show it, so this module is
-// the one place it is computed.
+// recomputes it for a saved line. Above the lines, the subtotal and the
+// discounted total come off the node: the server's `purchase_order_stats` view
+// sums the lines' stored totals.
 
 type Quantities = Pick<
   PurchaseOrderDetailLineFragment,
@@ -62,53 +58,22 @@ export const projectedLineCost = (
   line.pricePerPackAfterDiscount *
   supplierDiscountFactor(order);
 
-type Charges = Pick<
-  PurchaseOrderInfoFragment,
-  | 'agentCommission'
-  | 'documentCharge'
-  | 'communicationsCharge'
-  | 'insuranceCharge'
-  | 'freightCharge'
->;
-
 /**
- * The five additional charges summed — the panel's "Additional fees" row. Each
- * is a nullable Float; an absent charge is zero. They are NOT part of either
- * stored total.
- */
-export const chargesTotal = (node: Charges): number =>
-  (node.agentCommission ?? 0) +
-  (node.documentCharge ?? 0) +
-  (node.communicationsCharge ?? 0) +
-  (node.insuranceCharge ?? 0) +
-  (node.freightCharge ?? 0);
-
-/**
- * The figure users read as the order's final cost: the discounted total PLUS
- * the charges. No field on the wire carries it.
- */
-export const finalCost = (
-  node: Charges & Pick<PurchaseOrderInfoFragment, 'orderTotalAfterDiscount'>
-): number => node.orderTotalAfterDiscount + chargesTotal(node);
-
-/**
- * The totals band's four figures, left to right. `supplierDiscountAmount` is
+ * The totals band's three figures, left to right. `supplierDiscountAmount` is
  * the server's own resolution of the stored percentage against the subtotal,
  * so the band's arithmetic reads across.
  */
 export const orderTotals = (
-  node: Charges &
-    Pick<
-      PurchaseOrderInfoFragment,
-      | 'orderTotalBeforeDiscount'
-      | 'orderTotalAfterDiscount'
-      | 'supplierDiscountAmount'
-      | 'supplierDiscountPercentage'
-    >
+  node: Pick<
+    PurchaseOrderInfoFragment,
+    | 'orderTotalBeforeDiscount'
+    | 'orderTotalAfterDiscount'
+    | 'supplierDiscountAmount'
+    | 'supplierDiscountPercentage'
+  >
 ) => ({
   subtotal: node.orderTotalBeforeDiscount,
   discount: node.supplierDiscountAmount,
   discountPercentage: node.supplierDiscountPercentage ?? 0,
-  charges: chargesTotal(node),
-  total: finalCost(node),
+  total: node.orderTotalAfterDiscount,
 });
