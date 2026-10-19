@@ -25,14 +25,6 @@ function convert_data(queryResponse) {
     node.requestedNumberOfPacks = requestedNumberOfPacks;
   });
 
-  const po = queryResponse.data.purchaseOrder;
-  po.additionalFees =
-    (po.agentCommission || 0) +
-    (po.documentCharge || 0) +
-    (po.communicationsCharge || 0) +
-    (po.insuranceCharge || 0) +
-    (po.freightCharge || 0);
-
   queryResponse.data.purchaseOrder.lines.nodes = sortNodes(
     nodes,
     'lineNumber',
