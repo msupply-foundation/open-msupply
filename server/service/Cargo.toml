@@ -45,7 +45,7 @@ pretty_assertions = { workspace = true }
 flate2 = "1.1.9"
 simple-log = { workspace = true }
 # dependencies for temperature_sensor
-temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.git", rev = "369e69e343adcbd6989121ae72daa12c11f2a870" }
+temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.git", tag = "v0.3.0" }
 # plugin:
 hex = "0.4.3"
 pem = "3.0.6"

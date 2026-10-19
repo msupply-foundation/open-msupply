@@ -10370,7 +10370,7 @@ checksum = "fe470bf03e694eccaac03d81297cbc22e681f60d3af29d4b69369f014895bf06"
 [[package]]
 name = "temperature-sensor"
 version = "0.3.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git?rev=369e69e343adcbd6989121ae72daa12c11f2a870#369e69e343adcbd6989121ae72daa12c11f2a870"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.3.0#24f05fa5bbfc0e264100a3c89971ba5c08020e61"
 dependencies = [
  "chrono",
  "json",
