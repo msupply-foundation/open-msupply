@@ -57,10 +57,10 @@ impl MigrationFragment for Migrate {
         };
 
         let kept_joins: Vec<KeptJoin> =
-            diesel::sql_query(kept_joins_query()).load(connection.lock().connection())?;
+            diesel::sql_query(kept_joins_query(og_site_id)).load(connection.lock().connection())?;
 
         // Chunked to stay under SQLite's bind parameter limit
-        for chunk in kept_joins.chunks(1000) {
+        for chunk in kept_joins.chunks(500) {
             diesel::update(name_store_join::table)
                 .filter(name_store_join::id.eq_any(chunk.iter().map(|join| &join.id)))
                 .set(name_store_join::inactive.eq(true))
@@ -95,8 +95,9 @@ struct KeptJoin {
     store_id: String,
 }
 
-/// Active patient joins whose latest sync_buffer row is a delete or an inactive upsert.
-fn kept_joins_query() -> String {
+/// Active patient joins whose latest sync_buffer row from OG is a delete or an inactive
+/// upsert.
+fn kept_joins_query(og_site_id: i32) -> String {
     let is_inactive = if cfg!(feature = "postgres") {
         "(sb.data::jsonb ->> 'inactive') = 'true'"
     } else {
@@ -108,7 +109,7 @@ fn kept_joins_query() -> String {
         WITH latest AS (
             SELECT record_id, MAX(cursor) AS cursor
             FROM sync_buffer
-            WHERE table_name = 'name_store_join'
+            WHERE table_name = 'name_store_join' AND source_site_id = {og_site_id}
             GROUP BY record_id
         )
         SELECT nsj.id, nsj.store_id
@@ -124,7 +125,6 @@ fn kept_joins_query() -> String {
                 WHEN sb.action = 'UPSERT' THEN {is_inactive}
                 ELSE FALSE
               END
-        ORDER BY nsj.id
         "#
     )
 }
@@ -159,7 +159,6 @@ mod tests {
     use super::{changelog, name_store_join};
 
     const OG_SITE_ID: i32 = 1;
-    const THIS_SITE_ID: i32 = 2;
 
     const SEED: &str = r#"
         INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES
@@ -184,6 +183,9 @@ mod tests {
             ('kept_by_delete', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
                 '{"ID":"kept_by_delete","name_ID":"patient","store_ID":"store","inactive":false}', 1),
             ('kept_by_delete', '2025-01-02 00:00:00', 'name_store_join', 'DELETE', 'null', 1),
+            -- Pushed by a v7 site after OG's delete
+            ('kept_by_delete', '2025-01-03 00:00:00', 'name_store_join', 'UPSERT',
+                '{"id":"kept_by_delete","name_id":"patient","store_id":"store"}', 5),
             ('kept_by_inactive', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
                 '{"ID":"kept_by_inactive","name_ID":"patient","store_ID":"store","inactive":false}', 1),
             ('kept_by_inactive', '2025-01-02 00:00:00', 'name_store_join', 'UPSERT',
@@ -259,7 +261,6 @@ mod tests {
     fn central_key_values() -> String {
         format!(
             "INSERT INTO key_value_store (id, value_int) VALUES
-                ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID}),
                 ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', {OG_SITE_ID});"
         )
     }
@@ -321,13 +322,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn skips_without_og_site_id() {
-        let connection = setup(
-            "migration_inactivate_kept_name_store_joins_no_og",
-            &format!(
-                "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID});"
-            ),
-        )
-        .await;
+        let connection = setup("migration_inactivate_kept_name_store_joins_no_og", "").await;
         let before = max_cursor(&connection);
 
         run(&connection);
