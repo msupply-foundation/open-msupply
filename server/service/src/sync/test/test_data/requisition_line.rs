@@ -4,7 +4,7 @@ use crate::sync::translations::requisition_line::{
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
-use repository::{RequisitionLineRow, RequisitionLineRowDelete};
+use repository::{ForecastMethod, RequisitionLineRow, RequisitionLineRowDelete};
 use serde_json::json;
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
@@ -78,12 +78,13 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
             option_id: None,
+            campaign_id: None,
             price_per_unit: None,
             available_volume: Some(5.0),
             location_type_id: None,
-            forecast_total_doses: None,
-            forecast_total_units: None,
-            vaccine_courses: None,
+            forecast_method: ForecastMethod::Amc,
+            forecast_monthly_consumption: 3.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
+            forecast_data: None,
         },
     )
 }
@@ -123,6 +124,7 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
                 forecast_total_doses: None,
                 forecast_total_units: None,
                 vaccine_courses: None,
+                campaign_id: None,
             }),
         }),
     }
@@ -205,12 +207,13 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
             option_id: None,
+            campaign_id: None,
             price_per_unit: Some(1.1),
             available_volume: None,
             location_type_id: None,
-            forecast_total_doses: None,
-            forecast_total_units: None,
-            vaccine_courses: None,
+            forecast_method: ForecastMethod::Amc,
+            forecast_monthly_consumption: 3.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
+            forecast_data: None,
         },
     )
 }
@@ -255,6 +258,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 forecast_total_doses: None,
                 forecast_total_units: None,
                 vaccine_courses: None,
+                campaign_id: None,
             }),
         }),
     }

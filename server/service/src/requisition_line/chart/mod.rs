@@ -74,6 +74,7 @@ pub fn get_requisition_line_chart(
     let RequisitionLineRow {
         available_stock_on_hand,
         average_monthly_consumption,
+        forecast_monthly_consumption,
         requested_quantity,
         ..
     } = requisition_line.requisition_line_row;
@@ -107,7 +108,8 @@ pub fn get_requisition_line_chart(
         available_stock_on_hand as u32,
         *expected_delivery_date,
         requested_quantity as u32,
-        average_monthly_consumption,
+        // Stock is projected to fall at the line's monthly demand, whatever its forecast method
+        forecast_monthly_consumption,
         stock_evolution_options,
     )?;
 
@@ -153,13 +155,13 @@ impl SuggestedQuantityCalculation {
         } else {
             from.requisition_row.min_months_of_stock
         };
+        // The suggestion works from the line's monthly demand, whatever its forecast method
+        let monthly_demand = from.requisition_line_row.forecast_monthly_consumption;
         SuggestedQuantityCalculation {
-            average_monthly_consumption: from.requisition_line_row.average_monthly_consumption,
+            average_monthly_consumption: monthly_demand,
             stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
-            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption
-                * threshold,
-            maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption
-                * from.requisition_row.max_months_of_stock,
+            minimum_stock_on_hand: monthly_demand * threshold,
+            maximum_stock_on_hand: monthly_demand * from.requisition_row.max_months_of_stock,
             suggested: from.requisition_line_row.suggested_quantity as u32,
         }
     }
@@ -542,6 +544,7 @@ mod test {
                         .unwrap(),
                 ),
                 average_monthly_consumption: 25.0 * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
+                forecast_monthly_consumption: 25.0 * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
                 available_stock_on_hand: 30.0,
                 requested_quantity: 100.0,
                 ..Default::default()

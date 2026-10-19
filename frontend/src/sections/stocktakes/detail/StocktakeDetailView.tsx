@@ -233,7 +233,8 @@ const StocktakeDetailView: Component = () => {
           dosesPerUnit: false,
           donor: false,
           manufacturer: false,
-          campaign: false,
+          program: false,
+          activity: false,
         },
         // Code pinned to the inline-start edge, so the identifier stays put
         // while the counting columns scroll horizontally — this table is wide
@@ -921,16 +922,22 @@ const StocktakeDetailView: Component = () => {
       header: () => t('label.manufacturer'),
       cardGroup: 'more',
     },
+    // Program and Activity (ungated) — two independent fields on the line, so
+    // two columns. Unsortable (no server key; backend gap). Placed after
+    // Manufacturer, before Comment, matching OMS's columns.tsx campaign.
     {
-      // Campaign name (ungated) — campaign.name on the line. Unsortable (no
-      // server key; backend gap). Matches OMS's columns.tsx campaign, placed
-      // after Manufacturer, before Comment.
-      c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
-      header: () => t('label.campaign-only'),
+      c: { accessor: line => line.program?.name ?? '', id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'more',
-      ...getCellDefinition('campaign'),
+      ...getCellDefinition('program'),
     },
-    // Comment (spec column #18) — the line's own comment text. Distinct from
+    {
+      c: { accessor: line => line.campaign?.name ?? '', id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'more',
+      ...getCellDefinition('activity'),
+    },
+    // Comment (spec column #19) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },

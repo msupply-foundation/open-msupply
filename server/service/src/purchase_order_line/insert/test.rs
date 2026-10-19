@@ -218,15 +218,27 @@ mod insert {
         assert_eq!(result_2_1.id, purchase_order_lines_2_1.id);
         assert_eq!(result_2_2.id, purchase_order_lines_2_2.id);
 
-        // test activity log for created
-        let log = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id("purchase_order_id_1")
+        // test activity log for created: one entry per line, each naming its line
+        let created_logs = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id("purchase_order_id_2")
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineCreated)
-            .unwrap();
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineCreated)
+            .collect::<Vec<_>>();
+        assert_eq!(created_logs.len(), 2);
+        let log = &created_logs[1];
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineCreated);
+        assert_eq!(log.changed_from, None);
+        let to: serde_json::Value = serde_json::from_str(log.changed_to.as_ref().unwrap()).unwrap();
+        assert_eq!(to.get("line-number"), None);
+        assert_eq!(to["item-code"], mock_item_a().code);
+        assert_eq!(to["item-name"], mock_item_a().name);
+        assert_eq!(to["status"], "NEW");
+        assert_eq!(to["pack-size"], 10.0);
+        assert_eq!(to["requested-units"], 0.0);
+        assert_eq!(to["price-per-pack-before-discount"], 0.0);
+        assert_eq!(to.get("adjusted-units"), None);
+        assert_eq!(to.get("manufacturer"), None);
     }
 
     /// The stored total is the after-discount pack price × the packs (units over

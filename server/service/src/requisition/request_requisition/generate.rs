@@ -1,19 +1,21 @@
 use crate::PluginOrRepositoryError;
 use crate::item_stats::get_item_stats;
 use crate::location::query::{get_available_volume_by_location_type, restricted_location_type_id};
-use crate::preference::preferences::DisplayPopulationBasedForecasting;
-use crate::preference::types::Preference;
 use crate::pricing::item_price::{ItemPriceLookup, get_pricing_for_items};
 use crate::requisition::common::get_indicative_price_pref;
-use crate::requisition::request_requisition::generate_population_forecast::calculate_forecasting_fields;
+use crate::requisition::request_requisition::{ForecastInputs, order_demand};
 use crate::service_provider::ServiceContext;
 use chrono::{NaiveDate, Utc};
-use repository::{ItemRow, ItemRowRepository, RequisitionLineRow, RequisitionRow};
+use repository::{
+    EqualFilter, ItemRow, ItemRowRepository, LineForecast, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionRow,
+};
 use std::collections::{HashMap, HashSet};
 use util::uuid::uuid;
 
 pub struct GenerateSuggestedQuantity {
-    pub average_monthly_consumption: f64,
+    /// The line's monthly demand, whatever its forecast method
+    pub forecast_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
     pub min_months_of_stock: f64,
     pub max_months_of_stock: f64,
@@ -21,16 +23,16 @@ pub struct GenerateSuggestedQuantity {
 
 pub fn generate_suggested_quantity(
     GenerateSuggestedQuantity {
-        average_monthly_consumption,
+        forecast_monthly_consumption,
         available_stock_on_hand,
         min_months_of_stock,
         max_months_of_stock,
     }: GenerateSuggestedQuantity,
 ) -> f64 {
-    if average_monthly_consumption == 0.0 {
+    if forecast_monthly_consumption == 0.0 {
         return 0.0;
     }
-    let months_of_stock = available_stock_on_hand / average_monthly_consumption;
+    let months_of_stock = available_stock_on_hand / forecast_monthly_consumption;
 
     let default_min_months_of_stock = if min_months_of_stock == 0.0 {
         max_months_of_stock
@@ -43,7 +45,7 @@ pub fn generate_suggested_quantity(
     }
 
     // Suggested quantity should always round up - we order in units and otherwise we could under-order by a fraction
-    ((max_months_of_stock - months_of_stock) * average_monthly_consumption).ceil()
+    ((max_months_of_stock - months_of_stock) * forecast_monthly_consumption).ceil()
 }
 
 pub fn generate_requisition_lines(
@@ -90,15 +92,24 @@ pub fn generate_requisition_lines(
     let available_volume_by_type =
         get_available_volume_by_location_type(&ctx.connection, store_id, &location_type_ids)?;
 
-    let display_forecasting = DisplayPopulationBasedForecasting
-        .load(&ctx.connection, None)
-        .unwrap_or(false);
-
-    let population_forecast = if display_forecasting {
-        calculate_forecasting_fields(ctx, item_ids.clone())?
-    } else {
-        std::collections::HashMap::new()
-    };
+    // Each new line takes its default forecast, against the lines already on the order
+    let existing_lines: Vec<RequisitionLineRow> = RequisitionLineRepository::new(&ctx.connection)
+        .query_by_filter(
+            RequisitionLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+        )?
+        .into_iter()
+        .map(|line| line.requisition_line_row)
+        .collect();
+    let mut order = order_demand(&existing_lines);
+    let forecast_inputs = ForecastInputs::load(&ctx.connection, store_id, &item_ids)?;
+    let mut forecasts = forecast_inputs.default_forecasts(
+        &item_stats_rows
+            .iter()
+            .map(|stats| (stats.item_id.clone(), stats.average_monthly_consumption))
+            .collect::<Vec<_>>(),
+        &mut order,
+    );
 
     let lines = item_stats_rows
         .into_iter()
@@ -106,23 +117,16 @@ pub fn generate_requisition_lines(
             |item_stats| -> Result<RequisitionLineRow, PluginOrRepositoryError> {
                 let average_monthly_consumption = item_stats.average_monthly_consumption;
                 let available_stock_on_hand = item_stats.available_stock_on_hand;
-                let forecast_total_units = population_forecast
-                    .get(&item_stats.item_id)
-                    .and_then(|opt| opt.as_ref())
-                    .map(|f| f.forecast_total_units);
+                let forecast = forecasts
+                    .remove(&item_stats.item_id)
+                    .unwrap_or_else(|| LineForecast::amc(average_monthly_consumption));
 
-                let suggested_quantity = match (display_forecasting, forecast_total_units) {
-                    (true, Some(forecast_units)) if forecast_units > available_stock_on_hand => {
-                        (forecast_units - available_stock_on_hand).ceil()
-                    }
-                    (true, Some(_)) => 0.0,
-                    _ => generate_suggested_quantity(GenerateSuggestedQuantity {
-                        average_monthly_consumption,
-                        available_stock_on_hand,
-                        min_months_of_stock: requisition_row.min_months_of_stock,
-                        max_months_of_stock: requisition_row.max_months_of_stock,
-                    }),
-                };
+                let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
+                    forecast_monthly_consumption: forecast.monthly_consumption,
+                    available_stock_on_hand,
+                    min_months_of_stock: requisition_row.min_months_of_stock,
+                    max_months_of_stock: requisition_row.max_months_of_stock,
+                });
                 let item = item_by_id.get(&item_stats.item_id);
                 // The line records its item's location type only where the
                 // store has locations of that type to report volume for: the
@@ -132,13 +136,11 @@ pub fn generate_requisition_lines(
                     .and_then(restricted_location_type_id)
                     .and_then(|id| Some((id.to_string(), *available_volume_by_type.get(id)?)))
                     .unzip();
-                let population_forecast_for_item = population_forecast
-                    .get(&item_stats.item_id)
-                    .and_then(|opt| opt.as_ref());
 
                 Ok(RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
+                    campaign_id: None,
                     item_name: item.map(|item| item.name.clone()).unwrap_or_default(),
                     item_id: item_stats.item_id.clone(),
                     suggested_quantity,
@@ -156,11 +158,9 @@ pub fn generate_requisition_lines(
                     },
                     available_volume,
                     location_type_id,
-                    forecast_total_units,
-                    forecast_total_doses: population_forecast_for_item
-                        .map(|f| f.forecast_total_doses),
-                    vaccine_courses: population_forecast_for_item
-                        .map(|f| serde_json::to_string(&f.vaccine_courses).unwrap_or_default()),
+                    forecast_data: forecast.data_json(),
+                    forecast_method: forecast.method,
+                    forecast_monthly_consumption: forecast.monthly_consumption,
                     // Default
                     comment: None,
                     supply_quantity: 0.0,

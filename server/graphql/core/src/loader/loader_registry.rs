@@ -515,6 +515,12 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
+        ForecastMethodOptionsLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
         ProgramByIdLoader {
             connection_manager: connection_manager.clone(),
         },

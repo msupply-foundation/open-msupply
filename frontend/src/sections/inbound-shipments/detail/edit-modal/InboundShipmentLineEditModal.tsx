@@ -51,7 +51,7 @@ import {
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch } from '../../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
   InboundShipmentLines,
@@ -135,6 +135,11 @@ export interface InboundShipmentLineEditModalProps {
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
   /**
+   * The shipment's currency when it isn't the home currency, with its rate
+   * (home units per one foreign unit) — adds the foreign-currency cost columns.
+   */
+  foreignCurrency?: { code: string; rate: number };
+  /**
    * The supplier-declared figures (Packs shipped / Shipped pack size) are
    * read-only, because something outside this store declared them: the
    * shipment carries a source link (spec rules → source link) — a purchase
@@ -202,8 +207,9 @@ type DraftBatch = {
   manufacturerId: string | null;
   manufacturerName: string | null;
   campaignId: string | null;
-  // Kept beside the id so a campaign deleted from the register still labels
-  // the picker (spec/campaigns › Deleting a campaign).
+  // The campaign's NAME travels with its id (as donor / manufacturer do) so a
+  // soft-deleted campaign the line still carries can label itself — the
+  // register read excludes it (spec/campaigns contract › wire trap).
   campaignName: string | null;
   programId: string | null;
   /**
@@ -981,6 +987,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     </span>
   );
 
+  // Local → shipment currency, as the server stores it; zero rate counts as 1.
+  const toForeign = (local: number) =>
+    local / (props.foreignCurrency?.rate || 1);
+
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
@@ -1401,6 +1411,25 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignCostPricePerPack' },
+            header: () =>
+              `${t('label.pack-cost-price')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
+            cell: info => (
+              <span class={styles.statValue}>
+                {formatCurrencyCell(
+                  toForeign(info.row.original.costPricePerPack),
+                  props.foreignCurrency?.code
+                )}
+              </span>
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
@@ -1443,6 +1472,28 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignLineTotal' },
+            header: () =>
+              `${t('label.line-total')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 8, max: 10, weight: 1 } }),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <span class={styles.statValue}>
+                  {formatCurrencyCell(
+                    toForeign(b.numberOfPacks * b.costPricePerPack),
+                    props.foreignCurrency?.code
+                  )}
+                </span>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     // Donor — gated by the donor-tracking preference.
     ...(props.prefs.donor
       ? [
@@ -1479,31 +1530,48 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
-    // Campaign/program (spec S4) — a single picker; a campaign and a
-    // program are mutually exclusive on the line, so choosing one clears the
-    // other (the select routes the choice to the right wire field).
+    // Program and Campaign (spec S4) — two independent pickers, each written to
+    // its own wire field.
     {
-      c: { id: 'campaignOrProgram' },
-      header: () => t('label.campaign'),
+      c: { id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'pricing',
       meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
       cell: info => {
         const b = info.row.original;
         return (
-          <CampaignOrProgramSelect
-            label={t('label.campaign')}
+          <ProgramSelect
             hideLabel
             disabled={props.readOnly}
             size="small"
             storeId={props.storeId}
-            itemId={item()?.id ?? ''}
-            campaignId={b.campaignId ?? undefined}
-            campaignName={b.campaignName}
+            itemIds={[item()?.id].filter(id => id !== undefined)}
             programId={b.programId ?? undefined}
-            onChange={choice => {
-              updateBatch(b.id, 'campaignId', choice?.campaign?.id ?? null);
-              updateBatch(b.id, 'campaignName', choice?.campaign?.name ?? null);
-              updateBatch(b.id, 'programId', choice?.program?.id ?? null);
+            onChange={p => updateBatch(b.id, 'programId', p?.id ?? null)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <ActivitySelect
+            hideLabel
+            size="small"
+            campaignId={b.campaignId ?? undefined}
+            campaign={
+              b.campaignId
+                ? { id: b.campaignId, name: b.campaignName ?? '' }
+                : null
+            }
+            onChange={c => {
+              updateBatch(b.id, 'campaignId', c?.id ?? null);
+              updateBatch(b.id, 'campaignName', c?.name ?? null);
             }}
           />
         );

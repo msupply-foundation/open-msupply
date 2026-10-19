@@ -1,21 +1,21 @@
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
 use crate::{
-    purchase_order::validate::{can_edit_adjusted_quantity, can_edit_requested_quantity},
+    purchase_order::validate::can_edit_requested_quantity,
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
     },
 };
 use repository::{
-    EqualFilter, ItemRowRepository, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
-    Pagination, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
-    PurchaseOrderLineStatus, PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
+    EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
+    ItemStoreJoinRowRepositoryTrait, Pagination, PurchaseOrderLineFilter,
+    PurchaseOrderLineRepository, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
 };
 
 pub fn validate(
     input: &UpdatePurchaseOrderLineInput,
     connection: &StorageConnection,
-    user_has_permission: Option<bool>,
-) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
+) -> Result<(PurchaseOrderLineRow, ItemRow), UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
         .query_by_filter(
             PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
@@ -43,26 +43,6 @@ pub fn validate(
     {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity);
     }
-    // Allow editing of the adjusted quantity
-    // Check if the user is allowed to update the adjusted_number_of_units
-    if let Some(adjusted_units) = input.adjusted_number_of_units
-        && Some(adjusted_units) != line.adjusted_number_of_units
-        && !can_edit_adjusted_quantity(&purchase_order, user_has_permission.unwrap_or(false))
-    {
-        return Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity);
-    }
-
-    // Adjusted units cannot be reduced below received units
-    if let Some(adjusted_units) = input.adjusted_number_of_units
-        && Some(adjusted_units) != line.adjusted_number_of_units
-        && adjusted_units
-            < purchase_order_line
-                .purchase_order_line_stats_row
-                .shipped_number_of_units
-    {
-        return Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived);
-    }
-
     // Check the line status change before purchase_order_lines_editable
     // Should be able to update the line status only when the Purchase Order Sent
     if let Some(new_status) = input.status.clone() {
@@ -136,5 +116,5 @@ pub fn validate(
         );
     }
 
-    Ok(line)
+    Ok((line, item))
 }

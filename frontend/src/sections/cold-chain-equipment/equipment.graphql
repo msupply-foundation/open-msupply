@@ -91,6 +91,7 @@ fragment AssetDetail on AssetNode {
     status
     logDatetime
     reason {
+      id
       reason
     }
   }
