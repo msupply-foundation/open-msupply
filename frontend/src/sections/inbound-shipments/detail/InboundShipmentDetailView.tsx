@@ -171,7 +171,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   donor: false,
   manufacturer: false,
   manufactureDate: false,
-  campaignProgram: false,
+  program: false,
+  activity: false,
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
@@ -356,6 +357,23 @@ const InboundShipmentDetailView: Component = () => {
     return rows()
       .filter(r => ids.has(r.id))
       .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
+  };
+
+  // The items of the selected lines — the bulk program picker's narrowing, so
+  // it offers what those items are in rather than every program in the store
+  // (the line editor's rule, applied to a selection). Distinct ids; the fetch
+  // dedupes too, but the count is what the dialog's message counts.
+  // Read from the loaded page, as selectedVolume is — a selection carried
+  // across a page change contributes only the items still on screen.
+  const selectedItemIds = (): string[] => {
+    const ids = new Set(selectedIds());
+    return [
+      ...new Set(
+        rows()
+          .filter(r => ids.has(r.id))
+          .map(r => r.itemId)
+      ),
+    ];
   };
 
   // Volume-aware: inbound places received stock at a location, so the picker
@@ -1049,20 +1067,28 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.manufacture-date'),
         ...getCellDefinition('manufactureDate'),
       },
-      // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
-      // only; a line carries a campaign OR a program (mutually exclusive).
+      // Program and Campaign (spec S1 line-table cols 26-27 / L3) — manual
+      // shipments only. Two independent fields, so two columns: one combined
+      // column would hide the program on a line carrying both.
       ...(isManual
         ? [
             {
               c: {
-                accessor: line =>
-                  line.campaign?.name ?? line.program?.name ?? '',
-                id: 'campaignProgram',
+                accessor: line => line.program?.name ?? '',
+                id: 'program',
               },
-              header: () => t('label.campaign'),
-              // The `campaign` preset (a campaign OR program name), as the
-              // stocktake line table uses — not the `name` text sink.
-              ...getCellDefinition('campaign'),
+              header: () => t('label.program'),
+              ...getCellDefinition('program'),
+            } satisfies Column<Line, SortKey>,
+            {
+              c: {
+                accessor: line => line.campaign?.name ?? '',
+                id: 'activity',
+              },
+              header: () => t('label.activity'),
+              // The `campaign` preset, as the stocktake line table uses — not
+              // the `name` text sink.
+              ...getCellDefinition('activity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -1265,6 +1291,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
+                      selectedItemIds={selectedItemIds}
                       disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}

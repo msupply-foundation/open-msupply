@@ -197,6 +197,7 @@ export enum ActivityLogNodeType {
   StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
+  StockCampaignChange = 'STOCK_CAMPAIGN_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
   StockLineEdit = 'STOCK_LINE_EDIT',
@@ -1295,6 +1296,11 @@ export type CampaignFilterInput = {
   name?: InputMaybe<StringFilterInput>;
 };
 
+export enum CampaignKindNode {
+  Campaign = 'CAMPAIGN',
+  Routine = 'ROUTINE',
+}
+
 export type CampaignMutations = {
   __typename: 'CampaignMutations';
   deleteCampaign: DeleteCampaignResponse;
@@ -1318,6 +1324,7 @@ export type CampaignNode = {
   __typename: 'CampaignNode';
   endDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  kind: CampaignKindNode;
   name: Scalars['String']['output'];
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
@@ -10338,6 +10345,12 @@ export type RequisitionLineForecastPreviewErrorInterface = {
 
 export type RequisitionLineForecastPreviewInput = {
   /**
+   * The activity to preview the line as held for — its stock on hand, and the suggestion
+   * computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+   * `{ value: null }` previews it as held for nothing in particular
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
+  /**
    * Null keeps the line's own method: an existing line's stored one, or the default a
    * new line would take
    */
@@ -10381,6 +10394,7 @@ export type RequisitionLineNode = {
   availableStockOnHand: Scalars['Float']['output'];
   availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
@@ -12948,6 +12962,7 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 };
 
 export type UpdateRequestRequisitionLineInput = {
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
   /**
    * Changing the method recomputes the line's monthly demand, breakdown and suggested
@@ -13417,6 +13432,7 @@ export type UpsertCampaignErrorInterface = {
 export type UpsertCampaignInput = {
   endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  kind?: InputMaybe<CampaignKindNode>;
   name: Scalars['String']['input'];
   startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };

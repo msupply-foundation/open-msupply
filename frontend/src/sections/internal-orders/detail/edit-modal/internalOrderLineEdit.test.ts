@@ -28,6 +28,7 @@ import {
 import {
   buildAddPreview,
   editorLineFromLine,
+  previewActivity,
   modeToUnits,
   previewForecastMethod,
   saveExistingLine,
@@ -58,6 +59,7 @@ const storedLine = (): InternalOrderLineFragment => ({
   itemId: 'item-1',
   itemName: 'Measles vaccine',
   comment: null,
+  campaign: null,
   item: {
     code: 'MEA',
     unitName: 'vial',
@@ -123,7 +125,7 @@ const success = (data: unknown) => ({ kind: 'success', data }) as never;
 const previewResponse = (node: unknown) =>
   success({ requisitionLineForecastPreview: node });
 
-const draft = { requestedQuantity: 40, comment: 'note' };
+const draft = { requestedQuantity: 40, comment: 'note', campaignId: null };
 
 describe('OMS-REG-REPL-17.6 — a draft method change previews the line under it', () => {
   it('asks for the line under the picked method and saves nothing', async () => {
@@ -142,6 +144,9 @@ describe('OMS-REG-REPL-17.6 — a draft method change previews the line under it
         requisitionId: 'req-1',
         itemId: 'item-1',
         forecastMethod: 'POPULATION',
+        // The draft's Activity travels with every preview, so a method change
+        // never re-scopes the stock back to the STORED activity (issue 595)
+        campaignId: { value: null },
       },
     });
   });
@@ -208,6 +213,91 @@ describe('OMS-REG-REPL-17.6 — a draft method change previews the line under it
   });
 });
 
+describe('a draft Activity change previews the line held for it (issue 595)', () => {
+  // The same preview the server answers a method change with, but scoped: only
+  // the campaign's stock counts, so the suggestion rises to cover the shortfall.
+  const campaignPreview = {
+    ...populationPreview,
+    forecastMethod: 'AMC' as const,
+    forecastMonthlyConsumption: 30,
+    availableStockOnHand: 7,
+    suggestedQuantity: 83,
+    forecastBreakdown: {
+      __typename: 'AmcForecastNode' as const,
+      averageMonthlyConsumption: 30,
+    },
+  };
+  const measles = { id: 'camp-1', name: 'Measles 2026' };
+
+  it('asks for the line held for the chosen activity, under the draft`s own method', async () => {
+    fetchMock.mockResolvedValue(previewResponse(campaignPreview));
+    await previewActivity(
+      'store-a',
+      'req-1',
+      editorLineFromLine(storedLine()),
+      measles
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]).toEqual({
+      storeId: 'store-a',
+      input: {
+        requisitionId: 'req-1',
+        itemId: 'item-1',
+        // The draft's method, not null: picking an activity must not revert a
+        // method the user has already changed
+        forecastMethod: 'AMC',
+        campaignId: { value: 'camp-1' },
+      },
+    });
+  });
+
+  it('narrows the shown stock and suggestion, and carries the chosen activity', async () => {
+    fetchMock.mockResolvedValue(previewResponse(campaignPreview));
+    const line = {
+      ...editorLineFromLine(storedLine()),
+      requestedQuantity: 55,
+      comment: 'typed',
+    };
+    const result = await previewActivity('store-a', 'req-1', line, measles);
+    expect(result.kind).toBe('previewed');
+    const previewed = (result as { line: EditorLine }).line;
+    // The whole-store 60 narrows to the campaign's 7, and the suggestion
+    // follows it up — the under-ordering issue 595 is about
+    expect(previewed.availableStockOnHand).toBe(7);
+    expect(previewed.suggestedQuantity).toBe(83);
+    expect(previewed.campaign).toEqual(measles);
+    // The draft's own fields are the caller's, untouched
+    expect(previewed.requestedQuantity).toBe(55);
+    expect(previewed.comment).toBe('typed');
+  });
+
+  it('clears back to the whole store', async () => {
+    fetchMock.mockResolvedValue(previewResponse(populationPreview));
+    const result = await previewActivity(
+      'store-a',
+      'req-1',
+      { ...editorLineFromLine(storedLine()), campaign: measles },
+      null
+    );
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      input: { campaignId: { value: null } },
+    });
+    expect((result as { line: EditorLine }).line.campaign).toBe(null);
+  });
+
+  it('reports a failed read as failed', async () => {
+    fetchMock.mockResolvedValue({ kind: 'error' } as never);
+    expect(
+      await previewActivity(
+        'store-a',
+        'req-1',
+        editorLineFromLine(storedLine()),
+        measles
+      )
+    ).toEqual({ kind: 'failed' });
+  });
+});
+
 describe('OMS-REG-REPL-17.21 — a new item`s draft is the line its insert would create', () => {
   const itemStats = success({
     items: {
@@ -238,7 +328,13 @@ describe('OMS-REG-REPL-17.21 — a new item`s draft is the line its insert would
     );
     expect(previewCall?.[1]).toEqual({
       storeId: 'store-a',
-      input: { requisitionId: 'req-1', itemId: 'item-1', forecastMethod: null },
+      input: {
+        requisitionId: 'req-1',
+        itemId: 'item-1',
+        forecastMethod: null,
+        // A new line starts held for nothing in particular, as its insert would
+        campaignId: { value: null },
+      },
     });
     expect(line).toMatchObject({
       lineId: 'new-id',
@@ -305,6 +401,7 @@ describe('OMS-REG-REPL-17.22/.23 — the save sends the draft`s method', () => {
             requestedQuantity: 40,
             comment: 'note',
             optionId: undefined,
+            campaignId: { value: null },
             forecastMethod: 'AMC',
           },
         ],
@@ -336,6 +433,8 @@ describe('OMS-REG-REPL-17.22/.23 — the save sends the draft`s method', () => {
         requestedQuantity: 40,
         comment: 'note',
         optionId: undefined,
+        // Always sent, so a cleared Activity is a clear rather than a no-op.
+        campaignId: { value: null },
         forecastMethod: 'POPULATION',
       },
     });

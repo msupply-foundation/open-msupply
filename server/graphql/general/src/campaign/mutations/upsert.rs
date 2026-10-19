@@ -5,7 +5,7 @@ use graphql_core::{
     simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
-use graphql_types::types::CampaignNode;
+use graphql_types::types::{CampaignKindNode, CampaignNode};
 use repository::campaign::campaign::Campaign;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -18,6 +18,7 @@ pub struct UpsertCampaignInput {
     pub name: String,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
+    pub kind: Option<CampaignKindNode>,
 }
 
 #[derive(SimpleObject)]
@@ -69,6 +70,7 @@ impl UpsertCampaignInput {
             name: self.name,
             start_date: self.start_date,
             end_date: self.end_date,
+            kind: self.kind.map(Into::into),
         }
     }
 }

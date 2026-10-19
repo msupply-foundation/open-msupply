@@ -13,10 +13,11 @@ export type CampaignsResult = {
   nodes: Array<{
   id: string;
   name: string;
+  kind: "CAMPAIGN" | "ROUTINE";
 }>;
 });
 };
 
 export const Campaigns = {
-  query: "query campaigns($storeId: String!) {\n  campaigns(storeId: $storeId, sort: [{key: name}]) {\n    ... on CampaignConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
+  query: "query campaigns($storeId: String!) {\n  campaigns(storeId: $storeId, sort: [{key: name}]) {\n    ... on CampaignConnector {\n      __typename\n      nodes {\n        id\n        name\n        kind\n      }\n    }\n  }\n}",
 } as TypedDocument<CampaignsResult, CampaignsVariables>;

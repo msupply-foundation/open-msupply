@@ -1,6 +1,6 @@
 use super::{
-    ForecastBreakdownNode, ForecastMethodNode, ForecastMethodOptionNode, InvoiceLineConnector,
-    ItemNode, ItemStatsNode, ReasonOptionNode,
+    CampaignNode, ForecastBreakdownNode, ForecastMethodNode, ForecastMethodOptionNode,
+    InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode,
 };
 use crate::types::LocationTypeNode;
 use async_graphql::*;
@@ -10,7 +10,7 @@ use graphql_core::{
     ContextExt,
     loader::{
         AncillaryItemsByAncillaryIdLoader, AvailableVolumeOnRequisitionLoader,
-        AvailableVolumeOnRequisitionLoaderInput, ForecastMethodOptionsLoader,
+        AvailableVolumeOnRequisitionLoaderInput, CampaignByIdLoader, ForecastMethodOptionsLoader,
         InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
         LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
         RequisitionLineSupplyStatusLoader,
@@ -328,6 +328,17 @@ impl RequisitionLineNode {
         let result = loader.load_one(reason_option_id.clone()).await?;
 
         Ok(result.map(ReasonOptionNode::from_domain))
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let Some(campaign_id) = &self.row().campaign_id else {
+            return Ok(None);
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 
     pub async fn available_stock_on_hand(&self) -> &f64 {

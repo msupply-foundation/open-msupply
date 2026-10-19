@@ -923,6 +923,15 @@ const InternalOrderDetailView: Component = () => {
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
+    {
+      // The line's Activity — what its stock is ordered for (issue 595).
+      // UNGATED, like the line editor's own picker: the activity is a property
+      // of the line, not of the order's kind. Blank when the line is held for
+      // nothing in particular.
+      c: { accessor: line => line.campaign?.name ?? '', id: COL.activity },
+      header: () => t('label.activity'),
+      ...getCellDefinition('activity'),
+    },
     // Approval columns — only when the linked copy carries an approval status.
     ...(showApproval()
       ? ([
