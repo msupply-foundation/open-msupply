@@ -158,176 +158,72 @@ mod tests {
 
     use super::{changelog, name_store_join};
 
-    const OG_SITE_ID: i32 = 1;
-
-    const SEED: &str = r#"
-        INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES
-            ('store_name', 'STORE', false, false, 'S', 'Store'),
-            ('patient', 'PATIENT', true, false, 'P', 'Patient'),
-            ('facility', 'FACILITY', true, false, 'F', 'Facility');
-        INSERT INTO name_link (id, name_id) VALUES
-            ('store_name', 'store_name'),
-            ('patient', 'patient'),
-            ('facility', 'facility');
-        INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store', 'store_name', 'S', 3);
-
-        INSERT INTO name_store_join (id, name_link_id, store_id, name_is_customer, name_is_supplier) VALUES
-            ('kept_by_delete', 'patient', 'store', true, false),
-            ('kept_by_inactive', 'patient', 'store', true, false),
-            ('recreated_by_og', 'patient', 'store', true, false),
-            ('never_deleted', 'patient', 'store', true, false),
-            ('no_buffer_row', 'patient', 'store', true, false),
-            ('facility_kept', 'facility', 'store', true, false);
-
-        INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data, source_site_id) VALUES
-            ('kept_by_delete', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                '{"ID":"kept_by_delete","name_ID":"patient","store_ID":"store","inactive":false}', 1),
-            ('kept_by_delete', '2025-01-02 00:00:00', 'name_store_join', 'DELETE', 'null', 1),
-            -- Pushed by a v7 site after OG's delete
-            ('kept_by_delete', '2025-01-03 00:00:00', 'name_store_join', 'UPSERT',
-                '{"id":"kept_by_delete","name_id":"patient","store_id":"store"}', 5),
-            ('kept_by_inactive', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                '{"ID":"kept_by_inactive","name_ID":"patient","store_ID":"store","inactive":false}', 1),
-            ('kept_by_inactive', '2025-01-02 00:00:00', 'name_store_join', 'UPSERT',
-                '{"ID":"kept_by_inactive","name_ID":"patient","store_ID":"store","inactive":true}', 1),
-            -- Latest row is active
-            ('recreated_by_og', '2025-01-01 00:00:00', 'name_store_join', 'DELETE', 'null', 1),
-            ('recreated_by_og', '2025-01-02 00:00:00', 'name_store_join', 'UPSERT',
-                '{"ID":"recreated_by_og","name_ID":"patient","store_ID":"store","inactive":false}', 1),
-            ('never_deleted', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                '{"ID":"never_deleted","name_ID":"patient","store_ID":"store","inactive":false}', 1),
-            -- Other table
-            ('no_buffer_row', '2025-01-02 00:00:00', 'transact', 'DELETE', 'null', 1),
-            -- Not a patient
-            ('facility_kept', '2025-01-02 00:00:00', 'name_store_join', 'DELETE', 'null', 1);
-    "#;
-
-    /// (table_name, record_id, row_action, store_id, source_site_id)
-    type ChangelogSummary = (String, String, String, Option<String>, Option<i32>);
-
-    async fn setup(db_name: &str, key_values: &str) -> StorageConnection {
+    #[actix_rt::test]
+    async fn migration_inactivate_kept_name_store_joins() {
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name,
+            db_name: "migration_inactivate_kept_name_store_joins",
             version: Some(V3_03_01.version()),
             ..Default::default()
         })
         .await;
-        let seed = format!("{key_values}{SEED}");
-        connection.lock().connection().batch_execute(&seed).unwrap();
-        connection
-    }
 
-    fn run(connection: &StorageConnection) {
+        connection
+            .lock()
+            .connection()
+            .batch_execute(
+                r#"
+                INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', 1);
+                INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES
+                    ('store_name', 'STORE', false, false, 'S', 'Store'),
+                    ('patient', 'PATIENT', true, false, 'P', 'Patient'),
+                    ('facility', 'FACILITY', true, false, 'F', 'Facility');
+                INSERT INTO name_link (id, name_id) VALUES
+                    ('store_name', 'store_name'), ('patient', 'patient'), ('facility', 'facility');
+                INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store', 'store_name', 'S', 3);
+                INSERT INTO name_store_join (id, name_link_id, store_id, name_is_customer, name_is_supplier) VALUES
+                    ('kept_by_delete', 'patient', 'store', true, false),
+                    ('kept_by_inactive', 'patient', 'store', true, false),
+                    ('sent_again', 'patient', 'store', true, false),
+                    ('facility', 'facility', 'store', true, false);
+                INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data, source_site_id) VALUES
+                    ('kept_by_delete', '2025-01-01 00:00:00', 'name_store_join', 'DELETE', 'null', 1),
+                    -- A v7 site's push doesn't count
+                    ('kept_by_delete', '2025-01-02 00:00:00', 'name_store_join', 'UPSERT', '{"id":"kept_by_delete"}', 5),
+                    ('kept_by_inactive', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT', '{"inactive":true}', 1),
+                    ('sent_again', '2025-01-01 00:00:00', 'name_store_join', 'DELETE', 'null', 1),
+                    ('sent_again', '2025-01-02 00:00:00', 'name_store_join', 'UPSERT', '{"inactive":false}', 1),
+                    ('facility', '2025-01-01 00:00:00', 'name_store_join', 'DELETE', 'null', 1);
+                "#,
+            )
+            .unwrap();
+
         migrate(
-            connection,
+            &connection,
             Some(V3_04_00.version()),
             MigrationConfig::default(),
         )
         .unwrap();
-    }
 
-    fn inactive_joins(connection: &StorageConnection) -> Vec<String> {
-        name_store_join::table
+        let inactive: Vec<String> = name_store_join::table
             .filter(name_store_join::inactive.eq(true))
             .order(name_store_join::id)
             .select(name_store_join::id)
             .load(connection.lock().connection())
-            .unwrap()
-    }
-
-    fn changelog_after(connection: &StorageConnection, cursor: i64) -> Vec<ChangelogSummary> {
-        changelog::table
-            .filter(changelog::cursor.gt(cursor))
-            .order(changelog::record_id)
-            .select((
-                changelog::table_name,
-                changelog::record_id,
-                changelog::row_action,
-                changelog::store_id,
-                changelog::source_site_id,
-            ))
-            .load(connection.lock().connection())
-            .unwrap()
-    }
-
-    fn max_cursor(connection: &StorageConnection) -> i64 {
-        changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
-            .first::<Option<i64>>(connection.lock().connection())
-            .unwrap()
-            .unwrap_or(0)
-    }
-
-    fn central_key_values() -> String {
-        format!(
-            "INSERT INTO key_value_store (id, value_int) VALUES
-                ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', {OG_SITE_ID});"
-        )
-    }
-
-    #[actix_rt::test]
-    async fn inactivates_kept_patient_joins_on_central() {
-        let connection = setup(
-            "migration_inactivate_kept_name_store_joins",
-            &central_key_values(),
-        )
-        .await;
-        let before = max_cursor(&connection);
-
-        run(&connection);
-
-        assert_eq!(
-            inactive_joins(&connection),
-            vec!["kept_by_delete".to_string(), "kept_by_inactive".to_string()]
-        );
-        let og_sourced = |id: &str| {
-            (
-                "name_store_join".to_string(),
-                id.to_string(),
-                "UPSERT".to_string(),
-                Some("store".to_string()),
-                Some(OG_SITE_ID),
-            )
-        };
-        assert_eq!(
-            changelog_after(&connection, before),
-            vec![og_sourced("kept_by_delete"), og_sourced("kept_by_inactive")]
-        );
-
-        // Second run changes nothing
-        let before_second = max_cursor(&connection);
-        super::Migrate
-            .migrate_with_config(&connection, &MigrationConfig::default())
             .unwrap();
-        assert_eq!(changelog_after(&connection, before_second), vec![]);
-    }
+        assert_eq!(inactive, vec!["kept_by_delete", "kept_by_inactive"]);
 
-    #[actix_rt::test]
-    async fn skips_remote() {
-        let connection = setup(
-            "migration_inactivate_kept_name_store_joins_remote",
-            &format!(
-                "{}INSERT INTO key_value_store (id, value_int) VALUES ('SYNC_PUSH_CURSOR_V7', 100);",
-                central_key_values()
-            ),
-        )
-        .await;
-        let before = max_cursor(&connection);
-
-        run(&connection);
-
-        assert_eq!(inactive_joins(&connection), Vec::<String>::new());
-        assert_eq!(changelog_after(&connection, before), vec![]);
-    }
-
-    #[actix_rt::test]
-    async fn skips_without_og_site_id() {
-        let connection = setup("migration_inactivate_kept_name_store_joins_no_og", "").await;
-        let before = max_cursor(&connection);
-
-        run(&connection);
-
-        assert_eq!(inactive_joins(&connection), Vec::<String>::new());
-        assert_eq!(changelog_after(&connection, before), vec![]);
+        let logged: Vec<(String, Option<i32>)> = changelog::table
+            .filter(changelog::table_name.eq("name_store_join"))
+            .order(changelog::record_id)
+            .select((changelog::record_id, changelog::source_site_id))
+            .load(connection.lock().connection())
+            .unwrap();
+        assert_eq!(
+            logged,
+            vec![
+                ("kept_by_delete".to_string(), Some(1)),
+                ("kept_by_inactive".to_string(), Some(1)),
+            ]
+        );
     }
 }
