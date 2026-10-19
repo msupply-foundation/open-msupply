@@ -45,10 +45,12 @@ import {
 // OMS-REG-IMM-01.54  a to age below the from age is refused OMS-REG-IMM-01.56
 // ages are months on the wire, years + months on screen OMS-REG-IMM-01.58
 // removing an in-use dose is refused as such OMS-REG-IMM-01.64  a wastage rate
-// above 100 is too large The editor's rules live in pure functions, so each is
-// pinned at the cheapest layer: the draft, its defaults and checks, the draft →
-// input mapping (what the whole-course write actually sends) and the mapping of
-// the writes' rejection SHAPES onto what the dialog shows.
+// above 100 is too large OMS-REG-IMM-01.78  Starting each year is required,
+// above 0 and at most 100 OMS-REG-IMM-01.79  its helper states the doses a
+// year the forecast counts The editor's rules live in pure functions, so each
+// is pinned at the cheapest layer: the draft, its defaults and checks, the
+// draft → input mapping (what the whole-course write actually sends) and the
+// mapping of the writes' rejection SHAPES onto what the dialog shows.
 
 const course: CourseNode = {
   id: 'course-1',
@@ -210,7 +212,7 @@ describe('OMS-REG-IMM-01.35 / OMS-REG-IMM-01.64 — the rates', () => {
   });
 });
 
-describe('#623 — the annual start rate', () => {
+describe('OMS-REG-IMM-01.78 / OMS-REG-IMM-01.79 — Starting each year', () => {
   it('is required, and must be above 0 and at most 100', () => {
     const base = draftFromCourse(course);
     const problem = (annualStartRate: number | undefined) => {

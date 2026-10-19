@@ -62,7 +62,7 @@ describe('OMS-REG-REPL-11.11 — each course walks annual target doses → month
   });
 });
 
-describe('#623 — a course only part of its group starts each year', () => {
+describe('OMS-REG-REPL-11.16 — step 1 shows the start rate only for a course below 100%', () => {
   // Td for pregnant women: 5 doses spread over about 2.5 pregnancies, so 40%
   // of the group starts the course each year (2 doses per woman a year).
   // 4 000 × (40 / 100) × 5 × (80 / 100) × 1 = 6 400 doses a year.
