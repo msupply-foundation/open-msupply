@@ -248,6 +248,10 @@ impl Upsert for PurchaseOrderRow {
             Ok(Some(self.clone()))
         )
     }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn std::any::Any> {
+        Some(self)
+    }
 }
 
 #[derive(Debug, Clone)]

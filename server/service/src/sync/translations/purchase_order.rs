@@ -9,7 +9,7 @@ use crate::{
             FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
             name::NameTranslation,
             store::StoreTranslation,
-            utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
+            utils::{LegacyCustomFieldsBuilder, custom_field_string, merge_legacy_custom_fields},
         },
     },
 };
@@ -420,9 +420,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_2,
             freight_conditions,
             additional_instructions,
-            user_field_1: custom_field_text(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_1),
-            user_field_2: custom_field_text(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_2),
-            category_ID: custom_field_text(&custom_fields, keys::PURCHASE_ORDER_CATEGORY),
+            user_field_1: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_1),
+            user_field_2: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_2),
+            category_ID: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_CATEGORY),
             supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
                 order_total_before_discount * (percentage / 100.0)
             } else {
@@ -465,14 +465,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
 /// The `custom_fields` keys the OG import owns for purchase orders.
 static LEGACY_PURCHASE_ORDER_OWNED_KEYS: LazyLock<Vec<&'static str>> =
     LazyLock::new(|| legacy_owned_keys_for_scopes(&[PURCHASE_ORDER_CUSTOM_FIELD_SCOPE]));
-
-fn custom_field_text(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
-    custom_fields
-        .as_ref()?
-        .get(key)?
-        .as_str()
-        .map(str::to_string)
-}
 
 fn from_legacy_status(
     status: &LegacyPurchaseOrderStatus,
@@ -606,8 +598,10 @@ mod tests {
     async fn test_purchase_order_user_fields_map_to_custom_fields() {
         use crate::sync::{
             test::test_data::purchase_order as test_data, test_util_set_is_central_server,
+            translations::IntegrationOperation,
         };
         use repository::mock::mock_purchase_order_a;
+        use util::assert_variant;
 
         let translator = PurchaseOrderTranslation {};
         let (_, connection, _, _) = setup_all(
@@ -636,58 +630,61 @@ mod tests {
         record.data.0["user_field_2"] = json!("");
         record.data.0["category_ID"] = json!("PO_CAT_1");
 
-        let custom_fields = |result: PullTranslateResult| {
-            let debug = format!("{result:?}");
-            let start = debug.find("custom_fields: ").unwrap();
-            debug[start..]
-                .split(", supplier_name_id")
-                .next()
+        let custom_fields = || {
+            let mut operations = assert_variant!(
+                translator.try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record,
+                ),
+                Ok(PullTranslateResult::IntegrationOperations(out)) => out
+            );
+            let mut upsert = assert_variant!(
+                operations.pop(),
+                Some(IntegrationOperation::Upsert(out)) => out
+            );
+            upsert
+                .as_mut_any()
+                .and_then(|any| any.downcast_mut::<PurchaseOrderRow>())
                 .unwrap()
-                .to_string()
+                .custom_fields
+                .clone()
         };
 
         test_util_set_is_central_server(true);
-        let on_central = custom_fields(
-            translator
-                .try_translate_from_upsert_sync_record(
-                    &connection,
-                    &crate::sync::translations::FkChecker::new(),
-                    &record,
-                )
-                .unwrap(),
-        );
+        let on_central = custom_fields();
         test_util_set_is_central_server(false);
-        assert!(on_central.contains("Grant 42"), "{on_central}");
-        assert!(on_central.contains("PO_CAT_1"), "{on_central}");
-        assert!(on_central.contains("oms_authored"), "{on_central}");
-        assert!(!on_central.contains("cleared on OG"), "{on_central}");
-
-        let on_remote = custom_fields(
-            translator
-                .try_translate_from_upsert_sync_record(
-                    &connection,
-                    &crate::sync::translations::FkChecker::new(),
-                    &record,
-                )
-                .unwrap(),
+        assert_eq!(
+            on_central,
+            Some(json!({
+                "oms_authored": "keep",
+                "purchase_order_user_field_1": "Grant 42",
+                "purchase_order_category": "PO_CAT_1",
+            }))
         );
-        assert!(!on_remote.contains("Grant 42"), "{on_remote}");
-        assert!(on_remote.contains("cleared on OG"), "{on_remote}");
+
+        assert_eq!(
+            custom_fields(),
+            Some(json!({
+                "oms_authored": "keep",
+                "purchase_order_user_field_2": "cleared on OG",
+            }))
+        );
 
         let stored = Some(json!({
             "purchase_order_user_field_1": "Grant 42",
             "purchase_order_category": "PO_CAT_1",
         }));
         assert_eq!(
-            custom_field_text(&stored, keys::PURCHASE_ORDER_CATEGORY),
+            custom_field_string(&stored, keys::PURCHASE_ORDER_CATEGORY),
             Some("PO_CAT_1".to_string())
         );
         assert_eq!(
-            custom_field_text(&stored, keys::PURCHASE_ORDER_USER_FIELD_1),
+            custom_field_string(&stored, keys::PURCHASE_ORDER_USER_FIELD_1),
             Some("Grant 42".to_string())
         );
         assert_eq!(
-            custom_field_text(&stored, keys::PURCHASE_ORDER_USER_FIELD_2),
+            custom_field_string(&stored, keys::PURCHASE_ORDER_USER_FIELD_2),
             None
         );
     }
