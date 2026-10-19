@@ -25,16 +25,17 @@ import type {
  */
 
 /**
- * Months of stock for a line: available stock ÷ AMC, and 0 when the line has no
- * recorded consumption (the host's MOS column and its sort read the same
- * figure, which is why it lives here rather than being re-derived per caller).
+ * Months of stock for a line: available stock ÷ the line's monthly demand
+ * (whatever its forecast method), and 0 when it has none (the host's MOS column
+ * and its sort read the same figure, which is why it lives here rather than
+ * being re-derived per caller).
  */
 export const lineMonthsOfStock = (line: {
   availableStockOnHand: number;
-  averageMonthlyConsumption: number;
+  forecastMonthlyConsumption: number;
 }): number =>
-  line.averageMonthlyConsumption > 0
-    ? line.availableStockOnHand / line.averageMonthlyConsumption
+  line.forecastMonthlyConsumption > 0
+    ? line.availableStockOnHand / line.forecastMonthlyConsumption
     : 0;
 
 /**
