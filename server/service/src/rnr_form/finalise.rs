@@ -212,6 +212,7 @@ fn generate(
              }| {
                 let requisition_line = RequisitionLineRow {
                     id: uuid(),
+                    campaign_id: None,
                     requisition_id: requisition_row.id.clone(),
                     item_id: rnr_form_line_row.item_id.clone(),
                     item_name: item_row.name,

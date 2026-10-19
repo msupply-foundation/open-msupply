@@ -22,7 +22,7 @@ fn campaign1() -> CampaignRow {
         name: "COVID-19 Campaign".to_string(),
         start_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 1, 1).unwrap()),
         end_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 12, 31).unwrap()),
-        deleted_datetime: None,
+        ..Default::default()
     }
 }
 
@@ -43,7 +43,7 @@ fn campaign2() -> CampaignRow {
         name: "Polio Vaccination Campaign".to_string(),
         start_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 6, 1).unwrap()),
         end_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 6, 30).unwrap()),
-        deleted_datetime: None,
+        ..Default::default()
     }
 }
 

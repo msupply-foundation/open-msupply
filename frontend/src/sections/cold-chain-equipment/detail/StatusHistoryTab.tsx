@@ -1,3 +1,4 @@
+import { reasonName } from '@/domain/asset';
 import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
@@ -215,7 +216,11 @@ const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
           <DetailRow
             label={t('label.reason')}
             align="start"
-            control={<Text>{props.log.reason?.reason ?? ABSENT}</Text>}
+            control={
+              <Text>
+                {props.log.reason ? reasonName(props.log.reason) : ABSENT}
+              </Text>
+            }
           />
           <DetailRow
             label={t('label.observations')}

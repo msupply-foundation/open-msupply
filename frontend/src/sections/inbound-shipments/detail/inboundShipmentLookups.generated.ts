@@ -27,44 +27,6 @@ export type LinkInternalOrderRowFragment = {
 } | null;
 };
 
-export type InboundCampaignsVariables = {
-  storeId: string;
-};
-
-export type InboundCampaignsResult = {
-  campaigns: ({
-  __typename: "CampaignConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  name: string;
-}>;
-});
-};
-
-export const InboundCampaigns = {
-  query: "query inboundCampaigns($storeId: String!) {\n  campaigns(storeId: $storeId) {\n    ... on CampaignConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
-} as TypedDocument<InboundCampaignsResult, InboundCampaignsVariables>;
-
-export type InboundProgramsVariables = {
-  storeId: string;
-};
-
-export type InboundProgramsResult = {
-  programs: ({
-  __typename: "ProgramConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  name: string;
-}>;
-});
-};
-
-export const InboundPrograms = {
-  query: "query inboundPrograms($storeId: String!) {\n  programs(storeId: $storeId) {\n    ... on ProgramConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
-} as TypedDocument<InboundProgramsResult, InboundProgramsVariables>;
-
 export type InternalOrderLinesVariables = {
   storeId: string;
   requisitionId: string;

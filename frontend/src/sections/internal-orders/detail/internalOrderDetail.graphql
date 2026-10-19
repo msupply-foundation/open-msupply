@@ -92,6 +92,13 @@ fragment InternalOrderLine on RequisitionLineNode {
   reason {
     reason
   }
+  # The line's Activity — the campaign its stock is ordered for (issue 595).
+  # Read as a node so the editor can label a campaign the register no longer
+  # offers (spec/campaigns contract › wire trap).
+  campaign {
+    id
+    name
+  }
   # The items this line's item is configured as an ancillary of — backs the
   # "Ancillary of" flag on the Name column (OMS-REG-REPL-13.7); empty when none.
   ancillaryParents {
