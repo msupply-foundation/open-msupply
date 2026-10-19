@@ -77,8 +77,7 @@ export const InboundDeliveryPanel: Component<{
           thisDelivery: contributes,
           received: po?.receivedNumberOfUnits ?? 0,
           inTransit: po?.inTransitNumberOfUnits ?? 0,
-          poQuantity:
-            po?.adjustedNumberOfUnits ?? po?.requestedNumberOfUnits ?? 0,
+          poQuantity: po?.requestedNumberOfUnits ?? 0,
         });
       }
     }

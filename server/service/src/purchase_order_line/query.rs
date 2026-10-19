@@ -85,7 +85,7 @@ pub fn calculate_units_in_other_purchase_orders(
     // TODO: Reduce any other units received in GRs
     let total: f64 = lines
         .iter()
-        .map(|l| l.purchase_order_line_row.expected_number_of_units())
+        .map(|l| l.purchase_order_line_row.requested_number_of_units)
         .sum();
 
     // Prevent -0.0 from being returned
@@ -239,7 +239,7 @@ mod test {
         purchase_order_repo.upsert_one(&confirmed).unwrap();
         purchase_order_repo.upsert_one(&unconfirmed).unwrap();
 
-        // Same adjusted quantity on a and b, so only what has been received
+        // Same requested quantity on a and b, so only what has been received
         // separates what they have outstanding.
         let line_a = PurchaseOrderLineRow {
             id: "po_line_a".to_string(),
@@ -248,8 +248,7 @@ mod test {
             line_number: 1,
             item_id: mock_item_a().id,
             item_name: mock_item_a().name,
-            requested_number_of_units: 5.0,
-            adjusted_number_of_units: Some(30.0),
+            requested_number_of_units: 30.0,
             ..Default::default()
         };
         let line_b = PurchaseOrderLineRow {
@@ -259,8 +258,7 @@ mod test {
             line_number: 1,
             item_id: mock_item_b().id,
             item_name: mock_item_b().name,
-            requested_number_of_units: 1.0,
-            adjusted_number_of_units: Some(30.0),
+            requested_number_of_units: 30.0,
             ..Default::default()
         };
         let line_c = PurchaseOrderLineRow {
@@ -271,7 +269,6 @@ mod test {
             item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             requested_number_of_units: 7.0,
-            adjusted_number_of_units: None,
             ..Default::default()
         };
         let line_d = PurchaseOrderLineRow {
@@ -281,8 +278,7 @@ mod test {
             line_number: 2,
             item_id: mock_item_a().id,
             item_name: mock_item_a().name,
-            requested_number_of_units: 2.0,
-            adjusted_number_of_units: Some(4.0),
+            requested_number_of_units: 4.0,
             ..Default::default()
         };
         let line_repo = PurchaseOrderLineRowRepository::new(&connection);
@@ -378,14 +374,14 @@ mod test {
 
         assert_eq!(
             ids(
-                PurchaseOrderLineSortField::AdjustedNumberOfUnits,
+                PurchaseOrderLineSortField::RequestedNumberOfUnits,
                 Some(true)
             ),
             vec![
                 line_a.id.clone(),
                 line_b.id.clone(),
-                line_d.id.clone(),
-                line_c.id.clone()
+                line_c.id.clone(),
+                line_d.id.clone()
             ]
         );
 
@@ -428,7 +424,7 @@ mod test {
                     &context,
                     Some(&mock_store_a().id),
                     None,
-                    Some(PurchaseOrderLineFilter::new().received_less_than_adjusted(value)),
+                    Some(PurchaseOrderLineFilter::new().received_less_than_requested(value)),
                     None,
                 )
                 .unwrap()

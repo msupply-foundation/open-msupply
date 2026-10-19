@@ -105,7 +105,7 @@ const FILTERS: Filter<OutstandingLineFilter>[] =
     // filters (contract § listing outstanding lines): a sent line, still owed.
     // Never a user filter — the two are what makes this screen this screen.
     status: null,
-    receivedLessThanAdjusted: null,
+    receivedLessThanRequested: null,
     // Identity / scope — forced by the query. The store scope is the server's
     // own and has no filter field at all.
     id: null,

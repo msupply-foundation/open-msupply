@@ -135,6 +135,11 @@ export interface InboundShipmentLineEditModalProps {
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
   /**
+   * The shipment's currency when it isn't the home currency, with its rate
+   * (home units per one foreign unit) — adds the foreign-currency cost columns.
+   */
+  foreignCurrency?: { code: string; rate: number };
+  /**
    * The supplier-declared figures (Packs shipped / Shipped pack size) are
    * read-only, because something outside this store declared them: the
    * shipment carries a source link (spec rules → source link) — a purchase
@@ -982,6 +987,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     </span>
   );
 
+  // Local → shipment currency, as the server stores it; zero rate counts as 1.
+  const toForeign = (local: number) =>
+    local / (props.foreignCurrency?.rate || 1);
+
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
@@ -1402,6 +1411,25 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignCostPricePerPack' },
+            header: () =>
+              `${t('label.pack-cost-price')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
+            cell: info => (
+              <span class={styles.statValue}>
+                {formatCurrencyCell(
+                  toForeign(info.row.original.costPricePerPack),
+                  props.foreignCurrency?.code
+                )}
+              </span>
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
@@ -1444,6 +1472,28 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignLineTotal' },
+            header: () =>
+              `${t('label.line-total')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 8, max: 10, weight: 1 } }),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <span class={styles.statValue}>
+                  {formatCurrencyCell(
+                    toForeign(b.numberOfPacks * b.costPricePerPack),
+                    props.foreignCurrency?.code
+                  )}
+                </span>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     // Donor — gated by the donor-tracking preference.
     ...(props.prefs.donor
       ? [

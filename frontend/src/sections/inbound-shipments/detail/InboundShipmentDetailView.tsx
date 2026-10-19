@@ -440,6 +440,13 @@ const InboundShipmentDetailView: Component = () => {
   // comment for the rule and why the PO half comes from the scope.
   const sourceLinked = () =>
     hasSourceLink(isExternal(), current()?.linkedShipment);
+  const foreignCurrency = () => {
+    const node = current();
+    const currency = node?.currency;
+    return node && currency && !currency.isHomeCurrency
+      ? { code: currency.code, rate: node.currencyRate }
+      : undefined;
+  };
   // The rule, and why a PO-linked shipment is excluded, lives in
   // ./internalOrderContext.
   const showsOrderContext = () =>
@@ -1468,6 +1475,7 @@ const InboundShipmentDetailView: Component = () => {
                 // store (spec rules → header fields / OMS-REG-REPL-09.12). A
                 // manual internal-supplier shipment keeps cost editable.
                 costLocked={sourceLinked()}
+                foreignCurrency={foreignCurrency()}
                 // Packs shipped / Shipped pack size are the SENDING side's
                 // record of what left its shelf, so the receiver may read them
                 // but not retype them. Passed separately from costLocked even

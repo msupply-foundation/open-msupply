@@ -73,7 +73,6 @@ export type PurchaseOrderFragment = {
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
       receivedNumberOfUnits: number;
-      adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
       note?: string | null;
@@ -173,7 +172,6 @@ export type PurchaseOrderLineFragment = {
   requestedNumberOfUnits: number;
   shippedNumberOfUnits: number;
   receivedNumberOfUnits: number;
-  adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
   note?: string | null;
@@ -327,7 +325,6 @@ export type PurchaseOrderByIdQuery = {
             requestedNumberOfUnits: number;
             shippedNumberOfUnits: number;
             receivedNumberOfUnits: number;
-            adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
             note?: string | null;
@@ -511,7 +508,6 @@ export type PurchaseOrderLinesQuery = {
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
       receivedNumberOfUnits: number;
-      adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
       note?: string | null;
@@ -600,7 +596,6 @@ export type PurchaseOrderLineQuery = {
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
       receivedNumberOfUnits: number;
-      adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
       note?: string | null;
@@ -748,12 +743,7 @@ export type UpdatePurchaseOrderLineMutation = {
     | {
         __typename: 'UpdatePurchaseOrderLineError';
         error:
-          | { __typename: 'CannotEditAdjustedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
-          | {
-              __typename: 'CannotEditQuantityBelowReceived';
-              description: string;
-            }
           | { __typename: 'CannotEditRequestedQuantity'; description: string }
           | {
               __typename: 'ItemCannotBeOrdered';
@@ -842,7 +832,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedNumberOfUnits
     shippedNumberOfUnits
     receivedNumberOfUnits
-    adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount
     manufacturer(storeId: $storeId) {
@@ -1237,10 +1226,6 @@ export const UpdatePurchaseOrderLineDocument = gql`
           }
           ... on ItemCannotBeOrdered {
             ...ItemCannotBeOrdered
-          }
-          ... on CannotEditQuantityBelowReceived {
-            __typename
-            description
           }
         }
       }

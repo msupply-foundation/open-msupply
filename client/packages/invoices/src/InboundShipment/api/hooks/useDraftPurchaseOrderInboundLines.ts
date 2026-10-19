@@ -39,7 +39,6 @@ const makePurchaseOrderLineField = (pol: PurchaseOrderLineFragment) => ({
   __typename: 'PurchaseOrderLineNode' as const,
   id: pol.id,
   lineNumber: pol.lineNumber,
-  adjustedNumberOfUnits: pol.adjustedNumberOfUnits ?? null,
   shippedNumberOfUnits: pol.shippedNumberOfUnits,
   inTransitNumberOfUnits: 0,
   receivedNumberOfUnits: 0,
@@ -163,7 +162,7 @@ export const useDraftPurchaseOrderInboundLines = (
       // default price so the seeded sell price includes it.
       if (itemPriceIsLoading) return;
       const pol = purchaseOrderLine;
-      const qty = pol.adjustedNumberOfUnits ?? pol.requestedNumberOfUnits;
+      const qty = pol.requestedNumberOfUnits;
       const shipped = pol.shippedNumberOfUnits;
       const remainingUnits = qty - shipped;
       const numberOfPacks =
