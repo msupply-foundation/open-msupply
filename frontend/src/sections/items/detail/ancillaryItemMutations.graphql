@@ -22,6 +22,7 @@ mutation upsertAncillaryItem(
           id
           itemQuantity
           ancillaryQuantity
+          excludePrincipalWastage
           ancillaryItem {
             id
             code

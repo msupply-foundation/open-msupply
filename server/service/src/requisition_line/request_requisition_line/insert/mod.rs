@@ -4,6 +4,7 @@ use crate::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
     },
+    requisition::request_requisition::recompute_ancillary_dependants,
     requisition_line::query::get_requisition_line,
     service_provider::ServiceContext,
 };
@@ -71,6 +72,13 @@ pub fn insert_request_requisition_line(
                 .pop()
                 .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
+            // The new line can be a principal of existing Ancillary-ratio lines
+            recompute_ancillary_dependants(
+                connection,
+                &ctx.store_id,
+                &requisition_row,
+                vec![new_requisition_line_row.item_id.clone()],
+            )?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?

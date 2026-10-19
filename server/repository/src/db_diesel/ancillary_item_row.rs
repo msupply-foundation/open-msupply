@@ -16,6 +16,7 @@ define_linked_tables! {
         item_quantity -> Double,
         ancillary_quantity -> Double,
         deleted_datetime -> Nullable<Timestamp>,
+        exclude_principal_wastage -> Bool,
     },
     links: {
         item_link_id -> item_id,
@@ -35,6 +36,11 @@ pub struct AncillaryItemRow {
     pub item_quantity: f64,
     pub ancillary_quantity: f64,
     pub deleted_datetime: Option<NaiveDateTime>,
+    /// The ancillary isn't wasted along with the principal (syringes against open-vial
+    /// wastage), so the ratio applies to the principal's quantity net of its wastage rate.
+    /// Absent from records synced from older sites, which order for the wasted units too.
+    #[serde(default)]
+    pub exclude_principal_wastage: bool,
     // Resolved from item_link - must be last to match view column order
     pub item_id: String,
     pub ancillary_item_id: String,

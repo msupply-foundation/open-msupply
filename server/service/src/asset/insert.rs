@@ -130,6 +130,9 @@ struct StorageZone {
     label: &'static str,
 }
 
+// Catalogue storage capacities are in litres; location volume is in m³.
+const LITRES_PER_CUBIC_METRE: f64 = 1000.0;
+
 const STORAGE_ZONES: [StorageZone; 3] = [
     StorageZone {
         capacity_key: "storage_capacity_5c",
@@ -167,7 +170,7 @@ fn create_asset_locations(
                 .get(zone.capacity_key)
                 .and_then(|value| value.as_f64())
                 .unwrap_or(0.0);
-            (volume > 0.0).then_some((zone, volume))
+            (volume > 0.0).then_some((zone, volume / LITRES_PER_CUBIC_METRE))
         })
         .collect();
 

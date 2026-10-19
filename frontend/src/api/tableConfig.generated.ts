@@ -93,6 +93,10 @@ export type SaveGlobalTableConfigsVariables = {
     storeId: string;
     value: boolean;
   }> | null;
+    canChangeTargetMonthsOfStock?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
     externalInboundShipmentLinesMustBeAuthorised?: Array<{
     storeId: string;
     value: boolean;
