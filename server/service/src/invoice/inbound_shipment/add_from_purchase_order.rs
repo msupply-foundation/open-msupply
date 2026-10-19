@@ -1,8 +1,9 @@
 use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
-    EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    ItemType, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineStatus,
+    PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -32,6 +33,7 @@ pub fn add_from_purchase_order(
     )?;
 
     let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
+    let invoice_line_repository = InvoiceLineRepository::new(connection);
 
     // Set status based on authorisation config
     let external_inbound_shipment_lines_must_be_authorised =
@@ -53,6 +55,35 @@ pub fn add_from_purchase_order(
         let total_units = purchase_order_line.requested_number_of_units;
         let remaining_units =
             (total_units - purchase_order_line_stats.shipped_number_of_units).max(0.0);
+
+        if item.r#type == ItemType::Service {
+            // Carried once, whatever the status of the shipment already holding it
+            let already_on_a_shipment = invoice_line_repository.count(Some(
+                InvoiceLineFilter::new()
+                    .purchase_order_line_id(EqualFilter::equal_to(purchase_order_line.id.clone()))
+                    .r#type(InvoiceLineType::Service.equal_to()),
+            ))? > 0;
+            if already_on_a_shipment {
+                continue;
+            }
+            let foreign_total = purchase_order_line.line_total * supplier_discount_factor;
+            let local_total = foreign_total * exchange_rate;
+            invoice_line_row_repository.upsert_one(&InvoiceLineRow {
+                id: uuid(),
+                invoice_id: invoice_id.clone(),
+                item_id: item.id,
+                item_name: item.name,
+                item_code: item.code,
+                purchase_order_line_id: Some(purchase_order_line.id.clone()),
+                total_before_tax: local_total,
+                total_after_tax: local_total,
+                r#type: InvoiceLineType::Service,
+                foreign_currency_price_before_tax: Some(foreign_total),
+                ..Default::default()
+            })?;
+            continue;
+        }
+
         let number_of_packs = purchase_order_line.packs_for_units(remaining_units);
 
         let foreign_total = if total_units > 0.0 && number_of_packs > 0.0 {
