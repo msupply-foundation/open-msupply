@@ -65,6 +65,7 @@ export type PurchaseOrderDetailLineFragment = {
   code: string;
   name: string;
   unitName: string | null;
+  type: "SERVICE" | "STOCK" | "NON_STOCK";
   stats: {
   stockOnHand: number;
 };
@@ -177,7 +178,7 @@ export type PurchaseOrderDetailLinesResult = {
 };
 
 export const PurchaseOrderDetailLines = {
-  query: "query purchaseOrderDetailLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...PurchaseOrderDetailLine\n      }\n    }\n  }\n}\n\nfragment PurchaseOrderDetailLine on PurchaseOrderLineNode {\n  id\n  lineNumber\n  status\n  item {\n    id\n    code\n    name\n    unitName\n    stats(storeId: $storeId) {\n      stockOnHand\n    }\n  }\n  unit\n  requestedPackSize\n  requestedNumberOfUnits\n  shippedNumberOfUnits\n  receivedNumberOfUnits\n  pricePerPackBeforeDiscount\n  pricePerPackAfterDiscount\n  lineTotalAfterSupplierDiscount\n  requestedDeliveryDate\n  expectedDeliveryDate\n  supplierItemCode\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  comment\n  note\n  unitsOrderedInOthers\n}",
+  query: "query purchaseOrderDetailLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...PurchaseOrderDetailLine\n      }\n    }\n  }\n}\n\nfragment PurchaseOrderDetailLine on PurchaseOrderLineNode {\n  id\n  lineNumber\n  status\n  item {\n    id\n    code\n    name\n    unitName\n    type\n    stats(storeId: $storeId) {\n      stockOnHand\n    }\n  }\n  unit\n  requestedPackSize\n  requestedNumberOfUnits\n  shippedNumberOfUnits\n  receivedNumberOfUnits\n  pricePerPackBeforeDiscount\n  pricePerPackAfterDiscount\n  lineTotalAfterSupplierDiscount\n  requestedDeliveryDate\n  expectedDeliveryDate\n  supplierItemCode\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  comment\n  note\n  unitsOrderedInOthers\n}",
 } as TypedDocument<PurchaseOrderDetailLinesResult, PurchaseOrderDetailLinesVariables>;
 
 export type PurchaseOrderLineSetVariables = {

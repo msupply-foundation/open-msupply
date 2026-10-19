@@ -86,6 +86,12 @@ describe('OMS-FUN-PO-07.16 — the supplier discount apportioned to a line', () 
       0
     );
   });
+
+  it('takes nothing off a service line', () => {
+    expect(
+      projectedLineCost(line(), { supplierDiscountPercentage: 25 }, true)
+    ).toBe(60);
+  });
 });
 
 describe('OMS-FUN-PO-07.12 — the totals band’s three figures', () => {

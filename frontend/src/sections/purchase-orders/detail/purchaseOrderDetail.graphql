@@ -52,8 +52,8 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   #
   # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
   # every line discount: the only discount it precedes is the supplier's
-  # (contract ⚠️ the field called "before discount"). The final cost is
-  # `orderTotalAfterDiscount` (contract § pricing and totals).
+  # (contract ⚠️ the field called "before discount"). Service lines are lines,
+  # so both totals include them (contract § pricing and totals).
   orderTotalBeforeDiscount
   orderTotalAfterDiscount
   # Two views of ONE stored figure: the percentage is stored, the amount is
@@ -126,6 +126,7 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    type
     # The item's stock on hand NOW — the SOH column and the editor's figure.
     # Not the line's own `stockOnHandInUnits`, which is written as 0.0 at
     # insert and read by nothing (contract § authoring a line).

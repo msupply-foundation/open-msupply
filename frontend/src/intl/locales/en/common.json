@@ -2014,6 +2014,7 @@
   "label.server": "Server",
   "label.server-log": "Server log",
   "label.server-version": "Server version:",
+  "label.service": "Service",
   "label.service-charge": "Service charge",
   "label.settings-batch-size": "Sync batch size",
   "label.settings-batch-size-helper": "Number of records per sync request. Leave empty to use the server default. Lower values can help on low-bandwidth connections.",

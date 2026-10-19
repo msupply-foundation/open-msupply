@@ -11,7 +11,7 @@ import type {
 // `lineTotalAfterSupplierDiscount` (rules § pricing and totals) — nothing here
 // recomputes it for a saved line. Above the lines, the subtotal and the
 // discounted total come off the node: the server's `purchase_order_stats` view
-// sums the lines' stored totals.
+// sums the lines' stored totals, service lines included.
 
 type Quantities = Pick<
   PurchaseOrderDetailLineFragment,
@@ -45,18 +45,20 @@ export const supplierDiscountFactor = (order: Discount): number =>
  * What the table WILL show as a line's cost, for a line being edited that has
  * not been saved yet (the editor's read-only Total cost row): the packs times
  * the after-discount pack price, on the server's own rule for what it stores,
- * with the order's supplier discount apportioned to it. Zero for a
- * zero-pack-size line, for the same reason as `linePacks`. A saved line reads
- * its stored `lineTotalAfterSupplierDiscount` directly instead.
+ * with the order's supplier discount apportioned to it — none to a service
+ * line. Zero for a zero-pack-size line, for the same reason as `linePacks`. A
+ * saved line reads its stored `lineTotalAfterSupplierDiscount` directly
+ * instead.
  */
 export const projectedLineCost = (
   line: Quantities &
     Pick<PurchaseOrderDetailLineFragment, 'pricePerPackAfterDiscount'>,
-  order: Discount
+  order: Discount,
+  isService = false
 ): number =>
   linePacks(line) *
   line.pricePerPackAfterDiscount *
-  supplierDiscountFactor(order);
+  (isService ? 1 : supplierDiscountFactor(order));
 
 /**
  * The totals band's three figures, left to right. `supplierDiscountAmount` is
