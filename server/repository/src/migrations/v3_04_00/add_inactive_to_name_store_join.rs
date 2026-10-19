@@ -8,9 +8,8 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Patient visibility, as OG's `inactive` on the join: an inactive join
-        // hides the patient in the store but keeps the store's site receiving
-        // the patient's records, so a deletion still arrives (#1494)
+        // Whether the name is visible in the store, as OG's `inactive` on the join.
+        // An inactive join still routes the name's records to the store's site
         sql!(
             connection,
             r#"

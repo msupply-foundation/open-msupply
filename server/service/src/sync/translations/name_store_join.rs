@@ -82,8 +82,6 @@ impl SyncTranslation for NameStoreJoinTranslation {
         let data = sync_record.deserialize::<LegacyNameStoreJoinRow>()?;
         let inactive = data.inactive.unwrap_or(false);
 
-        // OG hides a name in a store by setting its join inactive. A join this
-        // server never had has nothing to hide
         if inactive && !NameStoreJoinRepository::new(connection).check_exists_by_id(&data.id)? {
             return Ok(PullTranslateResult::Ignored(
                 "Is inactive and not found".to_string(),
@@ -101,9 +99,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         };
 
-        // A patient join is kept when inactive, so the store's site still receives
-        // the patient's records (a deletion included) while the patient is hidden
-        // there (#1494). Other joins are deleted when inactive
+        // An inactive patient join is kept so the store's site still receives the
+        // patient's records, a deletion included. Other names' joins are deleted
         if inactive && name.r#type != NameRowType::Patient {
             return Ok(PullTranslateResult::delete(NameStoreJoinRowDelete(data.id)));
         }
@@ -227,10 +224,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        // A patient join is set inactive rather than deleted, as for an incoming
-        // inactive join (see the upsert translation): the store's site keeps
-        // receiving the patient's records, and prescriptions there keep their
-        // patient (#1494, #12365)
+        // A patient join is set inactive rather than deleted, as in the upsert
+        // translation; prescriptions on the store's site keep their patient
         if let Some(NameStoreJoin {
             name_store_join,
             name,
@@ -624,9 +619,8 @@ mod tests {
         );
     }
 
-    /// A patient join is set inactive, not deleted, by OG's delete or inactive
-    /// record; other joins are still deleted. An inactive join this server never
-    /// had is ignored (#1494)
+    /// OG's delete or inactive record sets a patient join inactive and deletes
+    /// other joins. An inactive join this server never had is ignored
     #[actix_rt::test]
     async fn test_name_store_join_inactive_keeps_patient_joins_only() {
         let translator = NameStoreJoinTranslation {};
@@ -757,11 +751,9 @@ mod tests {
         assert_eq!(pushed[0].record.record_data["inactive"], json!(true));
     }
 
-    /// A patient with a prescription in the store keeps a join there when OG
-    /// deletes or inactivates it: without a join the patient stops syncing to the
-    /// site holding the prescription, and integration there fails on FK
-    /// constraints (#12365). The join is kept inactive, so the patient is hidden
-    /// in the store (#1494)
+    /// A patient with a prescription in the store keeps an inactive join there
+    /// when OG deletes or inactivates it, so the prescription's site still gets
+    /// the patient
     #[actix_rt::test]
     async fn test_name_store_join_kept_inactive_for_patient_with_prescription() {
         let translator = NameStoreJoinTranslation {};

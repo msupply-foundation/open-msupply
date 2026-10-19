@@ -5,19 +5,15 @@ use repository::{
 
 use crate::sync_v7::{serde::DeserializeResult, validate_translate_integrate::SyncContext};
 
-// Keep a patient's deletion on central (#1494).
+// On central, a remote that hasn't received a patient's deletion can push an
+// edit with no `deleted_datetime`. The edit applies but the deletion is kept:
+// only OG says a patient isn't deleted (see the legacy name translator). Central
+// only, so a patient OG restores reaches remotes.
 //
-// A remote that hasn't received a patient's deletion yet can edit the patient
-// and push the whole row with no `deleted_datetime`. On central the edit is
-// applied but the deletion is kept: only OG says a patient isn't deleted (see
-// the legacy name translator). Records central sends to a remote are applied as
-// they are, so a patient OG restores reaches remotes.
-//
-// The kept row's changelog is stamped with OG's site id (this server's own if
-// unset), not the pushing remote's: a remote never pulls its own rows and the
-// changelog dedup keeps only the newest row per record, so a remote-stamped row
-// could leave the editing remote without the deletion. An OG-stamped row also
-// isn't pushed back to OG.
+// The kept row's changelog is stamped with OG's site id (own if unset): a remote
+// never pulls its own rows and changelog dedup keeps only the newest row, so a
+// remote-stamped row could leave the editing remote without the deletion. An
+// OG-stamped row isn't pushed back to OG.
 pub(crate) fn translate_name(
     connection: &StorageConnection,
     mut changelog_insert: ChangeLogInsertRow,
@@ -62,7 +58,7 @@ mod tests {
 
     /// On central, a remote's push of a patient with no deletion keeps central's
     /// deletion and is stamped with OG's site id; anything else is integrated as
-    /// it arrives (#1494)
+    /// it arrives
     #[actix_rt::test]
     async fn translate_name_keeps_patient_deletion_on_central() {
         let (_, connection, _, _) = setup_all(

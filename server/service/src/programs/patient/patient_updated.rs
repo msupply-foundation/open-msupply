@@ -11,8 +11,7 @@ use super::{
     patient_schema::{ContactDetails, SchemaGender, SchemaPatient},
 };
 
-// create name_store_join if not existing. An existing join is left as it is,
-// inactive included: saving a patient doesn't change their visibility in the store
+// create name_store_join if not existing. An existing join, active or not, is left as it is
 pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
@@ -42,10 +41,8 @@ pub fn create_patient_name_store_join(
     Ok(row)
 }
 
-/// Makes the patient visible in the store: creates the name_store_join, or sets
-/// an inactive one active (#1494). For deliberately adding a patient to a store
-/// (fetching them from central); the join's changelog row takes the change to
-/// the store's site and to OG
+/// Adds the patient to the store (fetching them from central): creates the
+/// name_store_join, or sets an inactive one active
 pub fn activate_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
@@ -53,15 +50,16 @@ pub fn activate_patient_name_store_join(
     name_store_join_id: Option<String>,
 ) -> Result<String, RepositoryError> {
     let join = create_patient_name_store_join(con, store_id, name_id, name_store_join_id)?;
+    let id = join.id.clone();
 
     if join.inactive {
         NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
             inactive: false,
-            ..join.clone()
+            ..join
         })?;
     }
 
-    Ok(join.id)
+    Ok(id)
 }
 
 /// Callback called when a patient document has been updated
@@ -536,8 +534,7 @@ mod test {
         assert_eq!(updated_patient_2, updated_patient);
     }
 
-    /// Fetching a patient into a store reactivates an inactive join; a patient
-    /// save leaves it inactive (#1494)
+    /// Fetching a patient into a store reactivates an inactive join; a save doesn't
     #[actix_rt::test]
     async fn test_activate_patient_name_store_join() {
         use super::{activate_patient_name_store_join, create_patient_name_store_join};

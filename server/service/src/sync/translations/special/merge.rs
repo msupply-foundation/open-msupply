@@ -263,7 +263,7 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     /// A kept join is active if either merged join was: a store that could see
-    /// either patient still sees the merged one (#1494)
+    /// either patient still sees the merged one
     #[actix_rt::test]
     async fn name_merge_keeps_join_active_if_either_is() {
         let (_, connection, _, _) = setup_all(

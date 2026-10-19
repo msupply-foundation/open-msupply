@@ -311,8 +311,7 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
 
-    // OG's soft delete. An `Option` so an absent flag (older senders) is told
-    // apart from `false`; see the pull translation
+    // OG's soft delete. `Option` to tell an absent flag (older senders) from `false`
     #[serde(default)]
     pub is_deleted: Option<bool>,
 }
@@ -436,10 +435,9 @@ impl SyncTranslation for NameTranslation {
             is_deleted,
         } = legacy;
 
-        // For a patient, a deletion stays unless OG says the patient isn't deleted
-        // (#1494): another sender (a v6 site's push) may not have received the
-        // deletion yet, and an absent flag (older senders) says nothing either way.
-        // Other names don't read `is_deleted`, and an upsert leaves them not deleted
+        // Patients only; other names ignore `is_deleted`. A deletion stays unless
+        // OG says the patient isn't deleted: another sender (a v6 site's push) may
+        // not have the deletion yet, and an absent flag says nothing
         let deleted_datetime = if legacy_type != LegacyNameRowType::Patient {
             None
         } else {
@@ -1056,23 +1054,28 @@ mod tests {
 
     /// OG's `is_deleted` sets a patient's `deleted_datetime`. A deletion stays
     /// unless OG says the patient isn't deleted: an absent flag, or `false` from
-    /// another site, keeps it. Other names don't read the flag (#1494)
+    /// another site, keeps it. Other names don't read the flag
     #[actix_rt::test]
     async fn name_pull_is_deleted() {
+        use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
         use chrono::NaiveDate;
-        use repository::{KeyType, KeyValueStoreRepository};
+        use repository::{
+            KeyType, KeyValueStoreRepository, SyncBufferRepository, SyncBufferRowInsert,
+        };
 
         const OG_SITE_ID: i32 = 1;
         const OTHER_SITE_ID: i32 = 2;
 
-        let translator = NameTranslation {};
         let (_, connection, _, _) =
             setup_all("name_pull_is_deleted", MockDataInserts::none().names()).await;
         KeyValueStoreRepository::new(&connection)
             .set_i32(KeyType::SettingsSyncCentralServerSiteId, Some(OG_SITE_ID))
             .unwrap();
+        let name_repo = NameRowRepository::new(&connection);
 
-        let record = |id: &str, r#type: &str, source_site_id: i32, is_deleted: Option<bool>| {
+        // Integrates a name record from `source_site_id`, returning the stored
+        // deleted_datetime
+        let integrate = |id: &str, r#type: &str, source_site_id: i32, is_deleted: Option<bool>| {
             let mut data = json!({
                 "ID": id,
                 "name": id,
@@ -1107,61 +1110,65 @@ mod tests {
             if let Some(is_deleted) = is_deleted {
                 data["is_deleted"] = json!(is_deleted);
             }
-            SyncBufferRow {
-                table_name: "name".to_string(),
-                record_id: id.to_string(),
-                data: SyncRecordData(data),
-                action: SyncAction::Upsert,
-                source_site_id,
-                ..Default::default()
-            }
-        };
-        // The translated row's deleted_datetime, read from its debug output
-        let translated_deleted_datetime = |record: SyncBufferRow| {
-            let result = translator
-                .try_translate_from_upsert_sync_record(
-                    &connection,
-                    &crate::sync::translations::FkChecker::new(),
-                    &record,
-                )
+            SyncBufferRepository::new(&connection)
+                .insert_many(&[SyncBufferRowInsert {
+                    record_id: id.to_string(),
+                    table_name: "name".to_string(),
+                    action: SyncAction::Upsert,
+                    data: SyncRecordData(data),
+                    source_site_id,
+                    ..Default::default()
+                }])
                 .unwrap();
-            let debug = format!("{result:?}");
-            let start = debug.find("deleted_datetime: ").unwrap() + "deleted_datetime: ".len();
-            let end = debug[start..].find(", ").unwrap();
-            debug[start..start + end].to_string()
-        };
-        let deleted_datetime = |source_site_id: i32, is_deleted: Option<bool>| {
-            translated_deleted_datetime(record("testId", "patient", source_site_id, is_deleted))
+            integrate_and_translate_sync_buffer(&connection, None, source_site_id, true).unwrap();
+            name_repo
+                .find_one_by_id(id)
+                .unwrap()
+                .unwrap()
+                .deleted_datetime
         };
 
         // Not deleted here: OG's deletion sets it
-        assert!(deleted_datetime(OG_SITE_ID, Some(true)).starts_with("Some("));
+        assert!(integrate("testId", "patient", OG_SITE_ID, Some(true)).is_some());
 
         // Deleted here
         let deleted_at = NaiveDate::from_ymd_opt(2026, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let name_repo = NameRowRepository::new(&connection);
         let mut patient = name_repo.find_one_by_id("testId").unwrap().unwrap();
         patient.deleted_datetime = Some(deleted_at);
         name_repo.upsert_one(&patient).unwrap();
-        let kept = format!("Some({deleted_at:?})");
 
         // Re-receiving the deletion keeps the original time
-        assert_eq!(deleted_datetime(OG_SITE_ID, Some(true)), kept);
+        assert_eq!(
+            integrate("testId", "patient", OG_SITE_ID, Some(true)),
+            Some(deleted_at)
+        );
         // An absent flag keeps it
-        assert_eq!(deleted_datetime(OG_SITE_ID, None), kept);
-        assert_eq!(deleted_datetime(OTHER_SITE_ID, None), kept);
+        assert_eq!(
+            integrate("testId", "patient", OG_SITE_ID, None),
+            Some(deleted_at)
+        );
+        assert_eq!(
+            integrate("testId", "patient", OTHER_SITE_ID, None),
+            Some(deleted_at)
+        );
         // `false` from another site keeps it
-        assert_eq!(deleted_datetime(OTHER_SITE_ID, Some(false)), kept);
+        assert_eq!(
+            integrate("testId", "patient", OTHER_SITE_ID, Some(false)),
+            Some(deleted_at)
+        );
         // `false` from OG clears it
-        assert_eq!(deleted_datetime(OG_SITE_ID, Some(false)), "None");
+        assert_eq!(
+            integrate("testId", "patient", OG_SITE_ID, Some(false)),
+            None
+        );
 
         // Other names don't read the flag
         assert_eq!(
-            translated_deleted_datetime(record("name_a", "facility", OG_SITE_ID, Some(true))),
-            "None"
+            integrate("name_a", "facility", OG_SITE_ID, Some(true)),
+            None
         );
     }
 

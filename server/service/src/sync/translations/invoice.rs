@@ -704,13 +704,12 @@ impl SyncTranslation for InvoiceTranslation {
         let mut operations = Vec::new();
 
         // On central, a prescription can arrive for a patient with no
-        // name_store_join for the prescription's store (this configuration is
-        // possible in OG, see issue #12365). Without one the patient doesn't sync
-        // to the site holding the prescription and integration there fails on FK
-        // constraints, so synthesize the join here. It is inactive, so the patient
-        // stays hidden in the store as in OG (#1494). If OG later authors a join
-        // for this name & store, the synthesized one is removed in its favour (see
-        // dedup in the name_store_join translator)
+        // name_store_join for its store (possible in OG). Without one the patient
+        // doesn't sync to the site holding the prescription and integration there
+        // fails on FK constraints, so synthesize an inactive join: it routes the
+        // patient to the site without marking them visible in the store. An OG join
+        // for this name & store later replaces it (see the name_store_join
+        // translator's dedup)
         if CentralServerConfig::is_central_server()
             && result.r#type == InvoiceType::Prescription
             && name.r#type == NameRowType::Patient
@@ -1791,10 +1790,8 @@ mod tests {
         }
     }
 
-    /// On central, a prescription for a patient with no name_store_join in the
-    /// prescription's store synthesizes an inactive one, so the patient syncs to
-    /// the site holding the prescription but stays hidden in the store (issue
-    /// #12365, #1494)
+    /// On central, a prescription for a patient with no name_store_join in its
+    /// store synthesizes an inactive one
     #[actix_rt::test]
     async fn test_prescription_synthesizes_name_store_join_on_central() {
         use crate::sync::test_util_set_is_central_server;
