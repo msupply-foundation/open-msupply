@@ -100,6 +100,8 @@ export default definePlugin({
       'group.contact': 'Contact',
       'group.status': 'Status',
       'field.patient-code': 'Patient code',
+      'button.generate': 'Generate',
+      'button.replace': 'Replace',
       'heading.replace-patient-code': 'Replace the patient code?',
       'message.replace-patient-code':
         'This patient already has the code {{ code }}. Generating a new one replaces it and uses up the next number.',
@@ -116,8 +118,6 @@ export default definePlugin({
       'group.enrolment': 'Enrolment',
       'field.enrolment-date': 'Enrolment date',
       'field.enrolment-id': 'Enrolment ID',
-      'button.generate': 'Generate',
-      'button.replace': 'Replace',
       'field.referred-from': 'Referred from',
       'referral.SELF': 'Self-referred',
       'referral.CLINIC': 'Clinic',
