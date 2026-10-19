@@ -834,6 +834,7 @@ mod update {
             PurchaseOrderStatus::New,
             PurchaseOrderStatus::Sent,
             PurchaseOrderStatus::Finalised,
+            PurchaseOrderStatus::Cancelled,
         ] {
             assert_eq!(
                 move_to(status),

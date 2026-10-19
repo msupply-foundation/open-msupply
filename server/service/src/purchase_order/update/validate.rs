@@ -33,18 +33,13 @@ pub fn validate(
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
     }
 
-    // Cancelling is final: a cancelled order never changes state again
-    if *current_status == PurchaseOrderStatus::Cancelled
-        && input.status.is_some()
-        && input.status != Some(PurchaseOrderStatus::Cancelled)
-    {
+    // Cancelling is final: a cancelled order never changes state again, nor is cancelled twice
+    if *current_status == PurchaseOrderStatus::Cancelled && input.status.is_some() {
         return Err(UpdatePurchaseOrderError::CannotReopenCancelledPurchaseOrder);
     }
 
     // Only a SENT order can be cancelled, and only while nothing has shipped against it
-    if input.status == Some(PurchaseOrderStatus::Cancelled)
-        && *current_status != PurchaseOrderStatus::Cancelled
-    {
+    if input.status == Some(PurchaseOrderStatus::Cancelled) {
         if *current_status != PurchaseOrderStatus::Sent {
             return Err(UpdatePurchaseOrderError::CannotCancelPurchaseOrder);
         }
