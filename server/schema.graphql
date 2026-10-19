@@ -6562,6 +6562,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6637,6 +6638,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -11363,6 +11365,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {
