@@ -164,15 +164,16 @@ impl PurchaseOrderNode {
         Ok(Some(filter_custom_fields(raw, &allowed_keys)))
     }
 
+    /// The supplier discount on the stock lines; service lines take none
     pub async fn supplier_discount_amount(&self) -> f64 {
-        let line_total_before_discount = match &self.stats {
-            Some(stats) => stats.order_total_before_discount,
+        let discountable_total = match &self.stats {
+            Some(stats) => stats.supplier_discountable_total,
             None => 0.0,
         };
 
         let discount_percentage = self.row().supplier_discount_percentage.unwrap_or(0.0) / 100.0;
 
-        line_total_before_discount * discount_percentage
+        discountable_total * discount_percentage
     }
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage

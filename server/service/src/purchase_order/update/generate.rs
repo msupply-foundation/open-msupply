@@ -94,14 +94,14 @@ pub fn generate(
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
 
     if let Some(supplier_discount_amount) = supplier_discount_amount {
-        let total_before_tax = purchase_order_stats
+        let discountable_total = purchase_order_stats
             .as_ref()
-            .map(|stats| stats.order_total_before_discount)
+            .map(|stats| stats.supplier_discountable_total)
             .unwrap_or(0.0);
 
-        if total_before_tax > 0.0 {
+        if discountable_total > 0.0 {
             updated_order.supplier_discount_percentage =
-                Some((supplier_discount_amount / total_before_tax) * 100.0);
+                Some((supplier_discount_amount / discountable_total) * 100.0);
         }
     }
 

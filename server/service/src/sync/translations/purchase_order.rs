@@ -247,16 +247,25 @@ impl SyncTranslation for PurchaseOrderTranslation {
             None => sent_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
         };
 
-        let supplier_discount_percentage = oms_fields
+        let supplier_discount_percentage = match oms_fields
             .clone()
             .and_then(|oms_field| oms_field.supplier_discount_percentage)
-            .or_else(|| {
-                if order_total_before_discount > 0.0 {
-                    Some(supplier_discount_amount / order_total_before_discount * 100.0)
-                } else {
-                    None
-                }
-            });
+        {
+            Some(percentage) => Some(percentage),
+            // Service lines take no supplier discount: convert against the stock lines already here
+            None => {
+                let discountable_total = PurchaseOrderRepository::new(connection)
+                    .query_by_filter(
+                        PurchaseOrderFilter::new().id(EqualFilter::equal_to(id.clone())),
+                    )?
+                    .pop()
+                    .and_then(|order| order.purchase_order_stats_row)
+                    .map(|stats| stats.supplier_discountable_total)
+                    .unwrap_or(order_total_before_discount);
+                (discountable_total > 0.0)
+                    .then(|| supplier_discount_amount / discountable_total * 100.0)
+            }
+        };
 
         let request_approval_datetime = oms_fields
             .clone()
@@ -393,6 +402,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             purchase_order_id: _,
             order_total_before_discount,
             order_total_after_discount,
+            supplier_discountable_total,
         } = purchase_order.purchase_order_stats_row.unwrap_or_default();
 
         let oms_fields = PurchaseOrderOmsFields {
@@ -424,7 +434,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             user_field_2: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_2),
             category_ID: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_CATEGORY),
             supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
-                order_total_before_discount * (percentage / 100.0)
+                supplier_discountable_total * (percentage / 100.0)
             } else {
                 0.0
             },
@@ -687,5 +697,81 @@ mod tests {
             custom_field_string(&stored, keys::PURCHASE_ORDER_USER_FIELD_2),
             None
         );
+    }
+
+    /// mSupply's discount amount is converted against the stock lines alone.
+    #[actix_rt::test]
+    async fn test_purchase_order_discount_amount_ignores_service_lines() {
+        use crate::sync::{
+            test::test_data::purchase_order as test_data, translations::IntegrationOperation,
+        };
+        use repository::{
+            PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+            mock::{mock_item_a, mock_item_service_item, mock_purchase_order_a},
+        };
+        use util::assert_variant;
+
+        let translator = PurchaseOrderTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_purchase_order_discount_amount_ignores_service_lines",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let order = PurchaseOrderRow {
+            id: "og_discount_po".to_string(),
+            purchase_order_number: 98765,
+            ..mock_purchase_order_a()
+        };
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&order)
+            .unwrap();
+        // 60.00 of stock and 25.00 of freight
+        for (id, item_id, line_total) in [
+            ("og_discount_stock", mock_item_a().id, 60.0),
+            ("og_discount_freight", mock_item_service_item().id, 25.0),
+        ] {
+            PurchaseOrderLineRowRepository::new(&connection)
+                .upsert_one(&PurchaseOrderLineRow {
+                    id: id.to_string(),
+                    purchase_order_id: order.id.clone(),
+                    store_id: order.store_id.clone(),
+                    item_id,
+                    line_total,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        // An mSupply record with no OMS fields: 12.00 off an 85.00 order
+        let mut record = test_data::test_pull_upsert_records()[0]
+            .sync_buffer_row
+            .clone();
+        record.record_id = order.id.clone();
+        record.data.0["ID"] = json!(order.id);
+        record.data.0["oms_fields"] = json!("");
+        record.data.0["Order_total_before_discount"] = json!(85.0);
+        record.data.0["supplier_discount_amount"] = json!(12.0);
+
+        let mut operations = assert_variant!(
+            translator.try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &record,
+            ),
+            Ok(PullTranslateResult::IntegrationOperations(out)) => out
+        );
+        let mut upsert = assert_variant!(
+            operations.pop(),
+            Some(IntegrationOperation::Upsert(out)) => out
+        );
+        let row = upsert
+            .as_mut_any()
+            .and_then(|any| any.downcast_mut::<PurchaseOrderRow>())
+            .unwrap()
+            .clone();
+
+        // 12.00 of the 60.00 of stock is 20%, not 12.00 of 85.00
+        assert_eq!(row.supplier_discount_percentage, Some(20.0));
     }
 }

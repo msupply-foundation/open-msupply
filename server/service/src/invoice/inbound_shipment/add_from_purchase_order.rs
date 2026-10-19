@@ -66,7 +66,8 @@ pub fn add_from_purchase_order(
             if already_on_a_shipment {
                 continue;
             }
-            let foreign_total = purchase_order_line.line_total * supplier_discount_factor;
+            // No supplier discount on a service line
+            let foreign_total = purchase_order_line.line_total;
             let local_total = foreign_total * exchange_rate;
             invoice_line_row_repository.upsert_one(&InvoiceLineRow {
                 id: uuid(),

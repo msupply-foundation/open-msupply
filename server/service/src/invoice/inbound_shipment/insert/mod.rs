@@ -875,7 +875,8 @@ mod test {
         assert!(close(line.total_after_tax, line.total_before_tax));
     }
 
-    /// A service order line is seeded once, as a service line for its stored total.
+    /// A service order line is seeded once, as a service line for its stored total,
+    /// with no supplier discount.
     #[actix_rt::test]
     async fn insert_inbound_shipment_seeds_service_lines() {
         fn supplier() -> NameRow {
@@ -902,6 +903,7 @@ mod test {
                 supplier_name_id: supplier().id,
                 currency_id: Some(currency_b().id),
                 foreign_exchange_rate: currency_b().rate,
+                supplier_discount_percentage: Some(10.0),
                 ..Default::default()
             }
         }
@@ -994,6 +996,15 @@ mod test {
             .find(|line| line.r#type == InvoiceLineType::Service)
             .expect("the service item should be seeded as a service line");
         let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        // The supplier discount takes 10% off the stock line only
+        let stock = lines
+            .iter()
+            .find(|line| line.r#type == InvoiceLineType::StockIn)
+            .unwrap();
+        assert!(close(
+            stock.foreign_currency_price_before_tax.unwrap(),
+            54.0
+        ));
         assert_eq!(service.item_id, mock_item_service_item().id);
         assert_eq!(
             service.purchase_order_line_id,

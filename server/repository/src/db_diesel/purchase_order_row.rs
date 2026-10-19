@@ -17,6 +17,7 @@ table! {
         purchase_order_id -> Text,
         order_total_before_discount -> Double,
         order_total_after_discount -> Double,
+        supplier_discountable_total -> Double,
     }
 }
 
@@ -26,6 +27,8 @@ pub struct PurchaseOrderStatsRow {
     pub purchase_order_id: String,
     pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
+    /// The stock lines' total — service lines take no supplier discount
+    pub supplier_discountable_total: f64,
 }
 
 define_linked_tables! {
