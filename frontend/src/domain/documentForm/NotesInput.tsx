@@ -6,6 +6,11 @@
  * is stamped with the signed-in user and the time when it is first written.
  * Which written notes may still be edited or removed is the form's to say
  * (`editRestrictions`); a note not yet written always may.
+ *
+ * The list changes only when the user adds or removes a note, so nothing
+ * moves under the pointer or the focus: a note with no text stays until it
+ * is removed, which needs no confirmation, and the document form's save
+ * leaves it out (withoutEmptyNotes).
  */
 import { createSignal, createUniqueId, Index, Show, type JSX } from 'solid-js';
 import { localisedDateTime, t } from '../../intl';
@@ -29,7 +34,10 @@ import type { Draft } from './draft';
 import type { FieldProps } from './fields';
 import type { NotesPath } from './paths';
 import {
+  flippedFromOpen,
+  isItemOpen,
   isNoteEditable,
+  shiftedPositions,
   withNewNote,
   withNoteText,
   withoutNote,
@@ -42,6 +50,10 @@ export interface NotesInputProps<T, P extends NotesPath<T>> extends Omit<
   'helperText'
 > {
   draft: Draft<T>;
+  /**
+   * The document's `notes`, where the save drops a note with no text; at any
+   * other path an empty note is saved as it is.
+   */
   path: P;
   /** Newest note first (JSON Forms `reverse`); oldest first otherwise. */
   newestFirst?: boolean;
@@ -105,14 +117,12 @@ export const NotesInput = <T, P extends NotesPath<T>>(
       Date.now()
     );
 
-  // Which items are open, by their position in the order shown: a note has
-  // no id, and its object is replaced on every keystroke. What is kept is the
-  // positions the user has opened or closed against the default (every item
-  // open with `defaultExpanded`, none without), so notes the draft gains after
-  // the form opens take the default too.
+  // Which items are open: the positions flipped from the default (every
+  // item open with `defaultExpanded`, none without), as notes.ts keeps them.
+  const defaultOpen = () => props.defaultExpanded === true;
   const [flipped, setFlipped] = createSignal<ReadonlySet<number>>(new Set());
   const isOpen = (position: number) =>
-    (props.defaultExpanded === true) !== flipped().has(position);
+    isItemOpen(flipped(), position, defaultOpen());
   const positionFromKey = (key: string) =>
     Number(key.slice(key.lastIndexOf('-') + 1));
   const openKeys = () =>
@@ -120,26 +130,13 @@ export const NotesInput = <T, P extends NotesPath<T>>(
       .map((_, position) => position)
       .filter(isOpen)
       .map(itemKey);
-  const onOpenChange = (keys: string[]) => {
-    const opened = new Set(keys.map(positionFromKey));
+  const onOpenChange = (keys: string[]) =>
     setFlipped(
-      new Set(
-        shown()
-          .map((_, position) => position)
-          .filter(p => opened.has(p) !== (props.defaultExpanded === true))
+      flippedFromOpen(
+        new Set(keys.map(positionFromKey)),
+        shown().length,
+        defaultOpen()
       )
-    );
-  };
-  // Moves the kept positions when a note is added or removed at `from`.
-  const shiftFlipped = (from: number, by: 1 | -1) =>
-    setFlipped(
-      positions =>
-        new Set(
-          [...positions].flatMap(p => {
-            if (by === -1 && p === from) return [];
-            return [p >= from ? p + by : p];
-          })
-        )
     );
 
   // Each position's note box, while it has one: a position keeps its box
@@ -152,7 +149,8 @@ export const NotesInput = <T, P extends NotesPath<T>>(
     const index = notes().length;
     d().set(props.path, withNewNote(notes()));
     const position = positionOf(index);
-    if (props.newestFirst) shiftFlipped(0, 1);
+    if (props.newestFirst)
+      setFlipped(positions => shiftedPositions(positions, 0, 1));
     // A new note opens, whatever the default, and takes the focus once its
     // item has opened.
     if (!isOpen(position))
@@ -166,7 +164,13 @@ export const NotesInput = <T, P extends NotesPath<T>>(
   const remove = (index: number) => {
     const position = positionOf(index);
     d().set(props.path, withoutNote(notes(), index));
-    shiftFlipped(position, -1);
+    setFlipped(positions => shiftedPositions(positions, position, -1));
+  };
+
+  // A note with text asks first; one with none has nothing to lose.
+  const askToRemove = (item: ShownNote) => {
+    if (item.note.text === '') remove(item.index);
+    else setRemoving(item.index);
   };
 
   const write = (index: number, text: string) =>
@@ -234,10 +238,6 @@ export const NotesInput = <T, P extends NotesPath<T>>(
                         boxes[position] = el;
                       }}
                       onInput={e => write(item().index, e.currentTarget.value)}
-                      // A note left empty is not kept.
-                      onBlur={e => {
-                        if (e.currentTarget.value === '') remove(item().index);
-                      }}
                       data-testid={
                         props.testId && `${props.testId}-${position}-text`
                       }
@@ -247,7 +247,7 @@ export const NotesInput = <T, P extends NotesPath<T>>(
                         variant="ghost"
                         size="small"
                         icon={<TrashIcon />}
-                        onClick={() => setRemoving(item().index)}
+                        onClick={() => askToRemove(item())}
                         data-testid={
                           props.testId && `${props.testId}-${position}-remove`
                         }

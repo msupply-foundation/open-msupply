@@ -115,3 +115,68 @@ export const withoutNote = (
   const rest = notes.filter((_, i) => i !== index);
   return rest.length > 0 ? rest : undefined;
 };
+
+const hasText = (note: unknown): boolean =>
+  typeof note !== 'object' ||
+  note === null ||
+  ((note as Note).text !== undefined && (note as Note).text !== '');
+
+/**
+ * The document with every note that has no text taken out of its `notes`,
+ * the base field every category's notes live in; no list once none is left.
+ * The notes list keeps an empty note while the form is open, so nothing
+ * moves under the pointer, and the save leaves it out.
+ */
+export const withoutEmptyNotes = <T>(data: T): T => {
+  const notes = (data as { notes?: unknown }).notes;
+  if (!Array.isArray(notes) || notes.every(hasText)) return data;
+  const kept = notes.filter(hasText);
+  const next: Record<string, unknown> = { ...data, notes: kept };
+  if (kept.length === 0) delete next.notes;
+  return next as T;
+};
+
+/*
+ * Which items of the notes list are open. A note has no id and its object is
+ * replaced on every keystroke, so items are tracked by their position in the
+ * order shown, and what is kept is the positions the user has opened or
+ * closed against the default: notes the draft gains after the form opens
+ * take the default too.
+ */
+
+/** Whether the item at `position` is open. */
+export const isItemOpen = (
+  flipped: ReadonlySet<number>,
+  position: number,
+  defaultOpen: boolean
+): boolean => defaultOpen !== flipped.has(position);
+
+/** The positions flipped from the default, given those open of `count`. */
+export const flippedFromOpen = (
+  open: ReadonlySet<number>,
+  count: number,
+  defaultOpen: boolean
+): Set<number> =>
+  new Set(
+    Array.from({ length: count }, (_, p) => p).filter(
+      p => open.has(p) !== defaultOpen
+    )
+  );
+
+/**
+ * The flipped positions after an item is added at `at` (`by` 1) or the one
+ * at `at` removed (`by` -1): the positions after it move with their notes,
+ * and a removed item's own position goes.
+ */
+export const shiftedPositions = (
+  flipped: ReadonlySet<number>,
+  at: number,
+  by: 1 | -1
+): Set<number> =>
+  new Set(
+    [...flipped].flatMap(p => {
+      if (by === -1 && p === at) return [];
+      if (by === -1) return [p > at ? p - 1 : p];
+      return [p >= at ? p + 1 : p];
+    })
+  );

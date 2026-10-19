@@ -21,7 +21,7 @@ use graphql::{
 };
 use log::info;
 use repository::{
-    StorageConnection, get_storage_connection_manager,
+    StorageConnection, SyncLogV5V6RowRepository, get_storage_connection_manager,
     migrations::{MigrationConfig, migrate},
     system_log_row::SystemLogType,
 };
@@ -394,6 +394,33 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    // No sync is running yet, so a sync log that never finished or failed was cut off by the
+    // previous shutdown. Close it, or it reads as in flight until a new run replaces it, and a
+    // paused site (maintenance mode included) starts none.
+    match SyncLogV5V6RowRepository::new(&connection)
+        .close_interrupted("Sync was interrupted: the server stopped before it finished")
+    {
+        Ok(0) => {}
+        Ok(closed) => info!("Closed {closed} sync log(s) interrupted by the previous shutdown"),
+        Err(error) => log::error!("Failed to close interrupted sync logs: {error:?}"),
+    }
+
+    // A restart in maintenance mode keeps everything paused (the flags are persisted and read at
+    // use), but must not look like it finished OMS central's own integration (#840). After the
+    // migrations, which add the key the check reads.
+    match service_provider.basic_context() {
+        Ok(ctx) => {
+            if let Err(error) =
+                service::sync::maintenance_mode::log_incomplete_integration_on_startup(
+                    &ctx.connection,
+                )
+            {
+                log::error!("Failed to check maintenance mode on startup: {error:?}");
+            }
+        }
+        Err(error) => log::error!("Failed to check maintenance mode on startup: {error:?}"),
+    }
 
     if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
         log::error!(

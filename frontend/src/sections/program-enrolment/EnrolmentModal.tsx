@@ -228,6 +228,7 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
                       patientId: props.patientId,
                       documentName: form.document()?.name,
                     }}
+                    participation={form.coordinator.participationFor}
                     fallback={() => <Default draft={form.draft} />}
                     archivedVersion={archivedVersion()}
                     currentSchemaId={form.registry()?.formSchemaId}

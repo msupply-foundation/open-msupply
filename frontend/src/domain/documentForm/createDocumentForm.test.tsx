@@ -1,4 +1,11 @@
-import { batch, createRoot, createSignal } from 'solid-js';
+import {
+  batch,
+  children,
+  createRoot,
+  createSignal,
+  Match,
+  Switch,
+} from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
 import v2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
@@ -41,6 +48,7 @@ import {
   type FormDocumentFragment,
 } from './documentForm.generated';
 import type { Encounter } from '../../plugin-sdk/documents';
+import type { FormParticipation } from '../../plugin-sdk/types';
 
 const V1 = 'demo_program_DemoEncounter_v1_test';
 const V2 = 'demo_program_DemoEncounter_v2_test';
@@ -262,15 +270,21 @@ describe('opening a document pinned to an earlier version', () => {
  * counts with the draft's.
  */
 describe("the form's part in the save", () => {
-  // A participant as a plugin form holds one: under its own owner.
-  const participate = (form: DocumentForm<Encounter>) =>
+  // A participant as a plugin form holds one: under its own owner, where it
+  // registers its steps, as a form does when it mounts.
+  const participate = (
+    form: DocumentForm<Encounter>,
+    register: (participant: FormParticipation) => void = () => {}
+  ) =>
     createRoot(d => {
       const previous = dispose;
       dispose = () => {
         d();
         previous?.();
       };
-      return form.coordinator.participationFor('plugin.form');
+      const participant = form.coordinator.participationFor('plugin.form');
+      register(participant);
+      return participant;
     });
 
   const ready = async () => {
@@ -284,9 +298,11 @@ describe("the form's part in the save", () => {
 
   it('stops the save when a before-save step throws, writing nothing', async () => {
     const form = await ready();
-    participate(form).onBeforeSave(() => {
-      throw new Error('No stock to give');
-    });
+    participate(form, p =>
+      p.onBeforeSave(() => {
+        throw new Error('No stock to give');
+      })
+    );
     expect(await form.save()).toBeUndefined();
     expect(saves()).toHaveLength(0);
     expect(form.saveError()).toBe('No stock to give');
@@ -296,12 +312,13 @@ describe("the form's part in the save", () => {
   it('runs the before-save step first and the after-save step with the record', async () => {
     const form = await ready();
     const order: string[] = [];
-    const participant = participate(form);
-    participant.onBeforeSave(async () => {
-      order.push(`before:${saves().length}`);
-    });
-    participant.onAfterSave(context => {
-      order.push(`after:${saves().length}:${context.recordId}`);
+    participate(form, p => {
+      p.onBeforeSave(async () => {
+        order.push(`before:${saves().length}`);
+      });
+      p.onAfterSave(context => {
+        order.push(`after:${saves().length}:${context.recordId}`);
+      });
     });
     expect(await form.save()).toBeDefined();
     expect(order).toEqual(['before:0', 'after:1:encounter-1']);
@@ -310,9 +327,11 @@ describe("the form's part in the save", () => {
 
   it('shows what an after-save step failed to do, the document saved', async () => {
     const form = await ready();
-    participate(form).onAfterSave(() => {
-      throw new Error('Could not refresh');
-    });
+    participate(form, p =>
+      p.onAfterSave(() => {
+        throw new Error('Could not refresh');
+      })
+    );
     expect(await form.save()).toBeDefined();
     expect(saves()).toHaveLength(1);
     expect(form.saveError()).toBe('Could not refresh');
@@ -335,6 +354,25 @@ describe("the form's part in the save", () => {
     expect(await form.save()).toBeUndefined();
     expect(form.saveError()).toBe('Too many');
     expect(saves()).toHaveLength(0);
+  });
+
+  it("clears the form's dirty state once saved, and lets an after-save step set it again", async () => {
+    const form = await ready();
+    let stillUnsaved = false;
+    const participant = participate(form, p =>
+      p.onAfterSave(() => {
+        if (stillUnsaved) p.setDirty(true);
+      })
+    );
+    participant.setDirty(true);
+    expect(await form.save()).toBeDefined();
+    await vi.waitFor(() => expect(form.isDirty()).toBe(false));
+
+    participant.setDirty(true);
+    stillUnsaved = true;
+    form.draft.set('extension.demo.notes' as never, 'changed' as never);
+    expect(await form.save()).toBeDefined();
+    expect(form.coordinator.dirty()).toBe(true);
   });
 });
 
@@ -434,6 +472,81 @@ describe('when the source changes', () => {
   };
   const ready = (form: DocumentForm<Encounter>) =>
     vi.waitFor(() => expect(form.status()).toBe('ready'), { timeout: 5000 });
+
+  // A form body mounted on 'ready', as every screen mounts one: each mount
+  // records the weight the draft held as it mounted.
+  const mountOn = (form: DocumentForm<Encounter>) =>
+    createRoot(d => {
+      const previous = dispose;
+      dispose = () => {
+        d();
+        previous?.();
+      };
+      const mounts: (number | undefined)[] = [];
+      const Body = () => {
+        mounts.push(weight(form));
+        return null;
+      };
+      children(() => (
+        <Switch>
+          <Match when={form.status() === 'ready'}>
+            <Body />
+          </Match>
+        </Switch>
+      ));
+      return mounts;
+    });
+
+  it("mounts the form on the document's data, not on an empty draft", async () => {
+    const { form } = follow(
+      { 'encounter/a': async () => encounter('encounter/a', 70) },
+      { kind: 'existing', name: 'encounter/a' }
+    );
+    const mounts = mountOn(form);
+    await ready(form);
+    expect(mounts).toEqual([70]);
+  });
+
+  it("keeps the form mounted through saves, a new document's first included", async () => {
+    const { form, go } = follow(
+      { 'encounter/created': async () => encounter('encounter/created', 80) },
+      newEncounter(80),
+      { created: 'encounter/created' }
+    );
+    const mounts = mountOn(form);
+    await ready(form);
+    expect(await form.save()).toBeDefined();
+    // The screen follows the first save to the saved record.
+    go({ kind: 'existing', name: 'encounter/created' });
+    form.draft.set('extension.demo.notes' as never, 'changed' as never);
+    expect(await form.save()).toBeDefined();
+    expect(calls(UpdateFormEncounter)).toHaveLength(1);
+    expect(form.status()).toBe('ready');
+    expect(mounts).toEqual([80]);
+  });
+
+  it('leaves a note with no text out of the save', async () => {
+    const { form } = follow(
+      { 'encounter/a': async () => encounter('encounter/a', 70) },
+      { kind: 'existing', name: 'encounter/a' }
+    );
+    await ready(form);
+    form.draft.set('notes' as never, [{ text: '' }, { text: 'Seen' }] as never);
+    expect(await form.save()).toBeDefined();
+    const [, variables] = calls(UpdateFormEncounter)[0] as [
+      unknown,
+      { input: { data: { notes?: unknown } } },
+    ];
+    expect(variables.input.data.notes).toEqual([{ text: 'Seen' }]);
+  });
+
+  it('saves nothing before the draft is seeded', async () => {
+    const { form } = follow({}, newEncounter(80));
+    expect(form.status()).toBe('loading');
+    expect(form.canSave()).toBe(false);
+    expect(await form.save()).toBeUndefined();
+    expect(calls(InsertFormEncounter)).toHaveLength(0);
+  });
 
   it('starts a new document afresh after an existing one, and inserts it', async () => {
     const { form, go } = follow(

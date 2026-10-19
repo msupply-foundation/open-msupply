@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::activity_log::system_log;
 use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
+use crate::sync::maintenance_mode::is_maintenance_mode;
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
 use chrono::{NaiveDateTime, TimeDelta, Utc};
@@ -54,6 +55,14 @@ impl LedgerFixDriver {
                 continue;
             }
 
+            // While OMS central integrates its own buffer in maintenance mode, ledgers are only
+            // half integrated and every one would be logged as a discrepancy. Skip without
+            // recording a run, so the next check runs it once the mode is off.
+            if is_maintenance_mode_or_log(&service_provider) {
+                log::info!("Ledger fix: skipping run, maintenance mode is on");
+                continue;
+            }
+
             ledger_fix(service_provider.clone()).await;
             set_last_ledger_fix_run(&service_provider);
         }
@@ -96,6 +105,19 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
 
     if let Err(log_error) = system_log(&ctx.connection, SystemLogType::LedgerFixError, &error_msg) {
         log::error!("Ledger fix: failed to write system log: {log_error:?}");
+    }
+}
+
+fn is_maintenance_mode_or_log(service_provider: &ServiceProvider) -> bool {
+    let result = service_provider
+        .basic_context()
+        .and_then(|ctx| is_maintenance_mode(&ctx.connection));
+    match result {
+        Ok(on) => on,
+        Err(error) => {
+            log::error!("Ledger fix: could not read maintenance mode, running anyway: {error:?}");
+            false
+        }
     }
 }
 

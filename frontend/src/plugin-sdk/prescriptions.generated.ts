@@ -19,12 +19,21 @@ export type SdkItemBatchesResult = {
   packSize: number;
   availableNumberOfPacks: number;
   onHold: boolean;
+  location: {
+  __typename: "LocationNode";
+  onHold: boolean;
+} | null;
+  vvmStatus: {
+  __typename: "VvmstatusNode";
+  unusable: boolean;
+  priority: number;
+} | null;
 }>;
 });
 };
 
 export const SdkItemBatches = {
-  query: "query sdkItemBatches($storeId: String!, $itemId: String!) {\n  historicalStockLines(storeId: $storeId, itemId: $itemId) {\n    ... on StockLineConnector {\n      __typename\n      nodes {\n        __typename\n        id\n        batch\n        expiryDate\n        packSize\n        availableNumberOfPacks\n        onHold\n      }\n    }\n  }\n}",
+  query: "query sdkItemBatches($storeId: String!, $itemId: String!) {\n  historicalStockLines(storeId: $storeId, itemId: $itemId) {\n    ... on StockLineConnector {\n      __typename\n      nodes {\n        __typename\n        id\n        batch\n        expiryDate\n        packSize\n        availableNumberOfPacks\n        onHold\n        location {\n          __typename\n          onHold\n        }\n        vvmStatus {\n          __typename\n          unusable\n          priority\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SdkItemBatchesResult, SdkItemBatchesVariables>;
 
 export type SdkPrescriptionSummaryVariables = {
@@ -41,10 +50,6 @@ export type SdkPrescriptionSummaryResult = {
   status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
   createdDatetime: string;
   pickedDatetime: string | null;
-  store: {
-  __typename: "StoreNode";
-  id: string;
-};
   lines: {
   __typename: "InvoiceLineConnector";
   nodes: Array<{
@@ -59,7 +64,7 @@ export type SdkPrescriptionSummaryResult = {
 };
 
 export const SdkPrescriptionSummary = {
-  query: "query sdkPrescriptionSummary($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      id\n      invoiceNumber\n      status\n      createdDatetime\n      pickedDatetime\n      store {\n        __typename\n        id\n      }\n      lines {\n        __typename\n        nodes {\n          __typename\n          itemId\n          itemName\n          numberOfPacks\n          packSize\n        }\n      }\n    }\n  }\n}",
+  query: "query sdkPrescriptionSummary($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      id\n      invoiceNumber\n      status\n      createdDatetime\n      pickedDatetime\n      lines {\n        __typename\n        nodes {\n          __typename\n          itemId\n          itemName\n          numberOfPacks\n          packSize\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SdkPrescriptionSummaryResult, SdkPrescriptionSummaryVariables>;
 
 export type SdkInsertPrescriptionVariables = {

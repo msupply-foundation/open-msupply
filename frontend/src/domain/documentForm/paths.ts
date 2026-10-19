@@ -211,10 +211,14 @@ export const pointerToPath = (pointer: string): string =>
     .join('.');
 
 /*
- * The document with undefined values, empty strings and empty objects
- * removed, recursively; arrays keep their length. Two documents that differ
- * only by what an untouched field leaves behind compare equal after it, which
- * is what "dirty" has to mean for a form over optional fields.
+ * The document with undefined values, empty strings, empty objects and
+ * empty arrays removed, recursively; an array with items keeps its length.
+ * Two documents that differ only by what an untouched field leaves behind
+ * compare equal after it (setAt removes an array its last item leaves, where
+ * a stored document may hold one empty), which is what "dirty" has to mean
+ * for a form over optional fields. For that comparison only: what it removes
+ * may be what the schema requires, so a document is validated and saved as
+ * it is.
  */
 export const normalise = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(normalise);
@@ -224,6 +228,7 @@ export const normalise = (value: unknown): unknown => {
     const n = normalise(v);
     if (n === undefined || n === '') continue;
     if (isPlainObject(n) && Object.keys(n).length === 0) continue;
+    if (Array.isArray(n) && n.length === 0) continue;
     out[key] = n;
   }
   return out;

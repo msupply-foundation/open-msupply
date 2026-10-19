@@ -564,7 +564,9 @@ export interface FormRecordView {
  *
  * `record` updates IN PLACE (its `documentName` arrives with the first save),
  * so a form reads it through `props` rather than destructuring it once. The
- * draft is one stable object for the form's life.
+ * draft is one stable object for the form's life. `form` is the form's own
+ * part in the enrolment's save, as an encounter form has it (a check that
+ * may stop the save, such as an enrolment number another enrolment holds).
  *
  * A `type`, not an interface, so it carries an implicit index signature and
  * is usable as the `P` of the uniform `Contribution<P>`.
@@ -574,6 +576,7 @@ export type ProgramEnrolmentFormProps<
 > = {
   readonly draft: Draft<T>;
   readonly record: FormRecordView;
+  readonly form: FormParticipation;
 };
 
 /**

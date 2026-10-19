@@ -27,6 +27,13 @@ export interface CampaignOrProgramSelectProps {
   itemId: string;
   /** The currently-selected campaign id (undefined = none). */
   campaignId?: string;
+  /**
+   * The saved campaign's name, to label `campaignId` when the register no
+   * longer lists it — a campaign deleted since the record was tagged keeps
+   * showing its name (spec/campaigns › Deleting a campaign). Only used when
+   * the register has no match.
+   */
+  campaignName?: string | null;
   /** The currently-selected program id (undefined = none). */
   programId?: string;
   /**
@@ -93,6 +100,16 @@ export const CampaignOrProgramSelect = (
     return undefined;
   };
 
+  // The saved campaign as an option, for the Combobox to fall back on when
+  // the register (live campaigns only) has no match for it.
+  const savedCampaign = (): Option | undefined =>
+    props.campaignId && props.campaignName != null
+      ? {
+          kind: 'campaign',
+          node: { id: props.campaignId, name: props.campaignName },
+        }
+      : undefined;
+
   return (
     <Combobox<Option>
       label={props.label}
@@ -103,6 +120,7 @@ export const CampaignOrProgramSelect = (
       itemToString={o => o.node.name}
       itemToValue={optionValue}
       value={value()}
+      selectedItem={savedCampaign()}
       disabled={props.disabled}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}

@@ -72,10 +72,14 @@
 .trigger {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
   width: 100%;
   height: var(--input-height);
-  padding-inline: var(--input-padding-x);
+  /* No end padding and no flex gap: the chevron sits in its own slot flush
+     with the field's end, beside the ✕'s, exactly as Combobox lays out its
+     toggle and clear — so a Select's chevron and ✕ line up with a Combobox's
+     when the two are stacked in a form. The value carries the space before
+     them (.value). */
+  padding-inline: var(--input-padding-x) 0;
   border: 1px solid var(--input-border);
   border-radius: var(--input-radius);
   background: var(--bg-white);
@@ -112,6 +116,8 @@
 .value {
   flex: 1;
   min-width: 0;
+  /* The room before the ✕ / chevron, as Combobox's input end padding. */
+  padding-inline-end: var(--space-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -125,6 +131,11 @@
 .triggerIcon {
   margin-inline-start: auto;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* A 1.25rem chevron centred in a 1.75rem slot — Combobox's toggle slot. */
+  inline-size: 1.75rem;
+  flex-shrink: 0;
   font-size: 1.25rem;
   color: var(--gray-dark);
 }
@@ -146,8 +157,9 @@
 
 .clear {
   position: absolute;
-  /* Align over the reserved slot: end padding + chevron + the flex gap. */
-  inset-inline-end: calc(var(--input-padding-x) + 1.25rem + var(--space-2));
+  /* Align over the reserved slot, which sits just inside the chevron's slot
+     and the trigger's 1px border. */
+  inset-inline-end: calc(1.75rem + 1px);
   inset-block-start: 0;
   display: inline-flex;
   align-items: center;

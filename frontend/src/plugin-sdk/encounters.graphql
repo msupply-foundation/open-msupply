@@ -2,8 +2,8 @@
 # kdd/custom-forms/specs.md § Opening an older document).
 
 # A patient's latest encounter of one type that started before a moment, with
-# its document and the schema version the document is pinned to. Deleted
-# encounters are left out, as the encounters query leaves them by default.
+# its document and the schema version the document is pinned to, narrowed by
+# the caller's filter (encounters.ts: Visited only).
 query sdkPreviousEncounter($storeId: String!, $filter: EncounterFilterInput) {
   encounters(
     storeId: $storeId

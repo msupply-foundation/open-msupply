@@ -21,9 +21,8 @@ export interface ProgramEnrolmentsPanelProps {
   tableId: string;
   emptyMessage: string;
   /**
-   * Opens the enrolment. The Programs tab passes it (the enrolment modal);
-   * the Vaccinations tab does not, since its row opens a vaccination card,
-   * which is not built.
+   * Opens the enrolment: the Programs tab's row opens it in the enrolment
+   * modal, the Vaccinations tab's row opens its vaccination card.
    */
   onRowClick?: (enrolment: Row) => void;
 }

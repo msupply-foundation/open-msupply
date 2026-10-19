@@ -99,6 +99,7 @@ describe('usePreviousEncounter', () => {
     expect(variables.filter).toEqual({
       patientId: { equalTo: 'fatouma' },
       type: { equalTo: 'ReproductiveHealthProgramEncounter' },
+      status: { equalTo: 'VISITED' },
       startDatetime: { beforeOrEqualTo: '2025-06-02T08:59:59.999Z' },
     });
     expect(read.data()?.data.extension?.note).toBe('earlier');

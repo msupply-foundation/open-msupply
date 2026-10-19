@@ -180,6 +180,50 @@ describe('autoAllocateBarReasons (OMS-REG-SMV-11.4–.6/.28)', () => {
       )
     ).toEqual(['on-hold']);
   });
+
+  it("another campaign's stock is never auto-allocated when the record matches campaigns", () => {
+    const campaignA = { stockLineOnHold: false, campaign: { id: 'a' } };
+    const routine = { stockLineOnHold: false, campaign: null };
+    const forA = prefs({ issueCampaignId: 'a' });
+    const forRoutine = prefs({ issueCampaignId: null });
+    expect(autoAllocateBarReasons(campaignA, forA, today)).toEqual([]);
+    expect(autoAllocateBarReasons(routine, forA, today)).toEqual([
+      'other-campaign',
+    ]);
+    // A routine record skips every campaign's stock.
+    expect(autoAllocateBarReasons(campaignA, forRoutine, today)).toEqual([
+      'other-campaign',
+    ]);
+    expect(autoAllocateBarReasons(routine, forRoutine, today)).toEqual([]);
+    // No issueCampaignId (prescriptions) = no campaign matching at all.
+    expect(autoAllocateBarReasons(campaignA, prefs(), today)).toEqual([]);
+    // …and manual entry is never barred by campaign.
+    expect(barReasons(routine, forA, today)).toEqual([]);
+  });
+
+  it("another campaign's batch reports only other-campaign, not its other reasons", () => {
+    const heldExpiredCampaignB = {
+      stockLineOnHold: true,
+      expiryDate: '2000-01-01',
+      vvmStatus: { unusable: true },
+      campaign: { id: 'b' },
+    };
+    expect(
+      autoAllocateBarReasons(
+        heldExpiredCampaignB,
+        prefs({ issueCampaignId: null }),
+        today
+      )
+    ).toEqual(['other-campaign']);
+    // Its own campaign's record still sees every reason.
+    expect(
+      autoAllocateBarReasons(
+        heldExpiredCampaignB,
+        prefs({ issueCampaignId: 'b' }),
+        today
+      )
+    ).toEqual(['on-hold', 'expired', 'unusable-vvm']);
+  });
 });
 
 // The manual-bar refinements (old-app parity): the on-hold exception for a

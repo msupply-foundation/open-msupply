@@ -240,41 +240,41 @@ describe('parseFormsDeclaration', () => {
     ).toThrow(/version id "same" is declared on Visit v1 and on Visit v2/);
   });
 
-  it("refuses a deployment's id declared on two types", () => {
-    const declare = () =>
-      parseFormsDeclaration(
-        {
-          programKeys: ['demo'],
-          documentTypes: [
-            {
-              ...encounterEntry,
-              versions: [
-                { file: 'v1.json', id: 'deployed-a' },
-                { file: 'v2.json', source: 'type.ts', type: 'Visit' },
-              ],
-            },
-            {
-              ...encounterEntry,
-              documentType: 'Checkup',
-              name: 'Checkup',
-              versions: [
-                {
-                  file: 'v1.json',
-                  source: 'type.ts',
-                  type: 'Checkup',
-                  id: 'deployed-a',
-                },
-              ],
-            },
-          ],
-        },
-        'forms.json'
-      );
-    expect(declare).toThrow(
-      'forms.json: version id "deployed-a" is declared on Visit v1 and on ' +
-        'Checkup v1 — a schema id names one version, so give each its ' +
-        "deployment's own id"
+  // Two registry entries may share a schema row; whether the two schemas
+  // match is checkFormVersions' to say, from the files.
+  it("leaves a deployment's id declared on two types to the schema check", () => {
+    const declared = parseFormsDeclaration(
+      {
+        programKeys: ['demo'],
+        documentTypes: [
+          {
+            ...encounterEntry,
+            versions: [
+              { file: 'v1.json', id: 'deployed-a' },
+              { file: 'v2.json', source: 'type.ts', type: 'Visit' },
+            ],
+          },
+          {
+            ...encounterEntry,
+            documentType: 'Checkup',
+            name: 'Checkup',
+            versions: [
+              {
+                file: 'v1.json',
+                source: 'type.ts',
+                type: 'Checkup',
+                id: 'deployed-a',
+              },
+            ],
+          },
+        ],
+      },
+      'forms.json'
     );
+    expect(declared.documentTypes.map(entry => entry.versions[0].id)).toEqual([
+      'deployed-a',
+      'deployed-a',
+    ]);
   });
 
   it("reads a version's acknowledged narrowings, each with its reason", () => {

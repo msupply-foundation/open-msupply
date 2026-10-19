@@ -20,6 +20,10 @@ fragment EncounterRecord on EncounterNode {
   }
   programEnrolment {
     __typename
+    # The vaccination card shows for an immunisation enrolment
+    # (spec/vaccination-card S2).
+    id
+    isImmunisationProgram
     document {
       __typename
       documentRegistry {

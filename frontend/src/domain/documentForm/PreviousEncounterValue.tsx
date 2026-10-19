@@ -7,7 +7,7 @@
  * it recorded nothing there.
  */
 import { Show, type JSX } from 'solid-js';
-import { localisedDate, t } from '../../intl';
+import { formatNumber, localisedDate, t } from '../../intl';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
 import type { Encounter } from '../../plugin-sdk/documents';
 import type { PreviousEncounterView } from '../../plugin-sdk/encounters';
@@ -34,7 +34,8 @@ export const previousValueText = (
   path: string
 ): string => {
   const v = previous ? getAt(previous.data, path) : undefined;
-  return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
+  if (typeof v === 'number') return formatNumber(v);
+  return typeof v === 'string' ? v : '';
 };
 
 export const PreviousEncounterValue = <

@@ -58,7 +58,8 @@ interface UntypedDraft {
   set(path: string, value: unknown): void;
   schemaFor: Draft<object>['schemaFor'];
   errorFor(path: string): string | undefined;
-  failedRule: HostDraft<object>['failedRule'];
+  // The host's draft has it; a plugin test's stub draft need not.
+  failedRule?: HostDraft<object>['failedRule'];
   readOnly(): boolean;
 }
 const untyped = <T,>(draft: Draft<T>) => draft as unknown as UntypedDraft;
@@ -107,7 +108,7 @@ export const TextInput = <T, P extends TextPath<T>>(
       required={required(d(), props.path)}
       error={textFieldError(
         d().errorFor(props.path),
-        d().failedRule(props.path as never),
+        d().failedRule?.(props.path as never),
         props.example
       )}
       disabled={isDisabled(d(), props)}
@@ -466,10 +467,10 @@ export const FieldGroup = (props: FieldGroupProps): JSX.Element => (
   </FormSection>
 );
 
-export interface DateOfBirthInputProps<
-  T,
-  P extends TextPath<T>,
-> extends Omit<FieldProps, 'helperText'> {
+export interface DateOfBirthInputProps<T, P extends TextPath<T>> extends Omit<
+  FieldProps,
+  'helperText'
+> {
   draft: Draft<T>;
   /** A `format: date` path: the date is stored as `yyyy-MM-dd`. */
   path: P;

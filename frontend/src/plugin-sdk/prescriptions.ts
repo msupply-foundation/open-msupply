@@ -3,12 +3,24 @@
  * written from a form, giving the patient stock from the store's batches, as
  * the old client's `Prescription` control writes one from an encounter. The
  * form library's `PrescriptionInput` is built on them. They act in the entered
- * store, like every SDK call.
+ * store, like every SDK call. A permission refusal opens the app's
+ * permission dialog, as it does on the store's own screens.
  */
 import { createMemo, createResource } from 'solid-js';
-import { graphqlFetch } from '../api/graphql';
+import {
+  barReasons,
+  fillOrderCompare,
+  type AllocationPreferences,
+} from '../domain/allocation';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+  type GraphqlResult,
+} from '../api/graphql';
 import { t } from '../intl';
-import { currentStoreId } from '../store/storeContext';
+import { currentStoreId, prescriptionPreferences } from '../store/storeContext';
 import { generateUUID } from '../uuid';
 import type { PluginQuery } from './bridge';
 import {
@@ -17,6 +29,7 @@ import {
   SdkPickPrescription,
   SdkPrescriptionSummary,
   SdkSavePrescriptionItemLines,
+  type SdkItemBatchesResult,
   type SdkPrescriptionSummaryResult,
 } from './prescriptions.generated';
 
@@ -32,14 +45,15 @@ export interface ItemBatchView {
   readonly availablePacks: number;
 }
 
-/** A written prescription, as a form shows it. Read-only. */
+/**
+ * A written prescription, as a form shows it. Read-only. Always one made in
+ * the entered store: the read finds no other.
+ */
 export interface PrescriptionSummaryView {
   readonly id: string;
   readonly invoiceNumber: number;
   /** When it was made, as an RFC 3339 instant. */
   readonly createdDatetime: string;
-  /** True when it was made in the store the user is in. */
-  readonly madeHere: boolean;
   /** Each item it gives, in units. */
   readonly lines: readonly {
     readonly itemId: string;
@@ -51,7 +65,11 @@ export interface PrescriptionSummaryView {
 /**
  * The batches of an item the store can give now, read reactively: refetched
  * when the item changes, paused while it is `undefined`, never suspending.
- * Batches on hold and those with nothing available are left out.
+ * Left out, as the prescription screen bars them: a batch with nothing
+ * available, on hold (itself or its location), expired under the store's
+ * _prevent issue of expired stock_, or with an unusable VVM status under
+ * _manage VVM status_. In the prescription screen's order: soonest expiry
+ * first, or VVM status first under its preference.
  */
 export const useItemBatches = (
   itemId: () => string | undefined
@@ -67,53 +85,82 @@ export const useItemBatches = (
       storeId,
       itemId: id,
     });
-    if (result.kind !== 'success') return undefined;
-    return result.data.historicalStockLines.nodes
-      .filter(line => !line.onHold && line.availableNumberOfPacks > 0)
-      .map((line): ItemBatchView => ({
-        id: line.id,
-        batch: line.batch ?? undefined,
-        expiryDate: line.expiryDate ?? undefined,
-        packSize: line.packSize,
-        availablePacks: line.availableNumberOfPacks,
-      }));
+    return result.kind === 'success'
+      ? result.data.historicalStockLines.nodes
+      : undefined;
   });
-  return {
-    data: () =>
+  // Judged on reading, so the store's preferences apply as they stand.
+  const batches = createMemo(() => {
+    const lines =
       resource.state === 'ready' || resource.state === 'refreshing'
         ? resource.latest
-        : undefined,
-    loading: () => resource.loading,
-  };
+        : undefined;
+    return lines && issuableBatches(lines, prescriptionPreferences());
+  });
+  return { data: batches, loading: () => resource.loading };
 };
 
-type InvoiceResult = SdkPrescriptionSummaryResult['invoice'];
+type StockLine = SdkItemBatchesResult['historicalStockLines']['nodes'][number];
+
+/** The stock lines the store may give, in its order, in the SDK's view. */
+export const issuableBatches = (
+  lines: readonly StockLine[],
+  prefs: AllocationPreferences,
+  today: Date = new Date()
+): ItemBatchView[] =>
+  lines
+    .filter(
+      line =>
+        line.availableNumberOfPacks > 0 &&
+        barReasons({ ...line, stockLineOnHold: line.onHold }, prefs, today)
+          .length === 0
+    )
+    .sort((a, b) => fillOrderCompare(a, b, prefs))
+    .map((line): ItemBatchView => ({
+      id: line.id,
+      batch: line.batch ?? undefined,
+      expiryDate: line.expiryDate ?? undefined,
+      packSize: line.packSize,
+      availablePacks: line.availableNumberOfPacks,
+    }));
+
+type InvoiceNode = Extract<
+  SdkPrescriptionSummaryResult['invoice'],
+  { __typename: 'InvoiceNode' }
+>;
+
+/**
+ * What a prescription read by id found. `not-found` is no prescription under
+ * the id in the entered store: one never written, or one made in another
+ * store, which this read cannot tell apart. `unreadable` is a read that
+ * failed, which the app's error handling has already reported.
+ */
+export type PrescriptionReadOutcome = 'found' | 'not-found' | 'unreadable';
+
+type SummaryRead =
+  | { kind: 'found'; invoice: InvoiceNode }
+  | { kind: 'not-found' }
+  | { kind: 'unreadable' };
 
 const readSummary = async (
   storeId: string,
   id: string
-): Promise<InvoiceResult | undefined> => {
-  const result = await graphqlFetch(
-    SdkPrescriptionSummary,
-    { storeId, id },
-    // A prescription not written yet is an answer here, not a fault.
-    { returnGraphqlErrors: true }
-  );
-  return result.kind === 'success' &&
-    result.data.invoice.__typename === 'InvoiceNode'
-    ? result.data.invoice
-    : undefined;
+): Promise<SummaryRead> => {
+  const result = await graphqlFetch(SdkPrescriptionSummary, { storeId, id });
+  if (result.kind !== 'success') return { kind: 'unreadable' };
+  const invoice = result.data.invoice;
+  return invoice.__typename === 'InvoiceNode'
+    ? { kind: 'found', invoice }
+    : { kind: 'not-found' };
 };
 
 /** The summary a prescription read gives, in the SDK's view. */
 export const toPrescriptionSummaryView = (
-  invoice: InvoiceResult,
-  storeId: string
+  invoice: InvoiceNode
 ): PrescriptionSummaryView => ({
   id: invoice.id,
   invoiceNumber: invoice.invoiceNumber,
   createdDatetime: invoice.createdDatetime,
-  madeHere: invoice.store.id === storeId,
   lines: invoice.lines.nodes.map(line => ({
     itemId: line.itemId,
     itemName: line.itemName,
@@ -123,13 +170,16 @@ export const toPrescriptionSummaryView = (
 
 /**
  * A prescription by id, read reactively: paused while the id is `undefined`,
- * never suspending. `data()` is undefined while loading and when there is no
- * such prescription (one a form has named but not yet written). `refetch`
- * reads it again, after the form writes it.
+ * never suspending. `data()` is the prescription once found; `outcome()`
+ * says what the read found, undefined while paused and until the first read
+ * lands. `refetch` reads it again.
  */
 export const usePrescriptionSummary = (
   id: () => string | undefined
-): PluginQuery<PrescriptionSummaryView> & { refetch: () => void } => {
+): PluginQuery<PrescriptionSummaryView> & {
+  outcome: () => PrescriptionReadOutcome | undefined;
+  refetch: () => void;
+} => {
   const request = createMemo(() => {
     const storeId = currentStoreId();
     const value = id();
@@ -137,14 +187,19 @@ export const usePrescriptionSummary = (
   });
   const [resource, { refetch }] = createResource(request, async key => {
     const [storeId = '', value = ''] = key.split('|');
-    const invoice = await readSummary(storeId, value);
-    return invoice ? toPrescriptionSummaryView(invoice, storeId) : undefined;
+    const read = await readSummary(storeId, value);
+    return read.kind === 'found'
+      ? { kind: read.kind, view: toPrescriptionSummaryView(read.invoice) }
+      : { kind: read.kind };
   });
+  const latest = () =>
+    request() !== undefined &&
+    (resource.state === 'ready' || resource.state === 'refreshing')
+      ? resource.latest
+      : undefined;
   return {
-    data: () =>
-      resource.state === 'ready' || resource.state === 'refreshing'
-        ? resource.latest
-        : undefined,
+    data: () => latest()?.view,
+    outcome: () => latest()?.kind,
     loading: () => resource.loading,
     refetch: () => void refetch(),
   };
@@ -158,6 +213,8 @@ export interface CreatePrescriptionInput {
   itemId: string;
   /** How many packs to give from each batch; zero lines are left out. */
   lines: readonly { stockLineId: string; numberOfPacks: number }[];
+  /** The quantity prescribed, in units: the total the user entered. */
+  prescribedQuantity?: number;
 }
 
 export type CreatePrescriptionResult =
@@ -169,10 +226,22 @@ const failed = (message?: string): CreatePrescriptionResult => ({
   message: message ?? t('error.prescription-not-created'),
 });
 
+// A write's failure as the result: a permission refusal opens the app's
+// permission dialog, any other refusal is its message.
+const writeFailed = (
+  result: Exclude<GraphqlResult<unknown>, { kind: 'success' }>
+): CreatePrescriptionResult => {
+  if (result.kind !== 'graphqlError') return failed();
+  if (isForbidden(result.errors)) {
+    reportPermissionDenied(missingPermissions(result.errors));
+    return failed();
+  }
+  return failed(result.message);
+};
+
 /**
  * Writes a prescription for the patient giving one item from the store's
- * batches, and marks it picked, so the stock is committed as given. The
- * prescribed quantity is the total given, in units.
+ * batches, and marks it picked, so the stock is committed as given.
  *
  * Idempotent on the id: a prescription already picked under it is left as it
  * is, and one an interrupted call left unpicked is completed, so a form that
@@ -187,7 +256,9 @@ export const createPrescription = async (
   if (!storeId) return failed();
   const lines = input.lines.filter(line => line.numberOfPacks > 0);
 
-  const existing = await readSummary(storeId, input.id);
+  const read = await readSummary(storeId, input.id);
+  if (read.kind === 'unreadable') return failed();
+  const existing = read.kind === 'found' ? read.invoice : undefined;
   if (existing && existing.status !== 'NEW') {
     return { kind: 'created', invoiceNumber: existing.invoiceNumber };
   }
@@ -198,24 +269,10 @@ export const createPrescription = async (
       { storeId, input: { id: input.id, patientId: input.patientId } },
       { returnGraphqlErrors: true }
     );
-    if (inserted.kind === 'graphqlError') return failed(inserted.message);
-    if (inserted.kind !== 'success') return failed();
+    if (inserted.kind !== 'success') return writeFailed(inserted);
     invoiceNumber = inserted.data.insertPrescription.invoiceNumber;
   }
 
-  const batches = await graphqlFetch(SdkItemBatches, {
-    storeId,
-    itemId: input.itemId,
-  });
-  if (batches.kind !== 'success') return failed();
-  const packSizes = new Map(
-    batches.data.historicalStockLines.nodes.map(b => [b.id, b.packSize])
-  );
-  const prescribedQuantity = lines.reduce(
-    (total, line) =>
-      total + line.numberOfPacks * (packSizes.get(line.stockLineId) ?? 1),
-    0
-  );
   const saved = await graphqlFetch(
     SdkSavePrescriptionItemLines,
     {
@@ -228,21 +285,22 @@ export const createPrescription = async (
           stockLineId: line.stockLineId,
           numberOfPacks: line.numberOfPacks,
         })),
-        prescribedQuantity,
+        ...(input.prescribedQuantity !== undefined &&
+        input.prescribedQuantity > 0
+          ? { prescribedQuantity: input.prescribedQuantity }
+          : {}),
       },
     },
     { returnGraphqlErrors: true }
   );
-  if (saved.kind === 'graphqlError') return failed(saved.message);
-  if (saved.kind !== 'success') return failed();
+  if (saved.kind !== 'success') return writeFailed(saved);
 
   const picked = await graphqlFetch(
     SdkPickPrescription,
     { storeId, id: input.id },
     { returnGraphqlErrors: true }
   );
-  if (picked.kind === 'graphqlError') return failed(picked.message);
-  if (picked.kind !== 'success') return failed();
+  if (picked.kind !== 'success') return writeFailed(picked);
   const response = picked.data.updatePrescription;
   if (response.__typename !== 'InvoiceNode') {
     return failed(response.error.description);

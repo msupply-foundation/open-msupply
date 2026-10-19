@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Note } from '../../plugin-sdk/documents';
 import {
+  flippedFromOpen,
+  isItemOpen,
   isNoteEditable,
+  shiftedPositions,
   withNewNote,
   withNoteText,
+  withoutEmptyNotes,
   withoutNote,
 } from './notes';
 
@@ -101,5 +105,60 @@ describe('withoutNote', () => {
 
   it('leaves no list once the last note goes', () => {
     expect(withoutNote([written(1)], 0)).toBeUndefined();
+  });
+});
+
+describe('withoutEmptyNotes', () => {
+  it('takes out every note with no text and keeps the rest in order', () => {
+    const first = written(3);
+    const last = { ...written(1), text: 'Later' };
+    expect(
+      withoutEmptyNotes({
+        status: 'ACTIVE',
+        notes: [{ text: '' }, first, { ...written(2), text: '' }, last],
+      })
+    ).toEqual({ status: 'ACTIVE', notes: [first, last] });
+  });
+
+  it('leaves no list once every note is empty', () => {
+    expect(
+      withoutEmptyNotes({ status: 'ACTIVE', notes: [{ text: '' }] })
+    ).toEqual({ status: 'ACTIVE' });
+  });
+
+  it("keeps a note's other keys, the old client's `invalid` among them", () => {
+    const flagged = { ...written(1), invalid: true };
+    expect(withoutEmptyNotes({ notes: [flagged] })).toEqual({
+      notes: [flagged],
+    });
+  });
+
+  it('returns the document itself when there is nothing to take out', () => {
+    const data = { notes: [written(1)] };
+    expect(withoutEmptyNotes(data)).toBe(data);
+    const none = { status: 'ACTIVE' };
+    expect(withoutEmptyNotes(none)).toBe(none);
+  });
+});
+
+describe('which items of the list are open', () => {
+  it('reads a flipped position as the opposite of the default', () => {
+    expect(isItemOpen(new Set([1]), 0, true)).toBe(true);
+    expect(isItemOpen(new Set([1]), 1, true)).toBe(false);
+    expect(isItemOpen(new Set([1]), 1, false)).toBe(true);
+  });
+
+  it('keeps the positions the user set against the default', () => {
+    expect([...flippedFromOpen(new Set([0, 2]), 3, true)]).toEqual([1]);
+    expect([...flippedFromOpen(new Set([0, 2]), 3, false)]).toEqual([0, 2]);
+  });
+
+  it('moves the positions after an added item along with their notes', () => {
+    expect([...shiftedPositions(new Set([0, 2]), 1, 1)]).toEqual([0, 3]);
+    expect([...shiftedPositions(new Set([0, 2]), 0, 1)]).toEqual([1, 3]);
+  });
+
+  it("drops a removed item's position and moves the ones after it back", () => {
+    expect([...shiftedPositions(new Set([0, 1, 3]), 1, -1)]).toEqual([0, 2]);
   });
 });

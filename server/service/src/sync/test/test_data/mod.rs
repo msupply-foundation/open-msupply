@@ -23,6 +23,7 @@ pub(crate) mod contact_form;
 pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod diagnosis;
+pub(crate) mod document_registry_om;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
 pub(crate) mod goods_received_line;
@@ -155,6 +156,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut backend_plugin::test_pull_upsert_records());
     test_records.append(&mut om_report::test_pull_upsert_records());
     test_records.append(&mut om_form_schema::test_pull_upsert_records());
+    test_records.append(&mut document_registry_om::test_pull_upsert_records());
     test_records.append(&mut frontend_plugin::test_pull_upsert_records());
     test_records.append(&mut plugin_data::test_pull_upsert_records());
     test_records.append(&mut campaign::test_pull_upsert_records());
@@ -289,6 +291,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut backend_plugin::test_v6_push_records());
     test_records.append(&mut om_report::test_v6_central_push_records());
     test_records.append(&mut om_form_schema::test_v6_central_push_records());
+    test_records.append(&mut document_registry_om::test_v6_central_push_records());
     test_records.append(&mut frontend_plugin::test_v6_push_records());
     test_records.append(&mut preference::test_v6_central_push_records());
     test_records.append(&mut campaign::test_v6_central_push_records());

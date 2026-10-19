@@ -88,17 +88,17 @@ import { patientPreferences } from '../../../store/storeContext';
 // Programs / Encounters / Vaccinations tabs are lists gated on the program
 // module: a Programs row opens the enrolment (spec/program-enrolment, whose
 // picker and enrolment live in sections/program-enrolment/), an Encounters row
-// navigates to the encounter's record screen, and Vaccinations rows are
-// non-clickable. Under the program module the header's split button carries the
-// record-create actions, New program and New encounter, beside Add insurance.
-// The Log tab reuses the shared activity-log surface.
+// navigates to the encounter's record screen, and a Vaccinations row opens that
+// enrolment's vaccination card (spec/vaccination-card S1; OMS-REG-DIS-02.52).
+// Under the program module the header's split button carries the record-create
+// actions, New program and New encounter, beside Add insurance. The Log tab
+// reuses the shared activity-log surface.
 //
 // The header also carries the triggers plugins contribute to
 // `patient.toolbarTrigger`; `openDocumentForm` opens a new encounter in the
 // encounter form modal.
 //
-// NOT built here: the Contact-tracing tab, and the vaccination card a
-// Vaccinations row would open.
+// NOT built here: the Contact-tracing tab.
 //
 // TO-DO: New encounter and the encounter screens are still unspecced; the
 // record-screen spec (implementation-plan H26, #789) brings them into spec.
@@ -539,9 +539,9 @@ const PatientDetailView: Component = () => {
               <Show when={hasProgramModule()}>
                 {/* Program-module lists. Programs + Vaccinations share the
                     enrolment table (Vaccinations = immunisation subset). A
-                    Programs row opens its enrolment in the modal; Vaccinations
-                    rows aren't clickable (the vaccination card is unbuilt).
-                    Encounters rows navigate to the encounter screen. */}
+                    Programs row opens its enrolment in the modal; a
+                    Vaccinations row opens its vaccination card. Encounters
+                    rows navigate to the encounter screen. */}
                 <TabPanel value="programs">
                   <ProgramEnrolmentsPanel
                     rows={enrolments()}
@@ -569,6 +569,11 @@ const PatientDetailView: Component = () => {
                     loading={enrolmentsData.loading}
                     tableId="patient-vaccination-card-list"
                     emptyMessage={t('messages.no-programs')}
+                    onRowClick={row =>
+                      navigate(
+                        `/${params.storeId}/dispensary/patients/${params.patientId}/vaccination-card/${row.id}`
+                      )
+                    }
                   />
                 </TabPanel>
               </Show>

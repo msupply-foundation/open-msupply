@@ -23,6 +23,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod document_registry_om;
 pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
@@ -150,6 +151,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         form_schema::boxed(),
         om_form_schema::boxed(),
         document_registry::boxed(),
+        document_registry_om::boxed(),
         property::boxed(),
         name_property::boxed(),
         legacy_field_labels::boxed(),

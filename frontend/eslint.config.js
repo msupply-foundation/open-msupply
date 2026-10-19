@@ -4,6 +4,7 @@ import solid from 'eslint-plugin-solid/configs/typescript';
 import commentLength from 'eslint-plugin-comment-length';
 import compat from 'eslint-plugin-compat';
 import globals from 'globals';
+import pluginImports from './scripts/eslint/pluginImports.mjs';
 
 /*
  * Comment line-length cap. `overflow-only` wraps ONLY lines that exceed the
@@ -166,9 +167,9 @@ export default tseslint.config(
    * they are Solid components in the host's runtime, so the reactivity and
    * browser-compat rules apply identically — plus the import boundary
    * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
-   * and solid-js. tsconfig.plugins.json and the plugin build preset
-   * (vite/pluginBuild.ts) already make a reach into host source unresolvable;
-   * this makes the failure say why.
+   * and solid-js, and its own files. tsconfig.plugins.json and the plugin
+   * build preset (vite/pluginBuild.ts) leave `@/` unresolvable, but not a
+   * relative path out of the plugin, which only this rule catches.
    */
   {
     files: [
@@ -187,6 +188,7 @@ export default tseslint.config(
       globals: globals.browser,
       parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
     },
+    plugins: { plugin: { rules: { imports: pluginImports } } },
     rules: {
       ...sharedRules,
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
@@ -198,32 +200,9 @@ export default tseslint.config(
         anchorDownloadRestriction,
         jsxDownloadRestriction,
       ],
-      /*
-       * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
-       * the plugin build preset both omit it), but a RELATIVE reach —
-       * `../../../src/intl` — resolves fine at both type-check and build time.
-       * Only lint closes that, so these patterns are load-bearing rather than
-       * belt-and-braces: without them a plugin could silently bundle a frozen
-       * copy of host code, which is the exact failure the old client had.
-       */
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              // `@/…`; any path reaching into src/; and any escape above the
-              // plugin's own tree (plugins/<dir>/src/x and
-              // plugins/<dir>/forms/<Type>/x sit 3 levels down, so
-              // four-or-more `../` can only mean leaving the plugin).
-              group: ['@/*', '**/src/*', '../../../../*'],
-              message:
-                'A plugin may import only @openmsupply/plugin-sdk and solid-js ' +
-                '(spec/plugins/sdk-contract.md § imports). Missing something? ' +
-                'That is a gap to add to the SDK.',
-            },
-          ],
-        },
-      ],
+      // What a plugin may import, resolved against each file
+      // (scripts/eslint/pluginImports.mjs).
+      'plugin/imports': 'error',
     },
   },
 

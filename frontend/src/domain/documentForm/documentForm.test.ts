@@ -385,6 +385,13 @@ describe('paths', () => {
     ).toBe(true);
     expect(deepEqual(normalise({ a: 1 }), normalise({ a: 2 }))).toBe(false);
   });
+
+  it('treats an empty array as absent, and keeps an array with items whole', () => {
+    expect(deepEqual(normalise({ a: 1, e: [] }), normalise({ a: 1 }))).toBe(
+      true
+    );
+    expect(normalise({ e: [{}, { f: 1 }] })).toEqual({ e: [{}, { f: 1 }] });
+  });
 });
 
 describe('fieldSchemaInfo', () => {
@@ -557,6 +564,19 @@ describe('createDraft', () => {
       c.draft.set('extension.demo.vitals.weightKg', 71);
       expect(c.isDirty()).toBe(true);
       c.draft.set('extension.demo.vitals.weightKg', 70);
+      expect(c.isDirty()).toBe(false);
+      dispose();
+    });
+  });
+
+  it('is not dirty once an emptied array is gone, and saves the document as it is', () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      c.reset({ ...validEncounter, notes: [] } as DemoEncounter);
+      expect(c.snapshot().notes).toEqual([]);
+      c.draft.set('notes.0.text' as never, 'Seen' as never);
+      expect(c.isDirty()).toBe(true);
+      c.draft.set('notes.0.text' as never, undefined as never);
       expect(c.isDirty()).toBe(false);
       dispose();
     });

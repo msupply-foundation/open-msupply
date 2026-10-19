@@ -7,45 +7,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 const graphqlFetch = vi.fn();
+const reportPermissionDenied = vi.fn();
 
-vi.mock('../api/graphql', () => ({
+vi.mock('../api/graphql', async importOriginal => ({
+  ...(await importOriginal<typeof import('../api/graphql')>()),
   graphqlFetch: (...args: unknown[]) => graphqlFetch(...args),
+  reportPermissionDenied: (permissions: string[]) =>
+    reportPermissionDenied(permissions),
 }));
 vi.mock('../store/storeContext', () => ({ currentStoreId: () => 'store-a' }));
 
 import {
   SdkInsertPrescription,
-  SdkItemBatches,
   SdkPickPrescription,
   SdkPrescriptionSummary,
   SdkSavePrescriptionItemLines,
 } from './prescriptions.generated';
-import { createPrescription } from './prescriptions';
+import { createPrescription, issuableBatches } from './prescriptions';
 
 beforeEach(() => {
   graphqlFetch.mockReset();
+  reportPermissionDenied.mockReset();
 });
 
 describe('createPrescription', () => {
-  const batches = {
-    kind: 'success',
-    data: {
-      historicalStockLines: {
-        __typename: 'StockLineConnector',
-        nodes: [
-          {
-            __typename: 'StockLineNode',
-            id: 'line-1',
-            batch: 'B1',
-            expiryDate: '2027-01-31',
-            packSize: 3,
-            availableNumberOfPacks: 10,
-            onHold: false,
-          },
-        ],
-      },
-    },
-  };
   const invoice = (status: string) => ({
     kind: 'success',
     data: {
@@ -56,7 +41,6 @@ describe('createPrescription', () => {
         status,
         createdDatetime: '2026-10-12T00:00:00Z',
         pickedDatetime: null,
-        store: { __typename: 'StoreNode', id: 'store-a' },
         lines: { __typename: 'InvoiceLineConnector', nodes: [] },
       },
     },
@@ -81,7 +65,6 @@ describe('createPrescription', () => {
           },
         };
       }
-      if (query === SdkItemBatches) return batches;
       if (query === SdkSavePrescriptionItemLines) {
         return {
           kind: 'success',
@@ -112,10 +95,11 @@ describe('createPrescription', () => {
       { stockLineId: 'line-1', numberOfPacks: 2 },
       { stockLineId: 'line-2', numberOfPacks: 0 },
     ],
+    prescribedQuantity: 6,
   };
   const queries = () => graphqlFetch.mock.calls.map(([query]) => query);
 
-  it('creates it, saves the batches given with the total in units, and picks it', async () => {
+  it('creates it, saves the batches given with the quantity prescribed, and picks it', async () => {
     respond(notFound);
     expect(await createPrescription(input)).toEqual({
       kind: 'created',
@@ -124,7 +108,6 @@ describe('createPrescription', () => {
     expect(queries()).toEqual([
       SdkPrescriptionSummary,
       SdkInsertPrescription,
-      SdkItemBatches,
       SdkSavePrescriptionItemLines,
       SdkPickPrescription,
     ]);
@@ -182,5 +165,108 @@ describe('createPrescription', () => {
       kind: 'failed',
       message: 'Invoice is not editable',
     });
+  });
+
+  it('writes nothing when it cannot tell whether one exists', async () => {
+    respond({ kind: 'unexpectedError' });
+    expect(await createPrescription(input)).toEqual({
+      kind: 'failed',
+      message: 'error.prescription-not-created',
+    });
+    expect(queries()).toEqual([SdkPrescriptionSummary]);
+  });
+
+  it('opens the permission dialog for a refusal on permission', async () => {
+    respond(notFound);
+    const fallback = graphqlFetch.getMockImplementation();
+    graphqlFetch.mockImplementation(
+      async (query: unknown, ...rest: unknown[]) =>
+        query === SdkInsertPrescription
+          ? {
+              kind: 'graphqlError',
+              message: 'Forbidden',
+              errors: [{ message: 'Forbidden' }],
+            }
+          : fallback?.(query, ...rest)
+    );
+    expect(await createPrescription(input)).toEqual({
+      kind: 'failed',
+      message: 'error.prescription-not-created',
+    });
+    expect(reportPermissionDenied).toHaveBeenCalledTimes(1);
+    expect(queries()).not.toContain(SdkSavePrescriptionItemLines);
+  });
+});
+
+describe('issuableBatches', () => {
+  const TODAY = new Date('2026-10-14T12:00:00');
+  const line = (id: string, fields: Record<string, unknown> = {}) => ({
+    __typename: 'StockLineNode' as const,
+    id,
+    batch: id,
+    expiryDate: '2027-06-30',
+    packSize: 1,
+    availableNumberOfPacks: 10,
+    onHold: false,
+    location: null,
+    vvmStatus: null,
+    ...fields,
+  });
+  const prefs = {
+    expiredStockPreventIssue: false,
+    expiredStockIssueThreshold: 0,
+    manageVvmStatusForStock: false,
+    sortByVvmStatusThenExpiry: false,
+  };
+  const ids = (
+    lines: ReturnType<typeof line>[],
+    overrides: Partial<typeof prefs> = {}
+  ) => issuableBatches(lines, { ...prefs, ...overrides }, TODAY).map(b => b.id);
+
+  it('leaves out a batch with nothing available, or on hold itself or by its location', () => {
+    expect(
+      ids([
+        line('ok'),
+        line('empty', { availableNumberOfPacks: 0 }),
+        line('held', { onHold: true }),
+        line('held-location', {
+          location: { __typename: 'LocationNode', onHold: true },
+        }),
+      ])
+    ).toEqual(['ok']);
+  });
+
+  it('leaves out expired stock only under the store preference', () => {
+    const lines = [line('ok'), line('expired', { expiryDate: '2026-10-01' })];
+    expect(ids(lines)).toEqual(['expired', 'ok']);
+    expect(ids(lines, { expiredStockPreventIssue: true })).toEqual(['ok']);
+  });
+
+  it('leaves out an unusable VVM status only under VVM management', () => {
+    const lines = [
+      line('ok'),
+      line('unusable', {
+        vvmStatus: { __typename: 'VvmstatusNode', unusable: true, priority: 3 },
+      }),
+    ];
+    expect(ids(lines)).toEqual(['ok', 'unusable']);
+    expect(ids(lines, { manageVvmStatusForStock: true })).toEqual(['ok']);
+  });
+
+  it("lists them in the prescription screen's order", () => {
+    const vvm = (priority: number) => ({
+      __typename: 'VvmstatusNode',
+      unusable: false,
+      priority,
+    });
+    const lines = [
+      line('late', { expiryDate: '2027-09-30', vvmStatus: vvm(1) }),
+      line('soon', { expiryDate: '2027-03-31', vvmStatus: vvm(2) }),
+    ];
+    expect(ids(lines)).toEqual(['soon', 'late']);
+    expect(ids(lines, { sortByVvmStatusThenExpiry: true })).toEqual([
+      'late',
+      'soon',
+    ]);
   });
 });

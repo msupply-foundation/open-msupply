@@ -15,6 +15,11 @@
 //   node scripts/reports/build-reports.mjs --report <report dir> --output <file> --definition
 //       just its report definition - what `report_builder print` and
 //       `remote_server_cli upsert-report` read
+//   node scripts/reports/build-reports.mjs --each <dir> --out <dir>
+//       each folder in <dir> - a client, in private/reports/clients - as a
+//       bundle of its own, into <out>, with <out>/clients.json saying which
+//       built and which failed. One client failing does not stop the rest;
+//       it exits non-zero only when none built. What publish-reports.yaml runs.
 //
 // A report is a directory holding a report-manifest.json; every one found
 // under a dir is built, at any depth, skipping node_modules.
@@ -437,12 +442,52 @@ export function buildDir(dir, outputName, options) {
   return output;
 }
 
+/** A file name for a folder's bundle: its name, with anything but [A-Za-z0-9._-] made a dash. */
+export const bundleFileName = name => `${name.replace(/[^A-Za-z0-9._-]/g, '-')}.json`;
+
+/**
+ * Builds each folder in `dir` that holds a report as a bundle of its own, into
+ * `outDir`. Returns what goes in clients.json: `{ client, file }` for one that
+ * built, `{ client, error }` for one that did not - its name kept as it is,
+ * spaces and all, since the file name cannot keep it.
+ */
+export function buildEach(dir, outDir, options) {
+  mkdirSync(outDir, { recursive: true });
+  const results = [];
+  const folders = readdirSync(dir, { withFileTypes: true })
+    .filter(d => d.isDirectory() && !d.name.startsWith('.') && !IGNORED_DIRS.includes(d.name))
+    .map(d => d.name)
+    .sort();
+  // clients.json is this run's own file, so no client may be written as it.
+  const taken = new Set(['clients.json']);
+  for (const client of folders) {
+    try {
+      // Inside the try: a folder that cannot be read is that client failing,
+      // not the run.
+      const reportDirs = findReports(join(dir, client));
+      if (!reportDirs.length) continue;
+      const reports = reportDirs.map(reportDir => buildReport(reportDir, options));
+      const file = bundleFileName(client);
+      if (taken.has(file)) fail(`${client} would be written as ${file}, which is already taken`);
+      taken.add(file);
+      writeFileSync(join(outDir, file), `${JSON.stringify({ reports }, null, 2)}\n`);
+      console.log(`Built ${client}: ${reports.length} report${reports.length === 1 ? '' : 's'}`);
+      results.push({ client, file });
+    } catch (e) {
+      console.error(`error: ${client}: ${e.message}`);
+      results.push({ client, error: e.message });
+    }
+  }
+  writeFileSync(join(outDir, 'clients.json'), `${JSON.stringify(results, null, 2)}\n`);
+  return results;
+}
+
 // ---------------------------------------------------------------------------
 // Command line
 // ---------------------------------------------------------------------------
 
 export function parseArgs(argv) {
-  const out = { paths: null, report: null, output: null, definition: false };
+  const out = { paths: null, report: null, output: null, definition: false, each: null, out: null };
   let list = null;
   for (const arg of argv) {
     if (arg === '--path') {
@@ -451,15 +496,12 @@ export function parseArgs(argv) {
     } else if (arg === '--definition') {
       out.definition = true;
       list = null;
-    } else if (arg === '--report' || arg === '--output') {
+    } else if (['--report', '--output', '--each', '--out'].includes(arg)) {
       list = arg;
     } else if (arg.startsWith('--')) {
       fail(`Unknown option ${arg}`);
-    } else if (list === '--report') {
-      out.report = arg;
-      list = null;
-    } else if (list === '--output') {
-      out.output = arg;
+    } else if (typeof list === 'string') {
+      out[list.slice(2)] = arg;
       list = null;
     } else if (Array.isArray(list)) {
       list.push(arg);
@@ -470,6 +512,8 @@ export function parseArgs(argv) {
   if ((out.report === null) !== (out.output === null)) fail('--report and --output go together');
   if (out.report !== null && out.paths !== null) fail('--report builds one report; it does not go with --path');
   if (out.definition && out.report === null) fail('--definition goes with --report');
+  if ((out.each === null) !== (out.out === null)) fail('--each and --out go together');
+  if (out.each !== null && (out.report !== null || out.paths !== null)) fail('--each builds every folder in a directory; it goes with nothing but --out');
   return out;
 }
 
@@ -483,6 +527,11 @@ function main() {
   }
   if (args.paths !== null) {
     for (const dir of args.paths) buildDir(resolve(dir), 'reports.json');
+    return;
+  }
+  if (args.each !== null) {
+    const results = buildEach(resolve(args.each), resolve(args.out));
+    if (!results.some(r => r.file)) fail(`nothing in ${args.each} built`);
     return;
   }
   // Named after their folder, which is how the server finds them to embed.

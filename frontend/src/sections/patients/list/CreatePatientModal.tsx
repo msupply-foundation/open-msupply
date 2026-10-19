@@ -25,6 +25,8 @@ import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { remToPx } from '../../../ui/utils/rem';
 import { ProgressList } from '../../../ui/sync/ProgressList';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { TextField } from '../../../ui/elements/inputs/TextField';
@@ -66,7 +68,6 @@ import {
   type NewPatientFields,
 } from '../detail/patientDocumentSeed';
 import { fetchPatientRegistry } from '../detail/programs/programsApi';
-import { documentFormFor } from '../../../plugins/documentFormSlot';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
 // S2 — the create wizard (spec/patients). A blocking modal with a
@@ -168,35 +169,33 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   // The store's Patient registry entry decides step ③'s path, as it decides
   // the Details tab's (patientDetails.ts). Read each time the modal opens,
   // non-suspending, since the modal is already open.
-  const [registryData] = createResource(
+  const [registryData, { refetch: refetchRegistry }] = createResource(
     () => (props.open ? props.storeId : undefined),
     fetchPatientRegistry
   );
   const registry = () => gated(registryData);
   const onDocumentPath = () => registry()?.entry !== undefined;
+  // A read that failed answers, with nothing: the path is unknown, so step
+  // ③ says so rather than guessing the plain path, which on a store with a
+  // Patient entry would create a patient without its document.
+  const registryFailed = () =>
+    registryData.state === 'ready' && registryData.latest === undefined;
 
   // The document path's step ③: the new patient's first document, seeded
-  // from step ① when the wizard reaches it, the way the form that edits it
-  // needs (seedNewPatientDocument): a plugin's patient form, or the host's
-  // default one.
+  // from step ① when the wizard reaches it (seedNewPatientDocument).
   const [seedFields, setSeedFields] = createSignal<NewPatientFields>();
-  const pluginForm = createMemo(() => {
-    const type = registry()?.entry?.documentType;
-    return (
-      type !== undefined &&
-      documentFormFor('patient.form', type).occupant !== undefined
-    );
-  });
   const documentSeed = createMemo((): Patient | undefined => {
     const fields = seedFields();
-    return fields
-      ? seedNewPatientDocument(patientId(), fields, pluginForm())
-      : undefined;
+    return fields ? seedNewPatientDocument(patientId(), fields) : undefined;
   });
   const [documentPath, setDocumentPath] = createSignal(documentPathModules);
+  const [documentPathFailed, setDocumentPathFailed] = createSignal(false);
   createEffect(() => {
     if (onDocumentPath() && !documentPath()) {
-      void loadDocumentPath().then(modules => setDocumentPath(() => modules));
+      loadDocumentPath().then(
+        modules => setDocumentPath(() => modules),
+        () => setDocumentPathFailed(true)
+      );
     }
   });
   // Made once, when the modules arrive, and untracked, so nothing the editor
@@ -413,6 +412,10 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     const form = newDocument()?.form;
     return View && form?.status() === 'ready' ? { View, form } : undefined;
   };
+  // The document path's code that did not load: a failed module load is
+  // kept by the browser, so a reload, not a retry, fetches it again.
+  const formNotLoaded = () =>
+    documentPathFailed() || (newDocument()?.form.libraryFailed() ?? false);
 
   // Cell-type presets carry the rendering AND the width
   // (ui/docs/CELL_TYPES.md). Deceased reads as a word here, not the list's
@@ -555,7 +558,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           confirms="plain"
           data-testid="dialog-button-ok"
           loading={busy()}
-          disabled={!registry()}
+          disabled={!registry() || (onDocumentPath() && !readyDocument())}
           onClick={() => void save()}
         >
           {t('button.save')}
@@ -704,6 +707,28 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               <Alert severity="error">{stepThreeError()}</Alert>
             </Show>
             <Switch fallback={<Spinner center />}>
+              <Match when={registryFailed()}>
+                <Stack gap="sm">
+                  <Alert severity="error">
+                    {t('error.patient-form-settings-not-read')}
+                  </Alert>
+                  <HStack justify="start">
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => void refetchRegistry()}
+                      data-testid="create-patient-registry-retry"
+                    >
+                      {t('button.retry')}
+                    </Button>
+                  </HStack>
+                </Stack>
+              </Match>
+              <Match when={formNotLoaded()}>
+                <Alert severity="error">
+                  {t('error.patient-form-not-loaded')}
+                </Alert>
+              </Match>
               <Match when={registry() && !onDocumentPath()}>
                 <PatientDetailsForm
                   storeId={props.storeId}

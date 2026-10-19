@@ -209,6 +209,9 @@ export const earlierIssuesFor = (issues, key) =>
  *   regressions  [{ key, error }]
  *   history      Map key → [outcome per previous run, oldest first]
  *   commits      [{ sha, message, files }] in baseline..current, or null
+ *   range        { total, checked } — the range's size and how many of its
+ *                newest commits `commits` came from; omitted when they are
+ *                the whole range
  *   compareUrl   link to the full range, or null
  *   earlier      Map key → [{ number, closed_at }]
  */
@@ -216,6 +219,7 @@ export const cluesMarkdown = ({
   regressions,
   history,
   commits,
+  range = null,
   compareUrl,
   earlier,
 }) => {
@@ -224,6 +228,8 @@ export const cluesMarkdown = ({
     '_Mechanical pointers, not a diagnosis — where to look first. History is this branch’s previous nightly runs, oldest first._',
     ''
   );
+  // Only part of a long range is checked; every "none" below must say so.
+  const unchecked = range ? range.total - range.checked : 0;
   if (commits) {
     const app = commits.filter(c =>
       c.files.some(f => f.startsWith('frontend/src/'))
@@ -233,11 +239,14 @@ export const cluesMarkdown = ({
         f => f.startsWith('server/') && !f.startsWith('server/data/')
       )
     ).length;
-    const range = compareUrl
-      ? `[${commits.length} commits](${compareUrl})`
-      : `${commits.length} commits`;
+    const total = range?.total ?? commits.length;
+    const link = compareUrl
+      ? `[${total} commits](${compareUrl})`
+      : `${total} commits`;
     lines.push(
-      `Since the baseline: ${range} — ${app} touch \`frontend/src\`, ${server} touch the server.`,
+      unchecked > 0
+        ? `Since the baseline: ${link} — of the newest ${range.checked}, ${app} touch \`frontend/src\` and ${server} touch the server. The other ${unchecked} weren't checked.`
+        : `Since the baseline: ${link} — ${app} touch \`frontend/src\`, ${server} touch the server.`,
       ''
     );
   }
@@ -268,6 +277,10 @@ export const cluesMarkdown = ({
             `  - ${h.sha.slice(0, 10)} ${h.message.split('\n')[0]} — ${h.touched.map(f => `\`${f}\``).join(', ')}`
           );
         if (hits.length > 8) lines.push(`  - … and ${hits.length - 8} more`);
+      } else if (unchecked > 0) {
+        lines.push(
+          `- None of the newest ${range.checked} commits touches this spec or the shared suite support — the other ${unchecked} weren't checked, so search the full range before ruling the suite out.`
+        );
       } else {
         lines.push(
           '- No commit in the range touches this spec or the shared suite support — look at app or server changes, or at intermittency.'
@@ -508,19 +521,42 @@ export const gatherClues = async ({
   }
 
   // Commits in baseline..current, with the files each one touched.
+  //
+  // The compare API pages its commits OLDEST first, so the first page alone is
+  // the wrong end of a long range — an imported repo's history once filled it
+  // entirely, and the clues reported "0 touch frontend/src" for a range where
+  // 178 commits did. Read the newest page's worth instead, and record the
+  // range's true size so the clues can say how much of it they checked.
   let commits = null;
   let compareUrl = null;
+  let range = null;
   if (summary.baselineCommit && summary.commit) {
     try {
-      const { data } = await github.rest.repos.compareCommitsWithBasehead({
-        owner,
-        repo,
-        basehead: `${summary.baselineCommit}...${summary.commit}`,
-        per_page: 100,
-      });
+      const PER_PAGE = 100;
+      const compare = async page =>
+        (
+          await github.rest.repos.compareCommitsWithBasehead({
+            owner,
+            repo,
+            basehead: `${summary.baselineCommit}...${summary.commit}`,
+            per_page: PER_PAGE,
+            page,
+          })
+        ).data;
+      const first = await compare(1);
+      const pages = Math.ceil(first.total_commits / PER_PAGE);
+      let newest = first.commits;
+      if (pages > 1) {
+        // The last page may be short; top it up from the one before.
+        const last = (await compare(pages)).commits;
+        const before =
+          pages - 1 === 1 ? first.commits : (await compare(pages - 1)).commits;
+        newest = [...before, ...last].slice(-PER_PAGE);
+      }
       compareUrl = `${serverUrl}/${owner}/${repo}/compare/${summary.baselineCommit.slice(0, 12)}...${summary.commit.slice(0, 12)}`;
+      range = { total: first.total_commits, checked: newest.length };
       commits = [];
-      for (const c of data.commits.slice(-100)) {
+      for (const c of newest) {
         if (c.parents.length > 1) continue; // merges repeat their commits' files
         const { data: full } = await github.rest.repos.getCommit({
           owner,
@@ -537,6 +573,7 @@ export const gatherClues = async ({
     } catch (e) {
       log(`commit range skipped: ${e.message}`);
       commits = null;
+      range = null;
     }
   }
 
@@ -551,5 +588,12 @@ export const gatherClues = async ({
     log(`earlier issues skipped: ${e.message}`);
   }
 
-  return cluesMarkdown({ regressions, history, commits, compareUrl, earlier });
+  return cluesMarkdown({
+    regressions,
+    history,
+    commits,
+    range,
+    compareUrl,
+    earlier,
+  });
 };

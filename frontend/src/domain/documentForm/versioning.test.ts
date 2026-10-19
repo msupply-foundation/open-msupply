@@ -375,12 +375,14 @@ describe('findNarrowings', () => {
       {
         path: 'code',
         changes: ['is newly required', 'gains pattern "^[0-9]{6}$"'],
+        keywords: ['required', 'pattern'],
       },
       {
         path: 'born',
         changes: ['changes format from "date-time" to "date"'],
+        keywords: ['format'],
       },
-      { path: 'region', changes: ['is given an enum'] },
+      { path: 'region', changes: ['is given an enum'], keywords: ['enum'] },
       {
         path: 'visits',
         changes: [
@@ -388,6 +390,7 @@ describe('findNarrowings', () => {
           'gains minLength 0',
           'lowers maximum from 100 to 50',
         ],
+        keywords: ['minimum', 'minLength', 'maximum'],
       },
     ]);
   });
@@ -403,8 +406,16 @@ describe('findNarrowings', () => {
     expect(
       findNarrowings(before, { ...after, required: ['consent'] }, additive)
     ).toEqual([
-      { path: 'contact.phone', changes: ['is newly required'] },
-      { path: 'consent', changes: ['is newly required'] },
+      {
+        path: 'contact.phone',
+        changes: ['is newly required'],
+        keywords: ['required'],
+      },
+      {
+        path: 'consent',
+        changes: ['is newly required'],
+        keywords: ['required'],
+      },
     ]);
   });
 
@@ -420,7 +431,11 @@ describe('findNarrowings', () => {
         additive
       )
     ).toEqual([
-      { path: 'contactDetails[].region', changes: ['is given an enum'] },
+      {
+        path: 'contactDetails[].region',
+        changes: ['is given an enum'],
+        keywords: ['enum'],
+      },
     ]);
   });
 
@@ -435,7 +450,11 @@ describe('findNarrowings', () => {
         moved: { phone: 'contact.phone' },
       })
     ).toEqual([
-      { path: 'contact.phone', changes: ['gains pattern "^[0-9]{8}$"'] },
+      {
+        path: 'contact.phone',
+        changes: ['gains pattern "^[0-9]{8}$"'],
+        keywords: ['pattern'],
+      },
     ]);
     expect(
       findNarrowings(before, after, {

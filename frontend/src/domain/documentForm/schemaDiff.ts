@@ -280,6 +280,12 @@ const parentOf = (path: string): string => {
 export interface Narrowing {
   path: string;
   changes: string[];
+  /**
+   * The schema keyword of each change (`required`, `enum`, `format`,
+   * `pattern`, or the limit's own), as the validator names the error it
+   * causes.
+   */
+  keywords: string[];
 }
 
 /**
@@ -324,6 +330,7 @@ export const findNarrowings = (
     if (cleared(path)) continue;
     const old = before.get(path);
     const changes: string[] = [];
+    const keywords = new Set<string>();
     const parent = parentOf(path);
     if (
       next.required &&
@@ -331,15 +338,21 @@ export const findNarrowings = (
       (parent === '' || before.has(parent))
     ) {
       changes.push('is newly required');
+      keywords.add('required');
     }
+    const found = () => ({ path, changes, keywords: [...keywords] });
     // A new field holds no old value; a changed type is checkCoverage's.
     if (!old || !old.types.every(type => next.types.includes(type))) {
-      if (changes.length) narrowings.push({ path, changes });
+      if (changes.length) narrowings.push(found());
       continue;
     }
-    if (next.enum && !old.enum) changes.push('is given an enum');
+    if (next.enum && !old.enum) {
+      changes.push('is given an enum');
+      keywords.add('enum');
+    }
     for (const format of next.formats) {
       if (old.formats.includes(format)) continue;
+      keywords.add('format');
       changes.push(
         old.formats.length
           ? `changes format from ${old.formats.map(quote).join('|')} to ${quote(format)}`
@@ -348,6 +361,7 @@ export const findNarrowings = (
     }
     for (const pattern of next.patterns) {
       if (old.patterns.includes(pattern)) continue;
+      keywords.add('pattern');
       changes.push(
         old.patterns.length
           ? `changes pattern from ${old.patterns.map(quote).join('|')} to ${quote(pattern)}`
@@ -361,13 +375,15 @@ export const findNarrowings = (
       const lower = (LOWER_LIMITS as readonly string[]).includes(key);
       if (held === undefined) {
         changes.push(`gains ${key} ${value}`);
+        keywords.add(key);
       } else if (lower ? value > held : value < held) {
         changes.push(
           `${lower ? 'raises' : 'lowers'} ${key} from ${held} to ${value}`
         );
+        keywords.add(key);
       }
     }
-    if (changes.length) narrowings.push({ path, changes });
+    if (changes.length) narrowings.push(found());
   }
   return narrowings;
 };
