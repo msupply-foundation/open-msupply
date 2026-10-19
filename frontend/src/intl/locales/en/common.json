@@ -2729,7 +2729,7 @@
   "messages.deleted-immunisation-programs_other": "Deleted {{count}} immunization programs",
   "messages.deleted-item-variant": "Item variant successfully deleted",
   "messages.deleted-lines-purchase-order_one": "Deleted 1 line from this purchase order",
-  "messages.deleted-lines-purchase-order_other": "",
+  "messages.deleted-lines-purchase-order_other": "Deleted {{count}} lines from this purchase order",
   "messages.deleted-lines_one": "Deleted 1 line",
   "messages.deleted-lines_other": "Deleted {{count}} lines",
   "messages.deleted-locations_one": "Deleted {{count}} location",
@@ -2744,8 +2744,8 @@
   "messages.deleted-purchase-orders_other": "Deleted {{count}} purchase orders",
   "messages.deleted-reasons_one": "Deleted {{count}} reason",
   "messages.deleted-reasons_other": "Deleted {{count}} reasons",
-  "messages.deleted-requisition_one": "Deleted {{count}} requisitions",
-  "messages.deleted-requisition_other": "",
+  "messages.deleted-requisition_one": "Deleted {{count}} requisition",
+  "messages.deleted-requisition_other": "Deleted {{count}} requisitions",
   "messages.deleted-requisitions_one": "Deleted {{count}} requisition",
   "messages.deleted-requisitions_other": "Deleted {{count}} requisitions",
   "messages.deleted-returns_one": "Deleted 1 return",
@@ -3387,6 +3387,7 @@
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.storeCustomColour": "Custom colour of page footer (hex code, e.g. #000000 for black)",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
+  "preference.transferStockToInternalCustomersAtCostPrice": "Transfer stock to internal customers at cost price",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
   "preference.warnWhenMissingRecentStocktake": "Warn users when creating internal order if there is no recent stocktake",
   "preference.warnWhenMissingRecentStocktake.description": "Display a warning when stocktake data is older than the specified max age or recent stock takes have fewer than the minimum number of items so isn't considered a valid stocktake for calculating stock levels.",
@@ -4024,8 +4025,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "preference": {
-    "transferStockToInternalCustomersAtCostPrice": "Transfer stock to internal customers at cost price"
-  }
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
