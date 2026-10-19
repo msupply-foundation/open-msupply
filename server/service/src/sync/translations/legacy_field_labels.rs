@@ -21,12 +21,14 @@ use super::{PullTranslateResult, SyncTranslation};
 /// alone once a row exists) and the rename fans out to v7 remotes through the
 /// regular `custom_field` sync path.
 ///
-/// Two sources, one translator (dispatching on table):
+/// Three sources, one translator (dispatching on table and item):
 ///  * item `user_field_1..7` labels — a `pref` record (`item = "user_fields"`)
 ///    whose nested `data.data` object holds the labels as plain JSON strings.
 ///  * name `Custom 1..3` / `Category 1..6` labels — a `pref_blob` record
 ///    (`item = "name_cat_custom_values"`), a 9-element 4D text array serialized
 ///    by `VARIABLE TO BLOB` and base64-encoded on the wire (parsed below).
+///  * purchase order `user_field_1/2` labels — `pref_blob` records
+///    `purchase_cust1_field` / `purchase_cust2_field`, each a single 4D text.
 ///
 /// Both tables have other consumers (`StorePreferenceTranslation` on `pref`;
 /// `pref_blob` items OMS doesn't read), so result semantics matter: a pref
@@ -138,7 +140,7 @@ impl SyncTranslation for LegacyFieldLabelsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         match sync_record.table_name.as_str() {
             "pref" => translate_user_field_labels(connection, sync_record),
-            "pref_blob" => translate_name_field_labels(connection, sync_record),
+            "pref_blob" => translate_pref_blob_labels(connection, sync_record),
             _ => Ok(PullTranslateResult::NotMatched),
         }
     }
@@ -289,6 +291,31 @@ fn parse_4d_text_array(blob_b64: &str) -> Result<Vec<String>, anyhow::Error> {
     Ok(result)
 }
 
+/// A 4D text blob (`type = "t"`): `RVLB`, tag 33, u32 LE length, then UTF-16LE.
+fn parse_4d_text(blob_b64: &str) -> Result<String, anyhow::Error> {
+    const HEADER_LEN: usize = 9;
+    const UNICODE_TEXT_TAG: u8 = 33;
+
+    let bytes = BASE64_STANDARD.decode(blob_b64)?;
+    ensure!(bytes.len() >= HEADER_LEN, "blob shorter than header");
+    ensure!(&bytes[0..4] == b"RVLB", "bad magic {:02x?}", &bytes[0..4]);
+    ensure!(
+        bytes[4] == UNICODE_TEXT_TAG,
+        "not a Unicode text (type tag {})",
+        bytes[4]
+    );
+    let units = u32::from_le_bytes(bytes[5..9].try_into()?) as usize;
+    ensure!(
+        bytes.len() == HEADER_LEN + units * 2,
+        "length {units} doesn't match the blob"
+    );
+    let utf16: Vec<u16> = bytes[HEADER_LEN..]
+        .chunks_exact(2)
+        .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
+        .collect();
+    Ok(String::from_utf16(&utf16)?)
+}
+
 #[derive(Deserialize)]
 struct LegacyPrefBlobRow {
     #[serde(default)]
@@ -299,19 +326,81 @@ struct LegacyPrefBlobRow {
     blob: String,
 }
 
-/// Name `Custom 1..3` / `Category 1..6` labels, from the `pref_blob`
-/// "name_cat_custom_values" record.
-fn translate_name_field_labels(
+/// The `pref_blob` items holding labels.
+fn translate_pref_blob_labels(
     connection: &StorageConnection,
     sync_record: &SyncBufferRow,
 ) -> Result<PullTranslateResult, anyhow::Error> {
     let data = sync_record.deserialize::<LegacyPrefBlobRow>()?;
-    // Other pref_blob items aren't ours — NotMatched (same outcome as
-    // before this translator existed: no translator found).
-    if data.item != "name_cat_custom_values" {
-        return Ok(PullTranslateResult::NotMatched);
+    match data.item.as_str() {
+        "name_cat_custom_values" => translate_name_field_labels(connection, data),
+        "purchase_cust1_field" => translate_text_label(
+            connection,
+            data,
+            keys::PURCHASE_ORDER_USER_FIELD_1,
+            "cust_purchase_field",
+        ),
+        "purchase_cust2_field" => translate_text_label(
+            connection,
+            data,
+            keys::PURCHASE_ORDER_USER_FIELD_2,
+            "cust_purchase_field2",
+        ),
+        // Other pref_blob items aren't ours — NotMatched (same outcome as
+        // before this translator existed: no translator found).
+        _ => Ok(PullTranslateResult::NotMatched),
     }
+}
 
+/// A single-text label; OG's placeholder (`factory_default`) keeps the seeded name.
+fn translate_text_label(
+    connection: &StorageConnection,
+    data: LegacyPrefBlobRow,
+    custom_field_id: &str,
+    factory_default: &str,
+) -> Result<PullTranslateResult, anyhow::Error> {
+    if !CentralServerConfig::is_central_server() {
+        return Ok(PullTranslateResult::Ignored(
+            "Mapping custom_field labels are central-authored".to_string(),
+        ));
+    }
+    if data.r#type != "t" {
+        warn!(
+            "{} has unexpected type {:?} — ignoring",
+            data.item, data.r#type
+        );
+        return Ok(PullTranslateResult::Ignored(
+            "Unexpected pref_blob type".to_string(),
+        ));
+    }
+    let label = match parse_4d_text(&data.blob) {
+        Ok(label) => label,
+        Err(error) => {
+            warn!("Could not parse {} blob: {error}", data.item);
+            return Ok(PullTranslateResult::Ignored(
+                "Unparseable label blob".to_string(),
+            ));
+        }
+    };
+    if label == factory_default {
+        return Ok(PullTranslateResult::Ignored(
+            "Label is OG's factory default".to_string(),
+        ));
+    }
+    match updated_custom_field_name(connection, custom_field_id, &label)? {
+        Some(custom_field) => Ok(PullTranslateResult::upsert(custom_field)),
+        None => Ok(PullTranslateResult::Ignored(
+            "No mapping custom_field label changes".to_string(),
+        )),
+    }
+}
+
+/// Name `Custom 1..3` / `Category 1..6` labels, from the `pref_blob`
+/// "name_cat_custom_values" record.
+fn translate_name_field_labels(
+    connection: &StorageConnection,
+    data: LegacyPrefBlobRow,
+) -> Result<PullTranslateResult, anyhow::Error> {
     // Central-only, mirroring the user-fields path.
     if !CentralServerConfig::is_central_server() {
         return Ok(PullTranslateResult::Ignored(
@@ -755,5 +844,90 @@ mod tests {
             }
         }
         BASE64_STANDARD.encode(bytes)
+    }
+
+    const DEFAULT_PO_USER_FIELD_1_BLOB: &str =
+        "UlZMQiETAAAAYwB1AHMAdABfAHAAdQByAGMAaABhAHMAZQBfAGYAaQBlAGwAZAA=";
+    const DEFAULT_TEXT_BLOB: &str = "UlZMQiEHAAAAZABlAGYAYQB1AGwAdAA=";
+
+    fn encode_4d_text(text: &str) -> String {
+        let units: Vec<u16> = text.encode_utf16().collect();
+        let mut bytes = b"RVLB".to_vec();
+        bytes.push(33);
+        bytes.extend((units.len() as u32).to_le_bytes());
+        for unit in units {
+            bytes.extend(unit.to_le_bytes());
+        }
+        BASE64_STANDARD.encode(bytes)
+    }
+
+    #[test]
+    fn parses_4d_text_blob() {
+        assert_eq!(
+            parse_4d_text(DEFAULT_PO_USER_FIELD_1_BLOB).unwrap(),
+            "cust_purchase_field"
+        );
+        assert_eq!(parse_4d_text(DEFAULT_TEXT_BLOB).unwrap(), "default");
+        assert_eq!(parse_4d_text("UlZMQiEAAAAA").unwrap(), "");
+        assert_eq!(
+            parse_4d_text(&encode_4d_text("Numéro de commande")).unwrap(),
+            "Numéro de commande"
+        );
+        // A text array, or a blob cut short, is refused rather than misread
+        assert!(parse_4d_text(DEFAULT_NAME_LABELS_BLOB).is_err());
+        assert!(parse_4d_text("UlZMQiETAAAAYwB1AA==").is_err());
+    }
+
+    #[actix_rt::test]
+    async fn purchase_order_user_field_labels_update_custom_field_names_on_central() {
+        let translator = LegacyFieldLabelsTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "purchase_order_user_field_labels_update_custom_field_names_on_central",
+            MockDataInserts::none(),
+        )
+        .await;
+        seed_central_mapping_custom_fields(&connection).unwrap();
+
+        let record = |item: &str, blob: &str| SyncBufferRow {
+            table_name: "pref_blob".to_string(),
+            record_id: item.to_string(),
+            data: SyncRecordData(serde_json::json!({
+                "ID": item,
+                "item": item,
+                "type": "t",
+                "blob": blob,
+                "store_id": "",
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+        let translate = |record: SyncBufferRow| {
+            translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record,
+                )
+                .unwrap()
+        };
+
+        test_util_set_is_central_server(true);
+        // OG's placeholder keeps the seeded name
+        assert!(matches!(
+            translate(record("purchase_cust1_field", DEFAULT_PO_USER_FIELD_1_BLOB)),
+            PullTranslateResult::Ignored(_)
+        ));
+        let debug = format!(
+            "{:?}",
+            translate(record("purchase_cust2_field", &encode_4d_text("Task code")))
+        );
+        assert!(debug.contains("purchase_order_user_field_2"), "{debug}");
+        assert!(debug.contains("Task code"), "{debug}");
+
+        test_util_set_is_central_server(false);
+        assert!(matches!(
+            translate(record("purchase_cust2_field", &encode_4d_text("Task code"))),
+            PullTranslateResult::Ignored(_)
+        ));
     }
 }
