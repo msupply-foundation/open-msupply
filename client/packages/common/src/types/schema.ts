@@ -1404,11 +1404,6 @@ export type CannotDeleteRequisitionWithLines =
     description: Scalars['String']['output'];
   };
 
-export type CannotEditAdjustedQuantity = PurchaseOrderLineError & {
-  __typename: 'CannotEditAdjustedQuantity';
-  description: Scalars['String']['output'];
-};
-
 export type CannotEditInvoice =
   AddToInboundShipmentFromMasterListErrorInterface &
     AddToOutboundShipmentFromMasterListErrorInterface &
@@ -1444,11 +1439,6 @@ export type CannotEditPurchaseOrder =
       __typename: 'CannotEditPurchaseOrder';
       description: Scalars['String']['output'];
     };
-
-export type CannotEditQuantityBelowReceived = PurchaseOrderLineError & {
-  __typename: 'CannotEditQuantityBelowReceived';
-  description: Scalars['String']['output'];
-};
 
 export type CannotEditRequestedQuantity = PurchaseOrderLineError & {
   __typename: 'CannotEditRequestedQuantity';
@@ -8732,14 +8722,13 @@ export type PurchaseOrderLineFilterInput = {
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
+  receivedLessThanRequested?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
   supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -8747,10 +8736,14 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
+  /** The line's stored total with the order's supplier discount apportioned to it */
+  lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
+  /** The pack price with the order's supplier discount apportioned to the line */
+  pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
@@ -8778,7 +8771,6 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
-  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
@@ -12882,7 +12874,6 @@ export type UpdatePurchaseOrderLineError = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
-  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];

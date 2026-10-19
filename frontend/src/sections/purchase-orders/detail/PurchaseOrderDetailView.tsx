@@ -35,6 +35,7 @@ import {
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  sumBy,
   type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
@@ -107,10 +108,7 @@ import {
 import { formatCurrency } from '@/intl/currency';
 import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
-import {
-  PurchaseOrderLineEditModal,
-  type LineLookup,
-} from './edit-modal/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
 import { Num } from '@/ui/elements/typography/Num';
 
@@ -267,6 +265,7 @@ const PurchaseOrderDetailView: Component = () => {
     }
   );
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const lineCost = (line: Line) => line.lineTotalAfterSupplierDiscount;
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
 
   // ── The whole line set (gates, cascades, the finalise warning) ────────────
@@ -384,30 +383,6 @@ const PurchaseOrderDetailView: Component = () => {
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
-  // A picked item already on the order resolves to its line (OMS-FUN-PO-02.23).
-  // A failed read is reported as such, never mistaken for an item not on the
-  // order.
-  const findLineForItem = async (itemId: string): Promise<LineLookup> => {
-    const onPage = rows().find(line => line.item.id === itemId);
-    if (onPage) return { kind: 'line', line: onPage };
-    const held = lineSet().find(line => line.item.id === itemId);
-    if (!held) return { kind: 'none' };
-    const result = await graphqlFetch(PurchaseOrderDetailLines, {
-      storeId: params.storeId,
-      filter: {
-        id: { equalTo: held.id },
-        purchaseOrderId: { equalTo: params.id },
-      },
-      page: { first: 1 },
-    });
-    if (
-      result.kind !== 'success' ||
-      result.data.purchaseOrderLines.__typename !== 'PurchaseOrderLineConnector'
-    )
-      return { kind: 'failed' };
-    const line = result.data.purchaseOrderLines.nodes[0];
-    return line ? { kind: 'line', line } : { kind: 'none' };
-  };
   // Sent or Finalised: every field on the screen is refused — except the
   // comment, open in every state, and the panel's two post-sending dates,
   // open until Finalised (rules § what may be changed, and when). Mirrored
@@ -641,16 +616,6 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(8),
     },
     {
-      // An ABSENT value until set — blank, not 0, which would be a different
-      // fact (ui-standards/tables.md § absent values).
-      c: { key: 'adjustedNumberOfUnits' },
-      sortKey: 'adjustedNumberOfUnits',
-      header: () => t('label.adjusted-units'),
-      ...getNumberCell(),
-      cell: exactQuantity,
-      size: remToPx(8),
-    },
-    {
       // Written by the shipment, never here.
       c: { key: 'shippedNumberOfUnits' },
       sortKey: 'shippedNumberOfUnits',
@@ -687,15 +652,15 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(7),
     },
     {
-      // The line's STORED total, as the server wrote it — never re-multiplied
-      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
-      // — the page, which is what a paginated table can total; the order's
-      // whole subtotal is the side panel's Subtotal row.
-      c: { accessor: line => line.lineTotal, id: 'lineCost' },
+      // The line's STORED total with the order's supplier discount apportioned
+      // to it, as the server computes it — never re-multiplied here (rules §
+      // pricing and totals). Its footer sums the rows ON SCREEN — the page,
+      // which is what a paginated table can total; the order's whole figures
+      // are the side panel's Subtotal and Final cost rows.
+      c: { accessor: lineCost, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
-      footer: () =>
-        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
+      footer: () => money(sumBy(rows(), lineCost)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -1000,14 +965,13 @@ const PurchaseOrderDetailView: Component = () => {
                   status: status(),
                   currencyCode: node().currency?.code,
                   requestedDeliveryDate: node().requestedDeliveryDate,
+                  supplierDiscountPercentage: node().supplierDiscountPercentage,
                 }}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}
-                canAuthorise={hasPermission('PURCHASE_ORDER_AUTHORISE')}
                 initialLine={editor()?.line}
                 hasNext={hasNextLine}
                 nextLine={nextLine}
-                findLineForItem={findLineForItem}
                 onSaved={refetchAll}
               />
 

@@ -16,11 +16,13 @@ pub fn add_from_purchase_order(
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
 
+    // The order's exchange rate converts PO-currency prices to the store's currency,
+    // and its supplier discount is apportioned to every line it ships
     let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&purchase_order_id)?
         .ok_or(InsertInboundShipmentError::PurchaseOrderDoesNotExist)?;
-    // Exchange rate converts prices from PO currency to store currency
     let exchange_rate = purchase_order.foreign_exchange_rate;
+    let supplier_discount_factor = purchase_order.supplier_discount_factor();
     let donor_id = purchase_order.donor_id;
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
@@ -48,17 +50,21 @@ pub fn add_from_purchase_order(
         let purchase_order_line_stats = purchase_order_line.purchase_order_line_stats_row;
         let purchase_order_line = purchase_order_line.purchase_order_line_row;
 
-        let total_units = purchase_order_line.expected_number_of_units();
+        let total_units = purchase_order_line.requested_number_of_units;
         let remaining_units =
             (total_units - purchase_order_line_stats.shipped_number_of_units).max(0.0);
         let number_of_packs = purchase_order_line.packs_for_units(remaining_units);
 
         let foreign_total = if total_units > 0.0 && number_of_packs > 0.0 {
-            purchase_order_line.line_total * remaining_units / total_units
+            purchase_order_line.line_total * supplier_discount_factor * remaining_units
+                / total_units
         } else {
             0.0
         };
         let local_total = foreign_total * exchange_rate;
+        let cost_price_per_pack = purchase_order_line.price_per_pack_after_discount
+            * supplier_discount_factor
+            * exchange_rate;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -73,8 +79,8 @@ pub fn add_from_purchase_order(
             manufacture_date: None,
             purchase_order_line_id: Some(purchase_order_line.id.clone()),
             pack_size: purchase_order_line.requested_pack_size,
-            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
-            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            cost_price_per_pack,
+            sell_price_per_pack: cost_price_per_pack,
             total_before_tax: local_total,
             total_after_tax: local_total,
             tax_percentage: None,

@@ -50,12 +50,10 @@ import {
   newLineDraft,
   packsEntered,
   packSizeEntered,
-  packsLabelKey,
   PRICE_DECIMALS,
   pricePerUnit,
   repriced,
   requestedDateEntered,
-  showsAdjustedUnits,
   unitsFigure,
   type LineDraft,
   type LineFacts,
@@ -73,9 +71,6 @@ import styles from './PurchaseOrderLineEditModal.module.css';
 
 type Line = PurchaseOrderDetailLineFragment;
 
-export type LineLookup =
-  { kind: 'line'; line: Line } | { kind: 'none' } | { kind: 'failed' };
-
 export interface PurchaseOrderLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -85,20 +80,18 @@ export interface PurchaseOrderLineEditModalProps {
     status: PurchaseOrderStatus;
     currencyCode: string | undefined;
     requestedDeliveryDate: string | null | undefined;
+    supplierDiscountPercentage: number | null;
   };
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;
   /** How many lines the order has — a new line's number is the next. */
   lineCount: number;
-  canAuthorise: boolean;
   /** An existing line → edit mode; omitted → add mode. */
   initialLine?: Line;
   /** Whether a line follows this one in the table's current order. */
   hasNext: (lineId: string) => boolean;
   /** The line after this one in the table's current order, paging if needed. */
   nextLine: (lineId: string) => Promise<Line | undefined>;
-  /** The order's existing line for an item, if any (OMS-FUN-PO-02.23). */
-  findLineForItem: (itemId: string) => Promise<LineLookup>;
   /** A save landed — the parent re-reads the page, the set and the node. */
   onSaved: () => void;
 }
@@ -166,28 +159,15 @@ const LineEditContent = (
   if (props.initialLine)
     seed(factsFromLine(props.initialLine), draftFromLine(props.initialLine));
 
-  // An item already on the order loads its existing line (OMS-FUN-PO-02.23);
-  // otherwise the line it would become (rules § what a new line is born as),
-  // with the item's own figures read live: its stock on hand now and its
-  // units on order across the store's other purchase orders.
+  // A picked item is always a new line, even one already on the order
+  // (OMS-FUN-PO-02.23) — the line it would become (rules § what a new line is
+  // born as), with the item's own figures read live: its stock on hand now and
+  // its units on order across the store's other purchase orders.
   const pickItem = async (item: ItemOption) => {
     const token = ++pickToken;
     const stale = () => disposed || token !== pickToken;
     setLoading(true);
     setErrorMessage(undefined);
-    const lookup = await props.findLineForItem(item.id);
-    if (stale()) return;
-    if (lookup.kind === 'failed') {
-      setLoading(false);
-      setErrorMessage(t('error.unable-to-load-data'));
-      return;
-    }
-    if (lookup.kind === 'line') {
-      setLoading(false);
-      seed(factsFromLine(lookup.line), draftFromLine(lookup.line));
-      packsField.focus();
-      return;
-    }
     const result = await graphqlFetch(PurchaseOrderLineItemFacts, {
       storeId: props.storeId,
       itemId: item.id,
@@ -224,7 +204,6 @@ const LineEditContent = (
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
       addMode: !props.initialLine,
-      canAuthorise: props.canAuthorise,
     })
   );
   const closed = (open: boolean) => !open || saving();
@@ -438,10 +417,10 @@ const LineEditContent = (
                 heading="group"
               >
                 <Show
-                  when={gates().packs}
+                  when={gates().drafting}
                   fallback={
                     <LabelledValue
-                      label={t(packsLabelKey(status()))}
+                      label={t('label.requested-packs')}
                       variant="field"
                       data-testid="packs-value"
                     >
@@ -450,7 +429,7 @@ const LineEditContent = (
                   }
                 >
                   <NumberField
-                    label={t(packsLabelKey(status()))}
+                    label={t('label.requested-packs')}
                     min={0}
                     decimalLimit={10}
                     data-testid="packs-input"
@@ -458,7 +437,7 @@ const LineEditContent = (
                     ref={packsField.ref}
                     value={linePacks(draft()!)}
                     onChange={value =>
-                      patch(packsEntered(status(), draft()!, value ?? 0))
+                      patch(packsEntered(draft()!, value ?? 0))
                     }
                   />
                 </Show>
@@ -482,48 +461,20 @@ const LineEditContent = (
                     disabled={saving()}
                     value={draft()!.requestedPackSize}
                     onChange={value =>
-                      patch(packSizeEntered(status(), draft()!, value ?? 0))
+                      patch(packSizeEntered(draft()!, value ?? 0))
                     }
                   />
                 </Show>
-                <Show
-                  when={showsAdjustedUnits(status())}
-                  fallback={
-                    <LabelledValue
-                      label={t('label.requested-units')}
-                      variant="field"
-                      data-testid="requested-units-value"
-                    >
-                      {unitsFigure(
-                        draft()!.requestedNumberOfUnits,
-                        facts()!.unitName
-                      )}
-                    </LabelledValue>
-                  }
+                <LabelledValue
+                  label={t('label.requested-units')}
+                  variant="field"
+                  data-testid="requested-units-value"
                 >
-                  <LabelledValue
-                    label={t('label.adjusted-units')}
-                    variant="field"
-                    data-testid="adjusted-units-value"
-                  >
-                    {draft()!.adjustedNumberOfUnits == null
-                      ? EMPTY
-                      : unitsFigure(
-                          draft()!.adjustedNumberOfUnits!,
-                          facts()!.unitName
-                        )}
-                  </LabelledValue>
-                  <LabelledValue
-                    label={t('label.originally-requested')}
-                    variant="field"
-                    data-testid="requested-units-value"
-                  >
-                    {unitsFigure(
-                      draft()!.requestedNumberOfUnits,
-                      facts()!.unitName
-                    )}
-                  </LabelledValue>
-                </Show>
+                  {unitsFigure(
+                    draft()!.requestedNumberOfUnits,
+                    facts()!.unitName
+                  )}
+                </LabelledValue>
               </FormSection>
             </InsetPanel>
 
@@ -672,10 +623,11 @@ const LineEditContent = (
                   variant="field"
                   data-testid="total-cost-value"
                 >
-                  {/* A PREVIEW of what the server will store as the line's
-                    total on save (its own rule, packs × the after-discount
-                    price) — the draft has no stored figure yet. */}
-                  {money(projectedLineCost(draft()!))}
+                  {/* A PREVIEW of the line cost the table will show on save
+                    (the server's own rule, packs × the after-discount price,
+                    with the order's supplier discount apportioned) — the draft
+                    has no stored figure yet. */}
+                  {money(projectedLineCost(draft()!, props.order))}
                 </LabelledValue>
               </FormSection>
             </InsetPanel>
