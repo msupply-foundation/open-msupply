@@ -106,7 +106,7 @@ import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
-import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
+import { InboundCostsPanel } from './tabs/InboundCostsPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
@@ -599,13 +599,13 @@ const InboundShipmentDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Financial / Currency / Delivery are PO-linked-only tabs (spec S3 tabs).
+  // Financial / Costs / Delivery are PO-linked-only tabs (spec S3 tabs).
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(isExternal()
       ? [
           { value: 'financial', label: t('label.financial') },
-          { value: 'currency', label: t('label.currency') },
+          { value: 'costs', label: t('label.costs') },
           { value: 'delivery', label: t('label.delivery') },
         ]
       : []),
@@ -1384,8 +1384,8 @@ const InboundShipmentDetailView: Component = () => {
                 <TabPanel value="financial">
                   <InboundFinancialPanel node={node()} rows={rows()} />
                 </TabPanel>
-                <TabPanel value="currency">
-                  <InboundCurrencyPanel
+                <TabPanel value="costs">
+                  <InboundCostsPanel
                     node={node()}
                     disabled={isDisabled()}
                     onSave={saveField}
