@@ -95,6 +95,7 @@ import {
   InternalOrderToolbar,
   type HeaderEditFields,
 } from './InternalOrderToolbar';
+import { intervalAndBufferBehindTarget } from './targetMonths';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
@@ -219,6 +220,10 @@ const InternalOrderDetailView: Component = () => {
     desc: false,
   });
   const [supplierError, setSupplierError] = createSignal<string>();
+  // A refused target change (the store fixes it to its supply interval +
+  // safety buffer, OMS-REG-REPL-17.18) — shown as an error notice beneath the
+  // header cluster until the next target change.
+  const [targetError, setTargetError] = createSignal<string>();
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // The line editor (S4): closed, open in add mode (undefined line), or open on
   // an existing line (edit mode). One signal drives both.
@@ -352,8 +357,6 @@ const InternalOrderDetailView: Component = () => {
   const indicatorNodes = () => gated(indicators) ?? [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
-  const showForecast = () =>
-    prefs()?.displayPopulationBasedForecasting ?? false;
   const showExcess = () => prefs()?.warningForExcessRequest ?? false;
   const showDestination = () =>
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
@@ -496,7 +499,10 @@ const InternalOrderDetailView: Component = () => {
       ...patch,
     });
     if (result.kind === 'saved') mutate(() => result.node);
-    if (result.kind === 'error') setSupplierError(result.message);
+    if (result.kind === 'error') {
+      if (result.field === 'target') setTargetError(result.message);
+      else setSupplierError(result.message);
+    }
   };
 
   const changeSupplier = (supplierId: string) => {
@@ -506,9 +512,11 @@ const InternalOrderDetailView: Component = () => {
   const changeDestination = (customerId: string | null) =>
     void saveField({ destinationCustomerId: { value: customerId } });
   const changeThreshold = (months: number) =>
-    void saveField({ minMonthsOfStock: months });
-  const changeTarget = (months: number) =>
-    void saveField({ maxMonthsOfStock: months });
+    saveField({ minMonthsOfStock: months });
+  const changeTarget = (months: number) => {
+    setTargetError(undefined);
+    return saveField({ maxMonthsOfStock: months });
+  };
 
   const onSent = (node: InternalOrderInfoFragment) => mutate(() => node);
 
@@ -520,8 +528,9 @@ const InternalOrderDetailView: Component = () => {
   // The one MOS formula, shared with the SDK line view (pluginViews) so the
   // figure a plugin reads is the figure this column shows.
   const mos = (line: Line) => lineMonthsOfStock(line);
-  const targetStock = (line: Line) =>
-    line.averageMonthlyConsumption * (info()?.maxMonthsOfStock ?? 0);
+  // Target months × the line's monthly demand, whatever its forecast method
+  // (resolved server-side).
+  const targetStock = (line: Line) => line.targetStock;
   const isExcess = (line: Line) =>
     showExcess() && line.requestedQuantity - line.suggestedQuantity >= 1;
 
@@ -570,10 +579,11 @@ const InternalOrderDetailView: Component = () => {
       );
     if (lineFilter().hideOverMinimum === true) {
       const months = monthsThreshold(node);
+      // Stock against the threshold months of the line's monthly demand.
       lines = lines.filter(
         l =>
-          l.availableStockOnHand < l.averageMonthlyConsumption * months ||
-          (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
+          l.availableStockOnHand < l.forecastMonthlyConsumption * months ||
+          (l.availableStockOnHand === 0 && l.forecastMonthlyConsumption === 0)
       );
     }
     return lines;
@@ -741,7 +751,9 @@ const InternalOrderDetailView: Component = () => {
       // MOS: the raw figure, so the number cell applies display rounding.
       c: { accessor: line => mos(line), id: COL.mos },
       sortKey: 'mos',
-      header: () => t('label.months-of-stock'),
+      // Stock ÷ the line's FORECAST monthly demand, so headed as such beside
+      // the measured AMC column (#12082); the published column id stays `mos`.
+      header: () => t('label.months-of-stock-forecast-demand'),
       ...getCellDefinition('mos'),
     },
     {
@@ -754,21 +766,6 @@ const InternalOrderDetailView: Component = () => {
       ...getCellDefinition('targetStock'),
       cell: dosesCell,
     },
-    // Target stock (population) — gated on the forecasting preference; the
-    // stored forecast rounded up, zero on a forecast-less line.
-    ...(showForecast()
-      ? ([
-          {
-            c: {
-              accessor: line => Math.ceil(line.forecastTotalUnits ?? 0),
-              id: COL.targetStockPopulation,
-            },
-            header: () => t('label.target-stock-population'),
-            ...getCellDefinition('targetStockPopulation'),
-            cell: dosesCell,
-          },
-        ] satisfies Column<Line, SortKey>[])
-      : []),
     {
       c: {
         accessor: line => line.suggestedQuantity,
@@ -1205,6 +1202,13 @@ const InternalOrderDetailView: Component = () => {
                             {t('info.cannot-edit-program-requisition')}
                           </Alert>
                         </Show>
+                        <Show when={targetError()}>
+                          {message => (
+                            <Alert severity="error" compact>
+                              {message()}
+                            </Alert>
+                          )}
+                        </Show>
                       </>
                     }
                   >
@@ -1214,6 +1218,9 @@ const InternalOrderDetailView: Component = () => {
                       editable={editable()}
                       isProgram={isProgram()}
                       showDestination={showDestination()}
+                      canChangeTargetMonths={
+                        prefs()?.canChangeTargetMonthsOfStock
+                      }
                       edit={edit}
                       onChangeSupplier={changeSupplier}
                       supplierError={supplierError()}
@@ -1416,11 +1423,11 @@ const InternalOrderDetailView: Component = () => {
                 requisitionId={node().id}
                 minMonths={node().minMonthsOfStock}
                 maxMonths={node().maxMonthsOfStock}
+                targetIntervalAndBuffer={intervalAndBufferBehindTarget(node())}
                 editable={editable()}
                 canAdd={canAddLines()}
                 showDoses={showDoses()}
                 showPricing={showPricing()}
-                showForecast={showForecast()}
                 showExcess={showExcess()}
                 showExtended={showExtended()}
                 orderInPacks={orderInPacks()}

@@ -1,6 +1,12 @@
 use crate::{
     location::query::{get_available_volume_by_location_type, restricted_location_type_id},
-    requisition::common::check_requisition_row_exists,
+    requisition::{
+        common::check_requisition_row_exists,
+        request_requisition::{
+            ForecastInputs, ForecastMethodUnavailableReason, apply_forecast, order_demand,
+            recompute_ancillary_dependants, suggested_quantity as request_suggested_quantity,
+        },
+    },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -8,8 +14,10 @@ use crate::{
 };
 
 use repository::{
-    ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    EqualFilter, ForecastMethod, LineForecast, ReasonOptionFilter, ReasonOptionRepository,
+    ReasonOptionType, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    StorageConnection,
     requisition_row::{RequisitionStatus, RequisitionType},
 };
 
@@ -19,6 +27,9 @@ pub struct UpdateRequestRequisitionLine {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
+    /// Changing the method recomputes the line's forecast and suggested quantity, and the
+    /// Ancillary-ratio lines it feeds
+    pub forecast_method: Option<ForecastMethod>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,6 +42,7 @@ pub enum UpdateRequestRequisitionLineError {
     UpdatedRequisitionLineDoesNotExist,
     RequisitionDoesNotExist,
     ReasonNotProvided(RequisitionLine),
+    ForecastMethodNotAvailable(ForecastMethodUnavailableReason),
     DatabaseError(RepositoryError),
 }
 
@@ -43,11 +55,23 @@ pub fn update_request_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_line = validate(connection, &ctx.store_id, &input)?;
-            let updated_requisition_line_row = generate(ctx, requisition_line, input)?;
+            let (requisition_line, requisition_row, new_forecast) =
+                validate(connection, &ctx.store_id, &input)?;
+            let method_changed = new_forecast.is_some();
+            let updated_requisition_line_row =
+                generate(ctx, requisition_line, &requisition_row, new_forecast, input)?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
+
+            if method_changed {
+                recompute_ancillary_dependants(
+                    connection,
+                    &ctx.store_id,
+                    &requisition_row,
+                    vec![updated_requisition_line_row.item_id.clone()],
+                )?;
+            }
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?
@@ -61,7 +85,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisitionLine,
-) -> Result<RequisitionLine, OutError> {
+) -> Result<(RequisitionLine, RequisitionRow, Option<LineForecast>), OutError> {
     let requisition_line = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
     let requisition_line_row = requisition_line.clone().requisition_line_row;
@@ -87,6 +111,48 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    // A method change computes the line's new forecast; choosing its current method changes
+    // nothing, so a line keeps a method that has since become unavailable
+    let new_forecast = match &input.forecast_method {
+        Some(method) if *method != requisition_line_row.forecast_method => {
+            let order_lines: Vec<RequisitionLineRow> = RequisitionLineRepository::new(connection)
+                .query_by_filter(
+                    RequisitionLineFilter::new()
+                        .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+                )?
+                .into_iter()
+                .map(|line| line.requisition_line_row)
+                .collect();
+            let order = order_demand(&order_lines);
+            let item_id = &requisition_line_row.item_id;
+            let inputs = ForecastInputs::load(connection, store_id, &[item_id.clone()])?;
+
+            if let Some(reason) = inputs.unavailable_reason(method, item_id, &order) {
+                return Err(OutError::ForecastMethodNotAvailable(reason));
+            }
+            Some(inputs.forecast(
+                method.clone(),
+                item_id,
+                requisition_line_row.average_monthly_consumption,
+                &order,
+            ))
+        }
+        _ => None,
+    };
+
+    // A reason explains a departure from the suggestion the update leaves: the one a
+    // method change in the same update recomputes, else the stored one
+    let suggested_quantity = new_forecast
+        .as_ref()
+        .map(|forecast| {
+            request_suggested_quantity(
+                &requisition_row,
+                forecast.monthly_consumption,
+                requisition_line_row.available_stock_on_hand,
+            )
+        })
+        .unwrap_or(requisition_line_row.suggested_quantity);
+
     if store_preference.use_consumption_and_stock_from_customers_for_internal_orders
         && requisition_row.program_id.is_some()
     {
@@ -101,14 +167,14 @@ fn validate(
         if !reason_options.is_empty()
             && input
                 .requested_quantity
-                .is_some_and(|requested| requested != requisition_line_row.suggested_quantity)
+                .is_some_and(|requested| requested != suggested_quantity)
             && input.option_id.is_none()
         {
             return Err(OutError::ReasonNotProvided(requisition_line));
         }
     }
 
-    Ok(requisition_line)
+    Ok((requisition_line, requisition_row, new_forecast))
 }
 
 fn generate(
@@ -118,13 +184,21 @@ fn generate(
         item_row,
         ..
     }: RequisitionLine,
+    requisition_row: &RequisitionRow,
+    new_forecast: Option<LineForecast>,
     UpdateRequestRequisitionLine {
         id: _,
         requested_quantity: updated_requested_quantity,
         comment: updated_comment,
         option_id,
+        forecast_method: _,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
+    let mut existing = existing;
+    if let Some(forecast) = new_forecast {
+        apply_forecast(&mut existing, forecast, requisition_row);
+    }
+
     // The line records its item's location type only where the store has
     // locations of that type to report volume for (see generate_requisition_lines)
     let (location_type_id, available_volume) = match restricted_location_type_id(&item_row) {
@@ -316,6 +390,7 @@ mod test {
                     requested_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
                     option_id: None,
+                    forecast_method: None,
                 },
             )
             .unwrap();

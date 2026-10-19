@@ -49,11 +49,14 @@ export const FRIDGE_TAG_URL = '/fridge-tag';
 // (server/server/src/print/mod.rs → test_printer).
 export const PRINT_LABEL_TEST_URL = '/print/label-test';
 
-// Staged upload (spec/plugin-management/contract.md § file upload): POST
-// multipart (part "files", one file) → `{ "file-id" }`, which a later GraphQL
-// call consumes — the plugin install today. Session auth only, no permission;
-// the server's form caps the body at 50 MB. Proxied to the backend in dev (see
-// vite.config.ts).
+// Staged upload (spec/plugin-management/contract.md § file upload,
+// spec/manage-reports/contract.md § installing): POST multipart (part
+// "files") → `{ "file-id" }` (hyphenated — the Rust struct is kebab-cased),
+// which a later GraphQL call consumes. Shared by the plugin install and the
+// report-bundle install, so a change here reaches both. Session auth only, no
+// permission, and it answers HTTP 500 — not 401 — when not signed in, so a
+// status check must not read 401 as the signed-out signal. The server's form
+// caps the body at 50 MB. Proxied to the backend in dev (see vite.config.ts).
 export const UPLOAD_URL = '/upload';
 
 // Installed frontend-plugin bundles (spec/plugins/contract.md § discovery &

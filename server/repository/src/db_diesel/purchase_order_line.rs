@@ -32,6 +32,7 @@ pub struct PurchaseOrderLine {
     pub purchase_order_line_row: PurchaseOrderLineRow,
     pub item_row: ItemRow,
     pub purchase_order_line_stats_row: PurchaseOrderLineStatsRow,
+    pub purchase_order_row: PurchaseOrderRow,
 }
 
 #[derive(Clone, Default)]
@@ -368,12 +369,19 @@ impl PurchaseOrderLineFilter {
 }
 
 fn to_domain(
-    (purchase_order_line_row, item_row, _, purchase_order_line_stats_row, _supplier): PurchaseOrderLineJoin,
+    (
+        purchase_order_line_row,
+        item_row,
+        purchase_order_row,
+        purchase_order_line_stats_row,
+        _supplier,
+    ): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,
         purchase_order_line_stats_row,
+        purchase_order_row,
     }
 }
 

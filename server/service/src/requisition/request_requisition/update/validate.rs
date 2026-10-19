@@ -1,9 +1,12 @@
 use super::{OutError, UpdateRequestRequisition};
 use crate::{
     NullableUpdate,
-    requisition::common::{
-        OrderTypeNotFoundError, check_emergency_order_within_max_items_limit,
-        check_requisition_row_exists,
+    requisition::{
+        common::{
+            OrderTypeNotFoundError, check_emergency_order_within_max_items_limit,
+            check_requisition_row_exists,
+        },
+        request_requisition::fixed_target_months_of_stock,
     },
     store_preference::get_store_preferences,
     validate::{
@@ -53,6 +56,15 @@ pub fn validate(
 
     if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    // Program orders, rejected above, take their target from the order type
+    if input
+        .max_months_of_stock
+        .is_some_and(|months| months != requisition_row.max_months_of_stock)
+        && fixed_target_months_of_stock(connection, store_id)?.is_some()
+    {
+        return Err(OutError::CannotChangeTargetMonthsOfStock);
     }
 
     if let (Some(program_id), Some(order_type)) =
