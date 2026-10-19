@@ -122,6 +122,7 @@ pub enum Resource {
     QueryEncounter,
     QueryContactTrace,
     MutateProgram,
+    AllocateProgramNumber,
     MutateEncounter,
     MutateContactTrace,
     // RnR
@@ -184,10 +185,11 @@ pub enum Resource {
 }
 
 impl Resource {
-    /// Whether this resource writes records that only the site hosting the store may author,
-    /// i.e. the tables classed `RemoteOwned` in the sync styles (invoices, requisitions,
-    /// stocktakes, stock lines, purchase orders, R&R forms, ...). Requests for these are rejected
-    /// when the request's store is not active on this site, see [`validate_store_active_on_site`].
+    /// Whether this resource writes records that only the site hosting the store may author:
+    /// the tables classed `RemoteOwned` in the sync styles (invoices, requisitions, stocktakes,
+    /// stock lines, purchase orders, R&R forms, ...), encounters and contact traces, and the
+    /// store's number counters, which don't sync. Requests for these are rejected when the
+    /// request's store is not active on this site, see [`validate_store_active_on_site`].
     ///
     /// Reads, and writes to data central is allowed to edit for any store (assets, locations,
     /// preferences, name properties, ...), return false.
@@ -220,7 +222,14 @@ impl Resource {
             | Resource::MutateVvmStatus
             | Resource::MutatePurchaseOrder
             | Resource::AuthorisePurchaseOrder
-            | Resource::FinalisePurchaseOrder => true,
+            | Resource::FinalisePurchaseOrder
+            // Synced as `Remote` + `Patient`, but edits from other sites reach the store's site
+            // through sync, never through these mutations
+            | Resource::MutateEncounter
+            | Resource::MutateContactTrace
+            // Number counters aren't synced, so another site would hand out duplicate numbers
+            | Resource::AllocatePatientNumber
+            | Resource::AllocateProgramNumber => true,
 
             // Reads, allowed for any store
             Resource::RouteMe
@@ -292,10 +301,7 @@ impl Resource {
             | Resource::MutateDocumentRegistry
             | Resource::MutateJsonSchema
             | Resource::MutatePatient
-            | Resource::AllocatePatientNumber
             | Resource::MutateProgram
-            | Resource::MutateEncounter
-            | Resource::MutateContactTrace
             | Resource::AddAsset
             | Resource::EditAsset
             | Resource::MutateAssetCatalogueItem
@@ -822,6 +828,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateProgram,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+        ]),
+    );
+    // Same permissions as MutateProgram, split out so it can be blocked for stores on other sites
+    map.insert(
+        Resource::AllocateProgramNumber,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
@@ -2026,7 +2040,7 @@ mod permission_validation_test {
                 PermissionType::RequisitionMutate,
                 PermissionType::LocationMutate,
             ];
-            [local_store(), remote_store()]
+            vec![local_store(), remote_store()]
                 .into_iter()
                 .flat_map(|store| {
                     permission_types
@@ -2093,6 +2107,25 @@ mod permission_validation_test {
             Err(AuthError::Denied(AuthDeniedKind::StoreNotActiveOnSite { store_id }))
                 if store_id == remote_store().id
         ));
+
+        // Patient records and unsynced number counters are owned by the store's site too
+        for resource in [
+            Resource::MutateEncounter,
+            Resource::MutateContactTrace,
+            Resource::AllocatePatientNumber,
+            Resource::AllocateProgramNumber,
+        ] {
+            assert!(
+                matches!(
+                    validate(&auth_data, resource.clone(), remote_store()),
+                    Err(AuthError::Denied(
+                        AuthDeniedKind::StoreNotActiveOnSite { .. }
+                    ))
+                ),
+                "{:?}",
+                resource
+            );
+        }
 
         // Reads and centrally editable data still work for remote stores
         assert!(validate(&auth_data, Resource::QueryRequisition, remote_store()).is_ok());
