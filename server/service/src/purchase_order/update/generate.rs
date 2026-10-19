@@ -38,11 +38,6 @@ pub fn generate(
         authorising_officer_2,
         additional_instructions,
         heading_message,
-        agent_commission,
-        document_charge,
-        communications_charge,
-        insurance_charge,
-        freight_charge,
         freight_conditions,
     }: UpdatePurchaseOrderInput,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -86,13 +81,6 @@ pub fn generate(
     updated_order.supplier_agent = supplier_agent.or(updated_order.supplier_agent);
     updated_order.heading_message = heading_message.or(updated_order.heading_message);
     updated_order.freight_conditions = freight_conditions.or(updated_order.freight_conditions);
-
-    updated_order.agent_commission = agent_commission.or(updated_order.agent_commission);
-    updated_order.document_charge = document_charge.or(updated_order.document_charge);
-    updated_order.communications_charge =
-        communications_charge.or(updated_order.communications_charge);
-    updated_order.insurance_charge = insurance_charge.or(updated_order.insurance_charge);
-    updated_order.freight_charge = freight_charge.or(updated_order.freight_charge);
 
     let supplier_discount_percentage = supplier_discount_percentage
         .or(purchase_order

@@ -100,21 +100,6 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
     #[serde(default)]
-    #[serde(deserialize_with = "zero_f64_as_none")]
-    pub agent_commission: Option<f64>,
-    #[serde(default)]
-    #[serde(deserialize_with = "zero_f64_as_none")]
-    pub document_charge: Option<f64>,
-    #[serde(default)]
-    #[serde(deserialize_with = "zero_f64_as_none")]
-    pub communications_charge: Option<f64>,
-    #[serde(default)]
-    #[serde(deserialize_with = "zero_f64_as_none")]
-    pub insurance_charge: Option<f64>,
-    #[serde(default)]
-    #[serde(deserialize_with = "zero_f64_as_none")]
-    pub freight_charge: Option<f64>,
-    #[serde(default)]
     pub supplier_discount_amount: f64,
     #[serde(default)]
     #[serde(deserialize_with = "zero_f64_as_none")]
@@ -201,11 +186,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_1,
             authorising_officer_2,
             additional_instructions,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
             heading_message,
             oms_fields,
@@ -299,11 +279,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
             request_approval_datetime,
             finalised_datetime,
@@ -365,11 +340,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
             request_approval_datetime,
             finalised_datetime,
@@ -406,11 +376,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_2,
             freight_conditions,
             additional_instructions,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
                 order_total_before_discount * (percentage / 100.0)
             } else {

@@ -46,11 +46,6 @@ pub struct UpdateInput {
     pub authorising_officer_2: Option<String>,
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
-    pub agent_commission: Option<f64>,
-    pub document_charge: Option<f64>,
-    pub communications_charge: Option<f64>,
-    pub insurance_charge: Option<f64>,
-    pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
 }
 
@@ -79,11 +74,6 @@ impl UpdateInput {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
         } = self;
 
@@ -111,11 +101,6 @@ impl UpdateInput {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
         }
     }

@@ -55,11 +55,6 @@ pub struct UpdatePurchaseOrderInput {
     pub authorising_officer_2: Option<String>,
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
-    pub agent_commission: Option<f64>,
-    pub document_charge: Option<f64>,
-    pub communications_charge: Option<f64>,
-    pub insurance_charge: Option<f64>,
-    pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
 }
 
@@ -88,11 +83,6 @@ impl UpdatePurchaseOrderInput {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
         } = self;
         let post_sending_dates_allowed = matches!(status, PurchaseOrderStatus::Sent)
@@ -115,11 +105,6 @@ impl UpdatePurchaseOrderInput {
             && authorising_officer_2.is_none()
             && additional_instructions.is_none()
             && heading_message.is_none()
-            && agent_commission.is_none()
-            && document_charge.is_none()
-            && communications_charge.is_none()
-            && insurance_charge.is_none()
-            && freight_charge.is_none()
             && freight_conditions.is_none()
     }
 }

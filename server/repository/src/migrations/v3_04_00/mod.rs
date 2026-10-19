@@ -10,6 +10,7 @@ mod add_not_installed_status_to_asset_status_enum;
 mod add_uploader_to_sync_file_reference;
 mod prescription_request_occupation_prominent;
 mod refresh_who_pqs_catalogue;
+mod remove_charges_from_purchase_order;
 mod update_default_asset_log_reasons;
 
 pub(crate) struct V3_04_00;
@@ -35,6 +36,7 @@ impl Migration for V3_04_00 {
             Box::new(update_default_asset_log_reasons::Migrate),
             Box::new(add_forecast_method_to_requisition_line::Migrate),
             Box::new(add_exclude_principal_wastage_to_ancillary_item::Migrate),
+            Box::new(remove_charges_from_purchase_order::Migrate),
         ]
     }
 }

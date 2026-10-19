@@ -7242,11 +7242,6 @@ type PurchaseOrderNode {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
 	supplierDiscountAmount: Float!
 	supplierDiscountPercentage: Float
@@ -10764,11 +10759,6 @@ input UpdatePurchaseOrderInput {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
 }
 

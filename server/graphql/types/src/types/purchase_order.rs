@@ -144,21 +144,6 @@ impl PurchaseOrderNode {
     pub async fn heading_message(&self) -> &Option<String> {
         &self.row().heading_message
     }
-    pub async fn agent_commission(&self) -> &Option<f64> {
-        &self.row().agent_commission
-    }
-    pub async fn document_charge(&self) -> &Option<f64> {
-        &self.row().document_charge
-    }
-    pub async fn communications_charge(&self) -> &Option<f64> {
-        &self.row().communications_charge
-    }
-    pub async fn insurance_charge(&self) -> &Option<f64> {
-        &self.row().insurance_charge
-    }
-    pub async fn freight_charge(&self) -> &Option<f64> {
-        &self.row().freight_charge
-    }
     pub async fn freight_conditions(&self) -> &Option<String> {
         &self.row().freight_conditions
     }
