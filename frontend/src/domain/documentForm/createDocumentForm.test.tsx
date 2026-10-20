@@ -278,21 +278,47 @@ describe('opening a document pinned to an earlier version', () => {
     });
   });
 
-  it('opens an earlier version of a type no plugin form renders as recorded', async () => {
-    const form = await open(documentPinnedTo(V1, v1, v1Fixture), [], 'none');
-    expect(form.version()).toEqual({ kind: 'unavailable' });
-    expect(form.draft.readOnly()).toBe(true);
-    expect(form.canSave()).toBe(false);
-    expect(form.recorded()?.schema).toBe(v1);
+  describe('a type no plugin form renders', () => {
+    // Fields of the base type only, which the current schema accepts.
+    const baseOnly = {
+      createdDatetime: '2026-07-30T01:30:00.000Z',
+      startDatetime: '2026-07-30T01:30:00.000Z',
+      status: 'VISITED',
+    };
+
+    it('shows a document holding values beyond the base type as recorded', async () => {
+      const form = await open(documentPinnedTo(V1, v1, v1Fixture), [], 'none');
+      expect(form.version()).toEqual({ kind: 'unavailable' });
+      expect(form.draft.readOnly()).toBe(true);
+      expect(form.canSave()).toBe(false);
+      expect(form.recorded()?.schema).toBe(v1);
+    });
+
+    it('shows a document the current schema refuses as recorded', async () => {
+      // No start datetime, which the current schema requires.
+      const { startDatetime: _, ...refused } = baseOnly;
+      const form = await open(documentPinnedTo(V1, v1, refused), [], 'none');
+      expect(form.version()).toEqual({ kind: 'unavailable' });
+      expect(form.recorded()?.data).toEqual(refused);
+    });
+
+    it('opens base fields the current schema accepts in the default form, editable', async () => {
+      const form = await open(documentPinnedTo(V1, v1, baseOnly), [], 'none');
+      expect(form.version()).toEqual({ kind: 'current' });
+      expect(form.draft.readOnly()).toBe(false);
+      expect(form.recorded()).toBeUndefined();
+    });
   });
 
-  it('opens an earlier version as unknown to a form that declares no versions', async () => {
+  it('opens another version than the current as unversioned, read-only, where the plugin form declares no versions', async () => {
     const form = await open(
       documentPinnedTo(V1, v1, v1Fixture),
       [],
       'unversioned'
     );
-    expect(form.version()).toEqual({ kind: 'unknown' });
+    expect(form.version()).toEqual({ kind: 'unversioned' });
+    expect(form.draft.readOnly()).toBe(true);
+    expect(form.canSave()).toBe(false);
     expect(form.recorded()?.schema).toBe(v1);
   });
 
@@ -513,6 +539,7 @@ describe('when the source changes', () => {
         source,
         versioning: type =>
           type === 'DemoEncounter' ? versioning([1]) : undefined,
+        hasPluginForm: type => type === 'DemoEncounter',
       });
       // Together, as a screen derives both from the one record it shows.
       const go = (next: DocumentFormSource, patient = 'patient-1') =>

@@ -101,6 +101,7 @@ const host = async (
       storeId: () => 'store',
       patientId: () => 'patient',
       source: s,
+      hasPluginForm: () => false,
       ...options,
     });
   });

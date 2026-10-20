@@ -21,6 +21,7 @@ import type {
   FormRecordView,
 } from '../plugin-sdk/types';
 import type { Draft } from '../domain/documentForm/draft';
+import type { RecordedDocument } from '../domain/documentForm/createDocumentForm';
 import type { Encounter } from '../plugin-sdk/documents';
 
 /*
@@ -46,6 +47,12 @@ vi.mock('./slotContext', () => ({
       monthsUnderstock: undefined,
     },
   }),
+}));
+
+// The fallback renderer draws DOM; the region only decides where it goes.
+vi.mock('../domain/documentForm/DocumentAsRecorded', () => ({
+  DocumentAsRecorded: (props: { schema: unknown; data: unknown }) =>
+    `as recorded: ${JSON.stringify(props.data)}`,
 }));
 
 import { clearPlugins, registerPlugin } from './registry';
@@ -90,6 +97,7 @@ const mount = (
   version: {
     archived?: () => number | undefined;
     currentSchemaId?: string;
+    recorded?: () => RecordedDocument | undefined;
   } = {}
 ) => {
   let render!: () => unknown;
@@ -104,6 +112,9 @@ const mount = (
       fallback: () => 'default form',
       get archivedVersion() {
         return version.archived?.();
+      },
+      get recorded() {
+        return version.recorded?.();
       },
       currentSchemaId: version.currentSchemaId,
     });
@@ -148,6 +159,47 @@ describe('DocumentFormRegion', () => {
     ]);
     const { render, dispose } = mount('E2EImmunisationEncounter', () => record);
     expect(render()).toBe('default form');
+    dispose();
+  });
+
+  it('renders the fallback renderer in place of the default form for a document as recorded', () => {
+    const { render, dispose } = mount('DemoEncounter', () => record, {
+      recorded: () => ({ schema: {}, data: { ward: 'B' } }),
+    });
+    expect(render()).toBe('as recorded: {"ward":"B"}');
+    dispose();
+  });
+
+  it("renders the fallback renderer in place of the plugin's form, which is never mounted", () => {
+    let mounts = 0;
+    register('demo_program', [
+      encounterForm('DemoEncounter', () => {
+        onMount(() => mounts++);
+        return 'demo form';
+      }),
+    ]);
+    const { render, dispose } = mount('DemoEncounter', () => record, {
+      recorded: () => ({ schema: {}, data: { ward: 'B' } }),
+    });
+    expect(render()).toBe('as recorded: {"ward":"B"}');
+    expect(mounts).toBe(0);
+    dispose();
+  });
+
+  it('goes back to the form when the document is no longer shown as recorded', () => {
+    register('demo_program', [
+      encounterForm('DemoEncounter', () => 'demo form'),
+    ]);
+    const [recorded, setRecorded] = createSignal<RecordedDocument | undefined>({
+      schema: {},
+      data: {},
+    });
+    const { render, dispose } = mount('DemoEncounter', () => record, {
+      recorded,
+    });
+    expect(render()).toBe('as recorded: {}');
+    setRecorded(undefined);
+    expect(render()).toBe('demo form');
     dispose();
   });
 

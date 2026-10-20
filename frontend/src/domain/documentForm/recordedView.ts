@@ -75,6 +75,26 @@ const propertiesOf = (
   return properties;
 };
 
+/*
+ * The one alternative a node wraps, when it is a wrapper: a nullable field
+ * (`anyOf: [{ type: 'string', format: 'date' }, { type: 'null' }]`) is its one
+ * non-null member. An enum written as a list of `const` members is not a
+ * wrapper, and neither is a choice between several types: none of their
+ * members speaks for the field, so a title taken from one would label the
+ * field with a single value.
+ */
+const wrapped = (
+  root: JsonSchema,
+  node: JsonSchema
+): JsonSchema | undefined => {
+  const members = alternatives(root, node).filter(
+    member =>
+      member['type'] !== 'null' && !('const' in member) && !('enum' in member)
+  );
+  const [only] = members;
+  return members.length === 1 ? only : undefined;
+};
+
 const keyword = (
   root: JsonSchema,
   node: JsonSchema,
@@ -82,10 +102,10 @@ const keyword = (
 ): string | undefined => {
   const own = resolveRef(root, node)[name];
   if (typeof own === 'string') return own;
-  for (const member of alternatives(root, node)) {
-    if (typeof member[name] === 'string') return member[name] as string;
-  }
-  return undefined;
+  const inner = wrapped(root, node);
+  return typeof inner?.[name] === 'string'
+    ? (inner[name] as string)
+    : undefined;
 };
 
 const itemsOf = (root: JsonSchema, node: JsonSchema): JsonSchema | undefined =>
@@ -218,4 +238,31 @@ export const recordedView = (schema: unknown, data: unknown): RecordedView => {
     ? entriesOf(root, root, '', data, undeclared)
     : [];
   return { entries, undeclared };
+};
+
+/**
+ * Whether `data` holds a value the schema does not declare: a key the schema
+ * names no property for, or anything inside an object it declares no
+ * properties for (the base types' `extension`, where a deployment keeps its
+ * own fields). The host's default form draws only what the base type declares,
+ * so such a value is one no default form shows.
+ */
+export const holdsBeyondSchema = (schema: unknown, data: unknown): boolean => {
+  const root = asSchema(schema) ?? {};
+  const beyond = (node: JsonSchema | undefined, value: unknown): boolean => {
+    if (isEmpty(value)) return false;
+    if (Array.isArray(value)) {
+      const items = node ? itemsOf(root, node) : undefined;
+      return value.some(item => beyond(items, item));
+    }
+    if (!isObject(value)) return false;
+    const properties = node ? propertiesOf(root, node) : {};
+    if (Object.keys(properties).length === 0) return true;
+    return Object.entries(value).some(
+      ([key, v]) =>
+        !isEmpty(v) &&
+        (!Object.hasOwn(properties, key) || beyond(properties[key], v))
+    );
+  };
+  return beyond(root, data);
 };

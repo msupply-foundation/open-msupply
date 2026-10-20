@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
 import v1Fixture from '../../../plugins/examples/demo_program/forms/DemoEncounter/fixtures/v1.json';
-import { humanise, recordedView, type RecordedEntry } from './recordedView';
+import {
+  holdsBeyondSchema,
+  humanise,
+  recordedView,
+  type RecordedEntry,
+} from './recordedView';
 
 /*
  * The fallback renderer's layout (implementation-plan H12): a document no form
@@ -170,6 +175,48 @@ describe('recordedView', () => {
     expect(view.undeclared).toEqual([]);
   });
 
+  it("never labels a field with the title of one of an enum's members", () => {
+    // An enum written as `const` members, each with its own title: a stored
+    // 'F' must not read as "Male".
+    const schema = {
+      type: 'object',
+      properties: {
+        gender: {
+          oneOf: [
+            { const: 'M', title: 'Male' },
+            { const: 'F', title: 'Female' },
+          ],
+        },
+        referral: {
+          anyOf: [
+            {
+              type: 'object',
+              title: 'Referral details',
+              properties: { by: { type: 'string' } },
+            },
+            { type: 'null' },
+          ],
+        },
+        choice: {
+          oneOf: [
+            { type: 'string', title: 'As text' },
+            { type: 'number', title: 'As number' },
+          ],
+        },
+      },
+    };
+    const view = recordedView(schema, {
+      gender: 'F',
+      referral: { by: 'Dr A' },
+      choice: 'x',
+    });
+    expect(outline(view.entries)).toEqual([
+      ['Gender', 'F'],
+      { 'Referral details': [['By', 'Dr A']] },
+      ['Choice', 'x'],
+    ]);
+  });
+
   it('shows nothing for data that is not an object, and survives no schema', () => {
     expect(recordedView(v1, 'text')).toEqual({ entries: [], undeclared: [] });
     expect(outline(recordedView(undefined, { a: 1 }).entries)).toEqual([
@@ -188,5 +235,52 @@ describe('humanise', () => {
     ['weightKg', 'Weight kg'],
   ])('%s → %s', (key, label) => {
     expect(humanise(key)).toBe(label);
+  });
+});
+
+describe('holdsBeyondSchema', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      contacts: {
+        type: 'array',
+        items: { type: 'object', properties: { phone: { type: 'string' } } },
+      },
+      extension: { type: 'object' },
+    },
+  };
+
+  it('is false for data the schema declares, empty values aside', () => {
+    expect(
+      holdsBeyondSchema(schema, {
+        name: 'A',
+        contacts: [{ phone: '1' }],
+        extension: {},
+        other: '',
+      })
+    ).toBe(false);
+  });
+
+  it('is true for a key the schema does not declare, at any depth', () => {
+    expect(holdsBeyondSchema(schema, { name: 'A', other: 1 })).toBe(true);
+    expect(
+      holdsBeyondSchema(schema, { contacts: [{ phone: '1', fax: '2' }] })
+    ).toBe(true);
+  });
+
+  it('is true for anything inside an object that declares no properties', () => {
+    expect(holdsBeyondSchema(schema, { extension: { ward: 'B' } })).toBe(true);
+  });
+
+  it('follows $ref and allOf, as the base types are emitted', () => {
+    const emitted = {
+      allOf: [{ $ref: '#/definitions/Doc' }],
+      definitions: {
+        Doc: { type: 'object', properties: { a: { type: 'string' } } },
+      },
+    };
+    expect(holdsBeyondSchema(emitted, { a: 'x' })).toBe(false);
+    expect(holdsBeyondSchema(emitted, { a: 'x', b: 'y' })).toBe(true);
   });
 });

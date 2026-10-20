@@ -18,10 +18,13 @@
  * version where there is one, until Edit; otherwise, and after Edit, in the
  * current form with its migrations run on the loaded data, the values they
  * clear held against their paths. A save re-pins it to the current version;
- * closing writes nothing. A document no form can open (a version the plugin
- * does not list, one it lists but cannot bring to the current version, or one
- * on an earlier version of a type no plugin form renders) opens read-only, as
- * recorded, for the fallback renderer (`recorded`; DocumentAsRecorded.tsx).
+ * closing writes nothing. A document no form can open opens read-only, as
+ * recorded, for the fallback renderer (`recorded`; DocumentAsRecorded.tsx):
+ * one pinned to a version the plugin does not list, one it lists but cannot
+ * bring to the current version, one pinned to another version of a form that
+ * declares none, and one on an earlier version of a type no plugin form
+ * renders when it holds values beyond the base type or fails the current
+ * schema (otherwise the host's default form opens it, editable).
  */
 import {
   createEffect,
@@ -57,6 +60,7 @@ import {
 } from './migration';
 import { withoutEmptyNotes } from './notes';
 import { getAt } from './paths';
+import { holdsBeyondSchema } from './recordedView';
 import {
   FormDocumentByName,
   InsertFormEncounter,
@@ -106,18 +110,27 @@ export type DocumentVersion =
   | { kind: 'migrated'; version: number }
   /**
    * Pinned to a version the plugin does not list (a site with a newer plugin
-   * wrote it), or to any but the current one where its form declares no
-   * versions. This and the two below open read-only, as recorded, in the
+   * wrote it). This and the three below open read-only, as recorded, in the
    * fallback renderer.
    */
   | { kind: 'unknown' }
+  /**
+   * Pinned to another version than the current one, where the plugin's form
+   * declares no versions: most likely an earlier one, from before an install
+   * moved the registry entry to a new schema id.
+   */
+  | { kind: 'unversioned' }
   /**
    * Pinned to a version the plugin lists but cannot migrate to the current
    * one: a later one, or the plugin in the browser and the one installed
    * differ.
    */
   | { kind: 'unreachable'; version: number }
-  /** Pinned to an earlier version of a type no plugin form renders. */
+  /**
+   * Pinned to an earlier version of a type no plugin form renders, holding
+   * values beyond the base type or failing the current schema. Without those
+   * the default form opens it.
+   */
   | { kind: 'unavailable' };
 
 /** The document as it was recorded, for the fallback renderer. */
@@ -144,7 +157,10 @@ const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
 
 /** The versions no form opens: shown as recorded, by the fallback renderer. */
 const asRecorded = (v: DocumentVersion): boolean =>
-  v.kind === 'unknown' || v.kind === 'unreachable' || v.kind === 'unavailable';
+  v.kind === 'unknown' ||
+  v.kind === 'unversioned' ||
+  v.kind === 'unreachable' ||
+  v.kind === 'unavailable';
 
 export interface CreateDocumentFormOptions {
   storeId: Accessor<string>;
@@ -169,11 +185,12 @@ export interface CreateDocumentFormOptions {
   versioning?: (documentType: string) => FormVersioning | undefined;
   /**
    * Whether a plugin form renders a document type, versioned or not: a
-   * document on an earlier version of a type none renders has no form that
-   * can open it. Read inside a memo, like `versioning`. Absent, no plugin form
-   * renders any type.
+   * document on an earlier version of a type none renders has no plugin form
+   * to open it. Required, with `versioning` beside it, so a caller cannot
+   * leave one out and have every older document of an unversioned form read
+   * as having no form at all. Read inside a memo, like `versioning`.
    */
-  hasPluginForm?: (documentType: string) => boolean;
+  hasPluginForm: (documentType: string) => boolean;
   /**
    * Takes a save the server refuses as Forbidden, with the permission names
    * it gives, in place of showing it as `saveError`: the screen routes it to
@@ -504,6 +521,27 @@ export const createDocumentForm = <T extends object>(
   // The saved version the user pressed Edit on, leaving its archived form.
   const [editing, setEditing] = createSignal<string>();
 
+  // A document of a type with no plugin form, on another version than the
+  // current: the default form opens it, unless it holds a value that form
+  // does not draw (anything beyond the base type) or one the current schema
+  // would refuse, which an editable form would carry into a save it cannot
+  // make sense of (kdd/custom-forms/specs.md § Forms in the UI). Undecided
+  // until the form library, which holds the base schemas and the validator,
+  // is in.
+  const needsFallback = (
+    doc: FormDocumentFragment,
+    r: FormRegistryFragment
+  ): boolean => {
+    const lib = gated(library);
+    if (!lib) return false;
+    const base = lib.baseSchemaFor(r.category);
+    if (base && holdsBeyondSchema(base.jsonSchema, doc.data)) return true;
+    return (
+      lib.validateDocument(r.formSchemaId, r.jsonSchema as JsonSchema, doc.data)
+        .length > 0
+    );
+  };
+
   const version = createMemo(
     (): DocumentVersion => {
       const doc = document();
@@ -513,9 +551,10 @@ export const createDocumentForm = <T extends object>(
       if (!doc || !r || !pinned || pinned === r.formSchemaId) return CURRENT;
       // A form that declares no versions knows only the current one.
       if (!v) {
-        return options.hasPluginForm?.(r.documentType)
-          ? { kind: 'unknown' }
-          : { kind: 'unavailable' };
+        if (options.hasPluginForm(r.documentType)) {
+          return { kind: 'unversioned' };
+        }
+        return needsFallback(doc, r) ? { kind: 'unavailable' } : CURRENT;
       }
       const at = v.versions.indexOf(pinned) + 1;
       const current = v.versions.indexOf(r.formSchemaId) + 1;

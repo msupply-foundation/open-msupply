@@ -112,6 +112,7 @@ const open = async (
       patientId: () => 'patient-1',
       source,
       extraErrors,
+      hasPluginForm: () => false,
     });
   });
   await vi.waitFor(() => expect(form.status()).toBe('ready'), {
