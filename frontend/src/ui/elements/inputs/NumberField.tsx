@@ -1,6 +1,7 @@
 import {
   batch,
   createEffect,
+  createMemo,
   createSignal,
   on,
   onMount,
@@ -275,11 +276,15 @@ export const NumberField = (props: NumberFieldProps) => {
   // 12,50 in fr, "1 000" → ١٬٠٠٠ in ar), and a decimalLimit/decimalMin change
   // (CurrencyField switching USD → JPY) changes the canonical rendering of an
   // unchanged value. Deferred: the signal's initial text already used the
-  // current locale and constraints.
-  const constraintsKey = () => {
+  // current locale and constraints. Memoised, so only a real change fires it:
+  // a constraint derived from a record (CurrencyField's decimals follow the
+  // record's currency) re-evaluates whenever the record is re-read, and an
+  // unmemoised key would rewrite the text the user is typing on every
+  // refetch — an order re-read after a save put "0" under the caret (#1336).
+  const constraintsKey = createMemo(() => {
     const c = constraints();
     return `${c.min}|${c.max}|${c.decimalLimit}|${c.decimalMin}|${c.noFormatting}`;
-  };
+  });
   createEffect(
     on(
       [locale, constraintsKey],
