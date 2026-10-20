@@ -8,6 +8,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
         name(storeId: $storeId) {
           address1
           address2
+          country
           phone
           email
         }
@@ -17,8 +18,17 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
         code
         address1
         address2
+        country
+        phone
+        email
       }
       number
+      reference
+      createdDatetime
+      requestedDeliveryDate
+      authorisingOfficer1
+      authorisingOfficer2
+      additionalInstructions
       headingMessage
       lines {
         nodes {
@@ -32,6 +42,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           requestedNumberOfUnits
           requestedPackSize
           lineTotalAfterSupplierDiscount
+          pricePerPackAfterSupplierDiscount
           supplierItemCode
           comment
         }

@@ -1,5 +1,10 @@
 import { sortNodes } from '../../../../../standard_reports/utils';
 
+// At least two decimals, up to four, so small pack prices are not rounded away
+function formatPrice(value) {
+  return value.toFixed(4).replace(/0{1,2}$/, '');
+}
+
 function convert_data(queryResponse) {
   let nodes = queryResponse.data.purchaseOrder.lines.nodes;
 
@@ -24,6 +29,7 @@ function convert_data(queryResponse) {
     const lineCost = node.lineTotalAfterSupplierDiscount || 0;
 
     node.lineCost = lineCost.toFixed(2);
+    node.pricePerPack = formatPrice(node.pricePerPackAfterSupplierDiscount || 0);
     node.requestedNumberOfPacks = requestedNumberOfPacks;
   });
 

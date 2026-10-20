@@ -1,5 +1,6 @@
 @media print {
   @page {
+    size: A4 landscape;
     @bottom-right {
       font-family: Tahoma;
       font-size: 8pt;
@@ -10,63 +11,179 @@
   }
 }
 
+body,
+th,
+td {
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
 body > table {
   width: 100%;
   padding: 2em;
 }
 
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: start;
+}
+
 .logo {
   display: block;
-  height: 96px;
+  height: 72px;
 }
 
-.header_image_section,
-.header_supplied_section,
-.body_section,
-.body_total_section {
+.header_section {
   width: 100%;
   border-bottom: 0.5px solid black;
-}
-
-.header_supplied_section {
   font-family: Tahoma;
   font-size: 8pt;
-  border-bottom: 0.5px solid black;
-  padding-top: 1pt;
 }
 
-.header_image_section {
-  width: 100%;
-  font-size: 8pt;
-  border-bottom: 0.5px solid black;
-  padding-top: 8pt;
+.header_section td {
+  vertical-align: top;
+  padding-bottom: 6pt;
+}
+
+.header_title {
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-size: 24pt;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
-.header-space-between {
-  display: flex;
-  justify-content: space-between;
-}
-.heading_message {
+.header_number {
   font-family: Tahoma;
+  font-size: 10pt;
+  font-weight: normal;
+  text-transform: none;
+}
+
+.header_logo {
+  text-align: end;
+}
+
+.header_logo .logo {
+  display: inline-block;
+}
+
+.heading_message {
   font-size: 10pt;
   text-align: center;
   padding: 6pt 0;
 }
 
-.body_column_label th {
-  border-bottom: 0.5px solid black;
-  text-align: start;
+.boxes,
+.details,
+.lines {
+  width: 100%;
+  margin-top: 10pt;
 }
 
-.body_column_label th,
-.body_value td {
-  font-family: Tahoma;
-  font-size: 8pt;
+.boxes th,
+.details th,
+.lines th {
+  background: #333;
+  color: white;
+  padding: 3pt 4pt;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.boxes td,
+.details td {
+  border: 0.5px solid black;
+  padding: 4pt;
+  vertical-align: top;
+}
+
+.boxes th,
+.boxes td {
+  width: calc(100% / 3);
+}
+
+.details th,
+.details td {
+  width: calc(100% / 3);
+}
+
+.details td {
+  height: 10pt;
+}
+
+.lines td {
+  padding: 3pt 4pt;
+  vertical-align: top;
+}
+
+.lines tbody.line {
+  border-bottom: 0.5px solid #999;
+  page-break-inside: avoid;
+}
+
+.lines .wide {
+  width: 30%;
+}
+
+.lines .number {
+  text-align: end;
+}
+
+.lines tr.comment td {
+  padding-top: 0;
+  font-style: italic;
+  color: #444;
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20pt;
+  margin-top: 12pt;
+  page-break-inside: avoid;
+}
+
+.instructions {
+  flex: 1;
+}
+
+.instructions_text {
+  white-space: pre-wrap;
+  margin-top: 2pt;
+}
+
+.totals td {
+  padding: 2pt 4pt;
+  text-align: end;
+}
+
+.totals td:first-child {
+  font-weight: bold;
+}
+
+.totals .grand_total td {
+  border-top: 0.5px solid black;
+  border-bottom: 0.5px solid black;
+}
+
+.signatures {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 1fr;
+  gap: 20pt 30pt;
+  margin-top: 40pt;
+  page-break-inside: avoid;
+}
+
+.signature_line {
+  border-bottom: 0.5px solid black;
+  height: 24pt;
+  margin-bottom: 2pt;
 }
 
 .watermark {
-  font-family: Tahoma;
   font-size: 60pt;
   position: fixed;
   top: 25%;
@@ -77,19 +194,4 @@ body > table {
   pointer-events: none;
   white-space: nowrap;
   user-select: none;
-}
-
-.right-aligned-table {
-  font-family: Tahoma;
-  font-size: 8pt;
-  text-align: right;
-  border-spacing: 20pt 0; /* Adds horizontal space between columns */
-  margin-inline-start: auto;
-  margin-inline-end: 0; /* Aligns table to the right */
-  padding: 0;
-  padding-top: 20pt;
-}
-/* Make left column of right-aligned-table bold */
-.right-aligned-table td:first-child {
-  font-weight: bold;
 }
