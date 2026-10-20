@@ -121,11 +121,14 @@ export type DocumentVersion =
    */
   | { kind: 'unversioned' }
   /**
-   * Pinned to a version the plugin lists but cannot migrate to the current
-   * one: a later one, or the plugin in the browser and the one installed
-   * differ.
+   * Any document of a type whose plugin form's newest version is not the
+   * registry entry's current one: the plugin in the browser and the one
+   * installed differ, as while a newer install reaches this site by sync or
+   * until a reload loads it. No version can be trusted then, and a save would
+   * pin data written for one version to the other's schema id, so a saved
+   * document is shown as recorded and a new one's form is read-only.
    */
-  | { kind: 'unreachable'; version: number }
+  | { kind: 'outOfStep' }
   /**
    * Pinned to an earlier version of a type no plugin form renders, holding
    * values beyond the base type or failing the current schema. Without those
@@ -151,7 +154,7 @@ const CURRENT: DocumentVersion = { kind: 'current' };
 
 const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
   a.kind === b.kind &&
-  (a.kind === 'archived' || a.kind === 'migrated' || a.kind === 'unreachable'
+  (a.kind === 'archived' || a.kind === 'migrated'
     ? a.version === (b as typeof a).version
     : true);
 
@@ -159,8 +162,20 @@ const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
 const asRecorded = (v: DocumentVersion): boolean =>
   v.kind === 'unknown' ||
   v.kind === 'unversioned' ||
-  v.kind === 'unreachable' ||
+  v.kind === 'outOfStep' ||
   v.kind === 'unavailable';
+
+/**
+ * Whether a type's plugin form and its registry entry name different current
+ * versions (sdk-contract § versions): none of its documents can be edited or
+ * started then.
+ */
+export const isOutOfStep = (
+  versioning: FormVersioning | undefined,
+  registry: Pick<FormRegistryFragment, 'formSchemaId'>
+): boolean =>
+  versioning !== undefined &&
+  versioning.versions.at(-1) !== registry.formSchemaId;
 
 export interface CreateDocumentFormOptions {
   storeId: Accessor<string>;
@@ -246,8 +261,9 @@ export interface DocumentForm<T> {
   version: Accessor<DocumentVersion>;
   /**
    * The document as it was recorded, while no form can open it (`version` is
-   * unknown, unreachable or unavailable): the body renders it through the
-   * fallback renderer in place of any form.
+   * unknown, unversioned, outOfStep or unavailable): the body renders it
+   * through the fallback renderer in place of any form. Undefined for a new
+   * document, which has no record.
    */
   recorded: Accessor<RecordedDocument | undefined>;
   /** Leaves an archived form for the current one, migrating the document. */
@@ -547,6 +563,8 @@ export const createDocumentForm = <T extends object>(
       const doc = document();
       const r = registry();
       const v = versioning();
+      // First, and for a new document too: out of step, no version holds.
+      if (r && isOutOfStep(v, r)) return { kind: 'outOfStep' };
       const pinned = doc?.schema?.id;
       if (!doc || !r || !pinned || pinned === r.formSchemaId) return CURRENT;
       // A form that declares no versions knows only the current one.
@@ -556,12 +574,10 @@ export const createDocumentForm = <T extends object>(
         }
         return needsFallback(doc, r) ? { kind: 'unavailable' } : CURRENT;
       }
+      // In step, the current version is the last listed, so any other listed
+      // one is earlier.
       const at = v.versions.indexOf(pinned) + 1;
-      const current = v.versions.indexOf(r.formSchemaId) + 1;
       if (at === 0) return { kind: 'unknown' };
-      if (current === 0 || at > current) {
-        return { kind: 'unreachable', version: at };
-      }
       if (v.archived.includes(at) && editing() !== doc.id) {
         return { kind: 'archived', version: at };
       }

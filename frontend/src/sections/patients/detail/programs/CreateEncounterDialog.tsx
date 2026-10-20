@@ -12,7 +12,11 @@ import { PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
 import { createFormValidation } from '../../../../ui/layout/Form/formValidation';
 import { ClinicianSelect, type Clinician } from '../../../../domain/clinician';
 import type { Encounter } from '../../../../plugin-sdk/documents';
-import { persistDocument } from '../../../../domain/documentForm/createDocumentForm';
+import {
+  isOutOfStep,
+  persistDocument,
+} from '../../../../domain/documentForm/createDocumentForm';
+import { documentFormVersioning } from '../../../../plugins/documentFormSlot';
 import { withFirstNoteText } from '../../../../domain/documentForm/notes';
 import type { FormRegistryFragment } from '../../../../domain/documentForm/documentForm.generated';
 
@@ -85,6 +89,17 @@ const CreateEncounterBody = (
     const registry = props.registries.find(r => r.id === registryId());
     const start = startDatetime();
     if (!validation.valid() || !registry || !start) return;
+    // The encounter's form could not open what this would write (the form
+    // host's outOfStep), so it is not started.
+    if (
+      isOutOfStep(
+        documentFormVersioning('encounter.form', registry.documentType),
+        registry
+      )
+    ) {
+      setSaveError(t('messages.document-form-out-of-step'));
+      return;
+    }
     const now = new Date().toISOString();
     const user = authUser();
     const c = clinician();

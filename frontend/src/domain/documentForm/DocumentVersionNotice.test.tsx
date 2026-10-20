@@ -97,10 +97,7 @@ describe('DocumentVersionNotice', () => {
   it.each([
     [{ kind: 'unknown' } as const, 'messages.document-unknown-version'],
     [{ kind: 'unversioned' } as const, 'messages.document-unversioned-version'],
-    [
-      { kind: 'unreachable', version: 3 } as const,
-      'messages.document-unreachable-version 3',
-    ],
+    [{ kind: 'outOfStep' } as const, 'messages.document-form-out-of-step'],
     [{ kind: 'unavailable' } as const, 'messages.document-form-unavailable'],
   ])(
     'warns, with its own message and no Edit, for a document no form can open (%o)',

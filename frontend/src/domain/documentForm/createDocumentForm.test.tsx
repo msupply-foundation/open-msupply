@@ -261,23 +261,6 @@ describe('opening a document pinned to an earlier version', () => {
     expect(graphqlFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('opens a version the plugin cannot migrate to the current one as recorded', async () => {
-    // The plugin in the browser lists v1 and a v3; the server's entry is on
-    // v2, which it does not list, so v1 has no migration path to it.
-    const unreachable = await open(documentPinnedTo(V1, v1, v1Fixture), [], {
-      ...versioning([]),
-      versions: [V1, 'demo_program_DemoEncounter_v3'],
-    });
-    expect(unreachable.version()).toEqual({ kind: 'unreachable', version: 1 });
-    expect(unreachable.draft.readOnly()).toBe(true);
-    expect(unreachable.canSave()).toBe(false);
-    expect(unreachable.kept()).toEqual([]);
-    // Shown as stored, not migrated: the weight is still where v1 put it.
-    expect(unreachable.recorded()?.data).toMatchObject({
-      extension: { demo: { weightKg: 68 } },
-    });
-  });
-
   describe('a type no plugin form renders', () => {
     // Fields of the base type only, which the current schema accepts.
     const baseOnly = {
@@ -339,6 +322,97 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.draft.readOnly()).toBe(false);
     expect(form.canSave()).toBe(false);
     expect(form.recorded()).toBeUndefined();
+  });
+});
+
+/*
+ * Out of step (OMS-REG-PLG-05.27): the plugin form's newest version and the
+ * registry entry's current one differ, either way round. No document of the
+ * type opens editable, whatever it is pinned to, and none is started.
+ */
+describe('a type whose plugin form and registry entry are out of step', () => {
+  const V3 = 'demo_program_DemoEncounter_v3_test';
+  // The registry's v2 is newer than the plugin in the browser.
+  const pluginBehind: FormVersioning = {
+    versions: [V1],
+    migrations: [],
+    archived: [],
+  };
+  // The plugin in the browser has a v3 the registry has not moved to.
+  const registryBehind: FormVersioning = {
+    ...versioning([]),
+    versions: [V1, V2, V3],
+  };
+  const notes = { extension: { demo: { notes: 'Seen' } } };
+
+  it.each([
+    [
+      'the plugin is behind, on its newest version',
+      pluginBehind,
+      V1,
+      v1,
+      v1Fixture,
+    ],
+    [
+      "the plugin is behind, on the registry's version",
+      pluginBehind,
+      V2,
+      v2,
+      notes,
+    ],
+    [
+      "the registry is behind, on the registry's version",
+      registryBehind,
+      V2,
+      v2,
+      notes,
+    ],
+    [
+      "the registry is behind, on the plugin's newest version",
+      registryBehind,
+      V3,
+      v2,
+      notes,
+    ],
+  ])(
+    'shows a document as recorded, read-only, where %s',
+    async (_, pluginForm, pinned, jsonSchema, data) => {
+      const form = await open(
+        documentPinnedTo(pinned, jsonSchema, data),
+        [],
+        pluginForm
+      );
+      expect(form.version()).toEqual({ kind: 'outOfStep' });
+      expect(form.draft.readOnly()).toBe(true);
+      expect(form.canSave()).toBe(false);
+      expect(form.kept()).toEqual([]);
+      // As stored, not migrated.
+      expect(form.recorded()).toEqual({ schema: jsonSchema, data });
+      expect(await form.save()).toBeUndefined();
+      expect(graphqlFetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('starts no new document', async () => {
+    const form = createRoot(d => {
+      dispose = d;
+      return createDocumentForm<Encounter>({
+        storeId: () => 'store',
+        patientId: () => 'patient',
+        source: () => ({ kind: 'new', registry, data: v1Fixture }),
+        versioning: () => pluginBehind,
+        hasPluginForm: () => true,
+      });
+    });
+    await vi.waitFor(() => expect(form.status()).toBe('ready'), {
+      timeout: 5000,
+    });
+    expect(form.version()).toEqual({ kind: 'outOfStep' });
+    expect(form.draft.readOnly()).toBe(true);
+    expect(form.canSave()).toBe(false);
+    expect(form.recorded()).toBeUndefined();
+    expect(await form.save()).toBeUndefined();
+    expect(graphqlFetch).not.toHaveBeenCalled();
   });
 });
 
