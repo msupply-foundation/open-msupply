@@ -31,7 +31,7 @@ import type {
   EncounterListVariables,
   EncounterListResult,
 } from './encounters.generated';
-import { filterFields, type EncounterFilter } from './listFilters';
+import { filterFields, shownFilter, type EncounterFilter } from './listFilters';
 
 // The global encounter list (spec/encounters/ui-surface.md S1): the standard
 // list screen over `encounters`, across every patient and program the user
@@ -66,9 +66,11 @@ const EncountersList: Component = () => {
 
   const tableConfig = createTableConfig({ tableId: 'encounters' });
 
+  const filter = createMemo(() => shownFilter(query().filter));
+
   const variables = createMemo<EncounterListVariables>(() => ({
     storeId: params.storeId,
-    filter: stripEmpty(query().filter),
+    filter: stripEmpty(filter()),
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
   }));
@@ -146,7 +148,7 @@ const EncountersList: Component = () => {
         filters={
           <FilterBar
             filters={filterFields()}
-            filter={query().filter}
+            filter={filter()}
             onChange={onFilterChange}
           />
         }

@@ -25,10 +25,19 @@ const isShownStatus = (
   value: string | null | undefined
 ): value is ShownStatus => STATUSES.some(status => status === value);
 
-// A status carried in from a URL that the list never offers reads as none.
 const shownStatus = (filter: EncounterFilter): ShownStatus | '' => {
   const status = filter.status?.equalTo;
   return isShownStatus(status) ? status : '';
+};
+
+/**
+ * The filter with any status the list never offers dropped, so a URL carrying
+ * one lists every encounter, not none: the server answers a filter on Deleted
+ * with nothing (spec/encounters/contract.md § who sees which encounters).
+ */
+export const shownFilter = (filter: EncounterFilter): EncounterFilter => {
+  const { status, ...rest } = filter;
+  return status && !isShownStatus(status.equalTo) ? rest : filter;
 };
 
 const FILTERS: Filter<EncounterFilter>[] = constructFilters<EncounterFilter>({
