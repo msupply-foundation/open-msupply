@@ -965,6 +965,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     markedItemId() === item()?.id &&
     lacksBatchOrExpiry(b);
   const markedCount = () => rows().filter(batchMarked).length;
+  // What a marked batch's badge says it has no value for.
+  const missingLabel = (b: DraftBatch) =>
+    batchIsBlank(b) && expiryIsBlank(b)
+      ? t('label.no-batch-or-expiry-date')
+      : batchIsBlank(b)
+        ? t('label.no-batch')
+        : t('label.no-expiry-date');
   const enterMissing = () => {
     if (!pendingSave()) return; // closed by Continue, not by "enter"
     setPendingSave(undefined);
@@ -1084,7 +1091,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.batch}
             warning={
               batchMarked(b) && batchIsBlank(b)
-                ? t('messages.enter-a-batch')
+                ? t('messages.no-batch-entered')
                 : undefined
             }
             warningTestId="batch-warning"
@@ -1327,7 +1334,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.expiryDate}
             warning={
               batchMarked(b) && expiryIsBlank(b)
-                ? t('messages.enter-an-expiry-date')
+                ? t('messages.no-expiry-date-entered')
                 : undefined
             }
             warningTestId="expiry-warning"
@@ -1771,15 +1778,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
-    // The card's "Needs batch or expiry" badge (OMS-REG-REPL-09.35); the row
-    // layout says it with the row tint and accent instead. Built by hand, as
-    // the stocktake editor's "Needs a reason" badge and for its reasons: the
-    // state follows the editable draft store, which a cached accessor value
-    // would miss, and getFlagCell's marker would shift the row actions sharing
-    // this badge slot every time a batch was marked or cleared.
+    // The card's badge naming what the batch has no value for — "No batch",
+    // "No expiry date" or both (OMS-REG-REPL-09.35). Stated as a fact rather
+    // than asked for, since neither is required. The row layout says it with
+    // the row tint and accent instead. Built by hand, as the stocktake
+    // editor's "Needs a reason" badge and for its reasons: the state follows
+    // the editable draft store, which a cached accessor value would miss, and
+    // getFlagCell's marker would shift the row actions sharing this badge
+    // slot every time a batch was marked or cleared.
     {
       c: { id: 'missingBatchOrExpiry' },
-      header: () => t('label.needs-batch-or-expiry'),
+      header: () => t('label.no-batch-or-expiry-date'),
       meta: {
         headerPosition: 'badge',
         hideOnTable: true,
@@ -1788,10 +1797,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       cell: info => (
         <Show when={batchMarked(info.row.original)}>
           <StatusBadge
-            label={t('label.needs-batch-or-expiry')}
+            label={missingLabel(info.row.original)}
             tone="warning"
             icon={<AlertTriangleIcon />}
-            testId="needs-batch-or-expiry-badge"
+            testId="missing-batch-or-expiry-badge"
           />
         </Show>
       ),
@@ -1970,7 +1979,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             <Show when={markedCount() > 0}>
               <Alert severity="warning" testId="batch-expiry-summary">
                 {tPlural(
-                  'messages.batches-need-batch-or-expiry',
+                  'messages.batches-without-batch-or-expiry',
                   markedCount()
                 )}
               </Alert>
