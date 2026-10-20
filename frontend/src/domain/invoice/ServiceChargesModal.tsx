@@ -1,5 +1,12 @@
 import { generateUUID } from '../../uuid';
-import { createResource, createSignal, Show, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  on,
+  Show,
+  type JSX,
+} from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
@@ -75,12 +82,22 @@ export interface ServiceChargesModalProps {
   save: (batch: ServiceChargeBatch) => Promise<ServiceChargeSaveResult>;
   /** Open with a new charge already added (the host's Add-charge action). */
   addOnOpen?: boolean;
+  /** The store's service items if the host has them; else fetched on open. */
+  serviceItems?: ServiceItem[];
 }
 
 export type ServiceChargeSaveResult =
   { ok: true } | { ok: false; message?: string };
 
-type ServiceItem = ServiceItemsResult['items']['nodes'][number];
+export type ServiceItem = ServiceItemsResult['items']['nodes'][number];
+
+const fetchServiceItems = async (storeId: string): Promise<ServiceItem[]> => {
+  const result = await graphqlFetch(ServiceItems, { storeId });
+  return result.kind === 'success' &&
+    result.data.items.__typename === 'ItemConnector'
+    ? result.data.items.nodes
+    : [];
+};
 
 const defaultOf = (items: ServiceItem[]): ServiceItem | undefined =>
   items.find(item => item.code === 'service') ?? items[0];
@@ -109,37 +126,41 @@ const ServiceChargesContent = (
   // store's service items (the Name lookup's options). The modal mounts fresh
   // each open (the <Show> wrapper), so this never refetches under the user.
   const [seed] = createResource(async () => {
-    const [charges, itemsResult] = await Promise.all([
+    const [charges, items] = await Promise.all([
       props.fetchCharges(),
-      graphqlFetch(ServiceItems, { storeId: props.storeId }),
+      props.serviceItems ?? fetchServiceItems(props.storeId),
     ]);
-    setDraft(
-      (charges ?? []).map(charge => ({
-        id: charge.id,
-        isNew: false,
-        deleted: false,
-        itemId: charge.itemId,
-        name: charge.name,
-        totalBeforeTax: charge.totalBeforeTax,
-        taxPercentage: charge.taxPercentage,
-        note: charge.note ?? '',
-      }))
-    );
-    const items =
-      itemsResult.kind === 'success' &&
-      itemsResult.data.items.__typename === 'ItemConnector'
-        ? itemsResult.data.items.nodes
-        : [];
-    const item = defaultOf(items);
-    if (props.addOnOpen && item && !props.disabled) addCharge(item);
-    return items;
+    return { charges: charges ?? [], items };
   });
+  // Seeding writes stay out of the fetcher; the seed resolves once per open.
+  createEffect(
+    on(
+      () => gated(seed),
+      seeded => {
+        if (!seeded) return;
+        setDraft(
+          seeded.charges.map(charge => ({
+            id: charge.id,
+            isNew: false,
+            deleted: false,
+            itemId: charge.itemId,
+            name: charge.name,
+            totalBeforeTax: charge.totalBeforeTax,
+            taxPercentage: charge.taxPercentage,
+            note: charge.note ?? '',
+          }))
+        );
+        const item = defaultOf(seeded.items);
+        if (props.addOnOpen && item && !props.disabled) addCharge(item);
+      }
+    )
+  );
   // Read via gated, never seed() directly: this accessor is reached
   // from headerActions' Add-charge `disabled` WHILE the seed is pending, and a
   // pending direct read suspends the host view's route <Suspense> — tearing
   // the side panel out from under the opening modal (kdd/solid-reactivity-
   // pitfalls › No remounts on interaction; confirmed with detect-remounts).
-  const serviceItems = () => gated(seed) ?? [];
+  const serviceItems = () => gated(seed)?.items ?? [];
   // The default for a NEW charge: the "service" item, else the first (the old
   // client's default-service-item rule).
   const defaultServiceItem = () => defaultOf(serviceItems());

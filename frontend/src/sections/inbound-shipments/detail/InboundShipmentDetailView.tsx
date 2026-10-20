@@ -110,11 +110,11 @@ import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCostsPanel } from './tabs/InboundCostsPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
+import { InboundServiceChargesPanel } from './tabs/InboundServiceChargesPanel';
 import {
-  InboundServiceChargesPanel,
+  ServiceItems,
   type ServiceChargesEditor,
-} from './tabs/InboundServiceChargesPanel';
-import { ServiceItems } from '../../../domain/invoice';
+} from '../../../domain/invoice';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
 import { CaptureWindow } from './scan/CaptureWindow';
 import { createCaptureWindow } from './scan/createCaptureWindow';
@@ -1469,7 +1469,7 @@ const InboundShipmentDetailView: Component = () => {
                   invoiceId={node().id}
                   isExternal={isExternal()}
                   disabled={isDisabled()}
-                  configured={serviceConfigured()}
+                  serviceItems={gated(serviceItems)}
                   editor={serviceEditor()}
                   onEditorChange={setServiceEditor}
                   onChanged={() => void refetchInfo()}

@@ -40,10 +40,11 @@ const withCode = (label: string, code: string): string =>
 // column is the price for ONE pack, never quantity × price. The two Line total
 // columns are the line's STORED totals (contract → Financial & Delivery tab
 // derivation). Every money column names its currency in the header; the PO
-// currency and the store's home (local) currency are distinct columns. The PO price columns (before discount,
-// discount %, after discount) show on every shipment so a PO line discount is
-// visible on the receipt; the local-cost and PO-currency line total columns
-// appear only when the shipment is in a foreign currency.
+// currency and the store's home (local) currency are distinct columns. The PO
+// price columns (before discount, discount %, after discount) show on every
+// shipment so a PO line discount is visible on the receipt; the local-cost and
+// PO-currency line total columns appear only when the shipment is in a foreign
+// currency.
 //
 // The line-total columns carry summed footers; the Name column's footer
 // holds the "Total" label. Rows are sorted by PO line number so a PO line's
