@@ -23,10 +23,22 @@ describe("Test all", () => {
       insuranceCharge: null,
       freightCharge: null,
       foreignExchangeRate: 2,
+      lines: {
+        nodes: [
+          {
+            lineNumber: 1,
+            requestedNumberOfUnits: 100,
+            requestedPackSize: 2,
+            lineTotalAfterSupplierDiscount: 7.5,
+          },
+        ],
+      },
     });
 
     const po = convert_data(input).data.purchaseOrder;
 
+    expect(po.lines.nodes[0].lineCost).toBe("7.50");
+    expect(po.lines.nodes[0].requestedNumberOfPacks).toBe(50);
     expect(po.additionalFees).toBe(2);
     expect(po.totalCost).toBe(9.5);
     expect(po.estimatedCost).toBe(19);

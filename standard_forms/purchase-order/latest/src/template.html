@@ -65,7 +65,7 @@
   </tr>
   <tr excel-type="total-row">
     <td>{{ t(k="label.exchange-rate", f="Exchange rate")}}:</td>
-    <td>{{ data.purchaseOrder.foreignExchangeRate | default(value="") }} {{ data.purchaseOrder.currency.code
+    <td>1 {{ data.purchaseOrder.currency.code }} = {{ data.purchaseOrder.foreignExchangeRate | default(value="") }} {{ data.currencies.nodes[0].code
       }}
     </td>
   </tr>
