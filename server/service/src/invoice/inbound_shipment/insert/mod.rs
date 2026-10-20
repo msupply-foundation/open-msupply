@@ -1035,4 +1035,94 @@ mod test {
             "a service already on another shipment is not seeded again"
         );
     }
+
+    /// On a home-currency order the seeded service line carries no foreign price.
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_seeds_home_currency_service_line() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "home_service_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn po() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "home_service_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                foreign_exchange_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_seeds_home_currency_service_line",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![NameStoreJoinRow {
+                    id: "home_service_supplier_join".to_string(),
+                    name_id: supplier().id,
+                    store_id: mock_store_a().id,
+                    name_is_supplier: true,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po())
+            .unwrap();
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&PurchaseOrderLineRow {
+                id: "home_service_po_line".to_string(),
+                purchase_order_id: po().id,
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_service_item().id,
+                requested_pack_size: 1.0,
+                requested_number_of_units: 1.0,
+                price_per_pack_after_discount: 25.0,
+                line_total: 25.0,
+                status: PurchaseOrderLineStatus::Sent,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        service_provider
+            .invoice_service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "home_service_shipment".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some(po().id),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id("home_service_shipment")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        let service = &lines[0];
+        assert_eq!(service.r#type, InvoiceLineType::Service);
+        assert_eq!(
+            service.purchase_order_line_id,
+            Some("home_service_po_line".to_string())
+        );
+        assert_eq!(service.foreign_currency_price_before_tax, None);
+        assert_eq!(service.total_before_tax, 25.0);
+        assert_eq!(service.total_after_tax, 25.0);
+    }
 }

@@ -1,9 +1,12 @@
 use crate::invoice::inbound_shipment::InsertInboundShipmentError;
+use crate::invoice_line::inbound_shipment_service_line::{
+    InsertInboundShipmentServiceLine, generate_inbound_shipment_service_line,
+};
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
-    ItemType, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineStatus,
-    PurchaseOrderRowRepository,
+    InvoiceRowRepository, ItemType, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
+    PurchaseOrderLineStatus, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -25,6 +28,9 @@ pub fn add_from_purchase_order(
     let exchange_rate = purchase_order.foreign_exchange_rate;
     let supplier_discount_factor = purchase_order.supplier_discount_factor();
     let donor_id = purchase_order.donor_id;
+    let invoice_currency_id = InvoiceRowRepository::new(connection)
+        .find_one_by_id(&invoice_id)?
+        .and_then(|invoice| invoice.currency_id);
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -67,20 +73,22 @@ pub fn add_from_purchase_order(
                 continue;
             }
             // No supplier discount on a service line
-            let foreign_total = purchase_order_line.line_total;
-            let local_total = foreign_total * exchange_rate;
+            let service_line = generate_inbound_shipment_service_line(
+                connection,
+                InsertInboundShipmentServiceLine {
+                    id: uuid(),
+                    invoice_id: invoice_id.clone(),
+                    item_id: Some(item.id.clone()),
+                    total_before_tax: purchase_order_line.line_total * exchange_rate,
+                    ..Default::default()
+                },
+                item,
+                invoice_currency_id.clone(),
+                &exchange_rate,
+            )?;
             invoice_line_row_repository.upsert_one(&InvoiceLineRow {
-                id: uuid(),
-                invoice_id: invoice_id.clone(),
-                item_id: item.id,
-                item_name: item.name,
-                item_code: item.code,
                 purchase_order_line_id: Some(purchase_order_line.id.clone()),
-                total_before_tax: local_total,
-                total_after_tax: local_total,
-                r#type: InvoiceLineType::Service,
-                foreign_currency_price_before_tax: Some(foreign_total),
-                ..Default::default()
+                ..service_line
             })?;
             continue;
         }
