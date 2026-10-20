@@ -110,6 +110,11 @@ import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCostsPanel } from './tabs/InboundCostsPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
+import {
+  InboundServiceChargesPanel,
+  type ServiceChargesEditor,
+} from './tabs/InboundServiceChargesPanel';
+import { ServiceItems } from '../../../domain/invoice';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
 import { CaptureWindow } from './scan/CaptureWindow';
 import { createCaptureWindow } from './scan/createCaptureWindow';
@@ -212,6 +217,25 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
+  const [serviceEditor, setServiceEditor] =
+    createSignal<ServiceChargesEditor>();
+  // Whether the store has a service item — read once the Service charges tab
+  // is first opened, never suspending (it arrives under the open screen).
+  const serviceTabOpened = createMemo(
+    prev => prev || activeTab() === 'service-charges',
+    false
+  );
+  const [serviceItems] = createResource(
+    () => (serviceTabOpened() ? params.storeId : undefined),
+    async storeId => {
+      const result = await graphqlFetch(ServiceItems, { storeId });
+      return result.kind === 'success' ? result.data.items.nodes : undefined;
+    }
+  );
+  const serviceConfigured = () => {
+    const items = gated(serviceItems);
+    return items ? items.length > 0 : undefined;
+  };
 
   // The line table's pager. It lives in the screen's bottom bar — the status
   // footer, or the selection footer while rows are ticked — rather than in a
@@ -628,6 +652,7 @@ const InboundShipmentDetailView: Component = () => {
           { value: 'delivery', label: t('label.delivery') },
         ]
       : []),
+    { value: 'service-charges', label: t('label.service-charges') },
     { value: 'documents', label: t('label.documents') },
     { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
@@ -1118,7 +1143,6 @@ const InboundShipmentDetailView: Component = () => {
                 <InboundShipmentSidePanel
                   storeId={params.storeId}
                   node={node()}
-                  open={sidePanelOpen()}
                   disabled={isDisabled()}
                   hasLines={hasLines()}
                   scope={scope()}
@@ -1127,7 +1151,6 @@ const InboundShipmentDetailView: Component = () => {
                   foreignCurrencyAllowed={prefs().issueInForeignCurrency}
                   onSaveField={saveField}
                   onSaved={onNodeSaved}
-                  onRefetch={refetchAll}
                   onDeleted={onDeleted}
                 />
               }
@@ -1147,6 +1170,19 @@ const InboundShipmentDetailView: Component = () => {
                       split button gains an icon for the same reason: collapsed
                       it is nothing but its icon. */}
                   <HeaderButtons>
+                    <Show
+                      when={activeTab() === 'service-charges' && !isDisabled()}
+                    >
+                      <Button
+                        data-testid="add-service-charge-button"
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
+                        disabled={serviceConfigured() !== true}
+                        onClick={() => setServiceEditor('add')}
+                      >
+                        {t('label.add-charge')}
+                      </Button>
+                    </Show>
                     <Show when={!isDisabled()}>
                       <SplitButton
                         icon={<PlusCircleIcon />}
@@ -1427,6 +1463,18 @@ const InboundShipmentDetailView: Component = () => {
                   <InboundDeliveryPanel node={node()} rows={rows()} />
                 </TabPanel>
               </Show>
+              <TabPanel value="service-charges">
+                <InboundServiceChargesPanel
+                  storeId={params.storeId}
+                  invoiceId={node().id}
+                  isExternal={isExternal()}
+                  disabled={isDisabled()}
+                  configured={serviceConfigured()}
+                  editor={serviceEditor()}
+                  onEditorChange={setServiceEditor}
+                  onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
               <TabPanel value="documents">
                 <InboundDocumentsPanel
                   node={node()}

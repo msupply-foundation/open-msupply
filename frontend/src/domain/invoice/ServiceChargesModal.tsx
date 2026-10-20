@@ -22,7 +22,10 @@ import { formatCurrencyCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
 import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
 import styles from './ServiceChargesModal.module.css';
-import { ServiceItems } from './invoiceModals.generated';
+import {
+  ServiceItems,
+  type ServiceItemsResult,
+} from './invoiceModals.generated';
 import {
   chargeTotalAfterTax,
   splitServiceChargeBatch,
@@ -69,10 +72,17 @@ export interface ServiceChargesModalProps {
    * already surfaced).
    */
   save: (batch: ServiceChargeBatch) => Promise<ServiceChargeSaveResult>;
+  /** Open with a new charge already added (the host's Add-charge action). */
+  addOnOpen?: boolean;
 }
 
 export type ServiceChargeSaveResult =
   { ok: true } | { ok: false; message?: string };
+
+type ServiceItem = ServiceItemsResult['items']['nodes'][number];
+
+const defaultOf = (items: ServiceItem[]): ServiceItem | undefined =>
+  items.find(item => item.code === 'service') ?? items[0];
 
 export const ServiceChargesModal = (
   props: ServiceChargesModalProps
@@ -110,10 +120,14 @@ const ServiceChargesContent = (
         note: charge.note ?? '',
       }))
     );
-    return itemsResult.kind === 'success' &&
+    const items =
+      itemsResult.kind === 'success' &&
       itemsResult.data.items.__typename === 'ItemConnector'
-      ? itemsResult.data.items.nodes
-      : [];
+        ? itemsResult.data.items.nodes
+        : [];
+    const item = defaultOf(items);
+    if (props.addOnOpen && item && !props.disabled) addCharge(item);
+    return items;
   });
   // Read via gated, never seed() directly: this accessor is reached
   // from headerActions' Add-charge `disabled` WHILE the seed is pending, and a
@@ -123,8 +137,7 @@ const ServiceChargesContent = (
   const serviceItems = () => gated(seed) ?? [];
   // The default for a NEW charge: the "service" item, else the first (the old
   // client's default-service-item rule).
-  const defaultServiceItem = () =>
-    serviceItems().find(item => item.code === 'service') ?? serviceItems()[0];
+  const defaultServiceItem = () => defaultOf(serviceItems());
 
   const rows = () => draft.filter(charge => !charge.deleted);
 
@@ -144,9 +157,7 @@ const ServiceChargesContent = (
     update(id, 'name', item.name);
   };
 
-  const addCharge = () => {
-    const item = defaultServiceItem();
-    if (!item) return;
+  const addCharge = (item: ServiceItem) => {
     setDraft(
       produce(charges =>
         charges.push({
@@ -320,7 +331,10 @@ const ServiceChargesContent = (
           icon={<PlusCircleIcon />}
           data-testid="add-charge-button"
           disabled={props.disabled || !defaultServiceItem()}
-          onClick={addCharge}
+          onClick={() => {
+            const item = defaultServiceItem();
+            if (item) addCharge(item);
+          }}
         >
           {t('label.add-charge')}
         </Button>

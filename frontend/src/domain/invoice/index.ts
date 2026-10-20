@@ -36,3 +36,4 @@ export {
   type ServiceChargeDraft,
   type ServiceChargeWrite,
 } from './serviceChargeBatch';
+export { ServiceItems } from './invoiceModals.generated';
