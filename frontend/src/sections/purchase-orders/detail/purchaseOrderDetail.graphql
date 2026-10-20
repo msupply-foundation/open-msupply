@@ -25,6 +25,8 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   confirmedDatetime
   sentDatetime
   finalisedDatetime
+  # The terminal branch off Sent, stamped on cancelling (rules § cancellation).
+  cancelledDatetime
   # Toolbar. Nullable on the wire: an order can report no supplier at all.
   supplier {
     id

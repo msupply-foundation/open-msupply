@@ -16,6 +16,8 @@ export const mapStatus = (
       return PurchaseOrderNodeStatus.Sent;
     case PurchaseOrderNodeStatus.Finalised:
       return PurchaseOrderNodeStatus.Finalised;
+    case PurchaseOrderNodeStatus.Cancelled:
+      return PurchaseOrderNodeStatus.Cancelled;
     default:
       return undefined;
   }

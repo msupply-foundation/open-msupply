@@ -50,5 +50,6 @@ pub fn generate(
         request_approval_datetime: None,
         finalised_datetime: None,
         custom_fields: None,
+        cancelled_datetime: None,
     })
 }

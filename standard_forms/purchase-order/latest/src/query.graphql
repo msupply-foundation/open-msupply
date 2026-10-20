@@ -31,7 +31,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           expectedDeliveryDate
           requestedNumberOfUnits
           requestedPackSize
-          pricePerPackAfterDiscount
+          lineTotalAfterSupplierDiscount
           supplierItemCode
           comment
         }

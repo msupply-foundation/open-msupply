@@ -53,6 +53,7 @@ export type PurchaseOrderFragment = {
   requestedDeliveryDate?: string | null;
   requestApprovalDatetime?: string | null;
   finalisedDatetime?: string | null;
+  cancelledDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -300,6 +301,7 @@ export type PurchaseOrderByIdQuery = {
         requestedDeliveryDate?: string | null;
         requestApprovalDatetime?: string | null;
         finalisedDatetime?: string | null;
+        cancelledDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -443,6 +445,7 @@ export type UpdatePurchaseOrderMutation = {
     | {
         __typename: 'UpdatePurchaseOrderError';
         error:
+          | { __typename: 'InboundShipmentsInProgress' }
           | { __typename: 'InboundShipmentsNotVerified'; description: string }
           | {
               __typename: 'ItemsCannotBeOrdered';
@@ -904,6 +907,7 @@ export const PurchaseOrderFragmentDoc = gql`
     requestedDeliveryDate
     requestApprovalDatetime
     finalisedDatetime
+    cancelledDatetime
     documents {
       __typename
       nodes {

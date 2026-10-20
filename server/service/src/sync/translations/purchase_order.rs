@@ -61,6 +61,8 @@ pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
     #[serde(default)]
+    pub cancelled_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
     pub status: PurchaseOrderStatus,
 }
 
@@ -278,6 +280,10 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .clone()
             .and_then(|oms_field| oms_field.finalised_datetime);
 
+        let cancelled_datetime = oms_fields
+            .clone()
+            .and_then(|oms_field| oms_field.cancelled_datetime);
+
         let status = oms_fields
             .clone()
             .map(|oms_field| oms_field.status)
@@ -337,6 +343,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             request_approval_datetime,
             finalised_datetime,
             custom_fields,
+            cancelled_datetime,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -399,6 +406,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             request_approval_datetime,
             finalised_datetime,
             custom_fields,
+            cancelled_datetime,
         } = purchase_order.purchase_order_row;
 
         let PurchaseOrderStatsRow {
@@ -415,6 +423,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             supplier_discount_percentage,
             request_approval_datetime,
             finalised_datetime,
+            cancelled_datetime,
             status: status.clone(),
         };
 
@@ -511,6 +520,8 @@ fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
         PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
         PurchaseOrderStatus::Sent => LegacyPurchaseOrderStatus::Cn,
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
+        // Legacy has no cancelled status; the true state travels in om_fields
+        PurchaseOrderStatus::Cancelled => LegacyPurchaseOrderStatus::Fn,
     }
 }
 
@@ -523,7 +534,10 @@ N.B. if this logic changes, update the Purchase Order form's logic
 fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
-        PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+        PurchaseOrderStatus::Confirmed
+            | PurchaseOrderStatus::Sent
+            | PurchaseOrderStatus::Finalised
+            | PurchaseOrderStatus::Cancelled
     )
 }
 

@@ -325,6 +325,7 @@ pub fn log_type_from_purchase_order_status(status: &PurchaseOrderStatus) -> Acti
         PurchaseOrderStatus::Confirmed => ActivityLogType::PurchaseOrderConfirmed,
         PurchaseOrderStatus::Sent => ActivityLogType::PurchaseOrderSent,
         PurchaseOrderStatus::Finalised => ActivityLogType::PurchaseOrderFinalised,
+        PurchaseOrderStatus::Cancelled => ActivityLogType::PurchaseOrderCancelled,
     }
 }
 

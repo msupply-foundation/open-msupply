@@ -64,6 +64,7 @@ define_linked_tables! {
         request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
         custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
+        cancelled_datetime -> Nullable<Timestamp>,
     },
     links: {
         supplier_name_link_id -> supplier_name_id,
@@ -116,6 +117,7 @@ pub struct PurchaseOrderRow {
     pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
     pub custom_fields: Option<JsonValue>,
+    pub cancelled_datetime: Option<NaiveDateTime>,
     // Resolved from name_link - must be last to match view column order
     pub supplier_name_id: String,
     pub donor_id: Option<String>,
@@ -139,6 +141,7 @@ pub enum PurchaseOrderStatus {
     Confirmed,
     Sent,
     Finalised,
+    Cancelled,
 }
 pub struct PurchaseOrderRowRepository<'a> {
     connection: &'a StorageConnection,

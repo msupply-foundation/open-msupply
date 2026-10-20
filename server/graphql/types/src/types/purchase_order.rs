@@ -186,6 +186,10 @@ impl PurchaseOrderNode {
         let finalised_datetime = self.row().finalised_datetime;
         finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
+    pub async fn cancelled_datetime(&self) -> Option<DateTime<Utc>> {
+        let cancelled_datetime = self.row().cancelled_datetime;
+        cancelled_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
         let purchase_order_id = &self.row().id;
@@ -246,6 +250,7 @@ pub enum PurchaseOrderNodeStatus {
     Confirmed,
     Sent,
     Finalised,
+    Cancelled,
 }
 
 impl PurchaseOrderConnector {

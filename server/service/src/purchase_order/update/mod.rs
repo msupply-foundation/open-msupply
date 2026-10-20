@@ -1,13 +1,19 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
-    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, TransactionError,
+    ActivityLogType, EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
+    PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, StorageConnection,
+    TransactionError,
 };
 
 use crate::{
     NullableUpdate,
     activity_log::{activity_log_entry, log_type_from_purchase_order_status},
     custom_field::CustomFieldPatchProblem,
+    invoice::inbound_shipment::{
+        InboundShipmentType,
+        delete::{DeleteInboundShipment, DeleteInboundShipmentError, delete_inbound_shipment},
+    },
     purchase_order::update::generate::GenerateResult,
     service_provider::ServiceContext,
 };
@@ -36,6 +42,16 @@ pub enum UpdatePurchaseOrderError {
     InvalidCustomFieldValue {
         key: String,
         expected: repository::CustomFieldValueType,
+    },
+    // Only a SENT order can be cancelled
+    CannotCancelPurchaseOrder,
+    // A cancelled order never changes state again
+    CannotReopenCancelledPurchaseOrder,
+    // An inbound shipment against the order has progressed past NEW
+    InboundShipmentsInProgress,
+    ShipmentDeleteError {
+        invoice_id: String,
+        error: DeleteInboundShipmentError,
     },
 }
 
@@ -150,6 +166,13 @@ pub fn update_purchase_order(
                 }
             }
 
+            // Cancelling removes the shipments still being drafted against the order
+            if existing_purchase_order.purchase_order_row.status != PurchaseOrderStatus::Cancelled
+                && updated_purchase_order.status == PurchaseOrderStatus::Cancelled
+            {
+                delete_new_inbound_shipments(ctx, connection, &updated_purchase_order.id)?;
+            }
+
             let activity_type = if existing_purchase_order.purchase_order_row.status
                 == PurchaseOrderStatus::Sent
                 && input.status == Some(PurchaseOrderStatus::Confirmed)
@@ -187,6 +210,33 @@ impl From<CustomFieldPatchProblem> for UpdatePurchaseOrderError {
             }
         }
     }
+}
+
+fn delete_new_inbound_shipments(
+    ctx: &ServiceContext,
+    connection: &StorageConnection,
+    purchase_order_id: &str,
+) -> Result<(), UpdatePurchaseOrderError> {
+    let new_shipments = InvoiceRepository::new(connection).query_by_filter(
+        InvoiceFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string()))
+            .r#type(EqualFilter::equal_to(InvoiceType::InboundShipment))
+            .status(InvoiceStatus::New.equal_to()),
+    )?;
+
+    for shipment in new_shipments {
+        let invoice_id = shipment.invoice_row.id;
+        delete_inbound_shipment(
+            ctx,
+            DeleteInboundShipment {
+                id: invoice_id.clone(),
+            },
+            InboundShipmentType::InboundShipmentExternal,
+        )
+        .map_err(|error| UpdatePurchaseOrderError::ShipmentDeleteError { invoice_id, error })?;
+    }
+
+    Ok(())
 }
 
 impl From<RepositoryError> for UpdatePurchaseOrderError {

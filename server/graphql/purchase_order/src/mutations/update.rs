@@ -118,6 +118,14 @@ impl InboundShipmentsNotVerified {
     }
 }
 
+pub struct InboundShipmentsInProgress;
+#[Object]
+impl InboundShipmentsInProgress {
+    pub async fn description(&self) -> &str {
+        "Cannot cancel this purchase order because an inbound shipment against it has progressed past New."
+    }
+}
+
 pub struct ItemsCannotBeOrdered(pub Vec<PurchaseOrderLine>);
 #[Object]
 impl ItemsCannotBeOrdered {
@@ -140,6 +148,7 @@ impl ItemsCannotBeOrdered {
 pub enum UpdateErrorInterface {
     ItemsCannotBeOrdered(ItemsCannotBeOrdered),
     InboundShipmentsNotVerified(InboundShipmentsNotVerified),
+    InboundShipmentsInProgress(InboundShipmentsInProgress),
 }
 
 #[derive(SimpleObject)]
@@ -212,6 +221,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 InboundShipmentsNotVerified,
             ));
         }
+        ServiceError::InboundShipmentsInProgress => {
+            return Ok(UpdateErrorInterface::InboundShipmentsInProgress(
+                InboundShipmentsInProgress,
+            ));
+        }
 
         ServiceError::SupplierDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
@@ -219,7 +233,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::DonorDoesNotExist
         | ServiceError::CannotEditSentPurchaseOrder
         | ServiceError::UnknownCustomFieldKey(_)
-        | ServiceError::InvalidCustomFieldValue { .. } => BadUserInput(formatted_error),
+        | ServiceError::InvalidCustomFieldValue { .. }
+        | ServiceError::CannotCancelPurchaseOrder
+        | ServiceError::CannotReopenCancelledPurchaseOrder
+        | ServiceError::ShipmentDeleteError { .. } => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }
