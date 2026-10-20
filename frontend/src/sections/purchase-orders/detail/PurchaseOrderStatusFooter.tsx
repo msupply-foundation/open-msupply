@@ -76,7 +76,7 @@ export interface PurchaseOrderStatusFooterProps {
  * server-side stops an order moving backwards or jumping forward (contract ⚠️
  * the ladder is a client-side convention). Two of its gates are likewise ours
  * alone — an order with no lines or an empty line, and the authorise
- * permission on entering Ready for sending — and both decline the move IN
+ * permission on entering Approved — and both decline the move IN
  * PLACE without ever raising the confirmation (spec S18).
  */
 export const PurchaseOrderStatusFooter: Component<
@@ -98,7 +98,7 @@ export const PurchaseOrderStatusFooter: Component<
   const target = () => nextStatus(status(), props.authorisationRequired);
 
   const steps = () =>
-    ladderFor(props.authorisationRequired).map(rung => ({
+    ladderFor(props.authorisationRequired, status()).map(rung => ({
       label: poStatusLabel(rung),
       date: statusMoment(props.node, rung),
     }));
@@ -181,7 +181,7 @@ export const PurchaseOrderStatusFooter: Component<
               data-testid="status-change-button"
               onClick={() => start(to())}
             >
-              {/* "Confirm <state>" — e.g. "Confirm Ready for sending". The key
+              {/* "Confirm <state>" — e.g. "Confirm Approved". The key
                   is a TEMPLATE (`Confirm {{status}}`), so the state's label
                   goes THROUGH it; appending it instead leaves the placeholder
                   on screen. */}
@@ -206,7 +206,7 @@ export const PurchaseOrderStatusFooter: Component<
                   {note => (
                     <Stack gap="sm">
                       <span>{confirmation.message}</span>
-                      {/* Entering Ready for sending also says what that state
+                      {/* Entering Approved also says what that state
                           means — the note follows the question (spec S18). */}
                       <Alert severity="info" compact>
                         {note()}

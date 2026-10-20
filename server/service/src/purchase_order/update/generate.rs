@@ -156,6 +156,9 @@ fn set_new_status_datetime(
         PurchaseOrderStatus::Finalised => {
             purchase_order.finalised_datetime = Some(current_datetime)
         }
+        PurchaseOrderStatus::Cancelled => {
+            purchase_order.cancelled_datetime = Some(current_datetime)
+        }
         PurchaseOrderStatus::New => {}
     }
 }
@@ -200,7 +203,8 @@ fn update_lines(
                                 repository::PurchaseOrderLineStatus::Sent;
                         }
                     }
-                    PurchaseOrderStatus::Finalised => {
+                    // Finalising and cancelling both close every line
+                    PurchaseOrderStatus::Finalised | PurchaseOrderStatus::Cancelled => {
                         line.purchase_order_line_row.status =
                             repository::PurchaseOrderLineStatus::Closed;
                     }

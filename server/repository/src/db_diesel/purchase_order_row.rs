@@ -65,6 +65,7 @@ define_linked_tables! {
         supplier_discount_percentage -> Nullable<Double>,
         request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        cancelled_datetime -> Nullable<Timestamp>,
     },
     links: {
         supplier_name_link_id -> supplier_name_id,
@@ -121,6 +122,7 @@ pub struct PurchaseOrderRow {
     pub supplier_discount_percentage: Option<f64>,
     pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    pub cancelled_datetime: Option<NaiveDateTime>,
     // Resolved from name_link - must be last to match view column order
     pub supplier_name_id: String,
     pub donor_id: Option<String>,
@@ -144,6 +146,7 @@ pub enum PurchaseOrderStatus {
     Confirmed,
     Sent,
     Finalised,
+    Cancelled,
 }
 pub struct PurchaseOrderRowRepository<'a> {
     connection: &'a StorageConnection,

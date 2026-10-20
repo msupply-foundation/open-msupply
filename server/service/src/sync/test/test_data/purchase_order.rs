@@ -147,6 +147,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             ),
+            cancelled_datetime: None,
         },
     )
 }
@@ -220,6 +221,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
                 ),
+                cancelled_datetime: None,
                 status: PurchaseOrderStatus::Finalised,
             }),
         }),
@@ -342,6 +344,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             supplier_discount_percentage: None,
             request_approval_datetime: None,
             finalised_datetime: None,
+            cancelled_datetime: None,
         },
     )
 }
@@ -472,6 +475,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             supplier_discount_percentage: None,
             request_approval_datetime: None,
             finalised_datetime: None,
+            cancelled_datetime: None,
         },
     )
 }

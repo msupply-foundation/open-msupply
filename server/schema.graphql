@@ -137,6 +137,7 @@ enum ActivityLogNodeType {
 	PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED
 	PURCHASE_ORDER_LINE_STATUS_CLOSED
 	PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW
+	PURCHASE_ORDER_CANCELLED
 	PRESCRIPTION_REQUEST_CREATED
 	PRESCRIPTION_REQUEST_UPDATED
 	PRESCRIPTION_REQUEST_READY_TO_DISPENSE
@@ -3243,6 +3244,10 @@ enum InboundNodeType {
 	FROM_PURCHASE_ORDER
 	MANUAL_INTERNAL
 	MANUAL_EXTERNAL
+}
+
+type InboundShipmentsInProgress implements UpdatePurchaseOrderErrorInterface {
+	description: String!
 }
 
 type InboundShipmentsNotVerified implements UpdatePurchaseOrderErrorInterface {
@@ -7259,6 +7264,7 @@ type PurchaseOrderNode {
 	supplierDiscountPercentage: Float
 	requestApprovalDatetime: DateTime
 	finalisedDatetime: DateTime
+	cancelledDatetime: DateTime
 	documents: SyncFileReferenceConnector!
 	lines: PurchaseOrderLineConnector!
 	currency: CurrencyNode
@@ -7270,6 +7276,7 @@ enum PurchaseOrderNodeStatus {
 	CONFIRMED
 	SENT
 	FINALISED
+	CANCELLED
 }
 
 union PurchaseOrderResponse = RecordNotFound | PurchaseOrderNode

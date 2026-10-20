@@ -41,11 +41,19 @@ export const StatusFooter = (): ReactElement | null => {
 
   if (!data) return null;
 
-  const filteredStatuses = authorisePurchaseOrder
-    ? purchaseOrderStatuses
-    : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.RequestApproval
-      );
+  const filteredStatuses = (
+    authorisePurchaseOrder
+      ? purchaseOrderStatuses
+      : purchaseOrderStatuses.filter(
+          status => status !== PurchaseOrderNodeStatus.RequestApproval
+        )
+  ).map(status =>
+    // A cancelled order never reached Finalised: Cancelled takes its place
+    data.status === PurchaseOrderNodeStatus.Cancelled &&
+    status === PurchaseOrderNodeStatus.Finalised
+      ? PurchaseOrderNodeStatus.Cancelled
+      : status
+  );
 
   return (
     <Box
@@ -75,7 +83,8 @@ const createStatusLog = (
   const allocatePurchaseOrderSentStatus =
     purchaseOrder.sentDatetime &&
     (purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
-      purchaseOrder.status === PurchaseOrderNodeStatus.Finalised);
+      purchaseOrder.status === PurchaseOrderNodeStatus.Finalised ||
+      purchaseOrder.status === PurchaseOrderNodeStatus.Cancelled);
 
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
@@ -88,6 +97,7 @@ const createStatusLog = (
         ? purchaseOrder.sentDatetime
         : null,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
+      [PurchaseOrderNodeStatus.Cancelled]: purchaseOrder.cancelledDatetime,
     };
 
   return statusLog;

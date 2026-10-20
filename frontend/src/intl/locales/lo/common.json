@@ -2279,7 +2279,7 @@
   "messages.at-least-one-vaccine-item-required": "ຕ້ອງມີລາຍການວັກແຊງຢ່າງໜ້ອຍໜຶ່ງລາຍການ",
   "messages.auto-allocated-lines": "ຈຳນວນຂອງແຖວຕົວແທນຖືກຈັດສັນອັດຕະໂນມັດແລ້ວ.",
   "messages.backdating-not-enabled": "ບໍ່ໄດ້ເປີດໃຊ້ການລົງວັນທີຍ້ອນຫຼັງສຳລັບສາງນີ້.",
-  "messages.batch-already-exists": "ຊຸດ/ຂະໜາດແພັກມີຢູ່ແລ້ວ ໂດຍມີຈຳນວນ {{numberOfPacks}} ແພັກ. ຈຳນວນໃໝ່ຈະຖືກເພີ່ມເຂົ້າແຖວນີ້.",
+  "messages.batch-already-exists_other": "ຊຸດ/ຂະໜາດແພັກມີຢູ່ແລ້ວ ໂດຍມີຈຳນວນ {{count}} ແພັກ. ຈຳນວນໃໝ່ຈະຖືກເພີ່ມເຂົ້າແຖວນີ້.",
   "messages.batch-not-found": "ບໍ່ພົບຊຸດ/ຂະໜາດແພັກໃນແຖວທີ່ມີຢູ່. ຈະສ້າງແຖວໃໝ່.",
   "messages.breach-ongoing": "ການລະເມີດອຸນຫະພູມນີ້ກຳລັງເກີດຂຶ້ນຢູ່ ແລະ ບໍ່ສາມາດຮັບຮູ້ໄດ້ຈົນກວ່າມັນຈະສິ້ນສຸດ.",
   "messages.bundled-item-saved": "ບັນທຶກລາຍການທີ່ຜູກມັດສຳເລັດແລ້ວ",

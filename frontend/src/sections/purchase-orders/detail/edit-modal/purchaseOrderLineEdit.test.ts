@@ -17,6 +17,7 @@ import {
   type LineDraft,
 } from './purchaseOrderLineEdit';
 import { linePacks, projectedLineCost } from '../purchaseOrderPricing';
+import { MAX_FRACTION_DIGITS } from '@/intl';
 import type { PurchaseOrderDetailLineFragment } from '../purchaseOrderDetail.generated';
 
 // Anchors: spec/purchase-orders/cases/OMS-FUN-PO-02 (the line editor),
@@ -95,6 +96,13 @@ describe('OMS-FUN-PO-02.18 / .19 — the figures the editor shows come from the 
   it('falls back to a bare “units” where the item has none', () => {
     expect(unitsFigure(5, null)).toBe('5 label.units-plural');
   });
+
+  it('shows a units figure exact when given the full places', () => {
+    expect(unitsFigure(1.23456789, 'Tablet', MAX_FRACTION_DIGITS)).toBe(
+      '1.23456789 Tablet'
+    );
+    expect(unitsFigure(1.23456789, 'Tablet', 2)).toBe('1.23* Tablet');
+  });
 });
 
 describe('OMS-FUN-PO-07.4 — packs are units over pack size', () => {
@@ -138,7 +146,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     expect(gates.text).toBe(true);
   });
 
-  it('fixes the quantity from Ready for sending', () => {
+  it('fixes the quantity from Approved', () => {
     expect(
       lineGates({ status: 'CONFIRMED', lineStatus: 'NEW', addMode: false })
         .drafting

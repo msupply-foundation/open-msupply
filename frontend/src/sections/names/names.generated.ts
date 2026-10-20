@@ -194,7 +194,7 @@ export type SupplierPurchaseOrdersResult = {
   nodes: Array<{
   id: string;
   number: number;
-  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED";
+  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED";
   createdDatetime: string;
   confirmedDatetime: string | null;
   targetMonths: number | null;

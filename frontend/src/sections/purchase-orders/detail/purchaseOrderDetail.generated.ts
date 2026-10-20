@@ -5,12 +5,13 @@ import type { TypedDocument } from "../../../api/graphql";
 export type PurchaseOrderInfoFragment = {
   id: string;
   number: number;
-  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED";
+  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED";
   createdDatetime: string;
   requestApprovalDatetime: string | null;
   confirmedDatetime: string | null;
   sentDatetime: string | null;
   finalisedDatetime: string | null;
+  cancelledDatetime: string | null;
   supplier: {
   id: string;
   name: string;
@@ -109,7 +110,7 @@ export type PurchaseOrderResult = {
 };
 
 export const PurchaseOrder = {
-  query: "query purchaseOrder($storeId: String!, $id: String!) {\n  purchaseOrder(storeId: $storeId, id: $id) {\n    __typename\n    ... on PurchaseOrderNode {\n      ...PurchaseOrderInfo\n    }\n    ... on RecordNotFound {\n      description\n    }\n  }\n}\n\nfragment PurchaseOrderInfo on PurchaseOrderNode {\n  id\n  number\n  status\n  createdDatetime\n  requestApprovalDatetime\n  confirmedDatetime\n  sentDatetime\n  finalisedDatetime\n  supplier {\n    id\n    name\n    code\n  }\n  reference\n  currencyId\n  currency {\n    id\n    code\n  }\n  foreignExchangeRate\n  requestedDeliveryDate\n  authorisingOfficer1\n  authorisingOfficer2\n  additionalInstructions\n  supplierAgent\n  headingMessage\n  freightConditions\n  agentCommission\n  documentCharge\n  communicationsCharge\n  insuranceCharge\n  freightCharge\n  orderTotalBeforeDiscount\n  orderTotalAfterDiscount\n  supplierDiscountPercentage\n  supplierDiscountAmount\n  donor {\n    id\n    name\n  }\n  shippingMethod\n  comment\n  contractSignedDate\n  advancePaidDate\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      user {\n        username\n      }\n    }\n  }\n}",
+  query: "query purchaseOrder($storeId: String!, $id: String!) {\n  purchaseOrder(storeId: $storeId, id: $id) {\n    __typename\n    ... on PurchaseOrderNode {\n      ...PurchaseOrderInfo\n    }\n    ... on RecordNotFound {\n      description\n    }\n  }\n}\n\nfragment PurchaseOrderInfo on PurchaseOrderNode {\n  id\n  number\n  status\n  createdDatetime\n  requestApprovalDatetime\n  confirmedDatetime\n  sentDatetime\n  finalisedDatetime\n  cancelledDatetime\n  supplier {\n    id\n    name\n    code\n  }\n  reference\n  currencyId\n  currency {\n    id\n    code\n  }\n  foreignExchangeRate\n  requestedDeliveryDate\n  authorisingOfficer1\n  authorisingOfficer2\n  additionalInstructions\n  supplierAgent\n  headingMessage\n  freightConditions\n  agentCommission\n  documentCharge\n  communicationsCharge\n  insuranceCharge\n  freightCharge\n  orderTotalBeforeDiscount\n  orderTotalAfterDiscount\n  supplierDiscountPercentage\n  supplierDiscountAmount\n  donor {\n    id\n    name\n  }\n  shippingMethod\n  comment\n  contractSignedDate\n  advancePaidDate\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n      user {\n        username\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderResult, PurchaseOrderVariables>;
 
 export type PurchaseOrderDetailLinesVariables = {
@@ -212,7 +213,7 @@ export type UpdatePurchaseOrderVariables = {
   input: {
     id: string;
     supplierId?: string | null;
-    status?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | null;
+    status?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED" | null;
     confirmedDatetime?: {
     value?: string | null;
   } | null;

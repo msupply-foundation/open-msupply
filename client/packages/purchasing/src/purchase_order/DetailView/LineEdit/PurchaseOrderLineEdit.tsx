@@ -35,7 +35,11 @@ import {
   calculateUnitQuantities,
   lineStatusOptions,
 } from './utils';
-import { isFieldDisabled, StatusGroup } from '../../../utils';
+import {
+  isFieldDisabled,
+  isPurchaseOrderClosed,
+  StatusGroup,
+} from '../../../utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -305,7 +309,7 @@ export const PurchaseOrderLineEdit = ({
               value={draft?.comment || ''}
               disabled={
                 draft?.status === PurchaseOrderLineStatusNode.Closed ||
-                status === PurchaseOrderNodeStatus.Finalised
+                isPurchaseOrderClosed(status)
               }
               onChange={(value?: string) => update({ comment: value })}
             />
@@ -314,7 +318,7 @@ export const PurchaseOrderLineEdit = ({
               value={draft?.note || ''}
               disabled={
                 draft?.status === PurchaseOrderLineStatusNode.Closed ||
-                status === PurchaseOrderNodeStatus.Finalised
+                isPurchaseOrderClosed(status)
               }
               onChange={(value?: string) => update({ note: value })}
             />

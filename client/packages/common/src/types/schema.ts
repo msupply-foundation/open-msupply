@@ -166,6 +166,7 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PurchaseOrderCancelled = 'PURCHASE_ORDER_CANCELLED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
@@ -3850,6 +3851,11 @@ export enum InboundNodeType {
   ManualExternal = 'MANUAL_EXTERNAL',
   ManualInternal = 'MANUAL_INTERNAL',
 }
+
+export type InboundShipmentsInProgress = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsInProgress';
+  description: Scalars['String']['output'];
+};
 
 export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
   __typename: 'InboundShipmentsNotVerified';
@@ -8822,6 +8828,7 @@ export type PurchaseOrderNode = {
   agentCommission?: Maybe<Scalars['Float']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   communicationsCharge?: Maybe<Scalars['Float']['output']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
@@ -8860,6 +8867,7 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
+  Cancelled = 'CANCELLED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
