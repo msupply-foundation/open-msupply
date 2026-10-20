@@ -11,16 +11,15 @@ import {
 } from './campaignEditor';
 
 // Anchors: spec/campaigns/cases/OMS-REG-MNG-04.
-//   .10 — New campaign opens a blank editor with Name, Start date and End date
+//   .10 — New activity opens a blank editor with Name, Code and Kind
 //   .11 — the confirming action stays inert while Name is blank/whitespace only
-//   .12 — a name and no dates saves
-//   .13 — both dates save
-//   .14 — a row click opens the editor pre-filled with that campaign's values
-//   .15 — an edit that changes the name and clears a set date saves as entered
-//   .16 — re-saving a campaign unchanged succeeds, keeping its own name
-//   .18 — a second campaign with an existing name is rejected as a duplicate
+//   .12 — a name and a code saves
+//   .14 — a row click opens the editor pre-filled with that activity's values
+//   .16 — re-saving an activity unchanged succeeds, keeping its own name
+//   .18 — a second activity with an existing name is rejected as a duplicate
 //   .19 — a name differing only in letter case is rejected as a duplicate
-//   .20 — a start date later than the end date is rejected as out-of-order
+//   .37 — an activity saves with no code; several can go without one
+//   .38 — a second activity with an existing code is rejected as a duplicate
 // The editor's rules live in pure functions, so each is pinned at the cheapest
 // layer: the draft → input mapping (what the whole-record write actually sends)
 // and the mapping of the upsert's two rejection SHAPES onto what the dialog
@@ -30,9 +29,8 @@ import {
 const campaign: Campaign = {
   id: 'camp-1',
   name: 'Measles 2026',
+  code: 'MSL26',
   kind: 'CAMPAIGN',
-  startDate: '2026-01-01',
-  endDate: '2026-03-31',
 };
 
 const successResult = (name: string): GraphqlResult<UpsertCampaignResult> => ({
@@ -44,9 +42,8 @@ const successResult = (name: string): GraphqlResult<UpsertCampaignResult> => ({
           __typename: 'CampaignNode',
           id: 'camp-1',
           name,
+          code: 'MSL26',
           kind: 'CAMPAIGN',
-          startDate: null,
-          endDate: null,
         },
       },
     },
@@ -57,46 +54,42 @@ const successResult = (name: string): GraphqlResult<UpsertCampaignResult> => ({
 // restated: codegen narrows `__typename` to the union the schema allows, so a
 // variant that is renamed or retired server-side fails this file rather than
 // letting a test go on asserting a shape the server can no longer return.
-type UpsertCampaignErrorTypename = Extract<
+type UpsertCampaignErrorNode = Extract<
   UpsertCampaignResult['centralServer']['campaign']['upsertCampaign'],
   { __typename: 'UpsertCampaignError' }
->['error']['__typename'];
+>['error'];
 
 const errorResult = (
-  typename: UpsertCampaignErrorTypename,
-  description: string
+  error: UpsertCampaignErrorNode
 ): GraphqlResult<UpsertCampaignResult> => ({
   kind: 'success',
   data: {
     centralServer: {
       campaign: {
-        upsertCampaign: {
-          __typename: 'UpsertCampaignError',
-          error: { __typename: typename, description },
-        },
+        upsertCampaign: { __typename: 'UpsertCampaignError', error },
       },
     },
   },
 });
 
-describe('OMS-REG-MNG-04.10 — New campaign opens a blank editor', () => {
-  it('starts with an empty name and no dates, carrying the client-supplied id', () => {
+describe('OMS-REG-MNG-04.10 — New activity opens a blank editor', () => {
+  it('starts with an empty name and code, carrying the client-supplied id', () => {
     expect(newCampaignDraft('generated-id')).toEqual({
       id: 'generated-id',
       name: '',
+      code: '',
       kind: 'CAMPAIGN',
     });
   });
 });
 
-describe('OMS-REG-MNG-04.14 — an edit opens the campaign pre-filled', () => {
-  it('seeds the draft with that campaign’s id, name and both dates', () => {
+describe('OMS-REG-MNG-04.14 — an edit opens the activity pre-filled', () => {
+  it('seeds the draft with that activity’s id, name, code and kind', () => {
     expect(draftFromCampaign(campaign)).toEqual({
       id: 'camp-1',
       name: 'Measles 2026',
+      code: 'MSL26',
       kind: 'CAMPAIGN',
-      startDate: '2026-01-01',
-      endDate: '2026-03-31',
     });
   });
 });
@@ -119,36 +112,56 @@ describe('OMS-REG-MNG-04.33 — the kind is chosen in the editor', () => {
     expect(
       campaignInput({ ...draftFromCampaign(campaign), kind: 'ROUTINE' }).kind
     ).toBe('ROUTINE');
-    expect(campaignInput({ id: 'id', name: 'X' }).kind).toBe('CAMPAIGN');
+    expect(campaignInput({ id: 'id', name: 'X', code: 'X' }).kind).toBe(
+      'CAMPAIGN'
+    );
   });
 });
 
 describe('OMS-REG-MNG-04.11 — the confirm stays inert while Name is blank', () => {
   it('refuses an empty name', () => {
-    expect(canSaveCampaign(newCampaignDraft('id'))).toBe(false);
+    expect(canSaveCampaign({ id: 'id', name: '', code: 'POL' })).toBe(false);
   });
 
   it('refuses a whitespace-only name', () => {
-    expect(canSaveCampaign({ id: 'id', name: '   ' })).toBe(false);
+    expect(canSaveCampaign({ id: 'id', name: '   ', code: 'POL' })).toBe(false);
   });
 
   it('allows a name with content', () => {
-    expect(canSaveCampaign({ id: 'id', name: 'Polio' })).toBe(true);
+    expect(canSaveCampaign({ id: 'id', name: 'Polio', code: 'POL' })).toBe(
+      true
+    );
   });
 
   it('allows a name whose content is surrounded by whitespace', () => {
-    expect(canSaveCampaign({ id: 'id', name: '  Polio  ' })).toBe(true);
+    expect(canSaveCampaign({ id: 'id', name: '  Polio  ', code: 'POL' })).toBe(
+      true
+    );
   });
 });
 
-describe('OMS-REG-MNG-04.12 — a name and no dates saves', () => {
-  it('sends both dates as undefined when neither is set', () => {
-    expect(campaignInput({ id: 'id', name: 'Polio' })).toEqual({
+describe('OMS-REG-MNG-04.37 — the code is optional', () => {
+  it('allows a name with no code', () => {
+    expect(canSaveCampaign({ id: 'id', name: 'Polio', code: '' })).toBe(true);
+  });
+
+  it('sends a blank code as blank, so clearing the field clears the code', () => {
+    // Omitting the code would leave the stored one alone; the editor owns the
+    // field, so a blank one is the user's answer and travels as such.
+    expect(
+      campaignInput({ ...draftFromCampaign(campaign), code: '  ' }).code
+    ).toBe('');
+    expect(campaignInput({ id: 'id', name: 'Polio' }).code).toBe('');
+  });
+});
+
+describe('OMS-REG-MNG-04.12 — a name and a code saves', () => {
+  it('sends the name, code and kind', () => {
+    expect(campaignInput({ id: 'id', name: 'Polio', code: 'POL' })).toEqual({
       id: 'id',
       name: 'Polio',
+      code: 'POL',
       kind: 'CAMPAIGN',
-      startDate: undefined,
-      endDate: undefined,
     });
   });
 
@@ -156,73 +169,24 @@ describe('OMS-REG-MNG-04.12 — a name and no dates saves', () => {
     // The uniqueness check compares against a TRIMMED incoming name while the
     // write persists the name verbatim, so an untrimmed name would sit in the
     // register as a collision-proof duplicate of its trimmed twin.
-    expect(campaignInput({ id: 'id', name: '  Probe Spaced  ' }).name).toBe(
-      'Probe Spaced'
-    );
-  });
-});
-
-describe('OMS-REG-MNG-04.13 — both dates save', () => {
-  it('sends both dates as plain ISO calendar dates', () => {
-    expect(campaignInput(draftFromCampaign(campaign))).toEqual({
-      id: 'camp-1',
-      name: 'Measles 2026',
-      kind: 'CAMPAIGN',
-      startDate: '2026-01-01',
-      endDate: '2026-03-31',
-    });
-  });
-
-  it('sends an out-of-order period as entered — the ordering rule is the server’s', () => {
     expect(
-      campaignInput({
-        id: 'id',
-        name: 'Backwards',
-        startDate: '2026-06-01',
-        endDate: '2026-01-01',
-      })
-    ).toEqual({
-      id: 'id',
-      name: 'Backwards',
-      kind: 'CAMPAIGN',
-      startDate: '2026-06-01',
-      endDate: '2026-01-01',
-    });
-  });
-});
-
-describe('OMS-REG-MNG-04.15 — clearing a set date clears it', () => {
-  it('sends a cleared date as undefined, which the whole-record write clears', () => {
-    // There are no nullable-update wrappers on this input: every field travels
-    // every time, so an omitted date CLEARS the stored one. That is
-    // exactly what clearing the field must do — and why a caller treating
-    // the mutation as a partial update would silently wipe the period.
-    const cleared = campaignInput({
-      ...draftFromCampaign(campaign),
-      name: 'Measles 2026 (revised)',
-      endDate: null,
-    });
-    expect(cleared).toEqual({
-      id: 'camp-1',
-      name: 'Measles 2026 (revised)',
-      kind: 'CAMPAIGN',
-      startDate: '2026-01-01',
-      endDate: undefined,
-    });
+      campaignInput({ id: 'id', name: '  Probe Spaced  ', code: 'P' }).name
+    ).toBe('Probe Spaced');
   });
 
-  it('treats an empty string from the date field as no date', () => {
+  it('trims the code it sends', () => {
     expect(
-      campaignInput({ id: 'id', name: 'X', startDate: '' }).startDate
-    ).toBe(undefined);
+      campaignInput({ id: 'id', name: 'Polio', code: '  POL ' }).code
+    ).toBe('POL');
   });
 });
 
-describe('OMS-REG-MNG-04.16 — re-saving a campaign unchanged succeeds', () => {
-  it('sends the campaign’s own id and name back, so uniqueness excludes itself', () => {
+describe('OMS-REG-MNG-04.16 — re-saving an activity unchanged succeeds', () => {
+  it('sends the activity’s own id, name and code back, so uniqueness excludes itself', () => {
     const input = campaignInput(draftFromCampaign(campaign));
     expect(input.id).toBe(campaign.id);
     expect(input.name).toBe(campaign.name);
+    expect(input.code).toBe(campaign.code);
   });
 
   it('reads a CampaignNode response as saved', () => {
@@ -233,24 +197,44 @@ describe('OMS-REG-MNG-04.16 — re-saving a campaign unchanged succeeds', () => 
 });
 
 describe('OMS-REG-MNG-04.18 / .19 — a duplicate name is rejected', () => {
-  it('maps UniqueValueViolation to the name-specific rejection', () => {
+  it('maps a name UniqueValueViolation to the name-specific rejection', () => {
     // The server compares names case-INSENSITIVELY, so an exact duplicate and
     // one differing only in letter case arrive as the same typed member — the
     // client keys both to the Name field with one message.
     expect(
       campaignSaveOutcome(
-        errorResult('UniqueValueViolation', 'Unique value violation')
+        errorResult({
+          __typename: 'UniqueValueViolation',
+          description: 'Field needs to be unique',
+          field: 'name',
+        })
       )
     ).toEqual({ kind: 'duplicate-name' });
   });
 });
 
-describe('OMS-REG-MNG-04.20 — out-of-order dates are rejected', () => {
-  it('maps the UNTYPED InvalidDates rejection to the generic save message', () => {
-    // The rejection has no member on UpsertCampaignErrorInterface: it
-    // arrives as a top-level Bad user input whose extensions.details is the
-    // token, with a null payload. A client inspecting only the typed union
-    // would see nothing.
+describe('OMS-REG-MNG-04.38 — a duplicate code is rejected', () => {
+  it('maps a code UniqueValueViolation to the code-specific rejection', () => {
+    // Name and code collisions arrive as the SAME member; only its field tells
+    // them apart, so reading the typename alone would blame the name.
+    expect(
+      campaignSaveOutcome(
+        errorResult({
+          __typename: 'UniqueValueViolation',
+          description: 'Field needs to be unique',
+          field: 'code',
+        })
+      )
+    ).toEqual({ kind: 'duplicate-code' });
+  });
+});
+
+describe('OMS-REG-MNG-04 — other save outcomes', () => {
+  it('maps an UNTYPED Bad user input to the generic save message', () => {
+    // The rejection has no member on UpsertCampaignErrorInterface: it arrives
+    // as a top-level Bad user input whose extensions.details is the token,
+    // with a null payload. A client inspecting only the typed union would see
+    // nothing.
     expect(
       campaignSaveOutcome({
         kind: 'graphqlError',
@@ -258,11 +242,11 @@ describe('OMS-REG-MNG-04.20 — out-of-order dates are rejected', () => {
         errors: [
           {
             message: 'Bad user input',
-            extensions: { details: 'InvalidDates' },
+            extensions: { details: 'CampaignDoesNotExist' },
           },
         ],
       })
-    ).toEqual({ kind: 'rejected', serverError: 'InvalidDates' });
+    ).toEqual({ kind: 'rejected', serverError: 'CampaignDoesNotExist' });
   });
 
   it('falls back to the error message when no details token is carried', () => {
@@ -274,12 +258,15 @@ describe('OMS-REG-MNG-04.20 — out-of-order dates are rejected', () => {
       })
     ).toEqual({ kind: 'rejected', serverError: 'Bad user input' });
   });
-});
 
-describe('OMS-REG-MNG-04 — other save outcomes', () => {
   it('appends a typed non-uniqueness error’s own description', () => {
     expect(
-      campaignSaveOutcome(errorResult('DatabaseError', 'Database error'))
+      campaignSaveOutcome(
+        errorResult({
+          __typename: 'DatabaseError',
+          description: 'Database error',
+        })
+      )
     ).toEqual({ kind: 'rejected', serverError: 'Database error' });
   });
 

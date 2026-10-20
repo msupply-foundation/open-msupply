@@ -172,8 +172,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("vaccination", "vaccination_date"),
         ("name_insurance_join", "expiry_date"),
         ("invoice", "expected_delivery_date"),
-        ("campaign", "start_date"),
-        ("campaign", "end_date"),
         ("purchase_order", "received_at_port_date"),
         ("purchase_order", "requested_delivery_date"),
         ("purchase_order_line", "requested_delivery_date"),

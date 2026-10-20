@@ -1293,6 +1293,7 @@ export type CampaignConnector = {
 };
 
 export type CampaignFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
@@ -1323,11 +1324,10 @@ export type CampaignMutationsUpsertCampaignArgs = {
 
 export type CampaignNode = {
   __typename: 'CampaignNode';
-  endDate?: Maybe<Scalars['NaiveDate']['output']>;
+  code: Scalars['String']['output'];
   id: Scalars['String']['output'];
   kind: CampaignKindNode;
   name: Scalars['String']['output'];
-  startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
 export enum CampaignSortFieldInput {
@@ -13421,11 +13421,11 @@ export type UpsertCampaignErrorInterface = {
 };
 
 export type UpsertCampaignInput = {
-  endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** Omit to leave the stored code alone; blank clears it */
+  code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   kind?: InputMaybe<CampaignKindNode>;
   name: Scalars['String']['input'];
-  startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpsertCampaignResponse = CampaignNode | UpsertCampaignError;

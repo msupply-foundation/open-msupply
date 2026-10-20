@@ -1055,6 +1055,7 @@ type CampaignConnector {
 input CampaignFilterInput {
 	id: EqualFilterStringInput
 	name: StringFilterInput
+	code: StringFilterInput
 }
 
 enum CampaignKindNode {
@@ -1071,8 +1072,7 @@ type CampaignMutations {
 type CampaignNode {
 	id: String!
 	name: String!
-	startDate: NaiveDate
-	endDate: NaiveDate
+	code: String!
 	kind: CampaignKindNode!
 }
 
@@ -11285,8 +11285,10 @@ interface UpsertCampaignErrorInterface {
 input UpsertCampaignInput {
 	id: String!
 	name: String!
-	startDate: NaiveDate
-	endDate: NaiveDate
+	"""
+	Omit to leave the stored code alone; blank clears it
+	"""
+	code: String
 	kind: CampaignKindNode
 }
 

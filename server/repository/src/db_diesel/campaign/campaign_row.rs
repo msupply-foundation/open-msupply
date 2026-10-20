@@ -8,7 +8,6 @@ use crate::{
     ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
-use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,10 +15,9 @@ table! {
     campaign(id) {
         id -> Text,
         name -> Text,
-        start_date -> Nullable<Date>,
-        end_date -> Nullable<Date>,
         deleted_datetime -> Nullable<Timestamp>,
         kind -> Text,
+        code -> Text,
     }
 }
 
@@ -52,11 +50,14 @@ allow_tables_to_appear_in_same_query!(campaign, vvm_status);
 pub struct CampaignRow {
     pub id: String,
     pub name: String,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     #[serde(default)]
     pub kind: CampaignKind,
+    /// Short identifier for systems outside open mSupply (e.g. an OpenLMIS program code),
+    /// so the name shown on screen can be anything. Blank when nothing needs one;
+    /// otherwise unique among live campaigns.
+    #[serde(default)]
+    pub code: String,
 }
 pub struct CampaignRowRepository<'a> {
     connection: &'a StorageConnection,
