@@ -138,7 +138,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
     expect(gates.text).toBe(true);
   });
 
-  it('fixes the quantity from Ready for sending', () => {
+  it('fixes the quantity from Approved', () => {
     expect(
       lineGates({ status: 'CONFIRMED', lineStatus: 'NEW', addMode: false })
         .drafting

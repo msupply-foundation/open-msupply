@@ -65,6 +65,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "sent_datetime"),
         ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
+        ("purchase_order", "cancelled_datetime"),
         ("stock_relocation", "created_datetime"),
         ("stock_relocation", "confirmed_datetime"),
         ("stock_relocation", "finalised_datetime"),

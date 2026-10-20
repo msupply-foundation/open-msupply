@@ -383,9 +383,9 @@ const PurchaseOrderDetailView: Component = () => {
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
-  // Sent or Finalised: every field on the screen is refused — except the
-  // comment, open in every state, and the panel's two post-sending dates,
-  // open until Finalised (rules § what may be changed, and when). Mirrored
+  // Sent, Finalised or Cancelled: every field on the screen is refused —
+  // except the comment, open in every state, and the panel's two post-sending
+  // dates, open until Finalised (rules § what may be changed, and when). Mirrored
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
@@ -719,6 +719,7 @@ const PurchaseOrderDetailView: Component = () => {
                   edit={edit}
                   onSaveField={saveField}
                   onDeleted={toList}
+                  onCancelled={refetchAll}
                 />
               }
               header={
@@ -727,7 +728,7 @@ const PurchaseOrderDetailView: Component = () => {
                   <HeaderButtons>
                     {/* The Add split (spec S6 § page actions): all three
                         options while drafting, so the whole control stands
-                        down from Ready for sending. */}
+                        down from Approved. */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
                       collapsible="narrow"

@@ -5,7 +5,7 @@ import type {
   PurchaseOrderDetailLineFragment,
   UpdatePurchaseOrderLineVariables,
 } from '../purchaseOrderDetail.generated';
-import { isDrafting } from '../purchaseOrderLadder';
+import { isClosed, isDrafting } from '../purchaseOrderLadder';
 import { linePacks } from '../purchaseOrderPricing';
 
 // The line editor's arithmetic and gates (spec/purchase-orders rules §
@@ -226,7 +226,7 @@ export type LineGates = {
 /**
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
- * fields, the quantity among them, close from Ready for sending; the
+ * fields, the quantity among them, close from Approved; the
  * requested date closes once Sent while the expected date stays open.
  */
 export const lineGates = (options: {
@@ -234,8 +234,7 @@ export const lineGates = (options: {
   lineStatus: LineStatus;
   addMode: boolean;
 }): LineGates => {
-  const open =
-    options.lineStatus !== 'CLOSED' && options.status !== 'FINALISED';
+  const open = options.lineStatus !== 'CLOSED' && !isClosed(options.status);
   const drafting = open && isDrafting(options.status);
   return {
     item: options.addMode,
