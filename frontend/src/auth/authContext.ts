@@ -11,6 +11,7 @@ import {
 import { refetchStoreContext } from '../store/storeContext';
 import { recordLastLoginUsername } from '../appData';
 import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
+import { applyUserLocale, type SupportedLocale } from '../intl';
 
 // All authentication context lives here: the user, the unauthenticated and
 // inactivity signals, and the actions that change them.
@@ -157,6 +158,22 @@ export type LoginResult =
   // the form is usable again with what was typed (spec, Unexpected API errors).
   | { kind: 'pending' };
 
+// The locale each profile language shows in. Khmer has no catalog, so a Khmer
+// profile keeps the session's language.
+const PROFILE_LOCALES: Record<
+  AuthUser['language'],
+  SupportedLocale | undefined
+> = {
+  ENGLISH: 'en',
+  FRENCH: 'fr',
+  SPANISH: 'es',
+  LAOS: 'lo',
+  KHMER: undefined,
+  PORTUGUESE: 'pt',
+  RUSSIAN: 'ru',
+  TETUM: 'tet',
+};
+
 export const login = async (
   typedUsername: string,
   password: string
@@ -193,6 +210,13 @@ export const login = async (
   // the login page can prefill it. Only on success — a rejected name is not
   // worth offering back — and never the password.
   recordLastLoginUsername(username);
+  // Spec (i18n § choosing the locale): login shows the user's language. Only
+  // here, not when a reload restores the session: that keeps the last-used
+  // locale. Awaited so the first screen paints in it.
+  await applyUserLocale(
+    auth.user.username,
+    PROFILE_LOCALES[auth.user.language]
+  );
   return { kind: 'success' };
 };
 

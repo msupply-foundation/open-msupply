@@ -5,11 +5,14 @@ import type { UserInfoFragment } from '../api/auth.generated';
 // authContext travels through graphqlFetch for me/login/logout; mock it so the
 // tests drive the auth outcome directly (the node test env has no network, and
 // graphqlFetch itself is covered in api/graphql.test.ts). storeContext is
-// mocked because logout() calls refetchStoreContext.
+// mocked because logout() calls refetchStoreContext, and intl because login()
+// applies the user's language (its rules are tested in intl/changeLanguage).
 const graphqlFetch = vi.fn();
 const msSinceLastGqlCall = vi.fn(() => 0);
+const applyUserLocale = vi.fn();
 vi.mock('../api/graphql', () => ({ graphqlFetch, msSinceLastGqlCall }));
 vi.mock('../store/storeContext', () => ({ refetchStoreContext: vi.fn() }));
+vi.mock('../intl', () => ({ applyUserLocale }));
 
 const user: UserInfoFragment = {
   __typename: 'UserNode',
@@ -22,6 +25,7 @@ const user: UserInfoFragment = {
   phoneNumber: null,
   inactivityTimeoutSeconds: 600,
   tokenRefreshIntervalSeconds: 60,
+  language: 'ENGLISH',
   defaultStore: { id: 's1' },
   stores: {
     nodes: [
@@ -108,6 +112,7 @@ const makeLocalStorage = () => {
 
 beforeEach(() => {
   graphqlFetch.mockReset();
+  applyUserLocale.mockReset();
   vi.stubGlobal('sessionStorage', makeSessionStorage());
   vi.stubGlobal('localStorage', makeLocalStorage());
 });
@@ -403,5 +408,58 @@ describe('disabled stores are never offered (SL-8)', () => {
 
     expect(result.kind).toBe('success');
     expect(auth.authUser()?.userId).toBe('u1');
+  });
+});
+
+describe("login shows the user's language (spec/i18n § choosing the locale)", () => {
+  const loginAs = (language: UserInfoFragment['language']) => ({
+    kind: 'success',
+    data: {
+      authToken: { __typename: 'AuthToken', user: { ...user, language } },
+    },
+  });
+
+  it("applies the profile's language for the user", async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginAs('FRENCH'));
+
+    await auth.login('alice', 'pw');
+
+    expect(applyUserLocale).toHaveBeenCalledWith('alice', 'fr');
+  });
+
+  it('passes no locale for a profile language with no catalog', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginAs('KHMER'));
+
+    await auth.login('alice', 'pw');
+
+    expect(applyUserLocale).toHaveBeenCalledWith('alice', undefined);
+  });
+
+  it('leaves the language alone on a refused login', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce({
+      kind: 'success',
+      data: {
+        authToken: {
+          __typename: 'AuthTokenError',
+          error: { description: 'Invalid credentials' },
+        },
+      },
+    });
+
+    await auth.login('alice', 'pw');
+
+    expect(applyUserLocale).not.toHaveBeenCalled();
+  });
+
+  it('leaves the language alone when a reload restores the session', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(meSuccess());
+
+    await auth.checkAuth();
+
+    expect(applyUserLocale).not.toHaveBeenCalled();
   });
 });
