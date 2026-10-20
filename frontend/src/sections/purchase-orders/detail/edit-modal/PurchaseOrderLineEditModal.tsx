@@ -1,7 +1,7 @@
 import { createMemo, createSignal, onCleanup, Show, type JSX } from 'solid-js';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
-import { formatCurrency, roundedText, t } from '@/intl';
+import { MAX_FRACTION_DIGITS, formatCurrency, roundedText, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import {
@@ -440,7 +440,10 @@ const LineEditContent = (
                         variant="field"
                         data-testid="packs-value"
                       >
-                        <Num value={linePacks(draft()!)} />
+                        <Num
+                          value={linePacks(draft()!)}
+                          places={MAX_FRACTION_DIGITS}
+                        />
                       </LabelledValue>
                     }
                   >
@@ -488,7 +491,8 @@ const LineEditContent = (
                   >
                     {unitsFigure(
                       draft()!.requestedNumberOfUnits,
-                      facts()!.unitName
+                      facts()!.unitName,
+                      MAX_FRACTION_DIGITS
                     )}
                   </LabelledValue>
                 </FormSection>

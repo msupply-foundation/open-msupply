@@ -326,5 +326,9 @@ export const insertInput = (
  * none (spec S10 § quantity) — the ordered-elsewhere figure (OMS-FUN-PO-02.19),
  * stock on hand and the line's own requested units.
  */
-export const unitsFigure = (units: number, unitName: string | null): string =>
-  `${roundedText(units)} ${unitName || tPlural('label.units-plural', units)}`;
+export const unitsFigure = (
+  units: number,
+  unitName: string | null,
+  places?: number
+): string =>
+  `${roundedText(units, places)} ${unitName || tPlural('label.units-plural', units)}`;

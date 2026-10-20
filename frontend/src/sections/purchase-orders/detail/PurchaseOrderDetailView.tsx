@@ -8,7 +8,7 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { t } from '@/intl';
+import { MAX_FRACTION_DIGITS, t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -175,7 +175,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : <Num value={value} />;
+  if (value == null) return '';
+  return <Num value={value} places={MAX_FRACTION_DIGITS} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -655,7 +656,6 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
-      cell: exactQuantity,
       size: remToPx(7),
     },
     {
