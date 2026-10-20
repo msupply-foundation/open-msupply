@@ -39,6 +39,7 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import {
   CommentHeader,
+  formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
   getTextCell,
@@ -747,6 +748,7 @@ const InboundShipmentDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        footer: () => t('label.total'),
       },
       // PO line number — PO-linked shipments only.
       ...(isExternal()
@@ -1013,7 +1015,7 @@ const InboundShipmentDetailView: Component = () => {
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      // Prices — manual shipments only (PO-linked derive from the order).
+      // Pack prices — manual shipments only (PO-linked derive from the order).
       ...(isManual
         ? [
             {
@@ -1026,20 +1028,23 @@ const InboundShipmentDetailView: Component = () => {
               header: () => t('label.pack-sell-price'),
               ...getCellDefinition('sellPricePerPack'),
             } satisfies Column<Line, SortKey>,
-            {
-              c: {
-                // Placeholder lines (0 packs, nothing shipped) have no
-                // meaningful total — blank (null → empty currency cell) rather
-                // than a zero amount (ui-surface § line table).
-                accessor: line =>
-                  isPlaceholderLine(line) ? null : line.totalBeforeTax,
-                id: 'total',
-              },
-              header: () => t('label.total'),
-              ...getCellDefinition('total'),
-            } satisfies Column<Line, SortKey>,
           ]
         : []),
+      {
+        c: {
+          // Placeholder lines (0 packs, nothing shipped) have no
+          // meaningful total — blank (null → empty currency cell) rather
+          // than a zero amount (ui-surface § line table).
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalBeforeTax,
+          id: 'total',
+        },
+        header: () => t('label.total'),
+        ...getCellDefinition('total'),
+        // The whole shipment's, not this page's — the lines are server-paged.
+        footer: () =>
+          formatCurrencyCell(current()?.pricing.stockTotalBeforeTax),
+      },
       // Donor — gated by the donor-tracking preference.
       ...(prefs().allowTrackingOfStockByDonor
         ? [
