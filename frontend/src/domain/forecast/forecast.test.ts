@@ -32,7 +32,7 @@ const measles: PopulationCourse = {
   coverageRate: 60,
   wastageRate: 50,
   targetPopulation: 10000,
-  annualStartRate: 100,
+  annualDosesPerPerson: null,
   lossFactor: 2,
   annualTargetDoses: 24000,
   dosesPerUnit: 2,
@@ -62,10 +62,10 @@ describe('OMS-REG-REPL-11.11 — each course walks annual target doses → month
   });
 });
 
-describe('OMS-REG-REPL-11.16 — step 1 shows the start rate only for a course below 100%', () => {
-  // Td for pregnant women: 5 doses spread over about 2.5 pregnancies, so 40%
-  // of the group starts the course each year (2 doses per woman a year).
-  // 4 000 × (40 / 100) × 5 × (80 / 100) × 1 = 6 400 doses a year.
+describe("OMS-REG-REPL-11.16 — step 1 counts a course's doses per person per year only when it sets one", () => {
+  // Td for pregnant women: 5 doses spread over about 2.5 pregnancies, so a
+  // woman reached gets 2 a year.
+  // 4 000 × 2 × (80 / 100) × 1 = 6 400 doses a year.
   const td: PopulationCourse = {
     courseName: 'Td',
     demographicName: 'Pregnant women',
@@ -73,7 +73,7 @@ describe('OMS-REG-REPL-11.16 — step 1 shows the start rate only for a course b
     coverageRate: 80,
     wastageRate: 0,
     targetPopulation: 4000,
-    annualStartRate: 40,
+    annualDosesPerPerson: 2,
     lossFactor: 1,
     annualTargetDoses: 6400,
     dosesPerUnit: 1,
@@ -81,15 +81,15 @@ describe('OMS-REG-REPL-11.16 — step 1 shows the start rate only for a course b
     monthlyUnits: 533.3333333333334,
   };
 
-  it('puts the start rate into step 1 and its formula', () => {
+  it('puts the doses per person per year into step 1 and its formula', () => {
     const [annual] = populationSteps(td);
-    expect(annual.substitution).toBe('4,000 × (40 / 100) × 5 × (80 / 100) × 1');
+    expect(annual.substitution).toBe('4,000 × 2 × (80 / 100) × 1');
     expect(annualTargetFormulaKey(td)).toBe(
-      'description.annual-target-doses-calculation-with-start-rate'
+      'description.annual-target-doses-calculation-with-doses-per-person'
     );
   });
 
-  it('leaves a whole-group course as it was', () => {
+  it('leaves a course counting every dose as it was', () => {
     const [annual] = populationSteps(measles);
     expect(annual.substitution).toBe('10,000 × 2 × (60 / 100) × 2');
     expect(annualTargetFormulaKey(measles)).toBe(

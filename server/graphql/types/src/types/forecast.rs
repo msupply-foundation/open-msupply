@@ -215,9 +215,10 @@ impl PopulationForecastCourseNode {
     pub async fn target_population(&self) -> f64 {
         self.course.target_population
     }
-    /// The share (%) of the target population starting the course each year
-    pub async fn annual_start_rate(&self) -> f64 {
-        self.course.annual_start_rate
+    /// The average doses a person gets in a year, counted in place of the number of
+    /// doses when set
+    pub async fn annual_doses_per_person(&self) -> Option<f64> {
+        self.course.annual_doses_per_person
     }
     pub async fn loss_factor(&self) -> f64 {
         self.course.loss_factor

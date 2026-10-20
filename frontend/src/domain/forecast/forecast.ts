@@ -86,25 +86,25 @@ export const courseTitle = (course: PopulationCourse): string =>
 // places — monthly demand keeps its fraction.
 export type ForecastStep = { substitution: string; result: string };
 
-// Whether step 1 carries the start-rate factor: only for a course that starts
-// less than its whole group each year, so a yearly cohort (births) reads as it
-// always has.
-const startsPartOfGroup = (course: PopulationCourse): boolean =>
-  course.annualStartRate !== 100;
+// Whether step 1 counts the course's average doses per person per year in place
+// of its number of doses: only for a course that sets one, so a course counting
+// every dose (births) reads as it always has.
+const countsDosesPerPerson = (course: PopulationCourse): boolean =>
+  course.annualDosesPerPerson != null;
 
 /** Step 1's formula wording, matching its substitution's factors. */
 export const annualTargetFormulaKey = (course: PopulationCourse): LocaleKey =>
-  startsPartOfGroup(course)
-    ? 'description.annual-target-doses-calculation-with-start-rate'
+  countsDosesPerPerson(course)
+    ? 'description.annual-target-doses-calculation-with-doses-per-person'
     : 'description.annual-target-doses-calculation';
 
 export const populationSteps = (
   course: PopulationCourse
 ): [ForecastStep, ForecastStep] => [
   {
-    // 1. Annual target doses = target population [× (start rate/100)] ×
-    // doses × (coverage/100) × loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${startsPartOfGroup(course) ? `(${formatNumber(course.annualStartRate)} / 100) × ` : ''}${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
+    // 1. Annual target doses = target population × (doses per person per year
+    // ?? doses) × (coverage/100) × loss factor.
+    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.annualDosesPerPerson ?? course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
     result: `= ${roundedText(course.annualTargetDoses)} ${t('label.doses-per-year')}`,
   },
   {

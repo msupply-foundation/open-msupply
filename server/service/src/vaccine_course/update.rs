@@ -1,7 +1,7 @@
 use super::{
     query::get_vaccine_course,
     validate::{
-        check_annual_start_rate_is_valid, check_dose_min_ages_are_in_order,
+        check_annual_doses_per_person_is_valid, check_dose_min_ages_are_in_order,
         check_vaccine_course_name_exists_for_program,
     },
 };
@@ -35,7 +35,7 @@ pub enum UpdateVaccineCourseError {
     CreatedRecordNotFound,
     DemographicDoesNotExist,
     VaccineDosesInUse,
-    AnnualStartRateOutOfRange,
+    AnnualDosesPerPersonNotPositive,
     DatabaseError(RepositoryError),
 }
 
@@ -101,7 +101,8 @@ pub struct UpdateVaccineCourse {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: Option<bool>,
-    pub annual_start_rate: Option<f64>,
+    /// None keeps the course's; a None value clears it
+    pub annual_doses_per_person: Option<NullableUpdate<f64>>,
 }
 
 pub fn update_vaccine_course(
@@ -204,9 +205,12 @@ pub fn validate(
         return Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder);
     }
 
-    if let Some(annual_start_rate) = input.annual_start_rate {
-        if !check_annual_start_rate_is_valid(annual_start_rate) {
-            return Err(UpdateVaccineCourseError::AnnualStartRateOutOfRange);
+    if let Some(NullableUpdate {
+        value: Some(annual_doses_per_person),
+    }) = input.annual_doses_per_person
+    {
+        if !check_annual_doses_per_person_is_valid(annual_doses_per_person) {
+            return Err(UpdateVaccineCourseError::AnnualDosesPerPersonNotPositive);
         }
     }
 
@@ -241,7 +245,7 @@ fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
-        annual_start_rate,
+        annual_doses_per_person,
     }: UpdateVaccineCourse,
 ) -> Result<GenerateResult, RepositoryError> {
     let updated_course = VaccineCourseRow {
@@ -254,7 +258,10 @@ fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose: can_skip_dose.unwrap_or(old_row.can_skip_dose),
-        annual_start_rate: annual_start_rate.unwrap_or(old_row.annual_start_rate),
+        annual_doses_per_person: nullable_update(
+            &annual_doses_per_person,
+            old_row.annual_doses_per_person,
+        ),
     };
 
     let items_for_course = VaccineCourseItemRepository::new(connection).query_by_filter(

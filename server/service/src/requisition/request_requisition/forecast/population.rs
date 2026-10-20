@@ -12,7 +12,7 @@ struct CourseGroup {
     demographic_name: Option<String>,
     coverage_rate: f64,
     wastage_rate: f64,
-    annual_start_rate: f64,
+    annual_doses_per_person: Option<f64>,
     population_percentage: f64,
     vaccine_doses: i32,
     dose_labels: HashSet<String>,
@@ -51,7 +51,7 @@ impl CoveringCourses {
                 vaccine_course_name,
                 coverage_rate,
                 wastage_rate,
-                annual_start_rate,
+                annual_doses_per_person,
                 dose_label,
                 item_id,
                 vaccine_doses,
@@ -75,7 +75,7 @@ impl CoveringCourses {
                         demographic_name,
                         coverage_rate: store_config.and_then(|(_, c)| *c).unwrap_or(coverage_rate),
                         wastage_rate: store_config.and_then(|(w, _)| *w).unwrap_or(wastage_rate),
-                        annual_start_rate,
+                        annual_doses_per_person,
                         population_percentage: population_percentage.unwrap_or(100.0),
                         vaccine_doses,
                         dose_labels: HashSet::new(),
@@ -157,14 +157,14 @@ fn course_forecast(group: &CourseGroup, population_served: f64) -> PopulationFor
         }
     };
     let number_of_doses = group.dose_labels.len() as i32;
-    // Only the share of the group starting the course this year takes its doses: the whole
-    // group for a yearly cohort (births), less for one people stay in for years or re-enter
-    // (an age band, pregnant women)
-    let annual_target_doses = target_population
-        * (group.annual_start_rate / 100.0)
-        * number_of_doses as f64
-        * (group.coverage_rate / 100.0)
-        * loss_factor;
+    // A person gets every dose in the course each year unless the course says how many
+    // they get on average: fewer for a group people stay in for years or re-enter (an age
+    // band, pregnant women), who get the course spread out
+    let doses_per_person = group
+        .annual_doses_per_person
+        .unwrap_or(number_of_doses as f64);
+    let annual_target_doses =
+        target_population * doses_per_person * (group.coverage_rate / 100.0) * loss_factor;
     let monthly_doses = annual_target_doses / 12.0;
     // An item with no doses per unit forecasts a unit per dose
     let doses_per_unit = if group.vaccine_doses == 0 {
@@ -180,7 +180,7 @@ fn course_forecast(group: &CourseGroup, population_served: f64) -> PopulationFor
         coverage_rate: group.coverage_rate,
         wastage_rate: group.wastage_rate,
         target_population,
-        annual_start_rate: group.annual_start_rate,
+        annual_doses_per_person: group.annual_doses_per_person,
         loss_factor,
         annual_target_doses,
         doses_per_unit,
@@ -239,7 +239,7 @@ mod tests {
                 coverage_rate: 60.0,
                 wastage_rate: 50.0,
                 target_population: 2500.0,
-                annual_start_rate: 100.0,
+                annual_doses_per_person: None,
                 loss_factor: 2.0,
                 annual_target_doses: 9000.0,
                 doses_per_unit: 2.0,
@@ -261,19 +261,20 @@ mod tests {
         assert_eq!(courses.wastage_rate("item_a"), 0.0);
     }
 
-    // A course 40% of the group starts each year (e.g. Td for pregnant women: 5 doses over
-    // about 2.5 pregnancies) takes 40% of the doses, with every other figure unchanged.
+    // A course with its average doses a person gets a year (e.g. Td for pregnant women: 5
+    // doses over about 2.5 pregnancies, so 2 a year) counts those in place of the course's
+    // doses, with every other figure unchanged. Here 1.2 for the 3-dose course.
     // store_b (no override), so the course's coverage (80%) and wastage (10%):
-    // Annual target doses: 2500 × (40 / 100) × 3 × 80% × 1.111… = 2666.666…
+    // Annual target doses: 2500 × 1.2 × 80% × 1.111… = 2666.666…
     // Monthly doses: 222.222…; 2 doses per unit, so 111.111… units
     #[actix_rt::test]
-    async fn population_forecast_counts_the_share_starting_each_year() {
+    async fn population_forecast_counts_the_annual_doses_per_person() {
         let (_, connection, _, _) = setup_all_with_data(
-            "population_forecast_counts_the_share_starting_each_year",
+            "population_forecast_counts_the_annual_doses_per_person",
             MockDataInserts::all(),
             MockData {
                 vaccine_courses: vec![VaccineCourseRow {
-                    annual_start_rate: 40.0,
+                    annual_doses_per_person: Some(1.2),
                     ..mock_vaccine_course()
                 }],
                 ..Default::default()
@@ -284,11 +285,11 @@ mod tests {
 
         let courses = CoveringCourses::load(&connection, "store_b", &[item_id.clone()]).unwrap();
         let course = &courses.forecast(&item_id, 10000.0).courses[0];
-        assert_eq!(course.annual_start_rate, 40.0);
+        assert_eq!(course.annual_doses_per_person, Some(1.2));
         // The group itself and the doses in the course are as before
         assert_eq!(course.target_population, 2500.0);
         assert_eq!(course.number_of_doses, 3);
-        // Only the 40% starting the course this year take doses
+        // 1.2 doses a person, not the course's 3
         let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
         assert!(close(course.annual_target_doses, 2666.666666666667));
         assert!(close(course.monthly_doses, 222.22222222222223));
@@ -323,7 +324,7 @@ mod tests {
             demographic_name: None,
             coverage_rate,
             wastage_rate,
-            annual_start_rate: 100.0,
+            annual_doses_per_person: None,
             population_percentage: 100.0,
             vaccine_doses: 1,
             dose_labels: HashSet::from(["Dose 1".to_string()]),
@@ -351,7 +352,7 @@ mod tests {
             demographic_name: None,
             coverage_rate: 100.0,
             wastage_rate,
-            annual_start_rate: 100.0,
+            annual_doses_per_person: None,
             population_percentage: 100.0,
             vaccine_doses: 1,
             dose_labels: HashSet::from(["Dose 1".to_string()]),

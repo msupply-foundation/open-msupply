@@ -56,7 +56,7 @@ mod delete {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
-            annual_start_rate: None,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 

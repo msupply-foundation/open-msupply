@@ -4,22 +4,23 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_annual_start_rate_to_vaccine_course"
+        "add_annual_doses_per_person_to_vaccine_course"
     }
 
-    // The share of a course's target population that starts the course each year. 100
-    // keeps every existing course forecasting as it did: the whole group, every year.
+    // The average number of doses a person reached gets in a year, for population
+    // forecasting. Null (every existing course) keeps forecasting as it did: every dose in
+    // the course, every year.
     //
-    // A site that pulled a course from a 3.04 central before upgrading dropped the rate
+    // A site that pulled a course from a 3.04 central before upgrading dropped the value
     // as an unknown field, and central data only re-flows on initialisation or change. So
     // the `vaccine_course` buffer rows go back to pending (`is_integrated = false`, as the
     // sync-v7 buffer partitions on it), and the next sync re-integrates them with their
-    // rate. A row from an older central has none, and integrates at 100.
+    // value. A row from an older central has none, and integrates as null.
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                ALTER TABLE vaccine_course ADD COLUMN annual_start_rate {DOUBLE} NOT NULL DEFAULT 100;
+                ALTER TABLE vaccine_course ADD COLUMN annual_doses_per_person {DOUBLE};
 
                 UPDATE sync_buffer
                     SET is_integrated = FALSE,
@@ -65,14 +66,14 @@ mod test {
     }
 
     /// Already-integrated vaccine courses go back to pending, so the next sync picks up
-    /// a rate the site dropped before it knew the field; other tables are left alone.
+    /// a value the site dropped before it knew the field; other tables are left alone.
     #[actix_rt::test]
-    async fn migration_3_04_00_annual_start_rate_reintegrates_vaccine_courses() {
+    async fn migration_3_04_00_annual_doses_per_person_reintegrates_vaccine_courses() {
         let previous_version = v3_02_00::V3_02_00.version();
         let version = v3_04_00::V3_04_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!("migration_{version}_annual_start_rate"),
+            db_name: &format!("migration_{version}_annual_doses_per_person"),
             version: Some(previous_version),
             ..Default::default()
         })

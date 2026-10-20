@@ -29,7 +29,7 @@ fn vaccine_course1() -> VaccineCourseRow {
         wastage_rate: 1.0,
         deleted_datetime: None,
         can_skip_dose: false,
-        annual_start_rate: 100.0,
+        annual_doses_per_person: None,
     }
 }
 

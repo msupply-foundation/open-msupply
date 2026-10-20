@@ -134,7 +134,7 @@ mod tests {
             wastage_rate: 0.0,
             deleted_datetime: None,
             can_skip_dose: false,
-            annual_start_rate: 100.0,
+            annual_doses_per_person: None,
         };
 
         let _insert_cursor = VaccineCourseRowRepository::new(&connection)

@@ -54,10 +54,10 @@ impl VaccineCourseNode {
         self.row().can_skip_dose
     }
 
-    /// The share (%) of the target population that starts the course each year, for
-    /// population forecasting
-    pub async fn annual_start_rate(&self) -> f64 {
-        self.row().annual_start_rate
+    /// The average number of doses a person reached gets in a year, for population
+    /// forecasting. Null counts every dose in the course
+    pub async fn annual_doses_per_person(&self) -> Option<f64> {
+        self.row().annual_doses_per_person
     }
 
     pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {

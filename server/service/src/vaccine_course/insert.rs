@@ -2,7 +2,7 @@ use super::{
     query::get_vaccine_course,
     update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     validate::{
-        check_annual_start_rate_is_valid, check_dose_min_ages_are_in_order,
+        check_annual_doses_per_person_is_valid, check_dose_min_ages_are_in_order,
         check_vaccine_course_name_exists_for_program,
     },
 };
@@ -31,7 +31,7 @@ pub enum InsertVaccineCourseError {
     ProgramDoesNotExist,
     DoseMinAgesAreNotInOrder,
     DemographicIndicatorDoesNotExist,
-    AnnualStartRateOutOfRange,
+    AnnualDosesPerPersonNotPositive,
     DatabaseError(RepositoryError),
 }
 
@@ -48,8 +48,8 @@ pub struct InsertVaccineCourse {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: bool,
-    /// None starts the course at 100%: the whole target population, every year
-    pub annual_start_rate: Option<f64>,
+    /// None counts every dose in the course, every year
+    pub annual_doses_per_person: Option<f64>,
 }
 
 pub fn insert_vaccine_course(
@@ -120,9 +120,9 @@ pub fn validate(
         return Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder);
     }
 
-    if let Some(annual_start_rate) = input.annual_start_rate {
-        if !check_annual_start_rate_is_valid(annual_start_rate) {
-            return Err(InsertVaccineCourseError::AnnualStartRateOutOfRange);
+    if let Some(annual_doses_per_person) = input.annual_doses_per_person {
+        if !check_annual_doses_per_person_is_valid(annual_doses_per_person) {
+            return Err(InsertVaccineCourseError::AnnualDosesPerPersonNotPositive);
         }
     }
 
@@ -142,7 +142,7 @@ pub fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
-        annual_start_rate,
+        annual_doses_per_person,
     }: InsertVaccineCourse,
 ) -> (VaccineCourseRow, Vec<VaccineCourseStoreConfigRow>) {
     let row = VaccineCourseRow {
@@ -155,7 +155,7 @@ pub fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose,
-        annual_start_rate: annual_start_rate.unwrap_or(100.0),
+        annual_doses_per_person,
     };
 
     let store_config_rows = store_configs

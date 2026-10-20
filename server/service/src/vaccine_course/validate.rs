@@ -32,10 +32,10 @@ pub fn check_vaccine_course_name_exists_for_program(
     Ok(result.is_empty())
 }
 
-/// A share of the target population: above 0 (a course nobody starts forecasts nothing,
-/// which is no use) and at most all of it
-pub fn check_annual_start_rate_is_valid(annual_start_rate: f64) -> bool {
-    annual_start_rate > 0.0 && annual_start_rate <= 100.0
+/// Above 0: a course nobody gets a dose of forecasts nothing, which is no use (clear it
+/// instead to count every dose in the course)
+pub fn check_annual_doses_per_person_is_valid(annual_doses_per_person: f64) -> bool {
+    annual_doses_per_person > 0.0
 }
 
 pub fn check_dose_min_ages_are_in_order(doses: &Vec<VaccineCourseDoseInput>) -> bool {

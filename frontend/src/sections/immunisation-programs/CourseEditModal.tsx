@@ -58,7 +58,6 @@ import {
   doseProblem,
   draftFromCourse,
   fieldProblem,
-  forecastDosesPerYear,
   insertInput,
   insertOutcome,
   isDirty,
@@ -718,42 +717,31 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                             group's full width. */}
                         <FormRow>
                           <NumberField
-                            label={t('label.annual-start-rate')}
+                            label={t('label.annual-doses-per-person')}
                             labelInfo={
                               <InfoTooltip
-                                text={t('description.annual-start-rate')}
-                                label={t('label.annual-start-rate')}
-                                triggerTestId="vaccine-course-annual-start-rate-info"
+                                text={t('description.annual-doses-per-person')}
+                                label={t('label.annual-doses-per-person')}
+                                triggerTestId="vaccine-course-annual-doses-per-person-info"
                               />
                             }
-                            required
-                            endAdornment="%"
                             min={0}
-                            // No `max`, as for wastage: out-of-range is a
-                            // save-time check the validation summary reports,
-                            // not a silent clamp.
-                            decimalLimit={1}
-                            data-testid="vaccine-course-annual-start-rate-input"
+                            decimalLimit={2}
+                            data-testid="vaccine-course-annual-doses-per-person-input"
                             disabled={saving()}
-                            error={fieldError('annualStartRate')}
-                            // What the population forecast will count, so a
-                            // programme can check the rate against the
-                            // doses-a-year figure it already plans with (5 Td
-                            // doses at 40% → 2).
-                            helperText={(() => {
-                              const doses = forecastDosesPerYear(draft);
-                              return doses === undefined
-                                ? undefined
-                                : t(
-                                    'messages.forecast-doses-per-person-per-year',
-                                    {
-                                      doses: Math.round(doses * 100) / 100,
-                                    }
-                                  );
-                            })()}
-                            value={draft.annualStartRate}
+                            error={fieldError('annualDosesPerPerson')}
+                            // What a blank counts, so a programme can see what
+                            // it overrides: the doses for full protection, below.
+                            helperText={
+                              draft.annualDosesPerPerson == null
+                                ? t('messages.annual-doses-per-person-blank', {
+                                    doses: draft.vaccineCourseDoses.length,
+                                  })
+                                : undefined
+                            }
+                            value={draft.annualDosesPerPerson ?? undefined}
                             onChange={value =>
-                              setDraft('annualStartRate', value)
+                              setDraft('annualDosesPerPerson', value ?? null)
                             }
                           />
                           <div />
