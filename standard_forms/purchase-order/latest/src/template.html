@@ -95,6 +95,23 @@
   {%- endfor %}
 </table>
 
+{% if po.charges | length > 0 %}
+<table class="charges">
+  <thead>
+    <tr>
+      <th>{{ t(k="heading.charges", f="Charges") }}</th>
+      <th class="number">{{ t(k="label.amount", f="Amount") }} ({{ po.currency.code }})</th>
+    </tr>
+  </thead>
+  {% for charge in po.charges -%}
+  <tr>
+    <td>{{ charge.description }}</td>
+    <td class="number">{{ charge.amount }}</td>
+  </tr>
+  {%- endfor %}
+</table>
+{% endif %}
+
 <div class="summary">
   <div class="instructions">
     {% if po.additionalInstructions %}

@@ -39,11 +39,13 @@ function convert_data(queryResponse) {
   // The exchange rate converts the order's currency to the store's
   po.estimatedCost = po.totalCost * (po.foreignExchangeRate || 1);
 
-  queryResponse.data.purchaseOrder.lines.nodes = sortNodes(
-    nodes,
-    'lineNumber',
-    'asc'
-  );
+  const sorted = sortNodes(nodes, 'lineNumber', 'asc');
+  const isService = node => !!node.item && node.item.type === 'SERVICE';
+  po.lines.nodes = sorted.filter(node => !isService(node));
+  po.charges = sorted.filter(isService).map(node => ({
+    description: node.comment || (node.item && node.item.name) || '',
+    amount: node.lineCost,
+  }));
 
   return queryResponse;
 }

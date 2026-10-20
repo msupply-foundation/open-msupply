@@ -138,6 +138,28 @@ th {
   color: #444;
 }
 
+.charges {
+  width: 40%;
+  margin-top: 10pt;
+}
+
+.charges th {
+  background: #333;
+  color: white;
+  padding: 3pt 4pt;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.charges td {
+  padding: 3pt 4pt;
+  border-bottom: 0.5px solid #999;
+}
+
+.charges .number {
+  text-align: end;
+}
+
 .summary {
   display: flex;
   justify-content: space-between;

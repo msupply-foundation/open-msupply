@@ -37,6 +37,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
             code
             name
             unitName
+            type
           }
           expectedDeliveryDate
           requestedNumberOfUnits

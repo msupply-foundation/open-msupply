@@ -69,6 +69,7 @@
           }
         ]
       },
+      "charges": [],
       "number": 3,
       "orderTotalAfterDiscount": 298.06,
       "orderTotalBeforeDiscount": 298.06,

@@ -52,4 +52,30 @@ describe("Test all", () => {
 
     expect(prices).toEqual(["0.0125", "4.90", "1.2346"]);
   });
+
+  it("moves service lines into the charges", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.purchaseOrder.lines.nodes = [
+      {
+        lineNumber: 2,
+        item: { name: "Service charges", type: "SERVICE" },
+        comment: "Freight",
+        lineTotalAfterSupplierDiscount: 150,
+      },
+      { lineNumber: 1, item: { name: "Amoxicillin", type: "STOCK" } },
+      {
+        lineNumber: 3,
+        item: { name: "Service charges", type: "SERVICE" },
+        lineTotalAfterSupplierDiscount: 35.5,
+      },
+    ];
+
+    const po = convert_data(input).data.purchaseOrder;
+
+    expect(po.lines.nodes.map((line) => line.lineNumber)).toEqual([1]);
+    expect(po.charges).toEqual([
+      { description: "Freight", amount: "150.00" },
+      { description: "Service charges", amount: "35.50" },
+    ]);
+  });
 });
