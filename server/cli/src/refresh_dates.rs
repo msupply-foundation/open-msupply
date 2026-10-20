@@ -47,6 +47,8 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_breach", "start_datetime"),
         ("temperature_breach", "end_datetime"),
         ("temperature_log", "datetime"),
+        ("temperature_summary", "start_datetime"),
+        ("temperature_summary", "end_datetime"),
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
         ("sync_file_reference", "created_datetime"),

@@ -10,6 +10,7 @@ mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
 mod add_stock_campaign_change_activity_log_type;
+mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
 mod prescription_request_occupation_prominent;
 mod refresh_who_pqs_catalogue;
@@ -32,6 +33,7 @@ impl Migration for V3_04_00 {
             Box::new(add_line_total_to_purchase_order_line::Migrate),
             Box::new(add_not_installed_status_to_asset_status_enum::Migrate),
             Box::new(add_uploader_to_sync_file_reference::Migrate),
+            Box::new(add_temperature_summary_table::Migrate),
             Box::new(prescription_request_occupation_prominent::Migrate),
             Box::new(add_campaign_id_to_invoice::Migrate),
             Box::new(refresh_who_pqs_catalogue::Migrate),
