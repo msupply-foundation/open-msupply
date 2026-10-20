@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { missingBatchOrExpiry, packDifference } from './inboundShipmentLine';
+import {
+  batchIsBlank,
+  expiryIsBlank,
+  lacksBatchOrExpiry,
+  packDifference,
+} from './inboundShipmentLine';
 
 // The Difference figure's DIRECTION (spec/inbound-shipments/ui-surface.md
 // § line table col 13, issue #562). The sign is the contract here: the
@@ -33,28 +38,32 @@ describe('packDifference', () => {
   });
 });
 
-// The batch/expiry prompt's trigger (issue #992): blank batch OR blank expiry
-// on any batch being saved — either one alone is enough to ask.
-describe('missingBatchOrExpiry', () => {
+// The batch/expiry prompt's trigger and marking (issue #992): per batch, a
+// blank batch OR a blank expiry — either one alone is enough.
+describe('batch and expiry blanks', () => {
   const full = { batch: 'B1', expiryDate: '2027-01-31' };
 
-  it('is false when every batch has both a batch and an expiry', () => {
-    expect(missingBatchOrExpiry([full, { ...full, batch: 'B2' }])).toBe(false);
+  it('a batch with both is not missing anything', () => {
+    expect(batchIsBlank(full)).toBe(false);
+    expect(expiryIsBlank(full)).toBe(false);
+    expect(lacksBatchOrExpiry(full)).toBe(false);
   });
 
-  it('is true when a batch is blank', () => {
-    expect(missingBatchOrExpiry([full, { ...full, batch: '' }])).toBe(true);
+  it('a blank batch is missing its batch only', () => {
+    const b = { ...full, batch: '' };
+    expect(batchIsBlank(b)).toBe(true);
+    expect(expiryIsBlank(b)).toBe(false);
+    expect(lacksBatchOrExpiry(b)).toBe(true);
   });
 
   it('treats a whitespace-only batch as blank', () => {
-    expect(missingBatchOrExpiry([{ ...full, batch: '  ' }])).toBe(true);
+    expect(batchIsBlank({ ...full, batch: '  ' })).toBe(true);
   });
 
-  it('is true when an expiry is blank', () => {
-    expect(missingBatchOrExpiry([{ ...full, expiryDate: null }])).toBe(true);
-  });
-
-  it('is false when there is nothing to save', () => {
-    expect(missingBatchOrExpiry([])).toBe(false);
+  it('a blank expiry is missing its expiry only', () => {
+    const b = { ...full, expiryDate: null };
+    expect(batchIsBlank(b)).toBe(false);
+    expect(expiryIsBlank(b)).toBe(true);
+    expect(lacksBatchOrExpiry(b)).toBe(true);
   });
 });

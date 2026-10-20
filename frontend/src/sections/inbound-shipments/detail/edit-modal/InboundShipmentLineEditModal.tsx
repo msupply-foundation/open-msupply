@@ -7,11 +7,13 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
+import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
+import { scrollCellIntoView } from '@/ui/elements/table/scrollCellIntoView';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
@@ -39,8 +41,18 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { missingBatchOrExpiry, packDifference } from '../inboundShipmentLine';
-import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
+import {
+  batchIsBlank,
+  expiryIsBlank,
+  lacksBatchOrExpiry,
+  packDifference,
+} from '../inboundShipmentLine';
+import {
+  AlertTriangleIcon,
+  CopyIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
   createFocusTarget,
@@ -435,6 +447,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // row id — where a row-click open, an advance, or a new batch lands focus.
   // The handle waits for the row to attach, so no load gate is needed here.
   const batchFields = createFocusTargets();
+  // Each batch's Batch and Expiry inputs — where "Enter batch and expiry"
+  // lands, on the first one left blank (OMS-REG-REPL-09.35).
+  const batchNumberFields = createFocusTargets();
+  const expiryFields = createFocusTargets();
 
   // The dialog-header slot the DataTable portals its toolbar controls into
   // (DataTable.controlsMount). A ref SIGNAL, not a plain variable: the header
@@ -913,6 +929,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       return false;
     }
     if (outcome.applied) props.onSaved();
+    setMarkedItemId(undefined); // a save that went through ends the marking
     return true;
   };
 
@@ -925,10 +942,43 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // them, or continue with none. Holds the save the user asked for (Save or
   // Save & next) so Continue runs exactly that one.
   const [pendingSave, setPendingSave] = createSignal<() => Promise<void>>();
+  const missingCount = () => rows().filter(lacksBatchOrExpiry).length;
   const guardSave = (action: () => Promise<void>) => {
-    if (props.prefs.promptBatchExpiry && missingBatchOrExpiry(rows()))
+    if (props.prefs.promptBatchExpiry && missingCount() > 0)
       setPendingSave(() => action);
     else void action();
+  };
+  const continueSave = () => {
+    const action = pendingSave();
+    setPendingSave(undefined); // so the prompt's close isn't read as "enter"
+    void action?.();
+  };
+
+  // "Enter batch and expiry" (OMS-REG-REPL-09.35–.38): the stocktake editor's
+  // awaiting-a-reason treatment, applied to batch and expiry. The batches
+  // still missing either are marked — badge, row tint, a warning under each
+  // blank field — until filled; a warning, never a block. Held as the item it
+  // was raised on, so moving to another item drops it with no reset of its own.
+  const [markedItemId, setMarkedItemId] = createSignal<string>();
+  const batchMarked = (b: DraftBatch) =>
+    markedItemId() !== undefined &&
+    markedItemId() === item()?.id &&
+    lacksBatchOrExpiry(b);
+  const markedCount = () => rows().filter(batchMarked).length;
+  const enterMissing = () => {
+    if (!pendingSave()) return; // closed by Continue, not by "enter"
+    setPendingSave(undefined);
+    setMarkedItemId(item()?.id);
+    const first = rows().find(lacksBatchOrExpiry);
+    if (!first) return;
+    // Centred, by its cell in table view, as the stocktake editor lands a
+    // missing reason — the warning beneath the field is the reason it's there.
+    const landing = {
+      scroll: (el: HTMLElement) =>
+        scrollCellIntoView(el, { block: 'center', inline: 'nearest' }),
+    };
+    if (batchIsBlank(first)) batchNumberFields.focus(first.id, landing);
+    else expiryFields.focus(first.id, landing);
   };
   // Back to the add-mode item-search state — no item picked. Reached when an
   // update walk exhausts, or by "OK & next" in add mode (add another). Always
@@ -939,6 +989,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setPoLineId(undefined);
     setBatches([]);
     setErrorMessage(undefined);
+    setMarkedItemId(undefined);
     // Focus the selector so the next item can be typed / picked.
     topSelector.focus();
   };
@@ -1025,11 +1076,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <TextField
+            ref={batchNumberFields.ref(b.id)}
             label={t('label.batch')}
             hideLabel
             disabled={props.readOnly}
             size="small"
             value={b.batch}
+            warning={
+              batchMarked(b) && batchIsBlank(b)
+                ? t('messages.enter-a-batch')
+                : undefined
+            }
+            warningTestId="batch-warning"
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
         );
@@ -1261,11 +1319,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <DateField
+            ref={expiryFields.ref(b.id)}
             label={t('label.expiry')}
             hideLabel
             disabled={props.readOnly}
             size="small"
             value={b.expiryDate}
+            warning={
+              batchMarked(b) && expiryIsBlank(b)
+                ? t('messages.enter-an-expiry-date')
+                : undefined
+            }
+            warningTestId="expiry-warning"
             onChange={v => updateBatch(b.id, 'expiryDate', v)}
           />
         );
@@ -1706,6 +1771,31 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    // The card's "Needs batch or expiry" badge (OMS-REG-REPL-09.35); the row
+    // layout says it with the row tint and accent instead. Built by hand, as
+    // the stocktake editor's "Needs a reason" badge and for its reasons: the
+    // state follows the editable draft store, which a cached accessor value
+    // would miss, and getFlagCell's marker would shift the row actions sharing
+    // this badge slot every time a batch was marked or cleared.
+    {
+      c: { id: 'missingBatchOrExpiry' },
+      header: () => t('label.needs-batch-or-expiry'),
+      meta: {
+        headerPosition: 'badge',
+        hideOnTable: true,
+        hideFromColumnSettings: true,
+      },
+      cell: info => (
+        <Show when={batchMarked(info.row.original)}>
+          <StatusBadge
+            label={t('label.needs-batch-or-expiry')}
+            tone="warning"
+            icon={<AlertTriangleIcon />}
+            testId="needs-batch-or-expiry-badge"
+          />
+        </Show>
+      ),
+    },
     ...(props.readOnly
       ? []
       : [
@@ -1874,7 +1964,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </>
       }
       actionsLead={
-        <Show when={errorMessage()}>
+        <Show
+          when={errorMessage()}
+          fallback={
+            <Show when={markedCount() > 0}>
+              <Alert severity="warning" testId="batch-expiry-summary">
+                {tPlural(
+                  'messages.batches-need-batch-or-expiry',
+                  markedCount()
+                )}
+              </Alert>
+            </Show>
+          }
+        >
           <Alert severity="error">{errorMessage()}</Alert>
         </Show>
       }
@@ -1983,6 +2085,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 columns={columns()}
                 rows={rows()}
                 rowKey={b => b.id}
+                rowTint={b => (batchMarked(b) ? 'warning' : undefined)}
+                rowAccent={b => (batchMarked(b) ? 'warning' : undefined)}
                 cardGroups={CARD_GROUPS}
                 showCardToggle
                 showFullScreen={false}
@@ -2009,11 +2113,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       {editor}
       <ConfirmDialog
         open={!!pendingSave()}
-        onClose={() => setPendingSave(undefined)}
-        message={t('messages.confirm-missing-batch-and-expiry')}
+        onClose={enterMissing}
+        message={tPlural(
+          'messages.confirm-missing-batch-and-expiry',
+          missingCount()
+        )}
         cancelLabel={t('button.enter-batch-and-expiry')}
         confirmLabel={t('button.continue')}
-        onConfirm={() => void pendingSave()?.()}
+        onConfirm={continueSave}
       />
     </>
   );
