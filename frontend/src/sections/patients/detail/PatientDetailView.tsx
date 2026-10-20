@@ -199,6 +199,7 @@ const PatientDetailView: Component = () => {
             storeId: params.storeId,
             filter: { patientId: { equalTo: params.patientId } },
             sort: { key: 'enrolmentDatetime' as const, desc: true },
+            eventTime: new Date().toISOString(),
           }
         : undefined,
     fetchPatientProgramEnrolments
@@ -214,6 +215,7 @@ const PatientDetailView: Component = () => {
             storeId: params.storeId,
             filter: { patientId: { equalTo: params.patientId } },
             sort: { key: 'startDatetime' as const, desc: true },
+            eventTime: new Date().toISOString(),
           }
         : undefined,
     fetchPatientEncounters
@@ -548,6 +550,7 @@ const PatientDetailView: Component = () => {
                     loading={enrolmentsData.loading}
                     tableId="patient-program-enrolment-list"
                     emptyMessage={t('messages.no-programs')}
+                    showAdditionalInfo
                     onRowClick={row =>
                       setEnrolmentTarget({
                         kind: 'existing',
@@ -561,6 +564,7 @@ const PatientDetailView: Component = () => {
                     rows={encounters()}
                     loading={encountersData.loading}
                     onRowClick={openEncounter}
+                    enrolmentRegistries={enrolmentRegistries()}
                   />
                 </TabPanel>
                 <TabPanel value="vaccinations">

@@ -1,0 +1,78 @@
+# The global encounter list (spec/encounters/contract.md). Rows come from the
+# flat encounter table, scoped server-side to the programs the user may read at
+# this store, not to the store itself; deleted rows are excluded by the
+# resolver. The sort is always sent: omitted, the server orders by patient id.
+#
+# The Program column is the name of the enrolment registry in the encounter's
+# context (encounterProgramNames below), as the old client's list names it:
+# one read serves every row, where EncounterNode.programEnrolment would look
+# up each row's enrolment.
+#
+# activeProgramEvents needs isCurrentEncounter: without it each row reads the
+# events of every encounter of its type for the patient. The server returns
+# every event type; the client keeps the `status` ones.
+query encounterList(
+  $storeId: String!
+  $filter: EncounterFilterInput
+  $sort: EncounterSortInput
+  $page: PaginationInput
+  $eventTime: DateTime
+) {
+  encounters(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on EncounterConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        type
+        startDatetime
+        status
+        patient {
+          __typename
+          name
+        }
+        document {
+          __typename
+          documentRegistry {
+            __typename
+            name
+          }
+        }
+        contextId
+        activeProgramEvents(
+          at: $eventTime
+          filter: { isCurrentEncounter: true }
+        ) {
+          ... on ProgramEventConnector {
+            __typename
+            nodes {
+              __typename
+              type
+              data
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The enrolment registries, whose names the Program column shows, matched by
+# context id. Only those of the programs the user may read come back.
+query encounterProgramNames($storeId: String!) {
+  documentRegistries(
+    storeId: $storeId
+    filter: { category: { equalTo: PROGRAM_ENROLMENT } }
+  ) {
+    ... on DocumentRegistryConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        contextId
+        name
+      }
+    }
+  }
+}

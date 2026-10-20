@@ -1,16 +1,11 @@
-import { type Component } from 'solid-js';
+import { createMemo, type Component } from 'solid-js';
 import { t } from '../../../../intl';
-import type { LocaleKey } from '../../../../intl/locales';
-import {
-  DataTable,
-  type Column,
-} from '../../../../ui/elements/table/DataTable';
-import {
-  getCellDefinition,
-  getTextCell,
-} from '../../../../ui/elements/table/tableHelpers';
-import { remToPx } from '../../../../ui/utils/rem';
+import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
+import {
+  encounterColumns,
+  enrolmentNameByContext,
+} from '../../../../domain/encounter/encounterColumns';
 import type { EncounterRowFragment } from './programTabs.generated';
 
 type Row = EncounterRowFragment;
@@ -20,59 +15,24 @@ export interface EncountersPanelProps {
   loading: boolean;
   /** Opens the encounter's record screen. */
   onRowClick: (encounter: Row) => void;
+  /** The enrolment registries, whose names the Program column shows. */
+  enrolmentRegistries: readonly { contextId: string; name: string | null }[];
 }
 
-// Encounter status → its fixed label key (matches the reference's
-// encounterStatusTranslation; PENDING renders as "Scheduled").
-const statusLabel = (status: Row['status']): string =>
-  status
-    ? t(`label.encounter-status-${status.toLowerCase()}` as LocaleKey)
-    : '';
-
 // The encounter table on the patient detail (spec/patients ui-surface ›
-// Encounters tab), newest first. A row click navigates to the encounter's
-// record screen (src/sections/encounters). Type/Program names are the document
-// registry names.
+// Encounters tab), newest first: the encounter list's columns without Patient
+// (spec/encounters/ui-surface.md S1). A row click navigates to the encounter's
+// record screen (src/sections/encounters).
 export const EncountersPanel: Component<EncountersPanelProps> = props => {
   const tableConfig = createTableConfig({
     tableId: 'patient-encounter-list',
   });
 
-  // Cell-type presets carry the rendering AND the width
-  // (ui/docs/CELL_TYPES.md): the start date from the shared CELL_DEF map, the
-  // text columns from the text helper plus a call-site `size` (no map key).
-  const columns = (): Column<Row, never>[] => [
-    {
-      c: {
-        accessor: r => r.document.documentRegistry?.name ?? r.type,
-        id: 'type',
-      },
-      header: () => t('label.encounter-type'),
-      ...getTextCell(),
-      size: remToPx(14),
-    },
-    {
-      c: {
-        accessor: r =>
-          r.programEnrolment?.document.documentRegistry?.name ?? '',
-        id: 'program',
-      },
-      header: () => t('label.program'),
-      ...getTextCell(),
-      size: remToPx(14),
-    },
-    {
-      c: { key: 'startDatetime' },
-      header: () => t('label.date'),
-      ...getCellDefinition('startDatetime'),
-    },
-    {
-      c: { accessor: r => statusLabel(r.status), id: 'status' },
-      header: () => t('label.status'),
-      ...getTextCell(),
-      size: remToPx(6),
-    },
-  ];
+  const columns = createMemo(() =>
+    encounterColumns<Row>({
+      programName: enrolmentNameByContext(props.enrolmentRegistries),
+    })
+  );
 
   return (
     <DataTable
