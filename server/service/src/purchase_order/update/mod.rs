@@ -177,22 +177,25 @@ pub fn update_purchase_order(
                 delete_new_inbound_shipments(ctx, connection, &updated_purchase_order.id)?;
             }
 
-            let activity_type = if existing_purchase_order.purchase_order_row.status
-                == PurchaseOrderStatus::Sent
-                && input.status == Some(PurchaseOrderStatus::Confirmed)
-            {
-                ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
-            } else {
-                log_type_from_purchase_order_status(&updated_purchase_order.status)
-            };
+            // Only a status change is logged; an edit to the order's fields leaves no entry
+            let previous_status = &existing_purchase_order.purchase_order_row.status;
+            if *previous_status != updated_purchase_order.status {
+                let activity_type = if *previous_status == PurchaseOrderStatus::Sent
+                    && updated_purchase_order.status == PurchaseOrderStatus::Confirmed
+                {
+                    ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
+                } else {
+                    log_type_from_purchase_order_status(&updated_purchase_order.status)
+                };
 
-            activity_log_entry(
-                ctx,
-                activity_type,
-                Some(updated_purchase_order.id.clone()),
-                None,
-                None,
-            )?;
+                activity_log_entry(
+                    ctx,
+                    activity_type,
+                    Some(updated_purchase_order.id.clone()),
+                    None,
+                    None,
+                )?;
+            }
 
             purchase_order_repository
                 .find_one_by_id(&updated_purchase_order.id)?
