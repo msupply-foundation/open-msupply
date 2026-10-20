@@ -32,6 +32,11 @@ function convert_data(queryResponse) {
     (po.communicationsCharge || 0) +
     (po.insuranceCharge || 0) +
     (po.freightCharge || 0);
+  // The order's final cost, in its own currency, as the app shows it: the
+  // charges are not part of either stored total, so they are added here
+  po.totalCost = (po.orderTotalAfterDiscount || 0) + po.additionalFees;
+  // The exchange rate converts the order's currency to the store's
+  po.estimatedCost = po.totalCost * (po.foreignExchangeRate || 1);
 
   queryResponse.data.purchaseOrder.lines.nodes = sortNodes(
     nodes,

@@ -73,6 +73,8 @@
       "insuranceCharge": null,
       "freightCharge": 50.5,
       "additionalFees": 63,
+      "totalCost": 361.06,
+      "estimatedCost": 361.06,
       "status": "CONFIRMED",
       "store": {
         "logo": null,
