@@ -22,13 +22,12 @@
               "unitName": "Tab"
             },
             "lineNumber": 1,
-            "pricePerPackAfterDiscount": 0.95,
+            "lineTotalAfterSupplierDiscount": 9.5,
             "requestedNumberOfUnits": 10000,
             "requestedPackSize": 1000,
             "supplierItemCode": null,
             "lineCost": "9.50",
-            "requestedNumberOfPacks": 10,
-            "adjustedUnits": ""
+            "requestedNumberOfPacks": 10
           },
           {
             "comment": "Second PO comment dolutegravir.",
@@ -39,13 +38,12 @@
               "unitName": "Comprime"
             },
             "lineNumber": 2,
-            "pricePerPackAfterDiscount": 1.98,
+            "lineTotalAfterSupplierDiscount": 43.56,
             "requestedNumberOfUnits": 242,
             "requestedPackSize": 11,
             "supplierItemCode": null,
             "lineCost": "43.56",
-            "requestedNumberOfPacks": 22,
-            "adjustedUnits": ""
+            "requestedNumberOfPacks": 22
           },
           {
             "comment": "Third PO comment salbutamol.",
@@ -56,13 +54,12 @@
               "unitName": null
             },
             "lineNumber": 3,
-            "pricePerPackAfterDiscount": 4.9,
+            "lineTotalAfterSupplierDiscount": 245,
             "requestedNumberOfUnits": 250,
             "requestedPackSize": 5,
             "supplierItemCode": null,
             "lineCost": "245.00",
-            "requestedNumberOfPacks": 50,
-            "adjustedUnits": ""
+            "requestedNumberOfPacks": 50
           }
         ]
       },
@@ -76,6 +73,8 @@
       "insuranceCharge": null,
       "freightCharge": 50.5,
       "additionalFees": 63,
+      "totalCost": 361.06,
+      "estimatedCost": 361.06,
       "status": "CONFIRMED",
       "store": {
         "logo": null,

@@ -10,6 +10,8 @@ import { Stack } from '@/ui/layout/Stack/Stack';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
+import { Select } from '@/ui/elements/selectors/Select';
+import { campaignKindLabel } from '@/domain/campaign';
 import {
   CancelButton,
   DialogSaveButton,
@@ -82,14 +84,14 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
         return;
       case 'duplicate-name':
         // Keyed to the Name field: its own message, not the generic one.
-        setError(t('messages.error-campaign-name-already-exists'));
+        setError(t('messages.error-activity-name-already-exists'));
         return;
       case 'rejected':
         // The generic save message with the server's own description appended —
         // `InvalidDates` resolves through the server-error table ("Invalid
         // dates"); a plain description passes through.
         setError(
-          `${t('messages.error-saving-campaign')} ${translateServerError(
+          `${t('messages.error-saving-activity')} ${translateServerError(
             outcome.serverError
           )}`
         );
@@ -105,7 +107,7 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
     <Dialog
       open
       testId="campaign-edit-modal"
-      title={isEdit() ? t('title.edit-campaign') : t('title.create-campaign')}
+      title={isEdit() ? t('title.edit-activity') : t('title.create-activity')}
       // Blocking while the mutation is in flight: no Escape exit until it
       // resolves.
       dismissable={!saving()}
@@ -159,6 +161,31 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
             // whitespace (rules § creating and editing). The save trims too;
             // this is what makes the trim visible to the user.
             onBlur={() => setDraft({ ...draft(), name: draft().name.trim() })}
+          />
+        </FieldRow>
+        {/* Kind is a must-have pick, never empty: an activity is either a
+            campaign or the routine one. */}
+        <FieldRow label={t('label.kind')} required>
+          <Select
+            label={t('label.kind')}
+            hideLabel
+            required
+            width="full"
+            testId="campaign-kind-input"
+            disabled={saving()}
+            value={draft().kind ?? 'CAMPAIGN'}
+            // Labelled by the shared kind→name map, so the editor, the
+            // register column and the Activity picker never drift apart.
+            options={[
+              { value: 'CAMPAIGN', label: campaignKindLabel('CAMPAIGN') },
+              { value: 'ROUTINE', label: campaignKindLabel('ROUTINE') },
+            ]}
+            onValueChange={value =>
+              setDraft({
+                ...draft(),
+                kind: value === 'ROUTINE' ? 'ROUTINE' : 'CAMPAIGN',
+              })
+            }
           />
         </FieldRow>
         {/* Both dates optional and independently clearable, and NEITHER is

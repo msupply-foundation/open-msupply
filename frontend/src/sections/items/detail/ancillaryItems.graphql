@@ -12,6 +12,7 @@ query itemAncillaryItems($storeId: String!, $itemId: String!) {
           id
           itemQuantity
           ancillaryQuantity
+          excludePrincipalWastage
           ancillaryItem {
             id
             code

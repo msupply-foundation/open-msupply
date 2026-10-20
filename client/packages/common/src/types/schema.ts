@@ -166,6 +166,7 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PurchaseOrderCancelled = 'PURCHASE_ORDER_CANCELLED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
@@ -197,6 +198,7 @@ export enum ActivityLogNodeType {
   StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
+  StockCampaignChange = 'STOCK_CAMPAIGN_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
   StockLineEdit = 'STOCK_LINE_EDIT',
@@ -432,6 +434,8 @@ export type AncillaryItemNode = {
   ancillaryItemId: Scalars['String']['output'];
   /** Right-hand side of the stored `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['output'];
+  /** Ordered against the principal's quantity net of its wastage rate */
+  excludePrincipalWastage: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   /** The principal item — the item this ancillary supply should be ordered alongside. */
   item?: Maybe<ItemNode>;
@@ -467,6 +471,10 @@ export type AncillaryRatioPrincipalNode = {
   monthlyConsumption: Scalars['Float']['output'];
   /** The principal line's monthly demand */
   principalMonthlyConsumption: Scalars['Float']['output'];
+  /** The principal's monthly demand net of the deducted wastage */
+  principalUsableConsumption: Scalars['Float']['output'];
+  /** The principal's wastage rate (%) deducted before the ratio applies; 0 when none */
+  wastageRate: Scalars['Float']['output'];
 };
 
 /**
@@ -1289,6 +1297,11 @@ export type CampaignFilterInput = {
   name?: InputMaybe<StringFilterInput>;
 };
 
+export enum CampaignKindNode {
+  Campaign = 'CAMPAIGN',
+  Routine = 'ROUTINE',
+}
+
 export type CampaignMutations = {
   __typename: 'CampaignMutations';
   deleteCampaign: DeleteCampaignResponse;
@@ -1312,6 +1325,7 @@ export type CampaignNode = {
   __typename: 'CampaignNode';
   endDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  kind: CampaignKindNode;
   name: Scalars['String']['output'];
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
@@ -1398,11 +1412,6 @@ export type CannotDeleteRequisitionWithLines =
     description: Scalars['String']['output'];
   };
 
-export type CannotEditAdjustedQuantity = PurchaseOrderLineError & {
-  __typename: 'CannotEditAdjustedQuantity';
-  description: Scalars['String']['output'];
-};
-
 export type CannotEditInvoice =
   AddToInboundShipmentFromMasterListErrorInterface &
     AddToOutboundShipmentFromMasterListErrorInterface &
@@ -1438,11 +1447,6 @@ export type CannotEditPurchaseOrder =
       __typename: 'CannotEditPurchaseOrder';
       description: Scalars['String']['output'];
     };
-
-export type CannotEditQuantityBelowReceived = PurchaseOrderLineError & {
-  __typename: 'CannotEditQuantityBelowReceived';
-  description: Scalars['String']['output'];
-};
 
 export type CannotEditRequestedQuantity = PurchaseOrderLineError & {
   __typename: 'CannotEditRequestedQuantity';
@@ -3847,6 +3851,11 @@ export enum InboundNodeType {
   ManualExternal = 'MANUAL_EXTERNAL',
   ManualInternal = 'MANUAL_INTERNAL',
 }
+
+export type InboundShipmentsInProgress = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsInProgress';
+  description: Scalars['String']['output'];
+};
 
 export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
   __typename: 'InboundShipmentsNotVerified';
@@ -8726,14 +8735,13 @@ export type PurchaseOrderLineFilterInput = {
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
-  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
+  receivedLessThanRequested?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
   supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -8741,10 +8749,14 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
+  /** The line's stored total with the order's supplier discount apportioned to it */
+  lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
+  /** The pack price with the order's supplier discount apportioned to the line */
+  pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
@@ -8772,7 +8784,6 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
-  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
@@ -8817,6 +8828,7 @@ export type PurchaseOrderNode = {
   agentCommission?: Maybe<Scalars['Float']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   communicationsCharge?: Maybe<Scalars['Float']['output']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
@@ -8855,6 +8867,7 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
+  Cancelled = 'CANCELLED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
@@ -10333,6 +10346,12 @@ export type RequisitionLineForecastPreviewErrorInterface = {
 
 export type RequisitionLineForecastPreviewInput = {
   /**
+   * The activity to preview the line as held for — its stock on hand, and the suggestion
+   * computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+   * `{ value: null }` previews it as held for nothing in particular
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
+  /**
    * Null keeps the line's own method: an existing line's stored one, or the default a
    * new line would take
    */
@@ -10376,6 +10395,7 @@ export type RequisitionLineNode = {
   availableStockOnHand: Scalars['Float']['output'];
   availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
@@ -12876,7 +12896,6 @@ export type UpdatePurchaseOrderLineError = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
-  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
@@ -12944,6 +12963,7 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 };
 
 export type UpdateRequestRequisitionLineInput = {
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
   /**
    * Changing the method recomputes the line's monthly demand, breakdown and suggested
@@ -13365,6 +13385,7 @@ export type UpsertAncillaryItemInput = {
   ancillaryItemId: Scalars['String']['input'];
   /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['input'];
+  excludePrincipalWastage?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   /** Left-hand side of the user-entered `x:y` ratio (principal count). */
@@ -13407,6 +13428,7 @@ export type UpsertCampaignErrorInterface = {
 export type UpsertCampaignInput = {
   endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  kind?: InputMaybe<CampaignKindNode>;
   name: Scalars['String']['input'];
   startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };

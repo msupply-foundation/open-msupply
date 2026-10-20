@@ -1,3 +1,4 @@
+import { categoryName, typeName } from '@/domain/asset';
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
@@ -171,7 +172,10 @@ const CatalogueList: Component = () => {
       ...getCellDefinition('code', { headerPosition: 'primary' }),
     },
     {
-      c: { accessor: row => row.assetType?.name ?? '', id: 'typeId' },
+      c: {
+        accessor: row => (row.assetType ? typeName(row.assetType) : ''),
+        id: 'typeId',
+      },
       header: () => t('label.type'),
     },
     {
@@ -190,7 +194,11 @@ const CatalogueList: Component = () => {
       header: () => t('label.class'),
     },
     {
-      c: { accessor: row => row.assetCategory?.name ?? '', id: 'categoryId' },
+      c: {
+        accessor: row =>
+          row.assetCategory ? categoryName(row.assetCategory) : '',
+        id: 'categoryId',
+      },
       header: () => t('label.category'),
     },
   ];

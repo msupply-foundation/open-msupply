@@ -86,6 +86,7 @@ pub struct PurchaseOrderLineRow {
     pub item_name: String,
     pub requested_pack_size: f64,
     pub requested_number_of_units: f64,
+    // Carried for legacy sync only; quantities always use requested_number_of_units
     pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,

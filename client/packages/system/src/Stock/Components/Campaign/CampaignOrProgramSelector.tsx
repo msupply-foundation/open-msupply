@@ -1,7 +1,9 @@
 import React, { ReactElement, SyntheticEvent } from 'react';
-import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
+import {
+  CampaignRowFragment,
+  useCampaigns,
+} from '@openmsupply-client/system/src/Manage/Campaigns/api';
 import { Autocomplete, AutocompleteOption } from '@common/components';
-import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 import { isArray } from 'lodash';
@@ -21,7 +23,7 @@ interface CampaignOrProgramSelectorProps {
   campaignId?: string;
   programId?: string;
   onChange: (value: {
-    campaign: CampaignNode | null;
+    campaign: CampaignRowFragment | null;
     program: ProgramFragment | null;
   }) => void;
   programOptionsOrFilter: ProgramFragment[] | { filterByItemId: string };

@@ -6,29 +6,24 @@ import type {
 // An order's money, as the screen assembles it (spec/purchase-orders rules §
 // pricing and totals). Pure, so the arithmetic is covered directly.
 //
-// A line's cost is the server's stored `lineTotal`, read straight off the row
-// (rules § pricing and totals) — nothing here recomputes it. Above the lines,
-// three figures exist and none is stored: the subtotal and the discounted total
-// come off the node (the server's `purchase_order_stats` view sums the lines'
-// stored totals), and the FINAL COST — the discounted total plus the five
-// additional charges — exists nowhere on the wire (contract ⚠️ the five charges
-// reach no total on the server). The totals band and the side panel both show
-// it, so this module is the one place it is computed.
+// A line's cost is the server's stored `lineTotal` with the order's supplier
+// discount apportioned to it, read straight off the row as
+// `lineTotalAfterSupplierDiscount` (rules § pricing and totals) — nothing here
+// recomputes it for a saved line. Above the lines, three figures exist and none
+// is stored: the subtotal and the discounted total come off the node (the
+// server's `purchase_order_stats` view sums the lines' stored totals), and the
+// FINAL COST — the discounted total plus the five additional charges — exists
+// nowhere on the wire (contract ⚠️ the five charges reach no total on the
+// server). The totals band and the side panel both show it, so this module is
+// the one place it is computed.
 
 type Quantities = Pick<
   PurchaseOrderDetailLineFragment,
-  'requestedNumberOfUnits' | 'adjustedNumberOfUnits' | 'requestedPackSize'
+  'requestedNumberOfUnits' | 'requestedPackSize'
 >;
 
 /**
- * The quantity the order expects of a line: its adjusted quantity where it
- * carries one, its requested quantity otherwise.
- */
-const expectedUnits = (line: Quantities): number =>
-  line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
-
-/**
- * A line's packs — the expected quantity over its pack size. A pack size of
+ * A line's packs — the requested quantity over its pack size. A pack size of
  * zero yields 0, not an infinity: the server writes such a line's total as 0
  * and the line contributes nothing to the order's total, so the column that
  * reads across to Line cost must agree with it (rules § pricing and totals,
@@ -36,19 +31,36 @@ const expectedUnits = (line: Quantities): number =>
  * unchanged).
  */
 export const linePacks = (line: Quantities): number =>
-  line.requestedPackSize > 0 ? expectedUnits(line) / line.requestedPackSize : 0;
+  line.requestedPackSize > 0
+    ? line.requestedNumberOfUnits / line.requestedPackSize
+    : 0;
+
+type Discount = Pick<PurchaseOrderInfoFragment, 'supplierDiscountPercentage'>;
 
 /**
- * What the server WILL store as a line's `lineTotal`, for a line being edited
- * that has not been saved yet (the editor's read-only Total cost row): the
- * packs times the after-discount pack price, on the server's own rule. Zero
- * for a zero-pack-size line, for the same reason as `linePacks`. A saved line
- * reads its stored `lineTotal` directly instead.
+ * The share of a figure left once the order's supplier discount is taken off
+ * — the server's own rule for apportioning the discount to a line (rules §
+ * pricing and totals). An absent discount leaves the figure whole.
+ */
+export const supplierDiscountFactor = (order: Discount): number =>
+  1 - (order.supplierDiscountPercentage ?? 0) / 100;
+
+/**
+ * What the table WILL show as a line's cost, for a line being edited that has
+ * not been saved yet (the editor's read-only Total cost row): the packs times
+ * the after-discount pack price, on the server's own rule for what it stores,
+ * with the order's supplier discount apportioned to it. Zero for a
+ * zero-pack-size line, for the same reason as `linePacks`. A saved line reads
+ * its stored `lineTotalAfterSupplierDiscount` directly instead.
  */
 export const projectedLineCost = (
   line: Quantities &
-    Pick<PurchaseOrderDetailLineFragment, 'pricePerPackAfterDiscount'>
-): number => linePacks(line) * line.pricePerPackAfterDiscount;
+    Pick<PurchaseOrderDetailLineFragment, 'pricePerPackAfterDiscount'>,
+  order: Discount
+): number =>
+  linePacks(line) *
+  line.pricePerPackAfterDiscount *
+  supplierDiscountFactor(order);
 
 type Charges = Pick<
   PurchaseOrderInfoFragment,

@@ -14,6 +14,7 @@ use repository::{
     mock::{
         MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e,
         mock_item_f, mock_item_g, mock_request_draft_requisition, mock_store_a,
+        mock_vaccine_item_a,
     },
     test_db::setup_all_with_data,
 };
@@ -42,6 +43,7 @@ fn link(
         item_quantity,
         ancillary_quantity,
         deleted_datetime: None,
+        exclude_principal_wastage: false,
     }
 }
 
@@ -141,6 +143,7 @@ impl Setup {
                     requisition_id: requisition().id,
                     item_id: item_id.to_string(),
                     forecast_method: method,
+                    ..Default::default()
                 },
             )
     }
@@ -261,6 +264,50 @@ async fn forecast_defaults_and_ancillary_chain() {
     assert_eq!(line_b.forecast_method, ForecastMethod::Amc);
     assert_eq!(line_b.forecast_monthly_consumption, 7.0);
     assert_eq!(setup.line(&c).forecast_monthly_consumption, 14.0);
+}
+
+#[actix_rt::test]
+async fn forecast_ancillary_excludes_principal_wastage() {
+    let (vaccine, b, c) = (mock_vaccine_item_a().id, mock_item_b().id, mock_item_c().id);
+    // store_a overrides the vaccine's course with a 50% wastage rate. b (syringes) isn't
+    // wasted along with the vaccine, so its link excludes the wastage; c (safety boxes)
+    // follows every vial.
+    let mut syringe = link(&vaccine, &b, 1.0, 1.0);
+    syringe.exclude_principal_wastage = true;
+    let setup = Setup::new(
+        "forecast_ancillary_excludes_principal_wastage",
+        vec![syringe, link(&vaccine, &c, 1.0, 1.0)],
+    )
+    .await;
+
+    setup.add(&vaccine);
+    setup.set_demand(&vaccine, 100.0);
+
+    // b follows the 50 doses given, and records what it deducted
+    let line_b = setup.add(&b);
+    assert_eq!(line_b.forecast_method, ForecastMethod::AncillaryRatio);
+    assert_eq!(line_b.forecast_monthly_consumption, 50.0);
+    let Some(ForecastData::AncillaryRatio(forecast)) = line_b
+        .forecast_data
+        .as_deref()
+        .and_then(ForecastData::from_json)
+    else {
+        panic!("expected an Ancillary ratio breakdown");
+    };
+    assert_eq!(forecast.principals[0].wastage_rate, 50.0);
+    assert_eq!(forecast.principals[0].principal_usable_consumption(), 50.0);
+
+    // c follows the whole demand
+    let line_c = setup.add(&c);
+    assert_eq!(line_c.forecast_monthly_consumption, 100.0);
+    let Some(ForecastData::AncillaryRatio(forecast)) = line_c
+        .forecast_data
+        .as_deref()
+        .and_then(ForecastData::from_json)
+    else {
+        panic!("expected an Ancillary ratio breakdown");
+    };
+    assert_eq!(forecast.principals[0].wastage_rate, 0.0);
 }
 
 #[actix_rt::test]

@@ -14,21 +14,17 @@ function convert_data(queryResponse) {
       return;
     }
 
-    const pricePerPack = node.pricePerPackAfterDiscount || 0;
     const packSize = node.requestedPackSize || 0;
     const requestedUnits = node.requestedNumberOfUnits || 0;
-    const adjustedUnits = node.adjustedNumberOfUnits;
 
     const requestedNumberOfPacks = packSize > 0 ? requestedUnits / packSize : 0;
-
-    // Use adjusted quantities for line cost if available, otherwise fall back to requested
-    const unitsForCost = adjustedUnits != null ? adjustedUnits : requestedUnits;
-    const packsForCost = packSize > 0 ? unitsForCost / packSize : 0;
-    const lineCost = pricePerPack * packsForCost;
+    // The line's stored total with the order's supplier discount apportioned
+    // to it - the line cost the app shows, so the lines sum to the discounted
+    // total
+    const lineCost = node.lineTotalAfterSupplierDiscount || 0;
 
     node.lineCost = lineCost.toFixed(2);
     node.requestedNumberOfPacks = requestedNumberOfPacks;
-    node.adjustedUnits = adjustedUnits != null ? adjustedUnits : '';
   });
 
   const po = queryResponse.data.purchaseOrder;
@@ -38,6 +34,11 @@ function convert_data(queryResponse) {
     (po.communicationsCharge || 0) +
     (po.insuranceCharge || 0) +
     (po.freightCharge || 0);
+  // The order's final cost, in its own currency, as the app shows it: the
+  // charges are not part of either stored total, so they are added here
+  po.totalCost = (po.orderTotalAfterDiscount || 0) + po.additionalFees;
+  // The exchange rate converts the order's currency to the store's
+  po.estimatedCost = po.totalCost * (po.foreignExchangeRate || 1);
 
   queryResponse.data.purchaseOrder.lines.nodes = sortNodes(
     nodes,

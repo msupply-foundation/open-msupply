@@ -30,6 +30,9 @@ pub struct RequisitionLineOmsFields {
     pub forecast_total_units: Option<f64>,
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -129,7 +132,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let average_monthly_consumption =
             (data.daily_usage * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30).ceil();
 
-        let (price_per_unit, available_volume, location_type_id, forecast) =
+        let (price_per_unit, available_volume, location_type_id, campaign_id, forecast) =
             if let Some(oms_fields) = data.oms_fields {
                 let forecast = forecast_from_legacy(
                     &LegacyForecast {
@@ -145,11 +148,12 @@ impl SyncTranslation for RequisitionLineTranslation {
                     oms_fields.price_per_unit,
                     oms_fields.available_volume,
                     oms_fields.location_type_id,
+                    oms_fields.campaign_id,
                     forecast,
                 )
             } else {
                 let amc = (ForecastMethod::Amc, average_monthly_consumption, None);
-                (None, None, None, amc)
+                (None, None, None, None, amc)
             };
         let (forecast_method, forecast_monthly_consumption, forecast_data) = forecast;
 
@@ -160,6 +164,8 @@ impl SyncTranslation for RequisitionLineTranslation {
 
         let location_type_id =
             fk_check(location_type_id, "location_type_id", FkField::LocationType)?;
+
+        let campaign_id = fk_check(campaign_id, "campaign_id", FkField::Campaign)?;
 
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
@@ -189,6 +195,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_data,
             forecast_method,
             forecast_monthly_consumption,
+            campaign_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -243,6 +250,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_method,
             forecast_monthly_consumption: _,
             forecast_data,
+            campaign_id,
         } = requisition_line_row;
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
@@ -300,6 +308,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_total_units,
             forecast_total_doses,
             vaccine_courses,
+            campaign_id,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
@@ -583,6 +592,7 @@ mod tests {
                         principal_monthly_consumption: 100.0,
                         item_quantity: 1.0,
                         ancillary_quantity: 2.0,
+                        wastage_rate: 0.0,
                     }],
                 })
                 .to_json(),

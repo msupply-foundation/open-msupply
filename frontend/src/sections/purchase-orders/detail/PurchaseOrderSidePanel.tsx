@@ -12,7 +12,10 @@ import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { NameSearch, type NameSeed } from '@/domain/name';
 import { ShippingMethodSelect } from '@/domain/shippingMethod';
-import { DeletePurchaseOrderAction } from './actions';
+import {
+  CancelPurchaseOrderAction,
+  DeletePurchaseOrderAction,
+} from './actions';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
 import {
   sentDayToWire,
@@ -24,6 +27,7 @@ import {
 import { formatCurrency } from '@/intl/currency';
 import { orderTotals } from './purchaseOrderPricing';
 import {
+  canCancel,
   canDelete,
   canEnterSentDate,
   canRecordPostSendingDates,
@@ -35,13 +39,15 @@ export interface PurchaseOrderSidePanelProps {
   node: PurchaseOrderInfoFragment;
   /** How many lines the order has — with none, it has no totals to show. */
   lineCount: number;
-  /** True once the order is Sent or Finalised (the comment and the panel's
-   *  three dates follow their own gates). */
+  /** True once the order is Sent, Finalised or Cancelled (the comment and
+   *  the panel's three dates follow their own gates). */
   disabled: boolean;
   edit: PurchaseOrderFieldEdit;
   /** Resolves with the verdict, so a refusal can be reported at the field. */
   onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   onDeleted: () => void;
+  /** The order was cancelled — the screen re-reads it and its lines. */
+  onCancelled: () => void;
 }
 
 // The fields whose control can carry an inline error (ui-standards/inputs.md §
@@ -52,10 +58,12 @@ type ReportingField =
 
 /*
  * The detail side panel (spec/purchase-orders S9): three sections — Pricing,
- * Other, Dates — and one action, composed per ui/docs/SIDE_PANEL.md.
+ * Other, Dates — and two actions, composed per ui/docs/SIDE_PANEL.md.
  *
  * Delete leaves for the list only once the deletion has succeeded (rules §
- * deleting from the screen; DeletePurchaseOrderAction).
+ * deleting from the screen; DeletePurchaseOrderAction). Cancel is the one
+ * state move the footer ladder never offers — a terminal branch off Sent —
+ * so it lives here (rules § cancellation; CancelPurchaseOrderAction).
  */
 export const PurchaseOrderSidePanel: Component<
   PurchaseOrderSidePanelProps
@@ -328,6 +336,15 @@ export const PurchaseOrderSidePanel: Component<
             orderNumber={props.node.number}
             disabled={!canDelete(status())}
             onDeleted={props.onDeleted}
+          />
+          {/* Present on a Sent order alone: before Sent an order is deleted
+              instead, and Finalised or Cancelled is final (rules §
+              cancellation). */}
+          <CancelPurchaseOrderAction
+            storeId={props.storeId}
+            orderId={props.node.id}
+            offered={canCancel(status())}
+            onCancelled={props.onCancelled}
           />
         </SidePanelActions>
       </SidePanelSection>

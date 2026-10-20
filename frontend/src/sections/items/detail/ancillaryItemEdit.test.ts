@@ -23,6 +23,7 @@ describe('isFormValid (CAT-08.4/.6)', () => {
       ancillaryItemId: 'other-1',
       itemQuantity: 1,
       ancillaryQuantity: 1,
+      excludePrincipalWastage: false,
     };
     expect(isFormValid({ ...base, itemQuantity: 0 }, PRINCIPAL)).toBe(false);
     expect(isFormValid({ ...base, ancillaryQuantity: -1 }, PRINCIPAL)).toBe(
@@ -33,7 +34,12 @@ describe('isFormValid (CAT-08.4/.6)', () => {
   it('is invalid when the ancillary item is the principal', () => {
     expect(
       isFormValid(
-        { ancillaryItemId: PRINCIPAL, itemQuantity: 1, ancillaryQuantity: 1 },
+        {
+          ancillaryItemId: PRINCIPAL,
+          itemQuantity: 1,
+          ancillaryQuantity: 1,
+          excludePrincipalWastage: false,
+        },
         PRINCIPAL
       )
     ).toBe(false);
@@ -42,7 +48,12 @@ describe('isFormValid (CAT-08.4/.6)', () => {
   it('is valid with a different item and a positive ratio', () => {
     expect(
       isFormValid(
-        { ancillaryItemId: 'other-1', itemQuantity: 100, ancillaryQuantity: 1 },
+        {
+          ancillaryItemId: 'other-1',
+          itemQuantity: 100,
+          ancillaryQuantity: 1,
+          excludePrincipalWastage: false,
+        },
         PRINCIPAL
       )
     ).toBe(true);
@@ -50,10 +61,16 @@ describe('isFormValid (CAT-08.4/.6)', () => {
 });
 
 describe('buildUpsertInput', () => {
+  // OMS-REG-CAT-08.17 — the wastage flag travels with the ratio.
   it('carries the principal id, the form fields, and the given id', () => {
     expect(
       buildUpsertInput(
-        { ancillaryItemId: 'other-1', itemQuantity: 100, ancillaryQuantity: 1 },
+        {
+          ancillaryItemId: 'other-1',
+          itemQuantity: 100,
+          ancillaryQuantity: 1,
+          excludePrincipalWastage: true,
+        },
         PRINCIPAL,
         'link-1'
       )
@@ -63,7 +80,12 @@ describe('buildUpsertInput', () => {
       ancillaryItemId: 'other-1',
       itemQuantity: 100,
       ancillaryQuantity: 1,
+      excludePrincipalWastage: true,
     });
+  });
+
+  it('starts a new link ordering for the whole principal quantity', () => {
+    expect(EMPTY_FORM.excludePrincipalWastage).toBe(false);
   });
 });
 

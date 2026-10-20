@@ -65,6 +65,7 @@ define_linked_tables! {
         supplier_discount_percentage -> Nullable<Double>,
         request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        cancelled_datetime -> Nullable<Timestamp>,
     },
     links: {
         supplier_name_link_id -> supplier_name_id,
@@ -121,9 +122,17 @@ pub struct PurchaseOrderRow {
     pub supplier_discount_percentage: Option<f64>,
     pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    pub cancelled_datetime: Option<NaiveDateTime>,
     // Resolved from name_link - must be last to match view column order
     pub supplier_name_id: String,
     pub donor_id: Option<String>,
+}
+
+impl PurchaseOrderRow {
+    /// The share of a value that remains once the supplier discount is taken off.
+    pub fn supplier_discount_factor(&self) -> f64 {
+        1.0 - self.supplier_discount_percentage.unwrap_or(0.0) / 100.0
+    }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd)]
@@ -137,6 +146,7 @@ pub enum PurchaseOrderStatus {
     Confirmed,
     Sent,
     Finalised,
+    Cancelled,
 }
 pub struct PurchaseOrderRowRepository<'a> {
     connection: &'a StorageConnection,

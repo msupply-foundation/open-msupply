@@ -1,6 +1,10 @@
 use std::collections::BTreeSet;
 
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry,
+    purchase_order_line::log::{item_code, line_log_detail},
+    service_provider::ServiceContext,
+};
 use repository::{
     ActivityLogType, NumberRowRepository, NumberRowType, PurchaseOrderLineRowRepository,
     RepositoryError, StorageConnection,
@@ -51,7 +55,14 @@ pub fn delete_purchase_order_lines(
                                 ctx,
                                 ActivityLogType::PurchaseOrderLineDeleted,
                                 Some(line.purchase_order_id.clone()),
-                                None,
+                                Some(
+                                    serde_json::to_string(&line_log_detail(
+                                        connection,
+                                        &line,
+                                        item_code(connection, &line.item_id)?,
+                                    )?)
+                                    .unwrap_or_default(),
+                                ),
                                 None,
                             )?;
                             line_repo.delete(&id)?;

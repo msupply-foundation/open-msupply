@@ -30,9 +30,8 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           }
           expectedDeliveryDate
           requestedNumberOfUnits
-          adjustedNumberOfUnits
           requestedPackSize
-          pricePerPackAfterDiscount
+          lineTotalAfterSupplierDiscount
           supplierItemCode
           comment
         }
