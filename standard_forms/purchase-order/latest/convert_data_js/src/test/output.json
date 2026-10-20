@@ -22,7 +22,7 @@
               "unitName": "Tab"
             },
             "lineNumber": 1,
-            "pricePerPackAfterDiscount": 0.95,
+            "lineTotalAfterSupplierDiscount": 9.5,
             "requestedNumberOfUnits": 10000,
             "requestedPackSize": 1000,
             "supplierItemCode": null,
@@ -38,7 +38,7 @@
               "unitName": "Comprime"
             },
             "lineNumber": 2,
-            "pricePerPackAfterDiscount": 1.98,
+            "lineTotalAfterSupplierDiscount": 43.56,
             "requestedNumberOfUnits": 242,
             "requestedPackSize": 11,
             "supplierItemCode": null,
@@ -54,7 +54,7 @@
               "unitName": null
             },
             "lineNumber": 3,
-            "pricePerPackAfterDiscount": 4.9,
+            "lineTotalAfterSupplierDiscount": 245,
             "requestedNumberOfUnits": 250,
             "requestedPackSize": 5,
             "supplierItemCode": null,
@@ -73,6 +73,8 @@
       "insuranceCharge": null,
       "freightCharge": 50.5,
       "additionalFees": 63,
+      "totalCost": 361.06,
+      "estimatedCost": 361.06,
       "status": "CONFIRMED",
       "store": {
         "logo": null,
