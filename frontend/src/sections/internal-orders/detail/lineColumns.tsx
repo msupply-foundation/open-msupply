@@ -56,7 +56,6 @@ export const INTERNAL_ORDER_LINE_COLUMNS = {
   amc: 'amc',
   mos: 'mos',
   targetStock: 'targetStock',
-  targetStockPopulation: 'targetStockPopulation',
   suggested: 'suggested',
   requested: 'requested',
   pricePerUnit: 'pricePerUnit',

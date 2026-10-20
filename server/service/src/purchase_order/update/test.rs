@@ -23,8 +23,10 @@ mod update {
     use crate::{
         preference::{AuthorisePurchaseOrder, Preference},
         purchase_order_line::{
-            insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
+            insert::InsertPurchaseOrderLineInput,
+            update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
         },
+        sync::test_util_set_is_central_server,
     };
 
     #[actix_rt::test]
@@ -417,7 +419,6 @@ mod update {
                     status: Some(PurchaseOrderLineStatus::Closed),
                     ..Default::default()
                 },
-                Some(true),
             )
             .unwrap();
 
@@ -435,85 +436,105 @@ mod update {
             ActivityLogType::PurchaseOrderLineStatusClosed
         );
 
-        // Edit the adjusted quantity on line B
-        service_provider
-            .purchase_order_line_service
-            .update_purchase_order_line(
-                &context,
-                store_id,
-                UpdatePurchaseOrderLineInput {
-                    id: "purchase_order_line_b".to_string(),
-                    adjusted_number_of_units: Some(12.0),
-                    ..Default::default()
-                },
-                Some(true),
-            )
-            .unwrap();
-
-        // Line A remains Closed and line B will now be at New status
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
-            .unwrap();
-
-        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
-        assert_eq!(lines[1].status, PurchaseOrderLineStatus::New);
-
-        // Test activity log created
-        let edited_line_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew)
-            .collect();
-
-        assert_eq!(edited_line_logs.len(), 1);
+        // A sent line's quantity can't be edited, so the order stays Sent
         assert_eq!(
-            edited_line_logs[0].r#type,
-            ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew
+            service_provider
+                .purchase_order_line_service
+                .update_purchase_order_line(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderLineInput {
+                        id: "purchase_order_line_b".to_string(),
+                        requested_number_of_units: Some(12.0),
+                        ..Default::default()
+                    },
+                ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
 
-        // The purchase order status will now be Confirmed
+        let mut lines = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_many_by_purchase_order_ids(std::slice::from_ref(&purchase_order_id))
+            .unwrap();
+        lines.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
+        assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+
         let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
             .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
 
-        assert_eq!(purchase_order.status, PurchaseOrderStatus::Confirmed);
+        assert_eq!(purchase_order.status, PurchaseOrderStatus::Sent);
+    }
 
-        // Test activity log created
-        let po_status_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed)
-            .collect();
+    #[actix_rt::test]
+    async fn update_purchase_order_authorisation_store_override() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_authorisation_store_override",
+            MockDataInserts::all(),
+        )
+        .await;
 
-        assert_eq!(po_status_logs.len(), 1);
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        // Written through the preference itself, as the real editor does; the
+        // write path only opens on a central server.
+        test_util_set_is_central_server(true);
+        let set_pref = |value: bool, store_id: Option<&String>| {
+            AuthorisePurchaseOrder
+                .upsert(&context.connection, value, store_id.cloned())
+                .unwrap();
+        };
+        let request_approval = |purchase_order_id: &str| {
+            service
+                .insert_purchase_order(
+                    &context,
+                    store_id,
+                    InsertPurchaseOrderInput {
+                        id: purchase_order_id.to_string(),
+                        supplier_id: mock_name_a().id,
+                    },
+                )
+                .unwrap();
+            service
+                .update_purchase_order(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderInput {
+                        id: purchase_order_id.to_string(),
+                        status: Some(PurchaseOrderStatus::RequestApproval),
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            PurchaseOrderRowRepository::new(&context.connection)
+                .find_one_by_id(purchase_order_id)
+                .unwrap()
+                .unwrap()
+                .status
+        };
+
+        // Authorisation required globally, but this store opts out: asking for
+        // approval lands the order straight at Confirmed.
+        set_pref(true, None);
+        set_pref(false, Some(store_id));
         assert_eq!(
-            po_status_logs[0].r#type,
-            ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
+            request_approval("purchase_order_override_off"),
+            PurchaseOrderStatus::Confirmed
         );
 
-        // Send the purchase order again
-        service
-            .update_purchase_order(
-                &context,
-                store_id,
-                UpdatePurchaseOrderInput {
-                    id: purchase_order_id.clone(),
-                    status: Some(PurchaseOrderStatus::Sent),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // Line A is still Closed and line B is now Sent
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
-            .unwrap();
-
-        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
-        assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+        // The reverse: not required globally, but this store opts in.
+        set_pref(false, None);
+        set_pref(true, Some(store_id));
+        assert_eq!(
+            request_approval("purchase_order_override_on"),
+            PurchaseOrderStatus::RequestApproval
+        );
     }
 
     #[actix_rt::test]

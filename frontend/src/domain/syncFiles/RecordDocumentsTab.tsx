@@ -1,9 +1,13 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { formatFileSize, t } from '@/intl';
-import { DocumentUploadPanel } from '@/ui/elements/display/DocumentUploadPanel';
+import {
+  DocumentUploadPanel,
+  type DocumentFile,
+} from '@/ui/elements/display/DocumentUploadPanel';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import { deleteSyncFile, syncFileUrl, uploadSyncFiles } from './syncFiles';
+import { groupDocumentVersions } from './documentVersions';
 import {
   ACCEPT,
   batchTooLarge,
@@ -17,6 +21,8 @@ export interface RecordDocument {
   fileName: string;
   createdDatetime?: string | null;
   totalBytes?: number | null;
+  /** The uploader, where the record's fragment reads it (versioned lists). */
+  user?: { username: string } | null;
 }
 
 export interface RecordDocumentsTabProps {
@@ -29,6 +35,14 @@ export interface RecordDocumentsTabProps {
   canUpload?: boolean;
   /** Default true; false hides every row's remove action. */
   canDelete?: boolean;
+  /**
+   * Treat same-named uploads as versions of one document: one row per file
+   * name showing its latest version, who uploaded it and when, and its
+   * version number, with the earlier versions reachable from the row — each
+   * with its own uploader and moment (spec/purchase-orders rules § documents
+   * and the activity log). Default false: every upload is its own row.
+   */
+  versioned?: boolean;
   /** Re-read the record so an upload or a delete shows. */
   onChanged: () => void;
 }
@@ -72,6 +86,31 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
   const onRejected = (rejections: FileRejection<File>[]) =>
     setErrorMessage(describeRejections(rejections));
 
+  const toFile = (document: RecordDocument): DocumentFile => ({
+    id: document.id,
+    fileName: document.fileName,
+    createdDatetime: document.createdDatetime,
+    uploadedBy: document.user?.username,
+    totalBytes: document.totalBytes,
+    url: syncFileUrl(props.tableName, props.recordId, document.id),
+    canDelete: props.canDelete !== false,
+  });
+
+  // One row per document. Versioned: the latest upload of each name is the
+  // row, numbered, with its earlier versions beneath it; every version keeps
+  // its own uploader and upload moment so each row reads per upload.
+  const rows = (): DocumentFile[] =>
+    props.versioned
+      ? groupDocumentVersions(props.documents).map(group => ({
+          ...toFile(group.latest),
+          version: group.version,
+          previousVersions: group.previous.map(previous => ({
+            ...toFile(previous.document),
+            version: previous.version,
+          })),
+        }))
+      : props.documents.map(toFile);
+
   return (
     <>
       <Show when={errorMessage()}>
@@ -82,14 +121,8 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
         )}
       </Show>
       <DocumentUploadPanel
-        documents={props.documents.map(document => ({
-          id: document.id,
-          fileName: document.fileName,
-          createdDatetime: document.createdDatetime,
-          totalBytes: document.totalBytes,
-          url: syncFileUrl(props.tableName, props.recordId, document.id),
-          canDelete: props.canDelete !== false,
-        }))}
+        documents={rows()}
+        versioned={props.versioned}
         accept={ACCEPT}
         maxSize={MAX_FILE_BYTES}
         canUpload={props.canUpload !== false}

@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
 import { formatCurrency } from '../../../intl/currency';
+import { formatNumber } from '../../../intl/formatNumber';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import {
@@ -309,6 +310,18 @@ export const InboundShipmentSidePanel: Component<
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
         <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
+        {/* The discount the order's prices were seeded net of — the sub-total below already reflects it. */}
+        <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
+          {percentage => (
+            <FieldRow
+              label={t('label.supplier-discount-applied')}
+              readOnly
+              valueTestId="supplier-discount-value"
+            >
+              {`${formatNumber(percentage(), { maximumFractionDigits: 2 })}%`}
+            </FieldRow>
+          )}
+        </Show>
         <FieldRow label={t('label.sub-total')}>
           <span>{formatCurrency(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
@@ -470,6 +483,7 @@ export const InboundShipmentSidePanel: Component<
             invoiceId={props.node.id}
             isExternal={isExternal()}
             number={() => props.node.invoiceNumber}
+            status={() => props.node.status}
             removesStock={() =>
               deleteRemovesStock(props.node.status) && props.hasLines
             }

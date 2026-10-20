@@ -33,6 +33,13 @@ export const visibleSections = (
   return sections;
 };
 
+// Within Synchronisation: maintenance mode, Pause sync API and Pause
+// processors (issues #717, #840) are central-server controls, so they need
+// BOTH central and Server Admin, like Configuration. The server refuses their
+// queries and mutations otherwise.
+export const showCentralSyncControls = (access: SettingsAccess): boolean =>
+  access.centralServer && access.serverAdmin;
+
 // Within Display settings: Language is always usable; the Custom theme and
 // Custom logo rows are Server Admin only (rules § Display settings).
 export const showThemeAndLogoRows = (access: SettingsAccess): boolean =>

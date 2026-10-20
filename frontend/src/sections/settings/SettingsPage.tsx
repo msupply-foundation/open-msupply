@@ -21,7 +21,11 @@ import {
 } from '../../ui/icons';
 import { hasPermission } from '../../store/storeContext';
 import { isCentralServer } from '../../api/serverInfo';
-import { visibleSections, type SettingsAccess } from './sectionVisibility';
+import {
+  showCentralSyncControls,
+  visibleSections,
+  type SettingsAccess,
+} from './sectionVisibility';
 import { DisplaySettingsSection } from './display/DisplaySettingsSection';
 import styles from './Settings.module.css';
 import { SyncSection } from './sync/SyncSection';
@@ -90,7 +94,9 @@ const SettingsPage: Component = () => {
                 </span>
               </AccordionTrigger>
               <AccordionContent>
-                <SyncSection />
+                <SyncSection
+                  showCentralControls={showCentralSyncControls(access())}
+                />
               </AccordionContent>
             </AccordionItem>
           </Show>

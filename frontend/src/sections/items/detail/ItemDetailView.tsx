@@ -55,6 +55,9 @@ import {
   formatUnits,
   dosesEquivalent,
 } from '../list/itemStats';
+import { decimalPlaces } from '@/intl/numberDisplay';
+import { formatCurrency } from '@/intl/currency';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The item detail screen (spec/items S2). Read-only: the General and Store tabs
 // render each field as a read-only labelled value (label above value, no input
@@ -309,7 +312,7 @@ const ItemDetailView: Component = () => {
                         label={t('label.units')}
                         value={formatUnits(
                           i().stats.averageMonthlyConsumption,
-                          2
+                          decimalPlaces()
                         )}
                       />
                     </StatsPanel>
@@ -410,7 +413,7 @@ const ItemDetailView: Component = () => {
                               data-testid="item-field-doses"
                               label={t('label.doses')}
                             >
-                              {formatUnits(i().doses)}
+                              <Num value={formatUnits(i().doses)} />
                             </LabelledValue>
                           </Show>
                         </FormRow>
@@ -464,14 +467,14 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-default-pack-size"
                             label={t('label.default-pack-size')}
                           >
-                            {formatUnits(i().defaultPackSize)}
+                            <Num value={formatUnits(i().defaultPackSize)} />
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             data-testid="item-field-outer-pack-size"
                             label={t('label.outer-pack-size')}
                           >
-                            {formatUnits(i().outerPackSize)}
+                            <Num value={formatUnits(i().outerPackSize)} />
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -480,14 +483,14 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-volume-per-pack"
                             label={t('label.volume-per-pack')}
                           >
-                            {formatUnits(i().volumePerPack, 2)}
+                            <Num value={i().volumePerPack} volume />
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             data-testid="item-field-volume-per-outer-pack"
                             label={t('label.volume-per-outer-pack')}
                           >
-                            {formatUnits(i().volumePerOuterPack, 2)}
+                            <Num value={i().volumePerOuterPack} volume />
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -496,7 +499,9 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-weight"
                             label={t('label.weight')}
                           >
-                            {formatUnits(i().weight, 2)}
+                            <Num
+                              value={formatUnits(i().weight, decimalPlaces())}
+                            />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -507,7 +512,8 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-margin"
                             label={t('label.margin')}
                           >
-                            {formatUnits(i().margin, 2)}
+                            {/* A percentage — its own precision, not the configured places. */}
+                            <Num value={formatUnits(i().margin, 2)} />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -528,10 +534,9 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-default-sell-price-per-pack"
                             label={t('label.default-sell-price-per-pack')}
                           >
-                            {formatUnits(
+                            {formatCurrency(
                               i().itemStoreProperties
-                                ?.defaultSellPricePerPack ?? 0,
-                              2
+                                ?.defaultSellPricePerPack ?? 0
                             )}
                           </LabelledValue>
                         </FormRow>

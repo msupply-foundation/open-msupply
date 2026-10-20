@@ -37,7 +37,7 @@ import {
 } from './scanner';
 
 /**
- * The four states a row can be in (OMS-REG-SET-05.57–.59):
+ * The four states a row can be in (OMS-REG-SET-05.57, .58, .68):
  *  - `in-use` — a screen is listening for scans right now, and this is the
  *    input it is taking them from;
  *  - `available` — usable, but nothing is using it at this moment;
@@ -133,7 +133,7 @@ const detailFor = (id: ScanSourceId, state: ScannerSourceState): string => {
         : t('messages.scanner-detail-camera-simple');
     case 'keyboard-wedge':
       // One line in both states: what tells the user whether to switch it
-      // on at all (OMS-REG-SET-05.60).
+      // on at all (OMS-REG-SET-05.69).
       return t('messages.scanner-detail-keyboard');
     default:
       return t('messages.scanner-detail-not-on-device');

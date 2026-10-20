@@ -508,7 +508,7 @@ const TestScannerPage: Component = () => {
                       the Devices section shows, without their controls. */}
                   <ScannerSources compact />
                   {/* The camera's decoder: a developer comparison, offered
-                      here rather than to every user (OMS-REG-SET-05.61). */}
+                      here rather than to every user (OMS-REG-SET-05.70). */}
                   <Show when={availableSources().includes('camera')}>
                     <CameraEngineSelect />
                   </Show>

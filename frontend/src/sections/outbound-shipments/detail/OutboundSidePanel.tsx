@@ -458,9 +458,6 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             // A date is a short value (SIDE_PANEL.md rule 2).
             size="small"
             width="compact"
-            // Numeric day-first display/parse (27/07/2026) — matches the
-            // panel's localisedDate renderings (created date etc.).
-            format="dd/MM/yyyy"
             testId="expected-delivery-date-field"
             disabled={props.disabled}
             value={props.node.expectedDeliveryDate ?? null}

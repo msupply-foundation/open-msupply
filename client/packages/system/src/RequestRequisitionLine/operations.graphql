@@ -60,9 +60,9 @@ fragment RequestLine on RequisitionLineNode {
     ...ReasonOptionRow
   }
 
-  forecastTotalUnits
-  forecastTotalDoses
-  vaccineCourses
+  forecastMethod
+  forecastMonthlyConsumption
+  targetStock
 }
 
 fragment Request on RequisitionNode {

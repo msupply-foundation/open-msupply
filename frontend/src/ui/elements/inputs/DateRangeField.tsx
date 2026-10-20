@@ -6,8 +6,8 @@ import { t } from '../../../intl';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  DEFAULT_DATE_FORMAT,
   dateToIsoDate,
+  defaultDateFormat,
   formatIsoDate,
   isoDateToDate,
 } from './dateTimeConvert';
@@ -120,7 +120,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
   const range = () => props.value ?? EMPTY;
 
   const fmt = (iso: string | null) =>
-    formatIsoDate(iso, props.format ?? DEFAULT_DATE_FORMAT) || null;
+    formatIsoDate(iso, props.format ?? defaultDateFormat()) || null;
 
   const display = () => {
     const { start, end } = range();

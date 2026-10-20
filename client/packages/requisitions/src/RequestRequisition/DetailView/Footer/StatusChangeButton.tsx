@@ -158,6 +158,8 @@ const useStatusChangeButton = () => {
         return t('messages.record-not-found');
       case 'OtherPartyNotACustomer':
         return t('error.other-party-not-a-customer');
+      case 'CannotChangeTargetMonthsOfStock':
+        return error.description;
       default:
         return noOtherVariants(error);
     }

@@ -34,7 +34,6 @@ export type StoreContextResult = {
   expiredStockPreventIssue: boolean;
   expiredStockIssueThreshold: number;
   invoiceStatusOptions: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED">;
-  useProcurementFunctionality: boolean;
   authorisePurchaseOrder: boolean;
   externalInboundShipmentLinesMustBeAuthorised: boolean;
   backdating: {
@@ -48,6 +47,7 @@ export type StoreContextResult = {
   firstThresholdForExpiringItems: number;
   secondThresholdForExpiringItems: number;
   storeCustomColour: string;
+  decimalPlacesForNumbers: number;
   warnWhenMissingRecentStocktake: {
   enabled: boolean;
   maxAge: number;
@@ -68,5 +68,5 @@ export type StoreContextResult = {
 };
 
 export const StoreContext = {
-  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    issueInForeignCurrency\n    manuallyLinkInternalOrderToInboundShipment\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n    editPrescribedQuantityOnPrescription\n    useConsumptionAndStockFromCustomersForInternalOrders\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    genderOptions\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n    blindStocktake\n    sortByVvmStatusThenExpiry\n    expiredStockPreventIssue\n    expiredStockIssueThreshold\n    invoiceStatusOptions\n    useProcurementFunctionality\n    authorisePurchaseOrder\n    externalInboundShipmentLinesMustBeAuthorised\n    backdating {\n      inventoryAdjustmentsEnabled\n      shipmentsEnabled\n      maxDays\n    }\n    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts\n    numberOfMonthsThresholdToShowLowStockAlertsForProducts\n    numberOfMonthsThresholdToShowOverStockAlertsForProducts\n    firstThresholdForExpiringItems\n    secondThresholdForExpiringItems\n    storeCustomColour\n    warnWhenMissingRecentStocktake {\n      enabled\n      maxAge\n      minItems\n    }\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
+  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    issueInForeignCurrency\n    manuallyLinkInternalOrderToInboundShipment\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n    editPrescribedQuantityOnPrescription\n    useConsumptionAndStockFromCustomersForInternalOrders\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    genderOptions\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n    blindStocktake\n    sortByVvmStatusThenExpiry\n    expiredStockPreventIssue\n    expiredStockIssueThreshold\n    invoiceStatusOptions\n    authorisePurchaseOrder\n    externalInboundShipmentLinesMustBeAuthorised\n    backdating {\n      inventoryAdjustmentsEnabled\n      shipmentsEnabled\n      maxDays\n    }\n    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts\n    numberOfMonthsThresholdToShowLowStockAlertsForProducts\n    numberOfMonthsThresholdToShowOverStockAlertsForProducts\n    firstThresholdForExpiringItems\n    secondThresholdForExpiringItems\n    storeCustomColour\n    decimalPlacesForNumbers\n    warnWhenMissingRecentStocktake {\n      enabled\n      maxAge\n      minItems\n    }\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StoreContextResult, StoreContextVariables>;

@@ -57,10 +57,21 @@ pub enum KeyType {
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
+    /// Set from Admin > Sync settings: while true the synchroniser skips scheduled and
+    /// manual runs on an initialised site. Distinct from `SettingsSyncIsDisabled`, which the
+    /// CLI sets permanently on a copied datafile.
+    SettingsSyncIsPaused,
     SettingsSyncV7Token,
     SettingsSyncVersion,
     SettingsTokenSecret,
     SettingsSyncSiteIsMultiDevice,
+    // Central only: refuse inbound v6/v7 sync data requests from remotes (#717)
+    SettingsSyncApiIsPaused,
+    /// Central only: while true the transfer and general processors drop their triggers (#840).
+    SettingsProcessorsArePaused,
+    /// Central only: maintenance mode, which holds the sync, sync API and processor pauses
+    /// together and locks non-admin users out (#840).
+    SettingsMaintenanceModeIsOn,
 
     DatabaseVersion,
 

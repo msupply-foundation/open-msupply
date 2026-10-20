@@ -126,6 +126,13 @@ pub struct PurchaseOrderRow {
     pub donor_id: Option<String>,
 }
 
+impl PurchaseOrderRow {
+    /// The share of a value that remains once the supplier discount is taken off.
+    pub fn supplier_discount_factor(&self) -> f64 {
+        1.0 - self.supplier_discount_percentage.unwrap_or(0.0) / 100.0
+    }
+}
+
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

@@ -54,7 +54,7 @@ export const ScannerSources: Component<{
   /**
    * Show the camera's decoder choice on its row. A developer comparison, so
    * the Devices section passes it only in development builds; the Test
-   * scanner screen offers it under Advanced instead (OMS-REG-SET-05.61).
+   * scanner screen offers it under Advanced instead (OMS-REG-SET-05.70).
    */
   showCameraEngine?: boolean;
 }> = props => {
@@ -211,7 +211,7 @@ export const ScannerSources: Component<{
  * the row names the camera, not which decoder it uses. A choice between two
  * decoders, not on/off — a switch read as turning the camera off. Offered so
  * the two can be compared on real devices; not something a store user needs
- * (OMS-REG-SET-05.61).
+ * (OMS-REG-SET-05.70).
  */
 export const CameraEngineSelect: Component = () => (
   <FieldRow label={t('label.camera-mode')} labelWidth="auto">

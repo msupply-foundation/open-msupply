@@ -424,6 +424,13 @@ const InboundShipmentDetailView: Component = () => {
   // comment for the rule and why the PO half comes from the scope.
   const sourceLinked = () =>
     hasSourceLink(isExternal(), current()?.linkedShipment);
+  const foreignCurrency = () => {
+    const node = current();
+    const currency = node?.currency;
+    return node && currency && !currency.isHomeCurrency
+      ? { code: currency.code, rate: node.currencyRate }
+      : undefined;
+  };
   // The rule, and why a PO-linked shipment is excluded, lives in
   // ./internalOrderContext.
   const showsOrderContext = () =>
@@ -1325,7 +1332,7 @@ const InboundShipmentDetailView: Component = () => {
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={isDisabled() ? undefined : openRow}
+                  onRowClick={openRow}
                   // A line the last bulk op failed reads in the error tone
                   // (spec S8 → per-line indicators).
                   rowTone={line =>
@@ -1429,6 +1436,12 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                defaultDonor={
+                  node().defaultDonor ??
+                  node().purchaseOrder?.donor ??
+                  undefined
+                }
+                campaign={node().campaign ?? null}
                 // Gates the editor's internal-order banner, on the same rule as
                 // the Units requested column so the two can't disagree.
                 requisitionId={
@@ -1439,6 +1452,7 @@ const InboundShipmentDetailView: Component = () => {
                 // store (spec rules → header fields / OMS-REG-REPL-09.12). A
                 // manual internal-supplier shipment keeps cost editable.
                 costLocked={sourceLinked()}
+                foreignCurrency={foreignCurrency()}
                 // Packs shipped / Shipped pack size are the SENDING side's
                 // record of what left its shelf, so the receiver may read them
                 // but not retype them. Passed separately from costLocked even
@@ -1446,6 +1460,7 @@ const InboundShipmentDetailView: Component = () => {
                 // merely coincide, and reading one as the other is how this
                 // field came to be editable on transfers.
                 shippedLocked={sourceLinked()}
+                readOnly={isDisabled()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

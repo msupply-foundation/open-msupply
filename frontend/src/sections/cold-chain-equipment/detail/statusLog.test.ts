@@ -240,12 +240,12 @@ describe('OMS-REG-CCE-06.25 / .26 — a mapping may be backdated, never postdate
 });
 
 describe('OMS-REG-CCE-06.38 — the history’s kind filter', () => {
-  it('narrows to status entries by enumerating all six statuses', () => {
+  it('narrows to status entries by enumerating all seven statuses', () => {
     // There is no "has a status" predicate, and `type: STATUS_UPDATE` would
     // also match the historical rows carrying no type (contract › temperature
     // mapping).
     const filter = logKindFilter('status', ASSET_STATUSES);
-    expect(filter.status?.equalAny).toHaveLength(6);
+    expect(filter.status?.equalAny).toHaveLength(7);
     expect(filter.type).toBeUndefined();
   });
 

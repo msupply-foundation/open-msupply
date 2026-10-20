@@ -15,7 +15,8 @@ import {
   scannerStateLabel,
 } from './scannerSourceModel';
 
-// spec/settings/ui-surface.md § Devices; cases OMS-REG-SET-05.57–.60, .64.
+// spec/settings/ui-surface.md § Devices; cases OMS-REG-SET-05.57, .58, .64,
+// .68, .69.
 const scanner = { vendorId: 1, productId: 2, name: 'Zebra DS2208' };
 
 const inDesktopApp = (status: {
@@ -134,7 +135,7 @@ describe('In use needs something armed (SET-05.58)', () => {
   });
 });
 
-describe('Not connected and Off (SET-05.59, .60)', () => {
+describe('Not connected and Off (SET-05.68, .69)', () => {
   it('switched-off inputs read Off, with the keyboard row saying when to turn it on', async () => {
     vi.stubGlobal('window', {});
     await refreshScanSources();

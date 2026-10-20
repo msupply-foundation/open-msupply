@@ -108,6 +108,7 @@ function mapSyncErrorV5V6(
       'error.sync-v6-api-incompatible',
     [SyncErrorVariant.IntegrationError]: 'error.internal-error',
     [SyncErrorVariant.V7UpgradeFailed]: 'error.v7-upgrade-failed',
+    [SyncErrorVariant.SyncApiPaused]: 'error.sync-api-paused',
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 
@@ -121,6 +122,8 @@ function mapSyncErrorV5V6(
         return t('error.sync-v6-api-incompatible-hint');
       case SyncErrorVariant.V7UpgradeFailed:
         return t('error.v7-upgrade-failed-hint');
+      case SyncErrorVariant.SyncApiPaused:
+        return t('error.sync-api-paused-hint');
       default:
         return undefined;
     }
@@ -168,6 +171,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.SiteIsNotV7]: 'error.site-is-not-v7',
     [SyncErrorVariantV7.WaitingForCentralV7Upgrade]:
       'error.waiting-for-central-v7-upgrade',
+    [SyncErrorVariantV7.SyncApiPaused]: 'error.sync-api-paused',
     [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
   };
 
@@ -179,6 +183,8 @@ function mapSyncErrorV7(
         return t('error.v6-server-not-configured-hint');
       case SyncErrorVariantV7.ConnectionError:
         return t('error.connection-error-hint');
+      case SyncErrorVariantV7.SyncApiPaused:
+        return t('error.sync-api-paused-hint');
       default:
         return undefined;
     }

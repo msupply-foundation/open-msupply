@@ -43,7 +43,7 @@ import {
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
-import { formatNumber, round } from '../../../../intl';
+import { round, roundedText } from '../../../../intl';
 import {
   clampManualPacks,
   issuedUnits,
@@ -81,6 +81,7 @@ import {
   SavePrescriptionItemLines,
   type PrescriptionEditLinesResult,
 } from './prescriptionLineEdit.generated';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
@@ -190,8 +191,8 @@ const banner = (
     case 'messages.over-allocated-line':
       return {
         text: t(message.key, {
-          quantity: formatNumber(message.quantity),
-          issueQuantity: formatNumber(message.issueQuantity),
+          quantity: roundedText(message.quantity),
+          issueQuantity: roundedText(message.issueQuantity),
         }),
         testId: 'prescription-adjusted-entry-warning',
         severity: 'warning',
@@ -200,7 +201,7 @@ const banner = (
     case 'messages.partial-pack-warning-doses':
       return {
         text: t(message.key, {
-          nearestAbove: formatNumber(message.nearestAbove),
+          nearestAbove: roundedText(message.nearestAbove),
         }),
         testId: 'prescription-partial-pack-warning',
         severity: 'warning',
@@ -990,7 +991,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   ? 'warning.cannot-create-placeholder-doses'
                   : 'warning.cannot-create-placeholder-units',
                 {
-                  allocatedQuantity: formatNumber(
+                  allocatedQuantity: roundedText(
                     unitsToLens(allocatedUnits(), allocateLens())
                   ),
                 }
@@ -1044,7 +1045,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
-            <Accordion collapsible variant="card">
+            <Accordion
+              collapsible
+              variant="card"
+              // The dialog's main line table lives in here: in the
+              // full-screen sheet the card runs to the sheet edges and the
+              // table sits flush under the trigger row (#246).
+              dialogTable
+            >
               <AccordionItem value="batches">
                 <AccordionTrigger
                   // h4: this disclosure sits INSIDE the Quantity section,
@@ -1058,7 +1066,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   // headroom).
                   end={
                     <>
-                      {t('label.available')}: {formatNumber(availableInLens())}{' '}
+                      {t('label.available')}: <Num value={availableInLens()} />{' '}
                       {dosesMode() ? t('label.doses') : unitName()}
                     </>
                   }

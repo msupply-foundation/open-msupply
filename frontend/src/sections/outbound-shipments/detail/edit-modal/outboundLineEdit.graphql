@@ -49,9 +49,11 @@ query draftStockOutLines(
         id
       }
       campaign {
+        id
         name
       }
       program {
+        id
         name
       }
       donor(storeId: $storeId) {

@@ -259,7 +259,7 @@ export const DevicesSection = () => {
           One row per input the app can drive, each with its own control,
           rather than a stack of label/value rows restating "no scanner". The
           camera's decoder choice is a developer comparison, shown here only
-          in development builds (OMS-REG-SET-05.61). */}
+          in development builds (OMS-REG-SET-05.70). */}
       <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">
         <ScannerSources showCameraEngine={import.meta.env.DEV} />
         <HStack justify="end" gap="md">
