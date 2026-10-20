@@ -83,6 +83,13 @@ export interface NumberFieldProps extends Omit<
   noFormatting?: boolean;
   /** Seed when `value` starts undefined; committed to the parent on mount. */
   defaultValue?: number;
+  /**
+   * What an empty field stands for, for a parent that never stores empty (a
+   * count where cleared means 0). Clearing commits this instead of
+   * `undefined`, yet the field stays empty while it is being edited, so the
+   * next figure typed replaces it whole; left empty, the field shows it.
+   */
+  emptyValue?: number;
 }
 
 /*
@@ -124,6 +131,13 @@ export interface NumberFieldProps extends Omit<
  *   keystroke the parent's figure to append to ("1" → "20", then "202" →
  *   "220"…, #1334).
  *
+ * - A parent that maps a cleared field to a number says so with
+ *   `emptyValue`, rather than turning `undefined` into it inside onChange.
+ *   The transformed-echo latch above can't see that mapping when the parent
+ *   already held the number — a 0 cleared is "answered" with the same 0, just
+ *   as a debounced parent's stale value would be — so the field would be left
+ *   blank over a stored 0 (#1336).
+ *
  * - Blur canonicalises: parse → round → clamp → commit if changed → display
  *   the formatted string (grouping separators, decimalMin padding) — or the
  *   parent's transformed echo, when it differs from what was typed. Enter
@@ -150,6 +164,7 @@ export const NumberField = (props: NumberFieldProps) => {
     'multiplier',
     'noFormatting',
     'defaultValue',
+    'emptyValue',
     'width',
     'class',
   ]);
@@ -303,7 +318,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value);
+      commit(result.commit.value ?? local.emptyValue);
       reportClamped(result.commit);
     }
   };
@@ -311,8 +326,14 @@ export const NumberField = (props: NumberFieldProps) => {
   const finalize = () => {
     dirty = false;
     const result = finalizeText(text(), constraints(), locale());
-    commit(result.value);
-    setText(echoText(result.value, result.text, displayString));
+    const value = result.value ?? local.emptyValue;
+    commit(value);
+    // Left empty, the field shows what empty stands for.
+    const typed =
+      result.value === undefined
+        ? displayString(value, constraints(), locale())
+        : result.text;
+    setText(echoText(value, typed, displayString));
     reportClamped(result);
   };
 
