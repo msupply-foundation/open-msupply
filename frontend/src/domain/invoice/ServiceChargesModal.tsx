@@ -20,6 +20,7 @@ import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import { formatCurrencyCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
+import { remToPx } from '../../ui/utils/rem';
 import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
 import styles from './ServiceChargesModal.module.css';
 import {
@@ -98,7 +99,11 @@ const ServiceChargesContent = (
   const [draft, setDraft] = createStore<ServiceChargeDraft[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
-  const tableConfig = createTableConfig({ tableId: 'service-charges' });
+  // Delete pinned right so it stays reachable when the inputs overflow.
+  const tableConfig = createTableConfig({
+    tableId: 'service-charges',
+    defaultConfig: { base: { columnPinning: { right: ['actions'] } } },
+  });
 
   // One seed fetch per open: the existing charges (into the draft) + the
   // store's service items (the Name lookup's options). The modal mounts fresh
@@ -265,6 +270,7 @@ const ServiceChargesContent = (
       c: { key: 'taxPercentage' },
       header: () => t('label.tax'),
       meta: { align: 'right' },
+      size: remToPx(7.5),
       cell: info => {
         const charge = info.row.original;
         return (
@@ -289,6 +295,7 @@ const ServiceChargesContent = (
       c: { id: 'totalAfterTax' },
       header: () => t('label.total'),
       meta: { align: 'right' },
+      size: remToPx(7.5),
       // JSX-wrapped so the store reads live in a tracked expression — a bare
       // string computed in the cell fn freezes at its first value when
       // amount/tax mutate in place (the same trap as the line editors'
@@ -301,6 +308,7 @@ const ServiceChargesContent = (
       c: { id: 'actions' },
       header: () => t('label.delete'),
       meta: { align: 'right' },
+      size: remToPx(5),
       cell: info => (
         <IconButton
           bordered
