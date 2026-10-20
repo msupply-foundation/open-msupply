@@ -537,6 +537,12 @@ mod test {
             "purchase_order",
             r#"{"ID":"po_blank","category_ID":"","user_field_1":"","user_field_2":""}"#,
         );
+        // A later record for the same order wins over the earlier one
+        buffer(
+            "po_mapped",
+            "purchase_order",
+            r#"{"ID":"po_mapped","category_ID":"CAT_1","user_field_1":"Grant 43","user_field_2":""}"#,
+        );
         buffer(
             "CAT_1",
             "purchase_order_category",
@@ -573,7 +579,7 @@ mod test {
             value("po_mapped"),
             Some(serde_json::json!({
                 "purchase_order_category": "CAT_1",
-                "purchase_order_user_field_1": "Grant 42",
+                "purchase_order_user_field_1": "Grant 43",
             }))
         );
         assert_eq!(value("po_blank"), None);

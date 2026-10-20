@@ -110,15 +110,18 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
-    /// Mapped to/from `custom_fields` — see [`LEGACY_PURCHASE_ORDER_OWNED_KEYS`].
+    /// Mapped to/from `custom_fields` — see [`LEGACY_PURCHASE_ORDER_OWNED_KEYS`]. Only central pushes them.
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub user_field_1: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub user_field_2: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub category_ID: Option<String>,
     #[serde(default)]
     pub supplier_discount_amount: f64,
@@ -285,7 +288,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
         let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
 
-        // Central refreshes the OG-owned keys; the owning remote authors its own and keeps them.
+        // Only central maps the mSupply-owned keys; a remote keeps whatever it already has.
         let existing_custom_fields = PurchaseOrderRowRepository::new(connection)
             .find_one_by_id(&id)?
             .and_then(|row| row.custom_fields);
@@ -415,6 +418,12 @@ impl SyncTranslation for PurchaseOrderTranslation {
             status: status.clone(),
         };
 
+        // Off central these keys are never authored, so leave them out rather than wipe mSupply's values
+        let is_central = CentralServerConfig::is_central_server();
+        let legacy_field = |key: &str| {
+            is_central.then(|| custom_field_string(&custom_fields, key).unwrap_or_default())
+        };
+
         let legacy_row = LegacyPurchaseOrderRow {
             id,
             purchase_order_number,
@@ -430,9 +439,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_2,
             freight_conditions,
             additional_instructions,
-            user_field_1: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_1),
-            user_field_2: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_USER_FIELD_2),
-            category_ID: custom_field_string(&custom_fields, keys::PURCHASE_ORDER_CATEGORY),
+            user_field_1: legacy_field(keys::PURCHASE_ORDER_USER_FIELD_1),
+            user_field_2: legacy_field(keys::PURCHASE_ORDER_USER_FIELD_2),
+            category_ID: legacy_field(keys::PURCHASE_ORDER_CATEGORY),
             supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
                 supplier_discountable_total * (percentage / 100.0)
             } else {
@@ -600,6 +609,56 @@ mod tests {
             };
 
             assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+        }
+    }
+
+    /// Only central pushes the legacy category and user fields; a cleared one goes as blank.
+    #[actix_rt::test]
+    async fn test_purchase_order_user_fields_push_from_central_only() {
+        use crate::sync::test_util_set_is_central_server;
+        use repository::mock::mock_purchase_order_a;
+
+        let translator = PurchaseOrderTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_purchase_order_user_fields_push_from_central_only",
+            MockDataInserts::none().purchase_order().currencies(),
+        )
+        .await;
+
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        let mut order = repo
+            .find_one_by_id(&mock_purchase_order_a().id)
+            .unwrap()
+            .unwrap();
+        order.custom_fields = Some(json!({ "purchase_order_user_field_1": "Grant 42" }));
+        repo.upsert_one(&order).unwrap();
+
+        let pushed = || {
+            let changelog = ChangelogRow {
+                record_id: order.id.clone(),
+                table_name: ChangelogTableName::PurchaseOrder,
+                ..Default::default()
+            };
+            let row = Row::PurchaseOrder(order.clone());
+            let PushTranslateResult::PushRecord(translated) = translator
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
+                .unwrap()
+            else {
+                panic!("should translate")
+            };
+            translated[0].record.record_data.clone()
+        };
+
+        test_util_set_is_central_server(true);
+        let from_central = pushed();
+        test_util_set_is_central_server(false);
+        assert_eq!(from_central["user_field_1"], json!("Grant 42"));
+        assert_eq!(from_central["user_field_2"], json!(""));
+        assert_eq!(from_central["category_ID"], json!(""));
+
+        let from_remote = pushed();
+        for field in ["user_field_1", "user_field_2", "category_ID"] {
+            assert!(from_remote.get(field).is_none(), "{field} left out");
         }
     }
 

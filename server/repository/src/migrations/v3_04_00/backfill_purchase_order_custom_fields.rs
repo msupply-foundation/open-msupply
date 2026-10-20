@@ -25,7 +25,7 @@ impl MigrationFragment for Migrate {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         let rows: Vec<SyncBufferData> = sql_query(
-            "SELECT record_id, data FROM sync_buffer WHERE table_name = 'purchase_order'",
+            "SELECT record_id, data FROM sync_buffer WHERE table_name = 'purchase_order' ORDER BY cursor DESC",
         )
         .load(connection.lock().connection())?;
 
@@ -35,7 +35,12 @@ impl MigrationFragment for Migrate {
             "UPDATE purchase_order SET custom_fields = $1 WHERE id = $2"
         };
 
+        // Newest first, so only each order's latest record is applied
+        let mut seen = std::collections::HashSet::new();
         for row in rows {
+            if !seen.insert(row.record_id.clone()) {
+                continue;
+            }
             let Ok(serde_json::Value::Object(legacy)) = serde_json::from_str(&row.data) else {
                 continue;
             };
