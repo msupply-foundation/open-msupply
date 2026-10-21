@@ -102773,6 +102773,31 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 2795,
+   "record_id": "e2e_pref_einb_prompt_for_batch_and_expiry_on_inbound_shipments",
+   "received_datetime": "2026-10-20T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_einb_prompt_for_batch_and_expiry_on_inbound_shipments",
+    "key": "prompt_for_batch_and_expiry_on_inbound_shipments",
+    "value": "true",
+    "store_id": "e2e_inbound_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "e2e_inbound_store",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],

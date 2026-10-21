@@ -4,10 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 /*
  * The Details tab's editor on the document path: a patient with no document
  * yet gets its first one on Save, and the screen then re-reads the patient,
- * which now names a document whose draft is read next. The form must stay
- * ready through that re-read, or the screen takes the form down and mounts a
- * new one (sdk-contract § Props update in place, OMS-REG-PLG-05.10). The
- * GraphQL edge is mocked; AJV and the base schemas run for real.
+ * which now carries that document and its draft. The form must stay ready
+ * through that re-read, or the screen takes the form down and mounts a new
+ * one (sdk-contract § Props update in place, OMS-REG-PLG-05.10). The GraphQL
+ * edge is mocked; AJV and the base schemas run for real.
  */
 
 const graphqlFetch = vi.fn();
@@ -55,10 +55,7 @@ import {
   FormDocumentByName,
   InsertFormPatient,
 } from '../../../domain/documentForm/documentForm.generated';
-import { PatientDocumentDraft } from './patientDocumentDraft.generated';
-import type { PatientResult } from './patient.generated';
-
-type PatientNode = NonNullable<PatientResult['patient']>;
+import type { PatientNode } from './patientDetails';
 
 const registry = {
   __typename: 'DocumentRegistryNode' as const,
@@ -129,9 +126,8 @@ afterEach(() => {
 });
 
 describe("a patient's first document on the Details tab", () => {
-  it('keeps the form ready while the saved document’s draft is read (OMS-REG-PLG-05.10)', async () => {
+  it('keeps the form ready through the re-read that brings the saved document (OMS-REG-PLG-05.10)', async () => {
     let saved: unknown;
-    let answerDraft!: () => void;
     graphqlFetch.mockImplementation(
       async (query: unknown, variables: { input?: { data: unknown } }) => {
         if (query === InsertFormPatient) {
@@ -145,17 +141,6 @@ describe("a patient's first document on the Details tab", () => {
               },
             },
           };
-        }
-        if (query === PatientDocumentDraft) {
-          // Held until the test answers it: the window the form must survive.
-          await new Promise<void>(resolve => (answerDraft = resolve));
-          return {
-            kind: 'success',
-            data: { patient: { id: 'patient-1', documentDraft: saved } },
-          };
-        }
-        if (query === FormDocumentByName) {
-          return { kind: 'success', data: { document: savedDocument(saved) } };
         }
         throw new Error('unexpected query');
       }
@@ -183,35 +168,21 @@ describe("a patient's first document on the Details tab", () => {
     await editor.doSave();
     expect(saved).toMatchObject({ firstName: 'Alexa' });
 
-    // The screen re-reads the patient, which now names its document.
+    // The screen re-reads the patient, which now carries its document and
+    // the draft an edit starts from; the form reads nothing itself.
     statuses.length = 0;
-    setNode(
-      node({
-        firstName: 'Alexa',
-        document: {
-          __typename: 'DocumentNode',
-          id: 'doc-1',
-          name: 'patients/patient-1',
-        },
-      })
-    );
-    await vi.waitFor(() =>
-      expect(
-        graphqlFetch.mock.calls.some(([q]) => q === PatientDocumentDraft)
-      ).toBe(true)
-    );
-    expect(editor.form.status()).toBe('ready');
-    expect(editor.form.draft.data.firstName).toBe('Alexa');
-
-    answerDraft();
-    await vi.waitFor(() =>
-      expect(
-        graphqlFetch.mock.calls.some(([q]) => q === FormDocumentByName)
-      ).toBe(true)
-    );
+    setNode({
+      ...node({ firstName: 'Alexa' }),
+      documentDraft: saved,
+      document: savedDocument(saved),
+    });
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(editor.form.status()).toBe('ready');
+    expect(editor.form.document()?.id).toBe('doc-1');
     expect(editor.form.draft.data.firstName).toBe('Alexa');
+    expect(
+      graphqlFetch.mock.calls.some(([q]) => q === FormDocumentByName)
+    ).toBe(false);
     // Never down to idle or loading, which would remount the form.
     expect(statuses.every(s => s === 'ready')).toBe(true);
   });

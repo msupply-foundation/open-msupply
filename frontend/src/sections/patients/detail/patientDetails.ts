@@ -1,18 +1,49 @@
-import { createResource, type Accessor } from 'solid-js';
-import { gated } from '../../../api/gated';
-import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
 import {
-  createPatientEditor,
-  type PatientEditor,
-  type PatientEditorParams,
-} from './patientEditor';
+  createEffect,
+  createResource,
+  type Accessor,
+  type Resource,
+} from 'solid-js';
+import { gated } from '../../../api/gated';
+import { graphqlFetch } from '../../../api/graphql';
+import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
+import { createPatientEditor, type PatientEditor } from './patientEditor';
 import {
   createPatientDocumentEditor,
   type PatientDocumentEditor,
 } from './patientDocumentEditor';
-import { fetchPatientRegistry } from './programs/programsApi';
+import { loadFormLibrary } from '../../../domain/documentForm/createDocumentForm';
+import {
+  fetchPatientRegistry,
+  rememberedPatientRegistry,
+} from './programs/programsApi';
+import {
+  Patient,
+  PatientWithDocument,
+  type PatientResult,
+  type PatientWithDocumentResult,
+} from './patient.generated';
+
+/** The patient as read on either path; the document path's read says more. */
+export type PatientNode =
+  | NonNullable<PatientResult['patient']>
+  | NonNullable<PatientWithDocumentResult['patient']>;
+
+export interface PatientDetailsParams {
+  storeId: Accessor<string>;
+  patientId: Accessor<string>;
+}
 
 export interface PatientDetails {
+  /**
+   * The patient read, for the screen's own read of it: suspending for a
+   * first load, gated under an open surface.
+   */
+  patient: Resource<PatientNode | undefined>;
+  /** The patient as last read, undefined while unresolved; never suspends. */
+  node: Accessor<PatientNode | undefined>;
+  /** Re-reads the patient (after a save, which makes a new version). */
+  refetch: () => void;
   /** The plain path's editor: the patient record's own fields. */
   editor: PatientEditor;
   /** The document path's editor: the patient document, on the store's form. */
@@ -35,12 +66,18 @@ export interface PatientDetails {
  * edit-patient modal, so a store with a patient document type writes it from
  * both, and neither saves the record underneath a document that would then
  * overwrite it.
+ *
+ * The patient read is this module's too, as the path decides its shape: on
+ * the document path the one read carries the document's draft and its latest
+ * version as the form opens it, so the Details tab shows the form after one
+ * round trip. The record is read at once on the path the store's answer
+ * earlier this session names, else as the plain record; a store on the
+ * document path whose answer is not yet known re-reads with the document once
+ * the registry answers, the record already showing.
  */
 export const createPatientDetails = (
-  params: PatientEditorParams
+  params: PatientDetailsParams
 ): PatientDetails => {
-  const editor = createPatientEditor(params);
-
   const [registryData] = createResource(
     () => params.storeId(),
     fetchPatientRegistry
@@ -48,12 +85,76 @@ export const createPatientDetails = (
   const registry = () => gated(registryData);
   const onDocumentPath = () => registry()?.entry !== undefined;
 
+  // Whether to read the patient with its document: the registry's answer once
+  // it has one (a failed read answers "no entry", as it does for the path),
+  // the store's remembered answer before that, else the record alone.
+  const withDocument = (): boolean => {
+    const answered =
+      registryData.state === 'ready' || registryData.state === 'errored';
+    if (answered) return onDocumentPath();
+    return rememberedPatientRegistry(params.storeId())?.entry !== undefined;
+  };
+
+  const [patient, { refetch }] = createResource(
+    () =>
+      JSON.stringify({
+        storeId: params.storeId(),
+        patientId: params.patientId(),
+        withDocument: withDocument(),
+      }),
+    async (serialised, { value }): Promise<PatientNode | undefined> => {
+      const { withDocument, ...variables } = JSON.parse(serialised) as {
+        storeId: string;
+        patientId: string;
+        withDocument: boolean;
+      };
+      const result = await graphqlFetch(
+        withDocument ? PatientWithDocument : Patient,
+        variables
+      );
+      if (result.kind === 'success') return result.data.patient ?? undefined;
+      if (!withDocument) return undefined;
+      // The read with the document failed (a stored document the server
+      // could not read, reported above): the patient opens on its record,
+      // with no form. The record read just before, where there was one,
+      // stands. After a save that is the node from before it, on the document
+      // path still holding the version the save replaced; the form host keeps
+      // the version it saved while the source's name is unchanged, so the
+      // stale node is harmless.
+      if (value?.id === variables.patientId) return value;
+      const record = await graphqlFetch(Patient, variables);
+      return record.kind === 'success'
+        ? (record.data.patient ?? undefined)
+        : undefined;
+    }
+  );
+  // The editors read the patient through the state gate: their reads run
+  // under whatever surface mounts them (the picker's edit modal, under an
+  // open screen), where a first load must not suspend (kdd/solid-reactivity-
+  // pitfalls › no remounts on interaction). The patient screen reads `patient`
+  // itself for its own first load.
+  const node = () => gated(patient);
+
+  const editor = createPatientEditor({ storeId: params.storeId, node });
+
+  // The form library chunk (validator, fields, default forms) is otherwise
+  // requested only once the patient has been read. Start it as soon as the
+  // registry says the document path is in use; the import is shared with the
+  // form host's own call.
+  createEffect(() => {
+    if (onDocumentPath()) void loadFormLibrary();
+  });
+
   const documentEditor = createPatientDocumentEditor({
-    ...params,
+    storeId: params.storeId,
+    node,
     registry: () => registry()?.entry,
   });
 
   return {
+    patient,
+    node,
+    refetch: () => void refetch(),
     editor,
     documentEditor,
     registry,

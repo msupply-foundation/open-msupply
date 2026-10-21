@@ -10,6 +10,7 @@ use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
+use diesel::dsl::{exists, not};
 use diesel::helper_types::IntoBoxed;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -36,6 +37,8 @@ define_linked_tables! {
         owner_name_link_id -> owner_name_id,
     }
 }
+
+allow_tables_to_appear_in_same_query!(document, document_with_links);
 
 // view of the document table that only shows the latest document version
 // grouped by document name
@@ -341,6 +344,47 @@ impl<'a> DocumentRepository<'a> {
         Ok(result)
     }
 
+    /// The latest version of each named document.
+    ///
+    /// Reads `document_view` (the document table joined to `name_link` for its
+    /// `owner_name_id`, a plain join whose name filter is pushed down), not the
+    /// `latest_document` view: that view groups every version in the table by
+    /// name, so a filter on it is only cheap where the planner moves the filter
+    /// inside the grouping. Postgres does that for one name compared with `=`,
+    /// but not for a list of names, and then a batched read scans the whole
+    /// table. One statement answers: the named versions with no later version
+    /// of the same name, where later is a later datetime or, among versions
+    /// tied on datetime, a higher id, the tie-break the `latest_document` view's
+    /// reader applied.
+    pub fn find_many_latest_by_names(
+        &self,
+        names: &[String],
+    ) -> Result<Vec<Document>, RepositoryError> {
+        let later = alias!(document_with_links as later);
+        let rows: Vec<DocumentRow> = document::dsl::document
+            .filter(document::dsl::name.eq_any(names))
+            .filter(not(exists(
+                later
+                    .filter(
+                        later
+                            .field(document_with_links::name)
+                            .eq(document::dsl::name),
+                    )
+                    .filter(
+                        later
+                            .field(document_with_links::datetime)
+                            .gt(document::dsl::datetime)
+                            .or(later
+                                .field(document_with_links::datetime)
+                                .eq(document::dsl::datetime)
+                                .and(later.field(document_with_links::id).gt(document::dsl::id))),
+                    ),
+            )))
+            .order(document::dsl::name.asc())
+            .load(self.connection.lock().connection())?;
+        rows.into_iter().map(to_document).collect()
+    }
+
     pub fn query_by_filter(
         &self,
         filter: DocumentFilter,
@@ -486,5 +530,95 @@ impl Document {
             context_id: self.context_id.to_string(),
             owner_name_id: self.owner_name_id.to_owned(),
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+    use chrono::{Duration, TimeZone};
+
+    fn version(id: &str, name: &str, minutes: i64, status: DocumentStatus) -> Document {
+        Document {
+            id: id.to_string(),
+            name: name.to_string(),
+            parent_ids: vec![],
+            user_id: "user".to_string(),
+            datetime: Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap()
+                + Duration::minutes(minutes),
+            r#type: "Patient".to_string(),
+            data: serde_json::json!({ "version": id }),
+            form_schema_id: None,
+            status,
+            owner_name_id: None,
+            context_id: "Patient".to_string(),
+        }
+    }
+
+    /// The direct read answers as the `latest_document` view did: the newest
+    /// version of each name, the highest id among versions tied on datetime, a
+    /// deleted newest version included, a name with no versions left out.
+    #[actix_rt::test]
+    async fn find_many_latest_by_names_matches_the_view() {
+        let (_, connection, _, _) = setup_all(
+            "find_many_latest_by_names_matches_the_view",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = DocumentRepository::new(&connection);
+        for doc in [
+            version("a1", "p/a/Patient", 0, DocumentStatus::Active),
+            version("a2", "p/a/Patient", 1, DocumentStatus::Active),
+            version("a3", "p/a/Patient", 2, DocumentStatus::Active),
+            version("b1", "p/b/Patient", 0, DocumentStatus::Active),
+            version("b9", "p/b/Patient", 5, DocumentStatus::Active),
+            version("b5", "p/b/Patient", 5, DocumentStatus::Active),
+            version("c1", "p/c/Patient", 0, DocumentStatus::Active),
+            version("c2", "p/c/Patient", 1, DocumentStatus::Deleted),
+            version("d1", "p/d/Patient", 0, DocumentStatus::Active),
+        ] {
+            repo.insert(&doc).unwrap();
+        }
+        let names: Vec<String> = [
+            "p/a/Patient",
+            "p/b/Patient",
+            "p/c/Patient",
+            "p/none/Patient",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect();
+
+        let direct: Vec<(String, String)> = repo
+            .find_many_latest_by_names(&names)
+            .unwrap()
+            .into_iter()
+            .map(|d| (d.name, d.id))
+            .collect();
+        // The view answers two rows for versions tied on datetime; the loader
+        // kept the last one it saw, as a map by name does.
+        let mut by_name = std::collections::BTreeMap::new();
+        for d in repo
+            .query(
+                Pagination::all(),
+                Some(DocumentFilter::new().name(StringFilter::equal_any(names.clone()))),
+                None,
+            )
+            .unwrap()
+        {
+            by_name.insert(d.name, d.id);
+        }
+        let through_view: Vec<(String, String)> = by_name.into_iter().collect();
+
+        assert_eq!(
+            direct,
+            vec![
+                ("p/a/Patient".to_string(), "a3".to_string()),
+                ("p/b/Patient".to_string(), "b9".to_string()),
+                ("p/c/Patient".to_string(), "c2".to_string()),
+            ]
+        );
+        assert_eq!(direct, through_view);
     }
 }

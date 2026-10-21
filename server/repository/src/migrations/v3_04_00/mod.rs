@@ -14,6 +14,7 @@ mod add_plugin_ownership_to_document_registry;
 mod add_purchase_order_custom_fields;
 mod add_stock_campaign_change_activity_log_type;
 mod add_temperature_summary_table;
+mod add_sync_log_indexes;
 mod add_uploader_to_sync_file_reference;
 mod backfill_purchase_order_custom_fields;
 mod prescription_request_occupation_prominent;
@@ -55,6 +56,7 @@ impl Migration for V3_04_00 {
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
             Box::new(add_plugin_ownership_to_document_registry::Migrate),
             Box::new(requeue_plugin_rows_for_upgraded_sites::Migrate),
+            Box::new(add_sync_log_indexes::Migrate),
         ]
     }
 }

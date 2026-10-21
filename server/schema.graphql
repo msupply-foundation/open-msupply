@@ -2726,6 +2726,11 @@ type EncounterNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	activeProgramEvents(at: DateTime, filter: ActiveEncounterEventFilterInput, page: PaginationInput, sort: ProgramEventSortInput): ProgramEventResponse!
 	programEvents(page: PaginationInput, sort: ProgramEventSortInput, filter: EncounterEventFilterInput): ProgramEventResponse!
 	"""
@@ -6735,6 +6740,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6810,6 +6816,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -7069,6 +7076,11 @@ type ProgramEnrolmentNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	"""
 	The program document
 	"""
@@ -11555,6 +11567,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

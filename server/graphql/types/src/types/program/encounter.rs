@@ -24,6 +24,7 @@ use crate::types::ClinicianNode;
 
 use super::{
     document::DocumentNode,
+    document_registry::{DocumentRegistryNode, document_registry_node},
     patient::{PatientFilterInput, PatientNode},
     program_enrolment::{ProgramEnrolmentFilterInput, ProgramEnrolmentNode},
     program_event::{
@@ -353,6 +354,15 @@ impl EncounterNode {
             .ok_or(Error::new("Program without document"))?;
 
         Ok(result)
+    }
+
+    /// The registry entry of the document's type, resolved from the row's own
+    /// type without loading the document.
+    pub async fn document_registry(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<DocumentRegistryNode>> {
+        document_registry_node(ctx, &self.allowed_ctx, &self.encounter_row().document_type).await
     }
 
     pub async fn active_program_events(

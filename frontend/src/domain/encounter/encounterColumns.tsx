@@ -18,15 +18,13 @@ import { statusEventTexts } from '@/domain/program/programEvents';
 
 type EncounterStatus = 'PENDING' | 'VISITED' | 'CANCELLED' | 'DELETED';
 
-type RegistryName = { documentRegistry: { name: string | null } | null };
-
 export type EncounterColumnRow = {
   id: string;
   type: string;
   startDatetime: string;
   status: EncounterStatus | null;
   contextId: string;
-  document: RegistryName;
+  documentRegistry: { name: string | null } | null;
   activeProgramEvents: {
     nodes: readonly { type: string; data: string | null }[];
   };
@@ -108,7 +106,7 @@ export const encounterColumns = <R extends EncounterColumnRow>(options: {
   return [
     {
       c: {
-        accessor: r => r.document.documentRegistry?.name ?? r.type,
+        accessor: r => r.documentRegistry?.name ?? r.type,
         id: 'type',
       },
       ...sortKey('Type'),

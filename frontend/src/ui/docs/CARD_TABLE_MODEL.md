@@ -132,7 +132,7 @@ One entry per body group in `cardGroups`.
 The card label text is the column's `header`, called (it is a function so the text re-resolves on a locale change). Whether and how it renders:
 
 - **Body cell, labelled** (the default) → [`LabelledValue`](../elements/typography/LabelledValue.tsx): label **above** the value, in the field grid.
-- **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"`: label **beside** the control, on the identity row.
+- **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"` `align="first-line"`: label **beside** the control, on the identity row, level with the control's first line — so a message the control grows beneath it (a field warning) doesn't drag the label down.
 - **Unlabelled** (default for header cells, or `showLabel: false`) → the cell content fills its slot directly.
 
 Read-only labelled values and editable inputs share the `--field-label-*` token, so a `LabelledValue` and a real input read identically in a card.
