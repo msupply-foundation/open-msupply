@@ -475,14 +475,14 @@ const LineEditContent = (
                   >
                     <NumberField
                       label={t('label.pack-size')}
-                      min={0}
+                      min={1}
                       decimalLimit={2}
                       data-testid="pack-size-input"
                       disabled={saving()}
                       value={draft()!.requestedPackSize}
-                      emptyValue={0}
+                      emptyValue={1}
                       onChange={value =>
-                        patch(packSizeEntered(draft()!, value ?? 0))
+                        patch(packSizeEntered(draft()!, value ?? 1))
                       }
                     />
                   </Show>
