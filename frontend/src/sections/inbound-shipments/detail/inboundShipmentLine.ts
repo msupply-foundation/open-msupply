@@ -42,3 +42,21 @@ export const lacksBatchOrExpiry = (b: {
   batch: string;
   expiryDate: string | null;
 }): boolean => batchIsBlank(b) || expiryIsBlank(b);
+
+/**
+ * What a set of batches is missing between them, so the words name only that:
+ * `batch` or `expiry` when no batch lacks the other one, `either` once both
+ * fields are blank somewhere; undefined when nothing is missing.
+ */
+export type MissingBatchField = 'batch' | 'expiry' | 'either';
+
+export const missingBatchField = (
+  bs: readonly { batch: string; expiryDate: string | null }[]
+): MissingBatchField | undefined => {
+  const batch = bs.some(batchIsBlank);
+  const expiry = bs.some(expiryIsBlank);
+  if (batch && expiry) return 'either';
+  if (batch) return 'batch';
+  if (expiry) return 'expiry';
+  return undefined;
+};

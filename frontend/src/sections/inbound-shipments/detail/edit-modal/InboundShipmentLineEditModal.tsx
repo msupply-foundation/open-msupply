@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { t, tPlural } from '../../../../intl';
+import { t, tPlural, type LocaleKey } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -45,7 +45,9 @@ import {
   batchIsBlank,
   expiryIsBlank,
   lacksBatchOrExpiry,
+  missingBatchField,
   packDifference,
+  type MissingBatchField,
 } from '../inboundShipmentLine';
 import {
   AlertTriangleIcon,
@@ -255,6 +257,30 @@ const AUTH_STATUS_LABEL: Record<AuthStatus, () => string> = {
   PENDING: () => t('label.pending'),
   PASSED: () => t('label.passed'),
   REJECTED: () => t('label.rejected'),
+};
+
+// The batch/expiry prompt's words (issue #992), by what the batches are
+// missing between them: a prompt about a blank batch alone never names the
+// expiry too. The prompt, its "enter" button and the footer count all follow.
+const MISSING_WORDS: Record<
+  MissingBatchField,
+  { prompt: LocaleKey; summary: LocaleKey; enter: LocaleKey }
+> = {
+  batch: {
+    prompt: 'messages.confirm-missing-batch',
+    summary: 'messages.batches-without-batch',
+    enter: 'button.enter-batch',
+  },
+  expiry: {
+    prompt: 'messages.confirm-missing-expiry',
+    summary: 'messages.batches-without-expiry',
+    enter: 'button.enter-expiry-date',
+  },
+  either: {
+    prompt: 'messages.confirm-missing-batch-or-expiry',
+    summary: 'messages.batches-without-batch-or-expiry',
+    enter: 'button.enter-batch-and-expiry',
+  },
 };
 
 // A small coloured status dot for a Select option adornment. Decorative — the
@@ -943,6 +969,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // Save & next) so Continue runs exactly that one.
   const [pendingSave, setPendingSave] = createSignal<() => Promise<void>>();
   const missingCount = () => rows().filter(lacksBatchOrExpiry).length;
+  // The prompt's words — 'either' until something is missing, which is only
+  // ever read while the prompt is open.
+  const missingWords = () =>
+    MISSING_WORDS[missingBatchField(rows()) ?? 'either'];
   const guardSave = (action: () => Promise<void>) => {
     if (props.prefs.promptBatchExpiry && missingCount() > 0)
       setPendingSave(() => action);
@@ -965,6 +995,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     markedItemId() === item()?.id &&
     lacksBatchOrExpiry(b);
   const markedCount = () => rows().filter(batchMarked).length;
+  // The footer count's words, by what the marked batches are missing.
+  const markedWords = () =>
+    MISSING_WORDS[missingBatchField(rows().filter(batchMarked)) ?? 'either'];
   // What a marked batch's badge says it has no value for.
   const missingLabel = (b: DraftBatch) =>
     batchIsBlank(b) && expiryIsBlank(b)
@@ -1315,7 +1348,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // hideOnCard rides INSIDE getNumberCell's meta argument — a `meta:` field
       // of our own would be overwritten by the spread that follows it, which is
       // exactly what put a stray "Tab received" above the card's panel.
-      ...getNumberCell({ hideOnCard: true }),
+      // controlLine: plain text, so in the top-aligned table it would ride the
+      // top of its cell rather than sit on the inputs' line.
+      ...getNumberCell({ hideOnCard: true, controlLine: true }),
     },
     {
       c: { key: 'expiryDate' },
@@ -1817,6 +1852,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               headerPosition: 'badge',
               align: 'right',
               hideFromColumnSettings: true,
+              // Icon buttons shorter than the inputs: centred on their line in
+              // the top-aligned table.
+              controlLine: true,
             },
             cell: info => {
               const b = info.row.original;
@@ -1978,10 +2016,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           fallback={
             <Show when={markedCount() > 0}>
               <Alert severity="warning" testId="batch-expiry-summary">
-                {tPlural(
-                  'messages.batches-without-batch-or-expiry',
-                  markedCount()
-                )}
+                {tPlural(markedWords().summary, markedCount())}
               </Alert>
             </Show>
           }
@@ -2109,6 +2144,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 }
                 controlsMount={tableControls()}
                 emptyMessage={t('label.add-batch')}
+                // Controls hold their line when a cell grows a message beneath
+                // it — the warning under a blank batch or expiry — rather than
+                // that cell's input rising above the rest of the row, as the
+                // stocktake editor does. The read-only figures are already an
+                // input tall (statValue); Units received and the row actions
+                // take meta.controlLine.
+                cellAlign="start"
               />
             </div>
           </>
@@ -2123,11 +2165,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       <ConfirmDialog
         open={!!pendingSave()}
         onClose={enterMissing}
-        message={tPlural(
-          'messages.confirm-missing-batch-and-expiry',
-          missingCount()
-        )}
-        cancelLabel={t('button.enter-batch-and-expiry')}
+        message={tPlural(missingWords().prompt, missingCount())}
+        cancelLabel={t(missingWords().enter)}
         confirmLabel={t('button.continue')}
         onConfirm={continueSave}
       />

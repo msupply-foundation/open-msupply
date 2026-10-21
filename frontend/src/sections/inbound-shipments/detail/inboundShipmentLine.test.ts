@@ -3,6 +3,7 @@ import {
   batchIsBlank,
   expiryIsBlank,
   lacksBatchOrExpiry,
+  missingBatchField,
   packDifference,
 } from './inboundShipmentLine';
 
@@ -65,5 +66,34 @@ describe('batch and expiry blanks', () => {
     expect(batchIsBlank(b)).toBe(false);
     expect(expiryIsBlank(b)).toBe(true);
     expect(lacksBatchOrExpiry(b)).toBe(true);
+  });
+});
+
+// What the prompt and footer name (PR #1587 review): only the field that is
+// actually blank, and both only when both are blank somewhere.
+describe('missingBatchField', () => {
+  const full = { batch: 'B1', expiryDate: '2027-01-31' };
+  const noBatch = { ...full, batch: '' };
+  const noExpiry = { ...full, expiryDate: null };
+
+  it('is undefined when every batch has both', () => {
+    expect(missingBatchField([full, full])).toBeUndefined();
+    expect(missingBatchField([])).toBeUndefined();
+  });
+
+  it('names the batch alone when only batches are blank', () => {
+    expect(missingBatchField([noBatch, full, noBatch])).toBe('batch');
+  });
+
+  it('names the expiry alone when only expiries are blank', () => {
+    expect(missingBatchField([full, noExpiry])).toBe('expiry');
+  });
+
+  it('names either when one batch lacks both', () => {
+    expect(missingBatchField([{ batch: '', expiryDate: null }])).toBe('either');
+  });
+
+  it('names either when different batches lack different fields', () => {
+    expect(missingBatchField([noBatch, noExpiry])).toBe('either');
   });
 });
