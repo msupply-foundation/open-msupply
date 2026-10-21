@@ -710,6 +710,37 @@ describe('when the source changes', () => {
     expect(form.status()).toBe('not-found');
   });
 
+  // A caller that read the document with its record (the patient screen,
+  // whose patient read carries the document on the document path) hands it
+  // over, and the form issues no read of its own.
+  it('opens a document read with its record without a read of its own', async () => {
+    const { form } = follow(
+      {},
+      {
+        kind: 'existing',
+        name: 'encounter/a',
+        document: encounter('encounter/a', 70),
+      }
+    );
+    await vi.waitFor(() => expect(form.status()).toBe('ready'), {
+      timeout: 5000,
+    });
+    expect(form.document()?.name).toBe('encounter/a');
+    expect(weight(form)).toBe(70);
+    expect(calls(FormDocumentByName)).toHaveLength(0);
+  });
+
+  it('reports a record read with no document as not found', async () => {
+    const { form } = follow(
+      {},
+      { kind: 'existing', name: 'encounter/gone', document: null }
+    );
+    await vi.waitFor(() => expect(form.status()).toBe('not-found'), {
+      timeout: 5000,
+    });
+    expect(calls(FormDocumentByName)).toHaveLength(0);
+  });
+
   it('does not let a save that returns late stand for the record shown since', async () => {
     let finishSave!: () => void;
     const holdSave = new Promise<void>(resolve => (finishSave = resolve));

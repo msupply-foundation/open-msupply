@@ -58,5 +58,22 @@ export const fetchPatientRegistry = async (
     filter: { category: { equalTo: 'PATIENT' } },
   });
   if (result.kind !== 'success') return undefined;
-  return { entry: result.data.documentRegistries.nodes[0] };
+  const entry = result.data.documentRegistries.nodes[0];
+  patientRegistryByStore.set(storeId, entry);
+  return { entry };
 };
+
+// The answer each store gave this session, so the next patient opened there
+// is read on its path at once rather than after the registry answers again
+// (#1562). Every read refreshes it; one that answers differently (a plugin
+// installed meanwhile) corrects the patient read that followed the old answer.
+const patientRegistryByStore = new Map<
+  string,
+  FormRegistryFragment | undefined
+>();
+export const rememberedPatientRegistry = (
+  storeId: string
+): { entry: FormRegistryFragment | undefined } | undefined =>
+  patientRegistryByStore.has(storeId)
+    ? { entry: patientRegistryByStore.get(storeId) }
+    : undefined;

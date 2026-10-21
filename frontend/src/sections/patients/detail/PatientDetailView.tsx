@@ -6,7 +6,6 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -34,7 +33,6 @@ import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
-import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatientCustomFields } from '../patientApi';
 import {
   CustomFieldsEditTab,
@@ -112,31 +110,17 @@ const PatientDetailView: Component = () => {
   const setActiveTab = (value: string) =>
     setSearchParams({ tab: value === 'details' ? undefined : value });
 
-  const [data, { refetch }] = createResource(
-    () =>
-      JSON.stringify({
-        storeId: params.storeId,
-        patientId: params.patientId,
-      }),
-    async serialised => {
-      const result = await graphqlFetch(
-        Patient,
-        JSON.parse(serialised) as PatientVariables
-      );
-      if (result.kind !== 'success') return undefined;
-      return result.data.patient ?? undefined;
-    }
-  );
-  const node = () => data.latest ?? undefined;
-
-  // The Details tab, on the plain path or the document path as the store's
-  // Patient registry entry says (spec/patients rules › two persistence
-  // paths) — shared with the picker's edit modal, so neither surface can
-  // drift on these rules or write the record under a document (patientDetails.ts).
+  // The patient read and the Details tab, on the plain path or the document
+  // path as the store's Patient registry entry says (spec/patients rules ›
+  // two persistence paths) — shared with the picker's edit modal, so neither
+  // surface can drift on these rules or write the record under a document
+  // (patientDetails.ts). On the document path the one read carries the
+  // document and its draft, so the form follows at once.
   const patientDetails = createPatientDetails({
     storeId: () => params.storeId,
-    node,
+    patientId: () => params.patientId,
   });
+  const { node, refetch } = patientDetails;
   const editor = patientDetails.editor;
   const details = patientDetails.active;
 

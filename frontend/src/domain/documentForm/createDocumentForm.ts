@@ -85,9 +85,16 @@ export type DocumentFormSource =
    * The latest version of a saved document. `seed`, when given, is what the
    * draft starts from in place of that version's data: a patient document
    * seeds from the server's `documentDraft`, which merges in later changes
-   * to the patient's name row.
+   * to the patient's name row. `document`, when given, is that version as
+   * the caller already read it with its record, and the form reads nothing
+   * itself; null where that read found none.
    */
-  | { kind: 'existing'; name: string; seed?: object }
+  | {
+      kind: 'existing';
+      name: string;
+      seed?: object;
+      document?: FormDocumentFragment | null;
+    }
   /** A document not yet saved: its registry entry and first data. */
   | { kind: 'new'; registry: FormRegistryFragment; data: object };
 
@@ -431,7 +438,7 @@ export const createDocumentForm = <T extends object>(
   const [loaded] = createResource(
     () => {
       const s = options.source();
-      return s?.kind === 'existing'
+      return s?.kind === 'existing' && s.document === undefined
         ? { storeId: options.storeId(), name: s.name }
         : undefined;
     },
@@ -450,8 +457,11 @@ export const createDocumentForm = <T extends object>(
   // (a new document), and that value is another document's: seeded or saved
   // into, it would show and update the wrong record.
   const read = () => {
-    const value = gated(loaded);
     const s = options.source();
+    if (s?.kind === 'existing' && s.document !== undefined) {
+      return { storeId: options.storeId(), name: s.name, document: s.document };
+    }
+    const value = gated(loaded);
     return value &&
       s?.kind === 'existing' &&
       value.name === s.name &&
