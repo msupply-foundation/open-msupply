@@ -10,6 +10,16 @@
   align-items: start;
 }
 
+/* Each column's flex-basis (`--form-column-min`, set by FormColumn's
+   `minWidth`, default `--measure-form-column`) governs the shared width and
+   the single-stack wrap point. It is set here, not on the column, so a
+   FormColumn used on its own in a vertical flex parent (a plugin form in the
+   encounter screen's Stack) keeps its content height (issue #1582). The
+   column's unhashed `data-form-column` hook reaches across the two modules. */
+.columns > [data-form-column] {
+  flex: 1 1 var(--form-column-min, var(--measure-form-column));
+}
+
 /* `stretch`: the columns on one line take that line's height, and each
    column's last block (a FormColumn is a flex column) grows into the extra, so
    a boxed group ends level with its neighbour's. A wrapped column sits on a

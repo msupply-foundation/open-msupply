@@ -14,14 +14,16 @@ export interface FormColumnProps extends JSX.HTMLAttributes<HTMLDivElement> {
 /*
  * FormColumn — one vertical stack of <FormSection>s inside <FormColumns> (see
  * kdd/form-layout). Carries the flex-basis that makes sibling columns share the
- * width equally and wrap to a single stack when squeezed (the `minWidth` knob);
- * stacks its sections with a consistent gap. Pure layout, hand-rolled CSS.
+ * width equally and wrap to a single stack when squeezed (the `minWidth` knob;
+ * applied by FormColumns' rule, so only inside that row); stacks its sections
+ * with a consistent gap. Pure layout, hand-rolled CSS.
  */
 export const FormColumn = (props: FormColumnProps) => {
   const [local, rest] = splitProps(props, ['minWidth', 'class', 'children']);
   return (
     <div
       class={local.class ? `${styles.column} ${local.class}` : styles.column}
+      data-form-column=""
       style={
         local.minWidth ? { '--form-column-min': local.minWidth } : undefined
       }
