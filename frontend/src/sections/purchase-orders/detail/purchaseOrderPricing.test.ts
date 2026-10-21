@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  chargesTotal,
-  finalCost,
   linePacks,
   orderTotals,
   projectedLineCost,
@@ -88,67 +86,28 @@ describe('OMS-FUN-PO-07.16 — the supplier discount apportioned to a line', () 
       0
     );
   });
-});
 
-describe('the additional charges', () => {
-  const charges = {
-    agentCommission: 1,
-    documentCharge: 2,
-    communicationsCharge: 4,
-    insuranceCharge: 8,
-    freightCharge: 16,
-  };
-
-  it('sums all five', () => {
-    expect(chargesTotal(charges)).toBe(31);
-  });
-
-  it('counts an absent charge as zero', () => {
+  it('takes nothing off a service line', () => {
     expect(
-      chargesTotal({
-        agentCommission: null,
-        documentCharge: 2,
-        communicationsCharge: null,
-        insuranceCharge: null,
-        freightCharge: null,
-      })
-    ).toBe(2);
-  });
-
-  // The charges reach NEITHER stored total: the final cost is the discounted
-  // total plus them, and exists only where it is shown.
-  it('adds to the DISCOUNTED total to give the final cost', () => {
-    expect(finalCost({ ...charges, orderTotalAfterDiscount: 45 })).toBe(76);
-  });
-
-  it('gives a line-less order a final cost of its charges alone', () => {
-    // Every figure on an order with no lines reads as zero rather than absent.
-    expect(finalCost({ ...charges, orderTotalAfterDiscount: 0 })).toBe(31);
+      projectedLineCost(line(), { supplierDiscountPercentage: 25 }, true)
+    ).toBe(60);
   });
 });
 
-describe('OMS-FUN-PO-07.12 — the totals band’s four figures', () => {
+describe('OMS-FUN-PO-07.12 — the totals band’s three figures', () => {
   const node = {
-    agentCommission: 1,
-    documentCharge: 2,
-    communicationsCharge: 4,
-    insuranceCharge: 8,
-    freightCharge: 16,
     orderTotalBeforeDiscount: 60,
     orderTotalAfterDiscount: 45,
     supplierDiscountAmount: 15,
     supplierDiscountPercentage: 25,
   };
 
-  it('reads across as subtotal − discount + charges = order total', () => {
+  it('reads across as subtotal − discount = order total', () => {
     const totals = orderTotals(node);
     expect(totals.subtotal).toBe(60);
     expect(totals.discount).toBe(15);
-    expect(totals.charges).toBe(31);
-    expect(totals.total).toBe(76);
-    expect(totals.subtotal - totals.discount + totals.charges).toBe(
-      totals.total
-    );
+    expect(totals.total).toBe(45);
+    expect(totals.subtotal - totals.discount).toBe(totals.total);
   });
 
   it('carries the stored percentage, which is what the label names', () => {
@@ -167,6 +126,6 @@ describe('OMS-FUN-PO-07.12 — the totals band’s four figures', () => {
       supplierDiscountPercentage: null,
     });
     expect(undiscounted.discount).toBe(0);
-    expect(undiscounted.total).toBe(91);
+    expect(undiscounted.total).toBe(60);
   });
 });

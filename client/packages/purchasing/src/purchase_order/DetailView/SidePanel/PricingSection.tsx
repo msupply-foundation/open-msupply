@@ -6,7 +6,6 @@ import {
   PanelRow,
   PanelLabel,
   PanelField,
-  splitTranslatedLines,
   useCurrency,
   Currencies,
   NumericTextInput,
@@ -43,21 +42,6 @@ export const PricingSection = ({
 
   if (!draft) return null;
 
-  const {
-    agentCommission = 0,
-    documentCharge = 0,
-    communicationsCharge = 0,
-    insuranceCharge = 0,
-    freightCharge = 0,
-  } = draft;
-
-  const additionalFees =
-    (agentCommission ?? 0) +
-    (documentCharge ?? 0) +
-    (communicationsCharge ?? 0) +
-    (insuranceCharge ?? 0) +
-    (freightCharge ?? 0);
-
   const handleSupplierDiscountChange = (value: number | undefined) => {
     if (value === draft?.supplierDiscountPercentage) return;
     onChange({ supplierDiscountPercentage: value ?? 0 });
@@ -74,12 +58,6 @@ export const PricingSection = ({
         <PanelRow>
           <PanelLabel>{t('label.cost-subtotal')}</PanelLabel>
           <PanelField>{c(draft.orderTotalBeforeDiscount).format()}</PanelField>
-        </PanelRow>
-        <PanelRow>
-          <PanelLabel>
-            {splitTranslatedLines(t('label.cost-additional-fees'))}
-          </PanelLabel>
-          <PanelField>{c(additionalFees).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.supplier-discount-percentage')}</PanelLabel>
@@ -107,7 +85,7 @@ export const PricingSection = ({
         <PanelRow>
           <PanelLabel>{t('label.cost-final')}</PanelLabel>
           <PanelField>
-            {c(draft.orderTotalAfterDiscount + additionalFees).format()}
+            {c(draft.orderTotalAfterDiscount).format()}
           </PanelField>
         </PanelRow>
       </Grid>

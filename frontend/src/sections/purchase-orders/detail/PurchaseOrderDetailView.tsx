@@ -8,7 +8,7 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { t } from '@/intl';
+import { MAX_FRACTION_DIGITS, t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -59,6 +59,7 @@ import { hasFurtherPage, pagedNext, rowAfter } from '@/list/pagedNext';
 import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
+import { CustomFieldsEditTab } from '@/domain/customFields';
 import { ExportPrintButton } from '@/domain/reports';
 import { MasterListPickerModal } from '@/domain/masterList';
 import { hasPermission, purchaseOrderPreferences } from '@/store/storeContext';
@@ -174,7 +175,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : <Num value={value} />;
+  if (value == null) return '';
+  return <Num value={value} places={MAX_FRACTION_DIGITS} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -425,6 +427,11 @@ const PurchaseOrderDetailView: Component = () => {
       : { ok: false };
   };
 
+  // Open in every state, like the comment.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => (await saveField({ customFields: patch })).ok;
+
   const edit = createDebouncedEdit<PurchaseOrderEditFields>({
     id: () => info()?.id ?? '',
     initial: () => {
@@ -532,6 +539,7 @@ const PurchaseOrderDetailView: Component = () => {
     { value: 'shipments', label: t('label.inbound-shipment') },
     { value: 'details', label: t('label.details') },
     { value: 'documents', label: t('label.documents') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
   ];
 
@@ -648,7 +656,6 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
-      cell: exactQuantity,
       size: remToPx(7),
     },
     {
@@ -934,18 +941,20 @@ const PurchaseOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="details">
-                <PurchaseOrderDetailsTab
-                  node={node()}
-                  disabled={isDisabled()}
-                  edit={edit}
-                  onSaveField={saveField}
-                />
+                <PurchaseOrderDetailsTab disabled={isDisabled()} edit={edit} />
               </TabPanel>
               <TabPanel value="documents">
                 <PurchaseOrderDocumentsTab
                   node={node()}
                   canChange={canAttachDocuments(status())}
                   onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
+              <TabPanel value="custom-fields">
+                <CustomFieldsEditTab
+                  scope="purchase_order"
+                  values={node().customFields}
+                  onSave={saveCustomFields}
                 />
               </TabPanel>
               <TabPanel value="log">

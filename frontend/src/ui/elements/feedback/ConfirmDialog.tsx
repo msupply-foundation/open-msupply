@@ -40,6 +40,13 @@ export interface ConfirmDialogProps {
   confirmVariant?: 'primary' | 'danger';
   /** A bespoke dismiss verb. Omit for the standard, translated Cancel. */
   cancelLabel?: string;
+  /**
+   * The header icon: the help `?` by default, since a confirmation is a
+   * question. A dialog that is a notice after the fact (a save that has
+   * already happened, offering where to go next) passes its own — a
+   * CheckCircleIcon or InfoIcon — so the mark doesn't ask.
+   */
+  icon?: JSX.Element;
   onConfirm: () => void;
 }
 
@@ -75,7 +82,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
       <Dialog
         open
         onClose={props.onClose}
-        icon={<HelpIcon />}
+        icon={props.icon ?? <HelpIcon />}
         testId="confirmation-modal"
         title={props.title ?? t('heading.are-you-sure')}
         description={props.message}
