@@ -388,7 +388,9 @@ const warningMessages = (
             reasons: message.reasons.map(reason => t(reason)).join(', '),
           }),
         };
-      default:
+      case 'warning.cannot-create-placeholder-units':
+      case 'warning.cannot-create-placeholder-packs':
+      case 'warning.cannot-create-placeholder-doses':
         return {
           testId: 'outbound-shortfall-warning',
           message: t(message.key, {
@@ -895,7 +897,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // Past NEW a shortfall has no placeholder to hold it, so — as the old app
     // does — the Issue field drops to what was allocated, beside the shortfall
     // warning. Written inside onChange, so NumberField keeps the typed text
-    // until blur and only then shows this figure (never mid-typing).
+    // until blur and only then shows this figure (never mid-typing). The drop
+    // can land on the value already held — the line holding everything
+    // available — so the field declares `parentAnswersSynchronously`.
     if (!props.isNew && result.shortfallUnits > 0)
       setIssueValue(
         roundedLensValue(units - result.shortfallUnits, allocateIn())
@@ -1805,9 +1809,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               height — NumberField's "small" (2.25rem) and Select's "sm"
               (1.75rem — the Pagination scale) don't align with each other. */}
             <div class={styles.issueGroup}>
+              {/* onIssueChange answers in place, and past New its answer can
+                  be the figure the field already holds (an over-request where
+                  the line holds everything available) — which the field could
+                  not tell from no answer, so it is told (NumberField's
+                  contract). */}
               <NumberField
                 label={t('label.issue')}
                 min={0}
+                parentAnswersSynchronously
                 data-testid="issue-quantity-input"
                 ref={issueField.ref}
                 value={issueValue()}
