@@ -54,11 +54,6 @@ export const DocumentVersionNotice = (
         {t('messages.document-unknown-version')}
       </Alert>
     </Match>
-    <Match when={props.version.kind === 'unversioned'}>
-      <Alert severity="warning" testId="document-version-notice">
-        {t('messages.document-unversioned-version')}
-      </Alert>
-    </Match>
     <Match when={props.version.kind === 'outOfStep'}>
       <Alert severity="warning" testId="document-version-notice">
         {t('messages.document-form-out-of-step')}

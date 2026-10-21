@@ -115,9 +115,9 @@ afterEach(() => {
 const open = async (
   loaded: FormDocumentFragment,
   archived: number[],
-  // The type's form as the registry has it: versioned (the default), a form
-  // declaring no versions, or no plugin form at all.
-  pluginForm: FormVersioning | 'unversioned' | 'none' = versioning(archived)
+  // The type's form as the registry has it: its versioning (the default), or
+  // no plugin form at all.
+  pluginForm: FormVersioning | 'none' = versioning(archived)
 ): Promise<DocumentForm<Encounter>> => {
   graphqlFetch.mockImplementation(
     async (query: unknown, variables: CallVariables) => {
@@ -152,7 +152,6 @@ const open = async (
         type === 'DemoEncounter' && typeof pluginForm === 'object'
           ? pluginForm
           : undefined,
-      hasPluginForm: type => type === 'DemoEncounter' && pluginForm !== 'none',
     });
   });
   await vi.waitFor(() => expect(form.status()).toBe('ready'), {
@@ -293,18 +292,6 @@ describe('opening a document pinned to an earlier version', () => {
     });
   });
 
-  it('opens another version than the current as unversioned, read-only, where the plugin form declares no versions', async () => {
-    const form = await open(
-      documentPinnedTo(V1, v1, v1Fixture),
-      [],
-      'unversioned'
-    );
-    expect(form.version()).toEqual({ kind: 'unversioned' });
-    expect(form.draft.readOnly()).toBe(true);
-    expect(form.canSave()).toBe(false);
-    expect(form.recorded()?.schema).toBe(v1);
-  });
-
   it('opens a current document in the default form, editable, with no plugin form', async () => {
     const form = await open(documentPinnedTo(V2, v2, {}), [], 'none');
     expect(form.version()).toEqual({ kind: 'current' });
@@ -401,7 +388,6 @@ describe('a type whose plugin form and registry entry are out of step', () => {
         patientId: () => 'patient',
         source: () => ({ kind: 'new', registry, data: v1Fixture }),
         versioning: () => pluginBehind,
-        hasPluginForm: () => true,
       });
     });
     await vi.waitFor(() => expect(form.status()).toBe('ready'), {
@@ -613,7 +599,6 @@ describe('when the source changes', () => {
         source,
         versioning: type =>
           type === 'DemoEncounter' ? versioning([1]) : undefined,
-        hasPluginForm: type => type === 'DemoEncounter',
       });
       // Together, as a screen derives both from the one record it shows.
       const go = (next: DocumentFormSource, patient = 'patient-1') =>

@@ -61,19 +61,18 @@ const isVersionNumber = (value: unknown, count: number): value is number =>
 
 /*
  * A form's versioning (sdk-contract § the document form slots): `versions`
- * is every schema id of its type, oldest first; `migrations` and `archived`
- * are keyed by position in it, so neither means anything without it. Checked
- * as far as the shape goes; whether a step covers its versions is the plugin
- * build's check, which has the schemas.
+ * is every schema id of its type, oldest first, and required, since the host
+ * reads from it whether the plugin in the browser matches the one installed;
+ * `migrations` and `archived` are keyed by position in it. Checked as far as
+ * the shape goes; whether a step covers its versions is the plugin build's
+ * check, which has the schemas.
  */
 const formVersioningProblem = (
   entry: Record<string, unknown>
 ): string | undefined => {
   const { versions, migrations, archived } = entry;
   if (versions === undefined) {
-    return migrations !== undefined || archived !== undefined
-      ? 'declares migrations or archived forms without the versions they are keyed by'
-      : undefined;
+    return 'declares no versions: pass the generated forms/<type>/versions.ts';
   }
   if (
     !Array.isArray(versions) ||

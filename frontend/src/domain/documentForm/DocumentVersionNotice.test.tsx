@@ -96,7 +96,6 @@ describe('DocumentVersionNotice', () => {
 
   it.each([
     [{ kind: 'unknown' } as const, 'messages.document-unknown-version'],
-    [{ kind: 'unversioned' } as const, 'messages.document-unversioned-version'],
     [{ kind: 'outOfStep' } as const, 'messages.document-form-out-of-step'],
     [{ kind: 'unavailable' } as const, 'messages.document-form-unavailable'],
   ])(

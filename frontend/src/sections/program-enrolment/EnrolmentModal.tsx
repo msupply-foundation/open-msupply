@@ -27,7 +27,6 @@ import { DocumentFormRegion } from '@/plugins/DocumentFormRegion';
 import {
   documentFormFor,
   documentFormVersioning,
-  hasDocumentForm,
 } from '@/plugins/documentFormSlot';
 import { pathLabel } from '@/domain/documentForm/draft';
 import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
@@ -100,7 +99,6 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     patientId: () => props.patientId,
     source,
     versioning: type => documentFormVersioning('programEnrolment.form', type),
-    hasPluginForm: type => hasDocumentForm('programEnrolment.form', type),
     onForbidden: reportPermissionDenied,
     refuseNewerVersion: true,
   });

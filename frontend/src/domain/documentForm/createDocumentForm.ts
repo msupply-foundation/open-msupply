@@ -110,16 +110,10 @@ export type DocumentVersion =
   | { kind: 'migrated'; version: number }
   /**
    * Pinned to a version the plugin does not list (a site with a newer plugin
-   * wrote it). This and the three below open read-only, as recorded, in the
+   * wrote it). This and the two below open read-only, as recorded, in the
    * fallback renderer.
    */
   | { kind: 'unknown' }
-  /**
-   * Pinned to another version than the current one, where the plugin's form
-   * declares no versions: most likely an earlier one, from before an install
-   * moved the registry entry to a new schema id.
-   */
-  | { kind: 'unversioned' }
   /**
    * Any document of a type whose plugin form's newest version is not the
    * registry entry's current one: the plugin in the browser and the one
@@ -160,10 +154,7 @@ const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
 
 /** The versions no form opens: shown as recorded, by the fallback renderer. */
 const asRecorded = (v: DocumentVersion): boolean =>
-  v.kind === 'unknown' ||
-  v.kind === 'unversioned' ||
-  v.kind === 'outOfStep' ||
-  v.kind === 'unavailable';
+  v.kind === 'unknown' || v.kind === 'outOfStep' || v.kind === 'unavailable';
 
 /**
  * Whether a type's plugin form and its registry entry name different current
@@ -194,18 +185,10 @@ export interface CreateDocumentFormOptions {
   readOnly?: Accessor<boolean>;
   /**
    * The versioning of a document type's plugin form, or undefined where no
-   * plugin form declares any. Read inside a memo, so it may read the plugin
-   * registry reactively.
+   * plugin form renders the type: every plugin form declares its versions.
+   * Read inside a memo, so it may read the plugin registry reactively.
    */
   versioning?: (documentType: string) => FormVersioning | undefined;
-  /**
-   * Whether a plugin form renders a document type, versioned or not: a
-   * document on an earlier version of a type none renders has no plugin form
-   * to open it. Required, with `versioning` beside it, so a caller cannot
-   * leave one out and have every older document of an unversioned form read
-   * as having no form at all. Read inside a memo, like `versioning`.
-   */
-  hasPluginForm: (documentType: string) => boolean;
   /**
    * Takes a save the server refuses as Forbidden, with the permission names
    * it gives, in place of showing it as `saveError`: the screen routes it to
@@ -261,7 +244,7 @@ export interface DocumentForm<T> {
   version: Accessor<DocumentVersion>;
   /**
    * The document as it was recorded, while no form can open it (`version` is
-   * unknown, unversioned, outOfStep or unavailable): the body renders it
+   * unknown, outOfStep or unavailable): the body renders it
    * through the fallback renderer in place of any form. Undefined for a new
    * document, which has no record.
    */
@@ -567,13 +550,8 @@ export const createDocumentForm = <T extends object>(
       if (r && isOutOfStep(v, r)) return { kind: 'outOfStep' };
       const pinned = doc?.schema?.id;
       if (!doc || !r || !pinned || pinned === r.formSchemaId) return CURRENT;
-      // A form that declares no versions knows only the current one.
-      if (!v) {
-        if (options.hasPluginForm(r.documentType)) {
-          return { kind: 'unversioned' };
-        }
-        return needsFallback(doc, r) ? { kind: 'unavailable' } : CURRENT;
-      }
+      // No plugin form renders the type: the default form opens what it can.
+      if (!v) return needsFallback(doc, r) ? { kind: 'unavailable' } : CURRENT;
       // In step, the current version is the last listed, so any other listed
       // one is earlier.
       const at = v.versions.indexOf(pinned) + 1;

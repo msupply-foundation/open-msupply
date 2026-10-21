@@ -83,6 +83,7 @@ const encounterForm = (
   slot: 'encounter.form',
   id,
   documentType,
+  versions: [`${documentType}_v1`],
   Component: Component as never,
 });
 

@@ -2790,7 +2790,6 @@
   "messages.document-form-unavailable": "Recorded with an earlier version of this form, and the form that can open it is not available here. It is shown as recorded, and cannot be edited.",
   "messages.document-migrated-version": "Recorded with version {{version}} of this form, and brought into the current version for editing. Saving stores it in the current version; closing without saving leaves it as it was.",
   "messages.document-unknown-version": "Recorded with a version of this form this app does not know, most likely on a site with a newer version. It can be read here, but not edited.",
-  "messages.document-unversioned-version": "Recorded with a different version of this form than the one in use, most likely an earlier one, which this app cannot bring into the current version. It is shown as recorded, and cannot be edited.",
   "messages.dose-catch-up": "This dose is past its window; recording it as a catch-up is fine.",
   "messages.dose-date-not-future": "A dose cannot be recorded in the future.",
   "messages.dose-due-at": "Due: {{age}}.",
