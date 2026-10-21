@@ -8,6 +8,7 @@ import {
   stepValue,
   textRepresents,
   valueRewritesText,
+  commitReports,
   type NumberFieldConstraints,
 } from './numberFieldLogic';
 
@@ -207,6 +208,20 @@ describe('emptyValue', () => {
       value: 7,
       text: '7',
     });
+  });
+
+  // Review on #1591: clearing a prescription batch row already at 0 must
+  // still reach its handler, which cancels a pending auto-allocation and
+  // marks the line dirty — as clearing to undefined always did.
+  it('the clearing keystroke reaches the parent even when it already holds emptyValue', () => {
+    expect(commitReports(0, 0, true)).toBe(true);
+    expect(commitReports(0, 7, true)).toBe(true);
+  });
+
+  it('otherwise only a change reaches the parent', () => {
+    expect(commitReports(0, 0, false)).toBe(false); // typing 0 over 0
+    expect(commitReports(5, 0, false)).toBe(true);
+    expect(commitReports(undefined, undefined, false)).toBe(false);
   });
 
   it('without it, clearing still commits undefined', () => {

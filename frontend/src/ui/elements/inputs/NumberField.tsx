@@ -16,6 +16,7 @@ import {
   finalizeText,
   processInput,
   stepValue,
+  commitReports,
   valueRewritesText,
   type LastCommit,
   type NumberFieldConstraints,
@@ -137,7 +138,9 @@ export interface NumberFieldProps extends Omit<
  *   The transformed-echo latch above can't see that mapping when the parent
  *   already held the number — a 0 cleared is "answered" with the same 0, just
  *   as a debounced parent's stale value would be — so the field would be left
- *   blank over a stored 0 (#1336).
+ *   blank over a stored 0 (#1336). The emptying keystroke always reaches
+ *   onChange, even when the parent already holds emptyValue — as the
+ *   `undefined` it replaces always did — so a handler's side effects run.
  *
  * - Blur canonicalises: parse → round → clamp → commit if changed → display
  *   the formatted string (grouping separators, decimalMin padding) — or the
@@ -203,13 +206,15 @@ export const NumberField = (props: NumberFieldProps) => {
   // Latched for the field's lifetime, since a parent's nature doesn't change.
   let parentAnswersSynchronously = false;
 
-  const commit = (value: number | undefined) => {
+  const commit = (value: number | undefined, emptied = false) => {
     // Batched so the parent's write lands but the sync effect below waits
     // until the batch ends — by which time the echo is recorded and the effect
     // can recognise it as ours.
     batch(() => {
       const before = local.value;
-      if (value !== before) local.onChange?.(value);
+      const emptiedToEmptyValue = emptied && local.emptyValue !== undefined;
+      if (commitReports(value, before, emptiedToEmptyValue))
+        local.onChange?.(value);
       const echo = local.value;
       if (echo !== before) parentAnswersSynchronously = true;
       lastCommitted = { value, echo };
@@ -318,7 +323,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value);
+      commit(result.commit.value, result.text === '');
       reportClamped(result.commit);
     }
   };

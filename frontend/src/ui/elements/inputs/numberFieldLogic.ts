@@ -249,6 +249,21 @@ export const isIncomplete = (text: string, locale: SupportedLocale): boolean =>
     getNumberSymbols(locale)
   );
 
+/**
+ * Whether a commit reaches the parent's onChange. Only a change does — except
+ * a keystroke that empties a field with an `emptyValue`, which always does:
+ * before emptyValue that keystroke committed `undefined`, a change from the
+ * parent's number, so the parent always heard it, and a handler that does
+ * more than store the figure (cancel a pending auto-allocation, mark the
+ * draft dirty) still must when the field already held its emptyValue.
+ * emptyValue changes what a clear reports, never whether it does.
+ */
+export const commitReports = (
+  value: number | undefined,
+  before: number | undefined,
+  emptiedToEmptyValue: boolean
+): boolean => emptiedToEmptyValue || value !== before;
+
 /** The field's last commit, and what the parent made of it (its echo). */
 export type LastCommit = {
   value: number | undefined;
