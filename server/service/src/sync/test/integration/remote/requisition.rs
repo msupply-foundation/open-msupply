@@ -77,6 +77,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             price_per_unit: None,
             available_volume: None,
             location_type_id: None,
+            campaign_id: None,
             forecast_method: ForecastMethod::Amc,
             forecast_monthly_consumption: 15.0,
             forecast_data: None,

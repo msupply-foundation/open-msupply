@@ -37,6 +37,7 @@ import {
 } from '../../../../ui/elements/accordion/Accordion';
 import styles from './PrescriptionLineEditModal.module.css';
 import {
+  getCellDefinition,
   getExpiryDateCell,
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
@@ -750,6 +751,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             />
           );
         },
+      },
+      {
+        // The batch's Activity — read-only context while dispensing, so a
+        // campaign batch is recognisable before it is issued.
+        c: {
+          accessor: line => line.campaign?.name ?? '',
+          id: 'activity',
+        },
+        header: () => t('label.activity'),
+        ...getCellDefinition('activity'),
       },
       {
         c: {

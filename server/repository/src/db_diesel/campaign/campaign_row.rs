@@ -2,6 +2,7 @@ use crate::db_diesel::{
     item_row::item, item_variant::item_variant_row::item_variant, location_row::location,
     name_row::name, stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status,
 };
+use crate::diesel_macros::diesel_string_enum;
 use crate::{
     ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
@@ -17,6 +18,20 @@ table! {
         start_date -> Nullable<Date>,
         end_date -> Nullable<Date>,
         deleted_datetime -> Nullable<Timestamp>,
+        kind -> Text,
+    }
+}
+
+diesel_string_enum! {
+    db_case = snake_case;
+    #[derive(Clone, Eq, Hash)]
+    #[strum(serialize_all = "snake_case")]
+    pub enum CampaignKind {
+        #[default]
+        Campaign,
+        Routine,
+        #[strum(default, transparent)]
+        Other(String),
     }
 }
 
@@ -38,6 +53,8 @@ pub struct CampaignRow {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    #[serde(default)]
+    pub kind: CampaignKind,
 }
 pub struct CampaignRowRepository<'a> {
     connection: &'a StorageConnection,

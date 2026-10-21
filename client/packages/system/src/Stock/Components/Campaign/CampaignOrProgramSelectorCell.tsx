@@ -1,9 +1,7 @@
 import React from 'react';
-import {
-  CampaignNode,
-} from '@openmsupply-client/common';
 import { ProgramFragment } from '@openmsupply-client/programs';
 import { CampaignOrProgramSelector } from './CampaignOrProgramSelector';
+import { CampaignRowFragment } from '../../../Manage/Campaigns/api';
 
 interface CampaignRowData {
   id: string;
@@ -19,7 +17,7 @@ export const CampaignOrProgramCell = <T extends CampaignRowData>({
 }: {
   row: T;
   updateFn: (patch: {
-    campaign: CampaignNode | null;
+    campaign: CampaignRowFragment | null;
     program: ProgramFragment | null;
   }) => void;
   disabled?: boolean;

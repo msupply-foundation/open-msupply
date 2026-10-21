@@ -51,6 +51,9 @@ export type AddInternalOrderLineVariables = {
     comment?: string | null;
     optionId?: string | null;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   }> | null;
     deleteRequestRequisitionLines?: Array<{
     id: string;
@@ -151,6 +154,9 @@ export type UpdateInternalOrderLineVariables = {
     comment?: string | null;
     optionId?: string | null;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   };
 };
 
@@ -182,6 +188,9 @@ export type InternalOrderLineForecastPreviewVariables = {
     requisitionId: string;
     itemId: string;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   };
 };
 
@@ -210,6 +219,7 @@ export type InternalOrderLineForecastPreviewResult = {
   coverageRate: number;
   wastageRate: number;
   targetPopulation: number;
+  annualDosesPerPerson: number | null;
   lossFactor: number;
   annualTargetDoses: number;
   dosesPerUnit: number;
@@ -253,5 +263,5 @@ export type InternalOrderLineForecastPreviewResult = {
 };
 
 export const InternalOrderLineForecastPreview = {
-  query: "query internalOrderLineForecastPreview($storeId: String!, $input: RequisitionLineForecastPreviewInput!) {\n  requisitionLineForecastPreview(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineForecastPreviewNode {\n      suggestedQuantity\n      averageMonthlyConsumption\n      availableStockOnHand\n      forecastMethod\n      forecastMonthlyConsumption\n      targetStock\n      forecastBreakdown {\n        __typename\n        ... on AmcForecastNode {\n          averageMonthlyConsumption\n        }\n        ... on PopulationForecastNode {\n          populationServed\n          courses {\n            courseName\n            demographicName\n            numberOfDoses\n            coverageRate\n            wastageRate\n            targetPopulation\n            lossFactor\n            annualTargetDoses\n            dosesPerUnit\n            monthlyDoses\n            monthlyUnits\n          }\n        }\n        ... on AncillaryRatioForecastNode {\n          principals {\n            itemId\n            item {\n              code\n              name\n              unitName\n            }\n            principalMonthlyConsumption\n            itemQuantity\n            ancillaryQuantity\n            wastageRate\n            principalUsableConsumption\n            monthlyConsumption\n          }\n        }\n      }\n      forecastMethodOptions {\n        method\n        isAvailable\n        unavailableReason\n      }\n    }\n    ... on RequisitionLineForecastPreviewError {\n      error {\n        __typename\n        description\n        ... on ForecastMethodNotAvailable {\n          unavailableReason\n        }\n      }\n    }\n  }\n}",
+  query: "query internalOrderLineForecastPreview($storeId: String!, $input: RequisitionLineForecastPreviewInput!) {\n  requisitionLineForecastPreview(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineForecastPreviewNode {\n      suggestedQuantity\n      averageMonthlyConsumption\n      availableStockOnHand\n      forecastMethod\n      forecastMonthlyConsumption\n      targetStock\n      forecastBreakdown {\n        __typename\n        ... on AmcForecastNode {\n          averageMonthlyConsumption\n        }\n        ... on PopulationForecastNode {\n          populationServed\n          courses {\n            courseName\n            demographicName\n            numberOfDoses\n            coverageRate\n            wastageRate\n            targetPopulation\n            annualDosesPerPerson\n            lossFactor\n            annualTargetDoses\n            dosesPerUnit\n            monthlyDoses\n            monthlyUnits\n          }\n        }\n        ... on AncillaryRatioForecastNode {\n          principals {\n            itemId\n            item {\n              code\n              name\n              unitName\n            }\n            principalMonthlyConsumption\n            itemQuantity\n            ancillaryQuantity\n            wastageRate\n            principalUsableConsumption\n            monthlyConsumption\n          }\n        }\n      }\n      forecastMethodOptions {\n        method\n        isAvailable\n        unavailableReason\n      }\n    }\n    ... on RequisitionLineForecastPreviewError {\n      error {\n        __typename\n        description\n        ... on ForecastMethodNotAvailable {\n          unavailableReason\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<InternalOrderLineForecastPreviewResult, InternalOrderLineForecastPreviewVariables>;

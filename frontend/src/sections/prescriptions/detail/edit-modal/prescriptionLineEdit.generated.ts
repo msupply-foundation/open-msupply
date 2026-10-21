@@ -35,6 +35,10 @@ export type PrescriptionEditLinesResult = {
   unusable: boolean;
   priority: number;
 } | null;
+  campaign: {
+  id: string;
+  name: string;
+} | null;
 }>;
 };
   items: ({
@@ -55,7 +59,7 @@ export type PrescriptionEditLinesResult = {
 };
 
 export const PrescriptionEditLines = {
-  query: "query prescriptionEditLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    prescribedQuantity\n    note\n    draftLines {\n      id\n      stockLineId\n      numberOfPacks\n      packSize\n      batch\n      expiryDate\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      barcode\n      dosesPerUnit\n      location {\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n    }\n  }\n  items(\n    storeId: $storeId\n    filter: {id: {equalTo: $itemId}, isVisibleOrOnHand: true}\n    page: {first: 1}\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n        itemDirections {\n          id\n          directions\n          priority\n        }\n      }\n    }\n  }\n}",
+  query: "query prescriptionEditLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    prescribedQuantity\n    note\n    draftLines {\n      id\n      stockLineId\n      numberOfPacks\n      packSize\n      batch\n      expiryDate\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      barcode\n      dosesPerUnit\n      location {\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n      campaign {\n        id\n        name\n      }\n    }\n  }\n  items(\n    storeId: $storeId\n    filter: {id: {equalTo: $itemId}, isVisibleOrOnHand: true}\n    page: {first: 1}\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n        itemDirections {\n          id\n          directions\n          priority\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionEditLinesResult, PrescriptionEditLinesVariables>;
 
 export type SavePrescriptionItemLinesVariables = {

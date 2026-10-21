@@ -9,6 +9,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -68,6 +69,7 @@ import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
   OutboundDetail,
   OutboundLines,
+  OutboundRequestedActivities,
   UpdateOutboundShipmentName,
   type OutboundLineFragment,
   type OutboundLinesVariables,
@@ -466,6 +468,37 @@ const OutboundDetailView: Component = () => {
     const current = node();
     return current ? isEditable(current.status) : false;
   };
+
+  // The Activity the originating requisition asked each item be supplied FOR
+  // (issue 595), by item id. Its OWN read, keyed on the requisition: a shipment
+  // raised without one never fetches, and the lines are pulled once per
+  // requisition rather than riding the entity read and every mutation payload
+  // that shares the OutboundInfo fragment. Read non-suspending — it first
+  // resolves while this screen is already open (kdd/solid-reactivity-pitfalls).
+  const [requestedActivityData] = createResource(
+    () => node()?.requisition?.id,
+    async requisitionId => {
+      const result = await graphqlFetch(OutboundRequestedActivities, {
+        storeId: params.storeId,
+        requisitionId,
+      });
+      return result.kind === 'success'
+        ? result.data.requisition.lines.nodes
+        : undefined;
+    }
+  );
+  const requestedActivityByItem = createMemo(
+    () =>
+      new Map(
+        (gated(requestedActivityData) ?? []).flatMap(line =>
+          line.campaign ? [[line.itemId, line.campaign] as const] : []
+        )
+      )
+  );
+  // An item the requisition doesn't carry, or one asked for with no particular
+  // activity, resolves to nothing and the editor warns about nothing.
+  const requestedActivity = (itemId: string) =>
+    requestedActivityByItem().get(itemId);
 
   // Status pre-flight (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16) — whole-shipment
   // answers the current page can't give (rules.md § server-paginated line
@@ -1398,6 +1431,10 @@ const OutboundDetailView: Component = () => {
                 // raised from a customer requisition has a requested quantity
                 // for a comment to explain (spec S4 § supplier comment).
                 fromCustomerRequisition={current().requisition != null}
+                // What the customer asked each item be supplied FOR (issue
+                // 595) — the editor warns, without blocking, when the stock
+                // issued is held for something else.
+                requestedActivity={requestedActivity}
                 editable={editable()}
                 currencyCode={current().currency?.code}
                 currencyRate={current().currencyRate}

@@ -143,6 +143,7 @@ impl Setup {
                     requisition_id: requisition().id,
                     item_id: item_id.to_string(),
                     forecast_method: method,
+                    ..Default::default()
                 },
             )
     }

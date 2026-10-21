@@ -12,7 +12,12 @@ import {
 } from '../../../ui/elements/table/Pagination';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { currentStep, trackStages } from '@/domain/invoice';
-import { STATUS_FLOW, STATUS_LABELS, isEditable } from '../outboundStatus';
+import {
+  STATUS_FLOW,
+  STATUS_LABELS,
+  isEditable,
+  statusLabel,
+} from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
@@ -23,9 +28,9 @@ import type { OutboundNode } from './outboundUpdate';
 // the list), and the status-change split button (its own action component).
 // Replaced by the bulk-action bar while lines are selected
 // (OMS-REG-DIST-04.20). A status change that lands is reported in the bar's
-// message slot, as a flash of the save confirmation
-// (spec/ui-standards/controls.md § action feedback) — the split button is gone
-// at Shipped, and the crumb alone is easy to miss.
+// message slot, as a flash of the status it reached, in the crumb's own word
+// (issue #1127; spec/ui-standards/controls.md § action feedback) — the split
+// button is gone at Shipped, and the crumb alone is easy to miss.
 
 export interface OutboundStatusFooterProps {
   storeId: string;
@@ -95,7 +100,7 @@ export const OutboundStatusFooter: Component<
   // release-and-confirm) come through here.
   const onSaved = (node: OutboundNode) => {
     props.onSaved(node);
-    saved.show(t('messages.shipment-saved'));
+    saved.show(statusLabel(node.status));
   };
 
   return (

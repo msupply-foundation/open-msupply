@@ -32,6 +32,13 @@ fragment RequisitionDetailLine on RequisitionLineNode {
   }
   # The customer's available stock as requested (label.customer-soh).
   availableStockOnHand
+  # The Activity the customer is ordering this line for — carried across on the
+  # requisition transfer (issue 595), so the supplier can see a line is meant
+  # for a campaign rather than routine use.
+  campaign {
+    id
+    name
+  }
   # The extended requisition columns — the customer's reported consumption
   # figures (store-context gates). Available and MOS are client arithmetic
   # over these.
@@ -71,6 +78,7 @@ fragment RequisitionDetailLine on RequisitionLineNode {
         coverageRate
         wastageRate
         targetPopulation
+        annualDosesPerPerson
         lossFactor
         annualTargetDoses
         dosesPerUnit

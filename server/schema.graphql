@@ -123,6 +123,7 @@ enum ActivityLogNodeType {
 	VVM_STATUS_LOG_UPDATED
 	VOLUME_PER_PACK_CHANGED
 	STOCK_LINE_EDIT
+	STOCK_CAMPAIGN_CHANGE
 	PURCHASE_ORDER_CREATED
 	PURCHASE_ORDER_REQUEST_APPROVAL
 	PURCHASE_ORDER_UNAUTHORISED
@@ -136,6 +137,7 @@ enum ActivityLogNodeType {
 	PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED
 	PURCHASE_ORDER_LINE_STATUS_CLOSED
 	PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW
+	PURCHASE_ORDER_CANCELLED
 	PRESCRIPTION_REQUEST_CREATED
 	PRESCRIPTION_REQUEST_UPDATED
 	PRESCRIPTION_REQUEST_READY_TO_DISPENSE
@@ -1163,6 +1165,11 @@ input CampaignFilterInput {
 	name: StringFilterInput
 }
 
+enum CampaignKindNode {
+	CAMPAIGN
+	ROUTINE
+}
+
 type CampaignMutations {
 	upsertCampaign(input: UpsertCampaignInput!): UpsertCampaignResponse!
 	deleteCampaign(input: DeleteCampaignInput!): DeleteCampaignResponse!
@@ -1174,6 +1181,7 @@ type CampaignNode {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode!
 }
 
 enum CampaignSortFieldInput {
@@ -3351,6 +3359,10 @@ enum InboundNodeType {
 	MANUAL_EXTERNAL
 }
 
+type InboundShipmentsInProgress implements UpdatePurchaseOrderErrorInterface {
+	description: String!
+}
+
 type InboundShipmentsNotVerified implements UpdatePurchaseOrderErrorInterface {
 	description: String!
 }
@@ -4467,6 +4479,11 @@ input InsertVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
@@ -6638,6 +6655,11 @@ type PopulationForecastCourseNode {
 	coverageRate: Float!
 	wastageRate: Float!
 	targetPopulation: Float!
+	"""
+	The average doses a person gets in a year, counted in place of the number of
+	doses when set
+	"""
+	annualDosesPerPerson: Float
 	lossFactor: Float!
 	annualTargetDoses: Float!
 	dosesPerUnit: Float!
@@ -6731,6 +6753,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6806,6 +6829,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -7329,11 +7353,11 @@ type PurchaseOrderLineNode {
 	pricePerPackAfterDiscount: Float!
 	lineTotal: Float!
 	"""
-	The pack price with the order's supplier discount apportioned to the line
+	The pack price with the order's supplier discount apportioned to the line (none on a service line)
 	"""
 	pricePerPackAfterSupplierDiscount: Float!
 	"""
-	The line's stored total with the order's supplier discount apportioned to it
+	The line's stored total with the order's supplier discount apportioned to it (none on a service line)
 	"""
 	lineTotalAfterSupplierDiscount: Float!
 	comment: String
@@ -7428,16 +7452,19 @@ type PurchaseOrderNode {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Filtered to the keys visible on the purchase_order scope
+	"""
+	customFields: JSON
+	"""
+	The supplier discount on the stock lines; service lines take none
+	"""
 	supplierDiscountAmount: Float!
 	supplierDiscountPercentage: Float
 	requestApprovalDatetime: DateTime
 	finalisedDatetime: DateTime
+	cancelledDatetime: DateTime
 	documents: SyncFileReferenceConnector!
 	lines: PurchaseOrderLineConnector!
 	currency: CurrencyNode
@@ -7449,6 +7476,7 @@ enum PurchaseOrderNodeStatus {
 	CONFIRMED
 	SENT
 	FINALISED
+	CANCELLED
 }
 
 union PurchaseOrderResponse = RecordNotFound | PurchaseOrderNode
@@ -8559,6 +8587,12 @@ input RequisitionLineForecastPreviewInput {
 	new line would take
 	"""
 	forecastMethod: ForecastMethodNode
+	"""
+	The activity to preview the line as held for — its stock on hand, and the suggestion
+	computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+	`{ value: null }` previews it as held for nothing in particular
+	"""
+	campaignId: NullableStringUpdate
 }
 
 type RequisitionLineForecastPreviewNode {
@@ -8646,6 +8680,7 @@ type RequisitionLineNode {
 	daysOutOfStock: Float!
 	optionId: String
 	reason: ReasonOptionNode
+	campaign: CampaignNode
 	availableStockOnHand: Float!
 	requisitionNumber: Int!
 	requisitionId: String!
@@ -10998,12 +11033,11 @@ input UpdatePurchaseOrderInput {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Merged into the order's custom fields; a null value deletes the key
+	"""
+	customFields: JSON
 }
 
 type UpdatePurchaseOrderLineError {
@@ -11082,6 +11116,7 @@ input UpdateRequestRequisitionLineInput {
 	is untouched
 	"""
 	forecastMethod: ForecastMethodNode
+	campaignId: NullableStringUpdate
 }
 
 union UpdateRequestRequisitionLineResponse = UpdateRequestRequisitionLineError | RequisitionLineNode
@@ -11425,6 +11460,12 @@ input UpdateVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Unchanged when omitted; a null value clears it, counting every dose
+	in the course
+	"""
+	annualDosesPerPerson: NullableFloatUpdate
 }
 
 union UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode
@@ -11498,6 +11539,7 @@ input UpsertCampaignInput {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode
 }
 
 union UpsertCampaignResponse = UpsertCampaignError | CampaignNode
@@ -11581,6 +11623,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {
@@ -11905,6 +11948,11 @@ type VaccineCourseNode {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 	demographic: DemographicNode
 	vaccineCourseItems: [VaccineCourseItemNode!]
 	vaccineCourseDoses: [VaccineCourseDoseNode!]

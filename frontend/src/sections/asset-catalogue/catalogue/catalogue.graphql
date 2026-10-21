@@ -23,9 +23,11 @@ query assetCatalogueItems(
           name
         }
         assetCategory {
+          id
           name
         }
         assetType {
+          id
           name
         }
       }

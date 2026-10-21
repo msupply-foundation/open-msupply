@@ -80,6 +80,8 @@ pub mod receive_payments_from_prescriptions;
 pub use receive_payments_from_prescriptions::*;
 pub mod do_not_print_placeholder_line_labels;
 pub use do_not_print_placeholder_line_labels::*;
+pub mod prompt_for_batch_and_expiry_on_inbound_shipments;
+pub use prompt_for_batch_and_expiry_on_inbound_shipments::*;
 pub mod blind_stocktake;
 pub use blind_stocktake::*;
 pub mod global_logo;
@@ -141,6 +143,7 @@ pub struct PreferenceProvider {
     pub invoice_status_options: InvoiceStatusOptions,
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
+    pub prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -198,5 +201,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         invoice_status_options: InvoiceStatusOptions,
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
+        prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
     }
 }

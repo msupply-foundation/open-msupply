@@ -23,6 +23,7 @@ const line = (over: Partial<DraftLine> & { id: string }): DraftLine => ({
   dosesPerUnit: 1,
   location: null,
   vvmStatus: null,
+  campaign: null,
   barred: [],
   autoBarred: [],
   scanExcluded: false,

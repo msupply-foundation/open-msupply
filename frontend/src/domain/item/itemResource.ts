@@ -21,6 +21,8 @@ export type ItemOption = {
   isVaccine: boolean;
   /** The item's configured doses-per-unit — the doses-display multiplier. */
   doses: number;
+  /** A service item: no stock, so the row shows a Service badge instead. */
+  isService: boolean;
   /** Default pack size — a new inbound line's starting pack size (OMS-REG-REPL-09.10/.11). */
   defaultPackSize: number;
   /**
@@ -88,6 +90,7 @@ export const lookUpItemById = async (
       availableUnits: availableUnitsOf(node),
       isVaccine: node.isVaccine,
       doses: node.doses,
+      isService: node.type === 'SERVICE',
       defaultPackSize: node.defaultPackSize,
       defaultSellPricePerPack:
         node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
@@ -156,7 +159,9 @@ export const itemPageFetcher =
     // The server's `ignoreForOrders` flag: `false` keeps only items the store
     // may order — the purchase-order line editor's chooser
     // (spec/purchase-orders rules › choosing the item). Omitted = no filter.
-    ignoreForOrders?: () => boolean | undefined
+    ignoreForOrders?: () => boolean | undefined,
+    // Offer service items as well as stock (purchase order line editor).
+    includeServiceItems?: () => boolean | undefined
   ) =>
   async (
     search: string,
@@ -169,7 +174,9 @@ export const itemPageFetcher =
     const result = await graphqlFetch(ItemsWithStock, {
       storeId,
       filter: {
-        type: { equalTo: 'STOCK' },
+        type: includeServiceItems?.()
+          ? { equalAny: ['STOCK', 'SERVICE'] }
+          : { equalTo: 'STOCK' },
         isActive: true,
         isVisible: true,
         ...(stockOnHand !== undefined ? { hasStockOnHand: stockOnHand } : {}),
@@ -195,6 +202,7 @@ export const itemPageFetcher =
         availableUnits: availableUnitsOf(node),
         isVaccine: node.isVaccine,
         doses: node.doses,
+        isService: node.type === 'SERVICE',
         defaultPackSize: node.defaultPackSize,
         defaultSellPricePerPack:
           node.itemStoreProperties?.defaultSellPricePerPack ?? 0,

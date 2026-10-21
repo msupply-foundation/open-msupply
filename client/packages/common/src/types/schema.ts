@@ -166,6 +166,7 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PurchaseOrderCancelled = 'PURCHASE_ORDER_CANCELLED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
@@ -197,6 +198,7 @@ export enum ActivityLogNodeType {
   StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
+  StockCampaignChange = 'STOCK_CAMPAIGN_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
   StockLineEdit = 'STOCK_LINE_EDIT',
@@ -1401,6 +1403,11 @@ export type CampaignFilterInput = {
   name?: InputMaybe<StringFilterInput>;
 };
 
+export enum CampaignKindNode {
+  Campaign = 'CAMPAIGN',
+  Routine = 'ROUTINE',
+}
+
 export type CampaignMutations = {
   __typename: 'CampaignMutations';
   deleteCampaign: DeleteCampaignResponse;
@@ -1424,6 +1431,7 @@ export type CampaignNode = {
   __typename: 'CampaignNode';
   endDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  kind: CampaignKindNode;
   name: Scalars['String']['output'];
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
@@ -3953,6 +3961,11 @@ export enum InboundNodeType {
   ManualInternal = 'MANUAL_INTERNAL',
 }
 
+export type InboundShipmentsInProgress = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsInProgress';
+  description: Scalars['String']['output'];
+};
+
 export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
   __typename: 'InboundShipmentsNotVerified';
   description: Scalars['String']['output'];
@@ -5127,6 +5140,11 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
+  /**
+   * The average number of doses a person reached gets in a year, for population
+   * forecasting. Null counts every dose in the course
+   */
+  annualDosesPerPerson?: InputMaybe<Scalars['Float']['input']>;
   canSkipDose: Scalars['Boolean']['input'];
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
@@ -8224,6 +8242,11 @@ export type PluginInfoNode = {
 
 export type PopulationForecastCourseNode = {
   __typename: 'PopulationForecastCourseNode';
+  /**
+   * The average doses a person gets in a year, counted in place of the number of
+   * doses when set
+   */
+  annualDosesPerPerson?: Maybe<Scalars['Float']['output']>;
   annualTargetDoses: Scalars['Float']['output'];
   courseName: Scalars['String']['output'];
   coverageRate: Scalars['Float']['output'];
@@ -8306,6 +8329,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  PromptForBatchAndExpiryOnInboundShipments = 'promptForBatchAndExpiryOnInboundShipments',
   ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
@@ -8389,6 +8413,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  promptForBatchAndExpiryOnInboundShipments: Scalars['Boolean']['output'];
   receivePaymentsFromPrescriptions: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
@@ -8926,13 +8951,13 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
-  /** The line's stored total with the order's supplier discount apportioned to it */
+  /** The line's stored total with the order's supplier discount apportioned to it (none on a service line) */
   lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
-  /** The pack price with the order's supplier discount apportioned to the line */
+  /** The pack price with the order's supplier discount apportioned to the line (none on a service line) */
   pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
@@ -8961,7 +8986,6 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
-  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
@@ -9003,26 +9027,24 @@ export type PurchaseOrderNode = {
   __typename: 'PurchaseOrderNode';
   additionalInstructions?: Maybe<Scalars['String']['output']>;
   advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
-  agentCommission?: Maybe<Scalars['Float']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
-  communicationsCharge?: Maybe<Scalars['Float']['output']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyId?: Maybe<Scalars['String']['output']>;
-  documentCharge?: Maybe<Scalars['Float']['output']>;
+  /** Filtered to the keys visible on the purchase_order scope */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   foreignExchangeRate: Scalars['Float']['output'];
-  freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;
   headingMessage?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
-  insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
   orderTotalAfterDiscount: Scalars['Float']['output'];
@@ -9037,6 +9059,7 @@ export type PurchaseOrderNode = {
   store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
+  /** The supplier discount on the stock lines; service lines take none */
   supplierDiscountAmount: Scalars['Float']['output'];
   supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   targetMonths?: Maybe<Scalars['Float']['output']>;
@@ -9044,6 +9067,7 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
+  Cancelled = 'CANCELLED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
@@ -10559,6 +10583,12 @@ export type RequisitionLineForecastPreviewErrorInterface = {
 
 export type RequisitionLineForecastPreviewInput = {
   /**
+   * The activity to preview the line as held for — its stock on hand, and the suggestion
+   * computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+   * `{ value: null }` previews it as held for nothing in particular
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
+  /**
    * Null keeps the line's own method: an existing line's stored one, or the default a
    * new line would take
    */
@@ -10602,6 +10632,7 @@ export type RequisitionLineNode = {
   availableStockOnHand: Scalars['Float']['output'];
   availableVolumeAtLocationType?: Maybe<AvailableVolumeAtLocationTypeNode>;
   averageMonthlyConsumption: Scalars['Float']['output'];
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
@@ -13091,22 +13122,19 @@ export type UpdatePurchaseOrderErrorInterface = {
 export type UpdatePurchaseOrderInput = {
   additionalInstructions?: InputMaybe<Scalars['String']['input']>;
   advancePaidDate?: InputMaybe<NullableDateUpdate>;
-  agentCommission?: InputMaybe<Scalars['Float']['input']>;
   authorisingOfficer1?: InputMaybe<Scalars['String']['input']>;
   authorisingOfficer2?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  communicationsCharge?: InputMaybe<Scalars['Float']['input']>;
   confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
   contractSignedDate?: InputMaybe<NullableDateUpdate>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
-  documentCharge?: InputMaybe<Scalars['Float']['input']>;
+  /** Merged into the order's custom fields; a null value deletes the key */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
   foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
-  freightCharge?: InputMaybe<Scalars['Float']['input']>;
   freightConditions?: InputMaybe<Scalars['String']['input']>;
   headingMessage?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  insuranceCharge?: InputMaybe<Scalars['Float']['input']>;
   receivedAtPortDate?: InputMaybe<NullableDateUpdate>;
   reference?: InputMaybe<Scalars['String']['input']>;
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
@@ -13192,6 +13220,7 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 };
 
 export type UpdateRequestRequisitionLineInput = {
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
   /**
    * Changing the method recomputes the line's monthly demand, breakdown and suggested
@@ -13568,6 +13597,12 @@ export type UpdateVaccineCourseErrorInterface = {
 };
 
 export type UpdateVaccineCourseInput = {
+  /**
+   * The average number of doses a person reached gets in a year, for population
+   * forecasting. Unchanged when omitted; a null value clears it, counting every dose
+   * in the course
+   */
+  annualDosesPerPerson?: InputMaybe<NullableFloatUpdate>;
   canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
@@ -13656,6 +13691,7 @@ export type UpsertCampaignErrorInterface = {
 export type UpsertCampaignInput = {
   endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  kind?: InputMaybe<CampaignKindNode>;
   name: Scalars['String']['input'];
   startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
@@ -13745,6 +13781,9 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
+  >;
+  promptForBatchAndExpiryOnInboundShipments?: InputMaybe<
+    Array<BoolStorePrefInput>
   >;
   receivePaymentsFromPrescriptions?: InputMaybe<Scalars['Boolean']['input']>;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -14115,6 +14154,11 @@ export type VaccineCourseMutationsUpdateVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
+  /**
+   * The average number of doses a person reached gets in a year, for population
+   * forecasting. Null counts every dose in the course
+   */
+  annualDosesPerPerson?: Maybe<Scalars['Float']['output']>;
   canSkipDose: Scalars['Boolean']['output'];
   coverageRate: Scalars['Float']['output'];
   demographic?: Maybe<DemographicNode>;

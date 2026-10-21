@@ -308,4 +308,97 @@ mod insert {
         assert_eq!(line_1.line_total, 60.0);
         assert_eq!(line_2.line_total, 0.0);
     }
+
+    /// A service line keeps its full price: no line discount, no supplier discount.
+    #[actix_rt::test]
+    async fn insert_purchase_order_service_line_takes_no_discount() {
+        use repository::{
+            EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderRowRepository,
+            mock::mock_item_service_item,
+        };
+
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_purchase_order_service_line_takes_no_discount",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_line_service;
+
+        service_provider
+            .purchase_order_service
+            .insert_purchase_order(
+                &context,
+                &mock_store_a().id,
+                InsertPurchaseOrderInput {
+                    id: "po_service".to_string(),
+                    supplier_id: mock_name_a().id.to_string(),
+                },
+            )
+            .unwrap();
+
+        // 10 packs at 6.00 = 60.00
+        service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "po_service_stock".to_string(),
+                    purchase_order_id: "po_service".to_string(),
+                    item_id_or_code: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(10.0),
+                    requested_number_of_units: Some(100.0),
+                    price_per_pack_before_discount: Some(6.0),
+                    price_per_pack_after_discount: Some(6.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Freight at 25.00, sent with a line discount the server drops
+        service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "po_service_freight".to_string(),
+                    purchase_order_id: "po_service".to_string(),
+                    item_id_or_code: mock_item_service_item().id.to_string(),
+                    requested_pack_size: Some(1.0),
+                    requested_number_of_units: Some(1.0),
+                    price_per_pack_before_discount: Some(25.0),
+                    price_per_pack_after_discount: Some(20.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let freight = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_one_by_id("po_service_freight")
+            .unwrap()
+            .unwrap();
+        assert_eq!(freight.price_per_pack_after_discount, 25.0);
+        assert_eq!(freight.line_total, 25.0);
+
+        let order_repo = PurchaseOrderRowRepository::new(&context.connection);
+        let mut order = order_repo.find_one_by_id("po_service").unwrap().unwrap();
+        order.supplier_discount_percentage = Some(10.0);
+        order_repo.upsert_one(&order).unwrap();
+
+        // 10% off the 60.00 of stock only: 85.00 − 6.00
+        let stats = PurchaseOrderRepository::new(&context.connection)
+            .query_by_filter(
+                PurchaseOrderFilter::new().id(EqualFilter::equal_to("po_service".to_string())),
+            )
+            .unwrap()
+            .pop()
+            .unwrap()
+            .purchase_order_stats_row
+            .unwrap();
+        assert_eq!(stats.order_total_before_discount, 85.0);
+        assert_eq!(stats.supplier_discountable_total, 60.0);
+        assert_eq!(stats.order_total_after_discount, 79.0);
+    }
 }

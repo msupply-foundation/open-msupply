@@ -1,3 +1,4 @@
+import { categoryName, typeName } from '@/domain/asset';
 import {
   createEffect,
   createMemo,
@@ -272,13 +273,20 @@ const EquipmentList: Component = () => {
       ...getCellDefinition('name', { headerPosition: 'primary' }),
     },
     {
-      c: { accessor: row => row.assetCategory?.name ?? '', id: 'category' },
+      c: {
+        accessor: row =>
+          row.assetCategory ? categoryName(row.assetCategory) : '',
+        id: 'category',
+      },
       header: () => t('label.category'),
       ...getTextCell(),
       size: remToPx(11),
     },
     {
-      c: { accessor: row => row.assetType?.name ?? '', id: 'type' },
+      c: {
+        accessor: row => (row.assetType ? typeName(row.assetType) : ''),
+        id: 'type',
+      },
       header: () => t('label.type'),
       ...getTextCell(),
       size: remToPx(11),

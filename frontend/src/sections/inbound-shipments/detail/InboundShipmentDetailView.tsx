@@ -39,6 +39,7 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import {
   CommentHeader,
+  formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
   getTextCell,
@@ -106,9 +107,14 @@ import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
-import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
+import { InboundCostsPanel } from './tabs/InboundCostsPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
+import { InboundServiceChargesPanel } from './tabs/InboundServiceChargesPanel';
+import {
+  ServiceItems,
+  type ServiceChargesEditor,
+} from '../../../domain/invoice';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
 import { CaptureWindow } from './scan/CaptureWindow';
 import { createCaptureWindow } from './scan/createCaptureWindow';
@@ -173,7 +179,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   donor: false,
   manufacturer: false,
   manufactureDate: false,
-  campaignProgram: false,
+  program: false,
+  activity: false,
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
@@ -212,6 +219,25 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
+  const [serviceEditor, setServiceEditor] =
+    createSignal<ServiceChargesEditor>();
+  // Whether the store has a service item — read once the Service charges tab
+  // is first opened, never suspending (it arrives under the open screen).
+  const serviceTabOpened = createMemo(
+    prev => prev || activeTab() === 'service-charges',
+    false
+  );
+  const [serviceItems] = createResource(
+    () => (serviceTabOpened() ? params.storeId : undefined),
+    async storeId => {
+      const result = await graphqlFetch(ServiceItems, { storeId });
+      return result.kind === 'success' ? result.data.items.nodes : undefined;
+    }
+  );
+  const serviceConfigured = () => {
+    const items = gated(serviceItems);
+    return items ? items.length > 0 : undefined;
+  };
 
   // The line table's pager. It lives in the screen's bottom bar — the status
   // footer, or the selection footer while rows are ticked — rather than in a
@@ -358,6 +384,23 @@ const InboundShipmentDetailView: Component = () => {
     return rows()
       .filter(r => ids.has(r.id))
       .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
+  };
+
+  // The items of the selected lines — the bulk program picker's narrowing, so
+  // it offers what those items are in rather than every program in the store
+  // (the line editor's rule, applied to a selection). Distinct ids; the fetch
+  // dedupes too, but the count is what the dialog's message counts.
+  // Read from the loaded page, as selectedVolume is — a selection carried
+  // across a page change contributes only the items still on screen.
+  const selectedItemIds = (): string[] => {
+    const ids = new Set(selectedIds());
+    return [
+      ...new Set(
+        rows()
+          .filter(r => ids.has(r.id))
+          .map(r => r.itemId)
+      ),
+    ];
   };
 
   // Volume-aware: inbound places received stock at a location, so the picker
@@ -599,16 +642,17 @@ const InboundShipmentDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Financial / Currency / Delivery are PO-linked-only tabs (spec S3 tabs).
+  // Financial / Costs / Delivery are PO-linked-only tabs (spec S3 tabs).
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(isExternal()
       ? [
           { value: 'financial', label: t('label.financial') },
-          { value: 'currency', label: t('label.currency') },
+          { value: 'costs', label: t('label.costs') },
           { value: 'delivery', label: t('label.delivery') },
         ]
       : []),
+    { value: 'service-charges', label: t('label.service-charges') },
     { value: 'documents', label: t('label.documents') },
     { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
@@ -729,6 +773,7 @@ const InboundShipmentDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        footer: () => t('label.total'),
       },
       // PO line number — PO-linked shipments only.
       ...(isExternal()
@@ -995,7 +1040,7 @@ const InboundShipmentDetailView: Component = () => {
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      // Prices — manual shipments only (PO-linked derive from the order).
+      // Pack prices — manual shipments only (PO-linked derive from the order).
       ...(isManual
         ? [
             {
@@ -1008,20 +1053,23 @@ const InboundShipmentDetailView: Component = () => {
               header: () => t('label.pack-sell-price'),
               ...getCellDefinition('sellPricePerPack'),
             } satisfies Column<Line, SortKey>,
-            {
-              c: {
-                // Placeholder lines (0 packs, nothing shipped) have no
-                // meaningful total — blank (null → empty currency cell) rather
-                // than a zero amount (ui-surface § line table).
-                accessor: line =>
-                  isPlaceholderLine(line) ? null : line.totalBeforeTax,
-                id: 'total',
-              },
-              header: () => t('label.total'),
-              ...getCellDefinition('total'),
-            } satisfies Column<Line, SortKey>,
           ]
         : []),
+      {
+        c: {
+          // Placeholder lines (0 packs, nothing shipped) have no
+          // meaningful total — blank (null → empty currency cell) rather
+          // than a zero amount (ui-surface § line table).
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalBeforeTax,
+          id: 'total',
+        },
+        header: () => t('label.total'),
+        ...getCellDefinition('total'),
+        // The whole shipment's, not this page's — the lines are server-paged.
+        footer: () =>
+          formatCurrencyCell(current()?.pricing.stockTotalBeforeTax),
+      },
       // Donor — gated by the donor-tracking preference.
       ...(prefs().allowTrackingOfStockByDonor
         ? [
@@ -1049,20 +1097,28 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.manufacture-date'),
         ...getCellDefinition('manufactureDate'),
       },
-      // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
-      // only; a line carries a campaign OR a program (mutually exclusive).
+      // Program and Campaign (spec S1 line-table cols 26-27 / L3) — manual
+      // shipments only. Two independent fields, so two columns: one combined
+      // column would hide the program on a line carrying both.
       ...(isManual
         ? [
             {
               c: {
-                accessor: line =>
-                  line.campaign?.name ?? line.program?.name ?? '',
-                id: 'campaignProgram',
+                accessor: line => line.program?.name ?? '',
+                id: 'program',
               },
-              header: () => t('label.campaign'),
-              // The `campaign` preset (a campaign OR program name), as the
-              // stocktake line table uses — not the `name` text sink.
-              ...getCellDefinition('campaign'),
+              header: () => t('label.program'),
+              ...getCellDefinition('program'),
+            } satisfies Column<Line, SortKey>,
+            {
+              c: {
+                accessor: line => line.campaign?.name ?? '',
+                id: 'activity',
+              },
+              header: () => t('label.activity'),
+              // The `campaign` preset, as the stocktake line table uses — not
+              // the `name` text sink.
+              ...getCellDefinition('activity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -1087,7 +1143,6 @@ const InboundShipmentDetailView: Component = () => {
                 <InboundShipmentSidePanel
                   storeId={params.storeId}
                   node={node()}
-                  open={sidePanelOpen()}
                   disabled={isDisabled()}
                   hasLines={hasLines()}
                   scope={scope()}
@@ -1096,7 +1151,6 @@ const InboundShipmentDetailView: Component = () => {
                   foreignCurrencyAllowed={prefs().issueInForeignCurrency}
                   onSaveField={saveField}
                   onSaved={onNodeSaved}
-                  onRefetch={refetchAll}
                   onDeleted={onDeleted}
                 />
               }
@@ -1116,6 +1170,19 @@ const InboundShipmentDetailView: Component = () => {
                       split button gains an icon for the same reason: collapsed
                       it is nothing but its icon. */}
                   <HeaderButtons>
+                    <Show
+                      when={activeTab() === 'service-charges' && !isDisabled()}
+                    >
+                      <Button
+                        data-testid="add-service-charge-button"
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
+                        disabled={serviceConfigured() !== true}
+                        onClick={() => setServiceEditor('add')}
+                      >
+                        {t('label.add-charge')}
+                      </Button>
+                    </Show>
                     <Show when={!isDisabled()}>
                       <SplitButton
                         icon={<PlusCircleIcon />}
@@ -1269,6 +1336,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
+                      selectedItemIds={selectedItemIds}
                       disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
@@ -1388,8 +1456,8 @@ const InboundShipmentDetailView: Component = () => {
                 <TabPanel value="financial">
                   <InboundFinancialPanel node={node()} rows={rows()} />
                 </TabPanel>
-                <TabPanel value="currency">
-                  <InboundCurrencyPanel
+                <TabPanel value="costs">
+                  <InboundCostsPanel
                     node={node()}
                     disabled={isDisabled()}
                     onSave={saveField}
@@ -1399,6 +1467,18 @@ const InboundShipmentDetailView: Component = () => {
                   <InboundDeliveryPanel node={node()} rows={rows()} />
                 </TabPanel>
               </Show>
+              <TabPanel value="service-charges">
+                <InboundServiceChargesPanel
+                  storeId={params.storeId}
+                  invoiceId={node().id}
+                  isExternal={isExternal()}
+                  disabled={isDisabled()}
+                  serviceItems={gated(serviceItems)}
+                  editor={serviceEditor()}
+                  onEditorChange={setServiceEditor}
+                  onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
               <TabPanel value="documents">
                 <InboundDocumentsPanel
                   node={node()}
@@ -1468,6 +1548,8 @@ const InboundShipmentDetailView: Component = () => {
                   doses: prefs().manageVaccinesInDoses,
                   authorisation:
                     prefs().externalInboundShipmentLinesMustBeAuthorised,
+                  promptBatchExpiry:
+                    prefs().promptForBatchAndExpiryOnInboundShipments,
                 }}
                 onSaved={onLinesChanged}
                 onRequestNext={nextItem}

@@ -32,6 +32,7 @@ const paracetamol: ItemOption = {
   name: 'Paracetamol 500mg',
   unitName: null,
   availableUnits: 0,
+  isService: false,
   isVaccine: false,
   doses: 1,
   defaultPackSize: 1,

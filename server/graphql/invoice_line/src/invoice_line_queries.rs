@@ -78,6 +78,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             program_id: f.program_id.map(EqualFilter::from),
             is_program_invoice: f.is_program_invoice,
+            purchase_order_line_id: None,
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,

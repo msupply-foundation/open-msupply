@@ -48,6 +48,8 @@ query draftStockOutLines(
       reasonOption {
         id
       }
+      # id as well as name: the editor compares a batch's activity against the
+      # one the requisition asked for (issue 595), which needs the id.
       campaign {
         id
         name

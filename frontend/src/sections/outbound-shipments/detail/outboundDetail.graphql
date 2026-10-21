@@ -5,6 +5,32 @@
 # saves splice the returned node back; line-level changes refetch the current
 # lines page.
 
+# What the customer asked each item be supplied FOR (issue 595) — the Activity
+# on each line of the shipment's originating requisition.
+#
+# Its OWN query, not a block on OutboundInfo: that fragment rides four reads,
+# three of them mutation payloads, so hanging an unpaginated line list off it
+# would re-pull every requisition line on each status change and header edit.
+# This is read once per requisition instead, and only when there is one. The
+# connector carries no item filter, so the editor looks its own item up in the
+# list rather than asking per open.
+query outboundRequestedActivities($storeId: String!, $requisitionId: String!) {
+  requisition(storeId: $storeId, id: $requisitionId) {
+    __typename
+    ... on RequisitionNode {
+      lines {
+        nodes {
+          itemId
+          campaign {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
 fragment OutboundInfo on InvoiceNode {
   id
   status

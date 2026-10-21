@@ -195,6 +195,7 @@ describe('createCaptureWindow', () => {
       availableUnits: 0,
       isVaccine: false,
       doses: 1,
+      isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
     });

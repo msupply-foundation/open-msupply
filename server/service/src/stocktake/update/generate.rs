@@ -4,6 +4,7 @@ use repository::{
     InvoiceStatus, InvoiceType, LocationMovementRow, NameRowRepository, NumberRowType,
     RepositoryError, StockLineRow, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
+    campaign::campaign_row::CampaignRowRepository,
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
@@ -352,8 +353,41 @@ fn log_stock_changes(
             new.expiry_date.map(|date| date.to_string()),
         )?;
     }
+    if existing.campaign_id != new.campaign_id {
+        let previous_campaign = campaign_log_name(&ctx.connection, existing.campaign_id)?;
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockCampaignChange,
+            Some(existing.id.to_string()),
+            Some(previous_campaign.unwrap_or_else(|| "-".to_string())),
+            campaign_log_name(&ctx.connection, new.campaign_id)?,
+        )?;
+    }
 
     Ok(())
+}
+
+/// An activity's NAME for the activity trail. A stock line stores its campaign by id, and
+/// the trail is read by PEOPLE — the batch, expiry and price entries beside this one all
+/// log the value a user would recognise, so an id here would be the odd one out and say
+/// nothing. Resolved INCLUDING soft-deleted, since a line can carry a campaign that has
+/// since been deleted; an id that resolves to no row at all — a campaign that never
+/// reached this store — falls back to the id, which is at least traceable.
+fn campaign_log_name(
+    connection: &StorageConnection,
+    campaign_id: Option<String>,
+) -> Result<Option<String>, RepositoryError> {
+    let Some(campaign_id) = campaign_id else {
+        return Ok(None);
+    };
+
+    Ok(Some(
+        CampaignRowRepository::new(connection)
+            .find_one_by_id(&campaign_id)?
+            .map(|campaign| campaign.name)
+            .unwrap_or(campaign_id),
+    ))
 }
 
 fn generate_new_stock_line(

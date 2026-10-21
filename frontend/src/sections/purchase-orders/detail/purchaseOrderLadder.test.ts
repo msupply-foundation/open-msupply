@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canAttachDocuments,
   canAuthorLines,
+  canCancel,
   canChangeCurrency,
   canCloseLines,
   canDelete,
@@ -9,6 +10,7 @@ import {
   canRecordPostSendingDates,
   canSetExpectedDate,
   currentStep,
+  isClosed,
   isOpenToChange,
   ladderFor,
   moveConfirmation,
@@ -31,6 +33,7 @@ const node = (over: Record<string, unknown> = {}) =>
     confirmedDatetime: null,
     sentDatetime: null,
     finalisedDatetime: null,
+    cancelledDatetime: null,
     ...over,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any;
@@ -208,7 +211,7 @@ describe('the two refusals that never reach a dialog', () => {
     expect(moveRefusal({ ...gates, emptyLineCount: 1 })).toBeTruthy();
   });
 
-  it('declines Ready for sending without the authorise permission', () => {
+  it('declines Approved without the authorise permission', () => {
     expect(
       moveRefusal({
         ...gates,
@@ -218,7 +221,7 @@ describe('the two refusals that never reach a dialog', () => {
     ).toBeTruthy();
   });
 
-  // The permission gates ENTERING Ready for sending, not every move.
+  // The permission gates ENTERING Approved, not every move.
   it('does not apply the authorise gate to another move', () => {
     expect(
       moveRefusal({
@@ -249,8 +252,8 @@ describe('the confirmation a move raises', () => {
     expect(confirmation.confirmLabel).toBeUndefined();
   });
 
-  // Entering Ready for sending also says what that state means.
-  it('adds the informational note for Ready for sending', () => {
+  // Entering Approved also says what that state means.
+  it('adds the informational note for Approved', () => {
     expect(moveConfirmation('CONFIRMED', false).note).toBeTruthy();
   });
 
@@ -270,5 +273,68 @@ describe('the confirmation a move raises', () => {
     expect(moveConfirmation('FINALISED', true).confirmLabel).toBe(
       moveConfirmation('FINALISED', false).confirmLabel
     );
+  });
+});
+
+// Cancellation (rules § cancellation; OMS-REG-PO-01.27–.29, OMS-FUN-PO-04.38):
+// a terminal branch off Sent that the ladder never OFFERS — it is the side
+// panel's action — but SHOWS once taken, in place of the Finalised the order
+// never reached.
+describe('a cancelled order', () => {
+  it('may be cancelled from Sent alone', () => {
+    expect(canCancel('SENT')).toBe(true);
+    for (const status of ['NEW', 'REQUEST_APPROVAL', 'CONFIRMED'] as const)
+      expect(canCancel(status)).toBe(false);
+    expect(canCancel('FINALISED')).toBe(false);
+    expect(canCancel('CANCELLED')).toBe(false);
+  });
+
+  it('stands in for Finalised on the ladder only once it is held', () => {
+    expect(ladderFor(true, 'SENT')).toEqual(ladderFor(true));
+    expect(ladderFor(true, 'CANCELLED')).toEqual([
+      'NEW',
+      'REQUEST_APPROVAL',
+      'CONFIRMED',
+      'SENT',
+      'CANCELLED',
+    ]);
+    expect(ladderFor(false, 'CANCELLED')).toEqual([
+      'NEW',
+      'CONFIRMED',
+      'SENT',
+      'CANCELLED',
+    ]);
+  });
+
+  it('offers no move at all, and reads as the last rung', () => {
+    expect(nextStatus('CANCELLED', true)).toBeUndefined();
+    expect(nextStatus('CANCELLED', false)).toBeUndefined();
+    expect(currentStep('CANCELLED', true)).toBe(4);
+    expect(currentStep('CANCELLED', false)).toBe(3);
+  });
+
+  it('stamps its own moment, and keeps the sent moment it was reached from', () => {
+    const cancelled = node({
+      status: 'CANCELLED',
+      sentDatetime: '2026-02-01T00:00:00',
+      cancelledDatetime: '2026-02-03T00:00:00',
+    });
+    expect(statusMoment(cancelled, 'CANCELLED')).toBe('2026-02-03T00:00:00');
+    expect(statusMoment(cancelled, 'SENT')).toBe('2026-02-01T00:00:00');
+    // An order that has not been cancelled carries no such moment.
+    expect(statusMoment(node({ status: 'SENT' }), 'CANCELLED')).toBeUndefined();
+  });
+
+  it('is closed like a Finalised order — the comment alone stays open', () => {
+    expect(isClosed('CANCELLED')).toBe(true);
+    expect(isClosed('FINALISED')).toBe(true);
+    expect(isClosed('SENT')).toBe(false);
+    expect(isOpenToChange('CANCELLED')).toBe(false);
+    expect(canRecordPostSendingDates('CANCELLED')).toBe(false);
+    expect(canSetExpectedDate('CANCELLED')).toBe(false);
+    expect(canCloseLines('CANCELLED')).toBe(false);
+    expect(canDelete('CANCELLED')).toBe(false);
+    expect(canAttachDocuments('CANCELLED')).toBe(false);
+    expect(canEnterSentDate('CANCELLED')).toBe(false);
   });
 });
