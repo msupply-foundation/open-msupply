@@ -351,6 +351,25 @@
   flex-shrink: 0;
 }
 
+/* Advisory warning — TextField's .warning: the error line's anatomy in the
+   warning colour (Alert's warning-text derivation, AA in both themes), with no
+   border or aria-invalid change, because the value isn't wrong. */
+.warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+}
+
+.warningIcon {
+  font-size: 0.875em;
+  color: inherit;
+  flex-shrink: 0;
+}
+
 /* The range picker's popover: the calendar with a footer under it (see
    DateRangeField). The Popover owns the surface + its padding, so this stacks
    the two and the footer's hairline sits inset by that padding. */

@@ -17,7 +17,11 @@ use crate::{
     purchase_order_row::purchase_order::{self},
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{IntoBoxed, case_when},
+    prelude::*,
+    sql_types::Double,
+};
 
 type PurchaseOrderLineJoin = (
     PurchaseOrderLineRow,
@@ -209,10 +213,19 @@ fn query() -> _ {
         .left_join(name::table.on(name::id.eq(purchase_order::supplier_name_id)))
 }
 
+// A service line is never outstanding
 #[diesel::dsl::auto_type]
 fn outstanding_number_of_units() -> _ {
-    purchase_order_line::requested_number_of_units
-        - purchase_order_line_stats::received_number_of_units
+    let service: ItemType = ItemType::Service;
+    let none_outstanding: f64 = 0.0;
+    case_when(
+        item::type_.eq(service),
+        none_outstanding.into_sql::<Double>(),
+    )
+    .otherwise(
+        purchase_order_line::requested_number_of_units
+            - purchase_order_line_stats::received_number_of_units,
+    )
 }
 
 type BoxedPurchaseOrderLineQuery = IntoBoxed<'static, query, DBType>;
@@ -262,7 +275,8 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
                 query = query.filter(
                     purchase_order_line_stats::received_number_of_units
                         .nullable()
-                        .ge(purchase_order_line::requested_number_of_units.nullable()),
+                        .ge(purchase_order_line::requested_number_of_units.nullable())
+                        .or(item::type_.eq(ItemType::Service).nullable()),
                 )
             }
             None => {}
@@ -317,6 +331,9 @@ impl PurchaseOrderLineRow {
 
 impl PurchaseOrderLine {
     pub fn outstanding_number_of_units(&self) -> f64 {
+        if self.item_row.r#type == ItemType::Service {
+            return 0.0;
+        }
         self.purchase_order_line_row.requested_number_of_units
             - self.purchase_order_line_stats_row.received_number_of_units
     }

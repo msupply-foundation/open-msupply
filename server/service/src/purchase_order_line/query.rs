@@ -454,7 +454,7 @@ mod test {
         );
     }
 
-    /// The outstanding-lines filter leaves service lines out altogether.
+    /// A service line is never outstanding: the filter, the figure and the sort all agree.
     #[actix_rt::test]
     async fn outstanding_lines_leave_out_service_lines() {
         use repository::mock::mock_item_service_item;
@@ -499,20 +499,74 @@ mod test {
                 .unwrap();
         }
 
-        let outstanding = service
-            .get_purchase_order_lines(
-                &context,
-                Some(&mock_store_a().id),
-                None,
+        let lines = |filter: Option<PurchaseOrderLineFilter>, sort| {
+            service
+                .get_purchase_order_lines(&context, Some(&mock_store_a().id), None, filter, sort)
+                .unwrap()
+                .rows
+        };
+        let ids = |lines: Vec<repository::PurchaseOrderLine>| {
+            lines
+                .into_iter()
+                .map(|line| line.purchase_order_line_row.id)
+                .collect::<Vec<String>>()
+        };
+
+        assert_eq!(
+            ids(lines(
                 Some(PurchaseOrderLineFilter::new().received_less_than_requested(true)),
-                None,
-            )
-            .unwrap()
-            .rows
+                None
+            )),
+            vec!["po_outstanding_stock".to_string()]
+        );
+        assert_eq!(
+            ids(lines(
+                Some(PurchaseOrderLineFilter::new().received_less_than_requested(false)),
+                None
+            )),
+            vec!["po_outstanding_freight".to_string()]
+        );
+
+        let outstanding = lines(None, None)
             .into_iter()
-            .map(|line| line.purchase_order_line_row.id)
-            .collect::<Vec<String>>();
-        assert_eq!(outstanding, vec!["po_outstanding_stock".to_string()]);
+            .map(|line| {
+                (
+                    line.purchase_order_line_row.id.clone(),
+                    line.outstanding_number_of_units(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            outstanding,
+            vec![
+                ("po_outstanding_freight".to_string(), 0.0),
+                ("po_outstanding_stock".to_string(), 1.0),
+            ]
+        );
+
+        let by_outstanding = |desc| {
+            ids(lines(
+                None,
+                Some(PurchaseOrderLineSort {
+                    key: PurchaseOrderLineSortField::OutstandingNumberOfUnits,
+                    desc: Some(desc),
+                }),
+            ))
+        };
+        assert_eq!(
+            by_outstanding(false),
+            vec![
+                "po_outstanding_freight".to_string(),
+                "po_outstanding_stock".to_string()
+            ]
+        );
+        assert_eq!(
+            by_outstanding(true),
+            vec![
+                "po_outstanding_stock".to_string(),
+                "po_outstanding_freight".to_string()
+            ]
+        );
     }
 
     /// Only a SENT order has put stock on order: lines on orders still being

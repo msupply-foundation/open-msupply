@@ -145,6 +145,10 @@ export type SaveGlobalTableConfigsVariables = {
     storeId: string;
     value: boolean;
   }> | null;
+    promptForBatchAndExpiryOnInboundShipments?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
   };
 };
 
