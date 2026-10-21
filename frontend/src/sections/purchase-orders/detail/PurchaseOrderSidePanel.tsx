@@ -141,6 +141,7 @@ export const PurchaseOrderSidePanel: Component<
           <NumberField
             label={t('label.supplier-discount-percentage')}
             hideLabel
+            data-testid="supplier-discount-percentage-input"
             size="small"
             width="compact"
             endAdornment="%"
@@ -160,6 +161,7 @@ export const PurchaseOrderSidePanel: Component<
           <CurrencyField
             label={t('label.supplier-discount-amount')}
             hideLabel
+            data-testid="supplier-discount-amount-input"
             size="small"
             width="compact"
             currency={currency()}
@@ -192,6 +194,7 @@ export const PurchaseOrderSidePanel: Component<
             size="small"
             storeId={props.storeId}
             role="donor"
+            inputTestId="donor-search-input"
             selected={selectedDonor()}
             disabled={props.disabled}
             // Clearable, and clearing is a real edit: the field is nullable and
@@ -208,6 +211,7 @@ export const PurchaseOrderSidePanel: Component<
           <ShippingMethodSelect
             label={t('label.shipping-method')}
             hideLabel
+            inputTestId="shipping-method-input"
             size="small"
             // The order stores the method's NAME, not its id, so the selected
             // option is matched by what was stored.
@@ -226,6 +230,7 @@ export const PurchaseOrderSidePanel: Component<
           <TextArea
             label={t('label.comment')}
             hideLabel
+            data-testid="comment-field"
             value={props.edit.state.comment}
             onInput={e => props.edit.setField('comment', e.currentTarget.value)}
             onBlur={() => props.edit.flush()}
