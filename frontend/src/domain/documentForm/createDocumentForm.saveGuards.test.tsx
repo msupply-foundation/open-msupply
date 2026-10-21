@@ -17,8 +17,11 @@ interface ErrorItem {
 }
 
 const graphqlFetch = vi.fn();
+const reportPermissionDenied = vi.fn();
 vi.mock('../../api/graphql', () => ({
   graphqlFetch: (...args: unknown[]) => graphqlFetch(...args),
+  reportPermissionDenied: (permissions: string[]) =>
+    reportPermissionDenied(permissions),
   describeErrors: (errors: ErrorItem[]) =>
     errors.map(e => e.extensions?.details ?? e.message).join(', '),
   isForbidden: (errors: ErrorItem[]) =>
@@ -88,6 +91,7 @@ afterEach(() => {
   dispose?.();
   dispose = undefined;
   graphqlFetch.mockReset();
+  reportPermissionDenied.mockReset();
 });
 
 const host = async (
@@ -234,26 +238,39 @@ describe('OMS-REG-PAT-04.20 / .21 / .64 — refusals', () => {
     data: { enrolmentDatetime: '2026-10-01T09:00:00Z' },
   };
 
-  it('a Forbidden goes to the permission-denied route, not the dialog (.21)', async () => {
+  it('a Forbidden goes to the permission-denied modal, not the dialog (.21)', async () => {
     graphqlFetch.mockResolvedValue(
       refused('Forbidden', 'NotAllowedToMutateDocument')
     );
-    const onForbidden = vi.fn();
-    const form = await host(NEW, { onForbidden });
+    const form = await host(NEW);
     expect(await form.save()).toBeUndefined();
-    expect(onForbidden).toHaveBeenCalledWith(['DocumentMutate']);
+    expect(reportPermissionDenied).toHaveBeenCalledWith(['DocumentMutate']);
     expect(form.saveError()).toBeUndefined();
+  });
+
+  it('a Forbidden on a saved document goes to the modal too, keeping the edit', async () => {
+    graphqlFetch.mockImplementation(async (query: unknown) =>
+      query === FormDocumentByName
+        ? { kind: 'success', data: { document: V1 } }
+        : refused('Forbidden', 'NotAllowedToMutateDocument')
+    );
+    const form = await host({ kind: 'existing', name: V1.name });
+    form.draft.set('programEnrolmentId', 'GRY-0009');
+    expect(await form.save()).toBeUndefined();
+    expect(reportPermissionDenied).toHaveBeenCalledWith(['DocumentMutate']);
+    expect(form.saveError()).toBeUndefined();
+    expect(form.draft.get('programEnrolmentId')).toBe('GRY-0009');
+    expect(form.isDirty()).toBe(true);
   });
 
   it('already enrolled shows in the dialog with the server reason (.20)', async () => {
     graphqlFetch.mockResolvedValue(
       refused('Bad user input', 'ProgramEnrolmentExists')
     );
-    const onForbidden = vi.fn();
-    const form = await host(NEW, { onForbidden });
+    const form = await host(NEW);
     expect(await form.save()).toBeUndefined();
     expect(form.saveError()).toBe('ProgramEnrolmentExists');
-    expect(onForbidden).not.toHaveBeenCalled();
+    expect(reportPermissionDenied).not.toHaveBeenCalled();
   });
 
   it('keeps the entries after a refusal (.64)', async () => {
@@ -264,14 +281,5 @@ describe('OMS-REG-PAT-04.20 / .21 / .64 — refusals', () => {
     form.draft.set('programEnrolmentId', 'GRY-0007');
     await form.save();
     expect(form.draft.get('programEnrolmentId')).toBe('GRY-0007');
-  });
-
-  it('without a route for it, a Forbidden shows as any refusal', async () => {
-    graphqlFetch.mockResolvedValue(
-      refused('Forbidden', 'NotAllowedToMutateDocument')
-    );
-    const form = await host(NEW);
-    await form.save();
-    expect(form.saveError()).toBe('NotAllowedToMutateDocument');
   });
 });

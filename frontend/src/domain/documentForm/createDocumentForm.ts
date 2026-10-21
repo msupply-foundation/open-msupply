@@ -39,6 +39,7 @@ import {
   graphqlFetch,
   isForbidden,
   missingPermissions,
+  reportPermissionDenied,
   type GraphqlResult,
 } from '../../api/graphql';
 import { gated } from '../../api/gated';
@@ -190,13 +191,6 @@ export interface CreateDocumentFormOptions {
    */
   versioning?: (documentType: string) => FormVersioning | undefined;
   /**
-   * Takes a save the server refuses as Forbidden, with the permission names
-   * it gives, in place of showing it as `saveError`: the screen routes it to
-   * the app's permission-denied modal (ui-standards/validation.md). Absent, a
-   * Forbidden shows as any other refusal.
-   */
-  onForbidden?: (permissions: string[]) => void;
-  /**
    * Refuses to save a saved document when a newer version was saved after
    * the one opened (spec/program-enrolment rules § editing an enrolment):
    * the server would take the save and lose the other change. Checked just
@@ -281,13 +275,11 @@ export type SaveOutcome =
        */
       recordId: string;
     }
-  | {
-      kind: 'refused';
-      message: string;
-      /** The permission names, when the refusal is a Forbidden. */
-      forbidden?: string[];
-    }
-  /** Reported by the app's global handling (a lost session, an outage). */
+  | { kind: 'refused'; message: string }
+  /**
+   * Reported by the app's global handling: a lost session, an outage, or a
+   * save refused for permission, which the permission-denied modal names.
+   */
   | { kind: 'reported' };
 
 export interface SaveInput {
@@ -304,9 +296,11 @@ export interface SaveInput {
  * server derives the category's flat row (program_enrolment, encounter) and
  * its program events from the saved document, or, for a patient, projects
  * its base fields onto the patient's name row. The schema id is always the
- * entry's current one, so an edit re-pins the document to it. Exported for
- * a create step that writes a document before any form opens (the
- * create-encounter dialog).
+ * entry's current one, so an edit re-pins the document to it. A save refused
+ * for permission goes to the app's permission-denied modal, as every other
+ * screen's does (spec/startup § permission denied), never shown as the
+ * server's text. Exported for a create step that writes a document before
+ * any form opens (the create-encounter dialog).
  */
 export const persistDocument = async (
   input: SaveInput
@@ -331,13 +325,11 @@ export const persistDocument = async (
         : { kind: 'reported' };
     }
     if (result.kind === 'graphqlError') {
-      return {
-        kind: 'refused',
-        message: describeErrors(result.errors),
-        forbidden: isForbidden(result.errors)
-          ? missingPermissions(result.errors)
-          : undefined,
-      };
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        return { kind: 'reported' };
+      }
+      return { kind: 'refused', message: describeErrors(result.errors) };
     }
     return { kind: 'reported' };
   };
@@ -766,11 +758,7 @@ export const createDocumentForm = <T extends object>(
     });
     setSaving(false);
     if (result.kind === 'refused') {
-      if (result.forbidden && options.onForbidden) {
-        options.onForbidden(result.forbidden);
-      } else if (key === currentKey()) {
-        setSaveError(result.message);
-      }
+      if (key === currentKey()) setSaveError(result.message);
       return undefined;
     }
     if (result.kind === 'reported') return undefined;

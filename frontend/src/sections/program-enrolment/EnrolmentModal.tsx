@@ -6,7 +6,6 @@ import {
   Switch,
   type JSX,
 } from 'solid-js';
-import { reportPermissionDenied } from '@/api/graphql';
 import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
@@ -99,7 +98,6 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     patientId: () => props.patientId,
     source,
     versioning: type => documentFormVersioning('programEnrolment.form', type),
-    onForbidden: reportPermissionDenied,
     refuseNewerVersion: true,
   });
   const archivedVersion = () => {

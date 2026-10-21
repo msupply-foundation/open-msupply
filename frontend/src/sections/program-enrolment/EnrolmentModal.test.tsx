@@ -94,7 +94,6 @@ vi.mock('@/ui/elements/buttons/Button', () => ({
 }));
 vi.mock('@/ui/icons', () => ({ SaveIcon: () => '', XCircleIcon: () => '' }));
 vi.mock('@/intl', () => ({ t: (key: string) => key }));
-vi.mock('@/api/graphql', () => ({ reportPermissionDenied: vi.fn() }));
 vi.mock('@/plugins/DocumentFormRegion', () => ({
   DocumentFormRegion: () => 'form',
 }));
@@ -156,7 +155,6 @@ vi.mock('@/domain/documentForm/createDocumentForm', () => ({
   },
 }));
 
-import { reportPermissionDenied } from '@/api/graphql';
 import { EnrolmentModal } from './EnrolmentModal';
 import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
 
@@ -238,7 +236,7 @@ describe('OMS-REG-PAT-04.8 / .9 — what a new enrolment starts with', () => {
   });
 });
 
-describe('OMS-REG-PAT-04.20 / .21 / .26 — refusals', () => {
+describe('OMS-REG-PAT-04.20 / .26 — refusals', () => {
   it('a refused save shows "Failed to save program enrolment" with the server reason (.20)', () => {
     const { banners } = open();
     setSaveError('ProgramEnrolmentExists');
@@ -251,11 +249,6 @@ describe('OMS-REG-PAT-04.20 / .21 / .26 — refusals', () => {
       'error.failed-to-save-program-enrolment'
     );
     expect(shown.details).toBe('ProgramEnrolmentExists');
-  });
-
-  it('a Forbidden goes to the permission-denied modal (.21)', () => {
-    open();
-    expect(shown.hostOptions?.onForbidden).toBe(reportPermissionDenied);
   });
 
   it('asks the host to refuse a save over a newer version (.26)', () => {
