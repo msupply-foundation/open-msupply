@@ -31,7 +31,6 @@ export const InboundServiceChargesPanel: Component<{
     );
   return (
     <ServiceChargesTable
-      tableId="inbound-shipment-service-charges"
       storeId={props.storeId}
       invoiceId={props.invoiceId}
       disabled={props.disabled}

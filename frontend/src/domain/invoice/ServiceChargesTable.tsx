@@ -6,7 +6,6 @@ import {
   type JSX,
 } from 'solid-js';
 import { gated } from '@/api/gated';
-import { createTableConfig } from '@/api/createTableConfig';
 import { t } from '@/intl';
 import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import {
@@ -43,7 +42,6 @@ export type ServiceChargeLine = {
 export type ServiceChargesEditor = 'add' | 'edit';
 
 export interface ServiceChargesTableProps<T extends ServiceChargeLine> {
-  tableId: string;
   storeId: string;
   invoiceId: string;
   /** The hosting shipment is read-only (its editability gate). */
@@ -68,10 +66,6 @@ export const ServiceChargesTable = <T extends ServiceChargeLine>(
   const [pendingDelete, setPendingDelete] = createSignal<T>();
   const [deletingId, setDeletingId] = createSignal<string>();
   const [errorMessage, setErrorMessage] = createSignal<string>();
-  const tableConfig = createTableConfig({
-    tableId: props.tableId,
-    defaultConfig: { base: { columnPinning: { right: ['actions'] } } },
-  });
 
   const [data, { refetch }] = createResource(
     () => props.invoiceId,
@@ -170,14 +164,10 @@ export const ServiceChargesTable = <T extends ServiceChargeLine>(
             ? t('messages.no-service-charges-configured')
             : t('messages.no-service-charges')
         }
-        config={tableConfig.config()}
-        setConfig={tableConfig.setConfig}
-        configIsDefault={tableConfig.isConfigDefault()}
-        onSaveGlobalDefault={
-          tableConfig.canSaveGlobalDefault()
-            ? tableConfig.saveGlobalTableConfig
-            : undefined
-        }
+        // A short, fixed list: no table settings or full screen. The static
+        // config only keeps Delete pinned right.
+        config={{ columnPinning: { right: ['actions'] } }}
+        showFullScreen={false}
       />
 
       <ServiceChargesModal
