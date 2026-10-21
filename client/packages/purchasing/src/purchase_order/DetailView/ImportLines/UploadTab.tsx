@@ -11,7 +11,6 @@ import {
   UploadFile,
   useExportCSV,
   ImportPanel,
-  PurchaseOrderNodeStatus,
   NumUtils,
 } from '@openmsupply-client/common';
 import { importPurchaseOrderLinesToCsv } from '../utils';
@@ -26,7 +25,6 @@ interface UploadTabProps {
   setErrorMessage: (value: SetStateAction<string>) => void;
   setWarningMessage: (value: SetStateAction<string>) => void;
   onUploadComplete: () => void;
-  status: PurchaseOrderNodeStatus;
 }
 
 export const UploadTab = ({
@@ -35,7 +33,6 @@ export const UploadTab = ({
   setWarningMessage,
   setLines,
   onUploadComplete,
-  status,
 }: ImportPanel & UploadTabProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -89,13 +86,12 @@ export const UploadTab = ({
       }
 
       const parsedValue = parseFloat(numString);
-      const calculatedValues = calculateUnitQuantities(status, {
+      const calculatedValues = calculateUnitQuantities({
         ...importRow,
         numberOfPacks: parsedValue,
       });
       Object.assign(importRow, {
         requestedNumberOfUnits: calculatedValues.requestedNumberOfUnits,
-        adjustedNumberOfUnits: calculatedValues.adjustedNumberOfUnits,
       });
       return parsedValue;
     });

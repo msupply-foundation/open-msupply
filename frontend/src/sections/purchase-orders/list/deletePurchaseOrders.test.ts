@@ -9,7 +9,7 @@ import type { DeletePurchaseOrderResult } from './purchaseOrders.generated';
 
 // Anchors: spec/purchase-orders/cases/
 //   OMS-FUN-PO-15.11 — an order in New or Ready for approval can be deleted
-//                      from the list; one in Ready for sending or later cannot
+//                      from the list; one in Approved or later cannot
 //   OMS-FUN-PO-15.13 — an order an external inbound shipment points at cannot
 //                      be deleted in any state
 // The dialog half — the confirmation gate (OMS-FUN-PO-15.1) and the report's

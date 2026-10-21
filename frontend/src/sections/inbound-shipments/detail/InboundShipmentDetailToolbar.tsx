@@ -17,7 +17,7 @@ import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { poLabel } from '../linkedOrder';
 import { NameSearch, type NameSeed } from '../../../domain/name';
-import { CampaignSelect } from '../../../domain/campaign';
+import { ActivitySelect } from '../../../domain/campaign';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
 import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
@@ -161,14 +161,14 @@ export const InboundShipmentDetailToolbar: Component<
         onBlur={() => props.edit.flush()}
       />
 
-      {/* The shipment's default campaign: new batches in the line editor start
-          with it (and can be changed per batch); existing lines keep theirs. */}
-      <CampaignSelect
-        label={t('label.campaign-only')}
+      {/* The shipment's default activity — a Routine entry or a campaign: new
+          batches in the line editor start with it (and can be changed per
+          batch); existing lines keep theirs. */}
+      <ActivitySelect
         size="small"
         inputTestId="inbound-campaign-input"
-        value={props.node.campaign}
-        placeholder={t('label.none')}
+        campaignId={props.node.campaign?.id}
+        campaign={props.node.campaign}
         disabled={props.disabled}
         onChange={campaign =>
           void props.onSaveField({

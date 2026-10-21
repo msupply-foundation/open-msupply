@@ -273,6 +273,18 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   },
 ];
 
+// The grouped-combobox demo's option set: a PINNED standing choice (no group)
+// and a tail of grouped rows. Emptying the field is the ✕, not a row. (The
+// Activity field itself groups BOTH its tiers and scopes them with a listbox
+// header — see domain/campaign/ActivitySelect; this demo is the pinned tier.)
+type RouteOption = { value: string; label: string; group?: string };
+const ROUTE_OPTIONS: RouteOption[] = [
+  { value: 'any', label: 'Any route' },
+  { value: 'oral', label: 'Oral', group: 'Route' },
+  { value: 'im', label: 'Intramuscular', group: 'Route' },
+  { value: 'sc', label: 'Subcutaneous', group: 'Route' },
+];
+
 export const selectorsMetadata: PageMetadata = {
   id: 'selectors',
   title: 'Selectors',
@@ -287,6 +299,11 @@ export const selectorsMetadata: PageMetadata = {
       id: 'selectors-select-clearable',
       title: 'Clearable drop-down',
       searchTerms: ['clearable', 'clear', 'cross', 'empty', 'optional'],
+    },
+    {
+      id: 'selectors-grouped',
+      title: 'Grouped combobox',
+      searchTerms: ['grouped', 'pinned', 'divider', 'section'],
     },
     {
       id: 'selectors-label-info',
@@ -374,6 +391,7 @@ export const SelectorsShowcase = () => {
   const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
     'addition'
   );
+  const [activity, setActivity] = createSignal<string | undefined>();
   // The no-options demo: both chips seeded present so they're openable on load.
   const [emptyOptionFilter, setEmptyOptionFilter] =
     createSignal<EmptyOptionFilter>({ category: null, categories: null });
@@ -505,6 +523,40 @@ export const SelectorsShowcase = () => {
             helperText="Not shown while there is an error"
             error="Choose a direction"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-grouped"
+          title="Grouped combobox — pinned options, then groups"
+        >
+          <Lead>
+            One list where the alternative is two controls and an extra click.{' '}
+            <code>itemGroup</code> names the heading an item belongs under, or
+            returns <code>undefined</code> to <em>pin</em> it above the groups:
+            pinned items first, a divider, then each group behind its own
+            small-caps heading. Typing narrows the grouped items only — a pinned
+            choice is never searched for, and a group whose items all fail drops
+            out with its heading.
+          </Lead>
+          <Combobox<RouteOption>
+            label="Route"
+            items={ROUTE_OPTIONS}
+            itemToString={o => (o.group ? `Route · ${o.label}` : o.label)}
+            itemToValue={o => o.value}
+            itemGroup={o => o.group}
+            filter={(o, input) =>
+              o.label.toLocaleLowerCase().includes(input.toLocaleLowerCase())
+            }
+            renderItem={o => o.label}
+            placeholder="None"
+            value={activity()}
+            onChange={o => setActivity(o?.value)}
+            helperText="Pick a grouped row to see the group-qualified value in the field"
+          />
+          <Note>
+            The chosen campaign reads back qualified by its tier — the option
+            rows stay bare, because inside the list the heading already says it.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

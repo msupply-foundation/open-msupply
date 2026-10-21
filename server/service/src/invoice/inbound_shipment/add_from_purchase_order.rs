@@ -1,8 +1,12 @@
 use crate::invoice::inbound_shipment::InsertInboundShipmentError;
+use crate::invoice_line::inbound_shipment_service_line::{
+    InsertInboundShipmentServiceLine, generate_inbound_shipment_service_line,
+};
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
-    EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    InvoiceRowRepository, ItemType, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
+    PurchaseOrderLineStatus, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -16,12 +20,17 @@ pub fn add_from_purchase_order(
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
 
+    // The order's exchange rate converts PO-currency prices to the store's currency,
+    // and its supplier discount is apportioned to every line it ships
     let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&purchase_order_id)?
         .ok_or(InsertInboundShipmentError::PurchaseOrderDoesNotExist)?;
-    // Exchange rate converts prices from PO currency to store currency
     let exchange_rate = purchase_order.foreign_exchange_rate;
+    let supplier_discount_factor = purchase_order.supplier_discount_factor();
     let donor_id = purchase_order.donor_id;
+    let invoice_currency_id = InvoiceRowRepository::new(connection)
+        .find_one_by_id(&invoice_id)?
+        .and_then(|invoice| invoice.currency_id);
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -30,6 +39,7 @@ pub fn add_from_purchase_order(
     )?;
 
     let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
+    let invoice_line_repository = InvoiceLineRepository::new(connection);
 
     // Set status based on authorisation config
     let external_inbound_shipment_lines_must_be_authorised =
@@ -48,17 +58,53 @@ pub fn add_from_purchase_order(
         let purchase_order_line_stats = purchase_order_line.purchase_order_line_stats_row;
         let purchase_order_line = purchase_order_line.purchase_order_line_row;
 
-        let total_units = purchase_order_line.expected_number_of_units();
+        let total_units = purchase_order_line.requested_number_of_units;
         let remaining_units =
             (total_units - purchase_order_line_stats.shipped_number_of_units).max(0.0);
+
+        if item.r#type == ItemType::Service {
+            // Carried once, whatever the status of the shipment already holding it
+            let already_on_a_shipment = invoice_line_repository.count(Some(
+                InvoiceLineFilter::new()
+                    .purchase_order_line_id(EqualFilter::equal_to(purchase_order_line.id.clone()))
+                    .r#type(InvoiceLineType::Service.equal_to()),
+            ))? > 0;
+            if already_on_a_shipment {
+                continue;
+            }
+            // No supplier discount on a service line
+            let service_line = generate_inbound_shipment_service_line(
+                connection,
+                InsertInboundShipmentServiceLine {
+                    id: uuid(),
+                    invoice_id: invoice_id.clone(),
+                    item_id: Some(item.id.clone()),
+                    total_before_tax: purchase_order_line.line_total * exchange_rate,
+                    ..Default::default()
+                },
+                item,
+                invoice_currency_id.clone(),
+                &exchange_rate,
+            )?;
+            invoice_line_row_repository.upsert_one(&InvoiceLineRow {
+                purchase_order_line_id: Some(purchase_order_line.id.clone()),
+                ..service_line
+            })?;
+            continue;
+        }
+
         let number_of_packs = purchase_order_line.packs_for_units(remaining_units);
 
         let foreign_total = if total_units > 0.0 && number_of_packs > 0.0 {
-            purchase_order_line.line_total * remaining_units / total_units
+            purchase_order_line.line_total * supplier_discount_factor * remaining_units
+                / total_units
         } else {
             0.0
         };
         let local_total = foreign_total * exchange_rate;
+        let cost_price_per_pack = purchase_order_line.price_per_pack_after_discount
+            * supplier_discount_factor
+            * exchange_rate;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -73,8 +119,8 @@ pub fn add_from_purchase_order(
             manufacture_date: None,
             purchase_order_line_id: Some(purchase_order_line.id.clone()),
             pack_size: purchase_order_line.requested_pack_size,
-            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
-            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            cost_price_per_pack,
+            sell_price_per_pack: cost_price_per_pack,
             total_before_tax: local_total,
             total_after_tax: local_total,
             tax_percentage: None,

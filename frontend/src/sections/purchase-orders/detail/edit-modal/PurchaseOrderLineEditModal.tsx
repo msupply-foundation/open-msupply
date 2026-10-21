@@ -1,7 +1,7 @@
 import { createMemo, createSignal, onCleanup, Show, type JSX } from 'solid-js';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
-import { formatCurrency, roundedText, t } from '@/intl';
+import { MAX_FRACTION_DIGITS, formatCurrency, roundedText, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import {
@@ -50,12 +50,11 @@ import {
   newLineDraft,
   packsEntered,
   packSizeEntered,
-  packsLabelKey,
   PRICE_DECIMALS,
   pricePerUnit,
   repriced,
   requestedDateEntered,
-  showsAdjustedUnits,
+  servicePriced,
   unitsFigure,
   type LineDraft,
   type LineFacts,
@@ -73,9 +72,6 @@ import styles from './PurchaseOrderLineEditModal.module.css';
 
 type Line = PurchaseOrderDetailLineFragment;
 
-export type LineLookup =
-  { kind: 'line'; line: Line } | { kind: 'none' } | { kind: 'failed' };
-
 export interface PurchaseOrderLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -85,20 +81,18 @@ export interface PurchaseOrderLineEditModalProps {
     status: PurchaseOrderStatus;
     currencyCode: string | undefined;
     requestedDeliveryDate: string | null | undefined;
+    supplierDiscountPercentage: number | null;
   };
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;
   /** How many lines the order has — a new line's number is the next. */
   lineCount: number;
-  canAuthorise: boolean;
   /** An existing line → edit mode; omitted → add mode. */
   initialLine?: Line;
   /** Whether a line follows this one in the table's current order. */
   hasNext: (lineId: string) => boolean;
   /** The line after this one in the table's current order, paging if needed. */
   nextLine: (lineId: string) => Promise<Line | undefined>;
-  /** The order's existing line for an item, if any (OMS-FUN-PO-02.23). */
-  findLineForItem: (itemId: string) => Promise<LineLookup>;
   /** A save landed — the parent re-reads the page, the set and the node. */
   onSaved: () => void;
 }
@@ -141,6 +135,10 @@ const LineEditContent = (
 
   const itemSearch = createFocusTarget();
   const packsField = createFocusTarget();
+  const priceField = createFocusTarget();
+  // A service line has no quantity, so its first field is the price.
+  const firstField = (service: boolean | undefined) =>
+    service ? priceField : packsField;
 
   let disposed = false;
   onCleanup(() => (disposed = true));
@@ -166,28 +164,15 @@ const LineEditContent = (
   if (props.initialLine)
     seed(factsFromLine(props.initialLine), draftFromLine(props.initialLine));
 
-  // An item already on the order loads its existing line (OMS-FUN-PO-02.23);
-  // otherwise the line it would become (rules § what a new line is born as),
-  // with the item's own figures read live: its stock on hand now and its
-  // units on order across the store's other purchase orders.
+  // A picked item is always a new line, even one already on the order
+  // (OMS-FUN-PO-02.23) — the line it would become (rules § what a new line is
+  // born as), with the item's own figures read live: its stock on hand now and
+  // its units on order across the store's other purchase orders.
   const pickItem = async (item: ItemOption) => {
     const token = ++pickToken;
     const stale = () => disposed || token !== pickToken;
     setLoading(true);
     setErrorMessage(undefined);
-    const lookup = await props.findLineForItem(item.id);
-    if (stale()) return;
-    if (lookup.kind === 'failed') {
-      setLoading(false);
-      setErrorMessage(t('error.unable-to-load-data'));
-      return;
-    }
-    if (lookup.kind === 'line') {
-      setLoading(false);
-      seed(factsFromLine(lookup.line), draftFromLine(lookup.line));
-      packsField.focus();
-      return;
-    }
     const result = await graphqlFetch(PurchaseOrderLineItemFacts, {
       storeId: props.storeId,
       itemId: item.id,
@@ -208,6 +193,7 @@ const LineEditContent = (
         itemCode: node.code,
         itemName: node.name,
         unitName: node.unitName ?? null,
+        isService: node.type === 'SERVICE',
         stockOnHand: node.stats.stockOnHand,
         unitsOrderedInOthers: result.data.unitsOrderedInOtherPurchaseOrders,
       },
@@ -216,7 +202,7 @@ const LineEditContent = (
         latestExpectedDate: props.latestExpectedDate,
       })
     );
-    packsField.focus();
+    firstField(node.type === 'SERVICE').focus();
   };
 
   const gates = createMemo(() =>
@@ -224,7 +210,6 @@ const LineEditContent = (
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
       addMode: !props.initialLine,
-      canAuthorise: props.canAuthorise,
     })
   );
   const closed = (open: boolean) => !open || saving();
@@ -238,8 +223,12 @@ const LineEditContent = (
 
   const setPrice = (field: keyof Prices, value: number | undefined) => {
     const current = draft();
-    if (current) patch(repriced(field, { ...current, [field]: value ?? 0 }));
+    if (!current) return;
+    if (facts()?.isService) return patch(servicePriced(value ?? 0));
+    patch(repriced(field, { ...current, [field]: value ?? 0 }));
   };
+  const priceLabel = () =>
+    facts()?.isService ? t('label.price') : t('label.per-pack-before-discount');
 
   // True once the line is saved — or was never touched, which saves nothing
   // (rules § saving). False on a refusal, which is reported in place.
@@ -292,8 +281,9 @@ const LineEditContent = (
       const next = await props.nextLine(lineId);
       if (disposed) return;
       if (!next) return props.onClose();
-      seed(factsFromLine(next), draftFromLine(next));
-      packsField.focus();
+      const nextFacts = factsFromLine(next);
+      seed(nextFacts, draftFromLine(next));
+      firstField(nextFacts.isService).focus();
     })();
 
   const currency = () => props.order.currencyCode;
@@ -316,7 +306,11 @@ const LineEditContent = (
       // No visible title (spec S10) — the string stays the accessible name.
       title={isNew() ? t('button.add-item') : t('heading.edit-line')}
       titleHidden
-      initialFocus={props.initialLine ? packsField : itemSearch}
+      initialFocus={
+        props.initialLine
+          ? firstField(props.initialLine.item.type === 'SERVICE')
+          : itemSearch
+      }
       actionsLead={
         <Show when={errorMessage()}>
           {message => (
@@ -364,9 +358,9 @@ const LineEditContent = (
               storeId={props.storeId}
               class={styles.itemSearch}
               width="full"
-              // Items barred from ordering are kept out of the chooser (rules §
-              // choosing the item).
+              // Barred items left out, service items offered.
               orderableOnly
+              includeServiceItems
               focusTarget={itemSearch}
               placeholder={t('placeholder.enter-an-item-code-or-name')}
               value={facts()?.itemId}
@@ -399,7 +393,7 @@ const LineEditContent = (
         <Show when={facts()}>
           {line => (
             <div class={styles.topEnd}>
-              <Show when={!props.initialLine}>
+              <Show when={!props.initialLine && !line().isService}>
                 <span class={styles.summary} data-testid="line-item-summary">
                   {t('label.in-stock-on-order-elsewhere', {
                     stockOnHand: unitsFigure(
@@ -431,101 +425,79 @@ const LineEditContent = (
       <Show when={facts() && draft()}>
         <FormColumns class={styles.columns}>
           <FormColumn minWidth="16rem">
-            <InsetPanel>
-              <FormSection
-                title={t('label.quantity')}
-                headingLevel="h3"
-                heading="group"
-              >
-                <Show
-                  when={gates().packs}
-                  fallback={
-                    <LabelledValue
-                      label={t(packsLabelKey(status()))}
-                      variant="field"
-                      data-testid="packs-value"
-                    >
-                      <Num value={linePacks(draft()!)} />
-                    </LabelledValue>
-                  }
+            <Show when={!facts()!.isService}>
+              <InsetPanel>
+                <FormSection
+                  title={t('label.quantity')}
+                  headingLevel="h3"
+                  heading="group"
                 >
-                  <NumberField
-                    label={t(packsLabelKey(status()))}
-                    min={0}
-                    decimalLimit={10}
-                    data-testid="packs-input"
-                    disabled={saving()}
-                    ref={packsField.ref}
-                    value={linePacks(draft()!)}
-                    onChange={value =>
-                      patch(packsEntered(status(), draft()!, value ?? 0))
+                  <Show
+                    when={gates().drafting}
+                    fallback={
+                      <LabelledValue
+                        label={t('label.requested-packs')}
+                        variant="field"
+                        data-testid="packs-value"
+                      >
+                        <Num
+                          value={linePacks(draft()!)}
+                          places={MAX_FRACTION_DIGITS}
+                        />
+                      </LabelledValue>
                     }
-                  />
-                </Show>
-                <Show
-                  when={gates().drafting}
-                  fallback={
-                    <LabelledValue
-                      label={t('label.pack-size')}
-                      variant="field"
-                      data-testid="pack-size-value"
-                    >
-                      <Num value={draft()!.requestedPackSize} />
-                    </LabelledValue>
-                  }
-                >
-                  <NumberField
-                    label={t('label.pack-size')}
-                    min={0}
-                    decimalLimit={2}
-                    data-testid="pack-size-input"
-                    disabled={saving()}
-                    value={draft()!.requestedPackSize}
-                    onChange={value =>
-                      patch(packSizeEntered(status(), draft()!, value ?? 0))
-                    }
-                  />
-                </Show>
-                <Show
-                  when={showsAdjustedUnits(status())}
-                  fallback={
-                    <LabelledValue
-                      label={t('label.requested-units')}
-                      variant="field"
-                      data-testid="requested-units-value"
-                    >
-                      {unitsFigure(
-                        draft()!.requestedNumberOfUnits,
-                        facts()!.unitName
-                      )}
-                    </LabelledValue>
-                  }
-                >
-                  <LabelledValue
-                    label={t('label.adjusted-units')}
-                    variant="field"
-                    data-testid="adjusted-units-value"
                   >
-                    {draft()!.adjustedNumberOfUnits == null
-                      ? EMPTY
-                      : unitsFigure(
-                          draft()!.adjustedNumberOfUnits!,
-                          facts()!.unitName
-                        )}
-                  </LabelledValue>
+                    <NumberField
+                      label={t('label.requested-packs')}
+                      min={0}
+                      decimalLimit={10}
+                      data-testid="packs-input"
+                      disabled={saving()}
+                      ref={packsField.ref}
+                      value={linePacks(draft()!)}
+                      onChange={value =>
+                        patch(packsEntered(draft()!, value ?? 0))
+                      }
+                    />
+                  </Show>
+                  <Show
+                    when={gates().drafting}
+                    fallback={
+                      <LabelledValue
+                        label={t('label.pack-size')}
+                        variant="field"
+                        data-testid="pack-size-value"
+                      >
+                        <Num value={draft()!.requestedPackSize} />
+                      </LabelledValue>
+                    }
+                  >
+                    <NumberField
+                      label={t('label.pack-size')}
+                      min={0}
+                      decimalLimit={2}
+                      data-testid="pack-size-input"
+                      disabled={saving()}
+                      value={draft()!.requestedPackSize}
+                      onChange={value =>
+                        patch(packSizeEntered(draft()!, value ?? 0))
+                      }
+                    />
+                  </Show>
                   <LabelledValue
-                    label={t('label.originally-requested')}
+                    label={t('label.requested-units')}
                     variant="field"
                     data-testid="requested-units-value"
                   >
                     {unitsFigure(
                       draft()!.requestedNumberOfUnits,
-                      facts()!.unitName
+                      facts()!.unitName,
+                      MAX_FRACTION_DIGITS
                     )}
                   </LabelledValue>
-                </Show>
-              </FormSection>
-            </InsetPanel>
+                </FormSection>
+              </InsetPanel>
+            </Show>
 
             <InsetPanel>
               <FormSection
@@ -592,7 +564,7 @@ const LineEditContent = (
                   when={gates().drafting}
                   fallback={
                     <LabelledValue
-                      label={t('label.per-pack-before-discount')}
+                      label={priceLabel()}
                       variant="field"
                       data-testid="price-before-discount-value"
                     >
@@ -601,81 +573,88 @@ const LineEditContent = (
                   }
                 >
                   <CurrencyField
-                    label={t('label.per-pack-before-discount')}
+                    label={priceLabel()}
                     currency={currency()}
                     decimalLimit={PRICE_DECIMALS}
                     data-testid="price-before-discount-input"
                     disabled={saving()}
+                    ref={priceField.ref}
                     value={draft()!.pricePerPackBeforeDiscount}
                     onChange={value =>
                       setPrice('pricePerPackBeforeDiscount', value)
                     }
                   />
                 </Show>
-                <Show
-                  when={gates().drafting}
-                  fallback={
-                    <LabelledValue
-                      label={t('label.discount')}
-                      variant="field"
-                      data-testid="discount-percentage-value"
-                    >
-                      {`${roundedText(draft()!.discountPercentage, 2)}%`}
-                    </LabelledValue>
-                  }
-                >
-                  <NumberField
-                    label={t('label.discount')}
-                    min={0}
-                    max={100}
-                    decimalLimit={2}
-                    endAdornment="%"
-                    data-testid="discount-percentage-input"
-                    disabled={saving()}
-                    value={draft()!.discountPercentage}
-                    onChange={value => setPrice('discountPercentage', value)}
-                  />
-                </Show>
-                <Show
-                  when={gates().drafting}
-                  fallback={
-                    <LabelledValue
-                      label={t('label.per-pack-after-discount')}
-                      variant="field"
-                      data-testid="price-after-discount-value"
-                    >
-                      {price(draft()!.pricePerPackAfterDiscount)}
-                    </LabelledValue>
-                  }
-                >
-                  <CurrencyField
-                    label={t('label.per-pack-after-discount')}
-                    currency={currency()}
-                    decimalLimit={PRICE_DECIMALS}
-                    data-testid="price-after-discount-input"
-                    disabled={saving()}
-                    value={draft()!.pricePerPackAfterDiscount}
-                    onChange={value =>
-                      setPrice('pricePerPackAfterDiscount', value)
+                {/* A service line has one price: no line discount. */}
+                <Show when={!facts()!.isService}>
+                  <Show
+                    when={gates().drafting}
+                    fallback={
+                      <LabelledValue
+                        label={t('label.discount')}
+                        variant="field"
+                        data-testid="discount-percentage-value"
+                      >
+                        {`${roundedText(draft()!.discountPercentage, 2)}%`}
+                      </LabelledValue>
                     }
-                  />
+                  >
+                    <NumberField
+                      label={t('label.discount')}
+                      min={0}
+                      max={100}
+                      decimalLimit={2}
+                      endAdornment="%"
+                      data-testid="discount-percentage-input"
+                      disabled={saving()}
+                      value={draft()!.discountPercentage}
+                      onChange={value => setPrice('discountPercentage', value)}
+                    />
+                  </Show>
+                  <Show
+                    when={gates().drafting}
+                    fallback={
+                      <LabelledValue
+                        label={t('label.per-pack-after-discount')}
+                        variant="field"
+                        data-testid="price-after-discount-value"
+                      >
+                        {price(draft()!.pricePerPackAfterDiscount)}
+                      </LabelledValue>
+                    }
+                  >
+                    <CurrencyField
+                      label={t('label.per-pack-after-discount')}
+                      currency={currency()}
+                      decimalLimit={PRICE_DECIMALS}
+                      data-testid="price-after-discount-input"
+                      disabled={saving()}
+                      value={draft()!.pricePerPackAfterDiscount}
+                      onChange={value =>
+                        setPrice('pricePerPackAfterDiscount', value)
+                      }
+                    />
+                  </Show>
+                  <LabelledValue
+                    label={t('label.per-unit-after-discount')}
+                    variant="field"
+                    data-testid="price-per-unit-value"
+                  >
+                    {price(pricePerUnit(draft()!))}
+                  </LabelledValue>
                 </Show>
-                <LabelledValue
-                  label={t('label.per-unit-after-discount')}
-                  variant="field"
-                  data-testid="price-per-unit-value"
-                >
-                  {price(pricePerUnit(draft()!))}
-                </LabelledValue>
                 <LabelledValue
                   label={t('label.line-total')}
                   variant="field"
                   data-testid="total-cost-value"
                 >
-                  {/* A PREVIEW of what the server will store as the line's
-                    total on save (its own rule, packs × the after-discount
-                    price) — the draft has no stored figure yet. */}
-                  {money(projectedLineCost(draft()!))}
+                  {/* A PREVIEW of the line cost the table will show on save
+                    (the server's own rule, packs × the after-discount price,
+                    with the order's supplier discount apportioned to a stock
+                    line) — the draft has no stored figure yet. */}
+                  {money(
+                    projectedLineCost(draft()!, props.order, facts()!.isService)
+                  )}
                 </LabelledValue>
               </FormSection>
             </InsetPanel>
@@ -740,7 +719,7 @@ const LineEditContent = (
                   />
                 </Show>
                 {/* Adding, these two sit in the top row's summary instead. */}
-                <Show when={props.initialLine}>
+                <Show when={props.initialLine && !facts()!.isService}>
                   <LabelledValue
                     label={t('label.stock-on-hand')}
                     variant="field"

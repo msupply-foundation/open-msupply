@@ -102747,6 +102747,32 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 3074,
+   "record_id": "e2e_perm_admin_Report_sly",
+   "received_datetime": "2026-10-14T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_admin_Report_sly",
+    "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "store_id": "3934979D64934D12A1757BA65F07931D",
+    "permission": "Report",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "3934979D64934D12A1757BA65F07931D",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],

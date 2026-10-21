@@ -15,6 +15,7 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
   CancelButton,
+  DialogCloseButton,
   DialogSaveButton,
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
@@ -50,7 +51,7 @@ import {
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch } from '../../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
   InboundShipmentLines,
@@ -134,6 +135,11 @@ export interface InboundShipmentLineEditModalProps {
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
   /**
+   * The shipment's currency when it isn't the home currency, with its rate
+   * (home units per one foreign unit) — adds the foreign-currency cost columns.
+   */
+  foreignCurrency?: { code: string; rate: number };
+  /**
    * The supplier-declared figures (Packs shipped / Shipped pack size) are
    * read-only, because something outside this store declared them: the
    * shipment carries a source link (spec rules → source link) — a purchase
@@ -147,6 +153,8 @@ export interface InboundShipmentLineEditModalProps {
    * warns against leaning on "manual" alone to carry a gate).
    */
   shippedLocked: boolean;
+  /** The shipment isn't editable: show the item's batches, take no input. */
+  readOnly?: boolean;
   locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
@@ -199,8 +207,9 @@ type DraftBatch = {
   manufacturerId: string | null;
   manufacturerName: string | null;
   campaignId: string | null;
-  // Kept beside the id so a campaign deleted from the register still labels
-  // the picker (spec/campaigns › Deleting a campaign).
+  // The campaign's NAME travels with its id (as donor / manufacturer do) so a
+  // soft-deleted campaign the line still carries can label itself — the
+  // register read excludes it (spec/campaigns contract › wire trap).
   campaignName: string | null;
   programId: string | null;
   /**
@@ -222,6 +231,12 @@ const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
   PENDING: styles.statusPending,
   PASSED: styles.statusPassed,
   REJECTED: styles.statusRejected,
+};
+const AUTH_STATUSES: AuthStatus[] = ['PENDING', 'PASSED', 'REJECTED'];
+const AUTH_STATUS_LABEL: Record<AuthStatus, () => string> = {
+  PENDING: () => t('label.pending'),
+  PASSED: () => t('label.passed'),
+  REJECTED: () => t('label.rejected'),
 };
 
 // A small coloured status dot for a Select option adornment. Decorative — the
@@ -645,7 +660,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       result.kind === 'success' &&
       result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
     )
-      setPoLines(result.data.purchaseOrder.lines.nodes);
+      setPoLines(
+        result.data.purchaseOrder.lines.nodes.filter(
+          l => l.item.type !== 'SERVICE'
+        )
+      );
   };
   const choosePoLine = (id: string) => {
     const line = poLines().find(l => l.id === id);
@@ -972,6 +991,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     </span>
   );
 
+  // Local → shipment currency, as the server stores it; zero rate counts as 1.
+  const toForeign = (local: number) =>
+    local / (props.foreignCurrency?.rate || 1);
+
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
@@ -991,6 +1014,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <TextField
             label={t('label.batch')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.batch}
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
@@ -1011,6 +1035,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               ref={batchFields.ref(b.id)}
               label={t('label.packs-received')}
               hideLabel
+              disabled={props.readOnly}
               size="small"
               value={b.numberOfPacks}
               min={0}
@@ -1063,6 +1088,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     <NumberField
                       label={t('label.shipped-number-of-packs')}
                       hideLabel
+                      disabled={props.readOnly}
                       size="small"
                       value={b.shippedNumberOfPacks}
                       min={0}
@@ -1143,6 +1169,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.received-pack-size')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
@@ -1178,6 +1205,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     <NumberField
                       label={t('label.shipped-pack-size')}
                       hideLabel
+                      disabled={props.readOnly}
                       size="small"
                       value={b.shippedPackSize}
                       min={0}
@@ -1222,6 +1250,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <DateField
             label={t('label.expiry')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.expiryDate}
             onChange={v => updateBatch(b.id, 'expiryDate', v)}
@@ -1256,6 +1285,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             locations={props.locations}
             value={b.locationId ?? undefined}
@@ -1298,24 +1328,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   hideLabel
                   size="small"
                   value={b.status ?? 'PENDING'}
-                  disabled={b.isNew}
-                  options={[
-                    {
-                      value: 'PENDING',
-                      label: t('label.pending'),
-                      adornment: <StatusDot status="PENDING" />,
-                    },
-                    {
-                      value: 'PASSED',
-                      label: t('label.passed'),
-                      adornment: <StatusDot status="PASSED" />,
-                    },
-                    {
-                      value: 'REJECTED',
-                      label: t('label.rejected'),
-                      adornment: <StatusDot status="REJECTED" />,
-                    },
-                  ]}
+                  disabled={b.isNew || props.readOnly}
+                  options={AUTH_STATUSES.map(status => ({
+                    value: status,
+                    label: AUTH_STATUS_LABEL[status](),
+                    adornment: <StatusDot status={status} />,
+                  }))}
                   // Fixed 3-option list ⇒ the string out is one of the union.
                   onValueChange={v =>
                     updateBatch(b.id, 'status', v as AuthStatus)
@@ -1366,6 +1384,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 <VvmStatusSelect
                   label={t('label.vvm-status')}
                   hideLabel
+                  disabled={props.readOnly}
                   size="small"
                   value={b.vvmStatusId ?? undefined}
                   onChange={s =>
@@ -1390,12 +1409,31 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             size="small"
             value={b.costPricePerPack}
-            disabled={props.costLocked}
+            disabled={props.costLocked || props.readOnly}
             onChange={v => changeCost(b.id, v ?? 0)}
           />
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignCostPricePerPack' },
+            header: () =>
+              `${t('label.pack-cost-price')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
+            cell: info => (
+              <span class={styles.statValue}>
+                {formatCurrencyCell(
+                  toForeign(info.row.original.costPricePerPack),
+                  props.foreignCurrency?.code
+                )}
+              </span>
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
@@ -1407,6 +1445,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <CurrencyField
             label={t('label.pack-sell-price')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.sellPricePerPack}
             onChange={v => changeSell(b.id, v ?? 0)}
@@ -1437,6 +1476,28 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignLineTotal' },
+            header: () =>
+              `${t('label.line-total')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 8, max: 10, weight: 1 } }),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <span class={styles.statValue}>
+                  {formatCurrencyCell(
+                    toForeign(b.numberOfPacks * b.costPricePerPack),
+                    props.foreignCurrency?.code
+                  )}
+                </span>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     // Donor — gated by the donor-tracking preference.
     ...(props.prefs.donor
       ? [
@@ -1451,6 +1512,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 <NameSearch
                   label={t('label.donor')}
                   hideLabel
+                  disabled={props.readOnly}
                   size="small"
                   storeId={props.storeId}
                   role="donor"
@@ -1472,30 +1534,48 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
-    // Campaign/program (spec S4) — a single picker; a campaign and a
-    // program are mutually exclusive on the line, so choosing one clears the
-    // other (the select routes the choice to the right wire field).
+    // Program and Campaign (spec S4) — two independent pickers, each written to
+    // its own wire field.
     {
-      c: { id: 'campaignOrProgram' },
-      header: () => t('label.campaign'),
+      c: { id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'pricing',
       meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
       cell: info => {
         const b = info.row.original;
         return (
-          <CampaignOrProgramSelect
-            label={t('label.campaign')}
+          <ProgramSelect
             hideLabel
+            disabled={props.readOnly}
             size="small"
             storeId={props.storeId}
-            itemId={item()?.id ?? ''}
-            campaignId={b.campaignId ?? undefined}
-            campaignName={b.campaignName}
+            itemIds={[item()?.id].filter(id => id !== undefined)}
             programId={b.programId ?? undefined}
-            onChange={choice => {
-              updateBatch(b.id, 'campaignId', choice?.campaign?.id ?? null);
-              updateBatch(b.id, 'campaignName', choice?.campaign?.name ?? null);
-              updateBatch(b.id, 'programId', choice?.program?.id ?? null);
+            onChange={p => updateBatch(b.id, 'programId', p?.id ?? null)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <ActivitySelect
+            hideLabel
+            size="small"
+            campaignId={b.campaignId ?? undefined}
+            campaign={
+              b.campaignId
+                ? { id: b.campaignId, name: b.campaignName ?? '' }
+                : null
+            }
+            onChange={c => {
+              updateBatch(b.id, 'campaignId', c?.id ?? null);
+              updateBatch(b.id, 'campaignName', c?.name ?? null);
             }}
           />
         );
@@ -1512,6 +1592,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <DateField
             label={t('label.manufacture-date')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.manufactureDate}
             max={localTodayIso()}
@@ -1551,6 +1632,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NameSearch
             label={t('label.manufacturer')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             storeId={props.storeId}
             role="manufacturer"
@@ -1582,6 +1664,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.volume-per-pack')}
             hideLabel
+            disabled={props.readOnly}
             decimalLimit={10}
             size="small"
             value={b.volumePerPack}
@@ -1602,6 +1685,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <TextField
             label={t('label.note')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.note}
             onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}
@@ -1609,41 +1693,45 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
-    {
-      c: { id: 'actions' },
-      header: () => t('label.actions'),
-      // Structural row-actions column — not user-configurable, so keep it out
-      // of the Columns popover.
-      meta: {
-        headerPosition: 'badge',
-        align: 'right',
-        hideFromColumnSettings: true,
-      },
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <>
-            <IconButton
-              bordered
-              size="small"
-              icon={<CopyIcon />}
-              label={t('label.duplicate-batch')}
-              disabled={saving()}
-              onClick={() => duplicateBatch(b.id)}
-            />
-            <IconButton
-              bordered
-              size="small"
-              variant="danger"
-              icon={<TrashIcon />}
-              label={t('label.delete-batch')}
-              disabled={saving()}
-              onClick={() => removeBatch(b.id)}
-            />
-          </>
-        );
-      },
-    },
+    ...(props.readOnly
+      ? []
+      : [
+          {
+            c: { id: 'actions' },
+            header: () => t('label.actions'),
+            // Structural row-actions column — not user-configurable, so keep
+            // it out of the Columns popover.
+            meta: {
+              headerPosition: 'badge',
+              align: 'right',
+              hideFromColumnSettings: true,
+            },
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <>
+                  <IconButton
+                    bordered
+                    size="small"
+                    icon={<CopyIcon />}
+                    label={t('label.duplicate-batch')}
+                    disabled={saving()}
+                    onClick={() => duplicateBatch(b.id)}
+                  />
+                  <IconButton
+                    bordered
+                    size="small"
+                    variant="danger"
+                    icon={<TrashIcon />}
+                    label={t('label.delete-batch')}
+                    disabled={saving()}
+                    onClick={() => removeBatch(b.id)}
+                  />
+                </>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]),
   ];
 
   return (
@@ -1743,7 +1831,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </HStack>
       }
       ariaLabel={
-        mode() === 'update' ? t('label.edit-line') : t('button.add-item')
+        props.readOnly
+          ? t('heading.view-line')
+          : mode() === 'update'
+            ? t('label.edit-line')
+            : t('button.add-item')
       }
       headerActions={
         <>
@@ -1755,7 +1847,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               that changes the data. Empty (and invisible) until an item is
               picked, since the table only exists then. */}
           <div ref={setTableControls} class={styles.headerTableControls} />
-          <Show when={!noItemYet()}>
+          <Show when={!noItemYet() && !props.readOnly}>
             <Button
               icon={<PlusCircleIcon />}
               data-testid="add-batch-button"
@@ -1773,8 +1865,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       }
       actions={
         // The standard dialog three, in spec S4's order: Cancel · Save ·
-        // Save & next. Icon-less verbs (D55) — never OK / OK & next.
-        <>
+        // Save & next. Icon-less verbs (D55) — never OK / OK & next. The
+        // read-only view has only Close.
+        <Show
+          when={!props.readOnly}
+          fallback={
+            <DialogCloseButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
+          }
+        >
           <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
@@ -1791,7 +1892,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               onClick={() => void onOkNext()}
             />
           </Show>
-        </>
+        </Show>
       }
     >
       <Show when={!loadingLines()} fallback={<Spinner center />}>

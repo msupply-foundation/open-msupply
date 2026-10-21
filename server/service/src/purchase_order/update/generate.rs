@@ -1,5 +1,5 @@
 use super::UpdatePurchaseOrderInput;
-use crate::nullable_update;
+use crate::{custom_field::apply_custom_fields_patch, nullable_update};
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
@@ -38,12 +38,8 @@ pub fn generate(
         authorising_officer_2,
         additional_instructions,
         heading_message,
-        agent_commission,
-        document_charge,
-        communications_charge,
-        insurance_charge,
-        freight_charge,
         freight_conditions,
+        custom_fields,
     }: UpdatePurchaseOrderInput,
 ) -> Result<GenerateResult, RepositoryError> {
     let mut updated_order = purchase_order.purchase_order_row.clone();
@@ -86,13 +82,8 @@ pub fn generate(
     updated_order.supplier_agent = supplier_agent.or(updated_order.supplier_agent);
     updated_order.heading_message = heading_message.or(updated_order.heading_message);
     updated_order.freight_conditions = freight_conditions.or(updated_order.freight_conditions);
-
-    updated_order.agent_commission = agent_commission.or(updated_order.agent_commission);
-    updated_order.document_charge = document_charge.or(updated_order.document_charge);
-    updated_order.communications_charge =
-        communications_charge.or(updated_order.communications_charge);
-    updated_order.insurance_charge = insurance_charge.or(updated_order.insurance_charge);
-    updated_order.freight_charge = freight_charge.or(updated_order.freight_charge);
+    updated_order.custom_fields =
+        apply_custom_fields_patch(updated_order.custom_fields, custom_fields);
 
     let supplier_discount_percentage = supplier_discount_percentage
         .or(purchase_order
@@ -103,14 +94,14 @@ pub fn generate(
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
 
     if let Some(supplier_discount_amount) = supplier_discount_amount {
-        let total_before_tax = purchase_order_stats
+        let discountable_total = purchase_order_stats
             .as_ref()
-            .map(|stats| stats.order_total_before_discount)
+            .map(|stats| stats.supplier_discountable_total)
             .unwrap_or(0.0);
 
-        if total_before_tax > 0.0 {
+        if discountable_total > 0.0 {
             updated_order.supplier_discount_percentage =
-                Some((supplier_discount_amount / total_before_tax) * 100.0);
+                Some((supplier_discount_amount / discountable_total) * 100.0);
         }
     }
 
@@ -156,6 +147,9 @@ fn set_new_status_datetime(
         PurchaseOrderStatus::Finalised => {
             purchase_order.finalised_datetime = Some(current_datetime)
         }
+        PurchaseOrderStatus::Cancelled => {
+            purchase_order.cancelled_datetime = Some(current_datetime)
+        }
         PurchaseOrderStatus::New => {}
     }
 }
@@ -200,7 +194,8 @@ fn update_lines(
                                 repository::PurchaseOrderLineStatus::Sent;
                         }
                     }
-                    PurchaseOrderStatus::Finalised => {
+                    // Finalising and cancelling both close every line
+                    PurchaseOrderStatus::Finalised | PurchaseOrderStatus::Cancelled => {
                         line.purchase_order_line_row.status =
                             repository::PurchaseOrderLineStatus::Closed;
                     }

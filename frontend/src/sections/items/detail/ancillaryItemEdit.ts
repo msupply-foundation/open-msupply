@@ -15,12 +15,17 @@ export type DraftAncillaryItem = {
   itemQuantity: number;
   /** Right-hand side of the x:y ratio (ancillary count). */
   ancillaryQuantity: number;
+  /** The ancillary isn't wasted with the principal, so it is ordered against
+   * the principal's quantity net of its wastage rate (rules.md § ancillary
+   * supplies › principal wastage). */
+  excludePrincipalWastage: boolean;
 };
 
 export const EMPTY_FORM: DraftAncillaryItem = {
   ancillaryItemId: null,
   itemQuantity: 1,
   ancillaryQuantity: 1,
+  excludePrincipalWastage: false,
 };
 
 // OMS-REG-CAT-08.4 (ratio sides > 0) + the item picker's own exclusion of the
@@ -45,6 +50,7 @@ export const buildUpsertInput = (
   ancillaryItemId: form.ancillaryItemId!,
   itemQuantity: form.itemQuantity,
   ancillaryQuantity: form.ancillaryQuantity,
+  excludePrincipalWastage: form.excludePrincipalWastage,
 });
 
 type UpsertError = Extract<

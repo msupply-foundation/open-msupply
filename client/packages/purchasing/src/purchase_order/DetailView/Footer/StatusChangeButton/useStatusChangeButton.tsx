@@ -102,10 +102,9 @@ export const useStatusChangeButton = () => {
 
   const hasOutstandingLines = useMemo(() => {
     if (!isFinalising || !lines?.nodes) return false;
-    return lines.nodes.some(line => {
-      const ordered = line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
-      return line.receivedNumberOfUnits < ordered;
-    });
+    return lines.nodes.some(
+      line => line.receivedNumberOfUnits < line.requestedNumberOfUnits
+    );
   }, [isFinalising, lines]);
 
   const getInfoMessage = () => {

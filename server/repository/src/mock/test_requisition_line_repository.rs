@@ -22,6 +22,7 @@ pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
         suggested_quantity: 3.0,
         available_stock_on_hand: 1.0,
         average_monthly_consumption: 10.0,
+        forecast_monthly_consumption: 10.0,
         ..Default::default()
     }
 }
@@ -35,6 +36,7 @@ pub fn mock_draft_request_requisition_line2() -> RequisitionLineRow {
         suggested_quantity: 3.0,
         available_stock_on_hand: 1.0,
         average_monthly_consumption: 10.0,
+        forecast_monthly_consumption: 10.0,
         ..Default::default()
     }
 }

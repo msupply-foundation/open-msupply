@@ -85,6 +85,14 @@ mod delete {
             .unwrap();
 
         assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineDeleted);
+        assert_eq!(log.changed_to, None);
+        let from: serde_json::Value =
+            serde_json::from_str(log.changed_from.as_ref().unwrap()).unwrap();
+        assert_eq!(from["item-code"], mock_item_a().code);
+        assert_eq!(from["item-name"], mock_item_a().name);
+        assert_eq!(from["status"], "NEW");
+        assert_eq!(from["pack-size"], 10.0);
+        assert_eq!(from["price-per-pack-after-discount"], 0.0);
     }
 
     #[actix_rt::test]

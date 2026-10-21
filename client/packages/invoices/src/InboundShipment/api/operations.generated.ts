@@ -120,7 +120,6 @@ export type InboundLineFragment = {
     __typename: 'PurchaseOrderLineNode';
     id: string;
     lineNumber: number;
-    adjustedNumberOfUnits?: number | null;
     shippedNumberOfUnits: number;
     inTransitNumberOfUnits: number;
     receivedNumberOfUnits: number;
@@ -297,7 +296,6 @@ export type InboundFragment = {
         __typename: 'PurchaseOrderLineNode';
         id: string;
         lineNumber: number;
-        adjustedNumberOfUnits?: number | null;
         shippedNumberOfUnits: number;
         inTransitNumberOfUnits: number;
         receivedNumberOfUnits: number;
@@ -672,7 +670,6 @@ export type InvoiceQuery = {
               __typename: 'PurchaseOrderLineNode';
               id: string;
               lineNumber: number;
-              adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
               receivedNumberOfUnits: number;
@@ -952,7 +949,6 @@ export type InboundByNumberQuery = {
               __typename: 'PurchaseOrderLineNode';
               id: string;
               lineNumber: number;
-              adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
               receivedNumberOfUnits: number;
@@ -1963,7 +1959,6 @@ export const InboundLineFragmentDoc = gql`
       __typename
       id
       lineNumber
-      adjustedNumberOfUnits
       shippedNumberOfUnits
       inTransitNumberOfUnits
       receivedNumberOfUnits

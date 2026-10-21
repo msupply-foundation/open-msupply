@@ -8,7 +8,7 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { t } from '@/intl';
+import { MAX_FRACTION_DIGITS, t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -35,6 +35,7 @@ import {
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  sumBy,
   type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
@@ -58,6 +59,7 @@ import { hasFurtherPage, pagedNext, rowAfter } from '@/list/pagedNext';
 import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
+import { CustomFieldsEditTab } from '@/domain/customFields';
 import { ExportPrintButton } from '@/domain/reports';
 import { MasterListPickerModal } from '@/domain/masterList';
 import { hasPermission, purchaseOrderPreferences } from '@/store/storeContext';
@@ -107,10 +109,7 @@ import {
 import { formatCurrency } from '@/intl/currency';
 import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
-import {
-  PurchaseOrderLineEditModal,
-  type LineLookup,
-} from './edit-modal/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
 import { Num } from '@/ui/elements/typography/Num';
 
@@ -176,7 +175,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : <Num value={value} />;
+  if (value == null) return '';
+  return <Num value={value} places={MAX_FRACTION_DIGITS} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -267,6 +267,7 @@ const PurchaseOrderDetailView: Component = () => {
     }
   );
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const lineCost = (line: Line) => line.lineTotalAfterSupplierDiscount;
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
 
   // ── The whole line set (gates, cascades, the finalise warning) ────────────
@@ -384,33 +385,9 @@ const PurchaseOrderDetailView: Component = () => {
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
-  // A picked item already on the order resolves to its line (OMS-FUN-PO-02.23).
-  // A failed read is reported as such, never mistaken for an item not on the
-  // order.
-  const findLineForItem = async (itemId: string): Promise<LineLookup> => {
-    const onPage = rows().find(line => line.item.id === itemId);
-    if (onPage) return { kind: 'line', line: onPage };
-    const held = lineSet().find(line => line.item.id === itemId);
-    if (!held) return { kind: 'none' };
-    const result = await graphqlFetch(PurchaseOrderDetailLines, {
-      storeId: params.storeId,
-      filter: {
-        id: { equalTo: held.id },
-        purchaseOrderId: { equalTo: params.id },
-      },
-      page: { first: 1 },
-    });
-    if (
-      result.kind !== 'success' ||
-      result.data.purchaseOrderLines.__typename !== 'PurchaseOrderLineConnector'
-    )
-      return { kind: 'failed' };
-    const line = result.data.purchaseOrderLines.nodes[0];
-    return line ? { kind: 'line', line } : { kind: 'none' };
-  };
-  // Sent or Finalised: every field on the screen is refused — except the
-  // comment, open in every state, and the panel's two post-sending dates,
-  // open until Finalised (rules § what may be changed, and when). Mirrored
+  // Sent, Finalised or Cancelled: every field on the screen is refused —
+  // except the comment, open in every state, and the panel's two post-sending
+  // dates, open until Finalised (rules § what may be changed, and when). Mirrored
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
@@ -449,6 +426,11 @@ const PurchaseOrderDetailView: Component = () => {
       ? { ok: false, message: result.message }
       : { ok: false };
   };
+
+  // Open in every state, like the comment.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => (await saveField({ customFields: patch })).ok;
 
   const edit = createDebouncedEdit<PurchaseOrderEditFields>({
     id: () => info()?.id ?? '',
@@ -557,6 +539,7 @@ const PurchaseOrderDetailView: Component = () => {
     { value: 'shipments', label: t('label.inbound-shipment') },
     { value: 'details', label: t('label.details') },
     { value: 'documents', label: t('label.documents') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
   ];
 
@@ -641,16 +624,6 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(8),
     },
     {
-      // An ABSENT value until set — blank, not 0, which would be a different
-      // fact (ui-standards/tables.md § absent values).
-      c: { key: 'adjustedNumberOfUnits' },
-      sortKey: 'adjustedNumberOfUnits',
-      header: () => t('label.adjusted-units'),
-      ...getNumberCell(),
-      cell: exactQuantity,
-      size: remToPx(8),
-    },
-    {
       // Written by the shipment, never here.
       c: { key: 'shippedNumberOfUnits' },
       sortKey: 'shippedNumberOfUnits',
@@ -683,19 +656,18 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
-      cell: exactQuantity,
       size: remToPx(7),
     },
     {
-      // The line's STORED total, as the server wrote it — never re-multiplied
-      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
-      // — the page, which is what a paginated table can total; the order's
-      // whole subtotal is the side panel's Subtotal row.
-      c: { accessor: line => line.lineTotal, id: 'lineCost' },
+      // The line's STORED total with the order's supplier discount apportioned
+      // to it, as the server computes it — never re-multiplied here (rules §
+      // pricing and totals). Its footer sums the rows ON SCREEN — the page,
+      // which is what a paginated table can total; the order's whole figures
+      // are the side panel's Subtotal and Final cost rows.
+      c: { accessor: lineCost, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
-      footer: () =>
-        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
+      footer: () => money(sumBy(rows(), lineCost)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -754,6 +726,7 @@ const PurchaseOrderDetailView: Component = () => {
                   edit={edit}
                   onSaveField={saveField}
                   onDeleted={toList}
+                  onCancelled={refetchAll}
                 />
               }
               header={
@@ -762,7 +735,7 @@ const PurchaseOrderDetailView: Component = () => {
                   <HeaderButtons>
                     {/* The Add split (spec S6 § page actions): all three
                         options while drafting, so the whole control stands
-                        down from Ready for sending. */}
+                        down from Approved. */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
                       collapsible="narrow"
@@ -968,18 +941,20 @@ const PurchaseOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="details">
-                <PurchaseOrderDetailsTab
-                  node={node()}
-                  disabled={isDisabled()}
-                  edit={edit}
-                  onSaveField={saveField}
-                />
+                <PurchaseOrderDetailsTab disabled={isDisabled()} edit={edit} />
               </TabPanel>
               <TabPanel value="documents">
                 <PurchaseOrderDocumentsTab
                   node={node()}
                   canChange={canAttachDocuments(status())}
                   onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
+              <TabPanel value="custom-fields">
+                <CustomFieldsEditTab
+                  scope="purchase_order"
+                  values={node().customFields}
+                  onSave={saveCustomFields}
                 />
               </TabPanel>
               <TabPanel value="log">
@@ -1000,14 +975,13 @@ const PurchaseOrderDetailView: Component = () => {
                   status: status(),
                   currencyCode: node().currency?.code,
                   requestedDeliveryDate: node().requestedDeliveryDate,
+                  supplierDiscountPercentage: node().supplierDiscountPercentage,
                 }}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}
-                canAuthorise={hasPermission('PURCHASE_ORDER_AUTHORISE')}
                 initialLine={editor()?.line}
                 hasNext={hasNextLine}
                 nextLine={nextLine}
-                findLineForItem={findLineForItem}
                 onSaved={refetchAll}
               />
 
