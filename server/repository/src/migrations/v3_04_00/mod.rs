@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_campaign_id_to_invoice;
 mod add_campaign_to_requisition_line;
+mod add_cancelled_status_to_purchase_order;
 mod add_code_to_location_type;
 mod add_exclude_principal_wastage_to_ancillary_item;
 mod add_forecast_method_to_requisition_line;
@@ -10,10 +11,14 @@ mod add_inactive_to_name_store_join;
 mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
+mod add_purchase_order_custom_fields;
 mod add_stock_campaign_change_activity_log_type;
+mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
+mod backfill_purchase_order_custom_fields;
 mod prescription_request_occupation_prominent;
 mod refresh_who_pqs_catalogue;
+mod remove_charges_from_purchase_order;
 mod update_default_asset_log_reasons;
 
 pub(crate) struct V3_04_00;
@@ -33,12 +38,17 @@ impl Migration for V3_04_00 {
             Box::new(add_line_total_to_purchase_order_line::Migrate),
             Box::new(add_not_installed_status_to_asset_status_enum::Migrate),
             Box::new(add_uploader_to_sync_file_reference::Migrate),
+            Box::new(add_temperature_summary_table::Migrate),
             Box::new(prescription_request_occupation_prominent::Migrate),
             Box::new(add_campaign_id_to_invoice::Migrate),
             Box::new(refresh_who_pqs_catalogue::Migrate),
             Box::new(update_default_asset_log_reasons::Migrate),
             Box::new(add_forecast_method_to_requisition_line::Migrate),
+            Box::new(add_cancelled_status_to_purchase_order::Migrate),
             Box::new(add_exclude_principal_wastage_to_ancillary_item::Migrate),
+            Box::new(remove_charges_from_purchase_order::Migrate),
+            Box::new(add_purchase_order_custom_fields::Migrate),
+            Box::new(backfill_purchase_order_custom_fields::Migrate),
             Box::new(add_kind_to_campaign::Migrate),
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
@@ -463,6 +473,138 @@ mod test {
                 central("2f734462-c76d-4b08-b8d2-40b250538d46"),
                 central("646c80b2-2ff7-4c50-916b-18ff3df5cfb5"),
                 central("ba800d96-2cf6-44e8-8fbb-41fedb154265"),
+            ]
+        );
+    }
+
+    /// Existing orders take their category and user fields from the sync buffer.
+    #[actix_rt::test]
+    async fn migration_3_04_00_backfill_purchase_order_custom_fields() {
+        use diesel::sql_types::{Bool, Nullable, Text};
+
+        #[derive(QueryableByName)]
+        struct CustomFields {
+            #[diesel(sql_type = Nullable<Text>)]
+            custom_fields: Option<String>,
+        }
+        #[derive(QueryableByName)]
+        struct Integrated {
+            #[diesel(sql_type = Text)]
+            record_id: String,
+            #[diesel(sql_type = Bool)]
+            is_integrated: bool,
+        }
+
+        let previous_version = V3_02_00.version();
+        let version = V3_04_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}_backfill_purchase_order_custom_fields"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('supplier_name', 'FACILITY', false, true, 'SUP1', 'Supplier');",
+        );
+        run(
+            &connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('supplier_name_link', 'supplier_name');",
+        );
+        run(
+            &connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'supplier_name_link', 'STORE1', 1);",
+        );
+        for (id, number) in [("po_mapped", 1), ("po_blank", 2)] {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('{id}', 'store_id', 'supplier_name_link', {number}, 'NEW', '2026-01-01 00:00:00', 1.0);"
+                ),
+            );
+        }
+        let buffer = |id: &str, table: &str, data: &str| {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO sync_buffer (record_id, received_datetime, integration_datetime, table_name, action, data, is_integrated, source_site_id) VALUES ('{id}', '2026-01-01 00:00:00', '2026-01-01 00:00:00', '{table}', 'UPSERT', '{data}', true, 1);"
+                ),
+            );
+        };
+        buffer(
+            "po_mapped",
+            "purchase_order",
+            r#"{"ID":"po_mapped","category_ID":"CAT_1","user_field_1":"Grant 42","user_field_2":""}"#,
+        );
+        buffer(
+            "po_blank",
+            "purchase_order",
+            r#"{"ID":"po_blank","category_ID":"","user_field_1":"","user_field_2":""}"#,
+        );
+        // A later record for the same order wins over the earlier one
+        buffer(
+            "po_mapped",
+            "purchase_order",
+            r#"{"ID":"po_mapped","category_ID":"CAT_1","user_field_1":"Grant 43","user_field_2":""}"#,
+        );
+        buffer(
+            "CAT_1",
+            "purchase_order_category",
+            r#"{"ID":"CAT_1","Description":"Emergency"}"#,
+        );
+        buffer(
+            "label_1",
+            "pref_blob",
+            r#"{"ID":"label_1","item":"purchase_cust1_field","type":"t"}"#,
+        );
+        buffer(
+            "other_pref",
+            "pref_blob",
+            r#"{"ID":"other_pref","item":"po_notes","type":"t"}"#,
+        );
+
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
+
+        let value = |id: &str| {
+            sql_query(format!(
+                "SELECT CAST(custom_fields AS TEXT) AS custom_fields FROM purchase_order WHERE id = '{id}'"
+            ))
+            .get_result::<CustomFields>(connection.lock().connection())
+            .unwrap()
+            .custom_fields
+            .map(|raw| serde_json::from_str::<serde_json::Value>(&raw).unwrap())
+        };
+        assert_eq!(
+            value("po_mapped"),
+            Some(serde_json::json!({
+                "purchase_order_category": "CAT_1",
+                "purchase_order_user_field_1": "Grant 43",
+            }))
+        );
+        assert_eq!(value("po_blank"), None);
+
+        let mut integrated: Vec<(String, bool)> = sql_query(
+            "SELECT record_id, is_integrated FROM sync_buffer WHERE table_name <> 'purchase_order'",
+        )
+        .load::<Integrated>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .map(|row| (row.record_id, row.is_integrated))
+        .collect();
+        integrated.sort();
+        assert_eq!(
+            integrated,
+            vec![
+                ("CAT_1".to_string(), false),
+                ("label_1".to_string(), false),
+                ("other_pref".to_string(), true),
             ]
         );
     }

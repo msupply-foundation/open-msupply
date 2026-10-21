@@ -16,6 +16,8 @@ export const mapStatus = (
       return PurchaseOrderNodeStatus.Sent;
     case PurchaseOrderNodeStatus.Finalised:
       return PurchaseOrderNodeStatus.Finalised;
+    case PurchaseOrderNodeStatus.Cancelled:
+      return PurchaseOrderNodeStatus.Cancelled;
     default:
       return undefined;
   }
@@ -35,11 +37,6 @@ export const parseUpdateInput = (input: RecordPatch<PurchaseOrderFragment>) => {
     supplierAgent: input.supplierAgent,
     headingMessage: input.headingMessage,
     freightConditions: input.freightConditions,
-    agentCommission: input.agentCommission,
-    documentCharge: input.documentCharge,
-    communicationsCharge: input.communicationsCharge,
-    insuranceCharge: input.insuranceCharge,
-    freightCharge: input.freightCharge,
     // Supplier section fields
     supplierDiscountPercentage: input.supplierDiscountPercentage,
     supplierDiscountAmount: input.supplierDiscountAmount,

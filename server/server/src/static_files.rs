@@ -113,11 +113,13 @@ fn check_purchase_order_document_editable(
     if let Some(po) = purchase_order
         && matches!(
             po.purchase_order_row.status,
-            PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+            PurchaseOrderStatus::Sent
+                | PurchaseOrderStatus::Finalised
+                | PurchaseOrderStatus::Cancelled
         )
     {
         return Err(InternalError::new(
-            "Cannot upload or delete documents for a sent or finalised purchase order",
+            "Cannot upload or delete documents for a sent, finalised or cancelled purchase order",
             StatusCode::BAD_REQUEST,
         )
         .into());
