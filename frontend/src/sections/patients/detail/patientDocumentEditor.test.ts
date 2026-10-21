@@ -196,19 +196,9 @@ describe("a patient's first document on the Details tab", () => {
 describe('a patient document on an earlier version the migration leaves unchanged', () => {
   it('opens clean, with Save off, until the user edits it', async () => {
     const stored = { id: 'patient-1', code: 'CF0002', firstName: 'Alex' };
-    graphqlFetch.mockImplementation(async (query: unknown) => {
-      if (query === PatientDocumentDraft) {
-        return {
-          kind: 'success',
-          data: { patient: { id: 'patient-1', documentDraft: stored } },
-        };
-      }
-      if (query === FormDocumentByName) {
-        return {
-          kind: 'success',
-          data: { document: savedDocument(stored, OLD_PATIENT_VERSION) },
-        };
-      }
+    // The patient read carries the document and its draft; the form reads
+    // nothing itself.
+    graphqlFetch.mockImplementation(async () => {
       throw new Error('unexpected query');
     });
 
@@ -216,14 +206,11 @@ describe('a patient document on an earlier version the migration leaves unchange
       dispose = d;
       return createPatientDocumentEditor({
         storeId: () => 'store',
-        node: () =>
-          node({
-            document: {
-              __typename: 'DocumentNode',
-              id: 'doc-1',
-              name: 'patients/patient-1',
-            },
-          }),
+        node: () => ({
+          ...node(),
+          documentDraft: stored,
+          document: savedDocument(stored, OLD_PATIENT_VERSION),
+        }),
         registry: () => registry,
       });
     });
