@@ -767,9 +767,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryJsonSchema,
         PermissionDSL::NoPermissionRequired,
     );
+    // Form schemas are what every site draws its program forms from, and an
+    // insert replaces one by id, so only a server admin may write them.
     map.insert(
         Resource::MutateJsonSchema,
-        PermissionDSL::NoPermissionRequired,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 
     // patient
@@ -2171,5 +2173,60 @@ mod permission_validation_test {
             },
         );
         assert!(matches!(missing_store_id, Err(AuthError::InternalError(_))));
+    }
+}
+
+/// `insertFormSchema` writes, by id, the schemas every site draws its program
+/// forms from, so writing one needs server admin (remaining work item 10).
+#[cfg(test)]
+mod mutate_json_schema_test {
+    use repository::{PermissionType, UserPermissionRow};
+
+    use super::{Resource, ResourceAccessRequest, all_permissions, validate_resource_permissions};
+
+    #[test]
+    fn insert_form_schema_needs_a_permission() {
+        let required_permissions = all_permissions()
+            .get(&Resource::MutateJsonSchema)
+            .expect("MutateJsonSchema must be mapped")
+            .clone();
+
+        // A signed-in user holding no permission at all.
+        let result = validate_resource_permissions(
+            "test_user_id",
+            &[],
+            &ResourceAccessRequest {
+                resource: Resource::MutateJsonSchema,
+                store_id: None,
+                require_central_standalone: false,
+            },
+            &required_permissions,
+            &mut Vec::new(),
+        );
+
+        assert!(
+            result.is_err(),
+            "a user with no permission may write form schemas ({required_permissions:?})"
+        );
+
+        // A server admin may.
+        let result = validate_resource_permissions(
+            "test_user_id",
+            &[UserPermissionRow {
+                id: "server_admin".to_string(),
+                user_id: "test_user_id".to_string(),
+                permission: PermissionType::ServerAdmin,
+                store_id: None,
+                context_id: None,
+            }],
+            &ResourceAccessRequest {
+                resource: Resource::MutateJsonSchema,
+                store_id: None,
+                require_central_standalone: false,
+            },
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(result.is_ok(), "{result:?}");
     }
 }

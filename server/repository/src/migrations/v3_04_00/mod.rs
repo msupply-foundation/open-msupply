@@ -13,8 +13,10 @@ mod add_is_auto_created_to_item_variant;
 mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
+mod add_plugin_ownership_to_document_registry;
 mod add_purchase_order_custom_fields;
 mod add_stock_campaign_change_activity_log_type;
+mod add_sync_log_indexes;
 mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
 mod backfill_purchase_order_custom_fields;
@@ -22,6 +24,7 @@ mod barcode_proposals;
 mod prescription_request_occupation_prominent;
 mod refresh_who_pqs_catalogue;
 mod remove_charges_from_purchase_order;
+mod requeue_plugin_rows_for_upgraded_sites;
 mod seed_barcode_auto_confirm_processor_cursor;
 mod update_default_asset_log_reasons;
 
@@ -57,6 +60,9 @@ impl Migration for V3_04_00 {
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
             Box::new(add_annual_doses_per_person_to_vaccine_course::Migrate),
+            Box::new(add_plugin_ownership_to_document_registry::Migrate),
+            Box::new(requeue_plugin_rows_for_upgraded_sites::Migrate),
+            Box::new(add_sync_log_indexes::Migrate),
             Box::new(add_barcode_auto_confirm_processor_cursor_pg_enum::Migrate),
             // Seeded before the proposals below go into the changelog, so the
             // processor on central looks at its own store's proposals too

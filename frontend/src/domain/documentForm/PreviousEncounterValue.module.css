@@ -1,0 +1,4 @@
+/* A previous encounter's value, with its own line breaks. */
+.text {
+  white-space: pre-wrap;
+}

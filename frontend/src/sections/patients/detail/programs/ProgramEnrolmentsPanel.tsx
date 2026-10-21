@@ -8,7 +8,9 @@ import {
   getCellDefinition,
   getTextCell,
 } from '../../../../ui/elements/table/tableHelpers';
+import { getChipListCell } from '../../../../ui/elements/table/ChipListCell';
 import { remToPx } from '../../../../ui/utils/rem';
+import { statusEventTexts } from '../../../../domain/program/programEvents';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import type { ProgramEnrolmentRowFragment } from './programTabs.generated';
 
@@ -20,14 +22,25 @@ export interface ProgramEnrolmentsPanelProps {
   /** tableId + empty copy differ between the Programs and Vaccinations tabs. */
   tableId: string;
   emptyMessage: string;
+  /**
+   * Opens the enrolment: the Programs tab's row opens it in the enrolment
+   * modal, the Vaccinations tab's row opens its vaccination card.
+   */
+  onRowClick?: (enrolment: Row) => void;
+  /**
+   * The Additional info column, the enrolment's status events: the Programs
+   * tab shows it, the Vaccinations tab does not.
+   */
+  showAdditionalInfo?: boolean;
 }
 
-// The read-only program-enrolment table shared by the Programs tab (all
-// enrolments) and the Vaccinations tab (immunisation enrolments only — filtered
-// by the caller) — spec/patients ui-surface › Programs / Vaccinations tabs.
-// Rows are NOT clickable: opening an enrolment (or its vaccination card) needs
-// the JSON-schema document form / card surfaces owned by other verticals, which
-// are out of scope here. The program name is the document registry name.
+// The program-enrolment table shared by the Programs tab (all enrolments) and
+// the Vaccinations tab (immunisation enrolments only — filtered by the caller)
+// — spec/patients ui-surface › Programs / Vaccinations tabs. A row opens its
+// enrolment only where the caller passes `onRowClick`. The program name is the
+// document registry name; the Additional info column (Programs only) shows the
+// enrolment's active status events (spec/encounters/rules.md § additional
+// information).
 export const ProgramEnrolmentsPanel: Component<
   ProgramEnrolmentsPanelProps
 > = props => {
@@ -40,7 +53,7 @@ export const ProgramEnrolmentsPanel: Component<
   const columns = (): Column<Row, never>[] => [
     {
       c: {
-        accessor: r => r.document.documentRegistry?.name ?? r.type,
+        accessor: r => r.documentRegistry?.name ?? r.type,
         id: 'program',
       },
       header: () => t('label.enrolment-program'),
@@ -56,6 +69,19 @@ export const ProgramEnrolmentsPanel: Component<
       ...getTextCell(),
       size: remToPx(11),
     },
+    ...(props.showAdditionalInfo
+      ? [
+          {
+            c: {
+              accessor: r => statusEventTexts(r.activeProgramEvents.nodes),
+              id: 'additionalInfo',
+            },
+            header: () => t('label.additional-info'),
+            ...getChipListCell(),
+            size: remToPx(18),
+          } satisfies Column<Row, never>,
+        ]
+      : []),
     {
       c: { accessor: r => r.status ?? '', id: 'status' },
       header: () => t('label.program-status'),
@@ -75,6 +101,7 @@ export const ProgramEnrolmentsPanel: Component<
       rows={props.rows}
       rowKey={r => r.id}
       loading={props.loading}
+      onRowClick={props.onRowClick}
       emptyMessage={props.emptyMessage}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}

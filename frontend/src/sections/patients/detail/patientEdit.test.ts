@@ -13,6 +13,8 @@ import {
   ageFromDob,
   ageMonthsAndDays,
   dobFromAge,
+} from '../../../domain/patient/age';
+import {
   draftEquals,
   emptyDraft,
   isDraftValid,

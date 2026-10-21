@@ -9,6 +9,7 @@ import { t } from '../../../intl';
 import { renderTemplate } from './renderTemplate';
 import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
+import type { GroupPosition } from './rowGroups';
 import styles from './DataTable.module.css';
 
 // The alignment convention carried on a column's meta (set by the cell
@@ -34,6 +35,16 @@ const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
 // centres on the row's inputs (meta.controlLine; the CSS is DataTable's).
 const cellControlLine = <T,>(cell: TanCell<T, unknown>): boolean =>
   cell.column.columnDef.meta?.controlLine ?? false;
+
+// The grouped-rows convention: a column whose runs of equal values show once
+// (meta.groupRows). Only its cells look up their place in a run.
+const cellGroupRows = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.groupRows ?? false;
+
+// The column-rule convention: a rule down the column's inline-end edge
+// (meta.dividerEnd; the CSS is DataTable's).
+const cellDividerEnd = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.dividerEnd ?? false;
 
 // A column's real growth cap in px (delivered as max-width), or undefined.
 // TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
@@ -125,6 +136,12 @@ export function TableRow<T>(props: {
   rowAccent?: (
     row: T
   ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
+  /**
+   * A grouped column's cell's place in its run of equal values
+   * (meta.groupRows), worked out by DataTable over the rows as rendered;
+   * undefined for a cell of an ungrouped column.
+   */
+  groupPosition?: (cell: TanCell<T, unknown>) => GroupPosition | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
@@ -228,64 +245,94 @@ export function TableRow<T>(props: {
         </td>
       </Show>
       <For each={props.row.getVisibleCells()}>
-        {cell => (
-          <Show when={props.cellVisible(cell)}>
-            <td
-              class={styles.td}
-              // Cross-FE test-id contract (e2e/TESTIDS.md): `cell-<columnId>`,
-              // scoped by row (row.getByTestId('cell-batch')).
-              data-testid={`cell-${cell.column.id}`}
-              // Hover-reveal for an ellipsised value — set only when the cell
-              // is actually clipped, measured on pointer-enter (issue #432
-              // follow-up, PR #638). No static `title`, so cells that fit show
-              // no tooltip.
-              onMouseEnter={event => revealIfClipped(event.currentTarget, cell)}
-              data-align={cellAlign(cell)}
-              data-mono={cellMono(cell) ? '' : undefined}
-              data-pinned={cell.column.getIsPinned() || undefined}
-              data-frozen-edge={props.frozenEdge(cell.column)}
-              // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
-              // 1, the cell clamps to that many lines then ellipsises (CSS
-              // line-clamp); otherwise the default single-line nowrap applies.
-              // min-width keeps the column-width floor (getSize()); maxSize is
-              // the growth cap, applied as max-width (docs/CELL_TYPES.md).
-              // TanStack merges its default maxSize (MAX_SAFE_INTEGER) into
-              // every columnDef, so only a value below that sentinel is a real
-              // cap. A pinned column additionally gets sticky position +
-              // offset.
-              data-wrap={cellWrapLines(cell) ? '' : undefined}
-              style={{
-                'min-width': `${cell.column.getSize()}px`,
-                ...(cellMaxWidthPx(cell) !== undefined
-                  ? { 'max-width': `${cellMaxWidthPx(cell)}px` }
-                  : {}),
-                ...(cellWrapLines(cell)
-                  ? { '--wrap-lines': String(cellWrapLines(cell)) }
-                  : {}),
-                ...props.pinnedStyle(cell.column),
-              }}
+        {cell => {
+          // Only a grouped column's cell (meta.groupRows) looks up its place
+          // in its run; every other cell skips the lookup and the extra <Show>.
+          const grouped = cellGroupRows(cell);
+          const position = () =>
+            grouped ? props.groupPosition?.(cell) : undefined;
+          // Just render the column's cell — TanStack's merged default cell
+          // renders the leaf value (a column's custom `cell` overrides).
+          // renderTemplate, not TanStack's flexRender: the latter untracks the
+          // call, freezing every locale-derived value (numbers, dates, money)
+          // until a reload.
+          const content = () => (
+            <Show
+              when={cellControlLine(cell)}
+              fallback={renderTemplate(
+                cell.column.columnDef.cell,
+                cell.getContext()
+              )}
             >
-              {/* Just render the column's cell — TanStack's merged default cell renders the
-                  leaf value (a column's custom `cell` overrides). renderTemplate, not
-                  TanStack's flexRender: the latter untracks the call, freezing every
-                  locale-derived value (numbers, dates, money) until a reload. */}
-              <Show
-                when={cellControlLine(cell)}
-                fallback={renderTemplate(
-                  cell.column.columnDef.cell,
-                  cell.getContext()
-                )}
+              <span class={styles.controlLine}>
+                {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
+              </span>
+            </Show>
+          );
+          return (
+            <Show when={props.cellVisible(cell)}>
+              <td
+                class={styles.td}
+                // Cross-FE test-id contract (e2e/TESTIDS.md):
+                // `cell-<columnId>`, scoped by row
+                // (row.getByTestId('cell-batch')).
+                data-testid={`cell-${cell.column.id}`}
+                // Hover-reveal for an ellipsised value — set only when the
+                // cell is actually clipped, measured on pointer-enter (issue
+                // #432 follow-up, PR #638). No static `title`, so cells that
+                // fit show no tooltip.
+                onMouseEnter={event =>
+                  revealIfClipped(event.currentTarget, cell)
+                }
+                data-align={cellAlign(cell)}
+                data-mono={cellMono(cell) ? '' : undefined}
+                data-pinned={cell.column.getIsPinned() || undefined}
+                data-frozen-edge={props.frozenEdge(cell.column)}
+                // Grouped rows (meta.groupRows): a cell the next row continues
+                // joins it (no divider — the CSS is DataTable's); a cell that
+                // continues the previous row's value shows blank, so it names
+                // its value to assistive technology instead.
+                data-group-continues={
+                  position()?.continuesNext ? '' : undefined
+                }
+                aria-label={
+                  position()?.continuesPrevious
+                    ? String(cell.getValue())
+                    : undefined
+                }
+                data-divider-end={cellDividerEnd(cell) ? '' : undefined}
+                // data-wrap + --wrap-lines: when a column sets meta.wrapLines
+                // > 1, the cell clamps to that many lines then ellipsises (CSS
+                // line-clamp); otherwise the default single-line nowrap
+                // applies. min-width keeps the column-width floor (getSize());
+                // maxSize is the growth cap, applied as max-width
+                // (docs/CELL_TYPES.md). TanStack merges its default maxSize
+                // (MAX_SAFE_INTEGER) into every columnDef, so only a value
+                // below that sentinel is a real cap. A pinned column
+                // additionally gets sticky position + offset.
+                data-wrap={cellWrapLines(cell) ? '' : undefined}
+                style={{
+                  'min-width': `${cell.column.getSize()}px`,
+                  ...(cellMaxWidthPx(cell) !== undefined
+                    ? { 'max-width': `${cellMaxWidthPx(cell)}px` }
+                    : {}),
+                  ...(cellWrapLines(cell)
+                    ? { '--wrap-lines': String(cellWrapLines(cell)) }
+                    : {}),
+                  ...props.pinnedStyle(cell.column),
+                }}
               >
-                <span class={styles.controlLine}>
-                  {renderTemplate(
-                    cell.column.columnDef.cell,
-                    cell.getContext()
-                  )}
-                </span>
-              </Show>
-            </td>
-          </Show>
-        )}
+                {/* A grouped cell continuing the previous row's value renders
+                  nothing. */}
+                {grouped ? (
+                  <Show when={!position()?.continuesPrevious}>{content()}</Show>
+                ) : (
+                  content()
+                )}
+              </td>
+            </Show>
+          );
+        }}
       </For>
     </tr>
   );
