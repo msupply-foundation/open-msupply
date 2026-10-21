@@ -32,6 +32,7 @@ import { CurrencyModal } from '../../../domain/invoice';
 import { isDeletable } from '../outboundStatus';
 import { changeShipmentCurrency, type OutboundNode } from './outboundUpdate';
 import { graphqlFetch } from '../../../api/graphql';
+import { createDebouncedField } from '../../../domain/debouncedEdit';
 import {
   FullOutbound,
   type OutboundLineFragment,
@@ -90,6 +91,15 @@ const money = (value: number | null | undefined): string =>
 
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
+  // The tax rate saves as it is typed; it shows its own draft while it is
+  // being edited and the shipment's rate otherwise, so an answer to an earlier
+  // keystroke can't land over a later one (createDebouncedField). Cleared, it
+  // saves no rate (null).
+  const tax = createDebouncedField({
+    value: () => pricing().taxPercentage ?? undefined,
+    save: (percentage: number | undefined) =>
+      props.onSaveField({ tax: { percentage: percentage ?? null } }),
+  });
   const requisition = () => props.node.requisition;
   const serviceLines = () => props.serviceLines;
   // Change-currency is offered only when the store allows foreign currency
@@ -356,16 +366,16 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             disabled={
               props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
             }
-            value={pricing().taxPercentage ?? undefined}
+            value={tax.value()}
             helperText={money(
               taxAmount(
                 pricing().stockTotalBeforeTax,
                 pricing().stockTotalAfterTax
               )
             )}
-            onChange={value =>
-              props.onSaveField({ tax: { percentage: value ?? null } })
-            }
+            onChange={tax.set}
+            onFocus={tax.onFocus}
+            onBlur={tax.onBlur}
           />
         </FieldRow>
         <FieldRow label={t('label.total')}>

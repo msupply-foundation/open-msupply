@@ -418,8 +418,9 @@ const PurchaseOrderDetailView: Component = () => {
     });
     if (result.kind === 'saved') {
       // The node carries derived money (both totals, the discount amount), so
-      // re-read rather than splicing the patch in.
-      void refetchInfo();
+      // re-read rather than splicing the patch in — awaited, so a buffered
+      // field (the discounts) shows the server's figure only once it is in.
+      await refetchInfo();
       return { ok: true };
     }
     return result.kind === 'error'
