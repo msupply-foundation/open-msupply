@@ -579,11 +579,6 @@ impl SyncTranslation for NameTranslation {
             custom_data_string: _,
             custom_fields,
         } = name_row;
-        if deleted_datetime.is_some() {
-            return Ok(PushTranslateResult::Ignored(
-                "Ignore pushing soft deleted name".to_string(),
-            ));
-        }
 
         let patient_type = match r#type {
             NameRowType::Patient => LegacyNameRowType::Patient,
@@ -1170,6 +1165,35 @@ mod tests {
             integrate("name_a", "facility", OG_SITE_ID, Some(true)),
             None
         );
+    }
+
+    /// A deleted patient's record is pushed with `is_deleted: true`
+    #[actix_rt::test]
+    async fn name_push_deleted_patient() {
+        let (_, connection, _, _) =
+            setup_all("name_push_deleted_patient", MockDataInserts::none()).await;
+
+        let patient = NameRow {
+            id: "patient".to_string(),
+            r#type: NameRowType::Patient,
+            deleted_datetime: Some(chrono::Utc::now().naive_utc()),
+            ..Default::default()
+        };
+        let PushTranslateResult::PushRecord(pushed) = NameTranslation {}
+            .try_translate_to_upsert_sync_record(
+                &connection,
+                &ChangelogRow {
+                    table_name: ChangelogTableName::Name,
+                    record_id: patient.id.clone(),
+                    ..Default::default()
+                },
+                Row::Name(patient),
+            )
+            .unwrap()
+        else {
+            panic!("expected a push record")
+        };
+        assert_eq!(pushed[0].record.record_data["is_deleted"], json!(true));
     }
 
     #[actix_rt::test]
