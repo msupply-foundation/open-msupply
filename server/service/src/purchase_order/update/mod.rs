@@ -1,12 +1,19 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
-    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, TransactionError,
+    ActivityLogType, EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
+    PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, StorageConnection,
+    TransactionError,
 };
 
 use crate::{
     NullableUpdate,
     activity_log::{activity_log_entry, log_type_from_purchase_order_status},
+    custom_field::CustomFieldPatchProblem,
+    invoice::inbound_shipment::{
+        InboundShipmentType,
+        delete::{DeleteInboundShipment, DeleteInboundShipmentError, delete_inbound_shipment},
+    },
     purchase_order::update::generate::GenerateResult,
     service_provider::ServiceContext,
 };
@@ -17,6 +24,8 @@ mod validate;
 
 use generate::generate;
 use validate::validate;
+
+pub const PURCHASE_ORDER_CUSTOM_FIELD_SCOPE: &str = "purchase_order";
 
 #[derive(PartialEq, Debug)]
 pub enum UpdatePurchaseOrderError {
@@ -29,6 +38,21 @@ pub enum UpdatePurchaseOrderError {
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
     InboundShipmentsNotVerified,
+    UnknownCustomFieldKey(String),
+    InvalidCustomFieldValue {
+        key: String,
+        expected: repository::CustomFieldValueType,
+    },
+    // Only a SENT order can be cancelled
+    CannotCancelPurchaseOrder,
+    // A cancelled order never changes state again
+    CannotReopenCancelledPurchaseOrder,
+    // An inbound shipment against the order has progressed past NEW
+    InboundShipmentsInProgress,
+    ShipmentDeleteError {
+        invoice_id: String,
+        error: DeleteInboundShipmentError,
+    },
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -55,12 +79,9 @@ pub struct UpdatePurchaseOrderInput {
     pub authorising_officer_2: Option<String>,
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
-    pub agent_commission: Option<f64>,
-    pub document_charge: Option<f64>,
-    pub communications_charge: Option<f64>,
-    pub insurance_charge: Option<f64>,
-    pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
+    /// Merged into `purchase_order.custom_fields`; a null value deletes the key
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 impl UpdatePurchaseOrderInput {
@@ -88,12 +109,8 @@ impl UpdatePurchaseOrderInput {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
+            custom_fields: _,
         } = self;
         let post_sending_dates_allowed = matches!(status, PurchaseOrderStatus::Sent)
             || (contract_signed_date.is_none() && advance_paid_date.is_none());
@@ -115,11 +132,6 @@ impl UpdatePurchaseOrderInput {
             && authorising_officer_2.is_none()
             && additional_instructions.is_none()
             && heading_message.is_none()
-            && agent_commission.is_none()
-            && document_charge.is_none()
-            && communications_charge.is_none()
-            && insurance_charge.is_none()
-            && freight_charge.is_none()
             && freight_conditions.is_none()
     }
 }
@@ -154,22 +166,32 @@ pub fn update_purchase_order(
                 }
             }
 
-            let activity_type = if existing_purchase_order.purchase_order_row.status
-                == PurchaseOrderStatus::Sent
-                && input.status == Some(PurchaseOrderStatus::Confirmed)
+            // Cancelling removes the shipments still being drafted against the order
+            if existing_purchase_order.purchase_order_row.status != PurchaseOrderStatus::Cancelled
+                && updated_purchase_order.status == PurchaseOrderStatus::Cancelled
             {
-                ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
-            } else {
-                log_type_from_purchase_order_status(&updated_purchase_order.status)
-            };
+                delete_new_inbound_shipments(ctx, connection, &updated_purchase_order.id)?;
+            }
 
-            activity_log_entry(
-                ctx,
-                activity_type,
-                Some(updated_purchase_order.id.clone()),
-                None,
-                None,
-            )?;
+            // Only a status change is logged; an edit to the order's fields leaves no entry
+            let previous_status = &existing_purchase_order.purchase_order_row.status;
+            if *previous_status != updated_purchase_order.status {
+                let activity_type = if *previous_status == PurchaseOrderStatus::Sent
+                    && updated_purchase_order.status == PurchaseOrderStatus::Confirmed
+                {
+                    ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
+                } else {
+                    log_type_from_purchase_order_status(&updated_purchase_order.status)
+                };
+
+                activity_log_entry(
+                    ctx,
+                    activity_type,
+                    Some(updated_purchase_order.id.clone()),
+                    None,
+                    None,
+                )?;
+            }
 
             purchase_order_repository
                 .find_one_by_id(&updated_purchase_order.id)?
@@ -178,6 +200,46 @@ pub fn update_purchase_order(
         .map_err(|error: TransactionError<UpdatePurchaseOrderError>| error.to_inner_error())?;
 
     Ok(purchase_order)
+}
+
+impl From<CustomFieldPatchProblem> for UpdatePurchaseOrderError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdatePurchaseOrderError::UnknownCustomFieldKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdatePurchaseOrderError::InvalidCustomFieldValue { key, expected }
+            }
+        }
+    }
+}
+
+fn delete_new_inbound_shipments(
+    ctx: &ServiceContext,
+    connection: &StorageConnection,
+    purchase_order_id: &str,
+) -> Result<(), UpdatePurchaseOrderError> {
+    let new_shipments = InvoiceRepository::new(connection).query_by_filter(
+        InvoiceFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string()))
+            .r#type(EqualFilter::equal_to(InvoiceType::InboundShipment))
+            .status(InvoiceStatus::New.equal_to()),
+    )?;
+
+    for shipment in new_shipments {
+        let invoice_id = shipment.invoice_row.id;
+        delete_inbound_shipment(
+            ctx,
+            DeleteInboundShipment {
+                id: invoice_id.clone(),
+            },
+            InboundShipmentType::InboundShipmentExternal,
+        )
+        .map_err(|error| UpdatePurchaseOrderError::ShipmentDeleteError { invoice_id, error })?;
+    }
+
+    Ok(())
 }
 
 impl From<RepositoryError> for UpdatePurchaseOrderError {

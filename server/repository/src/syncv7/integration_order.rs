@@ -115,6 +115,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::StockRelocationLine,
     ChangelogTableName::StocktakeLine,
     ChangelogTableName::TemperatureLog,
+    ChangelogTableName::TemperatureSummary,
     ChangelogTableName::VVMStatusLog,
 ];
 

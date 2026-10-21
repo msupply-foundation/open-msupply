@@ -25,6 +25,8 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   confirmedDatetime
   sentDatetime
   finalisedDatetime
+  # The terminal branch off Sent, stamped on cancelling (rules § cancellation).
+  cancelledDatetime
   # Toolbar. Nullable on the wire: an order can report no supplier at all.
   supplier {
     id
@@ -39,25 +41,21 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   }
   foreignExchangeRate
   requestedDeliveryDate
-  # Details heading (S8) — correspondence fields and the five charges.
+  # Details heading (S8) — correspondence fields.
   authorisingOfficer1
   authorisingOfficer2
   additionalInstructions
   supplierAgent
   headingMessage
   freightConditions
-  agentCommission
-  documentCharge
-  communicationsCharge
-  insuranceCharge
-  freightCharge
+  # Custom fields tab.
+  customFields
   # Side panel (S9) — pricing, other, dates.
   #
   # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
   # every line discount: the only discount it precedes is the supplier's
-  # (contract ⚠️ the field called "before discount"). Neither total includes
-  # the five charges, and NO field carries the final cost — the panel sums the
-  # charges itself and adds them (contract § pricing and totals).
+  # (contract ⚠️ the field called "before discount"). Service lines are lines,
+  # so both totals include them (contract § pricing and totals).
   orderTotalBeforeDiscount
   orderTotalAfterDiscount
   # Two views of ONE stored figure: the percentage is stored, the amount is
@@ -130,6 +128,7 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    type
     # The item's stock on hand NOW — the SOH column and the editor's figure.
     # Not the line's own `stockOnHandInUnits`, which is written as 0.0 at
     # insert and read by nothing (contract § authoring a line).
