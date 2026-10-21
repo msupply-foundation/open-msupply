@@ -44,7 +44,7 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
   const columns = (): Column<Row, never>[] => [
     {
       c: {
-        accessor: r => r.document.documentRegistry?.name ?? r.type,
+        accessor: r => r.documentRegistry?.name ?? r.type,
         id: 'type',
       },
       header: () => t('label.encounter-type'),
@@ -53,8 +53,7 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
     },
     {
       c: {
-        accessor: r =>
-          r.programEnrolment?.document.documentRegistry?.name ?? '',
+        accessor: r => r.programEnrolment?.documentRegistry?.name ?? '',
         id: 'program',
       },
       header: () => t('label.program'),

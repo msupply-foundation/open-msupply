@@ -44,7 +44,7 @@ export const ProgramEnrolmentsPanel: Component<
   const columns = (): Column<Row, never>[] => [
     {
       c: {
-        accessor: r => r.document.documentRegistry?.name ?? r.type,
+        accessor: r => r.documentRegistry?.name ?? r.type,
         id: 'program',
       },
       header: () => t('label.enrolment-program'),

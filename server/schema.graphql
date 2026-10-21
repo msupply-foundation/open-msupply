@@ -2680,6 +2680,11 @@ type EncounterNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	activeProgramEvents(at: DateTime, filter: ActiveEncounterEventFilterInput, page: PaginationInput, sort: ProgramEventSortInput): ProgramEventResponse!
 	programEvents(page: PaginationInput, sort: ProgramEventSortInput, filter: EncounterEventFilterInput): ProgramEventResponse!
 	"""
@@ -6926,6 +6931,11 @@ type ProgramEnrolmentNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	"""
 	The program document
 	"""

@@ -4,9 +4,9 @@ use graphql_core::{
     ContextExt,
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
-        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, PatientLoader,
-        PreviousEncounterLoader, PreviousEncounterLoaderInput, ProgramEnrolmentLoader,
-        ProgramEnrolmentLoaderInput,
+        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, DocumentRegistryLoader,
+        DocumentRegistryLoaderInput, PatientLoader, PreviousEncounterLoader,
+        PreviousEncounterLoaderInput, ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     map_filter,
     pagination::PaginationInput,
@@ -24,6 +24,7 @@ use crate::types::ClinicianNode;
 
 use super::{
     document::DocumentNode,
+    document_registry::DocumentRegistryNode,
     patient::{PatientFilterInput, PatientNode},
     program_enrolment::{ProgramEnrolmentFilterInput, ProgramEnrolmentNode},
     program_event::{
@@ -353,6 +354,27 @@ impl EncounterNode {
             .ok_or(Error::new("Program without document"))?;
 
         Ok(result)
+    }
+
+    /// The registry entry of the document's type, resolved from the row's own
+    /// type without loading the document.
+    pub async fn document_registry(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<DocumentRegistryNode>> {
+        let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
+        let document_registry = loader
+            .load_one(DocumentRegistryLoaderInput::new(
+                &self.allowed_ctx,
+                &self.encounter_row().document_type,
+            ))
+            .await?;
+        Ok(
+            document_registry.map(|document_registry| DocumentRegistryNode {
+                allowed_ctx: self.allowed_ctx.clone(),
+                document_registry,
+            }),
+        )
     }
 
     pub async fn active_program_events(
