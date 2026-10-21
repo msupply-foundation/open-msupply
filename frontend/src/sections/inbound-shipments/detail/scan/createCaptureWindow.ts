@@ -94,6 +94,14 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   const [working, setWorking] = createSignal(false);
   // A refusal or a failed save — replaces the message until the next scan.
   const [refusal, setRefusal] = createSignal<string>();
+  // A scan dropped while another was being worked (.200). Not a refusal: the
+  // entry on screen when it lands is usually saved and replaced straight
+  // after, and that must not take the notice with it. It goes when a scan is
+  // next taken.
+  const [dropped, setDropped] = createSignal(false);
+  // A scan refused because an editing window was open (.41) — that window
+  // says so too, since the screen's notice is behind it. Over once it closes.
+  const [discarded, setDiscarded] = createSignal(false);
   // The raw content of the last scan, where it was neither known nor a
   // product code — the notice replaces the message until the next scan.
   const [unrecognised, setUnrecognised] = createSignal<string>();
@@ -162,6 +170,13 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   };
 
   const close = () => {
+    // Closing doesn't receive a dropped box: say so on the screen instead.
+    if (dropped())
+      options.onNotice({
+        severity: 'warning',
+        text: t('messages.scan-still-working'),
+      });
+    setDropped(false);
     setOpen(false);
     saved.clear();
     reset();
@@ -352,6 +367,7 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   /** A scan, from the host screen's scan control. */
   const receive = async (incoming: CaptureRead) => {
     if (options.blocked()) {
+      setDiscarded(true);
       options.onNotice({
         severity: 'warning',
         text: t('messages.close-line-editor-to-scan'),
@@ -361,14 +377,17 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
     // One at a time: a scan arriving mid-lookup, mid-choice or mid-save is
     // dropped, and the user told to scan it again (.200).
     if (busy) {
-      const notice = t('messages.scan-still-working');
-      if (open()) {
-        setUnrecognised(undefined);
-        setRefusal(notice);
-      } else options.onNotice({ severity: 'warning', text: notice });
+      if (open()) setDropped(true);
+      else
+        options.onNotice({
+          severity: 'warning',
+          text: t('messages.scan-still-working'),
+        });
       return;
     }
     busy = true;
+    setDropped(false);
+    setDiscarded(false);
     try {
       await work(incoming);
     } finally {
@@ -407,6 +426,10 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
     match,
     working,
     refusal,
+    dropped,
+    discarded,
+    /** The editing window that blocked scanning closed (.41). */
+    editorClosed: () => setDiscarded(false),
     unrecognised,
     savedNotice: saved.value,
     quantityField,

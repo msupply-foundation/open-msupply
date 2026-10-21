@@ -1509,7 +1509,13 @@ const InboundShipmentDetailView: Component = () => {
 
               <InboundShipmentLineEditModal
                 open={editState() != null}
-                onClose={() => setEditState(undefined)}
+                onClose={() => {
+                  setEditState(undefined);
+                  // A scan it refused is over: its notice on the screen too.
+                  if (capture.discarded()) setScanNotice(undefined);
+                  capture.editorClosed();
+                }}
+                scanDiscarded={capture.discarded()}
                 storeId={params.storeId}
                 invoiceId={node().id}
                 isExternal={isExternal()}
@@ -1560,7 +1566,10 @@ const InboundShipmentDetailView: Component = () => {
               <capture.Chooser />
               <AddFromMasterListModal
                 open={masterListOpen()}
-                onClose={() => setMasterListOpen(false)}
+                onClose={() => {
+                  setMasterListOpen(false);
+                  capture.editorClosed();
+                }}
                 storeId={params.storeId}
                 invoiceId={node().id}
                 onAdded={onLinesChanged}
@@ -1569,7 +1578,10 @@ const InboundShipmentDetailView: Component = () => {
                 {req => (
                   <AddFromInternalOrderModal
                     open={internalOrderOpen()}
-                    onClose={() => setInternalOrderOpen(false)}
+                    onClose={() => {
+                      setInternalOrderOpen(false);
+                      capture.editorClosed();
+                    }}
                     storeId={params.storeId}
                     invoiceId={node().id}
                     requisitionId={req().id}

@@ -108,6 +108,13 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
             {shortContent(content() ?? '')}
           </Text>
         </Show>
+        {/* Shown while working too: a box is dropped exactly while the one
+            before it saves (.200). */}
+        <Show when={c().dropped()}>
+          <Alert severity="warning" testId="scan-capture-dropped">
+            {t('messages.scan-still-working')}
+          </Alert>
+        </Show>
         <Show when={!c().working() && message()}>
           {m => (
             <Alert severity={m().severity} testId="scan-capture-message">

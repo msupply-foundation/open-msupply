@@ -300,6 +300,10 @@ describe('createCaptureWindow', () => {
       severity: 'warning',
       text: 'Close the line editor to scan.',
     });
+    // Said in the editing window too, until it closes.
+    expect(capture.discarded()).toBe(true);
+    capture.editorClosed();
+    expect(capture.discarded()).toBe(false);
     dispose();
   });
 
@@ -335,11 +339,35 @@ describe('createCaptureWindow', () => {
     await capture.receive(LABEL);
     const saving = capture.receive(NEXT);
     await capture.receive(LABEL);
-    expect(capture.refusal()).toBe(
-      'Still working on the last scan. Scan that box again.'
-    );
+    expect(capture.dropped()).toBe(true);
     await saving;
     expect(capture.draft()?.batch).toBe('CD34');
+    // Saving the entry before and loading the next one don't take the
+    // notice with them: the dropped box still needs scanning again.
+    expect(capture.dropped()).toBe(true);
+    // The next scan taken is the user acting on it.
+    await capture.receive(LABEL);
+    expect(capture.dropped()).toBe(false);
+    dispose();
+  });
+
+  it('.200 a scan dropped while OK saves is said on the screen once the window closes', async () => {
+    answers = {
+      barcodeMatches: known,
+      itemsWithStock: item,
+      inboundShipmentLines: noLines,
+      batchInboundShipment: batchSaved,
+    };
+    const { capture, onNotice, dispose } = setup();
+    await capture.receive(LABEL);
+    const ok = capture.confirm();
+    await capture.receive(NEXT);
+    await ok;
+    expect(capture.open()).toBe(false);
+    expect(onNotice).toHaveBeenCalledWith({
+      severity: 'warning',
+      text: 'Still working on the last scan. Scan that box again.',
+    });
     dispose();
   });
 
