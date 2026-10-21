@@ -42,6 +42,15 @@ export interface DateFieldProps {
   format?: string;
   helperText?: string;
   error?: string;
+  /** Advisory warning below the field (FieldShell's `warning`). */
+  warning?: string;
+  /** `data-testid` for the warning message (e2e/TESTIDS.md). */
+  warningTestId?: string;
+  /**
+   * The typed-entry `<input>` — what a focus target binds to
+   * (ui/utils/createFocusTarget), as TextField forwards its own `ref`.
+   */
+  ref?: (el: HTMLInputElement) => void;
   /**
    * An affordance rendered inline after the label text (an InfoTooltip) — for a
    * standing explanation, e.g. why the field is disabled, that would drag a
@@ -127,6 +136,8 @@ export const DateField = (props: DateFieldProps) => {
       hideLabel={props.hideLabel}
       required={props.required}
       error={props.error}
+      warning={props.warning}
+      warningTestId={props.warningTestId}
       helperText={props.helperText}
       labelInfo={props.labelInfo}
       controlId={id()}
@@ -139,6 +150,7 @@ export const DateField = (props: DateFieldProps) => {
           data-disabled={props.disabled ? '' : undefined}
         >
           <input
+            ref={el => props.ref?.(el)}
             id={id()}
             type="text"
             class={styles.dateInput}
