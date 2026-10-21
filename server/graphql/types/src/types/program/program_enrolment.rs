@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     ContextExt,
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
-    loader::{DocumentLoader, DocumentRegistryLoader, DocumentRegistryLoaderInput, PatientLoader},
+    loader::{DocumentLoader, PatientLoader},
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
 };
@@ -15,7 +15,7 @@ use repository::{
 
 use super::{
     document::DocumentNode,
-    document_registry::DocumentRegistryNode,
+    document_registry::{DocumentRegistryNode, document_registry_node},
     encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
     patient::PatientNode,
     program_event::{
@@ -238,19 +238,7 @@ impl ProgramEnrolmentNode {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<DocumentRegistryNode>> {
-        let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
-        let document_registry = loader
-            .load_one(DocumentRegistryLoaderInput::new(
-                &self.allowed_ctx,
-                &self.row().document_type,
-            ))
-            .await?;
-        Ok(
-            document_registry.map(|document_registry| DocumentRegistryNode {
-                allowed_ctx: self.allowed_ctx.clone(),
-                document_registry,
-            }),
-        )
+        document_registry_node(ctx, &self.allowed_ctx, &self.row().document_type).await
     }
 
     /// The program document

@@ -10,7 +10,7 @@ use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use diesel::dsl::max;
+use diesel::dsl::{exists, not};
 use diesel::helper_types::IntoBoxed;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -37,6 +37,8 @@ define_linked_tables! {
         owner_name_link_id -> owner_name_id,
     }
 }
+
+allow_tables_to_appear_in_same_query!(document, document_with_links);
 
 // view of the document table that only shows the latest document version
 // grouped by document name
@@ -329,44 +331,43 @@ impl<'a> DocumentRepository<'a> {
 
     /// The latest version of each named document.
     ///
-    /// Reads the document table itself, not the `latest_document` view: the view
-    /// groups every version in the table by name, so a filter on it is only cheap
-    /// where the planner moves the filter inside the grouping. Postgres does that
-    /// for one name compared with `=`, but not for a list of names on every
-    /// version, and then a batched read scans the whole table (#1562). Two index
-    /// lookups by name instead: the newest datetime of each name, then those
-    /// rows, so no other version's data is read.
+    /// Reads `document_view` (the document table joined to `name_link` for its
+    /// `owner_name_id`, a plain join whose name filter is pushed down), not the
+    /// `latest_document` view: that view groups every version in the table by
+    /// name, so a filter on it is only cheap where the planner moves the filter
+    /// inside the grouping. Postgres does that for one name compared with `=`,
+    /// but not for a list of names, and then a batched read scans the whole
+    /// table. One statement answers: the named versions with no later version
+    /// of the same name, where later is a later datetime or, among versions
+    /// tied on datetime, a higher id, the tie-break the `latest_document` view's
+    /// reader applied.
     pub fn find_many_latest_by_names(
         &self,
         names: &[String],
     ) -> Result<Vec<Document>, RepositoryError> {
-        let newest: Vec<(String, Option<NaiveDateTime>)> = document::dsl::document
-            .filter(document::dsl::name.eq_any(names))
-            .group_by(document::dsl::name)
-            .select((document::dsl::name, max(document::dsl::datetime)))
-            .load(self.connection.lock().connection())?;
-        let datetimes: Vec<NaiveDateTime> = newest.iter().filter_map(|(_, d)| *d).collect();
-        if datetimes.is_empty() {
-            return Ok(Vec::new());
-        }
-
+        let later = alias!(document_with_links as later);
         let rows: Vec<DocumentRow> = document::dsl::document
             .filter(document::dsl::name.eq_any(names))
-            .filter(document::dsl::datetime.eq_any(&datetimes))
-            .order((document::dsl::name.asc(), document::dsl::id.desc()))
+            .filter(not(exists(
+                later
+                    .filter(
+                        later
+                            .field(document_with_links::name)
+                            .eq(document::dsl::name),
+                    )
+                    .filter(
+                        later
+                            .field(document_with_links::datetime)
+                            .gt(document::dsl::datetime)
+                            .or(later
+                                .field(document_with_links::datetime)
+                                .eq(document::dsl::datetime)
+                                .and(later.field(document_with_links::id).gt(document::dsl::id))),
+                    ),
+            )))
+            .order(document::dsl::name.asc())
             .load(self.connection.lock().connection())?;
-
-        let mut result = Vec::<Document>::new();
-        for row in rows {
-            let is_newest = newest
-                .iter()
-                .any(|(name, datetime)| *name == row.name && *datetime == Some(row.datetime));
-            let already_kept = result.last().is_some_and(|d| d.name == row.name);
-            if is_newest && !already_kept {
-                result.push(to_document(row)?);
-            }
-        }
-        Ok(result)
+        rows.into_iter().map(to_document).collect()
     }
 
     pub fn query_by_filter(
