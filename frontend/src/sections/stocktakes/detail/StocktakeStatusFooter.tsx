@@ -21,11 +21,11 @@ import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 // status stepper's SplitButton + its confirm → working → error dialog — see
 // FinaliseAction, kdd/action-modal). This footer owns the on-hold confirm and
 // the finalise success flash: a successful finalise closes the dialog and
-// hides the split button, so the slot is where the save confirmation lands
-// (spec/ui-standards/controls.md § action feedback). The mutations run
-// through the view's callbacks (onSetHold → saveStocktakeFields, onFinalised
-// after finaliseStocktake), which splice the returned node back with no
-// refetch.
+// hides the split button, so the slot is where the status it reached,
+// "Finalised", lands (issue #1127; spec/ui-standards/controls.md § action
+// feedback). The mutations run through the view's callbacks (onSetHold →
+// saveStocktakeFields, onFinalised after finaliseStocktake), which splice the
+// returned node back with no refetch.
 // Shown only when nothing is selected — the selection action bar replaces it
 // (matching OMS, which swaps the whole footer).
 
@@ -71,7 +71,7 @@ export const StocktakeStatusFooter: Component<
   // Finalise is the only status write (NEW → FINALISED).
   const onFinalised = (node: StocktakeInfoFragment) => {
     props.onFinalised(node);
-    saved.show(t('messages.saved'));
+    saved.show(STATUS_LABELS.FINALISED);
   };
 
   const isFinalised = () => props.node.status === 'FINALISED';

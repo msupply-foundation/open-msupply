@@ -5,7 +5,7 @@ import type {
   PurchaseOrderDetailLineFragment,
   UpdatePurchaseOrderLineVariables,
 } from '../purchaseOrderDetail.generated';
-import { isDrafting } from '../purchaseOrderLadder';
+import { isClosed, isDrafting } from '../purchaseOrderLadder';
 import { linePacks } from '../purchaseOrderPricing';
 
 // The line editor's arithmetic and gates (spec/purchase-orders rules §
@@ -28,6 +28,8 @@ export type LineFacts = {
   itemCode: string;
   itemName: string;
   unitName: string | null;
+  /** A service item has no quantity: one charge, priced per line. */
+  isService: boolean;
   stockOnHand: number;
   unitsOrderedInOthers: number;
 };
@@ -58,6 +60,7 @@ export const factsFromLine = (
   itemCode: line.item.code,
   itemName: line.item.name,
   unitName: line.unit ?? line.item.unitName,
+  isService: line.item.type === 'SERVICE',
   stockOnHand: line.item.stats.stockOnHand,
   unitsOrderedInOthers: line.unitsOrderedInOthers,
 });
@@ -87,16 +90,17 @@ export const draftFromLine = (
  * What a new line is born as (OMS-FUN-PO-02.7, OMS-FUN-PO-02.24): the item's default pack size,
  * no quantity, no prices, and its dates seeded from the order — the order's
  * requested delivery date and the latest expected date already on its lines.
+ * A service item is born as one charge of one.
  */
 export const newLineDraft = (
-  item: { defaultPackSize: number },
+  item: { defaultPackSize: number; type: string },
   seed: {
     requestedDeliveryDate: string | null | undefined;
     latestExpectedDate: string | null | undefined;
   }
 ): LineDraft => ({
-  requestedPackSize: item.defaultPackSize,
-  requestedNumberOfUnits: 0,
+  requestedPackSize: item.type === 'SERVICE' ? 1 : item.defaultPackSize,
+  requestedNumberOfUnits: item.type === 'SERVICE' ? 1 : 0,
   pricePerPackBeforeDiscount: 0,
   discountPercentage: 0,
   pricePerPackAfterDiscount: 0,
@@ -169,6 +173,13 @@ export const repriced = (changed: keyof Prices, prices: Prices): Prices => {
   };
 };
 
+/** A service line has one price: no line discount (rules § prices). */
+export const servicePriced = (price: number): Prices => ({
+  pricePerPackBeforeDiscount: price,
+  discountPercentage: 0,
+  pricePerPackAfterDiscount: price,
+});
+
 /**
  * The after-discount price of one unit (spec S10 § pricing): the pack price
  * over the pack size, zero where there is no pack size to divide by.
@@ -226,7 +237,7 @@ export type LineGates = {
 /**
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
- * fields, the quantity among them, close from Ready for sending; the
+ * fields, the quantity among them, close from Approved; the
  * requested date closes once Sent while the expected date stays open.
  */
 export const lineGates = (options: {
@@ -234,8 +245,7 @@ export const lineGates = (options: {
   lineStatus: LineStatus;
   addMode: boolean;
 }): LineGates => {
-  const open =
-    options.lineStatus !== 'CLOSED' && options.status !== 'FINALISED';
+  const open = options.lineStatus !== 'CLOSED' && !isClosed(options.status);
   const drafting = open && isDrafting(options.status);
   return {
     item: options.addMode,
@@ -316,5 +326,9 @@ export const insertInput = (
  * none (spec S10 § quantity) — the ordered-elsewhere figure (OMS-FUN-PO-02.19),
  * stock on hand and the line's own requested units.
  */
-export const unitsFigure = (units: number, unitName: string | null): string =>
-  `${roundedText(units)} ${unitName || tPlural('label.units-plural', units)}`;
+export const unitsFigure = (
+  units: number,
+  unitName: string | null,
+  places?: number
+): string =>
+  `${roundedText(units, places)} ${unitName || tPlural('label.units-plural', units)}`;

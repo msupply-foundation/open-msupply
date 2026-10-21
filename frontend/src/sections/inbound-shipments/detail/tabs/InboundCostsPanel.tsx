@@ -11,10 +11,10 @@ import { InfoTooltip } from '../../../../ui/elements/feedback/InfoTooltip';
 import { createDebouncedEdit } from '../../../../domain/debouncedEdit/createDebouncedEdit';
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
-// The three editable Currency-tab fields, written back on blur (save-on-blur;
+// The three editable Costs-tab fields, written back on blur (save-on-blur;
 // the debounce also settles a burst into one save). Keys match
 // UpdateInboundShipmentInput.
-type CurrencyFields = {
+type CostsFields = {
   currencyRate: number;
   chargesForeignCurrency: number;
   chargesLocalCurrency: number;
@@ -26,7 +26,7 @@ type CurrencyFields = {
 const money = (value: number): string =>
   formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// The detail "Currency" tab (spec S3 tabs → Currency; contract → Currency tab
+// The detail "Costs" tab (spec S3 tabs → Costs; contract → Costs tab
 // derivation). A two-column form (kdd/form-layout — the stock detail form's
 // vocabulary) reconciling the purchase order's currency against the store's
 // home (local) currency: the left column holds the exchange rate and the
@@ -37,12 +37,12 @@ const money = (value: number): string =>
 // either charge on a PO-linked shipment recomputes line costs server-side (the
 // save refetches the lines page — rules → header fields); the three inputs save
 // on blur (the debounced edit flushes on focus-out of the form).
-export const InboundCurrencyPanel: Component<{
+export const InboundCostsPanel: Component<{
   node: InboundInfoFragment;
   disabled: boolean;
-  onSave: (patch: Partial<CurrencyFields>) => void;
+  onSave: (patch: Partial<CostsFields>) => void;
 }> = props => {
-  const edit = createDebouncedEdit<CurrencyFields>({
+  const edit = createDebouncedEdit<CostsFields>({
     id: () => props.node.id,
     initial: () => ({
       currencyRate: props.node.currencyRate,

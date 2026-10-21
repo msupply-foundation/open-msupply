@@ -28,19 +28,14 @@ export type PurchaseOrderFragment = {
   id: string;
   number: number;
   additionalInstructions?: string | null;
-  agentCommission?: number | null;
   authorisingOfficer1?: string | null;
   authorisingOfficer2?: string | null;
   comment?: string | null;
-  communicationsCharge?: number | null;
   createdDatetime: string;
   currencyId?: string | null;
-  documentCharge?: number | null;
   foreignExchangeRate: number;
-  freightCharge?: number | null;
   freightConditions?: string | null;
   headingMessage?: string | null;
-  insuranceCharge?: number | null;
   reference?: string | null;
   sentDatetime?: string | null;
   shippingMethod?: string | null;
@@ -58,6 +53,7 @@ export type PurchaseOrderFragment = {
   requestedDeliveryDate?: string | null;
   requestApprovalDatetime?: string | null;
   finalisedDatetime?: string | null;
+  cancelledDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -280,19 +276,14 @@ export type PurchaseOrderByIdQuery = {
         id: string;
         number: number;
         additionalInstructions?: string | null;
-        agentCommission?: number | null;
         authorisingOfficer1?: string | null;
         authorisingOfficer2?: string | null;
         comment?: string | null;
-        communicationsCharge?: number | null;
         createdDatetime: string;
         currencyId?: string | null;
-        documentCharge?: number | null;
         foreignExchangeRate: number;
-        freightCharge?: number | null;
         freightConditions?: string | null;
         headingMessage?: string | null;
-        insuranceCharge?: number | null;
         reference?: string | null;
         sentDatetime?: string | null;
         shippingMethod?: string | null;
@@ -310,6 +301,7 @@ export type PurchaseOrderByIdQuery = {
         requestedDeliveryDate?: string | null;
         requestApprovalDatetime?: string | null;
         finalisedDatetime?: string | null;
+        cancelledDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -453,6 +445,7 @@ export type UpdatePurchaseOrderMutation = {
     | {
         __typename: 'UpdatePurchaseOrderError';
         error:
+          | { __typename: 'InboundShipmentsInProgress' }
           | { __typename: 'InboundShipmentsNotVerified'; description: string }
           | {
               __typename: 'ItemsCannotBeOrdered';
@@ -873,23 +866,18 @@ export const PurchaseOrderFragmentDoc = gql`
     id
     number
     additionalInstructions
-    agentCommission
     authorisingOfficer1
     authorisingOfficer2
     comment
-    communicationsCharge
     createdDatetime
     currencyId
-    documentCharge
     donor {
       id
       name
     }
     foreignExchangeRate
-    freightCharge
     freightConditions
     headingMessage
-    insuranceCharge
     reference
     lines {
       __typename
@@ -919,6 +907,7 @@ export const PurchaseOrderFragmentDoc = gql`
     requestedDeliveryDate
     requestApprovalDatetime
     finalisedDatetime
+    cancelledDatetime
     documents {
       __typename
       nodes {

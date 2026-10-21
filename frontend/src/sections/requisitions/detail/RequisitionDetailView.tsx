@@ -726,6 +726,15 @@ const RequisitionDetailView: Component = () => {
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
+      // The customer's Activity for this line — carried over the requisition
+      // transfer (issue 595). Read-only here: the supplier sees what the stock
+      // is wanted for, but the choice is the customer's. Blank for a line held
+      // for nothing in particular.
+      c: { accessor: line => line.campaign?.name ?? '', id: 'activity' },
+      header: () => t('label.activity'),
+      ...getCellDefinition('activity'),
+    },
+    {
       c: {
         accessor: line => line.suggestedQuantity,
         id: 'suggested',

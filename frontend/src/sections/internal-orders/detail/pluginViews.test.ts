@@ -24,6 +24,7 @@ const line = (
   itemId: 'item-1',
   itemName: 'Amoxicillin 250mg',
   comment: 'short supply',
+  campaign: null,
   item: {
     code: 'AMX250',
     unitName: 'tablet',

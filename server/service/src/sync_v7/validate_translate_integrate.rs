@@ -203,6 +203,7 @@ fn translate_delete(
         | ChangelogTableName::SyncMessage
         | ChangelogTableName::SystemLog
         | ChangelogTableName::TemperatureBreach
+        | ChangelogTableName::TemperatureSummary
         | ChangelogTableName::TemperatureLog
         | ChangelogTableName::UserStoreJoin
         | ChangelogTableName::Vaccination
