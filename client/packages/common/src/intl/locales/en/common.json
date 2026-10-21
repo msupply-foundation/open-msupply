@@ -2660,6 +2660,7 @@
   "preference.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts": "Number of months to check for consumption when calculating out of stock products",
   "preference.orderInPacks": "Order in packs",
   "preference.preventTransfersMonthsBeforeInitialisation": "Prevent transfers from this many months before initialisation",
+  "preference.promptForBatchAndExpiryOnInboundShipments": "Prompt to enter batch and expiry on inbound shipments",
   "preference.receivePaymentsFromPrescriptions": "Receive payments from prescription window",
   "preference.requisitionAutoFinalise": "Auto finalise fulfilled requisitions",
   "preference.secondThresholdForExpiringItems": "Second threshold for expiring items (days)",
