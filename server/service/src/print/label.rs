@@ -15,7 +15,10 @@ pub struct AssetLabelData {
     store_name: Option<String>,
 }
 
-pub fn get_asset_label(data: AssetLabelData) -> String {
+/// `settings` is the label printer's configuration, when there is one: its
+/// label size is written into the label so the printer lays it out on the
+/// label it has loaded rather than on whatever page size it last kept.
+pub fn get_asset_label(data: AssetLabelData, settings: Option<&LabelPrinterSettingNode>) -> String {
     let asset_number = sanitise_fd_field(&data.asset_number.unwrap_or_default());
 
     let date_printed = sanitise_fd_field(&data.date_printed.unwrap_or_default());
@@ -34,6 +37,7 @@ pub fn get_asset_label(data: AssetLabelData) -> String {
     format!(
         r#"
         ^XA
+        {}
         ^FX CI command parameters:
         ^FX - encoding (28 = UTF-8)
         ^CI28
@@ -45,7 +49,12 @@ pub fn get_asset_label(data: AssetLabelData) -> String {
         ^FO277,98^A0,30,24^TBN,310,30^FD{}^FS
         {}
         ^XZ"#,
-        data.code, store_name, asset_number, date_printed, m_supply_logo
+        label_geometry(settings),
+        data.code,
+        store_name,
+        asset_number,
+        date_printed,
+        m_supply_logo
     )
 
     // # Instructions to output QR codes rather than data matrix barcodes:
@@ -61,11 +70,27 @@ pub fn get_asset_label(data: AssetLabelData) -> String {
     // To make the layout correct, adjust the positions of the elements (i.e. the values in the '^FO[number],[number]' statements) at labelary.com/viewer.html
 }
 
+// The page the label's coordinates are measured on. ZPL positions every field
+// from the printer's home, and without a print width the printer keeps the one
+// it last had (often the whole print head). A desktop Zebra centres its print
+// width on the head and its labels in the media guides, so a print width wider
+// than the label puts home off the label's left edge and cuts off the
+// DataMatrix there (#1530). ^PW and ^LL give the printer the configured label
+// size; ^LH and ^LS put home back at the corner of the label in case a label
+// home or label shift was saved on the printer.
+fn label_geometry(settings: Option<&LabelPrinterSettingNode>) -> String {
+    let size = settings
+        .filter(|s| s.label_width > 0 && s.label_height > 0)
+        .map(|s| format!("^PW{}^LL{}", s.label_width, s.label_height))
+        .unwrap_or_default();
+    format!("{size}^LH0,0^LS0")
+}
+
 pub fn print_asset_label(
     settings: LabelPrinterSettingNode,
     data: AssetLabelData,
 ) -> Result<String> {
-    let payload = get_asset_label(data);
+    let payload = get_asset_label(data, Some(&settings));
     let printer = Jetdirect::new(settings.address, settings.port);
 
     printer.send_string(payload, Mode::Print)
@@ -220,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_asset_label_prints_store_name_above_asset_number() {
-        let zpl = get_asset_label(asset_label_data(Some("General Store")));
+        let zpl = get_asset_label(asset_label_data(Some("General Store")), None);
         let store = zpl.find("^FDGeneral Store^FS").expect("store name printed");
         let number = zpl.find("^FDKEN-0042^FS").expect("asset number printed");
         let date = zpl.find("^FD14/10/2026^FS").expect("date printed");
@@ -231,7 +256,7 @@ mod tests {
     fn test_asset_label_fx_comments_contain_no_commands() {
         // A ^FX comment runs only to the next ^ or ~, so either inside one is
         // executed by the printer as a command.
-        let zpl = get_asset_label(asset_label_data(Some("General Store")));
+        let zpl = get_asset_label(asset_label_data(Some("General Store")), None);
         for comment in zpl.split("^FX").skip(1) {
             let line = comment.lines().next().unwrap_or_default();
             assert!(
@@ -243,22 +268,55 @@ mod tests {
 
     #[test]
     fn test_asset_label_keeps_data_matrix_unchanged() {
-        let zpl = get_asset_label(asset_label_data(Some("General Store")));
+        let zpl = get_asset_label(asset_label_data(Some("General Store")), None);
         assert!(zpl.contains("^FO18,18"));
         assert!(zpl.contains("^BXN,11,200"));
         assert!(zpl.contains("^FD0190a1b2-3c4d-7e8f-9a0b-1c2d3e4f5a6b^FS"));
     }
 
+    fn printer_settings(label_width: i32, label_height: i32) -> LabelPrinterSettingNode {
+        LabelPrinterSettingNode {
+            address: "192.168.1.227".to_string(),
+            label_height,
+            label_width,
+            port: 9100,
+        }
+    }
+
+    #[test]
+    fn test_asset_label_sets_configured_label_size() {
+        let settings = printer_settings(576, 290);
+        let zpl = get_asset_label(asset_label_data(Some("General Store")), Some(&settings));
+        let size = zpl.find("^PW576^LL290").expect("label size set");
+        let home = zpl.find("^LH0,0^LS0").expect("label home reset");
+        let data_matrix = zpl.find("^BXN").expect("data matrix printed");
+        assert!(size < data_matrix && home < data_matrix);
+    }
+
+    #[test]
+    fn test_asset_label_without_printer_settings_still_resets_home() {
+        let zpl = get_asset_label(asset_label_data(Some("General Store")), None);
+        assert!(!zpl.contains("^PW"));
+        assert!(zpl.contains("^LH0,0^LS0"));
+    }
+
+    #[test]
+    fn test_asset_label_ignores_unset_label_size() {
+        let settings = printer_settings(0, 0);
+        let zpl = get_asset_label(asset_label_data(Some("General Store")), Some(&settings));
+        assert!(!zpl.contains("^PW"));
+    }
+
     #[test]
     fn test_asset_label_without_store_name_still_prints() {
-        let zpl = get_asset_label(asset_label_data(None));
+        let zpl = get_asset_label(asset_label_data(None), None);
         assert!(zpl.contains("^FDKEN-0042^FS"));
         assert!(zpl.contains("^TBN,310,30^FD^FS"));
     }
 
     #[test]
     fn test_asset_label_sanitises_store_name() {
-        let zpl = get_asset_label(asset_label_data(Some("Store ^XZ~JR")));
+        let zpl = get_asset_label(asset_label_data(Some("Store ^XZ~JR")), None);
         assert!(zpl.contains("^FDStore -XZ-JR^FS"));
         assert_eq!(zpl.matches("^XZ").count(), 1);
     }
