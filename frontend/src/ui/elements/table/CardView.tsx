@@ -131,7 +131,15 @@ function cellField<T>(
   // local — hoisting would resolve it once, outside any tracking scope, and
   // freeze the card's field labels in the locale that first painted them.
   return isHeader ? (
-    <FieldRow label={columnHeaderText(cell)} labelWidth="auto">
+    // first-line: the caption sits on the control's own line, so a message
+    // the control grows beneath it (a warning under a blank batch) doesn't
+    // pull the caption down to the middle of the taller block. Against a
+    // single-line control or a plain value, it coincides with centring.
+    <FieldRow
+      label={columnHeaderText(cell)}
+      labelWidth="auto"
+      align="first-line"
+    >
       {value()}
     </FieldRow>
   ) : (
