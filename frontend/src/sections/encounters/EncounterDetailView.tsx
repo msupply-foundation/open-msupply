@@ -32,6 +32,7 @@ import {
 } from '../../ui/elements/buttons/StandardButtons';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
 import { SaveIcon, XCircleIcon } from '../../ui/icons';
+import { hasPermission } from '../../store/storeContext';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
 import { suggestsVisited, visitedFields } from '../../domain/encounter/visited';
 import {
@@ -94,11 +95,18 @@ const EncounterDetailView: Component = () => {
     { equals: (a, b) => a?.name === b?.name }
   );
 
+  // Read-only for a user who may edit no program's records here, so nothing
+  // fills in or offers a save the server would refuse. One who may edit some
+  // programs but not this one still gets a save, which the server refuses.
+  // TO-DO: gate on the encounter's own program once the store's permissions
+  // say which programs a user may edit (remaining work item 13).
+  const canMutate = () => hasPermission('DOCUMENT_MUTATE');
   const form = createDocumentForm<Encounter>({
     storeId: () => params.storeId,
     patientId: () => record()?.patientId ?? '',
     source,
     labels: encounterVisitLabels,
+    readOnly: () => !canMutate(),
     versioning: type => documentFormVersioning('encounter.form', type),
   });
   const archivedVersion = () => {
@@ -219,15 +227,17 @@ const EncounterDetailView: Component = () => {
                     >
                       {form.isDirty() ? t('button.cancel') : t('button.close')}
                     </Button>
-                    <Button
-                      icon={<SaveIcon />}
-                      data-testid="save-button"
-                      loading={form.saving()}
-                      disabled={!form.canSave() || form.saving()}
-                      onClick={onSave}
-                    >
-                      {t('button.save')}
-                    </Button>
+                    <Show when={canMutate()}>
+                      <Button
+                        icon={<SaveIcon />}
+                        data-testid="save-button"
+                        loading={form.saving()}
+                        disabled={!form.canSave() || form.saving()}
+                        onClick={onSave}
+                      >
+                        {t('button.save')}
+                      </Button>
+                    </Show>
                   </ContentFooterActions>
                 </ContentFooter>
               }

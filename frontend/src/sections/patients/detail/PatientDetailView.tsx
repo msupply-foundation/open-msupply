@@ -6,7 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -73,7 +73,7 @@ import {
   type CreatedEncounter,
 } from './programs/CreateEncounterDialog';
 import { EncounterFormModal } from './programs/EncounterFormModal';
-import { patientPreferences } from '../../../store/storeContext';
+import { hasPermission, patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
 // (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
@@ -260,6 +260,16 @@ const PatientDetailView: Component = () => {
   };
   const canAddEncounter = () => enrolments().length > 0;
 
+  // A new enrolment or encounter is refused at the click, before its picker
+  // or dialog opens, for a user who may edit no program's records here
+  // (ui-standards/validation.md § permission gating): the server would refuse
+  // its save.
+  const refusedWithoutDocumentMutate = (): boolean => {
+    if (hasPermission('DOCUMENT_MUTATE')) return false;
+    reportPermissionDenied(['DocumentMutate']);
+    return true;
+  };
+
   // A trigger's `openDocumentForm`: a new encounter of a type in a program the
   // patient is enrolled in, which is all the server accepts. Anything else is
   // refused and named against the plugin that asked.
@@ -277,6 +287,7 @@ const PatientDetailView: Component = () => {
       });
       return;
     }
+    if (refusedWithoutDocumentMutate()) return;
     setEncounterFormType(registry);
   };
 
@@ -323,6 +334,12 @@ const PatientDetailView: Component = () => {
     return 'new-program';
   };
   const runCreate = (action: string) => {
+    if (
+      (action === 'new-program' || action === 'new-encounter') &&
+      refusedWithoutDocumentMutate()
+    ) {
+      return;
+    }
     if (action === 'new-program') {
       setPickerImmunisationOnly(activeTab() === 'vaccinations');
       setPickerOpen(true);

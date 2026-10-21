@@ -182,7 +182,11 @@ export interface CreateDocumentFormOptions {
    * check), shown and counted with the draft's own.
    */
   extraErrors?: Accessor<readonly FieldError[]>;
-  /** True while the user may only read the document (no permission to save). */
+  /**
+   * True while the user may only read the document (no permission to save):
+   * the draft is read-only and nothing can be saved, a migrated document
+   * included.
+   */
   readOnly?: Accessor<boolean>;
   /**
    * The versioning of a document type's plugin form, or undefined where no
@@ -557,6 +561,9 @@ export const createDocumentForm = <T extends object>(
     { equals: sameVersion }
   );
 
+  // The user may not save it, whatever its version.
+  const noSavePermission = () => options.readOnly?.() ?? false;
+
   // Read as it was recorded: against its own schema, with nothing to fix.
   const readingOnly = () =>
     version().kind === 'archived' || asRecorded(version());
@@ -612,8 +619,7 @@ export const createDocumentForm = <T extends object>(
       return r ? gated(library)?.baseSchemaFor(r.category) : undefined;
     },
     validate: () => gated(library)?.validateDocument,
-    readOnly: () =>
-      saving() || readingOnly() || (options.readOnly?.() ?? false),
+    readOnly: () => saving() || readingOnly() || noSavePermission(),
     validates: () => !readingOnly(),
     labels: options.labels,
     extraErrors: options.extraErrors,
@@ -701,7 +707,14 @@ export const createDocumentForm = <T extends object>(
   const isDirty = () => controller.isDirty() || coordinator.dirty();
 
   const save = async () => {
-    if (status() !== 'ready' || saving() || readingOnly()) return undefined;
+    if (
+      status() !== 'ready' ||
+      saving() ||
+      readingOnly() ||
+      noSavePermission()
+    ) {
+      return undefined;
+    }
     // A check a field is still running (draft.wait) decides first.
     if (controller.busy()) {
       setSaving(true);
@@ -795,6 +808,7 @@ export const createDocumentForm = <T extends object>(
     canSave: () =>
       status() === 'ready' &&
       !readingOnly() &&
+      !noSavePermission() &&
       (isNew() || isDirty() || version().kind === 'migrated'),
     validation: controller.validation,
     version,

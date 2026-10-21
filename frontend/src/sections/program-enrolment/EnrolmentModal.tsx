@@ -7,6 +7,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { t } from '@/intl';
+import { hasPermission } from '@/store/storeContext';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -93,10 +94,16 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
       : { kind: 'existing' as const, name: target.documentName };
   });
 
+  // Read-only for a user who may edit no program's records here (rules §
+  // access): a new enrolment is refused before it opens, so this is a saved
+  // one. TO-DO: gate on the enrolment's own program once the store's
+  // permissions say which programs a user may edit (remaining work item 13).
+  const canMutate = () => hasPermission('DOCUMENT_MUTATE');
   const form = createDocumentForm<ProgramEnrolment>({
     storeId: () => props.storeId,
     patientId: () => props.patientId,
     source,
+    readOnly: () => !canMutate(),
     versioning: type => documentFormVersioning('programEnrolment.form', type),
     refuseNewerVersion: true,
   });
@@ -182,11 +189,16 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
                 onClick={close}
               />
             </Show>
-            {/* No Save for an enrolment that no longer exists, nor for one
-                the default form can't complete: neither could ever be saved
-                from here (controls § blocked affordances). */}
+            {/* No Save for an enrolment that no longer exists, for one the
+                default form can't complete, or for a user who may edit no
+                program's records: none could ever be saved from here
+                (controls § blocked affordances). */}
             <Show
-              when={form.status() !== 'not-found' && unasked().length === 0}
+              when={
+                form.status() !== 'not-found' &&
+                unasked().length === 0 &&
+                canMutate()
+              }
             >
               <DialogSaveButton
                 data-testid="dialog-button-save"

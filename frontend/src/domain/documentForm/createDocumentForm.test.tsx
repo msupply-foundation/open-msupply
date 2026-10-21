@@ -37,6 +37,7 @@ vi.mock('./formLibrary', async () => ({
 
 import {
   createDocumentForm,
+  type CreateDocumentFormOptions,
   type DocumentForm,
   type DocumentFormSource,
   type FormVersioning,
@@ -117,7 +118,8 @@ const open = async (
   archived: number[],
   // The type's form as the registry has it: its versioning (the default), or
   // no plugin form at all.
-  pluginForm: FormVersioning | 'none' = versioning(archived)
+  pluginForm: FormVersioning | 'none' = versioning(archived),
+  extra: Partial<CreateDocumentFormOptions> = {}
 ): Promise<DocumentForm<Encounter>> => {
   graphqlFetch.mockImplementation(
     async (query: unknown, variables: CallVariables) => {
@@ -152,6 +154,7 @@ const open = async (
         type === 'DemoEncounter' && typeof pluginForm === 'object'
           ? pluginForm
           : undefined,
+      ...extra,
     });
   });
   await vi.waitFor(() => expect(form.status()).toBe('ready'), {
@@ -226,6 +229,22 @@ describe('opening a document pinned to an earlier version', () => {
     // The saved version is current, and its kept value is still listed.
     await vi.waitFor(() => expect(form.version()).toEqual({ kind: 'current' }));
     expect(form.kept().map(k => k.path)).toEqual(['extension.demo.adherence']);
+  });
+
+  it('offers no save of a migrated document to a user who may not save', async () => {
+    const form = await open(
+      documentPinnedTo(V1, v1, v1Fixture),
+      [],
+      undefined,
+      {
+        readOnly: () => true,
+      }
+    );
+    expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
+    expect(form.draft.readOnly()).toBe(true);
+    expect(form.canSave()).toBe(false);
+    expect(await form.save()).toBeUndefined();
+    expect(graphqlFetch).toHaveBeenCalledTimes(1);
   });
 
   it('migrates straight away where the version has no archived form', async () => {

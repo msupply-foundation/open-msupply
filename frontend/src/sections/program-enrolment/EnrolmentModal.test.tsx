@@ -97,6 +97,11 @@ vi.mock('@/intl', () => ({ t: (key: string) => key }));
 vi.mock('@/plugins/DocumentFormRegion', () => ({
   DocumentFormRegion: () => 'form',
 }));
+const [canMutate, setCanMutate] = createSignal(true);
+vi.mock('@/store/storeContext', () => ({
+  hasPermission: (permission: string) =>
+    permission === 'DOCUMENT_MUTATE' && canMutate(),
+}));
 const [pluginForm, setPluginForm] = createSignal(false);
 vi.mock('@/plugins/documentFormSlot', () => ({
   documentFormVersioning: () => undefined,
@@ -167,6 +172,7 @@ afterEach(() => {
   missing = [];
   draftData = {};
   setPluginForm(false);
+  setCanMutate(true);
   setStatus('ready');
   setSaving(false);
   delete shown.details;
@@ -323,7 +329,6 @@ const body = () => {
 };
 
 describe("OMS-REG-PAT-04.52 — a program whose form the default form can't stand in for", () => {
-
   it("says the program's own form isn't installed, naming what it asks for, and offers no Save", () => {
     missing = ['status', 'extension.riskGroup'];
     open();
@@ -360,7 +365,7 @@ describe("OMS-REG-PAT-04.52 — a program whose form the default form can't stan
   });
 });
 
-describe('OMS-REG-PAT-04.62 — an enrolment that already holds its program\'s answers', () => {
+describe("OMS-REG-PAT-04.62 — an enrolment that already holds its program's answers", () => {
   it('opens on the default form with no notice, and Save offered', () => {
     missing = ['status'];
     draftData = { enrolmentDatetime: '2026-10-01T00:00:00Z', status: 'ACTIVE' };
@@ -369,6 +374,24 @@ describe('OMS-REG-PAT-04.62 — an enrolment that already holds its program\'s a
     expect(shown.alerts.some(a => a.testId === 'enrolment-form-missing')).toBe(
       false
     );
+    expect(save()).toHaveLength(1);
+  });
+});
+
+describe('a user who may edit no program here', () => {
+  it('opens a saved enrolment read-only, with Cancel only and no Save', () => {
+    setCanMutate(false);
+    open(true);
+    body();
+    expect((shown.hostOptions?.readOnly as () => boolean)()).toBe(true);
+    expect(save()).toHaveLength(0);
+    expect(byTestId('dialog-button-cancel')).toHaveLength(1);
+  });
+
+  it('opens it editable for one who may', () => {
+    open(true);
+    body();
+    expect((shown.hostOptions?.readOnly as () => boolean)()).toBe(false);
     expect(save()).toHaveLength(1);
   });
 });
