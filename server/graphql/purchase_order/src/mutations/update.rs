@@ -46,12 +46,9 @@ pub struct UpdateInput {
     pub authorising_officer_2: Option<String>,
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
-    pub agent_commission: Option<f64>,
-    pub document_charge: Option<f64>,
-    pub communications_charge: Option<f64>,
-    pub insurance_charge: Option<f64>,
-    pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
+    /// Merged into the order's custom fields; a null value deletes the key
+    pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 impl UpdateInput {
@@ -79,12 +76,8 @@ impl UpdateInput {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -111,12 +104,8 @@ impl UpdateInput {
             authorising_officer_2,
             additional_instructions,
             heading_message,
-            agent_commission,
-            document_charge,
-            communications_charge,
-            insurance_charge,
-            freight_charge,
             freight_conditions,
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }
@@ -126,6 +115,14 @@ pub struct InboundShipmentsNotVerified;
 impl InboundShipmentsNotVerified {
     pub async fn description(&self) -> &str {
         "Cannot finalise this purchase order because there are open inbound shipments that have not been delivered."
+    }
+}
+
+pub struct InboundShipmentsInProgress;
+#[Object]
+impl InboundShipmentsInProgress {
+    pub async fn description(&self) -> &str {
+        "Cannot cancel this purchase order because an inbound shipment against it has progressed past New."
     }
 }
 
@@ -151,6 +148,7 @@ impl ItemsCannotBeOrdered {
 pub enum UpdateErrorInterface {
     ItemsCannotBeOrdered(ItemsCannotBeOrdered),
     InboundShipmentsNotVerified(InboundShipmentsNotVerified),
+    InboundShipmentsInProgress(InboundShipmentsInProgress),
 }
 
 #[derive(SimpleObject)]
@@ -223,12 +221,22 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 InboundShipmentsNotVerified,
             ));
         }
+        ServiceError::InboundShipmentsInProgress => {
+            return Ok(UpdateErrorInterface::InboundShipmentsInProgress(
+                InboundShipmentsInProgress,
+            ));
+        }
 
         ServiceError::SupplierDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist
-        | ServiceError::CannotEditSentPurchaseOrder => BadUserInput(formatted_error),
+        | ServiceError::CannotEditSentPurchaseOrder
+        | ServiceError::UnknownCustomFieldKey(_)
+        | ServiceError::InvalidCustomFieldValue { .. }
+        | ServiceError::CannotCancelPurchaseOrder
+        | ServiceError::CannotReopenCancelledPurchaseOrder
+        | ServiceError::ShipmentDeleteError { .. } => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

@@ -15,6 +15,7 @@ import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFo
 import { createFlash } from '../../../ui/utils/createFlash';
 import { CheckIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
+import { statusLabel } from '../list/internalOrderStatus';
 import {
   currentStatusStep,
   isEmptySend,
@@ -41,8 +42,8 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 // identifying the sender (OMS-REG-REPL-05.5/.15/.18, buildSendAutoComment) on
 // the same save; the server neither writes nor requires it (contract ›
 // lifecycle). A send that lands closes the dialog and hides the button, so the
-// bar's message slot flashes the save confirmation
-// (spec/ui-standards/controls.md § action feedback).
+// bar's message slot flashes the status it reached, "Sent" (issue #1127;
+// spec/ui-standards/controls.md § action feedback).
 type Phase = 'confirm' | 'empty' | 'sending' | 'error';
 
 // OMS-REG-REPL-05.5/.15/.18: the send auto-comment. When the store requires
@@ -145,7 +146,7 @@ export const InternalOrderStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSent(result.node);
       setOpen(false);
-      saved.show(t('messages.saved'));
+      saved.show(statusLabel(result.node.status));
       return;
     }
     if (result.kind === 'error') {

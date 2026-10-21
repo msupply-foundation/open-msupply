@@ -26,7 +26,7 @@ export const packDifference = (
 /*
  * What the "prompt for batch and expiry" store preference asks about before an
  * inbound line save, and marks once the user goes back to fill it in (issue
- * #992, OMS-REG-REPL-09.30–.38) — per batch, so the editor can say which batch
+ * #992, OMS-REG-REPL-09.31–.39) — per batch, so the editor can say which batch
  * and which field.
  */
 

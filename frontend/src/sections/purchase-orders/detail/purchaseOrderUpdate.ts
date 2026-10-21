@@ -19,9 +19,9 @@ import {
 //
 // A rejection reaches us two ways (contract § an order's own screen):
 //
-//  - a TYPED member of the response union — only ever the two LIFECYCLE
-//    refusals (`ItemsCannotBeOrdered`, `InboundShipmentsNotVerified`), neither
-//    reachable by editing a field;
+//  - a TYPED member of the response union — only ever the three LIFECYCLE
+//    refusals (`ItemsCannotBeOrdered`, `InboundShipmentsNotVerified`,
+//    `InboundShipmentsInProgress`), none reachable by editing a field;
 //  - an UNTYPED top-level `Bad user input`, which is EVERY field-level refusal
 //    this screen can provoke: a closed order, an unknown supplier or donor, a
 //    party that is not a supplier. The Rust variant name arrives in

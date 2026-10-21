@@ -22,6 +22,7 @@ query purchaseOrderLineItemFacts(
         name
         unitName
         defaultPackSize
+        type
         stats(storeId: $storeId) {
           stockOnHand
         }

@@ -474,7 +474,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // The handle waits for the row to attach, so no load gate is needed here.
   const batchFields = createFocusTargets();
   // Each batch's Batch and Expiry inputs — where "Enter batch and expiry"
-  // lands, on the first one left blank (OMS-REG-REPL-09.35).
+  // lands, on the first one left blank (OMS-REG-REPL-09.36).
   const batchNumberFields = createFocusTargets();
   const expiryFields = createFocusTargets();
 
@@ -708,7 +708,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       result.kind === 'success' &&
       result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
     )
-      setPoLines(result.data.purchaseOrder.lines.nodes);
+      setPoLines(
+        result.data.purchaseOrder.lines.nodes.filter(
+          l => l.item.type !== 'SERVICE'
+        )
+      );
   };
   const choosePoLine = (id: string) => {
     const line = poLines().find(l => l.id === id);
@@ -984,7 +988,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     void action?.();
   };
 
-  // "Enter batch and expiry" (OMS-REG-REPL-09.35–.38): the stocktake editor's
+  // "Enter batch and expiry" (OMS-REG-REPL-09.36–.39): the stocktake editor's
   // awaiting-a-reason treatment, applied to batch and expiry. The batches
   // still missing either are marked — badge, row tint, a warning under each
   // blank field — until filled; a warning, never a block. Held as the item it
@@ -1814,7 +1818,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       },
     },
     // The card's badge naming what the batch has no value for — "No batch",
-    // "No expiry date" or both (OMS-REG-REPL-09.35). Stated as a fact rather
+    // "No expiry date" or both (OMS-REG-REPL-09.36). Stated as a fact rather
     // than asked for, since neither is required. The row layout says it with
     // the row tint and accent instead. Built by hand, as the stocktake
     // editor's "Needs a reason" badge and for its reasons: the state follows

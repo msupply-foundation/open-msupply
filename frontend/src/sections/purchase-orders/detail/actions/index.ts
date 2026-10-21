@@ -3,3 +3,4 @@
 export { DeletePurchaseOrderAction } from './DeletePurchaseOrderAction';
 export { DeleteLinesAction } from './DeleteLinesAction';
 export { CloseLinesAction } from './CloseLinesAction';
+export { CancelPurchaseOrderAction } from './CancelPurchaseOrderAction';
