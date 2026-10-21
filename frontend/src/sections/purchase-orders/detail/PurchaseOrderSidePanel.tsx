@@ -147,6 +147,7 @@ export const PurchaseOrderSidePanel: Component<
             min={0}
             max={100}
             decimalLimit={2}
+            emptyValue={0}
             value={props.node.supplierDiscountPercentage ?? undefined}
             disabled={props.disabled}
             onChange={value =>
@@ -163,6 +164,7 @@ export const PurchaseOrderSidePanel: Component<
             width="compact"
             currency={currency()}
             min={0}
+            emptyValue={0}
             value={props.node.supplierDiscountAmount}
             disabled={props.disabled || subtotal() === 0}
             onChange={value =>

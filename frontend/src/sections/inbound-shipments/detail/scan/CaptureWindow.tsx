@@ -132,6 +132,7 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
               value={draft().packSize}
               min={1}
               disabled={draft().packSizeLocked || c().working()}
+              emptyValue={1}
               onChange={value => c().update({ packSize: value || 1 })}
             />
             <NumberField
@@ -140,6 +141,7 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
               value={draft().quantity}
               min={0}
               disabled={c().working()}
+              emptyValue={0}
               onChange={value => c().update({ quantity: value ?? 0 })}
             />
             <DateField

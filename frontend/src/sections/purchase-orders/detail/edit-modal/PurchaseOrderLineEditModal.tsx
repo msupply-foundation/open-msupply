@@ -455,6 +455,7 @@ const LineEditContent = (
                       disabled={saving()}
                       ref={packsField.ref}
                       value={linePacks(draft()!)}
+                      emptyValue={0}
                       onChange={value =>
                         patch(packsEntered(draft()!, value ?? 0))
                       }
@@ -479,6 +480,7 @@ const LineEditContent = (
                       data-testid="pack-size-input"
                       disabled={saving()}
                       value={draft()!.requestedPackSize}
+                      emptyValue={0}
                       onChange={value =>
                         patch(packSizeEntered(draft()!, value ?? 0))
                       }
@@ -580,6 +582,7 @@ const LineEditContent = (
                     disabled={saving()}
                     ref={priceField.ref}
                     value={draft()!.pricePerPackBeforeDiscount}
+                    emptyValue={0}
                     onChange={value =>
                       setPrice('pricePerPackBeforeDiscount', value)
                     }
@@ -608,6 +611,7 @@ const LineEditContent = (
                       data-testid="discount-percentage-input"
                       disabled={saving()}
                       value={draft()!.discountPercentage}
+                      emptyValue={0}
                       onChange={value => setPrice('discountPercentage', value)}
                     />
                   </Show>
@@ -630,6 +634,7 @@ const LineEditContent = (
                       data-testid="price-after-discount-input"
                       disabled={saving()}
                       value={draft()!.pricePerPackAfterDiscount}
+                      emptyValue={0}
                       onChange={value =>
                         setPrice('pricePerPackAfterDiscount', value)
                       }
