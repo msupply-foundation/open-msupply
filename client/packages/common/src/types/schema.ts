@@ -3252,6 +3252,11 @@ export type EncounterNode = {
   createdDatetime: Scalars['DateTime']['output'];
   /** The encounter document */
   document: DocumentNode;
+  /**
+   * The registry entry of the document's type, resolved from the row's own
+   * type without loading the document.
+   */
+  documentRegistry?: Maybe<DocumentRegistryNode>;
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -8497,6 +8502,11 @@ export type ProgramEnrolmentNode = {
   contextId: Scalars['String']['output'];
   /** The encounter document */
   document: DocumentNode;
+  /**
+   * The registry entry of the document's type, resolved from the row's own
+   * type without loading the document.
+   */
+  documentRegistry?: Maybe<DocumentRegistryNode>;
   /** The program document */
   encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime']['output'];
