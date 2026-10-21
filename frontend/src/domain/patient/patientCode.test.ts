@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { composePatientCode } from './patientCode';
+import { composePatientCode, generatedCodeFits } from './patientCode';
 
 // spec/patients § generating a code — DIS-02 `.54`: the store name's first
 // three letters upper-cased + the counter value padded to four digits.
@@ -34,5 +34,30 @@ describe('composePatientCode (DIS-02 .54 — generated code composition)', () =>
   // rule is positional, not "first three letters of the first word".
   it('slices positionally, not by word', () => {
     expect(composePatientCode('A-B Clinic', 1)).toBe('A-B0001');
+  });
+});
+
+// Remaining work item 17: the host's generator is offered only where the codes
+// it makes could satisfy the schema's pattern for the code.
+describe('generatedCodeFits', () => {
+  it('fits a schema with no pattern', () => {
+    expect(generatedCodeFits('Gryffindor', undefined)).toBe(true);
+  });
+
+  it("refuses a pattern the store's codes can never match", () => {
+    expect(generatedCodeFits('Gryffindor', '^[0-9]{6}$')).toBe(false);
+  });
+
+  it('fits a pattern written for the generated shape', () => {
+    expect(generatedCodeFits('Gryffindor', '^[A-Z]{3}[0-9]{4,}$')).toBe(true);
+  });
+
+  it('tests the code for this store', () => {
+    expect(generatedCodeFits('Gryffindor', '^GRY')).toBe(true);
+    expect(generatedCodeFits('Hufflepuff', '^GRY')).toBe(false);
+  });
+
+  it('refuses nothing on a pattern that is not a valid expression', () => {
+    expect(generatedCodeFits('Gryffindor', '([')).toBe(true);
   });
 });

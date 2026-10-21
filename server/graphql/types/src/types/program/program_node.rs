@@ -23,6 +23,13 @@ impl ProgramNode {
         self.program_row.is_immunisation
     }
 
+    /// The context the program's documents (its enrolments and encounters)
+    /// belong to: what a document registry entry's `contextId` names. Often,
+    /// but not always, the program's own id.
+    pub async fn context_id(&self) -> &str {
+        &self.program_row.context_id
+    }
+
     pub async fn vaccine_courses(
         &self,
         ctx: &Context<'_>,

@@ -602,6 +602,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.cost-price')}
                               data-testid="field-cost-price"
                               value={edit.costPricePerPack}
+                              emptyValue={0}
                               onChange={v =>
                                 setEdit('costPricePerPack', v ?? 0)
                               }
@@ -610,6 +611,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.sell-price')}
                               data-testid="field-sell-price"
                               value={edit.sellPricePerPack}
+                              emptyValue={0}
                               onChange={v =>
                                 setEdit('sellPricePerPack', v ?? 0)
                               }
@@ -673,6 +675,7 @@ const StockLineDetailView: Component = () => {
                               data-testid="field-volume-per-pack"
                               decimalLimit={10}
                               value={edit.volumePerPack}
+                              emptyValue={0}
                               onChange={v => setEdit('volumePerPack', v ?? 0)}
                             />
                             {/* Derived from the DRAFT volume per pack, not the

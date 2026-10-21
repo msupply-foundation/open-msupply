@@ -1,49 +1,67 @@
 # The patient detail's program-module tabs (spec/patients § program-module
-# tabs). READ-ONLY lists only — the enrolment/encounter document editors and the
-# vaccination card are owned by their own (unbuilt) verticals; these queries
-# feed plain tables. Program display name is the document registry name
-# (document.documentRegistry.name), matching the reference columns.
+# tabs): the lists behind the Programs, Encounters and Vaccinations tables.
+# Program display name is the document registry name
+# (documentRegistry.name, resolved from the row's own type without loading
+# the document), matching the reference columns. An
+# enrolment's `name` is its document's name, which the enrolment modal opens
+# it by; its `contextId` is its program's, which decides the encounter types
+# the patient can be given.
 #
 # Reads gate on QueryProgram (enrolments) / QueryEncounter (encounters); results
 # are already scoped to the caller's allowed program contexts server-side.
+#
+# activeProgramEvents feeds the Additional info chips (spec/encounters/rules.md
+# § additional information): an encounter's need isCurrentEncounter, or it
+# reads its siblings' events. The Vaccinations tab shows no chips but shares
+# the enrolment rows.
 
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   __typename
   id
   type
+  name
+  contextId
   programEnrolmentId
   status
   enrolmentDatetime
   isImmunisationProgram
-  document {
+  documentRegistry {
     __typename
-    documentRegistry {
+    name
+  }
+  activeProgramEvents(at: $eventTime) {
+    ... on ProgramEventConnector {
       __typename
-      name
+      nodes {
+        __typename
+        type
+        data
+      }
     }
   }
 }
 
+# An encounter's program name is the enrolment registry in its context
+# (`contextId`), from the registry read behind the create actions, as on the
+# encounter list (spec/encounters/contract.md).
 fragment EncounterRow on EncounterNode {
   __typename
   id
   type
   startDatetime
   status
-  document {
+  documentRegistry {
     __typename
-    documentRegistry {
-      __typename
-      name
-    }
+    name
   }
-  programEnrolment {
-    __typename
-    document {
+  contextId
+  activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
+    ... on ProgramEventConnector {
       __typename
-      documentRegistry {
+      nodes {
         __typename
-        name
+        type
+        data
       }
     }
   }
@@ -56,6 +74,7 @@ query patientProgramEnrolments(
   $storeId: String!
   $filter: ProgramEnrolmentFilterInput
   $sort: ProgramEnrolmentSortInput
+  $eventTime: DateTime
 ) {
   programEnrolments(storeId: $storeId, filter: $filter, sort: $sort) {
     ... on ProgramEnrolmentConnector {
@@ -73,6 +92,7 @@ query patientEncounters(
   $storeId: String!
   $filter: EncounterFilterInput
   $sort: EncounterSortInput
+  $eventTime: DateTime
 ) {
   encounters(storeId: $storeId, filter: $filter, sort: $sort) {
     ... on EncounterConnector {

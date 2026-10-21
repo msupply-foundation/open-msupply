@@ -38,6 +38,7 @@ export const PurchaseOrderDetailsTab: Component<
       <FormColumn minWidth="15rem">
         <TextField
           label={t('label.authorising-officer-1')}
+          data-testid="authorising-officer-1-field"
           value={props.edit.state.authorisingOfficer1}
           disabled={props.disabled}
           onInput={e =>
@@ -46,6 +47,7 @@ export const PurchaseOrderDetailsTab: Component<
         />
         <TextField
           label={t('label.authorising-officer-2')}
+          data-testid="authorising-officer-2-field"
           value={props.edit.state.authorisingOfficer2}
           disabled={props.disabled}
           onInput={e =>
@@ -54,6 +56,7 @@ export const PurchaseOrderDetailsTab: Component<
         />
         <TextArea
           label={t('label.additional-instructions')}
+          data-testid="additional-instructions-field"
           value={props.edit.state.additionalInstructions}
           disabled={props.disabled}
           onInput={e =>
@@ -65,6 +68,7 @@ export const PurchaseOrderDetailsTab: Component<
       <FormColumn minWidth="15rem">
         <TextField
           label={t('label.supplier-agent')}
+          data-testid="supplier-agent-field"
           value={props.edit.state.supplierAgent}
           disabled={props.disabled}
           onInput={e =>
@@ -73,6 +77,7 @@ export const PurchaseOrderDetailsTab: Component<
         />
         <TextField
           label={t('label.heading-message')}
+          data-testid="heading-message-field"
           value={props.edit.state.headingMessage}
           disabled={props.disabled}
           onInput={e =>
@@ -81,6 +86,7 @@ export const PurchaseOrderDetailsTab: Component<
         />
         <TextArea
           label={t('label.freight-condition')}
+          data-testid="freight-condition-field"
           value={props.edit.state.freightConditions}
           disabled={props.disabled}
           onInput={e =>

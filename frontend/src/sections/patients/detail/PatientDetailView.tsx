@@ -6,7 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
+import { reportPermissionDenied } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -23,9 +23,9 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_N } from '../../../ui/utils/shortcuts';
-import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
@@ -34,15 +34,16 @@ import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
-import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatientCustomFields } from '../patientApi';
 import {
   CustomFieldsEditTab,
   EMPTY_FIELD_VALUE,
 } from '../../../domain/customFields';
-import { createPatientEditor } from './patientEditor';
-import { PatientDetailsForm } from './PatientDetailsForm';
-import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
+import { createPatientDetails } from './patientDetails';
+import { PatientDetailsBody } from './PatientDetailsBody';
+import { PatientToolbarTriggers } from '../../../plugins/PatientToolbarTriggers';
+import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
 import {
@@ -53,28 +54,53 @@ import type { InsurancePolicyFragment } from './insurance/insurance.generated';
 import { ProgramEnrolmentsPanel } from './programs/ProgramEnrolmentsPanel';
 import { EncountersPanel } from './programs/EncountersPanel';
 import {
+  fetchFormRegistries,
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
 } from './programs/programsApi';
-import { patientPreferences } from '../../../store/storeContext';
+import { ProgramPickerDialog } from '@/sections/program-enrolment/ProgramPickerDialog';
+import {
+  fetchImmunisationContexts,
+  programsToOffer,
+} from '@/sections/program-enrolment/programEnrolmentApi';
+import {
+  EnrolmentModal,
+  type EnrolmentTarget,
+} from '@/sections/program-enrolment/EnrolmentModal';
+import {
+  CreateEncounterDialog,
+  type CreatedEncounter,
+} from './programs/CreateEncounterDialog';
+import { EncounterFormModal } from './programs/EncounterFormModal';
+import { hasPermission, patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
 // (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
-// Details tab is the plain-path built-in form, buffered locally and committed
-// on an explicit Save behind a confirmation, with a discard prompt when leaving
-// dirty (the StockLineDetailView model). The Insurance tab lists the patient's
-// policies and adds/edits them (gated on configured providers). The Programs /
-// Encounters / Vaccinations tabs are READ-ONLY lists gated on the program
-// module — the enrolment/encounter document editors and the vaccination card
-// they'd open are owned by other (unbuilt) verticals, so Programs/Vaccinations
-// rows are non-clickable and Encounters rows navigate to the (future) encounter
-// route. The Log tab reuses the shared activity-log surface.
+// Details tab edits the patient on one of two paths (spec/patients rules › two
+// persistence paths), buffered locally and committed on an explicit Save behind
+// a confirmation, with a discard prompt when leaving dirty (the
+// StockLineDetailView model). With a Patient registry entry installed it is the
+// document path: the patient document in the document form host, its body the
+// plugin form contributed to `patient.form` or the host's default patient form.
+// Without one it is the plain-path built-in form. The Insurance tab lists the
+// patient's policies and adds/edits them (gated on configured providers). The
+// Programs / Encounters / Vaccinations tabs are lists gated on the program
+// module: a Programs row opens the enrolment (spec/program-enrolment, whose
+// picker and enrolment live in sections/program-enrolment/), an Encounters row
+// navigates to the encounter's record screen, and a Vaccinations row opens that
+// enrolment's vaccination card (spec/vaccination-card S1; OMS-REG-DIS-02.52).
+// Under the program module the header's split button carries the record-create
+// actions, New program and New encounter, beside Add insurance. The Log tab
+// reuses the shared activity-log surface.
 //
-// NOT built here (owned by other/unbuilt verticals — see the implementation
-// flags): the document-path schema-driven form, the Custom fields tab, the
-// Contact-tracing tab, and — for the program-module tabs above — the enrolment
-// / encounter document editors, the create actions (New program / encounter),
-// and the vaccination card those rows would open.
+// The header also carries the triggers plugins contribute to
+// `patient.toolbarTrigger`; `openDocumentForm` opens a new encounter in the
+// encounter form modal.
+//
+// NOT built here: the Contact-tracing tab.
+//
+// TO-DO: New encounter and the encounter screens are still unspecced; the
+// record-screen spec (implementation-plan H26, #789) brings them into spec.
 
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
@@ -85,30 +111,22 @@ const PatientDetailView: Component = () => {
   const setActiveTab = (value: string) =>
     setSearchParams({ tab: value === 'details' ? undefined : value });
 
-  const [data, { refetch }] = createResource(
-    () =>
-      JSON.stringify({
-        storeId: params.storeId,
-        patientId: params.patientId,
-      }),
-    async serialised => {
-      const result = await graphqlFetch(
-        Patient,
-        JSON.parse(serialised) as PatientVariables
-      );
-      if (result.kind !== 'success') return undefined;
-      return result.data.patient ?? undefined;
-    }
-  );
-  const node = () => data.latest ?? undefined;
-
-  // Local edit buffer, duplicate-code check, validation, and full-replace save
-  // (spec/patients S3 Details) — shared with the picker's edit modal, so
-  // neither surface can drift on these rules (patientEditor.ts).
-  const editor = createPatientEditor({
+  // The patient read and the Details tab, on the plain path or the document
+  // path as the store's Patient registry entry says (spec/patients rules ›
+  // two persistence paths) — shared with the picker's edit modal, so neither
+  // surface can drift on these rules or write the record under a document
+  // (patientDetails.ts). On the document path the one read carries the
+  // document and its draft, so the form follows at once.
+  const patientDetails = createPatientDetails({
     storeId: () => params.storeId,
-    node,
+    patientId: () => params.patientId,
   });
+  // The screen's own read suspends for its first load (the Suspense below);
+  // everything under it reads the patient through patientDetails.node.
+  const { patient: data, refetch } = patientDetails;
+  const node = () => data.latest ?? undefined;
+  const editor = patientDetails.editor;
+  const details = patientDetails.active;
 
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
@@ -137,10 +155,10 @@ const PatientDetailView: Component = () => {
   // that trigger it (the app-bar button and the ghost button in the Insurance
   // panel's empty slot); each carries `shortcut={ALT_N}` for its badge.
   //
-  // Disabled — and so unlisted in the palette — except on the Insurance tab with
-  // the mutate permission, which is exactly when either control renders. KB-R2's
-  // "unclaimed only where the thing is absent": on the Details tab this screen has
-  // no add action, so nothing here answers the key.
+  // Disabled — and so unlisted in the palette — except on the Insurance tab
+  // with the mutate permission, which is exactly when either control renders.
+  // KB-R2's "unclaimed only where the thing is absent": on the Details tab this
+  // screen has no add action, so nothing here answers the key.
   createAddAction({
     name: 'button.add-insurance',
     run: () => setInsuranceState({}),
@@ -162,13 +180,14 @@ const PatientDetailView: Component = () => {
   // subset, derived client-side); encounters load separately, newest first.
   const hasProgramModule = () => patientPreferences().programModule;
 
-  const [enrolmentsData] = createResource(
+  const [enrolmentsData, { refetch: refetchEnrolments }] = createResource(
     () =>
       hasProgramModule()
         ? {
             storeId: params.storeId,
             filter: { patientId: { equalTo: params.patientId } },
             sort: { key: 'enrolmentDatetime' as const, desc: true },
+            eventTime: new Date().toISOString(),
           }
         : undefined,
     fetchPatientProgramEnrolments
@@ -177,13 +196,14 @@ const PatientDetailView: Component = () => {
   const immunisationEnrolments = () =>
     enrolments().filter(e => e.isImmunisationProgram);
 
-  const [encountersData] = createResource(
+  const [encountersData, { refetch: refetchEncounters }] = createResource(
     () =>
       hasProgramModule()
         ? {
             storeId: params.storeId,
             filter: { patientId: { equalTo: params.patientId } },
             sort: { key: 'startDatetime' as const, desc: true },
+            eventTime: new Date().toISOString(),
           }
         : undefined,
     fetchPatientEncounters
@@ -193,14 +213,139 @@ const PatientDetailView: Component = () => {
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
 
+  // The record-create actions, over the registry entries the server lets this
+  // user see: every enrolment type, and the encounter types of the programs the
+  // patient is enrolled in, since the server refuses an encounter in any other
+  // program.
+  const [registriesData] = createResource(
+    () => (hasProgramModule() ? params.storeId : undefined),
+    fetchFormRegistries
+  );
+  const registries = () => gated(registriesData) ?? [];
+  const enrolmentRegistries = () =>
+    registries().filter(r => r.category === 'PROGRAM_ENROLMENT');
+  // New program from the Vaccinations tab offers only immunisation programs
+  // (spec/program-enrolment rules § enrolling a patient); until their
+  // contexts are read, or if the read fails, it offers every program.
+  const [immunisationContexts] = createResource(
+    () => (hasProgramModule() ? params.storeId : undefined),
+    fetchImmunisationContexts
+  );
+  const [pickerImmunisationOnly, setPickerImmunisationOnly] =
+    createSignal(false);
+  const pickerRegistries = () =>
+    programsToOffer(
+      enrolmentRegistries(),
+      pickerImmunisationOnly(),
+      gated(immunisationContexts)
+    );
+  const enrolledTypes = () => new Set(enrolments().map(e => e.type));
+  const encounterRegistries = () => {
+    const contexts = new Set(enrolments().map(e => e.contextId));
+    return registries().filter(
+      r => r.category === 'ENCOUNTER' && contexts.has(r.contextId)
+    );
+  };
+  const canAddEncounter = () => enrolments().length > 0;
+
+  // A new enrolment or encounter is refused at the click, before its picker
+  // or dialog opens, for a user who may edit no program's records here
+  // (ui-standards/validation.md § permission gating): the server would refuse
+  // its save.
+  const refusedWithoutDocumentMutate = (): boolean => {
+    if (hasPermission('DOCUMENT_MUTATE')) return false;
+    reportPermissionDenied(['DocumentMutate']);
+    return true;
+  };
+
+  // A trigger's `openDocumentForm`: a new encounter of a type in a program the
+  // patient is enrolled in, which is all the server accepts. Anything else is
+  // refused and named against the plugin that asked.
+  const [encounterFormType, setEncounterFormType] =
+    createSignal<FormRegistryFragment>();
+  const openDocumentForm = (documentType: string, pluginCode: string) => {
+    const registry = encounterRegistries().find(
+      r => r.documentType === documentType
+    );
+    if (!registry) {
+      recordPluginDiagnostic({
+        level: 'warning',
+        pluginCode,
+        message: `patient.toolbarTrigger: openDocumentForm("${documentType}") refused — not an encounter type of a program this patient is enrolled in`,
+      });
+      return;
+    }
+    if (refusedWithoutDocumentMutate()) return;
+    setEncounterFormType(registry);
+  };
+
+  const [pickerOpen, setPickerOpen] = createSignal(false);
+  const [enrolmentTarget, setEnrolmentTarget] = createSignal<EnrolmentTarget>();
+  const [createEncounterOpen, setCreateEncounterOpen] = createSignal(false);
+
+  // A visit starting within the next five minutes is being recorded now, so
+  // its record screen opens (the old client's rule); a later one has been
+  // scheduled, and the patient's encounter list shows it.
+  const encounterCreated = (created: CreatedEncounter) => {
+    setCreateEncounterOpen(false);
+    const soon = Date.now() + 5 * 60 * 1000;
+    if (new Date(created.startDatetime).getTime() <= soon) {
+      openEncounter({ id: created.encounterId });
+      return;
+    }
+    setActiveTab('encounters');
+    void refetchEncounters();
+  };
+
+  type CreateAction = 'new-program' | 'new-encounter' | 'add-insurance';
+  const canAddInsurance = () => hasInsurance() && editor.canMutate();
+  const createOptions = () => [
+    { value: 'new-program', label: t('button.new-program') },
+    {
+      value: 'new-encounter',
+      label: t('button.new-encounter'),
+      disabled: !canAddEncounter(),
+      title: t('messages.enrol-before-encounter'),
+    },
+    ...(canAddInsurance()
+      ? [{ value: 'add-insurance', label: t('button.add-insurance') }]
+      : []),
+  ];
+  // The split button's main action follows the tab (spec/patients ui-surface
+  // S3 layout): the tab's own record kind, else New program.
+  const tabAction = (): CreateAction => {
+    if (activeTab() === 'insurance' && canAddInsurance())
+      return 'add-insurance';
+    if (activeTab() === 'encounters' && canAddEncounter()) {
+      return 'new-encounter';
+    }
+    return 'new-program';
+  };
+  const runCreate = (action: string) => {
+    if (
+      (action === 'new-program' || action === 'new-encounter') &&
+      refusedWithoutDocumentMutate()
+    ) {
+      return;
+    }
+    if (action === 'new-program') {
+      setPickerImmunisationOnly(activeTab() === 'vaccinations');
+      setPickerOpen(true);
+    } else if (action === 'new-encounter' && canAddEncounter()) {
+      setCreateEncounterOpen(true);
+    } else if (action === 'add-insurance' && canAddInsurance()) {
+      setInsuranceState({});
+    }
+  };
+
   const leave = () => navigate(`/${params.storeId}/dispensary/patients`);
 
   // Discard prompt on any leave from a dirty form (spec § patient edit form):
   // route change, tab switch, browser back, reload / tab close. onDiscard
   // resets the draft so a tab switch — which stays mounted — is truly cleared.
   const leaveGuard = createConfirmOnLeave({
-    isDirty: editor.isDirty,
-    onDiscard: editor.resetDraft,
+    isDirty: () => details().isDirty(),
+    onDiscard: () => details().resetDraft(),
   });
 
   const displayName = () => node()?.name || t('label.new-patient');
@@ -263,25 +408,54 @@ const PatientDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs()} />
-                  {/* Add insurance — the app-bar page action on the Insurance
-                      tab (spec ui-surface S3 layout). Gated on providers being
-                      configured + patient-mutate; opens the modal in add mode.
-                      (The other-vertical program create actions share this slot
-                      once built.) */}
-                  <Show
-                    when={activeTab() === 'insurance' && editor.canMutate()}
-                  >
-                    <HeaderButtons>
-                      <Button
+                  {/* The app-bar page actions (spec ui-surface S3 layout). Under
+                      the program module, one split button of record-create
+                      actions whose main action follows the tab; without it,
+                      Add insurance alone, on the Insurance tab. Add insurance
+                      is gated on providers being configured + patient-mutate
+                      and opens the modal in add mode either way. */}
+                  <HeaderButtons>
+                    <PatientToolbarTriggers
+                      props={{
+                        patient: {
+                          id: n().id,
+                          enrolmentTypes: enrolments().map(e => e.type),
+                        },
+                      }}
+                      openDocumentForm={openDocumentForm}
+                    />
+                    <Show
+                      when={hasProgramModule()}
+                      fallback={
+                        <Show
+                          when={
+                            activeTab() === 'insurance' && editor.canMutate()
+                          }
+                        >
+                          <Button
+                            icon={<PlusCircleIcon />}
+                            shortcut={ALT_N}
+                            data-testid="add-insurance-header-button"
+                            onClick={() => setInsuranceState({})}
+                          >
+                            {t('button.add-insurance')}
+                          </Button>
+                        </Show>
+                      }
+                    >
+                      <SplitButton
                         icon={<PlusCircleIcon />}
-                        shortcut={ALT_N}
-                        data-testid="add-insurance-header-button"
-                        onClick={() => setInsuranceState({})}
-                      >
-                        {t('button.add-insurance')}
-                      </Button>
-                    </HeaderButtons>
-                  </Show>
+                        options={createOptions()}
+                        value={tabAction()}
+                        onAction={runCreate}
+                        menuLabel={t('button.create')}
+                        shortcut={
+                          tabAction() === 'add-insurance' ? ALT_N : undefined
+                        }
+                        testId="patient-create-split-button"
+                      />
+                    </Show>
+                  </HeaderButtons>
                   {/* Summary (spec/patients S3): Patient ID · Gender · DOB
                       (with derived age) live in the app-bar toolbar row above
                       the tabs — the header field cluster, never a hand-rolled
@@ -334,17 +508,17 @@ const PatientDetailView: Component = () => {
                         data-testid="cancel-button"
                         onClick={leave}
                       >
-                        {editor.isDirty()
+                        {details().isDirty()
                           ? t('button.cancel')
                           : t('button.close')}
                       </Button>
-                      <Show when={editor.canMutate()}>
+                      <Show when={details().canMutate()}>
                         <Button
                           icon={<SaveIcon />}
                           data-testid="save-button"
-                          loading={editor.saving()}
-                          disabled={!editor.isDirty() || editor.saving()}
-                          onClick={() => void editor.attemptSave()}
+                          loading={details().saving()}
+                          disabled={!patientDetails.canSave()}
+                          onClick={() => void details().attemptSave()}
                         >
                           {t('button.save')}
                         </Button>
@@ -361,35 +535,33 @@ const PatientDetailView: Component = () => {
                     ContentContainer's `padded` supplies (ui-standards/
                     detail-views → detail form). */}
                 <ContentContainer size="form" padded>
-                  <Show when={editor.saveError()}>
-                    <Alert severity="error">{editor.saveError()}</Alert>
-                  </Show>
-                  <PatientDetailsForm
+                  <PatientDetailsBody
                     storeId={params.storeId}
                     patientId={params.patientId}
-                    draft={editor.edit}
-                    setField={editor.setField}
-                    disabled={!editor.canMutate()}
-                    errorFor={editor.validation.errorFor}
-                  />
-                  <FormErrorSummary
-                    errors={editor.validation.visible()}
-                    testId="patient-detail-error-summary"
+                    details={patientDetails}
+                    errorSummaryTestId="patient-detail-error-summary"
                   />
                 </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>
-                {/* Read-only program-module lists. Programs + Vaccinations
-                    share the enrolment table (Vaccinations = immunisation
-                    subset); rows aren't clickable (editing needs the document
-                    form / vaccination card, other verticals). Encounters rows
-                    navigate to the (future) encounter route. */}
+                {/* Program-module lists. Programs + Vaccinations share the
+                    enrolment table (Vaccinations = immunisation subset). A
+                    Programs row opens its enrolment in the modal; a
+                    Vaccinations row opens its vaccination card. Encounters
+                    rows navigate to the encounter screen. */}
                 <TabPanel value="programs">
                   <ProgramEnrolmentsPanel
                     rows={enrolments()}
                     loading={enrolmentsData.loading}
                     tableId="patient-program-enrolment-list"
                     emptyMessage={t('messages.no-programs')}
+                    showAdditionalInfo
+                    onRowClick={row =>
+                      setEnrolmentTarget({
+                        kind: 'existing',
+                        documentName: row.name,
+                      })
+                    }
                   />
                 </TabPanel>
                 <TabPanel value="encounters">
@@ -397,6 +569,7 @@ const PatientDetailView: Component = () => {
                     rows={encounters()}
                     loading={encountersData.loading}
                     onRowClick={openEncounter}
+                    enrolmentRegistries={enrolmentRegistries()}
                   />
                 </TabPanel>
                 <TabPanel value="vaccinations">
@@ -405,6 +578,11 @@ const PatientDetailView: Component = () => {
                     loading={enrolmentsData.loading}
                     tableId="patient-vaccination-card-list"
                     emptyMessage={t('messages.no-programs')}
+                    onRowClick={row =>
+                      navigate(
+                        `/${params.storeId}/dispensary/patients/${params.patientId}/vaccination-card/${row.id}`
+                      )
+                    }
                   />
                 </TabPanel>
               </Show>
@@ -439,6 +617,35 @@ const PatientDetailView: Component = () => {
                 <ActivityLogPanel storeId={params.storeId} recordId={n().id} />
               </TabPanel>
 
+              <ProgramPickerDialog
+                open={pickerOpen()}
+                registries={pickerRegistries()}
+                enrolledTypes={enrolledTypes()}
+                onPick={registry => {
+                  setPickerOpen(false);
+                  setEnrolmentTarget({ kind: 'new', registry });
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+              <EnrolmentModal
+                storeId={params.storeId}
+                patientId={n().id}
+                target={enrolmentTarget()}
+                onClose={() => setEnrolmentTarget(undefined)}
+                onSaved={() => {
+                  setActiveTab('programs');
+                  void refetchEnrolments();
+                }}
+              />
+              <CreateEncounterDialog
+                open={createEncounterOpen()}
+                storeId={params.storeId}
+                patientId={n().id}
+                registries={encounterRegistries()}
+                defaultType={encounters()[0]?.type}
+                onCreated={encounterCreated}
+                onClose={() => setCreateEncounterOpen(false)}
+              />
               <InsuranceModal
                 open={insuranceState() !== undefined}
                 onClose={() => setInsuranceState(undefined)}
@@ -450,13 +657,24 @@ const PatientDetailView: Component = () => {
                 onSaved={() => void refetchPolicies()}
               />
 
+              <EncounterFormModal
+                storeId={params.storeId}
+                patientId={n().id}
+                registry={encounterFormType()}
+                onClose={() => setEncounterFormType(undefined)}
+                onSaved={() => {
+                  void refetchEncounters();
+                  void refetchEnrolments();
+                }}
+              />
+
               <ConfirmDialog
-                open={editor.confirmSaveOpen()}
+                open={details().confirmSaveOpen()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
                 confirmAction="save"
-                onConfirm={() => void editor.doSave(() => void refetch())}
-                onClose={() => editor.setConfirmSaveOpen(false)}
+                onConfirm={() => void details().doSave(() => void refetch())}
+                onClose={() => details().setConfirmSaveOpen(false)}
               />
               <ConfirmDialog
                 open={leaveGuard.open()}

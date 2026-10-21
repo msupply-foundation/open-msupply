@@ -206,6 +206,9 @@ mod test {
             )
             .unwrap();
         let result = temperature_excursions(log_data).unwrap();
+        // Read straight after the call, so this bounds how far past `now` its
+        // clock could be. Setup alone can take several seconds on Postgres
+        let elapsed = (Utc::now().naive_utc() - now).num_seconds();
 
         let expected = vec![
             TemperatureExcursion {
@@ -228,16 +231,17 @@ mod test {
             },
         ];
 
-        // Duration is measured from the moment `excursions` ran, which may be a
-        // second or two after `now`, so check it separately with a tolerance
+        // Duration is measured from the moment `temperature_excursions` ran,
+        // somewhere between `now` and `now + elapsed`, so check it separately
         for (actual, expected) in result.iter().zip(expected.iter()) {
             let expected_duration = (now - expected.datetime).num_seconds();
             assert!(
-                (actual.duration - expected_duration).abs() <= 5,
-                "{}: duration {} not within 5s of {}",
+                (expected_duration..=expected_duration + elapsed).contains(&actual.duration),
+                "{}: duration {} not within {}..={}",
                 actual.id,
                 actual.duration,
-                expected_duration
+                expected_duration,
+                expected_duration + elapsed
             );
         }
 

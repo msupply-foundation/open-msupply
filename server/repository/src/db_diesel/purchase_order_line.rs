@@ -250,6 +250,12 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             expected_delivery_date,
         } = f;
 
+        // The OR pair must come first: or_filter ORs against the whole where
+        // clause so far, so only on an empty clause does it group as one term.
+        if item_code_or_name.is_some() {
+            apply_string_filter!(query, item_code_or_name.clone(), item::code);
+            apply_string_or_filter!(query, item_code_or_name, item::name);
+        }
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
         apply_equal_filter!(query, id, purchase_order_line::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
@@ -294,11 +300,6 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_number,
             purchase_order::purchase_order_number
         );
-        // or filter need to be applied before and filters
-        if item_code_or_name.is_some() {
-            apply_string_filter!(query, item_code_or_name.clone(), item::code);
-            apply_string_or_filter!(query, item_code_or_name, item::name);
-        }
 
         apply_string_filter!(query, item_name, item::name);
         apply_date_filter!(

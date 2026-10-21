@@ -500,7 +500,7 @@
   "error.failed-to-save-vaccine-course": "La sauvegarde du schéma de vaccination a échoué",
   "error.fetch-notifications": "Impossible d'afficher les notifications de la chaîne du froid",
   "error.field-must-be-specified": "{{field}} doit être spécifié",
-  "error.field-required": "Ce filtre est obligatoire.",
+  "error.field-required": "Ce champ est obligatoire.",
   "error.file-exceeds-size-limit": "« {{filename}} » dépasse la taille maximale du fichier de {{maxSize}}",
   "error.file-type-not-supported": "'{{filename}}' n'est pas un type de fichier pris en charge",
   "error.finalise-no-lines": "Cet inventaire n'a pas de lignes à finaliser. Ajoutez d'abord au moins une ligne.",

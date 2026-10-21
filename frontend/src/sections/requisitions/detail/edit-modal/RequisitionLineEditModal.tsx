@@ -530,6 +530,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
               ref={rowProps.ref}
               disabled={!editable()}
               value={shown()}
+              emptyValue={0}
               onChange={value => {
                 if (!rowProps.onChange) return;
                 const entered = value ?? 0;
@@ -647,6 +648,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
                 unitsToMode(supplyUnits(), entryMode(), packSize()) * 100
               ) / 100
             }
+            emptyValue={0}
             onChange={value =>
               patchDraft({
                 supplyQuantity: modeToUnits(

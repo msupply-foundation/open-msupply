@@ -152,6 +152,7 @@ export const PurchaseOrderDetailToolbar: Component<
       <CurrencySelect
         label={t('label.currency')}
         size="small"
+        inputTestId="currency-input"
         value={props.node.currencyId ?? undefined}
         // NOT a state rule: an order carrying a confirmation moment has its
         // currency fixed whatever state it is in, and an order in a late state
@@ -176,6 +177,7 @@ export const PurchaseOrderDetailToolbar: Component<
       <LabelledValue
         label={t('label.foreign-exchange-rate')}
         variant="field"
+        data-testid="exchange-rate-value"
         size="small"
       >
         {formatNumber(props.node.foreignExchangeRate, {
