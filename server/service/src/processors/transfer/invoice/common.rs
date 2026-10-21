@@ -97,7 +97,7 @@ pub(crate) fn generate_inbound_lines(
                 // Legacy customer invoice lines sync with `sentQuantity` and `sent_pack_size`
                 // of 0, so when the outbound hasn't recorded what it shipped, fall back to the
                 // line's own quantity and pack size - that's what the supplying store sent (#699)
-                let shipped_recorded = shipped_number_of_packs.is_some()
+                let shipped_recorded = shipped_number_of_packs.is_some_and(|packs| packs > 0.0)
                     && shipped_pack_size.is_some_and(|size| size > 0.0);
                 let (shipped_number_of_packs, shipped_pack_size) =
                     match (&invoice_row.r#type, &r#type) {
@@ -711,6 +711,27 @@ mod test {
         .unwrap();
 
         assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].shipped_number_of_packs, Some(20.0));
+        assert_eq!(lines[0].shipped_pack_size, Some(30.0));
+
+        // Only the pack size filled in still falls back
+        let mut line = transfer_at_cost_mock_data().invoice_lines[0].clone();
+        line.number_of_packs = 20.0;
+        line.pack_size = 30.0;
+        line.shipped_number_of_packs = Some(0.0);
+        line.shipped_pack_size = Some(30.0);
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&line)
+            .unwrap();
+
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
         assert_eq!(lines[0].shipped_number_of_packs, Some(20.0));
         assert_eq!(lines[0].shipped_pack_size, Some(30.0));
 
