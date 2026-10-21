@@ -260,9 +260,8 @@ const LineEditContent = (
       props.onSaved();
       return true;
     }
-    setErrorMessage(
-      result.kind === 'error' ? result.message : t('error.cant-save')
-    );
+    // No message = already up in a global modal (permission or transport).
+    if (result.kind === 'error') setErrorMessage(result.message);
     return false;
   };
 
