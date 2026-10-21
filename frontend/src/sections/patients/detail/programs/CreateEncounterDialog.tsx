@@ -1,4 +1,4 @@
-import { createSignal, Show, type JSX } from 'solid-js';
+import { createMemo, createSignal, Show, type JSX } from 'solid-js';
 import { t } from '../../../../intl';
 import { authUser, userDisplayName } from '../../../../auth/authContext';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -83,23 +83,27 @@ const CreateEncounterBody = (
     },
   ]);
 
-  const create = async () => {
-    if (saving()) return;
-    validation.arm();
-    const registry = props.registries.find(r => r.id === registryId());
-    const start = startDatetime();
-    if (!validation.valid() || !registry || !start) return;
-    // The encounter's form could not open what this would write (the form
-    // host's outOfStep), so it is not started.
-    if (
+  const chosen = () => props.registries.find(r => r.id === registryId());
+  // A type whose plugin form and registry entry are out of step can't be
+  // started (the form host's outOfStep): its form could not open what this
+  // would write. Said as soon as it is chosen, before anything is filled in.
+  const chosenOutOfStep = createMemo(() => {
+    const registry = chosen();
+    return (
+      registry !== undefined &&
       isOutOfStep(
         documentFormVersioning('encounter.form', registry.documentType),
         registry
       )
-    ) {
-      setSaveError(t('messages.document-form-out-of-step'));
-      return;
-    }
+    );
+  });
+
+  const create = async () => {
+    if (saving() || chosenOutOfStep()) return;
+    validation.arm();
+    const registry = chosen();
+    const start = startDatetime();
+    if (!validation.valid() || !registry || !start) return;
     const now = new Date().toISOString();
     const user = authUser();
     const c = clinician();
@@ -169,6 +173,7 @@ const CreateEncounterBody = (
             confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
+            disabled={chosenOutOfStep()}
             onClick={() => void create()}
           >
             {t('button.create')}
@@ -197,6 +202,11 @@ const CreateEncounterBody = (
             error={validation.errorFor('type')}
             testId="create-encounter-type"
           />
+          <Show when={chosenOutOfStep()}>
+            <Alert severity="warning" testId="document-version-notice">
+              {t('messages.document-form-out-of-step')}
+            </Alert>
+          </Show>
           <DateTimeField
             label={t('label.visit-date')}
             value={startDatetime()}
