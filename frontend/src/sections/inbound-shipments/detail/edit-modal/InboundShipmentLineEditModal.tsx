@@ -1043,6 +1043,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               // numberOfPacks is Float on the wire; match the reference 2-dp
               // room (spec S4).
               decimalLimit={2}
+              emptyValue={0}
               onChange={v => updateBatch(b.id, 'numberOfPacks', v ?? 0)}
             />
             {/* Units received, as a HINT under the packs figure rather than a
@@ -1180,6 +1181,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // Pack size is Float on the wire and may be fractional; 2-dp room
             // matches the reference (spec S4).
             decimalLimit={2}
+            emptyValue={1}
             onChange={v => changePackSize(b.id, v ?? 1)}
           />
         );
@@ -1410,6 +1412,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             size="small"
             value={b.costPricePerPack}
             disabled={props.costLocked || props.readOnly}
+            emptyValue={0}
             onChange={v => changeCost(b.id, v ?? 0)}
           />
         );
@@ -1448,6 +1451,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             disabled={props.readOnly}
             size="small"
             value={b.sellPricePerPack}
+            emptyValue={0}
             onChange={v => changeSell(b.id, v ?? 0)}
           />
         );
@@ -1669,6 +1673,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             size="small"
             value={b.volumePerPack}
             min={0}
+            emptyValue={0}
             onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
           />
         );

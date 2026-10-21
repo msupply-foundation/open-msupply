@@ -14,10 +14,10 @@ import {
   displayString,
   editString,
   finalizeText,
-  isIncomplete,
   processInput,
   stepValue,
-  textRepresents,
+  valueRewritesText,
+  type LastCommit,
   type NumberFieldConstraints,
 } from './numberFieldLogic';
 import styles from './NumberField.module.css';
@@ -176,6 +176,7 @@ export const NumberField = (props: NumberFieldProps) => {
     decimalLimit: local.decimalLimit ?? 0,
     decimalMin: local.decimalMin,
     noFormatting: local.noFormatting,
+    emptyValue: local.emptyValue,
   });
 
   /*
@@ -193,8 +194,7 @@ export const NumberField = (props: NumberFieldProps) => {
   let dirty = false;
   // `echo` is what the parent made of the commit — `value` itself, unless the
   // parent transforms it (see the contract above).
-  let lastCommitted:
-    { value: number | undefined; echo: number | undefined } | undefined;
+  let lastCommitted: LastCommit | undefined;
 
   // Whether the parent answers a commit INSIDE onChange — writing, perhaps
   // transforming, the value it passes back. Only then is the echo its answer:
@@ -255,13 +255,8 @@ export const NumberField = (props: NumberFieldProps) => {
       () => local.value,
       value => {
         const loc = locale();
-        if (
-          lastCommitted &&
-          (value === lastCommitted.value || value === lastCommitted.echo)
-        )
+        if (!valueRewritesText(value, text(), focused(), lastCommitted, loc))
           return;
-        if (textRepresents(text(), value, loc)) return;
-        if (focused() && isIncomplete(text(), loc)) return;
         setText(
           focused()
             ? editString(value, constraints(), loc)
@@ -323,7 +318,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value ?? local.emptyValue);
+      commit(result.commit.value);
       reportClamped(result.commit);
     }
   };
@@ -331,14 +326,8 @@ export const NumberField = (props: NumberFieldProps) => {
   const finalize = () => {
     dirty = false;
     const result = finalizeText(text(), constraints(), locale());
-    const value = result.value ?? local.emptyValue;
-    commit(value);
-    // Left empty, the field shows what empty stands for.
-    const typed =
-      result.value === undefined
-        ? displayString(value, constraints(), locale())
-        : result.text;
-    setText(echoText(value, typed, displayString));
+    commit(result.value);
+    setText(echoText(result.value, result.text, displayString));
     reportClamped(result);
   };
 

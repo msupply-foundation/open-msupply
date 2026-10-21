@@ -282,6 +282,7 @@ const ServiceChargesContent = (
             size="small"
             disabled={props.disabled}
             value={charge.totalBeforeTax}
+            emptyValue={0}
             onChange={value => update(charge.id, 'totalBeforeTax', value ?? 0)}
           />
         );
