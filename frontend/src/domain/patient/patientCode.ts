@@ -4,7 +4,7 @@ import { graphqlFetch } from '../../api/graphql';
 // re-exports PatientSearch, and pulling a Solid component into this module puts
 // Kobalte's client-only code in the import graph of a node-environment unit
 // test (the ItemVariantEditModal → domain/name/nameResource precedent).
-import { searchLocalPatients } from '../../domain/patient/patientResource';
+import { searchLocalPatients } from './patientResource';
 import {
   AllocatePatientCodeNumber,
   type AllocatePatientCodeNumberVariables,
@@ -33,6 +33,25 @@ const NUMBER_PAD = '0000';
 export const composePatientCode = (storeName: string, number: number): string =>
   storeName.slice(0, PREFIX_LENGTH).toLocaleUpperCase() +
   String(number).padStart(NUMBER_PAD.length, '0');
+
+/**
+ * Whether a code the generator makes for the store could satisfy the schema's
+ * `pattern` for the code: a deployment whose codes are, say, six digits gets no
+ * Generate, since every code it would make is refused. Tested on the shape of
+ * the first code; no pattern, or one that is not a valid expression, refuses
+ * nothing. Matched with the `u` flag, as the schema validator matches it.
+ */
+export const generatedCodeFits = (
+  storeName: string,
+  pattern: string | undefined
+): boolean => {
+  if (pattern === undefined) return true;
+  try {
+    return new RegExp(pattern, 'u').test(composePatientCode(storeName, 1));
+  } catch {
+    return true;
+  }
+};
 
 /**
  * Whether another patient already holds `code`. `excludePatientId` is the

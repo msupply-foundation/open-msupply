@@ -1,0 +1,62 @@
+# The vaccination card (spec/vaccination-card): the card read, the patient's
+# facts the card states, and the reason a not-given dose was withheld — which
+# the card row does not carry (contract § the card at a glance: backend gap),
+# so it is read per not-given dose by its vaccination id.
+
+fragment VaccinationCardRow on VaccinationCardItemNode {
+  __typename
+  id
+  vaccineCourseId
+  vaccineCourseDoseId
+  canSkipDose
+  vaccinationId
+  label
+  minAgeMonths
+  maxAgeMonths
+  customAgeLabel
+  minIntervalDays
+  given
+  vaccinationDate
+  suggestedDate
+  status
+  batch
+}
+
+query vaccinationCard($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    __typename
+    ... on VaccinationCardNode {
+      id
+      programName
+      patientFirstName
+      patientLastName
+      items {
+        ...VaccinationCardRow
+        facilityName(storeId: $storeId)
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+query vaccinationCardPatient($storeId: String!, $patientId: String!) {
+  patient(storeId: $storeId, patientId: $patientId) {
+    __typename
+    id
+    name
+    dateOfBirth
+  }
+}
+
+query vaccinationReason($storeId: String!, $id: String!) {
+  vaccination(storeId: $storeId, id: $id) {
+    __typename
+    id
+    notGivenReason
+  }
+}

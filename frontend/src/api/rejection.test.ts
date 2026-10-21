@@ -64,6 +64,15 @@ describe('what the reader does with everything else', () => {
     });
   });
 
+  it('shows a reason that is already a sentence as it came, names and ids intact', () => {
+    // A form plugin's install refusal (plugin-management contract › install)
+    // is a sentence naming document types and schema ids; splitting it at
+    // every capital would break them (OMS-REG-MNG-07.73).
+    const reason =
+      'Schema deployment_ReproductiveHealthEnrolment_v2_a1b2 is already installed with different content; a published schema version never changes';
+    expect(rejectionFrom(error(reason), GENERIC)).toEqual({ message: reason });
+  });
+
   it('keeps a multi-line dump out of the message and behind the disclosure', () => {
     // A variant carrying data pretty-debugs as a struct spanning lines, which
     // is not user copy — but it is the only account of what happened, so it

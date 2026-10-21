@@ -255,6 +255,17 @@ describe('graphqlFetch', () => {
     expect(unexpectedError()).toBeUndefined();
   });
 
+  it('names a document permission the server checks per context, HasDynamicPermission(...)', async () => {
+    mockFetch(
+      forbiddenBody(
+        'Missing permission: DocumentQuery, Required permissions: And([HasStoreAccess, HasDynamicPermission(DocumentQuery)]), Store: Some("X")'
+      )
+    );
+    const result = await graphqlFetch(document, {});
+    expect(result).toEqual({ kind: 'forbidden' });
+    expect(forbiddenError()).toEqual(['DocumentQuery']);
+  });
+
   it('sets an empty permission list when Forbidden carries no parseable detail', async () => {
     mockFetch({ data: null, errors: [{ message: 'Forbidden' }] });
     const result = await graphqlFetch(document, {});

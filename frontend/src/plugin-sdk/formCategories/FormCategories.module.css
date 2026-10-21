@@ -1,0 +1,80 @@
+/*
+ * The old client's category tiles (CategorizationTabLayout), measure for
+ * measure: 150px squares on a pale blue fill with a 20px radius, the icon at
+ * 5em, the label bold in the action blue with a chevron, and the error count
+ * in a pill at the bottom corner. Its colours are the nearest tokens.
+ */
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  place-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  inline-size: 9.375rem;
+  block-size: 9.375rem;
+  padding: 0.3125rem 0.625rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-icon);
+  color: var(--secondary-main);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) ease;
+}
+
+.tile:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, var(--bg-icon));
+}
+
+.tile:focus-visible {
+  outline: 3px solid var(--secondary-main);
+  outline-offset: 0.125rem;
+}
+
+.icon {
+  display: inline-flex;
+  font-size: 5em;
+  line-height: 1;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.chevron {
+  flex-shrink: 0;
+  font-size: 1.5em;
+}
+
+.missing {
+  position: absolute;
+  inset-block-end: 0.125rem;
+  inset-inline-end: 0.125rem;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bg-login);
+  color: var(--error-main);
+}
+
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

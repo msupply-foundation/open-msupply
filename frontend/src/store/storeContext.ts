@@ -314,6 +314,27 @@ const currentStoreName = (): string => {
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
 };
 
+// The CODE of the store the user has entered, the store part of an
+// identifier a plugin generates (SlotContext.storeCode). Read off the same
+// store list as currentStoreName; undefined while the store is unresolved, so
+// a caller never builds an identifier from a guess.
+//
+// Memoised, and created on first read, for currentStoreMode's reasons: every
+// slot region reads it through slotContext, and must depend on the code
+// rather than on the whole `me` payload, or a store renamed centrally would
+// rebuild the regions and remount their contributions.
+let storeCodeMemo: Accessor<string | undefined> | undefined;
+const currentStoreCode = (): string | undefined => {
+  storeCodeMemo ??= createRoot(() => {
+    const memo = createMemo(() => {
+      const storeId = currentStoreId();
+      return authUser()?.stores.nodes.find(s => s.id === storeId)?.code;
+    });
+    return memo;
+  });
+  return storeCodeMemo();
+};
+
 // Whether the approval state is part of the purchase-order ladder
 // (spec/purchase-orders rules § the status lifecycle).
 const purchaseOrderPreferences = () => {
@@ -372,6 +393,7 @@ export {
   refetch as refetchStoreContext,
   currentStoreId,
   currentStoreName,
+  currentStoreCode,
   currentStoreMode,
   stocktakePreferences,
   stockPreferences,
