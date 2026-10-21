@@ -67,6 +67,26 @@ describe('triggerShows', () => {
       }),
     ]);
   });
+
+  it('names a throwing gate once, however often it runs, logging every throw', () => {
+    const errors = vi.mocked(console.error);
+    const before = pluginDiagnostics().length;
+    const throwing = trigger({
+      id: 'throws-repeatedly',
+      visible: () => {
+        throw new Error('boom');
+      },
+    });
+    for (const props of [enrolled, notEnrolled, enrolled]) {
+      expect(triggerShows(throwing, props)).toBe(false);
+    }
+    expect(pluginDiagnostics().slice(before)).toHaveLength(1);
+    expect(
+      errors.mock.calls.filter(([line]) =>
+        String(line).includes('throws-repeatedly visible threw')
+      )
+    ).toHaveLength(3);
+  });
 });
 
 describe('runTrigger', () => {
@@ -113,5 +133,18 @@ describe('runTrigger', () => {
     expect(pluginDiagnostics().slice(before)[0]?.message).toContain(
       'its onClick threw'
     );
+  });
+
+  it('names a handler that throws on every click', () => {
+    const before = pluginDiagnostics().length;
+    const throwing = trigger({
+      id: 'throws-on-click',
+      onClick: () => {
+        throw new Error('boom');
+      },
+    });
+    runTrigger(throwing, enrolled, vi.fn());
+    runTrigger(throwing, enrolled, vi.fn());
+    expect(pluginDiagnostics().slice(before)).toHaveLength(2);
   });
 });
