@@ -37,4 +37,45 @@ describe("Test all", () => {
     expect(po.totalCost).toBe(7.5);
     expect(po.estimatedCost).toBe(15);
   });
+
+  it("keeps small pack prices to four decimals", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.purchaseOrder.lines.nodes = [
+      { lineNumber: 1, pricePerPackAfterSupplierDiscount: 0.0125 },
+      { lineNumber: 2, pricePerPackAfterSupplierDiscount: 4.9 },
+      { lineNumber: 3, pricePerPackAfterSupplierDiscount: 1.23456 },
+    ];
+
+    const prices = convert_data(input).data.purchaseOrder.lines.nodes.map(
+      (line) => line.pricePerPack,
+    );
+
+    expect(prices).toEqual(["0.0125", "4.90", "1.2346"]);
+  });
+
+  it("moves service lines into the charges", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.purchaseOrder.lines.nodes = [
+      {
+        lineNumber: 2,
+        item: { name: "Service charges", type: "SERVICE" },
+        comment: "Freight",
+        lineTotalAfterSupplierDiscount: 150,
+      },
+      { lineNumber: 1, item: { name: "Amoxicillin", type: "STOCK" } },
+      {
+        lineNumber: 3,
+        item: { name: "Service charges", type: "SERVICE" },
+        lineTotalAfterSupplierDiscount: 35.5,
+      },
+    ];
+
+    const po = convert_data(input).data.purchaseOrder;
+
+    expect(po.lines.nodes.map((line) => line.lineNumber)).toEqual([1]);
+    expect(po.charges).toEqual([
+      { description: "Freight", amount: "150.00" },
+      { description: "Service charges", amount: "35.50" },
+    ]);
+  });
 });
