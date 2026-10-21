@@ -45,7 +45,13 @@ import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
-import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
+import {
+  StockIcon,
+  BarIcon,
+  SaveIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+} from '../../../ui/icons';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
@@ -791,12 +797,14 @@ const StockLineDetailView: Component = () => {
                   OMS-REG-SMV-08.21). The repack is already saved when this
                   opens, so it is a notice with a choice of where to go — Stay
                   or Go to new line — not an "Are you sure?" whose Cancel would
-                  read as undoing it (#1222). Go navigates, then every close
+                  read as undoing it (#1222); its icon is a check, not the
+                  help mark, for the same reason. Go navigates, then every close
                   path clears the signal — the detail route component is reused
                   across :stockLineId changes, so a signal left set would reopen
                   this over the new line. */}
               <ConfirmDialog
                 open={repackedToLineId() !== undefined}
+                icon={<CheckCircleIcon />}
                 title={t('title.repack-complete')}
                 message={t('messages.full-repack-go-to-new-line')}
                 confirmLabel={t('button.go-to-new-line')}
