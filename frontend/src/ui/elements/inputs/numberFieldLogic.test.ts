@@ -161,12 +161,12 @@ describe('emptyValue', () => {
     expect(processInput('', o({ emptyValue: 0 }), 'en')).toEqual({
       accepted: true,
       text: '',
-      commit: { value: 0 },
+      commit: { value: 0, emptied: true },
     });
     expect(processInput('', o({ min: 1, emptyValue: 1 }), 'en')).toEqual({
       accepted: true,
       text: '',
-      commit: { value: 1 },
+      commit: { value: 1, emptied: true },
     });
   });
 
@@ -214,14 +214,25 @@ describe('emptyValue', () => {
   // still reach its handler, which cancels a pending auto-allocation and
   // marks the line dirty — as clearing to undefined always did.
   it('the clearing keystroke reaches the parent even when it already holds emptyValue', () => {
-    expect(commitReports(0, 0, true)).toBe(true);
-    expect(commitReports(0, 7, true)).toBe(true);
+    const cleared = processInput('', o({ emptyValue: 0 }), 'en');
+    const commit = cleared.accepted ? cleared.commit : undefined;
+    expect(commitReports(commit?.value, 0, commit?.emptied)).toBe(true);
+    expect(commitReports(commit?.value, 7, commit?.emptied)).toBe(true);
+  });
+
+  it('without emptyValue, clearing an empty field is not a change', () => {
+    const cleared = processInput('', o(), 'en');
+    const commit = cleared.accepted ? cleared.commit : undefined;
+    expect(commitReports(commit?.value, undefined, commit?.emptied)).toBe(
+      false
+    );
+    expect(commitReports(commit?.value, 3, commit?.emptied)).toBe(true);
   });
 
   it('otherwise only a change reaches the parent', () => {
-    expect(commitReports(0, 0, false)).toBe(false); // typing 0 over 0
-    expect(commitReports(5, 0, false)).toBe(true);
-    expect(commitReports(undefined, undefined, false)).toBe(false);
+    expect(commitReports(0, 0)).toBe(false); // typing 0 over 0
+    expect(commitReports(5, 0)).toBe(true);
+    expect(commitReports(undefined, undefined)).toBe(false);
   });
 
   it('without it, clearing still commits undefined', () => {

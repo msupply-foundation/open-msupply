@@ -45,9 +45,14 @@ export type ProcessedInput =
  * A committed value plus, when the round/clamp CHANGED what the text parsed
  * to, the number the user actually entered — how the component detects an
  * adjusted entry (its `onClamped`). Absent whenever the entry committed
- * as typed.
+ * as typed. `emptied` marks a keystroke that emptied a field with an
+ * `emptyValue` — see `commitReports`.
  */
-export type CommitResult = { value: number | undefined; adjustedFrom?: number };
+export type CommitResult = {
+  value: number | undefined;
+  adjustedFrom?: number;
+  emptied?: true;
+};
 
 // Matches Latin, Arabic-Indic and extended-Arabic digits — the three digit
 // systems our locales produce (LOCALE_META numberLocale: Arabic-Indic for
@@ -168,7 +173,14 @@ export const processInput = (
   // Emptied: the text stays empty — so the next figure typed replaces it
   // whole — while the commit says what empty stands for.
   if (text === '')
-    return { accepted: true, text, commit: { value: o.emptyValue } };
+    return {
+      accepted: true,
+      text,
+      commit:
+        o.emptyValue === undefined
+          ? { value: undefined }
+          : { value: o.emptyValue, emptied: true },
+    };
 
   const gate = gateRegex(o, symbols);
   if (gate.test(text)) {
@@ -261,8 +273,8 @@ export const isIncomplete = (text: string, locale: SupportedLocale): boolean =>
 export const commitReports = (
   value: number | undefined,
   before: number | undefined,
-  emptiedToEmptyValue: boolean
-): boolean => emptiedToEmptyValue || value !== before;
+  emptied = false
+): boolean => emptied || value !== before;
 
 /** The field's last commit, and what the parent made of it (its echo). */
 export type LastCommit = {

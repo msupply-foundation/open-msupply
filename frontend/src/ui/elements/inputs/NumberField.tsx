@@ -212,9 +212,7 @@ export const NumberField = (props: NumberFieldProps) => {
     // can recognise it as ours.
     batch(() => {
       const before = local.value;
-      const emptiedToEmptyValue = emptied && local.emptyValue !== undefined;
-      if (commitReports(value, before, emptiedToEmptyValue))
-        local.onChange?.(value);
+      if (commitReports(value, before, emptied)) local.onChange?.(value);
       const echo = local.value;
       if (echo !== before) parentAnswersSynchronously = true;
       lastCommitted = { value, echo };
@@ -323,7 +321,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value, result.text === '');
+      commit(result.commit.value, result.commit.emptied);
       reportClamped(result.commit);
     }
   };
