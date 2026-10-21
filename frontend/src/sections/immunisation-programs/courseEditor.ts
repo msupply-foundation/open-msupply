@@ -49,9 +49,10 @@ export type CourseDraft = Omit<
 
 /**
  * A blank editor for a new course of `programId` (rules § the course;
- * OMS-REG-IMM-01.31): coverage 100, wastage 0, Include in GAPS calculations
- * on, Can skip dose off, no demographic, no item, no dose, no store override.
- * The id is client-supplied — a fresh uuid, minted by the caller.
+ * OMS-REG-IMM-01.31): coverage 100, wastage 0, no average doses per person
+ * per year (the forecast counts every dose), Include in GAPS calculations on,
+ * Can skip dose off, no demographic, no item, no dose, no store override. The
+ * id is client-supplied — a fresh uuid, minted by the caller.
  */
 export const newCourseDraft = (id: string, programId: string): CourseDraft => ({
   id,
@@ -61,6 +62,7 @@ export const newCourseDraft = (id: string, programId: string): CourseDraft => ({
   demographic: null,
   coverageRate: 100,
   wastageRate: 0,
+  annualDosesPerPerson: null,
   useInGapsCalculations: true,
   canSkipDose: false,
   vaccineCourseItems: [],
@@ -77,6 +79,7 @@ export const draftFromCourse = (course: CourseNode): CourseDraft => ({
   demographic: course.demographic ?? null,
   coverageRate: course.coverageRate,
   wastageRate: course.wastageRate,
+  annualDosesPerPerson: course.annualDosesPerPerson ?? null,
   useInGapsCalculations: course.useInGapsCalculations,
   canSkipDose: course.canSkipDose,
   vaccineCourseItems: [...(course.vaccineCourseItems ?? [])],
@@ -200,7 +203,13 @@ export const MAX_WASTAGE_RATE = 100;
 export type ValidationItem =
   | {
       kind: 'field';
-      field: 'name' | 'coverageRate' | 'wastageRate' | 'vaccineItems' | 'doses';
+      field:
+        | 'name'
+        | 'coverageRate'
+        | 'wastageRate'
+        | 'annualDosesPerPerson'
+        | 'vaccineItems'
+        | 'doses';
       labelKey: LocaleKey;
       messageKey: LocaleKey;
     }
@@ -225,8 +234,9 @@ export type ValidationField = Extract<
 /**
  * The editor's completeness checks, run on Save (rules § the editor;
  * OMS-REG-IMM-01.34, OMS-REG-IMM-01.35, OMS-REG-IMM-01.52, OMS-REG-IMM-01.53,
- * OMS-REG-IMM-01.54, OMS-REG-IMM-01.64): the name, coverage rate and wastage
- * rate are required; the wastage rate is at most 100; at least one vaccine
+ * OMS-REG-IMM-01.54, OMS-REG-IMM-01.64, OMS-REG-IMM-01.78): the name,
+ * coverage rate and wastage rate are required; the wastage rate is at most
+ * 100; average doses per person per year, if set, above 0; at least one vaccine
  * item; at least one dose; each dose's label; each dose's from age strictly
  * greater than the previous dose's; each dose's to age at least its from age.
  * Nothing is sent while any fails. The server enforces only the from-age
@@ -261,6 +271,13 @@ export const validateDraft = (draft: CourseDraft): Validation => {
       field: 'wastageRate',
       labelKey: 'label.wastage-rate',
       messageKey: 'error.numeric-input-error-too-big',
+    });
+  if (draft.annualDosesPerPerson != null && draft.annualDosesPerPerson <= 0)
+    items.push({
+      kind: 'field',
+      field: 'annualDosesPerPerson',
+      labelKey: 'label.annual-doses-per-person',
+      messageKey: 'error.numeric-input-error-too-small',
     });
   if (draft.vaccineCourseItems.length === 0)
     items.push({
@@ -381,6 +398,7 @@ const comparable = (draft: CourseDraft) => ({
   demographicId: draft.demographicId ?? null,
   coverageRate: draft.coverageRate ?? null,
   wastageRate: draft.wastageRate ?? null,
+  annualDosesPerPerson: draft.annualDosesPerPerson,
   useInGapsCalculations: draft.useInGapsCalculations,
   canSkipDose: draft.canSkipDose,
   items: draft.vaccineCourseItems.map(item => item.itemId),
@@ -441,6 +459,7 @@ export const insertInput = (draft: ValidCourseDraft): InsertInput => ({
   demographicId: draft.demographicId ?? null,
   coverageRate: draft.coverageRate,
   wastageRate: draft.wastageRate,
+  annualDosesPerPerson: draft.annualDosesPerPerson,
   useInGapsCalculations: draft.useInGapsCalculations,
   canSkipDose: draft.canSkipDose,
   vaccineItems: itemInputs(draft),
@@ -460,6 +479,8 @@ export const updateInput = (draft: ValidCourseDraft): UpdateInput => ({
   demographicId: draft.demographicId ?? null,
   coverageRate: draft.coverageRate,
   wastageRate: draft.wastageRate,
+  // Always sent, so clearing it goes back to counting every dose
+  annualDosesPerPerson: { value: draft.annualDosesPerPerson },
   useInGapsCalculations: draft.useInGapsCalculations,
   canSkipDose: draft.canSkipDose,
   vaccineItems: itemInputs(draft),

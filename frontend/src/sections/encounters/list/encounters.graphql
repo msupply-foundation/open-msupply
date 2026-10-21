@@ -32,12 +32,9 @@ query encounterList(
           __typename
           name
         }
-        document {
+        documentRegistry {
           __typename
-          documentRegistry {
-            __typename
-            name
-          }
+          name
         }
         contextId
         activeProgramEvents(

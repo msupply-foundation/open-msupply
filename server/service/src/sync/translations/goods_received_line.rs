@@ -183,6 +183,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             linked_invoice_line_id: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         };
 
         Ok(PullTranslateResult::upsert(line))

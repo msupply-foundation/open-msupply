@@ -1,11 +1,4 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-  type Accessor,
-} from 'solid-js';
-import { gated } from '../../../api/gated';
-import { graphqlFetch } from '../../../api/graphql';
+import { createMemo, createSignal, type Accessor } from 'solid-js';
 import { t } from '../../../intl';
 import { hasPermission } from '../../../store/storeContext';
 import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
@@ -14,17 +7,14 @@ import {
   type DocumentForm,
   type DocumentFormSource,
 } from '../../../domain/documentForm/createDocumentForm';
-import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
-import {
-  documentFormVersioning,
-  hasDocumentForm,
-} from '../../../plugins/documentFormSlot';
+import type {
+  FormDocumentFragment,
+  FormRegistryFragment,
+} from '../../../domain/documentForm/documentForm.generated';
+import { documentFormVersioning } from '../../../plugins/documentFormSlot';
 import type { Patient } from '../../../plugin-sdk/documents';
 import { seedPatientDocument } from './patientDocumentSeed';
-import type { PatientResult } from './patient.generated';
-import { PatientDocumentDraft } from './patientDocumentDraft.generated';
-
-type PatientNode = NonNullable<PatientResult['patient']>;
+import type { PatientNode } from './patientDetails';
 
 /*
  * The Details tab's editor on the document path (kdd/custom-forms/specs.md §
@@ -34,26 +24,30 @@ type PatientNode = NonNullable<PatientResult['patient']>;
  * work the same on both paths.
  *
  * A patient with a document is edited from the server's `documentDraft` (the
- * latest version with later changes to the name row merged in), read here
- * and only here, and saved as the next version. A patient with none, a name
- * row made by the plain path or a sync, is seeded from that row and gets its
- * first document on its first Save; opening it writes nothing.
+ * latest version with later changes to the name row merged in), which the
+ * document path's patient read carries along with the version itself, as the
+ * form host opens it (patientDetails.ts); it is saved as the next version. A
+ * patient with none, a name row made by the plain path or a sync, is seeded
+ * from that row and gets its first document on its first Save; opening it
+ * writes nothing.
  */
 
 /**
- * A patient document's draft: `draft` undefined where the server has none;
- * undefined itself where the read failed, which the app reports.
+ * What the document path's read says of the patient's document: the latest
+ * version as the form host opens it, and the draft an edit starts from.
+ * Undefined for a read made on the plain path.
  */
-export const fetchPatientDocumentDraft = async (key: {
-  storeId: string;
-  patientId: string;
-}): Promise<{ draft: object | undefined } | undefined> => {
-  const result = await graphqlFetch(PatientDocumentDraft, key);
-  if (result.kind !== 'success') return undefined;
-  return {
-    draft: (result.data.patient?.documentDraft as object | null) ?? undefined,
-  };
-};
+export const documentRead = (
+  node: PatientNode
+):
+  | { document: FormDocumentFragment | null; draft: object | undefined }
+  | undefined =>
+  'documentDraft' in node
+    ? {
+        document: node.document,
+        draft: (node.documentDraft as object | null) ?? undefined,
+      }
+    : undefined;
 
 /** The error summary's names for the host's patient fields, by path. */
 const patientFieldLabels = (): Record<string, string> => ({
@@ -139,7 +133,6 @@ const createPatientDocumentFormCore = (params: {
     ],
     readOnly: () => !canMutate(),
     versioning: type => documentFormVersioning('patient.form', type),
-    hasPluginForm: type => hasDocumentForm('patient.form', type),
   });
 
   return { form, codeCheck, canMutate };
@@ -148,21 +141,14 @@ const createPatientDocumentFormCore = (params: {
 export const createPatientDocumentEditor = (
   params: PatientDocumentEditorParams
 ): PatientDocumentEditor => {
-  // Read on the document path for a patient with a document, and again
-  // whenever the patient is re-read (after a save), as the draft goes with it.
-  const [draftData] = createResource(() => {
-    const node = params.node();
-    return params.registry() && node?.document
-      ? { storeId: params.storeId(), patientId: node.id }
-      : undefined;
-  }, fetchPatientDocumentDraft);
-
-  // The source, with the patient it was made for. While the draft is still
-  // being read, the source already shown for this patient stays in place. A
+  // The source, with the patient it was made for. A patient with a document
+  // is opened from the document path's read of it; one read on the plain
+  // path (the path was not yet known, or the document could not be read)
+  // keeps the source already shown for this patient, else shows no form. A
   // first save re-reads the patient, which now has a document; dropping the
-  // source there would take the form down and mount a new one
-  // (sdk-contract § Props update in place, OMS-REG-PLG-05.10). The form's
-  // saved version stands for the record until the draft arrives.
+  // source there would take the form down and mount a new one (sdk-contract
+  // § Props update in place, OMS-REG-PLG-05.10). The form's saved version
+  // stands for the record until the re-read arrives.
   type PatientSource = { patientId: string; source: DocumentFormSource };
   const sourceFor = createMemo(
     (prev: PatientSource | undefined): PatientSource | undefined => {
@@ -170,7 +156,7 @@ export const createPatientDocumentEditor = (
       const node = params.node();
       if (!registry || !node) return undefined;
       if (node.document) {
-        const read = gated(draftData);
+        const read = documentRead(node);
         if (read) {
           return {
             patientId: node.id,
@@ -178,13 +164,11 @@ export const createPatientDocumentEditor = (
               kind: 'existing',
               name: node.document.name,
               seed: read.draft,
+              document: read.document,
             },
           };
         }
-        // A failed read has answered too: it shows no form, as before.
-        const answered =
-          draftData.state === 'ready' || draftData.state === 'errored';
-        return !answered && prev?.patientId === node.id ? prev : undefined;
+        return prev?.patientId === node.id ? prev : undefined;
       }
       return {
         patientId: node.id,

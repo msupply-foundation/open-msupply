@@ -6,7 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
+import { reportPermissionDenied } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -34,7 +34,6 @@ import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
-import { Patient, type PatientVariables } from './patient.generated';
 import { runUpdatePatientCustomFields } from '../patientApi';
 import {
   CustomFieldsEditTab,
@@ -73,7 +72,7 @@ import {
   type CreatedEncounter,
 } from './programs/CreateEncounterDialog';
 import { EncounterFormModal } from './programs/EncounterFormModal';
-import { patientPreferences } from '../../../store/storeContext';
+import { hasPermission, patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
 // (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
@@ -112,31 +111,20 @@ const PatientDetailView: Component = () => {
   const setActiveTab = (value: string) =>
     setSearchParams({ tab: value === 'details' ? undefined : value });
 
-  const [data, { refetch }] = createResource(
-    () =>
-      JSON.stringify({
-        storeId: params.storeId,
-        patientId: params.patientId,
-      }),
-    async serialised => {
-      const result = await graphqlFetch(
-        Patient,
-        JSON.parse(serialised) as PatientVariables
-      );
-      if (result.kind !== 'success') return undefined;
-      return result.data.patient ?? undefined;
-    }
-  );
-  const node = () => data.latest ?? undefined;
-
-  // The Details tab, on the plain path or the document path as the store's
-  // Patient registry entry says (spec/patients rules › two persistence
-  // paths) — shared with the picker's edit modal, so neither surface can
-  // drift on these rules or write the record under a document (patientDetails.ts).
+  // The patient read and the Details tab, on the plain path or the document
+  // path as the store's Patient registry entry says (spec/patients rules ›
+  // two persistence paths) — shared with the picker's edit modal, so neither
+  // surface can drift on these rules or write the record under a document
+  // (patientDetails.ts). On the document path the one read carries the
+  // document and its draft, so the form follows at once.
   const patientDetails = createPatientDetails({
     storeId: () => params.storeId,
-    node,
+    patientId: () => params.patientId,
   });
+  // The screen's own read suspends for its first load (the Suspense below);
+  // everything under it reads the patient through patientDetails.node.
+  const { patient: data, refetch } = patientDetails;
+  const node = () => data.latest ?? undefined;
   const editor = patientDetails.editor;
   const details = patientDetails.active;
 
@@ -260,6 +248,16 @@ const PatientDetailView: Component = () => {
   };
   const canAddEncounter = () => enrolments().length > 0;
 
+  // A new enrolment or encounter is refused at the click, before its picker
+  // or dialog opens, for a user who may edit no program's records here
+  // (ui-standards/validation.md § permission gating): the server would refuse
+  // its save.
+  const refusedWithoutDocumentMutate = (): boolean => {
+    if (hasPermission('DOCUMENT_MUTATE')) return false;
+    reportPermissionDenied(['DocumentMutate']);
+    return true;
+  };
+
   // A trigger's `openDocumentForm`: a new encounter of a type in a program the
   // patient is enrolled in, which is all the server accepts. Anything else is
   // refused and named against the plugin that asked.
@@ -277,6 +275,7 @@ const PatientDetailView: Component = () => {
       });
       return;
     }
+    if (refusedWithoutDocumentMutate()) return;
     setEncounterFormType(registry);
   };
 
@@ -323,6 +322,12 @@ const PatientDetailView: Component = () => {
     return 'new-program';
   };
   const runCreate = (action: string) => {
+    if (
+      (action === 'new-program' || action === 'new-encounter') &&
+      refusedWithoutDocumentMutate()
+    ) {
+      return;
+    }
     if (action === 'new-program') {
       setPickerImmunisationOnly(activeTab() === 'vaccinations');
       setPickerOpen(true);

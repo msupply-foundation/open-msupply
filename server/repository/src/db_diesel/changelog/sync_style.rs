@@ -178,6 +178,16 @@ impl ChangelogTableName {
                 transport: V7_ONLY,
                 multi_device_site: false,
             },
+            // Barcodes a store has learned (decisions/2026-09-30_barcodes.md): authored
+            // by the store's site and pushed up to central for review. Central never
+            // edits them, so like other RemoteOwned tables they only come back to the
+            // owning site when it initialises.
+            BarcodeProposal => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             Stocktake => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
@@ -403,12 +413,6 @@ impl ChangelogTableName {
                 multi_device_site: false,
             },
             Abbreviation => SyncStyle {
-                authoring: vec![Central],
-                distribution: vec![D::Central],
-                transport: V5,
-                multi_device_site: false,
-            },
-            Barcode => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
                 transport: V5,

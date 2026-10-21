@@ -16,6 +16,7 @@ use util::format_error;
 
 use crate::{
     apis::patient_v4::PatientV4,
+    processors::ProcessorType,
     programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     static_files::{StaticFile, StaticFileService},
@@ -688,6 +689,11 @@ fn integrate_for_site(
         },
         false,
     )?;
+
+    // Proposals pushed by the site may confirm a barcode, without waiting for
+    // central's own next sync to run its processors
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::BarcodeAutoConfirm);
     Ok(())
 }
 

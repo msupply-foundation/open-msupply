@@ -1,4 +1,5 @@
 use crate::types::{program_node::ProgramNode, program_order_type::ProgramOrderTypeNode};
+use util::barcode::display_barcode;
 
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
@@ -118,14 +119,18 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
+    /// The barcode the stock carries, as people read it, e.g. `9506682101352`
     pub async fn barcode(&self) -> Option<&str> {
-        self.stock_line.barcode()
+        self.stock_line.barcode().map(display_barcode)
     }
 
+    /// None for an auto-created variant, which only holds a barcode: it's kept out
+    /// of sight like it is in variant lists. `itemVariantId` still gives it.
     pub async fn item_variant(&self) -> Option<ItemVariantNode> {
         self.stock_line
             .item_variant_row
             .as_ref()
+            .filter(|item_variant_row| !item_variant_row.is_auto_created)
             .map(|item_variant_row| {
                 ItemVariantNode::from_domain(ItemVariant {
                     item_variant_row: item_variant_row.clone(),

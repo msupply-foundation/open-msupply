@@ -851,16 +851,124 @@ type BackdatingNode {
 	maxDays: Int!
 }
 
-type BarcodeNode {
+type BarcodeMatchNode {
+	"""
+	The packaging variant's id, or the proposal's
+	"""
 	id: String!
-	gtin: String!
+	status: BarcodeStatusNode!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
 	itemId: String!
-	manufacturerId: String
+	"""
+	The item variant to put on the line, for a confirmed barcode. It may be
+	auto-created, so not in the item's variant list.
+	"""
+	itemVariantId: String
+	"""
+	For a confirmed barcode
+	"""
+	packagingVariantId: String
 	packSize: Float
-	parentId: String
+	manufacturerId: String
+}
+
+type BarcodeMutations {
+	"""
+	Confirms a barcode for an item without a proposal. Confirming one the item
+	already has returns it.
+	"""
+	insertBarcode(storeId: String!, input: InsertConfirmedBarcodeInput!): BarcodeNode!
+	"""
+	Confirms a store's proposal, so the barcode reaches every site. With no
+	packaging variant or item variant given, it goes on the item's auto-created
+	variant for the proposal's manufacturer.
+	"""
+	confirmBarcodeProposal(storeId: String!, id: String!, packagingVariantId: String, itemVariantId: String): BarcodeNode!
+	"""
+	Removes the barcode from a packaging variant, everywhere. `id` is the
+	packaging variant's. The removal is remembered, so the barcode isn't
+	auto-confirmed for the item again. An auto-created variant left with no
+	barcode is deleted; confirming the barcode again brings it back.
+	"""
+	deleteBarcode(storeId: String!, id: String!): DeleteResponse!
+}
+
+type BarcodeNode {
+	"""
+	The packaging variant's id
+	"""
+	id: String!
+	"""
+	The barcode in its standard form with its scheme, e.g.
+	`gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
+	"""
+	value: String!
+	"""
+	The barcode as people read it, e.g. `9506682101352`
+	"""
+	barcode: String!
+	"""
+	The barcode as people read it. Use `barcode`.
+	"""
+	gtin: String! @deprecated(reason: "Use `barcode`")
+	itemId: String!
+	itemVariantId: String
+	packagingVariantId: String
+	"""
+	The barcode is on a variant central created only to hold barcodes
+	"""
+	isAutoCreated: Boolean!
+	packSize: Float
+	manufacturerId: String
+	"""
+	Barcodes no longer have a parent; always null. Kept so older clients
+	that still ask for it keep working.
+	"""
+	parentId: String @deprecated(reason: "Barcodes no longer have a parent")
+}
+
+type BarcodeProposalNode {
+	id: String!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	The store that proposed it
+	"""
+	storeId: String!
+	store: StoreNode
+	userId: String!
+	createdDatetime: DateTime!
+	updatedDatetime: DateTime!
 }
 
 union BarcodeResponse = NodeError | BarcodeNode
+
+enum BarcodeStatusNode {
+	"""
+	Confirmed on central, shared by every site
+	"""
+	CONFIRMED
+	"""
+	Learned on this site, not confirmed yet
+	"""
+	PROPOSED
+}
 
 input BatchInboundShipmentInput {
 	insertInboundShipments: [InsertInboundShipmentInput!]
@@ -1268,6 +1376,7 @@ type CentralServerMutationNode {
 	demographic: DemographicMutations!
 	vaccineCourse: VaccineCourseMutations!
 	general: CentralGeneralMutations!
+	barcode: BarcodeMutations!
 	plugins: CentralPluginMutations!
 	preferences: PreferenceMutations!
 	campaign: CampaignMutations!
@@ -2591,6 +2700,10 @@ type DraftStockOutLineNode {
 	with no invoice line yet.
 	"""
 	transferComment: String
+	"""
+	The batch's stock line barcode, as people read it
+	"""
+	barcode: String
 	reasonOption: ReasonOptionNode
 }
 
@@ -2726,6 +2839,11 @@ type EncounterNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	activeProgramEvents(at: DateTime, filter: ActiveEncounterEventFilterInput, page: PaginationInput, sort: ProgramEventSortInput): ProgramEventResponse!
 	programEvents(page: PaginationInput, sort: ProgramEventSortInput, filter: EncounterEventFilterInput): ProgramEventResponse!
 	"""
@@ -3550,6 +3668,9 @@ union InsertAssetLogResponse = InsertAssetLogError | AssetLogNode
 
 union InsertAssetResponse = InsertAssetError | AssetNode
 
+"""
+Deprecated: the input of the deprecated top-level `insertBarcode`
+"""
 input InsertBarcodeInput {
 	gtin: String!
 	itemId: String!
@@ -3566,6 +3687,24 @@ input InsertClinicianInput {
 	firstName: String
 	gender: GenderTypeNode
 	mobile: String
+}
+
+input InsertConfirmedBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	Put the barcode on this packaging variant of the item, which has none yet
+	"""
+	packagingVariantId: String
+	"""
+	Add a packaging variant with the barcode to this item variant of the item
+	"""
+	itemVariantId: String
 }
 
 input InsertContactFormInput {
@@ -3797,6 +3936,11 @@ input InsertInboundShipmentLineInput {
 	shippedPackSize: Float
 	purchaseOrderLineId: String
 	reasonOptionId: String
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -4463,6 +4607,11 @@ input InsertVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
@@ -4799,6 +4948,11 @@ type InvoiceLineNode {
 	shipment: no inbound mutation input accepts it.
 	"""
 	transferComment: String
+	"""
+	The barcode scanned or entered for the line, or carried by the stock it
+	issues, as people read it. Not necessarily a confirmed barcode.
+	"""
+	barcode: String
 	"""
 	The line of the shipment's linked requisition carrying the same item.
 	Null when the shipment has no requisition link, or the order has no line
@@ -5228,7 +5382,11 @@ type ItemNode {
 	backend-plugin path.
 	"""
 	stockOnHand(storeId: String!): Int!
-	variants: [ItemVariantNode!]!
+	"""
+	The item's variants. Auto-created ones, which central creates only to hold
+	a barcode, are left out unless `includeAutoCreated` is true.
+	"""
+	variants(includeAutoCreated: Boolean): [ItemVariantNode!]!
 	"""
 	Ancillary items configured against this item — i.e. items that should be
 	ordered alongside it (e.g. syringes that go with a vaccine).
@@ -5316,6 +5474,11 @@ type ItemStorePropertiesNode {
 type ItemVariantMutations {
 	upsertItemVariant(storeId: String!, input: UpsertItemVariantInput!): UpsertPackVariantResponse!
 	deleteItemVariant(storeId: String!, input: DeleteItemVariantInput!): DeleteItemVariantResponse!
+	"""
+	Makes a variant central created to hold a barcode a real one, so it shows
+	in variant lists and pickers. Its id stays the same.
+	"""
+	promoteItemVariant(storeId: String!, id: String!): ItemVariantNode!
 }
 
 type ItemVariantNode {
@@ -5338,6 +5501,11 @@ type ItemVariantNode {
 	"""
 	bundlesWith: [BundledItemNode!]!
 	vvmType: String
+	"""
+	Created on central only to hold a barcode. Left out of variant lists unless
+	asked for.
+	"""
+	isAutoCreated: Boolean!
 }
 
 type ItemsCannotBeOrdered implements UpdatePurchaseOrderErrorInterface {
@@ -5873,7 +6041,21 @@ type Mutations {
 	"""
 	setSyncPaused(paused: Boolean!): SyncPausedNode!
 	updateDisplaySettings(input: DisplaySettingsInput!): UpdateDisplaySettingsResponse!
-	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse!
+	"""
+	Records that a user picked an item for a barcode in this store, for central
+	to review. Call it when the line the scan opened is saved.
+	"""
+	proposeBarcode(storeId: String!, input: ProposeBarcodeInput!): BarcodeMatchNode!
+	"""
+	Withdraws a proposal made by a store on this site. It stops matching scans
+	here, and central stops reviewing it.
+	"""
+	deleteBarcodeProposal(storeId: String!, id: String!): DeleteResponse!
+	"""
+	Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+	on central. Adds a confirmed barcode on central and proposes one elsewhere.
+	"""
+	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse! @deprecated(reason: "Use `proposeBarcode`")
 	updateLogLevel(storeId: String!, input: UpsertLogLevelInput!): UpsertLogLevelResponse!
 	updateLabelPrinterSettings(input: LabelPrinterSettingsInput!): UpdateLabelPrinterSettingsResponse!
 	updateNameProperties(storeId: String!, input: UpdateNamePropertiesInput!): UpdateNamePropertiesResponse!
@@ -6346,6 +6528,10 @@ type PackagingVariantNode {
 	packagingLevel: Int!
 	packSize: Float
 	volumePerUnit: Float
+	"""
+	The confirmed barcode for this packaging, as people read it
+	"""
+	barcode: String
 }
 
 """
@@ -6642,6 +6828,11 @@ type PopulationForecastCourseNode {
 	coverageRate: Float!
 	wastageRate: Float!
 	targetPopulation: Float!
+	"""
+	The average doses a person gets in a year, counted in place of the number of
+	doses when set
+	"""
+	annualDosesPerPerson: Float
 	lossFactor: Float!
 	annualTargetDoses: Float!
 	dosesPerUnit: Float!
@@ -6735,6 +6926,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6810,6 +7002,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -7070,6 +7263,11 @@ type ProgramEnrolmentNode {
 	"""
 	document: DocumentNode!
 	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
+	"""
 	The program document
 	"""
 	encounters(page: PaginationInput, filter: EncounterFilterInput, sort: EncounterSortInput): EncounterConnector!
@@ -7277,6 +7475,16 @@ enum PropertyNodeValueType {
 	INTEGER
 	FLOAT
 	DATE
+}
+
+input ProposeBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
 }
 
 type PurchaseOrderConnector {
@@ -7838,7 +8046,26 @@ type Queries {
 		highStockThreshold: Float
 	): ItemCounts!
 	storePreferences(storeId: String!): StorePreferenceNode!
-	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse!
+	"""
+	Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+	barcodes first, then proposals made on this site, one per item and only
+	for items visible in the store. Empty for a barcode nobody has mapped yet.
+	"""
+	barcodeMatches(storeId: String!, barcode: String!): [BarcodeMatchNode!]!
+	"""
+	Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+	matches; RecordNotFound when it matches none, or several items.
+	"""
+	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse! @deprecated(reason: "Use `barcodeMatches`")
+	"""
+	The item's confirmed barcodes
+	"""
+	itemBarcodes(storeId: String!, itemId: String!): [BarcodeNode!]!
+	"""
+	Proposals for the item central hasn't confirmed or removed: every store's
+	on central, this site's elsewhere
+	"""
+	itemBarcodeProposals(storeId: String!, itemId: String!): [BarcodeProposalNode!]!
 	requisitionCounts(storeId: String!): RequisitionCounts!
 	logFileNames: LogNode!
 	logContents(fileName: String): LogNode!
@@ -8199,6 +8426,10 @@ type Queries {
 	): VaccineCoursesResponse!
 	vaccineCourse(id: String!): VaccineCourseResponse!
 	vaccineCourseDose(id: String!): VaccineCourseDoseResponse!
+	"""
+	Whether any item has variants. Auto-created variants, which only hold a
+	barcode, don't count.
+	"""
 	itemVariantsConfigured(storeId: String!): Boolean!
 	"""
 	Returns the relevant set of preferences based on context (e.g. current store)
@@ -9025,6 +9256,12 @@ input SaveOutboundShipmentLinesInput {
 	itemId: String!
 	lines: [OutboundShipmentLineInput!]!
 	placeholderQuantity: Float
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 input SavePrescriptionLinesInput {
@@ -9033,6 +9270,12 @@ input SavePrescriptionLinesInput {
 	lines: [PrescriptionLineInput!]!
 	prescribedQuantity: Float
 	note: String
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 type ScannedDataParseError {
@@ -9321,7 +9564,14 @@ type StockLineNode {
 	location: LocationNode
 	item: ItemNode!
 	supplierName: String
+	"""
+	The barcode the stock carries, as people read it, e.g. `9506682101352`
+	"""
 	barcode: String
+	"""
+	None for an auto-created variant, which only holds a barcode: it's kept out
+	of sight like it is in variant lists. `itemVariantId` still gives it.
+	"""
 	itemVariant: ItemVariantNode
 	vvmStatus: VvmstatusNode
 	vvmStatusLogs: VvmstatusLogConnector
@@ -10501,6 +10751,12 @@ input UpdateInboundShipmentLineInput {
 	shippedPackSize: Float
 	status: InvoiceLineStatusType
 	reasonOptionId: NullableStringUpdate
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. An empty one clears it. Doesn't propose a barcode (see
+	`proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union UpdateInboundShipmentLineResponse = UpdateInboundShipmentLineError | InvoiceLineNode
@@ -11398,6 +11654,12 @@ input UpdateVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Unchanged when omitted; a null value clears it, counting every dose
+	in the course
+	"""
+	annualDosesPerPerson: NullableFloatUpdate
 }
 
 union UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode
@@ -11555,6 +11817,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {
@@ -11879,6 +12142,11 @@ type VaccineCourseNode {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 	demographic: DemographicNode
 	vaccineCourseItems: [VaccineCourseItemNode!]
 	vaccineCourseDoses: [VaccineCourseDoseNode!]

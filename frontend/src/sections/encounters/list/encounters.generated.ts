@@ -226,13 +226,10 @@ export type EncounterListResult = {
   __typename: "PatientNode";
   name: string;
 };
-  document: {
-  __typename: "DocumentNode";
   documentRegistry: {
   __typename: "DocumentRegistryNode";
   name: string | null;
 } | null;
-};
   contextId: string;
   activeProgramEvents: ({
   __typename: "ProgramEventConnector";
@@ -248,7 +245,7 @@ export type EncounterListResult = {
 };
 
 export const EncounterList = {
-  query: "query encounterList($storeId: String!, $filter: EncounterFilterInput, $sort: EncounterSortInput, $page: PaginationInput, $eventTime: DateTime) {\n  encounters(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on EncounterConnector {\n      __typename\n      totalCount\n      nodes {\n        __typename\n        id\n        type\n        startDatetime\n        status\n        patient {\n          __typename\n          name\n        }\n        document {\n          __typename\n          documentRegistry {\n            __typename\n            name\n          }\n        }\n        contextId\n        activeProgramEvents(at: $eventTime, filter: {isCurrentEncounter: true}) {\n          ... on ProgramEventConnector {\n            __typename\n            nodes {\n              __typename\n              type\n              data\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query encounterList($storeId: String!, $filter: EncounterFilterInput, $sort: EncounterSortInput, $page: PaginationInput, $eventTime: DateTime) {\n  encounters(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on EncounterConnector {\n      __typename\n      totalCount\n      nodes {\n        __typename\n        id\n        type\n        startDatetime\n        status\n        patient {\n          __typename\n          name\n        }\n        documentRegistry {\n          __typename\n          name\n        }\n        contextId\n        activeProgramEvents(at: $eventTime, filter: {isCurrentEncounter: true}) {\n          ... on ProgramEventConnector {\n            __typename\n            nodes {\n              __typename\n              type\n              data\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<EncounterListResult, EncounterListVariables>;
 
 export type EncounterProgramNamesVariables = {

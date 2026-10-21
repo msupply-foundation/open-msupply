@@ -52,6 +52,7 @@ describe('document form slots', () => {
           slot: 'patient.form',
           id: 'patient',
           documentType: 'Patient',
+          versions: ['Patient_v1'],
           Component: patientForm(PatientForm),
           archived: { 1: patientForm(PatientForm) },
         },
@@ -59,12 +60,14 @@ describe('document form slots', () => {
           slot: 'programEnrolment.form',
           id: 'enrolment',
           documentType: 'NumberedEnrolment',
+          versions: ['NumberedEnrolment_v1'],
           Component: enrolmentForm(EnrolmentForm),
         },
         {
           slot: 'encounter.form',
           id: 'encounter',
           documentType: 'StatusedEncounter',
+          versions: ['StatusedEncounter_v1'],
           Component: encounterForm(EncounterForm),
         },
       ],
@@ -84,6 +87,7 @@ describe('document form slots', () => {
           slot: 'patient.form',
           id: 'patient',
           documentType: 'Patient',
+          versions: ['Patient_v1'],
           // @ts-expect-error an encounter slot's form, in the patient slot
           Component: encounterForm(EncounterForm),
         },
@@ -91,12 +95,29 @@ describe('document form slots', () => {
           slot: 'encounter.form',
           id: 'encounter',
           documentType: 'StatusedEncounter',
+          versions: ['StatusedEncounter_v1'],
           // @ts-expect-error a bare component, not made by the slot's helper
           Component: EncounterForm,
         },
       ],
     });
     expect(plugin.contributions).toHaveLength(2);
+  });
+
+  it('refuse a form that declares no versions', () => {
+    const plugin = definePlugin({
+      manifest,
+      contributions: [
+        // @ts-expect-error every form lists its type's versions, one or more
+        {
+          slot: 'encounter.form',
+          id: 'encounter',
+          documentType: 'StatusedEncounter',
+          Component: encounterForm(EncounterForm),
+        },
+      ],
+    });
+    expect(plugin.contributions).toHaveLength(1);
   });
 
   it("check an inline form's paths against the slot's base type", () => {

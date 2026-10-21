@@ -37,6 +37,7 @@ vi.mock('./formLibrary', async () => ({
 
 import {
   createDocumentForm,
+  type CreateDocumentFormOptions,
   type DocumentForm,
   type DocumentFormSource,
   type FormVersioning,
@@ -115,9 +116,10 @@ afterEach(() => {
 const open = async (
   loaded: FormDocumentFragment,
   archived: number[],
-  // The type's form as the registry has it: versioned (the default), a form
-  // declaring no versions, or no plugin form at all.
-  pluginForm: FormVersioning | 'unversioned' | 'none' = versioning(archived)
+  // The type's form as the registry has it: its versioning (the default), or
+  // no plugin form at all.
+  pluginForm: FormVersioning | 'none' = versioning(archived),
+  extra: Partial<CreateDocumentFormOptions> = {}
 ): Promise<DocumentForm<Encounter>> => {
   graphqlFetch.mockImplementation(
     async (query: unknown, variables: CallVariables) => {
@@ -152,7 +154,7 @@ const open = async (
         type === 'DemoEncounter' && typeof pluginForm === 'object'
           ? pluginForm
           : undefined,
-      hasPluginForm: type => type === 'DemoEncounter' && pluginForm !== 'none',
+      ...extra,
     });
   });
   await vi.waitFor(() => expect(form.status()).toBe('ready'), {
@@ -229,6 +231,22 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.kept().map(k => k.path)).toEqual(['extension.demo.adherence']);
   });
 
+  it('offers no save of a migrated document to a user who may not save', async () => {
+    const form = await open(
+      documentPinnedTo(V1, v1, v1Fixture),
+      [],
+      undefined,
+      {
+        readOnly: () => true,
+      }
+    );
+    expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
+    expect(form.draft.readOnly()).toBe(true);
+    expect(form.canSave()).toBe(false);
+    expect(await form.save()).toBeUndefined();
+    expect(graphqlFetch).toHaveBeenCalledTimes(1);
+  });
+
   it('migrates straight away where the version has no archived form', async () => {
     const form = await open(documentPinnedTo(V1, v1, v1Fixture), []);
     expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
@@ -259,23 +277,6 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.recorded()).toEqual({ schema: v2, data });
     expect(await form.save()).toBeUndefined();
     expect(graphqlFetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('opens a version the plugin cannot migrate to the current one as recorded', async () => {
-    // The plugin in the browser lists v1 and a v3; the server's entry is on
-    // v2, which it does not list, so v1 has no migration path to it.
-    const unreachable = await open(documentPinnedTo(V1, v1, v1Fixture), [], {
-      ...versioning([]),
-      versions: [V1, 'demo_program_DemoEncounter_v3'],
-    });
-    expect(unreachable.version()).toEqual({ kind: 'unreachable', version: 1 });
-    expect(unreachable.draft.readOnly()).toBe(true);
-    expect(unreachable.canSave()).toBe(false);
-    expect(unreachable.kept()).toEqual([]);
-    // Shown as stored, not migrated: the weight is still where v1 put it.
-    expect(unreachable.recorded()?.data).toMatchObject({
-      extension: { demo: { weightKg: 68 } },
-    });
   });
 
   describe('a type no plugin form renders', () => {
@@ -310,18 +311,6 @@ describe('opening a document pinned to an earlier version', () => {
     });
   });
 
-  it('opens another version than the current as unversioned, read-only, where the plugin form declares no versions', async () => {
-    const form = await open(
-      documentPinnedTo(V1, v1, v1Fixture),
-      [],
-      'unversioned'
-    );
-    expect(form.version()).toEqual({ kind: 'unversioned' });
-    expect(form.draft.readOnly()).toBe(true);
-    expect(form.canSave()).toBe(false);
-    expect(form.recorded()?.schema).toBe(v1);
-  });
-
   it('opens a current document in the default form, editable, with no plugin form', async () => {
     const form = await open(documentPinnedTo(V2, v2, {}), [], 'none');
     expect(form.version()).toEqual({ kind: 'current' });
@@ -339,6 +328,96 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.draft.readOnly()).toBe(false);
     expect(form.canSave()).toBe(false);
     expect(form.recorded()).toBeUndefined();
+  });
+});
+
+/*
+ * Out of step (OMS-REG-PLG-05.27): the plugin form's newest version and the
+ * registry entry's current one differ, either way round. No document of the
+ * type opens editable, whatever it is pinned to, and none is started.
+ */
+describe('a type whose plugin form and registry entry are out of step', () => {
+  const V3 = 'demo_program_DemoEncounter_v3_test';
+  // The registry's v2 is newer than the plugin in the browser.
+  const pluginBehind: FormVersioning = {
+    versions: [V1],
+    migrations: [],
+    archived: [],
+  };
+  // The plugin in the browser has a v3 the registry has not moved to.
+  const registryBehind: FormVersioning = {
+    ...versioning([]),
+    versions: [V1, V2, V3],
+  };
+  const notes = { extension: { demo: { notes: 'Seen' } } };
+
+  it.each([
+    [
+      'the plugin is behind, on its newest version',
+      pluginBehind,
+      V1,
+      v1,
+      v1Fixture,
+    ],
+    [
+      "the plugin is behind, on the registry's version",
+      pluginBehind,
+      V2,
+      v2,
+      notes,
+    ],
+    [
+      "the registry is behind, on the registry's version",
+      registryBehind,
+      V2,
+      v2,
+      notes,
+    ],
+    [
+      "the registry is behind, on the plugin's newest version",
+      registryBehind,
+      V3,
+      v2,
+      notes,
+    ],
+  ])(
+    'shows a document as recorded, read-only, where %s',
+    async (_, pluginForm, pinned, jsonSchema, data) => {
+      const form = await open(
+        documentPinnedTo(pinned, jsonSchema, data),
+        [],
+        pluginForm
+      );
+      expect(form.version()).toEqual({ kind: 'outOfStep' });
+      expect(form.draft.readOnly()).toBe(true);
+      expect(form.canSave()).toBe(false);
+      expect(form.kept()).toEqual([]);
+      // As stored, not migrated.
+      expect(form.recorded()).toEqual({ schema: jsonSchema, data });
+      expect(await form.save()).toBeUndefined();
+      expect(graphqlFetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('starts no new document', async () => {
+    const form = createRoot(d => {
+      dispose = d;
+      return createDocumentForm<Encounter>({
+        storeId: () => 'store',
+        patientId: () => 'patient',
+        source: () => ({ kind: 'new', registry, data: v1Fixture }),
+        versioning: () => pluginBehind,
+      });
+    });
+    await vi.waitFor(() => expect(form.status()).toBe('ready'), {
+      timeout: 5000,
+    });
+    expect(form.version()).toEqual({ kind: 'outOfStep' });
+    expect(form.draft.readOnly()).toBe(true);
+    expect(form.canSave()).toBe(false);
+    expect(form.recorded()).toBeUndefined();
+    expect(await form.save()).toBeUndefined();
+    expect(graphqlFetch).not.toHaveBeenCalled();
   });
 });
 
@@ -539,7 +618,6 @@ describe('when the source changes', () => {
         source,
         versioning: type =>
           type === 'DemoEncounter' ? versioning([1]) : undefined,
-        hasPluginForm: type => type === 'DemoEncounter',
       });
       // Together, as a screen derives both from the one record it shows.
       const go = (next: DocumentFormSource, patient = 'patient-1') =>
@@ -708,6 +786,37 @@ describe('when the source changes', () => {
       { timeout: 5000 }
     );
     expect(form.status()).toBe('not-found');
+  });
+
+  // A caller that read the document with its record (the patient screen,
+  // whose patient read carries the document on the document path) hands it
+  // over, and the form issues no read of its own.
+  it('opens a document read with its record without a read of its own', async () => {
+    const { form } = follow(
+      {},
+      {
+        kind: 'existing',
+        name: 'encounter/a',
+        document: encounter('encounter/a', 70),
+      }
+    );
+    await vi.waitFor(() => expect(form.status()).toBe('ready'), {
+      timeout: 5000,
+    });
+    expect(form.document()?.name).toBe('encounter/a');
+    expect(weight(form)).toBe(70);
+    expect(calls(FormDocumentByName)).toHaveLength(0);
+  });
+
+  it('reports a record read with no document as not found', async () => {
+    const { form } = follow(
+      {},
+      { kind: 'existing', name: 'encounter/gone', document: null }
+    );
+    await vi.waitFor(() => expect(form.status()).toBe('not-found'), {
+      timeout: 5000,
+    });
+    expect(calls(FormDocumentByName)).toHaveLength(0);
   });
 
   it('does not let a save that returns late stand for the record shown since', async () => {

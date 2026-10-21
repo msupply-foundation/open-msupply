@@ -11,7 +11,6 @@ pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod backend_plugin;
-pub(crate) mod barcode;
 pub(crate) mod campaign;
 pub(crate) mod category;
 pub(crate) mod clinician;
@@ -171,7 +170,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         requisition::boxed(),
         requisition_line::boxed(),
         activity_log::boxed(),
-        barcode::boxed(),
         clinician::boxed(),
         clinician_store_join::boxed(),
         name_store_join::boxed(),

@@ -1,6 +1,5 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -17,7 +16,6 @@ import { EditIcon } from '../../../ui/icons';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import { runUpdatePatientCustomFields } from '../patientApi';
-import { Patient, type PatientVariables } from './patient.generated';
 import { createPatientDetails } from './patientDetails';
 import { PatientDetailsBody } from './PatientDetailsBody';
 import { InsurancePanel } from './insurance/InsurancePanel';
@@ -74,25 +72,15 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = createSignal<ModalTab>('details');
 
-  const [data] = createResource(
-    () => ({ storeId: props.storeId, patientId: props.patientId }),
-    async (variables: PatientVariables) => {
-      const result = await graphqlFetch(Patient, variables);
-      return result.kind === 'success'
-        ? (result.data.patient ?? undefined)
-        : undefined;
-    }
-  );
-  const node = () => gated(data);
-
-  // The details on the store's persistence path, as the patient screen's
-  // Details tab has them: on a store with a patient document type the modal
-  // writes the document too, so the next save from either surface does not
-  // put back what the other changed.
+  // The patient read and the details on the store's persistence path, as the
+  // patient screen's Details tab has them: on a store with a patient document
+  // type the modal writes the document too, so the next save from either
+  // surface does not put back what the other changed.
   const patientDetails = createPatientDetails({
     storeId: () => props.storeId,
-    node,
+    patientId: () => props.patientId,
   });
+  const node = () => gated(patientDetails.patient);
   const editor = patientDetails.editor;
   const details = patientDetails.active;
 
