@@ -78,6 +78,7 @@ fragment RequisitionDetailLine on RequisitionLineNode {
         coverageRate
         wastageRate
         targetPopulation
+        annualDosesPerPerson
         lossFactor
         annualTargetDoses
         dosesPerUnit

@@ -4479,6 +4479,11 @@ input InsertVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
@@ -6650,6 +6655,11 @@ type PopulationForecastCourseNode {
 	coverageRate: Float!
 	wastageRate: Float!
 	targetPopulation: Float!
+	"""
+	The average doses a person gets in a year, counted in place of the number of
+	doses when set
+	"""
+	annualDosesPerPerson: Float
 	lossFactor: Float!
 	annualTargetDoses: Float!
 	dosesPerUnit: Float!
@@ -6743,6 +6753,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6818,6 +6829,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -11448,6 +11460,12 @@ input UpdateVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Unchanged when omitted; a null value clears it, counting every dose
+	in the course
+	"""
+	annualDosesPerPerson: NullableFloatUpdate
 }
 
 union UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode
@@ -11605,6 +11623,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {
@@ -11929,6 +11948,11 @@ type VaccineCourseNode {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 	demographic: DemographicNode
 	vaccineCourseItems: [VaccineCourseItemNode!]
 	vaccineCourseDoses: [VaccineCourseDoseNode!]

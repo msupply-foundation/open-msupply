@@ -5140,6 +5140,11 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
+  /**
+   * The average number of doses a person reached gets in a year, for population
+   * forecasting. Null counts every dose in the course
+   */
+  annualDosesPerPerson?: InputMaybe<Scalars['Float']['input']>;
   canSkipDose: Scalars['Boolean']['input'];
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
@@ -8237,6 +8242,11 @@ export type PluginInfoNode = {
 
 export type PopulationForecastCourseNode = {
   __typename: 'PopulationForecastCourseNode';
+  /**
+   * The average doses a person gets in a year, counted in place of the number of
+   * doses when set
+   */
+  annualDosesPerPerson?: Maybe<Scalars['Float']['output']>;
   annualTargetDoses: Scalars['Float']['output'];
   courseName: Scalars['String']['output'];
   coverageRate: Scalars['Float']['output'];
@@ -8319,6 +8329,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  PromptForBatchAndExpiryOnInboundShipments = 'promptForBatchAndExpiryOnInboundShipments',
   ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
@@ -8402,6 +8413,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  promptForBatchAndExpiryOnInboundShipments: Scalars['Boolean']['output'];
   receivePaymentsFromPrescriptions: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
@@ -13585,6 +13597,12 @@ export type UpdateVaccineCourseErrorInterface = {
 };
 
 export type UpdateVaccineCourseInput = {
+  /**
+   * The average number of doses a person reached gets in a year, for population
+   * forecasting. Unchanged when omitted; a null value clears it, counting every dose
+   * in the course
+   */
+  annualDosesPerPerson?: InputMaybe<NullableFloatUpdate>;
   canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
   coverageRate: Scalars['Float']['input'];
   demographicId?: InputMaybe<Scalars['String']['input']>;
@@ -13763,6 +13781,9 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
+  >;
+  promptForBatchAndExpiryOnInboundShipments?: InputMaybe<
+    Array<BoolStorePrefInput>
   >;
   receivePaymentsFromPrescriptions?: InputMaybe<Scalars['Boolean']['input']>;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -14133,6 +14154,11 @@ export type VaccineCourseMutationsUpdateVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
+  /**
+   * The average number of doses a person reached gets in a year, for population
+   * forecasting. Null counts every dose in the course
+   */
+  annualDosesPerPerson?: Maybe<Scalars['Float']['output']>;
   canSkipDose: Scalars['Boolean']['output'];
   coverageRate: Scalars['Float']['output'];
   demographic?: Maybe<DemographicNode>;
