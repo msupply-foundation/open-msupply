@@ -716,6 +716,217 @@ mod update {
         assert_eq!(total_logs.len(), 5);
     }
 
+    /// Only a status change is logged: editing an order's fields, or setting the
+    /// status it already has, leaves no activity log entry (#1590)
+    #[actix_rt::test]
+    async fn update_purchase_order_logs_status_changes_only() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_logs_status_changes_only",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        let purchase_order_id = "purchase_order_logs_status_changes_only".to_string();
+        let update = |input: UpdatePurchaseOrderInput| {
+            service
+                .update_purchase_order(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderInput {
+                        id: purchase_order_id.clone(),
+                        ..input
+                    },
+                )
+                .unwrap();
+        };
+        let log_types = || {
+            let mut logs = ActivityLogRowRepository::new(&context.connection)
+                .find_many_by_record_id(&purchase_order_id)
+                .unwrap();
+            logs.sort_by_key(|l| l.datetime);
+            logs.into_iter().map(|l| l.r#type).collect::<Vec<_>>()
+        };
+
+        service
+            .insert_purchase_order(
+                &context,
+                store_id,
+                InsertPurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    supplier_id: mock_name_a().id.to_string(),
+                },
+            )
+            .unwrap();
+
+        // Field edits on a NEW order
+        update(UpdatePurchaseOrderInput {
+            supplier_discount_percentage: Some(12.5),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            reference: Some("ref".to_string()),
+            ..Default::default()
+        });
+        assert_eq!(log_types(), vec![ActivityLogType::PurchaseOrderCreated]);
+
+        // Confirming is logged; a field edit, or confirming again, is not
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Confirmed),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            shipping_method: Some("air".to_string()),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Confirmed),
+            ..Default::default()
+        });
+        assert_eq!(
+            log_types(),
+            vec![
+                ActivityLogType::PurchaseOrderCreated,
+                ActivityLogType::PurchaseOrderConfirmed,
+            ]
+        );
+
+        // Sending is logged; a comment edit on the SENT order is not; moving it
+        // back to CONFIRMED is logged as such
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Sent),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            comment: Some("comment".to_string()),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Confirmed),
+            ..Default::default()
+        });
+        assert_eq!(
+            log_types(),
+            vec![
+                ActivityLogType::PurchaseOrderCreated,
+                ActivityLogType::PurchaseOrderConfirmed,
+                ActivityLogType::PurchaseOrderSent,
+                ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed,
+            ]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_custom_fields() {
+        use repository::{
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
+            mock::mock_purchase_order_a,
+        };
+        use serde_json::json;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_purchase_order_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
+                id: "purchase_order_user_field_1".to_string(),
+                key: "purchase_order_user_field_1".to_string(),
+                name: "User field 1".to_string(),
+                value_type: CustomFieldValueType::Text,
+                kind: CustomFieldKind::Legacy,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
+                id: "purchase_order_user_field_1__purchase_order".to_string(),
+                custom_field_id: "purchase_order_user_field_1".to_string(),
+                scope: "purchase_order".to_string(),
+                display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+
+        let id = mock_purchase_order_a().id;
+        let patch = |pairs: &[(&str, serde_json::Value)]| UpdatePurchaseOrderInput {
+            id: id.clone(),
+            custom_fields: Some(
+                pairs
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("not_a_field", json!("x"))]),
+            ),
+            Err(UpdatePurchaseOrderError::UnknownCustomFieldKey(
+                "not_a_field".to_string()
+            ))
+        );
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!(3))]),
+            ),
+            Err(UpdatePurchaseOrderError::InvalidCustomFieldValue {
+                key: "purchase_order_user_field_1".to_string(),
+                expected: CustomFieldValueType::Text,
+            })
+        );
+
+        // A key the client can't see survives a patch of a visible one
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        let mut row = repo.find_one_by_id(&id).unwrap().unwrap();
+        row.custom_fields = Some(json!({ "hidden": "keep" }));
+        repo.upsert_one(&row).unwrap();
+
+        service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!("Grant 42"))]),
+            )
+            .unwrap();
+        assert_eq!(
+            repo.find_one_by_id(&id).unwrap().unwrap().custom_fields,
+            Some(json!({ "purchase_order_user_field_1": "Grant 42", "hidden": "keep" }))
+        );
+
+        service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!(null))]),
+            )
+            .unwrap();
+        assert_eq!(
+            repo.find_one_by_id(&id).unwrap().unwrap().custom_fields,
+            Some(json!({ "hidden": "keep" }))
+        );
+    }
+
     /// Cancelling (rules § cancellation): a SENT order alone may be cancelled;
     /// the move stamps its moment, closes every line, deletes the NEW inbound
     /// shipments raised against the order, and is final.
