@@ -138,7 +138,7 @@ export const PurchaseOrderStatusFooter: Component<
       if (result.message) setErrorMessage(result.message);
       return;
     }
-    saved.show(t('messages.purchase-order-saved'));
+    saved.show(poStatusLabel(to));
   };
 
   return (
@@ -168,7 +168,7 @@ export const PurchaseOrderStatusFooter: Component<
         )}
       </Show>
 
-      {/* A move that lands flashes its save confirmation. */}
+      {/* A move that lands flashes the status it reached (issue #1127). */}
       <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>

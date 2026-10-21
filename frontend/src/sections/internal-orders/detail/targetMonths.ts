@@ -104,15 +104,68 @@ export const intervalAndBufferBehindTarget = (
     : undefined;
 };
 
+const totalMonths = (intervalAndBuffer: SupplyIntervalAndBuffer): number =>
+  intervalAndBuffer.supplyIntervalMonths + intervalAndBuffer.safetyBufferMonths;
+
+/**
+ * Whether an order's target differs from the supply interval + safety buffer
+ * the store fixes it to (OMS-REG-REPL-17.18): set before the store fixed it,
+ * or since the facility record changed. Such a target can still be moved, but
+ * only onto the store's.
+ */
+export const targetDiffersFromFixed = (
+  target: number,
+  fixed: SupplyIntervalAndBuffer
+): boolean => !sameMonths(target, totalMonths(fixed));
+
+/**
+ * The target select's options on an order whose target differs from the one
+ * the store fixes: its own target, and the store's to move it onto. A target
+ * below the reorder threshold can't be chosen, as in targetMonthOptions.
+ */
+export const fixedTargetOptions = (
+  target: number,
+  threshold: number,
+  fixed: SupplyIntervalAndBuffer
+): SelectOption[] =>
+  [target, totalMonths(fixed)]
+    .sort((a, b) => a - b)
+    .map(n => ({
+      value: String(n),
+      label: monthsLabel(n),
+      disabled: threshold > 0 && n < threshold,
+    }));
+
+const intervalAndBufferParams = (
+  intervalAndBuffer: SupplyIntervalAndBuffer
+) => ({
+  supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths, {
+    maximumFractionDigits: 2,
+  }),
+  safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths, {
+    maximumFractionDigits: 2,
+  }),
+});
+
 /** The locked target's tooltip, naming the interval and buffer that set it. */
 export const targetSetByStoreMessage = (
   intervalAndBuffer: SupplyIntervalAndBuffer
 ): string =>
-  t('messages.target-mos-set-by-store', {
-    supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths, {
-      maximumFractionDigits: 2,
-    }),
-    safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths, {
+  t(
+    'messages.target-mos-set-by-store',
+    intervalAndBufferParams(intervalAndBuffer)
+  );
+
+/**
+ * The tooltip on a target that differs from the one the store fixes, naming
+ * the interval and buffer it can only be changed to.
+ */
+export const targetDiffersFromStoreMessage = (
+  intervalAndBuffer: SupplyIntervalAndBuffer
+): string =>
+  t('messages.target-mos-differs-from-store', {
+    ...intervalAndBufferParams(intervalAndBuffer),
+    total: formatNumber(totalMonths(intervalAndBuffer), {
       maximumFractionDigits: 2,
     }),
   });

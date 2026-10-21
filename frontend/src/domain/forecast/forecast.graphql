@@ -24,6 +24,7 @@ fragment ForecastLine on RequisitionLineNode {
         coverageRate
         wastageRate
         targetPopulation
+        annualDosesPerPerson
         lossFactor
         annualTargetDoses
         dosesPerUnit

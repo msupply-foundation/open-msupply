@@ -11,6 +11,7 @@ import {
 import { refetchStoreContext } from '../store/storeContext';
 import { recordLastLoginUsername } from '../appData';
 import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
+import { applyUserLocale, type SupportedLocale } from '../intl';
 
 // All authentication context lives here: the user, the unauthenticated and
 // inactivity signals, and the actions that change them.
@@ -157,6 +158,22 @@ export type LoginResult =
   // the form is usable again with what was typed (spec, Unexpected API errors).
   | { kind: 'pending' };
 
+// The locale each profile language shows in. Khmer has no catalog, so a Khmer
+// profile keeps the session's language.
+const PROFILE_LOCALES: Record<
+  AuthUser['language'],
+  SupportedLocale | undefined
+> = {
+  ENGLISH: 'en',
+  FRENCH: 'fr',
+  SPANISH: 'es',
+  LAOS: 'lo',
+  KHMER: undefined,
+  PORTUGUESE: 'pt',
+  RUSSIAN: 'ru',
+  TETUM: 'tet',
+};
+
 export const login = async (
   typedUsername: string,
   password: string
@@ -184,6 +201,14 @@ export const login = async (
   if (loginableStores(auth.user).length === 0) {
     return { kind: 'error', message: 'You have no stores to log into' };
   }
+  // Spec (i18n § choosing the locale): login shows the user's language. Only
+  // here, not when a reload restores the session: that keeps the last-used
+  // locale. Before the user is set, which swaps the login page for the app,
+  // so the first screen paints in it.
+  await applyUserLocale(
+    auth.user.username,
+    PROFILE_LOCALES[auth.user.language]
+  );
   setUser(auth.user);
   clearUnauthenticated();
   setInactivityExpired(false);
