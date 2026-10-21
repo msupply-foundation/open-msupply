@@ -49,7 +49,7 @@ query patient($storeId: String!, $patientId: String!) {
 # Details tab edits the patient document): the same, with the document's
 # draft (its data with the name row's later changes merged in, what an edit
 # starts from) and its latest version as the form host opens it — the pinned
-# schema and the registry entry — so the tab needs no further read (#1562).
+# schema and the registry entry — so the tab needs no further read.
 # Issued only once the store's path is known: building the draft parses the
 # stored document, and a document the server cannot read must not stop the
 # patient opening on a store that never edits it.

@@ -70,10 +70,10 @@ export interface PatientDetails {
  * The patient read is this module's too, as the path decides its shape: on
  * the document path the one read carries the document's draft and its latest
  * version as the form opens it, so the Details tab shows the form after one
- * round trip rather than three (#1562). The record is read at once on the
- * path the store's answer earlier this session names, else as the plain
- * record; a store on the document path whose answer is not yet known re-reads
- * with the document once the registry answers, the record already showing.
+ * round trip. The record is read at once on the path the store's answer
+ * earlier this session names, else as the plain record; a store on the
+ * document path whose answer is not yet known re-reads with the document once
+ * the registry answers, the record already showing.
  */
 export const createPatientDetails = (
   params: PatientDetailsParams
@@ -115,9 +115,12 @@ export const createPatientDetails = (
       if (result.kind === 'success') return result.data.patient ?? undefined;
       if (!withDocument) return undefined;
       // The read with the document failed (a stored document the server
-      // could not read, reported above): the patient still opens on its
-      // record, with no form, as it did when the draft was read on its own.
-      // The record read just before, where there was one, stands.
+      // could not read, reported above): the patient opens on its record,
+      // with no form. The record read just before, where there was one,
+      // stands. After a save that is the node from before it, on the document
+      // path still holding the version the save replaced; the form host keeps
+      // the version it saved while the source's name is unchanged, so the
+      // stale node is harmless.
       if (value?.id === variables.patientId) return value;
       const record = await graphqlFetch(Patient, variables);
       return record.kind === 'success'

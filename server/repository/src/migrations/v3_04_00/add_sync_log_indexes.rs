@@ -10,7 +10,7 @@ impl MigrationFragment for Migrate {
     // The app's start-up reads the newest sync log row twice (initialisation
     // status, latest sync status), each ordered exactly as the repository orders
     // them. Without an index that is a scan of the whole table on every page
-    // load: 1.8M rows on a site with a long legacy history (#1562).
+    // load: 1.8M rows on a site with a long legacy history.
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,

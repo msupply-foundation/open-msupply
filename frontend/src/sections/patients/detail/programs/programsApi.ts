@@ -65,9 +65,9 @@ export const fetchPatientRegistry = async (
 };
 
 // The answer each store gave this session, so the next patient opened there
-// is read on its path at once rather than after the registry answers again
-// (#1562). Kept per user as well as store: the entries a user may see follow
-// their document permissions, and a logout does not reload the page. Every
+// is read on its path at once rather than after the registry answers again.
+// Kept per user as well as store: the entries a user may see follow their
+// document permissions, and a logout does not reload the page. Every
 // read refreshes it; one that answers differently (a plugin installed
 // meanwhile) corrects the patient read that followed the old answer.
 const patientRegistryByUserAndStore = new Map<
