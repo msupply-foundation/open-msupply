@@ -1,6 +1,7 @@
 use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
+mod add_annual_doses_per_person_to_vaccine_course;
 mod add_campaign_id_to_invoice;
 mod add_campaign_to_requisition_line;
 mod add_cancelled_status_to_purchase_order;
@@ -54,6 +55,7 @@ impl Migration for V3_04_00 {
             Box::new(add_kind_to_campaign::Migrate),
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
+            Box::new(add_annual_doses_per_person_to_vaccine_course::Migrate),
             Box::new(add_inactive_to_name_store_join::Migrate),
             Box::new(inactivate_kept_name_store_joins::Migrate),
             Box::new(recreate_joins_for_deleted_patients::Migrate),
