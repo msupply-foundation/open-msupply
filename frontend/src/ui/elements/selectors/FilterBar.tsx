@@ -620,6 +620,9 @@ export const FilterTextInput = (props: FilterTextInputProps) => {
  * DEBOUNCED like the text filter: NumberField eagerly commits every valid
  * keystroke, and an exact-match filter applied at "12" while typing "1200"
  * matches nothing — the pause lets the whole number land as one change.
+ * Enter or blur applies it at once, as the text filter does: a change landing
+ * 300ms after the user moved on reaches the screen as a second, unasked-for
+ * edit (the link-purchase-order modal dropped the row picked in that gap).
  * `decimalLimit` defaults to 0 (an integer filter — stocktake number, pack
  * count); pass a limit for decimal filters.
  */
@@ -646,7 +649,10 @@ export const FilterNumberInput = (props: {
     300
   );
   return (
-    <span class={styles.bareField}>
+    // NumberField turns Enter into a blur and commits in its blur handler,
+    // which runs before focusout reaches here — so this flush carries that
+    // commit. A flush after the chip is gone is a no-op (createDebounced).
+    <span class={styles.bareField} onFocusOut={() => commit.flush()}>
       <NumberField
         label={props.label}
         hideLabel
