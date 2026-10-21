@@ -3143,6 +3143,7 @@
   "messages.sync-api-paused-modal": "The sync API is paused, so remote sites cannot sync with this server. A server administrator can resume it from Settings.",
   "messages.sync-maintenance-mode": "Maintenance mode is on. Scheduled sync is paused, but Sync now still runs. Turn maintenance mode off from Settings once it has finished.",
   "messages.sync-paused": "Sync is paused. A server administrator can resume it from Settings.",
+  "messages.target-mos-differs-from-store": "This store fixes the target to its supply interval of {{supplyInterval}} months + safety buffer of {{safetyBuffer}} months. This order's target differs, and can only be changed to {{total}} months.",
   "messages.target-mos-set-by-store": "Set by this store: supply interval of {{supplyInterval}} months + safety buffer of {{safetyBuffer}} months. The store does not allow it to be changed.",
   "messages.temperature": "{{temperature}} °C",
   "messages.template-download-text": "Not sure how to start? ",
