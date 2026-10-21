@@ -81,6 +81,8 @@ export interface ItemSearchProps {
    * of the results — the purchase-order line editor's chooser.
    */
   orderableOnly?: boolean;
+  /** Offer service items as well as stock (purchase order line editor). */
+  includeServiceItems?: boolean;
   /**
    * Offer only the items of one category, by name (server-side
    * ItemFilterInput.categoryName) — the form library's PrescriptionInput,
@@ -136,6 +138,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     () => props.hasStockOnHand,
     () => props.masterListId,
     () => (props.orderableOnly ? false : undefined),
+    () => props.includeServiceItems,
     () => props.categoryName
   );
 
@@ -181,11 +184,20 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
           </span>
         )}
       </Show>
-      <span class={styles.total}>
-        {/* Fixed, localised "Units" label for every item (old-app parity — the
-            item's own unitName is untranslatable catalogue data). */}
-        <Num value={item.availableUnits} /> {t('label.units')}
-      </span>
+      <Show
+        when={!item.isService}
+        fallback={
+          <span class={styles.present} data-testid="item-option-service">
+            <StatusBadge label={t('label.service')} tone="info" />
+          </span>
+        }
+      >
+        <span class={styles.total}>
+          {/* Fixed, localised "Units" label for every item (old-app parity — the
+              item's own unitName is untranslatable catalogue data). */}
+          <Num value={item.availableUnits} /> {t('label.units')}
+        </span>
+      </Show>
     </span>
   );
 
@@ -211,6 +223,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       availableUnits: 0,
       isVaccine: false,
       doses: 0,
+      isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
     };

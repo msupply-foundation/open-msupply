@@ -61,6 +61,7 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
 import { campaignsRoutes } from './sections/campaigns';
+import { manageReportsRoutes } from './sections/manage-reports';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
@@ -138,6 +139,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
   'manage/campaigns': campaignsRoutes,
+  'manage/reports': manageReportsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
   'manage/custom-fields': customFieldsRoutes,
   'manage/indicators-demographics': demographicsRoutes,

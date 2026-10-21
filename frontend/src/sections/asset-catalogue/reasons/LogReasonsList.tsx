@@ -1,3 +1,4 @@
+import { reasonName } from '@/domain/asset';
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
@@ -145,7 +146,7 @@ const LogReasonsList: Component = () => {
       meta: { headerPosition: 'badge' },
     },
     {
-      c: { key: 'reason' },
+      c: { accessor: reasonName, id: 'reason' },
       header: () => t('label.reason'),
       ...getCellDefinition('reason', { headerPosition: 'primary' }),
     },
@@ -198,7 +199,7 @@ const LogReasonsList: Component = () => {
               selected={selectedRows}
               guard={() => guardWrite(REASON_WRITE)}
               deleteOne={deleteOne}
-              nameOf={row => row.reason}
+              nameOf={reasonName}
               confirmMessage={records =>
                 tPlural('messages.confirm-delete-reasons', records.length)
               }

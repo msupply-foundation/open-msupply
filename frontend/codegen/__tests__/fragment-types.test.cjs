@@ -110,3 +110,11 @@ test("fragment types are emitted before the operations that use them", () => {
   assert.ok(fragIdx !== -1 && opIdx !== -1);
   assert.ok(fragIdx < opIdx, "fragment type should come before the operation type");
 });
+
+test("a fragment-only document imports no TypedDocument", () => {
+  const schema = `type Query { u: User! } type User { id: ID! }`;
+  const out = generate({ schema, document: "fragment UserCard on User { id }" });
+
+  assert.ok(out.includes("export type UserCardFragment ="));
+  assert.ok(!out.includes("TypedDocument"));
+});

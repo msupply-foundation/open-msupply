@@ -131,9 +131,9 @@ mod test {
         activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository},
         location_movement::{LocationMovement, LocationMovementFilter, LocationMovementRepository},
         mock::{
-            MockData, MockDataInserts, mock_item_b_lines, mock_location_1, mock_stock_line_a,
-            mock_stock_line_b, mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a,
-            mock_store_c, mock_user_account_a, stock_line_with_volume,
+            MockData, MockDataInserts, mock_campaign_a, mock_item_b_lines, mock_location_1,
+            mock_stock_line_a, mock_stock_line_b, mock_stock_line_ci_c, mock_stock_line_si_d,
+            mock_store_a, mock_store_c, mock_user_account_a, stock_line_with_volume,
         },
         test_db::{setup_all, setup_all_with_data},
     };
@@ -211,6 +211,64 @@ mod test {
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))
         );
+    }
+
+    #[actix_rt::test]
+    async fn insert_repack_carries_campaign_and_program() {
+        let tagged = StockLineRow {
+            id: "tagged_stock_line".to_string(),
+            item_id: "item_a".to_string(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 10.0,
+            available_number_of_packs: 50.0,
+            total_number_of_packs: 50.0,
+            campaign_id: Some(mock_campaign_a().id.clone()),
+            program_id: Some("missing_program".to_string()),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_repack_carries_campaign_and_program",
+            MockDataInserts::all(),
+            MockData {
+                stock_lines: vec![tagged.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id.to_string())
+            .unwrap();
+
+        let repack = service_provider
+            .repack_service
+            .insert_repack(
+                &context,
+                InsertRepack {
+                    stock_line_id: tagged.id.clone(),
+                    number_of_packs: 10.0,
+                    new_pack_size: 5.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let new_line = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(repack.invoice_row.id.clone())),
+            )
+            .unwrap()
+            .into_iter()
+            .find(|l| l.invoice_line_row.r#type == InvoiceLineType::StockIn)
+            .and_then(|l| l.stock_line_option)
+            .expect("the repack creates a new stock line");
+
+        assert_ne!(new_line.id, tagged.id);
+        assert_eq!(new_line.campaign_id, tagged.campaign_id);
+        assert_eq!(new_line.program_id, tagged.program_id);
     }
 
     #[actix_rt::test]

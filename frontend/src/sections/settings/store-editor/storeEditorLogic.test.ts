@@ -508,6 +508,16 @@ describe('buildPreferencesInput (SET-05.37)', () => {
     });
   });
 
+  it('writes the changing-target-months switch, including turning it off', () => {
+    // On unless set (spec/internal-orders rules › target months of stock), so
+    // the edit that matters is an explicit false — it must reach the wire.
+    expect(
+      buildPreferencesInput({ canChangeTargetMonthsOfStock: false }, 'store-a')
+    ).toEqual({
+      canChangeTargetMonthsOfStock: [{ storeId: 'store-a', value: false }],
+    });
+  });
+
   it('returns undefined when nothing is staged, so the save skips the call', () => {
     expect(buildPreferencesInput({}, 'store-a')).toBeUndefined();
   });

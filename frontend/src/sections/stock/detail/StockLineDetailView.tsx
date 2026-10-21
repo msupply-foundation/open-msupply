@@ -45,10 +45,16 @@ import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
-import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
+import {
+  StockIcon,
+  BarIcon,
+  SaveIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+} from '../../../ui/icons';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   barcodeFieldFill,
@@ -728,19 +734,22 @@ const StockLineDetailView: Component = () => {
                                 }}
                               />
                             </Show>
-                            <CampaignOrProgramSelect
-                              label={t('label.campaign')}
-                              inputTestId="field-campaign-or-program"
+                            <ProgramSelect
+                              inputTestId="field-program"
                               storeId={params.storeId}
-                              itemId={l().itemId}
-                              campaignId={edit.campaignId ?? undefined}
-                              campaignName={l().campaign?.name}
+                              itemIds={[l().itemId]}
                               programId={edit.programId ?? undefined}
-                              placeholder={t('label.none')}
-                              onChange={v => {
-                                setEdit('campaignId', v?.campaign?.id ?? null);
-                                setEdit('programId', v?.program?.id ?? null);
-                              }}
+                              onChange={p =>
+                                setEdit('programId', p?.id ?? null)
+                              }
+                            />
+                            <ActivitySelect
+                              inputTestId="field-activity"
+                              campaignId={edit.campaignId ?? undefined}
+                              campaign={l().campaign}
+                              onChange={c =>
+                                setEdit('campaignId', c?.id ?? null)
+                              }
                             />
                           </FormRow>
                         </FormSection>
@@ -788,14 +797,21 @@ const StockLineDetailView: Component = () => {
                 }}
               />
               {/* Full repack → offer navigation to the new line (spec
-                  OMS-REG-SMV-08.21). OK navigates, then every close path clears
-                  the signal — the detail route component is reused across
-                  :stockLineId changes, so a signal left set would reopen this
-                  over the new line. */}
+                  OMS-REG-SMV-08.21). The repack is already saved when this
+                  opens, so it is a notice with a choice of where to go — Stay
+                  or Go to new line — not an "Are you sure?" whose Cancel would
+                  read as undoing it (#1222); its icon is a check, not the
+                  help mark, for the same reason. Go navigates, then every close
+                  path clears the signal — the detail route component is reused
+                  across :stockLineId changes, so a signal left set would reopen
+                  this over the new line. */}
               <ConfirmDialog
                 open={repackedToLineId() !== undefined}
-                title={t('heading.are-you-sure')}
-                message={t('messages.all-packs-repacked')}
+                icon={<CheckCircleIcon />}
+                title={t('title.repack-complete')}
+                message={t('messages.full-repack-go-to-new-line')}
+                confirmLabel={t('button.go-to-new-line')}
+                cancelLabel={t('button.stay')}
                 onConfirm={() => {
                   const id = repackedToLineId();
                   if (id) navigate(`/${params.storeId}/inventory/stock/${id}`);

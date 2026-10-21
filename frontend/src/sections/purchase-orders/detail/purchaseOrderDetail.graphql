@@ -25,6 +25,8 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   confirmedDatetime
   sentDatetime
   finalisedDatetime
+  # The terminal branch off Sent, stamped on cancelling (rules § cancellation).
+  cancelledDatetime
   # Toolbar. Nullable on the wire: an order can report no supplier at all.
   supplier {
     id
@@ -39,25 +41,21 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   }
   foreignExchangeRate
   requestedDeliveryDate
-  # Details heading (S8) — correspondence fields and the five charges.
+  # Details heading (S8) — correspondence fields.
   authorisingOfficer1
   authorisingOfficer2
   additionalInstructions
   supplierAgent
   headingMessage
   freightConditions
-  agentCommission
-  documentCharge
-  communicationsCharge
-  insuranceCharge
-  freightCharge
+  # Custom fields tab.
+  customFields
   # Side panel (S9) — pricing, other, dates.
   #
   # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
   # every line discount: the only discount it precedes is the supplier's
-  # (contract ⚠️ the field called "before discount"). Neither total includes
-  # the five charges, and NO field carries the final cost — the panel sums the
-  # charges itself and adds them (contract § pricing and totals).
+  # (contract ⚠️ the field called "before discount"). Service lines are lines,
+  # so both totals include them (contract § pricing and totals).
   orderTotalBeforeDiscount
   orderTotalAfterDiscount
   # Two views of ONE stored figure: the percentage is stored, the amount is
@@ -112,11 +110,9 @@ query purchaseOrder($storeId: String!, $id: String!) {
 # One line of the General tab's table (spec S7 § line columns). Number of packs
 # carries no field of its own — it is derived from the quantity and the pack
 # size (rules § pricing and totals), so purchaseOrderPricing.ts computes it from
-# exactly those fields. Line cost DOES: `lineTotal` is the stored figure the
-# server writes on every insert and update (unrounded — the display rounds),
-# and the same figure it hands an inbound shipment raised against the line — so
-# the column reads it rather than multiplying price by packs itself (contract §
-# pricing and totals).
+# exactly those fields. Line cost DOES: `lineTotalAfterSupplierDiscount` is the
+# server's own figure (contract § pricing and totals), so the column reads it
+# rather than multiplying price by packs itself.
 #
 # The same row is what a row click hands the line editor (spec S10), so it also
 # carries the editor's own fields — the before-discount price, the two texts,
@@ -132,6 +128,7 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    type
     # The item's stock on hand NOW — the SOH column and the editor's figure.
     # Not the line's own `stockOnHandInUnits`, which is written as 0.0 at
     # insert and read by nothing (contract § authoring a line).
@@ -142,7 +139,6 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   unit
   requestedPackSize
   requestedNumberOfUnits
-  adjustedNumberOfUnits
   # Both written by the shipment, never here: shipped counts every unit the
   # supplier has sent, received only those on a shipment marked received or
   # verified (contract § listing outstanding lines).
@@ -150,9 +146,8 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   receivedNumberOfUnits
   pricePerPackBeforeDiscount
   pricePerPackAfterDiscount
-  # The line's stored cost — written unrounded, the one figure the table,
-  # the order's totals and the shipment raised against the line all agree on.
-  lineTotal
+  # The stored line total with the order's supplier discount apportioned to it.
+  lineTotalAfterSupplierDiscount
   requestedDeliveryDate
   expectedDeliveryDate
   supplierItemCode
@@ -224,10 +219,6 @@ query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
       __typename
       nodes {
         id
-        # Resolves a picked item to its existing line (OMS-FUN-PO-02.23).
-        item {
-          id
-        }
         requestedNumberOfUnits
         requestedDeliveryDate
         expectedDeliveryDate

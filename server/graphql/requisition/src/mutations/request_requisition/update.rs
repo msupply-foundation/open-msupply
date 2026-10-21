@@ -56,6 +56,17 @@ pub enum UpdateErrorInterface {
     CannotEditRequisition(CannotEditRequisition),
     OrderingTooManyItems(OrderingTooManyItems),
     RequisitionReasonsNotProvided(RequisitionReasonsNotProvided),
+    CannotChangeTargetMonthsOfStock(CannotChangeTargetMonthsOfStock),
+}
+
+/// The store fixes a general order's target months of stock to its supply interval + safety
+/// buffer (the `canChangeTargetMonthsOfStock` preference is off)
+pub struct CannotChangeTargetMonthsOfStock;
+#[Object]
+impl CannotChangeTargetMonthsOfStock {
+    pub async fn description(&self) -> &str {
+        "Cannot change target months of stock"
+    }
 }
 
 #[derive(SimpleObject)]
@@ -190,6 +201,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::ReasonsNotProvided(lines) => {
             return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
                 RequisitionReasonsNotProvided(lines),
+            ));
+        }
+        ServiceError::CannotChangeTargetMonthsOfStock => {
+            return Ok(UpdateErrorInterface::CannotChangeTargetMonthsOfStock(
+                CannotChangeTargetMonthsOfStock,
             ));
         }
         ServiceError::DestinationCustomerNotACustomer => {

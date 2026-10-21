@@ -6,7 +6,8 @@ use repository::{
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
     AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
     CampaignRowRepository, CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository,
-    ContextRowRepository, CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
+    ContextRowRepository, CurrencyRowRepository, CustomFieldOptionRow,
+    CustomFieldOptionRowRepository, DemographicRowRepository, DiagnosisRowRepository,
     FormSchemaRowRepository, IndicatorColumnRowRepository, IndicatorLineRowRepository,
     InsuranceProviderRowRepository, InvoiceLineRowRepository, InvoiceRowRepository,
     ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository, KeyValueStoreRepository,
@@ -221,6 +222,33 @@ pub(crate) fn merge_legacy_custom_fields(
     } else {
         Some(serde_json::Value::Object(map))
     }
+}
+
+/// The option with `deleted_datetime` set, so the option set tracks a removed
+/// 4D category and the read dataloader filters it out. `None` when no option matches.
+pub(crate) fn soft_deleted_custom_field_option(
+    connection: &StorageConnection,
+    option_id: &str,
+) -> Result<Option<CustomFieldOptionRow>, RepositoryError> {
+    Ok(CustomFieldOptionRowRepository::new(connection)
+        .find_one_by_id(option_id)?
+        .map(|option| CustomFieldOptionRow {
+            deleted_datetime: Some(Utc::now().naive_utc()),
+            ..option
+        }))
+}
+
+/// A text value from a `custom_fields` blob, for pushing back to a legacy field.
+pub(crate) fn custom_field_string(
+    custom_fields: &Option<serde_json::Value>,
+    key: &str,
+) -> Option<String> {
+    custom_fields
+        .as_ref()?
+        .as_object()?
+        .get(key)?
+        .as_str()
+        .map(str::to_string)
 }
 
 /// The target table of an optional foreign key cleared during sync translation.

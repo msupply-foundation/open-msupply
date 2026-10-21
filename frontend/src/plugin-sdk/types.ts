@@ -223,7 +223,10 @@ export interface InternalOrderLineView {
   readonly suggestedQuantity: number;
   readonly availableStockOnHand: number;
   readonly averageMonthlyConsumption: number;
-  /** Available stock ÷ AMC; 0 when the line has no consumption. */
+  /**
+   * Available stock ÷ the line's monthly demand, whatever its forecast method;
+   * 0 when the line has none.
+   */
   readonly monthsOfStock: number;
   readonly initialStockOnHandUnits: number;
   readonly incomingUnits: number;

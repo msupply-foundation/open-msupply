@@ -106,7 +106,11 @@ export const PurchaseOrderShipmentsTab: Component<
       // always the EXTERNAL scope.
       onRowClick={row =>
         navigate(
-          inboundShipmentHref(props.storeId, row.id, 'INBOUND_SHIPMENT_EXTERNAL')
+          inboundShipmentHref(
+            props.storeId,
+            row.id,
+            'INBOUND_SHIPMENT_EXTERNAL'
+          )
         )
       }
       emptyMessage={t('error.no-inbound-shipments-linked')}
