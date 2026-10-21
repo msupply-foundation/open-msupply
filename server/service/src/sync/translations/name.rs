@@ -311,9 +311,9 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
 
-    // OG's soft delete. `Option` to tell an absent flag (older senders) from `false`
+    // OG's soft delete
     #[serde(default)]
-    pub is_deleted: Option<bool>,
+    pub is_deleted: bool,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -437,15 +437,15 @@ impl SyncTranslation for NameTranslation {
 
         // Patients only; other names ignore `is_deleted`. A deletion stays unless
         // OG says the patient isn't deleted: another sender (a v6 site's push) may
-        // not have the deletion yet, and an absent flag says nothing
+        // not have the deletion yet
         let deleted_datetime = if legacy_type != LegacyNameRowType::Patient {
             None
+        } else if is_deleted {
+            existing_deleted_datetime.or_else(|| Some(Utc::now().naive_utc()))
+        } else if is_from_legacy_central(connection, sync_record)? {
+            None
         } else {
-            match is_deleted {
-                Some(true) => existing_deleted_datetime.or_else(|| Some(Utc::now().naive_utc())),
-                Some(false) if is_from_legacy_central(connection, sync_record)? => None,
-                _ => existing_deleted_datetime,
-            }
+            existing_deleted_datetime
         };
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
@@ -646,7 +646,7 @@ impl SyncTranslation for NameTranslation {
             category4_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_4),
             category5_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_5),
             category6_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_6),
-            is_deleted: Some(deleted_datetime.is_some()),
+            is_deleted: deleted_datetime.is_some(),
         };
 
         Ok(PushTranslateResult::upsert(
@@ -745,7 +745,7 @@ mod tests {
             margin: None,
             freight_factor: None,
             currency_id: None,
-            is_deleted: None,
+            is_deleted: false,
         }
     }
 
@@ -1048,8 +1048,8 @@ mod tests {
     }
 
     /// OG's `is_deleted` sets a patient's `deleted_datetime`. A deletion stays
-    /// unless OG says the patient isn't deleted: an absent flag, or `false` from
-    /// another site, keeps it. Other names don't read the flag
+    /// unless OG says the patient isn't deleted: `false` from another site keeps
+    /// it. Other names don't read the flag
     #[actix_rt::test]
     async fn name_pull_is_deleted() {
         use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
@@ -1070,8 +1070,8 @@ mod tests {
 
         // Integrates a name record from `source_site_id`, returning the stored
         // deleted_datetime
-        let integrate = |id: &str, r#type: &str, source_site_id: i32, is_deleted: Option<bool>| {
-            let mut data = json!({
+        let integrate = |id: &str, r#type: &str, source_site_id: i32, is_deleted: bool| {
+            let data = json!({
                 "ID": id,
                 "name": id,
                 "code": id,
@@ -1100,11 +1100,9 @@ mod tests {
                 "national_health_number": "",
                 "isDeceased": false,
                 "om_created_datetime": "",
-                "om_gender": ""
+                "om_gender": "",
+                "is_deleted": is_deleted
             });
-            if let Some(is_deleted) = is_deleted {
-                data["is_deleted"] = json!(is_deleted);
-            }
             SyncBufferRepository::new(&connection)
                 .insert_many(&[SyncBufferRowInsert {
                     record_id: id.to_string(),
@@ -1124,7 +1122,7 @@ mod tests {
         };
 
         // Not deleted here: OG's deletion sets it
-        assert!(integrate("testId", "patient", OG_SITE_ID, Some(true)).is_some());
+        assert!(integrate("testId", "patient", OG_SITE_ID, true).is_some());
 
         // Deleted here
         let deleted_at = NaiveDate::from_ymd_opt(2026, 1, 1)
@@ -1137,34 +1135,19 @@ mod tests {
 
         // Re-receiving the deletion keeps the original time
         assert_eq!(
-            integrate("testId", "patient", OG_SITE_ID, Some(true)),
-            Some(deleted_at)
-        );
-        // An absent flag keeps it
-        assert_eq!(
-            integrate("testId", "patient", OG_SITE_ID, None),
-            Some(deleted_at)
-        );
-        assert_eq!(
-            integrate("testId", "patient", OTHER_SITE_ID, None),
+            integrate("testId", "patient", OG_SITE_ID, true),
             Some(deleted_at)
         );
         // `false` from another site keeps it
         assert_eq!(
-            integrate("testId", "patient", OTHER_SITE_ID, Some(false)),
+            integrate("testId", "patient", OTHER_SITE_ID, false),
             Some(deleted_at)
         );
         // `false` from OG clears it
-        assert_eq!(
-            integrate("testId", "patient", OG_SITE_ID, Some(false)),
-            None
-        );
+        assert_eq!(integrate("testId", "patient", OG_SITE_ID, false), None);
 
         // Other names don't read the flag
-        assert_eq!(
-            integrate("name_a", "facility", OG_SITE_ID, Some(true)),
-            None
-        );
+        assert_eq!(integrate("name_a", "facility", OG_SITE_ID, true), None);
     }
 
     /// A deleted patient's record is pushed with `is_deleted: true`
