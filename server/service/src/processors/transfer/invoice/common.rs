@@ -94,12 +94,16 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                // What the supplying store sent is the outbound line's own quantity and pack
-                // size. Legacy customer invoice lines sync with `sentQuantity` and
-                // `sent_pack_size` of 0, so their shipped fields can't be copied across (#699)
+                // Legacy customer invoice lines sync with `sentQuantity` and `sent_pack_size`
+                // of 0, so when the outbound hasn't recorded what it shipped, fall back to the
+                // line's own quantity and pack size - that's what the supplying store sent (#699)
+                let shipped_recorded = shipped_number_of_packs.is_some()
+                    && shipped_pack_size.is_some_and(|size| size > 0.0);
                 let (shipped_number_of_packs, shipped_pack_size) =
                     match (&invoice_row.r#type, &r#type) {
-                        (InvoiceType::OutboundShipment, InvoiceLineType::StockOut) => {
+                        (InvoiceType::OutboundShipment, InvoiceLineType::StockOut)
+                            if !shipped_recorded =>
+                        {
                             (Some(number_of_packs), Some(pack_size))
                         }
                         _ => (shipped_number_of_packs, shipped_pack_size),
@@ -365,8 +369,9 @@ mod test {
     use super::{generate_inbound_lines, get_cost_plus_margin, get_default_price_for_pack};
 
     use repository::{
-        Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
-        ItemStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow, StorageConnection,
+        Invoice, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, ItemRow, ItemStoreJoinRow, PreferenceRow,
+        PreferenceRowRepository, StockLineRow, StorageConnection,
         mock::{
             MockData, MockDataInserts, mock_item_a_join_store_a, mock_name_store_a, mock_store_a,
             mock_store_b, mock_store_c,
@@ -708,5 +713,26 @@ mod test {
         assert_eq!(lines.len(), 1);
         assert_eq!(lines[0].shipped_number_of_packs, Some(20.0));
         assert_eq!(lines[0].shipped_pack_size, Some(30.0));
+
+        // Shipped values the outbound already recorded are kept, not overwritten
+        let mut line = transfer_at_cost_mock_data().invoice_lines[0].clone();
+        line.number_of_packs = 20.0;
+        line.pack_size = 30.0;
+        line.shipped_number_of_packs = Some(15.0);
+        line.shipped_pack_size = Some(10.0);
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&line)
+            .unwrap();
+
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines[0].shipped_number_of_packs, Some(15.0));
+        assert_eq!(lines[0].shipped_pack_size, Some(10.0));
     }
 }
