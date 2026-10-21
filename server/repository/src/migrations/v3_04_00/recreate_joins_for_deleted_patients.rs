@@ -37,9 +37,9 @@ impl MigrationFragment for Migrate {
         "recreate_joins_for_deleted_patients"
     }
 
-    /// When OG deleted a patient it also deleted their joins, so the deletion had no
-    /// join to reach the stores' sites through. Recreate those joins as inactive from
-    /// OG's sync_buffer rows, and log the patient again so the deletion goes out.
+    /// Joins OG sent for a deleted patient that no longer exist are recreated as
+    /// inactive from OG's sync_buffer rows, and the patient is logged again so the
+    /// deletion reaches the stores' sites through them.
     ///
     /// Changelog rows are stamped with OG's site id so the sites pull them and they
     /// aren't pushed back to OG.

@@ -31,8 +31,8 @@ impl MigrationFragment for Migrate {
         "inactivate_kept_name_store_joins"
     }
 
-    /// Before 3.4, central kept a patient join active when OG deleted it while the
-    /// patient had prescriptions in the store (#12365). Set those joins inactive.
+    /// Active patient joins whose latest row from OG is a delete or an inactive upsert
+    /// are joins OG removed; set them inactive.
     ///
     /// Changelog rows are stamped with OG's site id so the store's site pulls them and
     /// they aren't pushed back to OG.
