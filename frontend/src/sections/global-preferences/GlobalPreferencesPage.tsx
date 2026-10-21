@@ -336,6 +336,7 @@ const GlobalPreferencesPage: Component = () => {
                 !parts().inventoryAdjustmentsEnabled)
             }
             data-testid="global-preference-backdating-max-days"
+            emptyValue={0}
             onChange={maxDays => stagePart({ maxDays: maxDays ?? 0 })}
           />
         </Row>

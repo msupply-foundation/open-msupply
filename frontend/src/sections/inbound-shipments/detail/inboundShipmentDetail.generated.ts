@@ -770,6 +770,7 @@ export type BatchInboundShipmentVariables = {
     shippedPackSize?: number | null;
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
+    barcode?: string | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -824,6 +825,7 @@ export type BatchInboundShipmentVariables = {
     reasonOptionId?: {
     value?: string | null;
   } | null;
+    barcode?: string | null;
   }> | null;
     deleteInboundShipmentLines?: Array<{
     id: string;
@@ -932,6 +934,7 @@ export type BatchInboundShipmentExternalVariables = {
     shippedPackSize?: number | null;
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
+    barcode?: string | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -986,6 +989,7 @@ export type BatchInboundShipmentExternalVariables = {
     reasonOptionId?: {
     value?: string | null;
   } | null;
+    barcode?: string | null;
   }> | null;
     deleteInboundShipmentLines?: Array<{
     id: string;

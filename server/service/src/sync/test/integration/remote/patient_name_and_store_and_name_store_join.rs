@@ -82,6 +82,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            inactive: false,
         };
         let patient_name_store_join_json = json!({
             "ID": patient_name_store_join_row.id,

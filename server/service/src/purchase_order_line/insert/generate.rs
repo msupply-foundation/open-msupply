@@ -48,7 +48,8 @@ pub fn generate(
         item_id: item.id,
         item_name: item.name.clone(),
         requested_number_of_units: requested_number_of_units.unwrap_or_default(),
-        requested_pack_size: requested_pack_size.unwrap_or_default(),
+        // A line is born at the item's default pack size unless one is given
+        requested_pack_size: requested_pack_size.unwrap_or(item.default_pack_size),
         requested_delivery_date,
         expected_delivery_date,
         price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),

@@ -967,17 +967,123 @@ export type BackdatingNode = {
   shipmentsEnabled: Scalars['Boolean']['output'];
 };
 
+export type BarcodeMatchNode = {
+  __typename: 'BarcodeMatchNode';
+  /** The barcode as people read it */
+  barcode: Scalars['String']['output'];
+  /** The packaging variant's id, or the proposal's */
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  /**
+   * The item variant to put on the line, for a confirmed barcode. It may be
+   * auto-created, so not in the item's variant list.
+   */
+  itemVariantId?: Maybe<Scalars['String']['output']>;
+  manufacturerId?: Maybe<Scalars['String']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  /** For a confirmed barcode */
+  packagingVariantId?: Maybe<Scalars['String']['output']>;
+  status: BarcodeStatusNode;
+  /** The barcode in its standard form with its scheme */
+  value: Scalars['String']['output'];
+};
+
+export type BarcodeMutations = {
+  __typename: 'BarcodeMutations';
+  /**
+   * Confirms a store's proposal, so the barcode reaches every site. With no
+   * packaging variant or item variant given, it goes on the item's auto-created
+   * variant for the proposal's manufacturer.
+   */
+  confirmBarcodeProposal: BarcodeNode;
+  /**
+   * Removes the barcode from a packaging variant, everywhere. `id` is the
+   * packaging variant's. The removal is remembered, so the barcode isn't
+   * auto-confirmed for the item again. An auto-created variant left with no
+   * barcode is deleted; confirming the barcode again brings it back.
+   */
+  deleteBarcode: DeleteResponse;
+  /**
+   * Confirms a barcode for an item without a proposal. Confirming one the item
+   * already has returns it.
+   */
+  insertBarcode: BarcodeNode;
+};
+
+export type BarcodeMutationsConfirmBarcodeProposalArgs = {
+  id: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
+  packagingVariantId?: InputMaybe<Scalars['String']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+export type BarcodeMutationsDeleteBarcodeArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type BarcodeMutationsInsertBarcodeArgs = {
+  input: InsertConfirmedBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
+  /** The barcode as people read it, e.g. `9506682101352` */
+  barcode: Scalars['String']['output'];
+  /**
+   * The barcode as people read it. Use `barcode`.
+   * @deprecated Use `barcode`
+   */
   gtin: Scalars['String']['output'];
+  /** The packaging variant's id */
+  id: Scalars['String']['output'];
+  /** The barcode is on a variant central created only to hold barcodes */
+  isAutoCreated: Scalars['Boolean']['output'];
+  itemId: Scalars['String']['output'];
+  itemVariantId?: Maybe<Scalars['String']['output']>;
+  manufacturerId?: Maybe<Scalars['String']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  packagingVariantId?: Maybe<Scalars['String']['output']>;
+  /**
+   * Barcodes no longer have a parent; always null. Kept so older clients
+   * that still ask for it keep working.
+   * @deprecated Barcodes no longer have a parent
+   */
+  parentId?: Maybe<Scalars['String']['output']>;
+  /**
+   * The barcode in its standard form with its scheme, e.g.
+   * `gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
+   */
+  value: Scalars['String']['output'];
+};
+
+export type BarcodeProposalNode = {
+  __typename: 'BarcodeProposalNode';
+  /** The barcode as people read it */
+  barcode: Scalars['String']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   manufacturerId?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
-  parentId?: Maybe<Scalars['String']['output']>;
+  store?: Maybe<StoreNode>;
+  /** The store that proposed it */
+  storeId: Scalars['String']['output'];
+  updatedDatetime: Scalars['DateTime']['output'];
+  userId: Scalars['String']['output'];
+  /** The barcode in its standard form with its scheme */
+  value: Scalars['String']['output'];
 };
 
 export type BarcodeResponse = BarcodeNode | NodeError;
+
+export enum BarcodeStatusNode {
+  /** Confirmed on central, shared by every site */
+  Confirmed = 'CONFIRMED',
+  /** Learned on this site, not confirmed yet */
+  Proposed = 'PROPOSED',
+}
 
 export type BatchInboundShipmentInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1588,12 +1694,23 @@ export type CentralPatientSearchResponse =
 
 export type CentralPluginMutations = {
   __typename: 'CentralPluginMutations';
+  /**
+   * `programs` chooses the program for each of a form plugin's program keys
+   * (a key left out keeps the program it is already bound to); `takeOver`
+   * names document types whose existing entry, installed by no plugin, the
+   * plugin may take over; `blankOldUi` names taken-over types whose form
+   * on sites still running the old client may go blank, because the type
+   * carries no legacy UI schema (refused otherwise).
+   */
   installUploadedPlugin: PluginInfoNode;
   uninstallPlugin: UninstallPluginNode;
 };
 
 export type CentralPluginMutationsInstallUploadedPluginArgs = {
+  blankOldUi?: InputMaybe<Array<Scalars['String']['input']>>;
   fileId: Scalars['String']['input'];
+  programs?: InputMaybe<Array<PluginProgramInput>>;
+  takeOver?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type CentralPluginMutationsUninstallPluginArgs = {
@@ -1628,6 +1745,7 @@ export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   ancillaryItem: AncillaryItemMutations;
   assetCatalogue: AssetCatalogueMutations;
+  barcode: BarcodeMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
   customField: CustomFieldMutations;
@@ -3109,6 +3227,8 @@ export type DraftStockOutItemData = {
 export type DraftStockOutLineNode = {
   __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
+  /** The batch's stock line barcode, as people read it */
+  barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
   donor?: Maybe<NameNode>;
@@ -3278,6 +3398,11 @@ export type EncounterNode = {
   createdDatetime: Scalars['DateTime']['output'];
   /** The encounter document */
   document: DocumentNode;
+  /**
+   * The registry entry of the document's type, resolved from the row's own
+   * type without loading the document.
+   */
+  documentRegistry?: Maybe<DocumentRegistryNode>;
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -3541,6 +3666,25 @@ export type ExistingLinesInput = {
   returnId: Scalars['String']['input'];
 };
 
+/** How this server's registry stands for a document type the bundle declares. */
+export enum ExistingRegistryEntryNode {
+  /** Several entries for the type: install is refused. */
+  Ambiguous = 'AMBIGUOUS',
+  /**
+   * An entry of another category (`existingEntryCategory`) than the one
+   * declared: install is refused.
+   */
+  CategoryMismatch = 'CATEGORY_MISMATCH',
+  /** No entry: install creates one. */
+  None = 'NONE',
+  /** The plugin's own entry, from an earlier install. */
+  Owned = 'OWNED',
+  /** Another plugin's entry (`existingEntryOwner`): install is refused. */
+  OwnedByAnotherPlugin = 'OWNED_BY_ANOTHER_PLUGIN',
+  /** An entry no plugin installed: install needs the type named in `takeOver`. */
+  Unowned = 'UNOWNED',
+}
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
@@ -3655,6 +3799,80 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
     description: Scalars['String']['output'];
     key: ForeignKey;
   };
+
+/**
+ * What installing the uploaded bundle's form plugins would meet on this
+ * server, for the choices `installUploadedPlugin` takes: the program for
+ * each key, the types to take over, and the types whose old-client form may
+ * go blank.
+ */
+export type FormInstallPreviewNode = {
+  __typename: 'FormInstallPreviewNode';
+  formPlugins: Array<FormPluginPreviewNode>;
+  /** The programs on this server, one to choose for each program key. */
+  programs: Array<ProgramNode>;
+};
+
+/** One document type a form plugin declares, checked against this server. */
+export type FormPluginDocumentTypeNode = {
+  __typename: 'FormPluginDocumentTypeNode';
+  /**
+   * True when installing would leave the type's form blank on sites still
+   * running the old client, which install refuses unless the type is named
+   * in `blankOldUi`.
+   */
+  blanksOldUi: Scalars['Boolean']['output'];
+  category: DocumentRegistryCategoryNode;
+  documentType: Scalars['String']['output'];
+  existingEntry: ExistingRegistryEntryNode;
+  /** The existing entry's category, for `CATEGORY_MISMATCH`. */
+  existingEntryCategory?: Maybe<DocumentRegistryCategoryNode>;
+  /** The unowned entry's id, for `UNOWNED`. */
+  existingEntryId?: Maybe<Scalars['String']['output']>;
+  /** The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`. */
+  existingEntryOwner?: Maybe<Scalars['String']['output']>;
+  /**
+   * The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+   * context is a program's: what a take-over keeps the type under unless
+   * its key is moved, so a screen can start the key on it.
+   */
+  existingEntryProgram?: Maybe<ProgramNode>;
+  name: Scalars['String']['output'];
+  /** `None` for the Patient type, whose context is fixed. */
+  programKey?: Maybe<Scalars['String']['output']>;
+  /**
+   * The refusals no choice in `installUploadedPlugin` can get past, in the
+   * words that mutation would refuse with: a schema version already
+   * installed with other content, a version documents are pinned to left
+   * out, a take-over that changes the deployment's rules or lacks its
+   * current version, a second patient type. Empty when install could go
+   * ahead with the right choices.
+   */
+  refusals: Array<Scalars['String']['output']>;
+};
+
+export type FormPluginPreviewNode = {
+  __typename: 'FormPluginPreviewNode';
+  documentTypes: Array<FormPluginDocumentTypeNode>;
+  pluginCode: Scalars['String']['output'];
+  programKeys: Array<FormPluginProgramKeyNode>;
+};
+
+/**
+ * One of a form plugin's program keys, with the program an earlier install
+ * bound it to.
+ */
+export type FormPluginProgramKeyNode = {
+  __typename: 'FormPluginProgramKeyNode';
+  /**
+   * The program the key is already bound to; `None` on a first install,
+   * when `programs` must choose one.
+   */
+  boundProgram?: Maybe<ProgramNode>;
+  /** The declared document types that name this key. */
+  documentTypes: Array<Scalars['String']['output']>;
+  programKey: Scalars['String']['output'];
+};
 
 export type FormSchemaConnector = {
   __typename: 'FormSchemaConnector';
@@ -4059,6 +4277,7 @@ export type InsertAssetLogResponse = AssetLogNode | InsertAssetLogError;
 
 export type InsertAssetResponse = AssetNode | InsertAssetError;
 
+/** Deprecated: the input of the deprecated top-level `insertBarcode` */
 export type InsertBarcodeInput = {
   gtin: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
@@ -4075,6 +4294,18 @@ export type InsertClinicianInput = {
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
   mobile?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertConfirmedBarcodeInput = {
+  /** As scanned or typed; the server puts it in standard form */
+  barcode: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  /** Add a packaging variant with the barcode to this item variant of the item */
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  /** Put the barcode on this packaging variant of the item, which has none yet */
+  packagingVariantId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertContactFormInput = {
@@ -4285,6 +4516,11 @@ export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
 };
 
 export type InsertInboundShipmentLineInput = {
+  /**
+   * The barcode scanned or typed for the line, as read; recorded on the line
+   * and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
   campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
@@ -5035,6 +5271,27 @@ export type InsertVaccineCourseResponse =
   | InsertVaccineCourseError
   | VaccineCourseNode;
 
+/**
+ * One registry entry as an install left it: the report the CLI prints,
+ * typed for a screen.
+ */
+export type InstalledDocumentTypeNode = {
+  __typename: 'InstalledDocumentTypeNode';
+  contextId: Scalars['String']['output'];
+  documentType: Scalars['String']['output'];
+  formSchemaId: Scalars['String']['output'];
+  outcome: RegistryOutcomeNode;
+  pluginCode: Scalars['String']['output'];
+  programKey?: Maybe<Scalars['String']['output']>;
+  /**
+   * Schema versions this install added; versions already present keep
+   * their schema.
+   */
+  schemasAdded: Scalars['Int']['output'];
+  /** Versions already present whose legacy UI schema this install replaced. */
+  uiSchemasUpdated: Scalars['Int']['output'];
+};
+
 export type InstalledPluginConnector = {
   __typename: 'InstalledPluginConnector';
   nodes: Array<InstalledPluginNode>;
@@ -5328,6 +5585,11 @@ export type InvoiceLineFilterInput = {
 
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
+  /**
+   * The barcode scanned or entered for the line, or carried by the stock it
+   * issues, as people read it. Not necessarily a confirmed barcode.
+   */
+  barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
@@ -5834,6 +6096,10 @@ export type ItemNode = {
   unitName?: Maybe<Scalars['String']['output']>;
   universalCode: Scalars['String']['output'];
   userField4: Scalars['Boolean']['output'];
+  /**
+   * The item's variants. Auto-created ones, which central creates only to hold
+   * a barcode, are left out unless `includeAutoCreated` is true.
+   */
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
@@ -5870,6 +6136,10 @@ export type ItemNodeStatsArgs = {
 
 export type ItemNodeStockOnHandArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeVariantsArgs = {
+  includeAutoCreated?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum ItemNodeType {
@@ -5931,11 +6201,21 @@ export type ItemStorePropertiesNode = {
 export type ItemVariantMutations = {
   __typename: 'ItemVariantMutations';
   deleteItemVariant: DeleteItemVariantResponse;
+  /**
+   * Makes a variant central created to hold a barcode a real one, so it shows
+   * in variant lists and pickers. Its id stays the same.
+   */
+  promoteItemVariant: ItemVariantNode;
   upsertItemVariant: UpsertPackVariantResponse;
 };
 
 export type ItemVariantMutationsDeleteItemVariantArgs = {
   input: DeleteItemVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemVariantMutationsPromoteItemVariantArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -5951,6 +6231,11 @@ export type ItemVariantNode = {
   /** This item variant is bundled with other (principal) item variants */
   bundlesWith: Array<BundledItemNode>;
   id: Scalars['String']['output'];
+  /**
+   * Created on central only to hold a barcode. Left out of variant lists unless
+   * asked for.
+   */
+  isAutoCreated: Scalars['Boolean']['output'];
   item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -6411,6 +6696,11 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
+  /**
+   * Withdraws a proposal made by a store on this site. It stops matching scans
+   * here, and central stops reviewing it.
+   */
+  deleteBarcodeProposal: DeleteResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentExternal: DeleteInboundShipmentResponse;
@@ -6447,6 +6737,11 @@ export type Mutations = {
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
+  /**
+   * Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+   * on central. Adds a confirmed barcode on central and proposes one elsewhere.
+   * @deprecated Use `proposeBarcode`
+   */
   insertBarcode: InsertBarcodeResponse;
   insertClinician: IdResponse;
   insertContactForm: InsertContactFormResponse;
@@ -6506,6 +6801,11 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  /**
+   * Records that a user picked an item for a barcode in this store, for central
+   * to review. Call it when the line the scan opened is saved.
+   */
+  proposeBarcode: BarcodeMatchNode;
   refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
@@ -6671,6 +6971,11 @@ export type MutationsCreateRequisitionShipmentArgs = {
 
 export type MutationsDeleteAssetArgs = {
   assetId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteBarcodeProposalArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7091,6 +7396,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsProposeBarcodeArgs = {
+  input: ProposeBarcodeInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsRefreshAncillaryItemsArgs = {
@@ -7780,6 +8090,8 @@ export type PackagingVariantInput = {
 
 export type PackagingVariantNode = {
   __typename: 'PackagingVariantNode';
+  /** The confirmed barcode for this packaging, as people read it */
+  barcode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   packSize?: Maybe<Scalars['Float']['output']>;
@@ -8055,7 +8367,28 @@ export type PluginDataSortInput = {
 
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
+  /**
+   * How the bundle's form plugins stand against this server, read before
+   * installing: each program key's current program, each document type's
+   * existing registry entry and whether installing it would blank the old
+   * client's form, and the programs to choose from. Null on an install's
+   * result.
+   */
+  formInstallPreview?: Maybe<FormInstallPreviewNode>;
+  /**
+   * What the install did to each form plugin's registry entries: the
+   * report the CLI prints, one node per declared type. Null for an
+   * uploaded bundle not yet installed, and empty for a bundle with no form
+   * plugin.
+   */
+  installedDocumentTypes?: Maybe<Array<InstalledDocumentTypeNode>>;
   pluginInfo: Scalars['JSON']['output'];
+};
+
+/** The program chosen for one of a form plugin's program keys. */
+export type PluginProgramInput = {
+  programId: Scalars['String']['input'];
+  programKey: Scalars['String']['input'];
 };
 
 export type PopulationForecastCourseNode = {
@@ -8483,6 +8816,11 @@ export type ProgramEnrolmentNode = {
   contextId: Scalars['String']['output'];
   /** The encounter document */
   document: DocumentNode;
+  /**
+   * The registry entry of the document's type, resolved from the row's own
+   * type without loading the document.
+   */
+  documentRegistry?: Maybe<DocumentRegistryNode>;
   /** The program document */
   encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime']['output'];
@@ -8627,6 +8965,12 @@ export type ProgramIndicatorSortInput = {
 
 export type ProgramNode = {
   __typename: 'ProgramNode';
+  /**
+   * The context the program's documents (its enrolments and encounters)
+   * belong to: what a document registry entry's `contextId` names. Often,
+   * but not always, the program's own id.
+   */
+  contextId: Scalars['String']['output'];
   elmisCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   isImmunisation: Scalars['Boolean']['output'];
@@ -8706,6 +9050,14 @@ export enum PropertyNodeValueType {
   Integer = 'INTEGER',
   String = 'STRING',
 }
+
+export type ProposeBarcodeInput = {
+  /** As scanned or typed; the server puts it in standard form */
+  barcode: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+};
 
 export type PurchaseOrderConnector = {
   __typename: 'PurchaseOrderConnector';
@@ -8944,7 +9296,18 @@ export type Queries = {
    * the response body and as an HttpOnly session cookie. There is no separate refresh token.
    */
   authToken: AuthTokenResponse;
+  /**
+   * Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+   * matches; RecordNotFound when it matches none, or several items.
+   * @deprecated Use `barcodeMatches`
+   */
   barcodeByGtin: BarcodeResponse;
+  /**
+   * Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+   * barcodes first, then proposals made on this site, one per item and only
+   * for items visible in the store. Empty for a barcode nobody has mapped yet.
+   */
+  barcodeMatches: Array<BarcodeMatchNode>;
   campaigns: CampaignsResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -9032,9 +9395,20 @@ export type Queries = {
   isSyncApiPaused: Scalars['Boolean']['output'];
   /** Admin pause flag (Admin > Sync settings); any signed-in user may read it. */
   isSyncPaused: Scalars['Boolean']['output'];
+  /**
+   * Proposals for the item central hasn't confirmed or removed: every store's
+   * on central, this site's elsewhere
+   */
+  itemBarcodeProposals: Array<BarcodeProposalNode>;
+  /** The item's confirmed barcodes */
+  itemBarcodes: Array<BarcodeNode>;
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
+  /**
+   * Whether any item has variants. Auto-created variants, which only hold a
+   * barcode, don't count.
+   */
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
@@ -9268,6 +9642,11 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesBarcodeMatchesArgs = {
+  barcode: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -9514,6 +9893,16 @@ export type QueriesInvoicesArgs = {
   sort?: InputMaybe<Array<InvoiceSortInput>>;
   storeId: Scalars['String']['input'];
   type?: InputMaybe<Array<InvoiceTypeInput>>;
+};
+
+export type QueriesItemBarcodeProposalsArgs = {
+  itemId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesItemBarcodesArgs = {
+  itemId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 export type QueriesItemCountsArgs = {
@@ -10169,6 +10558,14 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
+/** What an install did to one registry entry. */
+export enum RegistryOutcomeNode {
+  Created = 'CREATED',
+  TakenOver = 'TAKEN_OVER',
+  Unchanged = 'UNCHANGED',
+  Updated = 'UPDATED',
+}
+
 export type RepackConnector = {
   __typename: 'RepackConnector';
   nodes: Array<RepackNode>;
@@ -10820,6 +11217,12 @@ export type RnRFormSortInput = {
 export type RnRFormsResponse = RnRFormConnector;
 
 export type SaveOutboundShipmentLinesInput = {
+  /**
+   * The barcode scanned to issue the item, as read; recorded on the item's
+   * saved lines, and on the stock they issue from where it has none. Doesn't
+   * propose a barcode (see `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
@@ -10827,6 +11230,12 @@ export type SaveOutboundShipmentLinesInput = {
 };
 
 export type SavePrescriptionLinesInput = {
+  /**
+   * The barcode scanned to issue the item, as read; recorded on the item's
+   * saved lines, and on the stock they issue from where it has none. Doesn't
+   * propose a barcode (see `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<PrescriptionLineInput>;
@@ -11122,6 +11531,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &
 export type StockLineNode = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
+  /** The barcode the stock carries, as people read it, e.g. `9506682101352` */
   barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
@@ -11132,6 +11542,10 @@ export type StockLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  /**
+   * None for an auto-created variant, which only holds a barcode: it's kept out
+   * of sight like it is in variant lists. `itemVariantId` still gives it.
+   */
   itemVariant?: Maybe<ItemVariantNode>;
   /** @deprecated Since 2.10.0. Use item_variant.id instead */
   itemVariantId?: Maybe<Scalars['String']['output']>;
@@ -12370,6 +12784,12 @@ export type UpdateInboundShipmentLineErrorInterface = {
 };
 
 export type UpdateInboundShipmentLineInput = {
+  /**
+   * The barcode scanned or typed for the line, as read; recorded on the line
+   * and its stock. An empty one clears it. Doesn't propose a barcode (see
+   * `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
   campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;

@@ -10,7 +10,8 @@ use serde_json::Value;
 use crate::sync::{
     integrate_document::DocumentUpsert,
     translations::{
-        document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
+        document_registry::DocumentRegistryTranslation,
+        document_registry_om::OmDocumentRegistryTranslation, form_schema::FormSchemaTranslation,
         master_list::MasterListTranslation, name::NameTranslation,
     },
 };
@@ -67,6 +68,9 @@ impl SyncTranslation for DocumentTranslation {
             NameTranslation.table_name(),
             FormSchemaTranslation.table_name(),
             DocumentRegistryTranslation.table_name(),
+            // A document whose type has no entry yet gets no encounter or enrolment
+            // row, so entries from either central integrate first.
+            OmDocumentRegistryTranslation.table_name(),
             // context_id (FkField::Context) is synced via the program master list
             MasterListTranslation.table_name(),
         ]

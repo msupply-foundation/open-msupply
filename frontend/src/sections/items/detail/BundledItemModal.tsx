@@ -190,6 +190,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
           disabled={saving()}
           helperText={t('description.bundle-ratio')}
           value={form().ratio}
+          emptyValue={0}
           onChange={ratio => setForm({ ...form(), ratio: ratio ?? 0 })}
         />
       </Show>

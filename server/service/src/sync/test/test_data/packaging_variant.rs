@@ -28,6 +28,7 @@ fn packaging_variant1() -> PackagingVariantRow {
         pack_size: None,
         volume_per_unit: None,
         deleted_datetime: None,
+        barcode: None,
     }
 }
 
@@ -54,6 +55,7 @@ fn packaging_variant2() -> PackagingVariantRow {
         pack_size: Some(10.0),
         volume_per_unit: Some(0.001),
         deleted_datetime: None,
+        barcode: None,
     }
 }
 
