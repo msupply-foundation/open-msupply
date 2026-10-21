@@ -39,16 +39,14 @@ const withCode = (label: string, code: string): string =>
 // keeping per-pack prices and line totals as SEPARATE columns: a per-pack
 // column is the price for ONE pack, never quantity × price. The two Line total
 // columns are the line's STORED totals (contract → Financial & Delivery tab
-// derivation); only the Adjusted line total multiplies, cost × packs, since it
-// reflects the line's actual cost after the charge/rate cascade. Every money
-// column names
-// its currency in the header; the PO currency and the store's home (local)
-// currency are distinct columns. The PO price columns (before discount,
-// discount %, after discount) show on every shipment so a PO line discount is
-// visible on the receipt; the local-cost and PO-currency line total columns
-// appear only when the shipment is in a foreign currency.
+// derivation). Every money column names its currency in the header; the PO
+// currency and the store's home (local) currency are distinct columns. The PO
+// price columns (before discount, discount %, after discount) show on every
+// shipment so a PO line discount is visible on the receipt; the local-cost and
+// PO-currency line total columns appear only when the shipment is in a foreign
+// currency.
 //
-// The three line-total columns carry summed footers; the Name column's footer
+// The line-total columns carry summed footers; the Name column's footer
 // holds the "Total" label. Rows are sorted by PO line number so a PO line's
 // batches sit together (the spec calls for grouping by PO line; the shared
 // DataTable renders no group-header rows yet, so adjacency is the current
@@ -89,15 +87,12 @@ export const InboundFinancialPanel: Component<{
   // The two line totals read the line's stored figures (see the header note).
   const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
   const lineTotalLocal = (line: Line) => line.totalBeforeTax;
-  const adjustedTotalLocal = (line: Line) =>
-    line.costPricePerPack * line.numberOfPacks;
 
-  // The three footer totals are pure over the rows — none depends on the rate
+  // The footer totals are pure over the rows — none depends on the rate
   // — so they are memoised here rather than re-summed on every columns()
   // rebuild (which also fires on rate / currency-code changes).
   const totalPo = createMemo(() => sumBy(props.rows, lineTotalPo));
   const totalLocal = createMemo(() => sumBy(props.rows, lineTotalLocal));
-  const totalAdjusted = createMemo(() => sumBy(props.rows, adjustedTotalLocal));
 
   const sortedRows = () =>
     [...props.rows].sort(
@@ -107,7 +102,7 @@ export const InboundFinancialPanel: Component<{
     );
 
   // A right-aligned money column: `id`/`header`, the per-row value, and an
-  // optional summed-total footer (the three line-total columns carry one). The
+  // optional summed-total footer (the line-total columns carry one). The
   // `value`/`footerTotal` are plain over their inputs — columns() takes the
   // reactive dependency (rate, rows) and rebuilds, so the stored closures never
   // read a signal themselves (avoids the stale-closure reactivity trap).
@@ -229,12 +224,6 @@ export const InboundFinancialPanel: Component<{
         withCode(t('label.line-total'), localCode()),
         lineTotalLocal,
         totalLocal()
-      ),
-      moneyColumn(
-        'adjustedTotal',
-        withCode(t('label.adjusted-line-total'), localCode()),
-        adjustedTotalLocal,
-        totalAdjusted()
       ),
     ];
   };

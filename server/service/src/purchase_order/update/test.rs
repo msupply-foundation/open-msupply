@@ -766,7 +766,7 @@ mod update {
 
         // Field edits on a NEW order
         update(UpdatePurchaseOrderInput {
-            freight_charge: Some(12.5),
+            supplier_discount_percentage: Some(12.5),
             ..Default::default()
         });
         update(UpdatePurchaseOrderInput {
@@ -781,7 +781,7 @@ mod update {
             ..Default::default()
         });
         update(UpdatePurchaseOrderInput {
-            insurance_charge: Some(3.0),
+            shipping_method: Some("air".to_string()),
             ..Default::default()
         });
         update(UpdatePurchaseOrderInput {
@@ -818,6 +818,112 @@ mod update {
                 ActivityLogType::PurchaseOrderSent,
                 ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed,
             ]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_custom_fields() {
+        use repository::{
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
+            mock::mock_purchase_order_a,
+        };
+        use serde_json::json;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_purchase_order_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
+                id: "purchase_order_user_field_1".to_string(),
+                key: "purchase_order_user_field_1".to_string(),
+                name: "User field 1".to_string(),
+                value_type: CustomFieldValueType::Text,
+                kind: CustomFieldKind::Legacy,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
+                id: "purchase_order_user_field_1__purchase_order".to_string(),
+                custom_field_id: "purchase_order_user_field_1".to_string(),
+                scope: "purchase_order".to_string(),
+                display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+
+        let id = mock_purchase_order_a().id;
+        let patch = |pairs: &[(&str, serde_json::Value)]| UpdatePurchaseOrderInput {
+            id: id.clone(),
+            custom_fields: Some(
+                pairs
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("not_a_field", json!("x"))]),
+            ),
+            Err(UpdatePurchaseOrderError::UnknownCustomFieldKey(
+                "not_a_field".to_string()
+            ))
+        );
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!(3))]),
+            ),
+            Err(UpdatePurchaseOrderError::InvalidCustomFieldValue {
+                key: "purchase_order_user_field_1".to_string(),
+                expected: CustomFieldValueType::Text,
+            })
+        );
+
+        // A key the client can't see survives a patch of a visible one
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        let mut row = repo.find_one_by_id(&id).unwrap().unwrap();
+        row.custom_fields = Some(json!({ "hidden": "keep" }));
+        repo.upsert_one(&row).unwrap();
+
+        service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!("Grant 42"))]),
+            )
+            .unwrap();
+        assert_eq!(
+            repo.find_one_by_id(&id).unwrap().unwrap().custom_fields,
+            Some(json!({ "purchase_order_user_field_1": "Grant 42", "hidden": "keep" }))
+        );
+
+        service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!(null))]),
+            )
+            .unwrap();
+        assert_eq!(
+            repo.find_one_by_id(&id).unwrap().unwrap().custom_fields,
+            Some(json!({ "hidden": "keep" }))
         );
     }
 

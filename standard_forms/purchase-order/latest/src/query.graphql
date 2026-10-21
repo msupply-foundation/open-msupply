@@ -42,11 +42,6 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       orderTotalBeforeDiscount
       orderTotalAfterDiscount
       supplierDiscountAmount
-      agentCommission
-      documentCharge
-      communicationsCharge
-      insuranceCharge
-      freightCharge
       currency {
         code
       }

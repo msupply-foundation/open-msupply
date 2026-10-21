@@ -8749,13 +8749,13 @@ export type PurchaseOrderLineNode = {
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   lineTotal: Scalars['Float']['output'];
-  /** The line's stored total with the order's supplier discount apportioned to it */
+  /** The line's stored total with the order's supplier discount apportioned to it (none on a service line) */
   lineTotalAfterSupplierDiscount: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
   outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
-  /** The pack price with the order's supplier discount apportioned to the line */
+  /** The pack price with the order's supplier discount apportioned to the line (none on a service line) */
   pricePerPackAfterSupplierDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
@@ -8825,27 +8825,24 @@ export type PurchaseOrderNode = {
   __typename: 'PurchaseOrderNode';
   additionalInstructions?: Maybe<Scalars['String']['output']>;
   advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
-  agentCommission?: Maybe<Scalars['Float']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
-  communicationsCharge?: Maybe<Scalars['Float']['output']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyId?: Maybe<Scalars['String']['output']>;
-  documentCharge?: Maybe<Scalars['Float']['output']>;
+  /** Filtered to the keys visible on the purchase_order scope */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   foreignExchangeRate: Scalars['Float']['output'];
-  freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;
   headingMessage?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
-  insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
   orderTotalAfterDiscount: Scalars['Float']['output'];
@@ -8860,6 +8857,7 @@ export type PurchaseOrderNode = {
   store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
+  /** The supplier discount on the stock lines; service lines take none */
   supplierDiscountAmount: Scalars['Float']['output'];
   supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   targetMonths?: Maybe<Scalars['Float']['output']>;
@@ -12862,22 +12860,19 @@ export type UpdatePurchaseOrderErrorInterface = {
 export type UpdatePurchaseOrderInput = {
   additionalInstructions?: InputMaybe<Scalars['String']['input']>;
   advancePaidDate?: InputMaybe<NullableDateUpdate>;
-  agentCommission?: InputMaybe<Scalars['Float']['input']>;
   authorisingOfficer1?: InputMaybe<Scalars['String']['input']>;
   authorisingOfficer2?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  communicationsCharge?: InputMaybe<Scalars['Float']['input']>;
   confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
   contractSignedDate?: InputMaybe<NullableDateUpdate>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
-  documentCharge?: InputMaybe<Scalars['Float']['input']>;
+  /** Merged into the order's custom fields; a null value deletes the key */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
   foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
-  freightCharge?: InputMaybe<Scalars['Float']['input']>;
   freightConditions?: InputMaybe<Scalars['String']['input']>;
   headingMessage?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  insuranceCharge?: InputMaybe<Scalars['Float']['input']>;
   receivedAtPortDate?: InputMaybe<NullableDateUpdate>;
   reference?: InputMaybe<Scalars['String']['input']>;
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;

@@ -49,11 +49,6 @@
     }}</td>
   </tr>
   <tr excel-type="total-row">
-    <td>{{ t(k="label.additional-fees", f="Additional fees")}}:</td>
-    <td>{{ data.purchaseOrder.additionalFees | round(precision=2) }} {{ data.purchaseOrder.currency.code
-    }}</td>
-  </tr>
-  <tr excel-type="total-row">
     <td>{{ t(k="label.supplier-discount", f="Supplier discount")}}:</td>
     <td>{{ data.purchaseOrder.supplierDiscountAmount | round(precision=2) }} {{ data.purchaseOrder.currency.code
     }}</td>

@@ -660,7 +660,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       result.kind === 'success' &&
       result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
     )
-      setPoLines(result.data.purchaseOrder.lines.nodes);
+      setPoLines(
+        result.data.purchaseOrder.lines.nodes.filter(
+          l => l.item.type !== 'SERVICE'
+        )
+      );
   };
   const choosePoLine = (id: string) => {
     const line = poLines().find(l => l.id === id);

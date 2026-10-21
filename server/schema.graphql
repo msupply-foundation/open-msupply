@@ -7155,11 +7155,11 @@ type PurchaseOrderLineNode {
 	pricePerPackAfterDiscount: Float!
 	lineTotal: Float!
 	"""
-	The pack price with the order's supplier discount apportioned to the line
+	The pack price with the order's supplier discount apportioned to the line (none on a service line)
 	"""
 	pricePerPackAfterSupplierDiscount: Float!
 	"""
-	The line's stored total with the order's supplier discount apportioned to it
+	The line's stored total with the order's supplier discount apportioned to it (none on a service line)
 	"""
 	lineTotalAfterSupplierDiscount: Float!
 	comment: String
@@ -7254,12 +7254,14 @@ type PurchaseOrderNode {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Filtered to the keys visible on the purchase_order scope
+	"""
+	customFields: JSON
+	"""
+	The supplier discount on the stock lines; service lines take none
+	"""
 	supplierDiscountAmount: Float!
 	supplierDiscountPercentage: Float
 	requestApprovalDatetime: DateTime
@@ -10785,12 +10787,11 @@ input UpdatePurchaseOrderInput {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Merged into the order's custom fields; a null value deletes the key
+	"""
+	customFields: JSON
 }
 
 type UpdatePurchaseOrderLineError {

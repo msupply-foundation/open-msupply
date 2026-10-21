@@ -62,11 +62,6 @@
       "orderTotalAfterDiscount": 298.06,
       "orderTotalBeforeDiscount": 298.06,
       "supplierDiscountAmount": 0,
-      "agentCommission": 10,
-      "documentCharge": null,
-      "communicationsCharge": 2.5,
-      "insuranceCharge": null,
-      "freightCharge": 50.5,
       "status": "CONFIRMED",
       "store": {
         "logo": null,

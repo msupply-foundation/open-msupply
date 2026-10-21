@@ -28,15 +28,8 @@ function convert_data(queryResponse) {
   });
 
   const po = queryResponse.data.purchaseOrder;
-  po.additionalFees =
-    (po.agentCommission || 0) +
-    (po.documentCharge || 0) +
-    (po.communicationsCharge || 0) +
-    (po.insuranceCharge || 0) +
-    (po.freightCharge || 0);
-  // The order's final cost, in its own currency, as the app shows it: the
-  // charges are not part of either stored total, so they are added here
-  po.totalCost = (po.orderTotalAfterDiscount || 0) + po.additionalFees;
+  // The order's final cost, in its own currency, as the app shows it
+  po.totalCost = po.orderTotalAfterDiscount || 0;
   // The exchange rate converts the order's currency to the store's
   po.estimatedCost = po.totalCost * (po.foreignExchangeRate || 1);
 
