@@ -509,7 +509,7 @@ describe('OMS-REG-PAT-04.58 — a generated ID the field gives up on', () => {
   });
 });
 
-// No screen opens a new enrolment for such a user (OMS-REG-PAT-04.59); the
+// No screen opens a new enrolment for such a user (OMS-REG-PAT-04.68); the
 // field still draws nothing on its own for one.
 describe("without the store's document edit permission", () => {
   it('a new enrolment opens with no ID drawn, and Generate is still offered', async () => {
