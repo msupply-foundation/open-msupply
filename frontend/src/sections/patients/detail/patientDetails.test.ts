@@ -172,13 +172,11 @@ describe('createPatientDetails', () => {
     expect(details.active()).toBe(details.editor);
   });
 
-  it('decides nothing, and reads no patient, until the registry is answered', async () => {
+  it('decides nothing until the registry is answered', async () => {
     fetchPatientRegistry.mockReturnValue(new Promise(() => {}));
     const details = create();
     expect(details.registry()).toBeUndefined();
     expect(details.canSave()).toBe(false);
-    await Promise.resolve();
-    expect(patientReads()).toEqual([]);
   });
 
   // The read's shape follows the path: the document and its draft come with
@@ -189,13 +187,18 @@ describe('createPatientDetails', () => {
   describe('the patient read', () => {
     it('carries the document and its draft on the document path', async () => {
       const details = await open(patientRegistry);
-      expect(patientReads()).toEqual([PatientWithDocument]);
-      expect(details.node()).toBe(withDocument);
+      await vi.waitFor(() => expect(details.node()).toBe(withDocument));
+      // The record first, then with the document once the registry answered.
+      expect(patientReads()).toEqual([Patient, PatientWithDocument]);
       // The form opens from that read, with no read of its own.
       await vi.waitFor(() =>
         expect(details.documentEditor.form.document()?.id).toBe('doc-1')
       );
-      expect(graphqlFetch.mock.calls).toHaveLength(1);
+      expect(
+        graphqlFetch.mock.calls.every(
+          ([q]) => q === Patient || q === PatientWithDocument
+        )
+      ).toBe(true);
     });
 
     it('is the record alone on the plain path', async () => {
@@ -203,6 +206,35 @@ describe('createPatientDetails', () => {
       expect(patientReads()).toEqual([Patient]);
       expect(details.node()).toBe(record);
       expect(JSON.stringify(Patient)).not.toContain('documentDraft');
+    });
+
+    it('reads the record while the registry is unanswered, then again with the document once it names an entry', async () => {
+      let answerRegistry!: (value: unknown) => void;
+      fetchPatientRegistry.mockReturnValue(
+        new Promise(resolve => (answerRegistry = resolve))
+      );
+      answerPatient();
+      const details = create();
+      await vi.waitFor(() => expect(details.node()).toBe(record));
+      expect(patientReads()).toEqual([Patient]);
+
+      answerRegistry({ entry: patientRegistry });
+      await vi.waitFor(() => expect(details.node()).toBe(withDocument));
+      expect(patientReads()).toEqual([Patient, PatientWithDocument]);
+    });
+
+    it('reads the record once where the registry then names no entry', async () => {
+      let answerRegistry!: (value: unknown) => void;
+      fetchPatientRegistry.mockReturnValue(
+        new Promise(resolve => (answerRegistry = resolve))
+      );
+      answerPatient();
+      const details = create();
+      await vi.waitFor(() => expect(details.node()).toBe(record));
+      answerRegistry({ entry: undefined });
+      await vi.waitFor(() => expect(details.registry()).toBeDefined());
+      await Promise.resolve();
+      expect(patientReads()).toEqual([Patient]);
     });
 
     it("follows the store's remembered path before the registry answers", async () => {
@@ -215,7 +247,10 @@ describe('createPatientDetails', () => {
     });
 
     it('falls back to the record when the document read fails', async () => {
-      fetchPatientRegistry.mockResolvedValue({ entry: patientRegistry });
+      let answerRegistry!: (value: unknown) => void;
+      fetchPatientRegistry.mockReturnValue(
+        new Promise(resolve => (answerRegistry = resolve))
+      );
       graphqlFetch.mockImplementation(async (query: unknown) => {
         if (query === Patient) {
           return { kind: 'success', data: { patient: record } };
@@ -224,9 +259,17 @@ describe('createPatientDetails', () => {
       });
       const details = create();
       await vi.waitFor(() => expect(details.node()).toBe(record));
-      expect(patientReads()).toEqual([PatientWithDocument, Patient]);
-      // The patient is open; its form is not, as the draft could not be read.
+
+      answerRegistry({ entry: patientRegistry });
+      await vi.waitFor(() =>
+        expect(patientReads()).toEqual([Patient, PatientWithDocument])
+      );
+      await new Promise(resolve => setTimeout(resolve, 0));
+      // The patient stays open on the record read first; its form is not,
+      // as the draft could not be read, and the record is not read again.
       expect(details.onDocumentPath()).toBe(true);
+      expect(details.node()).toBe(record);
+      expect(patientReads()).toEqual([Patient, PatientWithDocument]);
       expect(details.documentEditor.form.status()).toBe('idle');
     });
   });

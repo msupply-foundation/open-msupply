@@ -40,7 +40,7 @@ export interface PatientDetails {
    * first load, gated under an open surface.
    */
   patient: Resource<PatientNode | undefined>;
-  /** The patient as last read, undefined while unresolved. */
+  /** The patient as last read, undefined while unresolved; never suspends. */
   node: Accessor<PatientNode | undefined>;
   /** Re-reads the patient (after a save, which makes a new version). */
   refetch: () => void;
@@ -70,9 +70,10 @@ export interface PatientDetails {
  * The patient read is this module's too, as the path decides its shape: on
  * the document path the one read carries the document's draft and its latest
  * version as the form opens it, so the Details tab shows the form after one
- * round trip rather than three (#1562). The path is known from the registry
- * read, or from the store's answer earlier this session; the first patient
- * opened in a store waits for the registry, the rest do not.
+ * round trip rather than three (#1562). The record is read at once on the
+ * path the store's answer earlier this session names, else as the plain
+ * record; a store on the document path whose answer is not yet known re-reads
+ * with the document once the registry answers, the record already showing.
  */
 export const createPatientDetails = (
   params: PatientDetailsParams
@@ -86,27 +87,22 @@ export const createPatientDetails = (
 
   // Whether to read the patient with its document: the registry's answer once
   // it has one (a failed read answers "no entry", as it does for the path),
-  // the store's remembered answer before that, nothing until either.
-  const withDocument = (): boolean | undefined => {
+  // the store's remembered answer before that, else the record alone.
+  const withDocument = (): boolean => {
     const answered =
       registryData.state === 'ready' || registryData.state === 'errored';
     if (answered) return onDocumentPath();
-    const remembered = rememberedPatientRegistry(params.storeId());
-    return remembered ? remembered.entry !== undefined : undefined;
+    return rememberedPatientRegistry(params.storeId())?.entry !== undefined;
   };
 
   const [patient, { refetch }] = createResource(
-    () => {
-      const shape = withDocument();
-      return shape === undefined
-        ? undefined
-        : JSON.stringify({
-            storeId: params.storeId(),
-            patientId: params.patientId(),
-            withDocument: shape,
-          });
-    },
-    async (serialised): Promise<PatientNode | undefined> => {
+    () =>
+      JSON.stringify({
+        storeId: params.storeId(),
+        patientId: params.patientId(),
+        withDocument: withDocument(),
+      }),
+    async (serialised, { value }): Promise<PatientNode | undefined> => {
       const { withDocument, ...variables } = JSON.parse(serialised) as {
         storeId: string;
         patientId: string;
@@ -121,13 +117,20 @@ export const createPatientDetails = (
       // The read with the document failed (a stored document the server
       // could not read, reported above): the patient still opens on its
       // record, with no form, as it did when the draft was read on its own.
+      // The record read just before, where there was one, stands.
+      if (value?.id === variables.patientId) return value;
       const record = await graphqlFetch(Patient, variables);
       return record.kind === 'success'
         ? (record.data.patient ?? undefined)
         : undefined;
     }
   );
-  const node = () => patient.latest ?? undefined;
+  // The editors read the patient through the state gate: their reads run
+  // under whatever surface mounts them (the picker's edit modal, under an
+  // open screen), where a first load must not suspend (kdd/solid-reactivity-
+  // pitfalls › no remounts on interaction). The patient screen reads `patient`
+  // itself for its own first load.
+  const node = () => gated(patient);
 
   const editor = createPatientEditor({ storeId: params.storeId, node });
 

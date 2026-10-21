@@ -120,7 +120,10 @@ const PatientDetailView: Component = () => {
     storeId: () => params.storeId,
     patientId: () => params.patientId,
   });
-  const { node, refetch } = patientDetails;
+  // The screen's own read suspends for its first load (the Suspense below);
+  // everything under it reads the patient through patientDetails.node.
+  const { patient: data, refetch } = patientDetails;
+  const node = () => data.latest ?? undefined;
   const editor = patientDetails.editor;
   const details = patientDetails.active;
 

@@ -1,4 +1,5 @@
 import { graphqlFetch } from '../../../../api/graphql';
+import { authUser } from '../../../../auth/authContext';
 import {
   PatientProgramEnrolments,
   type PatientProgramEnrolmentsVariables,
@@ -59,21 +60,27 @@ export const fetchPatientRegistry = async (
   });
   if (result.kind !== 'success') return undefined;
   const entry = result.data.documentRegistries.nodes[0];
-  patientRegistryByStore.set(storeId, entry);
+  patientRegistryByUserAndStore.set(rememberKey(storeId), entry);
   return { entry };
 };
 
 // The answer each store gave this session, so the next patient opened there
 // is read on its path at once rather than after the registry answers again
-// (#1562). Every read refreshes it; one that answers differently (a plugin
-// installed meanwhile) corrects the patient read that followed the old answer.
-const patientRegistryByStore = new Map<
+// (#1562). Kept per user as well as store: the entries a user may see follow
+// their document permissions, and a logout does not reload the page. Every
+// read refreshes it; one that answers differently (a plugin installed
+// meanwhile) corrects the patient read that followed the old answer.
+const patientRegistryByUserAndStore = new Map<
   string,
   FormRegistryFragment | undefined
 >();
+const rememberKey = (storeId: string): string =>
+  `${authUser()?.userId ?? ''}|${storeId}`;
 export const rememberedPatientRegistry = (
   storeId: string
-): { entry: FormRegistryFragment | undefined } | undefined =>
-  patientRegistryByStore.has(storeId)
-    ? { entry: patientRegistryByStore.get(storeId) }
+): { entry: FormRegistryFragment | undefined } | undefined => {
+  const key = rememberKey(storeId);
+  return patientRegistryByUserAndStore.has(key)
+    ? { entry: patientRegistryByUserAndStore.get(key) }
     : undefined;
+};
