@@ -36,6 +36,20 @@ vi.mock('../../../domain/documentForm/formLibrary', async () => ({
     .baseSchemaFor,
 }));
 
+// The patient type's plugin form, as Djibouti's: a v2 added to the
+// deployment's own v1 with no migration step (an additive change).
+const OLD_PATIENT_VERSION = 'deployment-patient-v0';
+vi.mock('../../../plugins/documentFormSlot', () => ({
+  documentFormVersioning: (_slot: string, type: string) =>
+    type === 'Patient'
+      ? {
+          versions: ['deployment-patient-v0', 'deployment-patient-v1'],
+          migrations: [],
+          archived: [],
+        }
+      : undefined,
+}));
+
 import { createPatientDocumentEditor } from './patientDocumentEditor';
 import {
   FormDocumentByName,
@@ -93,7 +107,7 @@ const node = (overrides: Partial<PatientNode> = {}): PatientNode => ({
   ...overrides,
 });
 
-const savedDocument = (data: unknown) => ({
+const savedDocument = (data: unknown, schemaId = registry.formSchemaId) => ({
   __typename: 'DocumentNode' as const,
   id: 'doc-1',
   name: 'patients/patient-1',
@@ -101,7 +115,7 @@ const savedDocument = (data: unknown) => ({
   data,
   schema: {
     __typename: 'JsonschemaNode' as const,
-    id: registry.formSchemaId,
+    id: schemaId,
     jsonSchema: {},
   },
   documentRegistry: registry,
@@ -200,5 +214,58 @@ describe("a patient's first document on the Details tab", () => {
     expect(editor.form.draft.data.firstName).toBe('Alexa');
     // Never down to idle or loading, which would remount the form.
     expect(statuses.every(s => s === 'ready')).toBe(true);
+  });
+});
+
+/*
+ * OMS-REG-PLG-05.17 (#1501): an existing patient whose document is on an
+ * earlier version, which the migration leaves as it is, opens on the Details
+ * tab with Save off and nothing to ask about on leaving, until an edit.
+ */
+describe('a patient document on an earlier version the migration leaves unchanged', () => {
+  it('opens clean, with Save off, until the user edits it', async () => {
+    const stored = { id: 'patient-1', code: 'CF0002', firstName: 'Alex' };
+    graphqlFetch.mockImplementation(async (query: unknown) => {
+      if (query === PatientDocumentDraft) {
+        return {
+          kind: 'success',
+          data: { patient: { id: 'patient-1', documentDraft: stored } },
+        };
+      }
+      if (query === FormDocumentByName) {
+        return {
+          kind: 'success',
+          data: { document: savedDocument(stored, OLD_PATIENT_VERSION) },
+        };
+      }
+      throw new Error('unexpected query');
+    });
+
+    const editor = createRoot(d => {
+      dispose = d;
+      return createPatientDocumentEditor({
+        storeId: () => 'store',
+        node: () =>
+          node({
+            document: {
+              __typename: 'DocumentNode',
+              id: 'doc-1',
+              name: 'patients/patient-1',
+            },
+          }),
+        registry: () => registry,
+      });
+    });
+
+    await vi.waitFor(() => expect(editor.form.status()).toBe('ready'), {
+      timeout: 5000,
+    });
+    expect(editor.form.version()).toEqual({ kind: 'migrated', version: 1 });
+    expect(editor.isDirty()).toBe(false);
+    expect(editor.canSave()).toBe(false);
+
+    editor.form.draft.set('firstName', 'Alexa');
+    expect(editor.isDirty()).toBe(true);
+    expect(editor.canSave()).toBe(true);
   });
 });

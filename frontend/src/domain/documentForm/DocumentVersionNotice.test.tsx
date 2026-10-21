@@ -77,21 +77,15 @@ describe('DocumentVersionNotice', () => {
       {
         severity: 'info',
         testId: 'document-version-notice',
-        text: 'messages.document-archived-version 1 button.edit',
+        text: 'messages.document-archived-version button.edit',
         edit: true,
       },
     ]);
   });
 
-  it('says a migrated document was brought into the current version, as info, with no Edit', () => {
-    expect(shown({ kind: 'migrated', version: 2 })).toEqual([
-      {
-        severity: 'info',
-        testId: 'document-version-notice',
-        text: 'messages.document-migrated-version 2',
-        edit: false,
-      },
-    ]);
+  // #1501: a migrated document's problems show on its fields.
+  it('says nothing for a document migrated into the current form (OMS-REG-PLG-05.17)', () => {
+    expect(shown({ kind: 'migrated', version: 2 })).toEqual([]);
   });
 
   it.each([
