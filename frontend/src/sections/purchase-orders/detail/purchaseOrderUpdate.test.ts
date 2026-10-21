@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { graphqlFetch } from '../../../api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
 import {
   cascadedDateFields,
   cascadeDeliveryDates,
@@ -15,10 +15,13 @@ import {
 // is the test subject's input. No dictionary is loaded here, so t() falls back
 // to its key and translateServerError to its sentence-cased identifier.
 
-vi.mock('../../../api/graphql', () => ({
+vi.mock('../../../api/graphql', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../api/graphql')>()),
   graphqlFetch: vi.fn(),
+  reportPermissionDenied: vi.fn(),
 }));
 const fetchMock = vi.mocked(graphqlFetch);
+const deniedMock = vi.mocked(reportPermissionDenied);
 
 const success = (data: unknown) => ({ kind: 'success', data }) as never;
 const saved = (field: string) =>
@@ -44,7 +47,25 @@ const untyped = (details?: string) =>
     ],
   }) as never;
 
-beforeEach(() => fetchMock.mockReset());
+const forbidden = () =>
+  ({
+    kind: 'graphqlError',
+    message: 'Forbidden',
+    errors: [
+      {
+        message: 'Forbidden',
+        extensions: {
+          details:
+            'Missing permission: PurchaseOrderMutate, Required permissions: And([HasStoreAccess, HasPermission(PurchaseOrderMutate)]), Store: Some("s1")',
+        },
+      },
+    ],
+  }) as never;
+
+beforeEach(() => {
+  fetchMock.mockReset();
+  deniedMock.mockReset();
+});
 
 describe('updatePurchaseOrder', () => {
   it('sends {storeId, input} and asks for the untyped errors back', async () => {
@@ -114,6 +135,14 @@ describe('updatePurchaseOrder', () => {
     ).toEqual({ kind: 'error', message: 'Bad user input' });
   });
 
+  it('routes a Forbidden to the permission-denied modal, with nothing to say inline', async () => {
+    fetchMock.mockResolvedValue(forbidden());
+    expect(
+      await updatePurchaseOrder('s1', { id: 'po-1', status: 'FINALISED' })
+    ).toEqual({ kind: 'failed' });
+    expect(deniedMock).toHaveBeenCalledWith(['PurchaseOrderMutate']);
+  });
+
   it('reports a transport failure as failed, with nothing to say', async () => {
     fetchMock.mockResolvedValue({ kind: 'unauthenticated' } as never);
     expect(await updatePurchaseOrder('s1', { id: 'po-1' })).toEqual({
@@ -153,6 +182,14 @@ describe('deletePurchaseOrderLines', () => {
       storeId: 's1',
       ids: ['l1', 'l2', 'l3', 'l4'],
     });
+  });
+
+  it('routes a Forbidden to the permission-denied modal, with no refusal to report', async () => {
+    fetchMock.mockResolvedValue(forbidden());
+    expect(await deletePurchaseOrderLines('s1', ['l1'])).toEqual({
+      applied: 0,
+    });
+    expect(deniedMock).toHaveBeenCalledWith(['PurchaseOrderMutate']);
   });
 
   it('reads the untyped state gate as nothing applied', async () => {
