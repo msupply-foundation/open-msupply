@@ -15,6 +15,8 @@ mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
 mod prescription_request_occupation_prominent;
 mod refresh_who_pqs_catalogue;
+mod relog_central_records_for_legacy_central;
+mod stamp_central_support_uploads_before_v3;
 mod update_default_asset_log_reasons;
 
 pub(crate) struct V3_04_00;
@@ -45,6 +47,8 @@ impl Migration for V3_04_00 {
             Box::new(add_kind_to_campaign::Migrate),
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
+            Box::new(relog_central_records_for_legacy_central::Migrate),
+            Box::new(stamp_central_support_uploads_before_v3::Migrate),
         ]
     }
 }
