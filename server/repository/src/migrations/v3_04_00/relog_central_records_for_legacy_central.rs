@@ -25,7 +25,8 @@ impl MigrationFragment for Migrate {
     /// are sent again, an upsert of the same data, and remotes pull the new rows the same
     /// way as the old. On a central upgrading from 2.x, the legacy push has never skipped
     /// them, so only records whose latest row is past the push cursor (which
-    /// `stamp_changelog_unpushed_before_v3` has moved to the last row pushed) are re-logged.
+    /// `stamp_changelog_unpushed_before_v3` has moved to the last row pushed) and has no
+    /// source site are re-logged. The push sends the ones with a source site as they are.
     ///
     /// A row without a source site gets the one it would have had on 3.x: the store's site
     /// for a record received through sync, and central otherwise. Rows from legacy central
@@ -56,7 +57,9 @@ impl MigrationFragment for Migrate {
             .is_some_and(|version| *version < Version::from_str("3.0.0"));
         // Without a push cursor nothing has been pushed, so every record is re-logged
         let unpushed = match key_value_int(connection, "REMOTE_SYNC_PUSH_CURSOR")? {
-            Some(push_cursor) if started_before_v3 => format!("AND c.cursor > {push_cursor}"),
+            Some(push_cursor) if started_before_v3 => {
+                format!("AND c.cursor > {push_cursor} AND c.source_site_id IS NULL")
+            }
             _ => String::new(),
         };
 
@@ -246,6 +249,7 @@ mod tests {
             &format!(
                 "INSERT INTO changelog (table_name, record_id, row_action, store_id, is_sync_update, source_site_id) VALUES
                     ('vaccination', 'vaccination_2x', 'UPSERT', 'store_remote', TRUE, NULL),
+                    ('vaccine_course', 'course_2x', 'UPSERT', NULL, FALSE, NULL),
                     -- Edited on 2.x, then on 3.x
                     ('encounter', 'encounter_edited_on_3x', 'UPSERT', NULL, FALSE, NULL),
                     ('encounter', 'encounter_edited_on_3x', 'UPSERT', NULL, FALSE, {CENTRAL_SITE_ID}),
@@ -274,6 +278,7 @@ mod tests {
                     Some("store_remote"),
                     REMOTE_SITE_ID
                 ),
+                row("vaccine_course", "course_2x", None, CENTRAL_SITE_ID),
                 row("encounter", "encounter_edited_on_3x", None, CENTRAL_SITE_ID),
                 row("vaccine_course", "course", None, CENTRAL_SITE_ID),
                 row(
@@ -287,8 +292,8 @@ mod tests {
         );
     }
 
-    /// A central upgrading from 2.x: only records 2.x hadn't pushed are re-logged, with the
-    /// source site 3.x would have given them.
+    /// A central upgrading from 2.x: only records 2.x hadn't pushed and that have no source
+    /// site are re-logged, with the one 3.x would have given them.
     #[actix_rt::test]
     async fn relogs_unpushed_2x_rows_on_central_upgrading_from_2x() {
         let connection = setup(
@@ -302,6 +307,9 @@ mod tests {
              INSERT INTO changelog (table_name, record_id, row_action, store_id, is_sync_update, source_site_id) VALUES
                 ('vaccination', 'vaccination_pushed', 'UPSERT', 'store_remote', TRUE, NULL),
                 ('vaccination', 'vaccination_from_remote', 'UPSERT', 'store_remote', TRUE, NULL),
+                -- The push sends these as they are: one already has a source site, and
+                -- stamp_central_unsent_before_v3 gives central's own row central's id
+                ('vaccination', 'vaccination_with_source', 'UPSERT', 'store_remote', TRUE, 7),
                 ('encounter', 'encounter_on_central', 'UPSERT', NULL, FALSE, NULL);",
         );
         // 2.x stores the next row to push
@@ -323,15 +331,12 @@ mod tests {
 
         assert_eq!(
             rows_after(&connection, before),
-            vec![
-                row(
-                    "vaccination",
-                    "vaccination_from_remote",
-                    Some("store_remote"),
-                    REMOTE_SITE_ID
-                ),
-                row("encounter", "encounter_on_central", None, CENTRAL_SITE_ID),
-            ]
+            vec![row(
+                "vaccination",
+                "vaccination_from_remote",
+                Some("store_remote"),
+                REMOTE_SITE_ID
+            ),]
         );
     }
 
