@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { graphqlFetch } from '../../../api/graphql';
 import {
   cascadedDateFields,
   cascadeDeliveryDates,
@@ -18,10 +18,8 @@ import {
 vi.mock('../../../api/graphql', async importOriginal => ({
   ...(await importOriginal<typeof import('../../../api/graphql')>()),
   graphqlFetch: vi.fn(),
-  reportPermissionDenied: vi.fn(),
 }));
 const fetchMock = vi.mocked(graphqlFetch);
-const deniedMock = vi.mocked(reportPermissionDenied);
 
 const success = (data: unknown) => ({ kind: 'success', data }) as never;
 const saved = (field: string) =>
@@ -62,10 +60,7 @@ const forbidden = () =>
     ],
   }) as never;
 
-beforeEach(() => {
-  fetchMock.mockReset();
-  deniedMock.mockReset();
-});
+beforeEach(() => fetchMock.mockReset());
 
 describe('updatePurchaseOrder', () => {
   it('sends {storeId, input} and asks for the untyped errors back', async () => {
@@ -135,12 +130,11 @@ describe('updatePurchaseOrder', () => {
     ).toEqual({ kind: 'error', message: 'Bad user input' });
   });
 
-  it('routes a Forbidden to the permission-denied modal, with nothing to say inline', async () => {
+  it('hands a Forbidden back apart from a refusal, naming the missing permission', async () => {
     fetchMock.mockResolvedValue(forbidden());
     expect(
       await updatePurchaseOrder('s1', { id: 'po-1', status: 'FINALISED' })
-    ).toEqual({ kind: 'failed' });
-    expect(deniedMock).toHaveBeenCalledWith(['PurchaseOrderMutate']);
+    ).toEqual({ kind: 'forbidden', permissions: ['PurchaseOrderMutate'] });
   });
 
   it('reports a transport failure as failed, with nothing to say', async () => {
@@ -184,12 +178,12 @@ describe('deletePurchaseOrderLines', () => {
     });
   });
 
-  it('routes a Forbidden to the permission-denied modal, with no refusal to report', async () => {
+  it('hands a Forbidden back with no refusal to report', async () => {
     fetchMock.mockResolvedValue(forbidden());
     expect(await deletePurchaseOrderLines('s1', ['l1'])).toEqual({
       applied: 0,
+      forbidden: ['PurchaseOrderMutate'],
     });
-    expect(deniedMock).toHaveBeenCalledWith(['PurchaseOrderMutate']);
   });
 
   it('reads the untyped state gate as nothing applied', async () => {
@@ -223,6 +217,28 @@ describe('closePurchaseOrderLines', () => {
       { storeId: 's1', input: { id: 'l2', status: 'CLOSED' } },
       { storeId: 's1', input: { id: 'l3', status: 'CLOSED' } },
     ]);
+  });
+
+  it('stops at a Forbidden, keeping what went and what was refused before it', async () => {
+    fetchMock
+      .mockResolvedValueOnce(saved('updatePurchaseOrderLine'))
+      .mockResolvedValueOnce(
+        refused(
+          'updatePurchaseOrderLine',
+          'UpdatePurchaseOrderLineError',
+          'RecordNotFound',
+          'gone'
+        )
+      )
+      .mockResolvedValueOnce(forbidden());
+    expect(
+      await closePurchaseOrderLines('s1', ['l1', 'l2', 'l3', 'l4'])
+    ).toEqual({
+      applied: 1,
+      message: 'gone',
+      forbidden: ['PurchaseOrderMutate'],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -283,6 +299,20 @@ describe('cascadeDeliveryDates', () => {
         'expectedDeliveryDate',
       ])
     ).toEqual({ applied: 1, message: 'Cannot Edit Sent Purchase Order' });
+  });
+
+  it('sends no further line once one is Forbidden', async () => {
+    fetchMock.mockResolvedValue(forbidden());
+    expect(
+      await cascadeDeliveryDates('s1', lines, '2026-04-01', [
+        'expectedDeliveryDate',
+      ])
+    ).toEqual({
+      applied: 0,
+      message: undefined,
+      forbidden: ['PurchaseOrderMutate'],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
