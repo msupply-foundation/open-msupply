@@ -159,6 +159,7 @@ diesel_string_enum! {
         SystemLog,
         TemperatureBreach,
         TemperatureLog,
+        TemperatureSummary,
         Unit,
         UserAccount,
         UserPermission,

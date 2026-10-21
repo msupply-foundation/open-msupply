@@ -17,7 +17,11 @@ export { registerPluginTranslations } from './pluginTranslations';
 
 // Detection / switching
 export { detectLocale, getUserLocale } from './detectLocale';
-export { changeLanguage, initialiseLocale } from './changeLanguage';
+export {
+  applyUserLocale,
+  changeLanguage,
+  initialiseLocale,
+} from './changeLanguage';
 export {
   formatCurrency,
   getCurrencyInfo,

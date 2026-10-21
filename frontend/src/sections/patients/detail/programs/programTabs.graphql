@@ -9,6 +9,11 @@
 #
 # Reads gate on QueryProgram (enrolments) / QueryEncounter (encounters); results
 # are already scoped to the caller's allowed program contexts server-side.
+#
+# activeProgramEvents feeds the Additional info chips (spec/encounters/rules.md
+# § additional information): an encounter's need isCurrentEncounter, or it
+# reads its siblings' events. The Vaccinations tab shows no chips but shares
+# the enrolment rows.
 
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   __typename
@@ -24,8 +29,21 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
     __typename
     name
   }
+  activeProgramEvents(at: $eventTime) {
+    ... on ProgramEventConnector {
+      __typename
+      nodes {
+        __typename
+        type
+        data
+      }
+    }
+  }
 }
 
+# An encounter's program name is the enrolment registry in its context
+# (`contextId`), from the registry read behind the create actions, as on the
+# encounter list (spec/encounters/contract.md).
 fragment EncounterRow on EncounterNode {
   __typename
   id
@@ -36,11 +54,15 @@ fragment EncounterRow on EncounterNode {
     __typename
     name
   }
-  programEnrolment {
-    __typename
-    documentRegistry {
+  contextId
+  activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
+    ... on ProgramEventConnector {
       __typename
-      name
+      nodes {
+        __typename
+        type
+        data
+      }
     }
   }
 }
@@ -52,6 +74,7 @@ query patientProgramEnrolments(
   $storeId: String!
   $filter: ProgramEnrolmentFilterInput
   $sort: ProgramEnrolmentSortInput
+  $eventTime: DateTime
 ) {
   programEnrolments(storeId: $storeId, filter: $filter, sort: $sort) {
     ... on ProgramEnrolmentConnector {
@@ -69,6 +92,7 @@ query patientEncounters(
   $storeId: String!
   $filter: EncounterFilterInput
   $sort: EncounterSortInput
+  $eventTime: DateTime
 ) {
   encounters(storeId: $storeId, filter: $filter, sort: $sort) {
     ... on EncounterConnector {

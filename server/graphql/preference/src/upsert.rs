@@ -115,6 +115,7 @@ pub struct UpsertPreferencesInput {
     pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub can_change_target_months_of_stock: Option<Vec<BoolStorePrefInput>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
@@ -129,6 +130,7 @@ pub struct UpsertPreferencesInput {
     pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
+    pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -200,6 +202,7 @@ impl UpsertPreferencesInput {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            can_change_target_months_of_stock,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -211,6 +214,7 @@ impl UpsertPreferencesInput {
             external_inbound_shipment_lines_must_be_authorised,
             show_indicative_price_in_requisitions,
             do_not_print_placeholder_line_labels,
+            prompt_for_batch_and_expiry_on_inbound_shipments,
         } = self;
 
         UpsertPreferences {
@@ -287,6 +291,9 @@ impl UpsertPreferencesInput {
                 select_destination_store_for_an_internal_order
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            can_change_target_months_of_stock: can_change_target_months_of_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
                 number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products
                     .as_ref()
@@ -324,6 +331,10 @@ impl UpsertPreferencesInput {
             do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            prompt_for_batch_and_expiry_on_inbound_shipments:
+                prompt_for_batch_and_expiry_on_inbound_shipments
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }

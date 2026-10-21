@@ -93,6 +93,10 @@ export type SaveGlobalTableConfigsVariables = {
     storeId: string;
     value: boolean;
   }> | null;
+    canChangeTargetMonthsOfStock?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
     externalInboundShipmentLinesMustBeAuthorised?: Array<{
     storeId: string;
     value: boolean;
@@ -138,6 +142,10 @@ export type SaveGlobalTableConfigsVariables = {
     value: boolean;
   }> | null;
     doNotPrintPlaceholderLineLabels?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    promptForBatchAndExpiryOnInboundShipments?: Array<{
     storeId: string;
     value: boolean;
   }> | null;

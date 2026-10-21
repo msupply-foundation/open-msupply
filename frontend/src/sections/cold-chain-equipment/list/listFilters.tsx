@@ -1,3 +1,4 @@
+import { categoryName, typeName } from '@/domain/asset';
 import { t } from '@/intl';
 import {
   FilterDate,
@@ -88,9 +89,10 @@ export const equipmentFilters = (options: {
           value={props.filter().categoryId?.equalTo ?? ''}
           options={[
             { value: '', label: t('label.all') },
-            ...options
-              .categories()
-              .map(category => ({ value: category.id, label: category.name })),
+            ...options.categories().map(category => ({
+              value: category.id,
+              label: categoryName(category),
+            })),
           ]}
           onChange={value =>
             props.setPartialFilter({
@@ -173,7 +175,7 @@ export const equipmentFilters = (options: {
             { value: '', label: t('label.all') },
             ...options
               .types()
-              .map(type => ({ value: type.id, label: type.name })),
+              .map(type => ({ value: type.id, label: typeName(type) })),
           ]}
           onChange={value =>
             props.setPartialFilter({

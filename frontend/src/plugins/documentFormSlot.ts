@@ -16,8 +16,9 @@ import { contributionId, visibleContributions } from './PluginSlot';
  * contribution's versioning (`documentFormVersioning`, createDocumentForm.ts).
  *
  * A document no form can open (pinned to a version the plugin form does not
- * list or cannot migrate, or to an earlier version of a type no plugin form
- * renders) renders read-only through the fallback renderer instead
+ * list, of a type whose plugin form and registry entry are out of step, or on
+ * an earlier version of a type no plugin form renders) renders read-only
+ * through the fallback renderer instead
  * (DocumentAsRecorded.tsx); the form host decides which (`recorded`,
  * createDocumentForm.ts).
  *
@@ -32,7 +33,7 @@ export interface DocumentFormOccupant<S extends DocumentFormSlotId> {
   documentType: string;
   Component: Component<SlotPropsMap[S]>;
   /** Every schema id of the type, oldest first. */
-  versions?: readonly string[];
+  versions: readonly string[];
   migrations?: readonly MigrationStep[];
   /** Earlier versions' forms, by version number, rendered read-only. */
   archived?: Readonly<Record<number, Component<SlotPropsMap[S]>>>;
@@ -99,28 +100,18 @@ export const documentFormFor = <S extends DocumentFormSlotId>(
 
 /**
  * The versioning the plugin form for a document type declares, for the form
- * host; undefined when no plugin form renders the type or it declares no
- * versions. Reads the registry, so the caller calls it inside a memo.
+ * host; undefined when no plugin form renders the type. Reads the registry,
+ * so the caller calls it inside a memo.
  */
 export const documentFormVersioning = (
   slot: DocumentFormSlotId,
   documentType: string
 ): FormVersioning | undefined => {
   const occupant = documentFormFor(slot, documentType).occupant;
-  if (!occupant?.versions) return undefined;
+  if (!occupant) return undefined;
   return {
     versions: occupant.versions,
     migrations: occupant.migrations ?? [],
     archived: Object.keys(occupant.archived ?? {}).map(Number),
   };
 };
-
-/**
- * Whether a plugin form renders a document type in this store, versioned or
- * not, for the form host. Reads the registry, so the caller calls it inside a
- * memo.
- */
-export const hasDocumentForm = (
-  slot: DocumentFormSlotId,
-  documentType: string
-): boolean => documentFormFor(slot, documentType).occupant !== undefined;

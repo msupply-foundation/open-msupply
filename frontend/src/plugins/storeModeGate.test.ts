@@ -102,6 +102,7 @@ const loggedIn: UserInfoFragment = {
   phoneNumber: null,
   inactivityTimeoutSeconds: 600,
   tokenRefreshIntervalSeconds: 60,
+  language: 'ENGLISH',
   defaultStore: { id: 'clinic' },
   stores: { nodes: [store('clinic', 'DISPENSARY'), store('depot', 'STORE')] },
 };

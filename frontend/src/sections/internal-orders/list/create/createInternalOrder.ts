@@ -12,21 +12,24 @@ import {
 // (spec/internal-orders S2 / § Creation). Both creates return the new order's
 // id (to navigate to it) or a user-facing error; the id is client-generated.
 
-// Default general thresholds hard-coded by the create modal (contract ›
-// creation): reorder 0, target 1 month.
+// The general create's reorder threshold is hard-coded to 0 (contract ›
+// creation). The target is deliberately NOT sent: omitted, the server defaults
+// it to the store's supply interval + safety buffer, else 1 month (rules ›
+// target months of stock, OMS-REG-REPL-17.15).
 const GENERAL_MIN_MONTHS_OF_STOCK = 0;
-const GENERAL_MAX_MONTHS_OF_STOCK = 1;
 
 export type CreateResult =
   | { kind: 'created'; id: string }
   | { kind: 'error'; message: string }
   | { kind: 'failed' };
 
-// General create (OMS-REG-REPL-04.6/.43): sends only id + otherPartyId with the
-// default thresholds. The picker offers only visible, store-backed suppliers,
-// so the typed supplier rejections are unreachable (contract wire trap) and any
-// non-success falls through to the generic mutation path (the global
-// unexpected-error modal) — hence no returnGraphqlErrors here.
+// General create (OMS-REG-REPL-04.6/.43): sends only id + otherPartyId with the default
+// reorder threshold, leaving the target to the server's default (the
+// store's supply interval + safety buffer). The picker offers only visible,
+// store-backed suppliers, so the typed supplier rejections are unreachable
+// (contract wire trap) and any non-success falls through to the generic
+// mutation path (the global unexpected-error modal) — hence no
+// returnGraphqlErrors here.
 export const createGeneralOrder = async (
   storeId: string,
   supplierId: string
@@ -37,7 +40,6 @@ export const createGeneralOrder = async (
       id: generateUUID(),
       otherPartyId: supplierId,
       minMonthsOfStock: GENERAL_MIN_MONTHS_OF_STOCK,
-      maxMonthsOfStock: GENERAL_MAX_MONTHS_OF_STOCK,
     },
   });
   if (result.kind !== 'success') return { kind: 'failed' };

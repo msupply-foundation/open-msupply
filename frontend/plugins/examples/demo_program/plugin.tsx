@@ -39,6 +39,7 @@ import { name, version } from './package.json';
 import { DemoPatientForm } from './forms/Patient/form';
 import { versions as patientVersions } from './forms/Patient/versions';
 import { DemoEnrolmentForm } from './forms/DemoProgramEnrolment/form';
+import { versions as enrolmentVersions } from './forms/DemoProgramEnrolment/versions';
 import { DemoEncounterForm } from './forms/DemoEncounter/form';
 import { DemoEncounterV1Form } from './forms/DemoEncounter/v1Form';
 import { migrations as encounterMigrations } from './forms/DemoEncounter/migrations';
@@ -75,6 +76,7 @@ export default definePlugin({
       id: 'enrolment-form',
       documentType: 'DemoProgramEnrolment',
       Component: enrolmentForm(DemoEnrolmentForm),
+      versions: enrolmentVersions,
     },
     {
       slot: 'encounter.form',

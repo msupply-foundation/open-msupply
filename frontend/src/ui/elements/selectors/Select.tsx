@@ -123,10 +123,14 @@ const NO_OPTIONS_VALUE = '__no-options__';
  * Styled drop-down — Kobalte Select (headless). Same job as a native <select>
  * (pick one from a fixed list) but for when the closed control and the options
  * need RICH content the native <option> can't render: a status colour-dot, an
- * icon, a two-line option. Hand-rolling that means re-implementing exactly what
- * WCAG 2.2 grades — a role="listbox" popup, typeahead, arrow / Home / End keys,
- * focus return, RTL-aware placement. Kobalte supplies that contract (the Solid
- * analogue of the RnD prototype's Radix Select — same reasoning, see its
+ * icon, a two-line option. One FLAT list, and a list that CANNOT change while
+ * the popup is open (Kobalte's Select closes on an options change — which is
+ * why a searchable or grouped set belongs on {@link Combobox}, whose grouped
+ * mode holds pinned choices above labelled sections). Hand-rolling that means
+ * re-implementing exactly what WCAG 2.2 grades — a role="listbox" popup,
+ * typeahead, arrow / Home / End keys, focus return, RTL-aware placement.
+ * Kobalte supplies that contract (the Solid analogue of the RnD prototype's
+ * Radix Select — same reasoning, see its
  * UI_ELEMENTS.md); we own 100% of the markup + CSS, styled via Kobalte's
  * data-* state attributes.
  *

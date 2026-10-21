@@ -475,6 +475,8 @@ const BOOL_PREFERENCE_KEYS = [
   'selectDestinationStoreForAnInternalOrder',
   'externalInboundShipmentLinesMustBeAuthorised',
   'doNotPrintPlaceholderLineLabels',
+  'canChangeTargetMonthsOfStock',
+  'promptForBatchAndExpiryOnInboundShipments',
 ] as const satisfies readonly PreferenceKeyOf<boolean>[];
 const NUMBER_PREFERENCE_KEYS = [
   'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',

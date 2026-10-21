@@ -1,23 +1,15 @@
 import { lazy } from 'solid-js';
 import { Route } from '@solidjs/router';
-import { EntryPage } from '../../nav/EntryPage';
-import { navDestinations } from '../../nav/navConfig';
 
 // The encounters section, mounted under the navConfig path
-// 'dispensary/encounter' in App.tsx. '/:encounterId' is the encounter record
-// screen, its own lazy chunk. '/' is the encounter list, which is not built, so
-// it shows the destination's entry page as every unbuilt destination does.
-//
-// TO-DO: the global encounter list (implementation-plan H15).
+// 'dispensary/encounter' in App.tsx: '/' is the encounter list, '/:encounterId'
+// the encounter record screen, each its own lazy chunk.
+const EncountersList = lazy(() => import('./list/EncountersList'));
 const EncounterDetailView = lazy(() => import('./EncounterDetailView'));
-
-const listDestination = navDestinations.find(
-  d => d.path === 'dispensary/encounter'
-);
 
 export const encountersRoutes = () => (
   <>
-    <Route path="/" component={() => <EntryPage dest={listDestination} />} />
+    <Route path="/" component={EncountersList} />
     <Route path="/:encounterId" component={EncounterDetailView} />
   </>
 );

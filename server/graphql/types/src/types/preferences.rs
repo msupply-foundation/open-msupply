@@ -183,6 +183,10 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn can_change_target_months_of_stock(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.can_change_target_months_of_stock)
+    }
+
     pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
         self.load_preference(
             &self
@@ -252,6 +256,14 @@ impl PreferencesNode {
 
     pub async fn do_not_print_placeholder_line_labels(&self) -> Result<bool> {
         self.load_preference(&self.preferences.do_not_print_placeholder_line_labels)
+    }
+
+    pub async fn prompt_for_batch_and_expiry_on_inbound_shipments(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .prompt_for_batch_and_expiry_on_inbound_shipments,
+        )
     }
 }
 
@@ -390,6 +402,7 @@ pub enum PreferenceKey {
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    CanChangeTargetMonthsOfStock,
     ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
@@ -402,6 +415,7 @@ pub enum PreferenceKey {
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
     DoNotPrintPlaceholderLineLabels,
+    PromptForBatchAndExpiryOnInboundShipments,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

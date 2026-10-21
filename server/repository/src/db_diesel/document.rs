@@ -260,6 +260,21 @@ impl<'a> DocumentRepository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
+    /// How many documents of a type are saved under a context, by each document's latest
+    /// version, leaving out deleted documents.
+    pub fn count_by_context(
+        &self,
+        document_type: &str,
+        context_id: &str,
+    ) -> Result<i64, RepositoryError> {
+        Ok(latest_document::table
+            .filter(latest_document::type_.eq(document_type))
+            .filter(latest_document::context_id.eq(context_id))
+            .filter(latest_document::status.ne(DocumentStatus::Deleted))
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
     /// How many documents of a type are pinned to each schema id, by each document's latest
     /// version, leaving out deleted documents and those pinned to no schema.
     pub fn count_by_form_schema_id(

@@ -27,6 +27,7 @@ query campaigns(
       nodes {
         id
         name
+        kind
         startDate
         endDate
       }
@@ -60,6 +61,7 @@ mutation upsertCampaign($input: UpsertCampaignInput!) {
         ... on CampaignNode {
           id
           name
+          kind
           startDate
           endDate
         }

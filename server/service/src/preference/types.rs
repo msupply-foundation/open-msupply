@@ -50,6 +50,7 @@ pub enum PrefKey {
     InboundShipmentAutoVerify,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    CanChangeTargetMonthsOfStock,
     ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
@@ -62,6 +63,7 @@ pub enum PrefKey {
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
     DoNotPrintPlaceholderLineLabels,
+    PromptForBatchAndExpiryOnInboundShipments,
 }
 
 #[derive(Clone, Debug, PartialEq)]

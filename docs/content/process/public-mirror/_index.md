@@ -34,7 +34,8 @@ half: how the sync runs, and what to do when something was published that should
   `mirror-public.yaml` from `develop` (Actions → Public mirror sync → Run workflow). Leave `refs`
   empty (develop, main and all release tags) or name the refs; leave `force` off. The `filter` job
   clones the selected refs, runs `git filter-repo` through the rules and the commit-message
-  rewrite, re-checks the filtered tree against the rules, and hands a bundle to the `push` job. The push job re-checks the tree again, mints a
+  rewrite (references to private repos become `internal#N` markers by `mirror_message.py`, and
+  quoted commit SHAs are translated, ancestors only, by `mirror_hashes.py`), re-checks the filtered tree against the rules, and hands a bundle to the `push` job. The push job re-checks the tree again, mints a
   `tmf-ci-bot` App token scoped to the public repo only, and pushes **without force**. A
   non-fast-forward push fails — that is the alarm. Every run publishes develop, main and all
   release tags, so the public develop is a snapshot as of the last dispatch.
@@ -97,6 +98,15 @@ For a stop that configuration cannot undo, remove the public repo from the `tmf-
   logged. Do not force. Find out what changed on the public side (`git fetch` it and look), import
   anything worth keeping through `.github/mirror/import-public-pr.sh` or by hand, then decide
   whether a logged republication is warranted.
+
+  If nobody pushed there, the filter itself produced different SHAs for the same history. To
+  check, download the run's `public-mirror` artifact, `git clone --bare filtered.bundle`, and
+  compare a rejected public tag with the same tag in the bundle. If their trees are identical
+  (`git diff --stat` prints nothing) but the commits differ, walk back to the first commit whose
+  parents match: whatever differs there (message, author, date) is the cause. On 2026-10-15 it was
+  a commit SHA quoted in a message, translated on one sync and not on the next. That is now
+  handled by `mirror_hashes.py`; see the KDD's *stable SHAs* sub-decision. Fix the filter, then
+  republish once, logged as in steps 4–6 of the leak runbook, with `refs` empty.
 - **Self-check failed** ("path(s) in the filtered tree are not publishable"). The filter and the
   rules disagree: a filter bug, or a rules edit that landed between the two jobs. Nothing was
   pushed. Fix and re-run.

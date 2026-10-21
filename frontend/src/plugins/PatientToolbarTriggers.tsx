@@ -8,7 +8,8 @@
  *
  * A trigger's label is a key in its plugin's catalogue, resolved under the
  * plugin's namespace. A `visible` or `onClick` that throws hides or does
- * nothing for that trigger alone, and is named in diagnostics.
+ * nothing for that trigger alone, and is named in diagnostics: a `visible`
+ * once a session, an `onClick` on every click.
  */
 import { createMemo, For, Show, type JSX } from 'solid-js';
 import { t } from '../intl';
@@ -33,6 +34,13 @@ export interface PatientToolbarTriggersProps {
 
 type Trigger = RegisteredContribution<'patient.toolbarTrigger'>;
 
+// The triggers whose `visible` has been named. It runs again on every change
+// to the patient's props, so naming each throw would bury every other
+// diagnostic; once is enough, as for a `when` (PluginSlot.tsx). The console
+// still has every throw. A click is the user's act, so each failed one is
+// named.
+const reportedVisibleFailures = new Set<string>();
+
 const failed = (
   trigger: Trigger,
   what: 'visible' | 'onClick',
@@ -40,6 +48,10 @@ const failed = (
 ) => {
   const id = contributionId(trigger);
   console.error(`patient.toolbarTrigger: ${id} ${what} threw`, error);
+  if (what === 'visible') {
+    if (reportedVisibleFailures.has(id)) return;
+    reportedVisibleFailures.add(id);
+  }
   recordPluginDiagnostic({
     level: 'warning',
     pluginCode: trigger.pluginCode,

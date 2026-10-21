@@ -62,6 +62,7 @@ pub struct UpsertPreferences {
     pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
+    pub can_change_target_months_of_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
@@ -77,6 +78,7 @@ pub struct UpsertPreferences {
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<StorePrefUpdate<bool>>>,
+    pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -123,6 +125,7 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
+        can_change_target_months_of_stock: can_change_target_months_of_stock_input,
         external_inbound_shipment_lines_must_be_authorised:
             external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -138,6 +141,8 @@ pub fn upsert_preferences(
         invoice_status_options: invoice_status_options_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
         do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels_input,
+        prompt_for_batch_and_expiry_on_inbound_shipments:
+            prompt_for_batch_and_expiry_on_inbound_shipments_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -177,6 +182,7 @@ pub fn upsert_preferences(
         warning_for_excess_request,
         can_create_internal_order_from_a_requisition,
         select_destination_store_for_an_internal_order,
+        can_change_target_months_of_stock,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
         number_of_months_threshold_to_show_low_stock_alerts_for_products,
         number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -188,6 +194,7 @@ pub fn upsert_preferences(
         external_inbound_shipment_lines_must_be_authorised,
         show_indicative_price_in_requisitions,
         do_not_print_placeholder_line_labels,
+        prompt_for_batch_and_expiry_on_inbound_shipments,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -340,6 +347,10 @@ pub fn upsert_preferences(
                 )?;
             }
 
+            if let Some(inputs) = can_change_target_months_of_stock_input {
+                upsert_store_input(connection, can_change_target_months_of_stock, inputs)?;
+            }
+
             if let Some(input) = external_inbound_shipment_lines_must_be_authorised_input {
                 upsert_store_input(connection, external_inbound_shipment_lines_must_be_authorised, input)?;
             }
@@ -406,6 +417,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = do_not_print_placeholder_line_labels_input {
                 upsert_store_input(connection, do_not_print_placeholder_line_labels, input)?;
+            }
+
+            if let Some(input) = prompt_for_batch_and_expiry_on_inbound_shipments_input {
+                upsert_store_input(connection, prompt_for_batch_and_expiry_on_inbound_shipments, input)?;
             }
 
             Ok(())

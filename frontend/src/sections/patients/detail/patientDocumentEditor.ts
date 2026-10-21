@@ -11,10 +11,7 @@ import type {
   FormDocumentFragment,
   FormRegistryFragment,
 } from '../../../domain/documentForm/documentForm.generated';
-import {
-  documentFormVersioning,
-  hasDocumentForm,
-} from '../../../plugins/documentFormSlot';
+import { documentFormVersioning } from '../../../plugins/documentFormSlot';
 import type { Patient } from '../../../plugin-sdk/documents';
 import { seedPatientDocument } from './patientDocumentSeed';
 import type { PatientNode } from './patientDetails';
@@ -136,7 +133,6 @@ const createPatientDocumentFormCore = (params: {
     ],
     readOnly: () => !canMutate(),
     versioning: type => documentFormVersioning('patient.form', type),
-    hasPluginForm: type => hasDocumentForm('patient.form', type),
   });
 
   return { form, codeCheck, canMutate };

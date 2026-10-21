@@ -123,6 +123,7 @@ enum ActivityLogNodeType {
 	VVM_STATUS_LOG_UPDATED
 	VOLUME_PER_PACK_CHANGED
 	STOCK_LINE_EDIT
+	STOCK_CAMPAIGN_CHANGE
 	PURCHASE_ORDER_CREATED
 	PURCHASE_ORDER_REQUEST_APPROVAL
 	PURCHASE_ORDER_UNAUTHORISED
@@ -136,6 +137,7 @@ enum ActivityLogNodeType {
 	PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED
 	PURCHASE_ORDER_LINE_STATUS_CLOSED
 	PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW
+	PURCHASE_ORDER_CANCELLED
 	PRESCRIPTION_REQUEST_CREATED
 	PRESCRIPTION_REQUEST_UPDATED
 	PRESCRIPTION_REQUEST_READY_TO_DISPENSE
@@ -298,6 +300,10 @@ type AlreadyInitialised implements InitialiseAsCentralServerErrorInterface {
 	description: String!
 }
 
+type AmcForecastNode {
+	averageMonthlyConsumption: Float!
+}
+
 type AncillaryCycleDetected implements UpsertAncillaryItemErrorInterface {
 	description: String!
 }
@@ -328,6 +334,10 @@ type AncillaryItemNode {
 	Right-hand side of the stored `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	"""
+	Ordered against the principal's quantity net of its wastage rate
+	"""
+	excludePrincipalWastage: Boolean!
 	itemId: String!
 	ancillaryItemId: String!
 	"""
@@ -344,6 +354,40 @@ type AncillaryMaxDepthExceeded implements UpsertAncillaryItemErrorInterface {
 	description: String!
 	max: Int!
 	actual: Int!
+}
+
+type AncillaryRatioForecastNode {
+	"""
+	One per principal line on the order
+	"""
+	principals: [AncillaryRatioPrincipalNode!]!
+}
+
+type AncillaryRatioPrincipalNode {
+	itemId: String!
+	item: ItemNode
+	"""
+	The principal line's monthly demand
+	"""
+	principalMonthlyConsumption: Float!
+	"""
+	The configured ratio: `itemQuantity` principal units to `ancillaryQuantity`
+	ancillary units, as on `AncillaryItemNode`
+	"""
+	itemQuantity: Float!
+	ancillaryQuantity: Float!
+	"""
+	The principal's wastage rate (%) deducted before the ratio applies; 0 when none
+	"""
+	wastageRate: Float!
+	"""
+	The principal's monthly demand net of the deducted wastage
+	"""
+	principalUsableConsumption: Float!
+	"""
+	This principal's share of the line's monthly demand
+	"""
+	monthlyConsumption: Float!
 }
 
 """
@@ -1013,6 +1057,11 @@ input CampaignFilterInput {
 	name: StringFilterInput
 }
 
+enum CampaignKindNode {
+	CAMPAIGN
+	ROUTINE
+}
+
 type CampaignMutations {
 	upsertCampaign(input: UpsertCampaignInput!): UpsertCampaignResponse!
 	deleteCampaign(input: DeleteCampaignInput!): DeleteCampaignResponse!
@@ -1024,6 +1073,7 @@ type CampaignNode {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode!
 }
 
 enum CampaignSortFieldInput {
@@ -1061,6 +1111,10 @@ type CannotChangeStatusOfInvoiceOnHold implements UpdateErrorInterface & UpdateI
 	description: String!
 }
 
+type CannotChangeTargetMonthsOfStock implements UpdateRequestRequisitionErrorInterface {
+	description: String!
+}
+
 type CannotDeleteCentralSite implements DeleteSiteErrorInterface {
 	description: String!
 }
@@ -1086,19 +1140,11 @@ type CannotDeleteRequisitionWithLines implements DeleteRequestRequisitionErrorIn
 	description: String!
 }
 
-type CannotEditAdjustedQuantity implements PurchaseOrderLineError {
-	description: String!
-}
-
 type CannotEditInvoice implements DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & DeletePrescriptionErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface {
 	description: String!
 }
 
 type CannotEditPurchaseOrder implements AddToPurchaseOrderFromMasterListErrorInterface & InsertPurchaseOrderLineErrorInterface & PurchaseOrderLineError {
-	description: String!
-}
-
-type CannotEditQuantityBelowReceived implements PurchaseOrderLineError {
 	description: String!
 }
 
@@ -2984,6 +3030,63 @@ input FloatStorePrefInput {
 	value: Float!
 }
 
+"""
+The inputs and steps behind a line's monthly demand, one member per method. None holds
+a months-of-stock figure: the requisition's thresholds supply those.
+"""
+union ForecastBreakdownNode = AmcForecastNode | PopulationForecastNode | AncillaryRatioForecastNode
+
+"""
+Where a requisition line's monthly demand comes from.
+"""
+enum ForecastMethodNode {
+	"""
+	The line's average monthly consumption
+	"""
+	AMC
+	"""
+	The vaccine courses covering the item, for the store's population served
+	"""
+	POPULATION
+	"""
+	The order's principal lines' monthly demand × the configured ancillary ratios
+	"""
+	ANCILLARY_RATIO
+}
+
+type ForecastMethodNotAvailable implements RequisitionLineForecastPreviewErrorInterface & UpdateRequestRequisitionLineErrorInterface {
+	description: String!
+	unavailableReason: ForecastMethodUnavailableReasonNode!
+}
+
+type ForecastMethodOptionNode {
+	method: ForecastMethodNode!
+	isAvailable: Boolean!
+	"""
+	Null when available
+	"""
+	unavailableReason: ForecastMethodUnavailableReasonNode
+}
+
+enum ForecastMethodUnavailableReasonNode {
+	"""
+	The population-based forecasting preference is off
+	"""
+	POPULATION_PREFERENCE_OFF
+	"""
+	The store's facility record carries no population served
+	"""
+	NO_POPULATION_SERVED
+	"""
+	No vaccine course covers the item
+	"""
+	NO_VACCINE_COURSE
+	"""
+	No line on the order is a principal of the item
+	"""
+	NO_PRINCIPAL_ON_ORDER
+}
+
 enum ForeignKey {
 	otherPartyId
 	itemId
@@ -3269,6 +3372,10 @@ enum InboundNodeType {
 	FROM_PURCHASE_ORDER
 	MANUAL_INTERNAL
 	MANUAL_EXTERNAL
+}
+
+type InboundShipmentsInProgress implements UpdatePurchaseOrderErrorInterface {
+	description: String!
 }
 
 type InboundShipmentsNotVerified implements UpdatePurchaseOrderErrorInterface {
@@ -4102,7 +4209,13 @@ input InsertRequestRequisitionInput {
 	colour: String
 	theirReference: String
 	comment: String
-	maxMonthsOfStock: Float!
+	"""
+	Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+	facility record carries no supply interval. Ignored, the store's supply interval +
+	safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+	preference is off and it has a supply interval
+	"""
+	maxMonthsOfStock: Float
 	minMonthsOfStock: Float!
 	"""
 	Defaults to 2 weeks from now
@@ -6524,6 +6637,34 @@ input PluginProgramInput {
 	programId: String!
 }
 
+type PopulationForecastCourseNode {
+	courseName: String!
+	"""
+	Null when the course targets the whole population
+	"""
+	demographicName: String
+	numberOfDoses: Int!
+	coverageRate: Float!
+	wastageRate: Float!
+	targetPopulation: Float!
+	lossFactor: Float!
+	annualTargetDoses: Float!
+	dosesPerUnit: Float!
+	monthlyDoses: Float!
+	monthlyUnits: Float!
+}
+
+type PopulationForecastNode {
+	"""
+	Null on a forecast converted from an older site's data
+	"""
+	populationServed: Float
+	"""
+	One per covering course-and-demographic
+	"""
+	courses: [PopulationForecastCourseNode!]!
+}
+
 """
 The context we are editing pref within (e.g. prefs for given store, user, etc.)
 """
@@ -6586,6 +6727,7 @@ enum PreferenceKey {
 	warningForExcessRequest
 	canCreateInternalOrderFromARequisition
 	selectDestinationStoreForAnInternalOrder
+	canChangeTargetMonthsOfStock
 	externalInboundShipmentLinesMustBeAuthorised
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts
@@ -6598,6 +6740,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6662,6 +6805,7 @@ type PreferencesNode {
 	inboundShipmentAutoVerify: Boolean!
 	canCreateInternalOrderFromARequisition: Boolean!
 	selectDestinationStoreForAnInternalOrder: Boolean!
+	canChangeTargetMonthsOfStock: Boolean!
 	externalInboundShipmentLinesMustBeAuthorised: Boolean!
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Int!
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts: Float!
@@ -6672,6 +6816,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -7180,7 +7325,7 @@ input PurchaseOrderLineFilterInput {
 	id: EqualFilterStringInput
 	purchaseOrderId: EqualFilterStringInput
 	status: EqualFilterPurchaseOrderLineStatusInput
-	receivedLessThanAdjusted: Boolean
+	receivedLessThanRequested: Boolean
 	supplierName: StringFilterInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
 	itemName: StringFilterInput
@@ -7195,13 +7340,20 @@ type PurchaseOrderLineNode {
 	pricePerPackBeforeDiscount: Float!
 	pricePerPackAfterDiscount: Float!
 	lineTotal: Float!
+	"""
+	The pack price with the order's supplier discount apportioned to the line (none on a service line)
+	"""
+	pricePerPackAfterSupplierDiscount: Float!
+	"""
+	The line's stored total with the order's supplier discount apportioned to it (none on a service line)
+	"""
+	lineTotalAfterSupplierDiscount: Float!
 	comment: String
 	supplierItemCode: String
 	item: ItemNode!
 	stockOnHandInUnits: Float!
 	requestedPackSize: Float!
 	requestedNumberOfUnits: Float!
-	adjustedNumberOfUnits: Float
 	shippedNumberOfUnits: Float!
 	inTransitNumberOfUnits: Float!
 	receivedNumberOfUnits: Float!
@@ -7236,7 +7388,6 @@ enum PurchaseOrderLineSortFieldInput {
 	purchaseOrderNumber
 	supplierName
 	purchaseOrderConfirmedDatetime
-	adjustedNumberOfUnits
 	receivedNumberOfUnits
 	outstandingNumberOfUnits
 }
@@ -7289,16 +7440,19 @@ type PurchaseOrderNode {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Filtered to the keys visible on the purchase_order scope
+	"""
+	customFields: JSON
+	"""
+	The supplier discount on the stock lines; service lines take none
+	"""
 	supplierDiscountAmount: Float!
 	supplierDiscountPercentage: Float
 	requestApprovalDatetime: DateTime
 	finalisedDatetime: DateTime
+	cancelledDatetime: DateTime
 	documents: SyncFileReferenceConnector!
 	lines: PurchaseOrderLineConnector!
 	currency: CurrencyNode
@@ -7310,6 +7464,7 @@ enum PurchaseOrderNodeStatus {
 	CONFIRMED
 	SENT
 	FINALISED
+	CANCELLED
 }
 
 union PurchaseOrderResponse = RecordNotFound | PurchaseOrderNode
@@ -7620,6 +7775,12 @@ type Queries {
 		daysTillExpired: Int
 	): StockCounts!
 	requisitionLineChart(storeId: String!, requestRequisitionLineId: String!, consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): RequisitionLineChartResponse!
+	"""
+	An item's request line as the line editor's draft would save it, under a chosen
+	forecast method, without saving anything: the line already on the order, or the one
+	adding the item would create
+	"""
+	requisitionLineForecastPreview(storeId: String!, input: RequisitionLineForecastPreviewInput!): RequisitionLineForecastPreviewResponse!
 	activityLogs(		storeId: String!,
 		"""
 		Pagination option (first and offset)
@@ -8142,7 +8303,7 @@ type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & Delet
 	description: String!
 }
 
-type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
+type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
 	description: String!
 }
 
@@ -8385,6 +8546,46 @@ type RequisitionLineConnector {
 	nodes: [RequisitionLineNode!]!
 }
 
+type RequisitionLineForecastPreviewError {
+	error: RequisitionLineForecastPreviewErrorInterface!
+}
+
+interface RequisitionLineForecastPreviewErrorInterface {
+	description: String!
+}
+
+input RequisitionLineForecastPreviewInput {
+	requisitionId: String!
+	itemId: String!
+	"""
+	Null keeps the line's own method: an existing line's stored one, or the default a
+	new line would take
+	"""
+	forecastMethod: ForecastMethodNode
+	"""
+	The activity to preview the line as held for — its stock on hand, and the suggestion
+	computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+	`{ value: null }` previews it as held for nothing in particular
+	"""
+	campaignId: NullableStringUpdate
+}
+
+type RequisitionLineForecastPreviewNode {
+	forecastMethod: ForecastMethodNode!
+	forecastMonthlyConsumption: Float!
+	forecastBreakdown: ForecastBreakdownNode!
+	forecastMethodOptions: [ForecastMethodOptionNode!]!
+	"""
+	The requisition's target months × the monthly demand
+	"""
+	targetStock: Float!
+	suggestedQuantity: Float!
+	averageMonthlyConsumption: Float!
+	availableStockOnHand: Float!
+}
+
+union RequisitionLineForecastPreviewResponse = RequisitionLineForecastPreviewNode | RequisitionLineForecastPreviewError
+
 type RequisitionLineNode {
 	id: String!
 	itemId: String!
@@ -8454,13 +8655,33 @@ type RequisitionLineNode {
 	daysOutOfStock: Float!
 	optionId: String
 	reason: ReasonOptionNode
+	campaign: CampaignNode
 	availableStockOnHand: Float!
 	requisitionNumber: Int!
 	requisitionId: String!
 	availableVolumeAtLocationType: AvailableVolumeAtLocationTypeNode
-	forecastTotalDoses: Float
-	forecastTotalUnits: Float
-	vaccineCourses: String
+	"""
+	Where the line's monthly demand comes from
+	"""
+	forecastMethod: ForecastMethodNode!
+	"""
+	The line's monthly demand in units: what its suggested quantity, months of stock and
+	target stock work from, whatever its forecast method
+	"""
+	forecastMonthlyConsumption: Float!
+	"""
+	The inputs and steps behind the line's monthly demand
+	"""
+	forecastBreakdown: ForecastBreakdownNode!
+	"""
+	Every forecast method, an unavailable one with its reason. Empty on a response
+	requisition's line, whose forecast is the customer's.
+	"""
+	forecastMethodOptions: [ForecastMethodOptionNode!]!
+	"""
+	The requisition's target months × the line's monthly demand
+	"""
+	targetStock: Float!
 }
 
 type RequisitionLineStatsError {
@@ -8520,6 +8741,12 @@ type RequisitionNode {
 	Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
 	"""
 	minMonthsOfStock: Float!
+	"""
+	The ordering store's supply interval and safety buffer (from its facility record) as
+	they stand now, null when it carries no supply interval. A general
+	order's default target months of stock.
+	"""
+	supplyIntervalAndBuffer: SupplyIntervalAndBufferNode
 	documents: SyncFileReferenceConnector!
 	lines: RequisitionLineConnector!
 	"""
@@ -9582,6 +9809,14 @@ type SupplierReturnLineNode {
 	packSize: Float!
 	onHold: Boolean!
 	reasonOption: ReasonOptionNode
+}
+
+type SupplyIntervalAndBufferNode {
+	supplyIntervalMonths: Float!
+	"""
+	Zero when the facility record carries none
+	"""
+	safetyBufferMonths: Float!
 }
 
 type SupplyRequestedQuantityError {
@@ -10748,12 +10983,11 @@ input UpdatePurchaseOrderInput {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Merged into the order's custom fields; a null value deletes the key
+	"""
+	customFields: JSON
 }
 
 type UpdatePurchaseOrderLineError {
@@ -10765,7 +10999,6 @@ input UpdatePurchaseOrderLineInput {
 	itemId: String
 	requestedPackSize: Float
 	requestedNumberOfUnits: Float
-	adjustedNumberOfUnits: Float
 	requestedDeliveryDate: NullableDateUpdate
 	expectedDeliveryDate: NullableDateUpdate
 	pricePerPackBeforeDiscount: Float
@@ -10827,6 +11060,13 @@ input UpdateRequestRequisitionLineInput {
 	requestedQuantity: Float
 	comment: String
 	optionId: String
+	"""
+	Changing the method recomputes the line's monthly demand, breakdown and suggested
+	quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
+	is untouched
+	"""
+	forecastMethod: ForecastMethodNode
+	campaignId: NullableStringUpdate
 }
 
 union UpdateRequestRequisitionLineResponse = UpdateRequestRequisitionLineError | RequisitionLineNode
@@ -11208,6 +11448,7 @@ input UpsertAncillaryItemInput {
 	Right-hand side of the user-entered `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	excludePrincipalWastage: Boolean
 }
 
 union UpsertAncillaryItemResponse = UpsertAncillaryItemError | AncillaryItemNode
@@ -11242,6 +11483,7 @@ input UpsertCampaignInput {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode
 }
 
 union UpsertCampaignResponse = UpsertCampaignError | CampaignNode
@@ -11313,6 +11555,7 @@ input UpsertPreferencesInput {
 	inboundShipmentAutoVerify: [BoolStorePrefInput!]
 	canCreateInternalOrderFromARequisition: [BoolStorePrefInput!]
 	selectDestinationStoreForAnInternalOrder: [BoolStorePrefInput!]
+	canChangeTargetMonthsOfStock: [BoolStorePrefInput!]
 	externalInboundShipmentLinesMustBeAuthorised: [BoolStorePrefInput!]
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: [IntegerStorePrefInput!]
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts: [FloatStorePrefInput!]
@@ -11324,6 +11567,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

@@ -3,6 +3,7 @@ import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
 import { ItemWithAvailableStockFragment } from '@openmsupply-client/system';
 import { FnUtils } from '@common/utils';
 import { useTranslation } from '@common/intl';
+import { ForecastMethodNode } from '@common/types';
 
 export type DraftResponseLine = Omit<
   ResponseLineFragment,
@@ -37,6 +38,9 @@ const createDraftFromItem = (
     alreadyIssued: 0,
     availableStockOnHand: 0,
     suggestedQuantity: 0,
+    forecastMethod: ForecastMethodNode.Amc,
+    forecastMonthlyConsumption: 0,
+    targetStock: 0,
     isCreated: true,
     itemStats: {
       __typename: 'ItemStatsNode',
@@ -60,7 +64,8 @@ export const useDraftRequisitionLine = (
   const t = useTranslation();
   const { lines } = useResponse.line.list();
   const { data } = useResponse.document.get();
-  const { mutateAsync: saveMutation, isPending: isLoading } = useResponse.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } =
+    useResponse.line.save();
   const [isReasonsError, setIsReasonsError] = useState(false);
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);

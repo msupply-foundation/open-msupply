@@ -39,6 +39,7 @@ import {
   graphqlFetch,
   isForbidden,
   missingPermissions,
+  reportPermissionDenied,
   type GraphqlResult,
 } from '../../api/graphql';
 import { gated } from '../../api/gated';
@@ -117,22 +118,19 @@ export type DocumentVersion =
   | { kind: 'migrated'; version: number }
   /**
    * Pinned to a version the plugin does not list (a site with a newer plugin
-   * wrote it). This and the three below open read-only, as recorded, in the
+   * wrote it). This and the two below open read-only, as recorded, in the
    * fallback renderer.
    */
   | { kind: 'unknown' }
   /**
-   * Pinned to another version than the current one, where the plugin's form
-   * declares no versions: most likely an earlier one, from before an install
-   * moved the registry entry to a new schema id.
+   * Any document of a type whose plugin form's newest version is not the
+   * registry entry's current one: the plugin in the browser and the one
+   * installed differ, as while a newer install reaches this site by sync or
+   * until a reload loads it. No version can be trusted then, and a save would
+   * pin data written for one version to the other's schema id, so a saved
+   * document is shown as recorded and a new one's form is read-only.
    */
-  | { kind: 'unversioned' }
-  /**
-   * Pinned to a version the plugin lists but cannot migrate to the current
-   * one: a later one, or the plugin in the browser and the one installed
-   * differ.
-   */
-  | { kind: 'unreachable'; version: number }
+  | { kind: 'outOfStep' }
   /**
    * Pinned to an earlier version of a type no plugin form renders, holding
    * values beyond the base type or failing the current schema. Without those
@@ -158,16 +156,25 @@ const CURRENT: DocumentVersion = { kind: 'current' };
 
 const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
   a.kind === b.kind &&
-  (a.kind === 'archived' || a.kind === 'migrated' || a.kind === 'unreachable'
+  (a.kind === 'archived' || a.kind === 'migrated'
     ? a.version === (b as typeof a).version
     : true);
 
 /** The versions no form opens: shown as recorded, by the fallback renderer. */
 const asRecorded = (v: DocumentVersion): boolean =>
-  v.kind === 'unknown' ||
-  v.kind === 'unversioned' ||
-  v.kind === 'unreachable' ||
-  v.kind === 'unavailable';
+  v.kind === 'unknown' || v.kind === 'outOfStep' || v.kind === 'unavailable';
+
+/**
+ * Whether a type's plugin form and its registry entry name different current
+ * versions (sdk-contract § versions): none of its documents can be edited or
+ * started then.
+ */
+export const isOutOfStep = (
+  versioning: FormVersioning | undefined,
+  registry: Pick<FormRegistryFragment, 'formSchemaId'>
+): boolean =>
+  versioning !== undefined &&
+  versioning.versions.at(-1) !== registry.formSchemaId;
 
 export interface CreateDocumentFormOptions {
   storeId: Accessor<string>;
@@ -182,29 +189,18 @@ export interface CreateDocumentFormOptions {
    * check), shown and counted with the draft's own.
    */
   extraErrors?: Accessor<readonly FieldError[]>;
-  /** True while the user may only read the document (no permission to save). */
+  /**
+   * True while the user may only read the document (no permission to save):
+   * the draft is read-only and nothing can be saved, a migrated document
+   * included.
+   */
   readOnly?: Accessor<boolean>;
   /**
    * The versioning of a document type's plugin form, or undefined where no
-   * plugin form declares any. Read inside a memo, so it may read the plugin
-   * registry reactively.
+   * plugin form renders the type: every plugin form declares its versions.
+   * Read inside a memo, so it may read the plugin registry reactively.
    */
   versioning?: (documentType: string) => FormVersioning | undefined;
-  /**
-   * Whether a plugin form renders a document type, versioned or not: a
-   * document on an earlier version of a type none renders has no plugin form
-   * to open it. Required, with `versioning` beside it, so a caller cannot
-   * leave one out and have every older document of an unversioned form read
-   * as having no form at all. Read inside a memo, like `versioning`.
-   */
-  hasPluginForm: (documentType: string) => boolean;
-  /**
-   * Takes a save the server refuses as Forbidden, with the permission names
-   * it gives, in place of showing it as `saveError`: the screen routes it to
-   * the app's permission-denied modal (ui-standards/validation.md). Absent, a
-   * Forbidden shows as any other refusal.
-   */
-  onForbidden?: (permissions: string[]) => void;
   /**
    * Refuses to save a saved document when a newer version was saved after
    * the one opened (spec/program-enrolment rules § editing an enrolment):
@@ -253,8 +249,9 @@ export interface DocumentForm<T> {
   version: Accessor<DocumentVersion>;
   /**
    * The document as it was recorded, while no form can open it (`version` is
-   * unknown, unreachable or unavailable): the body renders it through the
-   * fallback renderer in place of any form.
+   * unknown, outOfStep or unavailable): the body renders it
+   * through the fallback renderer in place of any form. Undefined for a new
+   * document, which has no record.
    */
   recorded: Accessor<RecordedDocument | undefined>;
   /** Leaves an archived form for the current one, migrating the document. */
@@ -289,13 +286,11 @@ export type SaveOutcome =
        */
       recordId: string;
     }
-  | {
-      kind: 'refused';
-      message: string;
-      /** The permission names, when the refusal is a Forbidden. */
-      forbidden?: string[];
-    }
-  /** Reported by the app's global handling (a lost session, an outage). */
+  | { kind: 'refused'; message: string }
+  /**
+   * Reported by the app's global handling: a lost session, an outage, or a
+   * save refused for permission, which the permission-denied modal names.
+   */
   | { kind: 'reported' };
 
 export interface SaveInput {
@@ -312,9 +307,11 @@ export interface SaveInput {
  * server derives the category's flat row (program_enrolment, encounter) and
  * its program events from the saved document, or, for a patient, projects
  * its base fields onto the patient's name row. The schema id is always the
- * entry's current one, so an edit re-pins the document to it. Exported for
- * a create step that writes a document before any form opens (the
- * create-encounter dialog).
+ * entry's current one, so an edit re-pins the document to it. A save refused
+ * for permission goes to the app's permission-denied modal, as every other
+ * screen's does (spec/startup § permission denied), never shown as the
+ * server's text. Exported for a create step that writes a document before
+ * any form opens (the create-encounter dialog).
  */
 export const persistDocument = async (
   input: SaveInput
@@ -339,13 +336,11 @@ export const persistDocument = async (
         : { kind: 'reported' };
     }
     if (result.kind === 'graphqlError') {
-      return {
-        kind: 'refused',
-        message: describeErrors(result.errors),
-        forbidden: isForbidden(result.errors)
-          ? missingPermissions(result.errors)
-          : undefined,
-      };
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        return { kind: 'reported' };
+      }
+      return { kind: 'refused', message: describeErrors(result.errors) };
     }
     return { kind: 'reported' };
   };
@@ -557,21 +552,16 @@ export const createDocumentForm = <T extends object>(
       const doc = document();
       const r = registry();
       const v = versioning();
+      // First, and for a new document too: out of step, no version holds.
+      if (r && isOutOfStep(v, r)) return { kind: 'outOfStep' };
       const pinned = doc?.schema?.id;
       if (!doc || !r || !pinned || pinned === r.formSchemaId) return CURRENT;
-      // A form that declares no versions knows only the current one.
-      if (!v) {
-        if (options.hasPluginForm(r.documentType)) {
-          return { kind: 'unversioned' };
-        }
-        return needsFallback(doc, r) ? { kind: 'unavailable' } : CURRENT;
-      }
+      // No plugin form renders the type: the default form opens what it can.
+      if (!v) return needsFallback(doc, r) ? { kind: 'unavailable' } : CURRENT;
+      // In step, the current version is the last listed, so any other listed
+      // one is earlier.
       const at = v.versions.indexOf(pinned) + 1;
-      const current = v.versions.indexOf(r.formSchemaId) + 1;
       if (at === 0) return { kind: 'unknown' };
-      if (current === 0 || at > current) {
-        return { kind: 'unreachable', version: at };
-      }
       if (v.archived.includes(at) && editing() !== doc.id) {
         return { kind: 'archived', version: at };
       }
@@ -580,6 +570,9 @@ export const createDocumentForm = <T extends object>(
     CURRENT,
     { equals: sameVersion }
   );
+
+  // The user may not save it, whatever its version.
+  const noSavePermission = () => options.readOnly?.() ?? false;
 
   // Read as it was recorded: against its own schema, with nothing to fix.
   const readingOnly = () =>
@@ -636,8 +629,7 @@ export const createDocumentForm = <T extends object>(
       return r ? gated(library)?.baseSchemaFor(r.category) : undefined;
     },
     validate: () => gated(library)?.validateDocument,
-    readOnly: () =>
-      saving() || readingOnly() || (options.readOnly?.() ?? false),
+    readOnly: () => saving() || readingOnly() || noSavePermission(),
     validates: () => !readingOnly(),
     labels: options.labels,
     extraErrors: options.extraErrors,
@@ -725,7 +717,14 @@ export const createDocumentForm = <T extends object>(
   const isDirty = () => controller.isDirty() || coordinator.dirty();
 
   const save = async () => {
-    if (status() !== 'ready' || saving() || readingOnly()) return undefined;
+    if (
+      status() !== 'ready' ||
+      saving() ||
+      readingOnly() ||
+      noSavePermission()
+    ) {
+      return undefined;
+    }
     // A check a field is still running (draft.wait) decides first.
     if (controller.busy()) {
       setSaving(true);
@@ -782,11 +781,7 @@ export const createDocumentForm = <T extends object>(
     });
     setSaving(false);
     if (result.kind === 'refused') {
-      if (result.forbidden && options.onForbidden) {
-        options.onForbidden(result.forbidden);
-      } else if (key === currentKey()) {
-        setSaveError(result.message);
-      }
+      if (key === currentKey()) setSaveError(result.message);
       return undefined;
     }
     if (result.kind === 'reported') return undefined;
@@ -823,6 +818,7 @@ export const createDocumentForm = <T extends object>(
     canSave: () =>
       status() === 'ready' &&
       !readingOnly() &&
+      !noSavePermission() &&
       (isNew() || isDirty() || version().kind === 'migrated'),
     validation: controller.validation,
     version,

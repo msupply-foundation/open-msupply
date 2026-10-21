@@ -1,0 +1,69 @@
+# The stored forecast of a requisition line (spec/internal-orders › forecasting): its
+# method, the monthly demand it yields, the breakdown behind it, and the target stock
+# that monthly demand × the requisition's target months makes.
+#
+# Codegen reads each document alone, so the verticals can't spread this fragment.
+# Each repeats the selection in its own line fragment instead, and passes that line
+# straight to ForecastBlock, which takes this fragment's type: a vertical that drops a
+# field here fails to type-check rather than rendering a hole.
+fragment ForecastLine on RequisitionLineNode {
+  forecastMethod
+  forecastMonthlyConsumption
+  targetStock
+  forecastBreakdown {
+    __typename
+    ... on AmcForecastNode {
+      averageMonthlyConsumption
+    }
+    ... on PopulationForecastNode {
+      populationServed
+      courses {
+        courseName
+        demographicName
+        numberOfDoses
+        coverageRate
+        wastageRate
+        targetPopulation
+        lossFactor
+        annualTargetDoses
+        dosesPerUnit
+        monthlyDoses
+        monthlyUnits
+      }
+    }
+    ... on AncillaryRatioForecastNode {
+      principals {
+        itemId
+        item {
+          code
+          name
+          unitName
+        }
+        principalMonthlyConsumption
+        itemQuantity
+        ancillaryQuantity
+        wastageRate
+        principalUsableConsumption
+        monthlyConsumption
+      }
+    }
+  }
+}
+
+# One entry of a line's forecastMethodOptions — the editor's method select. Like
+# ForecastLine, each vertical repeats the selection; ForecastBlock takes this type.
+fragment ForecastMethodOption on ForecastMethodOptionNode {
+  method
+  isAvailable
+  unavailableReason
+}
+
+# The ordering store's supply interval and safety buffer (spec/internal-orders
+# › target months of stock): their sum is the default — and, with the
+# changing-target-months preference off, the fixed — target of a general order.
+# A vertical repeats this selection on its RequisitionNode (see ForecastLine
+# above); ForecastBlock takes this fragment's type for its target-months caption.
+fragment SupplyIntervalAndBuffer on SupplyIntervalAndBufferNode {
+  supplyIntervalMonths
+  safetyBufferMonths
+}

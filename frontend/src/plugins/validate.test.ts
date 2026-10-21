@@ -452,12 +452,14 @@ describe('validateLoadedModule', () => {
           slot: 'programEnrolment.form',
           id: 'enrolment',
           documentType: 'DemoProgramEnrolment',
+          versions: ['DemoProgramEnrolment_v1'],
           Component,
         },
         {
           slot: 'encounter.form',
           id: 'encounter',
           documentType: 'DemoEncounter',
+          versions: ['DemoEncounter_v1'],
           Component,
         },
       ]);
@@ -470,6 +472,7 @@ describe('validateLoadedModule', () => {
           slot: 'patient.form',
           id: 'patient',
           documentType: 'Patient',
+          versions: ['Patient_v1'],
           Component,
         },
       ]);
@@ -491,12 +494,14 @@ describe('validateLoadedModule', () => {
           slot: 'encounter.form',
           id: 'first',
           documentType: 'DemoEncounter',
+          versions: ['DemoEncounter_v1'],
           Component,
         },
         {
           slot: 'encounter.form',
           id: 'second',
           documentType: 'DemoEncounter',
+          versions: ['DemoEncounter_v1'],
           Component,
         },
       ]);
@@ -513,12 +518,14 @@ describe('validateLoadedModule', () => {
           slot: 'programEnrolment.form',
           id: 'enrolment',
           documentType: 'Shared',
+          versions: ['Shared_v1'],
           Component,
         },
         {
           slot: 'encounter.form',
           id: 'encounter',
           documentType: 'Shared',
+          versions: ['Shared_v1'],
           Component,
         },
       ]);
@@ -549,9 +556,10 @@ describe('validateLoadedModule', () => {
         ).toBe('ok');
       });
 
-      it('refuses migrations or archived forms with no versions', () => {
+      it('refuses a form that declares no versions, with one version or more', () => {
+        expect(refusal(outcome({}))).toContain('declares no versions');
         expect(refusal(outcome({ migrations: [{ from: 1 }] }))).toContain(
-          'without the versions they are keyed by'
+          'declares no versions'
         );
       });
 
