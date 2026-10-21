@@ -428,6 +428,20 @@ describe("login shows the user's language (spec/i18n § choosing the locale)", (
     expect(applyUserLocale).toHaveBeenCalledWith('alice', 'fr');
   });
 
+  it('applies it before the user is set, so the first screen paints in it', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginAs('FRENCH'));
+    let userWhileApplying: unknown = 'not called';
+    applyUserLocale.mockImplementationOnce(async () => {
+      userWhileApplying = auth.authUser();
+    });
+
+    await auth.login('alice', 'pw');
+
+    expect(userWhileApplying).toBeUndefined();
+    expect(auth.authUser()?.userId).toBe('u1');
+  });
+
   it('passes no locale for a profile language with no catalog', async () => {
     const auth = await freshModule();
     graphqlFetch.mockResolvedValueOnce(loginAs('KHMER'));

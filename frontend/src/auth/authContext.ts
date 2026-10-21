@@ -201,6 +201,14 @@ export const login = async (
   if (loginableStores(auth.user).length === 0) {
     return { kind: 'error', message: 'You have no stores to log into' };
   }
+  // Spec (i18n § choosing the locale): login shows the user's language. Only
+  // here, not when a reload restores the session: that keeps the last-used
+  // locale. Before the user is set, which swaps the login page for the app,
+  // so the first screen paints in it.
+  await applyUserLocale(
+    auth.user.username,
+    PROFILE_LOCALES[auth.user.language]
+  );
   setUser(auth.user);
   clearUnauthenticated();
   setInactivityExpired(false);
@@ -210,13 +218,6 @@ export const login = async (
   // the login page can prefill it. Only on success — a rejected name is not
   // worth offering back — and never the password.
   recordLastLoginUsername(username);
-  // Spec (i18n § choosing the locale): login shows the user's language. Only
-  // here, not when a reload restores the session: that keeps the last-used
-  // locale. Awaited so the first screen paints in it.
-  await applyUserLocale(
-    auth.user.username,
-    PROFILE_LOCALES[auth.user.language]
-  );
   return { kind: 'success' };
 };
 
