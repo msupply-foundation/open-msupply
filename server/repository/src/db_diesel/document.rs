@@ -326,6 +326,36 @@ impl<'a> DocumentRepository<'a> {
         Ok(result)
     }
 
+    /// The latest version of each named document.
+    ///
+    /// Reads the document table itself, not the `latest_document` view: the view
+    /// groups every version in the table by name, so a filter on it is only cheap
+    /// where the planner moves the filter inside the grouping. Postgres does that
+    /// for one name compared with `=`, but not for a list of names on every
+    /// version, and then a batched read scans the whole table (#1562).
+    pub fn find_many_latest_by_names(
+        &self,
+        names: &[String],
+    ) -> Result<Vec<Document>, RepositoryError> {
+        let rows: Vec<DocumentRow> = document::dsl::document
+            .filter(document::dsl::name.eq_any(names))
+            .order((
+                document::dsl::name.asc(),
+                document::dsl::datetime.desc(),
+                document::dsl::id.desc(),
+            ))
+            .load(self.connection.lock().connection())?;
+
+        let mut result = Vec::<Document>::new();
+        for row in rows {
+            let newer_version_kept = result.last().is_some_and(|d| d.name == row.name);
+            if !newer_version_kept {
+                result.push(to_document(row)?);
+            }
+        }
+        Ok(result)
+    }
+
     pub fn query_by_filter(
         &self,
         filter: DocumentFilter,
