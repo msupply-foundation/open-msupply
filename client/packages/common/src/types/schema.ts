@@ -8974,7 +8974,6 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
-  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
