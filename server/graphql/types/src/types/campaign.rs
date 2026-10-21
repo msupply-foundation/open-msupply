@@ -6,7 +6,10 @@ use graphql_core::{
 };
 use repository::{
     EqualFilter, StringFilter,
-    campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+    campaign::{
+        campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+        campaign_row::CampaignKind,
+    },
 };
 
 use service::{ListResult, usize_to_u32};
@@ -25,6 +28,31 @@ pub struct CampaignSortInput {
     key: CampaignSortFieldInput,
     /// Sort query result is sorted descending or ascending (if not provided the default is ascending)
     desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum CampaignKindNode {
+    Campaign,
+    Routine,
+}
+
+impl From<&CampaignKind> for CampaignKindNode {
+    fn from(kind: &CampaignKind) -> Self {
+        match kind {
+            CampaignKind::Campaign => CampaignKindNode::Campaign,
+            CampaignKind::Routine => CampaignKindNode::Routine,
+            CampaignKind::Other(_) => CampaignKindNode::Campaign,
+        }
+    }
+}
+
+impl From<CampaignKindNode> for CampaignKind {
+    fn from(kind: CampaignKindNode) -> Self {
+        match kind {
+            CampaignKindNode::Campaign => CampaignKind::Campaign,
+            CampaignKindNode::Routine => CampaignKind::Routine,
+        }
+    }
 }
 
 #[derive(InputObject, Clone)]
@@ -69,6 +97,10 @@ impl CampaignNode {
 
     pub async fn end_date(&self) -> Option<NaiveDate> {
         self.campaign.end_date
+    }
+
+    pub async fn kind(&self) -> CampaignKindNode {
+        CampaignKindNode::from(&self.campaign.kind)
     }
 }
 

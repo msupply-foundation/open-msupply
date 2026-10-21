@@ -4,10 +4,11 @@ import {
   createSignal,
   Show,
   Suspense,
+  type Accessor,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
-import { t } from '@/intl';
+import { MAX_FRACTION_DIGITS, t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -30,11 +31,12 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
-  type CellFragment,
   getCellDefinition,
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  sumBy,
+  type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
   Pagination,
@@ -42,6 +44,7 @@ import {
 } from '@/ui/elements/table/Pagination';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { remToPx } from '@/ui/utils/rem';
+import { useFoldTotalsIntoBar } from '@/ui/utils/createMediaQuery';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { createAddAction } from '@/ui/utils/keyActions';
@@ -56,6 +59,7 @@ import { hasFurtherPage, pagedNext, rowAfter } from '@/list/pagedNext';
 import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
+import { CustomFieldsEditTab } from '@/domain/customFields';
 import { ExportPrintButton } from '@/domain/reports';
 import { MasterListPickerModal } from '@/domain/masterList';
 import { hasPermission, purchaseOrderPreferences } from '@/store/storeContext';
@@ -91,6 +95,7 @@ import {
 import { PurchaseOrderDetailToolbar } from './PurchaseOrderDetailToolbar';
 import { PurchaseOrderSidePanel } from './PurchaseOrderSidePanel';
 import { PurchaseOrderStatusFooter } from './PurchaseOrderStatusFooter';
+import { PurchaseOrderTotalsStrip } from './PurchaseOrderTotalsStrip';
 import { PurchaseOrderDetailsTab } from './tabs/PurchaseOrderDetailsTab';
 import { PurchaseOrderShipmentsTab } from './tabs/PurchaseOrderShipmentsTab';
 import { PurchaseOrderDocumentsTab } from './tabs/PurchaseOrderDocumentsTab';
@@ -98,17 +103,15 @@ import {
   canAttachDocuments,
   canAuthorLines,
   canCloseLines,
+  canSetExpectedDate,
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
-import { formatNumber } from '@/intl/formatNumber';
 import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
-import {
-  PurchaseOrderLineEditModal,
-  type LineLookup,
-} from './edit-modal/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
+import { Num } from '@/ui/elements/typography/Num';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
 // Details tab, S9's side panel, S10's line editor, S11-S13's remaining tabs,
@@ -155,23 +158,25 @@ const DEFAULT_URL_STATE: DetailUrlState = {
   first: DEFAULT_PAGE_SIZE,
 };
 
-// Hidden by default, keyed by column id: the two spec S7 names (pack size and
-// SOH), and on a narrow viewport four more that a card cannot carry.
+// Hidden by default, keyed by column id: pack size, and the two planning
+// inputs spec S7 keeps off the default layout (SOH and On order), plus on a
+// narrow viewport three more that a card cannot carry.
 const DEFAULT_HIDDEN: Record<string, boolean> = {
   packSize: false,
   stockOnHand: false,
+  onOrder: false,
 };
 const NARROW_HIDDEN: Record<string, boolean> = {
   ...DEFAULT_HIDDEN,
   unitName: false,
-  onOrder: false,
   requestedDeliveryDate: false,
   expectedDeliveryDate: false,
 };
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : formatNumber(value);
+  if (value == null) return '';
+  return <Num value={value} places={MAX_FRACTION_DIGITS} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -262,6 +267,7 @@ const PurchaseOrderDetailView: Component = () => {
     }
   );
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const lineCost = (line: Line) => line.lineTotalAfterSupplierDiscount;
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
 
   // ── The whole line set (gates, cascades, the finalise warning) ────────────
@@ -379,33 +385,9 @@ const PurchaseOrderDetailView: Component = () => {
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
-  // A picked item already on the order resolves to its line (OMS-FUN-PO-02.23).
-  // A failed read is reported as such, never mistaken for an item not on the
-  // order.
-  const findLineForItem = async (itemId: string): Promise<LineLookup> => {
-    const onPage = rows().find(line => line.item.id === itemId);
-    if (onPage) return { kind: 'line', line: onPage };
-    const held = lineSet().find(line => line.item.id === itemId);
-    if (!held) return { kind: 'none' };
-    const result = await graphqlFetch(PurchaseOrderDetailLines, {
-      storeId: params.storeId,
-      filter: {
-        id: { equalTo: held.id },
-        purchaseOrderId: { equalTo: params.id },
-      },
-      page: { first: 1 },
-    });
-    if (
-      result.kind !== 'success' ||
-      result.data.purchaseOrderLines.__typename !== 'PurchaseOrderLineConnector'
-    )
-      return { kind: 'failed' };
-    const line = result.data.purchaseOrderLines.nodes[0];
-    return line ? { kind: 'line', line } : { kind: 'none' };
-  };
-  // Sent or Finalised: every field on the screen is refused — except the
-  // comment, open in every state, and the panel's two post-sending dates,
-  // open until Finalised (rules § what may be changed, and when). Mirrored
+  // Sent, Finalised or Cancelled: every field on the screen is refused —
+  // except the comment, open in every state, and the panel's two post-sending
+  // dates, open until Finalised (rules § what may be changed, and when). Mirrored
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
@@ -445,6 +427,11 @@ const PurchaseOrderDetailView: Component = () => {
       : { ok: false };
   };
 
+  // Open in every state, like the comment.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => (await saveField({ customFields: patch })).ok;
+
   const edit = createDebouncedEdit<PurchaseOrderEditFields>({
     id: () => info()?.id ?? '',
     initial: () => {
@@ -467,11 +454,13 @@ const PurchaseOrderDetailView: Component = () => {
   // expected date has no order-level field at all. The other date follows only
   // where the lines still agree on it (rules § the two delivery dates), and
   // the order's requested date moves whenever it does; one re-read covers all.
+  // Past the authoring window only the expected date is still open, and it
+  // then travels alone — the agreed requested date is not dragged with it.
   const cascadeDate = async (
     field: DeliveryDateField,
     date: string
   ): Promise<SaveFieldResult> => {
-    const fields = cascadedDateFields(lineSet(), field);
+    const fields = cascadedDateFields(lineSet(), field, !isDisabled());
     const orderWrite = fields.includes('requestedDeliveryDate')
       ? await updatePurchaseOrder(params.storeId, {
           id: params.id,
@@ -516,6 +505,17 @@ const PurchaseOrderDetailView: Component = () => {
     refetchAll();
   };
 
+  // Where height is scarce the band gives way to the order total alone, on
+  // the bar the screen already has (spec S7 § totals band).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Takes the node accessor as an argument because `node` is the <Show>'s own
+  // binding below, not in scope here.
+  const inlineTotals = (node: Accessor<PurchaseOrderInfoFragment>) => (
+    <Show when={foldTotalsIntoBar()}>
+      <PurchaseOrderTotalsStrip inline node={node()} lineCount={lineCount()} />
+    </Show>
+  );
+
   const linePagination = (): PaginationProps => ({
     offset: query().offset,
     pageSize: query().first,
@@ -539,6 +539,7 @@ const PurchaseOrderDetailView: Component = () => {
     { value: 'shipments', label: t('label.inbound-shipment') },
     { value: 'details', label: t('label.details') },
     { value: 'documents', label: t('label.documents') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
   ];
 
@@ -623,20 +624,18 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(8),
     },
     {
-      // An ABSENT value until set — blank, not 0, which would be a different
-      // fact (ui-standards/tables.md § absent values).
-      c: { key: 'adjustedNumberOfUnits' },
-      sortKey: 'adjustedNumberOfUnits',
-      header: () => t('label.adjusted-units'),
+      // Written by the shipment, never here.
+      c: { key: 'shippedNumberOfUnits' },
+      sortKey: 'shippedNumberOfUnits',
+      header: () => t('label.shipped-units'),
       ...getNumberCell(),
       cell: exactQuantity,
       size: remToPx(8),
     },
     {
-      // Written by the shipment, never here.
-      c: { key: 'shippedNumberOfUnits' },
-      sortKey: 'shippedNumberOfUnits',
-      header: () => t('label.shipped-units'),
+      c: { key: 'receivedNumberOfUnits' },
+      sortKey: 'receivedNumberOfUnits',
+      header: () => t('label.received-units'),
       ...getNumberCell(),
       cell: exactQuantity,
       size: remToPx(8),
@@ -657,19 +656,18 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
-      cell: exactQuantity,
       size: remToPx(7),
     },
     {
-      // The line's STORED total, as the server wrote it — never re-multiplied
-      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
-      // — the page, which is what a paginated table can total; the order's
-      // whole subtotal is the side panel's Subtotal row.
-      c: { accessor: line => line.lineTotal, id: 'lineCost' },
+      // The line's STORED total with the order's supplier discount apportioned
+      // to it, as the server computes it — never re-multiplied here (rules §
+      // pricing and totals). Its footer sums the rows ON SCREEN — the page,
+      // which is what a paginated table can total; the order's whole figures
+      // are the side panel's Subtotal and Final cost rows.
+      c: { accessor: lineCost, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
-      footer: () =>
-        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
+      footer: () => money(sumBy(rows(), lineCost)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -728,6 +726,7 @@ const PurchaseOrderDetailView: Component = () => {
                   edit={edit}
                   onSaveField={saveField}
                   onDeleted={toList}
+                  onCancelled={refetchAll}
                 />
               }
               header={
@@ -736,7 +735,7 @@ const PurchaseOrderDetailView: Component = () => {
                   <HeaderButtons>
                     {/* The Add split (spec S6 § page actions): all three
                         options while drafting, so the whole control stands
-                        down from Ready for sending. */}
+                        down from Approved. */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
                       collapsible="narrow"
@@ -782,6 +781,7 @@ const PurchaseOrderDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled()}
+                      expectedDateDisabled={!canSetExpectedDate(status())}
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
                       datesVary={field => deliveryDatesVary(lineSet(), field)}
@@ -794,55 +794,67 @@ const PurchaseOrderDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
-                  when={selectedIds().length > 0}
-                  fallback={
-                    <PurchaseOrderStatusFooter
+                <>
+                  {/* Above BOTH footer faces — an order-level fact, so a
+                      row selection doesn't take it away. */}
+                  <Show when={!foldTotalsIntoBar()}>
+                    <PurchaseOrderTotalsStrip
                       node={node()}
-                      authorisationRequired={prefs().authorisePurchaseOrder}
                       lineCount={lineCount()}
-                      emptyLineCount={emptyLineCount()}
-                      stockStillOwed={stockStillOwed()}
-                      pagination={linePagination()}
-                      onMove={onMove}
                     />
-                  }
-                >
-                  {/* Selecting lines swaps the ladder for the bulk-action bar
-                      (spec S7 § line-selection actions). Each action carries
-                      its own window: removal while drafting, closing for
-                      receipt on a Sent order only. The two bulk delivery-date
-                      actions belong to S15, which this pass does not build. */}
-                  <ContentFooter testId="actions-footer">
-                    <strong data-testid="selected-rows-count">
-                      {selectedIds().length} {t('label.selected')}
-                    </strong>
-                    <DeleteLinesAction
-                      storeId={params.storeId}
-                      selectedIds={selectedIds}
-                      disabled={!canAuthorLines(status())}
-                      onChanged={onLinesChanged}
-                    />
-                    <CloseLinesAction
-                      storeId={params.storeId}
-                      selectedIds={selectedIds}
-                      disabled={!canCloseLines(status())}
-                      onChanged={onLinesChanged}
-                    />
-                    {/* The pager rides the selection face too: ticking a row
-                        must not strip the way to the rest of the lines. */}
-                    <Pagination {...linePagination()} inBar />
-                    <ContentFooterActions>
-                      <Button
-                        variant="secondary"
-                        icon={<CloseIcon />}
-                        onClick={() => setSelectedIds([])}
-                      >
-                        {t('label.clear-selection')}
-                      </Button>
-                    </ContentFooterActions>
-                  </ContentFooter>
-                </Show>
+                  </Show>
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <PurchaseOrderStatusFooter
+                        node={node()}
+                        authorisationRequired={prefs().authorisePurchaseOrder}
+                        lineCount={lineCount()}
+                        emptyLineCount={emptyLineCount()}
+                        stockStillOwed={stockStillOwed()}
+                        pagination={linePagination()}
+                        totals={inlineTotals(node)}
+                        onMove={onMove}
+                      />
+                    }
+                  >
+                    {/* Selecting lines swaps the ladder for the bulk-action bar
+                        (spec S7 § line-selection actions). Each action carries
+                        its own window: removal while drafting, closing for
+                        receipt on a Sent order only. The two bulk delivery-date
+                        actions belong to S15, which this pass does not build. */}
+                    <ContentFooter testId="actions-footer">
+                      {inlineTotals(node)}
+                      <strong data-testid="selected-rows-count">
+                        {selectedIds().length} {t('label.selected')}
+                      </strong>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canAuthorLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      <CloseLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canCloseLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      {/* The pager rides the selection face too: ticking a row
+                          must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<CloseIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="general">
@@ -929,18 +941,20 @@ const PurchaseOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="details">
-                <PurchaseOrderDetailsTab
-                  node={node()}
-                  disabled={isDisabled()}
-                  edit={edit}
-                  onSaveField={saveField}
-                />
+                <PurchaseOrderDetailsTab disabled={isDisabled()} edit={edit} />
               </TabPanel>
               <TabPanel value="documents">
                 <PurchaseOrderDocumentsTab
                   node={node()}
                   canChange={canAttachDocuments(status())}
                   onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
+              <TabPanel value="custom-fields">
+                <CustomFieldsEditTab
+                  scope="purchase_order"
+                  values={node().customFields}
+                  onSave={saveCustomFields}
                 />
               </TabPanel>
               <TabPanel value="log">
@@ -961,14 +975,13 @@ const PurchaseOrderDetailView: Component = () => {
                   status: status(),
                   currencyCode: node().currency?.code,
                   requestedDeliveryDate: node().requestedDeliveryDate,
+                  supplierDiscountPercentage: node().supplierDiscountPercentage,
                 }}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}
-                canAuthorise={hasPermission('PURCHASE_ORDER_AUTHORISE')}
                 initialLine={editor()?.line}
                 hasNext={hasNextLine}
                 nextLine={nextLine}
-                findLineForItem={findLineForItem}
                 onSaved={refetchAll}
               />
 

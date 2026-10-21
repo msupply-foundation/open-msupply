@@ -49,7 +49,7 @@ import {
 import { ItemSearch } from '@/domain/item';
 import { VvmStatusSelect } from '@/domain/vvmStatus';
 import { NameSearch } from '@/domain/name';
-import { CampaignOrProgramSelect } from '@/domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
 import {
@@ -965,8 +965,8 @@ const StocktakeLineEditContent = (
           vvmStatusId: line.vvmStatus?.id ?? null,
           donorId: line.donorId ?? null,
           manufacturerId: line.manufacturer?.id ?? null,
-          // Campaign / program (ungated) — plain scalars on INSERT, mutually
-          // exclusive (only one is ever set; the picker clears the other).
+          // Campaign / program (ungated) — plain scalars on INSERT. Two
+          // independent fields: a line may carry either, both or neither.
           campaignId: line.campaign?.id ?? null,
           programId: line.program?.id ?? null,
         });
@@ -993,8 +993,8 @@ const StocktakeLineEditContent = (
         donorId: { value: line.donorId ?? null },
         manufacturerId: { value: line.manufacturer?.id ?? null },
         // Campaign / program (ungated) — NullableStringUpdate wrapper on
-        // UPDATE: { value: id | null } sets/clears. Mutually exclusive: setting
-        // one sends the other as null so a stale opposite value is cleared.
+        // UPDATE: { value: id | null } sets/clears. Two independent fields,
+        // each sent at its own current value.
         campaignId: { value: line.campaign?.id ?? null },
         programId: { value: line.program?.id ?? null },
       });
@@ -1313,10 +1313,11 @@ const StocktakeLineEditContent = (
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
       cardGroup: 'batch',
-      // 11, not the 10 the width table lists for a date: 10rem was measured
-      // against a rendered VALUE ("11 Sep 2026", 74px in English), but an empty
-      // DateField shows the `DD MMM YYYY` placeholder, and all-caps is wider
-      // than the digits it stands for — at 10rem it clipped to "DD MMM YYY".
+      // 11, not the 10 the width table lists for a date: that 10 is measured
+      // against a rendered VALUE, but an empty DateField shows its all-caps
+      // hint, which is wider than the digits it stands for. At the small
+      // size's 13px `DD/MM/YYYY` is 87px; a 10rem cell leaves the input 79px
+      // of text room and clips it to "DD/MM/YYY", and 11rem leaves 95px.
       meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
@@ -1522,8 +1523,8 @@ const StocktakeLineEditContent = (
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'batch',
-      // 11 for the placeholder, as the expiry date above — and this is the field
-      // where it showed, since it is usually the empty one.
+      // 11 for the empty field's hint, as the expiry date above; this is the
+      // date that is usually empty.
       meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
@@ -1655,34 +1656,45 @@ const StocktakeLineEditContent = (
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
-    // Campaign / program (Pricing & additional info) — UNGATED (spec S4 lists
-    // it alongside donor and manufacturer, no store-preference gate). ONE
-    // combined picker
-    // over the store's campaigns + this item's programs; the two are mutually
-    // exclusive on the line, so a choice sets one of campaign/program and
-    // clears the other. buildBatch sends campaignId/programId accordingly.
+    // Program and Campaign (Pricing & additional info) — UNGATED (spec S4 lists
+    // them alongside donor and manufacturer, no store-preference gate). Two
+    // independent pickers: this item's programs, and the store's campaigns.
+    // buildBatch sends programId/campaignId accordingly.
     {
-      c: { id: 'campaignOrProgram' },
-      header: () => t('label.campaign'),
+      c: { id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'pricing',
       meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
-          <CampaignOrProgramSelect
+          <ProgramSelect
             size="small"
-            label={t('label.campaign')}
             hideLabel
             storeId={props.storeId}
-            itemId={line.item.id}
+            itemIds={[line.item.id]}
+            disabled={!line.countThisLine}
+            programId={line.program?.id}
+            onChange={program => update(line.id, 'program', program)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <ActivitySelect
+            size="small"
+            hideLabel
             disabled={!line.countThisLine}
             campaignId={line.campaign?.id}
-            programId={line.program?.id}
-            placeholder={t('label.none')}
-            onChange={choice => {
-              update(line.id, 'campaign', choice?.campaign ?? null);
-              update(line.id, 'program', choice?.program ?? null);
-            }}
+            campaign={line.campaign}
+            onChange={campaign => update(line.id, 'campaign', campaign)}
           />
         );
       },
@@ -2040,6 +2052,7 @@ const StocktakeLineEditContent = (
         }
       >
         <DataTable
+          dialogTable
           columns={columns()}
           rows={rows()}
           rowKey={line => line.id}

@@ -12,6 +12,7 @@ import { t } from '../../../intl';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
+  getFlagCell,
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
@@ -67,10 +68,7 @@ export const ItemAncillaryPanel: Component<{
   // a suspending read there tears down and remounts the whole screen.
   const rows = (): AncillaryRow[] => gated(data) ?? [];
 
-  const onSaved = () => {
-    props.onEditorChange(undefined);
-    void refetch();
-  };
+  const onSaved = () => void refetch();
 
   const confirmDelete = async () => {
     // Captured before ConfirmDialog's own onClose (fired right after
@@ -113,6 +111,16 @@ export const ItemAncillaryPanel: Component<{
         ...getTextCell(),
         size: remToPx(RATIO_WIDTH_REM),
       },
+      {
+        // The fact IS the flag (ui-standards › boolean cell): a link that
+        // orders against the principal's un-wasted quantity only.
+        c: {
+          accessor: row => row.excludePrincipalWastage,
+          id: 'excludePrincipalWastage',
+        },
+        header: () => t('label.exclude-principal-wastage'),
+        ...getFlagCell(t('label.exclude-principal-wastage')),
+      },
     ];
     if (props.isCentral) {
       cols.push({
@@ -122,6 +130,7 @@ export const ItemAncillaryPanel: Component<{
         header: () => t('label.delete'),
         cell: info => (
           <IconButton
+            data-testid="ancillary-item-delete-button"
             icon={<TrashIcon />}
             label={t('label.delete')}
             variant="danger"
@@ -165,6 +174,7 @@ export const ItemAncillaryPanel: Component<{
         empty={
           <Show when={props.isCentral}>
             <Button
+              data-testid="nothing-here-create-button"
               variant="ghost"
               onClick={() => props.onEditorChange({ mode: 'create' })}
             >

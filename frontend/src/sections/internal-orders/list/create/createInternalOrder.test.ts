@@ -17,7 +17,10 @@ import { PLUGIN_API_VERSION } from '@/plugin-sdk/apiVersion';
 import { definePlugin } from '@/plugin-sdk/definePlugin';
 import type { AnyContribution } from '@/plugin-sdk/types';
 import { clearPlugins, registerPlugin } from '@/plugins/registry';
-import { recentStocktakeGateShows } from './createInternalOrder';
+import {
+  createGeneralOrder,
+  recentStocktakeGateShows,
+} from './createInternalOrder';
 
 vi.mock('@/api/graphql', () => ({
   graphqlFetch: vi.fn(),
@@ -93,5 +96,33 @@ describe('recentStocktakeGateShows', () => {
       error: { kind: 'network' },
     } as never);
     expect(await gateShows()).toBe(false);
+  });
+});
+
+// OMS-REG-REPL-17.15: a general order's target defaults server-side to the
+// store's supply interval + safety buffer (else 1), so the create must leave
+// maxMonthsOfStock out of its input — sending it would override that default.
+describe('createGeneralOrder', () => {
+  it('sends the reorder threshold 0 and omits the target (OMS-REG-REPL-17.15)', async () => {
+    fetchMock.mockResolvedValue({
+      kind: 'success',
+      data: {
+        insertRequestRequisition: { __typename: 'RequisitionNode', id: 'new' },
+      },
+    } as never);
+    expect(await createGeneralOrder('store-a', 'supplier-1')).toEqual({
+      kind: 'created',
+      id: 'new',
+    });
+    const variables = fetchMock.mock.calls[0]?.[1] as {
+      storeId: string;
+      input: Record<string, unknown>;
+    };
+    expect(variables.storeId).toBe('store-a');
+    expect(variables.input).toMatchObject({
+      otherPartyId: 'supplier-1',
+      minMonthsOfStock: 0,
+    });
+    expect(variables.input).not.toHaveProperty('maxMonthsOfStock');
   });
 });

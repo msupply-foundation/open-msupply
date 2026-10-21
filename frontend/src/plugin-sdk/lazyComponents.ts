@@ -1,9 +1,9 @@
 /*
  * Host-owned LAZY component wrappers (spec/plugins/sdk-contract.md § code
  * splitting & lazy loading): the heavy components a plugin surface needs —
- * the data table, the date picker — without their weight landing in the SDK's
- * eager entry chunk. The implementation stays a host chunk, shared by the host
- * and every plugin, and loads on first render.
+ * the data table, the date picker, the form library — without their weight
+ * landing in the SDK's eager entry chunk. The implementation stays a host
+ * chunk, shared by the host and every plugin, and loads on first render.
  *
  * A lazy SDK component MUST render inside a `<Suspense>` boundary. A plugin
  * PAGE gets one for free — the host wraps every plugin page route in Suspense
@@ -11,7 +11,7 @@
  * these must render from the surface's FIRST paint, never first mounted by a
  * later interaction, which would suspend an already-open screen and remount it.
  */
-import { lazy } from 'solid-js';
+import { lazy, untrack } from 'solid-js';
 import type { ConfirmOnLeaveOptions } from '../domain/confirmOnLeave/createConfirmOnLeave';
 import type { Component, JSX } from 'solid-js';
 import type { DataTableProps } from '../ui/elements/table/DataTable';
@@ -24,6 +24,41 @@ import type {
   FilterSelectProps,
   FilterTextInputProps,
 } from '../ui/elements/selectors/FilterBar';
+import type {
+  AutocompleteInputProps,
+  CheckboxInputProps,
+  DateInputProps,
+  DateOfBirthInputProps,
+  DateTimeInputProps,
+  FieldGroupProps,
+  FormDividerProps,
+  NumberInputProps,
+  SelectInputProps,
+  TextAreaInputProps,
+  TextInputProps,
+} from '../domain/documentForm/fields';
+import type { NotesInputProps } from '../domain/documentForm/NotesInput';
+import type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
+import type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+import type { PrescriptionInputProps } from '../domain/documentForm/PrescriptionInput';
+import type {
+  FormCategoriesProps,
+  FormCategoryProps,
+} from './formCategories/FormCategories';
+import type {
+  BooleanPath,
+  EnumArrayPath,
+  EnumPath,
+  NotesPath,
+  NumberPath,
+  TextPath,
+} from '../domain/documentForm/paths';
+import type {
+  LabelledPatientFieldProps,
+  PatientFieldProps,
+} from '../domain/patient/documentFields';
+import type { EnrolmentIdFieldProps } from '../domain/documentForm/EnrolmentIdField';
+import type { Encounter, Patient, ProgramEnrolment } from './documents';
 
 const LazyDataTable = lazy(() =>
   import('../ui/elements/table/DataTable').then(m => ({
@@ -102,6 +137,339 @@ export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
     default: m.FilterDateRange,
   }))
 );
+
+/*
+ * The form component library (kdd/custom-forms/specs.md § Forms in the UI):
+ * the fields a plugin form is written with, each bound to the document draft
+ * the host hands the form and a path into the document type. They all come
+ * from one host module, which also carries the AJV validator and the host's
+ * default forms, so the first form a user opens fetches them as one chunk,
+ * shared by the host and every plugin (vite/lazyChunkGuard.ts keeps it out of
+ * the eager entry). A form renders its fields at its own first paint, inside
+ * the Suspense its mount point provides.
+ */
+type FormLibrary = typeof import('../domain/documentForm/formLibrary');
+
+// The library once it has loaded, so that a field mounted after that renders
+// at once rather than through `lazy`.
+let loadedLibrary: FormLibrary | undefined;
+const formLibrary = (): Promise<FormLibrary> =>
+  import('../domain/documentForm/formLibrary').then(m => (loadedLibrary = m));
+
+/*
+ * A form library component, lazy only until the library has loaded. Solid's
+ * `lazy` forgets a loaded component when the last instance of it unmounts, so
+ * a field a form shows conditionally (a date that appears once a box is
+ * ticked) would suspend on every showing, swapping the whole form for its
+ * region's spinner and remounting it (kdd/solid-reactivity-pitfalls). Once
+ * the library is in, every new instance renders the real component directly.
+ */
+const formLibraryComponent = <P extends object>(
+  pick: (library: FormLibrary) => Component<P>
+): Component<P> => {
+  const Lazy = lazy(() => formLibrary().then(m => ({ default: pick(m) })));
+  return props => {
+    // Rendered as a component renders, outside any caller's tracking.
+    const library = loadedLibrary;
+    return untrack(() => (library ? pick(library)(props) : Lazy(props)));
+  };
+};
+
+const LazyTextInput = formLibraryComponent(
+  m => m.TextInput as Component<TextInputProps<unknown, never>>
+);
+/** A single line of free text at a text path. */
+export const TextInput = LazyTextInput as unknown as <T, P extends TextPath<T>>(
+  props: TextInputProps<T, P>
+) => JSX.Element;
+
+const LazyTextAreaInput = formLibraryComponent(
+  m => m.TextAreaInput as Component<TextAreaInputProps<unknown, never>>
+);
+/** Several lines of free text at a text path. */
+export const TextAreaInput = LazyTextAreaInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: TextAreaInputProps<T, P>
+) => JSX.Element;
+
+const LazyNumberInput = formLibraryComponent(
+  m => m.NumberInput as Component<NumberInputProps<unknown, never>>
+);
+/** A number at a number path. */
+export const NumberInput = LazyNumberInput as unknown as <
+  T,
+  P extends NumberPath<T>,
+>(
+  props: NumberInputProps<T, P>
+) => JSX.Element;
+
+const LazyDateInput = formLibraryComponent(
+  m => m.DateInput as Component<DateInputProps<unknown, never>>
+);
+/** A calendar day, stored as the schema's `format` at the path says. */
+export const DateInput = LazyDateInput as unknown as <T, P extends TextPath<T>>(
+  props: DateInputProps<T, P>
+) => JSX.Element;
+
+const LazyDateTimeInput = formLibraryComponent(
+  m => m.DateTimeInput as Component<DateTimeInputProps<unknown, never>>
+);
+/** A date and time of day, stored as an RFC 3339 instant. */
+export const DateTimeInput = LazyDateTimeInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: DateTimeInputProps<T, P>
+) => JSX.Element;
+
+const LazySelectInput = formLibraryComponent(
+  m => m.SelectInput as Component<SelectInputProps<unknown, never>>
+);
+/** One value of an enum, with a label for every value the type allows. */
+export const SelectInput = LazySelectInput as unknown as <
+  T,
+  P extends EnumPath<T>,
+>(
+  props: SelectInputProps<T, P>
+) => JSX.Element;
+
+const LazyAutocompleteInput = formLibraryComponent(
+  m => m.AutocompleteInput as Component<AutocompleteInputProps<unknown, never>>
+);
+/** One value from a preset list at a text path; typing filters the list. */
+export const AutocompleteInput = LazyAutocompleteInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: AutocompleteInputProps<T, P>
+) => JSX.Element;
+
+const LazyCheckboxInput = formLibraryComponent(
+  m => m.CheckboxInput as Component<CheckboxInputProps<unknown, never>>
+);
+/** A yes/no value at a boolean path. */
+export const CheckboxInput = LazyCheckboxInput as unknown as <
+  T,
+  P extends BooleanPath<T>,
+>(
+  props: CheckboxInputProps<T, P>
+) => JSX.Element;
+
+const LazyDateOfBirthInput = formLibraryComponent(
+  m => m.DateOfBirthInput as Component<DateOfBirthInputProps<unknown, never>>
+);
+/** A date of birth at a `format: date` path, with the age beside it. */
+export const DateOfBirthInput = LazyDateOfBirthInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: DateOfBirthInputProps<T, P>
+) => JSX.Element;
+
+const LazyNotesInput = formLibraryComponent(
+  m => m.NotesInput as Component<NotesInputProps<unknown, never>>
+);
+/** Every note of a notes list, each in an accordion item. */
+export const NotesInput = LazyNotesInput as unknown as <
+  T,
+  P extends NotesPath<T>,
+>(
+  props: NotesInputProps<T, P>
+) => JSX.Element;
+
+const LazyMultiSelectInput = formLibraryComponent(
+  m => m.MultiSelectInput as Component<MultiSelectInputProps<unknown, never>>
+);
+/** Several values from an enum, each shown as a removable tag. */
+export const MultiSelectInput = LazyMultiSelectInput as unknown as <
+  T,
+  P extends EnumArrayPath<T>,
+>(
+  props: MultiSelectInputProps<T, P>
+) => JSX.Element;
+
+const LazyPreviousEncounterValue = formLibraryComponent(
+  m =>
+    m.PreviousEncounterValue as Component<
+      PreviousEncounterValueProps<Encounter, never>
+    >
+);
+/** What the previous encounter recorded at a field, shown under it. */
+export const PreviousEncounterValue = LazyPreviousEncounterValue as unknown as <
+  T extends Encounter,
+  P extends TextPath<T> | NumberPath<T>,
+>(
+  props: PreviousEncounterValueProps<T, P>
+) => JSX.Element;
+
+const LazyPrescriptionInput = formLibraryComponent(
+  m => m.PrescriptionInput as Component<PrescriptionInputProps<unknown, never>>
+);
+/** A prescription written from the form, for stock given at the visit. */
+export const PrescriptionInput = LazyPrescriptionInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: PrescriptionInputProps<T, P>
+) => JSX.Element;
+
+/** A titled group of fields. */
+export const FieldGroup: Component<FieldGroupProps> = formLibraryComponent(
+  m => m.FieldGroup
+);
+
+/** A hairline rule between two runs of fields in one group. */
+export const FormDivider: Component<FormDividerProps> = formLibraryComponent(
+  m => m.FormDivider
+);
+
+/** The row of a form's category tiles. */
+export const FormCategories: Component<FormCategoriesProps> =
+  formLibraryComponent(m => m.FormCategories);
+
+const LazyFormCategory = formLibraryComponent(
+  m => m.FormCategory as Component<FormCategoryProps<unknown>>
+);
+/** One category's tile, opening its fields in a dialog. */
+export const FormCategory = LazyFormCategory as unknown as <T>(
+  props: FormCategoryProps<T>
+) => JSX.Element;
+
+/*
+ * The host's patient fields (kdd/custom-forms/specs.md § Host-owned surfaces,
+ * Patient): one per field of the host's patient form, each bound to a patient
+ * document's draft, for a `patient.form` to compose beside its own fields.
+ * They carry the host's behaviour for the field (the code generator, age
+ * beside date of birth, the store's genders, the next-of-kin search) and
+ * write where the base Patient keeps the value, the first contact block for
+ * address and phone. From the form library's chunk.
+ */
+
+const LazyPatientCodeField = formLibraryComponent(
+  m => m.PatientCodeField as Component<LabelledPatientFieldProps>
+);
+/** The patient code, with the host's generator beside it. */
+export const PatientCodeField = LazyPatientCodeField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientCode2Field = formLibraryComponent(
+  m => m.PatientCode2Field as Component<LabelledPatientFieldProps>
+);
+/** The secondary patient code. */
+export const PatientCode2Field = LazyPatientCode2Field as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientFirstNameField = formLibraryComponent(
+  m => m.PatientFirstNameField as Component<LabelledPatientFieldProps>
+);
+/** First name, which the base Patient requires. */
+export const PatientFirstNameField = LazyPatientFirstNameField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientLastNameField = formLibraryComponent(
+  m => m.PatientLastNameField as Component<LabelledPatientFieldProps>
+);
+/** Last name, which the base Patient requires. */
+export const PatientLastNameField = LazyPatientLastNameField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientDateOfBirthField = formLibraryComponent(
+  m => m.PatientDateOfBirthField as Component<LabelledPatientFieldProps>
+);
+/**
+ * Date of birth with age beside it, editable both ways; an age entry marks the
+ * date estimated.
+ */
+export const PatientDateOfBirthField =
+  LazyPatientDateOfBirthField as unknown as <T extends Patient>(
+    props: LabelledPatientFieldProps<T>
+  ) => JSX.Element;
+
+const LazyPatientGenderField = formLibraryComponent(
+  m => m.PatientGenderField as Component<LabelledPatientFieldProps>
+);
+/** Gender, from the store's configured subset. */
+export const PatientGenderField = LazyPatientGenderField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientAddressField = formLibraryComponent(
+  m => m.PatientAddressField as Component<LabelledPatientFieldProps>
+);
+/**
+ * The address, in the first contact block (the one the patient record shows).
+ */
+export const PatientAddressField = LazyPatientAddressField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientPhoneField = formLibraryComponent(
+  m => m.PatientPhoneField as Component<LabelledPatientFieldProps>
+);
+/**
+ * The phone number, in the first contact block (the one the patient record
+ * shows).
+ */
+export const PatientPhoneField = LazyPatientPhoneField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientNextOfKinField = formLibraryComponent(
+  m => m.PatientNextOfKinField as Component<LabelledPatientFieldProps>
+);
+/** The next of kin, picked from the store's patients. */
+export const PatientNextOfKinField = LazyPatientNextOfKinField as unknown as <
+  T extends Patient,
+>(
+  props: LabelledPatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientDeceasedFields = formLibraryComponent(
+  m => m.PatientDeceasedFields as Component<PatientFieldProps>
+);
+/** Deceased, with the date of death while it is ticked. */
+export const PatientDeceasedFields = LazyPatientDeceasedFields as unknown as <
+  T extends Patient,
+>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+/*
+ * The host's enrolment ID field, for a `programEnrolment.form` to place where
+ * it wants the ID (spec/plugins/sdk-contract.md § the enrolment form). The
+ * program passes its ID format as `generate`; the field generates as a new
+ * enrolment opens, regenerates on request, and checks for duplicates. From
+ * the form library's chunk.
+ */
+const LazyEnrolmentIdField = formLibraryComponent(
+  m => m.EnrolmentIdField as Component<EnrolmentIdFieldProps>
+);
+/** The enrolment ID, generated from the program's format and checked. */
+export const EnrolmentIdField = LazyEnrolmentIdField as unknown as <
+  T extends ProgramEnrolment,
+>(
+  props: EnrolmentIdFieldProps<T>
+) => JSX.Element;
 
 /*
  * The modal dialogs (ui-standards § menus, popovers & modals) — the

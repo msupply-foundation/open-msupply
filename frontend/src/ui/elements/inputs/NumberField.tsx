@@ -1,4 +1,12 @@
-import { createEffect, createSignal, on, onMount, splitProps } from 'solid-js';
+import {
+  batch,
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  onMount,
+  splitProps,
+} from 'solid-js';
 import { locale } from '../../../intl/intl';
 import { TextField, type TextFieldProps } from './TextField';
 import { useInTableCell } from '../table/inTableCell';
@@ -6,10 +14,11 @@ import {
   displayString,
   editString,
   finalizeText,
-  isIncomplete,
   processInput,
   stepValue,
-  textRepresents,
+  commitReports,
+  valueRewritesText,
+  type LastCommit,
   type NumberFieldConstraints,
 } from './numberFieldLogic';
 import styles from './NumberField.module.css';
@@ -76,6 +85,13 @@ export interface NumberFieldProps extends Omit<
   noFormatting?: boolean;
   /** Seed when `value` starts undefined; committed to the parent on mount. */
   defaultValue?: number;
+  /**
+   * What an empty field stands for, for a parent that never stores empty (a
+   * count where cleared means 0). Clearing commits this instead of
+   * `undefined`, yet the field stays empty while it is being edited, so the
+   * next figure typed replaces it whole; left empty, the field shows it.
+   */
+  emptyValue?: number;
 }
 
 /*
@@ -106,8 +122,29 @@ export interface NumberFieldProps extends Omit<
  *   typing (old OMS clamped the display mid-entry: typing "5" toward "50"
  *   with min=10 became "10" under your fingers — the issue-5990 complaint).
  *
+ * - A parent may TRANSFORM a commit rather than store it as-is — the
+ *   internal-order editor rounds a dose count up to whole vials, so committing
+ *   120 doses at 20/vial echoes back 120 but 125 echoes back 140. That echo is
+ *   still our own commit: the text holds what was typed until blur, then shows
+ *   what the parent made of it (only for a parent that writes its value
+ *   inside onChange — a debounced or server-backed one keeps the typed text,
+ *   and its value lands later as an ordinary external change). Rewriting
+ *   mid-typing would hand the next
+ *   keystroke the parent's figure to append to ("1" → "20", then "202" →
+ *   "220"…, #1334).
+ *
+ * - A parent that maps a cleared field to a number says so with
+ *   `emptyValue`, rather than turning `undefined` into it inside onChange.
+ *   The transformed-echo latch above can't see that mapping when the parent
+ *   already held the number — a 0 cleared is "answered" with the same 0, just
+ *   as a debounced parent's stale value would be — so the field would be left
+ *   blank over a stored 0 (#1336). The emptying keystroke always reaches
+ *   onChange, even when the parent already holds emptyValue — as the
+ *   `undefined` it replaces always did — so a handler's side effects run.
+ *
  * - Blur canonicalises: parse → round → clamp → commit if changed → display
- *   the formatted string (grouping separators, decimalMin padding). Enter
+ *   the formatted string (grouping separators, decimalMin padding) — or the
+ *   parent's transformed echo, when it differs from what was typed. Enter
  *   commits-and-leaves: it blurs the field, which runs that same path.
  *   While focused the text is the "edit form" — locale digits and decimal
  *   separator but no grouping, so the caret never fights separators (the old
@@ -131,6 +168,7 @@ export const NumberField = (props: NumberFieldProps) => {
     'multiplier',
     'noFormatting',
     'defaultValue',
+    'emptyValue',
     'width',
     'class',
   ]);
@@ -141,6 +179,7 @@ export const NumberField = (props: NumberFieldProps) => {
     decimalLimit: local.decimalLimit ?? 0,
     decimalMin: local.decimalMin,
     noFormatting: local.noFormatting,
+    emptyValue: local.emptyValue,
   });
 
   /*
@@ -156,12 +195,42 @@ export const NumberField = (props: NumberFieldProps) => {
   const [focused, setFocused] = createSignal(false);
   // Not rendered from — plain variables, no signals needed.
   let dirty = false;
-  let lastCommitted: { value: number | undefined } | undefined;
+  // `echo` is what the parent made of the commit — `value` itself, unless the
+  // parent transforms it (see the contract above).
+  let lastCommitted: LastCommit | undefined;
 
-  const commit = (value: number | undefined) => {
-    lastCommitted = { value };
-    if (value !== local.value) local.onChange?.(value);
+  // Whether the parent answers a commit INSIDE onChange — writing, perhaps
+  // transforming, the value it passes back. Only then is the echo its answer:
+  // a parent that writes later (a debounced filter, a save that waits on the
+  // server) echoes back the OLD value, which must not replace the typed text.
+  // Latched for the field's lifetime, since a parent's nature doesn't change.
+  let parentAnswersSynchronously = false;
+
+  const commit = (value: number | undefined, emptied = false) => {
+    // Batched so the parent's write lands but the sync effect below waits
+    // until the batch ends — by which time the echo is recorded and the effect
+    // can recognise it as ours.
+    batch(() => {
+      const before = local.value;
+      if (commitReports(value, before, emptied)) local.onChange?.(value);
+      const echo = local.value;
+      if (echo !== before) parentAnswersSynchronously = true;
+      lastCommitted = { value, echo };
+    });
   };
+
+  // What a commit leaves on show once the user is done with it: the parent's
+  // echo when it transformed the commit, else the canonical typed text.
+  const echoText = (
+    committed: number | undefined,
+    typedText: string,
+    format: typeof displayString
+  ) =>
+    parentAnswersSynchronously &&
+    lastCommitted &&
+    lastCommitted.echo !== committed
+      ? format(lastCommitted.echo, constraints(), locale())
+      : typedText;
 
   // After the commit (so onChange's state lands first), report an entry the
   // constraints adjusted. Repeat keystrokes past a bound re-fire — the entered
@@ -181,17 +250,16 @@ export const NumberField = (props: NumberFieldProps) => {
   });
 
   // Parent → display sync: an external value change rewrites the text —
-  // except when it's our own commit echoing back (the user's uncanonicalised
-  // text must survive until blur), or the user is mid-entry on an incomplete
-  // string.
+  // except when it's our own commit echoing back, transformed or not (the
+  // user's uncanonicalised text must survive until blur), or the user is
+  // mid-entry on an incomplete string.
   createEffect(
     on(
       () => local.value,
       value => {
         const loc = locale();
-        if (lastCommitted && value === lastCommitted.value) return;
-        if (textRepresents(text(), value, loc)) return;
-        if (focused() && isIncomplete(text(), loc)) return;
+        if (!valueRewritesText(value, text(), focused(), lastCommitted, loc))
+          return;
         setText(
           focused()
             ? editString(value, constraints(), loc)
@@ -206,11 +274,15 @@ export const NumberField = (props: NumberFieldProps) => {
   // 12,50 in fr, "1 000" → ١٬٠٠٠ in ar), and a decimalLimit/decimalMin change
   // (CurrencyField switching USD → JPY) changes the canonical rendering of an
   // unchanged value. Deferred: the signal's initial text already used the
-  // current locale and constraints.
-  const constraintsKey = () => {
+  // current locale and constraints. Memoised, so only a real change fires it:
+  // a constraint derived from a record (CurrencyField's decimals follow the
+  // record's currency) re-evaluates whenever the record is re-read, and an
+  // unmemoised key would rewrite the text the user is typing on every
+  // refetch — an order re-read after a save put "0" under the caret (#1336).
+  const constraintsKey = createMemo(() => {
     const c = constraints();
     return `${c.min}|${c.max}|${c.decimalLimit}|${c.decimalMin}|${c.noFormatting}`;
-  };
+  });
   createEffect(
     on(
       [locale, constraintsKey],
@@ -249,7 +321,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value);
+      commit(result.commit.value, result.commit.emptied);
       reportClamped(result.commit);
     }
   };
@@ -257,8 +329,8 @@ export const NumberField = (props: NumberFieldProps) => {
   const finalize = () => {
     dirty = false;
     const result = finalizeText(text(), constraints(), locale());
-    setText(result.text);
     commit(result.value);
+    setText(echoText(result.value, result.text, displayString));
     reportClamped(result);
   };
 
@@ -289,8 +361,12 @@ export const NumberField = (props: NumberFieldProps) => {
       const base = finalizeText(text(), constraints(), locale()).value;
       const next = stepValue(base ?? local.value, amount, constraints());
       dirty = true;
-      setText(editString(next, constraints(), locale()));
       commit(next);
+      // A step is a finished entry, not mid-typing: show the parent's echo, so
+      // the next step starts from what was stored.
+      setText(
+        echoText(next, editString(next, constraints(), locale()), editString)
+      );
       return;
     }
     // Enter = "I'm done": leave the field — blur runs the commit-and-
@@ -310,6 +386,10 @@ export const NumberField = (props: NumberFieldProps) => {
     if (dirty) finalize();
     // Untouched: just restore the display form focus stripped (grouping).
     else setText(displayString(local.value, constraints(), locale()));
+    // The text now shows the parent's value, so the echo guard has done its
+    // job — left armed, a later external change landing on the old commit or
+    // echo (Save & next seeding a line with that quantity) would be skipped.
+    lastCommitted = undefined;
   };
 
   // No minus key on mobile numeric/decimal keypads — negative-capable fields

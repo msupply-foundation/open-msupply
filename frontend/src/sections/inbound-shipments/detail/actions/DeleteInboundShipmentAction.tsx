@@ -15,6 +15,8 @@ export interface DeleteInboundShipmentActionProps {
   isExternal: boolean;
   /** Shipment number — for the confirmation copy ("Shipment #N"). */
   number: () => number;
+  /** Shipment status — lets a refusal name its cause (deleteRefusalMessage). */
+  status: () => string;
   /**
    * Whether this shipment has already introduced stock (anything past New) —
    * the confirmation says so, because that stock goes with it.
@@ -75,7 +77,8 @@ const Body = (
     const result = await deleteInboundShipment(
       props.storeId,
       props.isExternal,
-      props.invoiceId
+      props.invoiceId,
+      props.status()
     );
     if (result.ok) return props.onDeleted();
     // A permission block already raised the global modal (D38) — close, rather

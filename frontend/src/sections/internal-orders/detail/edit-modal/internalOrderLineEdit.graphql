@@ -8,16 +8,16 @@
 #    id ties the two phases.
 #  · EDIT — updateRequestRequisitionLine carries the changed fields; the reason
 #    is cleared server-side when the quantity returns to the suggestion (D30).
+# Both carry the draft's forecast method in the update; the server recomputes
+# the line only when it differs from the stored one (rules › choosing a method).
 #
-# ADD mode previews the item's statistics from a live read BEFORE any line
-# exists (OMS-REG-REPL-04.65 — a reload before the first save finds nothing):
-# the item's current stock/consumption figures, from which the client previews
-# the suggestion. The real snapshot + suggestion are the server's, taken at
-# save.
+# ADD mode previews the line BEFORE it exists (OMS-REG-REPL-04.65 — a reload before the
+# first save finds nothing): the item's details from a live read, and the line's
+# statistics, forecast and suggestion from the forecast preview below — the line
+# the insert would create, so the first save reproduces it.
 
-# One item's current figures for the add-mode statistics preview. `stats`
-# triggers the AMC calculation — acceptable for a single picked item (contrast
-# item.graphql's search, which sums availableBatches to avoid it).
+# One item's details for the add-mode draft. Its statistics come from the
+# forecast preview below (the line the insert would create), not from here.
 query internalOrderItemStats($storeId: String!, $itemId: String!) {
   items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
     ... on ItemConnector {
@@ -30,11 +30,6 @@ query internalOrderItemStats($storeId: String!, $itemId: String!) {
         defaultPackSize
         doses
         isVaccine
-        stats(storeId: $storeId) {
-          averageMonthlyConsumption
-          availableStockOnHand
-          availableMonthsOfStockOnHand
-        }
       }
     }
   }
@@ -65,6 +60,9 @@ mutation addInternalOrderLine(
           error {
             __typename
             description
+            ... on ForecastMethodNotAvailable {
+              unavailableReason
+            }
           }
         }
       }
@@ -120,6 +118,84 @@ mutation updateInternalOrderLine(
       error {
         __typename
         description
+        ... on ForecastMethodNotAvailable {
+          unavailableReason
+        }
+      }
+    }
+  }
+}
+
+# FORECAST PREVIEW (rules › choosing a method): the draft's line under a method,
+# saving nothing — the stored line for an item on the order, else the line its
+# insert would create. Null `forecastMethod` keeps the line's own. The forecast
+# fields are the same selection as domain/forecast's ForecastLine fragment, so
+# the editor shows the draft's forecast as it shows a saved one.
+query internalOrderLineForecastPreview(
+  $storeId: String!
+  $input: RequisitionLineForecastPreviewInput!
+) {
+  requisitionLineForecastPreview(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineForecastPreviewNode {
+      suggestedQuantity
+      averageMonthlyConsumption
+      availableStockOnHand
+      forecastMethod
+      forecastMonthlyConsumption
+      targetStock
+      forecastBreakdown {
+        __typename
+        ... on AmcForecastNode {
+          averageMonthlyConsumption
+        }
+        ... on PopulationForecastNode {
+          populationServed
+          courses {
+            courseName
+            demographicName
+            numberOfDoses
+            coverageRate
+            wastageRate
+            targetPopulation
+            annualDosesPerPerson
+            lossFactor
+            annualTargetDoses
+            dosesPerUnit
+            monthlyDoses
+            monthlyUnits
+          }
+        }
+        ... on AncillaryRatioForecastNode {
+          principals {
+            itemId
+            item {
+              code
+              name
+              unitName
+            }
+            principalMonthlyConsumption
+            itemQuantity
+            ancillaryQuantity
+            wastageRate
+            principalUsableConsumption
+            monthlyConsumption
+          }
+        }
+      }
+      forecastMethodOptions {
+        method
+        isAvailable
+        unavailableReason
+      }
+    }
+    ... on RequisitionLineForecastPreviewError {
+      error {
+        __typename
+        description
+        ... on ForecastMethodNotAvailable {
+          unavailableReason
+        }
       }
     }
   }

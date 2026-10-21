@@ -17,7 +17,7 @@
  *             differ from the folder by a trailing 's': spec/stocktakes is
  *             driven by stocktake-regression.spec.ts)
  *   Workflow  exploratory/workflows/<vertical>.md exists
- *   Run       a report naming the vertical under exploratory/reports/<date>/
+ *   Run       exploratory/reports/<date>/<vertical>-findings.md exists
  *
  * The Run column carries a DATE, not a tick, so the script only checks that a
  * date is present exactly when a report is (which date is the author's).
@@ -87,7 +87,9 @@ const derive = vertical => {
       ? '✅'
       : '—',
     workflow: has(join('exploratory/workflows', `${vertical}.md`)),
-    run: reports.some(r => r.includes(vertical)),
+    // The report's exact name, not a substring: `reports` would otherwise
+    // claim manage-reports-findings.md.
+    run: reports.some(r => r.endsWith(`/${vertical}-findings.md`)),
   };
 };
 

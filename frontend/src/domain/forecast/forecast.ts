@@ -1,73 +1,168 @@
-import { t } from '../../intl';
+import { t, tPlural, type LocaleKey } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
+import { roundedText } from '../../intl/numberDisplay';
+import type {
+  ForecastLineFragment,
+  ForecastMethodOptionFragment,
+  SupplyIntervalAndBufferFragment,
+} from './forecast.generated';
 
-// The shared population-forecast module (kdd/domain-modules): the per-course
-// breakdown a forecast-carrying requisition line stores
-// (RequisitionLineNode.vaccineCourses) and the calculation-display arithmetic
-// over it. The surface is specced at internal-orders (S4, OMS-REG-REPL-11.7);
-// the requisitions vertical shows the same display on a transferred forecast
-// line (spec/requisitions § forecast context, OMS-REG-DIST-05.35). The client
-// parses and renders this; it never writes or recomputes it.
+// The shared forecast module (kdd/domain-modules): a requisition line's stored
+// forecast — its method, monthly demand, and breakdown — and the arithmetic the
+// forecast block displays over it. Specced at internal-orders (S4, rules ›
+// forecasting); the requisitions vertical shows the read-only form on a
+// transferred line (spec/requisitions › forecast context). The client renders
+// the forecast and asks the server to change a line's method; it never computes
+// one.
 
-// One course-and-demographic group of a line's stored population forecast —
-// the shape the server serialises (contract › Population-based forecasting).
-export type VaccineCourse = {
-  /**
-   * Pre-formatted "<course> (<demographic>)"; empty parens for a
-   * demographic-less course.
-   */
-  courseTitle: string;
-  numberOfDoses: number;
-  coverageRate: number;
-  targetPopulation: number;
-  wastageRate: number;
-  lossFactor: number;
-  annualTargetDoses: number;
-  bufferStockMonths: number;
-  supplyPeriodMonths: number;
-  dosesPerUnit: number;
-  forecastDoses: number;
-  forecastUnits: number;
-};
+export type ForecastMethod = ForecastLineFragment['forecastMethod'];
+export type ForecastBreakdown = ForecastLineFragment['forecastBreakdown'];
+export type PopulationCourse = Extract<
+  ForecastBreakdown,
+  { __typename: 'PopulationForecastNode' }
+>['courses'][number];
+export type AncillaryRatioPrincipal = Extract<
+  ForecastBreakdown,
+  { __typename: 'AncillaryRatioForecastNode' }
+>['principals'][number];
 
-// Parse a line's stored vaccineCourses JSON into its per-course breakdown. A
-// null, empty, or unparseable string yields no courses (the display then falls
-// back to the ordinary charts).
-export const parseVaccineCourses = (json: string | null): VaccineCourse[] => {
-  if (!json) return [];
-  try {
-    const parsed = JSON.parse(json);
-    return Array.isArray(parsed) ? (parsed as VaccineCourse[]) : [];
-  } catch {
-    return [];
+/** One entry of a line's forecastMethodOptions. */
+export type ForecastMethodOption = ForecastMethodOptionFragment;
+
+/**
+ * Why a method can't be chosen — the schema's
+ * ForecastMethodUnavailableReasonNode.
+ */
+export type ForecastMethodUnavailableReason = NonNullable<
+  ForecastMethodOption['unavailableReason']
+>;
+
+/** The methods in the order the select offers them. */
+export const FORECAST_METHODS: readonly ForecastMethod[] = [
+  'AMC',
+  'POPULATION',
+  'ANCILLARY_RATIO',
+];
+
+export const forecastMethodLabel = (method: ForecastMethod): string => {
+  switch (method) {
+    case 'AMC':
+      return t('label.forecast-method-amc');
+    case 'POPULATION':
+      return t('label.forecast-method-population');
+    case 'ANCILLARY_RATIO':
+      return t('label.forecast-method-ancillary-ratio');
   }
 };
 
-// One arithmetic step of the calculation display: its figures substituted into
-// the formula, then the emphasised result (OMS-REG-REPL-11.7). The step's title
-// and formula wording are static locale keys held by the display component;
-// this pure function owns only the arithmetic so it can be tested against the
-// AC's exact figures. Rounding mirrors the reference: the loss factor to 3 dp,
-// the two dose totals to 2 dp, the units result the ceil of the stored total.
+export const unavailableReasonMessage = (
+  reason: ForecastMethodUnavailableReason
+): string => {
+  switch (reason) {
+    case 'POPULATION_PREFERENCE_OFF':
+      return t('messages.forecast-method-unavailable-population-preference');
+    case 'NO_POPULATION_SERVED':
+      return t('messages.forecast-method-unavailable-no-population-served');
+    case 'NO_VACCINE_COURSE':
+      return t('messages.forecast-method-unavailable-no-vaccine-course');
+    case 'NO_PRINCIPAL_ON_ORDER':
+      return t('messages.forecast-method-unavailable-no-principal');
+  }
+};
+
+/**
+ * A course group's title: the course name, and its demographic in parentheses.
+ */
+export const courseTitle = (course: PopulationCourse): string =>
+  course.demographicName
+    ? `${course.courseName} (${course.demographicName})`
+    : course.courseName;
+
+// One arithmetic step of a Population course: its figures substituted into the
+// formula, then the emphasised result. The step's title and formula wording are
+// static locale keys held by the component; this pure function owns only the
+// arithmetic. Rounding: the loss factor keeps 3 dp — a rate, not a count of
+// things; the annual doses and the monthly units follow the configured decimal
+// places — monthly demand keeps its fraction.
 export type ForecastStep = { substitution: string; result: string };
 
-export const forecastSteps = (
-  course: VaccineCourse
-): [ForecastStep, ForecastStep, ForecastStep] => [
+// Whether step 1 counts the course's average doses per person per year in place
+// of its number of doses: only for a course that sets one, so a course counting
+// every dose (births) reads as it always has.
+const countsDosesPerPerson = (course: PopulationCourse): boolean =>
+  course.annualDosesPerPerson != null;
+
+/** Step 1's formula wording, matching its substitution's factors. */
+export const annualTargetFormulaKey = (course: PopulationCourse): LocaleKey =>
+  countsDosesPerPerson(course)
+    ? 'description.annual-target-doses-calculation-with-doses-per-person'
+    : 'description.annual-target-doses-calculation';
+
+export const populationSteps = (
+  course: PopulationCourse
+): [ForecastStep, ForecastStep] => [
   {
-    // 1. Annual target doses = target population × doses × (coverage/100) ×
-    // loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
-    result: `= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`,
+    // 1. Annual target doses = target population × (doses per person per year
+    // ?? doses) × (coverage/100) × loss factor.
+    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.annualDosesPerPerson ?? course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
+    result: `= ${roundedText(course.annualTargetDoses)} ${t('label.doses-per-year')}`,
   },
   {
-    // 2. Forecast doses = annual/12 × (supply period + buffer stock months).
-    substitution: `(${round(course.annualTargetDoses, 2)} / 12) × (${formatNumber(course.supplyPeriodMonths)} + ${formatNumber(course.bufferStockMonths)})`,
-    result: `= ${round(course.forecastDoses, 2)} ${t('label.doses').toLowerCase()}`,
-  },
-  {
-    // 3. Forecast units = forecast doses ÷ doses per unit (result rounded up).
-    substitution: `${round(course.forecastDoses, 2)} / ${formatNumber(course.dosesPerUnit)}`,
-    result: `= ${formatNumber(Math.ceil(course.forecastUnits))} ${t('label.units').toLowerCase()}`,
+    // 2. Monthly units = annual target doses / 12 / doses per unit.
+    substitution: `${roundedText(course.annualTargetDoses)} / 12 / ${formatNumber(course.dosesPerUnit)}`,
+    result: `= ${roundedText(course.monthlyUnits)} ${t('label.units-per-month')}`,
   },
 ];
+
+/**
+ * The deduction a principal's wastage makes before the ratio applies — "− 50%
+ * wastage" — or undefined when the link orders for the wasted units too
+ * (spec/internal-orders › the Ancillary ratio method).
+ */
+export const principalWastageDeduction = (
+  principal: AncillaryRatioPrincipal
+): string | undefined =>
+  principal.wastageRate > 0
+    ? t('description.less-principal-wastage', {
+        rate: formatNumber(principal.wastageRate),
+      })
+    : undefined;
+
+/** A principal's configured ratio, as ancillary : principal. */
+export const ancillaryRatio = (principal: AncillaryRatioPrincipal): string =>
+  `${formatNumber(principal.ancillaryQuantity)} : ${formatNumber(principal.itemQuantity)}`;
+
+/**
+ * A principal's item as "CODE Name", falling back to its id when unresolved.
+ */
+export const principalItemLabel = (
+  principal: AncillaryRatioPrincipal
+): string =>
+  principal.item
+    ? `${principal.item.code} ${principal.item.name}`
+    : principal.itemId;
+
+/**
+ * The target-stock step's caption: monthly demand × target months. Where the
+ * target came from the store's supply interval + safety buffer, the months
+ * show the supply interval and safety buffer that make them up (spec S4 › the
+ * forecast, OMS-REG-REPL-17.17) — "120 units × 3.5 months (supply interval 3
+ * + safety buffer 0.5)".
+ */
+export const targetStockCaption = (
+  monthlyDemand: string,
+  targetMonths: number,
+  intervalAndBuffer?: SupplyIntervalAndBufferFragment
+): string => {
+  // Plural-aware, so a one-month target reads "1 month".
+  const months = tPlural('label.number-months', targetMonths, {
+    count: formatNumber(targetMonths),
+  });
+  const step = `${monthlyDemand} × ${months}`;
+  if (!intervalAndBuffer) return step;
+  const makeup = t('label.supply-interval-plus-buffer', {
+    supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths),
+    safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths),
+  });
+  return `${step} (${makeup})`;
+};

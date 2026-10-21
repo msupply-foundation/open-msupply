@@ -3,7 +3,6 @@ use std::{collections::HashMap, ops::Index, vec};
 mod activity_log;
 pub mod asset;
 pub mod asset_log;
-mod barcode;
 mod campaign;
 mod clinician;
 pub mod common;
@@ -78,7 +77,6 @@ mod vvm_status;
 
 pub use asset::*;
 pub use asset_log::*;
-pub use barcode::*;
 pub use campaign::*;
 pub use clinician::*;
 use common::*;
@@ -225,7 +223,7 @@ pub struct MockData {
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
-    pub barcodes: Vec<BarcodeRow>,
+    pub barcode_proposals: Vec<BarcodeProposalRow>,
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
@@ -1089,6 +1087,13 @@ pub fn insert_mock_data(
             }
         }
 
+        // Before invoices and stock lines, which reference campaigns
+        if inserts.campaigns {
+            let repo = CampaignRowRepository::new(connection);
+            for row in &mock_data.campaigns {
+                repo.upsert_one(row).unwrap();
+            }
+        }
         if inserts.currencies {
             let repo = crate::CurrencyRowRepository::new(connection);
             for row in &mock_data.currencies {
@@ -1320,8 +1325,8 @@ pub fn insert_mock_data(
         }
 
         if inserts.barcodes {
-            for row in &mock_data.barcodes {
-                let repo = BarcodeRowRepository::new(connection);
+            for row in &mock_data.barcode_proposals {
+                let repo = BarcodeProposalRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1517,12 +1522,6 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
-        if inserts.campaigns {
-            let repo = CampaignRowRepository::new(connection);
-            for row in &mock_data.campaigns {
-                repo.upsert_one(row).unwrap();
-            }
-        }
         if inserts.item_store_joins {
             let repo = ItemStoreJoinRowRepository::new(connection);
             for row in &mock_data.item_store_joins {
@@ -1598,7 +1597,7 @@ impl MockData {
             mut master_lists,
             mut master_list_name_joins,
             mut program_order_types,
-            mut barcodes,
+            mut barcode_proposals,
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
@@ -1680,7 +1679,7 @@ impl MockData {
         self.master_list_name_joins
             .append(&mut master_list_name_joins);
         self.program_order_types.append(&mut program_order_types);
-        self.barcodes.append(&mut barcodes);
+        self.barcode_proposals.append(&mut barcode_proposals);
         self.clinicians.append(&mut clinicians);
         self.clinician_store_joins
             .append(&mut clinician_store_joins);

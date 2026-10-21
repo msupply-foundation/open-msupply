@@ -4,9 +4,8 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    BarcodeRowRepository, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository,
-    RepositoryError, StockLineRowRepository,
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
+    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
@@ -72,13 +71,8 @@ pub fn insert_stock_in_line(
                 invoice: invoice_user_update,
                 invoice_line,
                 stock_line,
-                barcode,
                 vvm_status_log,
             } = generate(connection, &ctx.user_id, input.clone(), item, invoice)?;
-
-            if let Some(barcode_row) = barcode {
-                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
-            }
 
             if let Some(stock_line_row) = stock_line {
                 StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
@@ -154,12 +148,13 @@ where
 mod test {
     use repository::{
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, PreferenceRow,
-        StorePreferenceRow, StorePreferenceRowRepository,
-        barcode::{BarcodeFilter, BarcodeRepository},
+        InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+        PreferenceRow, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+        PurchaseOrderRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        barcode_proposal::{BarcodeProposalFilter, BarcodeProposalRepository},
         mock::{
             MockData, MockDataInserts, currency_b, mock_customer_return_a,
-            mock_customer_return_a_invoice_line_a, mock_immunisation_program_a,
+            mock_customer_return_a_invoice_line_a, mock_donor_a, mock_immunisation_program_a,
             mock_inbound_shipment_a, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
             mock_name_customer_a, mock_name_store_b, mock_outbound_shipment_e,
@@ -557,6 +552,108 @@ mod test {
         .unwrap();
     }
 
+    /// A line added to a purchase-order-linked shipment with no default donor
+    /// takes the order's donor; the shipment's own default still wins.
+    #[actix_rt::test]
+    async fn insert_stock_in_line_inherits_po_donor() {
+        fn po() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "po_donor_fallback".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: mock_name_store_b().id,
+                donor_id: Some(mock_donor_a().id),
+                ..Default::default()
+            }
+        }
+
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "po_donor_fallback_line".to_string(),
+                purchase_order_id: po().id,
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
+
+        fn inbound(id: &str, default_donor_id: Option<String>) -> InvoiceRow {
+            InvoiceRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: Some(po().id),
+                default_donor_id,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_stock_in_line_inherits_po_donor",
+            MockDataInserts::all(),
+        )
+        .await;
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po())
+            .unwrap();
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&po_line())
+            .unwrap();
+        let invoice_repo = InvoiceRowRepository::new(&connection);
+        invoice_repo
+            .upsert_one(&inbound("po_donor_no_default", None))
+            .unwrap();
+        invoice_repo
+            .upsert_one(&inbound(
+                "po_donor_with_default",
+                Some("donor_b".to_string()),
+            ))
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let line_repo = InvoiceLineRowRepository::new(&connection);
+
+        let new_line = |id: &str, invoice_id: &str| InsertStockInLine {
+            id: id.to_string(),
+            invoice_id: invoice_id.to_string(),
+            item_id: mock_item_a().id,
+            pack_size: 1.0,
+            number_of_packs: 1.0,
+            r#type: StockInType::InboundShipment,
+            purchase_order_line_id: Some(po_line().id),
+            ..Default::default()
+        };
+
+        insert_stock_in_line(
+            &context,
+            new_line("po_donor_line_fallback", "po_donor_no_default"),
+            None,
+        )
+        .unwrap();
+        let line = line_repo
+            .find_one_by_id("po_donor_line_fallback")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.donor_id, Some(mock_donor_a().id));
+
+        insert_stock_in_line(
+            &context,
+            new_line("po_donor_line_default", "po_donor_with_default"),
+            None,
+        )
+        .unwrap();
+        let line = line_repo
+            .find_one_by_id("po_donor_line_default")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.donor_id, Some("donor_b".to_string()));
+    }
+
     #[actix_rt::test]
     async fn insert_stock_in_line_authorised_received_invoice() {
         fn authorised_received_inbound() -> InvoiceRow {
@@ -652,7 +749,8 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        let gtin = "new-gtin-123".to_string();
+        // Stored in standard form; no barcode or proposal is created
+        let scanned = " 9506682101352\n".to_string();
 
         insert_stock_in_line(
             &context,
@@ -662,7 +760,7 @@ mod test {
                 item_id: mock_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 1.0,
-                barcode: Some(gtin.clone()),
+                barcode: Some(scanned),
                 ..Default::default()
             },
             None,
@@ -690,15 +788,16 @@ mod test {
             expected.number_of_packs = 1.0;
             expected
         });
-
-        let barcode = BarcodeRepository::new(&connection)
-            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(gtin.to_owned())))
-            .unwrap()
-            .pop()
-            .unwrap();
+        assert_eq!(inbound_line.barcode.as_deref(), Some("gtin:09506682101352"));
 
         let stock_line = stock_line_option.unwrap();
-        assert_eq!(stock_line.barcode_id, Some(barcode.barcode_row.id));
+        assert_eq!(stock_line.barcode.as_deref(), Some("gtin:09506682101352"));
+        assert_eq!(
+            BarcodeProposalRepository::new(&connection)
+                .query_by_filter(BarcodeProposalFilter::new())
+                .unwrap(),
+            vec![]
+        );
 
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {

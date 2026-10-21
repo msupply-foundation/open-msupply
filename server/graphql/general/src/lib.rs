@@ -2,6 +2,7 @@ pub mod campaign;
 pub mod custom_field;
 pub mod help_document;
 mod mutations;
+pub use mutations::barcode::BarcodeMutations;
 mod queries;
 mod subscriptions;
 mod sync_api_error;
@@ -22,12 +23,16 @@ use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput,
-    CustomFieldsResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
-    PeriodScheduleRowResponse, StorePreferenceNode,
+    AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, CurrenciesResponse,
+    CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse, DeleteResponse, DiagnosisNode,
+    MasterListFilterInput, PeriodScheduleFilterInput, PeriodScheduleRowResponse,
+    StorePreferenceNode,
 };
 use mutations::{
-    barcode::{BarcodeInput, insert_barcode},
+    barcode::{
+        LegacyInsertBarcodeInput, LegacyInsertBarcodeResponse, ProposeBarcodeInput,
+        delete_barcode_proposal, legacy_insert_barcode, propose_barcode,
+    },
     common::SyncSettingsInput,
     display_settings::{
         DisplaySettingsInput, UpdateDisplaySettingsResponse, update_display_settings,
@@ -43,7 +48,14 @@ use mutations::{
         update_label_printer_settings,
     },
     log::{LogLevelInput, UpsertLogLevelResponse, update_log_level},
+    maintenance_mode::{
+        MaintenanceModeNode, ProcessorsPausedNode, SetMaintenanceModeResponse,
+        is_maintenance_mode_query, maintenance_mode_query, processors_paused_query,
+        set_maintenance_mode_mutation, set_processors_paused_mutation,
+    },
     manual_sync::manual_sync,
+    set_sync_paused::{SyncPausedNode, set_sync_paused},
+    sync_api_pause::{SyncApiPausedNode, set_sync_api_paused_mutation, sync_api_paused_query},
     sync_settings::{UpdateSyncSettingsResponse, update_sync_settings},
     update_insurance::{UpdateInsuranceInput, UpdateInsuranceResponse, update_insurance},
     update_name_properties::{
@@ -62,6 +74,7 @@ use queries::{
     insurance_providers::{InsuranceProvidersResponse, insurance_providers},
     migration_status::{MigrationStatusNode, migration_status},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
+    requisition_line_forecast_preview::RequisitionLineForecastPreviewInput,
     shipping_method::{ShippingMethodFilterInput, ShippingMethodsResponse, get_shipping_methods},
     sync_settings::{SyncSettingsNode, sync_settings},
 };
@@ -117,6 +130,12 @@ impl GeneralQueries {
 
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    /// Whether central is in maintenance mode, when only server admins can log in. Available
+    /// without authentication so the login screen can say so before anyone tries.
+    pub async fn is_maintenance_mode(&self, ctx: &Context<'_>) -> Result<bool> {
+        is_maintenance_mode_query(ctx)
     }
 
     pub async fn is_central_standalone(&self) -> bool {
@@ -291,6 +310,18 @@ impl GeneralQueries {
         )
     }
 
+    /// An item's request line as the line editor's draft would save it, under a chosen
+    /// forecast method, without saving anything: the line already on the order, or the one
+    /// adding the item would create
+    pub async fn requisition_line_forecast_preview(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: RequisitionLineForecastPreviewInput,
+    ) -> Result<requisition_line_forecast_preview::PreviewResponse> {
+        requisition_line_forecast_preview::forecast_preview(ctx, &store_id, input).await
+    }
+
     pub async fn activity_logs(
         &self,
         ctx: &Context<'_>,
@@ -327,8 +358,29 @@ impl GeneralQueries {
         number_of_records_in_push_queue(ctx)
     }
 
+    /// Admin pause flag (Admin > Sync settings); any signed-in user may read it.
+    pub async fn is_sync_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        is_sync_paused(ctx)
+    }
+
     pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
         sync_settings(ctx, true)
+    }
+
+    /// Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote)
+    pub async fn is_sync_api_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        sync_api_paused_query(ctx)
+    }
+
+    /// Central only: whether the transfer and general processors are paused (always false on a remote)
+    pub async fn are_processors_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        processors_paused_query(ctx)
+    }
+
+    /// Central only: maintenance mode, and how much of OMS central's own sync buffer is left to
+    /// integrate before it can be turned off (server admin only)
+    pub async fn maintenance_mode(&self, ctx: &Context<'_>) -> Result<MaintenanceModeNode> {
+        maintenance_mode_query(ctx)
     }
 
     pub async fn display_settings(
@@ -378,6 +430,21 @@ impl GeneralQueries {
         store_preferences(ctx, &store_id)
     }
 
+    /// Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+    /// barcodes first, then proposals made on this site, one per item and only
+    /// for items visible in the store. Empty for a barcode nobody has mapped yet.
+    pub async fn barcode_matches(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        barcode: String,
+    ) -> Result<Vec<BarcodeMatchNode>> {
+        barcode_matches(ctx, store_id, barcode)
+    }
+
+    /// Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+    /// matches; RecordNotFound when it matches none, or several items.
+    #[graphql(deprecation = "Use `barcodeMatches`")]
     pub async fn barcode_by_gtin(
         &self,
         ctx: &Context<'_>,
@@ -385,6 +452,27 @@ impl GeneralQueries {
         gtin: String,
     ) -> Result<BarcodeResponse> {
         barcode_by_gtin(ctx, store_id, gtin)
+    }
+
+    /// The item's confirmed barcodes
+    pub async fn item_barcodes(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+    ) -> Result<Vec<BarcodeNode>> {
+        item_barcodes(ctx, store_id, item_id)
+    }
+
+    /// Proposals for the item central hasn't confirmed or removed: every store's
+    /// on central, this site's elsewhere
+    pub async fn item_barcode_proposals(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+    ) -> Result<Vec<BarcodeProposalNode>> {
+        item_barcode_proposals(ctx, store_id, item_id)
     }
 
     pub async fn requisition_counts(
@@ -610,6 +698,11 @@ impl GeneralMutations {
         manual_sync(ctx, true)
     }
 
+    /// Pause or resume sync (server admin only). See `SyncPausedNode`.
+    pub async fn set_sync_paused(&self, ctx: &Context<'_>, paused: bool) -> Result<SyncPausedNode> {
+        set_sync_paused(ctx, paused)
+    }
+
     pub async fn update_display_settings(
         &self,
         ctx: &Context<'_>,
@@ -618,13 +711,38 @@ impl GeneralMutations {
         update_display_settings(ctx, input)
     }
 
+    /// Records that a user picked an item for a barcode in this store, for central
+    /// to review. Call it when the line the scan opened is saved.
+    pub async fn propose_barcode(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: ProposeBarcodeInput,
+    ) -> Result<BarcodeMatchNode> {
+        propose_barcode(ctx, &store_id, input)
+    }
+
+    /// Withdraws a proposal made by a store on this site. It stops matching scans
+    /// here, and central stops reviewing it.
+    pub async fn delete_barcode_proposal(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<DeleteResponse> {
+        delete_barcode_proposal(ctx, &store_id, &id)
+    }
+
+    /// Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+    /// on central. Adds a confirmed barcode on central and proposes one elsewhere.
+    #[graphql(deprecation = "Use `proposeBarcode`")]
     pub async fn insert_barcode(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: BarcodeInput,
-    ) -> Result<mutations::barcode::InsertResponse> {
-        insert_barcode(ctx, &store_id, input)
+        input: LegacyInsertBarcodeInput,
+    ) -> Result<LegacyInsertBarcodeResponse> {
+        legacy_insert_barcode(ctx, &store_id, input)
     }
 
     pub async fn update_log_level(
@@ -780,5 +898,36 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
+    }
+
+    /// Pause or resume the v6/v7 sync API remote sites sync through, e.g. during central maintenance.
+    /// Returns the new state.
+    pub async fn set_sync_api_paused(
+        &self,
+        ctx: &Context<'_>,
+        paused: bool,
+    ) -> Result<SyncApiPausedNode> {
+        set_sync_api_paused_mutation(ctx, paused)
+    }
+
+    /// Pause or resume the transfer and general processors. Resuming triggers each one so the
+    /// backlog is picked up. Returns the new state.
+    pub async fn set_processors_paused(
+        &self,
+        ctx: &Context<'_>,
+        paused: bool,
+    ) -> Result<ProcessorsPausedNode> {
+        set_processors_paused_mutation(ctx, paused)
+    }
+
+    /// Turn maintenance mode on or off. On pauses sync, the sync API and processors and signs out
+    /// every user who is not a server admin. Off is refused while OMS central's own sync buffer
+    /// has records left to integrate.
+    pub async fn set_maintenance_mode(
+        &self,
+        ctx: &Context<'_>,
+        on: bool,
+    ) -> Result<SetMaintenanceModeResponse> {
+        set_maintenance_mode_mutation(ctx, on)
     }
 }

@@ -166,6 +166,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       {/* Variant + ratio appear once an item is chosen (ui-surface S4). */}
       <Show when={form().itemId}>
         <Combobox<ItemVariantRow>
+          inputTestId="bundled-item-variant-input"
           label={t('label.variant')}
           items={candidateVariants()}
           loading={variantsData.loading}
@@ -182,12 +183,14 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
           }
         />
         <NumberField
+          data-testid="bundled-item-ratio-input"
           label={t('label.ratio')}
           min={0}
           decimalLimit={4}
           disabled={saving()}
           helperText={t('description.bundle-ratio')}
           value={form().ratio}
+          emptyValue={0}
           onChange={ratio => setForm({ ...form(), ratio: ratio ?? 0 })}
         />
       </Show>

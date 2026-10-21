@@ -1,6 +1,6 @@
 use super::{
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
+    utils::{LegacyCustomFieldsBuilder, custom_field_string, merge_legacy_custom_fields},
 };
 use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
@@ -134,6 +134,9 @@ pub struct TransactRowOmsFields {
     pub charges_local_currency: f64,
     #[serde(default)]
     pub charges_foreign_currency: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -386,15 +389,6 @@ fn build_legacy_invoice_custom_fields(
         builder = builder.option(keys::PRESCRIPTION_CATEGORY_2, category2_id);
     }
     builder.build()
-}
-
-fn custom_field_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
-    custom_fields
-        .as_ref()?
-        .as_object()?
-        .get(key)?
-        .as_str()
-        .map(str::to_string)
 }
 
 /// Inverse of [`build_legacy_invoice_custom_fields`]: read the invoice type's
@@ -665,6 +659,7 @@ impl SyncTranslation for InvoiceTranslation {
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
             custom_fields,
+            campaign_id: fk_check(oms_fields.campaign_id, "campaign_id", FkField::Campaign)?,
             // Prescription requests are OMS-native and v7-only, so OG has no
             // column for this and no site that holds one uses this translator
             // (a v7 site syncs invoices as rows). Nothing is read off the wire —
@@ -812,6 +807,7 @@ impl SyncTranslation for InvoiceTranslation {
                     custom_fields,
                     // OMS-native and v7-only — never pushed to OG
                     prescription_request_id: _,
+                    campaign_id,
                 },
             name_row,
             clinician_row,
@@ -899,6 +895,7 @@ impl SyncTranslation for InvoiceTranslation {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
                 charges_foreign_currency,
+                campaign_id,
             }),
         };
 

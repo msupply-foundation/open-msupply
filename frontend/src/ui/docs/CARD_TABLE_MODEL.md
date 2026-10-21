@@ -55,6 +55,8 @@ Set on each column literal in your `columns()` array. Anything not about the car
 | `meta.cardSpan`                 | `number`               | `1`           | Tracks this field takes of its group's `narrowLayout.columns` equal-track grid (≤1023px viewports only); ignored in every other layout. See [Field widths](#field-widths-metacardwidth).                                                                                                            |
 | `meta.align` / `meta.wrapLines` | —                      | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                                                                                                                                        |
 | `meta.controlLine`              | `boolean`              | `false`       | Table view, in an editor table with top-aligned cells (`cellAlign="start"`): holds a **short** cell (a row number, an icon button) to the row's input line — its content sits in a box one input tall and centres there, however the row grows beneath the inputs. Inert in a centre-aligned table. |
+| `meta.groupRows`                | `boolean`              | `false`       | Table view: shows a value **once per run** of equal consecutive values (rows as rendered — sorted, paged), joining the run's cells so a row tint runs through. A continuing cell is blank and names its value to assistive technology; an empty value never groups.                                 |
+| `meta.dividerEnd`               | `boolean`              | `false`       | Table view: a rule down the column's inline-end edge, header to footer — for a column that heads the ones after it, pinned or not.                                                                                                                                                                  |
 
 `getCellDefinition(key, meta?)` merges its second argument into the column's `meta`, so card flags ride along with a preset: `...getCellDefinition('numberOfPacks', { headerPosition: 'badge', showLabel: true })`.
 
@@ -86,7 +88,7 @@ A group's fields default to **equal auto-fit tracks** — fine for a list card's
 
 Two notes on the reference:
 
-- The site's date range (`10–11.5rem`) floors at `DD/MM/YYYY` plus the calendar icon. Our `DateField`'s empty state shows the all-caps `DD MMM YYYY` placeholder, which is wider than the digits it stands for and clips at 10 — so a **usually-empty** date (the stocktake dates) floors at `11`, its ceiling riding up with it.
+- The site's date range (`10–11.5rem`) floors at `DD/MM/YYYY` plus the calendar icon. Our `DateField`'s empty state shows an all-caps hint, wider than the digits it stands for: `DD/MM/YYYY` clips to `DD/MM/YYY` at 10 — so a **usually-empty** date (the stocktake dates) floors at `11`, its ceiling riding up with it.
 - [header-field-width.html](https://msupply-foundation.github.io/ux-testing/header-field-width.html) — the weighted-columns worked example — **rejects letting the row wrap**. That rule protects a fixed-height page header; a card body must wrap, which is what the narrow fallback is for, and the site's § Field Widths itself sizes a wrapping row by these ranges.
 
 **Body labels use the dense scale.** A card body field renders its caption through `LabelledValue size="small"` (0.8125rem — ui-standards § inputs' `.field-label--small`). At the 14px default the caption sat a step _larger_ than a `size="small"` control's 13px text, i.e. above the value it captions. The card's identity row (`headerPosition: 'primary'`, a `FieldRow`) deliberately keeps the full-size label — it reads as the card's heading.
@@ -130,7 +132,7 @@ One entry per body group in `cardGroups`.
 The card label text is the column's `header`, called (it is a function so the text re-resolves on a locale change). Whether and how it renders:
 
 - **Body cell, labelled** (the default) → [`LabelledValue`](../elements/typography/LabelledValue.tsx): label **above** the value, in the field grid.
-- **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"`: label **beside** the control, on the identity row.
+- **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"` `align="first-line"`: label **beside** the control, on the identity row, level with the control's first line — so a message the control grows beneath it (a field warning) doesn't drag the label down.
 - **Unlabelled** (default for header cells, or `showLabel: false`) → the cell content fills its slot directly.
 
 Read-only labelled values and editable inputs share the `--field-label-*` token, so a `LabelledValue` and a real input read identically in a card.

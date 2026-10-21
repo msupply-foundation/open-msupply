@@ -123,6 +123,7 @@ enum ActivityLogNodeType {
 	VVM_STATUS_LOG_UPDATED
 	VOLUME_PER_PACK_CHANGED
 	STOCK_LINE_EDIT
+	STOCK_CAMPAIGN_CHANGE
 	PURCHASE_ORDER_CREATED
 	PURCHASE_ORDER_REQUEST_APPROVAL
 	PURCHASE_ORDER_UNAUTHORISED
@@ -136,6 +137,7 @@ enum ActivityLogNodeType {
 	PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED
 	PURCHASE_ORDER_LINE_STATUS_CLOSED
 	PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW
+	PURCHASE_ORDER_CANCELLED
 	PRESCRIPTION_REQUEST_CREATED
 	PRESCRIPTION_REQUEST_UPDATED
 	PRESCRIPTION_REQUEST_READY_TO_DISPENSE
@@ -273,6 +275,11 @@ type AllocateOutboundShipmentUnallocatedLineNode {
 	skippedExpiredStockLines: StockLineConnector!
 	skippedOnHoldStockLines: StockLineConnector!
 	skippedUnusableVvmStatusLines: StockLineConnector!
+	"""
+	Batches of a different campaign than the shipment's (or any campaign,
+	on a shipment with none).
+	"""
+	skippedOtherCampaignStockLines: StockLineConnector!
 	issuedExpiringSoonStockLines: StockLineConnector!
 }
 
@@ -291,6 +298,10 @@ union AllocateProgramNumberResponse = NumberNode
 
 type AlreadyInitialised implements InitialiseAsCentralServerErrorInterface {
 	description: String!
+}
+
+type AmcForecastNode {
+	averageMonthlyConsumption: Float!
 }
 
 type AncillaryCycleDetected implements UpsertAncillaryItemErrorInterface {
@@ -323,6 +334,10 @@ type AncillaryItemNode {
 	Right-hand side of the stored `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	"""
+	Ordered against the principal's quantity net of its wastage rate
+	"""
+	excludePrincipalWastage: Boolean!
 	itemId: String!
 	ancillaryItemId: String!
 	"""
@@ -339,6 +354,40 @@ type AncillaryMaxDepthExceeded implements UpsertAncillaryItemErrorInterface {
 	description: String!
 	max: Int!
 	actual: Int!
+}
+
+type AncillaryRatioForecastNode {
+	"""
+	One per principal line on the order
+	"""
+	principals: [AncillaryRatioPrincipalNode!]!
+}
+
+type AncillaryRatioPrincipalNode {
+	itemId: String!
+	item: ItemNode
+	"""
+	The principal line's monthly demand
+	"""
+	principalMonthlyConsumption: Float!
+	"""
+	The configured ratio: `itemQuantity` principal units to `ancillaryQuantity`
+	ancillary units, as on `AncillaryItemNode`
+	"""
+	itemQuantity: Float!
+	ancillaryQuantity: Float!
+	"""
+	The principal's wastage rate (%) deducted before the ratio applies; 0 when none
+	"""
+	wastageRate: Float!
+	"""
+	The principal's monthly demand net of the deducted wastage
+	"""
+	principalUsableConsumption: Float!
+	"""
+	This principal's share of the line's monthly demand
+	"""
+	monthlyConsumption: Float!
 }
 
 """
@@ -606,6 +655,7 @@ enum AssetLogStatusNodeType {
 	NOT_FUNCTIONING
 	DECOMMISSIONED
 	UNSERVICEABLE
+	NOT_INSTALLED
 }
 
 enum AssetLogTypeNodeType {
@@ -801,16 +851,124 @@ type BackdatingNode {
 	maxDays: Int!
 }
 
-type BarcodeNode {
+type BarcodeMatchNode {
+	"""
+	The packaging variant's id, or the proposal's
+	"""
 	id: String!
-	gtin: String!
+	status: BarcodeStatusNode!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
 	itemId: String!
-	manufacturerId: String
+	"""
+	The item variant to put on the line, for a confirmed barcode. It may be
+	auto-created, so not in the item's variant list.
+	"""
+	itemVariantId: String
+	"""
+	For a confirmed barcode
+	"""
+	packagingVariantId: String
 	packSize: Float
-	parentId: String
+	manufacturerId: String
+}
+
+type BarcodeMutations {
+	"""
+	Confirms a barcode for an item without a proposal. Confirming one the item
+	already has returns it.
+	"""
+	insertBarcode(storeId: String!, input: InsertConfirmedBarcodeInput!): BarcodeNode!
+	"""
+	Confirms a store's proposal, so the barcode reaches every site. With no
+	packaging variant or item variant given, it goes on the item's auto-created
+	variant for the proposal's manufacturer.
+	"""
+	confirmBarcodeProposal(storeId: String!, id: String!, packagingVariantId: String, itemVariantId: String): BarcodeNode!
+	"""
+	Removes the barcode from a packaging variant, everywhere. `id` is the
+	packaging variant's. The removal is remembered, so the barcode isn't
+	auto-confirmed for the item again. An auto-created variant left with no
+	barcode is deleted; confirming the barcode again brings it back.
+	"""
+	deleteBarcode(storeId: String!, id: String!): DeleteResponse!
+}
+
+type BarcodeNode {
+	"""
+	The packaging variant's id
+	"""
+	id: String!
+	"""
+	The barcode in its standard form with its scheme, e.g.
+	`gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
+	"""
+	value: String!
+	"""
+	The barcode as people read it, e.g. `9506682101352`
+	"""
+	barcode: String!
+	"""
+	The barcode as people read it. Use `barcode`.
+	"""
+	gtin: String! @deprecated(reason: "Use `barcode`")
+	itemId: String!
+	itemVariantId: String
+	packagingVariantId: String
+	"""
+	The barcode is on a variant central created only to hold barcodes
+	"""
+	isAutoCreated: Boolean!
+	packSize: Float
+	manufacturerId: String
+	"""
+	Barcodes no longer have a parent; always null. Kept so older clients
+	that still ask for it keep working.
+	"""
+	parentId: String @deprecated(reason: "Barcodes no longer have a parent")
+}
+
+type BarcodeProposalNode {
+	id: String!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	The store that proposed it
+	"""
+	storeId: String!
+	store: StoreNode
+	userId: String!
+	createdDatetime: DateTime!
+	updatedDatetime: DateTime!
 }
 
 union BarcodeResponse = NodeError | BarcodeNode
+
+enum BarcodeStatusNode {
+	"""
+	Confirmed on central, shared by every site
+	"""
+	CONFIRMED
+	"""
+	Learned on this site, not confirmed yet
+	"""
+	PROPOSED
+}
 
 input BatchInboundShipmentInput {
 	insertInboundShipments: [InsertInboundShipmentInput!]
@@ -968,6 +1126,16 @@ type BatchStocktakeResponse {
 	deleteStocktakes: [DeleteStocktakeResponseWithId!]
 }
 
+"""
+One store's edit of a global preference it may override. A null `value`
+CLEARS the store's override, returning the store to the global value — the
+only way back once a store has pinned its own.
+"""
+input BoolStoreOverrideInput {
+	storeId: String!
+	value: Boolean
+}
+
 input BoolStorePrefInput {
 	storeId: String!
 	value: Boolean!
@@ -997,6 +1165,11 @@ input CampaignFilterInput {
 	name: StringFilterInput
 }
 
+enum CampaignKindNode {
+	CAMPAIGN
+	ROUTINE
+}
+
 type CampaignMutations {
 	upsertCampaign(input: UpsertCampaignInput!): UpsertCampaignResponse!
 	deleteCampaign(input: DeleteCampaignInput!): DeleteCampaignResponse!
@@ -1008,6 +1181,7 @@ type CampaignNode {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode!
 }
 
 enum CampaignSortFieldInput {
@@ -1045,6 +1219,10 @@ type CannotChangeStatusOfInvoiceOnHold implements UpdateErrorInterface & UpdateI
 	description: String!
 }
 
+type CannotChangeTargetMonthsOfStock implements UpdateRequestRequisitionErrorInterface {
+	description: String!
+}
+
 type CannotDeleteCentralSite implements DeleteSiteErrorInterface {
 	description: String!
 }
@@ -1070,19 +1248,11 @@ type CannotDeleteRequisitionWithLines implements DeleteRequestRequisitionErrorIn
 	description: String!
 }
 
-type CannotEditAdjustedQuantity implements PurchaseOrderLineError {
-	description: String!
-}
-
 type CannotEditInvoice implements DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & DeletePrescriptionErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface {
 	description: String!
 }
 
 type CannotEditPurchaseOrder implements AddToPurchaseOrderFromMasterListErrorInterface & InsertPurchaseOrderLineErrorInterface & PurchaseOrderLineError {
-	description: String!
-}
-
-type CannotEditQuantityBelowReceived implements PurchaseOrderLineError {
 	description: String!
 }
 
@@ -1120,6 +1290,22 @@ type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundS
 
 type CentralGeneralMutations {
 	configureNameProperties(input: [ConfigureNamePropertyInput!]!): ConfigureNamePropertiesResponse!
+	"""
+	Pause or resume the v6/v7 sync API remote sites sync through, e.g. during central maintenance.
+	Returns the new state.
+	"""
+	setSyncApiPaused(paused: Boolean!): SyncApiPausedNode!
+	"""
+	Pause or resume the transfer and general processors. Resuming triggers each one so the
+	backlog is picked up. Returns the new state.
+	"""
+	setProcessorsPaused(paused: Boolean!): ProcessorsPausedNode!
+	"""
+	Turn maintenance mode on or off. On pauses sync, the sync API and processors and signs out
+	every user who is not a server admin. Off is refused while OMS central's own sync buffer
+	has records left to integrate.
+	"""
+	setMaintenanceMode(on: Boolean!): SetMaintenanceModeResponse!
 }
 
 type CentralPatientNode {
@@ -1159,7 +1345,15 @@ input CentralPatientSearchInput {
 union CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError
 
 type CentralPluginMutations {
-	installUploadedPlugin(fileId: String!): PluginInfoNode!
+	"""
+	`programs` chooses the program for each of a form plugin's program keys
+	(a key left out keeps the program it is already bound to); `takeOver`
+	names document types whose existing entry, installed by no plugin, the
+	plugin may take over; `blankOldUi` names taken-over types whose form
+	on sites still running the old client may go blank, because the type
+	carries no legacy UI schema (refused otherwise).
+	"""
+	installUploadedPlugin(fileId: String!, programs: [PluginProgramInput!], takeOver: [String!], blankOldUi: [String!]): PluginInfoNode!
 	uninstallPlugin(id: String!): UninstallPluginNode!
 }
 
@@ -1182,6 +1376,7 @@ type CentralServerMutationNode {
 	demographic: DemographicMutations!
 	vaccineCourse: VaccineCourseMutations!
 	general: CentralGeneralMutations!
+	barcode: BarcodeMutations!
 	plugins: CentralPluginMutations!
 	preferences: PreferenceMutations!
 	campaign: CampaignMutations!
@@ -2505,6 +2700,10 @@ type DraftStockOutLineNode {
 	with no invoice line yet.
 	"""
 	transferComment: String
+	"""
+	The batch's stock line barcode, as people read it
+	"""
+	barcode: String
 	reasonOption: ReasonOptionNode
 }
 
@@ -2640,6 +2839,11 @@ type EncounterNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	activeProgramEvents(at: DateTime, filter: ActiveEncounterEventFilterInput, page: PaginationInput, sort: ProgramEventSortInput): ProgramEventResponse!
 	programEvents(page: PaginationInput, sort: ProgramEventSortInput, filter: EncounterEventFilterInput): ProgramEventResponse!
 	"""
@@ -2884,6 +3088,37 @@ input ExistingLinesInput {
 	returnId: String!
 }
 
+"""
+How this server's registry stands for a document type the bundle declares.
+"""
+enum ExistingRegistryEntryNode {
+	"""
+	No entry: install creates one.
+	"""
+	NONE
+	"""
+	The plugin's own entry, from an earlier install.
+	"""
+	OWNED
+	"""
+	An entry no plugin installed: install needs the type named in `takeOver`.
+	"""
+	UNOWNED
+	"""
+	Another plugin's entry (`existingEntryOwner`): install is refused.
+	"""
+	OWNED_BY_ANOTHER_PLUGIN
+	"""
+	Several entries for the type: install is refused.
+	"""
+	AMBIGUOUS
+	"""
+	An entry of another category (`existingEntryCategory`) than the one
+	declared: install is refused.
+	"""
+	CATEGORY_MISMATCH
+}
+
 type FailedToFetchReportData implements PrintReportErrorInterface {
 	description: String!
 	errors: JSON!
@@ -2908,6 +3143,63 @@ input FloatStorePrefInput {
 	value: Float!
 }
 
+"""
+The inputs and steps behind a line's monthly demand, one member per method. None holds
+a months-of-stock figure: the requisition's thresholds supply those.
+"""
+union ForecastBreakdownNode = AmcForecastNode | PopulationForecastNode | AncillaryRatioForecastNode
+
+"""
+Where a requisition line's monthly demand comes from.
+"""
+enum ForecastMethodNode {
+	"""
+	The line's average monthly consumption
+	"""
+	AMC
+	"""
+	The vaccine courses covering the item, for the store's population served
+	"""
+	POPULATION
+	"""
+	The order's principal lines' monthly demand × the configured ancillary ratios
+	"""
+	ANCILLARY_RATIO
+}
+
+type ForecastMethodNotAvailable implements RequisitionLineForecastPreviewErrorInterface & UpdateRequestRequisitionLineErrorInterface {
+	description: String!
+	unavailableReason: ForecastMethodUnavailableReasonNode!
+}
+
+type ForecastMethodOptionNode {
+	method: ForecastMethodNode!
+	isAvailable: Boolean!
+	"""
+	Null when available
+	"""
+	unavailableReason: ForecastMethodUnavailableReasonNode
+}
+
+enum ForecastMethodUnavailableReasonNode {
+	"""
+	The population-based forecasting preference is off
+	"""
+	POPULATION_PREFERENCE_OFF
+	"""
+	The store's facility record carries no population served
+	"""
+	NO_POPULATION_SERVED
+	"""
+	No vaccine course covers the item
+	"""
+	NO_VACCINE_COURSE
+	"""
+	No line on the order is a principal of the item
+	"""
+	NO_PRINCIPAL_ON_ORDER
+}
+
 enum ForeignKey {
 	otherPartyId
 	itemId
@@ -2921,6 +3213,90 @@ enum ForeignKey {
 type ForeignKeyError implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & SetPrescribedQuantityErrorInterface & RefreshAncillaryItemsErrorInterface & InsertResponseRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	key: ForeignKey!
+}
+
+"""
+What installing the uploaded bundle's form plugins would meet on this
+server, for the choices `installUploadedPlugin` takes: the program for
+each key, the types to take over, and the types whose old-client form may
+go blank.
+"""
+type FormInstallPreviewNode {
+	formPlugins: [FormPluginPreviewNode!]!
+	"""
+	The programs on this server, one to choose for each program key.
+	"""
+	programs: [ProgramNode!]!
+}
+
+"""
+One document type a form plugin declares, checked against this server.
+"""
+type FormPluginDocumentTypeNode {
+	documentType: String!
+	name: String!
+	category: DocumentRegistryCategoryNode!
+	"""
+	`None` for the Patient type, whose context is fixed.
+	"""
+	programKey: String
+	existingEntry: ExistingRegistryEntryNode!
+	"""
+	The unowned entry's id, for `UNOWNED`.
+	"""
+	existingEntryId: String
+	"""
+	The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`.
+	"""
+	existingEntryOwner: String
+	"""
+	The existing entry's category, for `CATEGORY_MISMATCH`.
+	"""
+	existingEntryCategory: DocumentRegistryCategoryNode
+	"""
+	The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+	context is a program's: what a take-over keeps the type under unless
+	its key is moved, so a screen can start the key on it.
+	"""
+	existingEntryProgram: ProgramNode
+	"""
+	True when installing would leave the type's form blank on sites still
+	running the old client, which install refuses unless the type is named
+	in `blankOldUi`.
+	"""
+	blanksOldUi: Boolean!
+	"""
+	The refusals no choice in `installUploadedPlugin` can get past, in the
+	words that mutation would refuse with: a schema version already
+	installed with other content, a version documents are pinned to left
+	out, a take-over that changes the deployment's rules or lacks its
+	current version, a second patient type. Empty when install could go
+	ahead with the right choices.
+	"""
+	refusals: [String!]!
+}
+
+type FormPluginPreviewNode {
+	pluginCode: String!
+	programKeys: [FormPluginProgramKeyNode!]!
+	documentTypes: [FormPluginDocumentTypeNode!]!
+}
+
+"""
+One of a form plugin's program keys, with the program an earlier install
+bound it to.
+"""
+type FormPluginProgramKeyNode {
+	programKey: String!
+	"""
+	The declared document types that name this key.
+	"""
+	documentTypes: [String!]!
+	"""
+	The program the key is already bound to; `None` on a first install,
+	when `programs` must choose one.
+	"""
+	boundProgram: ProgramNode
 }
 
 type FormSchemaConnector {
@@ -3111,6 +3487,10 @@ enum InboundNodeType {
 	MANUAL_EXTERNAL
 }
 
+type InboundShipmentsInProgress implements UpdatePurchaseOrderErrorInterface {
+	description: String!
+}
+
 type InboundShipmentsNotVerified implements UpdatePurchaseOrderErrorInterface {
 	description: String!
 }
@@ -3288,6 +3668,9 @@ union InsertAssetLogResponse = InsertAssetLogError | AssetLogNode
 
 union InsertAssetResponse = InsertAssetError | AssetNode
 
+"""
+Deprecated: the input of the deprecated top-level `insertBarcode`
+"""
 input InsertBarcodeInput {
 	gtin: String!
 	itemId: String!
@@ -3304,6 +3687,24 @@ input InsertClinicianInput {
 	firstName: String
 	gender: GenderTypeNode
 	mobile: String
+}
+
+input InsertConfirmedBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	Put the barcode on this packaging variant of the item, which has none yet
+	"""
+	packagingVariantId: String
+	"""
+	Add a packaging variant with the barcode to this item variant of the item
+	"""
+	itemVariantId: String
 }
 
 input InsertContactFormInput {
@@ -3535,6 +3936,11 @@ input InsertInboundShipmentLineInput {
 	shippedPackSize: Float
 	purchaseOrderLineId: String
 	reasonOptionId: String
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -3942,7 +4348,13 @@ input InsertRequestRequisitionInput {
 	colour: String
 	theirReference: String
 	comment: String
-	maxMonthsOfStock: Float!
+	"""
+	Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+	facility record carries no supply interval. Ignored, the store's supply interval +
+	safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+	preference is off and it has a supply interval
+	"""
+	maxMonthsOfStock: Float
 	minMonthsOfStock: Float!
 	"""
 	Defaults to 2 weeks from now
@@ -4195,9 +4607,36 @@ input InsertVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
+
+"""
+One registry entry as an install left it: the report the CLI prints,
+typed for a screen.
+"""
+type InstalledDocumentTypeNode {
+	pluginCode: String!
+	documentType: String!
+	programKey: String
+	contextId: String!
+	formSchemaId: String!
+	outcome: RegistryOutcomeNode!
+	"""
+	Schema versions this install added; versions already present keep
+	their schema.
+	"""
+	schemasAdded: Int!
+	"""
+	Versions already present whose legacy UI schema this install replaced.
+	"""
+	uiSchemasUpdated: Int!
+}
 
 type InstalledPluginConnector {
 	nodes: [InstalledPluginNode!]!
@@ -4294,6 +4733,11 @@ union InsurancesResponse = InsuranceConnector
 input IntegerStorePrefInput {
 	storeId: String!
 	value: Int!
+}
+
+type IntegrationIncomplete implements SetMaintenanceModeErrorInterface {
+	pendingIntegrationRecords: Int!
+	description: String!
 }
 
 type InternalError implements RefreshTokenErrorInterface & ScannedDataParseErrorInterface & InsertLocationErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertItemVariantErrorInterface & UpsertBundledItemErrorInterface & UpsertAncillaryItemErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpsertCampaignErrorInterface & InsertHelpDocumentErrorInterface & DeleteHelpDocumentErrorInterface & InsertAssetErrorInterface & UpdateAssetErrorInterface & InsertAssetLogErrorInterface {
@@ -4505,6 +4949,11 @@ type InvoiceLineNode {
 	"""
 	transferComment: String
 	"""
+	The barcode scanned or entered for the line, or carried by the stock it
+	issues, as people read it. Not necessarily a confirmed barcode.
+	"""
+	barcode: String
+	"""
 	The line of the shipment's linked requisition carrying the same item.
 	Null when the shipment has no requisition link, or the order has no line
 	for the item. Matched on item alone — there is no per-line link — so
@@ -4636,6 +5085,12 @@ type InvoiceNode {
 	diagnosis: DiagnosisNode
 	programId: String
 	program: ProgramNode
+	"""
+	The shipment's campaign (null = none): the default for new inbound
+	lines, or the campaign an outbound shipment issues for.
+	"""
+	campaignId: String
+	campaign: CampaignNode
 	store: StoreNode!
 	nameInsuranceJoinId: String
 	insurancePolicy: InsurancePolicyNode
@@ -4927,7 +5382,11 @@ type ItemNode {
 	backend-plugin path.
 	"""
 	stockOnHand(storeId: String!): Int!
-	variants: [ItemVariantNode!]!
+	"""
+	The item's variants. Auto-created ones, which central creates only to hold
+	a barcode, are left out unless `includeAutoCreated` is true.
+	"""
+	variants(includeAutoCreated: Boolean): [ItemVariantNode!]!
 	"""
 	Ancillary items configured against this item — i.e. items that should be
 	ordered alongside it (e.g. syringes that go with a vaccine).
@@ -5015,6 +5474,11 @@ type ItemStorePropertiesNode {
 type ItemVariantMutations {
 	upsertItemVariant(storeId: String!, input: UpsertItemVariantInput!): UpsertPackVariantResponse!
 	deleteItemVariant(storeId: String!, input: DeleteItemVariantInput!): DeleteItemVariantResponse!
+	"""
+	Makes a variant central created to hold a barcode a real one, so it shows
+	in variant lists and pickers. Its id stays the same.
+	"""
+	promoteItemVariant(storeId: String!, id: String!): ItemVariantNode!
 }
 
 type ItemVariantNode {
@@ -5037,6 +5501,11 @@ type ItemVariantNode {
 	"""
 	bundlesWith: [BundledItemNode!]!
 	vvmType: String
+	"""
+	Created on central only to hold a barcode. Left out of variant lists unless
+	asked for.
+	"""
+	isAutoCreated: Boolean!
 }
 
 type ItemsCannotBeOrdered implements UpdatePurchaseOrderErrorInterface {
@@ -5305,6 +5774,23 @@ enum LowStockStatus {
 	OK
 }
 
+type MaintenanceMode implements AuthTokenErrorInterface {
+	description: String!
+}
+
+"""
+State of central's maintenance mode.
+"""
+type MaintenanceModeNode {
+	isOn: Boolean!
+	"""
+	Rows in OMS central's own sync buffer (pulled from the legacy mSupply central server)
+	still waiting to be integrated. Maintenance mode cannot be turned off while this is above
+	zero.
+	"""
+	pendingIntegrationRecords: Int!
+}
+
 type MasterListConnector {
 	totalCount: Int!
 	nodes: [MasterListNode!]!
@@ -5550,8 +6036,26 @@ type Mutations {
 	initialiseSite(input: SyncSettingsInput!): InitialiseSiteResponse!
 	initialiseAsCentralServer(input: InitialiseAsCentralServerInputNode!): InitialiseAsCentralServerResponse!
 	manualSync(fetchPatientId: String): String!
+	"""
+	Pause or resume sync (server admin only). See `SyncPausedNode`.
+	"""
+	setSyncPaused(paused: Boolean!): SyncPausedNode!
 	updateDisplaySettings(input: DisplaySettingsInput!): UpdateDisplaySettingsResponse!
-	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse!
+	"""
+	Records that a user picked an item for a barcode in this store, for central
+	to review. Call it when the line the scan opened is saved.
+	"""
+	proposeBarcode(storeId: String!, input: ProposeBarcodeInput!): BarcodeMatchNode!
+	"""
+	Withdraws a proposal made by a store on this site. It stops matching scans
+	here, and central stops reviewing it.
+	"""
+	deleteBarcodeProposal(storeId: String!, id: String!): DeleteResponse!
+	"""
+	Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+	on central. Adds a confirmed barcode on central and proposes one elsewhere.
+	"""
+	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse! @deprecated(reason: "Use `proposeBarcode`")
 	updateLogLevel(storeId: String!, input: UpsertLogLevelInput!): UpsertLogLevelResponse!
 	updateLabelPrinterSettings(input: LabelPrinterSettingsInput!): UpdateLabelPrinterSettingsResponse!
 	updateNameProperties(storeId: String!, input: UpdateNamePropertiesInput!): UpdateNamePropertiesResponse!
@@ -5999,6 +6503,11 @@ input OutboundShipmentLineInput {
 	transferComment: String
 }
 
+type OverridingStoreNode {
+	storeId: String!
+	storeName: String!
+}
+
 type PackSizeCodeCombinationExists implements InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	itemCode: String!
@@ -6019,6 +6528,10 @@ type PackagingVariantNode {
 	packagingLevel: Int!
 	packSize: Float
 	volumePerUnit: Float
+	"""
+	The confirmed barcode for this packaging, as people read it
+	"""
+	barcode: String
 }
 
 """
@@ -6280,6 +6793,62 @@ input PluginDataSortInput {
 
 type PluginInfoNode {
 	pluginInfo: JSON!
+	"""
+	How the bundle's form plugins stand against this server, read before
+	installing: each program key's current program, each document type's
+	existing registry entry and whether installing it would blank the old
+	client's form, and the programs to choose from. Null on an install's
+	result.
+	"""
+	formInstallPreview: FormInstallPreviewNode
+	"""
+	What the install did to each form plugin's registry entries: the
+	report the CLI prints, one node per declared type. Null for an
+	uploaded bundle not yet installed, and empty for a bundle with no form
+	plugin.
+	"""
+	installedDocumentTypes: [InstalledDocumentTypeNode!]
+}
+
+"""
+The program chosen for one of a form plugin's program keys.
+"""
+input PluginProgramInput {
+	programKey: String!
+	programId: String!
+}
+
+type PopulationForecastCourseNode {
+	courseName: String!
+	"""
+	Null when the course targets the whole population
+	"""
+	demographicName: String
+	numberOfDoses: Int!
+	coverageRate: Float!
+	wastageRate: Float!
+	targetPopulation: Float!
+	"""
+	The average doses a person gets in a year, counted in place of the number of
+	doses when set
+	"""
+	annualDosesPerPerson: Float
+	lossFactor: Float!
+	annualTargetDoses: Float!
+	dosesPerUnit: Float!
+	monthlyDoses: Float!
+	monthlyUnits: Float!
+}
+
+type PopulationForecastNode {
+	"""
+	Null on a forecast converted from an older site's data
+	"""
+	populationServed: Float
+	"""
+	One per covering course-and-demographic
+	"""
+	courses: [PopulationForecastCourseNode!]!
 }
 
 """
@@ -6297,6 +6866,17 @@ type PreferenceDescriptionNode {
 	Use the PreferencesNode to load the strictly typed value.
 	"""
 	value: JSON!
+	"""
+	How this store arrives at `value`, for a global preference a store may
+	override. Null for every other preference, and in the global listing.
+	"""
+	storeOverride: StoreOverrideNode
+	"""
+	The stores that pin their own value instead of following this global
+	one, by store name. Empty where none do; null unless this is the global
+	listing of an overridable preference.
+	"""
+	overridingStores: [OverridingStoreNode!]
 }
 
 enum PreferenceKey {
@@ -6320,11 +6900,11 @@ enum PreferenceKey {
 	backdating
 	receivePaymentsFromPrescriptions
 	globalLogo
+	decimalPlacesForNumbers
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
 	orderInPacks
-	useProcurementFunctionality
 	sortByVvmStatusThenExpiry
 	useSimplifiedMobileUi
 	disableManualReturns
@@ -6333,6 +6913,7 @@ enum PreferenceKey {
 	warningForExcessRequest
 	canCreateInternalOrderFromARequisition
 	selectDestinationStoreForAnInternalOrder
+	canChangeTargetMonthsOfStock
 	externalInboundShipmentLinesMustBeAuthorised
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts
@@ -6345,6 +6926,7 @@ enum PreferenceKey {
 	invoiceStatusOptions
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
+	promptForBatchAndExpiryOnInboundShipments
 }
 
 type PreferenceMutations {
@@ -6397,11 +6979,11 @@ type PreferencesNode {
 	Large - don't add to eagerly-fetched preference queries.
 	"""
 	globalLogo: String!
+	decimalPlacesForNumbers: Int!
 	blindStocktake: Boolean!
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
 	orderInPacks: Boolean!
-	useProcurementFunctionality: Boolean!
 	sortByVvmStatusThenExpiry: Boolean!
 	useSimplifiedMobileUi: Boolean!
 	disableManualReturns: Boolean!
@@ -6409,6 +6991,7 @@ type PreferencesNode {
 	inboundShipmentAutoVerify: Boolean!
 	canCreateInternalOrderFromARequisition: Boolean!
 	selectDestinationStoreForAnInternalOrder: Boolean!
+	canChangeTargetMonthsOfStock: Boolean!
 	externalInboundShipmentLinesMustBeAuthorised: Boolean!
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Int!
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts: Float!
@@ -6419,6 +7002,7 @@ type PreferencesNode {
 	warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode!
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
+	promptForBatchAndExpiryOnInboundShipments: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -6622,6 +7206,13 @@ type PrinterNode {
 	labelHeight: Int!
 }
 
+"""
+State of central's processor pause.
+"""
+type ProcessorsPausedNode {
+	isPaused: Boolean!
+}
+
 type ProgramConnector {
 	totalCount: Int!
 	nodes: [ProgramNode!]!
@@ -6671,6 +7262,11 @@ type ProgramEnrolmentNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	"""
 	The program document
 	"""
@@ -6800,6 +7396,12 @@ type ProgramNode {
 	id: String!
 	name: String!
 	isImmunisation: Boolean!
+	"""
+	The context the program's documents (its enrolments and encounters)
+	belong to: what a document registry entry's `contextId` names. Often,
+	but not always, the program's own id.
+	"""
+	contextId: String!
 	vaccineCourses: [VaccineCourseNode!]
 	elmisCode: String
 }
@@ -6875,6 +7477,16 @@ enum PropertyNodeValueType {
 	DATE
 }
 
+input ProposeBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+}
+
 type PurchaseOrderConnector {
 	totalCount: Int!
 	nodes: [PurchaseOrderNode!]!
@@ -6909,7 +7521,7 @@ input PurchaseOrderLineFilterInput {
 	id: EqualFilterStringInput
 	purchaseOrderId: EqualFilterStringInput
 	status: EqualFilterPurchaseOrderLineStatusInput
-	receivedLessThanAdjusted: Boolean
+	receivedLessThanRequested: Boolean
 	supplierName: StringFilterInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
 	itemName: StringFilterInput
@@ -6924,13 +7536,20 @@ type PurchaseOrderLineNode {
 	pricePerPackBeforeDiscount: Float!
 	pricePerPackAfterDiscount: Float!
 	lineTotal: Float!
+	"""
+	The pack price with the order's supplier discount apportioned to the line (none on a service line)
+	"""
+	pricePerPackAfterSupplierDiscount: Float!
+	"""
+	The line's stored total with the order's supplier discount apportioned to it (none on a service line)
+	"""
+	lineTotalAfterSupplierDiscount: Float!
 	comment: String
 	supplierItemCode: String
 	item: ItemNode!
 	stockOnHandInUnits: Float!
 	requestedPackSize: Float!
 	requestedNumberOfUnits: Float!
-	adjustedNumberOfUnits: Float
 	shippedNumberOfUnits: Float!
 	inTransitNumberOfUnits: Float!
 	receivedNumberOfUnits: Float!
@@ -6965,7 +7584,6 @@ enum PurchaseOrderLineSortFieldInput {
 	purchaseOrderNumber
 	supplierName
 	purchaseOrderConfirmedDatetime
-	adjustedNumberOfUnits
 	receivedNumberOfUnits
 	outstandingNumberOfUnits
 }
@@ -7018,16 +7636,19 @@ type PurchaseOrderNode {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Filtered to the keys visible on the purchase_order scope
+	"""
+	customFields: JSON
+	"""
+	The supplier discount on the stock lines; service lines take none
+	"""
 	supplierDiscountAmount: Float!
 	supplierDiscountPercentage: Float
 	requestApprovalDatetime: DateTime
 	finalisedDatetime: DateTime
+	cancelledDatetime: DateTime
 	documents: SyncFileReferenceConnector!
 	lines: PurchaseOrderLineConnector!
 	currency: CurrencyNode
@@ -7039,6 +7660,7 @@ enum PurchaseOrderNodeStatus {
 	CONFIRMED
 	SENT
 	FINALISED
+	CANCELLED
 }
 
 union PurchaseOrderResponse = RecordNotFound | PurchaseOrderNode
@@ -7206,6 +7828,11 @@ type Queries {
 	refreshToken: RefreshTokenResponse!
 	me: UserResponse!
 	isCentralServer: Boolean!
+	"""
+	Whether central is in maintenance mode, when only server admins can log in. Available
+	without authentication so the login screen can say so before anyone tries.
+	"""
+	isMaintenanceMode: Boolean!
 	isCentralStandalone: Boolean!
 	featureFlags: JSONObject!
 	"""
@@ -7344,6 +7971,12 @@ type Queries {
 		daysTillExpired: Int
 	): StockCounts!
 	requisitionLineChart(storeId: String!, requestRequisitionLineId: String!, consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): RequisitionLineChartResponse!
+	"""
+	An item's request line as the line editor's draft would save it, under a chosen
+	forecast method, without saving anything: the line already on the order, or the one
+	adding the item would create
+	"""
+	requisitionLineForecastPreview(storeId: String!, input: RequisitionLineForecastPreviewInput!): RequisitionLineForecastPreviewResponse!
 	activityLogs(		storeId: String!,
 		"""
 		Pagination option (first and offset)
@@ -7368,7 +8001,24 @@ type Queries {
 	migrationStatus: MigrationStatusNode!
 	latestSyncStatus: FullSyncStatusNode
 	numberOfRecordsInPushQueue: Int!
+	"""
+	Admin pause flag (Admin > Sync settings); any signed-in user may read it.
+	"""
+	isSyncPaused: Boolean!
 	syncSettings: SyncSettingsNode
+	"""
+	Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote)
+	"""
+	isSyncApiPaused: Boolean!
+	"""
+	Central only: whether the transfer and general processors are paused (always false on a remote)
+	"""
+	areProcessorsPaused: Boolean!
+	"""
+	Central only: maintenance mode, and how much of OMS central's own sync buffer is left to
+	integrate before it can be turned off (server admin only)
+	"""
+	maintenanceMode: MaintenanceModeNode!
 	displaySettings(input: DisplaySettingsHash!): DisplaySettingsNode!
 	responseRequisitionStats(storeId: String!, requisitionLineId: String!): RequisitionLineStatsResponse!
 	inventoryAdjustmentReasons(
@@ -7396,7 +8046,26 @@ type Queries {
 		highStockThreshold: Float
 	): ItemCounts!
 	storePreferences(storeId: String!): StorePreferenceNode!
-	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse!
+	"""
+	Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+	barcodes first, then proposals made on this site, one per item and only
+	for items visible in the store. Empty for a barcode nobody has mapped yet.
+	"""
+	barcodeMatches(storeId: String!, barcode: String!): [BarcodeMatchNode!]!
+	"""
+	Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+	matches; RecordNotFound when it matches none, or several items.
+	"""
+	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse! @deprecated(reason: "Use `barcodeMatches`")
+	"""
+	The item's confirmed barcodes
+	"""
+	itemBarcodes(storeId: String!, itemId: String!): [BarcodeNode!]!
+	"""
+	Proposals for the item central hasn't confirmed or removed: every store's
+	on central, this site's elsewhere
+	"""
+	itemBarcodeProposals(storeId: String!, itemId: String!): [BarcodeProposalNode!]!
 	requisitionCounts(storeId: String!): RequisitionCounts!
 	logFileNames: LogNode!
 	logContents(fileName: String): LogNode!
@@ -7757,6 +8426,10 @@ type Queries {
 	): VaccineCoursesResponse!
 	vaccineCourse(id: String!): VaccineCourseResponse!
 	vaccineCourseDose(id: String!): VaccineCourseDoseResponse!
+	"""
+	Whether any item has variants. Auto-created variants, which only hold a
+	barcode, don't count.
+	"""
 	itemVariantsConfigured(storeId: String!): Boolean!
 	"""
 	Returns the relevant set of preferences based on context (e.g. current store)
@@ -7849,7 +8522,7 @@ type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & Delet
 	description: String!
 }
 
-type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
+type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
 	description: String!
 }
 
@@ -7915,6 +8588,16 @@ interface RefreshTokenErrorInterface {
 }
 
 union RefreshTokenResponse = RefreshTokenError | RefreshToken
+
+"""
+What an install did to one registry entry.
+"""
+enum RegistryOutcomeNode {
+	CREATED
+	UPDATED
+	TAKEN_OVER
+	UNCHANGED
+}
 
 type RepackConnector {
 	totalCount: Int!
@@ -8082,6 +8765,46 @@ type RequisitionLineConnector {
 	nodes: [RequisitionLineNode!]!
 }
 
+type RequisitionLineForecastPreviewError {
+	error: RequisitionLineForecastPreviewErrorInterface!
+}
+
+interface RequisitionLineForecastPreviewErrorInterface {
+	description: String!
+}
+
+input RequisitionLineForecastPreviewInput {
+	requisitionId: String!
+	itemId: String!
+	"""
+	Null keeps the line's own method: an existing line's stored one, or the default a
+	new line would take
+	"""
+	forecastMethod: ForecastMethodNode
+	"""
+	The activity to preview the line as held for — its stock on hand, and the suggestion
+	computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+	`{ value: null }` previews it as held for nothing in particular
+	"""
+	campaignId: NullableStringUpdate
+}
+
+type RequisitionLineForecastPreviewNode {
+	forecastMethod: ForecastMethodNode!
+	forecastMonthlyConsumption: Float!
+	forecastBreakdown: ForecastBreakdownNode!
+	forecastMethodOptions: [ForecastMethodOptionNode!]!
+	"""
+	The requisition's target months × the monthly demand
+	"""
+	targetStock: Float!
+	suggestedQuantity: Float!
+	averageMonthlyConsumption: Float!
+	availableStockOnHand: Float!
+}
+
+union RequisitionLineForecastPreviewResponse = RequisitionLineForecastPreviewNode | RequisitionLineForecastPreviewError
+
 type RequisitionLineNode {
 	id: String!
 	itemId: String!
@@ -8151,13 +8874,33 @@ type RequisitionLineNode {
 	daysOutOfStock: Float!
 	optionId: String
 	reason: ReasonOptionNode
+	campaign: CampaignNode
 	availableStockOnHand: Float!
 	requisitionNumber: Int!
 	requisitionId: String!
 	availableVolumeAtLocationType: AvailableVolumeAtLocationTypeNode
-	forecastTotalDoses: Float
-	forecastTotalUnits: Float
-	vaccineCourses: String
+	"""
+	Where the line's monthly demand comes from
+	"""
+	forecastMethod: ForecastMethodNode!
+	"""
+	The line's monthly demand in units: what its suggested quantity, months of stock and
+	target stock work from, whatever its forecast method
+	"""
+	forecastMonthlyConsumption: Float!
+	"""
+	The inputs and steps behind the line's monthly demand
+	"""
+	forecastBreakdown: ForecastBreakdownNode!
+	"""
+	Every forecast method, an unavailable one with its reason. Empty on a response
+	requisition's line, whose forecast is the customer's.
+	"""
+	forecastMethodOptions: [ForecastMethodOptionNode!]!
+	"""
+	The requisition's target months × the line's monthly demand
+	"""
+	targetStock: Float!
 }
 
 type RequisitionLineStatsError {
@@ -8217,6 +8960,12 @@ type RequisitionNode {
 	Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
 	"""
 	minMonthsOfStock: Float!
+	"""
+	The ordering store's supply interval and safety buffer (from its facility record) as
+	they stand now, null when it carries no supply interval. A general
+	order's default target months of stock.
+	"""
+	supplyIntervalAndBuffer: SupplyIntervalAndBufferNode
 	documents: SyncFileReferenceConnector!
 	lines: RequisitionLineConnector!
 	"""
@@ -8507,6 +9256,12 @@ input SaveOutboundShipmentLinesInput {
 	itemId: String!
 	lines: [OutboundShipmentLineInput!]!
 	placeholderQuantity: Float
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 input SavePrescriptionLinesInput {
@@ -8515,6 +9270,12 @@ input SavePrescriptionLinesInput {
 	lines: [PrescriptionLineInput!]!
 	prescribedQuantity: Float
 	note: String
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 type ScannedDataParseError {
@@ -8585,6 +9346,16 @@ input SensorSortInput {
 }
 
 union SensorsResponse = SensorConnector
+
+type SetMaintenanceModeError {
+	error: SetMaintenanceModeErrorInterface!
+}
+
+interface SetMaintenanceModeErrorInterface {
+	description: String!
+}
+
+union SetMaintenanceModeResponse = MaintenanceModeNode | SetMaintenanceModeError
 
 type SetPrescribedQuantityError {
 	error: SetPrescribedQuantityErrorInterface!
@@ -8793,7 +9564,14 @@ type StockLineNode {
 	location: LocationNode
 	item: ItemNode!
 	supplierName: String
+	"""
+	The barcode the stock carries, as people read it, e.g. `9506682101352`
+	"""
 	barcode: String
+	"""
+	None for an auto-created variant, which only holds a barcode: it's kept out
+	of sight like it is in variant lists. `itemVariantId` still gives it.
+	"""
 	itemVariant: ItemVariantNode
 	vvmStatus: VvmstatusNode
 	vvmStatusLogs: VvmstatusLogConnector
@@ -9118,6 +9896,19 @@ type StoreNode {
 	createdDate: NaiveDate
 }
 
+type StoreOverrideNode {
+	"""
+	Whether this store pins its own value rather than following the global
+	one.
+	"""
+	isOverridden: Boolean!
+	"""
+	The global value this store follows, or would return to by clearing the
+	override. Same type loss as `value`.
+	"""
+	globalValue: JSON!
+}
+
 type StorePreferenceNode {
 	id: String!
 	packToOne: Boolean!
@@ -9258,6 +10049,14 @@ type SupplierReturnLineNode {
 	reasonOption: ReasonOptionNode
 }
 
+type SupplyIntervalAndBufferNode {
+	supplyIntervalMonths: Float!
+	"""
+	Zero when the facility record carries none
+	"""
+	safetyBufferMonths: Float!
+}
+
 type SupplyRequestedQuantityError {
 	error: SupplyRequestedQuantityErrorInterface!
 }
@@ -9271,6 +10070,14 @@ input SupplyRequestedQuantityInput {
 }
 
 union SupplyRequestedQuantityResponse = SupplyRequestedQuantityError | RequisitionLineConnector
+
+"""
+State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync
+client pause) so the two can grow their own fields.
+"""
+type SyncApiPausedNode {
+	isPaused: Boolean!
+}
 
 type SyncErrorNode {
 	variant: SyncErrorVariant!
@@ -9298,6 +10105,7 @@ enum SyncErrorVariant {
 	V6_API_VERSION_INCOMPATIBLE
 	INTEGRATION_ERROR
 	V7_UPGRADE_FAILED
+	SYNC_API_PAUSED
 }
 
 enum SyncErrorVariantV7 {
@@ -9324,6 +10132,7 @@ enum SyncErrorVariantV7 {
 	SITE_IS_NOT_V7
 	WAITING_FOR_CENTRAL_V7_UPGRADE
 	REQUEST_SITE_AUTH_ERROR
+	SYNC_API_PAUSED
 	OTHER
 }
 
@@ -9342,6 +10151,8 @@ type SyncFileReferenceNode {
 	createdDatetime: DateTime!
 	error: String
 	status: SyncFileReferenceNodeStatus!
+	userId: String
+	user: UserNode
 }
 
 enum SyncFileReferenceNodeStatus {
@@ -9355,6 +10166,20 @@ enum SyncFileReferenceNodeStatus {
 type SyncInfoUpdatedNode {
 	syncStatus: FullSyncStatusNode
 	numberOfRecordsInPushQueue: Int!
+	"""
+	Admin pause (Admin > Sync settings): while true no scheduled or manual sync runs.
+	"""
+	isSyncPaused: Boolean!
+	"""
+	Central maintenance mode (#840): only server admins are signed in, and a manual sync is
+	forced past the sync pause.
+	"""
+	isMaintenanceMode: Boolean!
+	"""
+	Central's sync API pause: while true central refuses remote sites' sync. Always false on
+	a remote.
+	"""
+	isSyncApiPaused: Boolean!
 }
 
 type SyncMessageConnector {
@@ -9419,6 +10244,10 @@ input SyncMessageSortInput {
 	desc: Boolean
 }
 
+type SyncPausedNode {
+	isPaused: Boolean!
+}
+
 union SyncRequestDescriptionNode = AllStoreDataDescription | TableNameDescription
 
 input SyncSettingsInput {
@@ -9454,6 +10283,11 @@ type SyncSettingsNode {
 	"""
 	intervalSeconds: Int!
 	centralServerSiteId: Int!
+	"""
+	Admin pause (Admin > Sync settings). While true no scheduled or manual sync runs on an
+	initialised site; set with `setSyncPaused`.
+	"""
+	isPaused: Boolean!
 	syncSiteId: Int
 	"""
 	Configured sync batch size. Returns Some only when all three underlying
@@ -9871,6 +10705,12 @@ input UpdateInboundShipmentInput {
 	defaultDonor: UpdateDonorInput
 	receivedDatetime: DateTime
 	"""
+	The shipment's default campaign (null = none): lines added from a
+	master list or internal order take it, and the line editor prefills
+	new batches with it.
+	"""
+	campaignId: NullableStringUpdate
+	"""
 	Patch of customFields key -> value (JSON object) merged into the
 	invoice's custom properties; a `null` value clears that key, keys absent
 	from the patch are left unchanged.
@@ -9911,6 +10751,12 @@ input UpdateInboundShipmentLineInput {
 	shippedPackSize: Float
 	status: InvoiceLineStatusType
 	reasonOptionId: NullableStringUpdate
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. An empty one clears it. Doesn't propose a barcode (see
+	`proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union UpdateInboundShipmentLineResponse = UpdateInboundShipmentLineError | InvoiceLineNode
@@ -10056,6 +10902,10 @@ input UpdateOutboundShipmentInput {
 	currencyRate: Float
 	expectedDeliveryDate: NullableDateUpdate
 	shippingMethodId: NullableStringUpdate
+	"""
+	The campaign this shipment issues for (null = routine).
+	"""
+	campaignId: NullableStringUpdate
 	backdatedDatetime: DateTime
 	"""
 	Patch of customFields key -> value (JSON object) merged into the
@@ -10377,12 +11227,11 @@ input UpdatePurchaseOrderInput {
 	authorisingOfficer2: String
 	additionalInstructions: String
 	headingMessage: String
-	agentCommission: Float
-	documentCharge: Float
-	communicationsCharge: Float
-	insuranceCharge: Float
-	freightCharge: Float
 	freightConditions: String
+	"""
+	Merged into the order's custom fields; a null value deletes the key
+	"""
+	customFields: JSON
 }
 
 type UpdatePurchaseOrderLineError {
@@ -10394,7 +11243,6 @@ input UpdatePurchaseOrderLineInput {
 	itemId: String
 	requestedPackSize: Float
 	requestedNumberOfUnits: Float
-	adjustedNumberOfUnits: Float
 	requestedDeliveryDate: NullableDateUpdate
 	expectedDeliveryDate: NullableDateUpdate
 	pricePerPackBeforeDiscount: Float
@@ -10456,6 +11304,13 @@ input UpdateRequestRequisitionLineInput {
 	requestedQuantity: Float
 	comment: String
 	optionId: String
+	"""
+	Changing the method recomputes the line's monthly demand, breakdown and suggested
+	quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
+	is untouched
+	"""
+	forecastMethod: ForecastMethodNode
+	campaignId: NullableStringUpdate
 }
 
 union UpdateRequestRequisitionLineResponse = UpdateRequestRequisitionLineError | RequisitionLineNode
@@ -10799,6 +11654,12 @@ input UpdateVaccineCourseInput {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Unchanged when omitted; a null value clears it, counting every dose
+	in the course
+	"""
+	annualDosesPerPerson: NullableFloatUpdate
 }
 
 union UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode
@@ -10837,6 +11698,7 @@ input UpsertAncillaryItemInput {
 	Right-hand side of the user-entered `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	excludePrincipalWastage: Boolean
 }
 
 union UpsertAncillaryItemResponse = UpsertAncillaryItemError | AncillaryItemNode
@@ -10871,6 +11733,7 @@ input UpsertCampaignInput {
 	name: String!
 	startDate: NaiveDate
 	endDate: NaiveDate
+	kind: CampaignKindNode
 }
 
 union UpsertCampaignResponse = UpsertCampaignError | CampaignNode
@@ -10906,6 +11769,7 @@ union UpsertPackVariantResponse = UpsertItemVariantError | ItemVariantNode
 input UpsertPreferencesInput {
 	allowTrackingOfStockByDonor: Boolean
 	authorisePurchaseOrder: Boolean
+	authorisePurchaseOrderStoreOverride: [BoolStoreOverrideInput!]
 	customTranslations: JSONObject
 	"""
 	v2 custom translations, shape: `language -> namespace -> key -> value`.
@@ -10929,11 +11793,11 @@ input UpsertPreferencesInput {
 	backdating: BackdatingInput
 	receivePaymentsFromPrescriptions: Boolean
 	globalLogo: String
+	decimalPlacesForNumbers: Int
 	blindStocktake: [BoolStorePrefInput!]
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]
 	orderInPacks: [BoolStorePrefInput!]
-	useProcurementFunctionality: [BoolStorePrefInput!]
 	sortByVvmStatusThenExpiry: [BoolStorePrefInput!]
 	useSimplifiedMobileUi: [BoolStorePrefInput!]
 	disableManualReturns: [BoolStorePrefInput!]
@@ -10941,6 +11805,7 @@ input UpsertPreferencesInput {
 	inboundShipmentAutoVerify: [BoolStorePrefInput!]
 	canCreateInternalOrderFromARequisition: [BoolStorePrefInput!]
 	selectDestinationStoreForAnInternalOrder: [BoolStorePrefInput!]
+	canChangeTargetMonthsOfStock: [BoolStorePrefInput!]
 	externalInboundShipmentLinesMustBeAuthorised: [BoolStorePrefInput!]
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: [IntegerStorePrefInput!]
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts: [FloatStorePrefInput!]
@@ -10952,6 +11817,7 @@ input UpsertPreferencesInput {
 	invoiceStatusOptions: [InvoiceStatusOptionsInput!]
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
+	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {
@@ -11276,6 +12142,11 @@ type VaccineCourseNode {
 	useInGapsCalculations: Boolean!
 	wastageRate: Float!
 	canSkipDose: Boolean!
+	"""
+	The average number of doses a person reached gets in a year, for population
+	forecasting. Null counts every dose in the course
+	"""
+	annualDosesPerPerson: Float
 	demographic: DemographicNode
 	vaccineCourseItems: [VaccineCourseItemNode!]
 	vaccineCourseDoses: [VaccineCourseDoseNode!]

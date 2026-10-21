@@ -23,13 +23,18 @@ import { createFlash } from '../../../ui/utils/createFlash';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
-import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import {
+  currentStep,
+  filterByStatusPreference,
+  trackStages,
+} from '@/domain/invoice';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
   sourceLinkOf,
   reachableStatuses,
   statusDatetime,
   statusFlow,
+  statusLabel,
   STATUS_LABELS,
 } from './inboundShipmentStatus';
 
@@ -65,9 +70,10 @@ export interface InboundShipmentStatusFooterProps {
 // SUBMITTED, not pre-validated (spec S7 / validation.md → actions): a server
 // rejection (on hold, cannot-reverse, cannot-set-shipped-on-manual, pending
 // lines) returns and is shown inline at the control, the request preserved.
-// A committed advance is reported in the same slot, as a flash of the current
-// app's save confirmation (spec/ui-standards/controls.md § action feedback):
-// the split button is gone at Verified, and the crumb alone is easy to miss.
+// A committed advance is reported in the same slot, as a flash of the status
+// it reached, in the crumb's own word (issue #1127;
+// spec/ui-standards/controls.md § action feedback): the split button is gone
+// at Verified, and the crumb alone is easy to miss.
 export const InboundShipmentStatusFooter: Component<
   InboundShipmentStatusFooterProps
 > = props => {
@@ -85,10 +91,12 @@ export const InboundShipmentStatusFooter: Component<
 
   const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
-  // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted.
+  // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted. The
+  // track also keeps the shipment's OWN stage when the preference hides it, so
+  // a transfer resting at the sending store's Picked still marks Picked.
   const allowed = () => inboundShipmentPreferences().invoiceStatusOptions;
   const flow = () => statusFlow(sourceLink(), props.node.status);
-  const offered = () => filterByStatusPreference(flow(), allowed());
+  const offered = () => trackStages(flow(), allowed(), props.node.status);
   const steps = () =>
     offered().map(status => ({
       label: STATUS_LABELS[status],
@@ -118,7 +126,7 @@ export const InboundShipmentStatusFooter: Component<
     setBusy(false);
     if (result.kind === 'saved') {
       props.onAdvanced(result.node);
-      saved.show(t('messages.shipment-saved'));
+      saved.show(statusLabel(result.node.status));
     } else if (result.kind === 'error') setErrorMessage(result.message);
   };
 
@@ -141,12 +149,12 @@ export const InboundShipmentStatusFooter: Component<
         {t('label.hold')}
       </CheckboxButton>
 
-      {/* An excluded current status highlights the nearest included earlier
-          stage (OMS-REG-REPL-03.26). */}
+      {/* The current stage always has a step to mark, hidden or not
+          (OMS-REG-REPL-03.28). */}
       <StatusIndicator
         recordId={props.node.id}
         steps={steps()}
-        current={currentStep(flow(), offered(), props.node.status)}
+        current={currentStep(offered(), props.node.status)}
       />
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
@@ -166,7 +174,7 @@ export const InboundShipmentStatusFooter: Component<
         )}
       </Show>
 
-      {/* A committed advance flashes its save confirmation. */}
+      {/* A committed advance flashes the status it reached. */}
       <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>

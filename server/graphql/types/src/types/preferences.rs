@@ -6,7 +6,10 @@ use crate::types::{
 };
 use async_graphql::*;
 use repository::StorageConnection;
-use service::preference::{Preference, PreferenceDescription, preferences::PreferenceProvider};
+use service::preference::{
+    OverridingStore, Preference, PreferenceDescription, StoreOverrideDescription,
+    preferences::PreferenceProvider,
+};
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
@@ -123,6 +126,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.global_logo)
     }
 
+    pub async fn decimal_places_for_numbers(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.decimal_places_for_numbers)
+    }
+
     // Store preferences
     pub async fn blind_stocktake(&self) -> Result<bool> {
         self.load_preference(&self.preferences.blind_stocktake)
@@ -138,10 +145,6 @@ impl PreferencesNode {
 
     pub async fn order_in_packs(&self) -> Result<bool> {
         self.load_preference(&self.preferences.order_in_packs)
-    }
-
-    pub async fn use_procurement_functionality(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_procurement_functionality)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -178,6 +181,10 @@ impl PreferencesNode {
                 .preferences
                 .select_destination_store_for_an_internal_order,
         )
+    }
+
+    pub async fn can_change_target_months_of_stock(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.can_change_target_months_of_stock)
     }
 
     pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
@@ -250,6 +257,14 @@ impl PreferencesNode {
     pub async fn do_not_print_placeholder_line_labels(&self) -> Result<bool> {
         self.load_preference(&self.preferences.do_not_print_placeholder_line_labels)
     }
+
+    pub async fn prompt_for_batch_and_expiry_on_inbound_shipments(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .prompt_for_batch_and_expiry_on_inbound_shipments,
+        )
+    }
 }
 
 impl PreferencesNode {
@@ -290,6 +305,61 @@ impl PreferenceDescriptionNode {
     pub async fn value(&self) -> &serde_json::Value {
         &self.pref.value
     }
+
+    /// How this store arrives at `value`, for a global preference a store may
+    /// override. Null for every other preference, and in the global listing.
+    pub async fn store_override(&self) -> Option<StoreOverrideNode<'_>> {
+        self.pref
+            .store_override
+            .as_ref()
+            .map(|store_override| StoreOverrideNode { store_override })
+    }
+
+    /// The stores that pin their own value instead of following this global
+    /// one, by store name. Empty where none do; null unless this is the global
+    /// listing of an overridable preference.
+    pub async fn overriding_stores(&self) -> Option<Vec<OverridingStoreNode<'_>>> {
+        self.pref.overriding_stores.as_ref().map(|stores| {
+            stores
+                .iter()
+                .map(|store| OverridingStoreNode { store })
+                .collect()
+        })
+    }
+}
+
+pub struct OverridingStoreNode<'a> {
+    pub store: &'a OverridingStore,
+}
+
+#[Object]
+impl OverridingStoreNode<'_> {
+    pub async fn store_id(&self) -> &str {
+        &self.store.store_id
+    }
+
+    pub async fn store_name(&self) -> &str {
+        &self.store.store_name
+    }
+}
+
+pub struct StoreOverrideNode<'a> {
+    pub store_override: &'a StoreOverrideDescription,
+}
+
+#[Object]
+impl StoreOverrideNode<'_> {
+    /// Whether this store pins its own value rather than following the global
+    /// one.
+    pub async fn is_overridden(&self) -> bool {
+        self.store_override.is_overridden
+    }
+
+    /// The global value this store follows, or would return to by clearing the
+    /// override. Same type loss as `value`.
+    pub async fn global_value(&self) -> &serde_json::Value {
+        &self.store_override.global_value
+    }
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -318,12 +388,12 @@ pub enum PreferenceKey {
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
+    DecimalPlacesForNumbers,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
-    UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
     DisableManualReturns,
@@ -332,6 +402,7 @@ pub enum PreferenceKey {
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    CanChangeTargetMonthsOfStock,
     ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
@@ -344,6 +415,7 @@ pub enum PreferenceKey {
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
     DoNotPrintPlaceholderLineLabels,
+    PromptForBatchAndExpiryOnInboundShipments,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

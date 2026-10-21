@@ -206,11 +206,11 @@ pub struct LoggingSettings {
     pub mode: LogMode,
     ///  Off | Error | Warn | Info (default) | Debug | Trace
     pub level: Level,
-    /// Max number of temp logfiles to retain
     pub directory: Option<String>,
     pub filename: Option<String>,
+    /// Max number of rotated (gzip compressed) logfiles to retain, in addition to the active logfile
     pub max_file_count: Option<i64>,
-    /// Max logfile size in MB
+    /// Max logfile size in MB before it is rotated
     pub max_file_size: Option<usize>,
 }
 
@@ -286,14 +286,41 @@ pub struct ChangelogPartitionSettings {
     pub interval: IntervalSettings,
 }
 
+/// Omitted fields are 0; the 30 minute default only applies when the whole
+/// `interval` key is omitted (via the parent's `#[serde(default)]`). A zero
+/// total is rejected in `TryFrom` so it fails at startup.
 #[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(try_from = "IntervalSettingsRaw")]
 pub struct IntervalSettings {
-    #[serde(default)]
     pub hours: u64,
-    #[serde(default = "default_interval_mins")]
     pub mins: u64,
-    #[serde(default)]
     pub secs: u64,
+}
+
+/// Deserialization shape for [`IntervalSettings`], validated in `TryFrom`.
+#[derive(Deserialize)]
+struct IntervalSettingsRaw {
+    #[serde(default)]
+    hours: u64,
+    #[serde(default)]
+    mins: u64,
+    #[serde(default)]
+    secs: u64,
+}
+
+impl TryFrom<IntervalSettingsRaw> for IntervalSettings {
+    type Error = String;
+
+    fn try_from(raw: IntervalSettingsRaw) -> std::result::Result<Self, Self::Error> {
+        let IntervalSettingsRaw { hours, mins, secs } = raw;
+        if hours == 0 && mins == 0 && secs == 0 {
+            return Err(
+                "interval must be greater than zero: set at least one of hours, mins or secs"
+                    .to_string(),
+            );
+        }
+        Ok(IntervalSettings { hours, mins, secs })
+    }
 }
 
 fn default_partition_size() -> i64 {
@@ -359,7 +386,7 @@ impl ChangelogPartitionSettings {
 /// yaml-bound config for the scheduled changelog deduplication task
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ChangelogDedupSettings {
-    #[serde(default)]
+    #[serde(default = "default_dedup_interval")]
     pub interval: IntervalSettings,
     /// When set, dedup only runs while the local clock is within [from, to].
     /// When absent, dedup runs on every `interval` tick with no time gating.
@@ -405,18 +432,18 @@ fn default_dedup_batch() -> i64 {
     50_000
 }
 
-fn default_dedup_interval_hours() -> u64 {
-    24
+fn default_dedup_interval() -> IntervalSettings {
+    IntervalSettings {
+        hours: 24,
+        mins: 0,
+        secs: 0,
+    }
 }
 
 impl Default for ChangelogDedupSettings {
     fn default() -> Self {
         Self {
-            interval: IntervalSettings {
-                hours: default_dedup_interval_hours(),
-                mins: 0,
-                secs: 0,
-            },
+            interval: default_dedup_interval(),
             time_window: None,
             batch_size: default_dedup_batch(),
         }
@@ -439,8 +466,47 @@ impl TimeWindow {
 
 #[cfg(test)]
 mod test {
-    use super::ChangelogDedupSettings;
+    use super::{ChangelogDedupSettings, ChangelogPartitionSettings};
     use chrono::NaiveTime;
+    use std::time::Duration;
+
+    fn partition_interval(yaml: &str) -> Result<Duration, serde_yaml::Error> {
+        serde_yaml::from_str::<ChangelogPartitionSettings>(yaml).map(|s| s.interval.as_duration())
+    }
+
+    #[test]
+    fn interval_omitted_defaults_to_30_mins() {
+        assert_eq!(
+            partition_interval("partition_size: 10").unwrap(),
+            Duration::from_secs(30 * 60)
+        );
+    }
+
+    #[test]
+    fn interval_unwritten_fields_are_zero() {
+        assert_eq!(
+            partition_interval("interval:\n  hours: 1").unwrap(),
+            Duration::from_secs(60 * 60)
+        );
+        assert_eq!(
+            partition_interval("interval:\n  secs: 5").unwrap(),
+            Duration::from_secs(5)
+        );
+    }
+
+    #[test]
+    fn interval_all_zero_is_rejected() {
+        let err = partition_interval("interval:\n  hours: 0\n  mins: 0\n  secs: 0")
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("greater than zero"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn dedup_interval_omitted_defaults_to_24_hours() {
+        let s: ChangelogDedupSettings = serde_yaml::from_str("batch_size: 10").unwrap();
+        assert_eq!(s.interval.as_duration(), Duration::from_secs(24 * 60 * 60));
+    }
 
     #[test]
     fn time_window_parses_hh_mm() {

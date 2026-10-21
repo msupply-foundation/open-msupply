@@ -11,6 +11,7 @@ import {
   Representation,
   RepresentationValue,
   RequisitionNodeStatus,
+  ForecastMethodNode,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment, useResponse } from '../../api';
@@ -132,8 +133,12 @@ export const ResponseLineEditModal = ({
   const itemVolume =
     (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
     (draft?.supplyQuantity ?? 0);
+  // The customer's target stock on a Population line (the forecast's
+  // breakdown is shown by the Solid front end only).
   const displayForecasting =
-    (displayPopulationBasedForecasting && !!draft?.forecastTotalUnits) || false;
+    (displayPopulationBasedForecasting &&
+      draft?.forecastMethod === ForecastMethodNode.Population) ||
+    false;
 
   const tabs = [
     {
@@ -168,8 +173,6 @@ export const ResponseLineEditModal = ({
           }
           availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
           itemVolume={itemVolume}
-          displayForecasting={displayForecasting}
-          vaccineCourses={draft?.vaccineCourses}
         />
       ),
       value: 'label.customer',

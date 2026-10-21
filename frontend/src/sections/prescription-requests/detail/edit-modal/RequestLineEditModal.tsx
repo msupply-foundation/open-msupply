@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { generateUUID } from '../../../../uuid';
 import { t } from '../../../../intl';
-import { formatNumber } from '../../../../intl';
+import { roundedText } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -248,7 +248,7 @@ export const RequestLineEditModal: Component<
           <LabelledValue variant="field" label={t('label.available-soh')}>
             <span data-testid="available-stock-note">
               {t('label.available-quantity', {
-                number: formatNumber(chosen().availableUnits),
+                number: roundedText(chosen().availableUnits),
                 unitName: chosen().unitName ?? t('label.units'),
               })}
             </span>

@@ -11,8 +11,8 @@ import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  DEFAULT_DATE_FORMAT,
   dateToIsoDate,
+  defaultDateFormat,
   formatIsoDate,
   formatPlaceholder,
   isoDateToDate,
@@ -34,12 +34,23 @@ export interface DateFieldProps {
   /** Latest selectable date, ISO `YYYY-MM-DD`. Later dates unselectable. */
   max?: string;
   /**
-   * Display + typed-entry format, e.g. `dd/MM/yyyy`, `dd MMM yyyy` (default),
-   * `MM/dd/yyyy`, `yyyy-MM-dd`. Tokens: d/dd, M/MM/MMM/MMMM, yy/yyyy.
+   * Display + typed-entry format, e.g. `dd/MM/yyyy`, `dd MMM yyyy`,
+   * `MM/dd/yyyy`, `yyyy-MM-dd`. Tokens: d/dd, M/MM/MMM/MMMM, yy/yyyy. Defaults
+   * to the app language's numeric short date (`dd/MM/yyyy` in English), the
+   * same pattern read-only dates render with (#774).
    */
   format?: string;
   helperText?: string;
   error?: string;
+  /** Advisory warning below the field (FieldShell's `warning`). */
+  warning?: string;
+  /** `data-testid` for the warning message (e2e/TESTIDS.md). */
+  warningTestId?: string;
+  /**
+   * The typed-entry `<input>` — what a focus target binds to
+   * (ui/utils/createFocusTarget), as TextField forwards its own `ref`.
+   */
+  ref?: (el: HTMLInputElement) => void;
   /**
    * An affordance rendered inline after the label text (an InfoTooltip) — for a
    * standing explanation, e.g. why the field is disabled, that would drag a
@@ -73,7 +84,7 @@ export interface DateFieldProps {
 export const DateField = (props: DateFieldProps) => {
   const autoId = createUniqueId();
   const id = () => props.id ?? autoId;
-  const fmt = () => props.format ?? DEFAULT_DATE_FORMAT;
+  const fmt = () => props.format ?? defaultDateFormat();
 
   // Local text buffer for typing; resynced from the external value only when
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
@@ -125,6 +136,8 @@ export const DateField = (props: DateFieldProps) => {
       hideLabel={props.hideLabel}
       required={props.required}
       error={props.error}
+      warning={props.warning}
+      warningTestId={props.warningTestId}
       helperText={props.helperText}
       labelInfo={props.labelInfo}
       controlId={id()}
@@ -137,6 +150,7 @@ export const DateField = (props: DateFieldProps) => {
           data-disabled={props.disabled ? '' : undefined}
         >
           <input
+            ref={el => props.ref?.(el)}
             id={id()}
             type="text"
             class={styles.dateInput}

@@ -44,6 +44,9 @@ pub struct UpdateOutboundShipment {
     pub currency_rate: Option<f64>,
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub shipping_method_id: Option<NullableUpdate<String>>,
+    /// The campaign this shipment issues for (null = routine). Existing lines
+    /// are left as they are.
+    pub campaign_id: Option<NullableUpdate<String>>,
     pub backdated_datetime: Option<DateTime<Utc>>,
     /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
@@ -62,6 +65,7 @@ pub enum UpdateOutboundShipmentError {
     CannotIssueInForeignCurrency,
     OtherPartyDoesNotExist,
     ShippingMethodDoesNotExist,
+    CampaignDoesNotExist,
     /// A customFields patch key is not a visible outbound shipment property.
     UnknownPropertyKey(String),
     /// A customFields patch gives a defined property a value of the wrong
@@ -261,9 +265,10 @@ mod test {
         NameStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow,
         StockLineRowRepository, StorageConnection,
         mock::{
-            MockData, MockDataInserts, mock_inbound_shipment_a, mock_item_a, mock_name_a,
-            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_c,
+            MockData, MockDataInserts, mock_campaign_a, mock_inbound_shipment_a, mock_item_a,
+            mock_name_a, mock_outbound_shipment_b, mock_outbound_shipment_c,
+            mock_outbound_shipment_on_hold, mock_outbound_shipment_picked, mock_store_a,
+            mock_store_c,
         },
         test_db::setup_all_with_data,
     };
@@ -707,6 +712,7 @@ mod test {
                 currency_rate: _,
                 expected_delivery_date,
                 shipping_method_id: _,
+                campaign_id: _,
                 backdated_datetime: _,
                 custom_fields: _,
             } = get_update();
@@ -1884,5 +1890,74 @@ mod test {
             .unwrap();
         assert_eq!(after.status, InvoiceStatus::Picked);
         assert!(!after.on_hold);
+    }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_campaign() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "outbound_campaign".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_campaign",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                ..Default::default()
+            },
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+        let campaign = |value: Option<String>| UpdateOutboundShipment {
+            id: invoice().id,
+            campaign_id: Some(NullableUpdate { value }),
+            ..Default::default()
+        };
+        let saved_campaign = || {
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id(&invoice().id)
+                .unwrap()
+                .unwrap()
+                .campaign_id
+        };
+
+        assert_eq!(
+            service
+                .update_outbound_shipment(&context, campaign(Some("not_a_campaign".to_string()))),
+            Err(ServiceError::CampaignDoesNotExist)
+        );
+
+        service
+            .update_outbound_shipment(&context, campaign(Some(mock_campaign_a().id)))
+            .unwrap();
+        assert_eq!(saved_campaign(), Some(mock_campaign_a().id));
+
+        // A patch without the field leaves it alone
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice().id,
+                    comment: Some("comment".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(saved_campaign(), Some(mock_campaign_a().id));
+
+        service
+            .update_outbound_shipment(&context, campaign(None))
+            .unwrap();
+        assert_eq!(saved_campaign(), None);
     }
 }

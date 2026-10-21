@@ -39,6 +39,7 @@ pub struct UpsertAncillaryItem {
     pub item_quantity: f64,
     /// Right-hand side of the user-entered `x:y` ratio (ancillary count).
     pub ancillary_quantity: f64,
+    pub exclude_principal_wastage: Option<bool>,
 }
 
 pub fn upsert_ancillary_item(
@@ -49,8 +50,9 @@ pub fn upsert_ancillary_item(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &input)?;
-            let new_row = generate(input.clone());
             let repo = AncillaryItemRowRepository::new(connection);
+            let existing = repo.find_one_by_id(&input.id)?;
+            let new_row = generate(input.clone(), existing);
 
             repo.upsert_one(&new_row)?;
 
@@ -91,7 +93,9 @@ fn generate(
         ancillary_item_id,
         item_quantity,
         ancillary_quantity,
+        exclude_principal_wastage,
     }: UpsertAncillaryItem,
+    existing: Option<AncillaryItemRow>,
 ) -> AncillaryItemRow {
     AncillaryItemRow {
         id,
@@ -100,6 +104,8 @@ fn generate(
         item_quantity,
         ancillary_quantity,
         deleted_datetime: None,
+        exclude_principal_wastage: exclude_principal_wastage
+            .unwrap_or(existing.is_some_and(|row| row.exclude_principal_wastage)),
     }
 }
 

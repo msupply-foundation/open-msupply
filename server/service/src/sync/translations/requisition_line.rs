@@ -6,9 +6,10 @@ use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_f
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter,
-    RnRFormLineRepository, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ForecastMethod, ItemLinkRowRepository,
+    LegacyForecast, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
+    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row, StorageConnection,
+    SyncBufferRow, forecast_from_legacy, forecast_to_legacy,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -22,9 +23,16 @@ pub struct RequisitionLineOmsFields {
     pub price_per_unit: Option<f64>,
     pub available_volume: Option<f64>,
     pub location_type_id: Option<String>,
+    // The legacy forecast shape: only a Population line carries it. Converted to and from
+    // the line's forecast method, monthly demand and breakdown by `forecast_from_legacy`
+    // and `forecast_to_legacy`. Legacy sync serves only sites older than 3.0, so the
+    // current forecast shape is never sent.
     pub forecast_total_units: Option<f64>,
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -121,25 +129,33 @@ impl SyncTranslation for RequisitionLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
 
-        let (
-            price_per_unit,
-            available_volume,
-            location_type_id,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
-        ) = if let Some(oms_fields) = data.oms_fields {
-            (
-                oms_fields.price_per_unit,
-                oms_fields.available_volume,
-                oms_fields.location_type_id,
-                oms_fields.forecast_total_units,
-                oms_fields.forecast_total_doses,
-                oms_fields.vaccine_courses,
-            )
-        } else {
-            (None, None, None, None, None, None)
-        };
+        let average_monthly_consumption =
+            (data.daily_usage * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30).ceil();
+
+        let (price_per_unit, available_volume, location_type_id, campaign_id, forecast) =
+            if let Some(oms_fields) = data.oms_fields {
+                let forecast = forecast_from_legacy(
+                    &LegacyForecast {
+                        forecast_total_units: oms_fields.forecast_total_units,
+                        forecast_total_doses: oms_fields.forecast_total_doses,
+                        vaccine_courses: oms_fields.vaccine_courses,
+                    },
+                    average_monthly_consumption,
+                );
+                let forecast_data = forecast.data_json();
+                let forecast = (forecast.method, forecast.monthly_consumption, forecast_data);
+                (
+                    oms_fields.price_per_unit,
+                    oms_fields.available_volume,
+                    oms_fields.location_type_id,
+                    oms_fields.campaign_id,
+                    forecast,
+                )
+            } else {
+                let amc = (ForecastMethod::Amc, average_monthly_consumption, None);
+                (None, None, None, None, amc)
+            };
+        let (forecast_method, forecast_monthly_consumption, forecast_data) = forecast;
 
         let fk_check = fk_checker.with_table(connection, "requisition_line", &data.ID);
         let check_fk = fk_checker.with_table_required(connection, "requisition_line", &data.ID);
@@ -149,6 +165,8 @@ impl SyncTranslation for RequisitionLineTranslation {
         let location_type_id =
             fk_check(location_type_id, "location_type_id", FkField::LocationType)?;
 
+        let campaign_id = fk_check(campaign_id, "campaign_id", FkField::Campaign)?;
+
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: check_fk(data.requisition_ID, "requisition_id", FkField::Requisition)?,
@@ -157,9 +175,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
             available_stock_on_hand: data.stock_on_hand,
-            average_monthly_consumption: (data.daily_usage
-                * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30)
-                .ceil(),
+            average_monthly_consumption,
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
@@ -176,9 +192,10 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_data,
+            forecast_method,
+            forecast_monthly_consumption,
+            campaign_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -230,9 +247,10 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_monthly_consumption: _,
+            forecast_data,
+            campaign_id,
         } = requisition_line_row;
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
@@ -243,13 +261,26 @@ impl SyncTranslation for RequisitionLineTranslation {
             ))?
             .item_id;
 
-        let is_program_requisition = RequisitionRepository::new(connection)
+        let requisition = RequisitionRepository::new(connection)
             .query_by_filter(
                 RequisitionFilter::new().id(EqualFilter::equal_to(requisition_id.to_string())),
             )?
             .pop()
-            .map(|requisition| requisition.program.is_some())
-            .unwrap_or(false);
+            .ok_or(anyhow::anyhow!(
+                "Requisition ({requisition_id}) not found for requisition line ({id})"
+            ))?;
+        let is_program_requisition = requisition.program.is_some();
+
+        // A Population line is sent with its forecast spread over the order's target months
+        let LegacyForecast {
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
+        } = forecast_to_legacy(
+            &forecast_method,
+            forecast_data.as_deref(),
+            requisition.requisition_row.max_months_of_stock,
+        );
 
         let prev_stock_balance = if is_program_requisition {
             initial_stock_on_hand_units
@@ -277,6 +308,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_total_units,
             forecast_total_doses,
             vaccine_courses,
+            campaign_id,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
@@ -499,5 +531,155 @@ mod tests {
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
         assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
+    }
+
+    /// Legacy central only carries the legacy forecast shape: a Population line goes out
+    /// spread over the order's target months and converts back on pull.
+    #[actix_rt::test]
+    async fn test_requisition_line_forecast_uses_legacy_shape_on_legacy_central() {
+        use repository::{
+            AncillaryRatioForecast, AncillaryRatioPrincipal, ForecastData, PopulationForecast,
+            PopulationForecastCourse, RequisitionLineRowRepository,
+        };
+
+        let (_, connection, _, _) = setup_all(
+            "test_requisition_line_forecast_uses_legacy_shape_on_legacy_central",
+            MockDataInserts::all(),
+        )
+        .await;
+        let requisition = mock_request_draft_requisition();
+        assert_eq!(requisition.max_months_of_stock, 1.0);
+
+        let population = RequisitionLineRow {
+            id: "population_line".to_string(),
+            requisition_id: requisition.id.clone(),
+            item_id: "item_a".to_string(),
+            average_monthly_consumption: 30.0,
+            forecast_method: ForecastMethod::Population,
+            forecast_monthly_consumption: 100.0,
+            forecast_data: Some(
+                ForecastData::Population(PopulationForecast {
+                    population_served: Some(1200.0),
+                    courses: vec![PopulationForecastCourse {
+                        course_name: "Course".to_string(),
+                        demographic_name: None,
+                        number_of_doses: 1,
+                        coverage_rate: 100.0,
+                        wastage_rate: 0.0,
+                        target_population: 1200.0,
+                        annual_doses_per_person: None,
+                        loss_factor: 1.0,
+                        annual_target_doses: 1200.0,
+                        doses_per_unit: 1.0,
+                        monthly_doses: 100.0,
+                        monthly_units: 100.0,
+                    }],
+                })
+                .to_json(),
+            ),
+            ..Default::default()
+        };
+        let ancillary = RequisitionLineRow {
+            id: "ancillary_line".to_string(),
+            requisition_id: requisition.id.clone(),
+            item_id: "item_b".to_string(),
+            average_monthly_consumption: 30.0,
+            forecast_method: ForecastMethod::AncillaryRatio,
+            forecast_monthly_consumption: 200.0,
+            forecast_data: Some(
+                ForecastData::AncillaryRatio(AncillaryRatioForecast {
+                    principals: vec![AncillaryRatioPrincipal {
+                        item_id: "item_a".to_string(),
+                        principal_monthly_consumption: 100.0,
+                        item_quantity: 1.0,
+                        ancillary_quantity: 2.0,
+                        wastage_rate: 0.0,
+                    }],
+                })
+                .to_json(),
+            ),
+            ..Default::default()
+        };
+
+        let translator = RequisitionLineTranslation;
+        let round_trip = |line: &RequisitionLineRow| {
+            RequisitionLineRowRepository::new(&connection)
+                .upsert_one(line)
+                .unwrap();
+            let changelog = ChangelogRow {
+                record_id: line.id.clone(),
+                table_name: ChangelogTableName::RequisitionLine,
+                ..Default::default()
+            };
+            let PushTranslateResult::PushRecord(pushed) = translator
+                .try_translate_to_upsert_sync_record(
+                    &connection,
+                    &changelog,
+                    Row::RequisitionLine(line.clone()),
+                )
+                .unwrap()
+            else {
+                panic!("expected a push record");
+            };
+            let data = pushed[0].record.record_data.clone();
+            let pulled = translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &SyncBufferRow {
+                        table_name: "requisition_line".to_string(),
+                        record_id: line.id.clone(),
+                        data: SyncRecordData(data),
+                        action: SyncAction::Upsert,
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            (pushed[0].record.record_data.clone(), pulled)
+        };
+
+        // Pushed in the legacy shape only, over the order's target months
+        let (pushed, pulled) = round_trip(&population);
+        assert_eq!(pushed["oms_fields"]["forecast_total_units"], json!(100.0));
+        for key in [
+            "forecast_method",
+            "forecast_monthly_consumption",
+            "forecast_data",
+        ] {
+            assert!(
+                pushed["oms_fields"].get(key).is_none(),
+                "{} sent to legacy central",
+                key
+            );
+        }
+
+        // Pulled back, a Population line converts without its population served
+        let Some(ForecastData::Population(mut forecast)) = ForecastData::for_method(
+            &population.forecast_method,
+            population.forecast_data.as_deref(),
+        ) else {
+            panic!("expected a population forecast");
+        };
+        forecast.population_served = None;
+        assert_eq!(
+            pulled,
+            PullTranslateResult::upsert(RequisitionLineRow {
+                forecast_data: Some(ForecastData::Population(forecast).to_json()),
+                ..population.clone()
+            })
+        );
+
+        // An Ancillary-ratio line has no legacy form, so it becomes AMC
+        let (pushed, pulled) = round_trip(&ancillary);
+        assert_eq!(pushed["oms_fields"]["vaccine_courses"], json!(null));
+        assert_eq!(
+            pulled,
+            PullTranslateResult::upsert(RequisitionLineRow {
+                forecast_method: ForecastMethod::Amc,
+                forecast_monthly_consumption: 30.0,
+                forecast_data: None,
+                ..ancillary.clone()
+            })
+        );
     }
 }

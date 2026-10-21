@@ -1,6 +1,6 @@
 import type { JSX } from 'solid-js';
 import { Show } from 'solid-js';
-import { formatNumber, t } from '@/intl';
+import { t } from '@/intl';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -15,6 +15,7 @@ import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
 import type { LocaleKey } from '@/intl';
 import { type DraftRnrLine, type EditableRnrField } from './rnrFormEdit';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The R&R form line table's columns (spec/rnr-forms/ui-surface.md S3 § line
 // table): one row per program item, editable cells over a draft store, derived
@@ -105,7 +106,7 @@ const derivedNumber = (
     <Show when={marker}>
       {m => <StatusMarker severity={m().severity} label={m().label} />}
     </Show>
-    {formatNumber(value)}
+    <Num value={value} />
   </HStack>
 );
 
@@ -173,6 +174,7 @@ export const rnrFormLineColumns = ({
               ? t('error.rnr-negative-balance')
               : undefined
           }
+          emptyValue={0}
           onChange={v => update(line.id, 'initialBalance', v ?? 0)}
         />
       );
@@ -194,6 +196,7 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.quantityReceived}
+          emptyValue={0}
           onChange={v => update(line.id, 'quantityReceived', v ?? 0)}
         />
       );
@@ -215,6 +218,7 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.quantityConsumed}
+          emptyValue={0}
           onChange={v => update(line.id, 'quantityConsumed', v ?? 0)}
         />
       );
@@ -249,6 +253,7 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.losses}
+          emptyValue={0}
           onChange={v => update(line.id, 'losses', v ?? 0)}
         />
       );
@@ -274,6 +279,7 @@ export const rnrFormLineColumns = ({
           allowNegative
           disabled={disabled()}
           value={line.adjustments}
+          emptyValue={0}
           onChange={v => update(line.id, 'adjustments', v ?? 0)}
         />
       );
@@ -297,6 +303,7 @@ export const rnrFormLineColumns = ({
           max={periodLength()}
           disabled={disabled()}
           value={line.stockOutDuration}
+          emptyValue={0}
           onChange={v => update(line.id, 'stockOutDuration', v ?? 0)}
         />
       );

@@ -5,7 +5,7 @@
 // (./createCaptureWindow), which the detail view creates ONE of.
 
 import { Show } from 'solid-js';
-import { t, tPlural } from '@/intl';
+import { roundedText, t, tPlural } from '@/intl';
 import { ItemSearch } from '@/domain/item';
 import { activeSource } from '@/platform/barcodeScanner';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -35,7 +35,11 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
       severity: 'info' as const,
       text:
         found.key === 'messages.batch-already-exists'
-          ? tPlural(found.key, found.numberOfPacks)
+          ? // Plural form from the count; the figure itself at the configured
+            // decimal places (spec/ui-standards/tables.md § display rounding).
+            tPlural(found.key, found.numberOfPacks, {
+              count: roundedText(found.numberOfPacks),
+            })
           : t(found.key),
     };
   };
@@ -128,6 +132,7 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
               value={draft().packSize}
               min={1}
               disabled={draft().packSizeLocked || c().working()}
+              emptyValue={1}
               onChange={value => c().update({ packSize: value || 1 })}
             />
             <NumberField
@@ -136,6 +141,7 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
               value={draft().quantity}
               min={0}
               disabled={c().working()}
+              emptyValue={0}
               onChange={value => c().update({ quantity: value ?? 0 })}
             />
             <DateField

@@ -52,6 +52,7 @@ import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { assetCatalogueRoutes } from './sections/asset-catalogue';
 import { patientsRoutes } from './sections/patients';
+import { encountersRoutes } from './sections/encounters';
 import { cliniciansRoutes } from './sections/clinicians';
 import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
 import { coldChainMonitoringRoutes } from './sections/cold-chain-monitoring';
@@ -60,6 +61,7 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
 import { campaignsRoutes } from './sections/campaigns';
+import { manageReportsRoutes } from './sections/manage-reports';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
@@ -120,6 +122,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
+  'dispensary/encounter': encountersRoutes,
   'dispensary/clinicians': cliniciansRoutes,
   // ONE section, TWO destinations: the same list and detail screens, differing
   // only in whether the list is pinned to the active store (spec/cold-chain-
@@ -136,6 +139,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
   'manage/campaigns': campaignsRoutes,
+  'manage/reports': manageReportsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
   'manage/custom-fields': customFieldsRoutes,
   'manage/indicators-demographics': demographicsRoutes,

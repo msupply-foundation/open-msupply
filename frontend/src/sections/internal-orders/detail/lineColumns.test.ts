@@ -66,6 +66,18 @@ describe('published column ids (OMS-REG-REPL-16.2)', () => {
     expect(new Set(all).size).toBe(all.length);
   });
 
+  // Activity is ungated, so it always has a rendered position to anchor
+  // against — unlike the gated columns either side of it (ui-surface S3 #24).
+  it('publishes Activity between Reason and the approval pair', () => {
+    const all = publishedLineColumnIds();
+    expect(all.slice(all.indexOf('reason'))).toEqual([
+      'reason',
+      'activity',
+      'approvedPacks',
+      'approvalComment',
+    ]);
+  });
+
   it('names the two anchors the extended-consumption surfaces depend on', () => {
     // The ids CIV's columns anchor to — renaming either breaks an installed
     // plugin's placement, which is the whole point of freezing the set.
@@ -237,8 +249,8 @@ describe('mergeLineColumns — presentation', () => {
     );
     const column = merged.columns[1]!;
     expect(column.meta?.align).toBe('right');
-    // The host's own number cell: same alignment and same 2dp locale format a
-    // host figure gets.
+    // The host's own number cell: same alignment and the same locale format at
+    // the installation's decimal places a host figure gets.
     expect(column.cell).toBeTypeOf('function');
     expect(String(getNumberCell().meta?.align)).toBe('right');
     expect(accessed(column, { id: 'l1', value: 1 })).toBe(12345.678);

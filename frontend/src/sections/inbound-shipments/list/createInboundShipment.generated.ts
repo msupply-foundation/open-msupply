@@ -7,7 +7,8 @@ export type LinkPurchaseOrderRowFragment = {
   number: number;
   reference: string | null;
   comment: string | null;
-  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED";
+  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED";
+  sentDatetime: string | null;
   supplier: {
   id: string;
   name: string;
@@ -129,10 +130,10 @@ export type SentPurchaseOrdersVariables = {
     afterOrEqualTo?: string | null;
   } | null;
     status?: {
-    equalTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | null;
-    equalAny?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED"> | null;
-    notEqualTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | null;
-    notEqualAll?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED"> | null;
+    equalTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED" | null;
+    equalAny?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED"> | null;
+    notEqualTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED" | null;
+    notEqualAll?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED"> | null;
   } | null;
     supplier?: {
     equalTo?: string | null;
@@ -180,5 +181,5 @@ export type SentPurchaseOrdersResult = {
 };
 
 export const SentPurchaseOrders = {
-  query: "query sentPurchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {\n  purchaseOrders(\n    storeId: $storeId\n    filter: $filter\n    sort: [{key: number, desc: true}]\n  ) {\n    ... on PurchaseOrderConnector {\n      __typename\n      totalCount\n      nodes {\n        ...LinkPurchaseOrderRow\n      }\n    }\n  }\n}\n\nfragment LinkPurchaseOrderRow on PurchaseOrderNode {\n  id\n  number\n  reference\n  comment\n  status\n  supplier {\n    id\n    name\n    code\n  }\n}",
+  query: "query sentPurchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {\n  purchaseOrders(\n    storeId: $storeId\n    filter: $filter\n    sort: [{key: number, desc: true}]\n  ) {\n    ... on PurchaseOrderConnector {\n      __typename\n      totalCount\n      nodes {\n        ...LinkPurchaseOrderRow\n      }\n    }\n  }\n}\n\nfragment LinkPurchaseOrderRow on PurchaseOrderNode {\n  id\n  number\n  reference\n  comment\n  status\n  sentDatetime\n  supplier {\n    id\n    name\n    code\n  }\n}",
 } as TypedDocument<SentPurchaseOrdersResult, SentPurchaseOrdersVariables>;

@@ -131,6 +131,7 @@ describe('resolveIssueScan', () => {
         code: 'PARA',
         name: 'Paracetamol',
         unitName: 'Tab',
+        isService: false,
         isVaccine: false,
         doses: 1,
         availableUnits: 0,

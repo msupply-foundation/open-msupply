@@ -10,10 +10,7 @@
 # The node shapes match the ConsumptionHistoryPoint / StockEvolutionPoint the
 # chart components take, so their nodes pass straight through.
 query requisitionLineChart($storeId: String!, $lineId: String!) {
-  requisitionLineChart(
-    storeId: $storeId
-    requestRequisitionLineId: $lineId
-  ) {
+  requisitionLineChart(storeId: $storeId, requestRequisitionLineId: $lineId) {
     __typename
     ... on ItemChartNode {
       consumptionHistory {

@@ -1,5 +1,5 @@
 import { createMemo, Show, type Component } from 'solid-js';
-import { formatNumber, t } from '@/intl';
+import { roundedText, t } from '@/intl';
 import { unitsToLens, type AllocateUnit } from '@/domain/allocation';
 import { OkButton } from '@/ui/elements/buttons/StandardButtons';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -73,7 +73,7 @@ export const PrescriptionLineViewModal: Component<
     dosesMode()
       ? { kind: 'doses', dosesPerUnit: dosesPerUnit() }
       : { kind: 'units' };
-  const inLens = (units: number) => formatNumber(unitsToLens(units, lens()));
+  const inLens = (units: number) => roundedText(unitsToLens(units, lens()));
 
   const issued = () => issuedUnitsOf(props.lines);
   const prescribed = () => recordedPrescribedQuantity(props.lines);

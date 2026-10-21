@@ -4,11 +4,12 @@ import type { LocaleKey } from '@/intl';
 // The purchase-order lifecycle as the app presents it (spec/purchase-orders
 // rules § the status lifecycle):
 //
-//   New → Ready for approval → Ready for sending → Sent → Finalised
+//   New → Ready for approval → Approved → Sent → Finalised
 //
-// Two of the five stored names mislead, so nothing may render the enum: the
-// third state is stored as "confirmed" but displays as **Ready for sending**
-// (its key is `label.ready-to-send`, which matches neither), and
+// plus one terminal branch off Sent: **Cancelled** (rules § cancellation).
+//
+// Two of the stored names mislead, so nothing may render the enum: the third
+// state is stored as "confirmed" but displays as **Approved**, and
 // REQUEST_APPROVAL displays as **Ready for approval** (ui-surface § status
 // labels). This module is the one place that mapping lives — the list's chip,
 // the status filter's options, the CSV export and the supplier detail's
@@ -18,27 +19,34 @@ import type { LocaleKey } from '@/intl';
 // directly.
 
 export type PurchaseOrderStatus =
-  'NEW' | 'REQUEST_APPROVAL' | 'CONFIRMED' | 'SENT' | 'FINALISED';
+  'NEW' | 'REQUEST_APPROVAL' | 'CONFIRMED' | 'SENT' | 'FINALISED' | 'CANCELLED';
 
 // Status → its translated label key. Keyed by the enum so a new status value
 // is a compile error rather than an unlabelled chip.
 export const PO_STATUS_KEY: Record<PurchaseOrderStatus, LocaleKey> = {
   NEW: 'label.new',
   REQUEST_APPROVAL: 'label.ready-for-approval',
-  CONFIRMED: 'label.ready-to-send',
+  CONFIRMED: 'label.approved',
   SENT: 'label.sent',
   FINALISED: 'label.finalised',
+  CANCELLED: 'label.cancelled',
 };
 
-// The ladder in order — the status filter's options, so the select reads in
-// lifecycle order rather than enum-declaration order.
-export const PO_STATUSES: PurchaseOrderStatus[] = [
+// The ladder in order — the five states an order walks forward through. The
+// footer's rungs read this; Cancelled is not a rung (it is reached from the
+// side panel, never offered as the next state) and is appended to the ladder
+// only on an order that holds it (purchaseOrderLadder.ts).
+export const PO_LADDER: PurchaseOrderStatus[] = [
   'NEW',
   'REQUEST_APPROVAL',
   'CONFIRMED',
   'SENT',
   'FINALISED',
 ];
+
+// Every status, in lifecycle order — the status filter's options, so the
+// select reads as the ladder does, with the terminal branch last.
+export const PO_STATUSES: PurchaseOrderStatus[] = [...PO_LADDER, 'CANCELLED'];
 
 /** The locale key for a status (falling back to New for any unmapped value). */
 export const poStatusLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
@@ -75,24 +83,26 @@ export const poLineStatusLabel = (status: string): string =>
 
 // Status → chip colour (tokens.css --status-*). The tokens are named for the
 // SHIPMENT lifecycle, so these are borrowed by hue, not by meaning: a grey
-// start, a ramp through the two waiting states, and the terminal green. No
-// state here is a warning, so the amber is deliberately not used. Meaning is
-// carried by the chip's text, never by colour alone (WCAG).
+// start, a ramp through the two waiting states, the terminal green, and the
+// cancelled tone the dispensing chip already uses. No state here is a
+// warning, so the amber is deliberately not used. Meaning is carried by the
+// chip's text, never by colour alone (WCAG).
 const PO_STATUS_COLOUR: Record<PurchaseOrderStatus, string> = {
   NEW: 'var(--status-new)',
   REQUEST_APPROVAL: 'var(--status-delivered)',
   CONFIRMED: 'var(--status-allocated)',
   SENT: 'var(--status-shipped)',
   FINALISED: 'var(--status-finalised)',
+  CANCELLED: 'var(--status-cancelled)',
 };
 
 export const poStatusColour = (status: PurchaseOrderStatus): string =>
   PO_STATUS_COLOUR[status] ?? PO_STATUS_COLOUR.NEW;
 
-// The restricted-row marking (OMS-FUN-PO-15.10): a Sent or Finalised order is
-// closed to change, and the list distinguishes those from the orders still
-// being worked. A standing property of the record, so the list mirrors it
-// (ui-standards/validation.md § the line between the two) — unlike
-// deletability below.
+// The restricted-row marking (OMS-FUN-PO-15.10, .16): a Sent, Finalised or
+// Cancelled order is closed to change, and the list distinguishes those from
+// the orders still being worked. A standing property of the record, so the
+// list mirrors it (ui-standards/validation.md § the line between the two) —
+// unlike deletability below.
 export const isRowRestricted = (status: PurchaseOrderStatus): boolean =>
-  status === 'SENT' || status === 'FINALISED';
+  status === 'SENT' || status === 'FINALISED' || status === 'CANCELLED';

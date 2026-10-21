@@ -2,7 +2,6 @@ import { createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { StatusBadge } from '../../ui/elements/feedback/StatusBadge';
-import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
 import {
   itemPageFetcher,
@@ -11,6 +10,7 @@ import {
 } from './itemResource';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import styles from './ItemSearch.module.css';
+import { Num } from '../../ui/elements/typography/Num';
 
 const PAGE_SIZE = 30;
 
@@ -81,6 +81,14 @@ export interface ItemSearchProps {
    * of the results — the purchase-order line editor's chooser.
    */
   orderableOnly?: boolean;
+  /** Offer service items as well as stock (purchase order line editor). */
+  includeServiceItems?: boolean;
+  /**
+   * Offer only the items of one category, by name (server-side
+   * ItemFilterInput.categoryName) — the form library's PrescriptionInput,
+   * which offers the items of the method a program form has chosen.
+   */
+  categoryName?: string;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
   /**
@@ -129,7 +137,9 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     PAGE_SIZE,
     () => props.hasStockOnHand,
     () => props.masterListId,
-    () => (props.orderableOnly ? false : undefined)
+    () => (props.orderableOnly ? false : undefined),
+    () => props.includeServiceItems,
+    () => props.categoryName
   );
 
   // itemId → already-on-document, filled page-by-page by the caller's
@@ -174,11 +184,20 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
           </span>
         )}
       </Show>
-      <span class={styles.total}>
-        {/* Fixed, localised "Units" label for every item (old-app parity — the
-            item's own unitName is untranslatable catalogue data). */}
-        {formatNumber(item.availableUnits)} {t('label.units')}
-      </span>
+      <Show
+        when={!item.isService}
+        fallback={
+          <span class={styles.present} data-testid="item-option-service">
+            <StatusBadge label={t('label.service')} tone="info" />
+          </span>
+        }
+      >
+        <span class={styles.total}>
+          {/* Fixed, localised "Units" label for every item (old-app parity — the
+              item's own unitName is untranslatable catalogue data). */}
+          <Num value={item.availableUnits} /> {t('label.units')}
+        </span>
+      </Show>
     </span>
   );
 
@@ -204,6 +223,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       availableUnits: 0,
       isVaccine: false,
       doses: 0,
+      isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
     };

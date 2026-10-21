@@ -31,8 +31,8 @@ export interface Edit {
   manufacturer: { id: string; name: string } | null;
   donorId: string | null;
   donorName: string | null;
-  // Campaign and program are one mutually-exclusive field (the campaign-or-
-  // program lookup) — never both set at once.
+  // Campaign and program are two INDEPENDENT fields (separate pickers) — a
+  // line may carry either, both, or neither.
   campaignId: string | null;
   programId: string | null;
 }
@@ -91,15 +91,12 @@ export const buildPatch = (
   }
   if ((edit.donorId ?? null) !== (line.donor?.id ?? null))
     patch.donorId = { value: edit.donorId };
-  if (
-    edit.campaignId !== (line.campaign?.id ?? null) ||
-    edit.programId !== (line.program?.id ?? null)
-  ) {
-    // One mutually-exclusive choice over two wire fields: always send both
-    // wrappers so choosing one side clears the other.
+  // Two independent fields: each wrapper travels only when its own side
+  // changed, so editing one never rewrites the other.
+  if (edit.campaignId !== (line.campaign?.id ?? null))
     patch.campaignId = { value: edit.campaignId };
+  if (edit.programId !== (line.program?.id ?? null))
     patch.programId = { value: edit.programId };
-  }
   return patch;
 };
 

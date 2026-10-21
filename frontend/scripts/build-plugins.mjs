@@ -13,7 +13,11 @@
  *      halves go in its own bundle and nobody else's; a plugin's BACKEND half
  *      (`<plugin dir>/backend`, BoaJS code) is built here too, from its own
  *      source, through `vite/backendPluginBuild.ts` — so ONE command produces
- *      a country plugin's whole bundle;
+ *      a country plugin's whole bundle. A plugin with a FORM half
+ *      (`forms/forms.json`) has its current schema versions emitted from
+ *      their TypeScript types before anything builds, and its declaration,
+ *      schema versions and event rules packed into the same bundle's
+ *      `form_plugins` list (vite/formPlugins.ts);
  *   3. writes `dist/frontend_plugins/metadata.json`, the
  *      `frontendPluginMetadata` discovery response, so the built app can load
  *      them through its production path without a server.
@@ -51,6 +55,13 @@ import { build } from 'vite';
 import { HOST_RUNTIME } from '../src/plugin-sdk/apiVersion.ts';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
 import { backendPluginViteConfig } from '../vite/backendPluginBuild.ts';
+import {
+  emitFormSchemas,
+  packFormPlugin,
+  readFormsDeclaration,
+} from '../vite/formPlugins.ts';
+import { checkFormVersions } from '../vite/formVersionChecks.ts';
+import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
 
 const OUT_DIR = 'dist/frontend_plugins';
 const BACKEND_OUT_DIR = 'dist/backend_plugins';
@@ -158,35 +169,6 @@ const buildBackendPlugin = plugin =>
     })
   );
 
-/*
- * The in-repo plugin directories, both outside frontend/: `private/plugins/*`
- * holds the real country plugins (never published to the public mirror), and
- * `plugins/*` the public ones — today only `plugins/examples/*`, the reference
- * plugins that prove the mechanism. `plugins/examples` itself is a grouping
- * directory, not a plugin, so it is walked one level deeper rather than read
- * as an entry in its own right. A root missing altogether is skipped: the
- * public mirror has no `private/`. The dev loop (vite/devPlugins.ts) does NOT
- * walk these: building everything is packaging, serving everything at once is
- * a broken dev session.
- */
-const PLUGIN_ROOTS = ['../plugins', '../private/plugins'];
-const EXAMPLES_DIR = '../plugins/examples';
-
-const inRepoPluginDirs = () => {
-  const dirs = [];
-  const walk = root => {
-    if (!existsSync(root)) return;
-    for (const entry of readdirSync(root, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const dir = join(root, entry.name);
-      if (dir === EXAMPLES_DIR) walk(dir);
-      else dirs.push(dir);
-    }
-  };
-  PLUGIN_ROOTS.forEach(walk);
-  return dirs;
-};
-
 const discoverBackendPlugins = () => {
   const found = [];
   for (const dir of inRepoPluginDirs()) {
@@ -241,18 +223,10 @@ const packBackendPlugin = plugin => {
   /* eslint-enable camelcase */
 };
 
-const discoverPlugins = () => {
+const discoverPlugins = () =>
   // The reference plugins and the in-repo country plugins, then any
-  // out-of-tree plugin checkouts (the civ-plugins dev loop), comma- or
-  // colon-separated.
-  const dirs = inRepoPluginDirs();
-  for (const dir of (process.env.OMS_PLUGIN_DIRS ?? '')
-    .split(/[,:]/)
-    .filter(Boolean)) {
-    dirs.push(resolve('..', dir));
-  }
-  return dirs.map(readManifest).filter(Boolean);
-};
+  // out-of-tree plugin checkouts (the civ-plugins dev loop).
+  [...inRepoPluginDirs(), ...envPluginDirs()].map(readManifest).filter(Boolean);
 
 const buildPlugin = plugin =>
   build(
@@ -369,6 +343,48 @@ if (plugins.length === 0 && backendPlugins.length === 0) {
   process.exit(0);
 }
 
+/*
+ * The FORM halves, before anything builds: each type's current schema
+ * version is re-emitted from its TypeScript type, so the bundle cannot carry
+ * a schema its type no longer describes, and a type that does not emit fails
+ * the run before any vite build starts. The emit also writes each type's
+ * `versions.ts` and fails on an archived type that no longer generates its
+ * frozen file. Then the versioning checks (vite/formVersionChecks.ts): every
+ * event-rule path is a field of the current schema, every migration step
+ * covers the differences it spans, and every earlier version's fixture
+ * migrates to a valid current document. This is the step CI runs and
+ * `pnpm plugin:install` runs before installing, so a plugin failing them is
+ * never packed or installed. What is packed is the files on disk;
+ * `pnpm forms:check` (part of `pnpm check`) is what fails a change to a type
+ * whose re-emitted schema was not committed with it.
+ */
+const formPlugins = [];
+for (const plugin of plugins) {
+  const declaration = readFormsDeclaration(plugin.dir);
+  if (!declaration) continue;
+  const emitted = await emitFormSchemas(plugin.dir, declaration, {
+    check: false,
+    pluginCode: plugin.code,
+  });
+  if (emitted.problems.length > 0) {
+    throw new Error(
+      `${plugin.code}: cannot emit its form schemas:\n  - ` +
+        emitted.problems.join('\n  - ')
+    );
+  }
+  for (const file of emitted.written) {
+    console.info(`[build-plugins] emitted ${file}`);
+  }
+  const versioning = await checkFormVersions(plugin.dir, declaration);
+  if (versioning.length > 0) {
+    throw new Error(
+      `${plugin.code}: its form versions do not fit together:\n  - ` +
+        versioning.join('\n  - ')
+    );
+  }
+  formPlugins.push({ plugin, declaration });
+}
+
 for (const plugin of plugins) await buildPlugin(plugin);
 // Every one that has source, which is all of them bar a bundle that arrived
 // pre-built (readBackendManifest).
@@ -390,6 +406,13 @@ for (const [i, row] of backendRows.entries()) {
   }
 }
 
+// The form halves' rows: the declaration, every schema version file with its
+// content-hash id, and the event rules — validated as they are read, so a
+// bundle the install would refuse is never written.
+const formRows = formPlugins.map(({ plugin, declaration }) =>
+  packFormPlugin(plugin.code, plugin.dir, declaration)
+);
+
 /*
  * ONE BUNDLE PER PLUGIN, keyed by plugin code — never a shared one.
  *
@@ -407,6 +430,11 @@ for (const [i, row] of backendRows.entries()) {
  * to be installed together. A plugin with only one half (frontend-only like
  * the examples, backend-only like BES) simply gets a bundle with one populated
  * list; nothing here requires a pair.
+ *
+ * A form half joins its plugin's bundle the same way, keyed by the frontend
+ * manifest's code, as a third list. `form_plugins` is optional in the Rust
+ * `PluginBundle`, so a plugin without one packs no such key at all, and its
+ * bundle is byte-for-byte what it would be without form support.
  */
 const bundles = new Map();
 /* eslint-disable camelcase -- Rust PluginBundle's field names. */
@@ -419,6 +447,9 @@ const bundleFor = code => {
 };
 for (const { row } of packed) bundleFor(row.code).frontend_plugins.push(row);
 for (const row of backendRows) bundleFor(row.code).backend_plugins.push(row);
+for (const row of formRows) {
+  (bundleFor(row.plugin_code).form_plugins ??= []).push(row);
+}
 /* eslint-enable camelcase */
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -459,16 +490,29 @@ for (const [i, row] of backendRows.entries()) {
       `${(bytes / 1024).toFixed(1)} KB  ${origin}  [${row.types.join(', ')}]`
   );
 }
+for (const row of formRows) {
+  const versions = row.document_types.reduce(
+    (sum, entry) => sum + entry.versions.length,
+    0
+  );
+  console.info(
+    `[build-plugins] ${row.plugin_code}  forms  ` +
+      `${row.document_types.length} document type(s), ${versions} schema ` +
+      `version(s)  [${row.program_keys.join(', ')}]`
+  );
+}
 for (const [code, bundle] of bundles) {
   // Either count may be 0: a plugin ships a frontend half, a backend half, or
   // both, and all three are ordinary.
   const rows =
     `${bundle.frontend_plugins.length} frontend + ` +
-    `${bundle.backend_plugins.length} backend`;
+    `${bundle.backend_plugins.length} backend` +
+    (bundle.form_plugins ? ` + ${bundle.form_plugins.length} form` : '');
   console.info(`[build-plugins] ${join(BUNDLE_DIR, `${code}.json`)}  ${rows}`);
 }
 console.info(
   `[build-plugins] packed ${packed.length} frontend + ${backendRows.length} ` +
-    `backend into ${bundles.size} per-plugin bundle(s); round-trip verified; ` +
-    `wrote ${BUNDLE_DIR}/ + ${OUT_DIR}/metadata.json`
+    `backend + ${formRows.length} form into ${bundles.size} per-plugin ` +
+    `bundle(s); round-trip verified; wrote ${BUNDLE_DIR}/ + ` +
+    `${OUT_DIR}/metadata.json`
 );

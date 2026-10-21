@@ -129,6 +129,7 @@ export const LinkInternalOrderModal: Component<
         {t('message.continue-to-make-inbound-shipment')}
       </Text>
       <DataTable
+        dialogTable
         columns={columns()}
         rows={page()}
         rowKey={r => r.id}

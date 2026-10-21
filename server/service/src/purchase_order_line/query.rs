@@ -70,11 +70,8 @@ pub fn calculate_units_in_other_purchase_orders(
                 .id(EqualFilter::not_equal_to(
                     exclude_purchase_order_id.to_string(),
                 ))
-                .status(EqualFilter::equal_any(vec![
-                    PurchaseOrderStatus::RequestApproval,
-                    PurchaseOrderStatus::Confirmed,
-                    PurchaseOrderStatus::Sent,
-                ])),
+                // Only a SENT order has put stock on order
+                .status(EqualFilter::equal_to(PurchaseOrderStatus::Sent)),
         )
         .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed));
 
@@ -85,7 +82,7 @@ pub fn calculate_units_in_other_purchase_orders(
     // TODO: Reduce any other units received in GRs
     let total: f64 = lines
         .iter()
-        .map(|l| l.purchase_order_line_row.expected_number_of_units())
+        .map(|l| l.purchase_order_line_row.requested_number_of_units)
         .sum();
 
     // Prevent -0.0 from being returned
@@ -94,6 +91,7 @@ pub fn calculate_units_in_other_purchase_orders(
 
 #[cfg(test)]
 mod test {
+    use super::calculate_units_in_other_purchase_orders;
     use crate::service_provider::ServiceProvider;
     use repository::mock::{mock_item_a, mock_item_b, mock_name_a, mock_name_c, mock_store_a};
     use repository::{
@@ -239,7 +237,7 @@ mod test {
         purchase_order_repo.upsert_one(&confirmed).unwrap();
         purchase_order_repo.upsert_one(&unconfirmed).unwrap();
 
-        // Same adjusted quantity on a and b, so only what has been received
+        // Same requested quantity on a and b, so only what has been received
         // separates what they have outstanding.
         let line_a = PurchaseOrderLineRow {
             id: "po_line_a".to_string(),
@@ -248,8 +246,7 @@ mod test {
             line_number: 1,
             item_id: mock_item_a().id,
             item_name: mock_item_a().name,
-            requested_number_of_units: 5.0,
-            adjusted_number_of_units: Some(30.0),
+            requested_number_of_units: 30.0,
             ..Default::default()
         };
         let line_b = PurchaseOrderLineRow {
@@ -259,8 +256,7 @@ mod test {
             line_number: 1,
             item_id: mock_item_b().id,
             item_name: mock_item_b().name,
-            requested_number_of_units: 1.0,
-            adjusted_number_of_units: Some(30.0),
+            requested_number_of_units: 30.0,
             ..Default::default()
         };
         let line_c = PurchaseOrderLineRow {
@@ -271,7 +267,6 @@ mod test {
             item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             requested_number_of_units: 7.0,
-            adjusted_number_of_units: None,
             ..Default::default()
         };
         let line_d = PurchaseOrderLineRow {
@@ -281,8 +276,7 @@ mod test {
             line_number: 2,
             item_id: mock_item_a().id,
             item_name: mock_item_a().name,
-            requested_number_of_units: 2.0,
-            adjusted_number_of_units: Some(4.0),
+            requested_number_of_units: 4.0,
             ..Default::default()
         };
         let line_repo = PurchaseOrderLineRowRepository::new(&connection);
@@ -378,14 +372,14 @@ mod test {
 
         assert_eq!(
             ids(
-                PurchaseOrderLineSortField::AdjustedNumberOfUnits,
+                PurchaseOrderLineSortField::RequestedNumberOfUnits,
                 Some(true)
             ),
             vec![
                 line_a.id.clone(),
                 line_b.id.clone(),
-                line_d.id.clone(),
-                line_c.id.clone()
+                line_c.id.clone(),
+                line_d.id.clone()
             ]
         );
 
@@ -428,7 +422,7 @@ mod test {
                     &context,
                     Some(&mock_store_a().id),
                     None,
-                    Some(PurchaseOrderLineFilter::new().received_less_than_adjusted(value)),
+                    Some(PurchaseOrderLineFilter::new().received_less_than_requested(value)),
                     None,
                 )
                 .unwrap()
@@ -458,5 +452,217 @@ mod test {
                 line_b.id.clone()
             ]
         );
+    }
+
+    /// A service line is never outstanding: the filter, the figure and the sort all agree.
+    #[actix_rt::test]
+    async fn outstanding_lines_leave_out_service_lines() {
+        use repository::mock::mock_item_service_item;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "outstanding_lines_leave_out_service_lines",
+            MockDataInserts::none().stores().names().items(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.purchase_order_line_service;
+
+        let order = PurchaseOrderRow {
+            id: "po_outstanding_service".to_string(),
+            store_id: mock_store_a().id,
+            supplier_name_id: mock_name_a().id,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            status: repository::PurchaseOrderStatus::Sent,
+            purchase_order_number: 20,
+            ..Default::default()
+        };
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&order)
+            .unwrap();
+        // Neither line has anything received
+        for (id, line_number, item_id) in [
+            ("po_outstanding_stock", 1, mock_item_a().id),
+            ("po_outstanding_freight", 2, mock_item_service_item().id),
+        ] {
+            PurchaseOrderLineRowRepository::new(&connection)
+                .upsert_one(&PurchaseOrderLineRow {
+                    id: id.to_string(),
+                    purchase_order_id: order.id.clone(),
+                    store_id: mock_store_a().id,
+                    line_number,
+                    item_id,
+                    requested_number_of_units: 1.0,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let lines = |filter: Option<PurchaseOrderLineFilter>, sort| {
+            service
+                .get_purchase_order_lines(&context, Some(&mock_store_a().id), None, filter, sort)
+                .unwrap()
+                .rows
+        };
+        let ids = |lines: Vec<repository::PurchaseOrderLine>| {
+            lines
+                .into_iter()
+                .map(|line| line.purchase_order_line_row.id)
+                .collect::<Vec<String>>()
+        };
+
+        assert_eq!(
+            ids(lines(
+                Some(PurchaseOrderLineFilter::new().received_less_than_requested(true)),
+                None
+            )),
+            vec!["po_outstanding_stock".to_string()]
+        );
+        assert_eq!(
+            ids(lines(
+                Some(PurchaseOrderLineFilter::new().received_less_than_requested(false)),
+                None
+            )),
+            vec!["po_outstanding_freight".to_string()]
+        );
+
+        let outstanding = lines(None, None)
+            .into_iter()
+            .map(|line| {
+                (
+                    line.purchase_order_line_row.id.clone(),
+                    line.outstanding_number_of_units(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            outstanding,
+            vec![
+                ("po_outstanding_freight".to_string(), 0.0),
+                ("po_outstanding_stock".to_string(), 1.0),
+            ]
+        );
+
+        let by_outstanding = |desc| {
+            ids(lines(
+                None,
+                Some(PurchaseOrderLineSort {
+                    key: PurchaseOrderLineSortField::OutstandingNumberOfUnits,
+                    desc: Some(desc),
+                }),
+            ))
+        };
+        assert_eq!(
+            by_outstanding(false),
+            vec![
+                "po_outstanding_freight".to_string(),
+                "po_outstanding_stock".to_string()
+            ]
+        );
+        assert_eq!(
+            by_outstanding(true),
+            vec![
+                "po_outstanding_stock".to_string(),
+                "po_outstanding_freight".to_string()
+            ]
+        );
+    }
+
+    /// Only a SENT order has put stock on order: lines on orders still being
+    /// drafted, approved or already finalised contribute nothing, and nor do
+    /// closed lines on a sent order.
+    #[actix_rt::test]
+    async fn units_in_other_purchase_orders_counts_sent_orders_only() {
+        let (_, connection, _, _) = setup_all(
+            "units_in_other_purchase_orders_counts_sent_orders_only",
+            MockDataInserts::none().stores().items(),
+        )
+        .await;
+
+        let purchase_order_repo = PurchaseOrderRowRepository::new(&connection);
+        let line_repo = PurchaseOrderLineRowRepository::new(&connection);
+        let statuses = [
+            ("po_new", repository::PurchaseOrderStatus::New, 10.0),
+            (
+                "po_approval",
+                repository::PurchaseOrderStatus::RequestApproval,
+                20.0,
+            ),
+            (
+                "po_approved",
+                repository::PurchaseOrderStatus::Confirmed,
+                40.0,
+            ),
+            ("po_sent", repository::PurchaseOrderStatus::Sent, 80.0),
+            (
+                "po_finalised",
+                repository::PurchaseOrderStatus::Finalised,
+                160.0,
+            ),
+            (
+                "po_cancelled",
+                repository::PurchaseOrderStatus::Cancelled,
+                320.0,
+            ),
+        ];
+        for (number, (id, status, units)) in statuses.into_iter().enumerate() {
+            purchase_order_repo
+                .upsert_one(&PurchaseOrderRow {
+                    id: id.to_string(),
+                    store_id: mock_store_a().id,
+                    supplier_name_id: mock_name_c().id,
+                    created_datetime: chrono::Utc::now().naive_utc(),
+                    status,
+                    purchase_order_number: number as i64 + 1,
+                    ..Default::default()
+                })
+                .unwrap();
+            line_repo
+                .upsert_one(&PurchaseOrderLineRow {
+                    id: format!("{id}_line"),
+                    purchase_order_id: id.to_string(),
+                    store_id: mock_store_a().id,
+                    line_number: 1,
+                    item_id: mock_item_a().id,
+                    item_name: mock_item_a().name,
+                    requested_number_of_units: units,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        // A closed line on a sent order is no longer on order either.
+        line_repo
+            .upsert_one(&PurchaseOrderLineRow {
+                id: "po_sent_closed_line".to_string(),
+                purchase_order_id: "po_sent".to_string(),
+                store_id: mock_store_a().id,
+                line_number: 2,
+                item_id: mock_item_a().id,
+                item_name: mock_item_a().name,
+                requested_number_of_units: 1000.0,
+                status: repository::PurchaseOrderLineStatus::Closed,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let on_order = calculate_units_in_other_purchase_orders(
+            &connection,
+            &mock_item_a().id,
+            "some_other_order",
+            Some(&mock_store_a().id),
+        )
+        .unwrap();
+        assert_eq!(on_order, 80.0);
+
+        // The order being edited never counts itself.
+        let on_order = calculate_units_in_other_purchase_orders(
+            &connection,
+            &mock_item_a().id,
+            "po_sent",
+            Some(&mock_store_a().id),
+        )
+        .unwrap();
+        assert_eq!(on_order, 0.0);
     }
 }

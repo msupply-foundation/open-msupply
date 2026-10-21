@@ -13,7 +13,12 @@ import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
-import { t, type LocaleKey } from '../../intl';
+import {
+  MAX_FRACTION_DIGITS,
+  t,
+  tPlural,
+  type LocaleKey,
+} from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
@@ -25,6 +30,7 @@ import { ToggleSwitch } from '../../ui/elements/inputs/ToggleSwitch';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
 import { Button } from '../../ui/elements/buttons/Button';
+import { DisclosureToggle } from '../../ui/elements/buttons/DisclosureToggle';
 import {
   Accordion,
   AccordionContent,
@@ -35,6 +41,7 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { Text } from '../../ui/elements/typography/Text';
 import { CloseIcon, EditIcon } from '../../ui/icons';
+import { createCatalogueView } from '@/domain/preferences';
 import {
   GlobalPreferences,
   UpsertGlobalPreferences,
@@ -45,7 +52,6 @@ import {
   asNumber,
   buildAutoSaveInput,
   canEditGlobalPreferences,
-  filterCatalogue,
   genderLabelKey,
   groupPreferences,
   isAmcExplainerShown,
@@ -122,15 +128,18 @@ const GlobalPreferencesPage: Component = () => {
       ? overrides()[preference.key]
       : preference.value;
 
-  const catalogue = () =>
-    filterCatalogue(
-      groupPreferences(preferences()),
-      label,
-      groupLabel,
-      filter()
-    );
-  const nothingVisible = () =>
-    catalogue().ungrouped.length === 0 && catalogue().groups.length === 0;
+  // The catalogue as shown, and the groups' open state: the shared catalogue
+  // view (@/domain/preferences), which memoises both so the keyed lists below
+  // never remount an accordion item on typing, holds every kept group open
+  // while a filter is active, and starts closed on arrival
+  // (OMS-REG-GPREF-01.3).
+  const { catalogue, nothingVisible, accordionProps } = createCatalogueView({
+    preferences,
+    group: groupPreferences,
+    labelOf: label,
+    groupLabelOf: groupLabel,
+    filter,
+  });
 
   // -------------------------------------------------------------------------
   // Auto-save: one debounced, one-field write per changed preference
@@ -194,6 +203,55 @@ const GlobalPreferencesPage: Component = () => {
       {rowProps.children}
     </div>
   );
+
+  /*
+   * The stores that have pinned their own value for this preference
+   * (GPREF-01.29). Without this an admin editing a global value has no way to
+   * know that some stores will not follow the edit — the page would read as
+   * install-wide when it is not. Absent for a preference no store may
+   * override, and for one no store has.
+   *
+   * A disclosure rather than a bare sentence: the count alone prompts "which
+   * ones?", and the answer is already on the wire. Collapsed by default —
+   * which stores diverge is the follow-up question, not the row's own content.
+   */
+  const OverriddenNote = (noteProps: { preference: GlobalPreference }) => {
+    const [expanded, setExpanded] = createSignal(false);
+    const stores = () => noteProps.preference.overridingStores ?? [];
+    const regionId = () =>
+      `global-preference-${noteProps.preference.key}-override-stores`;
+    return (
+      <Show when={stores().length > 0}>
+        <div class={styles.note}>
+          <DisclosureToggle
+            expanded={expanded()}
+            controls={regionId()}
+            onClick={() => setExpanded(previous => !previous)}
+            data-testid={`global-preference-${noteProps.preference.key}-overrides`}
+          >
+            {tPlural(
+              'messages.preference-overridden-at-stores',
+              stores().length
+            )}
+          </DisclosureToggle>
+          <Show when={expanded()}>
+            {/* A list, not a run of text: the names are separate items, and
+                a deployment can have more of them than fit on one line. The
+                explicit role survives list-style: none, which strips list
+                semantics in Safari/VoiceOver. */}
+            <ul
+              id={regionId()}
+              role="list"
+              class={styles.overrideStores}
+              data-testid={regionId()}
+            >
+              <For each={stores()}>{store => <li>{store.storeName}</li>}</For>
+            </ul>
+          </Show>
+        </div>
+      </Show>
+    );
+  };
 
   /** The inline save-failure notice keyed to its row (OMS-REG-GPREF-01.11). */
   const RowError = (errorProps: { preference: GlobalPreference }) => (
@@ -278,6 +336,7 @@ const GlobalPreferencesPage: Component = () => {
                 !parts().inventoryAdjustmentsEnabled)
             }
             data-testid="global-preference-backdating-max-days"
+            emptyValue={0}
             onChange={maxDays => stagePart({ maxDays: maxDays ?? 0 })}
           />
         </Row>
@@ -290,66 +349,77 @@ const GlobalPreferencesPage: Component = () => {
      INTEGER / FLOAT / MULTI_CHOICE (genders) / CUSTOM_TRANSLATIONS_V2 /
      BACKDATING_DATA only — other kinds are store-scoped and never arrive. */
   const PreferenceRow = (props: { preference: GlobalPreference }) => (
-    <Switch>
-      <Match when={props.preference.valueType === 'BOOLEAN'}>
-        <Row label={label(props.preference)}>
-          <ToggleSwitch
-            label={label(props.preference)}
-            hideLabel
-            checked={asBool(current(props.preference))}
-            disabled={disabled()}
-            testId={`global-preference-${props.preference.key}`}
-            onChange={checked => stage(props.preference, checked)}
-          />
-        </Row>
-        <RowError preference={props.preference} />
-      </Match>
-      <Match
-        when={
-          props.preference.valueType === 'INTEGER' ||
-          props.preference.valueType === 'FLOAT'
-        }
-      >
-        <Row label={label(props.preference)}>
-          <NumberField
-            label={label(props.preference)}
-            hideLabel
-            width="compact"
-            value={
-              props.preference.key in overrides() &&
-              overrides()[props.preference.key] === undefined
-                ? undefined
-                : asNumber(current(props.preference))
-            }
-            // A whole number stays whole; days-in-a-month gets two places
-            // (rules § Editing).
-            decimalLimit={props.preference.valueType === 'FLOAT' ? 2 : 0}
-            disabled={disabled()}
-            data-testid={`global-preference-${props.preference.key}`}
-            onChange={next => stage(props.preference, next)}
-          />
-        </Row>
-        <RowError preference={props.preference} />
-      </Match>
-      <Match when={props.preference.valueType === 'MULTI_CHOICE'}>
-        <GenderChoice preference={props.preference} />
-      </Match>
-      <Match when={props.preference.valueType === 'CUSTOM_TRANSLATIONS_V2'}>
-        <Row label={label(props.preference)}>
-          <Button
-            variant="secondary"
-            onClick={() => setTranslationsOpen(true)}
-            disabled={disabled()}
-            data-testid="global-preference-customTranslationsV2"
-          >
-            <EditIcon /> {t('button.edit')}
-          </Button>
-        </Row>
-      </Match>
-      <Match when={props.preference.valueType === 'BACKDATING_DATA'}>
-        <BackdatingRows preference={props.preference} />
-      </Match>
-    </Switch>
+    <>
+      <Switch>
+        <Match when={props.preference.valueType === 'BOOLEAN'}>
+          <Row label={label(props.preference)}>
+            <ToggleSwitch
+              label={label(props.preference)}
+              hideLabel
+              checked={asBool(current(props.preference))}
+              disabled={disabled()}
+              testId={`global-preference-${props.preference.key}`}
+              onChange={checked => stage(props.preference, checked)}
+            />
+          </Row>
+          <RowError preference={props.preference} />
+        </Match>
+        <Match
+          when={
+            props.preference.valueType === 'INTEGER' ||
+            props.preference.valueType === 'FLOAT'
+          }
+        >
+          <Row label={label(props.preference)}>
+            <NumberField
+              label={label(props.preference)}
+              hideLabel
+              width="compact"
+              value={
+                props.preference.key in overrides() &&
+                overrides()[props.preference.key] === undefined
+                  ? undefined
+                  : asNumber(current(props.preference))
+              }
+              // A whole number stays whole; days-in-a-month gets two places
+              // (rules § Editing).
+              decimalLimit={props.preference.valueType === 'FLOAT' ? 2 : 0}
+              // Display rounding can't exceed what the formatter emits.
+              max={
+                props.preference.key === 'decimalPlacesForNumbers'
+                  ? MAX_FRACTION_DIGITS
+                  : undefined
+              }
+              disabled={disabled()}
+              data-testid={`global-preference-${props.preference.key}`}
+              onChange={next => stage(props.preference, next)}
+            />
+          </Row>
+          <RowError preference={props.preference} />
+        </Match>
+        <Match when={props.preference.valueType === 'MULTI_CHOICE'}>
+          <GenderChoice preference={props.preference} />
+        </Match>
+        <Match when={props.preference.valueType === 'CUSTOM_TRANSLATIONS_V2'}>
+          <Row label={label(props.preference)}>
+            <Button
+              variant="secondary"
+              onClick={() => setTranslationsOpen(true)}
+              disabled={disabled()}
+              data-testid="global-preference-customTranslationsV2"
+            >
+              <EditIcon /> {t('button.edit')}
+            </Button>
+          </Row>
+        </Match>
+        <Match when={props.preference.valueType === 'BACKDATING_DATA'}>
+          <BackdatingRows preference={props.preference} />
+        </Match>
+      </Switch>
+      {/* Trails whichever control the kind resolved to — overridability is a
+          property of the preference, not of its kind. */}
+      <OverriddenNote preference={props.preference} />
+    </>
   );
 
   const translationsPreference = () =>
@@ -400,66 +470,70 @@ const GlobalPreferencesPage: Component = () => {
                 </For>
               </div>
               {/* The four groups, closed on arrival (OMS-REG-GPREF-01.3),
-                  ordered by first member's catalogue position. */}
-              <Accordion multiple>
-                <For each={catalogue().groups}>
-                  {group => (
-                    <AccordionItem
-                      value={group.labelKey.replace(/^(label|title)\./, '')}
-                    >
-                      <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
-                      <AccordionContent>
-                        <div class={styles.rows}>
-                          <For each={group.members}>
-                            {preference => (
-                              <PreferenceRow preference={preference} />
-                            )}
-                          </For>
-                          {/* The AMC calculation explainer, while either AMC
+                  ordered by first member's catalogue position; held open
+                  while a filter is active. Nothing renders when the filter
+                  leaves no group. */}
+              <Show when={catalogue().groups.length > 0}>
+                <Accordion multiple {...accordionProps}>
+                  <For each={catalogue().groups}>
+                    {group => (
+                      <AccordionItem value={group.id}>
+                        <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
+                        <AccordionContent>
+                          <div class={styles.rows}>
+                            <For each={group.members}>
+                              {preference => (
+                                <PreferenceRow preference={preference} />
+                              )}
+                            </For>
+                            {/* The AMC calculation explainer, while either AMC
                               preference is active (OMS-REG-GPREF-01.7). */}
-                          <Show
-                            when={
-                              group.labelKey ===
-                                'title.average-monthly-consumption' &&
-                              isAmcExplainerShown(group.members, current)
-                            }
-                          >
-                            <div
-                              class={styles.explainer}
-                              data-testid="global-preferences-amc-explainer"
+                            <Show
+                              when={
+                                group.labelKey ===
+                                  'title.average-monthly-consumption' &&
+                                isAmcExplainerShown(group.members, current)
+                              }
                             >
-                              <span class={styles.label}>
-                                {t('label.amc-calculation')}
-                              </span>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-calculation')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-consumption')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-lookback-months')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-lookback-days')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-days-out-of-stock')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-days-out-of-stock-adjustment')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-minus-transfers')}
-                              </Text>
-                            </div>
-                          </Show>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )}
-                </For>
-              </Accordion>
+                              <div
+                                class={styles.explainer}
+                                data-testid="global-preferences-amc-explainer"
+                              >
+                                <span class={styles.label}>
+                                  {t('label.amc-calculation')}
+                                </span>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-calculation')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-consumption')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-lookback-months')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-lookback-days')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-days-out-of-stock')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t(
+                                    'messages.amc-days-out-of-stock-adjustment'
+                                  )}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-minus-transfers')}
+                                </Text>
+                              </div>
+                            </Show>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )}
+                  </For>
+                </Accordion>
+              </Show>
             </Show>
           </Stack>
         </div>

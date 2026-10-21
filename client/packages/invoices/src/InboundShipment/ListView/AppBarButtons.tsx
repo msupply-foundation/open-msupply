@@ -13,7 +13,6 @@ import {
   useAuthContext,
   useCallbackWithPermission,
   useNotification,
-  usePreferences,
   UserPermission,
   SplitButtonOption,
   SplitButton,
@@ -191,7 +190,10 @@ export const AddButton = ({
   onNewShipmentExternal: () => void;
 }) => {
   const t = useTranslation();
-  const { useProcurementFunctionality } = usePreferences();
+  const { userHasPermission } = useAuthContext();
+  const canReadPurchaseOrders = userHasPermission(
+    UserPermission.PurchaseOrderQuery
+  );
 
   const handleNewShipment = useCallbackWithPermission(
     UserPermission.InboundShipmentMutate,
@@ -208,7 +210,7 @@ export const AddButton = ({
       value: 'new-shipment',
       label: t('button.new-shipment'),
     },
-    ...(useProcurementFunctionality
+    ...(canReadPurchaseOrders
       ? [
           {
             value: 'new-external-shipment',

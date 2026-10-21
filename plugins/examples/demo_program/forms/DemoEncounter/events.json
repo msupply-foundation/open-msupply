@@ -1,0 +1,37 @@
+[
+  {
+    "type": "Field",
+    "conditions": [{ "field": "extension.demo.regimen", "isSet": true }],
+    "event": {
+      "documentType": "DemoProgramEnrolment",
+      "type": "currentRegimen",
+      "dataField": "extension.demo.regimen"
+    }
+  },
+  {
+    "type": "Schedule",
+    "conditions": [{ "field": "extension.demo.nextVisit", "isSet": true }],
+    "config": {
+      "datetimeField": "extension.demo.nextVisit",
+      "scheduleIn": { "days": 0 }
+    },
+    "event": {
+      "documentType": "DemoProgramEnrolment",
+      "type": "followUpStatus",
+      "data": "Due"
+    }
+  },
+  {
+    "type": "Schedule",
+    "conditions": [{ "field": "extension.demo.nextVisit", "isSet": true }],
+    "config": {
+      "datetimeField": "extension.demo.nextVisit",
+      "scheduleIn": { "days": 30 }
+    },
+    "event": {
+      "documentType": "DemoProgramEnrolment",
+      "type": "followUpStatus",
+      "data": "Overdue"
+    }
+  }
+]

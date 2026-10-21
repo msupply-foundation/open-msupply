@@ -9,7 +9,6 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -89,6 +88,7 @@ import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
 import styles from './StocktakeDetailView.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -233,7 +233,8 @@ const StocktakeDetailView: Component = () => {
           dosesPerUnit: false,
           donor: false,
           manufacturer: false,
-          campaign: false,
+          program: false,
+          activity: false,
         },
         // Code pinned to the inline-start edge, so the identifier stays put
         // while the counting columns scroll horizontally — this table is wide
@@ -794,7 +795,7 @@ const StocktakeDetailView: Component = () => {
               const value = info.getValue<number | null | undefined>();
               return (
                 <>
-                  {formatNumber(value, { maximumFractionDigits: 2 })}
+                  {value == null ? '' : <Num value={value} />}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
@@ -844,9 +845,7 @@ const StocktakeDetailView: Component = () => {
         isUncounted(info.row.original) ? (
           <AbsentValue label={t('label.not-counted')} />
         ) : (
-          formatNumber(info.getValue<number | null | undefined>(), {
-            maximumFractionDigits: 2,
-          })
+          <Num value={info.getValue<number | null | undefined>() ?? 0} />
         ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
@@ -923,16 +922,22 @@ const StocktakeDetailView: Component = () => {
       header: () => t('label.manufacturer'),
       cardGroup: 'more',
     },
+    // Program and Activity (ungated) — two independent fields on the line, so
+    // two columns. Unsortable (no server key; backend gap). Placed after
+    // Manufacturer, before Comment, matching OMS's columns.tsx campaign.
     {
-      // Campaign name (ungated) — campaign.name on the line. Unsortable (no
-      // server key; backend gap). Matches OMS's columns.tsx campaign, placed
-      // after Manufacturer, before Comment.
-      c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
-      header: () => t('label.campaign-only'),
+      c: { accessor: line => line.program?.name ?? '', id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'more',
-      ...getCellDefinition('campaign'),
+      ...getCellDefinition('program'),
     },
-    // Comment (spec column #18) — the line's own comment text. Distinct from
+    {
+      c: { accessor: line => line.campaign?.name ?? '', id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'more',
+      ...getCellDefinition('activity'),
+    },
+    // Comment (spec column #19) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },

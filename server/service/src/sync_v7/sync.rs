@@ -312,6 +312,11 @@ pub async fn is_central_token_cleared(
 /// extra round-trip.
 async fn check_site_status<'a>(session: &SyncV7<'a>) -> Result<(), SyncError> {
     let status = session.sync_api_v7.site_status(()).await?;
+    // Central is under maintenance: stop before pushing so nothing is half-sent, and retry on
+    // the normal interval
+    if status.is_sync_api_paused {
+        return Err(SyncError::SyncApiPaused);
+    }
     let kvs = KeyValueStoreRepository::new(session.connection);
     kvs.set_i32(
         KeyType::SettingsSyncCentralServerSiteId,
@@ -549,13 +554,204 @@ impl<'a> SyncV7<'a> {
 mod test {
     use std::cell::RefCell;
 
+    use super::*;
+    use crate::{
+        cursor_controller::CursorType,
+        sync::api::test_helpers::{ScriptedResponse, ScriptedServer},
+    };
     use repository::{
         FilterBuilder, KeyValueStoreRow, UnitRow, UnitRowRepository,
         mock::{MockData, MockDataInserts},
+        test_db,
         test_db::setup_all_with_data,
     };
+    use reqwest::header::HeaderMap;
 
-    use super::*;
+    fn truncated() -> ScriptedResponse {
+        ScriptedResponse::TruncatedBody {
+            content_length: 5000,
+            body: r#"{"Ok": {"siteId": 1, "lastCursorInBatch": 1, "rec"#,
+        }
+    }
+
+    /// A batch holding one record at `cursor`, so it can be found in the sync buffer.
+    fn batch(cursor: i64, record_id: &str) -> ScriptedResponse {
+        let batch = SyncBatchV7 {
+            site_id: 1,
+            last_cursor_in_batch: cursor as u64,
+            remaining: 0,
+            max_cursor: 2,
+            records: vec![SyncRecordV7 {
+                cursor,
+                record_id: record_id.to_string(),
+                table_name: ChangelogTableName::Unit,
+                action: RowActionType::Delete,
+                data: serde_json::Value::Null,
+                store_id: None,
+                transfer_store_id: None,
+                patient_id: None,
+            }],
+        };
+        complete(batch)
+    }
+
+    /// Nothing left to pull - ends the loop.
+    fn empty_batch() -> ScriptedResponse {
+        complete(SyncBatchV7 {
+            site_id: 1,
+            last_cursor_in_batch: 2,
+            max_cursor: 2,
+            ..Default::default()
+        })
+    }
+
+    fn complete(batch: SyncBatchV7) -> ScriptedResponse {
+        let response: api::pull::Response = Ok(batch);
+        ScriptedResponse::Complete(serde_json::to_string(&response).unwrap())
+    }
+
+    /// Pull with a batch size of one, so a one-record batch is followed by another request
+    /// and `empty_batch` ends the loop.
+    async fn pull(
+        connection: &StorageConnection,
+        responses: Vec<ScriptedResponse>,
+    ) -> Result<(), SyncError> {
+        let server = ScriptedServer::start(responses);
+        let session = SyncV7 {
+            connection,
+            sync_api_v7: SyncApiV7 {
+                url: server.url().parse().unwrap(),
+                auth_headers: HeaderMap::new(),
+            },
+            batch_size: BatchSize {
+                remote_pull: 1,
+                ..Default::default()
+            },
+        };
+        let step = SyncRequestStep {
+            filter: ChangelogCondition::True(),
+            cursor_type: CursorType::Standard(KeyType::SyncPullCursorV7),
+        };
+        let mut logger = SyncLogger::start(connection, None).unwrap();
+        session.pull(&mut logger, &step, None, true).await
+    }
+
+    fn is_buffered(connection: &StorageConnection, record_id: &str) -> bool {
+        SyncBufferRepository::new(connection)
+            .find_latest_by_record_id_slow_unindexed(record_id)
+            .unwrap()
+            .is_some()
+    }
+
+    /// Central drops the connection part-way through a batch body, the pull re-requests the
+    /// same cursor, and the batch from the retry lands in the sync buffer. Before this, the
+    /// drop aborted the whole sync run and the user had to press Retry.
+    #[actix_rt::test]
+    async fn test_pull_retries_dropped_response_body() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "v7_test_pull_retries_dropped_response_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let result = pull(
+            &connection,
+            vec![truncated(), batch(1, "record_from_retry"), empty_batch()],
+        )
+        .await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+        // The record only exists in the response served to the retry.
+        assert!(
+            is_buffered(&connection, "record_from_retry"),
+            "Batch from the retried request was not saved"
+        );
+    }
+
+    /// A connection that keeps dropping gives up once the retry budget is spent, and
+    /// reports it as a connection problem.
+    #[actix_rt::test]
+    async fn test_pull_gives_up_after_dropped_body_retries() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "v7_test_pull_gives_up_after_dropped_body_retries",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // The first attempt plus three retries. A fifth request would find the listener
+        // closed and fail to connect instead.
+        let result = pull(
+            &connection,
+            vec![truncated(), truncated(), truncated(), truncated()],
+        )
+        .await;
+
+        assert!(
+            matches!(&result, Err(SyncError::ConnectionError { e, .. }) if e.contains("Connection dropped while reading response body")),
+            "Unexpected result: {:#?}",
+            result
+        );
+    }
+
+    /// The retry budget is per batch: a batch that needs every retry doesn't leave the next
+    /// batch with none.
+    #[actix_rt::test]
+    async fn test_pull_resets_dropped_body_retries_after_each_batch() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "v7_test_pull_resets_dropped_body_retries_after_each_batch",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let result = pull(
+            &connection,
+            vec![
+                truncated(),
+                truncated(),
+                truncated(),
+                batch(1, "first_batch"),
+                truncated(),
+                truncated(),
+                truncated(),
+                batch(2, "second_batch"),
+                empty_batch(),
+            ],
+        )
+        .await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+        assert!(is_buffered(&connection, "first_batch"));
+        assert!(is_buffered(&connection, "second_batch"));
+    }
+
+    /// Only a dropped body is retried. A body that arrived in full but doesn't parse would
+    /// come back the same on a retry, so it fails straight away.
+    #[actix_rt::test]
+    async fn test_pull_does_not_retry_unparseable_body() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "v7_test_pull_does_not_retry_unparseable_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let result = pull(
+            &connection,
+            vec![
+                ScriptedResponse::Complete("not json at all".to_string()),
+                // Only reached if the parse failure were (wrongly) retried.
+                batch(1, "record_from_retry"),
+                empty_batch(),
+            ],
+        )
+        .await;
+
+        assert!(
+            matches!(&result, Err(SyncError::ParsingError { .. })),
+            "Unexpected result: {:#?}",
+            result
+        );
+        assert!(!is_buffered(&connection, "record_from_retry"));
+    }
 
     const UNITS: [&str; 6] = ["unit_1", "unit_2", "unit_3", "unit_4", "unit_5", "unit_6"];
 

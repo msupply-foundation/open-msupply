@@ -23,8 +23,6 @@ type Preferences = StoreContextResult['preferences'];
 type StorePreferences = StoreContextResult['storePreferences'];
 
 export type DashboardGates = {
-  /** External-inbound panel — procurement capability on (OMS-REG-DB-01.36). */
-  externalInboundPanel: boolean;
   /**
    * Emergency (new) customer-requisition stat — program module on
    * (OMS-REG-DB-01.39).
@@ -74,7 +72,6 @@ export const computeDashboardGates = (
   prefs: Preferences,
   store: StorePreferences
 ): DashboardGates => ({
-  externalInboundPanel: prefs.useProcurementFunctionality,
   emergencyStat: store.omProgramModule,
   outOfStockRecentlyUsedStat:
     prefs.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts >

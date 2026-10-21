@@ -1,10 +1,10 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { roundedText } from '../../../intl/numberDisplay';
 import { SvgPlot, linePath } from './svgPlot';
 
-const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+const fmt = (n: number) => roundedText(n);
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
 
@@ -77,13 +77,19 @@ export const StockEvolutionChart = (props: {
               <path
                 class={styles.maxLine}
                 d={linePath(
-                  data().map((d, i) => [s.bandCenter(i), s.y(d.maximumStockOnHand)])
+                  data().map((d, i) => [
+                    s.bandCenter(i),
+                    s.y(d.maximumStockOnHand),
+                  ])
                 )}
               />
               <path
                 class={styles.minLine}
                 d={linePath(
-                  data().map((d, i) => [s.bandCenter(i), s.y(d.minimumStockOnHand)])
+                  data().map((d, i) => [
+                    s.bandCenter(i),
+                    s.y(d.minimumStockOnHand),
+                  ])
                 )}
               />
             </>

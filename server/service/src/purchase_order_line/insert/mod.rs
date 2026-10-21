@@ -1,4 +1,8 @@
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry_with_diff,
+    purchase_order_line::log::{LineLogDetail, line_log_detail},
+    service_provider::ServiceContext,
+};
 use chrono::NaiveDate;
 use repository::{
     ActivityLogType, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, RepositoryError,
@@ -58,17 +62,17 @@ pub fn insert_purchase_order_line(
         .connection
         .transaction_sync(|connection| {
             let item = validate(&ctx.store_id.clone(), &input, connection)?;
+            let item_code = item.code.clone();
             let purchase_order_line = generate(connection, &ctx.store_id.clone(), item, input)?;
 
-            activity_log_entry(
+            PurchaseOrderLineRowRepository::new(connection).upsert_one(&purchase_order_line)?;
+            activity_log_entry_with_diff(
                 ctx,
                 ActivityLogType::PurchaseOrderLineCreated,
                 Some(purchase_order_line.purchase_order_id.clone()),
-                None,
-                None,
+                None::<&LineLogDetail>,
+                &line_log_detail(connection, &purchase_order_line, Some(item_code))?,
             )?;
-
-            PurchaseOrderLineRowRepository::new(connection).upsert_one(&purchase_order_line)?;
             Ok(purchase_order_line)
         })
         .map_err(|error: TransactionError<InsertPurchaseOrderLineError>| error.to_inner_error())?;

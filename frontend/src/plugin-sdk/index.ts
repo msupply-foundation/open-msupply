@@ -56,6 +56,35 @@ export type {
   NoPlacement,
 } from './types';
 
+// ── Document types — the base shapes a form plugin extends ─────────────────
+// A form plugin's document type extends one of these, and its JSON Schema is
+// emitted from that type at build (./documents.ts). Type-only, so erased at
+// build: nothing here is eager weight.
+export type {
+  DocumentData,
+  Patient,
+  Person,
+  Gender,
+  MaritalStatus,
+  Note,
+  NextOfKin,
+  Address,
+  ContactDetails,
+  SocioEconomics,
+  RelatedPerson,
+  DrugAllergy,
+  Allergies,
+  ProgramEnrolment,
+  ProgramEnrolmentStatus,
+  Encounter,
+  EncounterStatus,
+  Clinician,
+  User,
+  EncounterLocation,
+  ContactTrace,
+  ContactTraceLocation,
+} from './documents';
+
 // ── Auth & context ──────────────────────────────────────────────────────────
 /*
  * The session surface (sdk-contract § SDK surface — Auth & context): the same
@@ -101,6 +130,34 @@ export type {
   SaveContext,
   PrescriptionPaymentView,
   PrescriptionPaymentFormProps,
+} from './types';
+
+// ── Slot API — the document form slots ──────────────────────────────────────
+// A program record's body, per category: the form a plugin contributes for
+// one of its document types, written with the form library below.
+export type {
+  DocumentFormSlotId,
+  DocumentFormPlacement,
+  FormRecordView,
+  ProgramEnrolmentFormProps,
+  EncounterFormProps,
+  PatientFormProps,
+  EnrolmentFormComponent,
+  EncounterFormComponent,
+  PatientFormComponent,
+} from './types';
+// Each slot takes its form through its helper: eager and tiny, since each
+// only returns its argument, and the contribution is read at load.
+export { patientForm, encounterForm, enrolmentForm } from './forms';
+
+// ── Slot API — the patient toolbar trigger slot ─────────────────────────────
+// A button on the patient screen's header: the host draws it from the
+// trigger's label and icon, and runs its handler with the host actions.
+export type {
+  TriggerRender,
+  TriggerPatientView,
+  PatientTriggerProps,
+  PatientTriggerActions,
 } from './types';
 
 // ── UI kit ──────────────────────────────────────────────────────────────────
@@ -168,6 +225,10 @@ export type {
 } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+// The two-up row, for the demo program's forms (#468): a field with its
+// Generate button, weight beside height (kdd/form-layout). Already in the
+// eager graph (the patient details form renders it), so it adds nothing new.
+export { FormRow } from '../ui/layout/Form/FormRow';
 export { FormSection } from '../ui/layout/Form/FormSection';
 export type { FormSectionProps } from '../ui/layout/Form/FormSection';
 export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
@@ -379,6 +440,113 @@ export type {
 } from '../ui/elements/table/tableConfig';
 export type { PaginationProps } from '../ui/elements/table/Pagination';
 
+// ── Form library — the fields a plugin form is written with ─────────────────
+/*
+ * Lazy like the table: the fields, the AJV validator and the host's default
+ * forms are one host chunk, fetched when the first form opens (./
+ * lazyComponents.ts; kdd/custom-forms/specs.md § Forms in the UI). A field
+ * takes the draft the host hands a form and a path into the document type,
+ * checked by the compiler. The types are erased at build.
+ */
+export {
+  TextInput,
+  TextAreaInput,
+  NumberInput,
+  DateInput,
+  DateTimeInput,
+  SelectInput,
+  AutocompleteInput,
+  CheckboxInput,
+  DateOfBirthInput,
+  NotesInput,
+  MultiSelectInput,
+  PreviousEncounterValue,
+  PrescriptionInput,
+  FieldGroup,
+  FormDivider,
+} from './lazyComponents';
+/*
+ * The old client's category tiles and its program icons: a form's categories
+ * as tiles that open their fields in dialogs, replicating the old client's
+ * look until program forms move onto the core library's layout. The tiles are
+ * lazy from the form library's chunk; `ProgramIcon` is a small eager wrapper
+ * that loads the icons' shapes, their own chunk, when the first one renders.
+ */
+export { FormCategories, FormCategory } from './lazyComponents';
+export { ProgramIcon } from './programIcons/ProgramIcon';
+export type {
+  ProgramIconName,
+  ProgramIconProps,
+} from './programIcons/ProgramIcon';
+export type {
+  FormCategoriesProps,
+  FormCategoryProps,
+} from './formCategories/FormCategories';
+// The host's patient fields, for a `patient.form` to compose: lazy from the
+// same chunk.
+export {
+  PatientCodeField,
+  PatientCode2Field,
+  PatientFirstNameField,
+  PatientLastNameField,
+  PatientDateOfBirthField,
+  PatientGenderField,
+  PatientAddressField,
+  PatientPhoneField,
+  PatientNextOfKinField,
+  PatientDeceasedFields,
+} from './lazyComponents';
+export type {
+  LabelledPatientFieldProps,
+  PatientFieldProps,
+} from '../domain/patient/documentFields';
+// The host's enrolment ID field, for a `programEnrolment.form` to place.
+export { EnrolmentIdField } from './lazyComponents';
+export type { EnrolmentIdFieldProps } from '../domain/documentForm/EnrolmentIdField';
+export type { Draft } from '../domain/documentForm/draft';
+export type {
+  Path,
+  PathValue,
+  TextPath,
+  EnumPath,
+  NumberPath,
+  BooleanPath,
+  NotesPath,
+  EnumArrayPath,
+} from '../domain/documentForm/paths';
+export type { FieldSchemaInfo } from '../domain/documentForm/schemaNode';
+// Migrations between a document type's schema versions: eager and tiny, since
+// `defineMigration` only returns its argument, and the form contribution that
+// lists the steps is read at load.
+export { defineMigration } from './migrations';
+export type {
+  JsonScalar,
+  Migration,
+  MigrationStep,
+  MigrationTransform,
+  UnresolvedValues,
+} from '../domain/documentForm/migration';
+export type {
+  FieldProps,
+  TextInputProps,
+  TextAreaInputProps,
+  NumberInputProps,
+  DateInputProps,
+  DateTimeInputProps,
+  SelectInputProps,
+  AutocompleteInputProps,
+  AutocompleteOption,
+  CheckboxInputProps,
+  DateOfBirthInputProps,
+  FieldGroupProps,
+  FormDividerProps,
+} from '../domain/documentForm/fields';
+export type { NotesInputProps } from '../domain/documentForm/NotesInput';
+export type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
+export type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+export type { PrescriptionInputProps } from '../domain/documentForm/PrescriptionInput';
+export type { NoteEditRestrictions } from '../domain/documentForm/notes';
+
 // ── List & table state — the URL and the stored column layout ───────────────
 /*
  * Where a plugin list screen's state lives, so it remembers what a host one
@@ -456,8 +624,10 @@ export { ChevronDownIcon } from '../ui/icons';
  * The Afghanistan Daily Tally's icons (private/plugins/afghanistan
  * ui-surface.md): the add icon on _New tally sheet_, the delete icon on
  * _Discard draft_, the minus and plus of the counter control, the success
- * check beside _Auto-allocated_, the forward arrow on Continue. All path data
- * in the module that already ships — the same bargain as the entries above.
+ * check beside _Auto-allocated_, the forward arrow on Continue.
+ * PlusCircleIcon is also the demo program's "Record follow-up" on the patient
+ * header (#468), drawn beside the host's own create actions. All path data in
+ * the module that already ships — the same bargain as the entries above.
  */
 export {
   ArrowRightIcon,
@@ -567,6 +737,29 @@ export type {
  * plugin's own near-miss.
  */
 export { gated } from '../api/gated';
+
+// ── Data access — program data ──────────────────────────────────────────────
+// What a form plugin reads and draws beyond its own document: a server
+// counter for generated identifiers, and the program events the server
+// derives from documents (./programs.ts).
+export { allocateProgramNumber, useActiveProgramEvents } from './programs';
+export type { ProgramEventView, ActiveProgramEventsInput } from './programs';
+export { usePreviousEncounter } from './encounters';
+export type {
+  PreviousEncounterInput,
+  PreviousEncounterView,
+} from './encounters';
+export {
+  createPrescription,
+  useItemBatches,
+  usePrescriptionSummary,
+} from './prescriptions';
+export type {
+  CreatePrescriptionInput,
+  CreatePrescriptionResult,
+  ItemBatchView,
+  PrescriptionSummaryView,
+} from './prescriptions';
 
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';
