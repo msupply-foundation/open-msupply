@@ -628,6 +628,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               min={0}
               max={line.availablePacks * line.packSize}
               disabled={line.barred.length > 0}
+              emptyValue={0}
               onChange={units =>
                 setRowPacks(
                   line.id,

@@ -163,7 +163,6 @@ pub fn generate_lines_and_stock_lines(
                     stock_line_id: return_line.stock_line_id,
                     store_id: store_id.to_string(),
                     on_hold: existing_stock_line.is_some_and(|stock_line| stock_line.on_hold),
-                    barcode_id: None,
                     supplier_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,

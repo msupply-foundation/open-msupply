@@ -16,10 +16,9 @@
  * reactively: the answer typically comes from the plugin's own data read, and
  * the consulting flow already has an in-flight state covering exactly this
  * window. `when`-gating is evaluated here rather than through
- * `visibleContributions`, whose filter runs plugin `when` untrapped — fine
- * under a render boundary, but this path has none, and a throwing resolver
- * must fail alone (rules § error isolation) instead of rejecting the whole
- * consult.
+ * `visibleContributions`, because the gate and the resolver it guards are
+ * trapped together: either throwing answers `false` for that contribution
+ * alone (rules § error isolation) instead of rejecting the whole consult.
  */
 import type { HostWarningId } from '../plugin-sdk/types';
 import { recordPluginDiagnostic } from './diagnostics';

@@ -191,6 +191,11 @@ th {
   border-bottom: 0.5px solid black;
 }
 
+.totals .discount_note td {
+  font-weight: normal;
+  font-style: italic;
+}
+
 .signatures {
   display: grid;
   grid-template-columns: 2fr 1fr 2fr 1fr;

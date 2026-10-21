@@ -91,7 +91,10 @@ import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
 import { HistoryModal } from './HistoryModal';
 import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
 import { PrescriptionLineViewModal } from './PrescriptionLineViewModal';
-import { EditPatientModal } from '../../patients';
+// By its own path, not the patients section's index: App.tsx loads that
+// index for the routes, and the modal carries the document form host
+// (spec/patients S4 allow-edit), which must stay out of the startup bundle.
+import { EditPatientModal } from '../../patients/detail/EditPatientModal';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat

@@ -851,16 +851,124 @@ type BackdatingNode {
 	maxDays: Int!
 }
 
-type BarcodeNode {
+type BarcodeMatchNode {
+	"""
+	The packaging variant's id, or the proposal's
+	"""
 	id: String!
-	gtin: String!
+	status: BarcodeStatusNode!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
 	itemId: String!
-	manufacturerId: String
+	"""
+	The item variant to put on the line, for a confirmed barcode. It may be
+	auto-created, so not in the item's variant list.
+	"""
+	itemVariantId: String
+	"""
+	For a confirmed barcode
+	"""
+	packagingVariantId: String
 	packSize: Float
-	parentId: String
+	manufacturerId: String
+}
+
+type BarcodeMutations {
+	"""
+	Confirms a barcode for an item without a proposal. Confirming one the item
+	already has returns it.
+	"""
+	insertBarcode(storeId: String!, input: InsertConfirmedBarcodeInput!): BarcodeNode!
+	"""
+	Confirms a store's proposal, so the barcode reaches every site. With no
+	packaging variant or item variant given, it goes on the item's auto-created
+	variant for the proposal's manufacturer.
+	"""
+	confirmBarcodeProposal(storeId: String!, id: String!, packagingVariantId: String, itemVariantId: String): BarcodeNode!
+	"""
+	Removes the barcode from a packaging variant, everywhere. `id` is the
+	packaging variant's. The removal is remembered, so the barcode isn't
+	auto-confirmed for the item again. An auto-created variant left with no
+	barcode is deleted; confirming the barcode again brings it back.
+	"""
+	deleteBarcode(storeId: String!, id: String!): DeleteResponse!
+}
+
+type BarcodeNode {
+	"""
+	The packaging variant's id
+	"""
+	id: String!
+	"""
+	The barcode in its standard form with its scheme, e.g.
+	`gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
+	"""
+	value: String!
+	"""
+	The barcode as people read it, e.g. `9506682101352`
+	"""
+	barcode: String!
+	"""
+	The barcode as people read it. Use `barcode`.
+	"""
+	gtin: String! @deprecated(reason: "Use `barcode`")
+	itemId: String!
+	itemVariantId: String
+	packagingVariantId: String
+	"""
+	The barcode is on a variant central created only to hold barcodes
+	"""
+	isAutoCreated: Boolean!
+	packSize: Float
+	manufacturerId: String
+	"""
+	Barcodes no longer have a parent; always null. Kept so older clients
+	that still ask for it keep working.
+	"""
+	parentId: String @deprecated(reason: "Barcodes no longer have a parent")
+}
+
+type BarcodeProposalNode {
+	id: String!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	The store that proposed it
+	"""
+	storeId: String!
+	store: StoreNode
+	userId: String!
+	createdDatetime: DateTime!
+	updatedDatetime: DateTime!
 }
 
 union BarcodeResponse = NodeError | BarcodeNode
+
+enum BarcodeStatusNode {
+	"""
+	Confirmed on central, shared by every site
+	"""
+	CONFIRMED
+	"""
+	Learned on this site, not confirmed yet
+	"""
+	PROPOSED
+}
 
 input BatchInboundShipmentInput {
 	insertInboundShipments: [InsertInboundShipmentInput!]
@@ -1237,7 +1345,15 @@ input CentralPatientSearchInput {
 union CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError
 
 type CentralPluginMutations {
-	installUploadedPlugin(fileId: String!): PluginInfoNode!
+	"""
+	`programs` chooses the program for each of a form plugin's program keys
+	(a key left out keeps the program it is already bound to); `takeOver`
+	names document types whose existing entry, installed by no plugin, the
+	plugin may take over; `blankOldUi` names taken-over types whose form
+	on sites still running the old client may go blank, because the type
+	carries no legacy UI schema (refused otherwise).
+	"""
+	installUploadedPlugin(fileId: String!, programs: [PluginProgramInput!], takeOver: [String!], blankOldUi: [String!]): PluginInfoNode!
 	uninstallPlugin(id: String!): UninstallPluginNode!
 }
 
@@ -1260,6 +1376,7 @@ type CentralServerMutationNode {
 	demographic: DemographicMutations!
 	vaccineCourse: VaccineCourseMutations!
 	general: CentralGeneralMutations!
+	barcode: BarcodeMutations!
 	plugins: CentralPluginMutations!
 	preferences: PreferenceMutations!
 	campaign: CampaignMutations!
@@ -2583,6 +2700,10 @@ type DraftStockOutLineNode {
 	with no invoice line yet.
 	"""
 	transferComment: String
+	"""
+	The batch's stock line barcode, as people read it
+	"""
+	barcode: String
 	reasonOption: ReasonOptionNode
 }
 
@@ -2718,6 +2839,11 @@ type EncounterNode {
 	The encounter document
 	"""
 	document: DocumentNode!
+	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
 	activeProgramEvents(at: DateTime, filter: ActiveEncounterEventFilterInput, page: PaginationInput, sort: ProgramEventSortInput): ProgramEventResponse!
 	programEvents(page: PaginationInput, sort: ProgramEventSortInput, filter: EncounterEventFilterInput): ProgramEventResponse!
 	"""
@@ -2962,6 +3088,37 @@ input ExistingLinesInput {
 	returnId: String!
 }
 
+"""
+How this server's registry stands for a document type the bundle declares.
+"""
+enum ExistingRegistryEntryNode {
+	"""
+	No entry: install creates one.
+	"""
+	NONE
+	"""
+	The plugin's own entry, from an earlier install.
+	"""
+	OWNED
+	"""
+	An entry no plugin installed: install needs the type named in `takeOver`.
+	"""
+	UNOWNED
+	"""
+	Another plugin's entry (`existingEntryOwner`): install is refused.
+	"""
+	OWNED_BY_ANOTHER_PLUGIN
+	"""
+	Several entries for the type: install is refused.
+	"""
+	AMBIGUOUS
+	"""
+	An entry of another category (`existingEntryCategory`) than the one
+	declared: install is refused.
+	"""
+	CATEGORY_MISMATCH
+}
+
 type FailedToFetchReportData implements PrintReportErrorInterface {
 	description: String!
 	errors: JSON!
@@ -3056,6 +3213,90 @@ enum ForeignKey {
 type ForeignKeyError implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & SetPrescribedQuantityErrorInterface & RefreshAncillaryItemsErrorInterface & InsertResponseRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	key: ForeignKey!
+}
+
+"""
+What installing the uploaded bundle's form plugins would meet on this
+server, for the choices `installUploadedPlugin` takes: the program for
+each key, the types to take over, and the types whose old-client form may
+go blank.
+"""
+type FormInstallPreviewNode {
+	formPlugins: [FormPluginPreviewNode!]!
+	"""
+	The programs on this server, one to choose for each program key.
+	"""
+	programs: [ProgramNode!]!
+}
+
+"""
+One document type a form plugin declares, checked against this server.
+"""
+type FormPluginDocumentTypeNode {
+	documentType: String!
+	name: String!
+	category: DocumentRegistryCategoryNode!
+	"""
+	`None` for the Patient type, whose context is fixed.
+	"""
+	programKey: String
+	existingEntry: ExistingRegistryEntryNode!
+	"""
+	The unowned entry's id, for `UNOWNED`.
+	"""
+	existingEntryId: String
+	"""
+	The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`.
+	"""
+	existingEntryOwner: String
+	"""
+	The existing entry's category, for `CATEGORY_MISMATCH`.
+	"""
+	existingEntryCategory: DocumentRegistryCategoryNode
+	"""
+	The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+	context is a program's: what a take-over keeps the type under unless
+	its key is moved, so a screen can start the key on it.
+	"""
+	existingEntryProgram: ProgramNode
+	"""
+	True when installing would leave the type's form blank on sites still
+	running the old client, which install refuses unless the type is named
+	in `blankOldUi`.
+	"""
+	blanksOldUi: Boolean!
+	"""
+	The refusals no choice in `installUploadedPlugin` can get past, in the
+	words that mutation would refuse with: a schema version already
+	installed with other content, a version documents are pinned to left
+	out, a take-over that changes the deployment's rules or lacks its
+	current version, a second patient type. Empty when install could go
+	ahead with the right choices.
+	"""
+	refusals: [String!]!
+}
+
+type FormPluginPreviewNode {
+	pluginCode: String!
+	programKeys: [FormPluginProgramKeyNode!]!
+	documentTypes: [FormPluginDocumentTypeNode!]!
+}
+
+"""
+One of a form plugin's program keys, with the program an earlier install
+bound it to.
+"""
+type FormPluginProgramKeyNode {
+	programKey: String!
+	"""
+	The declared document types that name this key.
+	"""
+	documentTypes: [String!]!
+	"""
+	The program the key is already bound to; `None` on a first install,
+	when `programs` must choose one.
+	"""
+	boundProgram: ProgramNode
 }
 
 type FormSchemaConnector {
@@ -3427,6 +3668,9 @@ union InsertAssetLogResponse = InsertAssetLogError | AssetLogNode
 
 union InsertAssetResponse = InsertAssetError | AssetNode
 
+"""
+Deprecated: the input of the deprecated top-level `insertBarcode`
+"""
 input InsertBarcodeInput {
 	gtin: String!
 	itemId: String!
@@ -3443,6 +3687,24 @@ input InsertClinicianInput {
 	firstName: String
 	gender: GenderTypeNode
 	mobile: String
+}
+
+input InsertConfirmedBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	Put the barcode on this packaging variant of the item, which has none yet
+	"""
+	packagingVariantId: String
+	"""
+	Add a packaging variant with the barcode to this item variant of the item
+	"""
+	itemVariantId: String
 }
 
 input InsertContactFormInput {
@@ -3674,6 +3936,11 @@ input InsertInboundShipmentLineInput {
 	shippedPackSize: Float
 	purchaseOrderLineId: String
 	reasonOptionId: String
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -4349,6 +4616,28 @@ input InsertVaccineCourseInput {
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
 
+"""
+One registry entry as an install left it: the report the CLI prints,
+typed for a screen.
+"""
+type InstalledDocumentTypeNode {
+	pluginCode: String!
+	documentType: String!
+	programKey: String
+	contextId: String!
+	formSchemaId: String!
+	outcome: RegistryOutcomeNode!
+	"""
+	Schema versions this install added; versions already present keep
+	their schema.
+	"""
+	schemasAdded: Int!
+	"""
+	Versions already present whose legacy UI schema this install replaced.
+	"""
+	uiSchemasUpdated: Int!
+}
+
 type InstalledPluginConnector {
 	nodes: [InstalledPluginNode!]!
 	totalCount: Int!
@@ -4659,6 +4948,11 @@ type InvoiceLineNode {
 	shipment: no inbound mutation input accepts it.
 	"""
 	transferComment: String
+	"""
+	The barcode scanned or entered for the line, or carried by the stock it
+	issues, as people read it. Not necessarily a confirmed barcode.
+	"""
+	barcode: String
 	"""
 	The line of the shipment's linked requisition carrying the same item.
 	Null when the shipment has no requisition link, or the order has no line
@@ -5088,7 +5382,11 @@ type ItemNode {
 	backend-plugin path.
 	"""
 	stockOnHand(storeId: String!): Int!
-	variants: [ItemVariantNode!]!
+	"""
+	The item's variants. Auto-created ones, which central creates only to hold
+	a barcode, are left out unless `includeAutoCreated` is true.
+	"""
+	variants(includeAutoCreated: Boolean): [ItemVariantNode!]!
 	"""
 	Ancillary items configured against this item — i.e. items that should be
 	ordered alongside it (e.g. syringes that go with a vaccine).
@@ -5176,6 +5474,11 @@ type ItemStorePropertiesNode {
 type ItemVariantMutations {
 	upsertItemVariant(storeId: String!, input: UpsertItemVariantInput!): UpsertPackVariantResponse!
 	deleteItemVariant(storeId: String!, input: DeleteItemVariantInput!): DeleteItemVariantResponse!
+	"""
+	Makes a variant central created to hold a barcode a real one, so it shows
+	in variant lists and pickers. Its id stays the same.
+	"""
+	promoteItemVariant(storeId: String!, id: String!): ItemVariantNode!
 }
 
 type ItemVariantNode {
@@ -5198,6 +5501,11 @@ type ItemVariantNode {
 	"""
 	bundlesWith: [BundledItemNode!]!
 	vvmType: String
+	"""
+	Created on central only to hold a barcode. Left out of variant lists unless
+	asked for.
+	"""
+	isAutoCreated: Boolean!
 }
 
 type ItemsCannotBeOrdered implements UpdatePurchaseOrderErrorInterface {
@@ -5733,7 +6041,21 @@ type Mutations {
 	"""
 	setSyncPaused(paused: Boolean!): SyncPausedNode!
 	updateDisplaySettings(input: DisplaySettingsInput!): UpdateDisplaySettingsResponse!
-	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse!
+	"""
+	Records that a user picked an item for a barcode in this store, for central
+	to review. Call it when the line the scan opened is saved.
+	"""
+	proposeBarcode(storeId: String!, input: ProposeBarcodeInput!): BarcodeMatchNode!
+	"""
+	Withdraws a proposal made by a store on this site. It stops matching scans
+	here, and central stops reviewing it.
+	"""
+	deleteBarcodeProposal(storeId: String!, id: String!): DeleteResponse!
+	"""
+	Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+	on central. Adds a confirmed barcode on central and proposes one elsewhere.
+	"""
+	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse! @deprecated(reason: "Use `proposeBarcode`")
 	updateLogLevel(storeId: String!, input: UpsertLogLevelInput!): UpsertLogLevelResponse!
 	updateLabelPrinterSettings(input: LabelPrinterSettingsInput!): UpdateLabelPrinterSettingsResponse!
 	updateNameProperties(storeId: String!, input: UpdateNamePropertiesInput!): UpdateNamePropertiesResponse!
@@ -6206,6 +6528,10 @@ type PackagingVariantNode {
 	packagingLevel: Int!
 	packSize: Float
 	volumePerUnit: Float
+	"""
+	The confirmed barcode for this packaging, as people read it
+	"""
+	barcode: String
 }
 
 """
@@ -6467,6 +6793,29 @@ input PluginDataSortInput {
 
 type PluginInfoNode {
 	pluginInfo: JSON!
+	"""
+	How the bundle's form plugins stand against this server, read before
+	installing: each program key's current program, each document type's
+	existing registry entry and whether installing it would blank the old
+	client's form, and the programs to choose from. Null on an install's
+	result.
+	"""
+	formInstallPreview: FormInstallPreviewNode
+	"""
+	What the install did to each form plugin's registry entries: the
+	report the CLI prints, one node per declared type. Null for an
+	uploaded bundle not yet installed, and empty for a bundle with no form
+	plugin.
+	"""
+	installedDocumentTypes: [InstalledDocumentTypeNode!]
+}
+
+"""
+The program chosen for one of a form plugin's program keys.
+"""
+input PluginProgramInput {
+	programKey: String!
+	programId: String!
 }
 
 type PopulationForecastCourseNode {
@@ -6914,6 +7263,11 @@ type ProgramEnrolmentNode {
 	"""
 	document: DocumentNode!
 	"""
+	The registry entry of the document's type, resolved from the row's own
+	type without loading the document.
+	"""
+	documentRegistry: DocumentRegistryNode
+	"""
 	The program document
 	"""
 	encounters(page: PaginationInput, filter: EncounterFilterInput, sort: EncounterSortInput): EncounterConnector!
@@ -7042,6 +7396,12 @@ type ProgramNode {
 	id: String!
 	name: String!
 	isImmunisation: Boolean!
+	"""
+	The context the program's documents (its enrolments and encounters)
+	belong to: what a document registry entry's `contextId` names. Often,
+	but not always, the program's own id.
+	"""
+	contextId: String!
 	vaccineCourses: [VaccineCourseNode!]
 	elmisCode: String
 }
@@ -7115,6 +7475,16 @@ enum PropertyNodeValueType {
 	INTEGER
 	FLOAT
 	DATE
+}
+
+input ProposeBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
 }
 
 type PurchaseOrderConnector {
@@ -7676,7 +8046,26 @@ type Queries {
 		highStockThreshold: Float
 	): ItemCounts!
 	storePreferences(storeId: String!): StorePreferenceNode!
-	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse!
+	"""
+	Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+	barcodes first, then proposals made on this site, one per item and only
+	for items visible in the store. Empty for a barcode nobody has mapped yet.
+	"""
+	barcodeMatches(storeId: String!, barcode: String!): [BarcodeMatchNode!]!
+	"""
+	Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+	matches; RecordNotFound when it matches none, or several items.
+	"""
+	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse! @deprecated(reason: "Use `barcodeMatches`")
+	"""
+	The item's confirmed barcodes
+	"""
+	itemBarcodes(storeId: String!, itemId: String!): [BarcodeNode!]!
+	"""
+	Proposals for the item central hasn't confirmed or removed: every store's
+	on central, this site's elsewhere
+	"""
+	itemBarcodeProposals(storeId: String!, itemId: String!): [BarcodeProposalNode!]!
 	requisitionCounts(storeId: String!): RequisitionCounts!
 	logFileNames: LogNode!
 	logContents(fileName: String): LogNode!
@@ -8037,6 +8426,10 @@ type Queries {
 	): VaccineCoursesResponse!
 	vaccineCourse(id: String!): VaccineCourseResponse!
 	vaccineCourseDose(id: String!): VaccineCourseDoseResponse!
+	"""
+	Whether any item has variants. Auto-created variants, which only hold a
+	barcode, don't count.
+	"""
 	itemVariantsConfigured(storeId: String!): Boolean!
 	"""
 	Returns the relevant set of preferences based on context (e.g. current store)
@@ -8195,6 +8588,16 @@ interface RefreshTokenErrorInterface {
 }
 
 union RefreshTokenResponse = RefreshTokenError | RefreshToken
+
+"""
+What an install did to one registry entry.
+"""
+enum RegistryOutcomeNode {
+	CREATED
+	UPDATED
+	TAKEN_OVER
+	UNCHANGED
+}
 
 type RepackConnector {
 	totalCount: Int!
@@ -8853,6 +9256,12 @@ input SaveOutboundShipmentLinesInput {
 	itemId: String!
 	lines: [OutboundShipmentLineInput!]!
 	placeholderQuantity: Float
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 input SavePrescriptionLinesInput {
@@ -8861,6 +9270,12 @@ input SavePrescriptionLinesInput {
 	lines: [PrescriptionLineInput!]!
 	prescribedQuantity: Float
 	note: String
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 type ScannedDataParseError {
@@ -9149,7 +9564,14 @@ type StockLineNode {
 	location: LocationNode
 	item: ItemNode!
 	supplierName: String
+	"""
+	The barcode the stock carries, as people read it, e.g. `9506682101352`
+	"""
 	barcode: String
+	"""
+	None for an auto-created variant, which only holds a barcode: it's kept out
+	of sight like it is in variant lists. `itemVariantId` still gives it.
+	"""
 	itemVariant: ItemVariantNode
 	vvmStatus: VvmstatusNode
 	vvmStatusLogs: VvmstatusLogConnector
@@ -10329,6 +10751,12 @@ input UpdateInboundShipmentLineInput {
 	shippedPackSize: Float
 	status: InvoiceLineStatusType
 	reasonOptionId: NullableStringUpdate
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. An empty one clears it. Doesn't propose a barcode (see
+	`proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union UpdateInboundShipmentLineResponse = UpdateInboundShipmentLineError | InvoiceLineNode

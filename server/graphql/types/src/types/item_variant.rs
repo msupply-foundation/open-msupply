@@ -13,6 +13,7 @@ use repository::item_variant::item_variant::ItemVariant;
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
+use util::barcode::display_barcode;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,
 }
@@ -120,6 +121,12 @@ impl ItemVariantNode {
     pub async fn vvm_type(&self) -> &Option<String> {
         &self.item_variant.vvm_type
     }
+
+    /// Created on central only to hold a barcode. Left out of variant lists unless
+    /// asked for.
+    pub async fn is_auto_created(&self) -> bool {
+        self.item_variant.is_auto_created
+    }
 }
 
 impl ItemVariantNode {
@@ -165,6 +172,14 @@ impl PackagingVariantNode {
 
     pub async fn volume_per_unit(&self) -> Option<f64> {
         self.packaging_variant.volume_per_unit
+    }
+
+    /// The confirmed barcode for this packaging, as people read it
+    pub async fn barcode(&self) -> Option<&str> {
+        self.packaging_variant
+            .barcode
+            .as_deref()
+            .map(display_barcode)
     }
 }
 

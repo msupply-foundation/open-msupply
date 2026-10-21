@@ -8,6 +8,7 @@ import { FormSection } from '../ui/layout/Form/FormSection';
 import { FormRow } from '../ui/layout/Form/FormRow';
 import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
+import { Divider } from '../ui/elements/display/Divider';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import {
@@ -133,6 +134,11 @@ export const formLayoutMetadata: PageMetadata = {
         'min width',
         'pinned',
       ],
+    },
+    {
+      id: 'form-layout-divider',
+      title: 'Divider',
+      searchTerms: ['divider', 'rule', 'separator', 'spacer', 'hr'],
     },
   ],
 };
@@ -376,6 +382,28 @@ export const FormLayoutShowcase = () => (
                 <DateField label="Expiry" value="2027-03-31" />
               </FormRowItem>
             </FormRow>
+          </FormSection>
+        </FormPreview>
+      </DashboardCard>
+
+      <DashboardCard
+        id="form-layout-divider"
+        title="Divider — a rule between runs"
+      >
+        <Lead>
+          A hairline rule between two runs of fields in one section, where a
+          second heading would be too much: the dates of a history, then a
+          question about them. A native <code>&lt;hr&gt;</code>, announced as a
+          separator, with no margin of its own: the section's gap spaces it as
+          it spaces the fields. Fields that want a title of their own are a
+          second <code>FormSection</code>, not a run split off by a rule.
+        </Lead>
+        <FormPreview>
+          <FormSection title="History">
+            <DateField label="Date of last delivery" value="2024-05-01" />
+            <DateField label="Date of the last living child's birth" />
+            <Divider />
+            <TextField label="Knowledge of birth spacing" />
           </FormSection>
         </FormPreview>
       </DashboardCard>

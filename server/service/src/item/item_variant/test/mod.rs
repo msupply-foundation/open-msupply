@@ -349,4 +349,79 @@ mod query {
             UpsertItemVariantError::OtherPartyNotAManufacturer
         );
     }
+
+    /// Editing an auto-created variant keeps it auto-created; promoting it makes
+    /// it a real one, keeping its id
+    #[actix_rt::test]
+    async fn promote_auto_created_item_variant() {
+        use repository::item_variant::item_variant_row::{
+            ItemVariantRow, ItemVariantRowRepository,
+        };
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "promote_auto_created_item_variant",
+            MockDataInserts::none()
+                .items()
+                .user_accounts()
+                .names()
+                .stores()
+                .name_store_joins(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.item_service;
+
+        let repo = ItemVariantRowRepository::new(&connection);
+        repo.upsert_one(&ItemVariantRow {
+            id: "auto".to_string(),
+            name: "Barcode variant".to_string(),
+            item_id: mock_item_a().id,
+            is_auto_created: true,
+            ..Default::default()
+        })
+        .unwrap();
+
+        // Not listed
+        let listed = service
+            .get_item_variants(&context, None, None, None)
+            .unwrap()
+            .rows;
+        assert!(listed.iter().all(|v| v.item_variant_row.id != "auto"));
+
+        // Renaming keeps it auto-created
+        let renamed = service
+            .upsert_item_variant(
+                &context,
+                UpsertItemVariantWithPackaging {
+                    id: "auto".to_string(),
+                    item_id: mock_item_a().id,
+                    name: "Renamed".to_string(),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(renamed.item_variant_row.name, "Renamed");
+        assert!(renamed.item_variant_row.is_auto_created);
+
+        let promoted = service.promote_item_variant(&context, "auto").unwrap();
+        assert_eq!(promoted.item_variant_row.id, "auto");
+        assert!(!promoted.item_variant_row.is_auto_created);
+        assert!(
+            service
+                .get_item_variants(&context, None, None, None)
+                .unwrap()
+                .rows
+                .iter()
+                .any(|v| v.item_variant_row.id == "auto")
+        );
+
+        assert_eq!(
+            service.promote_item_variant(&context, "missing"),
+            Err(crate::item::item_variant::PromoteItemVariantError::ItemVariantDoesNotExist)
+        );
+    }
 }

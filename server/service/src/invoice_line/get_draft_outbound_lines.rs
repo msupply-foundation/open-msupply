@@ -47,6 +47,8 @@ pub struct DraftStockOutLine {
     pub reason_option_id: Option<String>,
     /// From the existing invoice line; a batch with no line yet carries none.
     pub transfer_comment: Option<String>,
+    /// The stock line's barcode, in its standard form (`util::barcode`)
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -300,6 +302,7 @@ impl DraftStockOutLine {
             donor_id: donor_link_id,
             manufacturer_id,
             volume_per_pack,
+            ref barcode,
             ..
         } = line.stock_line_row;
 
@@ -327,6 +330,7 @@ impl DraftStockOutLine {
             received_number_of_packs: None,
             reason_option_id: None,
             transfer_comment: None,
+            barcode: barcode.clone(),
         }
     }
 
@@ -361,6 +365,7 @@ impl DraftStockOutLine {
             item_variant_id,
             manufacturer_id,
             volume_per_pack,
+            barcode,
             ..
         } = find_stock_line_by_id(line.invoice_line_row.stock_line_id, historical_stock_lines)?
             .ok_or(RepositoryError::DBError {
@@ -399,6 +404,7 @@ impl DraftStockOutLine {
             received_number_of_packs,
             reason_option_id,
             transfer_comment,
+            barcode,
         })
     }
 }

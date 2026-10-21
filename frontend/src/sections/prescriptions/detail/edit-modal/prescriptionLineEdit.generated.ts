@@ -73,6 +73,7 @@ export type SavePrescriptionItemLinesVariables = {
   }>;
     prescribedQuantity?: number | null;
     note?: string | null;
+    barcode?: string | null;
   };
 };
 
