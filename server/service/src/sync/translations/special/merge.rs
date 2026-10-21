@@ -126,9 +126,8 @@ pub(crate) fn apply_name_merge(
     // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
     // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
     //
-    // We must also consider nsj.name_is_customer, nsj.name_is_supplier and nsj.inactive.
-    // The remaining NSJ that we keep must logically OR the customer and supplier fields with the deleted NSJs', and is active if either is.
-    // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
+    // The kept join is a customer or supplier if either join was, and active if
+    // either was, so the store keeps seeing the name for invoices and orders
     let store_repo = StoreRepository::new(connection);
     let store = store_repo.query_one(
         StoreFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_keep.clone())),
@@ -161,10 +160,7 @@ pub(crate) fn apply_name_merge(
             if let Some(nsj_keep) = name_store_joins_for_keep.iter().find(|nsj_keep| {
                 nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
             }) {
-                // We must also consider nsj_delete.name_is_customer, nsj_delete.name_is_supplier
-                // and nsj_delete.inactive. The remaining NSJ that we keep must logically OR the
-                // customer and supplier fields with the deleted NSJs', and is active if either is.
-                // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
+                // Combine the two joins into the kept one (see above)
                 if (!nsj_keep.name_store_join.name_is_customer
                     && nsj_delete.name_store_join.name_is_customer)
                     || (!nsj_keep.name_store_join.name_is_supplier
