@@ -16,7 +16,7 @@
 use std::collections::{HashMap, HashSet};
 
 use repository::{
-    DocumentFilter, DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow,
+    DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, EqualFilter, FormSchemaJson,
     FormSchemaRowRepository, ProgramFilter, ProgramRepository, ProgramRow, ProgramRowRepository,
     RepositoryError, StorageConnection,
@@ -800,7 +800,9 @@ fn key_document_types(
 }
 
 /// How many documents of each type are saved under a context, by each
-/// document's latest version, leaving out the types with none.
+/// document's latest version, leaving out the types with none. A deleted
+/// document is not counted: it opens nowhere and nothing can restore it, so
+/// counting it would refuse a move no one could ever clear.
 fn documents_under_context(
     connection: &StorageConnection,
     document_types: &[String],
@@ -809,11 +811,7 @@ fn documents_under_context(
     let repo = DocumentRepository::new(connection);
     let mut counts = Vec::new();
     for document_type in document_types {
-        let count = repo.count(Some(
-            DocumentFilter::new()
-                .r#type(EqualFilter::equal_to(document_type.to_string()))
-                .context_id(EqualFilter::equal_to(context_id.to_string())),
-        ))?;
+        let count = repo.count_by_context(document_type, context_id)?;
         if count > 0 {
             counts.push((document_type.clone(), count));
         }
@@ -1940,6 +1938,35 @@ mod test {
         );
         assert!(error.to_string().contains(": 5 document(s) of its types"));
         assert_eq!(entry(&connection, "DemoEncounter").context_id, "program_b");
+    }
+
+    #[actix_rt::test]
+    async fn deleted_documents_do_not_block_a_program_change() {
+        let connection = setup("form_plugin_program_change_deleted").await;
+        let sidecar = demo_sidecar();
+        install_form_plugins(
+            &connection,
+            slice::from_ref(&sidecar),
+            &options(&[("demo", "program_b")], &[]),
+        )
+        .unwrap();
+        save_document(
+            &connection,
+            "deleted_encounter",
+            "DemoEncounter",
+            "demo_program_DemoEncounter_v2_hash",
+            "program_b",
+            DocumentStatus::Deleted,
+        );
+
+        install_form_plugins(
+            &connection,
+            &[sidecar],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        assert_eq!(entry(&connection, "DemoEncounter").context_id, "program_a");
     }
 
     fn save_document(
