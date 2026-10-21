@@ -134,6 +134,8 @@ const inboundShipmentPreferences = () => {
     allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
     externalInboundShipmentLinesMustBeAuthorised:
       prefs?.externalInboundShipmentLinesMustBeAuthorised ?? false,
+    promptForBatchAndExpiryOnInboundShipments:
+      prefs?.promptForBatchAndExpiryOnInboundShipments ?? false,
     backdatingEnabled: prefs?.backdating?.shipmentsEnabled ?? false,
     backdatingMaxDays: prefs?.backdating?.maxDays ?? 0,
     packToOne: store?.packToOne ?? false,

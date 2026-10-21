@@ -31,6 +31,7 @@ import { TextField } from '@/ui/elements/inputs/TextField';
 import { FieldShell } from '@/ui/elements/inputs/FieldShell';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Checkbox } from '@/ui/elements/inputs/Checkbox';
+import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { MultiSelect } from '@/ui/elements/selectors/MultiSelect';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -710,6 +711,40 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                             value={draft.wastageRate}
                             onChange={value => setDraft('wastageRate', value)}
                           />
+                        </FormRow>
+                        {/* One slot of a two-up row, so the field lines up
+                            under the coverage rate rather than running the
+                            group's full width. */}
+                        <FormRow>
+                          <NumberField
+                            label={t('label.annual-doses-per-person')}
+                            labelInfo={
+                              <InfoTooltip
+                                text={t('description.annual-doses-per-person')}
+                                label={t('label.annual-doses-per-person')}
+                                triggerTestId="vaccine-course-annual-doses-per-person-info"
+                              />
+                            }
+                            min={0}
+                            decimalLimit={2}
+                            data-testid="vaccine-course-annual-doses-per-person-input"
+                            disabled={saving()}
+                            error={fieldError('annualDosesPerPerson')}
+                            // What a blank counts, so a programme can see what
+                            // it overrides: the doses for full protection, below.
+                            helperText={
+                              draft.annualDosesPerPerson == null
+                                ? t('messages.annual-doses-per-person-blank', {
+                                    doses: draft.vaccineCourseDoses.length,
+                                  })
+                                : undefined
+                            }
+                            value={draft.annualDosesPerPerson ?? undefined}
+                            onChange={value =>
+                              setDraft('annualDosesPerPerson', value ?? null)
+                            }
+                          />
+                          <div />
                         </FormRow>
                         <Checkbox
                           label={t('label.calculate-demand')}

@@ -22,3 +22,41 @@ export const packDifference = (
   shippedNumberOfPacks == null
     ? undefined
     : numberOfPacks - shippedNumberOfPacks;
+
+/*
+ * What the "prompt for batch and expiry" store preference asks about before an
+ * inbound line save, and marks once the user goes back to fill it in (issue
+ * #992, OMS-REG-REPL-09.31–.39) — per batch, so the editor can say which batch
+ * and which field.
+ */
+
+/** No batch number — blank, or whitespace only, which traces nothing. */
+export const batchIsBlank = (b: { batch: string }): boolean => !b.batch.trim();
+
+/** No expiry date. */
+export const expiryIsBlank = (b: { expiryDate: string | null }): boolean =>
+  !b.expiryDate;
+
+/** Missing either one — enough on its own to prompt and to mark the batch. */
+export const lacksBatchOrExpiry = (b: {
+  batch: string;
+  expiryDate: string | null;
+}): boolean => batchIsBlank(b) || expiryIsBlank(b);
+
+/**
+ * What a set of batches is missing between them, so the words name only that:
+ * `batch` or `expiry` when no batch lacks the other one, `either` once both
+ * fields are blank somewhere; undefined when nothing is missing.
+ */
+export type MissingBatchField = 'batch' | 'expiry' | 'either';
+
+export const missingBatchField = (
+  bs: readonly { batch: string; expiryDate: string | null }[]
+): MissingBatchField | undefined => {
+  const batch = bs.some(batchIsBlank);
+  const expiry = bs.some(expiryIsBlank);
+  if (batch && expiry) return 'either';
+  if (batch) return 'batch';
+  if (expiry) return 'expiry';
+  return undefined;
+};

@@ -1,6 +1,6 @@
 use super::{
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
+    utils::{LegacyCustomFieldsBuilder, custom_field_string, merge_legacy_custom_fields},
 };
 use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
@@ -389,15 +389,6 @@ fn build_legacy_invoice_custom_fields(
         builder = builder.option(keys::PRESCRIPTION_CATEGORY_2, category2_id);
     }
     builder.build()
-}
-
-fn custom_field_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
-    custom_fields
-        .as_ref()?
-        .as_object()?
-        .get(key)?
-        .as_str()
-        .map(str::to_string)
 }
 
 /// Inverse of [`build_legacy_invoice_custom_fields`]: read the invoice type's

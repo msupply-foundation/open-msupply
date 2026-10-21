@@ -1,6 +1,5 @@
-use chrono::Utc;
 use repository::{
-    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
+    CustomFieldOptionRow, StorageConnection, SyncBufferRow,
     category_row::{CategoryRow, CategoryRowDelete},
 };
 use serde::{Deserialize, Serialize};
@@ -9,7 +8,10 @@ use util::sync_serde::empty_str_as_option_string;
 use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::keys;
 
-use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
+use super::{
+    IntegrationOperation, PullTranslateResult, SyncTranslation,
+    utils::soft_deleted_custom_field_option,
+};
 
 /// Map an `item_category*` sync table to `(custom_field.id, is_relational)`.
 ///
@@ -129,13 +131,9 @@ impl SyncTranslation for CategoryTranslation {
         // option (by re-upserting it with `deleted_datetime` set) so the option
         // set tracks 4D category removals and the read dataloader filters it out.
         if CentralServerConfig::is_central_server()
-            && let Some(option) =
-                CustomFieldOptionRowRepository::new(connection).find_one_by_id(&record_id)?
+            && let Some(option) = soft_deleted_custom_field_option(connection, &record_id)?
         {
-            operations.push(IntegrationOperation::upsert(CustomFieldOptionRow {
-                deleted_datetime: Some(Utc::now().naive_utc()),
-                ..option
-            }));
+            operations.push(IntegrationOperation::upsert(option));
         }
 
         Ok(PullTranslateResult::IntegrationOperations(operations))

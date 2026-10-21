@@ -1,13 +1,10 @@
-use chrono::Utc;
-use repository::{
-    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
-};
+use repository::{CustomFieldOptionRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::keys;
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{PullTranslateResult, SyncTranslation, utils::soft_deleted_custom_field_option};
 
 /// Map a `transaction_category.type` to the `custom_field.id` of the OPTION
 /// mapping custom_field its categories belong to. The key *is* the id (see
@@ -110,18 +107,14 @@ impl SyncTranslation for TransactionCategoryTranslation {
             ));
         }
 
-        let Some(option) = CustomFieldOptionRowRepository::new(connection)
-            .find_one_by_id(&sync_record.record_id)?
+        let Some(option) = soft_deleted_custom_field_option(connection, &sync_record.record_id)?
         else {
             return Ok(PullTranslateResult::Ignored(
                 "No matching transaction category option".to_string(),
             ));
         };
 
-        Ok(PullTranslateResult::upsert(CustomFieldOptionRow {
-            deleted_datetime: Some(Utc::now().naive_utc()),
-            ..option
-        }))
+        Ok(PullTranslateResult::upsert(option))
     }
 }
 

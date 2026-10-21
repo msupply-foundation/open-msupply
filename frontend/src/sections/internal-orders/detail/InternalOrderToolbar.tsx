@@ -10,7 +10,10 @@ import { NameSearch, type NameSeed } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import {
+  fixedTargetOptions,
   storeFixedIntervalAndBuffer,
+  targetDiffersFromFixed,
+  targetDiffersFromStoreMessage,
   targetMonthOptions,
   targetSetByStoreMessage,
   thresholdMonthOptions,
@@ -38,7 +41,10 @@ export interface InternalOrderToolbarProps {
   editable: boolean;
   /** A program order locks supplier + MOS thresholds even while Draft. */
   isProgram: boolean;
-  /** The destination-customer field's store-preference gate (OMS-REG-REPL-04.55). */
+  /**
+   * The destination-customer field's store-preference gate
+   * (OMS-REG-REPL-04.55).
+   */
   showDestination: boolean;
   /**
    * The store preference letting users change a general order's target — on
@@ -92,6 +98,16 @@ export const InternalOrderToolbar: Component<
           supplyIntervalAndBuffer: props.node.supplyIntervalAndBuffer,
           isProgram: props.isProgram,
         });
+  // A target the store fixes that this order doesn't have yet (set before the
+  // store fixed it, or since its facility record changed) stays changeable,
+  // but only onto the store's.
+  const differsFromFixed = () => {
+    const fixed = fixedIntervalAndBuffer();
+    return (
+      fixed != null &&
+      targetDiffersFromFixed(props.node.maxMonthsOfStock, fixed)
+    );
+  };
 
   const supplierSeed = (): NameSeed => ({
     id: props.node.otherPartyId,
@@ -134,11 +150,19 @@ export const InternalOrderToolbar: Component<
   // chosen.
   const thresholdOptions = () =>
     thresholdMonthOptions(props.node.maxMonthsOfStock);
-  const targetOptions = () =>
-    targetMonthOptions(
-      props.node.maxMonthsOfStock,
-      props.node.minMonthsOfStock
-    );
+  const targetOptions = () => {
+    const fixed = fixedIntervalAndBuffer();
+    return fixed != null && differsFromFixed()
+      ? fixedTargetOptions(
+          props.node.maxMonthsOfStock,
+          props.node.minMonthsOfStock,
+          fixed
+        )
+      : targetMonthOptions(
+          props.node.maxMonthsOfStock,
+          props.node.minMonthsOfStock
+        );
+  };
 
   const onThresholdChange = (value: string) => {
     if (value === thresholdValue()) return; // no-op / reconcile re-fire
@@ -280,16 +304,24 @@ export const InternalOrderToolbar: Component<
           testId="max-months-of-stock-select"
           options={targetOptions()}
           value={targetValue()}
-          disabled={fieldsLocked() || fixedIntervalAndBuffer() != null}
+          disabled={
+            fieldsLocked() ||
+            (fixedIntervalAndBuffer() != null && !differsFromFixed())
+          }
           // Where the store fixes the target, a tooltip on the label names
           // the supply interval and safety buffer that set it (spec S3 §
           // toolbar) — on the label, as the inbound received date's reason,
-          // since a disabled trigger takes no hover.
+          // since a disabled trigger takes no hover. On a target that differs
+          // from it, the tooltip says the target can only move onto it.
           labelInfo={
             <Show when={fixedIntervalAndBuffer()}>
               {intervalAndBuffer => (
                 <InfoTooltip
-                  text={targetSetByStoreMessage(intervalAndBuffer())}
+                  text={
+                    differsFromFixed()
+                      ? targetDiffersFromStoreMessage(intervalAndBuffer())
+                      : targetSetByStoreMessage(intervalAndBuffer())
+                  }
                   triggerTestId="max-months-of-stock-locked-info"
                 />
               )}

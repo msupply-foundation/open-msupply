@@ -35,6 +35,11 @@ pub struct PopulationForecastCourse {
     pub coverage_rate: f64,
     pub wastage_rate: f64,
     pub target_population: f64,
+    /// The course's average doses a person gets in a year, used in place of
+    /// `number_of_doses` when set. None on a course without one, a forecast made before
+    /// courses carried it, or one converted from the legacy shape
+    #[serde(default)]
+    pub annual_doses_per_person: Option<f64>,
     pub loss_factor: f64,
     pub annual_target_doses: f64,
     pub doses_per_unit: f64,
@@ -240,6 +245,7 @@ pub fn forecast_from_legacy(
                 coverage_rate: course.coverage_rate,
                 wastage_rate: course.wastage_rate,
                 target_population: course.target_population,
+                annual_doses_per_person: None,
                 loss_factor: course.loss_factor,
                 annual_target_doses: course.annual_target_doses,
                 doses_per_unit: course.doses_per_unit as f64,

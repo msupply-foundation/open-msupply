@@ -116,7 +116,7 @@ export const PurchaseOrderSidePanel: Component<
   const subtotal = () => totals().subtotal;
   // An order with no lines has NO totals — the server fabricates 0.0 for both
   // (contract ⚠️), so the line count decides whether a figure exists at all
-  // (rules § pricing and totals). The charges are real whatever the lines.
+  // (rules § pricing and totals).
   const total = (value: number): string =>
     props.lineCount === 0 ? '-' : money(value);
 
@@ -132,20 +132,6 @@ export const PurchaseOrderSidePanel: Component<
           valueTestId="cost-subtotal-value"
         >
           {total(subtotal())}
-        </FieldRow>
-
-        {/* The five charges summed. They reach NEITHER stored total, which is
-            why this row is assembled here (purchaseOrderPricing.ts). */}
-        <FieldRow
-          label={
-            <span style={{ 'white-space': 'pre-line' }}>
-              {t('label.cost-additional-fees')}
-            </span>
-          }
-          readOnly
-          valueTestId="cost-additional-fees-value"
-        >
-          {money(totals().charges)}
         </FieldRow>
 
         {/* The two discount inputs are two views of ONE stored figure: only
@@ -185,9 +171,8 @@ export const PurchaseOrderSidePanel: Component<
           />
         </FieldRow>
 
-        {/* The discounted total PLUS the charges — the same figure the totals
-            band reads as Order total. No field carries it (contract ⚠️ the
-            five charges reach no total on the server). */}
+        {/* The discounted total — the same figure the totals band reads as
+            Order total. */}
         <FieldRow
           label={t('label.cost-final')}
           readOnly

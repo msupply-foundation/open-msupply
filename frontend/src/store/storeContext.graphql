@@ -68,6 +68,9 @@ query storeContext($storeId: String!) {
     # know before it offers a move.
     authorisePurchaseOrder
     externalInboundShipmentLinesMustBeAuthorised
+    # Whether an inbound line save with a blank batch or expiry asks first
+    # (issue #992).
+    promptForBatchAndExpiryOnInboundShipments
     backdating {
       inventoryAdjustmentsEnabled
       shipmentsEnabled

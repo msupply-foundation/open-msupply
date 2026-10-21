@@ -9,7 +9,12 @@ import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFo
 import { createFlash } from '../../../ui/utils/createFlash';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, trackStages } from '@/domain/invoice';
-import { returnKind, statusFlow, statusSteps } from './returnStatus';
+import {
+  returnKind,
+  statusFlow,
+  statusLabel,
+  statusSteps,
+} from './returnStatus';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 
 // The return-level footer (spec/customer-returns/ui-surface.md S3 § layout —
@@ -23,8 +28,9 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 // flipping, and the messages flip with direction.
 //
 // A status change that lands is reported in the bar's message slot, as a
-// flash of the save confirmation (spec/ui-standards/controls.md § action
-// feedback) — the split button is gone at Verified.
+// flash of the status it reached, in the crumb's own word (issue #1127;
+// spec/ui-standards/controls.md § action feedback) — the split button is gone
+// at Verified.
 
 export interface CustomerReturnStatusFooterProps {
   storeId: string;
@@ -58,7 +64,7 @@ export const CustomerReturnStatusFooter: Component<
 
   const onApplied = (node: CustomerReturnInfoFragment) => {
     props.onAdvanced(node);
-    saved.show(t('messages.return-saved'));
+    saved.show(statusLabel(node.status));
   };
 
   return (

@@ -35,7 +35,8 @@ query internalOrderLines($storeId: String!, $requisitionId: String!) {
 
 # The lines of the linked purchase order — the line editor's PO-line picker on
 # a PO-linked shipment (spec S4 / OMS-REG-REPL-09.6: a PO-linked line must cite
-# an order line). Excludes lines already assigned client-side.
+# an order line). Excludes lines already assigned, and service lines (they
+# reach the shipment as service charges), client-side.
 query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
   purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {
     __typename
@@ -50,6 +51,7 @@ query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
             id
             code
             name
+            type
           }
         }
       }

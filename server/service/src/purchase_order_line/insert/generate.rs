@@ -1,8 +1,8 @@
 use super::InsertPurchaseOrderLineInput;
 use crate::number::next_number;
 use repository::{
-    ItemRow, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus, RepositoryError,
-    StorageConnection, UnitRowRepository,
+    ItemRow, ItemType, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    RepositoryError, StorageConnection, UnitRowRepository,
 };
 
 pub fn generate(
@@ -63,6 +63,10 @@ pub fn generate(
         adjusted_number_of_units: None,
         stock_on_hand_in_units: 0.0,
     };
+    // A service line carries no line discount
+    if item.r#type == ItemType::Service {
+        row.price_per_pack_after_discount = row.price_per_pack_before_discount;
+    }
     row.line_total = row.calculate_line_total();
 
     Ok(row)

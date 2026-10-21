@@ -18,6 +18,7 @@ import {
   saveRequisitionFields,
 } from './requisitionUpdate';
 import { currentStatusStep, statusSteps } from './requisitionDetailStatus';
+import { statusLabel } from '../list/requisitionStatus';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 
 // The detail footer (spec/requisitions S2 § footer): the labelled Close back
@@ -40,10 +41,10 @@ import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 // validation of any header edit (rules › finalising), so a reasons rejection
 // flags the offending lines' Reason cells. Failures surface inline in the
 // open dialog, never a toast (S6). A finalise that lands closes the dialog and
-// hides the split button, so the bar's message slot flashes the save
-// confirmation (spec/ui-standards/controls.md § action feedback). Create
-// shipment needs no flash: it navigates to the new shipment, which is the
-// result.
+// hides the split button, so the bar's message slot flashes the status it
+// reached, "Finalised" (issue #1127; spec/ui-standards/controls.md § action
+// feedback). Create shipment needs no flash: it navigates to the new
+// shipment, which is the result.
 
 // The finalise dialog's phases; the raise dialog's cover its three
 // client-side refusals too.
@@ -173,7 +174,7 @@ export const RequisitionStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSaved(result.node);
       setFinaliseOpen(false);
-      saved.show(t('messages.saved'));
+      saved.show(statusLabel(result.node.status));
       return;
     }
     if (result.kind === 'error') {

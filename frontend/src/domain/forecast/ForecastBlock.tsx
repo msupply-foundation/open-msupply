@@ -14,6 +14,7 @@ import { FormSection } from '../../ui/layout/Form/FormSection';
 import {
   FORECAST_METHODS,
   ancillaryRatio,
+  annualTargetFormulaKey,
   courseTitle,
   forecastMethodLabel,
   populationSteps,
@@ -230,9 +231,7 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
                         <AccordionContent class={styles.steps}>
                           <CalculationStep
                             title={t('label.annual-target-doses-calculation')}
-                            formula={t(
-                              'description.annual-target-doses-calculation'
-                            )}
+                            formula={t(annualTargetFormulaKey(course))}
                             substitution={steps()[0].substitution}
                             result={steps()[0].result}
                           />

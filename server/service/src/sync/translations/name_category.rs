@@ -1,14 +1,11 @@
-use chrono::Utc;
-use repository::{
-    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
-};
+use repository::{CustomFieldOptionRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::keys;
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{PullTranslateResult, SyncTranslation, utils::soft_deleted_custom_field_option};
 
 /// mSupply name categories modelled as customFields OPTIONs — a **central-only**
 /// path with no relational counterpart (unlike item categories, names have no
@@ -134,19 +131,14 @@ impl SyncTranslation for NameCategoryTranslation {
         // Soft-delete the matching option (by re-upserting it with
         // `deleted_datetime` set) so the option set tracks 4D category removals
         // and the read dataloader filters it out.
-        let record_id = sync_record.record_id.clone();
-        let Some(option) =
-            CustomFieldOptionRowRepository::new(connection).find_one_by_id(&record_id)?
+        let Some(option) = soft_deleted_custom_field_option(connection, &sync_record.record_id)?
         else {
             return Ok(PullTranslateResult::Ignored(
                 "No matching name category option to soft-delete".to_string(),
             ));
         };
 
-        Ok(PullTranslateResult::upsert(CustomFieldOptionRow {
-            deleted_datetime: Some(Utc::now().naive_utc()),
-            ..option
-        }))
+        Ok(PullTranslateResult::upsert(option))
     }
 }
 

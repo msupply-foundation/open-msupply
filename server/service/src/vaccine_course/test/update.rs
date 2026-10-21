@@ -12,6 +12,7 @@ mod query {
         VaccineCourseItemFilter, VaccineCourseItemRepository,
     };
 
+    use crate::NullableUpdate;
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::insert::InsertVaccineCourse;
     use crate::vaccine_course::update::{
@@ -40,6 +41,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -92,6 +94,17 @@ mod query {
             Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder)
         );
 
+        // Annual doses per person must be above 0
+        let update = UpdateVaccineCourse {
+            id: vaccine_course_insert_a.id.clone(),
+            annual_doses_per_person: Some(NullableUpdate { value: Some(0.0) }),
+            ..Default::default()
+        };
+        assert_eq!(
+            service.update_vaccine_course(&context, update),
+            Err(UpdateVaccineCourseError::AnnualDosesPerPersonNotPositive)
+        );
+
         // 0 - Update the vaccine course with the items and doses
 
         let update = UpdateVaccineCourse {
@@ -104,6 +117,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: Some(true),
+            annual_doses_per_person: Some(NullableUpdate { value: Some(1.8) }),
             store_configs: vec![],
         };
 
@@ -111,6 +125,7 @@ mod query {
         assert_eq!(result.name, "new_name");
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
         assert!(result.can_skip_dose);
+        assert_eq!(result.annual_doses_per_person, Some(1.8));
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
@@ -142,9 +157,12 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
-        let _result = service.update_vaccine_course(&context, update).unwrap();
+        let result = service.update_vaccine_course(&context, update).unwrap();
+        // An update without annual doses per person keeps the course's
+        assert_eq!(result.annual_doses_per_person, Some(1.8));
 
         // Check there is one item for the vaccine_course
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
@@ -165,9 +183,12 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_doses_per_person: Some(NullableUpdate { value: None }),
             store_configs: vec![],
         };
-        let _result = service.update_vaccine_course(&context, update).unwrap();
+        let result = service.update_vaccine_course(&context, update).unwrap();
+        // A null value clears it, back to counting every dose in the course
+        assert_eq!(result.annual_doses_per_person, None);
 
         // Check there is one item for the vaccine_course, and it's the right one
         let items = item_repo.query_by_filter(item_filter.clone()).unwrap();
@@ -196,6 +217,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
@@ -216,6 +238,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
@@ -243,6 +266,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -264,6 +288,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 

@@ -91,6 +91,7 @@ pub struct InvoiceLineFilter {
     pub invoice_type: Option<EqualFilter<InvoiceType>>,
     pub invoice_status: Option<EqualFilter<InvoiceStatus>>,
     pub stock_line_id: Option<EqualFilter<String>>,
+    pub purchase_order_line_id: Option<EqualFilter<String>>,
     pub picked_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
@@ -163,6 +164,11 @@ impl InvoiceLineFilter {
 
     pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
         self.stock_line_id = Some(filter);
+        self
+    }
+
+    pub fn purchase_order_line_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.purchase_order_line_id = Some(filter);
         self
     }
 
@@ -359,6 +365,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             invoice_type,
             invoice_status,
             stock_line_id,
+            purchase_order_line_id,
             picked_datetime,
             delivered_datetime,
             verified_datetime,
@@ -390,6 +397,11 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, invoice_type, invoice::type_);
         apply_equal_filter!(query, invoice_status, invoice::status);
         apply_equal_filter!(query, stock_line_id, stock_line::id);
+        apply_equal_filter!(
+            query,
+            purchase_order_line_id,
+            invoice_line::purchase_order_line_id
+        );
         apply_equal_filter!(query, reason_option, reason_option::reason);
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);

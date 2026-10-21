@@ -61,6 +61,11 @@ pub(crate) mod keys {
     pub(crate) const SUPPLIER_RETURN_CATEGORY: &str = "supplier_return_category";
     pub(crate) const CUSTOMER_RETURN_CATEGORY: &str = "customer_return_category";
     pub(crate) const PRESCRIPTION_CATEGORY_2: &str = "prescription_category_2";
+
+    // purchase order — prefixed, as item already owns `user_field_N`.
+    pub(crate) const PURCHASE_ORDER_CATEGORY: &str = "purchase_order_category";
+    pub(crate) const PURCHASE_ORDER_USER_FIELD_1: &str = "purchase_order_user_field_1";
+    pub(crate) const PURCHASE_ORDER_USER_FIELD_2: &str = "purchase_order_user_field_2";
 }
 
 /// A code-defined mSupply "mapping custom_field" — a custom_field in the new system that
@@ -332,6 +337,28 @@ static MAPPING_CUSTOM_FIELDS: &[MappingCustomField] = {
             display_mode: Prominent,
             scopes: &["prescription"],
         },
+        // purchase order `category_ID` and `user_field_1/2`, pushed back to OG.
+        MappingCustomField {
+            key: PURCHASE_ORDER_CATEGORY,
+            name: "Category",
+            value_type: Option,
+            display_mode: Visible,
+            scopes: &["purchase_order"],
+        },
+        MappingCustomField {
+            key: PURCHASE_ORDER_USER_FIELD_1,
+            name: "User field 1",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["purchase_order"],
+        },
+        MappingCustomField {
+            key: PURCHASE_ORDER_USER_FIELD_2,
+            name: "User field 2",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["purchase_order"],
+        },
     ]
 };
 
@@ -485,15 +512,17 @@ mod tests {
         assert_eq!(trans_si.key, "inbound_shipment_category");
         assert_eq!(trans_si.value_type, CustomFieldValueType::Option);
 
-        // 25 custom_fields: 3 name customs + 6 name categories + 7 item user fields
+        // 28 custom_fields: 3 name customs + 6 name categories + 7 item user fields
         // + 3 item categories (main + 2 & 3) + 6 transaction categories (5 typed
-        // + the pi2 prescription "Patient type" dimension).
-        assert_eq!(custom_field_repo.find_all().unwrap().len(), 25);
-        // 43 table mappings: the 3 name customs + 6 name categories map to all
+        // + the pi2 prescription "Patient type" dimension) + the purchase order
+        // category and 2 user fields.
+        assert_eq!(custom_field_repo.find_all().unwrap().len(), 28);
+        // 46 table mappings: the 3 name customs + 6 name categories map to all
         // three name scopes "customer", "supplier" and "patient" (9×3 = 27), the
         // 7 item fields + 3 item categories to "item" (10×1 = 10), the 6
-        // transaction categories to one invoice scope each (6×1 = 6).
-        assert_eq!(table_repo.find_all().unwrap().len(), 43);
+        // transaction categories to one invoice scope each (6×1 = 6), the 3
+        // purchase order fields to "purchase_order" (3×1 = 3).
+        assert_eq!(table_repo.find_all().unwrap().len(), 46);
 
         // The name customs are shared by patients (same definition, extra mapping).
         let patient_mapping = table_repo

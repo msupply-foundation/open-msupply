@@ -34,6 +34,7 @@ import {
   reachableStatuses,
   statusDatetime,
   statusFlow,
+  statusLabel,
   STATUS_LABELS,
 } from './inboundShipmentStatus';
 
@@ -69,9 +70,10 @@ export interface InboundShipmentStatusFooterProps {
 // SUBMITTED, not pre-validated (spec S7 / validation.md → actions): a server
 // rejection (on hold, cannot-reverse, cannot-set-shipped-on-manual, pending
 // lines) returns and is shown inline at the control, the request preserved.
-// A committed advance is reported in the same slot, as a flash of the current
-// app's save confirmation (spec/ui-standards/controls.md § action feedback):
-// the split button is gone at Verified, and the crumb alone is easy to miss.
+// A committed advance is reported in the same slot, as a flash of the status
+// it reached, in the crumb's own word (issue #1127;
+// spec/ui-standards/controls.md § action feedback): the split button is gone
+// at Verified, and the crumb alone is easy to miss.
 export const InboundShipmentStatusFooter: Component<
   InboundShipmentStatusFooterProps
 > = props => {
@@ -124,7 +126,7 @@ export const InboundShipmentStatusFooter: Component<
     setBusy(false);
     if (result.kind === 'saved') {
       props.onAdvanced(result.node);
-      saved.show(t('messages.shipment-saved'));
+      saved.show(statusLabel(result.node.status));
     } else if (result.kind === 'error') setErrorMessage(result.message);
   };
 
@@ -172,7 +174,7 @@ export const InboundShipmentStatusFooter: Component<
         )}
       </Show>
 
-      {/* A committed advance flashes its save confirmation. */}
+      {/* A committed advance flashes the status it reached. */}
       <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>

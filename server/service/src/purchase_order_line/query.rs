@@ -454,6 +454,121 @@ mod test {
         );
     }
 
+    /// A service line is never outstanding: the filter, the figure and the sort all agree.
+    #[actix_rt::test]
+    async fn outstanding_lines_leave_out_service_lines() {
+        use repository::mock::mock_item_service_item;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "outstanding_lines_leave_out_service_lines",
+            MockDataInserts::none().stores().names().items(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.purchase_order_line_service;
+
+        let order = PurchaseOrderRow {
+            id: "po_outstanding_service".to_string(),
+            store_id: mock_store_a().id,
+            supplier_name_id: mock_name_a().id,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            status: repository::PurchaseOrderStatus::Sent,
+            purchase_order_number: 20,
+            ..Default::default()
+        };
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&order)
+            .unwrap();
+        // Neither line has anything received
+        for (id, line_number, item_id) in [
+            ("po_outstanding_stock", 1, mock_item_a().id),
+            ("po_outstanding_freight", 2, mock_item_service_item().id),
+        ] {
+            PurchaseOrderLineRowRepository::new(&connection)
+                .upsert_one(&PurchaseOrderLineRow {
+                    id: id.to_string(),
+                    purchase_order_id: order.id.clone(),
+                    store_id: mock_store_a().id,
+                    line_number,
+                    item_id,
+                    requested_number_of_units: 1.0,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let lines = |filter: Option<PurchaseOrderLineFilter>, sort| {
+            service
+                .get_purchase_order_lines(&context, Some(&mock_store_a().id), None, filter, sort)
+                .unwrap()
+                .rows
+        };
+        let ids = |lines: Vec<repository::PurchaseOrderLine>| {
+            lines
+                .into_iter()
+                .map(|line| line.purchase_order_line_row.id)
+                .collect::<Vec<String>>()
+        };
+
+        assert_eq!(
+            ids(lines(
+                Some(PurchaseOrderLineFilter::new().received_less_than_requested(true)),
+                None
+            )),
+            vec!["po_outstanding_stock".to_string()]
+        );
+        assert_eq!(
+            ids(lines(
+                Some(PurchaseOrderLineFilter::new().received_less_than_requested(false)),
+                None
+            )),
+            vec!["po_outstanding_freight".to_string()]
+        );
+
+        let outstanding = lines(None, None)
+            .into_iter()
+            .map(|line| {
+                (
+                    line.purchase_order_line_row.id.clone(),
+                    line.outstanding_number_of_units(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            outstanding,
+            vec![
+                ("po_outstanding_freight".to_string(), 0.0),
+                ("po_outstanding_stock".to_string(), 1.0),
+            ]
+        );
+
+        let by_outstanding = |desc| {
+            ids(lines(
+                None,
+                Some(PurchaseOrderLineSort {
+                    key: PurchaseOrderLineSortField::OutstandingNumberOfUnits,
+                    desc: Some(desc),
+                }),
+            ))
+        };
+        assert_eq!(
+            by_outstanding(false),
+            vec![
+                "po_outstanding_freight".to_string(),
+                "po_outstanding_stock".to_string()
+            ]
+        );
+        assert_eq!(
+            by_outstanding(true),
+            vec![
+                "po_outstanding_stock".to_string(),
+                "po_outstanding_freight".to_string()
+            ]
+        );
+    }
+
     /// Only a SENT order has put stock on order: lines on orders still being
     /// drafted, approved or already finalised contribute nothing, and nor do
     /// closed lines on a sent order.
