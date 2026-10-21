@@ -83,6 +83,12 @@ export interface ItemSearchProps {
   orderableOnly?: boolean;
   /** Offer service items as well as stock (purchase order line editor). */
   includeServiceItems?: boolean;
+  /**
+   * Offer only the items of one category, by name (server-side
+   * ItemFilterInput.categoryName) — the form library's PrescriptionInput,
+   * which offers the items of the method a program form has chosen.
+   */
+  categoryName?: string;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
   /**
@@ -132,7 +138,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     () => props.hasStockOnHand,
     () => props.masterListId,
     () => (props.orderableOnly ? false : undefined),
-    () => props.includeServiceItems
+    () => props.includeServiceItems,
+    () => props.categoryName
   );
 
   // itemId → already-on-document, filled page-by-page by the caller's
