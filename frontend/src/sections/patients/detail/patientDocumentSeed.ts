@@ -7,7 +7,9 @@ type PatientNode = NonNullable<PatientResult['patient']>;
 
 // The name row's own fields, back into the document shape: exactly what the
 // server projects from a document onto the row, so a first save round-trips
-// the patient as it stands.
+// the patient as it stands. It starts an empty `extension`, as a new patient's
+// does (seedNewPatientDocument), so a field the deployment requires inside it
+// is required on the first save as on any later one, as the old client has it.
 export const seedPatientDocument = (node: PatientNode): Patient => {
   const contact: ContactDetails = {
     address1: node.address1 ?? undefined,
@@ -37,6 +39,7 @@ export const seedPatientDocument = (node: PatientNode): Patient => {
     dateOfDeath: node.dateOfDeath ?? undefined,
     contactDetails: hasContact ? [contact] : undefined,
     nextOfKin,
+    extension: {},
   };
   // A plain object with no undefined properties, as a saved document is.
   return JSON.parse(JSON.stringify(seed)) as Patient;

@@ -1,6 +1,7 @@
 import { createRoot } from 'solid-js';
 import { describe, expect, it } from 'vitest';
 import { createDraft } from '../../../domain/documentForm/draft';
+import { validateDocument } from '../../../domain/documentForm/validation';
 import type { Patient } from '../../../plugin-sdk/documents';
 import {
   seedNewPatientDocument,
@@ -39,7 +40,7 @@ const node = (overrides: Partial<PatientNode> = {}): PatientNode => ({
 });
 
 describe('seedPatientDocument (a name row, as the first document)', () => {
-  it('carries the fields the server projects back, and no empty ones', () => {
+  it('carries the fields the server projects back, no empty ones, and an empty extension', () => {
     expect(seedPatientDocument(node())).toEqual({
       id: 'patient-1',
       code: 'CF0002',
@@ -47,7 +48,27 @@ describe('seedPatientDocument (a name row, as the first document)', () => {
       lastName: 'Demo',
       gender: 'MALE',
       dateOfBirth: '1979-11-03',
+      extension: {},
     });
+  });
+
+  // OMS-REG-PLG-DJ-01.30, .32: a field the deployment requires inside
+  // `extension` is required on the first save, as its form marks it.
+  it('makes a field required inside the extension required from the first save', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        extension: {
+          type: 'object',
+          required: ['nationality'],
+          properties: { nationality: { type: 'string' } },
+        },
+      },
+    } as const;
+    const seed = seedPatientDocument(node());
+    expect(
+      validateDocument('patient-seed-test', schema, seed).map(e => e.path)
+    ).toEqual(['extension.nationality']);
   });
 
   it('puts address, phone and the rest of the contact in the first block', () => {
@@ -153,12 +174,16 @@ describe('withoutEmptyExtension', () => {
       });
       c.reset(seed);
       withoutEmptyExtension(c.draft);
-      return { draft: c.draft, dispose };
+      return { draft: c.draft, isDirty: c.isDirty, dispose };
     });
 
-  it('takes out an empty extension', () => {
-    const { draft, dispose } = draftOf({ id: 'p', extension: {} } as Patient);
+  it('takes out an empty extension, leaving the draft unchanged', () => {
+    const { draft, isDirty, dispose } = draftOf({
+      id: 'p',
+      extension: {},
+    } as Patient);
     expect(draft.get('extension')).toBeUndefined();
+    expect(isDirty()).toBe(false);
     dispose();
   });
 
