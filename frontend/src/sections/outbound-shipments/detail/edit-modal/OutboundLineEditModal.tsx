@@ -16,7 +16,10 @@ import { t, tPlural } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
+import {
+  Alert,
+  type AlertSeverity,
+} from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
@@ -91,7 +94,11 @@ import {
   type IssueWarning,
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
-import { activityMismatch, issueWarningMessages } from './allocationWarnings';
+import {
+  activityMismatch,
+  issueWarningMessages,
+  type DistributionOutcome,
+} from './allocationWarnings';
 import { Num } from '@/ui/elements/typography/Num';
 import {
   proposeIssuedBarcode,
@@ -390,13 +397,19 @@ export const OutboundLineEditModal = (
 //
 // Each banner carries the test id of the category it reports (e2e/TESTIDS.md
 // › Distribution), so a suite can tell an over-allocation from a skip report
-// without reading copy.
-type IssueBanner = { testId: string; message: string };
+// without reading copy. A skip is info — allocation handled it (stock-
+// allocation ui-surface § severity); over-allocation is a warning.
+type IssueBanner = {
+  testId: string;
+  message: string;
+  severity: AlertSeverity;
+};
 const warningMessages = (
   derived: readonly IssueWarning[],
-  requestedUnits: number
+  requestedUnits: number,
+  outcome: DistributionOutcome
 ): IssueBanner[] =>
-  issueWarningMessages(derived, requestedUnits).map(message =>
+  issueWarningMessages(derived, requestedUnits, outcome).map(message =>
     message.key === 'messages.over-allocated'
       ? {
           testId: 'outbound-over-allocated-warning',
@@ -404,12 +417,12 @@ const warningMessages = (
             quantity: roundedText(message.quantity),
             issueQuantity: roundedText(message.issueQuantity),
           }),
+          severity: 'warning',
         }
       : {
-          testId: 'outbound-skipped-stock-warning',
-          message: t(message.key, {
-            reasons: message.reasons.map(reason => t(reason)).join(', '),
-          }),
+          testId: `outbound-skipped-stock-warning-${message.reason}`,
+          message: t(message.key),
+          severity: 'info',
         }
   );
 
@@ -645,6 +658,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             testId: 'outbound-auto-allocated-notice',
             message: t('messages.auto-allocated-lines'),
+            severity: 'warning',
           },
           ...prev,
         ]);
@@ -947,7 +961,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setWarnings(
       warningMessages(
         deriveIssueWarnings(result, { reportShortfall: false }),
-        units
+        units,
+        {
+          met: result.shortfallUnits <= 0,
+          expiredIssuable: !allocationPrefs().expiredStockPreventIssue,
+        }
       )
     );
     setDirty(true);
@@ -1012,6 +1030,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 quantity: roundedText(appliedQuantity),
                 issueQuantity: roundedText(value),
               }),
+              severity: 'warning',
             },
           ]
         : []
@@ -2151,7 +2170,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {/* Stacked warning banners (spec S4 § warnings). */}
             <For each={warnings()}>
               {banner => (
-                <Alert severity="warning" testId={banner.testId}>
+                <Alert severity={banner.severity} testId={banner.testId}>
                   {banner.message}
                 </Alert>
               )}

@@ -1,45 +1,47 @@
 import type { BarReason, IssueWarning } from '../../../../domain/allocation';
 
-// The line editor's inline warning banners, as message descriptors the editor
+// The line editor's inline banners, as message descriptors the editor
 // resolves via t()/formatNumber (spec/stock-allocation § reporting,
 // OMS-REG-SMV-11.7/.11). Derived from the shared deriveIssueWarnings output:
-// over-allocation surfaces (OMS-REG-SMV-11.11), and every skipped category is reported
-// (OMS-REG-SMV-11.7) — reusing the same ported vocabulary the bulk "Allocate placeholder
-// lines" report uses (`messages.allocated-lines-skipped-line-reasons` + the
-// `label.*` reason tokens), so the two surfaces read identically. The shortfall
-// is surfaced separately (the placeholder notice), so it produces no banner
-// here.
+// over-allocation surfaces (OMS-REG-SMV-11.11), and each skipped category is
+// its own whole sentence naming the consequence (OMS-REG-SMV-11.7, #1168) —
+// the dispensing editor's sentences, the expired one by outcome (SMV-11.44).
+// On-hold stock is not reported: its row already carries the On hold badge.
+// The shortfall is surfaced separately (the placeholder notice), so it
+// produces no banner here.
 
-/** The ported label key each barred category is reported under. */
-export type SkipReasonLabel =
-  | 'label.on-hold'
-  | 'label.expired'
-  | 'label.unusable-vvm-status'
-  | 'label.not-for-this-campaign';
+/** The sentence each reported skip category reads. */
+const SKIP_MESSAGE = {
+  expired: 'messages.stock-expired',
+  'unusable-vvm': 'messages.stock-unusable-vvm',
+  'other-campaign': 'messages.stock-other-campaign',
+} as const;
+type ReportedSkip = keyof typeof SKIP_MESSAGE;
+
+/** What the expired sentence turns on (stock-allocation § reporting). */
+export interface DistributionOutcome {
+  /** The request was covered in full. */
+  met: boolean;
+  /** Expired stock stays manually issuable (its guard preference is off). */
+  expiredIssuable: boolean;
+}
+
+const skipMessage = (reason: ReportedSkip, outcome: DistributionOutcome) => {
+  if (reason !== 'expired') return SKIP_MESSAGE[reason];
+  if (outcome.met) return 'messages.stock-expired-skipped';
+  return outcome.expiredIssuable
+    ? 'messages.stock-expired'
+    : 'messages.stock-expired-cannot-issue';
+};
 
 export type IssueWarningMessage =
   | { key: 'messages.over-allocated'; quantity: number; issueQuantity: number }
-  | {
-      key: 'messages.allocated-lines-skipped-line-reasons';
-      reasons: SkipReasonLabel[];
-    };
-
-const skipReasonLabel = (reason: BarReason): SkipReasonLabel => {
-  switch (reason) {
-    case 'on-hold':
-      return 'label.on-hold';
-    case 'expired':
-      return 'label.expired';
-    case 'unusable-vvm':
-      return 'label.unusable-vvm-status';
-    case 'other-campaign':
-      return 'label.not-for-this-campaign';
-  }
-};
+  | { key: ReturnType<typeof skipMessage>; reason: ReportedSkip };
 
 export const issueWarningMessages = (
   derived: readonly IssueWarning[],
-  requestedUnits: number
+  requestedUnits: number,
+  outcome: DistributionOutcome
 ): IssueWarningMessage[] =>
   derived.flatMap((warning): IssueWarningMessage[] => {
     switch (warning.kind) {
@@ -52,12 +54,11 @@ export const issueWarningMessages = (
           },
         ];
       case 'skipped-barred':
-        return [
-          {
-            key: 'messages.allocated-lines-skipped-line-reasons',
-            reasons: warning.reasons.map(skipReasonLabel),
-          },
-        ];
+        return warning.reasons.flatMap((reason: BarReason) =>
+          reason === 'on-hold'
+            ? []
+            : [{ key: skipMessage(reason, outcome), reason }]
+        );
       case 'shortfall':
         return [];
       // Outbound distributes whole packs only — the partial-packs warning is

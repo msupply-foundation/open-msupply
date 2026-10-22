@@ -2,48 +2,54 @@ import { describe, expect, it } from 'vitest';
 import type { IssueWarning } from '../../../../domain/allocation';
 import { activityMismatch, issueWarningMessages } from './allocationWarnings';
 
+const short = { met: false, expiredIssuable: true };
+
 describe('issueWarningMessages (OMS-REG-SMV-11.7/.11)', () => {
   it('surfaces over-allocation as total-vs-requested (OMS-REG-SMV-11.11)', () => {
     const derived: IssueWarning[] = [{ kind: 'over-allocated', units: 5 }];
-    expect(issueWarningMessages(derived, 10)).toEqual([
+    expect(issueWarningMessages(derived, 10, short)).toEqual([
       { key: 'messages.over-allocated', quantity: 15, issueQuantity: 10 },
     ]);
   });
 
-  it('reports every skipped category, reusing the ported label tokens (OMS-REG-SMV-11.7)', () => {
+  it('reports each skipped category as its own sentence, on hold left to its badge (OMS-REG-SMV-11.7, #1168)', () => {
     const derived: IssueWarning[] = [
       {
         kind: 'skipped-barred',
-        reasons: ['on-hold', 'expired', 'unusable-vvm'],
+        reasons: ['on-hold', 'expired', 'unusable-vvm', 'other-campaign'],
       },
     ];
-    expect(issueWarningMessages(derived, 0)).toEqual([
-      {
-        key: 'messages.allocated-lines-skipped-line-reasons',
-        reasons: [
-          'label.on-hold',
-          'label.expired',
-          'label.unusable-vvm-status',
-        ],
-      },
+    expect(issueWarningMessages(derived, 0, short)).toEqual([
+      { key: 'messages.stock-expired', reason: 'expired' },
+      { key: 'messages.stock-unusable-vvm', reason: 'unusable-vvm' },
+      { key: 'messages.stock-other-campaign', reason: 'other-campaign' },
     ]);
   });
 
-  it('reports a single skip reason', () => {
+  it('words the expired skip by outcome (OMS-REG-SMV-11.44)', () => {
+    const derived: IssueWarning[] = [
+      { kind: 'skipped-barred', reasons: ['expired'] },
+    ];
+    expect(
+      issueWarningMessages(derived, 10, { met: true, expiredIssuable: true })
+    ).toEqual([{ key: 'messages.stock-expired-skipped', reason: 'expired' }]);
+    expect(
+      issueWarningMessages(derived, 10, { met: false, expiredIssuable: false })
+    ).toEqual([
+      { key: 'messages.stock-expired-cannot-issue', reason: 'expired' },
+    ]);
+  });
+
+  it('reports nothing for on-hold stock alone', () => {
     const derived: IssueWarning[] = [
       { kind: 'skipped-barred', reasons: ['on-hold'] },
     ];
-    expect(issueWarningMessages(derived, 0)).toEqual([
-      {
-        key: 'messages.allocated-lines-skipped-line-reasons',
-        reasons: ['label.on-hold'],
-      },
-    ]);
+    expect(issueWarningMessages(derived, 0, short)).toEqual([]);
   });
 
   it('does not surface the shortfall here (it is the placeholder notice)', () => {
     const derived: IssueWarning[] = [{ kind: 'shortfall', units: 20 }];
-    expect(issueWarningMessages(derived, 20)).toEqual([]);
+    expect(issueWarningMessages(derived, 20, short)).toEqual([]);
   });
 
   it('combines over-allocation and skipped categories', () => {
@@ -51,17 +57,14 @@ describe('issueWarningMessages (OMS-REG-SMV-11.7/.11)', () => {
       { kind: 'over-allocated', units: 2 },
       { kind: 'skipped-barred', reasons: ['expired'] },
     ];
-    expect(issueWarningMessages(derived, 8)).toEqual([
+    expect(issueWarningMessages(derived, 8, short)).toEqual([
       { key: 'messages.over-allocated', quantity: 10, issueQuantity: 8 },
-      {
-        key: 'messages.allocated-lines-skipped-line-reasons',
-        reasons: ['label.expired'],
-      },
+      { key: 'messages.stock-expired', reason: 'expired' },
     ]);
   });
 
   it('produces no banners for an empty result', () => {
-    expect(issueWarningMessages([], 5)).toEqual([]);
+    expect(issueWarningMessages([], 5, short)).toEqual([]);
   });
 });
 
