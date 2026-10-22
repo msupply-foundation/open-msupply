@@ -208,6 +208,10 @@ COPY standard_forms/generated standard_forms/generated
 FROM server-base AS server-build-sqlite
 ARG TARGETARCH
 ARG CARGO_PROFILE
+# How many rustc processes at once. Unset compiles one per CPU, and the build
+# lanes share one machine: four builds at that width outgrew its RAM. Declared
+# here so a value passed in reaches cargo as an env var; see docker-image.yaml.
+ARG CARGO_BUILD_JOBS
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
@@ -247,6 +251,10 @@ RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=
 FROM server-base AS server-build-postgres
 ARG TARGETARCH
 ARG CARGO_PROFILE
+# How many rustc processes at once. Unset compiles one per CPU, and the build
+# lanes share one machine: four builds at that width outgrew its RAM. Declared
+# here so a value passed in reaches cargo as an env var; see docker-image.yaml.
+ARG CARGO_BUILD_JOBS
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
