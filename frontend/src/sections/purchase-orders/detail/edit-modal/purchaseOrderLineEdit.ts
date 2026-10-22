@@ -1,11 +1,11 @@
-import { roundedText, tPlural, type LocaleKey } from '@/intl';
+import { roundedText, tPlural } from '@/intl';
 import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
 import type {
   InsertPurchaseOrderLineVariables,
   PurchaseOrderDetailLineFragment,
   UpdatePurchaseOrderLineVariables,
 } from '../purchaseOrderDetail.generated';
-import { isDrafting } from '../purchaseOrderLadder';
+import { isClosed, isDrafting } from '../purchaseOrderLadder';
 import { linePacks } from '../purchaseOrderPricing';
 
 // The line editor's arithmetic and gates (spec/purchase-orders rules §
@@ -28,6 +28,8 @@ export type LineFacts = {
   itemCode: string;
   itemName: string;
   unitName: string | null;
+  /** A service item has no quantity: one charge, priced per line. */
+  isService: boolean;
   stockOnHand: number;
   unitsOrderedInOthers: number;
 };
@@ -36,7 +38,6 @@ export type LineFacts = {
 export type LineDraft = {
   requestedPackSize: number;
   requestedNumberOfUnits: number;
-  adjustedNumberOfUnits: number | null;
   pricePerPackBeforeDiscount: number;
   /** Not stored: recovered from the two prices on open (rules § prices). */
   discountPercentage: number;
@@ -59,6 +60,7 @@ export const factsFromLine = (
   itemCode: line.item.code,
   itemName: line.item.name,
   unitName: line.unit ?? line.item.unitName,
+  isService: line.item.type === 'SERVICE',
   stockOnHand: line.item.stats.stockOnHand,
   unitsOrderedInOthers: line.unitsOrderedInOthers,
 });
@@ -68,7 +70,6 @@ export const draftFromLine = (
 ): LineDraft => ({
   requestedPackSize: line.requestedPackSize,
   requestedNumberOfUnits: line.requestedNumberOfUnits,
-  adjustedNumberOfUnits: line.adjustedNumberOfUnits ?? null,
   pricePerPackBeforeDiscount: line.pricePerPackBeforeDiscount,
   discountPercentage: discountPercentage(
     line.pricePerPackBeforeDiscount,
@@ -89,17 +90,17 @@ export const draftFromLine = (
  * What a new line is born as (OMS-FUN-PO-02.7, OMS-FUN-PO-02.24): the item's default pack size,
  * no quantity, no prices, and its dates seeded from the order — the order's
  * requested delivery date and the latest expected date already on its lines.
+ * A service item is born as one charge of one.
  */
 export const newLineDraft = (
-  item: { defaultPackSize: number },
+  item: { defaultPackSize: number; type: string },
   seed: {
     requestedDeliveryDate: string | null | undefined;
     latestExpectedDate: string | null | undefined;
   }
 ): LineDraft => ({
-  requestedPackSize: item.defaultPackSize,
-  requestedNumberOfUnits: 0,
-  adjustedNumberOfUnits: null,
+  requestedPackSize: item.type === 'SERVICE' ? 1 : item.defaultPackSize,
+  requestedNumberOfUnits: item.type === 'SERVICE' ? 1 : 0,
   pricePerPackBeforeDiscount: 0,
   discountPercentage: 0,
   pricePerPackAfterDiscount: 0,
@@ -113,50 +114,22 @@ export const newLineDraft = (
 
 // ─── Quantities ─────────────────────────────────────────────────────────────
 
-/**
- * Which quantity a units figure writes (OMS-FUN-PO-02.12, .25): both, equal, while
- * drafting; the adjusted one alone from Ready for sending.
- */
-export const quantityPatch = (
-  status: PurchaseOrderStatus,
-  units: number
-):
-  | Pick<LineDraft, 'requestedNumberOfUnits' | 'adjustedNumberOfUnits'>
-  | Pick<LineDraft, 'adjustedNumberOfUnits'> =>
-  isDrafting(status)
-    ? { requestedNumberOfUnits: units, adjustedNumberOfUnits: units }
-    : { adjustedNumberOfUnits: units };
-
-/** Packs typed → the quantity in units is packs × pack size. */
+/** Packs typed → units are packs × pack size (OMS-FUN-PO-02.12). */
 export const packsEntered = (
-  status: PurchaseOrderStatus,
   draft: LineDraft,
   packs: number
-): Partial<LineDraft> => quantityPatch(status, packs * draft.requestedPackSize);
+): Partial<LineDraft> => ({
+  requestedNumberOfUnits: packs * draft.requestedPackSize,
+});
 
 /** A new pack size keeps the packs authored and moves the units with it. */
 export const packSizeEntered = (
-  status: PurchaseOrderStatus,
   draft: LineDraft,
   packSize: number
 ): Partial<LineDraft> => ({
   requestedPackSize: packSize,
-  ...quantityPatch(status, linePacks(draft) * packSize),
+  requestedNumberOfUnits: linePacks(draft) * packSize,
 });
-
-/**
- * One input, two labels (spec S10 § quantity): Requested packs while
- * drafting, Adjusted packs once Ready for sending or Sent — and, the spec's
- * one exception, Requested packs again on a Finalised order.
- */
-export const packsLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
-  status === 'CONFIRMED' || status === 'SENT'
-    ? 'label.adjusted-packs'
-    : 'label.requested-packs';
-
-/** The read-only Adjusted units row appears once the order is past approval. */
-export const showsAdjustedUnits = (status: PurchaseOrderStatus): boolean =>
-  !isDrafting(status);
 
 // ─── Prices ─────────────────────────────────────────────────────────────────
 
@@ -200,6 +173,13 @@ export const repriced = (changed: keyof Prices, prices: Prices): Prices => {
   };
 };
 
+/** A service line has one price: no line discount (rules § prices). */
+export const servicePriced = (price: number): Prices => ({
+  pricePerPackBeforeDiscount: price,
+  discountPercentage: 0,
+  pricePerPackAfterDiscount: price,
+});
+
 /**
  * The after-discount price of one unit (spec S10 § pricing): the pack price
  * over the pack size, zero where there is no pack size to divide by.
@@ -235,12 +215,19 @@ export type LineGates = {
    * opened from its row (OMS-FUN-PO-02.11).
    */
   item: boolean;
-  /** The packs input (OMS-REG-PO-01.1, OMS-REG-PO-01.2). */
-  packs: boolean;
-  /** Pack size, both prices, the supplier's code and the manufacturer. */
+  /**
+   * The quantity, pack size, both prices, the supplier's code and the
+   * manufacturer (OMS-REG-PO-01.1, OMS-REG-PO-01.2).
+   */
   drafting: boolean;
-  /** Both delivery dates. */
-  dates: boolean;
+  /** The requested delivery date — the agreed date, fixed once Sent. */
+  requestedDate: boolean;
+  /**
+   * The expected delivery date — our estimate of arrival, which keeps moving
+   * after the order is sent, so it stays open until the order is Finalised
+   * (OMS-REG-PO-01.24).
+   */
+  expectedDate: boolean;
   /** The comment for the supplier and the internal note. */
   text: boolean;
   /** Never: nothing here changes a line's status (OMS-FUN-PO-02.22). */
@@ -250,24 +237,21 @@ export type LineGates = {
 /**
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
- * fields close from Ready for sending; the dates close once Sent; the packs
- * follow the quantity rule — requested while drafting, adjusted with the
- * authorise permission from Ready for sending.
+ * fields, the quantity among them, close from Approved; the
+ * requested date closes once Sent while the expected date stays open.
  */
 export const lineGates = (options: {
   status: PurchaseOrderStatus;
   lineStatus: LineStatus;
   addMode: boolean;
-  canAuthorise: boolean;
 }): LineGates => {
-  const open =
-    options.lineStatus !== 'CLOSED' && options.status !== 'FINALISED';
+  const open = options.lineStatus !== 'CLOSED' && !isClosed(options.status);
   const drafting = open && isDrafting(options.status);
   return {
     item: options.addMode,
-    packs: open && (isDrafting(options.status) || options.canAuthorise),
     drafting,
-    dates: open && options.status !== 'SENT',
+    requestedDate: open && options.status !== 'SENT',
+    expectedDate: open,
     text: open,
     status: false,
   };
@@ -294,11 +278,6 @@ export const lineChanges = (
     patch.requestedPackSize = draft.requestedPackSize;
   if (draft.requestedNumberOfUnits !== initial.requestedNumberOfUnits)
     patch.requestedNumberOfUnits = draft.requestedNumberOfUnits;
-  if (
-    draft.adjustedNumberOfUnits !== initial.adjustedNumberOfUnits &&
-    draft.adjustedNumberOfUnits !== null
-  )
-    patch.adjustedNumberOfUnits = draft.adjustedNumberOfUnits;
   if (draft.pricePerPackBeforeDiscount !== initial.pricePerPackBeforeDiscount)
     patch.pricePerPackBeforeDiscount = draft.pricePerPackBeforeDiscount;
   if (draft.pricePerPackAfterDiscount !== initial.pricePerPackAfterDiscount)
@@ -317,11 +296,7 @@ export const lineChanges = (
   return Object.keys(patch).length > 0 ? patch : undefined;
 };
 
-/**
- * A new line's whole draft. The insert carries no adjusted quantity: the
- * server births a line with none, and the requested figure stands for both
- * until the order leaves drafting.
- */
+/** A new line's whole draft. */
 export const insertInput = (
   id: string,
   purchaseOrderId: string,
@@ -349,7 +324,11 @@ export const insertInput = (
 /**
  * A units figure followed by the item's unit name, or "units" where it has
  * none (spec S10 § quantity) — the ordered-elsewhere figure (OMS-FUN-PO-02.19),
- * stock on hand and the line's own requested and adjusted units.
+ * stock on hand and the line's own requested units.
  */
-export const unitsFigure = (units: number, unitName: string | null): string =>
-  `${roundedText(units)} ${unitName || tPlural('label.units-plural', units)}`;
+export const unitsFigure = (
+  units: number,
+  unitName: string | null,
+  places?: number
+): string =>
+  `${roundedText(units, places)} ${unitName || tPlural('label.units-plural', units)}`;

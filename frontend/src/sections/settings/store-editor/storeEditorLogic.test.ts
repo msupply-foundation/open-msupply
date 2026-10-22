@@ -358,18 +358,16 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => 
     valueType: StorePreference['valueType'] = 'BOOLEAN'
   ): StorePreference => ({ key, valueType, value: false, storeOverride: null });
   // A slice of the served order: the purchase-order preferences sit apart
-  // (rows 1, 5 and 15) among unrelated rows.
+  // (rows 1 and 14) among unrelated rows.
   const served: StorePreference[] = [
     pref('authorisePurchaseOrder'),
     pref('blindStocktake'),
-    pref('useProcurementFunctionality'),
     pref('disableManualReturns'),
     pref('externalInboundShipmentLinesMustBeAuthorised'),
     pref('firstThresholdForExpiringItems', 'INTEGER'),
   ];
   const LABELS: Partial<Record<StorePreference['key'], string>> = {
     blindStocktake: 'Enable blind stock take',
-    useProcurementFunctionality: 'Use procurement functionality',
     disableManualReturns: 'Disable manual returns',
     externalInboundShipmentLinesMustBeAuthorised:
       'Inbound shipment (external) lines must be authorised',
@@ -390,7 +388,6 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => 
     expect(groups[0]?.labelKey).toBe('label.procurement');
     expect(groups[0]?.members.map(p => p.key)).toEqual([
       'authorisePurchaseOrder',
-      'useProcurementFunctionality',
       'externalInboundShipmentLinesMustBeAuthorised',
     ]);
   });
@@ -404,7 +401,7 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => 
       'authorise'
     );
     expect(filtered.ungrouped).toEqual([]);
-    expect(filtered.groups[0]?.members).toHaveLength(3);
+    expect(filtered.groups[0]?.members).toHaveLength(2);
   });
 });
 
@@ -508,6 +505,16 @@ describe('buildPreferencesInput (SET-05.37)', () => {
     expect(input).toEqual({
       blindStocktake: [{ storeId: 'store-a', value: true }],
       firstThresholdForExpiringItems: [{ storeId: 'store-a', value: 30 }],
+    });
+  });
+
+  it('writes the changing-target-months switch, including turning it off', () => {
+    // On unless set (spec/internal-orders rules › target months of stock), so
+    // the edit that matters is an explicit false — it must reach the wire.
+    expect(
+      buildPreferencesInput({ canChangeTargetMonthsOfStock: false }, 'store-a')
+    ).toEqual({
+      canChangeTargetMonthsOfStock: [{ storeId: 'store-a', value: false }],
     });
   });
 

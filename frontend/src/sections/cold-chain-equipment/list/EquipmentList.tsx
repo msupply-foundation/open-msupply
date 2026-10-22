@@ -1,8 +1,10 @@
+import { categoryName, typeName } from '@/domain/asset';
 import {
   createEffect,
   createMemo,
   createResource,
   createSignal,
+  For,
   Show,
 } from 'solid-js';
 import type { Component } from 'solid-js';
@@ -19,7 +21,10 @@ import { HStack } from '@/ui/layout/Stack/HStack';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
-import { ScanButton } from '@/domain/barcode';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { Text } from '@/ui/elements/typography/Text';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
+import { ScanButton, ScanStatus, scanStatusShown } from '@/domain/barcode';
 import {
   DataTable,
   type Column,
@@ -68,6 +73,7 @@ import { ImportEquipmentAction } from './actions/ImportEquipmentAction';
 import { ExportEquipmentAction } from './actions/ExportEquipmentAction';
 import { DeleteAssetsAction } from './actions/DeleteAssetsAction';
 import { createAssetScan } from './createAssetScan';
+import { scannedAssetFacts } from './assetScan';
 
 // S1 — the equipment list (spec/cold-chain-equipment, ui-surface S1). The
 // standard list screen: data + URL-backed filter/sort/pagination state from the
@@ -114,6 +120,10 @@ const EquipmentList: Component = () => {
     storeId: () => params.storeId,
     onOpen: id => navigate(id),
   });
+  const scannedFacts = () => {
+    const pending = scan.draft();
+    return pending ? scannedAssetFacts(pending) : [];
+  };
 
   const tableConfig = createTableConfig({
     tableId: 'equipment',
@@ -263,13 +273,20 @@ const EquipmentList: Component = () => {
       ...getCellDefinition('name', { headerPosition: 'primary' }),
     },
     {
-      c: { accessor: row => row.assetCategory?.name ?? '', id: 'category' },
+      c: {
+        accessor: row =>
+          row.assetCategory ? categoryName(row.assetCategory) : '',
+        id: 'category',
+      },
       header: () => t('label.category'),
       ...getTextCell(),
       size: remToPx(11),
     },
     {
-      c: { accessor: row => row.assetType?.name ?? '', id: 'type' },
+      c: {
+        accessor: row => (row.assetType ? typeName(row.assetType) : ''),
+        id: 'type',
+      },
       header: () => t('label.type'),
       ...getTextCell(),
       size: remToPx(11),
@@ -381,14 +398,20 @@ const EquipmentList: Component = () => {
               sort={variables().sort}
             />
           </HeaderButtons>
-          <Show when={scan.notice()}>
-            {notice => (
-              <Toolbar>
-                <Alert severity={notice().severity} testId="scan-notice">
-                  {notice().text}
-                </Alert>
-              </Toolbar>
-            )}
+          {/* The hardware scanner's status and a scan's outcome, in the
+              toolbar row — the status is not a page action (barcode-scanning
+              R1). */}
+          <Show when={scanStatusShown(scan.control) || scan.notice()}>
+            <Toolbar>
+              <ScanStatus control={scan.control} />
+              <Show when={scan.notice()}>
+                {notice => (
+                  <Alert severity={notice().severity} testId="scan-notice">
+                    {notice().text}
+                  </Alert>
+                )}
+              </Show>
+            </Toolbar>
           </Show>
         </Header>
       }
@@ -454,7 +477,19 @@ const EquipmentList: Component = () => {
       <ConfirmDialog
         open={scan.draft() !== undefined}
         title={t('heading.create-new-asset')}
-        message={t('messages.create-new-asset-confirmation')}
+        message={
+          // What will be created, not a bare "create it?" (OMS-REG-CCE-04.38).
+          <Stack gap="sm">
+            <Text>{t('messages.create-asset-from-scan')}</Text>
+            <For each={scannedFacts()}>
+              {fact => (
+                <LabelledValue label={t(fact.label)}>
+                  {fact.value}
+                </LabelledValue>
+              )}
+            </For>
+          </Stack>
+        }
         onConfirm={() => void scan.confirmCreate()}
         onClose={scan.cancelCreate}
       />

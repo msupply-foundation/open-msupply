@@ -116,6 +116,31 @@ export type OutboundLineFragment = {
   volumePerPack: number;
 };
 
+export type OutboundRequestedActivitiesVariables = {
+  storeId: string;
+  requisitionId: string;
+};
+
+export type OutboundRequestedActivitiesResult = {
+  requisition: ({
+  __typename: "RequisitionNode";
+} & {
+  lines: {
+  nodes: Array<{
+  itemId: string;
+  campaign: {
+  id: string;
+  name: string;
+} | null;
+}>;
+};
+});
+};
+
+export const OutboundRequestedActivities = {
+  query: "query outboundRequestedActivities($storeId: String!, $requisitionId: String!) {\n  requisition(storeId: $storeId, id: $requisitionId) {\n    __typename\n    ... on RequisitionNode {\n      lines {\n        nodes {\n          itemId\n          campaign {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<OutboundRequestedActivitiesResult, OutboundRequestedActivitiesVariables>;
+
 export type OutboundDetailVariables = {
   storeId: string;
   id: string;
@@ -516,6 +541,11 @@ export type AllocateOutboundLineResult = {
   batch: string | null;
 }>;
 };
+  skippedOtherCampaignStockLines: {
+  nodes: Array<{
+  batch: string | null;
+}>;
+};
   issuedExpiringSoonStockLines: {
   nodes: Array<{
   batch: string | null;
@@ -533,7 +563,7 @@ export type AllocateOutboundLineResult = {
 };
 
 export const AllocateOutboundLine = {
-  query: "mutation allocateOutboundLine($storeId: String!, $lineId: String!) {\n  allocateOutboundShipmentUnallocatedLine(storeId: $storeId, lineId: $lineId) {\n    __typename\n    ... on AllocateOutboundShipmentUnallocatedLineNode {\n      inserts {\n        totalCount\n      }\n      updates {\n        totalCount\n      }\n      deletes {\n        id\n      }\n      skippedExpiredStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n      skippedOnHoldStockLines {\n        nodes {\n          batch\n        }\n      }\n      skippedUnusableVvmStatusLines {\n        nodes {\n          batch\n        }\n      }\n      issuedExpiringSoonStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n    }\n    ... on AllocateOutboundShipmentUnallocatedLineError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "mutation allocateOutboundLine($storeId: String!, $lineId: String!) {\n  allocateOutboundShipmentUnallocatedLine(storeId: $storeId, lineId: $lineId) {\n    __typename\n    ... on AllocateOutboundShipmentUnallocatedLineNode {\n      inserts {\n        totalCount\n      }\n      updates {\n        totalCount\n      }\n      deletes {\n        id\n      }\n      skippedExpiredStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n      skippedOnHoldStockLines {\n        nodes {\n          batch\n        }\n      }\n      skippedUnusableVvmStatusLines {\n        nodes {\n          batch\n        }\n      }\n      skippedOtherCampaignStockLines {\n        nodes {\n          batch\n        }\n      }\n      issuedExpiringSoonStockLines {\n        nodes {\n          batch\n          expiryDate\n        }\n      }\n    }\n    ... on AllocateOutboundShipmentUnallocatedLineError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<AllocateOutboundLineResult, AllocateOutboundLineVariables>;
 
 export type UpdateOutboundUnallocatedLineVariables = {

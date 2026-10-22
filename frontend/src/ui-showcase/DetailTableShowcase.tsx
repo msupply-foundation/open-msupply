@@ -189,6 +189,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   return {
     id: `line-${i + 1}`,
     type: 'STOCK_IN',
+    barcode: null,
     itemId: `item-${i}`,
     itemName: item.name,
     itemCode: item.code,
@@ -533,10 +534,18 @@ export const DetailTableShowcase = () => {
     },
     {
       c: {
-        accessor: line => line.campaign?.name ?? line.program?.name ?? '',
-        id: 'campaignProgram',
+        accessor: line => line.program?.name ?? '',
+        id: 'program',
       },
-      header: () => t('label.campaign'),
+      header: () => t('label.program'),
+      cardGroup: 'more',
+    },
+    {
+      c: {
+        accessor: line => line.campaign?.name ?? '',
+        id: 'activity',
+      },
+      header: () => t('label.activity'),
       cardGroup: 'more',
     },
     {

@@ -2835,6 +2835,149 @@ mod test {
         );
     }
 
+    /// The rate/charges cascade re-prices each line from the order line's pack
+    /// price NET of the supplier discount, so the discount survives a later
+    /// charges or rate edit rather than being silently restored.
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cost_price_keeps_supplier_discount() {
+        use repository::{PurchaseOrderLineRow, PurchaseOrderRow, PurchaseOrderStatus};
+
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "discount_cascade_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "discount_cascade_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn purchase_order() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "discount_cascade_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: mock_name_a().id,
+                purchase_order_number: 1,
+                status: PurchaseOrderStatus::Sent,
+                created_datetime: chrono::NaiveDateTime::default(),
+                foreign_exchange_rate: 1.0,
+                supplier_discount_percentage: Some(10.0),
+                ..Default::default()
+            }
+        }
+
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "discount_cascade_po_line".to_string(),
+                store_id: mock_store_a().id,
+                purchase_order_id: purchase_order().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                item_name: "Item A".to_string(),
+                price_per_pack_after_discount: 10.0,
+                requested_pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "discount_cascade_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: None,
+                currency_id: Some(repository::mock::currency_b().id),
+                currency_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        // Seeded at the discounted price of 9.00, sell matching cost.
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "discount_cascade_line".to_string(),
+                invoice_id: invoice().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 9.0,
+                sell_price_per_pack: 9.0,
+                r#type: InvoiceLineType::StockIn,
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_cost_price_keeps_supplier_discount",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                purchase_order: vec![purchase_order()],
+                purchase_order_line: vec![po_line()],
+                invoices: vec![invoice()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Link the invoice and its line to the order once both exist
+        let mut invoice_row = invoice();
+        invoice_row.purchase_order_id = Some(purchase_order().id);
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&invoice_row)
+            .unwrap();
+        let mut line_row = invoice_line();
+        line_row.purchase_order_line_id = Some(po_line().id);
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&line_row)
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Goods at the discounted price: 9 x 5 packs = 45 local; charges of
+        // 4.50 are a 10% uplift, so the cost becomes 9.90 - not 11.00, which
+        // the undiscounted 10.00 would give.
+        service_provider
+            .invoice_service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice().id,
+                    charges_local_currency: Some(4.5),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line().id)
+            .unwrap()
+            .unwrap();
+        assert!(
+            (line.cost_price_per_pack - 9.9).abs() < 0.0001,
+            "cost should be the discounted price plus charges, got {}",
+            line.cost_price_per_pack
+        );
+        assert!((line.sell_price_per_pack - 9.9).abs() < 0.0001);
+        assert!((line.total_before_tax - 49.5).abs() < 0.0001);
+    }
+
     #[actix_rt::test]
     async fn update_inbound_shipment_campaign() {
         fn invoice() -> InvoiceRow {

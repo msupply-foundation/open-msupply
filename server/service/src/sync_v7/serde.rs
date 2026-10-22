@@ -8,9 +8,10 @@ use util::json_without_nulls;
 
 use crate::sync_v7::{
     translations::{
-        invoice_line::translate_invoice_line, store::translate_store,
-        sync_file_reference::translate_sync_file_reference,
+        invoice_line::translate_invoice_line, requisition_line::translate_requisition_line,
+        store::translate_store, sync_file_reference::translate_sync_file_reference,
         temperature_log::translate_temperature_log,
+        temperature_summary::translate_temperature_summary,
     },
     validate_translate_integrate::{SyncContext, create_changelog},
 };
@@ -37,7 +38,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::Invoice(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::InvoiceLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::ActivityLog(r) => serde_json::to_value(r).map_err(map_serde_err),
-        Row::Barcode(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::BarcodeProposal(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Clinician(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::ClinicianStoreJoin(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Document(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -54,6 +55,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::StocktakeLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::TemperatureBreach(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::TemperatureLog(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::TemperatureSummary(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::VVMStatusLog(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Requisition(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::RequisitionLine(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -178,6 +180,12 @@ pub(crate) fn deserialize(
         ChangelogTableName::TemperatureLog => {
             return translate_temperature_log(connection, changelog_insert, data);
         }
+        ChangelogTableName::TemperatureSummary => {
+            return translate_temperature_summary(connection, changelog_insert, data);
+        }
+        ChangelogTableName::RequisitionLine => {
+            return translate_requisition_line(changelog_insert, data);
+        }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
@@ -193,7 +201,7 @@ pub(crate) fn deserialize(
         ChangelogTableName::StockRelocationLine => from_value::<StockRelocationLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
         ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
-        ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
+        ChangelogTableName::BarcodeProposal => from_value::<BarcodeProposalRow>(data),
         ChangelogTableName::Clinician => from_value::<ClinicianRow>(data),
         ChangelogTableName::ClinicianStoreJoin => from_value::<ClinicianStoreJoinRow>(data),
         ChangelogTableName::Document => from_value::<DocumentRow>(data),
@@ -211,7 +219,6 @@ pub(crate) fn deserialize(
         ChangelogTableName::TemperatureBreach => from_value::<TemperatureBreachRow>(data),
         ChangelogTableName::VVMStatusLog => from_value::<VVMStatusLogRow>(data),
         ChangelogTableName::Requisition => from_value::<RequisitionRow>(data),
-        ChangelogTableName::RequisitionLine => from_value::<RequisitionLineRow>(data),
         ChangelogTableName::AssetCatalogueItem => from_value::<AssetCatalogueItemRow>(data),
         ChangelogTableName::AssetCatalogueType => from_value::<AssetTypeRow>(data),
         ChangelogTableName::AssetCategory => from_value::<AssetCategoryRow>(data),

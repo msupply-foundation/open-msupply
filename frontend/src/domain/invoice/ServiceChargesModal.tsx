@@ -1,5 +1,12 @@
 import { generateUUID } from '../../uuid';
-import { createResource, createSignal, Show, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  on,
+  Show,
+  type JSX,
+} from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
@@ -20,9 +27,13 @@ import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import { formatCurrencyCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
+import { remToPx } from '../../ui/utils/rem';
 import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
 import styles from './ServiceChargesModal.module.css';
-import { ServiceItems } from './invoiceModals.generated';
+import {
+  ServiceItems,
+  type ServiceItemsResult,
+} from './invoiceModals.generated';
 import {
   chargeTotalAfterTax,
   splitServiceChargeBatch,
@@ -69,10 +80,27 @@ export interface ServiceChargesModalProps {
    * already surfaced).
    */
   save: (batch: ServiceChargeBatch) => Promise<ServiceChargeSaveResult>;
+  /** Open with a new charge already added (the host's Add-charge action). */
+  addOnOpen?: boolean;
+  /** The store's service items if the host has them; else fetched on open. */
+  serviceItems?: ServiceItem[];
 }
 
 export type ServiceChargeSaveResult =
   { ok: true } | { ok: false; message?: string };
+
+export type ServiceItem = ServiceItemsResult['items']['nodes'][number];
+
+const fetchServiceItems = async (storeId: string): Promise<ServiceItem[]> => {
+  const result = await graphqlFetch(ServiceItems, { storeId });
+  return result.kind === 'success' &&
+    result.data.items.__typename === 'ItemConnector'
+    ? result.data.items.nodes
+    : [];
+};
+
+const defaultOf = (items: ServiceItem[]): ServiceItem | undefined =>
+  items.find(item => item.code === 'service') ?? items[0];
 
 export const ServiceChargesModal = (
   props: ServiceChargesModalProps
@@ -88,43 +116,54 @@ const ServiceChargesContent = (
   const [draft, setDraft] = createStore<ServiceChargeDraft[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
-  const tableConfig = createTableConfig({ tableId: 'service-charges' });
+  // Delete pinned right so it stays reachable when the inputs overflow.
+  const tableConfig = createTableConfig({
+    tableId: 'service-charges',
+    defaultConfig: { base: { columnPinning: { right: ['actions'] } } },
+  });
 
   // One seed fetch per open: the existing charges (into the draft) + the
   // store's service items (the Name lookup's options). The modal mounts fresh
   // each open (the <Show> wrapper), so this never refetches under the user.
   const [seed] = createResource(async () => {
-    const [charges, itemsResult] = await Promise.all([
+    const [charges, items] = await Promise.all([
       props.fetchCharges(),
-      graphqlFetch(ServiceItems, { storeId: props.storeId }),
+      props.serviceItems ?? fetchServiceItems(props.storeId),
     ]);
-    setDraft(
-      (charges ?? []).map(charge => ({
-        id: charge.id,
-        isNew: false,
-        deleted: false,
-        itemId: charge.itemId,
-        name: charge.name,
-        totalBeforeTax: charge.totalBeforeTax,
-        taxPercentage: charge.taxPercentage,
-        note: charge.note ?? '',
-      }))
-    );
-    return itemsResult.kind === 'success' &&
-      itemsResult.data.items.__typename === 'ItemConnector'
-      ? itemsResult.data.items.nodes
-      : [];
+    return { charges: charges ?? [], items };
   });
+  // Seeding writes stay out of the fetcher; the seed resolves once per open.
+  createEffect(
+    on(
+      () => gated(seed),
+      seeded => {
+        if (!seeded) return;
+        setDraft(
+          seeded.charges.map(charge => ({
+            id: charge.id,
+            isNew: false,
+            deleted: false,
+            itemId: charge.itemId,
+            name: charge.name,
+            totalBeforeTax: charge.totalBeforeTax,
+            taxPercentage: charge.taxPercentage,
+            note: charge.note ?? '',
+          }))
+        );
+        const item = defaultOf(seeded.items);
+        if (props.addOnOpen && item && !props.disabled) addCharge(item);
+      }
+    )
+  );
   // Read via gated, never seed() directly: this accessor is reached
   // from headerActions' Add-charge `disabled` WHILE the seed is pending, and a
   // pending direct read suspends the host view's route <Suspense> — tearing
   // the side panel out from under the opening modal (kdd/solid-reactivity-
   // pitfalls › No remounts on interaction; confirmed with detect-remounts).
-  const serviceItems = () => gated(seed) ?? [];
+  const serviceItems = () => gated(seed)?.items ?? [];
   // The default for a NEW charge: the "service" item, else the first (the old
   // client's default-service-item rule).
-  const defaultServiceItem = () =>
-    serviceItems().find(item => item.code === 'service') ?? serviceItems()[0];
+  const defaultServiceItem = () => defaultOf(serviceItems());
 
   const rows = () => draft.filter(charge => !charge.deleted);
 
@@ -144,9 +183,7 @@ const ServiceChargesContent = (
     update(id, 'name', item.name);
   };
 
-  const addCharge = () => {
-    const item = defaultServiceItem();
-    if (!item) return;
+  const addCharge = (item: ServiceItem) => {
     setDraft(
       produce(charges =>
         charges.push({
@@ -245,6 +282,7 @@ const ServiceChargesContent = (
             size="small"
             disabled={props.disabled}
             value={charge.totalBeforeTax}
+            emptyValue={0}
             onChange={value => update(charge.id, 'totalBeforeTax', value ?? 0)}
           />
         );
@@ -254,6 +292,7 @@ const ServiceChargesContent = (
       c: { key: 'taxPercentage' },
       header: () => t('label.tax'),
       meta: { align: 'right' },
+      size: remToPx(7.5),
       cell: info => {
         const charge = info.row.original;
         return (
@@ -278,6 +317,7 @@ const ServiceChargesContent = (
       c: { id: 'totalAfterTax' },
       header: () => t('label.total'),
       meta: { align: 'right' },
+      size: remToPx(7.5),
       // JSX-wrapped so the store reads live in a tracked expression — a bare
       // string computed in the cell fn freezes at its first value when
       // amount/tax mutate in place (the same trap as the line editors'
@@ -290,6 +330,7 @@ const ServiceChargesContent = (
       c: { id: 'actions' },
       header: () => t('label.delete'),
       meta: { align: 'right' },
+      size: remToPx(5),
       cell: info => (
         <IconButton
           bordered
@@ -320,7 +361,10 @@ const ServiceChargesContent = (
           icon={<PlusCircleIcon />}
           data-testid="add-charge-button"
           disabled={props.disabled || !defaultServiceItem()}
-          onClick={addCharge}
+          onClick={() => {
+            const item = defaultServiceItem();
+            if (item) addCharge(item);
+          }}
         >
           {t('label.add-charge')}
         </Button>

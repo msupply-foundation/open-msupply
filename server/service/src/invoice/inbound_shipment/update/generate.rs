@@ -3,7 +3,8 @@ use chrono::Utc;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
-    LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
+    LocationMovementRow, Name, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
+    RepositoryError,
     location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
 use repository::{
@@ -225,23 +226,21 @@ pub(crate) fn generate(
 
     // Recalculate cost prices when currency rate or charges change,
     // but only for invoices linked to a purchase order
-    let has_purchase_order = update_invoice.purchase_order_id.is_some();
-    let should_update_cost_prices = has_purchase_order
-        && (patch.currency_rate.is_some()
-            || patch.charges_local_currency.is_some()
-            || patch.charges_foreign_currency.is_some());
+    let pricing_changed = patch.currency_rate.is_some()
+        || patch.charges_local_currency.is_some()
+        || patch.charges_foreign_currency.is_some();
 
-    let update_cost_price_for_lines = if should_update_cost_prices {
-        Some(generate_cost_price_update_for_lines(
+    let update_cost_price_for_lines = match &update_invoice.purchase_order_id {
+        Some(purchase_order_id) if pricing_changed => Some(generate_cost_price_update_for_lines(
             connection,
             &update_invoice.id,
+            purchase_order_id,
             update_invoice.currency_id.clone(),
             &update_invoice.currency_rate,
             update_invoice.charges_foreign_currency,
             update_invoice.charges_local_currency,
-        )?)
-    } else {
-        None
+        )?),
+        _ => None,
     };
 
     let update_donor = match patch.default_donor {
@@ -319,7 +318,8 @@ fn generate_foreign_currency_before_tax_for_lines(
 }
 
 /// Recalculates cost_price_per_pack for each invoice line based on:
-/// - PO price per pack (from linked purchase_order_line) converted to local currency
+/// - PO price per pack (from linked purchase_order_line, net of the order's
+///   supplier discount) converted to local currency
 /// - Plus the % cost adjustment from charges
 ///
 /// Rate convention: rate = home (local) currency units per 1 foreign currency unit
@@ -334,6 +334,7 @@ fn generate_foreign_currency_before_tax_for_lines(
 fn generate_cost_price_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
+    purchase_order_id: &str,
     currency_id: Option<String>,
     currency_rate: &f64,
     charges_foreign_currency: f64,
@@ -353,6 +354,10 @@ fn generate_cost_price_update_for_lines(
     };
 
     let po_line_repo = PurchaseOrderLineRowRepository::new(connection);
+    let supplier_discount_factor = PurchaseOrderRowRepository::new(connection)
+        .find_one_by_id(purchase_order_id)?
+        .map(|order| order.supplier_discount_factor())
+        .unwrap_or(1.0);
 
     // First pass: gather PO prices and compute total goods in local currency
     struct LineInfo {
@@ -368,7 +373,7 @@ fn generate_cost_price_update_for_lines(
         let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
         let po_price_local = if let Some(po_line_id) = po_line_id {
             if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
-                po_line.price_per_pack_after_discount * safe_rate
+                po_line.price_per_pack_after_discount * supplier_discount_factor * safe_rate
             } else {
                 // No PO line found, keep current cost price
                 row.cost_price_per_pack
@@ -579,6 +584,7 @@ pub fn generate_lines_and_stock_lines(
             reason_option_id: _,
             volume_per_pack,
             manufacturer_id,
+            barcode,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -606,7 +612,8 @@ pub fn generate_lines_and_stock_lines(
             total_volume: volume_per_pack * number_of_packs,
             manufacture_date,
             on_hold: false,
-            barcode_id: None,
+            // The received box's barcode goes onto its stock
+            barcode,
         };
         result.push(LineAndStockLine {
             line,

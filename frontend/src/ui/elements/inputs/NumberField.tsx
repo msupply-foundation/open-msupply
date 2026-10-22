@@ -1,6 +1,7 @@
 import {
   batch,
   createEffect,
+  createMemo,
   createSignal,
   on,
   onMount,
@@ -13,10 +14,11 @@ import {
   displayString,
   editString,
   finalizeText,
-  isIncomplete,
   processInput,
   stepValue,
-  textRepresents,
+  commitReports,
+  valueRewritesText,
+  type LastCommit,
   type NumberFieldConstraints,
 } from './numberFieldLogic';
 import styles from './NumberField.module.css';
@@ -95,6 +97,13 @@ export interface NumberFieldProps extends Omit<
   noFormatting?: boolean;
   /** Seed when `value` starts undefined; committed to the parent on mount. */
   defaultValue?: number;
+  /**
+   * What an empty field stands for, for a parent that never stores empty (a
+   * count where cleared means 0). Clearing commits this instead of
+   * `undefined`, yet the field stays empty while it is being edited, so the
+   * next figure typed replaces it whole; left empty, the field shows it.
+   */
+  emptyValue?: number;
 }
 
 /*
@@ -140,6 +149,15 @@ export interface NumberFieldProps extends Omit<
  *   over-request back to it — declares `parentAnswersSynchronously`: such an
  *   answer looks like no answer, so the field can't infer it from the echo.
  *
+ * - A parent that maps a cleared field to a number says so with
+ *   `emptyValue`, rather than turning `undefined` into it inside onChange.
+ *   The transformed-echo latch above can't see that mapping when the parent
+ *   already held the number — a 0 cleared is "answered" with the same 0, just
+ *   as a debounced parent's stale value would be — so the field would be left
+ *   blank over a stored 0 (#1336). The emptying keystroke always reaches
+ *   onChange, even when the parent already holds emptyValue — as the
+ *   `undefined` it replaces always did — so a handler's side effects run.
+ *
  * - Blur canonicalises: parse → round → clamp → commit if changed → display
  *   the formatted string (grouping separators, decimalMin padding) — or the
  *   parent's transformed echo, when it differs from what was typed. Enter
@@ -167,6 +185,7 @@ export const NumberField = (props: NumberFieldProps) => {
     'multiplier',
     'noFormatting',
     'defaultValue',
+    'emptyValue',
     'width',
     'class',
   ]);
@@ -177,6 +196,7 @@ export const NumberField = (props: NumberFieldProps) => {
     decimalLimit: local.decimalLimit ?? 0,
     decimalMin: local.decimalMin,
     noFormatting: local.noFormatting,
+    emptyValue: local.emptyValue,
   });
 
   /*
@@ -194,8 +214,7 @@ export const NumberField = (props: NumberFieldProps) => {
   let dirty = false;
   // `echo` is what the parent made of the commit — `value` itself, unless the
   // parent transforms it (see the contract above).
-  let lastCommitted:
-    { value: number | undefined; echo: number | undefined } | undefined;
+  let lastCommitted: LastCommit | undefined;
 
   // Whether the parent answers a commit INSIDE onChange — writing, perhaps
   // transforming, the value it passes back. Only then is the echo its answer:
@@ -208,13 +227,13 @@ export const NumberField = (props: NumberFieldProps) => {
   const answersSynchronously = () =>
     local.parentAnswersSynchronously || parentAnswersSynchronously;
 
-  const commit = (value: number | undefined) => {
+  const commit = (value: number | undefined, emptied = false) => {
     // Batched so the parent's write lands but the sync effect below waits
     // until the batch ends — by which time the echo is recorded and the effect
     // can recognise it as ours.
     batch(() => {
       const before = local.value;
-      if (value !== before) local.onChange?.(value);
+      if (commitReports(value, before, emptied)) local.onChange?.(value);
       const echo = local.value;
       if (echo !== before) parentAnswersSynchronously = true;
       lastCommitted = { value, echo };
@@ -258,13 +277,8 @@ export const NumberField = (props: NumberFieldProps) => {
       () => local.value,
       value => {
         const loc = locale();
-        if (
-          lastCommitted &&
-          (value === lastCommitted.value || value === lastCommitted.echo)
-        )
+        if (!valueRewritesText(value, text(), focused(), lastCommitted, loc))
           return;
-        if (textRepresents(text(), value, loc)) return;
-        if (focused() && isIncomplete(text(), loc)) return;
         setText(
           focused()
             ? editString(value, constraints(), loc)
@@ -279,11 +293,15 @@ export const NumberField = (props: NumberFieldProps) => {
   // 12,50 in fr, "1 000" → ١٬٠٠٠ in ar), and a decimalLimit/decimalMin change
   // (CurrencyField switching USD → JPY) changes the canonical rendering of an
   // unchanged value. Deferred: the signal's initial text already used the
-  // current locale and constraints.
-  const constraintsKey = () => {
+  // current locale and constraints. Memoised, so only a real change fires it:
+  // a constraint derived from a record (CurrencyField's decimals follow the
+  // record's currency) re-evaluates whenever the record is re-read, and an
+  // unmemoised key would rewrite the text the user is typing on every
+  // refetch — an order re-read after a save put "0" under the caret (#1336).
+  const constraintsKey = createMemo(() => {
     const c = constraints();
     return `${c.min}|${c.max}|${c.decimalLimit}|${c.decimalMin}|${c.noFormatting}`;
-  };
+  });
   createEffect(
     on(
       [locale, constraintsKey],
@@ -322,7 +340,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value);
+      commit(result.commit.value, result.commit.emptied);
       reportClamped(result.commit);
     }
   };

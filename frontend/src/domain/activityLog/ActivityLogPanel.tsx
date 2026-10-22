@@ -1,10 +1,10 @@
-import { createResource, type Component, type JSX } from 'solid-js';
+import { For, createResource, type Component, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
 import { createTableConfig } from '../../api/createTableConfig';
-import { t } from '../../intl';
+import { hasTranslation, t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
-import { dictionaries, locale } from '../../intl/intl';
+import { localisedDate } from '../../intl/formatDateTime';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
@@ -16,6 +16,7 @@ import {
   type ActivityLogFragment,
   type ActivityLogVariables,
 } from './activityLog.generated';
+import { describeChange } from './changeDetails';
 
 // The shared "Log" tab surface: the activity-log entries recorded against ONE
 // record, scoped by recordId. A read-only, non-paginated table — Date · Time ·
@@ -38,74 +39,33 @@ const LOG_PAGE_SIZE = 1000;
 
 // The event name: the enum maps to a `log.<kebab>` translation key (OMS
 // Formatter.logTypeTranslation parity — TYPE → `log.<lower, _→->`). t() has no
-// react-i18next `defaultValue`, so look the key up in the active dictionary
+// react-i18next `defaultValue`, so look the key up on the translation ladder
 // first and fall back to the raw enum value when unmapped.
 const eventLabel = (type: Log['type']): string => {
   const key = `log.${type.toLowerCase().replace(/_/g, '-')}` as LocaleKey;
-  const dict = dictionaries()[locale()];
-  return dict?.[key] !== undefined ? t(key) : type;
-};
-
-const tryParseObject = (
-  value: string | null
-): Record<string, unknown> | null => {
-  if (!value) return null;
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return typeof parsed === 'object' && parsed !== null
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
+  return hasTranslation(key) ? t(key) : type;
 };
 
 const fieldLabel = (key: string): string => {
   const localeKey = `label.${key}` as LocaleKey;
-  const dict = dictionaries()[locale()];
-  return dict?.[localeKey] !== undefined ? t(localeKey) : key;
+  return hasTranslation(localeKey) ? t(localeKey) : key;
 };
 
-// A change's before/after detail (`from`/`to`). When `to` parses to a JSON
-// object we diff its keys against `from` and render one line per changed field;
-// otherwise fall back to the scalar "[from] to [to]" form. (Ported from OMS's
-// formatChangeDetails — the same rendering the stocktakes Log tab uses.)
-const changeDetails = (from: string | null, to: string | null): JSX.Element => {
-  const fromObj = tryParseObject(from);
-  const toObj = tryParseObject(to);
+// A calendar date on the wire is localised; any other string reads bare.
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const showValue = (value: unknown): string => {
+  if (typeof value === 'string')
+    return DATE_ONLY.test(value) ? localisedDate(value) : value;
+  return JSON.stringify(value);
+};
 
-  if (toObj) {
-    const keys = new Set([
-      ...Object.keys(fromObj ?? {}),
-      ...Object.keys(toObj),
-    ]);
-    const changes: JSX.Element[] = [];
-    for (const key of keys) {
-      const before = fromObj?.[key];
-      const after = toObj[key];
-      if (JSON.stringify(before) === JSON.stringify(after)) continue;
-      const label = <strong>{fieldLabel(key)}:</strong>;
-      if (before != null && after != null) {
-        changes.push(
-          <div>
-            {label} {JSON.stringify(before)}{' '}
-            <strong>{t('log.changed-to')}</strong> {JSON.stringify(after)}
-          </div>
-        );
-      } else if (before != null) {
-        changes.push(
-          <div>
-            {label} {t('log.removed')} {JSON.stringify(before)}
-          </div>
-        );
-      } else {
-        changes.push(
-          <div>
-            {label} {JSON.stringify(after)}
-          </div>
-        );
-      }
-    }
+// A change's before/after detail (`from`/`to`): one line per field when either
+// side is a JSON object (changeDetails.ts), else the scalar "[from] to [to]"
+// form. (Ported from OMS's formatChangeDetails.)
+const changeDetails = (from: string | null, to: string | null): JSX.Element => {
+  const lines = describeChange(from, to);
+
+  if (lines) {
     return (
       <span
         style={{
@@ -114,7 +74,33 @@ const changeDetails = (from: string | null, to: string | null): JSX.Element => {
           gap: '0.25rem',
         }}
       >
-        {changes}
+        <For each={lines}>
+          {line => {
+            const label = <strong>{fieldLabel(line.key)}:</strong>;
+            switch (line.kind) {
+              case 'changed':
+                return (
+                  <div>
+                    {label} {showValue(line.before)}{' '}
+                    <strong>{t('log.changed-to')}</strong>{' '}
+                    {showValue(line.after)}
+                  </div>
+                );
+              case 'removed':
+                return (
+                  <div>
+                    {label} {t('log.removed')} {showValue(line.before)}
+                  </div>
+                );
+              case 'value':
+                return (
+                  <div>
+                    {label} {showValue(line.value)}
+                  </div>
+                );
+            }
+          }}
+        </For>
       </span>
     );
   }

@@ -9,6 +9,7 @@ use graphql_core::{
     },
 };
 use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
+use util::barcode::display_barcode;
 
 use crate::types::{ReasonOptionNode, program_node::ProgramNode};
 
@@ -215,6 +216,11 @@ impl DraftStockOutLineNode {
     /// with no invoice line yet.
     pub async fn transfer_comment(&self) -> &Option<String> {
         &self.shipment_line.transfer_comment
+    }
+
+    /// The batch's stock line barcode, as people read it
+    pub async fn barcode(&self) -> Option<&str> {
+        self.shipment_line.barcode.as_deref().map(display_barcode)
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

@@ -91,7 +91,18 @@ import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
 import { HistoryModal } from './HistoryModal';
 import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
 import { PrescriptionLineViewModal } from './PrescriptionLineViewModal';
-import { EditPatientModal } from '../../patients';
+// By its own path, not the patients section's index: App.tsx loads that
+// index for the routes, and the modal carries the document form host
+// (spec/patients S4 allow-edit), which must stay out of the startup bundle.
+import { EditPatientModal } from '../../patients/detail/EditPatientModal';
+import {
+  createIssueScanHost,
+  ScanButton,
+  ScanStatus,
+  type IssueScan,
+} from '@/domain/barcode';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
@@ -110,10 +121,16 @@ const PrescriptionDetailView: Component = () => {
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [activeTab, setActiveTab] = createSignal('details');
-  const [editState, setEditState] = createSignal<{
+  // What the S4 line editor is open on: a row's item (edit), nothing (Add
+  // item), or a scan (add mode on the scanned item — spec/barcode-scanning
+  // rules § Issuing by scanning).
+  type EditState = {
     itemId?: string;
     item?: { id: string; code: string; name: string };
-  }>();
+    scan?: IssueScan;
+  };
+  const [editState, setEditState] = createSignal<EditState>();
+  const openEditor = (state: EditState) => setEditState(state);
   // S4's read-only face (.73) — the item it's open for; undefined = closed.
   const [viewItemId, setViewItemId] = createSignal<string>();
   // The patient picker's edit-patient modal (#1038) — the id it's currently
@@ -200,6 +217,23 @@ const PrescriptionDetailView: Component = () => {
   // its placeholders (rules › prescribed quantity), and they need no more work.
   const isOpenPlaceholder = (line: Line) =>
     !disabled() && isPlaceholderLine(line);
+
+  // Dispensing by scanning (spec/prescriptions ui-surface S3 page actions
+  // "Add from scanner"; the shared issuing host in domain/barcode): a scan
+  // opens S4 on the item its code means within the record's program, or
+  // empty with a warning when it means nothing yet; a scan while S4 waits
+  // for an item (after OK & next) picks it. With a hardware scanner the
+  // screen listens from arrival while the record is editable; a camera
+  // scans per press. `info()` is the `.state`-gated read, so a refetch never
+  // reads as "not editable" and stops the scanner mid-visit.
+  const issueScan = createIssueScanHost({
+    owner: 'prescription',
+    storeId: () => params.storeId,
+    disabled: () => !info() || disabled(),
+    editorOpen: () => editState() != null,
+    openEditor: scan => openEditor({ scan }),
+    masterListId: () => info()?.programId ?? undefined,
+  });
 
   // The rendered rows — dispensed lines, a cancellation reversal's returned
   // lines, and the prescribed-quantity placeholder (isRenderableLine);
@@ -320,7 +354,7 @@ const PrescriptionDetailView: Component = () => {
   // read a suspending source).
   createAddAction({
     name: 'button.add-item',
-    run: () => setEditState({}),
+    run: () => openEditor({}),
     disabled: () => !info() || disabled(),
   });
 
@@ -365,7 +399,7 @@ const PrescriptionDetailView: Component = () => {
   const openRow = (line: Line) => {
     if (disabled()) setViewItemId(line.itemId);
     else
-      setEditState({
+      openEditor({
         itemId: line.itemId,
         item: { id: line.itemId, code: line.itemCode, name: line.itemName },
       });
@@ -551,11 +585,17 @@ const PrescriptionDetailView: Component = () => {
                       icon={<PlusCircleIcon />}
                       shortcut={ALT_N}
                       data-testid="add-item-button"
-                      onClick={() => setEditState({})}
+                      onClick={() => openEditor({})}
                     >
                       {t('button.add-item')}
                     </Button>
                   </Show>
+                  {/* Add from scanner: a camera's Scan action, shown at every
+                      status and disabled once the record can't be edited, as
+                      on receiving. Nothing renders here for a hardware
+                      scanner, whose status is the field cluster's trailing
+                      note. */}
+                  <ScanButton control={issueScan.control} />
                   {/* Print: labels primary, the report selector as the
                       option — both at every status (OMS-REG-DIS-03.47/.48/.71). Labels report
                       their outcome here (.64): busy, then printed / failed. */}
@@ -613,7 +653,20 @@ const PrescriptionDetailView: Component = () => {
                 </HeaderButtons>
                 {/* The header field cluster — never a hand-rolled <Toolbar>
                     (ui/docs/PAGES.md § header field cluster). */}
-                <HeaderToolbar>
+                {/* A scan's outcome, inline beside the action that took it —
+                    never a toast (controls › action feedback). */}
+                <Show when={issueScan.noticeShown()}>
+                  {notice => (
+                    <Toolbar>
+                      <Alert severity={notice().severity} testId="scan-notice">
+                        {notice().text}
+                      </Alert>
+                    </Toolbar>
+                  )}
+                </Show>
+                <HeaderToolbar
+                  alert={<ScanStatus control={issueScan.control} />}
+                >
                   <PrescriptionToolbar
                     storeId={params.storeId}
                     node={node()}
@@ -733,7 +786,7 @@ const PrescriptionDetailView: Component = () => {
                       variant="ghost"
                       shortcut={ALT_N}
                       data-testid="nothing-here-create-button"
-                      onClick={() => setEditState({})}
+                      onClick={() => openEditor({})}
                     >
                       {t('button.add-item')}
                     </Button>
@@ -784,11 +837,23 @@ const PrescriptionDetailView: Component = () => {
                 // and never writes it (spec/prescriptions § prescribed
                 // quantity).
                 lockPrescribedQuantity={node().prescriptionRequestId != null}
-                onClose={() => setEditState(undefined)}
+                scan={state.scan}
+                onScanReceiver={issueScan.setReceiver}
+                onBatchLabelReceiver={issueScan.setBatchLabelReceiver}
+                scanDiscarded={issueScan.discarded()}
+                onClose={() => {
+                  issueScan.editorClosed();
+                  setEditState(undefined);
+                }}
                 onSaved={() => void refetch()}
               />
             )}
           </Show>
+
+          {/* "Which item is this barcode?" for a barcode mapped to several
+              items (barcode-scanning rules § Looking a barcode up). Mounted
+              outside the editor: a scan asks before the editor opens. */}
+          <issueScan.Chooser />
 
           {/* S4's read-only face (.73) — the same surface the editor above
               occupies while the prescription is editable, opened by a row

@@ -1,0 +1,12 @@
+# The contexts of the store's immunisation programs: New program from a
+# patient's Vaccinations tab offers only the enrolment types in these
+# (spec/program-enrolment rules § enrolling a patient).
+query immunisationProgramContexts($storeId: String!) {
+  programs(storeId: $storeId, filter: { isImmunisation: true }) {
+    ... on ProgramConnector {
+      nodes {
+        contextId
+      }
+    }
+  }
+}

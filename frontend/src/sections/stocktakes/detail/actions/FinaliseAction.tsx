@@ -44,7 +44,7 @@ export interface FinaliseActionProps {
 // onApplied merges the saved node and the dialog CLOSES (spec/ui-standards/
 // controls.md § dialogs, D22). Closure alone is too quiet — the split button
 // hides at FINALISED too — so the footer that hosts this action flashes the
-// save confirmation in its message slot (§ action feedback; kdd/action-modal
+// status it reached in its message slot (§ action feedback; kdd/action-modal
 // Update 3), and the arriving crumb plays its one-shot motion. On a rejection
 // onError stamps the offending lines (rows show them), the error phase shows
 // the server's translated message and offers

@@ -223,7 +223,6 @@ export type PreferencesQuery = {
     sortByVvmStatusThenExpiry: boolean;
     storeCustomColour: string;
     syncRecordsDisplayThreshold: number;
-    useProcurementFunctionality: boolean;
     useSimplifiedMobileUi: boolean;
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
@@ -423,7 +422,6 @@ export const PreferencesDocument = gql`
       sortByVvmStatusThenExpiry
       storeCustomColour
       syncRecordsDisplayThreshold
-      useProcurementFunctionality
       useSimplifiedMobileUi
       expiredStockPreventIssue
       expiredStockIssueThreshold

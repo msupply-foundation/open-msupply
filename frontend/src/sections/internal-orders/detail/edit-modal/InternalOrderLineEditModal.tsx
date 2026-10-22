@@ -33,6 +33,7 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
+import { ActivitySelect } from '@/domain/campaign';
 import {
   PluginSlotOutlet,
   type PluginSlotContribution,
@@ -55,10 +56,17 @@ import {
   statInMode,
   saveNewLine,
   saveExistingLine,
+  previewActivity,
+  previewForecastMethod,
+  type ForecastPreviewResult,
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
-import { ForecastCalculationDisplay } from '../../../../domain/forecast';
+import {
+  ForecastBlock,
+  type ForecastMethod,
+  type SupplyIntervalAndBufferFragment,
+} from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 import { Num } from '../../../../ui/elements/typography/Num';
 
@@ -66,9 +74,9 @@ import { Num } from '../../../../ui/elements/typography/Num';
 // mode, general orders only — OMS-REG-REPL-04.63) or fill one line (edit mode,
 // any status; read-only opens with every control disabled). Panels: the item's
 // statistics, its stock movements (extended gate), the edits, and below them
-// either the read-only context charts (target-quantity breakdown + consumption
-// / stock-evolution) or, where the store forecasts and this line carries a
-// forecast, the population-forecast calculation display (OMS-REG-REPL-11.7).
+// the line's forecast (method + breakdown + the step into stock) and the
+// read-only context charts (target-quantity breakdown + consumption /
+// stock-evolution).
 
 export interface InternalOrderLineEditModalProps {
   open: boolean;
@@ -77,6 +85,12 @@ export interface InternalOrderLineEditModalProps {
   requisitionId: string;
   minMonths: number;
   maxMonths: number;
+  /**
+   * The store's supply interval and safety buffer the order's target came
+   * from, if it did — the forecast's target months then show the supply
+   * interval and safety buffer that make them up (OMS-REG-REPL-17.17).
+   */
+  targetIntervalAndBuffer?: SupplyIntervalAndBufferFragment;
   /** Read-only order → every control disabled (reads still shown). */
   editable: boolean;
   /** General order → add mode reachable; program orders can't add (OMS-REG-REPL-04.63). */
@@ -84,7 +98,6 @@ export interface InternalOrderLineEditModalProps {
   // Preference gates (spec S4 — the extra rows/columns).
   showDoses: boolean;
   showPricing: boolean;
-  showForecast: boolean;
   showExcess: boolean;
   /**
    * Customer-statistics program order → the movements panel + reason
@@ -151,8 +164,18 @@ const LineEditContent = (
   // its display (OMS-REG-REPL-04.22/.24/.69/.88/.90).
   const [requestedUnits, setRequestedUnits] = createSignal(0);
   const [comment, setComment] = createSignal('');
+  // The line's Activity (issue 595): the chosen campaign id, null for routine.
+  // Stored with its name so a campaign the register no longer offers still
+  // labels itself (spec/campaigns contract › wire trap).
+  const [campaign, setCampaign] = createSignal<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [reasonId, setReasonId] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
+  // A draft method change's preview in flight (rules › choosing a method) —
+  // Save waits for it, so the method it sends is the one the editor shows.
+  const [previewing, setPreviewing] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
@@ -183,12 +206,27 @@ const LineEditContent = (
   // NON-suspending (the `.state` gate) — the resource first-fetches on the
   // interaction of opening/advancing, so a direct read would remount the modal
   // (kdd/solid-reactivity-pitfalls § no remounts).
-  const chartKey = () => {
-    const editorLine = line();
-    return editorLine && !editorLine.isNew
-      ? { storeId: props.storeId, lineId: editorLine.lineId }
-      : false;
-  };
+  // Keyed on the stable inputs only, compared by value: every setLine — a
+  // draft method preview included — hands the editor a new line object, and a
+  // key object rebuilt from it would otherwise refetch the chart each time.
+  type ChartKey = { storeId: string; lineId: string } | false;
+  const chartKey = createMemo<ChartKey>(
+    () => {
+      const editorLine = line();
+      return editorLine && !editorLine.isNew
+        ? { storeId: props.storeId, lineId: editorLine.lineId }
+        : false;
+    },
+    false,
+    {
+      equals: (prev, next) =>
+        prev === next ||
+        (prev !== false &&
+          next !== false &&
+          prev.storeId === next.storeId &&
+          prev.lineId === next.lineId),
+    }
+  );
   const [chart] = createResource(chartKey, async variables => {
     const result = await graphqlFetch(RequisitionLineChart, variables);
     if (result.kind !== 'success') return undefined;
@@ -199,6 +237,17 @@ const LineEditContent = (
   // The history/evolution pair shows only when the server returned series (an
   // order with no expected-delivery-date returns both null — then only the
   // target-quantity breakdown shows, spec S4 § charts).
+  // The draft previews a method other than the saved line's — the stock
+  // evolution series, projected server-side from the stored forecast, then
+  // lags the draft until it is saved.
+  const previewsOtherMethod = () => {
+    const editorLine = line();
+    return (
+      !!editorLine &&
+      !editorLine.isNew &&
+      editorLine.forecast.forecastMethod !== editorLine.ownForecastMethod
+    );
+  };
   const hasSeries = () => {
     const data = chartData();
     return !!(
@@ -225,6 +274,7 @@ const LineEditContent = (
     );
     setRequestedUnits(editorLine.requestedQuantity);
     setComment(editorLine.comment);
+    setCampaign(editorLine.campaign);
     setReasonId(editorLine.reasonId);
     setErrorMessage(undefined);
     if (props.editable) requestedField.focus();
@@ -244,9 +294,8 @@ const LineEditContent = (
     setErrorMessage(undefined);
     const preview = await buildAddPreview(
       props.storeId,
+      props.requisitionId,
       itemId,
-      props.minMonths,
-      props.maxMonths,
       generateUUID()
     );
     if (disposed) return;
@@ -329,6 +378,13 @@ const LineEditContent = (
     );
   };
 
+  // A forecast figure (units) in the active mode, at the configured places —
+  // the forecast block keeps its arithmetic's fractions.
+  const forecastQuantity = (units: number): string => {
+    const figure = unitsToMode(units, entryMode(), packSize(), doses());
+    return `${roundedText(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
+
   // A unit quantity re-expressed in the OTHER measure (OMS-REG-REPL-04.75):
   // units when doses is the active mode, the dose equivalent otherwise —
   // rounded whole.
@@ -368,6 +424,7 @@ const LineEditContent = (
       requestedQuantity: requestedUnits(),
       comment: comment(),
       optionId: draftOptionId(),
+      campaignId: campaign()?.id ?? null,
     };
     const result = editorLine.isNew
       ? await saveNewLine(props.storeId, props.requisitionId, editorLine, draft)
@@ -380,6 +437,52 @@ const LineEditContent = (
     if (result.kind === 'error') setErrorMessage(result.message);
     else setErrorMessage(t('error.cant-save'));
     return false;
+  };
+
+  // The shared body of a draft preview: run it against the line on screen, and
+  // land it only if that is still the line on screen.
+  const runPreview = async (
+    preview: (line: EditorLine) => Promise<ForecastPreviewResult>
+  ) => {
+    const editorLine = current();
+    if (!editorLine) return;
+    setPreviewing(true);
+    setErrorMessage(undefined);
+    const result = await preview(editorLine);
+    if (disposed) return;
+    setPreviewing(false);
+    // The editor moved on (another item, or Save & next) while it was in
+    // flight: the preview is for a line no longer shown.
+    if (current()?.lineId !== editorLine.lineId) return;
+    if (result.kind === 'previewed') setLine(result.line);
+    else if (result.kind === 'error') setErrorMessage(result.message);
+    else setErrorMessage(t('error.unable-to-load-data'));
+  };
+
+  // Picking a method is a draft edit (rules › choosing a method): the line is
+  // re-previewed under it — forecast and suggestion recomputed as the save will
+  // recompute them — leaving the draft's quantity, comment and reason as typed.
+  // Nothing is saved until Save; Cancel discards it with the rest of the draft.
+  const onMethodChange = (method: ForecastMethod) =>
+    runPreview(editorLine =>
+      previewForecastMethod(
+        props.storeId,
+        props.requisitionId,
+        editorLine,
+        method
+      )
+    );
+
+  // Picking an Activity is a draft edit too (issue 595): the line is re-previewed
+  // as held for it — stock on hand narrowed to that campaign's stock, and the
+  // suggestion recomputed against it — so the editor SHOWS what the save will
+  // store rather than the whole-store figures it opened on. The picker's own
+  // value is the draft's; the preview follows it.
+  const onActivityChange = (chosen: { id: string; name: string } | null) => {
+    setCampaign(chosen);
+    void runPreview(editorLine =>
+      previewActivity(props.storeId, props.requisitionId, editorLine, chosen)
+    );
   };
 
   const onOk = () =>
@@ -455,12 +558,14 @@ const LineEditContent = (
     value: JSX.Element;
     caption?: string;
     highlight?: boolean;
+    /** `data-testid` on the VALUE, for a figure a test has to read. */
+    testId?: string;
   }): JSX.Element => (
     <FieldRow
       label={rowProps.label}
       class={rowProps.highlight ? styles.highlight : undefined}
     >
-      <span class={styles.statValue}>
+      <span class={styles.statValue} data-testid={rowProps.testId}>
         {rowProps.value}
         <Show when={rowProps.caption}>
           {caption => <span class={styles.statCaption}>{caption()}</span>}
@@ -514,7 +619,7 @@ const LineEditContent = (
           />
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={!current() || saving() || !props.editable}
+            disabled={!current() || saving() || previewing() || !props.editable}
             loading={saving()}
             onClick={onOk}
           />
@@ -523,6 +628,7 @@ const LineEditContent = (
           <Show when={current() && props.editable}>
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
+              disabled={previewing()}
               loading={saving() || advancing()}
               onClick={onOkNext}
             />
@@ -598,6 +704,9 @@ const LineEditContent = (
                   />
                 </Show>
                 <StatRow
+                  // Read by the activity-scoping test: this is the figure the
+                  // draft preview narrows (issue 595).
+                  testId="line-soh-value"
                   label={t('label.our-soh')}
                   value={stat(editorLine().availableStockOnHand)}
                   caption={statCaption(editorLine().availableStockOnHand)}
@@ -611,8 +720,10 @@ const LineEditContent = (
                   value={stat(editorLine().averageMonthlyConsumption, true)}
                   caption={statCaption(editorLine().averageMonthlyConsumption)}
                 />
+                {/* Stock ÷ the line's forecast monthly demand — labelled so
+                  beside the measured AMC/AMD above (#12082). */}
                 <StatRow
-                  label={t('label.months-of-stock')}
+                  label={t('label.months-of-stock-forecast-demand')}
                   value={
                     <>
                       <Num value={editorLine().monthsOfStock} />{' '}
@@ -620,22 +731,6 @@ const LineEditContent = (
                     </>
                   }
                 />
-                <Show
-                  when={
-                    props.showForecast &&
-                    editorLine().forecastTotalUnits != null
-                  }
-                >
-                  <StatRow
-                    label={t('label.target-stock-population')}
-                    value={stat(
-                      Math.ceil(editorLine().forecastTotalUnits ?? 0)
-                    )}
-                    caption={statCaption(
-                      Math.ceil(editorLine().forecastTotalUnits ?? 0)
-                    )}
-                  />
-                </Show>
                 <Show when={props.showExtended}>
                   <StatRow
                     label={t('label.short-expiry')}
@@ -707,6 +802,7 @@ const LineEditContent = (
                       ref={requestedField.ref}
                       disabled={disabled() || saving()}
                       value={requestedDisplay()}
+                      emptyValue={0}
                       onChange={onRequestedChange}
                     />
                     <Select
@@ -765,6 +861,24 @@ const LineEditContent = (
                   </FieldRow>
                 </Show>
 
+                {/* The line's Activity (issue 595) — offered on EVERY internal
+                  order, program-based or standard: what the stock is ordered
+                  for is a property of the line, not of the order's kind. */}
+                <FieldRow label={t('label.activity')}>
+                  <ActivitySelect
+                    hideLabel
+                    inputTestId="line-activity-field"
+                    disabled={disabled() || saving() || previewing()}
+                    campaignId={campaign()?.id}
+                    campaign={campaign()}
+                    onChange={chosen =>
+                      onActivityChange(
+                        chosen ? { id: chosen.id, name: chosen.name } : null
+                      )
+                    }
+                  />
+                </FieldRow>
+
                 <FieldRow label={t('label.comment')}>
                   <TextArea
                     label={t('label.comment')}
@@ -797,63 +911,74 @@ const LineEditContent = (
               )}
             </Show>
 
-            {/* Below — where the store shows population-based forecasting and
-              this line carries a forecast, the calculation display stands in
-              for the charts (spec S4, OMS-REG-REPL-11.7); otherwise the read-only context
-              charts: the target-quantity breakdown (client-side from the line's
-              stats) atop the consumption-history + stock-evolution pair. The
-              pair needs a saved line's server series (chartData); absent it — an
-              add-mode draft, or an order with no expected-delivery-date — only
-              the breakdown shows. */}
-            <Show
-              when={
-                props.showForecast && editorLine().vaccineCourses.length > 0
-              }
-              fallback={
-                <div class={styles.charts}>
-                  <div class={styles.breakdown}>
-                    <h3 class={styles.chartHeading}>
-                      {t('heading.target-quantity')}
-                    </h3>
-                    <TargetQuantityBreakdown
-                      averageMonthlyConsumption={
-                        editorLine().averageMonthlyConsumption
-                      }
-                      availableStockOnHand={editorLine().availableStockOnHand}
-                      suggestedQuantity={editorLine().suggestedQuantity}
-                      thresholdMonths={props.minMonths}
-                      targetMonths={props.maxMonths}
-                    />
+            {/* Below — the draft's forecast (spec S4 › the forecast): its
+              method, the breakdown behind its monthly demand, and the step into
+              stock — the stored line's, or the server's preview of the line the
+              draft would save (an add-mode draft, or a method change). */}
+            <ForecastBlock
+              line={editorLine().forecast}
+              targetMonths={props.maxMonths}
+              targetIntervalAndBuffer={props.targetIntervalAndBuffer}
+              formatQuantity={forecastQuantity}
+              options={editorLine().forecastMethodOptions}
+              ownMethod={editorLine().ownForecastMethod}
+              disabled={disabled() || saving() || previewing()}
+              onMethodChange={method => void onMethodChange(method)}
+              testId="line-forecast"
+            />
+
+            {/* Then the read-only context charts, on every line whatever its
+              forecast method: the target-quantity breakdown (client-side from
+              the line's monthly demand and stock) atop the consumption-history
+              + stock-evolution pair. The pair needs a saved line's server
+              series (chartData); absent it — an add-mode draft, or an order
+              with no expected-delivery-date — only the breakdown shows. */}
+            <div class={styles.charts}>
+              <div class={styles.breakdown}>
+                <h3 class={styles.chartHeading}>
+                  {t('heading.target-quantity')}
+                </h3>
+                <TargetQuantityBreakdown
+                  averageMonthlyConsumption={editorLine().monthlyDemand}
+                  availableStockOnHand={editorLine().availableStockOnHand}
+                  suggestedQuantity={editorLine().suggestedQuantity}
+                  thresholdMonths={props.minMonths}
+                  targetMonths={props.maxMonths}
+                  zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
+                />
+              </div>
+              <Show when={hasSeries() && chartData()}>
+                {data => (
+                  <div class={styles.chartPair}>
+                    <div class={styles.chartSection}>
+                      <h3 class={styles.chartHeading}>
+                        {t('heading.consumption-history')}
+                      </h3>
+                      <ConsumptionHistoryChart
+                        data={data().consumptionHistory?.nodes ?? []}
+                      />
+                    </div>
+                    <div class={styles.chartSection}>
+                      <h3 class={styles.chartHeading}>
+                        {t('heading.stock-evolution')}
+                      </h3>
+                      {/* The server projects the SAVED line's forecast; while
+                        the draft previews another method the chart can't
+                        follow it, so it says whose demand it draws (spec S4 ›
+                        context charts). */}
+                      <Show when={previewsOtherMethod()}>
+                        <p class={styles.chartNote}>
+                          {t('messages.stock-evolution-saved-method')}
+                        </p>
+                      </Show>
+                      <StockEvolutionChart
+                        data={data().stockEvolution?.nodes ?? []}
+                      />
+                    </div>
                   </div>
-                  <Show when={hasSeries() && chartData()}>
-                    {data => (
-                      <div class={styles.chartPair}>
-                        <div class={styles.chartSection}>
-                          <h3 class={styles.chartHeading}>
-                            {t('heading.consumption-history')}
-                          </h3>
-                          <ConsumptionHistoryChart
-                            data={data().consumptionHistory?.nodes ?? []}
-                          />
-                        </div>
-                        <div class={styles.chartSection}>
-                          <h3 class={styles.chartHeading}>
-                            {t('heading.stock-evolution')}
-                          </h3>
-                          <StockEvolutionChart
-                            data={data().stockEvolution?.nodes ?? []}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Show>
-                </div>
-              }
-            >
-              <ForecastCalculationDisplay
-                courses={editorLine().vaccineCourses}
-              />
-            </Show>
+                )}
+              </Show>
+            </div>
           </>
         )}
       </Show>

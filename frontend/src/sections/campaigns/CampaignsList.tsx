@@ -22,7 +22,7 @@ import { PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { hasPermission } from '@/store/storeContext';
-import { campaignsResource } from '@/domain/campaign';
+import { campaignKindLabel, campaignsResource } from '@/domain/campaign';
 import { survivingSelection, wholeRegisterVariables } from './campaignDelete';
 import { Campaigns } from './campaigns.generated';
 import {
@@ -49,9 +49,9 @@ import { DeleteCampaignsAction } from './DeleteCampaignsAction';
 //    slot is deliberately unfilled rather than wired to a filter the server
 //    drops (contract.md § backend gaps).
 //  - NO export. The register carries no CSV/Excel action.
-//  - The two date columns are NOT sortable: `CampaignSortFieldInput` has only
-//    `name`, so declaring a sortKey for them is impossible by construction (the
-//    generated union is the literal 'name').
+//  - Only Name sorts: `CampaignSortFieldInput` has only `name`, so declaring a
+//    sortKey for Code or Kind is impossible by construction (the generated
+//    union is the literal 'name').
 
 const CampaignsList: Component = () => {
   // storeId is guaranteed present: the section renders only inside
@@ -99,7 +99,7 @@ const CampaignsList: Component = () => {
   // Alt+N — this screen's add action (spec/keyboard KB-R2). Declared by the
   // SCREEN, once, because two controls trigger it: the header button and the
   // empty state's ghost button. Each carries `shortcut={ALT_N}` for its badge.
-  createAddAction({ name: 'button.new-campaign', run: openCreate });
+  createAddAction({ name: 'button.new-activity', run: openCreate });
 
   const tableConfig = createTableConfig({ tableId: 'campaigns' });
 
@@ -213,22 +213,22 @@ const CampaignsList: Component = () => {
       meta: { headerPosition: 'primary' },
     },
     {
-      c: { key: 'startDate' },
-      header: () => t('label.start-date'),
-      // No sortKey: there is no server sort key for either date, so the header
-      // offers no sort control and its column menu no sort entry.
-      ...getCellDefinition('startDate'),
+      c: { key: 'code' },
+      header: () => t('label.code'),
+      // No sortKey: `CampaignSortFieldInput` offers only `name`.
+      ...getCellDefinition('code'),
     },
     {
-      c: { key: 'endDate' },
-      header: () => t('label.end-date'),
-      ...getCellDefinition('endDate'),
+      c: { accessor: row => campaignKindLabel(row.kind), id: 'kind' },
+      header: () => t('label.kind'),
+      // No sortKey: `CampaignSortFieldInput` offers only `name`.
+      ...getCellDefinition('kind'),
     },
   ];
 
   // The destination's own name, under the Manage section (the trail comes from
   // the nav registry; this list's crumb is its own name).
-  const crumbs = () => [{ label: t('campaigns') }];
+  const crumbs = () => [{ label: t('label.activities') }];
 
   return (
     <Page
@@ -245,7 +245,7 @@ const CampaignsList: Component = () => {
               data-testid="new-campaign-button"
               onClick={openCreate}
             >
-              {t('button.new-campaign')}
+              {t('button.new-activity')}
             </Button>
           </HeaderButtons>
         </Header>
@@ -262,7 +262,7 @@ const CampaignsList: Component = () => {
         onSort={onSort}
         // No detail screen: a row opens the editor on that campaign (`.14`).
         onRowClick={openEdit}
-        emptyMessage={t('error.no-campaigns')}
+        emptyMessage={t('error.no-activities')}
         empty={
           <Button
             variant="ghost"

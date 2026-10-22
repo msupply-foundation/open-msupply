@@ -7,14 +7,14 @@ import {
   DialogButton,
   Alert,
   Box,
-  CampaignNode,
 } from '@openmsupply-client/common';
 import { ProgramFragment } from '@openmsupply-client/programs';
 import { CampaignOrProgramSelector } from './CampaignOrProgramSelector';
+import { CampaignRowFragment } from '../../../Manage/Campaigns/api';
 
 interface ChangeCampaignOrProgramConfirmationModalProps<
   T extends {
-    campaign?: CampaignNode | null;
+    campaign?: Pick<CampaignRowFragment, 'id' | 'name'> | null;
     program?: ProgramFragment | null;
     item?: { id: string; programs?: ProgramFragment[] | null } | null;
   },
@@ -28,7 +28,7 @@ interface ChangeCampaignOrProgramConfirmationModalProps<
 
 export const ChangeCampaignOrProgramConfirmationModal = <
   T extends {
-    campaign?: CampaignNode | null;
+    campaign?: Pick<CampaignRowFragment, 'id' | 'name'> | null;
     program?: ProgramFragment | null;
     item?: { id: string; programs?: ProgramFragment[] | null } | null;
   },
@@ -41,7 +41,7 @@ export const ChangeCampaignOrProgramConfirmationModal = <
 }: ChangeCampaignOrProgramConfirmationModalProps<T>) => {
   const t = useTranslation();
 
-  const [campaign, setCampaign] = useState<CampaignNode | null>(null);
+  const [campaign, setCampaign] = useState<CampaignRowFragment | null>(null);
   const [program, setProgram] = useState<ProgramFragment | null>(null);
   const { validPrograms, hasMissingPrograms } = findCommonPrograms(rows);
 

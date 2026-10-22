@@ -1,13 +1,23 @@
 /*
- * FormColumns — flex-wrap row of FormColumn stacks (see FormColumns.tsx). The
- * columns carry their own flex-basis (see FormColumn.module.css); this owns the
- * gap between them and lets them wrap to a single stack when squeezed.
+ * FormColumns — flex-wrap row of FormColumn stacks (see FormColumns.tsx). This
+ * owns the gap between the columns and, in the rule below, their flex-basis,
+ * and lets them wrap to a single stack when squeezed.
  */
 .columns {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-6);
   align-items: start;
+}
+
+/* Each column's flex-basis (`--form-column-min`, set by FormColumn's
+   `minWidth`, default `--measure-form-column`) governs the shared width and
+   the single-stack wrap point. It is set here, not on the column, so a
+   FormColumn used on its own in a vertical flex parent (a plugin form in the
+   encounter screen's Stack) keeps its content height. The column's unhashed
+   `data-form-column` hook reaches across the two modules. */
+.columns > [data-form-column] {
+  flex: 1 1 var(--form-column-min, var(--measure-form-column));
 }
 
 /* `stretch`: the columns on one line take that line's height, and each

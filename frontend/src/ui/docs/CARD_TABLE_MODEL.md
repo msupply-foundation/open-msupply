@@ -55,6 +55,8 @@ Set on each column literal in your `columns()` array. Anything not about the car
 | `meta.cardSpan`                 | `number`               | `1`           | Tracks this field takes of its group's `narrowLayout.columns` equal-track grid (≤1023px viewports only); ignored in every other layout. See [Field widths](#field-widths-metacardwidth).                                                                                                            |
 | `meta.align` / `meta.wrapLines` | —                      | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                                                                                                                                        |
 | `meta.controlLine`              | `boolean`              | `false`       | Table view, in an editor table with top-aligned cells (`cellAlign="start"`): holds a **short** cell (a row number, an icon button) to the row's input line — its content sits in a box one input tall and centres there, however the row grows beneath the inputs. Inert in a centre-aligned table. |
+| `meta.groupRows`                | `boolean`              | `false`       | Table view: shows a value **once per run** of equal consecutive values (rows as rendered — sorted, paged), joining the run's cells so a row tint runs through. A continuing cell is blank and names its value to assistive technology; an empty value never groups.                                 |
+| `meta.dividerEnd`               | `boolean`              | `false`       | Table view: a rule down the column's inline-end edge, header to footer — for a column that heads the ones after it, pinned or not.                                                                                                                                                                  |
 
 `getCellDefinition(key, meta?)` merges its second argument into the column's `meta`, so card flags ride along with a preset: `...getCellDefinition('numberOfPacks', { headerPosition: 'badge', showLabel: true })`.
 
@@ -130,7 +132,7 @@ One entry per body group in `cardGroups`.
 The card label text is the column's `header`, called (it is a function so the text re-resolves on a locale change). Whether and how it renders:
 
 - **Body cell, labelled** (the default) → [`LabelledValue`](../elements/typography/LabelledValue.tsx): label **above** the value, in the field grid.
-- **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"`: label **beside** the control, on the identity row.
+- **Header cell, labelled** (`showLabel: true`) → [`FieldRow`](../elements/inputs/FieldRow.tsx) `labelWidth="auto"` `align="first-line"`: label **beside** the control, on the identity row, level with the control's first line — so a message the control grows beneath it (a field warning) doesn't drag the label down.
 - **Unlabelled** (default for header cells, or `showLabel: false`) → the cell content fills its slot directly.
 
 Read-only labelled values and editable inputs share the `--field-label-*` token, so a `LabelledValue` and a real input read identically in a card.

@@ -22,22 +22,22 @@ export type CampaignsResult = {
   nodes: Array<{
   id: string;
   name: string;
-  startDate: string | null;
-  endDate: string | null;
+  code: string;
+  kind: "CAMPAIGN" | "ROUTINE";
 }>;
 });
 };
 
 export const Campaigns = {
-  query: "query campaigns($storeId: String!, $sort: [CampaignSortInput!], $page: PaginationInput) {\n  campaigns(storeId: $storeId, sort: $sort, page: $page) {\n    ... on CampaignConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        startDate\n        endDate\n      }\n    }\n  }\n}",
+  query: "query campaigns($storeId: String!, $sort: [CampaignSortInput!], $page: PaginationInput) {\n  campaigns(storeId: $storeId, sort: $sort, page: $page) {\n    ... on CampaignConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        code\n        kind\n      }\n    }\n  }\n}",
 } as TypedDocument<CampaignsResult, CampaignsVariables>;
 
 export type UpsertCampaignVariables = {
   input: {
     id: string;
     name: string;
-    startDate?: string | null;
-    endDate?: string | null;
+    code?: string | null;
+    kind?: "CAMPAIGN" | "ROUTINE" | null;
   };
 };
 
@@ -49,22 +49,33 @@ export type UpsertCampaignResult = {
 } & {
   id: string;
   name: string;
-  startDate: string | null;
-  endDate: string | null;
+  code: string;
+  kind: "CAMPAIGN" | "ROUTINE";
 }) | ({
   __typename: "UpsertCampaignError";
 } & {
-  error: {
-  __typename: "DatabaseError" | "InternalError" | "UniqueValueViolation";
+  error: ({
+  __typename: "UniqueValueViolation";
+} & {
+  field: "code" | "serial" | "name";
+} & {
   description: string;
-};
+}) | ({
+  __typename: "InternalError";
+} & {
+  description: string;
+}) | ({
+  __typename: "DatabaseError";
+} & {
+  description: string;
+});
 });
 };
 };
 };
 
 export const UpsertCampaign = {
-  query: "mutation upsertCampaign($input: UpsertCampaignInput!) {\n  centralServer {\n    campaign {\n      upsertCampaign(input: $input) {\n        __typename\n        ... on CampaignNode {\n          id\n          name\n          startDate\n          endDate\n        }\n        ... on UpsertCampaignError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation upsertCampaign($input: UpsertCampaignInput!) {\n  centralServer {\n    campaign {\n      upsertCampaign(input: $input) {\n        __typename\n        ... on CampaignNode {\n          id\n          name\n          code\n          kind\n        }\n        ... on UpsertCampaignError {\n          error {\n            __typename\n            description\n            ... on UniqueValueViolation {\n              __typename\n              field\n            }\n            ... on InternalError {\n              __typename\n            }\n            ... on DatabaseError {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UpsertCampaignResult, UpsertCampaignVariables>;
 
 export type DeleteCampaignsVariables = {

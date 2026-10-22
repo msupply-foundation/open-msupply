@@ -4,32 +4,80 @@
 # plain path (spec/patients contract › editing wire trap) — only the document
 # path projects them. customFields is re-filtered server-side to the "patient"
 # scope's visible keys.
-query patient($storeId: String!, $patientId: String!) {
-  patient(storeId: $storeId, patientId: $patientId) {
+fragment PatientFields on PatientNode {
+  id
+  name
+  code
+  code2
+  firstName
+  lastName
+  gender
+  dateOfBirth
+  age
+  phone
+  address1
+  address2
+  country
+  email
+  website
+  isDeceased
+  dateOfDeath
+  nextOfKinId
+  nextOfKinName
+  createdDatetime
+  customFields
+  nextOfKin {
     id
     name
-    code
-    code2
-    firstName
-    lastName
-    gender
-    dateOfBirth
-    age
-    phone
-    address1
-    address2
-    country
-    email
-    website
-    isDeceased
-    dateOfDeath
-    nextOfKinId
-    nextOfKinName
-    createdDatetime
-    customFields
-    nextOfKin {
+  }
+}
+
+# The read every store makes. `document` names the patient's latest document
+# version, null for a patient that has none.
+query patient($storeId: String!, $patientId: String!) {
+  patient(storeId: $storeId, patientId: $patientId) {
+    ...PatientFields
+    document {
+      __typename
       id
       name
+    }
+  }
+}
+
+# The document path's read (a Patient registry entry is installed, so the
+# Details tab edits the patient document): the same, with the document's
+# draft (its data with the name row's later changes merged in, what an edit
+# starts from) and its latest version as the form host opens it — the pinned
+# schema and the registry entry — so the tab needs no further read.
+# Issued only once the store's path is known: building the draft parses the
+# stored document, and a document the server cannot read must not stop the
+# patient opening on a store that never edits it.
+query patientWithDocument($storeId: String!, $patientId: String!) {
+  patient(storeId: $storeId, patientId: $patientId) {
+    ...PatientFields
+    documentDraft
+    document {
+      __typename
+      id
+      name
+      type
+      data
+      schema {
+        __typename
+        id
+        jsonSchema
+      }
+      documentRegistry {
+        __typename
+        id
+        documentType
+        category
+        contextId
+        name
+        formSchemaId
+        jsonSchema
+      }
     }
   }
 }

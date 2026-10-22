@@ -1,40 +1,92 @@
-# The barcode registry — "the book" (spec/barcode-scanning/contract.md).
-# One installation-wide set of code → item rows. `storeId` only authorises; it
-# never narrows the answer (contract § Looking a code up, wire trap).
+# Barcodes (spec/barcode-scanning/contract.md; decisions/2026-09-30_barcodes.md).
+# A confirmed barcode is central's: it lives on one of the item's packaging
+# variants, reaches every site, and one barcode can be confirmed for several
+# items. A proposal is a barcode a store learned, waiting
+# for central. The server stores every barcode in its standard form, so the app
+# sends a scan as it was read and never pads or trims it. `barcode` is the
+# barcode as people read it; `value` is the stored form.
 
-fragment Barcode on BarcodeNode {
+fragment Barcode on BarcodeMatchNode {
   id
-  gtin
+  status
+  value
+  barcode
   itemId
   packSize
 }
 
-# A miss is the NodeError branch carrying RecordNotFound — the normal first
-# scan of a new product, not a failure (contract wire trap). barcodeRegistry.ts
-# discriminates it.
-query barcodeByGtin($storeId: String!, $gtin: String!) {
-  barcodeByGtin(storeId: $storeId, gtin: $gtin) {
-    __typename
-    ... on BarcodeNode {
-      ...Barcode
-    }
-    ... on NodeError {
-      error {
-        __typename
-        description
+# What a scan matches: confirmed barcodes first, then proposals made on this
+# site, one per item this store can see. An empty list is an unknown barcode —
+# the normal first scan of a new product.
+query barcodeMatches($storeId: String!, $barcode: String!) {
+  barcodeMatches(storeId: $storeId, barcode: $barcode) {
+    ...Barcode
+  }
+}
+
+# Records that a user picked an item for a barcode in this store, for central to
+# review. Sent once the line the scan opened is saved. Answers with the confirmed
+# barcode instead when the barcode is already confirmed for the item.
+# InvalidBarcode and InvalidItem are top-level GraphQL errors.
+mutation proposeBarcode($storeId: String!, $input: ProposeBarcodeInput!) {
+  proposeBarcode(storeId: $storeId, input: $input) {
+    ...Barcode
+  }
+}
+
+# Central only: confirmed barcodes. Every error is a top-level GraphQL error.
+mutation insertBarcode(
+  $storeId: String!
+  $input: InsertConfirmedBarcodeInput!
+) {
+  centralServer {
+    barcode {
+      insertBarcode(storeId: $storeId, input: $input) {
+        id
       }
     }
   }
 }
 
-# An upsert despite the name: saving a known code rewrites its row. The
-# response union has no error member — the one rejection (InvalidItem) is a
-# top-level GraphQL error (contract wire trap).
-mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
-  insertBarcode(storeId: $storeId, input: $input) {
-    __typename
-    ... on BarcodeNode {
-      ...Barcode
+# With no packaging variant or item variant given, the barcode goes on the
+# item's auto-created variant for the proposal's manufacturer.
+mutation confirmBarcodeProposal(
+  $storeId: String!
+  $id: String!
+  $packagingVariantId: String
+  $itemVariantId: String
+) {
+  centralServer {
+    barcode {
+      confirmBarcodeProposal(
+        storeId: $storeId
+        id: $id
+        packagingVariantId: $packagingVariantId
+        itemVariantId: $itemVariantId
+      ) {
+        id
+      }
+    }
+  }
+}
+
+# Withdraws a proposal made by a store on this site, e.g. one that picked the
+# wrong item. It stops matching scans here, and central stops reviewing it. Not
+# central only. ProposalDoesNotExist is a top-level GraphQL error.
+mutation deleteBarcodeProposal($storeId: String!, $id: String!) {
+  deleteBarcodeProposal(storeId: $storeId, id: $id) {
+    id
+  }
+}
+
+# `id` is the packaging variant's. Central remembers the removal, so the
+# barcode isn't auto-confirmed for the item again.
+mutation deleteBarcode($storeId: String!, $id: String!) {
+  centralServer {
+    barcode {
+      deleteBarcode(storeId: $storeId, id: $id) {
+        id
+      }
     }
   }
 }

@@ -66,7 +66,6 @@ vi.mock('../auth/authContext', async () => {
   edges.auth.setUser = value => setUser(() => value);
   return {
     authUser: user,
-    storeCodeOf: (storeId: string) => storeId,
     currentUserId: () => undefined,
   };
 });
@@ -103,6 +102,7 @@ const loggedIn: UserInfoFragment = {
   phoneNumber: null,
   inactivityTimeoutSeconds: 600,
   tokenRefreshIntervalSeconds: 60,
+  language: 'ENGLISH',
   defaultStore: { id: 'clinic' },
   stores: { nodes: [store('clinic', 'DISPENSARY'), store('depot', 'STORE')] },
 };

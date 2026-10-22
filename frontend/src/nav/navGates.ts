@@ -1,6 +1,5 @@
 import {
   hasPermission,
-  hasProcurement,
   hasProgramModule,
   hasVaccineModule,
   isDispensary,
@@ -44,7 +43,6 @@ const CAPABILITY_PREDICATES: Record<NavCapability, () => boolean> = {
   dispensary: isDispensary,
   programModule: hasProgramModule,
   vaccineModule: hasVaccineModule,
-  procurement: hasProcurement,
   central: isCentralServer,
   // A server admin on a central server — admin plumbing, a capability gate
   // that happens to read the user (spec/navigation § central administration).

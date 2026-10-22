@@ -183,18 +183,20 @@ pub fn update_stocktake(
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType, NameRow,
-        PreferenceRow, StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
-        StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
-        StocktakeRow, StocktakeStatus,
+        ActivityLogType, EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository,
+        InvoiceLineType, NameRow, PreferenceRow, StockLineRow, StockLineRowRepository,
+        StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow, StocktakeStatus,
+        activity_log::{ActivityLogFilter, ActivityLogRepository},
         mock::{
-            MockData, MockDataInserts, mock_donor_b, mock_item_a, mock_item_a_variant_1,
-            mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
-            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            MockData, MockDataInserts, mock_campaign_a, mock_donor_b, mock_item_a,
+            mock_item_a_variant_1, mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b,
+            mock_stocktake_a, mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
             mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
+            mock_user_account_a,
         },
         test_db::{setup_all, setup_all_with_data},
     };
@@ -754,6 +756,81 @@ mod test {
         assert_eq!(
             stocktake_line.stock_line.as_ref().unwrap().item_variant_id,
             Some(mock_item_a_variant_1().id.clone())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn finalise_stocktake_logs_a_campaign_change() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "finalise_stocktake_logs_a_campaign_change",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id.to_string())
+            .unwrap();
+
+        service_provider
+            .stocktake_line_service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: mock_stocktake_line_stock_surplus().id.clone(),
+                    campaign_id: Some(NullableUpdate {
+                        value: Some(mock_campaign_a().id.clone()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        service_provider
+            .stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: mock_stocktake_stock_surplus().id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line_id = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().id(EqualFilter::equal_to(
+                    mock_stocktake_line_stock_surplus().id,
+                )),
+                None,
+            )
+            .unwrap()
+            .pop()
+            .unwrap()
+            .line
+            .stock_line_id
+            .expect("the surplus line counts existing stock");
+
+        let logs = ActivityLogRepository::new(&connection)
+            .query_by_filter(
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(stock_line_id)),
+            )
+            .unwrap();
+
+        let campaign_log = logs
+            .iter()
+            .find(|l| l.activity_log_row.r#type == ActivityLogType::StockCampaignChange)
+            .expect("the campaign change is logged");
+        // The trail names the activity, not its id — the entry is read by people
+        assert_eq!(
+            campaign_log.activity_log_row.changed_to,
+            Some(mock_campaign_a().name)
+        );
+        // The line held no activity before, as the other stock logs write an absent value
+        assert_eq!(
+            campaign_log.activity_log_row.changed_from,
+            Some("-".to_string())
         );
     }
 

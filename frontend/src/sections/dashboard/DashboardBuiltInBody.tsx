@@ -493,10 +493,9 @@ export const DashboardBuiltInBody: Component = () => {
                 />
               </StatsPanel>
             </Show>
-            {/* id: replenishment.inbound-external — procurement gate
-                (OMS-REG-DB-01.36) and the external read, both carried by the
-                panel's visibility; absent entirely when either is off, not
-                shown disabled. */}
+            {/* id: replenishment.inbound-external — the external read
+                (OMS-REG-DB-01.36), carried by the panel's visibility; absent
+                entirely without it, not shown disabled. */}
             <Show
               when={panelShown(DASHBOARD_IDS.replenishment.inboundExternal.id)}
             >

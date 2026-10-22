@@ -180,7 +180,8 @@ pub struct InvoiceRow {
     pub prescription_request_id: Option<String>,
     /// The shipment-level campaign (None = routine). On inbound, the line
     /// editor prefills new batches with it and lines added from a master list
-    /// or internal order take it; on outbound it's the campaign the shipment issues for.
+    /// or internal order take it; on outbound it's the campaign the shipment
+    /// issues for, and auto-allocation only picks batches of that campaign.
     pub campaign_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,

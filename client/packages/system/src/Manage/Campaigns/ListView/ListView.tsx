@@ -4,13 +4,12 @@ import {
   useUrlQueryParams,
   useEditModal,
   useTranslation,
-  CampaignNode,
   useDeleteConfirmation,
   useNotification,
   usePaginatedMaterialTable,
   MaterialTable,
-  ColumnType,
   ColumnDef,
+  UniqueValueKey,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
@@ -53,34 +52,30 @@ export const CampaignsList = () => {
     }
 
     if (result?.__typename === 'UpsertCampaignError') {
-      const isUniqueValidation =
+      const uniqueField =
         '__typename' in result.error &&
-        result.error.__typename === 'UniqueValueViolation';
+        result.error.__typename === 'UniqueValueViolation'
+          ? result.error.field
+          : undefined;
 
-      const errorMessage = isUniqueValidation
-        ? t('messages.error-campaign-name-already-exists')
-        : `${t('messages.error-saving-campaign')} — ${result.error.description ?? ''}`;
+      const errorMessage =
+        uniqueField === UniqueValueKey.Code
+          ? t('messages.error-campaign-code-already-exists')
+          : uniqueField === UniqueValueKey.Name
+            ? t('messages.error-campaign-name-already-exists')
+            : `${t('messages.error-saving-campaign')} — ${result.error.description ?? ''}`;
       error(errorMessage)();
     }
   };
   const columns = useMemo(
     (): ColumnDef<CampaignRowFragment>[] => [
       { accessorKey: 'name', header: t('label.name'), enableSorting: true },
-      {
-        accessorKey: 'startDate',
-        header: t('label.start-date'),
-        columnType: ColumnType.Date,
-      },
-      {
-        accessorKey: 'endDate',
-        header: t('label.end-date'),
-        columnType: ColumnType.Date,
-      },
+      { accessorKey: 'code', header: t('label.code') },
     ],
     []
   );
 
-  const onRowClick = (row: CampaignNode) => {
+  const onRowClick = (row: CampaignRowFragment) => {
     const selected = data?.nodes.find(campaign => campaign.id === row.id);
     updateDraft(selected as DraftCampaign);
     onOpen();

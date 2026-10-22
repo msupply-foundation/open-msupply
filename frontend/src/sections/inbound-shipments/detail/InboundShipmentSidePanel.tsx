@@ -1,15 +1,8 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-  For,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
 import { formatCurrency } from '../../../intl/currency';
+import { formatNumber } from '../../../intl/formatNumber';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -25,15 +18,11 @@ import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { EditIcon } from '../../../ui/icons';
 import {
   FullInboundShipment,
-  InboundServiceLines,
   type InboundInfoFragment,
 } from './inboundShipmentDetail.generated';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
-import {
-  runInboundBatch,
-  updateInboundShipment,
-} from './inboundShipmentUpdate';
+import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
   deleteRemovesStock,
   sourceLinkOf,
@@ -43,25 +32,13 @@ import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
-import { CurrencyModal, ServiceChargesModal } from '../../../domain/invoice';
-import {
-  fetchInboundServiceCharges,
-  saveInboundServiceCharges,
-} from './modals/inboundServiceCharges';
+import { CurrencyModal } from '../../../domain/invoice';
 import { poLabel, ioLabel } from '../linkedOrder';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 
 export interface InboundShipmentSidePanelProps {
   storeId: string;
   node: InboundInfoFragment;
-  /**
-   * Whether the details panel is actually SHOWING. The Page frame keeps panel
-   * content mounted and merely parks it off-frame while closed (so panel state
-   * survives open/close — kdd/state-management → no remounts), which means a
-   * resource created here would otherwise fetch on every detail load even for a
-   * panel nobody opened. The service-charge lines arm their fetch on this.
-   */
-  open: boolean;
   /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   /**
@@ -84,81 +61,21 @@ export interface InboundShipmentSidePanelProps {
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
   ) => void;
   onSaved: (node: InboundInfoFragment) => void;
-  /** A change that needs the header/pricing re-read (e.g. service charges). */
-  onRefetch: () => void;
   onDeleted: () => void;
 }
 
-const round2 = (value: number): number => Math.round(value * 100) / 100;
-
 // The inbound-shipment detail side panel (spec S3 → side panel): record
 // actions, additional info (donor/edited-by/created/colour/comment), related
-// documents, charges (stock/service/foreign-currency/grand total), and — for a
-// transfer — read-only transport details.
+// documents, charges (stock/service total/foreign-currency/grand total), and
+// — for a transfer — read-only transport details.
 export const InboundShipmentSidePanel: Component<
   InboundShipmentSidePanelProps
 > = props => {
   const [donorOpen, setDonorOpen] = createSignal(false);
-  const [serviceOpen, setServiceOpen] = createSignal(false);
   const [currencyOpen, setCurrencyOpen] = createSignal(false);
 
   // Which mutation twin the scope's writes go through (plain vs `...External`).
   const isExternal = () => isExternalScope(props.scope);
-
-  // The itemised service lines feeding the Charges → Service charges block.
-  // Re-read when the service-line modal saves or the service tax rate changes
-  // (bump the version); pricing totals come from the node via onRefetch.
-  //
-  // Fetched on the FIRST open of the panel, then held (kdd/state-management →
-  // data needed only sometimes). The Page frame keeps this content mounted and
-  // merely parks it off-frame while closed, so without the latch every detail
-  // load would pay for a query nobody looked at. The latch never lowers:
-  // closing the panel is not a refresh gesture, and every edit that can change
-  // these lines already bumps the version below, so a re-read on reopen would
-  // buy nothing. `undefined` disables the fetch; `0` is a legitimate version.
-  const [serviceVersion, setServiceVersion] = createSignal(0);
-  const everOpened = createMemo(prev => prev || props.open, false);
-  const [serviceLines] = createResource(
-    () => (everOpened() ? serviceVersion() : undefined),
-    async () => {
-      const result = await graphqlFetch(InboundServiceLines, {
-        storeId: props.storeId,
-        filter: {
-          invoiceId: { equalTo: props.node.id },
-          type: { equalTo: 'SERVICE' },
-        },
-      });
-      return result.kind === 'success' &&
-        result.data.invoiceLines.__typename === 'InvoiceLineConnector'
-        ? result.data.invoiceLines.nodes
-        : [];
-    }
-  );
-  // Non-suspending read (kdd/solid-reactivity-pitfalls → No remounts on
-  // interaction). This refetches WHILE the screen
-  // stays open (a committed charges batch, and the tax cascade below fired from
-  // a focused field), and first-fetches on the interaction that opens the panel
-  // — a direct `serviceLines()` read would suspend the detail view's boundary
-  // each time, unmounting the panel's own focused tax input.
-  const serviceLineRows = () => gated(serviceLines) ?? [];
-  const refreshService = () => {
-    setServiceVersion(v => v + 1);
-    props.onRefetch();
-  };
-
-  // Editing the service tax cascades one rate across every service line (the
-  // per-line tax cascade — the update input's TaxInput wrapper), mirroring the
-  // stock-tax cascade on the invoice.
-  const setServiceTax = (percentage: number) => {
-    const lines = serviceLineRows();
-    if (lines.length === 0) return;
-    void runInboundBatch(props.storeId, isExternal(), {
-      updateInboundShipmentServiceLines: lines.map(line => ({
-        id: line.id,
-        tax: { percentage },
-      })),
-    }).then(refreshService);
-  };
 
   // Change-currency is offered only when the store allows foreign currency and
   // the supplier isn't itself a store (spec S3 charges → foreign currency).
@@ -188,17 +105,6 @@ export const InboundShipmentSidePanel: Component<
 
   const pricing = () => props.node.pricing;
   const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
-
-  // Derived service tax rate (blended across lines) and amount — the display
-  // side of the inline editor; both zero when there's nothing to tax.
-  const serviceRate = () =>
-    pricing().serviceTotalBeforeTax > 0
-      ? round2(
-          (pricing().serviceTotalAfterTax / pricing().serviceTotalBeforeTax -
-            1) *
-            100
-        )
-      : 0;
 
   return (
     <>
@@ -309,6 +215,18 @@ export const InboundShipmentSidePanel: Component<
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
         <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
+        {/* The discount the order's prices were seeded net of — the sub-total below already reflects it. */}
+        <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
+          {percentage => (
+            <FieldRow
+              label={t('label.supplier-discount-applied')}
+              readOnly
+              valueTestId="supplier-discount-value"
+            >
+              {`${formatNumber(percentage(), { maximumFractionDigits: 2 })}%`}
+            </FieldRow>
+          )}
+        </Show>
         <FieldRow label={t('label.sub-total')}>
           <span>{formatCurrency(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
@@ -319,6 +237,7 @@ export const InboundShipmentSidePanel: Component<
             size="small"
             value={props.node.taxPercentage ?? 0}
             min={0}
+            emptyValue={0}
             max={100}
             decimalLimit={2}
             endAdornment="%"
@@ -335,53 +254,16 @@ export const InboundShipmentSidePanel: Component<
           <span>{formatCurrency(pricing().stockTotalAfterTax)}</span>
         </FieldRow>
 
-        {/* Service charges: an edit action opens the service-line modal; an
-            itemised list, then sub-total · tax (inline editor + amount) ·
-            total (spec S3 charges → service charges). */}
-        <SidePanelSubheading
-          action={
-            <IconButton
-              bordered
-              size="small"
-              icon={<EditIcon />}
-              label={t('messages.edit-service-charges')}
-              disabled={props.disabled}
-              data-testid="edit-service-charges-button"
-              onClick={() => setServiceOpen(true)}
-            />
-          }
-        >
+        {/* Itemised in the Service charges tab; the after-tax total here. */}
+        <SidePanelSubheading>
           {t('heading.service-charges')}
         </SidePanelSubheading>
-        <For each={serviceLineRows()}>
-          {line => (
-            <FieldRow label={line.itemName}>
-              <span>{formatCurrency(line.totalBeforeTax)}</span>
-            </FieldRow>
-          )}
-        </For>
-        <FieldRow label={t('label.sub-total')}>
-          <span>{formatCurrency(pricing().serviceTotalBeforeTax)}</span>
-        </FieldRow>
-        <FieldRow label={t('label.tax')}>
-          <NumberField
-            label={t('label.tax')}
-            hideLabel
-            size="small"
-            value={serviceRate()}
-            min={0}
-            max={100}
-            decimalLimit={2}
-            endAdornment="%"
-            disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
-            helperText={formatCurrency(
-              pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
-            )}
-            onChange={value => setServiceTax(value ?? 0)}
-          />
-        </FieldRow>
-        <FieldRow label={t('label.total')}>
-          <span>{formatCurrency(pricing().serviceTotalAfterTax)}</span>
+        <FieldRow
+          label={t('label.total')}
+          readOnly
+          valueTestId="service-charges-total"
+        >
+          {formatCurrency(pricing().serviceTotalAfterTax)}
         </FieldRow>
 
         {/* Foreign currency — code/rate/converted total + the gated
@@ -495,28 +377,6 @@ export const InboundShipmentSidePanel: Component<
         node={props.node}
         isExternal={isExternal()}
         onSaved={props.onSaved}
-      />
-      {/* The shared service-charges editor (spec S6) with inbound's wire
-          twins (plain vs external batch); a committed batch re-reads the
-          charges block. */}
-      <ServiceChargesModal
-        open={serviceOpen()}
-        onClose={() => setServiceOpen(false)}
-        storeId={props.storeId}
-        disabled={props.disabled}
-        fetchCharges={() =>
-          fetchInboundServiceCharges(props.storeId, props.node.id)
-        }
-        save={async batch => {
-          const result = await saveInboundServiceCharges(
-            props.storeId,
-            isExternal(),
-            props.node.id,
-            batch
-          );
-          if (result.ok) refreshService();
-          return result;
-        }}
       />
       {/* The shared change-currency modal with inbound's header update; a
           saved node replaces the entity in place. */}

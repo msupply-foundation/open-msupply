@@ -347,6 +347,8 @@ describe('one-shot scans distinguish cancelled from failed', () => {
     expect(result).toMatchObject({ ok: false, cancelled: false });
   });
 
+  // release() must settle a waiting caller: an unresolved promise here would
+  // hang whichever screen asked for the scan.
   // A source that never settles its own one-shot (a streaming HID source
   // with no read coming) must not hold its caller forever.
   it('cancelScanOnce settles a one-shot the source never would, as cancelled', async () => {
@@ -373,8 +375,6 @@ describe('one-shot scans distinguish cancelled from failed', () => {
     await refreshScanSources();
   });
 
-  // release() must settle a waiting caller: an unresolved promise here would
-  // hang whichever screen asked for the scan.
   it('resolves a pending scan as cancelled when the scanner is released', async () => {
     const pending = scanOnce();
     await stopListening();

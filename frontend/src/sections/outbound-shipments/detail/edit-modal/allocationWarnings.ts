@@ -21,7 +21,10 @@ import {
 
 /** The ported label key each barred category is reported under. */
 export type SkipReasonLabel =
-  'label.on-hold' | 'label.expired' | 'label.unusable-vvm-status';
+  | 'label.on-hold'
+  | 'label.expired'
+  | 'label.unusable-vvm-status'
+  | 'label.not-for-this-campaign';
 
 export type ShortfallKey =
   | 'warning.cannot-create-placeholder-units'
@@ -44,6 +47,8 @@ const skipReasonLabel = (reason: BarReason): SkipReasonLabel => {
       return 'label.expired';
     case 'unusable-vvm':
       return 'label.unusable-vvm-status';
+    case 'other-campaign':
+      return 'label.not-for-this-campaign';
   }
 };
 
@@ -96,3 +101,30 @@ export const issueWarningMessages = (
         return [];
     }
   });
+
+/**
+ * The batches issued that are NOT held for the Activity the requisition asked
+ * for (issue 595).
+ *
+ * Stock held for nothing in particular counts as a mismatch too: the customer
+ * asked for campaign stock, and routine stock is not that. Only ALLOCATED rows
+ * are judged — an untouched batch on the grid is not being issued, so it says
+ * nothing about what is. Nothing is returned when the requisition asked for no
+ * activity, which is the ordinary case and must stay silent.
+ *
+ * This reports; it never gates. The editor renders it as an advisory banner.
+ */
+export const activityMismatch = <
+  T extends { numberOfPacks: number; campaign?: { id: string } | null },
+>(
+  lines: readonly T[],
+  requestedActivity: { id: string; name: string } | undefined
+): { activity: string; batches: number } | undefined => {
+  if (!requestedActivity) return undefined;
+  const batches = lines.filter(
+    line => line.numberOfPacks > 0 && line.campaign?.id !== requestedActivity.id
+  ).length;
+  return batches > 0
+    ? { activity: requestedActivity.name, batches }
+    : undefined;
+};
