@@ -56,6 +56,7 @@ pub enum Row {
     AssetProperty(AssetPropertyRow),
     BackendPlugin(BackendPluginRow),
     AncillaryItem(AncillaryItemRow),
+    SupplyWastageRate(SupplyWastageRateRow),
     BundledItem(BundledItemRow),
     Campaign(CampaignRow),
     Demographic(DemographicRow),
@@ -470,6 +471,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::AncillaryItem => {
                 for r in AncillaryItemRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::AncillaryItem(r));
+                }
+            }
+            ChangelogTableName::SupplyWastageRate => {
+                for r in SupplyWastageRateRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::SupplyWastageRate(r));
                 }
             }
             ChangelogTableName::BundledItem => {

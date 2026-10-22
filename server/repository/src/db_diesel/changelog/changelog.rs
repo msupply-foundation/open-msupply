@@ -154,6 +154,7 @@ diesel_string_enum! {
         Store,
         StorePreference,
         #[default]
+        SupplyWastageRate,
         SyncFileReference,
         SyncMessage,
         SystemLog,

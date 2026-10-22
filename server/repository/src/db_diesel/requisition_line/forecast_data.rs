@@ -66,6 +66,10 @@ pub struct AncillaryRatioPrincipal {
     /// captured by an older site, which never deducted it)
     #[serde(default)]
     pub wastage_rate: f64,
+    /// The ancillary's own wastage rate (%) as a supply, added on top of what the ratio
+    /// gives (e.g. syringes broken or dropped); 0 on a forecast captured by an older site
+    #[serde(default)]
+    pub own_wastage_rate: f64,
 }
 
 impl AncillaryRatioPrincipal {
@@ -75,10 +79,11 @@ impl AncillaryRatioPrincipal {
     }
 
     pub fn monthly_consumption(&self) -> f64 {
-        if self.item_quantity == 0.0 {
+        if self.item_quantity == 0.0 || !(0.0..100.0).contains(&self.own_wastage_rate) {
             return 0.0;
         }
         self.principal_usable_consumption() * self.ancillary_quantity / self.item_quantity
+            / (1.0 - self.own_wastage_rate / 100.0)
     }
 }
 

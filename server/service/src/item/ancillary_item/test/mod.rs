@@ -243,4 +243,58 @@ mod tests {
             .unwrap();
         assert_eq!(after_delete.count, 0);
     }
+
+    #[actix_rt::test]
+    async fn supply_wastage_rate_service() {
+        use crate::item::ancillary_item::{
+            SetSupplyWastageRate, SetSupplyWastageRateError, supply_wastage_rates,
+        };
+
+        let (_, connection, connection_manager, _) =
+            setup_all("supply_wastage_rate_service", MockDataInserts::none().items()).await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.item_service;
+        let set = |item_id: String, wastage_rate: f64| {
+            service.set_supply_wastage_rate(
+                &context,
+                SetSupplyWastageRate {
+                    item_id,
+                    wastage_rate,
+                },
+            )
+        };
+
+        test_util_set_is_central_server(false);
+        assert_eq!(
+            set(mock_item_a().id, 10.0),
+            Err(SetSupplyWastageRateError::NotCentralServer)
+        );
+
+        test_util_set_is_central_server(true);
+        assert_eq!(
+            set(mock_item_a().id, 100.0),
+            Err(SetSupplyWastageRateError::RateOutOfRange)
+        );
+        assert_eq!(
+            set(mock_item_a().id, -1.0),
+            Err(SetSupplyWastageRateError::RateOutOfRange)
+        );
+        assert_eq!(
+            set("no_such_item".to_string(), 10.0),
+            Err(SetSupplyWastageRateError::ItemDoesNotExist)
+        );
+
+        // Set, then changed in place rather than a second row
+        assert_eq!(set(mock_item_a().id, 10.0), Ok(10.0));
+        assert_eq!(set(mock_item_a().id, 15.0), Ok(15.0));
+        let rates = supply_wastage_rates(&connection, &[mock_item_a().id, mock_item_b().id]).unwrap();
+        assert_eq!(rates.get(&mock_item_a().id), Some(&15.0));
+        assert_eq!(rates.get(&mock_item_b().id), None);
+
+        // 0 clears it
+        assert_eq!(set(mock_item_a().id, 0.0), Ok(0.0));
+        let rates = supply_wastage_rates(&connection, &[mock_item_a().id]).unwrap();
+        assert_eq!(rates.get(&mock_item_a().id), Some(&0.0));
+    }
 }

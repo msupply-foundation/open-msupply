@@ -414,11 +414,18 @@ export type AncillaryDeltaNode = {
 export type AncillaryItemMutations = {
   __typename: 'AncillaryItemMutations';
   deleteAncillaryItem: DeleteAncillaryItemResponse;
+  /** Sets an item's own wastage rate (%) as an ancillary supply, returning the rate saved */
+  setSupplyWastageRate: Scalars['Float']['output'];
   upsertAncillaryItem: UpsertAncillaryItemResponse;
 };
 
 export type AncillaryItemMutationsDeleteAncillaryItemArgs = {
   input: DeleteAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemMutationsSetSupplyWastageRateArgs = {
+  input: SetSupplyWastageRateInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -469,6 +476,8 @@ export type AncillaryRatioPrincipalNode = {
   itemQuantity: Scalars['Float']['output'];
   /** This principal's share of the line's monthly demand */
   monthlyConsumption: Scalars['Float']['output'];
+  /** The ancillary's own wastage rate (%) as a supply, added on top of the ratio; 0 when none */
+  ownWastageRate: Scalars['Float']['output'];
   /** The principal line's monthly demand */
   principalMonthlyConsumption: Scalars['Float']['output'];
   /** The principal's monthly demand net of the deducted wastage */
@@ -6092,6 +6101,11 @@ export type ItemNode = {
    */
   stockOnHand: Scalars['Int']['output'];
   strength?: Maybe<Scalars['String']['output']>;
+  /**
+   * This item's own wastage rate (%) as an ancillary supply, added on top of what its
+   * ancillary links order (e.g. syringes broken or dropped); 0 when none.
+   */
+  supplyWastageRate: Scalars['Float']['output'];
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
   universalCode: Scalars['String']['output'];
@@ -11355,6 +11369,12 @@ export type SetPrescribedQuantityWithId = {
 export type SetSiteMultiDeviceNode = {
   __typename: 'SetSiteMultiDeviceNode';
   id: Scalars['Int']['output'];
+};
+
+export type SetSupplyWastageRateInput = {
+  itemId: Scalars['String']['input'];
+  /** Percent, at least 0 and below 100; 0 clears it */
+  wastageRate: Scalars['Float']['input'];
 };
 
 export type ShippingMethodConnector = {

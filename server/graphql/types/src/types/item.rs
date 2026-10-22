@@ -11,6 +11,7 @@ use graphql_core::{
     ContextExt,
     loader::{
         AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
+        SupplyWastageRateByItemIdLoader,
         AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
         ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
         ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
@@ -271,6 +272,13 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    /// This item's own wastage rate (%) as an ancillary supply, added on top of what its
+    /// ancillary links order (e.g. syringes broken or dropped); 0 when none.
+    pub async fn supply_wastage_rate(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<SupplyWastageRateByItemIdLoader>>();
+        Ok(loader.load_one(self.row().id.clone()).await?.unwrap_or(0.0))
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {

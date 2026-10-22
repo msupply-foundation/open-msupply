@@ -151,6 +151,7 @@ fn translate_delete(
         ChangelogTableName::Sensor => Box::new(SensorRowDelete(id)),
         // Tables without a delete translator / do not delete
         ChangelogTableName::AncillaryItem
+        | ChangelogTableName::SupplyWastageRate
         | ChangelogTableName::AssetCatalogueItem
         | ChangelogTableName::AssetCatalogueType
         | ChangelogTableName::AssetCategory

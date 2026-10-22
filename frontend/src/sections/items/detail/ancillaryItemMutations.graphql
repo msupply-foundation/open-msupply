@@ -71,3 +71,17 @@ mutation deleteAncillaryItem(
     }
   }
 }
+
+# The item's own wastage rate as a supply (rules.md § ancillary supplies ›
+# supply wastage). Returns the rate saved; an out-of-range rate or a missing
+# item is a NON-typed top-level error, client-guarded by the field's bounds.
+mutation setSupplyWastageRate(
+  $storeId: String!
+  $input: SetSupplyWastageRateInput!
+) {
+  centralServer {
+    ancillaryItem {
+      setSupplyWastageRate(storeId: $storeId, input: $input)
+    }
+  }
+}

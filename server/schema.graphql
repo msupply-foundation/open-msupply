@@ -322,6 +322,10 @@ type AncillaryDeltaNode {
 type AncillaryItemMutations {
 	upsertAncillaryItem(storeId: String!, input: UpsertAncillaryItemInput!): UpsertAncillaryItemResponse!
 	deleteAncillaryItem(storeId: String!, input: DeleteAncillaryItemInput!): DeleteAncillaryItemResponse!
+	"""
+	Sets an item's own wastage rate (%) as an ancillary supply, returning the rate saved
+	"""
+	setSupplyWastageRate(storeId: String!, input: SetSupplyWastageRateInput!): Float!
 }
 
 type AncillaryItemNode {
@@ -380,6 +384,10 @@ type AncillaryRatioPrincipalNode {
 	The principal's wastage rate (%) deducted before the ratio applies; 0 when none
 	"""
 	wastageRate: Float!
+	"""
+	The ancillary's own wastage rate (%) as a supply, added on top of the ratio; 0 when none
+	"""
+	ownWastageRate: Float!
 	"""
 	The principal's monthly demand net of the deducted wastage
 	"""
@@ -5397,6 +5405,11 @@ type ItemNode {
 	other (principal) item.
 	"""
 	ancillaryFor: [AncillaryItemNode!]!
+	"""
+	This item's own wastage rate (%) as an ancillary supply, added on top of what its
+	ancillary links order (e.g. syringes broken or dropped); 0 when none.
+	"""
+	supplyWastageRate: Float!
 	itemDirections: [ItemDirectionNode!]!
 	warnings: [WarningNode!]!
 	categories: [ItemCategoryNode!]!
@@ -9380,6 +9393,14 @@ type SetPrescribedQuantityWithId {
 
 type SetSiteMultiDeviceNode {
 	id: Int!
+}
+
+input SetSupplyWastageRateInput {
+	itemId: String!
+	"""
+	Percent, at least 0 and below 100; 0 clears it
+	"""
+	wastageRate: Float!
 }
 
 type ShippingMethodConnector {
