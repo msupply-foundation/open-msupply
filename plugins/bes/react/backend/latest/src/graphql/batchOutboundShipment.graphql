@@ -1,0 +1,121 @@
+mutation BatchOutboundShipment(
+  $storeId: String!
+  $input: BatchOutboundShipmentInput!
+) {
+  batchOutboundShipment(storeId: $storeId, input: $input) {
+    insertOutboundShipments {
+      id
+      response {
+        __typename
+        ... on InvoiceNode {
+          id
+          invoiceNumber
+        }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on InsertOutboundShipmentError {
+          error {
+            description
+          }
+        }
+      }
+    }
+    insertOutboundShipmentLines {
+      id
+      response {
+        ... on InsertOutboundShipmentLineError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+          itemCode
+          numberOfPacks
+        }
+      }
+    }
+    insertOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on InvoiceLineNode {
+          id
+        }
+        ... on InsertOutboundShipmentUnallocatedLineError {
+          error {
+            description
+          }
+        }
+      }
+    }
+    allocateOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on AllocateOutboundShipmentUnallocatedLineNode {
+          __typename
+          inserts {
+            nodes {
+              id
+              numberOfPacks
+              stockLine {
+                batch
+              }
+            }
+          }
+          updates {
+            nodes {
+              id
+            }
+          }
+        }
+        ... on AllocateOutboundShipmentUnallocatedLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+    updateOutboundShipments {
+      id
+      response {
+        __typename
+        ... on UpdateOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+    deleteOutboundShipments {
+      id
+      response {
+        ... on DeleteOutboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
