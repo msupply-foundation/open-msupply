@@ -84,6 +84,25 @@ export const DeleteItemVariant = {
   query: "mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {\n  centralServer {\n    itemVariant {\n      deleteItemVariant(storeId: $storeId, input: $input) {\n        __typename\n        ... on DeleteResponse {\n          id\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeleteItemVariantResult, DeleteItemVariantVariables>;
 
+export type PromoteItemVariantVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type PromoteItemVariantResult = {
+  centralServer: {
+  itemVariant: {
+  promoteItemVariant: {
+  id: string;
+};
+};
+};
+};
+
+export const PromoteItemVariant = {
+  query: "mutation promoteItemVariant($storeId: String!, $id: String!) {\n  centralServer {\n    itemVariant {\n      promoteItemVariant(storeId: $storeId, id: $id) {\n        id\n      }\n    }\n  }\n}",
+} as TypedDocument<PromoteItemVariantResult, PromoteItemVariantVariables>;
+
 export type UpsertBundledItemVariables = {
   storeId: string;
   input: {

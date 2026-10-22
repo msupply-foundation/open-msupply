@@ -2,8 +2,7 @@ fragment CampaignRow on CampaignNode {
   __typename
   id
   name
-  startDate
-  endDate
+  code
 }
 
 query campaigns(

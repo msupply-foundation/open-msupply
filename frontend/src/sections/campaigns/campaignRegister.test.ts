@@ -49,7 +49,7 @@ describe('OMS-REG-MNG-04.2 — default order is by name, ascending', () => {
   it('name is the only sort key the register can express', () => {
     // `CampaignSortFieldInput` carries one value, so the GENERATED union is the
     // literal 'name': a column naming any other key is a compile error, which
-    // is what makes the two date columns unsortable by construction rather than
+    // is what makes the Code and Kind columns unsortable by construction rather than
     // by convention. The pin is TYPE-LEVEL: if a second member ever appears
     // upstream, the conditional type below becomes `never` and this line stops
     // compiling.

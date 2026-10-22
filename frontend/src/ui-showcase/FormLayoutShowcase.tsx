@@ -106,7 +106,7 @@ export const formLayoutMetadata: PageMetadata = {
     {
       id: 'form-layout-columns',
       title: 'FormColumns',
-      searchTerms: ['column', 'two column', 'stacks'],
+      searchTerms: ['column', 'two column', 'stacks', 'lone column'],
     },
     {
       id: 'form-layout-boxed',
@@ -212,6 +212,21 @@ export const FormLayoutShowcase = () => (
             </div>
           </FormColumn>
         </FormColumns>
+        <Note>
+          A <code>FormColumn</code> on its own — a one-column plugin form placed
+          straight into a screen's vertical <code>Stack</code>, no{' '}
+          <code>FormColumns</code> row around it — keeps its content height, so
+          the block after it follows at the Stack's gap. The row sets the
+          flex-basis on its own columns only: on a lone column in a vertical
+          flex parent, a basis would be a minimum height, and one short section
+          would sit over an empty band.
+        </Note>
+        <Stack>
+          <FormColumn>
+            <div class={styles.stub}>lone column · one short section</div>
+          </FormColumn>
+          <div class={styles.stub}>the next block in the Stack</div>
+        </Stack>
       </DashboardCard>
 
       <DashboardCard

@@ -5,7 +5,6 @@ import {
   ALT_N,
   ALT_S,
   ALT_SHIFT_M,
-  CTRL_S,
   ESCAPE,
   MOD_K,
   PLUS,
@@ -139,10 +138,10 @@ describe('matches', () => {
     expect(
       matches(ALT_D, press({ code: 'KeyD', key: 'd', alt: true, ctrl: true }))
     ).toBe(false);
-    expect(matches(CTRL_S, press({ code: 'KeyS', key: 's', ctrl: true }))).toBe(
+    expect(matches(MOD_K, press({ code: 'KeyK', key: 'k', ctrl: true }))).toBe(
       true
     );
-    // Alt+S and Ctrl+S are different bindings on the same letter.
+    // Alt+S is not answered by Ctrl on the same letter.
     expect(matches(ALT_S, press({ code: 'KeyS', key: 's', ctrl: true }))).toBe(
       false
     );
@@ -154,7 +153,6 @@ describe('ariaKeyshortcuts', () => {
     onMac();
     // Even on a Mac the ARIA value uses the canonical modifier names.
     expect(ariaKeyshortcuts(ALT_SHIFT_M)).toBe('Alt+Shift+M');
-    expect(ariaKeyshortcuts(CTRL_S)).toBe('Control+S');
     expect(ariaKeyshortcuts(ESCAPE)).toBe('Escape');
     expect(ariaKeyshortcuts(MOD_K)).toBe('Meta+K');
 

@@ -59,9 +59,10 @@ import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   barcodeFieldFill,
   createScanControl,
+  proposeBarcode,
   ScanFieldButton,
   ScanNotice,
-  scanUnusableReason,
+  scanFieldHelper,
 } from '../../../domain/barcode';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
@@ -132,11 +133,13 @@ const StockLineDetailView: Component = () => {
     { entry?: StockLineVvmLogFragment } | undefined
   >();
 
-  // The Barcode field's scan affordance (spec/stock S2; barcode-scanning
-  // rules § Setting a code on a stock line): a scan fills the code, batch and
-  // expiry into the draft, which saves like any other edit. Ctrl+S answers it
-  // too — but not behind one of this screen's dialogs, where the scan would
-  // land in a form the user cannot see.
+  // Scanning into the Barcode field (spec/stock S2; barcode-scanning rules §
+  // Setting a code on a stock line): a scan fills the code, batch and expiry
+  // into the draft, which saves like any other edit. With a hardware scanner
+  // the whole screen listens (OMS-REG-BAC-01.137) and the scan never also
+  // types into the focused field; with a camera the field's button takes one
+  // (.138). Not behind one of this screen's dialogs, where the scan would
+  // land in a form the user cannot see (.134).
   const scanner = createScanControl({
     owner: 'stock-line',
     mode: 'field',
@@ -256,15 +259,16 @@ const StockLineDetailView: Component = () => {
     );
   });
 
-  const doSave = async () => {
+  // Saving records the barcode on the line, then proposes it for the line's
+  // item; it never changes the barcode for other items (barcode-scanning
+  // rules § Setting a barcode on a stock line).
+  const commitSave = async () => {
     const l = line();
     if (!l) return;
     setSaving(true);
     setSaveError(undefined);
-    const outcome = await runUpdateStockLine(
-      params.storeId,
-      buildPatch(edit, l)
-    );
+    const patch = buildPatch(edit, l);
+    const outcome = await runUpdateStockLine(params.storeId, patch);
     setSaving(false);
     if (!outcome) return;
     if (outcome.kind === 'error') {
@@ -276,6 +280,13 @@ const StockLineDetailView: Component = () => {
     const saved = outcome.data;
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
     seedFor(saved);
+    // The line is saved whatever this does; it's learned next time if not now.
+    if (patch.barcode)
+      void proposeBarcode(params.storeId, {
+        barcode: patch.barcode,
+        itemId: l.item.id,
+        packSize: l.packSize,
+      });
   };
 
   const leave = () => navigate(`/${params.storeId}/inventory/stock`);
@@ -549,9 +560,9 @@ const StockLineDetailView: Component = () => {
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
                             }
-                            helperText={scanUnusableReason(scanner)}
+                            helperText={scanFieldHelper(scanner)}
                             endAction={
-                              scanner.available() ? (
+                              scanner.needsPress() ? (
                                 <ScanFieldButton control={scanner} />
                               ) : undefined
                             }
@@ -836,7 +847,7 @@ const StockLineDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-stock')}
                 confirmAction="save"
-                onConfirm={() => void doSave()}
+                onConfirm={() => void commitSave()}
                 onClose={() => setConfirmSaveOpen(false)}
               />
               {/* Discard prompt when leaving with unsaved edits. */}

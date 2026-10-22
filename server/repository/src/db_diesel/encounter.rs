@@ -159,7 +159,10 @@ fn query() -> _ {
 
 type BoxedEncounterQuery = IntoBoxed<'static, query, DBType>;
 
-fn create_filtered_query(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
+fn create_filtered_query(
+    connection: &StorageConnection,
+    filter: Option<EncounterFilter>,
+) -> Result<BoxedEncounterQuery, RepositoryError> {
     let mut query = query().into_boxed();
 
     if let Some(f) = filter {
@@ -207,12 +210,21 @@ fn create_filtered_query(filter: Option<EncounterFilter>) -> BoxedEncounterQuery
         }
 
         if program_enrolment.is_some() {
-            let program_ids = ProgramEnrolmentRepository::create_filtered_query(program_enrolment)
-                .select(program_enrolment::program_id);
+            // Read the matching program ids first and filter on that list, rather
+            // than nesting the enrolment query as a subquery. With the subquery,
+            // Postgres pairs the list's ORDER BY ... LIMIT with a nested-loop plan
+            // that re-reads every enrolment of the program for each encounter, and
+            // when the filter matches nothing that loop visits every encounter
+            // before giving up (#1672).
+            let program_ids: Vec<String> =
+                ProgramEnrolmentRepository::create_filtered_query(program_enrolment)
+                    .select(program_enrolment::program_id)
+                    .distinct()
+                    .load(connection.lock().connection())?;
             query = query.filter(encounter::program_id.eq_any(program_ids));
         }
     }
-    query
+    Ok(query)
 }
 
 pub struct EncounterRepository<'a> {
@@ -225,7 +237,7 @@ impl<'a> EncounterRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<EncounterFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(self.connection, filter)?;
 
         Ok(query
             .count()
@@ -245,7 +257,7 @@ impl<'a> EncounterRepository<'a> {
         filter: Option<EncounterFilter>,
         sort: Option<EncounterSort>,
     ) -> Result<Vec<Encounter>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(self.connection, filter)?;
 
         if let Some(sort) = sort {
             match sort.key {
@@ -282,5 +294,82 @@ impl<'a> EncounterRepository<'a> {
             .load::<EncounterJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
+        EncounterFilter, EncounterRepository, ProgramEnrolmentFilter, ProgramEnrolmentRow,
+        ProgramEnrolmentRowRepository, StringFilter,
+        mock::{
+            MockDataInserts, context_program_a, mock_encounter_a,
+            mock_form_schema_simplified_enrolment, mock_patient, mock_program_a,
+        },
+        test_db,
+    };
+
+    #[actix_rt::test]
+    async fn encounter_program_enrolment_filter() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "encounter_program_enrolment_filter",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_lists()
+                .programs()
+                .form_schemas()
+                .encounters(),
+        )
+        .await;
+
+        // program_a's enrolment document type has a named registry entry; the
+        // immunisation program's encounter has no enrolment that matches any name.
+        DocumentRegistryRowRepository::new(&connection)
+            .upsert_one(&DocumentRegistryRow {
+                id: "family_planning_enrolment".to_string(),
+                category: DocumentRegistryCategory::ProgramEnrolment,
+                document_type: "FamilyPlanningEnrolment".to_string(),
+                context_id: context_program_a().id,
+                name: Some("Family planning".to_string()),
+                form_schema_id: Some(mock_form_schema_simplified_enrolment().id),
+                config: None,
+                plugin_code: None,
+                program_key: None,
+            })
+            .unwrap();
+        ProgramEnrolmentRowRepository::new(&connection)
+            .upsert_one(&ProgramEnrolmentRow {
+                id: "family_planning_enrolment_a".to_string(),
+                document_type: "FamilyPlanningEnrolment".to_string(),
+                program_id: mock_program_a().id,
+                patient_id: mock_patient().id,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let repo = EncounterRepository::new(&connection);
+        let by_program_name = |name: &str| {
+            EncounterFilter::new().program_enrolment(
+                ProgramEnrolmentFilter::new().program_name(StringFilter::like(name)),
+            )
+        };
+
+        // A name that matches: only program_a's encounter
+        let result = repo.query_by_filter(by_program_name("planning")).unwrap();
+        assert_eq!(
+            result.iter().map(|e| e.row.id.clone()).collect::<Vec<_>>(),
+            vec![mock_encounter_a().id]
+        );
+        assert_eq!(repo.count(Some(by_program_name("planning"))).unwrap(), 1);
+
+        // A name no program has: an empty page and a zero count, promptly
+        let result = repo.query_by_filter(by_program_name("bn")).unwrap();
+        assert!(result.is_empty());
+        assert_eq!(repo.count(Some(by_program_name("bn"))).unwrap(), 0);
     }
 }

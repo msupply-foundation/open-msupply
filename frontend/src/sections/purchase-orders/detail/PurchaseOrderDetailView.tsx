@@ -9,7 +9,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { MAX_FRACTION_DIGITS, t } from '@/intl';
-import { graphqlFetch } from '@/api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
 import { Page } from '@/ui/layout/Page/Page';
@@ -340,6 +340,8 @@ const PurchaseOrderDetailView: Component = () => {
     );
     if (result.kind === 'done') refetchAll();
     else if (result.kind === 'error') setNotice(result.message);
+    else if (result.kind === 'forbidden')
+      reportPermissionDenied(result.permissions);
   };
 
   // The editor's walk follows the table's current sort and filter (rules §
@@ -422,6 +424,7 @@ const PurchaseOrderDetailView: Component = () => {
       void refetchInfo();
       return { ok: true };
     }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
     return result.kind === 'error'
       ? { ok: false, message: result.message }
       : { ok: false };
@@ -467,6 +470,12 @@ const PurchaseOrderDetailView: Component = () => {
           requestedDeliveryDate: { value: date },
         })
       : undefined;
+    // The lines need the same permission as the order, so a Forbidden here
+    // ends the cascade before it starts.
+    if (orderWrite?.kind === 'forbidden') {
+      reportPermissionDenied(orderWrite.permissions);
+      return { ok: false };
+    }
     const outcome = await cascadeDeliveryDates(
       params.storeId,
       lineSet(),
@@ -474,6 +483,10 @@ const PurchaseOrderDetailView: Component = () => {
       fields
     );
     refetchAll();
+    if (outcome.forbidden) {
+      reportPermissionDenied(outcome.forbidden);
+      return { ok: false };
+    }
     const message =
       (orderWrite?.kind === 'error' ? orderWrite.message : undefined) ??
       outcome.message;
@@ -496,6 +509,7 @@ const PurchaseOrderDetailView: Component = () => {
       if (result.blockedLines) setBlockedLines(result.blockedLines);
       return { ok: false, message: result.message };
     }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
     return { ok: false };
   };
 

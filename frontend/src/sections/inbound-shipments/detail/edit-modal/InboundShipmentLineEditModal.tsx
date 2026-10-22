@@ -190,6 +190,11 @@ export interface InboundShipmentLineEditModalProps {
     currentItemId: string,
     covered: Set<string>
   ) => Promise<string | undefined>;
+  /**
+   * A scan arrived while this editor was open and was discarded — say so
+   * here, where the user is looking, rather than behind the dialog (.41).
+   */
+  scanDiscarded?: boolean;
 }
 
 // The inbound-shipment line editor (spec S4): the single surface for entering a
@@ -2065,6 +2070,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </Show>
       }
     >
+      <Show when={props.scanDiscarded}>
+        <Alert severity="warning" testId="scan-discarded">
+          {t('messages.close-line-editor-to-scan')}
+        </Alert>
+      </Show>
       <Show when={!loadingLines()} fallback={<Spinner center />}>
         <Show
           when={!noItemYet()}

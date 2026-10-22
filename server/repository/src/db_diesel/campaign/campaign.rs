@@ -19,6 +19,7 @@ pub type CampaignSort = Sort<CampaignSortField>;
 pub struct CampaignFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
 }
 
 impl CampaignFilter {
@@ -33,6 +34,11 @@ impl CampaignFilter {
 
     pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: StringFilter) -> Self {
+        self.code = Some(filter);
         self
     }
 }
@@ -105,7 +111,7 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
     let mut query = campaign::table.into_boxed();
 
     if let Some(f) = filter {
-        let CampaignFilter { id, name } = f;
+        let CampaignFilter { id, name, code } = f;
 
         apply_equal_filter!(query, id, campaign::id);
 
@@ -113,6 +119,12 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
             && let Some(name_to_match) = name_filter.equal_to
         {
             query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
+        }
+
+        if let Some(code_filter) = code
+            && let Some(code_to_match) = code_filter.equal_to
+        {
+            query = query.filter(lower(campaign::code).eq(lower(code_to_match)))
         }
     }
 
