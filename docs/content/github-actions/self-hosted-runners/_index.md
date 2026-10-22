@@ -40,6 +40,36 @@ docker --version && docker buildx version
 docker run --rm --platform linux/arm64 debian:trixie-slim uname -m   # -> aarch64
 ```
 
+### Build cache limits
+
+**Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 2.5 GB, and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
+
+`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. Neither the file nor `/etc/docker` may exist yet:
+
+```bash
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json >/dev/null <<'JSON'
+{
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "policy": [
+        { "filter": ["type==exec.cachemount"], "keepDuration": "336h", "maxUsedSpace": "60GB" },
+        { "all": true, "maxUsedSpace": "100GB", "minFreeSpace": "30GB" }
+      ]
+    }
+  }
+}
+JSON
+sudo systemctl restart docker
+docker buildx inspect | grep -iA6 'gc policy'   # must show the rules above, not the defaults
+```
+
+- **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
+- **The first rule is the cargo caches**: one target dir per database and architecture, release and debug in each, plus the registry. 60 GB is a starting point — `docker buildx du --verbose` shows what they actually take.
+- **The second bounds the whole build cache** and keeps 30 GB of the disk free for images and deployments' databases.
+- `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
+
 ## Sizing
 
 Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
@@ -179,7 +209,7 @@ Adding a build lane is installing and registering `actions-runner-5`, then `syst
 
 Every deployment runs here: the named ones from `docker-named-deployment.yaml` (`develop`, the RC servers, ad-hoc ones) and every PR preview from `docker-pr-preview.yaml`. How to *use* them is on the [Docker page](../../docker/).
 
-Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>` (`http://` while they are [on the VPN only](#vpn-only-deployments)), where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest.
+Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>` (`http://` while they are [on the VPN only](#vpn-only-deployments)), where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest — including images that were built but never deployed, which no deploy or teardown ever sees.
 
 **Today `build`, `deploy` and `e2e` share one machine and one daemon.** The workflows assume nothing about that — splitting them is moving the deploy lane, not changing a workflow — but while they share:
 
@@ -214,7 +244,10 @@ Everything else a deployment needs to remember is a **label on its container**, 
 
 The labels come from `docker/compose.deploy.yaml` as of the commit whose workflow is running — develop's for a dispatch — not the commit being deployed. That is also how older release tags deploy; see the [Docker page](../../docker/).
 
-**`docker-expire.yaml` reaps expired deployments daily** and its summary lists everything deployed and when each expires — the quickest answer to "what is on this box". Run it with `dry_run` to preview.
+**`docker-expire.yaml` reaps expired deployments daily** and its summary lists everything deployed and when each expires — the quickest answer to "what is on this box". Run it with `dry_run` to preview. The same sweep also:
+
+- **tears down the preview of any closed pull request**, whatever its label says. A PR's own close normally does that, but GitHub runs no `pull_request` workflow on a PR with merge conflicts, so before the close moved to `pull_request_target` a preview closed in conflict ran on for good.
+- **removes `msupplyfoundation/omsupply` images no container is running that are over a day old** — a build whose deploy was cancelled by the next push, or failed, leaves one, and at several GB each they were most of what filled the disk. Removing one costs at most a rebuild if that commit is deployed again.
 
 **Teardown marks the GitHub deployment inactive** (clearing the "Active" badge and dead link) but leaves the empty environment row in repository settings — deleting it needs Administration: write.
 
