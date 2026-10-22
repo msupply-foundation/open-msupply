@@ -1,0 +1,4 @@
+{
+  "//": "Expecting for every plugin to be developed from 'common/packages/plugins/{plugin repo}/backend/{version}'",
+  "extends": "../../../backend-tsconfig.json"
+}
