@@ -44,25 +44,12 @@ docker run --rm --platform linux/arm64 debian:trixie-slim uname -m   # -> aarch6
 
 **Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 2.5 GB, and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
 
-`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. Neither the file nor `/etc/docker` may exist yet:
+`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. The limits are tracked in [`.github/deploy/host/daemon.json`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/deploy/host/daemon.json) and installed with the runner units (see [systemd](#systemd)):
 
 ```bash
-sudo mkdir -p /etc/docker
-sudo tee /etc/docker/daemon.json >/dev/null <<'JSON'
-{
-  "builder": {
-    "gc": {
-      "enabled": true,
-      "policy": [
-        { "filter": ["type==exec.cachemount"], "keepDuration": "336h", "maxUsedSpace": "60GB" },
-        { "all": true, "maxUsedSpace": "100GB", "minFreeSpace": "30GB" }
-      ]
-    }
-  }
-}
-JSON
+.github/scripts/host-config.sh install
 sudo systemctl restart docker
-docker buildx inspect | grep -iA6 'gc policy'   # must show the rules above, not the defaults
+docker buildx inspect | grep -iA6 'gc policy'   # must show the repo's rules, not the defaults
 ```
 
 - **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
@@ -82,7 +69,9 @@ Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RA
 sudo fallocate -l 16G /swapfile && sudo chmod 600 /swapfile
 sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-``` Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
+```
+
+`docker-deploy-services.yaml`'s daily [host check](#systemd) reports a box with no swap. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
 
 ## User and directories
 
@@ -146,65 +135,14 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 ### systemd
 
-The build lanes share one template; `%i` is the lane. Written with a heredoc so `$USER` and `$HOME` resolve to you.
+The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane. Install them from a checkout on the box, as the runner user — the script fills in your user and home, and uses `sudo` itself:
 
 ```bash
-sudo tee /etc/systemd/system/actions-runner@.service >/dev/null <<EOF
-[Unit]
-Description=GitHub Actions runner %i
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-User=$USER
-WorkingDirectory=$HOME/actions-runner-%i
-ExecStart=$HOME/actions-runner-%i/run.sh
-Restart=always
-RestartSec=5
-# No MemoryHigh/MemoryMax: the builds and containers a job starts run under
-# dockerd and containerd, not this unit, so a limit here never reaches them.
-# See "Sizing".
-# run.sh traps SIGTERM and passes it to the runner, which finishes or cancels
-# the job it holds instead of dying mid-job. `mixed` sends the SIGTERM to
-# run.sh alone, and SIGKILLs whatever is left only after TimeoutStopSec.
-Environment=RUNNER_MANUALLY_TRAP_SIG=1
-KillMode=mixed
-TimeoutStopSec=5min
-
-[Install]
-WantedBy=multi-user.target
-EOF
-sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4
+.github/scripts/host-config.sh install
+sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner-deploy
 ```
 
-The deploy lane has a unit of its own, with the same stop behaviour. It is the lane that tears a stack down when the box is full:
-
-```bash
-sudo tee /etc/systemd/system/actions-runner-deploy.service >/dev/null <<EOF
-[Unit]
-Description=GitHub Actions runner deploy
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-User=$USER
-WorkingDirectory=$HOME/actions-runner-deploy
-ExecStart=$HOME/actions-runner-deploy/run.sh
-Restart=always
-RestartSec=5
-Environment=RUNNER_MANUALLY_TRAP_SIG=1
-KillMode=mixed
-TimeoutStopSec=5min
-
-[Install]
-WantedBy=multi-user.target
-EOF
-sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner-deploy
-```
+`install` restarts nothing: it writes what differs, reloads systemd and prints the restarts that change needs, for a moment when nothing is running. **`docker-deploy-services.yaml` checks the box against the repo on its daily run** and puts any difference in its job summary as a warning, so a hand edit on the box shows up instead of drifting. To change a unit, change the repo's copy and install it; an edit made only on the box is reported until the repo agrees.
 
 ```bash
 systemctl status 'actions-runner*'
