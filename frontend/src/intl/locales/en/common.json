@@ -2885,6 +2885,7 @@
   "messages.enrol-before-encounter": "Enrol the patient in a program to record an encounter.",
   "messages.enrolment-changed-since-opened": "This enrolment has been changed since you opened it. Close it and open it again to see the latest version.",
   "messages.enrolment-form-not-installed": "This program's own enrolment form isn't installed on this site, so this enrolment can't be saved here. The program also asks for: {{fields}}.",
+  "messages.error-activity-code-already-exists": "An activity with the same code already exists 🥺",
   "messages.error-activity-name-already-exists": "An activity with same name already exists 🥺",
   "messages.error-converting-csv-to-excel": "Unable to convert CSV to Excel",
   "messages.error-deleting-assets_one": "{{count}} asset could not be deleted",
