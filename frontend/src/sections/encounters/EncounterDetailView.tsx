@@ -10,10 +10,11 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { gated } from '../../api/gated';
-import { t, localisedDate } from '../../intl';
+import { t, localisedDate, getDisplayAge } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '../../ui/layout/Header/HeaderToolbar';
 import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
 import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
@@ -21,6 +22,7 @@ import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFoote
 import { FormRowItem } from '../../ui/layout/Form/FormRowItem';
 import { FormErrorSummary } from '../../ui/layout/Form/FormErrorSummary';
 import { Stack } from '../../ui/layout/Stack/Stack';
+import { createSidePanelOpen } from '../../ui/layout/SidePanel/createSidePanelOpen';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
@@ -31,13 +33,14 @@ import {
   DialogSaveButton,
 } from '../../ui/elements/buttons/StandardButtons';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
-import { SaveIcon, XCircleIcon } from '../../ui/icons';
+import { FileIcon, SaveIcon, SidebarIcon, XCircleIcon } from '../../ui/icons';
+import { ALT_M } from '../../ui/utils/shortcuts';
 import { hasPermission } from '../../store/storeContext';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
 import { suggestsVisited, visitedFields } from '../../domain/encounter/visited';
 import {
   EncounterClinicianField,
-  EncounterStatusField,
+  EncounterStatusMenu,
   EncounterVisitDateField,
   encounterVisitLabels,
 } from '../../domain/encounter/EncounterVisitFields';
@@ -48,15 +51,29 @@ import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
 import { documentFormVersioning } from '../../plugins/documentFormSlot';
 import type { Encounter } from '../../plugin-sdk/documents';
 import { VaccinationCardRegion } from '../vaccination-card';
+import {
+  EnrolmentModal,
+  type EnrolmentTarget,
+} from '../program-enrolment/EnrolmentModal';
 import { fetchEncounterRecord } from './encounterRecord';
+import { EncounterSidePanel } from './EncounterSidePanel';
+import styles from './EncounterDetailView.module.css';
 
 /*
  * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI: the
  * host record screen). The host owns the route, the frame, the toolbar and the
  * save; the body is the plugin form contributed for the encounter's type, or
  * the host's default encounter form (DocumentFormRegion). The toolbar's visit
- * date, clinician and status and the body's fields edit one draft, the document
- * form host's, saved in one go by Save.
+ * date and clinician, the status chip beside the title and the body's fields
+ * edit one draft, the document form host's, saved in one go by Save.
+ *
+ * The frame follows Product's program-enrolment prototype (internal #468):
+ * the status as a chip beside the title, opening the statuses it can move to,
+ * and reading Missed for a Scheduled visit whose date has passed; the patient
+ * with their date of birth and age among the header's facts; a Medical file
+ * button opening the encounter's enrolment; and a More side panel with who
+ * entered the encounter and when, its notes, the patient's previous
+ * encounters of the type, and Delete (EncounterSidePanel).
  *
  * Opened from a patient's Encounters row, and after "New encounter" creates
  * one whose visit is under way. Every read is non-suspending: the screen
@@ -115,6 +132,15 @@ const EncounterDetailView: Component = () => {
   };
   const draft = form.draft;
 
+  // The More panel: the shared open state (open by default on a very wide
+  // viewport, the user's choice persisted), as every detail screen's.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+
+  // The Medical file button opens the encounter's enrolment in the enrolment
+  // modal (spec/program-enrolment S3), as the old client's Medical file info.
+  const [enrolmentTarget, setEnrolmentTarget] = createSignal<EnrolmentTarget>();
+  const enrolmentDocumentName = () => record()?.programEnrolment?.document.name;
+
   const patientHref = () =>
     `/${params.storeId}/dispensary/patients/${record()?.patientId ?? ''}?tab=encounters`;
   const leave = () => navigate(patientHref());
@@ -145,6 +171,17 @@ const EncounterDetailView: Component = () => {
     void form.save();
   };
 
+  // Delete, as the old client does it: the Deleted status, saved. A save
+  // that does not go through (the error summary says why) puts the status
+  // back, so the draft is not left holding a deletion it did not make.
+  const deleteEncounter = async () => {
+    const before = draft.data.status;
+    draft.set('status', 'DELETED');
+    const saved = await form.save();
+    if (saved) leave();
+    else draft.set('status', before);
+  };
+
   const typeName = () => form.registry()?.name ?? record()?.type ?? '';
   const crumbs = () => {
     const start = draft.data.startDatetime;
@@ -159,6 +196,18 @@ const EncounterDetailView: Component = () => {
       { label: record()?.patient.name ?? '', onClick: leave },
       { label: leaf },
     ];
+  };
+
+  // The patient as the header states them: name, then date of birth with
+  // the age it gives, where there is one ("Smith, Jay · 08/07/2026 (3
+  // months, 13 days)").
+  const patientFact = () => {
+    const patient = record()?.patient;
+    if (!patient) return '';
+    if (!patient.dateOfBirth) return patient.name;
+    const age = getDisplayAge(patient.dateOfBirth);
+    const birth = localisedDate(patient.dateOfBirth);
+    return `${patient.name} · ${birth}${age ? ` (${age})` : ''}`;
   };
 
   const ready = () => form.status() === 'ready';
@@ -190,15 +239,83 @@ const EncounterDetailView: Component = () => {
           const Default = lib().DefaultEncounterForm;
           return (
             <Page
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.more')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <EncounterSidePanel
+                  storeId={params.storeId}
+                  encounterId={params.encounterId}
+                  patientId={record()?.patientId ?? ''}
+                  type={record()?.type ?? ''}
+                  draft={draft}
+                  canMutate={canMutate()}
+                  onDelete={() => void deleteEncounter()}
+                />
+              }
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs()} />
+                  <div class={styles.titleStatus}>
+                    <EncounterStatusMenu draft={draft} />
+                  </div>
+                  <HeaderButtons>
+                    <Show when={enrolmentDocumentName()}>
+                      {name => (
+                        <Button
+                          variant="secondary"
+                          icon={<FileIcon />}
+                          collapsible="narrow"
+                          title={t('button.enrolment-info')}
+                          data-testid="encounter-medical-file-button"
+                          onClick={() =>
+                            setEnrolmentTarget({
+                              kind: 'existing',
+                              documentName: name(),
+                            })
+                          }
+                        >
+                          {t('button.enrolment-info')}
+                        </Button>
+                      )}
+                    </Show>
+                    {/* More — the closed-panel reopen affordance, as on every
+                        detail screen; createSidePanelOpen registers Alt+M,
+                        this is the control that advertises it. */}
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
+                        data-testid="open-detail-panel-button"
+                        shortcut={ALT_M}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  {/* Floors: 12 + 10 + 13 + 10 = 45rem for four fields. The
+                      patient's name with their date of birth and age is the
+                      long one; the date is a fixed-format scalar. */}
                   <HeaderToolbar>
-                    <FormRowItem weight={1.2}>
+                    <FormRowItem weight={1.8} minWidth="12rem">
+                      <LabelledValue
+                        label={t('label.patient')}
+                        variant="field"
+                        size="small"
+                        data-testid="encounter-patient"
+                      >
+                        {patientFact()}
+                      </LabelledValue>
+                    </FormRowItem>
+                    <FormRowItem weight={1}>
                       <LabelledValue
                         label={t('label.program')}
                         variant="field"
                         size="small"
+                        data-testid="encounter-program"
                       >
                         {record()?.programEnrolment?.document.documentRegistry
                           ?.name || '—'}
@@ -207,11 +324,8 @@ const EncounterDetailView: Component = () => {
                     <FormRowItem weight={0} minWidth="13rem">
                       <EncounterVisitDateField draft={draft} size="small" />
                     </FormRowItem>
-                    <FormRowItem weight={1.5}>
+                    <FormRowItem weight={1.4}>
                       <EncounterClinicianField draft={draft} size="small" />
-                    </FormRowItem>
-                    <FormRowItem weight={1}>
-                      <EncounterStatusField draft={draft} size="small" />
                     </FormRowItem>
                   </HeaderToolbar>
                 </Header>
@@ -297,6 +411,13 @@ const EncounterDetailView: Component = () => {
                   </ContentContainer>
                 )}
               </Show>
+              <EnrolmentModal
+                storeId={params.storeId}
+                patientId={record()?.patientId ?? ''}
+                target={enrolmentTarget()}
+                onClose={() => setEnrolmentTarget(undefined)}
+                onSaved={() => undefined}
+              />
               <Show when={askingVisited()}>
                 <Dialog
                   open

@@ -1,8 +1,9 @@
-# The encounter record screen's header facts: who the encounter is for, its
-# program and its document's name, which the document form host loads the
-# document by. The document itself, draft and all, is the form host's
-# (domain/documentForm). Deleted encounters are included, so a link to one opens
-# rather than answering not-found.
+# The encounter record screen's header facts: who the encounter is for (with
+# their date of birth, for the age the header shows), its program and its
+# document's name, which the document form host loads the document by. The
+# document itself, draft and all, is the form host's (domain/documentForm).
+# Deleted encounters are included, so a link to one opens rather than
+# answering not-found.
 
 fragment EncounterRecord on EncounterNode {
   __typename
@@ -13,6 +14,7 @@ fragment EncounterRecord on EncounterNode {
     __typename
     id
     name
+    dateOfBirth
   }
   document {
     __typename
@@ -21,11 +23,13 @@ fragment EncounterRecord on EncounterNode {
   programEnrolment {
     __typename
     # The vaccination card shows for an immunisation enrolment
-    # (spec/vaccination-card S2).
+    # (spec/vaccination-card S2); the Medical file button opens the enrolment
+    # by its document's name.
     id
     isImmunisationProgram
     document {
       __typename
+      name
       documentRegistry {
         __typename
         name
@@ -43,6 +47,35 @@ query encounterRecord($storeId: String!, $id: String!) {
       __typename
       nodes {
         ...EncounterRecord
+      }
+    }
+  }
+}
+
+# The side panel's Previous encounters: the patient's other encounters of the
+# same type, newest first. Scoped to the programs the user may read, like the
+# list; the resolver leaves deleted ones out. One more than the panel shows,
+# since the open encounter is among them.
+query encounterPrevious(
+  $storeId: String!
+  $patientId: String!
+  $type: String!
+  $first: Int!
+) {
+  encounters(
+    storeId: $storeId
+    filter: { patientId: { equalTo: $patientId }, type: { equalTo: $type } }
+    sort: { key: startDatetime, desc: true }
+    page: { first: $first }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        startDatetime
+        status
       }
     }
   }
