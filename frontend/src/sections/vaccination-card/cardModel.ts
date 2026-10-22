@@ -148,12 +148,16 @@ const STATUS_KEY: Record<DoseStatus, LocaleKey> = {
 export const statusLabel = (status: DoseStatus): string =>
   t(STATUS_KEY[status]);
 
-/** A status's badge colour token. */
+/**
+ * A status's badge colour token. Overdue carries the error tone, as the old
+ * client's card does (internal #468 item 5): it is the one status that needs
+ * noticing at a glance.
+ */
 export const STATUS_COLOUR: Record<DoseStatus, string> = {
   GIVEN: 'var(--status-finalised)',
   NOT_GIVEN: 'var(--status-cancelled)',
   PENDING: 'var(--status-allocated)',
-  LATE: 'var(--status-new)',
+  LATE: 'var(--status-overdue)',
 };
 
 /**

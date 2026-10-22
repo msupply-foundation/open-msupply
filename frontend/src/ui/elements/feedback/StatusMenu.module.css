@@ -1,0 +1,106 @@
+/*
+ * Status menu — a status chip that opens a menu of statuses. The trigger is a
+ * bare button around the chip (the LanguageSelector trigger's recipe:
+ * transparent, a hover tint, the focus ring), so the chip keeps its own look
+ * and the caret is the only hint that it opens. The menu is portaled to
+ * <body> (inherits `dir` for RTL) and wears the house menu look — dense rows
+ * divided by a hairline, as SplitButton's menu does.
+ *
+ * Rule order is ascending-specificity (no-descending-specificity).
+ */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--motion-fast) ease;
+}
+
+.trigger:hover,
+.trigger[data-expanded] {
+  background: var(--bg-group-main);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.caret {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  transition: transform var(--motion-fast) ease;
+}
+
+.trigger[data-expanded] .caret {
+  transform: rotate(180deg);
+}
+
+/* --- Menu ------------------------------------------------------------- */
+.content {
+  z-index: 50;
+  min-inline-size: 10rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-3);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.item + .item {
+  border-block-start: 1px solid var(--color-divider);
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}
+
+.item[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The current status's check: a fixed slot so chips align with or without it. */
+.mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+  inline-size: 1rem;
+  color: var(--secondary-main);
+}
+
+.indicator {
+  display: inline-flex;
+  font-size: 0.875rem;
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-block-size: var(--touch-target);
+  }
+}
