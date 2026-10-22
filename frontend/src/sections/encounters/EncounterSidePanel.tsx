@@ -35,24 +35,36 @@ export interface EncounterSidePanelProps {
   patientId: string;
   /** The encounter's type, which its previous encounters share. */
   type: string;
+  /**
+   * The encounter's visit date as stored: its previous encounters are the
+   * patient's earlier ones of the type.
+   */
+  startDatetime: string | undefined;
   draft: Draft<Encounter>;
+  /**
+   * Whether the form renders the encounter's notes itself (a plugin form's
+   * notes list, with its own rules on which notes may still be edited; the
+   * default form's box): the panel's Notes then stands down.
+   */
+  formEditsNotes: boolean;
   /** Whether the user may change the encounter (so may delete it). */
   canMutate: boolean;
   /**
-   * Deletes the encounter: the screen records the Deleted status and saves,
+   * Deletes the encounter: the screen writes the stored document as Deleted,
    * then leaves for the patient.
    */
   onDelete: () => void;
 }
 
 /*
- * The encounter screen's side panel (internal #468; Product's
- * program-enrolment prototype; ui/docs/SIDE_PANEL.md), the old client's
- * details panel: who entered the encounter and when, its notes, the
- * patient's previous encounters of the type, and Delete. Entered by and
- * Entered on are the document's own createdBy and createdDatetime; Notes
- * edits the draft's first note, the same note the default encounter form's
- * box edits, so the two never disagree.
+ * The encounter screen's side panel (Product's program-enrolment prototype;
+ * ui/docs/SIDE_PANEL.md), the old client's details panel: who entered the
+ * encounter and when, its notes, the patient's previous encounters of the
+ * type, and Delete. Entered by and Entered on are the document's own
+ * createdBy and createdDatetime. Notes edits the draft's first note, but
+ * only where no form field renders the notes: a form that does owns them,
+ * with whatever rules it applies to written notes, and a second box over
+ * the same note would bypass those.
  */
 export const EncounterSidePanel: Component<EncounterSidePanelProps> = props => {
   const [confirmingDelete, setConfirmingDelete] = createSignal(false);
@@ -61,12 +73,16 @@ export const EncounterSidePanel: Component<EncounterSidePanelProps> = props => {
   // must never remount it (kdd/solid-reactivity-pitfalls › no remounts on
   // interaction). It re-reads when the screen moves to another encounter.
   const [previousData] = createResource(
-    () => ({
-      storeId: props.storeId,
-      patientId: props.patientId,
-      type: props.type,
-      encounterId: props.encounterId,
-    }),
+    () =>
+      props.startDatetime
+        ? {
+            storeId: props.storeId,
+            patientId: props.patientId,
+            type: props.type,
+            encounterId: props.encounterId,
+            before: props.startDatetime,
+          }
+        : undefined,
     fetchPreviousEncounters
   );
   const previous = () => gated(previousData);
@@ -99,27 +115,29 @@ export const EncounterSidePanel: Component<EncounterSidePanelProps> = props => {
             ? localisedDate(props.draft.data.createdDatetime)
             : '—'}
         </FieldRow>
-        <FieldRow label={t('label.notes')} align="first-line">
-          <TextArea
-            label={t('label.notes')}
-            hideLabel
-            rows={3}
-            value={props.draft.data.notes?.[0]?.text ?? ''}
-            onInput={e =>
-              props.draft.set(
-                'notes',
-                withFirstNoteText(
-                  props.draft.data.notes,
-                  e.currentTarget.value,
-                  { id: authUser()?.userId, name: userDisplayName() },
-                  new Date().toISOString()
+        <Show when={!props.formEditsNotes}>
+          <FieldRow label={t('label.notes')} align="first-line">
+            <TextArea
+              label={t('label.notes')}
+              hideLabel
+              rows={3}
+              value={props.draft.data.notes?.[0]?.text ?? ''}
+              onInput={e =>
+                props.draft.set(
+                  'notes',
+                  withFirstNoteText(
+                    props.draft.data.notes,
+                    e.currentTarget.value,
+                    { id: authUser()?.userId, name: userDisplayName() },
+                    new Date().toISOString()
+                  )
                 )
-              )
-            }
-            disabled={props.draft.readOnly()}
-            data-testid="encounter-panel-notes"
-          />
-        </FieldRow>
+              }
+              disabled={props.draft.readOnly()}
+              data-testid="encounter-panel-notes"
+            />
+          </FieldRow>
+        </Show>
       </SidePanelSection>
 
       <SidePanelSection

@@ -101,11 +101,13 @@ export const EncounterStatusField = (props: VisitFieldProps): JSX.Element => (
 
 /*
  * The status as the record screen shows it: a chip beside the title that
- * opens the same three choices (internal #468; Product's program-enrolment
- * prototype). The chip reads Missed, in the error tone, for a Scheduled
- * encounter whose visit date has passed — the old client's "Encounter
- * Missed" note — so the menu marks the stored status, not the word shown.
- * Picking a status edits the draft, as the field above does; Save records it.
+ * opens the same three choices (Product's program-enrolment prototype). The
+ * chip reads Missed, in the error tone, for a Scheduled encounter whose
+ * visit day has passed — the old client's "Encounter Missed" note — so the
+ * menu marks the stored status, not the word shown. Picking a status edits
+ * the draft, as the field above does; Save records it. A deleted encounter
+ * shows its chip alone: Delete is final here, not a status to pick back
+ * from (the old client's select let it be).
  */
 export const EncounterStatusMenu = (props: {
   draft: Draft<Encounter>;
@@ -119,7 +121,7 @@ export const EncounterStatusMenu = (props: {
   return (
     <Show when={chip()}>
       {chip => (
-        <StatusMenu
+        <StatusMenu<EncounterStatus>
           label={chip().label}
           colour={chip().colour}
           options={SETTABLE_STATUSES.map(s => ({
@@ -128,9 +130,11 @@ export const EncounterStatusMenu = (props: {
             colour: ENCOUNTER_STATUS_COLOUR[s],
           }))}
           value={props.draft.data.status}
-          onSelect={v => props.draft.set('status', v as EncounterStatus)}
+          onSelect={v => props.draft.set('status', v)}
           triggerLabel={`${t('label.status')}: ${chip().label}. ${t('label.change-status')}`}
-          disabled={props.draft.readOnly()}
+          disabled={
+            props.draft.readOnly() || props.draft.data.status === 'DELETED'
+          }
           testId="encounter-status"
         />
       )}

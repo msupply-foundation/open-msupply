@@ -44,7 +44,10 @@ import {
   EncounterVisitDateField,
   encounterVisitLabels,
 } from '../../domain/encounter/EncounterVisitFields';
-import { createDocumentForm } from '../../domain/documentForm/createDocumentForm';
+import {
+  createDocumentForm,
+  persistDocument,
+} from '../../domain/documentForm/createDocumentForm';
 import { DocumentKeptValues } from '../../domain/documentForm/DocumentKeptValues';
 import { DocumentVersionNotice } from '../../domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
@@ -57,7 +60,6 @@ import {
 } from '../program-enrolment/EnrolmentModal';
 import { fetchEncounterRecord } from './encounterRecord';
 import { EncounterSidePanel } from './EncounterSidePanel';
-import styles from './EncounterDetailView.module.css';
 
 /*
  * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI: the
@@ -67,13 +69,14 @@ import styles from './EncounterDetailView.module.css';
  * date and clinician, the status chip beside the title and the body's fields
  * edit one draft, the document form host's, saved in one go by Save.
  *
- * The frame follows Product's program-enrolment prototype (internal #468):
- * the status as a chip beside the title, opening the statuses it can move to,
- * and reading Missed for a Scheduled visit whose date has passed; the patient
- * with their date of birth and age among the header's facts; a Medical file
- * button opening the encounter's enrolment; and a More side panel with who
- * entered the encounter and when, its notes, the patient's previous
- * encounters of the type, and Delete (EncounterSidePanel).
+ * The frame follows Product's program-enrolment prototype: the status as a
+ * chip at the end of the breadcrumb trail, opening the statuses it can move
+ * to, and reading Missed for a Scheduled visit whose day has passed; the
+ * patient with their date of birth and age among the header's facts; a
+ * Medical file button opening the encounter's enrolment; and a More side
+ * panel with who entered the encounter and when, its notes where the form
+ * renders none, the patient's earlier encounters of the type, and Delete
+ * (EncounterSidePanel).
  *
  * Opened from a patient's Encounters row, and after "New encounter" creates
  * one whose visit is under way. Every read is non-suspending: the screen
@@ -171,16 +174,38 @@ const EncounterDetailView: Component = () => {
     void form.save();
   };
 
-  // Delete, as the old client does it: the Deleted status, saved. A save
-  // that does not go through (the error summary says why) puts the status
-  // back, so the draft is not left holding a deletion it did not make.
+  // Delete: the document as stored, written again with the Deleted status.
+  // Not the form's save, which would validate the draft (an empty visit with
+  // required fields could never be deleted), save whatever was edited along
+  // with the deletion, and run the form's own save steps — a prescription
+  // control's would issue stock against a visit being thrown away. What was
+  // edited is dropped with the record. A refusal is shown above the form.
+  const [deleting, setDeleting] = createSignal(false);
+  const [deleteError, setDeleteError] = createSignal<string>();
   const deleteEncounter = async () => {
-    const before = draft.data.status;
-    draft.set('status', 'DELETED');
-    const saved = await form.save();
-    if (saved) leave();
-    else draft.set('status', before);
+    const stored = form.document();
+    const r = form.registry();
+    if (!stored || !r || deleting()) return;
+    setDeleting(true);
+    setDeleteError(undefined);
+    const result = await persistDocument({
+      storeId: params.storeId,
+      patientId: record()?.patientId ?? '',
+      registry: r,
+      parent: stored.id,
+      data: { ...(stored.data as object), status: 'DELETED' },
+    });
+    setDeleting(false);
+    if (result.kind === 'refused') {
+      setDeleteError(result.message);
+      return;
+    }
+    if (result.kind === 'reported') return;
+    form.discard();
+    leave();
   };
+  const storedStart = () =>
+    (form.document()?.data as Partial<Encounter> | undefined)?.startDatetime;
 
   const typeName = () => form.registry()?.name ?? record()?.type ?? '';
   const crumbs = () => {
@@ -248,17 +273,19 @@ const EncounterDetailView: Component = () => {
                   encounterId={params.encounterId}
                   patientId={record()?.patientId ?? ''}
                   type={record()?.type ?? ''}
+                  startDatetime={storedStart()}
                   draft={draft}
+                  formEditsNotes={draft.namesField('notes')}
                   canMutate={canMutate()}
                   onDelete={() => void deleteEncounter()}
                 />
               }
               header={
                 <Header>
-                  <Breadcrumb crumbs={crumbs()} />
-                  <div class={styles.titleStatus}>
-                    <EncounterStatusMenu draft={draft} />
-                  </div>
+                  <Breadcrumb
+                    crumbs={crumbs()}
+                    status={<EncounterStatusMenu draft={draft} />}
+                  />
                   <HeaderButtons>
                     <Show when={enrolmentDocumentName()}>
                       {name => (
@@ -358,8 +385,8 @@ const EncounterDetailView: Component = () => {
             >
               <ContentContainer size="form" padded>
                 <Stack>
-                  <Show when={form.saveError()}>
-                    <Alert severity="error">{form.saveError()}</Alert>
+                  <Show when={form.saveError() ?? deleteError()}>
+                    {message => <Alert severity="error">{message()}</Alert>}
                   </Show>
                   <DocumentVersionNotice
                     version={form.version()}

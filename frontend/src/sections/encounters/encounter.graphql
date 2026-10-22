@@ -52,19 +52,26 @@ query encounterRecord($storeId: String!, $id: String!) {
   }
 }
 
-# The side panel's Previous encounters: the patient's other encounters of the
-# same type, newest first. Scoped to the programs the user may read, like the
+# The side panel's Previous encounters: the patient's earlier encounters of
+# the same type, newest first — started on or before the open encounter's
+# visit date (the bound is inclusive; the caller drops the open one and any
+# at the same instant). Scoped to the programs the user may read, like the
 # list; the resolver leaves deleted ones out. One more than the panel shows,
 # since the open encounter is among them.
 query encounterPrevious(
   $storeId: String!
   $patientId: String!
   $type: String!
+  $before: DateTime!
   $first: Int!
 ) {
   encounters(
     storeId: $storeId
-    filter: { patientId: { equalTo: $patientId }, type: { equalTo: $type } }
+    filter: {
+      patientId: { equalTo: $patientId }
+      type: { equalTo: $type }
+      startDatetime: { beforeOrEqualTo: $before }
+    }
     sort: { key: startDatetime, desc: true }
     page: { first: $first }
   ) {

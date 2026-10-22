@@ -150,7 +150,7 @@ export const statusLabel = (status: DoseStatus): string =>
 
 /**
  * A status's badge colour token. Overdue carries the error tone, as the old
- * client's card does (internal #468 item 5): it is the one status that needs
+ * client's card does: it is the one status that needs
  * noticing at a glance.
  */
 export const STATUS_COLOUR: Record<DoseStatus, string> = {

@@ -5,15 +5,16 @@ import {
   SETTABLE_STATUSES,
 } from './encounterStatus';
 
-// The record screen's status chip (internal #468). t() falls back to the key
+// The record screen's status chip. t() falls back to the key
 // with no dictionary loaded, so a label reads as its key.
 
-const now = new Date('2026-10-20T10:00:00Z');
-const past = '2026-10-19T10:00:00Z';
-const ahead = '2026-10-21T10:00:00Z';
+// Local-day instants, as Missed is judged by the device's calendar day.
+const now = new Date(2026, 9, 20, 12, 0);
+const past = new Date(2026, 9, 19, 12, 0).toISOString();
+const ahead = new Date(2026, 9, 21, 12, 0).toISOString();
 
 describe('encounterDisplayStatus', () => {
-  it('reads a Scheduled encounter whose start has passed as Missed', () => {
+  it('reads a Scheduled encounter whose day has passed as Missed', () => {
     expect(encounterDisplayStatus('PENDING', past, now)).toBe('MISSED');
   });
 
