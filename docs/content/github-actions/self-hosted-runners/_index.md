@@ -42,14 +42,16 @@ docker run --rm --platform linux/arm64 debian:trixie-slim uname -m   # -> aarch6
 
 ### Build cache limits
 
-**Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 2.5 GB, and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
+**Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 1.4% of the disk (2.5 GB on this one), and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
 
 `/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. The limits are tracked in [`.github/deploy/host/daemon.json`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/deploy/host/daemon.json), and the daily [host check](#systemd) gives the commands to write it when the box's differs. Then:
 
 ```bash
 sudo systemctl restart docker
-docker buildx inspect | grep -iA6 'gc policy'   # must show the repo's rules, not the defaults
+docker buildx inspect | grep -iA6 'gc policy'
 ```
+
+Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s` and `Max Used Space` 60GB. Anything else means docker did not take the file as meant, and it says nothing about it: an unknown key under `builder` is silently ignored, and a malformed filter fails every GC pass rather than the restart. **The syntax is easy to get wrong** — each filter is `key=value` with ONE `=` (docker adds the second), and how long to keep is the `until` filter, not a field of its own.
 
 - **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
 - **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 60 GB is a starting point — `docker buildx du --verbose` shows what they actually take.
