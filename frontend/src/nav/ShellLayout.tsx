@@ -41,7 +41,11 @@ import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { bindHostPathname } from './hostLocation';
 import { bindHostSearch } from './hostSearchParams';
 import { dispatchHostBeforeLeave } from './hostBeforeLeave';
-import { storePath, storeRelativePath } from './storeRelativePath';
+import {
+  routerBase,
+  storePath,
+  storeRelativePath,
+} from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
@@ -174,6 +178,10 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   const onNavigate = (leaf: NavLeaf) => navigate(storeHref(leaf.to));
 
+  // The same address as a document href — the mount in front, as a new tab or
+  // a copied link needs (#271); `navigate` takes it router-space, without.
+  const menuHref = (to: string) => `${routerBase}${storeHref(to)}`;
+
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
   // can go (spec/keyboard OMS-REG-KBD-01.5–.7). The menu offers only what this
@@ -289,6 +297,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         lower={menuLower()}
         selected={selected()}
         onNavigate={onNavigate}
+        hrefFor={menuHref}
         /* The brand mark goes home — the store root, which IS Home, the same
            destination the menu's own Home entry routes to (navConfig, path '').
            The conventional job for a logo in app chrome, and the reason it is
