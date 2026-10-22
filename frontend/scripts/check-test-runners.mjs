@@ -217,15 +217,19 @@ if (failures.length) {
   process.exit(1);
 }
 
-// The plugin roots beside frontend/ are globbed ahead of need: the public
-// mirror has no private/, and plugins/ holds only the examples (which carry
-// no tests) until a public plugin arrives. An empty one is expected there,
-// not a sign of a suite that moved.
-const OPTIONAL_ROOTS = ['../plugins/', '../private/plugins/'];
+// Plugin globs expected to match nothing. `../plugins/*/` is globbed ahead of
+// need: plugins/ holds only the examples (their own globs, checked as usual)
+// until a public plugin arrives. `../private/plugins/` is skipped only where
+// it is missing, as in the public mirror; where it exists, an empty match is
+// a suite that moved, and is reported like any other.
+const OPTIONAL_PREFIXES = [
+  '../plugins/*/',
+  ...(existsSync('../private/plugins') ? [] : ['../private/plugins/']),
+];
 
 for (const { name, globs } of RUNNERS) {
   for (const g of globs) {
-    if (OPTIONAL_ROOTS.some(root => g.startsWith(root))) continue;
+    if (OPTIONAL_PREFIXES.some(prefix => g.startsWith(prefix))) continue;
     if (!testFiles.some(f => matchesGlob(f, g))) {
       console.warn(`check-test-runners: ${name} — '${g}' matches no file.`);
     }
