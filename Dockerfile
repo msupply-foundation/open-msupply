@@ -123,10 +123,7 @@ RUN set -eux; \
 # Debug builds only: release already has neither. Full debuginfo was most of a
 # debug image - 5.8GB on disk against 1GB compressed - and line tables still
 # give file:line in panics and backtraces. Incremental compilation is wasted on
-# a cache mount every build changes. Also what lets CI's test builds
-# (.github/ci/server.Dockerfile, which sets the same) share this build's cache
-# mounts: cargo fingerprints both, so a mismatch keeps two copies of every
-# crate in the one mount.
+# a cache mount every build changes.
 ENV CARGO_INCREMENTAL=0 \
     CARGO_PROFILE_DEV_DEBUG=line-tables-only
 WORKDIR /src
