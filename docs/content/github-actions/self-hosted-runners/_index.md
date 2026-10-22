@@ -51,11 +51,11 @@ sudo systemctl restart docker
 docker buildx inspect | grep -iA6 'gc policy'
 ```
 
-Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s` and `Max Used Space` 60GB. Anything else means docker did not take the file as meant, and it says nothing about it: an unknown key under `builder` is silently ignored, and a malformed filter fails every GC pass rather than the restart. **The syntax is easy to get wrong** — each filter is `key=value` with ONE `=` (docker adds the second), and how long to keep is the `until` filter, not a field of its own.
+Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s` and `Max Used Space: 50GiB`, and rule #1 `Max Used Space: 70GiB` with `Min Free Space: 50GiB` (docker shows the file's GB as GiB). Anything else means docker did not take the file as meant, and it says nothing about it: an unknown key under `builder` is silently ignored, and a malformed filter fails every GC pass rather than the restart. **The syntax is easy to get wrong** — each filter is `key=value` with ONE `=` (docker adds the second), and how long to keep is the `until` filter, not a field of its own.
 
 - **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
-- **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 60 GB is a starting point — `docker buildx du --verbose` shows what they actually take.
-- **The second bounds the whole build cache** and keeps 30 GB of the disk free for images and deployments' databases.
+- **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 50 GB holds the ones pull requests and develop merges use; a rarely built one (an arm64 release, say) is evicted and builds cold. `docker buildx du --verbose` shows what they actually take.
+- **The second bounds the whole build cache** at 70 GB and keeps 50 GB of the disk free, for images, deployments' databases and what a CI job writes while it runs: its test archive, postgres's test databases, sqlite's `test_output`. GC runs only when a build finishes, so the free space has to last a whole test run — at 30 GB, a postgres run filled the disk.
 - `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
 
 ## Sizing
@@ -72,7 +72,7 @@ sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
-`docker-deploy-services.yaml`'s daily [host check](#systemd) reports a box with no swap. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
+`docker-deploy-services.yaml`'s daily [host check](#systemd) reports a box with no swap. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. The box has 194 GB, and the build cache limits above are sized for it - with a bigger disk, raise them. 500 GB is not excessive.
 
 ## User and directories
 
@@ -138,13 +138,13 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
 
-**`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees.
+**`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees. So is a lane installed in `~/actions-runner-<lane>` whose tracked unit (`actions-runner@<lane>`, or `actions-runner-deploy`) is not enabled — a lane running under a unit set up by hand shows both that and `UNTRACKED`, and the commands move it over.
 
 On a new box, before any lane can run that workflow, copy the two files from the repo by hand with `@USER@`/`@HOME@` filled in, then:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner-deploy
+sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e actions-runner-deploy
 ```
 
 ```bash
