@@ -6,6 +6,13 @@
   font-weight: var(--weight-regular);
 }
 
+/* A batch code with its status badges beside it. */
+.batchCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* The stacked reporting banners (one Alert per reported category). */
 .warningStack {
   display: flex;

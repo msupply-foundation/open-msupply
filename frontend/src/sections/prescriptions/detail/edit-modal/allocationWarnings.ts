@@ -15,13 +15,26 @@ import { round9, type BarReason, type IssueWarning } from '@/domain/allocation';
 // never had; the phrasing splits on how hard the bar is (rules § barred
 // batches): on-hold stock cannot be issued at all, while expired and
 // unusable-VVM stock is merely never AUTO-allocated and stays manually
-// issuable unless its guard preference is on.
+// issuable unless its guard preference is on. The expired sentence also
+// follows the outcome (rules § expired stock passed over): a met request
+// warns against picking the expired box, a short one says whether that stock
+// can still be issued by hand.
 
 /** The message each barred category is reported under, one sentence each. */
 export type SkipMessageKey =
   | 'messages.stock-on-hold'
   | 'messages.stock-expired'
+  | 'messages.stock-expired-skipped'
+  | 'messages.stock-expired-cannot-issue'
   | 'messages.stock-unusable-vvm';
+
+/** What the expired sentence turns on (rules § expired stock passed over). */
+export interface DistributionOutcome {
+  /** The request was covered in full. */
+  met: boolean;
+  /** Expired stock stays manually issuable (its guard preference is off). */
+  expiredIssuable: boolean;
+}
 
 export type PrescriptionWarningMessage =
   | { key: SkipMessageKey }
@@ -37,7 +50,10 @@ export type PrescriptionWarningMessage =
       issueQuantity: number;
     };
 
-const skipMessageKey = (reason: BarReason): SkipMessageKey | null => {
+const skipMessageKey = (
+  reason: BarReason,
+  outcome: DistributionOutcome
+): SkipMessageKey | null => {
   switch (reason) {
     // The on-hold arm completes the shared vocabulary, but prescriptions
     // never reports it — held stock is hidden from the grid and its
@@ -45,7 +61,10 @@ const skipMessageKey = (reason: BarReason): SkipMessageKey | null => {
     case 'on-hold':
       return 'messages.stock-on-hold';
     case 'expired':
-      return 'messages.stock-expired';
+      if (outcome.met) return 'messages.stock-expired-skipped';
+      return outcome.expiredIssuable
+        ? 'messages.stock-expired'
+        : 'messages.stock-expired-cannot-issue';
     case 'unusable-vvm':
       return 'messages.stock-unusable-vvm';
     // Prescriptions don't match campaigns (no issueCampaignId), so this never
@@ -57,19 +76,21 @@ const skipMessageKey = (reason: BarReason): SkipMessageKey | null => {
 
 /**
  * Map a distribution's derived warnings to banner messages: every skipped
- * category reported as its own sentence (OMS-REG-SMV-11.7 — DIS-03.59), and the split-pack
+ * category reported as its own sentence (OMS-REG-SMV-11.7 — DIS-03.59; the
+ * expired one by outcome — .76/.77), and the split-pack
  * warning naming the nearest whole-pack quantity above, in doses under the
  * doses lens (OMS-REG-SMV-11.32 — DIS-03.58).
  */
 export const issueWarningMessages = (
   derived: readonly IssueWarning[],
-  lens: { doses: boolean; dosesPerUnit: number }
+  lens: { doses: boolean; dosesPerUnit: number },
+  outcome: DistributionOutcome
 ): PrescriptionWarningMessage[] =>
   derived.flatMap((warning): PrescriptionWarningMessage[] => {
     switch (warning.kind) {
       case 'skipped-barred':
         return warning.reasons.flatMap(reason => {
-          const key = skipMessageKey(reason);
+          const key = skipMessageKey(reason, outcome);
           return key ? [{ key }] : [];
         });
       case 'partial-packs':
@@ -92,6 +113,20 @@ export const issueWarningMessages = (
         return [];
     }
   });
+
+/**
+ * Whether the reports include an expired skip — what opens the Batches
+ * section (DIS-03.75). Unusable-VVM stock does not.
+ */
+export const reportsExpiredSkip = (
+  messages: readonly PrescriptionWarningMessage[]
+): boolean =>
+  messages.some(
+    message =>
+      message.key === 'messages.stock-expired' ||
+      message.key === 'messages.stock-expired-skipped' ||
+      message.key === 'messages.stock-expired-cannot-issue'
+  );
 
 /**
  * A manual per-batch entry's reports, REPLACING any distribution reports —

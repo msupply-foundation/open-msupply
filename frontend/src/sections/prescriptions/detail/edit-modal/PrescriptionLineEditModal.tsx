@@ -40,6 +40,7 @@ import {
   getCellDefinition,
   getExpiryDateCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
@@ -47,6 +48,7 @@ import { prescriptionPreferences } from '../../../../store/storeContext';
 import { round, roundedText } from '../../../../intl';
 import {
   clampManualPacks,
+  isExpired,
   issuedUnits,
   lensToUnits,
   round9,
@@ -73,6 +75,7 @@ import {
 import {
   issueWarningMessages,
   manualEntryMessages,
+  reportsExpiredSkip,
   type PrescriptionWarningMessage,
 } from './allocationWarnings';
 import { expandAbbreviations } from '@/domain/directions';
@@ -83,6 +86,7 @@ import {
   type PrescriptionEditLinesResult,
 } from './prescriptionLineEdit.generated';
 import { Num } from '@/ui/elements/typography/Num';
+import { RowStatusBadges } from '@/sections/outbound-shipments/detail/RowStatusBadges';
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
@@ -178,6 +182,8 @@ const banner = (
         severity: 'info',
       };
     case 'messages.stock-expired':
+    case 'messages.stock-expired-skipped':
+    case 'messages.stock-expired-cannot-issue':
       return {
         text: t(message.key),
         testId: 'prescription-skipped-stock-warning-expired',
@@ -271,6 +277,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [warnings, setWarnings] = createSignal<PrescriptionWarningMessage[]>(
     []
   );
+  // The Batches section's open state (.56): closed as each item's grid lands,
+  // opened by a distribution that passes over expired stock (.75).
+  const [batchesOpen, setBatchesOpen] = createSignal(false);
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
@@ -326,6 +335,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     setIssueUnits(existingUnits > 0 ? round9(existingUnits) : undefined);
     setShortfall(0);
     setWarnings([]);
+    setBatchesOpen(false);
     setDirty(false);
     // Land ready to type: with the item's grid in hand, Issue is the next
     // field. Armed here rather than gated on a load flag — Issue is inert
@@ -405,12 +415,19 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       )
     );
     setShortfall(shortfallUnits);
-    setWarnings(
-      issueWarningMessages(derived, {
-        doses: dosesMode(),
-        dosesPerUnit: dosesPerUnit(),
-      })
+    const messages = issueWarningMessages(
+      derived,
+      { doses: dosesMode(), dosesPerUnit: dosesPerUnit() },
+      {
+        met: shortfallUnits <= 0,
+        expiredIssuable: !prefs().expiredStockPreventIssue,
+      }
     );
+    setWarnings(messages);
+    // Expired stock passed over opens the Batches section, so the batch drawn
+    // is seen beside the expired one (.75). Only a distribution opens it — a
+    // user who closed it keeps it closed until the next one reports the skip.
+    if (reportsExpiredSkip(messages)) setBatchesOpen(true);
     setIssueUnits(round9(issuedUnits(lines)));
     setDirty(true);
   };
@@ -672,10 +689,38 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     itemSearch.focus();
   };
 
+  const lineHeld = (line: DraftLine): boolean =>
+    line.stockLineOnHold || !!line.location?.onHold;
+
   const columns = createMemo((): Column<DraftLine, never>[] => {
     const vaccine = itemInfo()?.isVaccine ?? false;
     const cols: Column<DraftLine, never>[] = [
-      { c: { key: 'batch' }, header: () => t('label.batch') },
+      {
+        c: { key: 'batch' },
+        header: () => t('label.batch'),
+        // Expired / Near expiry / On hold beside the code, as on outbound —
+        // so once the section opens on a skip the expired batch is told apart
+        // (.75). A batch the expired guard's threshold skipped before its
+        // date reads Near expiry, not Expired.
+        cell: info => {
+          const line = info.row.original;
+          const expired = isExpired(line.expiryDate);
+          return (
+            <span class={styles.batchCell}>
+              {line.batch ?? ''}
+              <RowStatusBadges
+                expired={expired}
+                nearExpiry={
+                  !expired &&
+                  !!line.expiryDate &&
+                  isNearOrPastExpiry(line.expiryDate)
+                }
+                held={lineHeld(line)}
+              />
+            </span>
+          );
+        },
+      },
       {
         c: { key: 'expiryDate' },
         header: () => t('label.expiry'),
@@ -764,11 +809,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         ...getCellDefinition('activity'),
       },
       {
-        c: {
-          accessor: line =>
-            line.stockLineOnHold || (line.location?.onHold ?? false),
-          id: 'onHold',
-        },
+        // Kept beside the badge: cards hide the badge cluster, and this
+        // column's chip is then the only worded hold left (as on outbound).
+        c: { accessor: lineHeld, id: 'onHold' },
         header: () => t('label.on-hold'),
         ...getBooleanCell({ display: 'dot', label: t('label.on-hold') }),
       }
@@ -1052,13 +1095,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             }
           >
             {/* The batch grid folds behind a Batches disclosure, closed on
-              open (OMS-REG-DIS-03.56) — issuing allocates without it; the
-              user expands it for batch detail or per-batch entry. While
+              open (OMS-REG-DIS-03.56) — issuing allocates without it, unless
+              it passed over expired stock (.75); the user expands it for
+              batch detail or per-batch entry. While
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
             <Accordion
               collapsible
+              value={batchesOpen() ? ['batches'] : []}
+              onValueChange={value => setBatchesOpen(value.includes('batches'))}
               variant="card"
               // The dialog's main line table lives in here: in the
               // full-screen sheet the card runs to the sheet edges and the
