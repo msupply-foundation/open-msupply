@@ -189,7 +189,7 @@ describe("a patient's first document on the Details tab", () => {
 });
 
 /*
- * OMS-REG-PLG-05.17 (#1501): an existing patient whose document is on an
+ * OMS-REG-PLG-05.81: an existing patient whose document is on an
  * earlier version, which the migration leaves as it is, opens on the Details
  * tab with Save off and nothing to ask about on leaving, until an edit.
  */

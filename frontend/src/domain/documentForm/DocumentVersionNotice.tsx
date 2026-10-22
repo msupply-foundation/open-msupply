@@ -4,8 +4,8 @@
  * the Edit action that leaves an archived form for the current one. Rendered
  * by the screens that mount the document form host, above the form body;
  * nothing for a document on the current version, nor for one migrated into
- * the current form, whose problems show on its fields (#1501). Each version no
- * form can open, shown as recorded by the fallback renderer, says why.
+ * the current form, whose problems show on its fields. Each version no form
+ * can open, shown as recorded by the fallback renderer, says why.
  */
 import { Match, Switch, type JSX } from 'solid-js';
 import { t } from '../../intl';

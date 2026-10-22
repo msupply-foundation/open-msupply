@@ -203,7 +203,7 @@ describe('opening a document pinned to an earlier version', () => {
       },
     ]);
     // The migration moved and cleared values, so the form opens changed
-    // (OMS-REG-PLG-05.17, #1501).
+    // (OMS-REG-PLG-05.81).
     expect(form.isDirty()).toBe(true);
     expect(form.canSave()).toBe(true);
 
@@ -233,7 +233,7 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.kept().map(k => k.path)).toEqual(['extension.demo.adherence']);
   });
 
-  it('offers no save of a migrated document to a user who may not save', async () => {
+  it('offers no save of a migrated document to a user who may not save, and opens it clean', async () => {
     const form = await open(
       documentPinnedTo(V1, v1, v1Fixture),
       [],
@@ -244,6 +244,10 @@ describe('opening a document pinned to an earlier version', () => {
     );
     expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
     expect(form.draft.readOnly()).toBe(true);
+    // The migration changed this document, but a user who cannot save gets
+    // no stored baseline: nothing to be asked about on leaving
+    // (OMS-REG-PLG-05.81).
+    expect(form.isDirty()).toBe(false);
     expect(form.canSave()).toBe(false);
     expect(await form.save()).toBeUndefined();
     expect(graphqlFetch).toHaveBeenCalledTimes(1);
@@ -256,9 +260,9 @@ describe('opening a document pinned to an earlier version', () => {
   });
 
   /*
-   * OMS-REG-PLG-05.17 / .24 (#1501): a migrated document opens changed only
-   * when the migration changed what it holds. One it leaves as stored opens
-   * clean, Save off, until the user edits it; that save re-pins it.
+   * OMS-REG-PLG-05.81 / .82: a migrated document opens changed only when the
+   * migration changed what it holds. One it leaves as stored opens clean,
+   * Save off, until the user edits it; that save re-pins it.
    */
   it('opens a document the migration leaves unchanged clean, with Save off until an edit', async () => {
     // Nothing at a path the v1 → v2 step moves, clears or keeps.
@@ -294,13 +298,15 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.canSave()).toBe(true);
   });
 
-  it('discards back to the migrated document, not the stored one', async () => {
+  it('discards back to the migrated document, clean (OMS-REG-PLG-05.81)', async () => {
     const form = await open(documentPinnedTo(V1, v1, v1Fixture), []);
     form.draft.set('extension.demo.notes' as never, 'changed' as never);
     expect(form.isDirty()).toBe(true);
     form.discard();
-    // Still changed from the stored document: the migration's own changes.
-    expect(form.isDirty()).toBe(true);
+    // Back to the migrated document, which Discard then counts as the
+    // baseline: clean, so a leave guard that discarded it does not ask again.
+    expect(form.isDirty()).toBe(false);
+    expect(form.canSave()).toBe(false);
     expect(demo(form)?.notes).toBe(
       'Reports feeling well; some tiredness in the afternoons.'
     );

@@ -139,11 +139,11 @@ export interface DraftSchema {
 export interface DraftController<T> {
   draft: HostDraft<T>;
   /**
-   * Replaces the document, making the form pristine. `unresolved` carries
-   * the values a migration cleared, by the path they were cleared from.
-   * `stored`, when given, is what the dirty check compares against in place
-   * of the seed: a migrated document's data as stored, so the form opens
-   * dirty only when the migration changed it (#1501).
+   * Replaces the document. `unresolved` carries the values a migration
+   * cleared, by the path they were cleared from. `stored`, when given, is
+   * what the dirty check compares against in place of the seed: a migrated
+   * document's data as stored, so the form is pristine afterwards only when
+   * the seed equals it. Without `stored`, the form is pristine.
    */
   reset: (
     seed: T,

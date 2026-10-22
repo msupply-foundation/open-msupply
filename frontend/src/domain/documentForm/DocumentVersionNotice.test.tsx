@@ -83,8 +83,8 @@ describe('DocumentVersionNotice', () => {
     ]);
   });
 
-  // #1501: a migrated document's problems show on its fields.
-  it('says nothing for a document migrated into the current form (OMS-REG-PLG-05.17)', () => {
+  // A migrated document's problems show on its fields.
+  it('says nothing for a document migrated into the current form (OMS-REG-PLG-05.81)', () => {
     expect(shown({ kind: 'migrated', version: 2 })).toEqual([]);
   });
 

@@ -196,7 +196,7 @@ export const createPatientDocumentEditor = (
 
   // A patient without a document opens pristine and saves only once edited,
   // as the plain path does; so does a document migrated from an earlier
-  // version, unless the migration changed it (#1501).
+  // version, unless the migration changed it.
   const canSave = () =>
     documentForm.status() === 'ready' &&
     canMutate() &&
