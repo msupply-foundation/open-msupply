@@ -97,6 +97,12 @@ export interface HostDraft<T> extends Draft<T> {
    * the name when the field goes.
    */
   nameField(path: string, name: Accessor<FieldName | undefined>): () => void;
+  /**
+   * Whether a field on show has named `path`, or a path beneath it: the form
+   * renders that part of the document itself, so a host surface that would
+   * edit the same part (the encounter panel's Notes) stands down.
+   */
+  namesField(path: string): boolean;
 }
 
 /** How a field shows itself, for the error summary to name it the same way. */
@@ -369,6 +375,12 @@ export const createDraft = <T extends object>(
     errorFor: path => validation.errorFor(path),
     failedRule: path => errors().find(e => e.id === path)?.rule,
     visibleErrorPaths: () => validation.visible().map(e => e.id),
+    namesField: path => {
+      const shown = names();
+      return (
+        path in shown || Object.keys(shown).some(k => k.startsWith(`${path}.`))
+      );
+    },
     nameField: (path, name) => {
       setNames(previous => ({ ...previous, [path]: name }));
       return () =>
