@@ -66,13 +66,23 @@ docker buildx inspect | grep -iA6 'gc policy'   # must show the rules above, not
 ```
 
 - **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
-- **The first rule is the cargo caches**: one target dir per database and architecture, release and debug in each, plus the registry. 60 GB is a starting point — `docker buildx du --verbose` shows what they actually take.
+- **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 60 GB is a starting point — `docker buildx du --verbose` shows what they actually take.
 - **The second bounds the whole build cache** and keeps 30 GB of the disk free for images and deployments' databases.
 - `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
 
 ## Sizing
 
-Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
+Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer.
+
+**Nothing on the host caps a lane's memory.** A job's real work does not run in the runner's process tree: `docker buildx build` compiles inside dockerd's BuildKit, and `docker run` containers run under containerd. A limit on the runner's systemd unit only ever covers the runner and the `docker` client, so it cannot stop a build. What bounds memory is how much each build runs at once (cargo's job count) and limits set on the containers themselves — add lanes only as far as the busiest days leave headroom, and watch available memory when you do.
+
+**Add swap.** With none, a brief spike past free memory goes straight to the OOM killer, which may pick a deployment's postgres; with some, it slows down instead:
+
+```bash
+sudo fallocate -l 16G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+``` Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
 
 ## User and directories
 
@@ -152,9 +162,9 @@ WorkingDirectory=$HOME/actions-runner-%i
 ExecStart=$HOME/actions-runner-%i/run.sh
 Restart=always
 RestartSec=5
-# One cold build cannot starve the deployments and the other lanes: past this
-# the kernel reclaims from the lane rather than from the rest of the machine.
-MemoryHigh=10G
+# No MemoryHigh/MemoryMax: the builds and containers a job starts run under
+# dockerd and containerd, not this unit, so a limit here never reaches them.
+# See "Sizing".
 # run.sh traps SIGTERM and passes it to the runner, which finishes or cancels
 # the job it holds instead of dying mid-job. `mixed` sends the SIGTERM to
 # run.sh alone, and SIGKILLs whatever is left only after TimeoutStopSec.
@@ -169,7 +179,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4
 ```
 
-The deploy lane has a unit of its own, with the same stop behaviour but **no memory cap** — it is the lane that tears a stack down when the box is full:
+The deploy lane has a unit of its own, with the same stop behaviour. It is the lane that tears a stack down when the box is full:
 
 ```bash
 sudo tee /etc/systemd/system/actions-runner-deploy.service >/dev/null <<EOF
