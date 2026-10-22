@@ -53,7 +53,7 @@ export interface CreateEncounterDialogProps {
   /** Preselected type: the patient's latest encounter's, as the old client. */
   defaultType?: string;
   /**
-   * Opened as the prompt after Save as visited (internal #1656) rather than
+   * Opened as the prompt after Save as visited rather than
    * as New encounter: titled "Schedule the next visit" over "Saved as
    * visited.", its note asked for as the reason, Not now and Book for its
    * buttons, and the visit date and reason starting from the suggestion.

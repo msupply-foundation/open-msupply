@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
  * The create-encounter dialog's refusal of a type that is out of step
  * (OMS-REG-PLG-05.64): said as soon as the type is chosen, with Create
  * disabled, so nothing is filled in for a visit that can't be started. And
- * its next-visit mode (internal #1656), the prompt after Save as visited:
+ * its next-visit mode, the prompt after Save as visited:
  * the same dialog under another title, prefilled with the suggestion. The
  * library components are stand-ins that keep their props.
  */
@@ -210,7 +210,7 @@ describe('OMS-REG-PLG-05.64 — a type out of step is not started', () => {
   });
 });
 
-describe('the prompt to schedule the next visit (#1656)', () => {
+describe('the prompt to schedule the next visit', () => {
   const suggestion = {
     patientName: 'Smith, Jay',
     startDatetime: '2026-11-05T09:30:00.000Z',

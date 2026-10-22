@@ -96,7 +96,7 @@ import { fetchNextVisit, type NextVisit } from './nextVisit';
  * its archived form, with Edit to bring it into the current one, or in the
  * current form after migration.
  *
- * The footer's save follows the status (internal #1656, the same prototype;
+ * The footer's save follows the status (the same prototype;
  * the old client's Save progress and Mark as visited). A Scheduled or Missed
  * visit, Pending as stored, offers Save as visited, which records the status
  * and, where none is recorded, the end time (domain/encounter/visited.ts),

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { suggestNextVisit } from './nextVisit';
 
 /*
- * What the prompt after Save as visited is prefilled with (internal #1656;
- * spec/vaccination-card rules § effects on the encounter): the card's
+ * What the prompt after Save as visited is prefilled with
+ * (spec/vaccination-card rules § effects on the encounter): the card's
  * earliest suggested date still to come, else the type's own suggestion
  * where still to come.
  */

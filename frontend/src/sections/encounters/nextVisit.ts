@@ -9,7 +9,7 @@ import {
 import { EncounterNextDoses, EncounterNextVisit } from './encounter.generated';
 
 /*
- * The prompt after Save as visited (internal #1656; Product's
+ * The prompt after Save as visited (Product's
  * program-enrolment prototype): "Schedule the next visit", prefilled with the
  * same visit type, a suggested date and a reason. What fills it, and which
  * types it offers, are read here once the save has landed, since the server
