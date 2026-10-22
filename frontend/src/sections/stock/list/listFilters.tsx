@@ -7,6 +7,7 @@ import {
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
 import { masterListsResource } from '../../../domain/masterList';
+import { campaignKindLabel, campaignsResource } from '../../../domain/campaign';
 import { vvmStatusesResource } from '../../../domain/vvmStatus';
 import { stockPreferences } from '../../../store/storeContext';
 import type { StockLinesVariables } from './stock.generated';
@@ -62,6 +63,32 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
         onChange={value =>
           props.setPartialFilter({
             masterList: value ? { id: { equalTo: value } } : null,
+          })
+        }
+      />
+    ),
+  },
+  // Activity — single-select of the campaign register (both kinds), matching
+  // the line's campaign. Each option reads back qualified by its kind, as the
+  // Activity picker does, since a name can repeat across the two kinds.
+  // Offered only when the register has entries (gated in filterFields below).
+  campaignId: {
+    label: () => t('label.activity'),
+    render: props => (
+      <FilterSelect
+        label={t('label.activity')}
+        testId={props.testId}
+        value={props.filter().campaignId?.equalTo ?? ''}
+        options={[
+          { value: '', label: t('label.any') },
+          ...campaignsResource.noSuspense().map(c => ({
+            value: c.id,
+            label: `${campaignKindLabel(c.kind)} · ${c.name}`,
+          })),
+        ]}
+        onChange={value =>
+          props.setPartialFilter({
+            campaignId: value ? { equalTo: value } : null,
           })
         }
       />
@@ -141,20 +168,22 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
   storeId: null,
   isAvailable: null,
   isActive: null,
-  campaignId: null,
 });
 
 // The filters offered, gated reactively (spec/stock S1 › filters):
 //  - VVM status only when manageVvmStatusForStock is on.
 //  - Master list only when the store has any master lists.
+//  - Activity only when the campaign register has any entries.
 // ALL_FILTERS is a stable module const (labels are accessors), so filtering it
 // keeps each Filter's identity — FilterBar's <For> reuses chips, no remount.
 export const filterFields = (): Filter<StockFilter>[] => {
   const prefs = stockPreferences();
   const hasMasterLists = masterListsResource.noSuspense().length > 0;
+  const hasCampaigns = campaignsResource.noSuspense().length > 0;
   return ALL_FILTERS.filter(f => {
     if (f.key === 'vvmStatusId') return prefs.manageVvmStatusForStock;
     if (f.key === 'masterList') return hasMasterLists;
+    if (f.key === 'campaignId') return hasCampaigns;
     return true;
   });
 };
