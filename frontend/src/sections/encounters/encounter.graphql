@@ -80,3 +80,49 @@ query encounterPrevious(
     }
   }
 }
+
+# After Save as visited, what to suggest for the next visit (nextVisit.ts):
+# the date the encounter type's configuration works out from the visit just
+# saved, with its label, which the prompt offers as the reason. Read after
+# the save, since the server derives it from the saved document's events.
+query encounterNextVisit($storeId: String!, $id: String!) {
+  encounters(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        suggestedNextEncounter {
+          __typename
+          startDatetime
+          label
+        }
+      }
+    }
+  }
+}
+
+# For an immunisation enrolment, each dose's suggested date and label: the
+# next visit is suggested for the earliest still to come
+# (spec/vaccination-card rules § effects on the encounter).
+query encounterNextDoses($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    ... on VaccinationCardNode {
+      __typename
+      id
+      items {
+        __typename
+        id
+        label
+        suggestedDate
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
