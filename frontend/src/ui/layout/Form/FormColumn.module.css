@@ -3,9 +3,8 @@
  * min-inline-size: 0 lets a column shrink below its content's intrinsic width
  * so long field labels/values don't force overflow. Its flex-basis (the shared
  * width and the single-stack wrap point) lives in FormColumns.module.css, on
- * the row's columns only: a basis is a WIDTH in that row, but in a vertical
- * flex parent (a Stack) it became a 22rem minimum HEIGHT, so a one-field form
- * stood over a tall empty band (issue #1582).
+ * the row's columns only: a basis is a width in that row, but in a vertical
+ * flex parent (a Stack) it would be a minimum height.
  */
 .column {
   min-inline-size: 0;
