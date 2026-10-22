@@ -82,7 +82,17 @@ const mount = () =>
     dispose = d;
     return createAssetScan({ storeId: () => 'store', onOpen: () => {} });
   });
+
 describe('scanning from the equipment register', () => {
+  it('OMS-REG-CCE-04.37 listens from arrival with a hardware scanner — nothing to press', async () => {
+    setSourcesForTest([hardware]);
+    await refreshScanSources();
+    const scan = mount();
+    await settle();
+    expect(scan.control.listening()).toBe(true);
+    expect(scan.control.needsPress()).toBe(false);
+  });
+
   it('OMS-REG-CCE-04.39 a scan matching nothing says so in plain words, without the scanned content', async () => {
     answers = {
       assetById: { kind: 'success', data: { assets: { nodes: [] } } },
@@ -90,9 +100,6 @@ describe('scanning from the equipment register', () => {
     setSourcesForTest([hardware]);
     await refreshScanSources();
     const scan = mount();
-    await settle();
-    // The register waits to be pressed (ui-surface § R1).
-    await scan.control.press();
     await settle();
 
     handlers?.onScan({ kind: 'text', text: 'FRIDGE-404' });

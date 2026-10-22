@@ -24,6 +24,7 @@ query prescriptionEditLines(
       inStorePacks
       availablePacks
       stockLineOnHold
+      barcode
       dosesPerUnit
       location {
         code
