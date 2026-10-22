@@ -123,6 +123,7 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
       // Selecting a purchase order opens it in the purchase-order area
       // (OMS-REG-REPL-08.23).
       onRowClick={() => navigate(purchaseOrderAreaPath(params.storeId))}
+      rowHref={() => purchaseOrderAreaPath(params.storeId)}
     />
   );
 };

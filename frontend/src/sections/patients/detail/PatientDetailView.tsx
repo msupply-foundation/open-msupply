@@ -210,8 +210,12 @@ const PatientDetailView: Component = () => {
   );
   const encounters = () => gated(encountersData) ?? [];
 
+  const encounterHref = (encounter: { id: string }) =>
+    `/${params.storeId}/dispensary/encounter/${encounter.id}`;
   const openEncounter = (encounter: { id: string }) =>
-    navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
+    navigate(encounterHref(encounter));
+  const vaccinationCardHref = (enrolment: { id: string }) =>
+    `/${params.storeId}/dispensary/patients/${params.patientId}/vaccination-card/${enrolment.id}`;
 
   // The record-create actions, over the registry entries the server lets this
   // user see: every enrolment type, and the encounter types of the programs the
@@ -569,6 +573,7 @@ const PatientDetailView: Component = () => {
                     rows={encounters()}
                     loading={encountersData.loading}
                     onRowClick={openEncounter}
+                    rowHref={encounterHref}
                     enrolmentRegistries={enrolmentRegistries()}
                   />
                 </TabPanel>
@@ -578,11 +583,8 @@ const PatientDetailView: Component = () => {
                     loading={enrolmentsData.loading}
                     tableId="patient-vaccination-card-list"
                     emptyMessage={t('messages.no-programs')}
-                    onRowClick={row =>
-                      navigate(
-                        `/${params.storeId}/dispensary/patients/${params.patientId}/vaccination-card/${row.id}`
-                      )
-                    }
+                    onRowClick={row => navigate(vaccinationCardHref(row))}
+                    rowHref={vaccinationCardHref}
                   />
                 </TabPanel>
               </Show>

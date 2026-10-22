@@ -9,6 +9,7 @@ import { t } from '../../../intl';
 import { renderTemplate } from './renderTemplate';
 import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
+import { RowLink, leftToBrowser } from './RowLink';
 import type { GroupPosition } from './rowGroups';
 import styles from './DataTable.module.css';
 
@@ -91,6 +92,8 @@ export function TableRow<T>(props: {
   onRowClick?: (row: T) => void;
   /** Whether `onRowClick` applies to this row (see DataTable's prop). */
   rowClickable?: (row: T) => boolean;
+  /** The address a clickable row opens, as a link (see DataTable's prop). */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Keyboard row navigation (spec/keyboard KB-N1). When set, this row can take
    * the keyboard highlight: the arrows move real DOM focus onto it and `Enter`
@@ -172,6 +175,12 @@ export function TableRow<T>(props: {
   const clickable = () =>
     props.onRowClick !== undefined &&
     (props.rowClickable?.(props.row.original) ?? true);
+  // Only a row that opens something can be a link to it; a group header row
+  // opens nothing.
+  const href = () =>
+    clickable() && !props.row.getIsGrouped()
+      ? props.rowHref?.(props.row.original)
+      : undefined;
   return (
     <tr
       data-testid="table-row"
@@ -222,8 +231,9 @@ export function TableRow<T>(props: {
       onFocus={event => {
         if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
       }}
-      onClick={() => {
-        if (clickable()) props.onRowClick?.(props.row.original);
+      onClick={event => {
+        if (!clickable() || leftToBrowser(event)) return;
+        props.onRowClick?.(props.row.original);
       }}
     >
       <Show when={props.enableSelection}>
@@ -311,6 +321,8 @@ export function TableRow<T>(props: {
                 // below that sentinel is a real cap. A pinned column
                 // additionally gets sticky position + offset.
                 data-wrap={cellWrapLines(cell) ? '' : undefined}
+                // The row's link fills this cell behind its content (RowLink).
+                data-row-link={href() ? '' : undefined}
                 style={{
                   'min-width': `${cell.column.getSize()}px`,
                   ...(cellMaxWidthPx(cell) !== undefined
@@ -322,6 +334,7 @@ export function TableRow<T>(props: {
                   ...props.pinnedStyle(cell.column),
                 }}
               >
+                <Show when={href()}>{link => <RowLink href={link()} />}</Show>
                 {/* A grouped cell continuing the previous row's value renders
                   nothing. */}
                 {grouped ? (

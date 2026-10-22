@@ -208,8 +208,9 @@ const PurchaseOrdersList: Component = () => {
     clearSelection();
   };
 
-  const openRow = (row: Row) =>
-    navigate(`/${params.storeId}/replenishment/purchase-order/${row.id}`);
+  const rowHref = (row: Row) =>
+    `/${params.storeId}/replenishment/purchase-order/${row.id}`;
+  const openRow = (row: Row) => navigate(rowHref(row));
 
   // Columns and crumbs are accessors (not plain arrays): their text comes from
   // t(), which must be read in a reactive scope to re-translate on a language
@@ -372,6 +373,7 @@ const PurchaseOrdersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // A Sent or Finalised order is closed to change, which the row says
         // outright (OMS-FUN-PO-15.10) — a standing property of the record, so
         // the list mirrors it.

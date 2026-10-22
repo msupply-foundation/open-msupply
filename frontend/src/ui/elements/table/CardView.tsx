@@ -19,6 +19,7 @@ import {
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
 import { isKeyboardFocus } from './createRowFocus';
+import { RowLink, leftToBrowser } from './RowLink';
 import { visibleOnCard, type CardGroup } from './columnTypes';
 import {
   cardFieldMaxRem,
@@ -322,7 +323,13 @@ function DisclosureGroup<T, G extends string>(props: {
       defaultValue={props.group.disclosure === 'open' ? [props.group.key] : []}
     >
       <AccordionItem value={props.group.key}>
-        <div onClick={event => event.stopPropagation()}>
+        {/* Keeps its own pointer events on a linked card (RowLink): a click
+            inside an open disclosure must not fall through to the card's link
+            any more than it reaches the row. */}
+        <div
+          class={styles.cardDisclosure}
+          onClick={event => event.stopPropagation()}
+        >
           <div class={styles.cardDisclosureHead}>
             <AccordionTrigger class={styles.cardDisclosureTrigger}>
               {/* Reuse the group caption's exact icon+label lead so a
@@ -369,6 +376,8 @@ export function CardView<T, G extends string>(props: {
   onRowClick?: (row: T) => void;
   /** Whether `onRowClick` applies to a row (see DataTable's prop). */
   rowClickable?: (row: T) => boolean;
+  /** The address a clickable row opens, as a link (see DataTable's prop). */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Semantic text tone (see DataTable's rowTone) — in card view the tone
    * paints the card's IDENTITY title only (a whole-card repaint would
@@ -441,6 +450,8 @@ export function CardView<T, G extends string>(props: {
         const clickable = () =>
           props.onRowClick !== undefined &&
           (props.rowClickable?.(row.original) ?? true);
+        const href = () =>
+          clickable() ? props.rowHref?.(row.original) : undefined;
         return (
           <tr
             class={`${styles.cardRow} ${clickable() ? styles.rowClickable : ''}`}
@@ -466,12 +477,18 @@ export function CardView<T, G extends string>(props: {
             onFocus={event => {
               if (isKeyboardFocus(event)) rowFocus()?.onFocus();
             }}
-            onClick={() => {
-              if (clickable()) props.onRowClick?.(row.original);
+            onClick={event => {
+              if (!clickable() || leftToBrowser(event)) return;
+              props.onRowClick?.(row.original);
             }}
           >
             <td class={styles.cardCell}>
-              <div class={styles.card}>
+              {/* The row's link fills the card behind its content (RowLink). */}
+              <div
+                class={styles.card}
+                data-row-link={href() ? '' : undefined}
+              >
+                <Show when={href()}>{link => <RowLink href={link()} />}</Show>
                 <div class={styles.cardHeader}>
                   <Show when={props.enableSelection}>
                     <BareCheckbox

@@ -15,6 +15,8 @@ export interface EncountersPanelProps {
   loading: boolean;
   /** Opens the encounter's record screen. */
   onRowClick: (encounter: Row) => void;
+  /** The encounter screen's address — makes each row a link. */
+  rowHref?: (encounter: Row) => string | undefined;
   /** The enrolment registries, whose names the Program column shows. */
   enrolmentRegistries: readonly { contextId: string; name: string | null }[];
 }
@@ -41,6 +43,7 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
       rowKey={r => r.id}
       loading={props.loading}
       onRowClick={props.onRowClick}
+      rowHref={props.rowHref}
       emptyMessage={t('messages.no-encounters')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}

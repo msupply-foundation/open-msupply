@@ -630,6 +630,62 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   cursor: pointer;
 }
 
+/* A row's LINK (rowHref; RowLink.tsx, #271): an empty <a> filling each cell —
+   or each card — BEHIND its content, so right-clicking anywhere on the row
+   offers the browser's "Open link in new tab".
+   - The host (`data-row-link`) is its own stacking context, so the link's
+     negative z-index puts it under the content but above the host's own fill
+     (row tints, the pinned cell's opaque surface) rather than beneath it.
+   - The host's pointer events are off and the link's on, so a pointer over the
+     content — text included — falls through to the link.
+   - Controls and anything with its own tooltip take theirs back on: they sit
+     above the link, so a button, checkbox or real link in a cell still works,
+     and a `title` still shows.
+   A pinned cell is already positioned (sticky); re-declaring it relative would
+   unstick it, so only an unpinned cell is made the link's containing block. */
+[data-row-link] {
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.td[data-row-link]:not([data-pinned]),
+.card[data-row-link] {
+  position: relative;
+}
+
+.rowLink {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: auto;
+}
+
+[data-row-link]
+  :is(
+    a[href],
+    button,
+    input,
+    select,
+    textarea,
+    label,
+    summary,
+    [tabindex],
+    [title],
+    [role='button'],
+    [role='checkbox'],
+    [role='switch'],
+    [role='combobox'],
+    [role='link']
+  ) {
+  pointer-events: auto;
+}
+
+/* A card's disclosure stops clicks reaching the row (CardView), so it keeps
+   them from reaching the card's link too. */
+[data-row-link] .cardDisclosure {
+  pointer-events: auto;
+}
+
 /* Row hover wash (ui-standards § tables): every body row, not just
    clickable ones — a 4% text-tone wash, ≡ the spec's rgba(0,0,0,0.04)
    in light, flipping to a near-white wash in dark. Painted on the CELLS
