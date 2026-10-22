@@ -44,10 +44,9 @@ docker run --rm --platform linux/arm64 debian:trixie-slim uname -m   # -> aarch6
 
 **Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 2.5 GB, and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
 
-`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. The limits are tracked in [`.github/deploy/host/daemon.json`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/deploy/host/daemon.json) and installed with the runner units (see [systemd](#systemd)):
+`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. The limits are tracked in [`.github/deploy/host/daemon.json`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/deploy/host/daemon.json), and the daily [host check](#systemd) gives the commands to write it when the box's differs. Then:
 
 ```bash
-.github/scripts/host-config.sh install
 sudo systemctl restart docker
 docker buildx inspect | grep -iA6 'gc policy'   # must show the repo's rules, not the defaults
 ```
@@ -135,14 +134,16 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 ### systemd
 
-The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane. Install them from a checkout on the box, as the runner user — the script fills in your user and home, and uses `sudo` itself:
+The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
+
+**`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees.
+
+On a new box, before any lane can run that workflow, copy the two files from the repo by hand with `@USER@`/`@HOME@` filled in, then:
 
 ```bash
-.github/scripts/host-config.sh install
+sudo systemctl daemon-reload
 sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner-deploy
 ```
-
-`install` restarts nothing: it writes what differs, reloads systemd and prints the restarts that change needs, for a moment when nothing is running. **`docker-deploy-services.yaml` checks the box against the repo on its daily run** and puts any difference in its job summary as a warning, so a hand edit on the box shows up instead of drifting. To change a unit, change the repo's copy and install it; an edit made only on the box is reported until the repo agrees.
 
 ```bash
 systemctl status 'actions-runner*'
