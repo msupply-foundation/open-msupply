@@ -92,6 +92,7 @@ const playwrightGlobs = () => {
 // skip rather than fail, or `pnpm check` could never pass in the public repo.
 // The mirror machinery is itself unpublished, so its absence marks the mirror.
 const PLAYWRIGHT_CONFIG = 'e2e/playwright.config.ts';
+const A11Y_SHOWCASE_CONFIG = 'e2e/a11y/showcase.config.ts';
 const IN_MIRROR = !existsSync('../.github/mirror/rules.txt');
 
 const RUNNERS = [
@@ -134,6 +135,17 @@ const RUNNERS = [
       workflow: 'frontend-e2e-nightly.yaml',
       command: 'playwright test --config e2e/playwright.config.ts',
       step: /playwright test --config e2e\/playwright\.config\.ts/,
+    },
+  },
+  // The showcase accessibility scan: its own Playwright config, served by
+  // `vite preview` rather than a backend, so the per-PR gate can run it.
+  existsSync(A11Y_SHOWCASE_CONFIG) && {
+    name: 'Playwright showcase a11y (`pnpm a11y:showcase`)',
+    globs: ['e2e/a11y/**/*.spec.ts'],
+    ci: {
+      workflow: 'frontend-check-test.yaml',
+      command: 'pnpm a11y:showcase',
+      step: /^[ \t]*run:[ \t]*pnpm a11y:showcase[ \t]*$/m,
     },
   },
 ].filter(Boolean);
