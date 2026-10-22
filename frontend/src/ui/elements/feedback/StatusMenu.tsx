@@ -4,8 +4,8 @@ import { CheckIcon, ChevronDownIcon } from '../../icons';
 import { StatusChip } from './StatusChip';
 import styles from './StatusMenu.module.css';
 
-export interface StatusMenuOption {
-  value: string;
+export interface StatusMenuOption<V extends string = string> {
+  value: V;
   label: string;
   /** The option's chip colour — a `--status-*` token, as StatusChip takes. */
   colour: string;
@@ -17,7 +17,7 @@ export interface StatusMenuOption {
   title?: string;
 }
 
-export interface StatusMenuProps {
+export interface StatusMenuProps<V extends string = string> {
   /**
    * The chip as shown: the record's status in the words the screen uses for
    * it. May differ from `value` — an encounter still Scheduled whose date has
@@ -26,10 +26,10 @@ export interface StatusMenuProps {
   label: string;
   colour: string;
   /** The statuses the menu offers, each with its own chip colour. */
-  options: StatusMenuOption[];
+  options: StatusMenuOption<V>[];
   /** The stored status, which the menu marks as current. */
-  value?: string;
-  onSelect: (value: string) => void;
+  value?: V;
+  onSelect: (value: V) => void;
   /**
    * Accessible name for the trigger, which has no text of its own beyond the
    * chip — say what it is and what it does ("Status: Scheduled. Change
@@ -60,14 +60,17 @@ export interface StatusMenuProps {
  * chip and marks the current one. Kobalte DropdownMenu with a RadioGroup
  * (headless) for the trigger wiring, roving focus, type-ahead and the
  * `aria-checked` current item; our markup + CSS, the house menu look
- * (SplitButton's dense divided rows), styled off its data-* state.
+ * (SplitButton's dense divided rows, its metrics), styled off its data-*
+ * state. Typed by the status union it offers, so a pick needs no cast.
  *
  * Picking an item only reports it (`onSelect`): what a status change means —
  * an edit to save, a save in itself — is the screen's. The read-only form
  * (`disabled`) renders the chip alone, since a caret with nothing behind it
  * would promise a change the user cannot make.
  */
-export const StatusMenu = (props: StatusMenuProps): JSX.Element => (
+export const StatusMenu = <V extends string>(
+  props: StatusMenuProps<V>
+): JSX.Element => (
   <Show
     when={!props.disabled}
     fallback={

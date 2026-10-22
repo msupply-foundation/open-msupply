@@ -53,6 +53,7 @@ export type EncounterPreviousVariables = {
   storeId: string;
   patientId: string;
   type: string;
+  before: string;
   first: number;
 };
 
@@ -71,7 +72,7 @@ export type EncounterPreviousResult = {
 };
 
 export const EncounterPrevious = {
-  query: "query encounterPrevious($storeId: String!, $patientId: String!, $type: String!, $first: Int!) {\n  encounters(\n    storeId: $storeId\n    filter: {patientId: {equalTo: $patientId}, type: {equalTo: $type}}\n    sort: {key: startDatetime, desc: true}\n    page: {first: $first}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      totalCount\n      nodes {\n        __typename\n        id\n        startDatetime\n        status\n      }\n    }\n  }\n}",
+  query: "query encounterPrevious($storeId: String!, $patientId: String!, $type: String!, $before: DateTime!, $first: Int!) {\n  encounters(\n    storeId: $storeId\n    filter: {patientId: {equalTo: $patientId}, type: {equalTo: $type}, startDatetime: {beforeOrEqualTo: $before}}\n    sort: {key: startDatetime, desc: true}\n    page: {first: $first}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      totalCount\n      nodes {\n        __typename\n        id\n        startDatetime\n        status\n      }\n    }\n  }\n}",
 } as TypedDocument<EncounterPreviousResult, EncounterPreviousVariables>;
 
 export type EncounterNextVisitVariables = {

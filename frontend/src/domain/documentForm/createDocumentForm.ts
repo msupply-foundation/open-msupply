@@ -52,7 +52,7 @@ import {
   createSaveCoordinator,
   type SaveCoordinator,
 } from '../../plugins/formParticipation';
-import { createDraft, type Draft } from './draft';
+import { createDraft, type HostDraft } from './draft';
 import {
   applyMigrations,
   keptFields,
@@ -227,7 +227,7 @@ export interface DocumentForm<T> {
    * stays loading, and the screen says so rather than spinning.
    */
   libraryFailed: Accessor<boolean>;
-  draft: Draft<T>;
+  draft: HostDraft<T>;
   /**
    * The form's own part in the save (FormParticipation), for the plugin form
    * to take through its slot: a form's dirty state and validity count with

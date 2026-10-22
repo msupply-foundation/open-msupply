@@ -1,21 +1,20 @@
 import { t } from '@/intl';
+import type { EncounterStatus } from '@/plugin-sdk/documents';
 import { encounterStatusLabel, encounterTiming } from './encounterColumns';
 
 /*
- * An encounter's status as the record screen shows it (internal #468,
- * Product's program-enrolment prototype): the stored status, except that a
- * Scheduled encounter whose start has passed reads Missed — the old client's
- * "Encounter Missed" note beside the screen's title, folded into the status
- * chip. The list's timing chip judges the same thing the same way
- * (encounterColumns › encounterTiming).
+ * An encounter's status as the record screen shows it (Product's
+ * program-enrolment prototype): the stored status, except that a Scheduled
+ * encounter whose day has passed reads Missed — the old client's "Encounter
+ * Missed" note beside the screen's title, folded into the status chip. The
+ * list's timing chip judges the same thing the same way (encounterColumns ›
+ * encounterTiming).
  */
 
-type StoredStatus = 'PENDING' | 'VISITED' | 'CANCELLED' | 'DELETED';
-
-export type EncounterDisplayStatus = StoredStatus | 'MISSED';
+export type EncounterDisplayStatus = EncounterStatus | 'MISSED';
 
 /** The statuses a user can move an encounter to, in the order offered. */
-export const SETTABLE_STATUSES: readonly StoredStatus[] = [
+export const SETTABLE_STATUSES: readonly EncounterStatus[] = [
   'PENDING',
   'VISITED',
   'CANCELLED',
@@ -35,7 +34,7 @@ export const ENCOUNTER_STATUS_COLOUR: Record<EncounterDisplayStatus, string> = {
 };
 
 export const encounterDisplayStatus = (
-  status: StoredStatus | null | undefined,
+  status: EncounterStatus | null | undefined,
   startDatetime: string | undefined,
   now: Date
 ): EncounterDisplayStatus | undefined => {
@@ -59,7 +58,7 @@ export const encounterDisplayLabel = (
 
 /** The chip for a status: its word and colour. */
 export const encounterStatusChip = (
-  status: StoredStatus | null | undefined,
+  status: EncounterStatus | null | undefined,
   startDatetime: string | undefined,
   now: Date
 ): { label: string; colour: string } | undefined => {

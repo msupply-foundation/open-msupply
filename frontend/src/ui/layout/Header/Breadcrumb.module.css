@@ -49,6 +49,16 @@
 }
 
 /*
+ * The record's status after the leaf: on the title's line, a chip's width
+ * from it, never wrapping on its own (the trail wraps as a whole).
+ */
+.status {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/*
  * The leaf is the page's <h1>, but visually just another crumb — heading
  * semantics, trail looks (the UA's h1 size/weight/margins are all reset).
  */
