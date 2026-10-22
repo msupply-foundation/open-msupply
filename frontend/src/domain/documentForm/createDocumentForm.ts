@@ -300,14 +300,22 @@ export interface SaveInput {
   /** The latest version's document id; absent for the first save. */
   parent: string | undefined;
   data: unknown;
+  /**
+   * The schema version to pin the written version to: the entry's current
+   * one unless given. A write of the stored data as it stands (a delete)
+   * pins to the version it was recorded under, so data of an earlier version
+   * is neither pinned unmigrated to the current schema nor refused by it.
+   */
+  schemaId?: string;
 }
 
 /*
  * The category's own mutation: each has an insert and an update, and the
  * server derives the category's flat row (program_enrolment, encounter) and
  * its program events from the saved document, or, for a patient, projects
- * its base fields onto the patient's name row. The schema id is always the
- * entry's current one, so an edit re-pins the document to it. A save refused
+ * its base fields onto the patient's name row. The schema id is the entry's
+ * current one unless the caller pins another, so an edit re-pins the document
+ * to it. A save refused
  * for permission goes to the app's permission-denied modal, as every other
  * screen's does (spec/startup § permission denied), never shown as the
  * server's text. Exported for a create step that writes a document before
@@ -318,7 +326,7 @@ export const persistDocument = async (
 ): Promise<SaveOutcome> => {
   const { storeId, patientId, registry, parent, data } = input;
   const type = registry.documentType;
-  const schemaId = registry.formSchemaId;
+  const schemaId = input.schemaId ?? registry.formSchemaId;
   const options = { returnGraphqlErrors: true };
   const outcome = <R>(
     result: GraphqlResult<R>,

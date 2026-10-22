@@ -174,12 +174,15 @@ const EncounterDetailView: Component = () => {
     void form.save();
   };
 
-  // Delete: the document as stored, written again with the Deleted status.
-  // Not the form's save, which would validate the draft (an empty visit with
-  // required fields could never be deleted), save whatever was edited along
-  // with the deletion, and run the form's own save steps — a prescription
-  // control's would issue stock against a visit being thrown away. What was
-  // edited is dropped with the record. A refusal is shown above the form.
+  // Delete: the document as stored, written again with the Deleted status,
+  // pinned to the schema version it was recorded under (its data is not
+  // migrated, so the current version could refuse it or be pinned to it
+  // wrongly). Not the form's save, which would validate the draft (an empty
+  // visit with required fields could never be deleted), save whatever was
+  // edited along with the deletion, and run the form's own save steps — a
+  // prescription control's would issue stock against a visit being thrown
+  // away. What was edited is dropped with the record. A refusal is shown
+  // above the form.
   const [deleting, setDeleting] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string>();
   const deleteEncounter = async () => {
@@ -194,6 +197,7 @@ const EncounterDetailView: Component = () => {
       registry: r,
       parent: stored.id,
       data: { ...(stored.data as object), status: 'DELETED' },
+      schemaId: stored.schema?.id,
     });
     setDeleting(false);
     if (result.kind === 'refused') {
