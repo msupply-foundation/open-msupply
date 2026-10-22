@@ -10,7 +10,10 @@ use crate::{
 };
 
 use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
-use diesel::{dsl::sum, prelude::*};
+use diesel::{
+    dsl::{not, sum},
+    prelude::*,
+};
 use std::collections::HashMap;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -143,7 +146,9 @@ impl<'a> LocationRepository<'a> {
                         query = query.filter(location::id.eq_any(sub_query));
                     }
                     false => {
-                        query = query.filter(location::id.ne_all(sub_query));
+                        // `not(eq_any)` not `ne_all`: Postgres hashes `NOT (x = ANY(sub))` but
+                        // re-scans `x != ALL(sub)` once per outer row.
+                        query = query.filter(not(location::id.eq_any(sub_query)));
                     }
                 }
             }

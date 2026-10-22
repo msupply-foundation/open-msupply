@@ -6,7 +6,7 @@ use super::{
 };
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin, not},
     prelude::*,
 };
 use serde::{Deserialize, Serialize};
@@ -369,26 +369,29 @@ impl<'a> ItemRepository<'a> {
                 )
                 .group_by(store_stock_on_hand::item_id);
 
-            query =
-                match (is_visible_or_on_hand, has_stock_on_hand) {
-                    // visible items AND non-visible items with stock on hand
-                    (Some(true), _) => query.filter(
-                        item::id
-                            .eq_any(visible_item_ids.clone().into_boxed())
-                            .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
-                    ),
-                    // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
-                    // Items with stock on hand
-                    (_, Some(true)) => query
-                        .filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+            query = match (is_visible_or_on_hand, has_stock_on_hand) {
+                // visible items AND non-visible items with stock on hand
+                (Some(true), _) => query.filter(
+                    item::id
+                        .eq_any(visible_item_ids.clone().into_boxed())
+                        .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+                ),
+                // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
+                // Items with stock on hand
+                (_, Some(true)) => {
+                    query.filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed()))
+                }
 
-                    // Items with no stock on hand
-                    (_, Some(false)) => query
-                        .filter(item::id.ne_all(item_ids_with_stock_on_hand.clone().into_boxed())),
+                // Items with no stock on hand.
+                // `not(eq_any)` not `ne_all`: Postgres hashes `NOT (x = ANY(sub))` but
+                // re-scans `x != ALL(sub)` once per outer row.
+                (_, Some(false)) => query.filter(not(
+                    item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())
+                )),
 
-                    // no stock_on_hand filters
-                    (_, _) => query,
-                };
+                // no stock_on_hand filters
+                (_, _) => query,
+            };
 
             query = match (is_visible_or_on_hand, is_visible) {
                 // visible items AND non-visible items with stock on hand
@@ -401,7 +404,9 @@ impl<'a> ItemRepository<'a> {
                 (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids.into_boxed())),
 
                 // invisible items
-                (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids.into_boxed())),
+                (_, Some(false)) => {
+                    query.filter(not(item::id.eq_any(visible_item_ids.into_boxed())))
+                }
 
                 // no visibility filters
                 (_, _) => query,
@@ -431,7 +436,7 @@ impl<'a> ItemRepository<'a> {
                 if is_program_item_filter {
                     query = query.filter(item::id.eq_any(program_item_ids));
                 } else {
-                    query = query.filter(item::id.ne_all(program_item_ids));
+                    query = query.filter(not(item::id.eq_any(program_item_ids)));
                 }
             }
 
@@ -457,7 +462,7 @@ impl<'a> ItemRepository<'a> {
                 query = if ignore_for_orders {
                     query.filter(item::id.eq_any(ignored_item_ids))
                 } else {
-                    query.filter(item::id.ne_all(ignored_item_ids))
+                    query.filter(not(item::id.eq_any(ignored_item_ids)))
                 };
             }
         }
