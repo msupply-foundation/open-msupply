@@ -123,7 +123,10 @@ RUN set -eux; \
 # Debug builds only: release already has neither. Full debuginfo was most of a
 # debug image - 5.8GB on disk against 1GB compressed - and line tables still
 # give file:line in panics and backtraces. Incremental compilation is wasted on
-# a cache mount every build changes.
+# a cache mount every build changes. Also what lets CI's test builds
+# (.github/ci/server.Dockerfile, which sets the same) share the debug cache
+# mounts: cargo fingerprints both, so a mismatch keeps two copies of every
+# crate in the one mount.
 ENV CARGO_INCREMENTAL=0 \
     CARGO_PROFILE_DEV_DEBUG=line-tables-only
 WORKDIR /src
@@ -204,18 +207,19 @@ COPY standard_forms/generated standard_forms/generated
 # is absent or stale, which is not this build.
 FROM server-base AS server-build-sqlite
 ARG TARGETARCH
+ARG CARGO_PROFILE
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
 #
-# It deliberately does NOT carry CARGO_PROFILE. Cargo already separates profiles
-# into target/debug and target/release with their own fingerprints, so the two
-# coexist in one mount without interfering - and keeping the id as it is means
-# adding debug builds does not orphan the warm release cache that every release
-# and every develop merge depends on. The cost is a bigger mount (a debug target
-# dir is several times a release one, and the dev profile has incremental
-# compilation on by default); `docker builder prune --filter
-# type=exec.cachemount` is the release valve.
+# It also carries CARGO_PROFILE, and the registry mount does too - and that is
+# a trust boundary, not tidiness. Debug builds compile pull-request code: every
+# preview is one, and CI's test builds (.github/ci/server.Dockerfile) share the
+# debug mounts. Build scripts and proc-macros run with write access to every
+# mount they are given, so a release build sharing them would compile from
+# whatever an unreviewed branch left there. Release builds come only from
+# develop, RCs and tags, and keep mounts no pull request ever touches. Callers
+# pass `release` or `debug`, never `dev`, so each profile has one id.
 #
 # sharing=private, not locked: if two builds want the SAME id at once (a tag
 # build overlapping a develop merge, say), locked makes the second wait for the
@@ -229,8 +233,8 @@ ARG TARGETARCH
 # running two projects at once. Leaving it `locked` would serialise EVERY pair
 # of concurrent builds on the registry even when their target dirs differ,
 # which defeats the per-db and per-arch ids entirely.
-RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/target,sharing=private \
-    --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
+    --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
@@ -242,11 +246,12 @@ RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/tar
 
 FROM server-base AS server-build-postgres
 ARG TARGETARCH
+ARG CARGO_PROFILE
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
-RUN --mount=type=cache,id=cargo-target-postgres-$TARGETARCH,target=/src/server/target,sharing=private \
-    --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+RUN --mount=type=cache,id=cargo-target-postgres-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
+    --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
