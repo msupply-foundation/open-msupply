@@ -4,6 +4,8 @@ import {
   expiryIsBlank,
   lacksBatchOrExpiry,
   missingBatchField,
+  newBatchDefaultsFromLine,
+  orderLinePrice,
   packDifference,
 } from './inboundShipmentLine';
 
@@ -95,5 +97,75 @@ describe('missingBatchField', () => {
 
   it('names either when different batches lack different fields', () => {
     expect(missingBatchField([noBatch, noExpiry])).toBe('either');
+  });
+});
+
+// A new batch's starting figures (spec/inbound-shipments/rules.md › new-batch
+// defaults) when "Add batch" is used on an item opened from its row.
+describe('newBatchDefaultsFromLine', () => {
+  const item = {
+    id: 'item-1',
+    code: 'PARA',
+    name: 'Paracetamol',
+    unitName: 'Tab',
+    isVaccine: false,
+    doses: 1,
+    defaultPackSize: 10,
+    itemStoreProperties: { defaultSellPricePerPack: 4 },
+    volumePerPack: 0.25,
+  };
+  const orderLine = {
+    id: 'pol-1',
+    lineNumber: 1,
+    requestedPackSize: 20,
+    requestedNumberOfUnits: 200,
+    shippedNumberOfUnits: 0,
+    inTransitNumberOfUnits: 0,
+    receivedNumberOfUnits: 0,
+    pricePerPackBeforeDiscount: 12,
+    pricePerPackAfterDiscount: 10,
+    pricePerPackAfterSupplierDiscount: 9,
+  };
+
+  it("OMS-REG-REPL-09.40 seeds from the item's default pack size and price", () => {
+    expect(
+      newBatchDefaultsFromLine({ item, purchaseOrderLine: null }, undefined)
+    ).toEqual({
+      defaultPackSize: 10,
+      prefillPricePerPack: 4,
+      volumePerPack: 0.25,
+    });
+  });
+
+  it('prices at zero where the store has no default sell price', () => {
+    expect(
+      newBatchDefaultsFromLine(
+        {
+          item: { ...item, itemStoreProperties: null },
+          purchaseOrderLine: null,
+        },
+        undefined
+      ).prefillPricePerPack
+    ).toBe(0);
+  });
+
+  it('OMS-REG-REPL-09.42 seeds from the cited order line at the shipment rate', () => {
+    expect(
+      newBatchDefaultsFromLine({ item, purchaseOrderLine: orderLine }, 1.5)
+    ).toEqual({
+      defaultPackSize: 20,
+      prefillPricePerPack: 13.5,
+      volumePerPack: 0.25,
+    });
+  });
+});
+
+describe('orderLinePrice', () => {
+  it('is the price net of supplier discount at a home-currency rate of one', () => {
+    expect(orderLinePrice(9, undefined)).toBe(9);
+  });
+
+  it('converts a foreign price at the shipment rate', () => {
+    expect(orderLinePrice(9, 2)).toBe(18);
   });
 });

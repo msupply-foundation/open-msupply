@@ -46,8 +46,11 @@ import {
   expiryIsBlank,
   lacksBatchOrExpiry,
   missingBatchField,
+  newBatchDefaultsFromLine,
+  orderLinePrice,
   packDifference,
   type MissingBatchField,
+  type NewBatchDefaults,
 } from '../inboundShipmentLine';
 import {
   AlertTriangleIcon,
@@ -429,16 +432,7 @@ type ChosenItem = {
   unitName: string | null;
   isVaccine: boolean;
   doses: number;
-  /**
-   * Item default pack size + store default sell price — the new-line price
-   * prefill (OMS-REG-REPL-09.10/.11). defaultSellPricePerPack is 0 where
-   * unknown (the PO-line picker and edit-mode line-load don't fetch it), so no
-   * price prefill there — correct, since OMS-REG-REPL-09.10/.11 targets the
-   * manual add-item case.
-   */
-  defaultPackSize: number;
-  defaultSellPricePerPack: number;
-};
+} & NewBatchDefaults;
 
 const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [item, setItem] = createSignal<ChosenItem | null>(null);
@@ -571,8 +565,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       unitName: first.item?.unitName ?? null,
       isVaccine: first.item?.isVaccine ?? false,
       doses: first.item?.doses ?? 0,
-      defaultPackSize: first.item?.defaultPackSize ?? 1,
-      defaultSellPricePerPack: 0,
+      // What "Add batch" seeds from here (OMS-REG-REPL-09.40/.42).
+      ...newBatchDefaultsFromLine(first, props.foreignCurrency?.rate),
     });
     // Focus the requested batch, else the first row.
     batchFields.focus(focusLineId ?? first.id);
@@ -590,23 +584,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     campaignName: props.campaign?.name ?? null,
   });
 
-  // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
-  // starts at the item's default pack size, with cost AND sell price seeded
-  // from the store default sell price — but only when cost is editable (a
-  // manual shipment); on a PO/transfer shipment cost derives from the source,
-  // so leave prices at zero.
-  const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
-    const base = newBatch();
-    const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
-    if (props.costLocked) return { ...base, packSize };
-    const price = chosen.defaultSellPricePerPack;
-    return {
-      ...base,
-      packSize,
-      costPricePerPack: price,
-      sellPricePerPack: price,
-    };
-  };
+  // A fresh batch for `chosen` (spec rules › new-batch defaults): its starting
+  // pack size, cost AND sell price, and volume per pack. On a source-linked
+  // shipment too — cost can't be typed there, so the prefilled cost is the
+  // one the line is saved with (OMS-REG-REPL-09.41/.42).
+  const prefillFromItem = (chosen: ChosenItem): DraftBatch => ({
+    ...newBatch(),
+    packSize: chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1,
+    costPricePerPack: chosen.prefillPricePerPack,
+    sellPricePerPack: chosen.prefillPricePerPack,
+    volumePerPack: chosen.volumePerPack,
+  });
 
   // Picking from the item search is an ADD-flow action (update mode is entered
   // only by clicking a row, and locks the selector), so it keeps mode 'add'.
@@ -631,11 +619,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     void loadChosenItem(option);
   };
 
-  // Seed the editor for a search-picked item. The item descriptor comes from
-  // the SEARCH option, not from any loaded line: only the option carries the
-  // store default sell price, so keeping it is what lets a later "Add batch"
-  // prefill its price (OMS-REG-REPL-09.10/.11) even on an item loaded from its
-  // existing lines.
+  // Seed the editor for a search-picked item, its new-batch defaults taken
+  // from the SEARCH option (OMS-REG-REPL-09.10/.11/.43).
   const loadChosenItem = async (option: ItemOption) => {
     setLoadingLines(true);
     setErrorMessage(undefined);
@@ -649,7 +634,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       isVaccine: option.isVaccine,
       doses: option.doses,
       defaultPackSize: option.defaultPackSize,
-      defaultSellPricePerPack: option.defaultSellPricePerPack,
+      prefillPricePerPack: option.defaultSellPricePerPack,
+      volumePerPack: option.volumePerPack,
     };
     const existing = await fetchItemLines(option.id);
     if (ticket !== loadTicket) return;
@@ -728,7 +714,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
     // attributes fill in once the line is saved and reloaded via the full line
     // fragment (edit mode). Default them for the pre-save PO-add view.
-    setItem({
+    const chosen: ChosenItem = {
       id: line.item.id,
       code: line.item.code,
       name: line.item.name,
@@ -736,9 +722,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       isVaccine: false,
       doses: 0,
       defaultPackSize: line.requestedPackSize || 1,
-      defaultSellPricePerPack: 0,
-    });
-    const batch = { ...newBatch(), packSize: line.requestedPackSize || 1 };
+      prefillPricePerPack: orderLinePrice(
+        line.pricePerPackAfterSupplierDiscount,
+        props.foreignCurrency?.rate
+      ),
+      volumePerPack: line.item.volumePerPack,
+    };
+    setItem(chosen);
+    const batch = prefillFromItem(chosen);
     setBatches([batch]);
     batchFields.focus(batch.id);
   };
@@ -767,7 +758,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // Pack-size / price edits (OMS-REG-REPL-09.10/.11): moving the pack size off
   // the item default clears a still-prefilled (non-overridden) price to zero;
   // editing a price marks it overridden so a later pack-size change leaves it
-  // alone.
+  // alone. An order line's price is kept: it is the order's price per pack at
+  // any pack size, as the server's cost recalculation applies it.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -775,7 +767,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = d.find(x => x.id === id);
         if (!b) return;
         b.packSize = value;
-        if (chosen && !props.costLocked && value !== chosen.defaultPackSize) {
+        if (
+          chosen &&
+          !props.purchaseOrderId &&
+          value !== chosen.defaultPackSize
+        ) {
           if (!b.costOverridden) b.costPricePerPack = 0;
           if (!b.sellOverridden) b.sellPricePerPack = 0;
         }

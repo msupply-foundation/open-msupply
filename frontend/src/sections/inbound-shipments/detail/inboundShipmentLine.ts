@@ -1,3 +1,5 @@
+import type { InboundLineFragment } from './inboundShipmentDetail.generated';
+
 // Line arithmetic shared by every surface that reports it. One definition
 // because the sign convention is the whole point: the detail table's
 // Difference column and the line editor's Difference cell each used to carry
@@ -59,4 +61,53 @@ export const missingBatchField = (
   if (batch) return 'batch';
   if (expiry) return 'expiry';
   return undefined;
+};
+
+/*
+ * What a new batch starts with (spec rules › new-batch defaults,
+ * OMS-REG-REPL-09.10/.40–.43): its pack size, the cost AND sell price for that
+ * pack size, and its volume per pack.
+ */
+export type NewBatchDefaults = {
+  defaultPackSize: number;
+  prefillPricePerPack: number;
+  volumePerPack: number;
+};
+
+/**
+ * An order line's price per pack — net of the supplier discount, in the
+ * order's currency — in local currency at the shipment's rate. `rate` is
+ * undefined on a home-currency shipment.
+ */
+export const orderLinePrice = (
+  pricePerPackAfterSupplierDiscount: number,
+  rate: number | undefined
+): number => pricePerPackAfterSupplierDiscount * (rate ?? 1);
+
+/**
+ * The defaults for another batch of an item already on the shipment, read off
+ * one of its existing lines: the order line it cites on a PO-linked shipment,
+ * else the item.
+ */
+export const newBatchDefaultsFromLine = (
+  line: Pick<InboundLineFragment, 'item' | 'purchaseOrderLine'>,
+  rate: number | undefined
+): NewBatchDefaults => {
+  const orderLine = line.purchaseOrderLine;
+  const volumePerPack = line.item?.volumePerPack ?? 0;
+  return orderLine
+    ? {
+        defaultPackSize: orderLine.requestedPackSize || 1,
+        prefillPricePerPack: orderLinePrice(
+          orderLine.pricePerPackAfterSupplierDiscount,
+          rate
+        ),
+        volumePerPack,
+      }
+    : {
+        defaultPackSize: line.item?.defaultPackSize ?? 1,
+        prefillPricePerPack:
+          line.item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        volumePerPack,
+      };
 };

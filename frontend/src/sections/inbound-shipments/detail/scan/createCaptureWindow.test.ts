@@ -130,7 +130,6 @@ const setup = (blocked = false) =>
       storeId: () => 'store',
       invoiceId: () => 'inv',
       isExternal: () => false,
-      costLocked: () => false,
       blocked: () => blocked,
       onSaved,
       onNotice,
@@ -198,6 +197,7 @@ describe('createCaptureWindow', () => {
       isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
+      volumePerPack: 0,
     });
     capture.update({ quantity: 3 });
     calls.length = 0;

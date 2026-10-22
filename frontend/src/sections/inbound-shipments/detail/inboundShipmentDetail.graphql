@@ -175,7 +175,13 @@ fragment InboundLine on InvoiceLineNode {
     unitName
     isVaccine
     doses
+    # What "Add batch" seeds a new batch from, for an item opened from its row
+    # (spec rules › new-batch defaults).
     defaultPackSize
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
+    volumePerPack
   }
   donor(storeId: $storeId) {
     id

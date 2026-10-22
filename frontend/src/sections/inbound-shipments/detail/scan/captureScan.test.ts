@@ -33,6 +33,7 @@ const item: CaptureItem = {
   name: 'Paracetamol',
   defaultPackSize: 10,
   defaultSellPricePerPack: 5,
+  volumePerPack: 0.5,
 };
 
 const known = (packSize: number | null): BarcodeLookup => ({
@@ -367,7 +368,7 @@ describe('saveRefusal', () => {
 });
 
 describe('captureBatch', () => {
-  const context = { invoiceId: 'inv', costLocked: false, newLineId: 'new' };
+  const context = { invoiceId: 'inv', newLineId: 'new' };
   const draft = {
     ...draftFromScan(LABEL, known(10), item),
     quantity: 4,
@@ -387,6 +388,7 @@ describe('captureBatch', () => {
           manufactureDate: undefined,
           costPricePerPack: 5,
           sellPricePerPack: 5,
+          volumePerPack: 0.5,
           barcode: GTIN,
         },
       ],
@@ -439,12 +441,10 @@ describe('captureBatch', () => {
     expect(line?.sellPricePerPack).toBe(0);
   });
 
-  it('prices are zero where a source link locks cost', () => {
-    const line = captureBatch(draft, undefined, {
-      ...context,
-      costLocked: true,
-    })?.insertInboundShipmentLines?.[0];
-    expect(line?.costPricePerPack).toBe(0);
+  it("OMS-REG-REPL-09.43 a new line carries the item's volume per pack", () => {
+    const line = captureBatch({ ...draft, packSize: 20 }, undefined, context)
+      ?.insertInboundShipmentLines?.[0];
+    expect(line?.volumePerPack).toBe(0.5);
   });
 
   it('builds nothing while refused', () => {
@@ -498,7 +498,7 @@ describe('captureBatch', () => {
 });
 
 describe('the barcode a new line carries', () => {
-  const context = { invoiceId: 'inv', costLocked: false, newLineId: 'new' };
+  const context = { invoiceId: 'inv', newLineId: 'new' };
   const inserted = (draft: Parameters<typeof captureBatch>[0]) =>
     captureBatch({ ...draft, quantity: 1 }, undefined, context)
       ?.insertInboundShipmentLines?.[0];
