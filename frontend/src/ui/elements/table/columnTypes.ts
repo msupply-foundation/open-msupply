@@ -142,6 +142,25 @@ declare module '@tanstack/solid-table' {
      */
     hideOnCardWhen?(row: TData): boolean;
     /**
+     * Mark THIS column's cell on the rows the predicate names — the per-cell
+     * counterpart of the row-level `rowTone`, for an error that belongs to
+     * one field of a line rather than to the whole line: a variance with no
+     * reason (the Reason cell), a count that would take stock below zero (the
+     * Counted cell). 'error' draws an error-toned ring inside the cell in
+     * table view and around the value in card view, via data-cell-tone; the
+     * CSS is DataTable's.
+     *
+     * The ring is colour alone, so it never carries the error by itself: the
+     * cell's own renderer still states it in words (a message beneath the
+     * value, a labelled StatusMarker), and the column decides both the
+     * wording and where it goes. The ring only points the eye at the cell.
+     *
+     * Read per cell at render, so a page can drive it from an error signal
+     * without rebuilding its columns. Method-style for the same reason as
+     * `hideOnCardWhen`.
+     */
+    cellTone?(row: TData): 'error' | undefined;
+    /**
      * An explanation of what this column's figure means, as ALREADY-TRANSLATED
      * text — the header's tooltip content (spec/internal-orders § S3 lists the
      * `description.*` key per column; a plugin column carries its own key,

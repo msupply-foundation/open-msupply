@@ -286,6 +286,9 @@ export function TableRow<T>(props: {
                 }
                 data-align={cellAlign(cell)}
                 data-mono={cellMono(cell) ? '' : undefined}
+                data-cell-tone={cell.column.columnDef.meta?.cellTone?.(
+                  cell.row.original
+                )}
                 data-pinned={cell.column.getIsPinned() || undefined}
                 data-frozen-edge={props.frozenEdge(cell.column)}
                 // Grouped rows (meta.groupRows): a cell the next row continues

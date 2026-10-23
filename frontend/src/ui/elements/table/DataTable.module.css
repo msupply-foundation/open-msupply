@@ -380,6 +380,36 @@
   font-size: 92.857%;
 }
 
+/* A marked cell (meta.cellTone → data-cell-tone): a ring in the error tone
+   around the one field of a line the error is about. Drawn as an OUTLINE so it
+   takes no room — a cell that flips state mid-edit changes no width and moves
+   no neighbour — and so it composes with what the cell already paints:
+   backgrounds (row tints, selection, the hover wash) and the frozen block's
+   seam, which is a box-shadow. In table view it sits inside the cell's own
+   edge (a negative offset), clear of the collapsed borders; it is square
+   because a collapsed-border cell takes no border-radius. In card view it sits
+   just outside the value, rounded like a field. The column's renderer states
+   the error in words beside it (ColumnMeta.cellTone). */
+.td[data-cell-tone='error'] {
+  outline: 2px solid var(--error-main);
+  outline-offset: -2px;
+}
+
+/* In card view the ring goes round the value's wrapper, which is a block for
+   every value a column can ring, ringed or not: one box, so a value holding a
+   block of its own (a message stacked beneath a number) keeps one ring, and
+   the value's own alignment holds inside it. Ringing it then changes nothing
+   but the outline. */
+.cardToneValue {
+  display: block;
+}
+
+.card [data-cell-tone='error'] {
+  outline: 2px solid var(--error-main);
+  outline-offset: 0.125rem;
+  border-radius: var(--radius-sm);
+}
+
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
    pinned to the block-end of the scroll area so a summed total stays visible
    while the rows scroll, styled like the header band (toolbar grey, medium

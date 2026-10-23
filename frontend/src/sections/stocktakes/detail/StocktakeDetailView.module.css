@@ -1,6 +1,7 @@
-/* Snapshot cell stacks a per-line "recount this line" error message beneath
-   the count when the snapshot and current count disagree (a
-   SnapshotCountCurrentCountMismatchLine error). Tokens only. */
+/* A line's error message, stacked beneath the value of the cell it is about:
+   "recount this line" under Snapshot when the snapshot and current count
+   disagree (SnapshotCountCurrentCountMismatchLine), "reduced below zero" under
+   Counted (StockLineReducedBelowZero). Tokens only. */
 .lineError {
   display: block;
   color: var(--error-main);

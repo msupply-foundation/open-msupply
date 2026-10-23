@@ -27,8 +27,10 @@ import { remToPx } from '../ui/utils/rem';
 import { ShellFullScreenContext } from '../ui/layout/AppShell/shellContext';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
+import { HStack } from '../ui/layout/Stack/HStack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
+import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
@@ -737,6 +739,67 @@ const RowStatesDemo = () => {
               : undefined
       }
     />
+  );
+};
+
+// Cell errors (meta.cellTone): an error about ONE field of a line rings that
+// field's cell — here the quantity of a line that would take stock below zero
+// — and the cell states it in words beside the value. One predicate drives
+// both. The button clears and re-stamps the errors, as a page does when the
+// server answers again: the ring takes no room, so nothing in the row moves.
+const CellErrorsDemo = () => {
+  const [stamped, setStamped] = createSignal(true);
+  const quantityError = (row: StockLine) =>
+    stamped() && (row.id === 'sl-2' || row.id === 'sl-3');
+  const { config, setConfig } = createViewConfig('table');
+  const columns = (): Column<StockLine, SortKey>[] => [
+    {
+      c: { key: 'code' },
+      header: () => 'Code',
+      ...getCellDefinition<StockLine>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => 'Name',
+      ...getCellDefinition<StockLine>('name', { headerPosition: 'primary' }),
+    },
+    {
+      c: { key: 'quantity' },
+      header: () => 'Quantity',
+      ...getNumberCell<StockLine>({
+        cellTone: (row: StockLine) =>
+          quantityError(row) ? 'error' : undefined,
+      }),
+      size: remToPx(8),
+      cell: info => (
+        <HStack gap="sm" justify="end">
+          <Show when={quantityError(info.row.original)}>
+            <StatusMarker
+              severity="error"
+              label="Would take stock below zero"
+            />
+          </Show>
+          {info.row.original.quantity}
+        </HStack>
+      ),
+    },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Button variant="secondary" onClick={() => setStamped(on => !on)}>
+          {stamped() ? 'Clear the errors' : 'Stamp the errors'}
+        </Button>
+      </div>
+      <DataTable
+        columns={columns()}
+        rows={DATA.slice(0, 4)}
+        rowKey={r => r.id}
+        showCardToggle
+        config={config()}
+        setConfig={setConfig}
+      />
+    </Stack>
   );
 };
 
@@ -1744,6 +1807,20 @@ export const TableCardShowcase = () => (
             <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · Cell errors">
+          <Lead>
+            An error about <em>one field</em> of a line rings that field's cell:{' '}
+            <code>meta.cellTone</code>, a function from the row to{' '}
+            <code>'error'</code> or nothing, set on the column the error is
+            about. The ring is colour, so the cell also says it in words (here a
+            labelled <code>StatusMarker</code>) — drive both from one predicate.
+            It is an outline, so clearing or stamping it moves nothing. Flip to
+            cards and the ring goes round the value. Full rules are in{' '}
+            <code>CARD_TABLE_MODEL.md</code>.
+          </Lead>
+          <CellErrorsDemo />
         </DashboardCard>
 
         <DashboardCard title="Table basics · An editor table">

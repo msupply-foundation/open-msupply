@@ -809,13 +809,17 @@ const RequisitionDetailView: Component = () => {
       cell: dosesCell,
     },
     // Reason — the line's variance reason; extended gate. Flagged when a
-    // header save was rejected for a missing reason (OMS-REG-DIST-06.19).
+    // header save was rejected for a missing reason (OMS-REG-DIST-06.19): a
+    // labelled marker beside the reason text, and the cell ringed.
     ...(showExtended()
       ? ([
           {
             c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
             header: () => t('label.reason'),
-            ...getCellDefinition('reason'),
+            ...getCellDefinition('reason', {
+              cellTone: (line: Line) =>
+                reasonFlaggedIds().has(line.id) ? 'error' : undefined,
+            }),
             cell: cellInfo => {
               const line = cellInfo.row.original;
               return (

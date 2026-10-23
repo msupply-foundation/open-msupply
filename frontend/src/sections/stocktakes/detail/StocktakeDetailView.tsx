@@ -203,7 +203,8 @@ const StocktakeDetailView: Component = () => {
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // Per-line errors from the last failed finalise/bulk action, keyed by line
   // id → the error's __typename (the shared LineErrors shape, kept raw). The
-  // Snapshot column renders it inline; cleared when a fresh page lands.
+  // Snapshot and Counted columns render it inline; cleared when a line change
+  // commits (clearLineErrors, below).
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
   // The stamped error line ids — what the "show error lines" filter (showError)
   // resolves to at query time (id.equalAny). Empty when nothing is stamped, so
@@ -553,8 +554,8 @@ const StocktakeDetailView: Component = () => {
   // inline via stampErrors so the offending rows flag their error.
 
   // Stamp the per-line errors (lineId → typename) — drives the inline
-  // Snapshot-cell message. An action/finalise calls this the moment a save
-  // partially fails.
+  // Snapshot- and Counted-cell messages and their rings. An action/finalise
+  // calls this the moment a save partially fails.
   const stampErrors = (errors: LineErrors) => setLineErrors(new Map(errors));
 
   // A line-level change committed (line-edit modal OR a selection action). We
@@ -786,11 +787,17 @@ const StocktakeDetailView: Component = () => {
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'more',
-            ...getCellDefinition('snapshotNumberOfPacks'),
+            ...getCellDefinition('snapshotNumberOfPacks', {
+              cellTone: (line: Line) =>
+                lineErrors().get(line.id) ===
+                'SnapshotCountCurrentCountMismatchLine'
+                  ? 'error'
+                  : undefined,
+            }),
             // Snapshot cell also carries the line's error beneath the count (a
             // snapshot/current-count mismatch is a "recount this line" message
-            // about the snapshot); the count itself formats like every other
-            // number column.
+            // about the snapshot), and is ringed while it does (cellTone
+            // above); the count itself formats like every other number column.
             cell: info => {
               const value = info.getValue<number | null | undefined>();
               return (
@@ -828,6 +835,10 @@ const StocktakeDetailView: Component = () => {
         align: 'right',
         headerPosition: 'badge',
         hideFromColumnSettings: true,
+        cellTone: (line: Line) =>
+          lineErrors().get(line.id) === 'StockLineReducedBelowZero'
+            ? 'error'
+            : undefined,
       }),
       // An uncounted line has no counted value, and a blank cell says nothing —
       // it reads as "zero" or "still loading" as readily as "not counted yet",
@@ -841,12 +852,29 @@ const StocktakeDetailView: Component = () => {
       //
       // The accessor above keeps the raw number as the cell's VALUE, so
       // sorting, the hover-reveal and any export are unchanged.
-      cell: info =>
-        isUncounted(info.row.original) ? (
-          <AbsentValue label={t('label.not-counted')} />
-        ) : (
-          <Num value={info.getValue<number | null | undefined>() ?? 0} />
-        ),
+      //
+      // A count that would take the batch's available stock below zero (a
+      // reduce-to-zero the server refused) says so beneath the value, and the
+      // cell is ringed while it does (cellTone above).
+      cell: info => (
+        <>
+          {isUncounted(info.row.original) ? (
+            <AbsentValue label={t('label.not-counted')} />
+          ) : (
+            <Num value={info.getValue<number | null | undefined>() ?? 0} />
+          )}
+          <Show
+            when={
+              lineErrors().get(info.row.original.id) ===
+              'StockLineReducedBelowZero'
+            }
+          >
+            <span class={styles.lineError}>
+              {t('error.reduced-below-zero')}
+            </span>
+          </Show>
+        </>
+      ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
     // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
