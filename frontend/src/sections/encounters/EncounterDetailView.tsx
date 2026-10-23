@@ -169,37 +169,45 @@ const EncounterDetailView: Component = () => {
 
   // Save as visited: the status and end time, saved; a save that does not
   // go through (the error summary says why) puts them back, so the footer
-  // still offers Save as visited once the form is put right. Then, while
-  // the prompt's reads are in flight, the button stays busy; the prompt
-  // opens only where the patient has a type to book.
+  // still offers Save as visited once the form is put right. The footer is
+  // held on its pending reading for the whole run — Save as visited busy,
+  // Close disabled — through the save and the prompt's reads that follow:
+  // setting the status would otherwise flip the status-keyed footer at the
+  // click, unmounting Save as visited before its own busy state could show
+  // and leaving a Close the user could press in the gap. `savingAsVisited`,
+  // cleared in a `finally`, keeps the pending footer up until the run ends.
+  // The prompt opens only where the patient has a type to book.
   const [nextVisit, setNextVisit] = createSignal<NextVisit>();
-  const [preparingNextVisit, setPreparingNextVisit] = createSignal(false);
+  const [savingAsVisited, setSavingAsVisited] = createSignal(false);
   const saveAsVisited = async () => {
-    const before = {
-      status: draft.data.status,
-      endDatetime: draft.data.endDatetime,
-    };
-    const fields = visitedFields(draft.data.endDatetime, new Date());
-    draft.set('status', fields.status);
-    draft.set('endDatetime', fields.endDatetime);
-    const saved = await form.save();
-    if (!saved) {
-      draft.set('status', before.status);
-      draft.set('endDatetime', before.endDatetime);
-      return;
+    setSavingAsVisited(true);
+    try {
+      const before = {
+        status: draft.data.status,
+        endDatetime: draft.data.endDatetime,
+      };
+      const fields = visitedFields(draft.data.endDatetime, new Date());
+      draft.set('status', fields.status);
+      draft.set('endDatetime', fields.endDatetime);
+      const saved = await form.save();
+      if (!saved) {
+        draft.set('status', before.status);
+        draft.set('endDatetime', before.endDatetime);
+        return;
+      }
+      const enrolment = record()?.programEnrolment;
+      const next = await fetchNextVisit({
+        storeId: params.storeId,
+        patientId: record()?.patientId ?? '',
+        encounterId: params.encounterId,
+        immunisationEnrolmentId: enrolment?.isImmunisationProgram
+          ? enrolment.id
+          : undefined,
+      });
+      if (next.registries.length > 0) setNextVisit(next);
+    } finally {
+      setSavingAsVisited(false);
     }
-    const enrolment = record()?.programEnrolment;
-    setPreparingNextVisit(true);
-    const next = await fetchNextVisit({
-      storeId: params.storeId,
-      patientId: record()?.patientId ?? '',
-      encounterId: params.encounterId,
-      immunisationEnrolmentId: enrolment?.isImmunisationProgram
-        ? enrolment.id
-        : undefined,
-    });
-    setPreparingNextVisit(false);
-    if (next.registries.length > 0) setNextVisit(next);
   };
   const nextVisitCreated = (created: CreatedEncounter) => {
     setNextVisit(undefined);
@@ -404,13 +412,20 @@ const EncounterDetailView: Component = () => {
                       variant="secondary"
                       icon={<XCircleIcon />}
                       data-testid="cancel-button"
+                      disabled={savingAsVisited()}
                       onClick={leave}
                     >
                       {form.isDirty() ? t('button.cancel') : t('button.close')}
                     </Button>
                     <Show when={canMutate()}>
+                      {/* The Save-as-visited run holds this branch up even
+                          once the status has gone to Visited, so the busy
+                          button is not swapped out mid-save (see
+                          saveAsVisited). */}
                       <Show
-                        when={draft.data.status === 'PENDING'}
+                        when={
+                          draft.data.status === 'PENDING' || savingAsVisited()
+                        }
                         fallback={
                           <Button
                             icon={<SaveIcon />}
@@ -423,7 +438,7 @@ const EncounterDetailView: Component = () => {
                           </Button>
                         }
                       >
-                        <Show when={form.canSave()}>
+                        <Show when={form.canSave() && !savingAsVisited()}>
                           <Button
                             variant="secondary"
                             icon={<SaveIcon />}
@@ -438,8 +453,8 @@ const EncounterDetailView: Component = () => {
                         <Button
                           icon={<CheckCircleIcon />}
                           data-testid="save-as-visited-button"
-                          loading={form.saving() || preparingNextVisit()}
-                          disabled={draft.readOnly() || preparingNextVisit()}
+                          loading={savingAsVisited()}
+                          disabled={draft.readOnly() || savingAsVisited()}
                           onClick={() => void saveAsVisited()}
                         >
                           {t('button-save-as-visited')}
