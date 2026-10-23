@@ -6,6 +6,7 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { HStack } from '../../../ui/layout/Stack/HStack';
+import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { SetSupplyWastageRate } from './ancillaryItemMutations.generated';
 
 // The item's own wastage rate as an ancillary supply (rules.md § ancillary
@@ -51,43 +52,47 @@ export const SupplyWastageRateField: Component<{
     if (result.kind === 'success') props.onSaved();
   };
 
+  // Padded and start-aligned: it sits above a full-bleed table, so it takes
+  // the page's edge padding itself and lines up with the table's first column.
   return (
-    <Show
-      when={props.isCentral}
-      fallback={
-        <FieldRow
-          label={t('label.supply-wastage-rate')}
-          labelWidth="auto"
-          readOnly
-          valueTestId="supply-wastage-rate-value"
-        >
-          {props.rate === undefined ? '' : `${props.rate}%`}
-        </FieldRow>
-      }
-    >
-      <HStack gap="sm" align="end">
-        <NumberField
-          label={t('label.supply-wastage-rate')}
-          labelInfo={
-            <InfoTooltip text={t('description.supply-wastage-rate')} />
-          }
-          width="compact"
-          endAdornment="%"
-          decimalLimit={2}
-          max={MAX_RATE}
-          value={draft()}
-          disabled={saving() || props.rate === undefined}
-          data-testid="supply-wastage-rate-input"
-          onChange={setDraft}
-        />
-        <Button
-          data-testid="supply-wastage-rate-save"
-          disabled={!changed() || saving()}
-          onClick={() => void save()}
-        >
-          {t('button.save')}
-        </Button>
-      </HStack>
-    </Show>
+    <ContentContainer size="form" padded align="start">
+      <Show
+        when={props.isCentral}
+        fallback={
+          <FieldRow
+            label={t('label.supply-wastage-rate')}
+            labelWidth="auto"
+            readOnly
+            valueTestId="supply-wastage-rate-value"
+          >
+            {props.rate === undefined ? '' : `${props.rate}%`}
+          </FieldRow>
+        }
+      >
+        <HStack gap="sm" align="end">
+          <NumberField
+            label={t('label.supply-wastage-rate')}
+            labelInfo={
+              <InfoTooltip text={t('description.supply-wastage-rate')} />
+            }
+            width="compact"
+            endAdornment="%"
+            decimalLimit={2}
+            max={MAX_RATE}
+            value={draft()}
+            disabled={saving() || props.rate === undefined}
+            data-testid="supply-wastage-rate-input"
+            onChange={setDraft}
+          />
+          <Button
+            data-testid="supply-wastage-rate-save"
+            disabled={!changed() || saving()}
+            onClick={() => void save()}
+          >
+            {t('button.save')}
+          </Button>
+        </HStack>
+      </Show>
+    </ContentContainer>
   );
 };
