@@ -211,6 +211,10 @@ const StocktakeDetailView: Component = () => {
   // the filter is treated as absent rather than sending an empty equalAny
   // (which the server reads as "match nothing").
   const errorLineIds = (): string[] => [...lineErrors().keys()];
+  // The line's count was refused for taking available stock below zero — the
+  // Counted cell's ring and message (table) and the card's body field.
+  const reducedBelowZero = (line: Line): boolean =>
+    lineErrors().get(line.id) === 'StockLineReducedBelowZero';
   const hasErrors = (): boolean => lineErrors().size > 0;
   // Column config (order/sizing/visibility) persists per user/store. The extra
   // editable columns start HIDDEN by default so the table isn't overwhelming —
@@ -836,9 +840,7 @@ const StocktakeDetailView: Component = () => {
         headerPosition: 'badge',
         hideFromColumnSettings: true,
         cellTone: (line: Line) =>
-          lineErrors().get(line.id) === 'StockLineReducedBelowZero'
-            ? 'error'
-            : undefined,
+          reducedBelowZero(line) ? 'error' : undefined,
       }),
       // An uncounted line has no counted value, and a blank cell says nothing —
       // it reads as "zero" or "still loading" as readily as "not counted yet",
@@ -855,7 +857,10 @@ const StocktakeDetailView: Component = () => {
       //
       // A count that would take the batch's available stock below zero (a
       // reduce-to-zero the server refused) says so beneath the value, and the
-      // cell is ringed while it does (cellTone above).
+      // cell is ringed while it does (cellTone above). On a card this cell is
+      // the header badge, which has no room for a sentence: the badge drops
+      // the message (data-cell-message) and the card-only field below
+      // carries it.
       cell: info => (
         <>
           {isUncounted(info.row.original) ? (
@@ -863,17 +868,27 @@ const StocktakeDetailView: Component = () => {
           ) : (
             <Num value={info.getValue<number | null | undefined>() ?? 0} />
           )}
-          <Show
-            when={
-              lineErrors().get(info.row.original.id) ===
-              'StockLineReducedBelowZero'
-            }
-          >
-            <span class={styles.lineError}>
+          <Show when={reducedBelowZero(info.row.original)}>
+            <span class={styles.lineError} data-cell-message>
               {t('error.reduced-below-zero')}
             </span>
           </Show>
         </>
+      ),
+    },
+    // CARD-ONLY: the Counted badge's below-zero message, in the card body at
+    // full width, on the lines that carry it. Captioned with Counted's own
+    // label so it reads as that figure's error.
+    {
+      c: { id: 'countedNumberOfPacksError' },
+      header: () => t('label.counted-num-of-packs'),
+      meta: {
+        hideOnTable: true,
+        hideFromColumnSettings: true,
+        hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
+      },
+      cell: () => (
+        <span class={styles.lineError}>{t('error.reduced-below-zero')}</span>
       ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine

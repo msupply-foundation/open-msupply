@@ -215,6 +215,27 @@ The ring is colour alone, so it is **never the only signal**: the column's own `
 
 `cellTone` is called per cell at render, so drive it from the page's error signal directly; the columns don't rebuild when it changes. A cell that holds a **control** already has its own error state (an input's `error` prop rings the input), so an editor column doesn't also need `cellTone`.
 
+**A message under a value in the card's badge slot.** A badge sits beside the card title and never shrinks, so the table cell's message beneath the value can't come along: mark it `data-cell-message` and the badge slot drops it, leaving the ringed value. Carry the message in a card-only body field instead, withdrawn on the rows without the error — the stocktake detail's Counted column does this:
+
+```tsx
+// In the Counted cell (a badge on cards): dropped from the badge.
+<Show when={reducedBelowZero(line)}>
+  <span class={styles.lineError} data-cell-message>{t('error.reduced-below-zero')}</span>
+</Show>
+
+// CARD-ONLY body field carrying it, on the lines that have it.
+{
+  c: { id: 'countedNumberOfPacksError' },
+  header: () => t('label.counted-num-of-packs'),
+  meta: {
+    hideOnTable: true,
+    hideFromColumnSettings: true,
+    hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
+  },
+  cell: () => <span class={styles.lineError}>{t('error.reduced-below-zero')}</span>,
+}
+```
+
 ### What a dev writes
 
 The DataTable owns the tints, the selection-gating and the replaces-blue rule. The page owns **only** the row → state mapping:

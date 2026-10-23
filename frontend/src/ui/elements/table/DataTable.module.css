@@ -1761,6 +1761,16 @@ tr[data-accent='error'] > :first-child::before {
   display: inline-flex;
 }
 
+/* A message a cell stacks beneath its value ([data-cell-message] — a line
+   error under a count) is dropped from a card's BADGE slot: the badge sits
+   beside the card title and never shrinks, so a sentence there would take
+   the title's room. A page that puts such a column in the badge carries the
+   message in a card-only body field instead (CARD_TABLE_MODEL.md § cellTone).
+   Table view and body fields keep it. */
+.cardBadge [data-cell-message] {
+  display: none;
+}
+
 /* Inline row-status badges (StatusBadge cluster beside a name/batch value —
    ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
    states as their after-the-title chips (the flag columns), so the inline
