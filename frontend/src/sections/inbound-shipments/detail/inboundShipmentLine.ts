@@ -65,8 +65,8 @@ export const missingBatchField = (
 
 /*
  * What a new batch starts with (spec rules › new-batch defaults,
- * OMS-REG-REPL-09.10/.40–.43): its pack size, the cost AND sell price for that
- * pack size, and its volume per pack.
+ * OMS-REG-REPL-09.10/.40–.45): its pack size, and the cost AND sell price and
+ * the volume per pack for that pack size.
  */
 export type NewBatchDefaults = {
   defaultPackSize: number;
@@ -85,15 +85,16 @@ export const orderLinePrice = (
 ): number => pricePerPackAfterSupplierDiscount * (rate ?? 1);
 
 /**
- * A price for `defaultPackSize` carried to `packSize` at the same price per
- * unit — what a transfer's read-only cost follows when the pack size changes
- * (OMS-REG-REPL-09.44). Zero where there is no default pack size to divide by.
+ * A per-pack figure for `defaultPackSize` carried to `packSize` at the same
+ * figure per unit — what a transfer's read-only cost follows when the pack
+ * size changes (OMS-REG-REPL-09.44), and what volume per pack follows on any
+ * shipment (.45). Zero where there is no default pack size to divide by.
  */
-export const priceAtPackSize = (
-  price: number,
+export const perUnitAtPackSize = (
+  perPack: number,
   defaultPackSize: number,
   packSize: number
-): number => (defaultPackSize > 0 ? (price / defaultPackSize) * packSize : 0);
+): number => (defaultPackSize > 0 ? (perPack / defaultPackSize) * packSize : 0);
 
 /**
  * The defaults for another batch of an item already on the shipment, read off
@@ -105,20 +106,22 @@ export const newBatchDefaultsFromLine = (
   rate: number | undefined
 ): NewBatchDefaults => {
   const orderLine = line.purchaseOrderLine;
-  const volumePerPack = line.item?.volumePerPack ?? 0;
-  return orderLine
-    ? {
-        defaultPackSize: orderLine.requestedPackSize || 1,
-        prefillPricePerPack: orderLinePrice(
-          orderLine.pricePerPackAfterSupplierDiscount,
-          rate
-        ),
-        volumePerPack,
-      }
-    : {
-        defaultPackSize: line.item?.defaultPackSize ?? 1,
-        prefillPricePerPack:
-          line.item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
-        volumePerPack,
-      };
+  const itemPackSize = line.item?.defaultPackSize ?? 1;
+  const itemVolume = line.item?.volumePerPack ?? 0;
+  if (!orderLine)
+    return {
+      defaultPackSize: itemPackSize,
+      prefillPricePerPack:
+        line.item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+      volumePerPack: itemVolume,
+    };
+  const packSize = orderLine.requestedPackSize || 1;
+  return {
+    defaultPackSize: packSize,
+    prefillPricePerPack: orderLinePrice(
+      orderLine.pricePerPackAfterSupplierDiscount,
+      rate
+    ),
+    volumePerPack: perUnitAtPackSize(itemVolume, itemPackSize, packSize),
+  };
 };

@@ -17,7 +17,7 @@ import {
   type ReadScan,
 } from '@/domain/barcode';
 import type { ItemOption } from '@/domain/item';
-import { priceAtPackSize } from '../inboundShipmentLine';
+import { perUnitAtPackSize } from '../inboundShipmentLine';
 import type { BatchInboundShipmentVariables } from '../inboundShipmentDetail.generated';
 
 /** A scan as the window receives it — never an unreadable one. */
@@ -319,11 +319,12 @@ export const saveRefusal = (
  * undefined, and the window moves on as if it had saved.
  *
  * A new line follows the inbound new-batch defaults (OMS-REG-REPL-09.10/.11,
- * .41, .43, .44): cost and sell price prefill from the item's default sell
+ * .41, .43–.45): cost and sell price prefill from the item's default sell
  * price at its default pack size. At any other pack size they are zero where
  * cost can be typed, and follow the pack size at the default's price per unit
  * where a source link locks cost, since a zero there could never be
- * corrected. Volume per pack is the item's.
+ * corrected. Volume per pack is the item's volume per unit at the line's pack
+ * size.
  */
 export const captureBatch = (
   draft: CaptureDraft,
@@ -356,7 +357,7 @@ export const captureBatch = (
     };
   }
   const price = context.costLocked
-    ? priceAtPackSize(
+    ? perUnitAtPackSize(
         item.defaultSellPricePerPack,
         item.defaultPackSize,
         draft.packSize
@@ -377,7 +378,11 @@ export const captureBatch = (
         manufactureDate: draft.manufactureDate ?? undefined,
         costPricePerPack: price,
         sellPricePerPack: price,
-        volumePerPack: item.volumePerPack,
+        volumePerPack: perUnitAtPackSize(
+          item.volumePerPack,
+          item.defaultPackSize,
+          draft.packSize
+        ),
         ...(draft.barcode ? { barcode: draft.barcode } : {}),
       },
     ],

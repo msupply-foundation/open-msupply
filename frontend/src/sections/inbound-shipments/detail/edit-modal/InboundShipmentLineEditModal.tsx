@@ -49,7 +49,7 @@ import {
   newBatchDefaultsFromLine,
   orderLinePrice,
   packDifference,
-  priceAtPackSize,
+  perUnitAtPackSize,
   type MissingBatchField,
   type NewBatchDefaults,
 } from '../inboundShipmentLine';
@@ -243,12 +243,17 @@ type DraftBatch = {
   programId: string | null;
   /**
    * Whether the user has hand-edited the cost / sell price
-   * (OMS-REG-REPL-09.10/.11): a prefilled price the user hasn't touched clears
-   * to zero when the pack size moves off the item default; an overridden one is
-   * left alone.
+   * (OMS-REG-REPL-09.10/.11/.44): a prefilled price the user hasn't touched
+   * moves with a pack-size change (spec rules › new-batch defaults); an
+   * overridden one is left alone.
    */
   costOverridden: boolean;
   sellOverridden: boolean;
+  /**
+   * Whether the user has typed the volume per pack: one they haven't follows
+   * every pack-size change at the item's volume per unit (OMS-REG-REPL-09.45).
+   */
+  volumeOverridden: boolean;
 };
 
 // The three authorisation states a line can hold (the fragment's non-null set).
@@ -330,6 +335,7 @@ const emptyBatch = (): DraftBatch => ({
   programId: null,
   costOverridden: false,
   sellOverridden: false,
+  volumeOverridden: false,
 });
 
 const fromLine = (line: InboundLineFragment): DraftBatch => ({
@@ -362,6 +368,7 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   // saved price.
   costOverridden: true,
   sellOverridden: true,
+  volumeOverridden: true,
 });
 
 // The card body groups. This modal is card-only (no table view — see the
@@ -727,7 +734,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         line.pricePerPackAfterSupplierDiscount,
         props.foreignCurrency?.rate
       ),
-      volumePerPack: line.item.volumePerPack,
+      volumePerPack: perUnitAtPackSize(
+        line.item.volumePerPack,
+        line.item.defaultPackSize,
+        line.requestedPackSize || 1
+      ),
     };
     setItem(chosen);
     const batch = prefillFromItem(chosen);
@@ -763,8 +774,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // read-only, so a zero could never be corrected: both follow the pack size
   // at the default's price per unit instead (.44). An order line's price is
   // kept: it is the order's price per pack at any pack size, as the server's
-  // cost recalculation applies it (.42). Editing a price marks it overridden
-  // so a later pack-size change leaves it alone.
+  // cost recalculation applies it (.42). Volume per pack follows the pack size
+  // at the item's volume per unit on every shipment (.45). Editing a price or
+  // the volume marks it overridden so a later pack-size change leaves it
+  // alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -772,14 +785,21 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = d.find(x => x.id === id);
         if (!b) return;
         b.packSize = value;
-        if (!chosen || props.purchaseOrderId) return;
+        if (!chosen) return;
+        if (!b.volumeOverridden)
+          b.volumePerPack = perUnitAtPackSize(
+            chosen.volumePerPack,
+            chosen.defaultPackSize,
+            value
+          );
+        if (props.purchaseOrderId) return;
         const reprice = (price: number) => {
           if (!b.costOverridden) b.costPricePerPack = price;
           if (!b.sellOverridden) b.sellPricePerPack = price;
         };
         if (props.costLocked)
           reprice(
-            priceAtPackSize(
+            perUnitAtPackSize(
               chosen.prefillPricePerPack,
               chosen.defaultPackSize,
               value
@@ -806,6 +826,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         if (b) {
           b.sellPricePerPack = value;
           b.sellOverridden = true;
+        }
+      })
+    );
+  const changeVolume = (id: string, value: number) =>
+    setBatches(
+      produce(d => {
+        const b = d.find(x => x.id === id);
+        if (b) {
+          b.volumePerPack = value;
+          b.volumeOverridden = true;
         }
       })
     );
@@ -1810,7 +1840,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.volumePerPack}
             min={0}
             emptyValue={0}
-            onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
+            onChange={v => changeVolume(b.id, v ?? 0)}
           />
         );
       },

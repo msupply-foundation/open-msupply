@@ -7,7 +7,7 @@ import {
   newBatchDefaultsFromLine,
   orderLinePrice,
   packDifference,
-  priceAtPackSize,
+  perUnitAtPackSize,
 } from './inboundShipmentLine';
 
 // The Difference figure's DIRECTION (spec/inbound-shipments/ui-surface.md
@@ -150,13 +150,15 @@ describe('newBatchDefaultsFromLine', () => {
     ).toBe(0);
   });
 
-  it('OMS-REG-REPL-09.42 seeds from the cited order line at the shipment rate', () => {
+  it('OMS-REG-REPL-09.42 .45 seeds from the cited order line at the shipment rate, its volume at the order pack size', () => {
+    // The item's 0.25 belongs to its pack of 10; the order's pack of 20 holds
+    // twice as much.
     expect(
       newBatchDefaultsFromLine({ item, purchaseOrderLine: orderLine }, 1.5)
     ).toEqual({
       defaultPackSize: 20,
       prefillPricePerPack: 13.5,
-      volumePerPack: 0.25,
+      volumePerPack: 0.5,
     });
   });
 });
@@ -171,19 +173,20 @@ describe('orderLinePrice', () => {
   });
 });
 
-// What a transfer's read-only cost follows on a pack-size change
-// (spec/inbound-shipments/rules.md › new-batch defaults, OMS-REG-REPL-09.44).
-describe('priceAtPackSize', () => {
+// What a transfer's read-only cost (OMS-REG-REPL-09.44) and any batch's
+// volume per pack (.45) follow on a pack-size change
+// (spec/inbound-shipments/rules.md › new-batch defaults).
+describe('perUnitAtPackSize', () => {
   it('keeps the default price per unit at another pack size', () => {
-    expect(priceAtPackSize(10, 100, 50)).toBe(5);
-    expect(priceAtPackSize(10, 100, 200)).toBe(20);
+    expect(perUnitAtPackSize(10, 100, 50)).toBe(5);
+    expect(perUnitAtPackSize(10, 100, 200)).toBe(20);
   });
 
   it('is the default price at the default pack size', () => {
-    expect(priceAtPackSize(10, 100, 100)).toBe(10);
+    expect(perUnitAtPackSize(10, 100, 100)).toBe(10);
   });
 
   it('is zero where the item has no default pack size', () => {
-    expect(priceAtPackSize(10, 0, 50)).toBe(0);
+    expect(perUnitAtPackSize(10, 0, 50)).toBe(0);
   });
 });

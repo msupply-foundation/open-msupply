@@ -55,6 +55,7 @@ query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
             code
             name
             type
+            defaultPackSize
             volumePerPack
           }
         }

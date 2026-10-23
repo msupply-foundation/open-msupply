@@ -451,10 +451,17 @@ describe('captureBatch', () => {
     expect(line?.sellPricePerPack).toBe(10);
   });
 
-  it("OMS-REG-REPL-09.43 a new line carries the item's volume per pack", () => {
-    const line = captureBatch({ ...draft, packSize: 20 }, undefined, context)
+  it("OMS-REG-REPL-09.43 a new line at the default pack size carries the item's volume per pack", () => {
+    const line = captureBatch(draft, undefined, context)
       ?.insertInboundShipmentLines?.[0];
     expect(line?.volumePerPack).toBe(0.5);
+  });
+
+  it('OMS-REG-REPL-09.45 at another pack size the volume per pack keeps the volume per unit', () => {
+    // 0.5 for a pack of 10 → 1.0 for a pack of 20.
+    const line = captureBatch({ ...draft, packSize: 20 }, undefined, context)
+      ?.insertInboundShipmentLines?.[0];
+    expect(line?.volumePerPack).toBe(1);
   });
 
   it('builds nothing while refused', () => {

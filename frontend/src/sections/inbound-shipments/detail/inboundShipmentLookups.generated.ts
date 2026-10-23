@@ -69,6 +69,7 @@ export type PurchaseOrderLinesResult = {
   code: string;
   name: string;
   type: "SERVICE" | "STOCK" | "NON_STOCK";
+  defaultPackSize: number;
   volumePerPack: number;
 };
 }>;
@@ -77,7 +78,7 @@ export type PurchaseOrderLinesResult = {
 };
 
 export const PurchaseOrderLines = {
-  query: "query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {\n  purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {\n    __typename\n    ... on PurchaseOrderNode {\n      id\n      lines {\n        nodes {\n          id\n          lineNumber\n          requestedPackSize\n          pricePerPackAfterSupplierDiscount\n          item {\n            id\n            code\n            name\n            type\n            volumePerPack\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {\n  purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {\n    __typename\n    ... on PurchaseOrderNode {\n      id\n      lines {\n        nodes {\n          id\n          lineNumber\n          requestedPackSize\n          pricePerPackAfterSupplierDiscount\n          item {\n            id\n            code\n            name\n            type\n            defaultPackSize\n            volumePerPack\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderLinesResult, PurchaseOrderLinesVariables>;
 
 export type SupplierInternalOrdersVariables = {
