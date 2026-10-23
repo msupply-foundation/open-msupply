@@ -54,7 +54,14 @@ export const StocktakeLineFilters: Component<
   // <For> reuses its chips when the register loads — no remount.
   const filters = createMemo(() => {
     const hasCampaigns = campaignsResource.noSuspense().length > 0;
-    return allFilters.filter(f => f.key !== 'campaignId' || hasCampaigns);
+    // Offer Activity while the register has entries OR the filter already
+    // carries a value — otherwise a URL with a campaignId while the register is
+    // empty or still loading (a stale link to a deleted campaign) would narrow
+    // the table with no chip to see or clear it.
+    const campaignFilterActive = props.filter.campaignId != null;
+    return allFilters.filter(
+      f => f.key !== 'campaignId' || hasCampaigns || campaignFilterActive
+    );
   });
 
   // The errors chip definition. Its render is display-only (a count badge) —

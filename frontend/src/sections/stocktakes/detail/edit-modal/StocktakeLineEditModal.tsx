@@ -77,7 +77,10 @@ import {
   type StocktakeLineFragment,
   type StockLinesByItemResult,
 } from '../lines/stocktakeDetail.generated';
-import { variantVolumePerPack } from '../lines/itemVariant';
+import {
+  variantVolumeForLine,
+  variantVolumePerPack,
+} from '../lines/itemVariant';
 import {
   runBatchStocktakeLines,
   type BatchStocktakeLinesInput,
@@ -706,18 +709,21 @@ const StocktakeLineEditContent = (
     setLineErrors(new Map());
     setVariants([]);
     setLoadingLines(true);
-    // The variants load alongside the batches; both land together below.
-    const itemVariants = fetchItemVariants(props.storeId, item.id);
-    const existing =
+    // The variants load alongside the batches — awaited together, so a failed
+    // existing-lines fetch (or a sibling's) can't leave the variants promise
+    // unhandled.
+    const [existing, itemVariants] = await Promise.all([
       knownExisting ??
-      (await fetchExistingLines(props.storeId, props.stocktakeId, item.id));
+        fetchExistingLines(props.storeId, props.stocktakeId, item.id),
+      fetchItemVariants(props.storeId, item.id),
+    ]);
     const seeded = await buildDraft(
       props.storeId,
       item,
       existing,
       existing.length === 0
     );
-    setVariants(await itemVariants);
+    setVariants(itemVariants);
     setDraft(reconcile(seeded, { key: 'id' }));
     // Focus the requested batch, else the first row — the focus effect runs
     // when loadingLines flips false below.
@@ -838,6 +844,18 @@ const StocktakeLineEditContent = (
       variant.packagingVariants,
       line.packSize
     );
+    if (volume !== undefined) update(line.id, 'volumePerPack', volume);
+  };
+
+  // Set a batch's pack size. The variant seeds the volume per pack from the
+  // packaging level matching the pack size, so a pack-size change re-seeds it
+  // from the line's chosen variant (OMS-REG-INV-03.93) — otherwise the saved
+  // volume would stay the one worked out for the pack size at the moment the
+  // variant was picked. Only the volume stays as-is when no level matches the
+  // new pack size (variantVolumeForLine returns undefined).
+  const setPackSize = (line: DraftLine, value: number | null) => {
+    update(line.id, 'packSize', value);
+    const volume = variantVolumeForLine(variants(), line.itemVariantId, value);
     if (volume !== undefined) update(line.id, 'volumePerPack', volume);
   };
 
@@ -1340,7 +1358,7 @@ const StocktakeLineEditContent = (
             // where no stock stands behind the row (packSizeEditable).
             disabled={!line.countThisLine || !packSizeEditable(line)}
             value={line.packSize ?? undefined}
-            onChange={value => update(line.id, 'packSize', value ?? null)}
+            onChange={value => setPackSize(line, value ?? null)}
           />
         );
       },
