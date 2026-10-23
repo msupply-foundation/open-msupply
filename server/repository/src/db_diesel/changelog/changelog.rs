@@ -153,8 +153,8 @@ diesel_string_enum! {
         StocktakeLine,
         Store,
         StorePreference,
-        #[default]
         SupplyWastageRate,
+        #[default]
         SyncFileReference,
         SyncMessage,
         SystemLog,
