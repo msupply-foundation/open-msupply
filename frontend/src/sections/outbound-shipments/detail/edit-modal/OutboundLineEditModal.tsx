@@ -384,9 +384,11 @@ export const OutboundLineEditModal = (
 // over-allocation surfaced (OMS-REG-SMV-11.11) and every skipped category reported
 // (OMS-REG-SMV-11.7) — is the pure issueWarningMessages (unit-tested in
 // ./allocationWarnings); here we only resolve its keys/params via t(), reusing
-// the same ported vocabulary the bulk allocate report uses. The shortfall is
-// NOT reported here — outbound surfaces it as the dedicated placeholder notice
-// (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
+// the same ported vocabulary the bulk allocate report uses. While NEW the
+// shortfall is NOT reported here — it becomes the placeholder, surfaced as the
+// dedicated placeholder notice — so deriveIssueWarnings reports it only past
+// NEW, where no placeholder can be created and the save issues what was
+// allocated (OMS-REG-DIST-03.23, OMS-REG-SMV-11.13).
 //
 // Each banner carries the test id of the category it reports (e2e/TESTIDS.md
 // › Distribution), so a suite can tell an over-allocation from a skip report
@@ -394,24 +396,37 @@ export const OutboundLineEditModal = (
 type IssueBanner = { testId: string; message: string };
 const warningMessages = (
   derived: readonly IssueWarning[],
-  requestedUnits: number
+  requestedUnits: number,
+  lens: AllocateUnit
 ): IssueBanner[] =>
-  issueWarningMessages(derived, requestedUnits).map(message =>
-    message.key === 'messages.over-allocated'
-      ? {
+  issueWarningMessages(derived, requestedUnits, lens).map(message => {
+    switch (message.key) {
+      case 'messages.over-allocated':
+        return {
           testId: 'outbound-over-allocated-warning',
           message: t(message.key, {
             quantity: roundedText(message.quantity),
             issueQuantity: roundedText(message.issueQuantity),
           }),
-        }
-      : {
+        };
+      case 'messages.allocated-lines-skipped-line-reasons':
+        return {
           testId: 'outbound-skipped-stock-warning',
           message: t(message.key, {
             reasons: message.reasons.map(reason => t(reason)).join(', '),
           }),
-        }
-  );
+        };
+      case 'warning.cannot-create-placeholder-units':
+      case 'warning.cannot-create-placeholder-packs':
+      case 'warning.cannot-create-placeholder-doses':
+        return {
+          testId: 'outbound-shortfall-warning',
+          message: t(message.key, {
+            allocatedQuantity: roundedText(message.allocatedQuantity),
+          }),
+        };
+    }
+  });
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
@@ -544,9 +559,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // allocate's ordering — with rows holding nothing allocatable sunk to
     // the bottom (OMS-REG-SMV-11.37). Snapshot the seeded allocation first: the
     // on-hold manual exception and the sinking both judge it (OMS-REG-SMV-11.35/.36).
-    const sorted = [...data.draftLines].sort((a, b) =>
-      fillOrderCompare(a, b, allocationPrefs())
-    );
+    // Each row is COPIED before it reaches the draft store: the store writes
+    // edits into the objects it holds, and graphqlFetch hands back the same
+    // parsed response when the server's answer is unchanged — so seeding the
+    // raw rows would write a cancelled edit into that shared response, and the
+    // next open would show it as if it were saved.
+    const sorted = data.draftLines
+      .map(line => ({ ...line }))
+      .sort((a, b) => fillOrderCompare(a, b, allocationPrefs()));
     seededPacksById = new Map(
       sorted.map(line => [line.id, line.numberOfPacks])
     );
@@ -917,8 +937,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
   // routine fills usable batches oldest-expiry-first in whole packs
   // (src/domain/allocation distributeIssue — OMS-REG-SMV-11.1/.9–.11's client face); the
-  // shortfall becomes the placeholder (NEW only), and each condition raises
-  // its warning banner.
+  // shortfall becomes the placeholder (NEW only; past NEW it is a warning
+  // banner instead), and each condition raises its warning banner.
   const distribute = (units: number) => {
     const lens = allocateIn();
     const result = distributeIssue(
@@ -942,12 +962,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     }
     setPlaceholderUnits(props.isNew ? result.shortfallUnits : 0);
     // Structured per-category + over-allocation warnings from the shared policy
-    // (OMS-REG-SMV-11.7/.11). Shortfall is surfaced separately as the placeholder notice,
-    // so it is excluded here (reportShortfall:false).
+    // (OMS-REG-SMV-11.7/.11). While NEW the shortfall is surfaced separately as
+    // the placeholder notice; past NEW it has no placeholder to land in, so it
+    // is reported here instead (OMS-REG-SMV-11.13).
     setWarnings(
       warningMessages(
-        deriveIssueWarnings(result, { reportShortfall: false }),
-        units
+        deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
+        units,
+        lens
       )
     );
     setDirty(true);
@@ -956,6 +978,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // against the current quantity, e.g. after raising it back above zero).
     setZeroConfirm(false);
     setVvmConfirm(false);
+    return result;
   };
 
   // NumberField hands us a committed number (already numeric-only and clamped
@@ -963,11 +986,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // when the field is cleared.
   const onIssueChange = (value: number | undefined) => {
     setIssueValue(value);
-    const units = lensToUnits(value ?? null, allocateIn());
+    const units = lensToUnits(value ?? null, allocateIn()) ?? 0;
     // Clearing (or blanking) the Issue field distributes 0 — resetting every
     // batch's packs and the placeholder, not leaving the last distribution
     // behind.
-    distribute(units ?? 0);
+    const result = distribute(units);
+    // Past NEW a shortfall has no placeholder to hold it, so — as the old app
+    // does — the Issue field drops to what was allocated, beside the shortfall
+    // warning. Written inside onChange, so NumberField keeps the typed text
+    // until blur and only then shows this figure (never mid-typing). The drop
+    // can land on the value already held — the line holding everything
+    // available — so the field declares `parentAnswersSynchronously`.
+    if (!props.isNew && result.shortfallUnits > 0)
+      setIssueValue(
+        roundedLensValue(units - result.shortfallUnits, allocateIn())
+      );
   };
 
   // The Issue field mirrors a manual per-batch edit (OMS-REG-SMV-11.24/.25,
@@ -1920,9 +1953,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               height — NumberField's "small" (2.25rem) and Select's "sm"
               (1.75rem — the Pagination scale) don't align with each other. */}
             <div class={styles.issueGroup}>
+              {/* onIssueChange answers in place, and past New its answer can
+                  be the figure the field already holds (an over-request where
+                  the line holds everything available) — which the field could
+                  not tell from no answer, so it is told (NumberField's
+                  contract). */}
               <NumberField
                 label={t('label.issue')}
                 min={0}
+                parentAnswersSynchronously
                 data-testid="issue-quantity-input"
                 ref={issueField.ref}
                 value={issueValue()}

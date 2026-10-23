@@ -17,7 +17,9 @@
  * versioning its plugin form declares: read-only in the archived form for its
  * version where there is one, until Edit; otherwise, and after Edit, in the
  * current form with its migrations run on the loaded data, the values they
- * clear held against their paths. A save re-pins it to the current version;
+ * clear held against their paths. It opens dirty only when the migration
+ * changed what it holds, and only for a user who may save it. A save re-pins
+ * it to the current version;
  * closing writes nothing. A document no form can open opens read-only, as
  * recorded, for the fallback renderer (`recorded`; DocumentAsRecorded.tsx):
  * one pinned to a version the plugin does not list, one it lists but cannot
@@ -586,9 +588,20 @@ export const createDocumentForm = <T extends object>(
   const readingOnly = () =>
     version().kind === 'archived' || asRecorded(version());
 
-  /** The draft's starting point for the document as it stands. */
+  /**
+   * The draft's starting point for the document as it stands, and, for a
+   * migrated one, its data as stored: the form is dirty from the start only
+   * when the migration changed what the document holds. A user who may not
+   * save it gets no stored baseline, so the form opens clean for them: a
+   * dirty form they could never clear would only ever ask about changes
+   * they cannot keep.
+   */
   const seedFor = ():
-    | { data: object; unresolved: Record<string, UnresolvedValue> }
+    | {
+        data: object;
+        unresolved: Record<string, UnresolvedValue>;
+        stored?: unknown;
+      }
     | undefined => {
     const s = options.source();
     const doc = document();
@@ -612,7 +625,9 @@ export const createDocumentForm = <T extends object>(
         steps.versions.indexOf(r.formSchemaId) + 1,
         steps.migrations
       );
-      if (migrated) return migrated;
+      if (migrated) {
+        return { ...migrated, stored: noSavePermission() ? undefined : raw };
+      }
     }
     return { data: raw as object, unresolved: {} };
   };
@@ -665,7 +680,7 @@ export const createDocumentForm = <T extends object>(
       const seed = seedFor() ?? { data: {}, unresolved: {} };
       setSaveError(undefined);
       setNewerVersion(false);
-      controller.reset(seed.data as T, seed.unresolved);
+      controller.reset(seed.data as T, seed.unresolved, seed.stored);
       setSeededFor(currentKey());
     });
   });
@@ -805,6 +820,9 @@ export const createDocumentForm = <T extends object>(
     return result.document;
   };
 
+  // Discard goes back to the document as the form opened it: for a migrated
+  // one, the migrated data, compared against itself, so the form is clean
+  // afterwards and a leave guard that discarded it stays quiet.
   const discard = () => {
     const seed = seedFor();
     if (seed) controller.reset(seed.data as T, seed.unresolved);
@@ -822,12 +840,14 @@ export const createDocumentForm = <T extends object>(
     document,
     isNew,
     isDirty,
-    // A migrated document may be saved untouched: the save re-pins it.
+    // A migrated document is dirty, and saves untouched, only when the
+    // migration changed it and the user may save; otherwise its first edit's
+    // save re-pins it.
     canSave: () =>
       status() === 'ready' &&
       !readingOnly() &&
       !noSavePermission() &&
-      (isNew() || isDirty() || version().kind === 'migrated'),
+      (isNew() || isDirty()),
     validation: controller.validation,
     version,
     recorded,
