@@ -457,6 +457,10 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * total one page. The toggle persists as `groupRows` config (needs
    * `setConfig`); expansion is the table's own, and starts collapsed.
    * `label` names the toggle ("Group by item").
+   *
+   * Grouping leaves the column ORDER alone (groupedColumnMode: false) — the
+   * group row's label leads the first visible column wherever `columnId` sits,
+   * so there is no reason to shuffle a user's columns when they toggle it.
    */
   rowGroup?: { columnId: string; label: () => string };
 
@@ -793,6 +797,13 @@ export function DataTable<T, K extends string, G extends string = never>(
     getRowId: row => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
+    // Keep the user's column order when grouping is on. TanStack's default
+    // ('reorder') moves the grouped column to the front while grouped, so a
+    // user who had reordered their columns would see one jump on every toggle.
+    // The group row's label leads the first visible column regardless (see
+    // TableRow's labelColumnId / rowGroup's groupLabelColumnId), so nothing is
+    // gained by the shuffle.
+    groupedColumnMode: false,
   });
 
   // The rows table view draws, in order. Ungrouped that is TanStack's row

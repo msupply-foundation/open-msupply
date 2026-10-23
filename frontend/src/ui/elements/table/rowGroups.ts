@@ -41,6 +41,20 @@ export interface GroupableRow<R> {
 }
 
 /**
+ * The column a group row's label — its grouped value and line count — sits in:
+ * the FIRST visible column, not the grouped column's own cell. The grouped
+ * column is user-hideable and re-orderable, so pinning the label to it would
+ * drop the value and count whenever that column is hidden (and move it around
+ * when the column is reordered). Leading with the first visible column keeps
+ * the label present and in one place however the columns are arranged
+ * (ui-standards § tables › row groups). `columnIds` are the row's visible
+ * columns in render order; undefined when none are visible.
+ */
+export const groupLabelColumnId = (
+  columnIds: readonly string[]
+): string | undefined => columnIds[0];
+
+/**
  * The rows a table draws, in order, from its top-level rows. A plain row
  * stays as it is; a group row is followed by its rows while expanded; a
  * group of ONE row is drawn as that row alone, since a group row over a

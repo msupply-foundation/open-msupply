@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayedRows, groupPositions } from './rowGroups';
+import { displayedRows, groupLabelColumnId, groupPositions } from './rowGroups';
 
 // ui-standards § tables › grouped rows: a grouped column shows a value once per
 // run of equal consecutive values, its cells joined across the run.
@@ -81,5 +81,22 @@ describe('row groups — the rows drawn', () => {
     expect(
       ids([line('x'), group('g', [line('a'), line('b')], true), line('y')])
     ).toEqual(['x', 'g', 'a', 'b', 'y']);
+  });
+});
+
+// ui-standards § tables › row groups: the group row's label leads the first
+// visible column, so hiding or reordering the grouped column never drops it.
+describe('row groups — where the label sits', () => {
+  it('leads the first visible column', () => {
+    expect(groupLabelColumnId(['itemCode', 'itemName', 'numberOfPacks'])).toBe(
+      'itemCode'
+    );
+  });
+  it('falls to the next column when the grouped column is hidden, so the label and count never vanish', () => {
+    // itemCode (the grouped column) hidden → the first visible column leads.
+    expect(groupLabelColumnId(['itemName', 'numberOfPacks'])).toBe('itemName');
+  });
+  it('has no label cell when nothing is visible', () => {
+    expect(groupLabelColumnId([])).toBeUndefined();
   });
 });

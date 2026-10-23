@@ -10,7 +10,7 @@ import { renderTemplate } from './renderTemplate';
 import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { ChevronDownIcon } from '../../icons';
-import type { GroupPosition } from './rowGroups';
+import { groupLabelColumnId, type GroupPosition } from './rowGroups';
 import styles from './DataTable.module.css';
 
 // The alignment convention carried on a column's meta (set by the cell
@@ -188,6 +188,33 @@ export function TableRow<T>(props: {
   // or collapses it rather than opening a record, and its checkbox selects
   // every line in it.
   const isGroup = () => props.row.getIsGrouped();
+  // A group row's label (grouped value + line count) leads the first VISIBLE
+  // column — not the grouped column's own cell, which is user-hideable and
+  // re-orderable (groupLabelColumnId). The grouped value is read from the
+  // grouped column's cell wherever it sits, so the label reads the same value
+  // whether or not that column is on screen.
+  const labelColumnId = () =>
+    groupLabelColumnId(
+      props.row
+        .getVisibleCells()
+        .filter(cell => props.cellVisible(cell))
+        .map(cell => cell.column.id)
+    );
+  const groupedCell = () =>
+    props.row.getAllCells().find(cell => cell.getIsGrouped());
+  // A cell's rendered content (renderTemplate, not flexRender — see the For
+  // body below). Shared so the group label can render the grouped column's
+  // value from a DIFFERENT cell than the one it lands in.
+  const renderCellContent = (cell: TanCell<T, unknown>): JSX.Element => (
+    <Show
+      when={cellControlLine(cell)}
+      fallback={renderTemplate(cell.column.columnDef.cell, cell.getContext())}
+    >
+      <span class={styles.controlLine}>
+        {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
+      </span>
+    </Show>
+  );
   const clickable = () =>
     isGroup() ||
     (props.onRowClick !== undefined &&
@@ -228,6 +255,11 @@ export function TableRow<T>(props: {
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS.
       data-selected={selected() ? '' : undefined}
+      // A group row expands/collapses on click and on Enter, so it carries its
+      // own expanded state (not only the chevron button inside it) — a screen
+      // reader moving by row then hears whether the group is open. Omitted on a
+      // plain row, which expands nothing.
+      aria-expanded={isGroup() ? props.row.getIsExpanded() : undefined}
       /*
        * Programmatically focusable, never a tab stop (KB-N1/KB-T2): the <table>
        * holds the single tabindex=0 and the arrows move DOM focus between rows
@@ -332,19 +364,7 @@ export function TableRow<T>(props: {
           // renderTemplate, not TanStack's flexRender: the latter untracks the
           // call, freezing every locale-derived value (numbers, dates, money)
           // until a reload.
-          const content = () => (
-            <Show
-              when={cellControlLine(cell)}
-              fallback={renderTemplate(
-                cell.column.columnDef.cell,
-                cell.getContext()
-              )}
-            >
-              <span class={styles.controlLine}>
-                {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
-              </span>
-            </Show>
-          );
+          const content = () => renderCellContent(cell);
           return (
             <Show when={props.cellVisible(cell)}>
               <td
@@ -399,13 +419,16 @@ export function TableRow<T>(props: {
                 }}
               >
                 {/* A group row (rowGroup) shows the grouped value with its line
-                  count, and a figure only in a column that aggregates; every
-                  other cell is blank. A grouped cell continuing the previous
-                  row's value (meta.groupRows) renders nothing. */}
+                  count in the first visible column (labelColumnId), and a
+                  figure only in a column that aggregates; every other cell is
+                  blank. The value is read from the grouped column's own cell,
+                  so it reads the same whether or not that column is on screen.
+                  A grouped cell continuing the previous row's value
+                  (meta.groupRows) renders nothing. */}
                 {isGroup() ? (
-                  cell.getIsGrouped() ? (
+                  cell.column.id === labelColumnId() ? (
                     <span class={styles.groupLabel}>
-                      {content()}
+                      {renderCellContent(groupedCell() ?? cell)}
                       <span
                         class={styles.groupCount}
                         data-testid="group-line-count"
