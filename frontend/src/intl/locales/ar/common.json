@@ -1690,7 +1690,6 @@
   "messages.results-found": "تم العثور على {{totalCount}} نتائج",
   "messages.results-over-limit": "عرض أول {{limit}} نتائج فقط - يرجى تنقيح البحث",
   "messages.rnr-not-all-lines-confirmed": "لم يتم تأكيد جميع الخطوط. هل أنت متأكد من أنك مستعد لوضع اللمسات الأخيرة؟",
-  "messages.save-encounter-as-visited": "حفظ اللقاء ك: تمت الزيارة؟",
   "messages.saved": "تم الحفظ",
   "messages.scanner-connected": "متصل",
   "messages.scanner-disconnected": "غير متصل",

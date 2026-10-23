@@ -2344,7 +2344,6 @@
   "messages.results-found": "{{totalCount}} پایلې وموندل شوې",
   "messages.results-over-limit": "یوازې لومړۍ {{limit}} پایلې ښودل - مهرباني وکړئ خپل لټون اصلاح کړئ",
   "messages.rnr-not-all-lines-confirmed": "ټولې کرښې د تایید په توګه په نښه شوي ندي. ایا تاسو ډاډه یاست چې نهایی کولو ته چمتو یاست؟",
-  "messages.save-encounter-as-visited": "لیدنه د لیدلو په توګه خوندي کړئ؟",
   "messages.saved": "خوندي شوی",
   "messages.scan-disabled-warning": "د سکین کولو توان نلري، مهرباني وکړئ د دوام لپاره د توکي ترمیم کړکۍ موډل بند کړئ",
   "messages.scanner-connected": "نښلول شوی",
