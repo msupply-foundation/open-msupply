@@ -1,7 +1,6 @@
 pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod ancillary_item;
-pub(crate) mod supply_wastage_rate;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_catalogue_type;
@@ -83,6 +82,7 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod supply_wastage_rate;
 pub(crate) mod sync_file_reference;
 pub(crate) mod sync_message;
 pub(crate) mod sync_message_om;

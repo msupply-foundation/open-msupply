@@ -61,7 +61,10 @@ impl<'a> SupplyWastageRateRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SupplyWastageRateRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<SupplyWastageRateRow>, RepositoryError> {
         let result = supply_wastage_rate::table
             .filter(supply_wastage_rate::id.eq(id))
             .first(self.connection.lock().connection())

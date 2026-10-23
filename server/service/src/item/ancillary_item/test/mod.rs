@@ -250,8 +250,11 @@ mod tests {
             SetSupplyWastageRate, SetSupplyWastageRateError, supply_wastage_rates,
         };
 
-        let (_, connection, connection_manager, _) =
-            setup_all("supply_wastage_rate_service", MockDataInserts::none().items()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "supply_wastage_rate_service",
+            MockDataInserts::none().items(),
+        )
+        .await;
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.item_service;
@@ -288,7 +291,8 @@ mod tests {
         // Set, then changed in place rather than a second row
         assert_eq!(set(mock_item_a().id, 10.0), Ok(10.0));
         assert_eq!(set(mock_item_a().id, 15.0), Ok(15.0));
-        let rates = supply_wastage_rates(&connection, &[mock_item_a().id, mock_item_b().id]).unwrap();
+        let rates =
+            supply_wastage_rates(&connection, &[mock_item_a().id, mock_item_b().id]).unwrap();
         assert_eq!(rates.get(&mock_item_a().id), Some(&15.0));
         assert_eq!(rates.get(&mock_item_b().id), None);
 

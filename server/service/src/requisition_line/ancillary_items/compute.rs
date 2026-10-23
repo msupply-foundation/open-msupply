@@ -97,8 +97,12 @@ pub fn compute_ancillary_plan(
         } else {
             1.0
         };
-        let own_share =
-            1.0 - supply_wastage_rates.get(&row.ancillary_item_id).copied().unwrap_or(0.0) / 100.0;
+        let own_share = 1.0
+            - supply_wastage_rates
+                .get(&row.ancillary_item_id)
+                .copied()
+                .unwrap_or(0.0)
+                / 100.0;
         let ratio = usable_share * row.ancillary_quantity / row.item_quantity / own_share;
         graph
             .entry(&row.item_id)

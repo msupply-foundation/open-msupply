@@ -82,7 +82,8 @@ impl AncillaryRatioPrincipal {
         if self.item_quantity == 0.0 || !(0.0..100.0).contains(&self.own_wastage_rate) {
             return 0.0;
         }
-        self.principal_usable_consumption() * self.ancillary_quantity / self.item_quantity
+        self.principal_usable_consumption() * self.ancillary_quantity
+            / self.item_quantity
             / (1.0 - self.own_wastage_rate / 100.0)
     }
 }

@@ -9,8 +9,7 @@ use crate::{
 };
 use repository::{
     ForecastData, ForecastMethod, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    StorageConnection,
-    SupplyWastageRateRow, SupplyWastageRateRowRepository,
+    StorageConnection, SupplyWastageRateRow, SupplyWastageRateRowRepository,
     ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
     mock::{
         MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e,

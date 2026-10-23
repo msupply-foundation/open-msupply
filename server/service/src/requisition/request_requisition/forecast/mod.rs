@@ -120,7 +120,10 @@ impl ForecastInputs {
     }
 
     fn supply_wastage_rate(&self, item_id: &str) -> f64 {
-        self.supply_wastage_rates.get(item_id).copied().unwrap_or(0.0)
+        self.supply_wastage_rates
+            .get(item_id)
+            .copied()
+            .unwrap_or(0.0)
     }
 
     /// The configured links from principals on the order to `item_id`.
