@@ -77,12 +77,13 @@ export type NewBatchDefaults = {
 /**
  * An order line's price per pack — net of the supplier discount, in the
  * order's currency — in local currency at the shipment's rate. `rate` is
- * undefined on a home-currency shipment.
+ * undefined on a home-currency shipment; a rate of 0 (which can arrive by
+ * sync) is read as 1, as the server's cost recalculation reads it.
  */
 export const orderLinePrice = (
   pricePerPackAfterSupplierDiscount: number,
   rate: number | undefined
-): number => pricePerPackAfterSupplierDiscount * (rate ?? 1);
+): number => pricePerPackAfterSupplierDiscount * (rate || 1);
 
 /**
  * A per-pack figure for `defaultPackSize` carried to `packSize` at the same

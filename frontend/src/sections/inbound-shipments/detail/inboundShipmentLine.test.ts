@@ -171,6 +171,10 @@ describe('orderLinePrice', () => {
   it('converts a foreign price at the shipment rate', () => {
     expect(orderLinePrice(9, 2)).toBe(18);
   });
+
+  it('reads a rate of 0 as 1, as the server recalculation does', () => {
+    expect(orderLinePrice(9, 0)).toBe(9);
+  });
 });
 
 // What a transfer's read-only cost (OMS-REG-REPL-09.44) and any batch's
