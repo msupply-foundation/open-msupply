@@ -142,6 +142,17 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
 
+// The statuses at which the server will delete the shipment — its own window
+// (delete/validate.rs → check_invoice_is_editable), wider than EDITABLE by
+// Shipped. Picked and Verified are refused whatever the shipment holds, so the
+// detail's Delete is disabled there rather than offered only to be refused
+// (issue #628). Refusals that depend on the lines (stock issued, counted,
+// transferred) are still submitted and surfaced.
+const DELETABLE: InboundStatus[] = ['NEW', 'SHIPPED', 'DELIVERED', 'RECEIVED'];
+
+export const isDeletable = (status: string): boolean =>
+  DELETABLE.includes(status as InboundStatus);
+
 // Received closes a PO-linked shipment's line-selection actions (issue #873):
 // the goods are in stock, so a bulk change is too late. Lines are still added,
 // edited and deleted one at a time through the editor, and header fields
@@ -172,9 +183,10 @@ const hasIntroducedStock = (status: string): boolean =>
 // is refused outright (server invoice/inbound_shipment/delete/validate.rs →
 // check_invoice_is_editable admits New/Shipped/Delivered/Received) — warning
 // that its stock "will be removed as well" promises an outcome that cannot
-// happen, and the user meets the finalised refusal instead. Nor is this a gate:
-// delete stays offered and submitted at every status (issue #1134); the status
-// only picks the copy. Shipped and Delivered hold no stock yet, so they get the
+// happen, and the user meets the finalised refusal instead. Nor is this a gate
+// (that is `isDeletable`); the status only picks the copy, and the list's bulk
+// delete still submits a Verified selection (issue #1134). Shipped and
+// Delivered hold no stock yet, so they get the
 // plain confirmation too — telling someone their Shipped shipment "has already
 // been received" was both false and alarming.
 export const deleteRemovesStock = (status: string): boolean =>
