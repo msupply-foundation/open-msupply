@@ -332,6 +332,7 @@ async fn forecast_ancillary_adds_the_supply_wastage() {
     // store_a gives the vaccine a 50% wastage rate. b (syringes) is used for the doses given
     // and 20% of them break. c (safety boxes) follows the syringes, broken ones included.
     // d excludes the syringes' wastage, which as no course covers them is their own 20%.
+    // The vaccine's own 10% as a supply is ignored: its course's 50% is what b deducts.
     let mut syringe = link(&vaccine, &b, 1.0, 1.0);
     syringe.exclude_principal_wastage = true;
     let mut lid = link(&b, &d, 1.0, 1.0);
@@ -342,6 +343,7 @@ async fn forecast_ancillary_adds_the_supply_wastage() {
     )
     .await;
     set_supply_wastage(&setup.connection, &b, 20.0);
+    set_supply_wastage(&setup.connection, &vaccine, 10.0);
 
     setup.add(&vaccine);
     setup.set_demand(&vaccine, 100.0);

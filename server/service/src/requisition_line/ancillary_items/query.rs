@@ -7,7 +7,8 @@ use std::collections::HashSet;
 
 use super::compute::{AncillaryPlan, compute_ancillary_plan};
 use crate::{
-    item::ancillary_item::supply_wastage_rates, requisition::request_requisition::wastage_rates,
+    item::ancillary_item::supply_wastage_rates,
+    requisition::request_requisition::principal_wastage_rates,
 };
 
 #[derive(Debug, PartialEq)]
@@ -49,16 +50,6 @@ pub fn get_ancillary_plan(
     let ancillary_rows =
         AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
-    // The wastage rates, in the order's store, of the principals whose links exclude them
-    let principal_ids: Vec<String> = ancillary_rows
-        .iter()
-        .filter(|row| row.exclude_principal_wastage)
-        .map(|row| row.item_id.clone())
-        .collect::<HashSet<String>>()
-        .into_iter()
-        .collect();
-    let wastage_rates = wastage_rates(connection, &requisition.store_id, &principal_ids)?;
-
     // Every linked item's own wastage rate as a supply
     let linked_item_ids: Vec<String> = ancillary_rows
         .iter()
@@ -67,6 +58,21 @@ pub fn get_ancillary_plan(
         .into_iter()
         .collect();
     let supply_wastage_rates = supply_wastage_rates(connection, &linked_item_ids)?;
+
+    // The wastage rates, in the order's store, of the principals whose links exclude them
+    let principal_ids: Vec<String> = ancillary_rows
+        .iter()
+        .filter(|row| row.exclude_principal_wastage)
+        .map(|row| row.item_id.clone())
+        .collect::<HashSet<String>>()
+        .into_iter()
+        .collect();
+    let wastage_rates = principal_wastage_rates(
+        connection,
+        &requisition.store_id,
+        &principal_ids,
+        &supply_wastage_rates,
+    )?;
 
     Ok(compute_ancillary_plan(
         &line_rows,

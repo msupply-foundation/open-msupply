@@ -65,9 +65,10 @@ impl AncillaryPlan {
 /// `lines` should be every line on the requisition (already filtered by
 /// requisition_id by the caller). `ancillary_rows` should be every
 /// non-deleted `ancillary_item` row — we build a full graph once and walk
-/// only the nodes we actually start from. `wastage_rates` is each principal's
-/// wastage rate (%) in the requisition's store, for the links that exclude it.
-/// `supply_wastage_rates` is each item's own wastage rate (%) as a supply.
+/// only the nodes we actually start from. `wastage_rates` is the wastage rate
+/// (%) each principal deducts in the requisition's store, for the links that
+/// exclude it (see `principal_wastage_rates`). `supply_wastage_rates` is each
+/// item's own wastage rate (%) as a supply.
 pub fn compute_ancillary_plan(
     lines: &[RequisitionLineRow],
     ancillary_rows: &[AncillaryItemRow],
@@ -79,21 +80,15 @@ pub fn compute_ancillary_plan(
     // Ratio here is "ancillary units per principal unit" — i.e. for every unit
     // of the principal item, we need this many units of the ancillary item.
     // A link that excludes the principal's wastage applies its configured
-    // ratio to the principal's un-wasted share only: the vaccine courses' rate,
-    // or for a principal no course covers (a syringe feeding safety boxes) its
-    // own rate as a supply. The ancillary's own wastage is then added on top.
+    // ratio to the principal's un-wasted share only. The ancillary's own
+    // wastage is then added on top.
     let mut graph: HashMap<&str, Vec<(&str, f64)>> = HashMap::new();
     for row in ancillary_rows {
         if row.item_quantity <= 0.0 {
             continue;
         }
         let usable_share = if row.exclude_principal_wastage {
-            let principal_rate = wastage_rates
-                .get(&row.item_id)
-                .or_else(|| supply_wastage_rates.get(&row.item_id))
-                .copied()
-                .unwrap_or(0.0);
-            1.0 - principal_rate / 100.0
+            1.0 - wastage_rates.get(&row.item_id).copied().unwrap_or(0.0) / 100.0
         } else {
             1.0
         };
@@ -509,8 +504,10 @@ mod tests {
         // 100 vaccines at 50% wastage. Syringes are used for the 50 doses given and 20% of
         // them break, so 50 / 0.8 = 62.5 -> 63. The safety box follows the syringes'
         // wastage (broken ones go in the box too): 63 / 100 -> 1. A lid excluding the
-        // syringes' wastage deducts their own 20%, as no vaccine course covers them.
-        let wastage_rates = HashMap::from([("vaccine".to_string(), 50.0)]);
+        // syringes' wastage deducts the 20% they're given as a principal (their own, as
+        // no vaccine course covers them).
+        let wastage_rates =
+            HashMap::from([("vaccine".to_string(), 50.0), ("syringe".to_string(), 20.0)]);
         let supply_wastage_rates = HashMap::from([("syringe".to_string(), 20.0)]);
         let mut syringe = link("vaccine", "syringe", 1.0, 1.0);
         syringe.exclude_principal_wastage = true;
@@ -533,23 +530,6 @@ mod tests {
         assert!(f64_approx_eq(required("safety_box"), 1.0));
         // 63 syringes, less their own 20%: 50.4 -> 51
         assert!(f64_approx_eq(required("lid"), 51.0));
-    }
-
-    #[test]
-    fn a_principal_covered_by_a_course_deducts_the_course_rate_not_its_own() {
-        // The vaccine also has an own rate as a supply; a link excluding its wastage still
-        // deducts the course's 50%.
-        let wastage_rates = HashMap::from([("vaccine".to_string(), 50.0)]);
-        let supply_wastage_rates = HashMap::from([("vaccine".to_string(), 10.0)]);
-        let mut syringe = link("vaccine", "syringe", 1.0, 1.0);
-        syringe.exclude_principal_wastage = true;
-        let plan = compute_ancillary_plan(
-            &[line("l1", "vaccine", 100.0)],
-            &[syringe],
-            &wastage_rates,
-            &supply_wastage_rates,
-        );
-        assert!(f64_approx_eq(plan.to_add[0].required_quantity, 50.0));
     }
 
     #[test]

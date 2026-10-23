@@ -1,6 +1,6 @@
 import { createEffect, createSignal, on, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
+import { formatNumber, t } from '../../../intl';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
@@ -72,7 +72,7 @@ export const SupplyWastageRateField: Component<{
             readOnly
             valueTestId="supply-wastage-rate-value"
           >
-            {props.rate === undefined ? '' : `${props.rate}%`}
+            {props.rate === undefined ? '' : `${formatNumber(props.rate)}%`}
           </FieldRow>
         }
       >
@@ -90,7 +90,10 @@ export const SupplyWastageRateField: Component<{
               value={draft()}
               disabled={saving() || props.rate === undefined}
               data-testid="supply-wastage-rate-input"
-              onChange={setDraft}
+              onChange={value => {
+                setDraft(value);
+                setRejected(false);
+              }}
             />
             <Button
               data-testid="supply-wastage-rate-save"

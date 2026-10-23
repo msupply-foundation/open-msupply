@@ -31,18 +31,9 @@ impl From<RepositoryError> for SetSupplyWastageRateError {
     }
 }
 
-/// A rate the calculations honour: below 0 or at 100 and above it would invert or zero the
-/// divisor, so it counts as none.
-pub fn honoured_supply_wastage_rate(rate: f64) -> f64 {
-    if (0.0..100.0).contains(&rate) {
-        rate
-    } else {
-        0.0
-    }
-}
-
 /// Each item's own wastage rate (%), keyed by item id; items without one are absent. An item
-/// left with more than one row by a merge takes the highest.
+/// left with more than one row by a merge takes the highest. A rate below 0 or at 100 and
+/// above would invert or zero the divisor, so it counts as none.
 pub fn supply_wastage_rates(
     connection: &StorageConnection,
     item_ids: &[String],
@@ -52,11 +43,15 @@ pub fn supply_wastage_rates(
         return Ok(rates);
     }
     for row in SupplyWastageRateRowRepository::new(connection).find_many_by_item_id(item_ids)? {
-        let rate = honoured_supply_wastage_rate(row.wastage_rate);
-        let entry = rates.entry(row.item_id).or_insert(0.0);
-        if rate > *entry {
-            *entry = rate;
-        }
+        let rate = if (0.0..100.0).contains(&row.wastage_rate) {
+            row.wastage_rate
+        } else {
+            0.0
+        };
+        rates
+            .entry(row.item_id)
+            .and_modify(|max: &mut f64| *max = max.max(rate))
+            .or_insert(rate);
     }
     Ok(rates)
 }
