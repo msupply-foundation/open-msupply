@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type JSX } from 'solid-js';
 import { formatFileSize, t } from '@/intl';
 import {
   DocumentUploadPanel,
@@ -23,18 +23,29 @@ export interface RecordDocument {
   totalBytes?: number | null;
   /** The uploader, where the record's fragment reads it (versioned lists). */
   user?: { username: string } | null;
+  /**
+   * The record the file is stored under, where it can differ from the tab's
+   * own (a transferred requisition lists its linked internal order's files).
+   * Opening and removing go through this record's path. Default: the tab's
+   * `recordId`.
+   */
+  recordId?: string;
 }
 
-export interface RecordDocumentsTabProps {
+export interface RecordDocumentsTabProps<
+  T extends RecordDocument = RecordDocument,
+> {
   /** The sync-file table the record's documents attach to. */
   tableName: string;
   recordId: string;
   /** The record node's own documents list. */
-  documents: RecordDocument[];
+  documents: T[];
   /** Default true; false hides the upload zone. */
   canUpload?: boolean;
   /** Default true; false hides every row's remove action. */
   canDelete?: boolean;
+  /** Per-row remove gate, applied within `canDelete`. Default: every row. */
+  canDeleteDocument?: (document: T) => boolean;
   /**
    * Treat same-named uploads as versions of one document: one row per file
    * name showing its latest version, who uploaded it and when, and its
@@ -49,9 +60,14 @@ export interface RecordDocumentsTabProps {
 
 // A record screen's Documents tab: the shared documents panel over the
 // sync-file store, keyed to one table by the record's id. A vertical
-// contributes only the two gates — whether files may be attached and removed.
-export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
+// contributes only the gates — whether files may be attached and removed.
+export const RecordDocumentsTab = <T extends RecordDocument>(
+  props: RecordDocumentsTabProps<T>
+): JSX.Element => {
   const [errorMessage, setErrorMessage] = createSignal<string>();
+
+  const recordIdOf = (document: RecordDocument) =>
+    document.recordId ?? props.recordId;
 
   const onUpload = async (files: File[]) => {
     setErrorMessage(undefined);
@@ -72,11 +88,15 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
     else setErrorMessage(result.message);
   };
 
-  const onDelete = async (document: { id: string }) => {
+  // The panel hands back its row, which doesn't carry the record; the listed
+  // document does.
+  const onDelete = async (file: { id: string }) => {
     setErrorMessage(undefined);
+    const document = props.documents.find(d => d.id === file.id);
+    if (!document) return;
     const result = await deleteSyncFile(
       props.tableName,
-      props.recordId,
+      recordIdOf(document),
       document.id
     );
     if (result.ok) props.onChanged();
@@ -86,14 +106,16 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
   const onRejected = (rejections: FileRejection<File>[]) =>
     setErrorMessage(describeRejections(rejections));
 
-  const toFile = (document: RecordDocument): DocumentFile => ({
+  const toFile = (document: T): DocumentFile => ({
     id: document.id,
     fileName: document.fileName,
     createdDatetime: document.createdDatetime,
     uploadedBy: document.user?.username,
     totalBytes: document.totalBytes,
-    url: syncFileUrl(props.tableName, props.recordId, document.id),
-    canDelete: props.canDelete !== false,
+    url: syncFileUrl(props.tableName, recordIdOf(document), document.id),
+    canDelete:
+      props.canDelete !== false &&
+      (props.canDeleteDocument?.(document) ?? true),
   });
 
   // One row per document. Versioned: the latest upload of each name is the
