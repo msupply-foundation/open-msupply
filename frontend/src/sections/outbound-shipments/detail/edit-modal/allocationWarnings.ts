@@ -1,5 +1,7 @@
 import {
   expiredSkipReport,
+  unitsToLens,
+  type AllocateUnit,
   type BarReason,
   type DistributionOutcome,
   type ExpiredSkipReport,
@@ -14,8 +16,12 @@ import {
 // the dispensing editor's sentences, the expired one by outcome (the shared
 // expiredSkipReport, SMV-11.44).
 // On-hold stock is not reported: its row already carries the On hold badge.
-// The shortfall is surfaced separately (the placeholder notice), so it
-// produces no banner here.
+// A shortfall while NEW becomes the placeholder and is surfaced as the
+// placeholder notice, so the editor only derives it past NEW, where no
+// placeholder can be created (OMS-REG-DIST-03.23). There it is reported as the
+// prescriptions editor reports its own (`warning.cannot-create-placeholder-*`):
+// the total that WAS allocated, in the entry lens — the figure the Issue field
+// drops to (OMS-REG-SMV-11.13 — never silently narrow).
 
 /** The sentence each reported skip category reads. */
 const SKIP_MESSAGE = {
@@ -37,13 +43,31 @@ const skipMessage = (reason: ReportedSkip, outcome: DistributionOutcome) =>
     ? EXPIRED_SKIP_MESSAGE[expiredSkipReport(outcome)]
     : SKIP_MESSAGE[reason];
 
+export type ShortfallKey =
+  | 'warning.cannot-create-placeholder-units'
+  | 'warning.cannot-create-placeholder-packs'
+  | 'warning.cannot-create-placeholder-doses';
+
 export type IssueWarningMessage =
   | { key: 'messages.over-allocated'; quantity: number; issueQuantity: number }
+  | { key: ShortfallKey; allocatedQuantity: number }
   | { key: ReturnType<typeof skipMessage>; reason: ReportedSkip };
+
+const shortfallKey = (lens: AllocateUnit): ShortfallKey => {
+  switch (lens.kind) {
+    case 'units':
+      return 'warning.cannot-create-placeholder-units';
+    case 'packs':
+      return 'warning.cannot-create-placeholder-packs';
+    case 'doses':
+      return 'warning.cannot-create-placeholder-doses';
+  }
+};
 
 export const issueWarningMessages = (
   derived: readonly IssueWarning[],
   requestedUnits: number,
+  lens: AllocateUnit,
   outcome: DistributionOutcome
 ): IssueWarningMessage[] =>
   derived.flatMap((warning): IssueWarningMessage[] => {
@@ -63,7 +87,15 @@ export const issueWarningMessages = (
             : [{ key: skipMessage(reason, outcome), reason }]
         );
       case 'shortfall':
-        return [];
+        return [
+          {
+            key: shortfallKey(lens),
+            allocatedQuantity: unitsToLens(
+              requestedUnits - warning.units,
+              lens
+            ),
+          },
+        ];
       // Outbound distributes whole packs only — the partial-packs warning is
       // the prescriptions (partial-pack dispensing) consumer's (OMS-REG-SMV-11.32).
       case 'partial-packs':
