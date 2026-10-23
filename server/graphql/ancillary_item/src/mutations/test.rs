@@ -12,8 +12,8 @@ mod test {
         item::{
             ItemServiceTrait,
             ancillary_item::{
-                DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem,
-                UpsertAncillaryItemError,
+                DeleteAncillaryItem, DeleteAncillaryItemError, SetSupplyWastageRate,
+                SetSupplyWastageRateError, UpsertAncillaryItem, UpsertAncillaryItemError,
             },
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -43,6 +43,16 @@ mod test {
                     + Send,
             >,
         >,
+        set_supply_wastage_rate: Option<
+            Box<
+                dyn Fn(
+                        &ServiceContext,
+                        SetSupplyWastageRate,
+                    ) -> Result<f64, SetSupplyWastageRateError>
+                    + Sync
+                    + Send,
+            >,
+        >,
     }
 
     impl ItemServiceTrait for TestService {
@@ -60,6 +70,17 @@ mod test {
             input: DeleteAncillaryItem,
         ) -> Result<String, DeleteAncillaryItemError> {
             (self.delete.as_ref().expect("delete not stubbed"))(ctx, input)
+        }
+
+        fn set_supply_wastage_rate(
+            &self,
+            ctx: &ServiceContext,
+            input: SetSupplyWastageRate,
+        ) -> Result<f64, SetSupplyWastageRateError> {
+            (self
+                .set_supply_wastage_rate
+                .as_ref()
+                .expect("set_supply_wastage_rate not stubbed"))(ctx, input)
         }
     }
 
@@ -284,6 +305,94 @@ mod test {
             &variables,
             "Forbidden",
             None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_set_supply_wastage_rate() {
+        let (_, _, connection_manager, settings) = setup_graphql_test(
+            EmptyMutation,
+            AncillaryItemMutations,
+            "omsupply-database-gql-set-supply-wastage-rate",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let query = r#"mutation SetSupplyWastageRate($storeId: String!, $input: SetSupplyWastageRateInput!) {
+            setSupplyWastageRate(storeId: $storeId, input: $input) {
+                __typename
+                ... on SupplyWastageRateNode {
+                    itemId
+                    wastageRate
+                }
+                ... on SetSupplyWastageRateError {
+                    error {
+                        __typename
+                    }
+                }
+            }
+        }"#;
+
+        let variables = Some(json!({
+            "storeId": "store_a",
+            "input": { "itemId": "item_a", "wastageRate": 10.0 }
+        }));
+
+        // RateOutOfRange → typed SupplyWastageRateOutOfRange error variant
+        let test_service = TestService {
+            set_supply_wastage_rate: Some(Box::new(|_, _| {
+                Err(SetSupplyWastageRateError::RateOutOfRange)
+            })),
+            ..Default::default()
+        };
+        let expected_out_of_range = json!({
+            "setSupplyWastageRate": {
+                "__typename": "SetSupplyWastageRateError",
+                "error": { "__typename": "SupplyWastageRateOutOfRange" }
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected_out_of_range,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // NotCentralServer → "Forbidden"
+        let test_service = TestService {
+            set_supply_wastage_rate: Some(Box::new(|_, _| {
+                Err(SetSupplyWastageRateError::NotCentralServer)
+            })),
+            ..Default::default()
+        };
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            "Forbidden",
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Success
+        let test_service = TestService {
+            set_supply_wastage_rate: Some(Box::new(|_, input| Ok(input.wastage_rate))),
+            ..Default::default()
+        };
+        let expected = json!({
+            "setSupplyWastageRate": {
+                "__typename": "SupplyWastageRateNode",
+                "itemId": "item_a",
+                "wastageRate": 10.0
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
     }

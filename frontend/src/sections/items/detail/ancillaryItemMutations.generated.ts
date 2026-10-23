@@ -99,11 +99,23 @@ export type SetSupplyWastageRateVariables = {
 export type SetSupplyWastageRateResult = {
   centralServer: {
   ancillaryItem: {
-  setSupplyWastageRate: number;
+  setSupplyWastageRate: ({
+  __typename: "SupplyWastageRateNode";
+} & {
+  itemId: string;
+  wastageRate: number;
+}) | ({
+  __typename: "SetSupplyWastageRateError";
+} & {
+  error: {
+  __typename: "SupplyWastageRateOutOfRange";
+  description: string;
+};
+});
 };
 };
 };
 
 export const SetSupplyWastageRate = {
-  query: "mutation setSupplyWastageRate($storeId: String!, $input: SetSupplyWastageRateInput!) {\n  centralServer {\n    ancillaryItem {\n      setSupplyWastageRate(storeId: $storeId, input: $input)\n    }\n  }\n}",
+  query: "mutation setSupplyWastageRate($storeId: String!, $input: SetSupplyWastageRateInput!) {\n  centralServer {\n    ancillaryItem {\n      setSupplyWastageRate(storeId: $storeId, input: $input) {\n        __typename\n        ... on SupplyWastageRateNode {\n          itemId\n          wastageRate\n        }\n        ... on SetSupplyWastageRateError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SetSupplyWastageRateResult, SetSupplyWastageRateVariables>;

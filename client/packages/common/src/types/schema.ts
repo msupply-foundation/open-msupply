@@ -414,8 +414,8 @@ export type AncillaryDeltaNode = {
 export type AncillaryItemMutations = {
   __typename: 'AncillaryItemMutations';
   deleteAncillaryItem: DeleteAncillaryItemResponse;
-  /** Sets an item's own wastage rate (%) as an ancillary supply, returning the rate saved */
-  setSupplyWastageRate: Scalars['Float']['output'];
+  /** Sets an item's own wastage rate (%) as an ancillary supply */
+  setSupplyWastageRate: SetSupplyWastageRateResponse;
   upsertAncillaryItem: UpsertAncillaryItemResponse;
 };
 
@@ -11371,11 +11371,24 @@ export type SetSiteMultiDeviceNode = {
   id: Scalars['Int']['output'];
 };
 
+export type SetSupplyWastageRateError = {
+  __typename: 'SetSupplyWastageRateError';
+  error: SetSupplyWastageRateErrorInterface;
+};
+
+export type SetSupplyWastageRateErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type SetSupplyWastageRateInput = {
   itemId: Scalars['String']['input'];
   /** Percent, at least 0 and below 100; 0 clears it */
   wastageRate: Scalars['Float']['input'];
 };
+
+export type SetSupplyWastageRateResponse =
+  | SetSupplyWastageRateError
+  | SupplyWastageRateNode;
 
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
@@ -12109,6 +12122,18 @@ export type SupplyRequestedQuantityInput = {
 export type SupplyRequestedQuantityResponse =
   | RequisitionLineConnector
   | SupplyRequestedQuantityError;
+
+/** The rate saved for the item */
+export type SupplyWastageRateNode = {
+  __typename: 'SupplyWastageRateNode';
+  itemId: Scalars['String']['output'];
+  wastageRate: Scalars['Float']['output'];
+};
+
+export type SupplyWastageRateOutOfRange = SetSupplyWastageRateErrorInterface & {
+  __typename: 'SupplyWastageRateOutOfRange';
+  description: Scalars['String']['output'];
+};
 
 /**
  * State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync

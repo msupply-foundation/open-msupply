@@ -15,12 +15,45 @@ pub struct SetSupplyWastageRateInput {
     pub wastage_rate: f64,
 }
 
-/// Sets an item's own wastage rate as an ancillary supply, returning the rate saved
+/// The rate saved for the item
+#[derive(SimpleObject)]
+pub struct SupplyWastageRateNode {
+    pub item_id: String,
+    pub wastage_rate: f64,
+}
+
+#[derive(SimpleObject)]
+pub struct SetSupplyWastageRateError {
+    pub error: SetSupplyWastageRateErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "SetSupplyWastageRateResponse")]
+pub enum SetSupplyWastageRateResponse {
+    Error(SetSupplyWastageRateError),
+    Response(SupplyWastageRateNode),
+}
+
+pub struct SupplyWastageRateOutOfRange;
+#[Object]
+impl SupplyWastageRateOutOfRange {
+    pub async fn description(&self) -> &str {
+        "A supply's wastage rate must be at least 0 and below 100"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum SetSupplyWastageRateErrorInterface {
+    SupplyWastageRateOutOfRange(SupplyWastageRateOutOfRange),
+}
+
+/// Sets an item's own wastage rate as an ancillary supply
 pub fn set_supply_wastage_rate(
     ctx: &Context<'_>,
     store_id: String,
     input: SetSupplyWastageRateInput,
-) -> Result<f64> {
+) -> Result<SetSupplyWastageRateResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -36,29 +69,47 @@ pub fn set_supply_wastage_rate(
         item_id,
         wastage_rate,
     } = input;
-    service_provider
-        .item_service
-        .set_supply_wastage_rate(
-            &service_context,
-            SetSupplyWastageRate {
+    let result = service_provider.item_service.set_supply_wastage_rate(
+        &service_context,
+        SetSupplyWastageRate {
+            item_id: item_id.clone(),
+            wastage_rate,
+        },
+    );
+
+    match result {
+        Ok(wastage_rate) => Ok(SetSupplyWastageRateResponse::Response(
+            SupplyWastageRateNode {
                 item_id,
                 wastage_rate,
             },
-        )
-        .map_err(map_error)
+        )),
+        Err(error) => Ok(SetSupplyWastageRateResponse::Error(
+            SetSupplyWastageRateError {
+                error: map_error(error)?,
+            },
+        )),
+    }
 }
 
-fn map_error(error: ServiceError) -> Error {
+fn map_error(error: ServiceError) -> Result<SetSupplyWastageRateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        // User-visible structured error — typed so the client can render a translated message
+        ServiceError::RateOutOfRange => {
+            return Ok(
+                SetSupplyWastageRateErrorInterface::SupplyWastageRateOutOfRange(
+                    SupplyWastageRateOutOfRange,
+                ),
+            );
+        }
         ServiceError::NotCentralServer => Forbidden(formatted_error),
         // Bad user input that the UI prevents
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::RateOutOfRange => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
-    graphql_error.extend()
+    Err(graphql_error.extend())
 }
