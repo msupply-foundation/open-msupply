@@ -9,6 +9,7 @@ import { t } from '../../../intl';
 import { renderTemplate } from './renderTemplate';
 import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
+import { ChevronDownIcon } from '../../icons';
 import type { GroupPosition } from './rowGroups';
 import styles from './DataTable.module.css';
 
@@ -40,6 +41,15 @@ const cellControlLine = <T,>(cell: TanCell<T, unknown>): boolean =>
 // (meta.groupRows). Only its cells look up their place in a run.
 const cellGroupRows = <T,>(cell: TanCell<T, unknown>): boolean =>
   cell.column.columnDef.meta?.groupRows ?? false;
+
+// Row grouping (DataTable rowGroup): a group row shows a column's figure only
+// where the column names its own aggregationFn. TanStack's default is 'auto',
+// which sums ANY number column — a pack size summed over batches is not a
+// figure anyone wants — so 'auto' counts as no aggregate.
+const cellAggregates = <T,>(cell: TanCell<T, unknown>): boolean => {
+  const aggregationFn = cell.column.columnDef.aggregationFn;
+  return aggregationFn !== undefined && aggregationFn !== 'auto';
+};
 
 // The column-rule convention: a rule down the column's inline-end edge
 // (meta.dividerEnd; the CSS is DataTable's).
@@ -86,6 +96,11 @@ const revealIfClipped = <T,>(
 export function TableRow<T>(props: {
   row: TanRow<T>;
   enableSelection: boolean;
+  /**
+   * Draw the leading expander column (DataTable rowGroup, while grouped): a
+   * group row's cell holds its expand/collapse chevron, a line's is blank.
+   */
+  expander?: boolean;
   /** Render the row's selection checkbox disabled (see DataTable's prop). */
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
@@ -169,12 +184,22 @@ export function TableRow<T>(props: {
    */
   cellVisible: (cell: TanCell<T, unknown>) => boolean;
 }): JSX.Element {
+  // A group row (DataTable rowGroup) stands in for its lines: a click expands
+  // or collapses it rather than opening a record, and its checkbox selects
+  // every line in it.
+  const isGroup = () => props.row.getIsGrouped();
   const clickable = () =>
-    props.onRowClick !== undefined &&
-    (props.rowClickable?.(props.row.original) ?? true);
+    isGroup() ||
+    (props.onRowClick !== undefined &&
+      (props.rowClickable?.(props.row.original) ?? true));
+  const selected = () =>
+    isGroup() ? props.row.getIsAllSubRowsSelected() : props.row.getIsSelected();
   return (
     <tr
-      data-testid="table-row"
+      // A group row is not a record, so it does not answer to `table-row`
+      // (e2e/TESTIDS.md).
+      data-testid={isGroup() ? 'table-group-row' : 'table-row'}
+      data-group-row={isGroup() ? '' : undefined}
       // The row's key (TanStack getRowId = the table's rowKey), so a caller can
       // address a specific row in the DOM (e.g. scroll it into view).
       data-row-key={props.row.id}
@@ -202,7 +227,7 @@ export function TableRow<T>(props: {
       // Selected rows get the same brand tint as selected cards (consistent
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS.
-      data-selected={props.row.getIsSelected() ? '' : undefined}
+      data-selected={selected() ? '' : undefined}
       /*
        * Programmatically focusable, never a tab stop (KB-N1/KB-T2): the <table>
        * holds the single tabindex=0 and the arrows move DOM focus between rows
@@ -223,23 +248,74 @@ export function TableRow<T>(props: {
         if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
       }}
       onClick={() => {
-        if (clickable()) props.onRowClick?.(props.row.original);
+        if (isGroup()) props.row.toggleExpanded();
+        else if (clickable()) props.onRowClick?.(props.row.original);
       }}
     >
+      <Show when={props.expander}>
+        {/* The expander shares the selection column's fixed box, fills and
+            tints (.selectCell), so the two leading columns read as one band. */}
+        <td
+          class={`${styles.selectCell} ${styles.expanderCell}`}
+          data-pinned="left"
+          data-frozen-edge={
+            props.leadingIsFrozenEdge && !props.enableSelection
+              ? 'left'
+              : undefined
+          }
+          style={props.leadingPinnedStyle(0)}
+        >
+          <Show when={isGroup()}>
+            <button
+              type="button"
+              class={styles.groupExpander}
+              data-testid="group-expander"
+              aria-expanded={props.row.getIsExpanded()}
+              aria-label={
+                props.row.getIsExpanded()
+                  ? t('table.collapse-group')
+                  : t('table.expand-group')
+              }
+              data-expanded={props.row.getIsExpanded() ? '' : undefined}
+              onClick={event => {
+                event.stopPropagation();
+                props.row.toggleExpanded();
+              }}
+            >
+              <ChevronDownIcon />
+            </button>
+          </Show>
+        </td>
+      </Show>
       <Show when={props.enableSelection}>
         <td
           class={styles.selectCell}
           data-pinned="left"
           data-frozen-edge={props.leadingIsFrozenEdge ? 'left' : undefined}
-          style={props.leadingPinnedStyle(0)}
+          style={props.leadingPinnedStyle(props.expander ? 1 : 0)}
         >
+          {/* A group row's box reflects its lines — ticked when all are,
+              the dash when some are — and toggles them all at once. Only
+              line ids ever reach the page's selection (DataTable's
+              enableRowSelection refuses a group row itself). */}
           <BareCheckbox
             class={styles.selectBox}
             aria-label={t('table.select-row')}
             data-testid="select-row-checkbox"
             disabled={props.selectionDisabled}
-            checked={props.row.getIsSelected()}
-            onChange={props.row.getToggleSelectedHandler()}
+            checked={selected()}
+            indeterminate={isGroup() && props.row.getIsSomeSelected()}
+            onChange={event => {
+              if (!isGroup()) {
+                props.row.getToggleSelectedHandler()(event);
+                return;
+              }
+              const next = !props.row.getIsAllSubRowsSelected();
+              props.row.toggleSelected(next);
+              // Same DOM resync as the header's select-all: from the dash the
+              // native click already ticked the box.
+              event.currentTarget.checked = next;
+            }}
             onClick={event => event.stopPropagation()}
           />
         </td>
@@ -322,9 +398,25 @@ export function TableRow<T>(props: {
                   ...props.pinnedStyle(cell.column),
                 }}
               >
-                {/* A grouped cell continuing the previous row's value renders
-                  nothing. */}
-                {grouped ? (
+                {/* A group row (rowGroup) shows the grouped value with its line
+                  count, and a figure only in a column that aggregates; every
+                  other cell is blank. A grouped cell continuing the previous
+                  row's value (meta.groupRows) renders nothing. */}
+                {isGroup() ? (
+                  cell.getIsGrouped() ? (
+                    <span class={styles.groupLabel}>
+                      {content()}
+                      <span
+                        class={styles.groupCount}
+                        data-testid="group-line-count"
+                      >
+                        ({props.row.subRows.length})
+                      </span>
+                    </span>
+                  ) : (
+                    <Show when={cellAggregates(cell)}>{content()}</Show>
+                  )
+                ) : grouped ? (
                   <Show when={!position()?.continuesPrevious}>{content()}</Show>
                 ) : (
                   content()

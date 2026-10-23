@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupPositions } from './rowGroups';
+import { displayedRows, groupPositions } from './rowGroups';
 
 // ui-standards § tables › grouped rows: a grouped column shows a value once per
 // run of equal consecutive values, its cells joined across the run.
@@ -37,5 +37,49 @@ describe('grouped rows — runs of equal values', () => {
   it('handles no rows and one row', () => {
     expect(groupPositions([])).toEqual([]);
     expect(flags(['a'])).toEqual(['--']);
+  });
+});
+
+// ui-standards § tables › row groups: rows gathered under an expandable group
+// row; a group of one is drawn as its row.
+interface FakeRow {
+  id: string;
+  getIsGrouped: () => boolean;
+  getIsExpanded: () => boolean;
+  subRows: FakeRow[];
+}
+const line = (id: string): FakeRow => ({
+  id,
+  getIsGrouped: () => false,
+  getIsExpanded: () => false,
+  subRows: [],
+});
+const group = (id: string, rows: FakeRow[], expanded = false): FakeRow => ({
+  id,
+  getIsGrouped: () => true,
+  getIsExpanded: () => expanded,
+  subRows: rows,
+});
+const ids = (rows: FakeRow[]) => displayedRows(rows).map(row => row.id);
+
+describe('row groups — the rows drawn', () => {
+  it('draws a collapsed group as its group row alone', () => {
+    expect(ids([group('g', [line('a'), line('b')])])).toEqual(['g']);
+  });
+  it('follows an expanded group row with its rows', () => {
+    expect(ids([group('g', [line('a'), line('b')], true)])).toEqual([
+      'g',
+      'a',
+      'b',
+    ]);
+  });
+  it('draws a group of one as that row, expanded or not', () => {
+    expect(ids([group('g', [line('a')])])).toEqual(['a']);
+    expect(ids([group('g', [line('a')], true)])).toEqual(['a']);
+  });
+  it('keeps ungrouped rows and the order of groups', () => {
+    expect(
+      ids([line('x'), group('g', [line('a'), line('b')], true), line('y')])
+    ).toEqual(['x', 'g', 'a', 'b', 'y']);
   });
 });

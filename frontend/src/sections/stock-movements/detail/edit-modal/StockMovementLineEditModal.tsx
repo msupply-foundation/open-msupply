@@ -13,6 +13,7 @@ import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
 import {
   CancelButton,
   DialogSaveButton,
@@ -22,6 +23,7 @@ import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { ArrowRightIcon } from '@/ui/icons';
+import { ALT_S } from '@/ui/utils/shortcuts';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { ItemSearch } from '@/domain/item';
 import { LocationVolumeSelect } from '@/domain/location';
@@ -334,12 +336,33 @@ export const StockMovementLineEditModal: Component<
               onClick={() => void onSaveAndNext()}
             />
           </Show>
-          <DialogSaveButton
-            data-testid="dialog-button-save"
-            disabled={!valid()}
-            loading={saving()}
-            onClick={() => void onSave()}
-          />
+          {/* The confirm names what it does: "Add line" while adding, the
+              standard Save while editing (ui-surface S3 › layout). A plain
+              <Button> for the custom label, so it declares the dialog's
+              confirm and Alt+S itself, as DialogSaveButton would. */}
+          <Show
+            when={isUpdate()}
+            fallback={
+              <Button
+                variant="primary"
+                confirms="plain"
+                shortcut={ALT_S}
+                data-testid="dialog-button-save"
+                disabled={!valid()}
+                loading={saving()}
+                onClick={() => void onSave()}
+              >
+                {t('button.add-line')}
+              </Button>
+            }
+          >
+            <DialogSaveButton
+              data-testid="dialog-button-save"
+              disabled={!valid()}
+              loading={saving()}
+              onClick={() => void onSave()}
+            />
+          </Show>
         </>
       }
     >

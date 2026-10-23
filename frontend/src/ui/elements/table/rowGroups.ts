@@ -29,3 +29,28 @@ export const groupPositions = (values: readonly unknown[]): GroupPosition[] => {
  * table hands its rows the same answer however its rows change.
  */
 export const NO_GROUP_RUNS: ReadonlyMap<string, GroupPosition> = new Map();
+
+// Row groups (DataTable rowGroup; ui-standards § tables › row groups) — a
+// different thing from the runs above: rows gathered under a group row that
+// expands to them. The shape of TanStack's Row this needs, so it is tested
+// without a table.
+export interface GroupableRow<R> {
+  getIsGrouped: () => boolean;
+  getIsExpanded: () => boolean;
+  subRows: R[];
+}
+
+/**
+ * The rows a table draws, in order, from its top-level rows. A plain row
+ * stays as it is; a group row is followed by its rows while expanded; a
+ * group of ONE row is drawn as that row alone, since a group row over a
+ * single row only restates it.
+ */
+export const displayedRows = <R extends GroupableRow<R>>(
+  rows: readonly R[]
+): R[] =>
+  rows.flatMap(row => {
+    if (!row.getIsGrouped()) return [row];
+    if (row.subRows.length === 1) return row.subRows;
+    return row.getIsExpanded() ? [row, ...row.subRows] : [row];
+  });
