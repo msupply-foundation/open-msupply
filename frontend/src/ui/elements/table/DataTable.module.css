@@ -398,10 +398,13 @@
 /* In card view the ring goes round the value's wrapper, which is a block for
    every value a column can ring, ringed or not: one box, so a value holding a
    block of its own (a message stacked beneath a number) keeps one ring, and
-   the value's own alignment holds inside it. Ringing it then changes nothing
-   but the outline. */
+   ringing it changes nothing but the outline. It hugs its content, so the
+   ring sits round the value rather than spanning the field like an empty
+   input; card fields set their values at the start, which is where it sits. */
 .cardToneValue {
   display: block;
+  inline-size: fit-content;
+  max-inline-size: 100%;
 }
 
 .card [data-cell-tone='error'] {

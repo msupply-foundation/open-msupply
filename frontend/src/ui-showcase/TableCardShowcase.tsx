@@ -27,7 +27,6 @@ import { remToPx } from '../ui/utils/rem';
 import { ShellFullScreenContext } from '../ui/layout/AppShell/shellContext';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
-import { HStack } from '../ui/layout/Stack/HStack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
@@ -771,16 +770,18 @@ const CellErrorsDemo = () => {
           quantityError(row) ? 'error' : undefined,
       }),
       size: remToPx(8),
+      // Marker and number inline, so the cell's own alignment places them:
+      // at the end in table view (a number column), at the start on a card.
       cell: info => (
-        <HStack gap="sm" justify="end">
+        <>
           <Show when={quantityError(info.row.original)}>
             <StatusMarker
               severity="error"
               label="Would take stock below zero"
-            />
+            />{' '}
           </Show>
           {info.row.original.quantity}
-        </HStack>
+        </>
       ),
     },
   ];
