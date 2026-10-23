@@ -573,7 +573,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       unitName: first.item?.unitName ?? null,
       isVaccine: first.item?.isVaccine ?? false,
       doses: first.item?.doses ?? 0,
-      // What "Add batch" seeds from here (OMS-REG-REPL-09.40/.42).
+      // What "Add batch" seeds from here (OMS-REG-REPL-09.40/.42). Read off the
+      // first line, the same line seedFromLines takes the order-line link
+      // from, so a new batch's price and pack size always come from the order
+      // line it will cite — even where the item's batches cite several.
       ...newBatchDefaultsFromLine(first, props.foreignCurrency?.rate),
     });
     // Focus the requested batch, else the first row.
