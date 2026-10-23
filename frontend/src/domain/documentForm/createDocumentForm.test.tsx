@@ -203,7 +203,9 @@ describe('opening a document pinned to an earlier version', () => {
         value: 'Missed two doses last month while travelling.',
       },
     ]);
-    expect(form.isDirty()).toBe(false);
+    // The migration moved and cleared values, so the form opens changed
+    // (OMS-REG-PLG-05.81).
+    expect(form.isDirty()).toBe(true);
     expect(form.canSave()).toBe(true);
 
     expect(await form.save()).toBeUndefined();
@@ -232,7 +234,7 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.kept().map(k => k.path)).toEqual(['extension.demo.adherence']);
   });
 
-  it('offers no save of a migrated document to a user who may not save', async () => {
+  it('offers no save of a migrated document to a user who may not save, and opens it clean', async () => {
     const form = await open(
       documentPinnedTo(V1, v1, v1Fixture),
       [],
@@ -243,6 +245,10 @@ describe('opening a document pinned to an earlier version', () => {
     );
     expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
     expect(form.draft.readOnly()).toBe(true);
+    // The migration changed this document, but a user who cannot save gets
+    // no stored baseline: nothing to be asked about on leaving
+    // (OMS-REG-PLG-05.81).
+    expect(form.isDirty()).toBe(false);
     expect(form.canSave()).toBe(false);
     expect(await form.save()).toBeUndefined();
     expect(graphqlFetch).toHaveBeenCalledTimes(1);
@@ -254,12 +260,57 @@ describe('opening a document pinned to an earlier version', () => {
     expect(demo(form)?.vitals).toEqual({ weightKg: 68, heightCm: 172 });
   });
 
-  it('discards back to the migrated document, not the stored one', async () => {
+  /*
+   * OMS-REG-PLG-05.81 / .82: a migrated document opens changed only when the
+   * migration changed what it holds. One it leaves as stored opens clean,
+   * Save off, until the user edits it; that save re-pins it.
+   */
+  it('opens a document the migration leaves unchanged clean, with Save off until an edit', async () => {
+    // Nothing at a path the v1 → v2 step moves, clears or keeps.
+    const untouched = {
+      createdDatetime: '2026-07-30T01:30:00.000Z',
+      startDatetime: '2026-07-30T01:30:00.000Z',
+      status: 'VISITED',
+      extension: { demo: { notes: 'Reports feeling well.' } },
+    };
+    const form = await open(documentPinnedTo(V1, v1, untouched), []);
+    expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
+    expect(form.draft.readOnly()).toBe(false);
+    expect(form.isDirty()).toBe(false);
+    expect(form.canSave()).toBe(false);
+
+    form.draft.set('extension.demo.notes' as never, 'Feeling better.' as never);
+    expect(form.isDirty()).toBe(true);
+    expect(form.canSave()).toBe(true);
+    const saved = await form.save();
+    expect(saved?.schema?.id).toBe(V2);
+    const [, variables] = graphqlFetch.mock.calls.at(-1) as [
+      unknown,
+      CallVariables,
+    ];
+    expect(variables.input.schemaId).toBe(V2);
+    expect(variables.input.parent).toBe(`doc-${V1}`);
+  });
+
+  it('opens a document the migration changed dirty, with Save on untouched', async () => {
+    const form = await open(documentPinnedTo(V1, v1, v1Fixture), []);
+    expect(form.version()).toEqual({ kind: 'migrated', version: 1 });
+    expect(form.isDirty()).toBe(true);
+    expect(form.canSave()).toBe(true);
+  });
+
+  it('discards back to the migrated document, clean (OMS-REG-PLG-05.81)', async () => {
     const form = await open(documentPinnedTo(V1, v1, v1Fixture), []);
     form.draft.set('extension.demo.notes' as never, 'changed' as never);
     expect(form.isDirty()).toBe(true);
     form.discard();
+    // Back to the migrated document, which Discard then counts as the
+    // baseline: clean, so a leave guard that discarded it does not ask again.
     expect(form.isDirty()).toBe(false);
+    expect(form.canSave()).toBe(false);
+    expect(demo(form)?.notes).toBe(
+      'Reports feeling well; some tiredness in the afternoons.'
+    );
     expect(demo(form)?.vitals).toEqual({ weightKg: 68, heightCm: 172 });
     expect(form.draft.unresolved('extension.demo.regimen' as never)).toBe(
       'LEGACY_TRIAL'

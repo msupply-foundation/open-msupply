@@ -145,10 +145,17 @@ export interface DraftSchema {
 export interface DraftController<T> {
   draft: HostDraft<T>;
   /**
-   * Replaces the document, making the form pristine. `unresolved` carries
-   * the values a migration cleared, by the path they were cleared from.
+   * Replaces the document. `unresolved` carries the values a migration
+   * cleared, by the path they were cleared from. `stored`, when given, is
+   * what the dirty check compares against in place of the seed: a migrated
+   * document's data as stored, so the form is pristine afterwards only when
+   * the seed equals it. Without `stored`, the form is pristine.
    */
-  reset: (seed: T, unresolved?: Record<string, UnresolvedValue>) => void;
+  reset: (
+    seed: T,
+    unresolved?: Record<string, UnresolvedValue>,
+    stored?: unknown
+  ) => void;
   /** A plain copy of the document, for the save. */
   snapshot: () => T;
   isDirty: Accessor<boolean>;
@@ -398,10 +405,10 @@ export const createDraft = <T extends object>(
 
   return {
     draft,
-    reset: (next, unresolved = {}) => {
+    reset: (next, unresolved = {}, stored = next) => {
       const copy = structuredClone(next) as Record<string, unknown>;
       setStore(reconcile(copy));
-      setSeed(() => structuredClone(next));
+      setSeed(() => structuredClone(stored));
       setUnresolvedValues(unresolved);
       setFieldErrors({});
       setVersion(v => v + 1);
