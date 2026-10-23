@@ -69,6 +69,12 @@ export const RecordDocumentsTab = <T extends RecordDocument>(
   const recordIdOf = (document: RecordDocument) =>
     document.recordId ?? props.recordId;
 
+  // A refused upload or removal shows inline, naming the server's reason
+  // (spec/ui-standards controls › action feedback); success is the list
+  // itself updating.
+  const showFailure = (message?: string) =>
+    setErrorMessage(t('error.an-error-occurred', { message: message ?? '' }));
+
   const onUpload = async (files: File[]) => {
     setErrorMessage(undefined);
     if (batchTooLarge(files)) {
@@ -85,7 +91,7 @@ export const RecordDocumentsTab = <T extends RecordDocument>(
       files
     );
     if (result.ok) props.onChanged();
-    else setErrorMessage(result.message);
+    else showFailure(result.message);
   };
 
   // The panel hands back its row, which doesn't carry the record; the listed
@@ -100,7 +106,7 @@ export const RecordDocumentsTab = <T extends RecordDocument>(
       document.id
     );
     if (result.ok) props.onChanged();
-    else setErrorMessage(result.message);
+    else showFailure(result.message);
   };
 
   const onRejected = (rejections: FileRejection<File>[]) =>
