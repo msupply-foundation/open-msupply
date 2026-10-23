@@ -7,6 +7,7 @@ import {
   newBatchDefaultsFromLine,
   orderLinePrice,
   packDifference,
+  priceAtPackSize,
 } from './inboundShipmentLine';
 
 // The Difference figure's DIRECTION (spec/inbound-shipments/ui-surface.md
@@ -167,5 +168,22 @@ describe('orderLinePrice', () => {
 
   it('converts a foreign price at the shipment rate', () => {
     expect(orderLinePrice(9, 2)).toBe(18);
+  });
+});
+
+// What a transfer's read-only cost follows on a pack-size change
+// (spec/inbound-shipments/rules.md › new-batch defaults, OMS-REG-REPL-09.44).
+describe('priceAtPackSize', () => {
+  it('keeps the default price per unit at another pack size', () => {
+    expect(priceAtPackSize(10, 100, 50)).toBe(5);
+    expect(priceAtPackSize(10, 100, 200)).toBe(20);
+  });
+
+  it('is the default price at the default pack size', () => {
+    expect(priceAtPackSize(10, 100, 100)).toBe(10);
+  });
+
+  it('is zero where the item has no default pack size', () => {
+    expect(priceAtPackSize(10, 0, 50)).toBe(0);
   });
 });

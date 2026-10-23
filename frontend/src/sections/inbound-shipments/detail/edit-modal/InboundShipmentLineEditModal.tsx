@@ -49,6 +49,7 @@ import {
   newBatchDefaultsFromLine,
   orderLinePrice,
   packDifference,
+  priceAtPackSize,
   type MissingBatchField,
   type NewBatchDefaults,
 } from '../inboundShipmentLine';
@@ -755,11 +756,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     batchFields.focus(batch.id);
   };
 
-  // Pack-size / price edits (OMS-REG-REPL-09.10/.11): moving the pack size off
-  // the item default clears a still-prefilled (non-overridden) price to zero;
-  // editing a price marks it overridden so a later pack-size change leaves it
-  // alone. An order line's price is kept: it is the order's price per pack at
-  // any pack size, as the server's cost recalculation applies it.
+  // Pack-size / price edits (spec rules › new-batch defaults): a pack-size
+  // change moves each still-prefilled (non-overridden) price by whether cost
+  // can be typed. Where it can, moving off the item default clears both to
+  // zero for the user to enter (OMS-REG-REPL-09.10/.11). On a transfer cost is
+  // read-only, so a zero could never be corrected: both follow the pack size
+  // at the default's price per unit instead (.44). An order line's price is
+  // kept: it is the order's price per pack at any pack size, as the server's
+  // cost recalculation applies it (.42). Editing a price marks it overridden
+  // so a later pack-size change leaves it alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -767,14 +772,20 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = d.find(x => x.id === id);
         if (!b) return;
         b.packSize = value;
-        if (
-          chosen &&
-          !props.purchaseOrderId &&
-          value !== chosen.defaultPackSize
-        ) {
-          if (!b.costOverridden) b.costPricePerPack = 0;
-          if (!b.sellOverridden) b.sellPricePerPack = 0;
-        }
+        if (!chosen || props.purchaseOrderId) return;
+        const reprice = (price: number) => {
+          if (!b.costOverridden) b.costPricePerPack = price;
+          if (!b.sellOverridden) b.sellPricePerPack = price;
+        };
+        if (props.costLocked)
+          reprice(
+            priceAtPackSize(
+              chosen.prefillPricePerPack,
+              chosen.defaultPackSize,
+              value
+            )
+          );
+        else if (value !== chosen.defaultPackSize) reprice(0);
       })
     );
   };

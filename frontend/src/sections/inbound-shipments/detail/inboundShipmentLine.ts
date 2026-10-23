@@ -85,6 +85,17 @@ export const orderLinePrice = (
 ): number => pricePerPackAfterSupplierDiscount * (rate ?? 1);
 
 /**
+ * A price for `defaultPackSize` carried to `packSize` at the same price per
+ * unit — what a transfer's read-only cost follows when the pack size changes
+ * (OMS-REG-REPL-09.44). Zero where there is no default pack size to divide by.
+ */
+export const priceAtPackSize = (
+  price: number,
+  defaultPackSize: number,
+  packSize: number
+): number => (defaultPackSize > 0 ? (price / defaultPackSize) * packSize : 0);
+
+/**
  * The defaults for another batch of an item already on the shipment, read off
  * one of its existing lines: the order line it cites on a PO-linked shipment,
  * else the item.

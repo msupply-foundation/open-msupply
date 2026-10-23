@@ -583,6 +583,8 @@ const InboundShipmentDetailView: Component = () => {
     storeId: () => params.storeId,
     invoiceId: () => current()?.id ?? params.invoiceId,
     isExternal,
+    // The same source-link rule the line editor's cost field follows.
+    costLocked: () => isExternal() || !!current()?.linkedShipment,
     blocked: () =>
       editState() != null || masterListOpen() || internalOrderOpen(),
     onSaved: onLinesChanged,

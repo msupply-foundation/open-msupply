@@ -368,7 +368,7 @@ describe('saveRefusal', () => {
 });
 
 describe('captureBatch', () => {
-  const context = { invoiceId: 'inv', newLineId: 'new' };
+  const context = { invoiceId: 'inv', costLocked: false, newLineId: 'new' };
   const draft = {
     ...draftFromScan(LABEL, known(10), item),
     quantity: 4,
@@ -441,6 +441,16 @@ describe('captureBatch', () => {
     expect(line?.sellPricePerPack).toBe(0);
   });
 
+  it('OMS-REG-REPL-09.44 where a source link locks cost, prices follow the pack size at the default price per unit', () => {
+    // Default 5.00 for a pack of 10 → 10.00 for a pack of 20.
+    const line = captureBatch({ ...draft, packSize: 20 }, undefined, {
+      ...context,
+      costLocked: true,
+    })?.insertInboundShipmentLines?.[0];
+    expect(line?.costPricePerPack).toBe(10);
+    expect(line?.sellPricePerPack).toBe(10);
+  });
+
   it("OMS-REG-REPL-09.43 a new line carries the item's volume per pack", () => {
     const line = captureBatch({ ...draft, packSize: 20 }, undefined, context)
       ?.insertInboundShipmentLines?.[0];
@@ -498,7 +508,7 @@ describe('captureBatch', () => {
 });
 
 describe('the barcode a new line carries', () => {
-  const context = { invoiceId: 'inv', newLineId: 'new' };
+  const context = { invoiceId: 'inv', costLocked: false, newLineId: 'new' };
   const inserted = (draft: Parameters<typeof captureBatch>[0]) =>
     captureBatch({ ...draft, quantity: 1 }, undefined, context)
       ?.insertInboundShipmentLines?.[0];

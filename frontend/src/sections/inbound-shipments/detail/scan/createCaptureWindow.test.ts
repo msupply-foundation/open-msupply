@@ -130,6 +130,7 @@ const setup = (blocked = false) =>
       storeId: () => 'store',
       invoiceId: () => 'inv',
       isExternal: () => false,
+      costLocked: () => false,
       blocked: () => blocked,
       onSaved,
       onNotice,

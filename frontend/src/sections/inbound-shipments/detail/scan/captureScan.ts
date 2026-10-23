@@ -17,6 +17,7 @@ import {
   type ReadScan,
 } from '@/domain/barcode';
 import type { ItemOption } from '@/domain/item';
+import { priceAtPackSize } from '../inboundShipmentLine';
 import type { BatchInboundShipmentVariables } from '../inboundShipmentDetail.generated';
 
 /** A scan as the window receives it — never an unreadable one. */
@@ -318,14 +319,16 @@ export const saveRefusal = (
  * undefined, and the window moves on as if it had saved.
  *
  * A new line follows the inbound new-batch defaults (OMS-REG-REPL-09.10/.11,
- * .41, .43): cost and sell price prefill from the item's default sell price
- * at its default pack size, and are zero at any other pack size, whether or
- * not a source link locks cost; volume per pack is the item's.
+ * .41, .43, .44): cost and sell price prefill from the item's default sell
+ * price at its default pack size. At any other pack size they are zero where
+ * cost can be typed, and follow the pack size at the default's price per unit
+ * where a source link locks cost, since a zero there could never be
+ * corrected. Volume per pack is the item's.
  */
 export const captureBatch = (
   draft: CaptureDraft,
   match: MatchableLine | undefined,
-  context: { invoiceId: string; newLineId: string }
+  context: { invoiceId: string; costLocked: boolean; newLineId: string }
 ): BatchInboundShipmentVariables['input'] | undefined => {
   const item = draft.item;
   if (!item || saveRefusal(draft)) return undefined;
@@ -352,8 +355,15 @@ export const captureBatch = (
       ],
     };
   }
-  const price =
-    draft.packSize === item.defaultPackSize ? item.defaultSellPricePerPack : 0;
+  const price = context.costLocked
+    ? priceAtPackSize(
+        item.defaultSellPricePerPack,
+        item.defaultPackSize,
+        draft.packSize
+      )
+    : draft.packSize === item.defaultPackSize
+      ? item.defaultSellPricePerPack
+      : 0;
   return {
     insertInboundShipmentLines: [
       {
