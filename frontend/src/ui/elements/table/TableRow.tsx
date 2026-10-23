@@ -232,7 +232,7 @@ export function TableRow<T>(props: {
         if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
       }}
       onClick={event => {
-        if (!clickable() || leftToBrowser(event)) return;
+        if (!clickable() || leftToBrowser(event, Boolean(href()))) return;
         props.onRowClick?.(props.row.original);
       }}
     >

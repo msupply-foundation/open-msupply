@@ -41,22 +41,27 @@ export const RowLink = (props: { href: string }): JSX.Element => (
 );
 
 /**
- * Whose is a click on a row that has a link — the app's or the browser's?
- * `true` when it belongs to the browser: a modified click that landed on the
- * link, which the browser turns into a new tab or window, so the row does
- * nothing and the current tab stays where it is. A plain click on the link is
- * the app's: the link's own navigation is cancelled (a full page load, or the
- * router's interception — which honours `defaultPrevented`) so the row's
- * `onRowClick` navigates instead, guards and all. A click anywhere else — a
- * control in a cell — is left exactly as it was.
+ * Whose is a click on a row — the app's or the browser's? `linked` says
+ * whether the row has a link; a row without one keeps every click, as before.
+ *
+ * `true` for any modified click on a linked row, so the row does nothing and
+ * the current tab stays where it is. On the link, the browser turns it into a
+ * new tab or window. Off it — on a control, or on something that keeps its own
+ * pointer events for a `title` (a chip list), where the link can't be reached —
+ * the browser has nothing to open, and running `onRowClick` would move the
+ * current tab: the one thing a modified click asks not to happen.
+ *
+ * A plain click is the app's. On the link, the link's own navigation is
+ * cancelled (a full page load, or the router's interception — which honours
+ * `defaultPrevented`) so the row's `onRowClick` navigates instead, guards and
+ * all. Off it, the click is left exactly as it was.
  */
-export const leftToBrowser = (event: MouseEvent): boolean => {
+export const leftToBrowser = (event: MouseEvent, linked: boolean): boolean => {
+  if (!linked) return false;
+  if (!isPlainClick(event)) return true;
   // Duck-typed rather than `instanceof Element`, so it can be tested without
   // a DOM (the isTextEntry approach).
   const target = event.target as Partial<Element> | null;
-  const onLink = target?.closest?.(`.${styles.rowLink}`) != null;
-  if (!onLink) return false;
-  if (!isPlainClick(event)) return true;
-  event.preventDefault();
+  if (target?.closest?.(`.${styles.rowLink}`) != null) event.preventDefault();
   return false;
 };

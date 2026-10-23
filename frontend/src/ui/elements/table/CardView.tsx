@@ -478,16 +478,13 @@ export function CardView<T, G extends string>(props: {
               if (isKeyboardFocus(event)) rowFocus()?.onFocus();
             }}
             onClick={event => {
-              if (!clickable() || leftToBrowser(event)) return;
+              if (!clickable() || leftToBrowser(event, Boolean(href()))) return;
               props.onRowClick?.(row.original);
             }}
           >
             <td class={styles.cardCell}>
               {/* The row's link fills the card behind its content (RowLink). */}
-              <div
-                class={styles.card}
-                data-row-link={href() ? '' : undefined}
-              >
+              <div class={styles.card} data-row-link={href() ? '' : undefined}>
                 <Show when={href()}>{link => <RowLink href={link()} />}</Show>
                 <div class={styles.cardHeader}>
                   <Show when={props.enableSelection}>

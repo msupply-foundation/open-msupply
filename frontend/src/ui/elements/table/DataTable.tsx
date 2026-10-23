@@ -183,8 +183,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * `navigate()`; the mount is added for the link (RowLink).
    *
    * A link, not a second way to open the row: a plain click still runs
-   * `onRowClick`, so its guards and side effects are untouched, and only a
-   * click the browser would open elsewhere goes to the browser. Rows that
+   * `onRowClick`, so its guards and side effects are untouched, and a
+   * modified click never does — the browser opens the link elsewhere, or, on
+   * a control the link can't reach, nothing happens. Rows that
    * open a modal have no address and leave this unset; a row it answers
    * undefined for, or that isn't clickable, gets no link.
    */
