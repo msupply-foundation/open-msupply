@@ -11737,6 +11737,7 @@ export type StocktakeLineConnector = {
 };
 
 export type StocktakeLineFilterInput = {
+  campaignId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
