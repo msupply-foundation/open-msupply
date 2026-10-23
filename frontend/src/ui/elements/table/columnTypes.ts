@@ -58,6 +58,23 @@ declare module '@tanstack/solid-table' {
      */
     controlLine?: boolean;
     /**
+     * Group consecutive rows that share this column's value (ui-standards §
+     * tables › grouped rows) — a schedule read by age, say. The value shows
+     * once, on the first row of its run; the run's cells in this column join,
+     * with no divider between them, so a row tint runs straight through. Every
+     * other column keeps its dividers: each row stays its own line. Runs follow
+     * the rows as rendered (sorted, paged); an empty value never groups. A
+     * continued cell is blank on screen but still names its value to assistive
+     * technology. TABLE view only: a card shows its own value.
+     */
+    groupRows?: boolean;
+    /**
+     * Draw a rule down this column's inline-end edge, header to footer
+     * (ui-standards § tables › grouped rows) — for a column that heads the ones
+     * after it, such as a grouped column. TABLE view only.
+     */
+    dividerEnd?: boolean;
+    /**
      * Where this column's cell renders in the CARD HEADER (card view). The
      * header is the card's top row: a big identity/title inline-start and a
      * badge/chip inline-end, both rendered WITHOUT their label. A column has a

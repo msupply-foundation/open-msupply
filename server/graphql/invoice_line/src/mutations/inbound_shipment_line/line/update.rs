@@ -46,6 +46,10 @@ pub struct UpdateInput {
     pub shipped_pack_size: Option<f64>,
     pub status: Option<Option<InvoiceLineStatusType>>,
     pub reason_option_id: Option<NullableUpdateInput<String>>,
+    /// The barcode scanned or typed for the line, as read; recorded on the line
+    /// and its stock. An empty one clears it. Doesn't propose a barcode (see
+    /// `proposeBarcode`).
+    pub barcode: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -139,11 +143,13 @@ impl UpdateInput {
             shipped_pack_size,
             status,
             reason_option_id,
+            barcode,
         } = self;
 
         ServiceInput {
             id,
             item_id,
+            barcode,
             location: location.map(|location| NullableUpdate {
                 value: location.value,
             }),

@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "allOf": [
+    {
+      "$ref": "#/definitions/DemoEncounterV1"
+    }
+  ],
+  "definitions": {
+    "Clinician": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DemoEncounterV1": {
+      "properties": {
+        "clinician": {
+          "$ref": "#/definitions/Clinician"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/User",
+          "description": "User who created the encounter (could be different to \"Clinician\")"
+        },
+        "createdDatetime": {
+          "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "extension": {
+          "properties": {
+            "demo": {
+              "$ref": "#/definitions/DemoEncounterV1Extension"
+            }
+          },
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/definitions/EncounterLocation",
+          "description": "The store/clinic/location of the encounter"
+        },
+        "notes": {
+          "description": "An overall note for additional comments about the encounter",
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/EncounterStatus"
+        }
+      },
+      "required": ["createdDatetime", "startDatetime"],
+      "type": "object"
+    },
+    "DemoEncounterV1Extension": {
+      "properties": {
+        "adherence": {
+          "description": "Notes on how well the patient is keeping to the regimen",
+          "type": "string"
+        },
+        "heightCm": {
+          "description": "Height in centimetres",
+          "type": "number"
+        },
+        "nextVisit": {
+          "description": "Date and time of the next follow-up visit",
+          "format": "date-time",
+          "type": "string"
+        },
+        "notes": {
+          "description": "Free-text notes about the visit",
+          "type": "string"
+        },
+        "regimen": {
+          "$ref": "#/definitions/DemoRegimenV1",
+          "description": "The regimen the patient is on after this visit"
+        },
+        "weightKg": {
+          "description": "Weight in kilograms",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "DemoRegimenV1": {
+      "enum": ["FIRST_LINE", "SECOND_LINE", "LEGACY_TRIAL"],
+      "type": "string"
+    },
+    "EncounterLocation": {
+      "properties": {
+        "storeId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "EncounterStatus": {
+      "enum": ["PENDING", "VISITED", "CANCELLED", "DELETED"],
+      "type": "string"
+    },
+    "Note": {
+      "properties": {
+        "authorId": {
+          "description": "authorId should be captured automatically from app state",
+          "type": "string"
+        },
+        "authorName": {
+          "description": "Practitioner's \"real\" name. Currently needs to be entered, but would ideally default to local state (but we don't yet have this in the database)",
+          "type": "string"
+        },
+        "created": {
+          "description": "Datetime when the note has been created",
+          "format": "date-time",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["text"],
+      "type": "object"
+    },
+    "User": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

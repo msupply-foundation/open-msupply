@@ -14,6 +14,12 @@ query assetFromGs1Data($storeId: String!, $gs1: [Gs1DataElement!]!) {
       assetNumber
       serialNumber
       catalogueItemId
+      # Shown in the create-from-scan confirmation (ui-surface S7) so the user
+      # sees what will be created.
+      catalogueItem {
+        code
+        model
+      }
       warrantyStart
       warrantyEnd
       installationDate

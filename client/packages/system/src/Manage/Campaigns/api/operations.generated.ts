@@ -7,8 +7,7 @@ export type CampaignRowFragment = {
   __typename: 'CampaignNode';
   id: string;
   name: string;
-  startDate?: string | null;
-  endDate?: string | null;
+  code: string;
 };
 
 export type CampaignsQueryVariables = Types.Exact<{
@@ -30,8 +29,7 @@ export type CampaignsQuery = {
       __typename: 'CampaignNode';
       id: string;
       name: string;
-      startDate?: string | null;
-      endDate?: string | null;
+      code: string;
     }>;
   };
 };
@@ -47,13 +45,7 @@ export type UpsertCampaignMutation = {
     campaign: {
       __typename: 'CampaignMutations';
       upsertCampaign:
-        | {
-            __typename: 'CampaignNode';
-            id: string;
-            name: string;
-            startDate?: string | null;
-            endDate?: string | null;
-          }
+        | { __typename: 'CampaignNode'; id: string; name: string; code: string }
         | {
             __typename: 'UpsertCampaignError';
             error:
@@ -108,8 +100,7 @@ export const CampaignRowFragmentDoc = gql`
     __typename
     id
     name
-    startDate
-    endDate
+    code
   }
 `;
 export const CampaignsDocument = gql`

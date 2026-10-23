@@ -20,6 +20,7 @@ use repository::{
 
 use super::UpdateStockInLine;
 use crate::NullableUpdate;
+use util::barcode::standard_barcode;
 
 pub struct GenerateResult {
     pub invoice_row_option: Option<InvoiceRow>,
@@ -75,7 +76,6 @@ pub fn generate(
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
-                barcode_id: None,
                 overwrite_stock_levels: true,
             },
         )?;
@@ -157,6 +157,7 @@ fn generate_line(
         r#type: _,
         status,
         reason_option_id,
+        barcode,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -166,6 +167,9 @@ fn generate_line(
     let mut update_line = current_line;
 
     update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
+    if let Some(barcode) = barcode {
+        update_line.barcode = standard_barcode(&barcode);
+    }
     update_line.batch = batch.or(update_line.batch);
     update_line.note = note.map(|n| n.value).unwrap_or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);

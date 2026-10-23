@@ -117,15 +117,19 @@ export const isForbidden = (errors: GraphqlErrorItem[]): boolean =>
 //    And([HasStoreAccess, HasPermission(StocktakeMutate)]), Store: Some(\"X\")"
 // We surface only the HasPermission(...) names — the actual UserPermission the
 // user is missing (PascalCase, e.g. StocktakeMutate; NOT the query's
-// SCREAMING_CASE) — and drop the structural checks like HasStoreAccess. Names
-// are de-duplicated in first-seen order; empty when details is
-// absent/unparsable (the modal then shows a generic permission-denied message).
+// SCREAMING_CASE) — and drop the structural checks like HasStoreAccess.
+// Document permissions are checked per program context and named as
+// HasDynamicPermission(...), e.g. HasDynamicPermission(DocumentQuery); those
+// count too. Names are de-duplicated in first-seen order; empty when details
+// is absent/unparsable (the modal then shows a generic permission-denied
+// message).
 export const missingPermissions = (errors: GraphqlErrorItem[]): string[] => {
   const seen = new Set<string>();
   for (const e of errors) {
     const details = e.extensions?.details;
     if (typeof details !== 'string') continue;
-    for (const match of details.matchAll(/HasPermission\(([A-Za-z0-9]+)\)/g)) {
+    const checks = /Has(?:Dynamic)?Permission\(([A-Za-z0-9]+)\)/g;
+    for (const match of details.matchAll(checks)) {
       seen.add(match[1]);
     }
   }

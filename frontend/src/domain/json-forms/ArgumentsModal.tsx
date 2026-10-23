@@ -568,10 +568,8 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     options={enumField.options}
                     value={selectValue(enumField.key)}
                     disabled={enumField.readOnly}
-                    // Select has no error slot; the required miss still gates
-                    // OK (OMS-REG-RPT-10.13) and this text says why. No
-                    // shipped schema marks an enum required today.
-                    helperText={requiredError(enumField)}
+                    // No shipped schema marks an enum required today.
+                    error={requiredError(enumField)}
                     // A picked choice must be emptiable again unless required
                     // (OMS-REG-RPT-10.42); the cleared key is omitted on
                     // submit (OMS-REG-RPT-10.15). A read-only field

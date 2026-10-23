@@ -584,6 +584,7 @@ pub fn generate_lines_and_stock_lines(
             reason_option_id: _,
             volume_per_pack,
             manufacturer_id,
+            barcode,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -611,7 +612,8 @@ pub fn generate_lines_and_stock_lines(
             total_volume: volume_per_pack * number_of_packs,
             manufacture_date,
             on_hold: false,
-            barcode_id: None,
+            // The received box's barcode goes onto its stock
+            barcode,
         };
         result.push(LineAndStockLine {
             line,

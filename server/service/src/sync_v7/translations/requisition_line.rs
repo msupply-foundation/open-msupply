@@ -140,6 +140,7 @@ mod test {
                         coverage_rate: 90.0,
                         wastage_rate: 10.0,
                         target_population: 1000.0,
+                        annual_doses_per_person: None,
                         loss_factor: 1.0 / 0.9,
                         annual_target_doses: 2000.0,
                         doses_per_unit: 2.0,

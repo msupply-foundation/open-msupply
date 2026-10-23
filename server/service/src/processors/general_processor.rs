@@ -20,7 +20,8 @@ use crate::{
 };
 
 use super::{
-    assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
+    assign_requisition_number::AssignRequisitionNumber,
+    barcode_auto_confirm::BarcodeAutoConfirmProcessor, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
     plugin_processor::PluginProcessor,
     prescription_request_status::PrescriptionRequestStatusProcessor,
@@ -59,6 +60,7 @@ pub enum ProcessorType {
     Plugins,
     RequisitionAutoFinalise,
     MergeSyncMessage,
+    BarcodeAutoConfirm,
 }
 
 impl ProcessorType {
@@ -87,6 +89,9 @@ impl ProcessorType {
                 vec![Box::new(SupportUploadFilesProcessor)]
             }
             ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
+            // Safe from the #12547 first-run trap: its cursor is seeded at the
+            // changelog head by the migration that creates barcode_proposal.
+            ProcessorType::BarcodeAutoConfirm => vec![Box::new(BarcodeAutoConfirmProcessor)],
         }
     }
 

@@ -14,8 +14,8 @@ export type Campaign = CampaignsResult['campaigns']['nodes'][number];
 /**
  * The register's sort key type. `CampaignSortFieldInput` carries exactly one
  * value, so this is the literal `'name'`: a column can only ever name a real
- * sort key, and the absence of `startDate`/`endDate` keys is what makes the two
- * date columns unsortable (contract.md § backend gaps).
+ * sort key, and the absence of a `code` key is what makes the Code column
+ * unsortable (contract.md § backend gaps).
  */
 export type CampaignSortKey = NonNullable<
   CampaignsVariables['sort']

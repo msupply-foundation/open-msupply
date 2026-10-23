@@ -56,6 +56,7 @@ impl SyncTranslation for ItemVariantTranslation {
             created_datetime,
             created_by,
             manufacturer_id,
+            is_auto_created,
         } = from_renamed_keys_str::<ItemVariantRow>(&sync_record.data.0.to_string(), RENAMED_KEYS)?;
 
         let fk_check = fk_checker.with_table(connection, "item_variant", &id);
@@ -77,6 +78,7 @@ impl SyncTranslation for ItemVariantTranslation {
             // manufacturer is a name id resolved to name_link on upsert; name_link.id == name.id by
             // convention, so validating the name id against name_link is correct.
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
+            is_auto_created,
         };
 
         Ok(PullTranslateResult::upsert(result))

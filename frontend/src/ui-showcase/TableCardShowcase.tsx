@@ -853,6 +853,52 @@ const EditorTableDemo = () => {
   );
 };
 
+// Grouped rows and a column rule: a schedule whose doses fall at shared ages.
+// The Age column takes meta.groupRows — each age shows once, on the first dose
+// at it, and its run's cells join, so a tinted run reads as one block — and
+// meta.dividerEnd, which rules it off from the doses it heads.
+interface ScheduleDose {
+  id: string;
+  age: string;
+  dose: string;
+  due: boolean;
+}
+
+const SCHEDULE: ScheduleDose[] = [
+  { id: 's1', age: 'At birth', dose: 'BCG', due: false },
+  { id: 's2', age: 'At birth', dose: 'Hep B 1', due: false },
+  { id: 's3', age: '6 weeks', dose: 'DTP 1', due: true },
+  { id: 's4', age: '6 weeks', dose: 'Polio 1', due: true },
+  { id: 's5', age: '6 weeks', dose: 'PCV 1', due: true },
+  { id: 's6', age: '10 weeks', dose: 'DTP 2', due: false },
+];
+
+const GroupedRowsDemo = () => {
+  const columns: Column<ScheduleDose, never>[] = [
+    {
+      c: { key: 'age' },
+      header: () => 'Age',
+      meta: { groupRows: true, dividerEnd: true },
+      size: remToPx(8),
+    },
+    { c: { key: 'dose' }, header: () => 'Dose', size: remToPx(10) },
+    {
+      c: { accessor: r => (r.due ? 'Due' : ''), id: 'status' },
+      header: () => 'Status',
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns}
+      rows={SCHEDULE}
+      rowKey={r => r.id}
+      rowTint={r => (r.due ? 'unfinished' : undefined)}
+      rowAccent={r => (r.due ? 'unfinished' : undefined)}
+      showFullScreen={false}
+    />
+  );
+};
+
 // 4 — One list, two renderings: the SAME columns as a working table, plus
 // showCardToggle (needs setConfig). The name declares itself the card title
 // and the status a badge; flip the toolbar toggle and the identical Column[]
@@ -1546,7 +1592,15 @@ export const tableCardMetadata: PageMetadata = {
     {
       id: 'table-card-basics',
       title: 'Table basics',
-      searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+      searchTerms: [
+        'cell',
+        'column',
+        'width',
+        'row states',
+        'tint',
+        'grouped rows',
+        'column rule',
+      ],
     },
     {
       id: 'table-card-proportion',
@@ -1706,6 +1760,19 @@ export const TableCardShowcase = () => (
             centre-aligned table.
           </Lead>
           <EditorTableDemo />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · Grouped rows and a column rule">
+          <Lead>
+            A column that heads the rows after it — a schedule's age, a ledger's
+            date — takes <code>meta.groupRows</code>: each value shows once, on
+            the first row of its run of equal values, and the run's cells join
+            with no divider between them, so a row tint runs straight through.
+            Runs follow the rows as rendered, sorted and paged; an empty value
+            never groups. <code>meta.dividerEnd</code> rules the column off from
+            the ones it heads, header to footer, pinned or not. Table view only.
+          </Lead>
+          <GroupedRowsDemo />
         </DashboardCard>
 
         <DashboardCard

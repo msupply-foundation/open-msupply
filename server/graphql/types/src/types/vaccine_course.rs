@@ -54,6 +54,12 @@ impl VaccineCourseNode {
         self.row().can_skip_dose
     }
 
+    /// The average number of doses a person reached gets in a year, for population
+    /// forecasting. Null counts every dose in the course
+    pub async fn annual_doses_per_person(&self) -> Option<f64> {
+        self.row().annual_doses_per_person
+    }
+
     pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {
         let demographic_id = match &self.row().demographic_id {
             Some(id) => id,

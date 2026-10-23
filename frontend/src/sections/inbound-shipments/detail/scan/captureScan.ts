@@ -1,14 +1,18 @@
 // Receiving by scanning — the capture window's logic (spec/barcode-scanning
-// rules.md § Learning a code while receiving; ui-surface.md § S2; cases
-// OMS-REG-BAC-01.30–.41, .102, .103, .108, .110).
+// rules.md § Receiving by scanning; ui-surface.md § S2; cases
+// OMS-REG-BAC-01.31–.41, .102, .103, .108, .110).
 //
 // Pure: what a scan puts in the window, which line it matches, which message
-// the window shows, and what a save writes — to the shipment and to the book.
-// The window (CaptureWindow.tsx) owns the requests and the timing.
+// the window shows, and what a save writes. The save sends the scanned barcode
+// with the new line; the server records it on the line and its stock and
+// learns it for the item. The window (CaptureWindow.tsx) owns the requests and
+// the timing.
 
 import {
+  isBatchLabel,
   itemNumber,
   labelFields,
+  sameBarcode,
   type BarcodeLookup,
   type ReadScan,
 } from '@/domain/barcode';
@@ -37,28 +41,19 @@ export type CaptureDraft = {
   /** The code resolved to an item: the Item field is locked (.31). */
   itemLocked: boolean;
   /**
-   * The resolved entry carried a pack size: Pack size is locked on it, and
-   * shows it (.32, .108).
+   * The mapping's pack size, where it has one. It pre-fills Pack size (.196)
+   * but never locks it.
    */
-  packSizeLocked: boolean;
+  mappingPackSize: number | undefined;
   /**
-   * The scan carried an item number — a label's `01`, or a retail barcode.
-   * Only such a code is worth learning (.70), and it drives the message.
+   * The barcode saved with the line (.25, .185): a mapped barcode in its
+   * standard form, or an unknown one where it is a real item number (rules:
+   * "An unknown barcode is only worth learning when it is a real item
+   * number"); other unknown content is used for the lookup only (.70).
+   * Undefined otherwise. It also drives the message: a barcode that will be
+   * remembered, or one that won't.
    */
-  itemNumber: string | undefined;
-  /**
-   * The book knows the code, whether or not its item resolved in this store.
-   * A known code whose item this store cannot see opens unlocked, like an
-   * unknown one, but is never re-pointed (it is not learned) — so the
-   * message must not promise to save it.
-   */
-  codeKnown: boolean;
-  /**
-   * The code to teach the book on save, where the code was unknown and is a
-   * real item number (rules: "An unknown code is only worth learning when it
-   * is a real item number"). Undefined otherwise.
-   */
-  learnCode: string | undefined;
+  barcode: string | undefined;
   /** The raw scan, for the manual-input diagnostic readout. */
   content: string;
 };
@@ -67,6 +62,7 @@ export type CaptureDraft = {
 export type MatchableLine = {
   id: string;
   batch?: string | null;
+  barcode?: string | null;
   packSize: number;
   numberOfPacks: number;
   expiryDate?: string | null;
@@ -74,7 +70,7 @@ export type MatchableLine = {
 };
 
 /**
- * A new line's pack size (.102, .108): the book's, else the label's, else the
+ * A new line's pack size (.102, .196): the mapping's, else the label's, else the
  * item's default — 1 only where the item has no default at all.
  */
 export const packSizeFor = (
@@ -87,25 +83,47 @@ export const packSizeFor = (
   (item && item.defaultPackSize > 0 ? item.defaultPackSize : 1);
 
 /**
- * The window a scan opens (.30–.33). Item and pack size come from the book
- * where the code resolved, and are locked there; batch, dates and quantity
- * come from the label and stay editable (.20).
+ * The scan says what it is without a lookup: it carries an item number (a
+ * label's, or a retail barcode), or it is a batch label. Either always
+ * opens an entry, so only other scans need looking up before the window
+ * decides.
+ */
+export const opensEntryUnseen = (read: CaptureRead): boolean =>
+  itemNumber(read) !== undefined || isBatchLabel(read);
+
+/**
+ * A scan nothing is known about that is not a product code (rules: "Not
+ * recognised"): the lookup found no mapping, or there was no code to look
+ * up. It opens no entry — there is nothing to learn, so choosing an item for
+ * it would mislead (.202, .195). A failed lookup is not this: it is reported
+ * globally and opens as before.
+ */
+export const isUnrecognised = (
+  read: CaptureRead,
+  lookup: BarcodeLookup
+): boolean =>
+  !opensEntryUnseen(read) &&
+  (lookup.kind === 'unknown' || lookup.kind === 'no-code');
+
+/**
+ * The window a scan opens (.31–.33). Item and pack size come from the mapping
+ * where the code resolved — the item locked, the pack size only pre-filled;
+ * batch, dates and quantity come from the label and stay editable (.20).
  *
- * Pack size follows packSizeFor: where the book and the label both carry one
- * the field locks on the book's AND shows it (.108 — the current app's
- * defect `.62`, fixed rather than reproduced).
+ * Pack size follows packSizeFor: where the mapping and the label both carry one
+ * the field shows the mapping's (.196).
  *
  * Every scan starts on an empty window (a scan-on saves and clears first),
  * so no item has been chosen before it: an unknown item number is always
  * learnable here (rules: "learned only if the user had not already chosen an
  * item before the scan").
  *
- * `item` is the book entry's item, resolved in this store — undefined where
+ * `item` is the mapping's item, resolved in this store — undefined where
  * the code is not known or its item cannot be seen here. A failed lookup
  * (already reported globally) opens like a scan with no code: item
- * unresolved and nothing to learn. The entry's pack size locks only where
- * its item resolved; otherwise it would lock a hand-picked item to another
- * item's pack size.
+ * unresolved and nothing to learn. The mapping's pack size is used only
+ * where its item resolved; otherwise it would pre-fill a hand-picked item
+ * with another item's pack size.
  */
 export const draftFromScan = (
   read: CaptureRead,
@@ -113,13 +131,14 @@ export const draftFromScan = (
   item: CaptureItem | undefined
 ): CaptureDraft => {
   const fields = labelFields(read);
+  // A barcode mapped to several items has been through the chooser before
+  // this, so it arrives as the chosen mapping.
   const known = lookup.kind === 'known' ? lookup.barcode : undefined;
   const resolved = known ? item : undefined;
   const entryPackSize =
     resolved && known?.packSize != null && known.packSize > 0
       ? known.packSize
       : undefined;
-  const number = itemNumber(read);
   return {
     item: resolved,
     batch: fields.batch ?? '',
@@ -128,18 +147,69 @@ export const draftFromScan = (
     quantity: fields.quantity ?? 0,
     manufactureDate: fields.manufactureDate ?? null,
     itemLocked: resolved !== undefined,
-    packSizeLocked: entryPackSize !== undefined,
-    itemNumber: number,
-    codeKnown: known !== undefined,
-    learnCode: lookup.kind === 'unknown' ? number : undefined,
+    mappingPackSize: entryPackSize,
+    barcode: known
+      ? known.barcode
+      : lookup.kind === 'unknown'
+        ? itemNumber(read)
+        : undefined,
     content: read.content,
   };
 };
 
 /**
+ * A batch label scanned onto the entry on screen (.186, .206): each value it
+ * supplies replaces the entry's, and nothing else changes — not the item, not
+ * the barcode the line will carry.
+ */
+export const fillFromLabel = (
+  draft: CaptureDraft,
+  label: CaptureRead
+): CaptureDraft => {
+  const fields = labelFields(label);
+  return {
+    ...draft,
+    batch: fields.batch ?? draft.batch,
+    expiryDate: fields.expiryDate ?? draft.expiryDate,
+    manufactureDate: fields.manufactureDate ?? draft.manufactureDate,
+    quantity: fields.quantity ?? draft.quantity,
+    packSize: fields.packSize ?? draft.packSize,
+  };
+};
+
+/**
+ * A code scanned onto an entry a batch label opened, before any item was
+ * chosen (.189): the new scan's draft, keeping the entry's values wherever
+ * the new scan's label did not supply its own — including any the user typed
+ * into the entry. Pack size follows
+ * packSizeFor — the mapping's, else the new label's, else the entry's where
+ * its label set one, else the item's default.
+ */
+export const mergeOntoLabelEntry = (
+  entry: CaptureDraft,
+  /** The pack size the entry's label stated, if it stated one. */
+  entryPackSize: number | undefined,
+  next: CaptureDraft,
+  nextRead: CaptureRead
+): CaptureDraft => {
+  const fields = labelFields(nextRead);
+  return {
+    ...next,
+    batch: fields.batch ?? entry.batch,
+    expiryDate: fields.expiryDate ?? entry.expiryDate,
+    manufactureDate: fields.manufactureDate ?? entry.manufactureDate,
+    quantity: fields.quantity ?? entry.quantity,
+    packSize:
+      next.mappingPackSize !== undefined || fields.packSize !== undefined
+        ? next.packSize
+        : packSizeFor(next.item, undefined, entryPackSize),
+  };
+};
+
+/**
  * Pick an item by hand (unknown code, or no code). Pack size follows
- * packSizeFor — the label's, else the item's default — unless it is locked
- * by the book.
+ * packSizeFor — the label's, else the item's default. Only an unresolved
+ * entry is picked by hand, so there is no mapping pack size to keep.
  */
 export const chooseItem = (
   draft: CaptureDraft,
@@ -148,77 +218,19 @@ export const chooseItem = (
 ): CaptureDraft => ({
   ...draft,
   item,
-  packSize: draft.packSizeLocked
-    ? draft.packSize
-    : packSizeFor(item, undefined, labelPackSize),
+  packSize: packSizeFor(item, undefined, labelPackSize),
 });
 
 /**
- * Whether a scan onto the entry on screen saves it and starts the next (.37)
- * rather than joining it (.186): only where the entry and the scan both
- * carry an item number — box after box. Anything else is the rest of the
- * same box, so a box printed with two barcodes, the product's and a batch
- * and expiry label, composes one line in either order.
- */
-export const scansOn = (entry: CaptureDraft, read: CaptureRead): boolean =>
-  entry.itemNumber !== undefined && itemNumber(read) !== undefined;
-
-/**
- * A scan joining the entry on screen (.186–.189). Each value the scan's label
- * supplies replaces the entry's; the rest — including anything the user typed
- * — stays. Where the scan's code resolved an item, that item comes in, locked,
- * with the book's pack size; otherwise the entry keeps its own. The scan's
- * item number becomes the entry's where the entry had none, and is learned
- * only if no item had been chosen before it (rules: "A code is learned only
- * if the user had not already chosen an item before the scan").
- *
- * `next` is the scan's own draft (draftFromScan); `labelPackSize` the pack
- * size the entry's labels stated so far.
- */
-export const joinScan = (
-  entry: CaptureDraft,
-  next: CaptureDraft,
-  read: CaptureRead,
-  labelPackSize: number | undefined
-): CaptureDraft => {
-  const fields = labelFields(read);
-  const resolved = next.item;
-  const packSize = resolved
-    ? next.packSizeLocked
-      ? next.packSize
-      : packSizeFor(resolved, undefined, fields.packSize ?? labelPackSize)
-    : entry.packSizeLocked
-      ? entry.packSize
-      : (fields.packSize ?? entry.packSize);
-  const numbered = entry.itemNumber === undefined && next.itemNumber;
-  return {
-    item: resolved ?? entry.item,
-    batch: fields.batch ?? entry.batch,
-    expiryDate: fields.expiryDate ?? entry.expiryDate,
-    packSize,
-    quantity: fields.quantity ?? entry.quantity,
-    manufactureDate: fields.manufactureDate ?? entry.manufactureDate,
-    itemLocked: resolved ? true : entry.itemLocked,
-    packSizeLocked: resolved ? next.packSizeLocked : entry.packSizeLocked,
-    itemNumber: entry.itemNumber ?? next.itemNumber,
-    codeKnown: entry.codeKnown || next.codeKnown,
-    learnCode:
-      entry.item === undefined
-        ? (next.learnCode ?? entry.learnCode)
-        : entry.learnCode,
-    content: numbered ? next.content : entry.content,
-  };
-};
-
-/**
- * The line a draft adds to: same item, batch, pack size and expiry (.35,
- * .5). Made-on date is not part of the match. `lines` are the item's lines
- * on this shipment. An empty batch matches a line with none. A blank expiry
- * on either side matches any — the label said nothing, or the line has none
- * yet, and borrowDates / the save fill the blank.
+ * The line a draft adds to: same item, batch and pack size (.176, .175). The
+ * barcode keeps two lines apart only when both have one and they differ — two
+ * manufacturers' boxes of the same batch — so a line typed in by hand and a
+ * scanned box merge. Dates are not part of the match: borrowDates and the
+ * save fill a blank from the other side. `lines` are the item's lines on this
+ * shipment. An empty batch matches a line with none.
  */
 export const matchingLine = <L extends MatchableLine>(
-  draft: Pick<CaptureDraft, 'item' | 'batch' | 'packSize' | 'expiryDate'>,
+  draft: Pick<CaptureDraft, 'item' | 'batch' | 'packSize' | 'barcode'>,
   lines: readonly L[]
 ): L | undefined => {
   if (!draft.item) return undefined;
@@ -227,9 +239,9 @@ export const matchingLine = <L extends MatchableLine>(
     line =>
       (line.batch ?? '') === batch &&
       line.packSize === draft.packSize &&
-      (!draft.expiryDate ||
-        !line.expiryDate ||
-        line.expiryDate === draft.expiryDate)
+      (!draft.barcode ||
+        !line.barcode ||
+        sameBarcode(line.barcode, draft.barcode))
   );
 };
 
@@ -252,26 +264,23 @@ export const borrowDates = (
 export type CaptureMessage =
   | { key: 'messages.receiving-no-product-code' }
   | { key: 'messages.receiving-new-barcode' }
-  | { key: 'messages.receiving-item-not-in-store' }
   | { key: 'messages.batch-not-found' }
   | { key: 'messages.batch-already-exists'; numberOfPacks: number };
 
 /**
  * The window's one message (ui-surface S2 § The message) — always
  * information, never an error or a warning (.110): not knowing a code is a
- * normal answer. Until an item is present it says whether the code can be
- * learned (.33, .70) — or, for a known code whose item this store cannot
- * see, that it will not be changed; once one is, whether saving adds to a
- * line or creates one (.35, .36).
+ * normal answer. Until an item is present it says whether the barcode will
+ * be remembered for the item the user picks (.33, .205) — it will where the
+ * line carries one; once an item is present, whether saving adds to a line
+ * or creates one (.176, .36).
  */
 export const captureMessage = (
-  draft: Pick<CaptureDraft, 'item' | 'itemNumber' | 'codeKnown'>,
+  draft: Pick<CaptureDraft, 'item' | 'barcode'>,
   match: MatchableLine | undefined
 ): CaptureMessage => {
-  if (!draft.item && draft.codeKnown)
-    return { key: 'messages.receiving-item-not-in-store' };
   if (!draft.item)
-    return draft.itemNumber
+    return draft.barcode
       ? { key: 'messages.receiving-new-barcode' }
       : { key: 'messages.receiving-no-product-code' };
   if (!match) return { key: 'messages.batch-not-found' };
@@ -282,28 +291,26 @@ export const captureMessage = (
 };
 
 /** Why the window cannot save what it holds, or undefined when it can. */
-export type SaveRefusal =
-  | 'error.barcode-scanner-save-no-item-selected'
-  | 'error.barcode-scanner-save-no-quantity-entered';
-
-/** .38, .39 — and .40, which is the same test gating OK. */
-export const saveRefusal = (
-  draft: Pick<CaptureDraft, 'item' | 'quantity'>
-): SaveRefusal | undefined => {
-  if (!draft.item) return 'error.barcode-scanner-save-no-item-selected';
-  if (!(draft.quantity > 0))
-    return 'error.barcode-scanner-save-no-quantity-entered';
-  return undefined;
-};
+export type SaveRefusal = 'error.barcode-scanner-save-no-item-selected';
 
 /**
- * The batch that saves the window (.35–.37): an update adding the quantity
+ * .38 — and .199, which is the same test gating OK. A quantity of zero saves:
+ * the line is a placeholder the user fills in later (.198).
+ */
+export const saveRefusal = (
+  draft: Pick<CaptureDraft, 'item'>
+): SaveRefusal | undefined =>
+  draft.item ? undefined : 'error.barcode-scanner-save-no-item-selected';
+
+/**
+ * The batch that saves the window (.36, .37, .176): an update adding the quantity
  * to the matched line, else an insert of a new line. The fields on screen
  * are what is written.
  *
- * An update fills only the dates the line lacks (.103) — the line's own
- * expiry and made-on date are never overwritten, and a date the window left
- * blank is never sent as a clear.
+ * An update fills only what the line lacks (.103, .196) — its expiry,
+ * made-on date and barcode are never overwritten, and a date the window left
+ * blank is never sent as a clear. An update with nothing to add is not sent:
+ * undefined, and the window moves on as if it had saved.
  *
  * A new line's prices follow the inbound rule for any new manual line
  * (OMS-REG-REPL-09.10/.11): cost and sell price prefill from the item's
@@ -318,21 +325,28 @@ export const captureBatch = (
   const item = draft.item;
   if (!item || saveRefusal(draft)) return undefined;
   const batch = draft.batch.trim();
-  if (match)
+  if (match) {
+    const fill = {
+      ...(!match.expiryDate && draft.expiryDate
+        ? { expiryDate: { value: draft.expiryDate } }
+        : {}),
+      ...(!match.manufactureDate && draft.manufactureDate
+        ? { manufactureDate: { value: draft.manufactureDate } }
+        : {}),
+      ...(!match.barcode && draft.barcode ? { barcode: draft.barcode } : {}),
+    };
+    if (draft.quantity === 0 && Object.keys(fill).length === 0)
+      return undefined;
     return {
       updateInboundShipmentLines: [
         {
           id: match.id,
           numberOfPacks: match.numberOfPacks + draft.quantity,
-          ...(!match.expiryDate && draft.expiryDate
-            ? { expiryDate: { value: draft.expiryDate } }
-            : {}),
-          ...(!match.manufactureDate && draft.manufactureDate
-            ? { manufactureDate: { value: draft.manufactureDate } }
-            : {}),
+          ...fill,
         },
       ],
     };
+  }
   const price =
     !context.costLocked && draft.packSize === item.defaultPackSize
       ? item.defaultSellPricePerPack
@@ -350,22 +364,11 @@ export const captureBatch = (
         manufactureDate: draft.manufactureDate ?? undefined,
         costPricePerPack: price,
         sellPricePerPack: price,
+        ...(draft.barcode ? { barcode: draft.barcode } : {}),
       },
     ],
   };
 };
-
-/**
- * What a successful save teaches the book: the unknown item number against
- * the saved item, at the saved pack size. Undefined where there is nothing
- * to learn (a known code, a plain code, no code).
- */
-export const codeToLearn = (
-  draft: CaptureDraft
-): { gtin: string; itemId: string; packSize: number } | undefined =>
-  draft.learnCode && draft.item
-    ? { gtin: draft.learnCode, itemId: draft.item.id, packSize: draft.packSize }
-    : undefined;
 
 /** The Barcode diagnostic line: the raw scan, cut to its first characters. */
 export const shortContent = (content: string): string =>

@@ -1,3 +1,4 @@
+pub mod barcode;
 pub mod canonical_json;
 pub mod constants;
 pub mod hash;

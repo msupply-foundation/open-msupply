@@ -18,7 +18,7 @@ describe('leakToRemove', () => {
     expect(leakToRemove('12', '1]2', 2)).toEqual({ start: 1, end: 2 });
   });
 
-  it('.136 a number field that refused the first key keeps the user’s own digits', () => {
+  it('.135 a number field that refused the first key keeps the user’s own digits', () => {
     // A `]` the field filtered out: the value never changed, so there is
     // nothing to remove — deleting "one before the caret" would eat the 2.
     expect(leakToRemove('12', '12', 2)).toBeUndefined();

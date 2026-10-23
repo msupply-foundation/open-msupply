@@ -36,6 +36,8 @@ pub enum UpdatePurchaseOrderLineInputError {
     CannotChangeStatus,
     CannotEditExpectedDeliveryDate,
     ItemCannotBeOrdered(PurchaseOrderLine),
+    OtherPartyDoesNotExist,
+    OtherPartyNotAManufacturer,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]

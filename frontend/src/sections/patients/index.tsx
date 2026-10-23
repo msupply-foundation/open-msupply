@@ -2,11 +2,14 @@ import { lazy, Show } from 'solid-js';
 import { Navigate, Route, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { isDispensary } from '../../store/storeContext';
+import { VaccinationCardView } from '../vaccination-card';
 
 // The patients vertical routes (spec/patients), mounted under the navConfig
 // path 'dispensary/patients' in App.tsx. Views are lazy so the section is its
 // own bundle. Paths are relative to the mount point: '/' = the list,
-// '/:patientId' = the detail screen.
+// '/:patientId' = the detail screen, and beneath it the vaccination card a
+// Vaccinations row opens (spec/vaccination-card S1), the card vertical's own
+// lazy chunk.
 const PatientsList = lazy(() => import('./list/PatientsList'));
 const PatientDetailView = lazy(() => import('./detail/PatientDetailView'));
 
@@ -18,14 +21,6 @@ export {
   CreatePatientModal,
   type CreatePatientModalProps,
 } from './list/CreatePatientModal';
-
-// The edit-patient modal (spec/patients S4 allow-edit) is likewise reused by
-// any surface holding a patient — the prescription header's picker
-// (PatientSearch's `onEditPatient`, #1038) today.
-export {
-  EditPatientModal,
-  type EditPatientModalProps,
-} from './detail/EditPatientModal';
 
 // Dispensary-mode gate (spec/patients OMS-REG-DIS-01.49): the whole patient
 // surface is reachable only in dispensary mode. The Dispensary nav group is
@@ -51,5 +46,9 @@ export const patientsRoutes = () => (
   <Route path="/" component={DispensaryOnly}>
     <Route path="/" component={PatientsList} />
     <Route path="/:patientId" component={PatientDetailView} />
+    <Route
+      path="/:patientId/vaccination-card/:programEnrolmentId"
+      component={VaccinationCardView}
+    />
   </Route>
 );

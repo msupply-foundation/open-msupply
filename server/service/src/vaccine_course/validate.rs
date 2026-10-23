@@ -32,6 +32,12 @@ pub fn check_vaccine_course_name_exists_for_program(
     Ok(result.is_empty())
 }
 
+/// Above 0: a course nobody gets a dose of forecasts nothing, which is no use (clear it
+/// instead to count every dose in the course)
+pub fn check_annual_doses_per_person_is_valid(annual_doses_per_person: f64) -> bool {
+    annual_doses_per_person > 0.0
+}
+
 pub fn check_dose_min_ages_are_in_order(doses: &Vec<VaccineCourseDoseInput>) -> bool {
     // First dose could be at 0.0 months, so we start with -0.01
     let mut prev_min_age = -0.01;

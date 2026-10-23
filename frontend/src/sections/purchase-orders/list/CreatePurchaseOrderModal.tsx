@@ -1,7 +1,12 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { generateUUID } from '@/uuid';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -72,6 +77,11 @@ const Body: Component<{ onClose: () => void }> = props => {
     );
     setCreating(false);
     if (result.kind === 'graphqlError') {
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        props.onClose();
+        return;
+      }
       setErrorMessage(
         `${t('error.failed-to-create-purchase-order')} ${result.message}`
       );

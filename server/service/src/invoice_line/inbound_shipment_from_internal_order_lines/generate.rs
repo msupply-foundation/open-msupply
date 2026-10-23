@@ -32,7 +32,6 @@ pub fn generate(
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
-                barcode_id: None,
                 overwrite_stock_levels: true,
             },
         )?;
@@ -99,6 +98,7 @@ fn generate_line(
         manufacturer_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment: None,
+        barcode: None,
         vvm_status_id: None,
         reason_option_id: None,
         // The shipment's default campaign (issue #996)

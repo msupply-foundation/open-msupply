@@ -185,6 +185,16 @@ describe('dirty and validity', () => {
     });
   });
 
+  it('clears every contribution dirty state at once', () => {
+    createRoot(() => {
+      const coordinator = createSaveCoordinator();
+      coordinator.participationFor('civ').setDirty(true);
+      coordinator.participationFor('haiti').setDirty(true);
+      coordinator.clearDirty();
+      expect(coordinator.dirty()).toBe(false);
+    });
+  });
+
   it('surfaces the first invalid field message', () => {
     createRoot(() => {
       const coordinator = createSaveCoordinator();

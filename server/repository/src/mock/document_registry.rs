@@ -17,6 +17,8 @@ pub fn document_registry_a() -> DocumentRegistryRow {
         name: None,
         form_schema_id: Some(mock_form_schema_simplified_patient().id.clone()),
         config: None,
+        plugin_code: None,
+        program_key: None,
     }
 }
 
@@ -29,6 +31,8 @@ pub fn document_registry_b() -> DocumentRegistryRow {
         name: None,
         form_schema_id: Some(mock_form_schema_simplified_enrolment().id.clone()),
         config: None,
+        plugin_code: None,
+        program_key: None,
     }
 }
 
@@ -60,6 +64,8 @@ pub fn document_registry_c() -> DocumentRegistryRow {
             ]})
             .to_string(),
         ),
+        plugin_code: None,
+        program_key: None,
     }
 }
 

@@ -46,9 +46,18 @@ import styles from './ScannerSources.module.css';
  * both unrepresentable, and made neither's state honest.
  *
  * Shared by the Devices settings section and the Test scanner screen, so the
- * two cannot drift.
+ * two cannot drift. Worded for whoever holds the scanner — any signed-in user
+ * (OMS-REG-SET-05.56) — not for the engineer who wrote the source.
  */
-export const ScannerSources: Component<{ compact?: boolean }> = props => {
+export const ScannerSources: Component<{
+  compact?: boolean;
+  /**
+   * Show the camera's decoder choice on its row. A developer comparison, so
+   * the Devices section passes it only in development builds; the Test
+   * scanner screen offers it under Advanced instead (OMS-REG-SET-05.70).
+   */
+  showCameraEngine?: boolean;
+}> = props => {
   const [pairing, setPairing] = createSignal(false);
   // True once a filtered chooser came back empty-handed: the scanner may not
   // advertise the bar-code usage page, so the wider list is then offered.
@@ -110,7 +119,7 @@ export const ScannerSources: Component<{ compact?: boolean }> = props => {
                 <div class={styles.control}>
                   <Show when={toggle() === 'manual'}>
                     <ToggleSwitch
-                      label={t('settings.enable-mock-barcode-scanner')}
+                      label={t('settings.type-barcodes-by-hand')}
                       hideLabel
                       checked={mockScannerEnabled()}
                       onChange={setMockScannerEnabled}
@@ -119,46 +128,25 @@ export const ScannerSources: Component<{ compact?: boolean }> = props => {
                   </Show>
                   <Show when={toggle() === 'keyboard-wedge'}>
                     <ToggleSwitch
-                      label={t('label.barcode-scanner-keyboard-wedge')}
+                      label={t('label.scanner-input-keyboard')}
                       hideLabel
                       checked={keyboardWedgeEnabled()}
                       onChange={setKeyboardWedgeEnabled}
                       testId="keyboard-wedge-toggle"
                     />
                   </Show>
-                  {/* Labelled, unlike the two above: the row names the
-                    camera, not which decoder it uses. A choice between two
-                    decoders, not on/off — a switch read as turning the
-                    camera off. */}
-                  <Show when={toggle() === 'camera-engine'}>
-                    <FieldRow label={t('label.camera-mode')} labelWidth="auto">
-                      <Select
-                        label={t('label.camera-mode')}
-                        hideLabel
-                        size="small"
-                        width="short"
-                        options={[
-                          {
-                            value: 'google',
-                            label: t('label.camera-mode-google'),
-                          },
-                          {
-                            value: 'bundled',
-                            label: t('label.camera-mode-bundled'),
-                          },
-                        ]}
-                        value={cameraEngine()}
-                        onValueChange={engine =>
-                          setCameraEngine(
-                            engine === 'bundled' ? 'bundled' : 'google'
-                          )
-                        }
-                        testId="camera-engine-select"
-                      />
-                    </FieldRow>
-                  </Show>
                 </div>
               )}
+            </Show>
+
+            <Show
+              when={
+                !props.compact && props.showCameraEngine && row.id === 'camera'
+              }
+            >
+              <div class={styles.control}>
+                <CameraEngineSelect />
+              </div>
             </Show>
 
             {/* Pairing is a BUTTON because a browser only raises its device
@@ -217,3 +205,30 @@ export const ScannerSources: Component<{ compact?: boolean }> = props => {
     </ul>
   );
 };
+
+/**
+ * Which decoder the camera scans with. Labelled, unlike the row switches:
+ * the row names the camera, not which decoder it uses. A choice between two
+ * decoders, not on/off — a switch read as turning the camera off. Offered so
+ * the two can be compared on real devices; not something a store user needs
+ * (OMS-REG-SET-05.70).
+ */
+export const CameraEngineSelect: Component = () => (
+  <FieldRow label={t('label.camera-mode')} labelWidth="auto">
+    <Select
+      label={t('label.camera-mode')}
+      hideLabel
+      size="small"
+      width="short"
+      options={[
+        { value: 'google', label: t('label.camera-mode-google') },
+        { value: 'bundled', label: t('label.camera-mode-bundled') },
+      ]}
+      value={cameraEngine()}
+      onValueChange={engine =>
+        setCameraEngine(engine === 'bundled' ? 'bundled' : 'google')
+      }
+      testId="camera-engine-select"
+    />
+  </FieldRow>
+);

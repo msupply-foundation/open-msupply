@@ -125,7 +125,7 @@ describe('decimal padding (decimalMin)', () => {
 
   it('handles decimalLimit < decimalMin', () => {
     const tight = o({ decimalLimit: 1, decimalMin: 3 });
-    // Typing past the limit is repaired by rounding…
+    // A paste past the limit is repaired by rounding…
     expect(processInput('1.11', tight, 'en')).toEqual({
       accepted: true,
       text: '1.1',
@@ -161,12 +161,12 @@ describe('emptyValue', () => {
     expect(processInput('', o({ emptyValue: 0 }), 'en')).toEqual({
       accepted: true,
       text: '',
-      commit: { value: 0 },
+      commit: { value: 0, emptied: true },
     });
     expect(processInput('', o({ min: 1, emptyValue: 1 }), 'en')).toEqual({
       accepted: true,
       text: '',
-      commit: { value: 1 },
+      commit: { value: 1, emptied: true },
     });
   });
 
@@ -214,14 +214,25 @@ describe('emptyValue', () => {
   // still reach its handler, which cancels a pending auto-allocation and
   // marks the line dirty — as clearing to undefined always did.
   it('the clearing keystroke reaches the parent even when it already holds emptyValue', () => {
-    expect(commitReports(0, 0, true)).toBe(true);
-    expect(commitReports(0, 7, true)).toBe(true);
+    const cleared = processInput('', o({ emptyValue: 0 }), 'en');
+    const commit = cleared.accepted ? cleared.commit : undefined;
+    expect(commitReports(commit?.value, 0, commit?.emptied)).toBe(true);
+    expect(commitReports(commit?.value, 7, commit?.emptied)).toBe(true);
+  });
+
+  it('without emptyValue, clearing an empty field is not a change', () => {
+    const cleared = processInput('', o(), 'en');
+    const commit = cleared.accepted ? cleared.commit : undefined;
+    expect(commitReports(commit?.value, undefined, commit?.emptied)).toBe(
+      false
+    );
+    expect(commitReports(commit?.value, 3, commit?.emptied)).toBe(true);
   });
 
   it('otherwise only a change reaches the parent', () => {
-    expect(commitReports(0, 0, false)).toBe(false); // typing 0 over 0
-    expect(commitReports(5, 0, false)).toBe(true);
-    expect(commitReports(undefined, undefined, false)).toBe(false);
+    expect(commitReports(0, 0)).toBe(false); // typing 0 over 0
+    expect(commitReports(5, 0)).toBe(true);
+    expect(commitReports(undefined, undefined)).toBe(false);
   });
 
   it('without it, clearing still commits undefined', () => {
@@ -284,18 +295,23 @@ describe('gate and repair', () => {
   });
 
   it('ignores a typed decimal point in an integer field', () => {
-    expect(processInput('1.', o(), 'en')).toEqual({
-      accepted: true,
-      text: '1',
-      commit: { value: 1 },
-    });
+    expect(processInput('1.', o(), 'en', '1')).toEqual({ accepted: false });
   });
 
   it('drops a letter typed into a number', () => {
-    expect(processInput('12a', o(), 'en')).toEqual({
+    expect(processInput('12a', o(), 'en', '12')).toEqual({ accepted: false });
+  });
+
+  it('drops a minus typed in front of a number when negatives are banned', () => {
+    // A repair would strip it and report the entry as clamped from -5.
+    expect(processInput('-5', o(), 'en', '5')).toEqual({ accepted: false });
+  });
+
+  it('repairs a paste over a selection', () => {
+    expect(processInput('-5', o(), 'en', '12')).toEqual({
       accepted: true,
-      text: '12',
-      commit: { value: 12 },
+      text: '5',
+      commit: { value: 5, adjustedFrom: -5 },
     });
   });
 
@@ -304,6 +320,34 @@ describe('gate and repair', () => {
     expect(processInput('1.2.3', o({ decimalLimit: 2 }), 'en')).toEqual({
       accepted: false,
     });
+  });
+});
+
+describe('a keystroke past the decimal limit', () => {
+  const dec2 = o({ decimalLimit: 2 });
+
+  // Each step is one keystroke: the text before it and the text after it.
+  const type = (keys: string) => {
+    let text = '';
+    const seen: string[] = [];
+    for (const key of keys) {
+      const r = processInput(text + key, dec2, 'en', text);
+      if (r.accepted) text = r.text;
+      seen.push(text);
+    }
+    return seen;
+  };
+
+  it('is dropped, so typing 0.0001 stays at 0.00 (#1261)', () => {
+    expect(type('0.0001')).toEqual(['0', '0.', '0.0', '0.00', '0.00', '0.00']);
+  });
+
+  it('never rounds the text up', () => {
+    expect(type('0.159')).toEqual(['0', '0.', '0.1', '0.15', '0.15']);
+  });
+
+  it('never trims trailing zeros', () => {
+    expect(type('0.105')).toEqual(['0', '0.', '0.1', '0.10', '0.10']);
   });
 });
 

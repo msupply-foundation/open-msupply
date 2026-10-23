@@ -286,7 +286,7 @@
   "error.failed-to-save-vaccine-course": "فشل في حفظ دورة اللقاح",
   "error.fetch-notifications": "غير قادر على عرض إشعارات سلسلة التبريد",
   "error.field-must-be-specified": "يجب تحديد {{field}}",
-  "error.field-required": "هذا الفلتر مطلوب.",
+  "error.field-required": "هذا الحقل مطلوب.",
   "error.fridge-tag-import": "تعذر استيراد سجلات علامة الثلاجة: {{message}}",
   "error.fridge-tag-import-empty": "لم يتم استيراد أي بيانات",
   "error.general-query-error": "كان هناك خطأ في الاتصال بالخادم 😢",

@@ -64,7 +64,7 @@ pub fn validate(
             PurchaseOrderLineFilter::new()
                 .purchase_order_id(EqualFilter::equal_to(input.purchase_order_id.to_string()))
                 .requested_pack_size(EqualFilter::equal_to(
-                    input.requested_pack_size.unwrap_or_default(),
+                    input.requested_pack_size.unwrap_or(item.default_pack_size),
                 ))
                 .item_id(EqualFilter::equal_to(item.id.to_string())),
         ),
@@ -74,7 +74,7 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(
             PackSizeCodeCombination {
                 item_code: item.code.clone(),
-                requested_pack_size: input.requested_pack_size.unwrap_or_default(),
+                requested_pack_size: input.requested_pack_size.unwrap_or(item.default_pack_size),
             },
         ));
     }

@@ -1,0 +1,401 @@
+import { describe, expect, it } from 'vitest';
+import {
+  blankOldUiCandidates,
+  canInstall,
+  formName,
+  initialChoices,
+  installReport,
+  installVariables,
+  needsChoices,
+  previewOf,
+  programMoves,
+  programOptions,
+  refusedTypes,
+  takeOverCandidates,
+  typeRefusals,
+  unchosenKeys,
+  withBlankOldUis,
+  blankOldUisAcknowledged,
+  withProgram,
+  withTakeOvers,
+  takeOversConfirmed,
+  type DocumentTypePreview,
+  type FormInstallPreview,
+  type InstallChoices,
+} from './formInstall';
+
+// spec/plugin-management/cases/OMS-REG-MNG-07 — installing a bundle that
+// carries a form plugin (.67–.72, .74, .76–.80): what the dialog asks, what it
+// sends, and how it reads the install back, decided from the server's preview.
+
+const HIV = { id: 'hiv_program', name: 'HIV Care' };
+const TB = { id: 'tb_program', name: 'TB' };
+const UNNAMED = { id: 'B910362B', name: '' };
+
+const type = (
+  documentType: string,
+  programKey: string | null,
+  rest: Partial<DocumentTypePreview> = {}
+): DocumentTypePreview => ({
+  documentType,
+  name: `${documentType} name`,
+  category: programKey ? 'ENCOUNTER' : 'PATIENT',
+  programKey,
+  existingEntry: 'NONE',
+  existingEntryId: null,
+  existingEntryOwner: null,
+  existingEntryCategory: null,
+  existingEntryProgram: null,
+  blanksOldUi: false,
+  refusals: [],
+  ...rest,
+});
+
+const preview = (
+  overrides: Partial<FormInstallPreview['formPlugins'][number]> = {},
+  programs = [HIV, TB]
+): FormInstallPreview => ({
+  programs,
+  formPlugins: [
+    {
+      pluginCode: 'deployment',
+      programKeys: [
+        {
+          programKey: 'hivCare',
+          documentTypes: ['HIVEncounter'],
+          boundProgram: null,
+        },
+        { programKey: 'tb', documentTypes: ['TBEncounter'], boundProgram: TB },
+      ],
+      documentTypes: [
+        type('Patient', null),
+        type('HIVEncounter', 'hivCare'),
+        type('TBEncounter', 'tb'),
+      ],
+      ...overrides,
+    },
+  ],
+});
+
+const none: InstallChoices = { programs: {}, takeOver: [], blankOldUi: [] };
+
+describe('OMS-REG-MNG-07.74 — a bundle with no form plugin asks nothing', () => {
+  it('needs no choices when the preview lists no form plugin', () => {
+    expect(needsChoices({ programs: [HIV], formPlugins: [] })).toBe(false);
+    expect(needsChoices(preview())).toBe(true);
+  });
+
+  it('reads no preview from a file the server could not parse, or a failed read', () => {
+    expect(
+      previewOf({
+        __typename: 'UploadedPluginError',
+        error: 'CANNOT_PARSE_FILE',
+      })
+    ).toBeUndefined();
+    expect(previewOf(undefined)).toBeUndefined();
+    expect(
+      previewOf({ __typename: 'PluginInfoNode', formInstallPreview: preview() })
+    ).toEqual(preview());
+  });
+});
+
+describe('OMS-REG-MNG-07.68 — a bound key starts on its current program', () => {
+  it('pre-fills the keys an earlier install bound, and nothing else', () => {
+    expect(initialChoices(preview())).toEqual({
+      programs: { tb: 'tb_program' },
+      takeOver: [],
+      blankOldUi: [],
+    });
+  });
+
+  it('sends the unchanged program with a re-install', () => {
+    const choices = initialChoices(preview());
+    expect(installVariables('file-1', choices)).toEqual({
+      fileId: 'file-1',
+      programs: [{ programKey: 'tb', programId: 'tb_program' }],
+      takeOver: [],
+      blankOldUi: [],
+    });
+  });
+});
+
+describe('OMS-REG-MNG-07.69 — Install plugin waits for every program key', () => {
+  it('names the keys with no program', () => {
+    const choices = initialChoices(preview());
+    expect(unchosenKeys(preview(), choices).map(k => k.programKey)).toEqual([
+      'hivCare',
+    ]);
+    expect(canInstall(preview(), choices)).toBe(false);
+  });
+
+  it('allows the install once each key has one', () => {
+    const choices = withProgram(initialChoices(preview()), 'hivCare', HIV.id);
+    expect(unchosenKeys(preview(), choices)).toEqual([]);
+    expect(canInstall(preview(), choices)).toBe(true);
+    expect(installVariables('file-1', choices).programs).toEqual([
+      { programKey: 'tb', programId: 'tb_program' },
+      { programKey: 'hivCare', programId: 'hiv_program' },
+    ]);
+  });
+});
+
+describe('OMS-REG-MNG-07.70 — the forms to take over are confirmed together, with one checkbox', () => {
+  const unowned = preview({
+    documentTypes: [
+      type('Patient', null, {
+        existingEntry: 'UNOWNED',
+        existingEntryId: 'C319',
+      }),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: 'UNOWNED',
+        existingEntryId: 'dep_hiv',
+      }),
+      type('TBEncounter', 'tb'),
+    ],
+  });
+  const programs = withProgram(initialChoices(unowned), 'hivCare', HIV.id);
+
+  it('lists every such form and withholds the install until the one checkbox is ticked', () => {
+    expect(takeOverCandidates(unowned).map(t => t.documentType)).toEqual([
+      'Patient',
+      'HIVEncounter',
+    ]);
+    expect(takeOversConfirmed(unowned, programs)).toBe(false);
+    expect(canInstall(unowned, programs)).toBe(false);
+    const confirmed = withTakeOvers(unowned, programs, true);
+    expect(takeOversConfirmed(unowned, confirmed)).toBe(true);
+    expect(canInstall(unowned, confirmed)).toBe(true);
+    // Every listed form goes with the install.
+    expect(installVariables('f', confirmed).takeOver).toEqual([
+      'Patient',
+      'HIVEncounter',
+    ]);
+  });
+
+  it('withdraws them all when the checkbox is cleared', () => {
+    const confirmed = withTakeOvers(unowned, programs, true);
+    const cleared = withTakeOvers(unowned, confirmed, false);
+    expect(cleared.takeOver).toEqual([]);
+    expect(canInstall(unowned, cleared)).toBe(false);
+  });
+
+  it('counts as confirmed when there is nothing to take over', () => {
+    expect(takeOversConfirmed(preview(), initialChoices(preview()))).toBe(true);
+  });
+});
+
+describe('OMS-REG-MNG-07.71 — the forms the old interface would show empty are acknowledged together', () => {
+  const blanking = preview({
+    documentTypes: [
+      type('Patient', null, {
+        existingEntry: 'OWNED',
+        blanksOldUi: true,
+      }),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: 'OWNED',
+        blanksOldUi: true,
+      }),
+      type('TBEncounter', 'tb'),
+    ],
+  });
+  const programs = withProgram(initialChoices(blanking), 'hivCare', HIV.id);
+
+  it('lists every such form and withholds the install until the one checkbox is ticked', () => {
+    expect(blankOldUiCandidates(blanking).map(t => t.documentType)).toEqual([
+      'Patient',
+      'HIVEncounter',
+    ]);
+    expect(canInstall(blanking, programs)).toBe(false);
+    const acknowledged = withBlankOldUis(blanking, programs, true);
+    expect(blankOldUisAcknowledged(blanking, acknowledged)).toBe(true);
+    expect(canInstall(blanking, acknowledged)).toBe(true);
+    expect(installVariables('f', acknowledged).blankOldUi).toEqual([
+      'Patient',
+      'HIVEncounter',
+    ]);
+    expect(withBlankOldUis(blanking, acknowledged, false).blankOldUi).toEqual(
+      []
+    );
+  });
+});
+
+describe("OMS-REG-MNG-07.72 — another plugin's type is refused up front", () => {
+  it('names an owned type, an ambiguous one and one of another category, and withholds the install', () => {
+    const owned = preview({
+      documentTypes: [
+        type('Patient', null, {
+          existingEntry: 'CATEGORY_MISMATCH',
+          existingEntryCategory: 'ENCOUNTER',
+        }),
+        type('HIVEncounter', 'hivCare', {
+          existingEntry: 'OWNED_BY_ANOTHER_PLUGIN',
+          existingEntryOwner: 'other_plugin',
+        }),
+        type('TBEncounter', 'tb', { existingEntry: 'AMBIGUOUS' }),
+      ],
+    });
+    expect(refusedTypes(owned).map(t => t.documentType)).toEqual([
+      'Patient',
+      'HIVEncounter',
+      'TBEncounter',
+    ]);
+    const complete = withProgram(initialChoices(owned), 'hivCare', HIV.id);
+    expect(canInstall(owned, complete)).toBe(false);
+  });
+});
+
+describe('OMS-REG-MNG-07.76 — the programs offered are the server’s, by name', () => {
+  it('sorts by name and shows the id where the name is blank', () => {
+    expect(programOptions([TB, UNNAMED, HIV])).toEqual([
+      { value: 'B910362B', label: 'B910362B' },
+      { value: 'hiv_program', label: 'HIV Care' },
+      { value: 'tb_program', label: 'TB' },
+    ]);
+  });
+
+  it('starts with no choices when the preview has no programs to offer', () => {
+    const empty = preview({}, []);
+    expect(programOptions(empty.programs)).toEqual([]);
+    expect(canInstall(empty, none)).toBe(false);
+  });
+});
+
+describe('OMS-REG-MNG-07.78 — a take-over starts its key on the program its forms are in', () => {
+  // The deployment's own HIV entries, in HIV Care, about to be taken over by
+  // a plugin whose hivCare key no earlier install bound.
+  const deployed = preview({
+    documentTypes: [
+      type('Patient', null),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: 'UNOWNED',
+        existingEntryId: 'dep_hiv',
+        existingEntryProgram: HIV,
+      }),
+      type('TBEncounter', 'tb'),
+    ],
+  });
+
+  it('pre-fills the key with that program, as it pre-fills a bound one', () => {
+    expect(initialChoices(deployed).programs).toEqual({
+      hivCare: HIV.id,
+      tb: TB.id,
+    });
+  });
+
+  it('warns, without withholding the install, when another program would move them', () => {
+    const start = withTakeOvers(deployed, initialChoices(deployed), true);
+    expect(programMoves(deployed, start, 'hivCare')).toEqual([]);
+    const moved = withProgram(start, 'hivCare', TB.id);
+    expect(programMoves(deployed, moved, 'hivCare')).toEqual([
+      {
+        from: HIV,
+        forms: [expect.objectContaining({ documentType: 'HIVEncounter' })],
+      },
+    ]);
+    expect(canInstall(deployed, moved)).toBe(true);
+  });
+
+  it('leaves the key empty when its forms sit in more than one program', () => {
+    const split = preview({
+      programKeys: [
+        {
+          programKey: 'hivCare',
+          documentTypes: ['HIVEnrolment', 'HIVEncounter'],
+          boundProgram: null,
+        },
+      ],
+      documentTypes: [
+        type('HIVEnrolment', 'hivCare', {
+          existingEntry: 'UNOWNED',
+          existingEntryProgram: HIV,
+        }),
+        type('HIVEncounter', 'hivCare', {
+          existingEntry: 'UNOWNED',
+          existingEntryProgram: TB,
+        }),
+      ],
+    });
+    expect(initialChoices(split).programs).toEqual({});
+    // Whichever is chosen, the other program's form moves.
+    expect(
+      programMoves(
+        split,
+        withProgram(initialChoices(split), 'hivCare', HIV.id),
+        'hivCare'
+      ).map(move => move.from.id)
+    ).toEqual([TB.id]);
+  });
+});
+
+describe('OMS-REG-MNG-07.79 — a refusal no choice gets past is named up front', () => {
+  it("lists the server's reasons and withholds the install whatever is chosen", () => {
+    const reason =
+      'Schema deployment_HIVEncounter_v1_aaaa is already installed with different content; a published schema version never changes, so the bundle must carry it exactly as installed';
+    const refused = preview({
+      documentTypes: [
+        type('Patient', null),
+        type('HIVEncounter', 'hivCare', { refusals: [reason] }),
+        type('TBEncounter', 'tb'),
+      ],
+    });
+    expect(typeRefusals(refused)).toEqual([
+      {
+        type: expect.objectContaining({ documentType: 'HIVEncounter' }),
+        reason,
+      },
+    ]);
+    const complete = withProgram(initialChoices(refused), 'hivCare', HIV.id);
+    expect(unchosenKeys(refused, complete)).toEqual([]);
+    expect(canInstall(refused, complete)).toBe(false);
+  });
+});
+
+describe('OMS-REG-MNG-07.80 — the install says what it did to each form', () => {
+  it('names each form by its display name, with its outcome, the program chosen for its key and counts', () => {
+    expect(
+      installReport(
+        preview(),
+        withProgram(initialChoices(preview()), 'hivCare', HIV.id),
+        [
+          {
+            documentType: 'Patient',
+            programKey: null,
+            contextId: 'Patient',
+            outcome: 'TAKEN_OVER',
+            schemasAdded: 0,
+            uiSchemasUpdated: 0,
+          },
+          {
+            documentType: 'HIVEncounter',
+            programKey: 'hivCare',
+            contextId: HIV.id,
+            outcome: 'CREATED',
+            schemasAdded: 2,
+            uiSchemasUpdated: 0,
+          },
+        ]
+      )
+    ).toEqual([
+      {
+        documentType: 'Patient',
+        name: 'Patient name',
+        outcome: 'TAKEN_OVER',
+        program: undefined,
+        schemasAdded: 0,
+        uiSchemasUpdated: 0,
+      },
+      {
+        documentType: 'HIVEncounter',
+        name: 'HIVEncounter name',
+        outcome: 'CREATED',
+        program: 'HIV Care',
+        schemasAdded: 2,
+        uiSchemasUpdated: 0,
+      },
+    ]);
+  });
+
+  it('falls back to the document type for a form the preview does not name', () => {
+    expect(formName(type('Bare', 'tb', { name: '' }))).toBe('Bare');
+  });
+});

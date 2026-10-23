@@ -40,7 +40,7 @@ impl SyncRecordTester for StockLineRecordTester {
             on_hold: true,
             note: Some("some remote sync test note".to_string()),
             supplier_id: Some(new_site_properties.name_id.clone()),
-            barcode_id: None,
+            barcode: None,
             item_variant_id: None,
             donor_id: None,
             ..Default::default()

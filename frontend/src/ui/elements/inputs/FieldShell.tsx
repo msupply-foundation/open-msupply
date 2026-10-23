@@ -19,6 +19,15 @@ export interface FieldShellProps {
   /** Shown below the field when there's no error. */
   helperText?: string;
   /**
+   * Advisory warning shown below the field when there's no error — TextField's
+   * `warning`: the error line's anatomy in the warning colour, with none of the
+   * error semantics (no aria-invalid, border unchanged; an error displaces it).
+   * Displaces the helper text.
+   */
+  warning?: string;
+  /** `data-testid` for the warning message (e2e/TESTIDS.md). */
+  warningTestId?: string;
+  /**
    * An affordance rendered inline after the label text — the InfoTooltip help
    * icon, as TextField's slot of the same name. The place for an explanation
    * that would otherwise sit under the control as permanent `helperText`: in a
@@ -52,7 +61,8 @@ export const FieldShell = (props: FieldShellProps) => {
   // that interpolates the live value) changes. See
   // kdd/solid-reactivity-pitfalls.
   const control = props.children({
-    describedBy: props.error || props.helperText ? messageId : undefined,
+    describedBy:
+      props.error || props.warning || props.helperText ? messageId : undefined,
     invalid: props.error ? true : undefined,
   });
 
@@ -91,9 +101,31 @@ export const FieldShell = (props: FieldShellProps) => {
       <Show
         when={props.error}
         fallback={
-          <Show when={props.helperText}>
-            <p id={messageId} class={styles.helper} data-field-message="helper">
-              {props.helperText}
+          <Show
+            when={props.warning}
+            fallback={
+              <Show when={props.helperText}>
+                <p
+                  id={messageId}
+                  class={styles.helper}
+                  data-field-message="helper"
+                >
+                  {props.helperText}
+                </p>
+              </Show>
+            }
+          >
+            {/* role="status", as TextField's warning: it can appear while
+                the user is mid-form, so it's announced politely. */}
+            <p
+              id={messageId}
+              class={styles.warning}
+              data-field-message="warning"
+              role="status"
+              data-testid={props.warningTestId}
+            >
+              <AlertTriangleIcon class={styles.warningIcon} />
+              {props.warning}
             </p>
           </Show>
         }

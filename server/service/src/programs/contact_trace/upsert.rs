@@ -304,6 +304,8 @@ mod test {
                 name: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
+                plugin_code: None,
+                program_key: None,
             })
             .unwrap();
         registry_repo
@@ -315,6 +317,8 @@ mod test {
                 name: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
+                plugin_code: None,
+                program_key: None,
             })
             .unwrap();
 

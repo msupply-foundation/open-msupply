@@ -221,9 +221,7 @@ export const NumberField = (props: NumberFieldProps) => {
     // can recognise it as ours.
     batch(() => {
       const before = local.value;
-      const emptiedToEmptyValue = emptied && local.emptyValue !== undefined;
-      if (commitReports(value, before, emptiedToEmptyValue))
-        local.onChange?.(value);
+      if (commitReports(value, before, emptied)) local.onChange?.(value);
       const echo = local.value;
       if (echo !== before) parentAnswersSynchronously = true;
       lastCommitted = { value, echo };
@@ -311,7 +309,7 @@ export const NumberField = (props: NumberFieldProps) => {
     const el = e.currentTarget;
     const raw = el.value;
     const caret = el.selectionStart ?? raw.length;
-    const result = processInput(raw, constraints(), locale());
+    const result = processInput(raw, constraints(), locale(), text());
     if (!result.accepted) {
       // Rejected: the text signal didn't change, so Solid won't touch the
       // DOM — put the previous value (and the caret) back ourselves.
@@ -332,7 +330,7 @@ export const NumberField = (props: NumberFieldProps) => {
       el.setSelectionRange(pos, pos);
     }
     if (result.commit) {
-      commit(result.commit.value, result.text === '');
+      commit(result.commit.value, result.commit.emptied);
       reportClamped(result.commit);
     }
   };

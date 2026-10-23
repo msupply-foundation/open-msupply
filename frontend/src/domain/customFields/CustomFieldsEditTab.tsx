@@ -172,6 +172,7 @@ export const CustomFieldsEditTab = (props: {
               <HStack>
                 <SaveButton
                   collapsible={false}
+                  data-testid="custom-fields-save-button"
                   disabled={!dirty()}
                   loading={saving()}
                   onClick={() => void save()}

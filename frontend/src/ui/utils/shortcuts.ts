@@ -154,11 +154,6 @@ export const ALT_V = shortcut({ alt: true, code: 'KeyV', tier: 'global' });
 /** Open the repack modal. Stock line detail only. — StockLineDetailView */
 export const ALT_R = shortcut({ alt: true, code: 'KeyR', tier: 'global' });
 /**
- * Scan a barcode, wherever a scanner control is present and enabled.
- * — createScanControl (domain/barcode)
- */
-export const CTRL_S = shortcut({ ctrl: true, code: 'KeyS', tier: 'global' });
-/**
  * Navigate up one level (KB-X5) — the Escape ladder's tail. Registered as an
  * UNLISTED action (OMS-REG-KBD-01.21): it owns the binding without being
  * browsable.
@@ -256,7 +251,7 @@ const keyName = (s: Shortcut): string => {
 };
 
 /**
- * The `aria-keyshortcuts` value — 'Alt+Shift+M', 'Control+S', 'Escape'. ARIA
+ * The `aria-keyshortcuts` value — 'Alt+Shift+M', 'Control+K', 'Escape'. ARIA
  * modifier names in the canonical order, never the platform spelling.
  */
 export const ariaKeyshortcuts = (s: Shortcut): string => {
