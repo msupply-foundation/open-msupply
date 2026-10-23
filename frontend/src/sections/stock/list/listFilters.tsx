@@ -7,7 +7,11 @@ import {
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
 import { masterListsResource } from '../../../domain/masterList';
-import { campaignKindLabel, campaignsResource } from '../../../domain/campaign';
+import {
+  activityOptions,
+  campaignKindLabel,
+  campaignsResource,
+} from '../../../domain/campaign';
 import { vvmStatusesResource } from '../../../domain/vvmStatus';
 import { stockPreferences } from '../../../store/storeContext';
 import type { StockLinesVariables } from './stock.generated';
@@ -70,7 +74,9 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
   },
   // Activity — single-select of the campaign register (both kinds), matching
   // the line's campaign. Each option reads back qualified by its kind, as the
-  // Activity picker does, since a name can repeat across the two kinds.
+  // Activity picker does, since a name can repeat across the two kinds. Options
+  // go through activityOptions so the order matches the picker — routine
+  // entries first, then campaigns — rather than the name-sorted interleaving.
   // Offered only when the register has entries (gated in filterFields below).
   campaignId: {
     label: () => t('label.activity'),
@@ -81,9 +87,9 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
         value={props.filter().campaignId?.equalTo ?? ''}
         options={[
           { value: '', label: t('label.any') },
-          ...campaignsResource.noSuspense().map(c => ({
-            value: c.id,
-            label: `${campaignKindLabel(c.kind)} · ${c.name}`,
+          ...activityOptions(campaignsResource.noSuspense(), 'all').map(o => ({
+            value: o.node.id,
+            label: `${campaignKindLabel(o.kind)} · ${o.node.name}`,
           })),
         ]}
         onChange={value =>
