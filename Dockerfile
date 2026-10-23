@@ -232,6 +232,19 @@ ARG CARGO_BUILD_JOBS
 # it is cold rather than free, and orphaned private caches accumulate on disk
 # (`docker builder prune --filter type=exec.cachemount`).
 #
+# Every file under /src gets a fresh mtime before cargo runs - correctness, not
+# speed. Cargo decides a workspace crate is fresh by comparing its sources'
+# mtimes with when it last built them, never their contents. COPY keeps the
+# context's mtimes, and a runner's checkout keeps a file's mtime until git
+# rewrites it, so an unchanged file can be older than a build of a DIFFERENT
+# version of it that another branch, or CI's base-commit build, left in this
+# shared mount - and cargo would link that one. Touched inside the same RUN, so
+# it never survives as a cached layer: either BuildKit reuses this whole step,
+# whose output came from identical inputs, or the step runs and every workspace
+# crate recompiles. Dependencies are untouched: they live in the registry
+# mount, keyed by version. Also covers the files build scripts watch outside
+# server/ (locales, generated reports).
+#
 # The registry mount is sharing=shared: it is append-mostly downloaded .crate
 # files and cargo does its own locking, exactly as it does on a dev machine
 # running two projects at once. Leaving it `locked` would serialise EVERY pair
@@ -240,6 +253,7 @@ ARG CARGO_BUILD_JOBS
 RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
     --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
+    find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -261,6 +275,7 @@ ARG CARGO_BUILD_JOBS
 RUN --mount=type=cache,id=cargo-target-postgres-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
     --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
+    find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
