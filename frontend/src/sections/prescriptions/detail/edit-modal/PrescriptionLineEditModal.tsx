@@ -48,6 +48,7 @@ import { prescriptionPreferences } from '../../../../store/storeContext';
 import { round, roundedText } from '../../../../intl';
 import {
   clampManualPacks,
+  distributionOutcome,
   isExpired,
   issuedUnits,
   lensToUnits,
@@ -418,10 +419,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     const messages = issueWarningMessages(
       derived,
       { doses: dosesMode(), dosesPerUnit: dosesPerUnit() },
-      {
-        met: shortfallUnits <= 0,
-        expiredIssuable: !prefs().expiredStockPreventIssue,
-      }
+      distributionOutcome({ shortfallUnits }, prefs())
     );
     setWarnings(messages);
     // Expired stock passed over opens the Batches section, so the batch drawn

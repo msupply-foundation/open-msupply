@@ -1,11 +1,18 @@
-import type { BarReason, IssueWarning } from '../../../../domain/allocation';
+import {
+  expiredSkipReport,
+  type BarReason,
+  type DistributionOutcome,
+  type ExpiredSkipReport,
+  type IssueWarning,
+} from '../../../../domain/allocation';
 
 // The line editor's inline banners, as message descriptors the editor
 // resolves via t()/formatNumber (spec/stock-allocation § reporting,
 // OMS-REG-SMV-11.7/.11). Derived from the shared deriveIssueWarnings output:
 // over-allocation surfaces (OMS-REG-SMV-11.11), and each skipped category is
 // its own whole sentence naming the consequence (OMS-REG-SMV-11.7, #1168) —
-// the dispensing editor's sentences, the expired one by outcome (SMV-11.44).
+// the dispensing editor's sentences, the expired one by outcome (the shared
+// expiredSkipReport, SMV-11.44).
 // On-hold stock is not reported: its row already carries the On hold badge.
 // The shortfall is surfaced separately (the placeholder notice), so it
 // produces no banner here.
@@ -18,21 +25,17 @@ const SKIP_MESSAGE = {
 } as const;
 type ReportedSkip = keyof typeof SKIP_MESSAGE;
 
-/** What the expired sentence turns on (stock-allocation § reporting). */
-export interface DistributionOutcome {
-  /** The request was covered in full. */
-  met: boolean;
-  /** Expired stock stays manually issuable (its guard preference is off). */
-  expiredIssuable: boolean;
-}
+/** The expired sentence for each outcome. */
+const EXPIRED_SKIP_MESSAGE = {
+  skipped: 'messages.stock-expired-skipped',
+  'not-auto-allocated': 'messages.stock-expired',
+  'cannot-issue': 'messages.stock-expired-cannot-issue',
+} as const satisfies Record<ExpiredSkipReport, string>;
 
-const skipMessage = (reason: ReportedSkip, outcome: DistributionOutcome) => {
-  if (reason !== 'expired') return SKIP_MESSAGE[reason];
-  if (outcome.met) return 'messages.stock-expired-skipped';
-  return outcome.expiredIssuable
-    ? 'messages.stock-expired'
-    : 'messages.stock-expired-cannot-issue';
-};
+const skipMessage = (reason: ReportedSkip, outcome: DistributionOutcome) =>
+  reason === 'expired'
+    ? EXPIRED_SKIP_MESSAGE[expiredSkipReport(outcome)]
+    : SKIP_MESSAGE[reason];
 
 export type IssueWarningMessage =
   | { key: 'messages.over-allocated'; quantity: number; issueQuantity: number }

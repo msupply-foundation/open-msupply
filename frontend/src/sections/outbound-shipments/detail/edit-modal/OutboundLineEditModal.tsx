@@ -82,6 +82,7 @@ import {
   barReasons,
   clampManualPacks,
   deriveIssueWarnings,
+  distributionOutcome,
   isExpired,
   rowHasAllocatableStock,
   distributeIssue,
@@ -91,14 +92,11 @@ import {
   dosesToPacks,
   type AllocateUnit,
   type AllocationPreferences,
+  type DistributionOutcome,
   type IssueWarning,
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
-import {
-  activityMismatch,
-  issueWarningMessages,
-  type DistributionOutcome,
-} from './allocationWarnings';
+import { activityMismatch, issueWarningMessages } from './allocationWarnings';
 import { Num } from '@/ui/elements/typography/Num';
 import {
   proposeIssuedBarcode,
@@ -962,10 +960,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       warningMessages(
         deriveIssueWarnings(result, { reportShortfall: false }),
         units,
-        {
-          met: result.shortfallUnits <= 0,
-          expiredIssuable: !allocationPrefs().expiredStockPreventIssue,
-        }
+        distributionOutcome(result, allocationPrefs())
       )
     );
     setDirty(true);
