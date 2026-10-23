@@ -37,6 +37,7 @@ vi.mock('./formLibrary', async () => ({
 
 import {
   createDocumentForm,
+  persistDocument,
   type CreateDocumentFormOptions,
   type DocumentForm,
   type DocumentFormSource,
@@ -868,5 +869,61 @@ describe('when the source changes', () => {
     form.draft.set('extension.demo.vitals.weightKg' as never, 91 as never);
     await form.save();
     expect(form.saveError()).toBe('refused');
+  });
+});
+
+describe('persistDocument', () => {
+  const saveInput = async () => {
+    const [, variables] = graphqlFetch.mock.calls.at(-1) as [
+      unknown,
+      CallVariables,
+    ];
+    return variables.input;
+  };
+
+  it("pins the written version to the entry's current schema", async () => {
+    graphqlFetch.mockResolvedValue({
+      kind: 'success',
+      data: {
+        updateEncounter: {
+          id: 'encounter-1',
+          document: documentPinnedTo(V2, v2, {}),
+        },
+      },
+    });
+    const result = await persistDocument({
+      storeId: 'store',
+      patientId: 'patient',
+      registry,
+      parent: `doc-${V1}`,
+      data: {},
+    });
+    expect(result.kind).toBe('saved');
+    expect((await saveInput()).schemaId).toBe(V2);
+  });
+
+  it('pins to the schema the caller names: a stored version written as it stands', async () => {
+    graphqlFetch.mockResolvedValue({
+      kind: 'success',
+      data: {
+        updateEncounter: {
+          id: 'encounter-1',
+          document: documentPinnedTo(V1, v1, v1Fixture),
+        },
+      },
+    });
+    const stored = documentPinnedTo(V1, v1, v1Fixture);
+    const result = await persistDocument({
+      storeId: 'store',
+      patientId: 'patient',
+      registry,
+      parent: stored.id,
+      data: { ...(stored.data as object), status: 'DELETED' },
+      schemaId: stored.schema?.id,
+    });
+    expect(result.kind).toBe('saved');
+    const input = await saveInput();
+    expect(input.schemaId).toBe(V1);
+    expect(input.parent).toBe(`doc-${V1}`);
   });
 });
