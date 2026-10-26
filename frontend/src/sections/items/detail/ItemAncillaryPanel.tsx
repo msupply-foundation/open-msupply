@@ -154,7 +154,6 @@ export const ItemAncillaryPanel: Component<{
         isCentral={props.isCentral}
         rate={gated(data)?.supplyWastageRate}
         isAncillary={(gated(data)?.ancillaryFor.length ?? 0) > 0}
-        onSaved={onSaved}
       />
 
       {/* No <Show> wrapper around the table: the DataTable owns the empty
