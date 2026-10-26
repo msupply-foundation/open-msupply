@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use repository::{
-    ItemRowRepository, RepositoryError, StorageConnection, SupplyWastageRateRow,
-    SupplyWastageRateRowRepository,
+    EqualFilter, ItemRowRepository, RepositoryError, StorageConnection,
+    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
+    ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
 };
-use util::uuid::uuid;
 
 use crate::{service_provider::ServiceContext, sync::CentralServerConfig};
 
@@ -13,6 +13,8 @@ pub enum SetSupplyWastageRateError {
     /// A supply's wastage rate can only be set on the central server
     NotCentralServer,
     ItemDoesNotExist,
+    /// The rate is stored on the links that order the item, so it needs at least one
+    NotAnAncillaryItem,
     /// The rate must be at least 0 and below 100
     RateOutOfRange,
     DatabaseError(RepositoryError),
@@ -31,59 +33,61 @@ impl From<RepositoryError> for SetSupplyWastageRateError {
     }
 }
 
-/// Each item's own wastage rate (%), keyed by item id; items without one are absent. An item
-/// left with more than one row by a merge takes the highest. A rate below 0 or at 100 and
-/// above would invert or zero the divisor, so it counts as none.
-pub fn supply_wastage_rates(
-    connection: &StorageConnection,
-    item_ids: &[String],
-) -> Result<HashMap<String, f64>, RepositoryError> {
+/// Each ancillary item's own wastage rate (%) from the links ordering it, keyed by the
+/// ancillary's item id; items no link orders are absent. Every link to an item carries the
+/// same rate, but should they differ the highest wins. A rate below 0 or at 100 and above
+/// would invert or zero the divisor, so it counts as none.
+pub fn supply_wastage_rates_of(links: &[AncillaryItemRow]) -> HashMap<String, f64> {
     let mut rates = HashMap::new();
-    if item_ids.is_empty() {
-        return Ok(rates);
-    }
-    for row in SupplyWastageRateRowRepository::new(connection).find_many_by_item_id(item_ids)? {
-        let rate = if (0.0..100.0).contains(&row.wastage_rate) {
-            row.wastage_rate
+    for link in links {
+        let rate = if (0.0..100.0).contains(&link.wastage_rate) {
+            link.wastage_rate
         } else {
             0.0
         };
         rates
-            .entry(row.item_id)
+            .entry(link.ancillary_item_id.clone())
             .and_modify(|max: &mut f64| *max = max.max(rate))
             .or_insert(rate);
     }
-    Ok(rates)
+    rates
 }
 
+/// Each of `item_ids`' own wastage rate (%) as a supply (see `supply_wastage_rates_of`).
+pub fn supply_wastage_rates(
+    connection: &StorageConnection,
+    item_ids: &[String],
+) -> Result<HashMap<String, f64>, RepositoryError> {
+    if item_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    Ok(supply_wastage_rates_of(&links_to(connection, item_ids)?))
+}
+
+/// The undeleted links ordering any of `item_ids` as their ancillary.
+fn links_to(
+    connection: &StorageConnection,
+    item_ids: &[String],
+) -> Result<Vec<AncillaryItemRow>, RepositoryError> {
+    AncillaryItemRepository::new(connection).query_by_filter(
+        AncillaryItemFilter::new().ancillary_item_id(EqualFilter::equal_any(item_ids.to_vec())),
+    )
+}
+
+/// Sets the rate on every link ordering the item, so it reads the same wherever it's linked.
 pub fn set_supply_wastage_rate(
     ctx: &ServiceContext,
     input: SetSupplyWastageRate,
 ) -> Result<f64, SetSupplyWastageRateError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
-            let repo = SupplyWastageRateRowRepository::new(connection);
-            let existing = repo.find_many_by_item_id(std::slice::from_ref(&input.item_id))?;
-            if existing.is_empty() {
-                // Keyed by the item id where it's free, so concurrent sets can't make two
-                let id = match repo.find_one_by_id(&input.item_id)? {
-                    None => input.item_id.clone(),
-                    Some(_) => uuid(),
-                };
-                repo.upsert_one(&SupplyWastageRateRow {
-                    id,
+            let links = validate(connection, &input)?;
+            let repo = AncillaryItemRowRepository::new(connection);
+            for link in links {
+                repo.upsert_one(&AncillaryItemRow {
                     wastage_rate: input.wastage_rate,
-                    item_id: input.item_id.clone(),
+                    ..link
                 })?;
-            } else {
-                // After a merge an item can carry several rows; keep them in step
-                for row in existing {
-                    repo.upsert_one(&SupplyWastageRateRow {
-                        wastage_rate: input.wastage_rate,
-                        ..row
-                    })?;
-                }
             }
             Ok(input.wastage_rate)
         })
@@ -93,7 +97,7 @@ pub fn set_supply_wastage_rate(
 fn validate(
     connection: &StorageConnection,
     input: &SetSupplyWastageRate,
-) -> Result<(), SetSupplyWastageRateError> {
+) -> Result<Vec<AncillaryItemRow>, SetSupplyWastageRateError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SetSupplyWastageRateError::NotCentralServer);
     }
@@ -106,5 +110,9 @@ fn validate(
     {
         return Err(SetSupplyWastageRateError::ItemDoesNotExist);
     }
-    Ok(())
+    let links = links_to(connection, std::slice::from_ref(&input.item_id))?;
+    if links.is_empty() {
+        return Err(SetSupplyWastageRateError::NotAnAncillaryItem);
+    }
+    Ok(links)
 }

@@ -4,7 +4,7 @@ use repository::ancillary_item_row::AncillaryItemRow;
 use repository::{EqualFilter, RepositoryError};
 
 use async_graphql::dataloader::*;
-use service::{item::ancillary_item::supply_wastage_rates, service_provider::ServiceProvider};
+use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
 /// Loads ancillary items grouped by their principal `item_id`. The repository
@@ -63,21 +63,5 @@ impl Loader<String> for AncillaryItemsByAncillaryIdLoader {
                 .push(row);
         }
         Ok(map)
-    }
-}
-
-/// Loads each item's own wastage rate (%) as a supply, by item id. An item without one is
-/// absent.
-pub struct SupplyWastageRateByItemIdLoader {
-    pub service_provider: Data<ServiceProvider>,
-}
-
-impl Loader<String> for SupplyWastageRateByItemIdLoader {
-    type Value = f64;
-    type Error = RepositoryError;
-
-    async fn load(&self, item_ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        supply_wastage_rates(&service_context.connection, item_ids)
     }
 }

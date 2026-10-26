@@ -196,7 +196,6 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `PackagingVariant` | Central | Central | v6 | — |
 | `Property` | Central | Central | v6 | Yes |
 | `Report` | Central | Central | v6 | Yes |
-| `SupplyWastageRate` | Central | Central | v6 | — |
 | `VaccineCourse` | Central | Central | v6 | — |
 | `VaccineCourseDose` | Central | Central | v6 | — |
 | `VaccineCourseItem` | Central | Central | v6 | — |

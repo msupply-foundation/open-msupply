@@ -7,7 +7,7 @@ use std::collections::HashSet;
 
 use super::compute::{AncillaryPlan, compute_ancillary_plan};
 use crate::{
-    item::ancillary_item::supply_wastage_rates,
+    item::ancillary_item::supply_wastage_rates_of,
     requisition::request_requisition::principal_wastage_rates,
 };
 
@@ -50,14 +50,8 @@ pub fn get_ancillary_plan(
     let ancillary_rows =
         AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
-    // Every linked item's own wastage rate as a supply
-    let linked_item_ids: Vec<String> = ancillary_rows
-        .iter()
-        .flat_map(|row| [row.item_id.clone(), row.ancillary_item_id.clone()])
-        .collect::<HashSet<String>>()
-        .into_iter()
-        .collect();
-    let supply_wastage_rates = supply_wastage_rates(connection, &linked_item_ids)?;
+    // Every ancillary's own wastage rate as a supply, carried on the links to it
+    let supply_wastage_rates = supply_wastage_rates_of(&ancillary_rows);
 
     // The wastage rates, in the order's store, of the principals whose links exclude them
     let principal_ids: Vec<String> = ancillary_rows

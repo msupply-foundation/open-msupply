@@ -13,6 +13,9 @@ export type ItemAncillaryItemsResult = {
 } & {
   nodes: Array<{
   supplyWastageRate: number;
+  ancillaryFor: Array<{
+  id: string;
+}>;
   ancillaryItems: Array<{
   id: string;
   itemQuantity: number;
@@ -29,5 +32,5 @@ export type ItemAncillaryItemsResult = {
 };
 
 export const ItemAncillaryItems = {
-  query: "query itemAncillaryItems($storeId: String!, $itemId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        supplyWastageRate\n        ancillaryItems {\n          id\n          itemQuantity\n          ancillaryQuantity\n          excludePrincipalWastage\n          ancillaryItem {\n            id\n            code\n            name\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query itemAncillaryItems($storeId: String!, $itemId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        supplyWastageRate\n        ancillaryFor {\n          id\n        }\n        ancillaryItems {\n          id\n          itemQuantity\n          ancillaryQuantity\n          excludePrincipalWastage\n          ancillaryItem {\n            id\n            code\n            name\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ItemAncillaryItemsResult, ItemAncillaryItemsVariables>;

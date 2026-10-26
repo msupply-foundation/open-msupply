@@ -95,7 +95,6 @@ export type ChangelogTableName =
   | 'StocktakeLine'
   | 'Store'
   | 'StorePreference'
-  | 'SupplyWastageRate'
   | 'SyncFileReference'
   | 'SyncMessage'
   | 'SystemLog'

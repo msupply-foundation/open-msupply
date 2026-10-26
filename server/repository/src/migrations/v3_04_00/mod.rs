@@ -17,10 +17,10 @@ mod add_not_installed_status_to_asset_status_enum;
 mod add_plugin_ownership_to_document_registry;
 mod add_purchase_order_custom_fields;
 mod add_stock_campaign_change_activity_log_type;
-mod add_supply_wastage_rate_table;
 mod add_sync_log_indexes;
 mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
+mod add_wastage_rate_to_ancillary_item;
 mod backfill_purchase_order_custom_fields;
 mod barcode_proposals;
 mod prescription_request_occupation_prominent;
@@ -72,7 +72,7 @@ impl Migration for V3_04_00 {
             Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
             Box::new(add_is_auto_created_to_item_variant::Migrate),
             Box::new(barcode_proposals::Migrate),
-            Box::new(add_supply_wastage_rate_table::Migrate),
+            Box::new(add_wastage_rate_to_ancillary_item::Migrate),
         ]
     }
 }

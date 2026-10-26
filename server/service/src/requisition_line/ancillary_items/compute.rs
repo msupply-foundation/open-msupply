@@ -264,6 +264,7 @@ mod tests {
             ancillary_quantity: a,
             deleted_datetime: None,
             exclude_principal_wastage: false,
+            wastage_rate: 0.0,
         }
     }
 

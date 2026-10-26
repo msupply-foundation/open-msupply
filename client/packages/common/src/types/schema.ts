@@ -6102,8 +6102,9 @@ export type ItemNode = {
   stockOnHand: Scalars['Int']['output'];
   strength?: Maybe<Scalars['String']['output']>;
   /**
-   * This item's own wastage rate (%) as an ancillary supply, added on top of what its
-   * ancillary links order (e.g. syringes broken or dropped); 0 when none.
+   * This item's own wastage rate (%) as an ancillary supply, added on top of what the
+   * links ordering it give (e.g. syringes broken or dropped); 0 when none. Stored on
+   * those links (`ancillaryFor`), so an item no link orders has none.
    */
   supplyWastageRate: Scalars['Float']['output'];
   type: ItemNodeType;

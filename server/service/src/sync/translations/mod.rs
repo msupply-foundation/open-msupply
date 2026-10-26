@@ -82,7 +82,6 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
-pub(crate) mod supply_wastage_rate;
 pub(crate) mod sync_file_reference;
 pub(crate) mod sync_message;
 pub(crate) mod sync_message_om;
@@ -226,7 +225,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         packaging_variant::boxed(),
         // Ancillary Item
         ancillary_item::boxed(),
-        supply_wastage_rate::boxed(),
         // System log
         system_log::boxed(),
         // Plugins

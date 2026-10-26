@@ -3,13 +3,17 @@
 # independent of the itemDetail read, so the tab can refetch after a save/
 # delete without reloading the whole page — mirrors the Ledger tab's
 # itemLedger.graphql pattern. Also this item's own wastage rate as a supply,
-# shown above the links (rules.md § ancillary supplies › supply wastage).
+# shown above the links (rules.md § ancillary supplies › supply wastage), and
+# the links ordering it, which carry that rate — none, and there's no rate to set.
 query itemAncillaryItems($storeId: String!, $itemId: String!) {
   items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
     ... on ItemConnector {
       __typename
       nodes {
         supplyWastageRate
+        ancillaryFor {
+          id
+        }
         ancillaryItems {
           id
           itemQuantity

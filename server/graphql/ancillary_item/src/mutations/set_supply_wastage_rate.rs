@@ -107,7 +107,9 @@ fn map_error(error: ServiceError) -> Result<SetSupplyWastageRateErrorInterface> 
         }
         ServiceError::NotCentralServer => Forbidden(formatted_error),
         // Bad user input that the UI prevents
-        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ItemDoesNotExist | ServiceError::NotAnAncillaryItem => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

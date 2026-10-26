@@ -232,6 +232,7 @@ mod test {
                     ancillary_quantity: input.ancillary_quantity,
                     deleted_datetime: None,
                     exclude_principal_wastage: input.exclude_principal_wastage.unwrap_or(false),
+                    wastage_rate: 0.0,
                 })
             })),
             ..Default::default()

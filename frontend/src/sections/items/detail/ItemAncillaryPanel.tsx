@@ -153,6 +153,7 @@ export const ItemAncillaryPanel: Component<{
         itemId={props.itemId}
         isCentral={props.isCentral}
         rate={gated(data)?.supplyWastageRate}
+        isAncillary={(gated(data)?.ancillaryFor.length ?? 0) > 0}
         onSaved={onSaved}
       />
 

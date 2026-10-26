@@ -16,8 +16,7 @@ use graphql_core::{
         ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
         ItemsStockOnHandLoaderInput, LocationTypeLoader, MasterListByItemIdLoader,
         MasterListByItemIdLoaderInput, ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput,
-        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput,
-        SupplyWastageRateByItemIdLoader, WarningLoader,
+        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -28,7 +27,7 @@ use repository::{
     item_variant::item_variant::{ItemVariantFilter, ItemVariantRepository},
 };
 use serde_json::json;
-use service::{ListResult, item_stats::ItemStats};
+use service::{ListResult, item::ancillary_item::supply_wastage_rates_of, item_stats::ItemStats};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -274,11 +273,19 @@ impl ItemNode {
         Ok(AncillaryItemNode::from_vec(result))
     }
 
-    /// This item's own wastage rate (%) as an ancillary supply, added on top of what its
-    /// ancillary links order (e.g. syringes broken or dropped); 0 when none.
+    /// This item's own wastage rate (%) as an ancillary supply, added on top of what the
+    /// links ordering it give (e.g. syringes broken or dropped); 0 when none. Stored on
+    /// those links (`ancillaryFor`), so an item no link orders has none.
     pub async fn supply_wastage_rate(&self, ctx: &Context<'_>) -> Result<f64> {
-        let loader = ctx.get_loader::<DataLoader<SupplyWastageRateByItemIdLoader>>();
-        Ok(loader.load_one(self.row().id.clone()).await?.unwrap_or(0.0))
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
+        let links = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+        Ok(supply_wastage_rates_of(&links)
+            .get(&self.row().id)
+            .copied()
+            .unwrap_or(0.0))
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {

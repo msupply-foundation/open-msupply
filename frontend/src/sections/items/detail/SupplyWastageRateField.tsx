@@ -14,7 +14,8 @@ import { SetSupplyWastageRate } from './ancillaryItemMutations.generated';
 // The item's own wastage rate as an ancillary supply (rules.md § ancillary
 // supplies › supply wastage): one rate for the item, applied wherever a link
 // orders it. Editable on the central server only, like the links themselves;
-// read-only elsewhere.
+// read-only elsewhere. It's stored on the links ordering the item, so until
+// one does there's nothing to set it on and the field is disabled.
 
 // Below 100: a rate of 100% or more has no meaningful divisor (the server
 // refuses it), so the field caps just under it.
@@ -24,6 +25,8 @@ export const SupplyWastageRateField: Component<{
   storeId: string;
   itemId: string;
   isCentral: boolean;
+  /** Some link orders this item as its ancillary. */
+  isAncillary: boolean;
   /** The saved rate; undefined until the tab's query has loaded. */
   rate: number | undefined;
   onSaved: () => void;
@@ -88,7 +91,14 @@ export const SupplyWastageRateField: Component<{
               decimalLimit={2}
               max={MAX_RATE}
               value={draft()}
-              disabled={saving() || props.rate === undefined}
+              helperText={
+                props.rate !== undefined && !props.isAncillary
+                  ? t('messages.supply-wastage-rate-not-ancillary')
+                  : undefined
+              }
+              disabled={
+                saving() || props.rate === undefined || !props.isAncillary
+              }
               data-testid="supply-wastage-rate-input"
               onChange={value => {
                 setDraft(value);
@@ -97,7 +107,7 @@ export const SupplyWastageRateField: Component<{
             />
             <Button
               data-testid="supply-wastage-rate-save"
-              disabled={!changed() || saving()}
+              disabled={!changed() || saving() || !props.isAncillary}
               onClick={() => void save()}
             >
               {t('button.save')}

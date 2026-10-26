@@ -2536,6 +2536,7 @@
   "message.select-purchase-order-for-shipment": "Select the purchase order this shipment is arriving against",
   "message.select-schedule-first": "Select a schedule first",
   "messages": "Messages",
+  "messages.supply-wastage-rate-not-ancillary": "Add this item as an ancillary of another item to set its wastage rate",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.active-policy-needs-coverage": "An active policy must have a non-zero coverage rate. Increase the rate or deactivate the policy.",
   "messages.ago": "{{time}} ago",

@@ -274,13 +274,6 @@ impl ChangelogTableName {
                 transport: V6,
                 multi_device_site: false,
             },
-            // Read alongside the ancillary links wherever they are, so it travels the same way.
-            SupplyWastageRate => SyncStyle {
-                authoring: vec![Central],
-                distribution: vec![D::Central],
-                transport: V6,
-                multi_device_site: false,
-            },
             AssetCatalogueItem => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],

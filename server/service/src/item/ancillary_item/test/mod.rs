@@ -249,6 +249,7 @@ mod tests {
         use crate::item::ancillary_item::{
             SetSupplyWastageRate, SetSupplyWastageRateError, supply_wastage_rates,
         };
+        use repository::ancillary_item_row::AncillaryItemRowRepository;
 
         let (_, connection, connection_manager, _) = setup_all(
             "supply_wastage_rate_service",
@@ -267,38 +268,76 @@ mod tests {
                 },
             )
         };
+        let upsert_link = |id: &str, item_id: String, item_quantity: f64| {
+            service
+                .upsert_ancillary_item(
+                    &context,
+                    UpsertAncillaryItem {
+                        id: id.to_string(),
+                        item_id,
+                        ancillary_item_id: mock_item_b().id,
+                        item_quantity,
+                        ancillary_quantity: 1.0,
+                        exclude_principal_wastage: None,
+                    },
+                )
+                .unwrap()
+        };
+        let link_rate = |id: &str| {
+            AncillaryItemRowRepository::new(&connection)
+                .find_one_by_id(id)
+                .unwrap()
+                .unwrap()
+                .wastage_rate
+        };
 
         test_util_set_is_central_server(false);
         assert_eq!(
-            set(mock_item_a().id, 10.0),
+            set(mock_item_b().id, 10.0),
             Err(SetSupplyWastageRateError::NotCentralServer)
         );
 
         test_util_set_is_central_server(true);
         assert_eq!(
-            set(mock_item_a().id, 100.0),
+            set(mock_item_b().id, 100.0),
             Err(SetSupplyWastageRateError::RateOutOfRange)
         );
         assert_eq!(
-            set(mock_item_a().id, -1.0),
+            set(mock_item_b().id, -1.0),
             Err(SetSupplyWastageRateError::RateOutOfRange)
         );
         assert_eq!(
             set("no_such_item".to_string(), 10.0),
             Err(SetSupplyWastageRateError::ItemDoesNotExist)
         );
+        // The rate lives on the links ordering the item, so it needs one
+        assert_eq!(
+            set(mock_item_b().id, 10.0),
+            Err(SetSupplyWastageRateError::NotAnAncillaryItem)
+        );
 
-        // Set, then changed in place rather than a second row
-        assert_eq!(set(mock_item_a().id, 10.0), Ok(10.0));
-        assert_eq!(set(mock_item_a().id, 15.0), Ok(15.0));
+        // a → b, then b's rate set
+        upsert_link("ab", mock_item_a().id, 1.0);
+        assert_eq!(set(mock_item_b().id, 15.0), Ok(15.0));
+        assert_eq!(link_rate("ab"), 15.0);
+
+        // A new link to b orders at b's rate, and editing a link keeps it
+        upsert_link("cb", mock_item_c().id, 1.0);
+        assert_eq!(link_rate("cb"), 15.0);
+        upsert_link("ab", mock_item_a().id, 2.0);
+        assert_eq!(link_rate("ab"), 15.0);
+
+        // Setting it again updates every link to b
+        assert_eq!(set(mock_item_b().id, 20.0), Ok(20.0));
+        assert_eq!((link_rate("ab"), link_rate("cb")), (20.0, 20.0));
         let rates =
             supply_wastage_rates(&connection, &[mock_item_a().id, mock_item_b().id]).unwrap();
-        assert_eq!(rates.get(&mock_item_a().id), Some(&15.0));
-        assert_eq!(rates.get(&mock_item_b().id), None);
+        assert_eq!(rates.get(&mock_item_b().id), Some(&20.0));
+        assert_eq!(rates.get(&mock_item_a().id), None);
 
         // 0 clears it
-        assert_eq!(set(mock_item_a().id, 0.0), Ok(0.0));
-        let rates = supply_wastage_rates(&connection, &[mock_item_a().id]).unwrap();
-        assert_eq!(rates.get(&mock_item_a().id), Some(&0.0));
+        assert_eq!(set(mock_item_b().id, 0.0), Ok(0.0));
+        let rates = supply_wastage_rates(&connection, &[mock_item_b().id]).unwrap();
+        assert_eq!(rates.get(&mock_item_b().id), Some(&0.0));
     }
 }
