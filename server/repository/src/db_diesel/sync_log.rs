@@ -47,6 +47,14 @@ impl<'a> SyncLogV5V6Repository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
+    /// An EXISTS: stops at the first matching row instead of sorting the table,
+    /// which on a site with a long sync history can hold millions of rows.
+    pub fn exists(&self, filter: Option<SyncLogV5V6Filter>) -> Result<bool, RepositoryError> {
+        let query = create_filtered_query(filter);
+        Ok(diesel::select(diesel::dsl::exists(query))
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn query_one(&self, filter: SyncLogV5V6Filter) -> Result<Option<SyncLog>, RepositoryError> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
@@ -73,7 +81,7 @@ impl<'a> SyncLogV5V6Repository<'a> {
                 }
                 SyncLogV5V6SortField::DoneDatetime => {
                     // If nulls last on desc search and nulls first on asc search is more
-                    // convenient for sync log rows datetimes that are nullable (see get_initialisation_status)
+                    // convenient for sync log rows datetimes that are nullable (see get_first_initialisation_finished_datetime)
                     apply_sort_asc_nulls_first!(query, sort, sync_log::finished_datetime)
                 }
             }

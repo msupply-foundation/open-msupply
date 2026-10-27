@@ -267,32 +267,22 @@ fn get_initialisation_status(
         return Ok(InitialisationStatus::Initialised(site_name));
     }
 
+    // Existence checks only: the front end asks for this before every page load,
+    // so it mustn't cost more as a site's sync history grows.
     let v7_repo = SyncLogV7Repository::new(&ctx.connection);
-    let v7_has_any = v7_repo.query_one(SyncLogV7Condition::TRUE)?.is_some();
-    let v7_has_success = v7_repo
-        .query_one(SyncLogV7Condition::And(vec![
-            SyncLogV7Condition::FinishedDatetime::is_not_null(),
-            SyncLogV7Condition::Error::is_null(),
-        ]))?
-        .is_some();
+    let v7_has_any = v7_repo.exists(SyncLogV7Condition::TRUE)?;
+    let v7_has_success = v7_repo.exists(SyncLogV7Condition::And(vec![
+        SyncLogV7Condition::FinishedDatetime::is_not_null(),
+        SyncLogV7Condition::Error::is_null(),
+    ]))?;
 
     // V5/V6 — checked regardless of V7 state so a previously-initialised site
     // isn't downgraded to Initialising if a V7 attempt fails.
-    let v5_latest = SyncLogV5V6Repository::new(&ctx.connection)
-        .query(
-            Pagination::one(),
-            None,
-            Some(Sort {
-                key: SyncLogV5V6SortField::DoneDatetime,
-                desc: Some(true),
-            }),
-        )?
-        .pop();
-    let v5_has_success = v5_latest
-        .as_ref()
-        .map(|l| l.sync_log_row.finished_datetime.is_some())
-        .unwrap_or(false);
-    let v5_has_any = v5_latest.is_some();
+    let v5_repo = SyncLogV5V6Repository::new(&ctx.connection);
+    let v5_has_any = v5_repo.exists(None)?;
+    let v5_has_success = v5_repo.exists(Some(
+        SyncLogV5V6Filter::new().finished_datetime(DatetimeFilter::is_null(false)),
+    ))?;
 
     if v7_has_success || v5_has_success {
         // Get sync site name

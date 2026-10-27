@@ -117,6 +117,14 @@ impl<'a> SyncLogV7Repository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    /// An EXISTS: stops at the first matching row instead of sorting the table.
+    pub fn exists(&self, filter: SyncLogV7Condition::Inner) -> Result<bool, RepositoryError> {
+        let query = sync_log_v7::table.filter(filter.to_boxed());
+        Ok(diesel::select(diesel::dsl::exists(query))
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn query_one(
         &self,
         filter: SyncLogV7Condition::Inner,
