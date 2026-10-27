@@ -8,6 +8,7 @@ import {
   type PluginDiagnostic,
 } from './diagnostics';
 import { FrontendPluginMetadata } from './frontendPluginMetadata.generated';
+import { importPluginBundle } from './importPluginBundle';
 import { loadedPlugins, registerPlugin, type LoadedPlugin } from './registry';
 import { validateLoadedModule } from './validate';
 
@@ -193,11 +194,9 @@ export const fetchPluginMetadata = async (): Promise<
  */
 const appDeps: LoadPluginsDeps = {
   fetchMetadata: fetchPluginMetadata,
-  // @vite-ignore: the URL is discovered at runtime, so Vite must not try to
-  // resolve or pre-bundle it. Shared specifiers inside the bundle
-  // (`solid-js`, `@openmsupply/plugin-sdk`) resolve through the host's import
-  // map to the host's own live instances (kdd/plugin-loading).
-  importBundle: url => import(/* @vite-ignore */ url),
+  // Not a bare `import()`: one compiled here would report a broken plugin as a
+  // stale app (./importPluginBundle.ts).
+  importBundle: importPluginBundle,
   registerTranslations: registerPluginTranslations,
   register: registerPlugin,
   recordDiagnostic: recordPluginDiagnostic,
