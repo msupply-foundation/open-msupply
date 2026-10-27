@@ -27,6 +27,18 @@ const APP_PAGE = 'index.html';
 export const chunkName = file =>
   file.replace(/-[A-Za-z0-9_-]{8}(?=\.\w+$)/, '');
 
+// The name a JS chunk is compared by. Where the manifest key is a source path
+// it is used as is: unique, and stable across builds (assets/common.js alone
+// would be every locale's common.json). A package path drops the pnpm store
+// prefix, so a version bump doesn't rename it. Shared chunks (keys starting
+// "_") have no source path, so they fall back to the file name without its
+// hash, which several of them can share.
+export const stableName = (key, file) => {
+  if (key.startsWith('_')) return chunkName(file);
+  const pkg = key.match(/node_modules\/\.pnpm\/[^/]+\/node_modules\/(.+)$/);
+  return pkg ? pkg[1] : key;
+};
+
 export const measure = dist => {
   const manifest = JSON.parse(
     readFileSync(join(dist, '.vite/manifest.json'), 'utf8')
@@ -55,17 +67,25 @@ export const measure = dist => {
     );
   const cssFiles = keys =>
     new Set([...keys].flatMap(k => manifest[k].css ?? []));
-  // Total gzip bytes, and per chunk name (chunks that share a name once the
-  // hash is gone are summed).
+  const nameOf = new Map(
+    Object.entries(manifest).map(([k, v]) => [v.file, stableName(k, v.file)])
+  );
+  // Total gzip bytes, and per chunk name (chunks that share a name are
+  // summed, and countByName says how many were).
   const sizes = files => {
     const byName = {};
+    const countByName = {};
     let total = 0;
     for (const f of files) {
       const n = gzipSync(readFileSync(join(dist, f))).length;
+      const name = f.endsWith('.js')
+        ? (nameOf.get(f) ?? chunkName(f))
+        : chunkName(f);
       total += n;
-      byName[chunkName(f)] = (byName[chunkName(f)] ?? 0) + n;
+      byName[name] = (byName[name] ?? 0) + n;
+      countByName[name] = (countByName[name] ?? 0) + 1;
     }
-    return { total, count: files.size, byName };
+    return { total, count: files.size, byName, countByName };
   };
 
   const entries = Object.keys(manifest).filter(k => manifest[k].isEntry);

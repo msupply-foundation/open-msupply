@@ -53,16 +53,32 @@ export const compareSizes = (base, pr, { baseSha } = {}) => {
   const row = (label, b, p, unit) =>
     `| ${label} | ${kb(b.total)} (${b.count} ${unit}) | ${kb(p.total)} (${p.count} ${unit}) | ${signedKb(p.total - b.total)}${pct(p.total - b.total, b.total)} |`;
 
-  const upfrontNames = new Set(
-    [base, pr].flatMap(m => [
-      ...Object.keys(m.upfront.js.byName),
-      ...Object.keys(m.upfront.css.byName),
-    ])
-  );
-  const chunks = [
-    ...chunkRows(base.app.js.byName, pr.app.js.byName),
-    ...chunkRows(base.app.css.byName, pr.app.css.byName),
-  ].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  // How a row's bytes load, from this PR's build (the base's for a removed
+  // chunk). A name several chunks share can be partly each: "mixed".
+  const loads = (kind, name) => {
+    const m = pr.app[kind].byName[name] === undefined ? base : pr;
+    const up = m.upfront[kind].byName[name] ?? 0;
+    return up === 0
+      ? 'lazily'
+      : up === m.app[kind].byName[name]
+        ? 'up front'
+        : 'mixed';
+  };
+  const label = (kind, name) => {
+    const n = Math.max(
+      ...[base, pr].map(m => m.app[kind].countByName?.[name] ?? 1)
+    );
+    return n > 1 ? `\`${name}\` (${n} chunks)` : `\`${name}\``;
+  };
+  const chunks = ['js', 'css']
+    .flatMap(kind =>
+      chunkRows(base.app[kind].byName, pr.app[kind].byName).map(r => ({
+        ...r,
+        label: label(kind, r.name),
+        loads: loads(kind, r.name),
+      }))
+    )
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
   const lines = [
     MARKER,
@@ -87,7 +103,7 @@ export const compareSizes = (base, pr, { baseSha } = {}) => {
       '|---|---|---|---|---|',
       ...shown.map(
         r =>
-          `| \`${r.name}\` | ${upfrontNames.has(r.name) ? 'up front' : 'lazily'} | ${r.base === undefined ? 'new' : kb(r.base)} | ${r.pr === undefined ? 'removed' : kb(r.pr)} | ${signedKb(r.delta)} |`
+          `| ${r.label} | ${r.loads} | ${r.base === undefined ? 'new' : kb(r.base)} | ${r.pr === undefined ? 'removed' : kb(r.pr)} | ${signedKb(r.delta)} |`
       ),
       ...(chunks.length > shown.length
         ? ['', `…and ${chunks.length - shown.length} more.`]

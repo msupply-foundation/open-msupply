@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { chunkName, measure } from './bundle-size.mjs';
+import { chunkName, measure, stableName } from './bundle-size.mjs';
 import {
   CHUNK_BYTES,
   MARKER,
@@ -64,15 +64,57 @@ describe('measure', () => {
     // Up front is the static imports only: the lazy chunk is left out.
     expect(Object.keys(m.upfront.js.byName).sort()).toEqual([
       'assets/Badge.js',
-      'assets/index.js',
+      'index.html',
     ]);
     expect(m.upfront.js.total).toBe(appJs[0] + appJs[1]);
     expect(m.upfront.css.total).toBe(m.app.css.total);
+    // Source-path keys name their chunk; the shared chunk falls back to its
+    // file name.
     expect(Object.keys(m.app.js.byName).sort()).toEqual([
       'assets/Badge.js',
-      'assets/index.js',
-      'assets/lazy.js',
+      'index.html',
+      'src/lazy.ts',
     ]);
+  });
+
+  it('keeps same-named chunks apart where the manifest has their source', () => {
+    const dist = fakeDist(
+      {
+        'index.html': {
+          file: 'assets/index-AAAAAAAA.js',
+          isEntry: true,
+          imports: ['_intl-BBBBBBBB.js', '_intl-CCCCCCCC.js'],
+          dynamicImports: [
+            'src/intl/locales/en/common.json',
+            'src/intl/locales/fr/common.json',
+          ],
+        },
+        'src/intl/locales/en/common.json': {
+          file: 'assets/common-DDDDDDDD.js',
+        },
+        'src/intl/locales/fr/common.json': {
+          file: 'assets/common-EEEEEEEE.js',
+        },
+        '_intl-BBBBBBBB.js': { file: 'assets/intl-BBBBBBBB.js' },
+        '_intl-CCCCCCCC.js': { file: 'assets/intl-CCCCCCCC.js' },
+      },
+      {
+        'assets/index-AAAAAAAA.js': 'console.log(1);',
+        'assets/common-DDDDDDDD.js': 'export default {"a":"en"};',
+        'assets/common-EEEEEEEE.js': 'export default {"a":"fr"};',
+        'assets/intl-BBBBBBBB.js': 'export const a = 1;',
+        'assets/intl-CCCCCCCC.js': 'export const b = 2;',
+      }
+    );
+    const { byName, countByName } = measure(dist).app.js;
+    expect(Object.keys(byName).sort()).toEqual([
+      'assets/intl.js',
+      'index.html',
+      'src/intl/locales/en/common.json',
+      'src/intl/locales/fr/common.json',
+    ]);
+    // The two shared chunks have no source path, so they stay summed.
+    expect(countByName['assets/intl.js']).toBe(2);
   });
 
   it('names chunks without their content hash', () => {
@@ -81,6 +123,21 @@ describe('measure', () => {
       'assets/return_Status.css'
     );
     expect(chunkName('assets/no-hash.js')).toBe('assets/no-hash.js');
+  });
+
+  it('names a chunk by its source, without the pnpm store path', () => {
+    expect(stableName('src/lazy.ts', 'assets/lazy-CCCCCCCC.js')).toBe(
+      'src/lazy.ts'
+    );
+    expect(
+      stableName(
+        'node_modules/.pnpm/@capacitor+app@8.1.1_@capacitor+core@8.4.1/node_modules/@capacitor/app/dist/esm/web.js',
+        'assets/web-AAAAAAAA.js'
+      )
+    ).toBe('@capacitor/app/dist/esm/web.js');
+    expect(stableName('_web-BjTeafRi.js', 'assets/web-BjTeafRi.js')).toBe(
+      'assets/web.js'
+    );
   });
 });
 
@@ -171,6 +228,24 @@ describe('compareSizes', () => {
     const r = compareSizes(lazyBase, base);
     expect(base.app.js.total).toBe(lazyBase.app.js.total);
     expect(r.significant).toBe(true);
+  });
+
+  it('says how many chunks a shared name sums, and "mixed" when they load both ways', () => {
+    // Two assets/intl.js chunks: 3,000 B up front and 1,000 B lazily, which
+    // the PR grows by 1,000 B on the lazy side.
+    const withIntl = lazyBytes => {
+      const m = sizes({ 'assets/index.js': 100_000 });
+      const total = 3_000 + lazyBytes;
+      m.app.js.byName['assets/intl.js'] = total;
+      m.app.js.countByName = { 'assets/intl.js': 2 };
+      m.app.js.total += total;
+      m.upfront.js.byName['assets/intl.js'] = 3_000;
+      return m;
+    };
+    const md = compareSizes(withIntl(1_000), withIntl(2_000)).markdown;
+    expect(md).toContain(
+      '| `assets/intl.js` (2 chunks) | mixed | 3.9 KB | 4.9 KB | +1.0 KB |'
+    );
   });
 
   it('leaves out chunks that barely moved', () => {
