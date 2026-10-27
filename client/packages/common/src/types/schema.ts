@@ -6529,8 +6529,14 @@ export type LogLevelNode = {
 
 export type LogNode = {
   __typename: 'LogNode';
-  fileContent?: Maybe<Array<Scalars['String']['output']>>;
+  /**
+   * The file's text, as written: at most its last 1 MiB. Download the whole file from
+   * `/support/log/{name}`.
+   */
+  content?: Maybe<Scalars['String']['output']>;
   fileNames?: Maybe<Array<Scalars['String']['output']>>;
+  /** Whether `content` is only the end of a longer file. */
+  truncated?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type Logout = {
