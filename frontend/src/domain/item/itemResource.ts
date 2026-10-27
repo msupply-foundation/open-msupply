@@ -62,11 +62,19 @@ export type ItemLookup =
  */
 export const lookUpItemById = async (
   storeId: string,
-  id: string
+  id: string,
+  // Scope the answer to one master list (a program's catalogue, as the item
+  // search scopes it): an item outside it answers `missing`.
+  options: { masterListId?: string } = {}
 ): Promise<ItemLookup> => {
   const result = await graphqlFetch(ItemsWithStock, {
     storeId,
-    filter: { id: { equalTo: id } },
+    filter: {
+      id: { equalTo: id },
+      ...(options.masterListId
+        ? { masterListId: { equalTo: options.masterListId } }
+        : {}),
+    },
     page: { first: 1 },
   });
   if (result.kind !== 'success') return { kind: 'failed' };

@@ -105,6 +105,7 @@ export type SdkSavePrescriptionItemLinesVariables = {
   }>;
     prescribedQuantity?: number | null;
     note?: string | null;
+    barcode?: string | null;
   };
 };
 

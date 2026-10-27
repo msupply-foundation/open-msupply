@@ -51,16 +51,15 @@ export const createAssetScan = (options: {
   const [draft, setDraft] = createSignal<ScannedAssetDraft | undefined>();
   const [busy, setBusy] = createSignal(false);
 
+  // Listens from arrival like every scanning screen (barcode-scanning rules
+  // § Triggering a scan; OMS-REG-CCE-04.37).
   const control = createScanControl({
     owner: 'equipment',
-    // The register waits to be pressed (ui-surface § R1: "The equipment
-    // register is the exception").
-    armOnArrival: false,
     onScan: scan => {
       // One scan at a time: while one resolves or waits for confirmation, a
       // second would race it to the same dialog, so it is dropped. Not
-      // `disabled` — that disarms the scanner, and the user would have to
-      // press Scan again after every label.
+      // `disabled` — that stops the scanner, and a label scanned the moment
+      // the dialog closes would be lost.
       if (busy() || draft() !== undefined) return;
       setNotice(undefined);
       setBusy(true);
