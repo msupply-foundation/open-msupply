@@ -1,5 +1,6 @@
 import { createSignal, Match, Show, Switch, type JSX } from 'solid-js';
 import { t } from '@/intl';
+import { reportPermissionDenied } from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -56,6 +57,12 @@ export const LinesOutcomeDialog = (props: LinesOutcomeDialogProps) => {
     if (phase().kind !== 'confirm') return;
     setPhase({ kind: 'working' });
     const outcome = await props.run(ids);
+    // The permission-denied modal says why; the dialog has nothing to add.
+    if (outcome.forbidden) {
+      reportPermissionDenied(outcome.forbidden);
+      finish(outcome);
+      return;
+    }
     if (outcome.message) {
       setPhase({ kind: 'error', outcome });
       return;
