@@ -7,6 +7,10 @@ type: bug
 assignees: ''
 ---
 
+## Impact 💥
+
+<!-- Who is affected today, how badly, and whether there's a workaround. e.g. "Only standalone central servers; no current clients" or "All stores using program requisitions; no workaround". -->
+
 ## What went wrong? 😲
 
 <!-- Provide a clear and concise description of what the bug is. Screenshots are helpful! -->
