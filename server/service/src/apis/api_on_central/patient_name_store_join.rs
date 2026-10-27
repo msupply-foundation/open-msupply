@@ -4,7 +4,7 @@ use tokio::time::{Duration, sleep};
 
 use crate::{
     programs::patient::{
-        add_patient_to_oms_central, patient_updated::create_patient_name_store_join,
+        add_patient_to_oms_central, patient_updated::activate_patient_name_store_join,
     },
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
@@ -59,9 +59,9 @@ pub async fn add_patient_name_store_join(
         wait_for_sync_of_patient_records(service_provider, &ctx, &name_id).await?;
     }
 
-    create_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
+    activate_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
 
-    info!("Created name_store_join for patient {name_id} and store {store_id}");
+    info!("Added patient {name_id} to store {store_id}");
 
     Ok(())
 }
