@@ -30,9 +30,18 @@ impl MigrationFragment for Migrate {
     ///
     /// No changelog rows: central already has these joins not visible.
     ///
-    /// Remotes only: skip sites that have not pushed over v6/v7.
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        if !has_pushed_over_v6_or_v7(connection)? {
+    /// Remotes only: sites that started below 2.0 (central needs 2.0) or have pushed
+    /// over v6/v7.
+    fn migrate_with_config(
+        &self,
+        connection: &StorageConnection,
+        config: &MigrationConfig,
+    ) -> anyhow::Result<()> {
+        let started_before_v6 = config
+            .starting_database_version
+            .as_ref()
+            .is_some_and(|version| *version < Version::from_str("2.0.0"));
+        if !started_before_v6 && !has_pushed_over_v6_or_v7(connection)? {
             return Ok(());
         }
 
