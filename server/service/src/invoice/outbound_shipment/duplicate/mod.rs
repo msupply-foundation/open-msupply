@@ -132,6 +132,7 @@ mod test {
             store_id: mock_store_b().id,
             name_is_customer: true,
             name_is_supplier: false,
+            visible: true,
         }
     }
 
