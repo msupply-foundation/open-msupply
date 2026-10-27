@@ -126,7 +126,7 @@ pub(crate) fn apply_name_merge(
     // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
     // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
     //
-    // The kept join is a customer or supplier if either join was, and active if
+    // The kept join is a customer and/or supplier if either join was, and active if
     // either was, so the store keeps seeing the name for invoices and orders
     let store_repo = StoreRepository::new(connection);
     let store = store_repo.query_one(
