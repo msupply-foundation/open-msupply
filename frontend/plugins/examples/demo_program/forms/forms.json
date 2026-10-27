@@ -1,0 +1,73 @@
+{
+  "programKeys": ["demo"],
+  "documentTypes": [
+    {
+      "documentType": "Patient",
+      "category": "Patient",
+      "name": "Patient",
+      "dir": "Patient",
+      "versions": [
+        {
+          "file": "v1.json",
+          "source": "type.ts",
+          "type": "DemoPatient"
+        }
+      ]
+    },
+    {
+      "documentType": "DemoProgramEnrolment",
+      "category": "ProgramEnrolment",
+      "name": "Demo Program",
+      "programKey": "demo",
+      "dir": "DemoProgramEnrolment",
+      "versions": [
+        {
+          "file": "v1.json",
+          "source": "type.ts",
+          "type": "DemoProgramEnrolment"
+        }
+      ]
+    },
+    {
+      "documentType": "DemoEncounter",
+      "category": "Encounter",
+      "name": "Demo follow-up",
+      "programKey": "demo",
+      "dir": "DemoEncounter",
+      "versions": [
+        {
+          "file": "v1.json",
+          "source": "v1.ts",
+          "type": "DemoEncounterV1"
+        },
+        {
+          "file": "v2.json",
+          "source": "type.ts",
+          "type": "DemoEncounter"
+        }
+      ],
+      "events": "events.json"
+    },
+    {
+      "documentType": "VaccinationEncounter",
+      "category": "Encounter",
+      "name": "Vaccination Encounter",
+      "programKey": "demo",
+      "dir": "VaccinationEncounter",
+      "legacyUiSchema": "legacy-ui.json",
+      "versions": [
+        {
+          "file": "v1.json",
+          "source": "v1.ts",
+          "type": "VaccinationEncounter",
+          "id": "fea09b1f-1554-492e-8732-538a271c1c2b"
+        },
+        {
+          "file": "v2.json",
+          "source": "type.ts",
+          "type": "VaccinationEncounter"
+        }
+      ]
+    }
+  ]
+}

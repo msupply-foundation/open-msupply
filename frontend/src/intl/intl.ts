@@ -107,6 +107,14 @@ export const t = (
 ): string => translate(key, vars) ?? key;
 
 /**
+ * Whether a key has a string anywhere on the fallback ladder, as `t()` would
+ * resolve it: for a key built from a value at run time (`gender.<value>`),
+ * which the caller renders some other way when no catalogue names it.
+ */
+export const hasTranslation = (key: string): boolean =>
+  activeDict()[key] !== undefined;
+
+/**
  * Translate a pluralised key. The catalog holds `${key}_${category}` entries
  * (e.g. `login.failed-attempts_one`); we pick the CLDR category for the count
  * in the active locale, then interpolate {{ count }}.

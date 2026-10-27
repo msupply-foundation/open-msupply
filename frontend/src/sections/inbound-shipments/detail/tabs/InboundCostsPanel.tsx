@@ -109,6 +109,7 @@ export const InboundCostsPanel: Component<{
               min={0}
               decimalLimit={2}
               disabled={props.disabled}
+              emptyValue={0}
               onChange={v => edit.setField('chargesForeignCurrency', v ?? 0)}
             />
             <LabelledValue
@@ -123,6 +124,7 @@ export const InboundCostsPanel: Component<{
               min={0}
               decimalLimit={2}
               disabled={props.disabled}
+              emptyValue={0}
               onChange={v => edit.setField('chargesLocalCurrency', v ?? 0)}
             />
           </FormSection>

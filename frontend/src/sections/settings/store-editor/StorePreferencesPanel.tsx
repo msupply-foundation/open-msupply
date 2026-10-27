@@ -164,6 +164,7 @@ export const StorePreferencesPanel = (props: {
                     decimalLimit={0}
                     disabled={props.disabled || !parts().enabled}
                     data-testid="store-preference-warn-stocktake-max-age"
+                    emptyValue={0}
                     onChange={maxAge => stagePart({ maxAge: maxAge ?? 0 })}
                   />
                 </Row>
@@ -176,6 +177,7 @@ export const StorePreferencesPanel = (props: {
                     decimalLimit={0}
                     disabled={props.disabled || !parts().enabled}
                     data-testid="store-preference-warn-stocktake-min-items"
+                    emptyValue={0}
                     onChange={minItems =>
                       stagePart({ minItems: minItems ?? 0 })
                     }
@@ -318,6 +320,7 @@ export const StorePreferencesPanel = (props: {
               data-testid={`store-preference-${preference().key}`}
               // The wire has no "unset" — a cleared field stages the
               // kind's zero (rules § The store editor › Preferences).
+              emptyValue={0}
               onChange={next => props.onStage(preference(), next ?? 0)}
             />
           </Row>

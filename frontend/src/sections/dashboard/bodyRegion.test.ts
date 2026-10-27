@@ -31,6 +31,7 @@ const [storeMode, setStoreMode] = createSignal<
 
 vi.mock('../../store/storeContext', () => ({
   currentStoreId: () => storeId(),
+  currentStoreCode: () => undefined,
   currentStoreMode: () => storeMode(),
   storeContext: () => ({
     me: undefined,

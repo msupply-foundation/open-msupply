@@ -36,6 +36,7 @@ const variantRow = (
       packagingLevel: 1,
       packSize: 1,
       volumePerUnit: 0.5,
+      barcode: '5012345678900',
     },
   ],
   bundledItemVariants: [],

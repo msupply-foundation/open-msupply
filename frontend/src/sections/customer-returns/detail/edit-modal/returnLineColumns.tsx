@@ -151,6 +151,7 @@ export const quantityColumns = (
           min={1}
           decimalLimit={2}
           value={line.packSize}
+          emptyValue={1}
           onChange={value => update(line.id, 'packSize', value ?? 1)}
         />
       );
@@ -176,6 +177,7 @@ export const quantityColumns = (
           max={line.numberOfPacksIssued ?? undefined}
           decimalLimit={2}
           value={line.numberOfPacksReturned}
+          emptyValue={0}
           onChange={value =>
             update(
               line.id,
@@ -201,6 +203,7 @@ export const quantityColumns = (
           min={0}
           decimalLimit={4}
           value={line.volumePerPack}
+          emptyValue={0}
           onChange={value => update(line.id, 'volumePerPack', value ?? 0)}
         />
       );

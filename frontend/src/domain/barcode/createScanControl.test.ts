@@ -23,7 +23,6 @@ import type {
 import { setDictionaries, setLocale } from '@/intl/intl';
 import commonEn from '@/intl/locales/en/common.json';
 import { registeredActions } from '@/ui/utils/keyActions';
-import { CTRL_S } from '@/ui/utils/shortcuts';
 import {
   createScanControl,
   shownScanNotice,
@@ -98,8 +97,13 @@ const mount = (options: Partial<ScanControlOptions> = {}) => {
   return { control, scans };
 };
 
-const scanAction = () =>
-  registeredActions().find(action => action.shortcut === CTRL_S);
+// .133: nothing about scanning is a keyboard action any more.
+const scanActions = () =>
+  registeredActions().filter(action => {
+    const name =
+      typeof action.name === 'function' ? action.name() : action.name;
+    return /scan/i.test(name ?? '');
+  });
 
 beforeAll(() => {
   setDictionaries({ en: commonEn });
@@ -123,24 +127,65 @@ afterEach(async () => {
 // --- tests -------------------------------------------------------------------
 
 describe('where the device has no scanner', () => {
-  it('.55 is unavailable — the affordance is hidden — and Ctrl+S is inert', async () => {
+  it('.55 is unavailable — the affordance is hidden — and nothing listens', async () => {
     await useSources([]);
     const { control } = mount();
+    await settle();
     expect(control.available()).toBe(false);
+    expect(control.listening()).toBe(false);
     expect(control.inert()).toBe(true);
-    expect(scanAction()?.disabled?.()).toBe(true);
   });
 });
 
-describe('a scanner that is present but not connected', () => {
-  it('.56 is shown disabled with a reason, and never arms', async () => {
+describe('a hardware scanner (one that can stay armed)', () => {
+  it('.130 listens from arrival, with nothing to press, and hands every scan up already read', async () => {
+    await useSources([continuous]);
+    const { control, scans } = mount();
+    await settle();
+
+    expect(control.needsPress()).toBe(false);
+    expect(control.listening()).toBe(true);
+    expect(scanOwner()).toBe('test');
+
+    emit('05012345678900');
+    emit(']d20105012345678900');
+    expect(scans.map(scan => scan.kind)).toEqual(['raw', 'gs1']);
+  });
+
+  it('.130 a press does nothing — the scanner is not armed or disarmed from the app', async () => {
+    await useSources([continuous]);
+    const { control } = mount();
+    await settle();
+    await control.press();
+    expect(control.listening()).toBe(true);
+  });
+
+  it('.130 field mode listens too, so a scan anywhere on the screen fills the field', async () => {
+    await useSources([continuous]);
+    const { control, scans } = mount({ mode: 'field' });
+    await settle();
+    expect(control.listening()).toBe(true);
+    emit('ABC');
+    expect(scans).toEqual([{ kind: 'raw', content: 'ABC' }]);
+  });
+
+  it('.130 starts listening once sources resolve after the screen opened', async () => {
+    await useSources([]);
+    const { control } = mount();
+    await settle();
+    expect(control.listening()).toBe(false);
+    await useSources([continuous]);
+    await settle();
+    expect(control.listening()).toBe(true);
+  });
+
+  it('.131 a scanner configured but not connected does not listen, and says so', async () => {
     connected = false;
     await useSources([continuous]);
     const { control } = mount();
     await settle();
     expect(control.available()).toBe(true);
     expect(control.disconnected()).toBe(true);
-    expect(control.inert()).toBe(true);
     expect(control.listening()).toBe(false);
   });
 
@@ -160,83 +205,37 @@ describe('a scanner that is present but not connected', () => {
     await settle();
     expect(available).not.toHaveBeenCalled();
   });
-});
 
-describe('page mode, scanner can stay armed', () => {
-  it('.57 arms on arrival and hands every scan up already read', async () => {
-    await useSources([continuous]);
-    const { control, scans } = mount();
-    await settle();
-
-    expect(control.listening()).toBe(true);
-    expect(control.label()).toBe('Ready to scan…');
-    expect(scanOwner()).toBe('test');
-
-    emit('05012345678900');
-    emit(']d20105012345678900');
-    expect(scans.map(scan => scan.kind)).toEqual(['raw', 'gs1']);
-  });
-
-  it('.57 a press disarms, and the next arms again', async () => {
-    await useSources([continuous]);
-    const { control, scans } = mount();
-    await settle();
-
-    await control.press();
-    expect(control.listening()).toBe(false);
-    expect(control.label()).toBe('Scan');
-    emit('dropped');
-    expect(scans).toEqual([]);
-
-    await control.press();
-    expect(control.listening()).toBe(true);
-  });
-
-  it('does not arm on arrival where the screen opts out (the equipment register)', async () => {
-    await useSources([continuous]);
-    const { control } = mount({ armOnArrival: false });
-    await settle();
-    expect(control.listening()).toBe(false);
-    await control.press();
-    expect(control.listening()).toBe(true);
-  });
-
-  it('Ctrl+S is the same press, named by the current label', async () => {
-    await useSources([continuous]);
-    const { control } = mount();
-    await settle();
-
-    const action = scanAction();
-    expect(action?.disabled?.()).toBe(false);
-    expect(typeof action?.name === 'function' && action.name()).toBe(
-      'Ready to scan…'
-    );
-    action?.run();
-    await settle();
-    expect(control.listening()).toBe(false);
-  });
-
-  it('stops reading as armed once another screen takes the scan', async () => {
-    await useSources([continuous]);
-    const { control } = mount();
-    await settle();
-
-    await startListening(() => {}, { label: 'elsewhere' });
-    expect(control.listening()).toBe(false);
-    expect(control.label()).toBe('Scan');
-  });
-
-  it('disarms when the screen stops being editable, and stays inert', async () => {
+  it('.134 stops listening while the screen cannot use a scan, and listens again after', async () => {
     await useSources([continuous]);
     const [disabled, setDisabled] = createSignal(false);
-    const { control } = mount({ disabled });
+    const { control, scans } = mount({ disabled });
     await settle();
     expect(control.listening()).toBe(true);
 
     setDisabled(true);
     expect(control.listening()).toBe(false);
-    expect(control.inert()).toBe(true);
-    expect(scanAction()?.disabled?.()).toBe(true);
+    emit('dropped');
+    expect(scans).toEqual([]);
+
+    setDisabled(false);
+    await settle();
+    expect(control.listening()).toBe(true);
+  });
+
+  it('stops reading as listening once another screen takes the scan, and takes it back once released', async () => {
+    await useSources([continuous]);
+    const { control } = mount();
+    await settle();
+
+    const other = await startListening(() => {}, { label: 'elsewhere' });
+    expect(control.listening()).toBe(false);
+    expect(scanOwner()).toBe('elsewhere');
+
+    if (other.ok) other.dispose();
+    await settle();
+    expect(control.listening()).toBe(true);
+    expect(scanOwner()).toBe('test');
   });
 
   it('.58 leaving the screen stops its scanning', async () => {
@@ -249,21 +248,24 @@ describe('page mode, scanner can stay armed', () => {
     disposeRoot = undefined;
     await settle();
     expect(scanOwner()).toBeUndefined();
-    expect(scanAction()).toBeUndefined();
   });
 
-  it('reports a failure to arm inline', async () => {
+  it('reports a failure to start listening in the status, and does not retry in a loop', async () => {
     listenResult = { ok: false, message: 'Failed to open the device.' };
     await useSources([continuous]);
+    const listen = vi.spyOn(continuous, 'listen');
     const { control } = mount();
     await settle();
+    await settle();
     expect(control.listening()).toBe(false);
-    expect(control.notice()).toBe(
+    expect(control.startError()).toBe(
       'Unable to start scanning: web-hid: Failed to open the device.'
     );
+    expect(control.notice()).toBeUndefined();
+    expect(listen).toHaveBeenCalledTimes(1);
   });
 
-  it('reports a reading that failed while armed, and clears it on the next good scan', async () => {
+  it('reports a reading that failed while listening, and clears it on the next good scan', async () => {
     await useSources([continuous]);
     const { control, scans } = mount();
     await settle();
@@ -275,19 +277,36 @@ describe('page mode, scanner can stay armed', () => {
     expect(control.notice()).toBeUndefined();
     expect(scans).toHaveLength(1);
   });
+
+  it('never asks a hardware scanner for a one-shot scan', async () => {
+    await useSources([continuous]);
+    const once = vi.spyOn(continuous, 'scanOnce');
+    const { control } = mount({ mode: 'field' });
+    await settle();
+    await control.press();
+    expect(once).not.toHaveBeenCalled();
+  });
 });
 
-describe('page mode, one scan per press', () => {
-  it('never arms, and each press asks for exactly one scan', async () => {
+describe('a camera (one scan per press)', () => {
+  it('.132 never listens, and each press asks for exactly one scan', async () => {
     await useSources([oneShot]);
     const { control, scans } = mount();
     await settle();
+    expect(control.needsPress()).toBe(true);
     expect(control.listening()).toBe(false);
+    expect(scanOwner()).toBeUndefined();
 
     nextOutcome = { ok: true, scan: { kind: 'text', text: 'ABC' } };
     await control.press();
     expect(scans).toEqual([{ kind: 'raw', content: 'ABC' }]);
-    expect(control.listening()).toBe(false);
+  });
+
+  it('.138 the field affordance is the same one scan per press', async () => {
+    await useSources([oneShot]);
+    const { control, scans } = mount({ mode: 'field' });
+    await control.press();
+    expect(scans).toHaveLength(1);
   });
 
   it('is silent when the user cancels', async () => {
@@ -305,6 +324,15 @@ describe('page mode, one scan per press', () => {
     nextOutcome = { ok: false, cancelled: false, message: 'camera busy' };
     await control.press();
     expect(control.notice()).toBe('Unable to scan barcode: camera busy');
+  });
+
+  it('is inert while the screen cannot use a scan', async () => {
+    await useSources([oneShot]);
+    const once = vi.spyOn(oneShot, 'scanOnce');
+    const { control } = mount({ disabled: () => true });
+    expect(control.inert()).toBe(true);
+    await control.press();
+    expect(once).not.toHaveBeenCalled();
   });
 
   it('a scan still open when the screen goes away is cancelled, not left waiting', async () => {
@@ -326,21 +354,12 @@ describe('page mode, one scan per press', () => {
   });
 });
 
-describe('field mode', () => {
-  it('never arms, even where the scanner could stay armed', async () => {
-    await useSources([continuous, oneShot]);
-    const { control } = mount({ mode: 'field' });
-    await settle();
-    expect(control.listening()).toBe(false);
-    expect(scanOwner()).toBeUndefined();
-  });
-
-  it('is disabled while another screen holds the armed scanner', async () => {
+describe('the keyboard', () => {
+  it('.133 registers no scanning shortcut or palette action', async () => {
     await useSources([continuous]);
-    const { control } = mount({ mode: 'field' });
-    await startListening(() => {}, { label: 'elsewhere' });
-    expect(control.armedElsewhere()).toBe(true);
-    expect(control.inert()).toBe(true);
+    mount();
+    await settle();
+    expect(scanActions()).toEqual([]);
   });
 });
 

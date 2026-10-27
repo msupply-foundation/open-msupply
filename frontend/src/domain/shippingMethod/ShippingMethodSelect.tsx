@@ -14,6 +14,8 @@ export interface ShippingMethodSelectProps {
   /** Control size — 'small' for dense contexts (a side-panel field row). */
   size?: 'default' | 'small';
   disabled?: boolean;
+  /** `data-testid` for the text `<input>` (e2e/TESTIDS.md). */
+  inputTestId?: string;
   placeholder?: string;
 }
 
@@ -34,6 +36,7 @@ export const ShippingMethodSelect = (
     itemToValue={m => m.id}
     value={props.value}
     disabled={props.disabled}
+    inputTestId={props.inputTestId}
     placeholder={props.placeholder}
     onChange={m => props.onChange(m)}
   />

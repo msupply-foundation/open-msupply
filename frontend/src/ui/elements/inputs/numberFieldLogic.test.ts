@@ -7,6 +7,8 @@ import {
   processInput,
   stepValue,
   textRepresents,
+  valueRewritesText,
+  commitReports,
   type NumberFieldConstraints,
 } from './numberFieldLogic';
 
@@ -149,6 +151,97 @@ describe('clearing', () => {
       value: undefined,
       text: '',
     });
+  });
+});
+
+// #1336: a field whose parent never stores empty (a count where cleared means
+// 0) says so with `emptyValue`, rather than mapping undefined inside onChange.
+describe('emptyValue', () => {
+  it('clearing commits it, and the text stays empty for the next figure', () => {
+    expect(processInput('', o({ emptyValue: 0 }), 'en')).toEqual({
+      accepted: true,
+      text: '',
+      commit: { value: 0, emptied: true },
+    });
+    expect(processInput('', o({ min: 1, emptyValue: 1 }), 'en')).toEqual({
+      accepted: true,
+      text: '',
+      commit: { value: 1, emptied: true },
+    });
+  });
+
+  it('a figure typed after clearing is the whole value', () => {
+    expect(processInput('5', o({ emptyValue: 0 }), 'en')).toEqual({
+      accepted: true,
+      text: '5',
+      commit: { value: 5 },
+    });
+  });
+
+  it('left empty, the field commits and shows it, formatted', () => {
+    expect(finalizeText('', o({ emptyValue: 0 }), 'en')).toEqual({
+      value: 0,
+      text: '0',
+    });
+    expect(
+      finalizeText(
+        '',
+        o({ decimalLimit: 2, decimalMin: 2, emptyValue: 0 }),
+        'en'
+      )
+    ).toEqual({ value: 0, text: '0.00' });
+    expect(finalizeText('', o({ emptyValue: 0 }), 'ar')).toEqual({
+      value: 0,
+      text: '٠',
+    });
+  });
+
+  it('unparseable text left behind counts as empty', () => {
+    expect(finalizeText('-', o({ min: -10, emptyValue: 0 }), 'en')).toEqual({
+      value: 0,
+      text: '0',
+    });
+  });
+
+  it('a typed figure is untouched by it', () => {
+    expect(finalizeText('7', o({ emptyValue: 0 }), 'en')).toEqual({
+      value: 7,
+      text: '7',
+    });
+  });
+
+  // Review on #1591: clearing a prescription batch row already at 0 must
+  // still reach its handler, which cancels a pending auto-allocation and
+  // marks the line dirty — as clearing to undefined always did.
+  it('the clearing keystroke reaches the parent even when it already holds emptyValue', () => {
+    const cleared = processInput('', o({ emptyValue: 0 }), 'en');
+    const commit = cleared.accepted ? cleared.commit : undefined;
+    expect(commitReports(commit?.value, 0, commit?.emptied)).toBe(true);
+    expect(commitReports(commit?.value, 7, commit?.emptied)).toBe(true);
+  });
+
+  it('without emptyValue, clearing an empty field is not a change', () => {
+    const cleared = processInput('', o(), 'en');
+    const commit = cleared.accepted ? cleared.commit : undefined;
+    expect(commitReports(commit?.value, undefined, commit?.emptied)).toBe(
+      false
+    );
+    expect(commitReports(commit?.value, 3, commit?.emptied)).toBe(true);
+  });
+
+  it('otherwise only a change reaches the parent', () => {
+    expect(commitReports(0, 0)).toBe(false); // typing 0 over 0
+    expect(commitReports(5, 0)).toBe(true);
+    expect(commitReports(undefined, undefined)).toBe(false);
+  });
+
+  it('without it, clearing still commits undefined', () => {
+    expect(processInput('', o(), 'en')).toEqual({
+      accepted: true,
+      text: '',
+      commit: { value: undefined },
+    });
+    expect(finalizeText('', o(), 'en')).toEqual({ value: undefined, text: '' });
   });
 });
 
@@ -385,6 +478,48 @@ describe('sync guards', () => {
     expect(textRepresents('', undefined, 'en')).toBe(true);
     expect(textRepresents('5', 10, 'en')).toBe(false);
     expect(textRepresents('', 0, 'en')).toBe(false);
+  });
+
+  // The parent → display decision. #1336: the field cleared commits its
+  // emptyValue 0; the parent answering with that 0 — at once, or later from
+  // the server — must leave the field empty, not write "0" under the caret.
+  it('an emptied field stays empty when its emptyValue comes back', () => {
+    const cleared = { value: 0, echo: 10 }; // committed 0; parent still had 10
+    expect(valueRewritesText(0, '', true, cleared, 'en')).toBe(false);
+    // A field already at 0 cleared: the parent's 0 never changed.
+    expect(valueRewritesText(0, '', true, { value: 0, echo: 0 }, 'en')).toBe(
+      false
+    );
+  });
+
+  it("the field's own commit echoing back, transformed or not, keeps the text", () => {
+    expect(
+      valueRewritesText(12, '12', true, { value: 12, echo: 10 }, 'en')
+    ).toBe(false);
+    // The parent rounded 125 doses up to 140 (whole vials): kept until blur.
+    expect(
+      valueRewritesText(140, '125', true, { value: 125, echo: 140 }, 'en')
+    ).toBe(false);
+  });
+
+  it('a genuinely external change rewrites the text', () => {
+    expect(valueRewritesText(7, '5', false, undefined, 'en')).toBe(true);
+    expect(valueRewritesText(7, '5', true, { value: 5, echo: 5 }, 'en')).toBe(
+      true
+    );
+    // Without emptyValue, a cleared field's undefined answered with 0 is the
+    // parent's own figure — shown.
+    expect(
+      valueRewritesText(0, '', false, { value: undefined, echo: 10 }, 'en')
+    ).toBe(true);
+  });
+
+  it('text already showing the value, or mid-entry, is left alone', () => {
+    expect(valueRewritesText(1000, '1,000', false, undefined, 'en')).toBe(
+      false
+    );
+    expect(valueRewritesText(3, '-', true, undefined, 'en')).toBe(false);
+    expect(valueRewritesText(3, '-', false, undefined, 'en')).toBe(true);
   });
 
   it('isIncomplete flags entry states only', () => {

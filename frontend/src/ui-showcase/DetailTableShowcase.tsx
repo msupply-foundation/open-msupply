@@ -189,6 +189,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   return {
     id: `line-${i + 1}`,
     type: 'STOCK_IN',
+    barcode: null,
     itemId: `item-${i}`,
     itemName: item.name,
     itemCode: item.code,

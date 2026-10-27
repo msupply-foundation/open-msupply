@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { itemNumber, labelFields, readScan, readText, scanCode } from './readScan';
+import {
+  isBatchLabel,
+  itemNumber,
+  labelFields,
+  readScan,
+  readText,
+  scanCode,
+} from './readScan';
 
 // Test names lead with the OMS-REG-BAC-01 behaviours they cover
 // (spec/barcode-scanning/cases).
@@ -9,7 +16,10 @@ const today = new Date(2026, 8, 23);
 
 describe('tidying a scan', () => {
   it('.19 strips zero-width characters and trims', () => {
-    expect(readText('​  ABC-123 ﻿')).toEqual({ kind: 'raw', content: 'ABC-123' });
+    expect(readText('​  ABC-123 ﻿')).toEqual({
+      kind: 'raw',
+      content: 'ABC-123',
+    });
   });
 
   it('.19 .73 trims control characters from the ends, but never the field separator', () => {
@@ -43,11 +53,23 @@ describe('tidying a scan', () => {
   it('.69 reads MLKit’s in-text GS1 markers the same as the Honeywell’s', () => {
     const label = `016036658250798921100000087118${GS}1726013110U013383${GS}3072`;
     const honeywell = readScan({ kind: 'text', text: label, aimId: ']d2' });
-    const cameraMatrix = readScan({ kind: 'text', text: GS + label, format: 'DATA_MATRIX' });
+    const cameraMatrix = readScan({
+      kind: 'text',
+      text: GS + label,
+      format: 'DATA_MATRIX',
+    });
     expect(cameraMatrix).toEqual(honeywell);
 
-    const honeywell128 = readScan({ kind: 'text', text: '0150382903018883', aimId: ']C1' });
-    const camera128 = readScan({ kind: 'text', text: ']C10150382903018883', format: 'CODE_128' });
+    const honeywell128 = readScan({
+      kind: 'text',
+      text: '0150382903018883',
+      aimId: ']C1',
+    });
+    const camera128 = readScan({
+      kind: 'text',
+      text: ']C10150382903018883',
+      format: 'CODE_128',
+    });
     expect(camera128).toEqual(honeywell128);
     expect(scanCode(camera128)).toBe('50382903018883');
   });
@@ -76,7 +98,10 @@ describe('structured or raw', () => {
   });
 
   it('.16 .17 leaves an ordinary barcode as raw content, not an error', () => {
-    expect(readText('1012345678901')).toEqual({ kind: 'raw', content: '1012345678901' });
+    expect(readText('1012345678901')).toEqual({
+      kind: 'raw',
+      content: '1012345678901',
+    });
     expect(readText('not-a-valid-gs1-barcode').kind).toBe('raw');
   });
 
@@ -92,14 +117,18 @@ describe('structured or raw', () => {
 
 describe('reading the hardware layer’s scans', () => {
   it('passes the decoder’s AIM identifier through', () => {
-    expect(readScan({ kind: 'text', text: '21123456', aimId: ']C1' }).kind).toBe('gs1');
+    expect(
+      readScan({ kind: 'text', text: '21123456', aimId: ']C1' }).kind
+    ).toBe('gs1');
   });
 
   // A report in no known framing cannot be told apart from its label — the
   // old fallback leaked the length byte and symbology code into the code.
   // So it is not a code at all, however plausible its characters look.
   it('.72 reads a HID report in no known framing as unreadable', () => {
-    const bytes = new Uint8Array([...'0109501101530003'].map(c => c.charCodeAt(0)));
+    const bytes = new Uint8Array(
+      [...'0109501101530003'].map(c => c.charCodeAt(0))
+    );
     const read = readScan({ kind: 'bytes', bytes });
     expect(read).toEqual({ kind: 'unreadable', content: '0109501101530003' });
     expect(scanCode(read)).toBeUndefined();
@@ -110,7 +139,11 @@ describe('reading the hardware layer’s scans', () => {
   it('reads a report flagged as continuing as unreadable, not truncated', () => {
     const report = new Uint8Array(63);
     const part = '0109501101530003';
-    report.set([part.length, 0, ...[...']d2', ...part].map(c => c.charCodeAt(0))]);
+    report.set([
+      part.length,
+      0,
+      ...[...']d2', ...part].map(c => c.charCodeAt(0)),
+    ]);
     report[62] = 1;
     expect(readScan({ kind: 'bytes', bytes: report }).kind).toBe('unreadable');
   });
@@ -121,7 +154,11 @@ describe('reading the hardware layer’s scans', () => {
   it('.69 reads a framed HID report the same as the keyboard read of it', () => {
     const report = new Uint8Array(63);
     const label = `016036658250798921100000087118${GS}1726013110U013383${GS}3072`;
-    report.set([label.length, 0, ...[...']d2', ...label].map(c => c.charCodeAt(0))]);
+    report.set([
+      label.length,
+      0,
+      ...[...']d2', ...label].map(c => c.charCodeAt(0)),
+    ]);
     report[61] = 0x77;
     const hid = readScan({ kind: 'bytes', bytes: report });
     expect(hid.kind).toBe('gs1');
@@ -130,14 +167,24 @@ describe('reading the hardware layer’s scans', () => {
   });
 
   it('decodes keystrokes', () => {
-    const keys = [...'ABCDE'].map(c => ({ code: `Key${c}`, shift: true, alt: false, ctrl: false }));
-    expect(readScan({ kind: 'keystrokes', keys })).toEqual({ kind: 'raw', content: 'ABCDE' });
+    const keys = [...'ABCDE'].map(c => ({
+      code: `Key${c}`,
+      shift: true,
+      alt: false,
+      ctrl: false,
+    }));
+    expect(readScan({ kind: 'keystrokes', keys })).toEqual({
+      kind: 'raw',
+      content: 'ABCDE',
+    });
   });
 });
 
 describe('the code a scan is looked up by', () => {
   it('is the item number where the label carried one', () => {
-    expect(scanCode(readText('01095011015300031714070410AB-123'))).toBe('09501101530003');
+    expect(scanCode(readText('01095011015300031714070410AB-123'))).toBe(
+      '09501101530003'
+    );
   });
 
   it('is the raw content otherwise', () => {
@@ -196,7 +243,12 @@ describe('the item number', () => {
 describe('what a stock screen pre-fills', () => {
   it('.14 .15 reads the six fields', () => {
     const read = readText(
-      `0109501101530003` + `17261200` + `11250115` + `10LOT-7${GS}` + `3024${GS}` + `3712`
+      `0109501101530003` +
+        `17261200` +
+        `11250115` +
+        `10LOT-7${GS}` +
+        `3024${GS}` +
+        `3712`
     );
     expect(labelFields(read, today)).toEqual({
       itemNumber: '09501101530003',
@@ -228,5 +280,23 @@ describe('what a stock screen pre-fills', () => {
     const read = readText('0109501101530003' + '17270229');
     expect(read.kind).toBe('gs1');
     expect(labelFields(read, today).expiryDate).toBeUndefined();
+  });
+});
+
+describe('a batch label', () => {
+  it('.186 a label with no item number and a batch or expiry is one', () => {
+    expect(isBatchLabel(readText('17280630' + '10LOT9'))).toBe(true);
+  });
+
+  it('a label carrying an item number is not', () => {
+    expect(isBatchLabel(readText('0105012345678900' + '10LOT9'))).toBe(false);
+  });
+
+  it('.202 a shipping container code alone is not', () => {
+    expect(isBatchLabel(readText('00493362502211704878'))).toBe(false);
+  });
+
+  it('a plain code is not', () => {
+    expect(isBatchLabel(readText('SHIP-0042'))).toBe(false);
   });
 });

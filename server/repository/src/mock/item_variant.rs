@@ -16,6 +16,7 @@ pub fn mock_item_a_variant_1() -> ItemVariantRow {
             .unwrap(),
         created_by: None,
         manufacturer_id: None,
+        is_auto_created: false,
     }
 }
 
@@ -33,6 +34,7 @@ pub fn mock_item_a_variant_2() -> ItemVariantRow {
             .unwrap(),
         created_by: None,
         manufacturer_id: None,
+        is_auto_created: false,
     }
 }
 
@@ -50,6 +52,7 @@ pub fn mock_item_b_variant_1() -> ItemVariantRow {
             .unwrap(),
         created_by: None,
         manufacturer_id: None,
+        is_auto_created: false,
     }
 }
 
@@ -67,6 +70,7 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
             .unwrap(),
         created_by: None,
         manufacturer_id: None,
+        is_auto_created: false,
     }
 }
 
@@ -84,6 +88,7 @@ pub fn mock_item_c_variant_1() -> ItemVariantRow {
             .unwrap(),
         created_by: None,
         manufacturer_id: None,
+        is_auto_created: false,
     }
 }
 
@@ -101,6 +106,7 @@ pub fn mock_vaccine_item_a_variant_1() -> ItemVariantRow {
             .unwrap(),
         created_by: None,
         manufacturer_id: None,
+        is_auto_created: false,
     }
 }
 

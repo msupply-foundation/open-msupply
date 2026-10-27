@@ -17,6 +17,10 @@ pub struct SavePrescriptionLinesInput {
     pub lines: Vec<PrescriptionLineInput>,
     pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
+    /// The barcode scanned to issue the item, as read; recorded on the item's
+    /// saved lines, and on the stock they issue from where it has none. Doesn't
+    /// propose a barcode (see `proposeBarcode`).
+    pub barcode: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -67,9 +71,11 @@ impl SavePrescriptionLinesInput {
             lines,
             prescribed_quantity,
             note,
+            barcode,
         } = self;
 
         SaveStockOutItemLines {
+            barcode,
             invoice_id,
             item_id,
             placeholder_quantity: None, // Not used in Prescriptions

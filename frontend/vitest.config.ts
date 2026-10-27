@@ -40,6 +40,12 @@ export default defineConfig({
       // (nightly-lib.mjs) and e2e:affected (affected.mjs).
       'scripts/**/*.test.mjs',
       'plugins/*/src/**/*.test.ts',
+      // A form plugin's own tests sit beside its document types under
+      // `forms/`, which the `src` glob above does not reach.
+      'plugins/examples/*/forms/**/*.test.ts',
+      'plugins/*/forms/**/*.test.ts',
+      // A plugin's data repairs, plain Node scripts beside the plugin.
+      'plugins/*/repair/**/*.test.mjs',
       // cook_islands' backend half and shared domain core, named rather than
       // globbed: civ's backend tests are jest-style and import `@common/*`,
       // so they would fail the run on sight. `shared/` sits OUTSIDE the

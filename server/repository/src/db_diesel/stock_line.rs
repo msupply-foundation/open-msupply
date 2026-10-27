@@ -1,6 +1,5 @@
 use super::{
     DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
-    barcode_row::barcode,
     campaign_row::campaign,
     item_row::item,
     item_variant::item_variant_row::{ItemVariantRow, item_variant},
@@ -12,8 +11,8 @@ use super::{
 };
 
 use crate::{
-    BarcodeRow, DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort,
-    ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
+    DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort, ItemSortField,
+    MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
     campaign_row::CampaignRow,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
@@ -32,7 +31,6 @@ pub struct StockLine {
     pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
     pub supplier_name_row: Option<NameRow>,
-    pub barcode_row: Option<BarcodeRow>,
     pub item_variant_row: Option<ItemVariantRow>,
     pub vvm_status_row: Option<VVMStatusRow>,
     pub campaign_row: Option<CampaignRow>,
@@ -83,7 +81,6 @@ type StockLineJoin = (
     Option<ItemVariantRow>,
     Option<LocationRow>,
     Option<NameRow>,
-    Option<BarcodeRow>,
     Option<VVMStatusRow>,
     Option<CampaignRow>,
 );
@@ -384,7 +381,6 @@ fn query() -> _ {
         .left_join(item_variant::table)
         .left_join(location::table)
         .left_join(name::table)
-        .left_join(barcode::table)
         .left_join(vvm_status::table)
         .left_join(campaign::table)
 }
@@ -398,7 +394,6 @@ fn to_domain(
         item_variant_row,
         location_row,
         supplier_name_row,
-        barcode_row,
         vvm_status_row,
         campaign_row,
     ): StockLineJoin,
@@ -408,7 +403,6 @@ fn to_domain(
         item_row,
         location_row,
         supplier_name_row,
-        barcode_row,
         item_variant_row,
         vvm_status_row,
         campaign_row,
@@ -499,9 +493,7 @@ impl StockLine {
     }
 
     pub fn barcode(&self) -> Option<&str> {
-        self.barcode_row
-            .as_ref()
-            .map(|barcode_row| barcode_row.gtin.as_str())
+        self.stock_line_row.barcode.as_deref()
     }
 }
 

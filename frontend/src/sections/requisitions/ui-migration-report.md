@@ -17,7 +17,7 @@ Scope: the whole `src/sections/requisitions/` vertical, audited against the elev
 | Side panel | ✅ F17 | ✅ | — | ✅ F18 | ✅ F17 (L4 flagged) | ✅ F17 | ✅ | ✅ | ✅ F17 | ✅ | ✅ |
 | Line editor | ✅ F20 | ✅ | — | ✅ F19 | ✅ F19/D3 | ✅ (L2 flagged) | ✅ | ✅ | ✅ | ✅ | ✅ S7–S9, F21 |
 | Line stats | ✅ F22 (L1 flagged) | ✅ | — | ✅ | ✅ | ✅ F23 | ✅ | ✅ | (L1 flagged) | ✅ | ✅ |
-| Documents tab | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | B1 open |
+| Documents tab | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ B1 |
 
 The SIDE_PANEL.md sign-off checklist passes on every composition item; its final item (render + visual confirm) is part of the operator visual pass below.
 
@@ -55,7 +55,7 @@ The SIDE_PANEL.md sign-off checklist passes on every composition item; its final
 
 ## Out-of-scope behaviour gap
 
-**B1** — `RequisitionDocumentsTab.tsx` hard-codes `canDelete: false` where `rules.md` grants Remove for an own-record document (`document.recordId === node.id`), confirming first. Behaviour, not composition — needs its own spec-conformance fix.
+**B1** — `RequisitionDocumentsTab.tsx` hard-coded `canDelete: false` where `rules.md` grants Remove for an own-record document (`document.recordId === node.id`), confirming first. Behaviour, not composition — **fixed** under #744: the own-versus-transferred check is `isOwnDocument` (`requisitionDocuments.ts`, unit-tested against OMS-REG-DIST-06.40/.41), the panel's own confirmation guards the remove, and the delete goes through the file's own `recordId` path.
 
 ## Deferred / open
 

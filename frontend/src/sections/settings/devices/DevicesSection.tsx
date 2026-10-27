@@ -1,16 +1,10 @@
-import {
-  createEffect,
-  createResource,
-  createSignal,
-  Show,
-} from 'solid-js';
+import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { PRINT_LABEL_TEST_URL } from '../../../config';
 import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
 import { isAndroid } from '../../../platform';
 import { showPrintViaUsbRow } from '../sectionVisibility';
-import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { Stack } from '../../../ui/layout/Stack/Stack';
@@ -39,8 +33,10 @@ import { HStack } from '../../../ui/layout/Stack/HStack';
  *    (OMS-REG-SET-05.20). Test and Save both require all four network/label
  *    fields, even in USB mode (OMS-REG-SET-05.21); the USB preference is
  *    device-local and never saved to the server (OMS-REG-SET-05.22).
- *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic
- *    surface over local-device state; it never decides which screen accepts a
+ *  - Barcode scanner: also for ANY signed-in user (OMS-REG-SET-05.56) — its
+ *    state is local to this device and never reaches the server, so a
+ *    permission would protect nothing, and the person holding the scanner is
+ *    the one who needs to set it up. It never decides which screen accepts a
  *    scan (owned by spec/android).
  */
 export const DevicesSection = () => {
@@ -256,29 +252,26 @@ export const DevicesSection = () => {
         </HStack>
       </FormSection>
 
-      {/* Barcode scanner — Server Admin only, strictly stricter than the
-          label printer beside it (OMS-REG-SET-05.23). All state is
-          local-device; nothing here reaches the server (contract § Devices —
-          barcode scanner).
+      {/* Barcode scanner — for any signed-in user, like the label printer
+          beside it (OMS-REG-SET-05.56). All state is local-device; nothing
+          here reaches the server (contract § Devices — barcode scanner).
 
           One row per input the app can drive, each with its own control,
-          rather than a stack of label/value rows restating "no scanner". */}
-      <Show when={hasPermission('SERVER_ADMIN')}>
-        <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">
-          <ScannerSources />
-          <HStack justify="end" gap="md">
-            <Button
-              variant="secondary"
-              onClick={() =>
-                navigate(`/${params.storeId}/settings/test-scanner`)
-              }
-              data-testid="test-scanner"
-            >
-              {t('label.barcode-scanner-test')}
-            </Button>
-          </HStack>
-        </FormSection>
-      </Show>
+          rather than a stack of label/value rows restating "no scanner". The
+          camera's decoder choice is a developer comparison, shown here only
+          in development builds (OMS-REG-SET-05.70). */}
+      <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">
+        <ScannerSources showCameraEngine={import.meta.env.DEV} />
+        <HStack justify="end" gap="md">
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/${params.storeId}/settings/test-scanner`)}
+            data-testid="test-scanner"
+          >
+            {t('label.barcode-scanner-test')}
+          </Button>
+        </HStack>
+      </FormSection>
     </Stack>
   );
 };

@@ -339,7 +339,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
-        <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
+        {/* The STORED shipment rate (the entity's own taxPercentage), not
+            pricing.taxPercentage: that is the server's whole-invoice blend of
+            service and stock tax, so pre-filling the input with it would save
+            the blend as the shipment's rate. */}
+        <FieldRow label={taxLabel(props.node.taxPercentage ?? 0)}>
           {/* The tax AMOUNT is the input's helperText, not a value floated to
               its right (SIDE_PANEL.md rule 3 — a value beside the input breaks
               the panel's value-alignment column). A percentage is a short
@@ -356,7 +360,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             disabled={
               props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
             }
-            value={pricing().taxPercentage ?? undefined}
+            value={props.node.taxPercentage ?? undefined}
             helperText={money(
               taxAmount(
                 pricing().stockTotalBeforeTax,

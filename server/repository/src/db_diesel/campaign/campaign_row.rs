@@ -1,14 +1,12 @@
 use crate::db_diesel::{
-    barcode_row::barcode, item_row::item, item_variant::item_variant_row::item_variant,
-    location_row::location, name_row::name, stock_line_row::stock_line,
-    vvm_status::vvm_status_row::vvm_status,
+    item_row::item, item_variant::item_variant_row::item_variant, location_row::location,
+    name_row::name, stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status,
 };
 use crate::diesel_macros::diesel_string_enum;
 use crate::{
     ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
-use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,10 +14,9 @@ table! {
     campaign(id) {
         id -> Text,
         name -> Text,
-        start_date -> Nullable<Date>,
-        end_date -> Nullable<Date>,
         deleted_datetime -> Nullable<Timestamp>,
         kind -> Text,
+        code -> Text,
     }
 }
 
@@ -41,7 +38,6 @@ allow_tables_to_appear_in_same_query!(campaign, item);
 allow_tables_to_appear_in_same_query!(campaign, item_variant);
 allow_tables_to_appear_in_same_query!(campaign, location);
 allow_tables_to_appear_in_same_query!(campaign, name);
-allow_tables_to_appear_in_same_query!(campaign, barcode);
 allow_tables_to_appear_in_same_query!(campaign, vvm_status);
 
 #[derive(
@@ -52,11 +48,14 @@ allow_tables_to_appear_in_same_query!(campaign, vvm_status);
 pub struct CampaignRow {
     pub id: String,
     pub name: String,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     #[serde(default)]
     pub kind: CampaignKind,
+    /// Short identifier for systems outside open mSupply (e.g. an OpenLMIS program code),
+    /// so the name shown on screen can be anything. Blank when nothing needs one;
+    /// otherwise unique among live campaigns.
+    #[serde(default)]
+    pub code: String,
 }
 pub struct CampaignRowRepository<'a> {
     connection: &'a StorageConnection,

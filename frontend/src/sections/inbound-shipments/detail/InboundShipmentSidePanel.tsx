@@ -237,6 +237,7 @@ export const InboundShipmentSidePanel: Component<
             size="small"
             value={props.node.taxPercentage ?? 0}
             min={0}
+            emptyValue={0}
             max={100}
             decimalLimit={2}
             endAdornment="%"

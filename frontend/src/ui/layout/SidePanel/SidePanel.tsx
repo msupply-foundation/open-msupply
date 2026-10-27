@@ -58,6 +58,7 @@ export const SidePanel = (props: SidePanelProps) => (
         <IconButton
           label={t('button.close')}
           icon={<CloseIcon />}
+          data-testid="close-detail-panel-button"
           // createSidePanelOpen (beside this file) registers Alt+Shift+M as
           // "hide the more-info panel"; this button is the control that
           // advertises it, the mirror of the app bar's More carrying Alt+M

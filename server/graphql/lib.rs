@@ -42,7 +42,7 @@ use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::custom_field::{CustomFieldConfigQueries, CustomFieldMutations};
 use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
-    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
+    BarcodeMutations, CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
     SyncStatusSubscriptions,
 };
@@ -124,6 +124,10 @@ impl CentralServerMutationNode {
 
     async fn general(&self) -> CentralGeneralMutations {
         CentralGeneralMutations
+    }
+
+    async fn barcode(&self) -> BarcodeMutations {
+        BarcodeMutations
     }
 
     async fn plugins(&self) -> CentralPluginMutations {

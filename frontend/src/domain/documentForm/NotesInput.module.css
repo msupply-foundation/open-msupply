@@ -1,0 +1,24 @@
+/*
+ * NotesInput — the notes list (see NotesInput.tsx): its label row with the
+ * Add button, then one accordion item per note.
+ */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A closed note's first line, cut to the trigger's width. */
+.preview {
+  display: block;
+  overflow: hidden;
+  font-weight: var(--weight-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A note that can no longer be edited, with its own line breaks. */
+.text {
+  margin: 0;
+  white-space: pre-wrap;
+}

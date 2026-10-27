@@ -1,4 +1,4 @@
-import { setLocale } from './intl';
+import { locale as activeLocale, setLocale } from './intl';
 import {
   DEFAULT_LOCALE,
   isSupported,
@@ -7,7 +7,11 @@ import {
 } from './locales';
 import { loadDictionary } from './loadDictionary';
 import { loadDateFnsLocale } from './formatDateTime';
-import { persistUserLocale, rememberLastLocale } from './detectLocale';
+import {
+  getUserLocale,
+  persistUserLocale,
+  rememberLastLocale,
+} from './detectLocale';
 
 // Everything a locale needs resident before it goes active: its own dictionary,
 // its base locale's if it's a regional variant (`fr-DJ` → `fr`), and the
@@ -46,6 +50,28 @@ export const changeLanguage = async (
 
   if (username) persistUserLocale(username, locale);
   else rememberLastLocale(locale);
+};
+
+/**
+ * Show a user's language at login (spec/i18n § choosing the locale): the one
+ * they chose in the app on this device, otherwise their profile's. A regional
+ * variant of the profile's language stays active, so a French profile does not
+ * turn a `fr-DJ` session into `fr`. Neither is saved as the user's own choice:
+ * only a choice made in the app is.
+ */
+export const applyUserLocale = async (
+  username: string,
+  profile: SupportedLocale | undefined
+): Promise<void> => {
+  const current = activeLocale();
+  const chosen = getUserLocale(username);
+  if (chosen) {
+    if (chosen !== current) await changeLanguage(chosen);
+    return;
+  }
+  if (!profile || profile === current || LOCALE_META[current].base === profile)
+    return;
+  await changeLanguage(profile);
 };
 
 /**

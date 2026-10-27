@@ -152,6 +152,7 @@ const DemographicsPage: Component = () => {
               endAdornment="%"
               value={row.populationPercentage}
               disabled={editor.saving()}
+              emptyValue={0}
               onChange={value => editor.setShare(row.id, value)}
             />
           </Show>
@@ -181,6 +182,7 @@ const DemographicsPage: Component = () => {
               decimalLimit={0}
               value={row.basePopulation}
               disabled={editor.saving()}
+              emptyValue={0}
               onChange={editor.setBaseline}
             />
           </Show>
@@ -205,6 +207,7 @@ const DemographicsPage: Component = () => {
             endAdornment="%"
             value={editor.draft.rates[rateKey(year)]}
             disabled={editor.saving()}
+            emptyValue={0}
             onChange={value => editor.setRate(year, value)}
             data-testid={`growth-rate-year-${year}`}
           />

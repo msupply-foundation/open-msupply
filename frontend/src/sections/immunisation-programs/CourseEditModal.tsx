@@ -402,6 +402,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
               invalid={Boolean(error())}
               aria-describedby={describedBy()}
               value={entry().years}
+              emptyValue={0}
               onChange={years => type({ years: years ?? 0 })}
             />
             <NumberField
@@ -417,6 +418,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
               invalid={Boolean(error())}
               aria-describedby={describedBy()}
               value={entry().months}
+              emptyValue={0}
               onChange={months => type({ months: months ?? 0 })}
             />
           </HStack>
@@ -514,6 +516,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
             disabled={saving()}
             value={dose.minIntervalDays}
             // A cleared interval reads as zero days (rules § input bounds).
+            emptyValue={0}
             onChange={days =>
               updateDose(dose.id, { minIntervalDays: days ?? 0 })
             }

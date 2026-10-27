@@ -186,7 +186,9 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::ItemDoesNotExist
         | ServiceError::CannotChangeStatus
         | ServiceError::CannotEditPurchaseOrderLine
-        | ServiceError::CannotEditExpectedDeliveryDate => BadUserInput(formatted_error),
+        | ServiceError::CannotEditExpectedDeliveryDate
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

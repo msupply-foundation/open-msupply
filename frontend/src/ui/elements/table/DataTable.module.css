@@ -325,6 +325,21 @@
   transition: background-color var(--motion-base);
 }
 
+/* Grouped rows (meta.groupRows; ui-standards § tables › grouped rows): a cell
+   the next row continues joins it — no divider between them, so the run reads
+   as one block and a row tint runs straight through. The divider is removed,
+   not made transparent: the borders are collapsed, so a transparent one would
+   show the table's own background as a seam across a tinted run. */
+.td[data-group-continues] {
+  border-block-end-style: none;
+}
+
+/* A column rule (meta.dividerEnd): down the column's inline-end edge, header
+   to footer — for a column that heads the ones after it. */
+:is(.th, .td, .tf)[data-divider-end] {
+  border-inline-end: 1px solid var(--color-divider);
+}
+
 /* The one body cell that must NOT clip absolutely: a frozen block's outer edge
    carries the freeze shadow as a strip drawn entirely OUTSIDE its box
    ([data-frozen-edge]::after, left/right: 100%), and .td's ellipsis clipping

@@ -1,4 +1,6 @@
+use crate::NullableUpdate;
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 use crate::{
     purchase_order::validate::can_edit_requested_quantity,
     purchase_order_line::update::{
@@ -69,6 +71,29 @@ pub fn validate(
         && input.status == Some(PurchaseOrderLineStatus::Closed)
     {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
+    }
+
+    // Same rule as on insert: it must exist and be a manufacturer, but need not
+    // be visible to the store
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            &purchase_order.store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) | Err(OtherPartyErrors::OtherPartyNotVisible) => {}
+            Err(OtherPartyErrors::OtherPartyDoesNotExist) => {
+                return Err(UpdatePurchaseOrderLineInputError::OtherPartyDoesNotExist);
+            }
+            Err(OtherPartyErrors::TypeMismatched) => {
+                return Err(UpdatePurchaseOrderLineInputError::OtherPartyNotAManufacturer);
+            }
+            Err(OtherPartyErrors::DatabaseError(e)) => return Err(e.into()),
+        }
     }
 
     // check if pack size and item id combination already exists

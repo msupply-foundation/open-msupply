@@ -52,6 +52,14 @@
     "plugins/examples/**/*.tsx",
     "plugins/*/src/**/*.ts",
     "plugins/*/src/**/*.tsx",
+    // A form plugin's root module, its catalogues and its `forms/` tree,
+    // which the form tooling reads at the plugin's root, outside `src/`
+    // (plugins/README.md § Form plugins).
+    "plugins/*/*.ts",
+    "plugins/*/*.tsx",
+    "plugins/*/translations/**/*.ts",
+    "plugins/*/forms/**/*.ts",
+    "plugins/*/forms/**/*.tsx",
     // cook_islands' BACKEND half, plus the `shared/` wire contract both
     // halves import. Named rather than globbed as `plugins/*/backend`,
     // because civ's half compiles only against its own toolchain's

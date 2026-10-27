@@ -404,6 +404,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             legacy_goods_received_line_id: goods_received_lines_ID,
             transfer_comment,
+            // Barcodes don't sync with legacy mSupply
+            barcode: None,
         };
 
         let result = adjust_negative_values(result);
@@ -479,6 +481,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                     manufacturer_id,
                     legacy_goods_received_line_id: _,
                     transfer_comment,
+                    // Barcodes don't sync with legacy mSupply
+                    barcode: _,
                 },
             item_row,
             ..
@@ -652,6 +656,7 @@ mod tests {
                     vvm_type: None,
                     created_datetime: NaiveDateTime::default(),
                     created_by: None,
+                    is_auto_created: false,
                 }],
                 key_value_store_rows: vec![KeyValueStoreRow {
                     id: KeyType::SettingsSyncSiteId,

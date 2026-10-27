@@ -1,8 +1,10 @@
 import {
+  createEffect,
   createMemo,
   createResource,
   createSignal,
   For,
+  onCleanup,
   Show,
   type Component,
 } from 'solid-js';
@@ -38,6 +40,7 @@ import {
   getCellDefinition,
   getExpiryDateCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
@@ -45,6 +48,8 @@ import { prescriptionPreferences } from '../../../../store/storeContext';
 import { round, roundedText } from '../../../../intl';
 import {
   clampManualPacks,
+  distributionOutcome,
+  isExpired,
   issuedUnits,
   lensToUnits,
   round9,
@@ -56,12 +61,22 @@ import {
   buildSaveInput,
   canSave,
   draftAvailableUnits,
+  scanNarrowing,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
 import {
+  proposeIssuedBarcode,
+  batchLabelNarrowing,
+  ScanNarrowedNotice,
+  type BatchLabelReceiver,
+  type IssueScan,
+  type IssueScanReceiver,
+} from '@/domain/barcode';
+import {
   issueWarningMessages,
   manualEntryMessages,
+  reportsExpiredSkip,
   type PrescriptionWarningMessage,
 } from './allocationWarnings';
 import { expandAbbreviations } from '@/domain/directions';
@@ -72,6 +87,7 @@ import {
   type PrescriptionEditLinesResult,
 } from './prescriptionLineEdit.generated';
 import { Num } from '@/ui/elements/typography/Num';
+import { RowStatusBadges } from '@/sections/outbound-shipments/detail/RowStatusBadges';
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
@@ -111,6 +127,31 @@ export interface PrescriptionLineEditModalProps {
    * away the one number they most need.
    */
   lockPrescribedQuantity?: boolean;
+  /**
+   * Opened by a scan (spec/barcode-scanning rules § Issuing by scanning) —
+   * add mode, on the scan's item where the code resolved, else empty with the
+   * no-match warning. The editor carries it until its first successful save,
+   * which proposes the barcode.
+   */
+  scan?: IssueScan;
+  /**
+   * While the editor waits for an item (add mode, nothing chosen — on open,
+   * or after OK & next) it takes a scan as its pick; the detail's scan host
+   * hands the resolved scan here. Called with `undefined` once an item is
+   * chosen, while saving, and on close.
+   */
+  onScanReceiver?: (receiver: IssueScanReceiver | undefined) => void;
+  /**
+   * While it is open on an item, it takes a batch label's batch and narrows
+   * its rows to it (OMS-REG-BAC-01.192). Called with `undefined` while it has
+   * no item, while loading or saving, and on close.
+   */
+  onBatchLabelReceiver?: (receiver: BatchLabelReceiver | undefined) => void;
+  /**
+   * A scan arrived while this editor already had an item and was discarded —
+   * said here, where the user is looking (OMS-REG-BAC-01.141).
+   */
+  scanDiscarded?: boolean;
   onClose: () => void;
   /** A save landed — the detail refetches. */
   onSaved: () => void;
@@ -142,6 +183,8 @@ const banner = (
         severity: 'info',
       };
     case 'messages.stock-expired':
+    case 'messages.stock-expired-skipped':
+    case 'messages.stock-expired-cannot-issue':
       return {
         text: t(message.key),
         testId: 'prescription-skipped-stock-warning-expired',
@@ -181,8 +224,20 @@ type ItemInfo = NonNullable<
 const Body = (props: PrescriptionLineEditModalProps) => {
   const prefs = prescriptionPreferences;
 
-  const [itemId, setItemId] = createSignal(props.initialItemId);
+  // Read once: the body mounts fresh per open, so there is no later prop
+  // change to follow.
+  // eslint-disable-next-line solid/reactivity
+  const [scan, setScan] = createSignal<IssueScan | undefined>(props.scan);
+  const [itemId, setItemId] = createSignal(
+    // eslint-disable-next-line solid/reactivity
+    props.initialItemId ?? props.scan?.item?.id
+  );
   const isEdit = props.initialItemId != null;
+  // Locked when editing a line, and on a scan's editor once it has an item —
+  // resolved by the scan, or chosen after an unknown one (.42, .43: "once an
+  // item is chosen the editor locks to it").
+  const itemLocked = () =>
+    isEdit || (scan() !== undefined && itemId() !== undefined);
 
   // Working-size latch (#771): open small in add mode (just the item lookup),
   // grow ONCE when the first item is picked, and never shrink back — "OK &
@@ -214,6 +269,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [note, setNote] = createSignal('');
   const [abbrevEntry, setAbbrevEntry] = createSignal('');
   const [issueUnits, setIssueUnits] = createSignal<number>();
+  // Each row's packs as seeded — what a batch label's narrowing keeps in.
+  let seededPacksById = new Map<string, number>();
   const [shortfall, setShortfall] = createSignal(0);
   // The other distribution/manual-entry reports (stock-allocation §
   // reporting): barred stock skipped (.59), the split-pack warning (.58), an
@@ -221,6 +278,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [warnings, setWarnings] = createSignal<PrescriptionWarningMessage[]>(
     []
   );
+  // The Batches section's open state (.56): closed as each item's grid lands,
+  // opened by a distribution that passes over expired stock (.75).
+  const [batchesOpen, setBatchesOpen] = createSignal(false);
   const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
@@ -254,8 +314,19 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         ? 'doses'
         : 'units'
     );
-    const seeded = seedDraftLines(draft.draftLines, prefs(), new Date());
+    // A scanned label's batch narrows the rows to it (.44) until the user
+    // clears it; focus still lands on the quantity, and distribution falls
+    // onto that batch.
+    const seeded = seedDraftLines(
+      draft.draftLines,
+      prefs(),
+      new Date(),
+      scan()
+    );
     setLines(reconcile(seeded, { key: 'id' }));
+    seededPacksById = new Map(
+      seeded.map(line => [line.id, line.numberOfPacks])
+    );
     setPrescribedQuantity(draft.prescribedQuantity ?? undefined);
     setNote(draft.note ?? '');
     // Re-opening a dispensed line shows its saved state: the issue field
@@ -265,6 +336,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     setIssueUnits(existingUnits > 0 ? round9(existingUnits) : undefined);
     setShortfall(0);
     setWarnings([]);
+    setBatchesOpen(false);
     setDirty(false);
     // Land ready to type: with the item's grid in hand, Issue is the next
     // field. Armed here rather than gated on a load flag — Issue is inert
@@ -344,12 +416,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       )
     );
     setShortfall(shortfallUnits);
-    setWarnings(
-      issueWarningMessages(derived, {
-        doses: dosesMode(),
-        dosesPerUnit: dosesPerUnit(),
-      })
+    const messages = issueWarningMessages(
+      derived,
+      { doses: dosesMode(), dosesPerUnit: dosesPerUnit() },
+      distributionOutcome({ shortfallUnits }, prefs())
     );
+    setWarnings(messages);
+    // Expired stock passed over opens the Batches section, so the batch drawn
+    // is seen beside the expired one (.75). Only a distribution opens it — a
+    // user who closed it keeps it closed until the next one reports the skip.
+    if (reportsExpiredSkip(messages)) setBatchesOpen(true);
     setIssueUnits(round9(issuedUnits(lines)));
     setDirty(true);
   };
@@ -517,19 +593,29 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       SavePrescriptionItemLines,
       {
         storeId: props.storeId,
-        input: buildSaveInput(
-          props.invoiceId,
-          id,
-          lines,
-          prescribedQuantity(),
-          note()
-        ),
+        input: {
+          ...buildSaveInput(
+            props.invoiceId,
+            id,
+            lines,
+            prescribedQuantity(),
+            note()
+          ),
+          // The scanned barcode (.139): the server records it on the lines;
+          // it's proposed for the item once they've saved.
+          ...(scan()?.code ? { barcode: scan()?.code } : {}),
+        },
       },
       { returnGraphqlErrors: true }
     );
     setSaving(false);
     if (result.kind === 'success') {
       props.onSaved();
+      // The lines are saved whatever this does (proposeIssuedBarcode).
+      void proposeIssuedBarcode(props.storeId, scan(), id);
+      // The scan is spent: it named this item only, so OK & next onto another
+      // item must not send it again.
+      setScan(undefined);
       return true;
     }
     setSaveError(
@@ -539,6 +625,46 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     );
     return false;
   };
+
+  // A scan while waiting for an item picks it, as the scan that opened the
+  // editor would have: locked where the code resolved, else the no-match
+  // warning over the still-choosable search.
+  const receiveScan: IssueScanReceiver = next => {
+    setScan(next);
+    if (next.item) {
+      cancelAllocate();
+      setItemId(next.item.id);
+    } else itemSearch.focus();
+  };
+  createEffect(() => {
+    const waiting = !isEdit && itemId() === undefined && !saving();
+    props.onScanReceiver?.(waiting ? receiveScan : undefined);
+  });
+  onCleanup(() => props.onScanReceiver?.(undefined));
+
+  // A batch label scanned while the editor is open on an item narrows its
+  // rows to that batch, replacing any batch a scan narrowed to (.192) —
+  // in place, without re-fetching the grid the dispenser may be filling in;
+  // a quantity entered since the editor opened moves onto the label's batch.
+  const receiveBatchLabel: BatchLabelReceiver = batch => {
+    const { excluded, redistribute } = batchLabelNarrowing(
+      lines,
+      seededPacksById,
+      { batch, code: scan()?.code }
+    );
+    setLines({}, line => ({ scanExcluded: excluded.has(line.id) }));
+    const units = issueUnits();
+    if (redistribute && units !== undefined) {
+      cancelAllocate();
+      runAllocation(units);
+    }
+  };
+  createEffect(() => {
+    const ready =
+      itemId() !== undefined && gridData.state === 'ready' && !saving();
+    props.onBatchLabelReceiver?.(ready ? receiveBatchLabel : undefined);
+  });
+  onCleanup(() => props.onBatchLabelReceiver?.(undefined));
 
   const onOk = async () => {
     if (await save()) props.onClose();
@@ -561,10 +687,38 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     itemSearch.focus();
   };
 
+  const lineHeld = (line: DraftLine): boolean =>
+    line.stockLineOnHold || !!line.location?.onHold;
+
   const columns = createMemo((): Column<DraftLine, never>[] => {
     const vaccine = itemInfo()?.isVaccine ?? false;
     const cols: Column<DraftLine, never>[] = [
-      { c: { key: 'batch' }, header: () => t('label.batch') },
+      {
+        c: { key: 'batch' },
+        header: () => t('label.batch'),
+        // Expired / Near expiry / On hold beside the code, as on outbound —
+        // so once the section opens on a skip the expired batch is told apart
+        // (.75). A batch the expired guard's threshold skipped before its
+        // date reads Near expiry, not Expired.
+        cell: info => {
+          const line = info.row.original;
+          const expired = isExpired(line.expiryDate);
+          return (
+            <span class={styles.batchCell}>
+              {line.batch ?? ''}
+              <RowStatusBadges
+                expired={expired}
+                nearExpiry={
+                  !expired &&
+                  !!line.expiryDate &&
+                  isNearOrPastExpiry(line.expiryDate)
+                }
+                held={lineHeld(line)}
+              />
+            </span>
+          );
+        },
+      },
       {
         c: { key: 'expiryDate' },
         header: () => t('label.expiry'),
@@ -627,7 +781,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               value={line.numberOfPacks * line.packSize}
               min={0}
               max={line.availablePacks * line.packSize}
-              disabled={line.barred.length > 0}
+              disabled={line.barred.length > 0 || line.scanExcluded}
+              emptyValue={0}
               onChange={units =>
                 setRowPacks(
                   line.id,
@@ -652,11 +807,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         ...getCellDefinition('activity'),
       },
       {
-        c: {
-          accessor: line =>
-            line.stockLineOnHold || (line.location?.onHold ?? false),
-          id: 'onHold',
-        },
+        // Kept beside the badge: cards hide the badge cluster, and this
+        // column's chip is then the only worded hold left (as on outbound).
+        c: { accessor: lineHeld, id: 'onHold' },
         header: () => t('label.on-hold'),
         ...getBooleanCell({ display: 'dot', label: t('label.on-hold') }),
       }
@@ -687,7 +840,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       widthRem={44}
       minBodyHeightRem={28}
       initialFocus={
-        isEdit
+        // A scan's editor opens on its item: the grid's arrival focuses the
+        // quantity, so there is no search to start in.
+        isEdit || props.scan?.item
           ? focusPrescribedFirst()
             ? prescribedQuantityFocus
             : undefined
@@ -748,6 +903,34 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           dialog's own title holds the h2 (rank mirrors structure, never
           size). */}
       <FormSection title={t('label.item')} headingLevel="h3" heading="group">
+        <Show when={props.scanDiscarded}>
+          <Alert severity="warning" testId="scan-discarded">
+            {t('messages.close-line-editor-to-scan')}
+          </Alert>
+        </Show>
+        {/* A scan that resolved no item (.43): say so, then wait for the pick
+            like any add-mode open. A code whose item is outside the record's
+            program (.169) names the item and the reason instead — "no
+            matching item" would be untrue, and leave the dispenser guessing
+            whether the barcode was wrong. */}
+        <Show when={scan() && !scan()?.item && itemId() === undefined}>
+          <Show
+            when={scan()?.outsideScope}
+            fallback={
+              <Alert severity="warning" testId="scan-no-matching-item">
+                {t('error.no-matching-item')}
+              </Alert>
+            }
+          >
+            {outside => (
+              <Alert severity="warning" testId="scan-item-not-in-program">
+                {t('messages.scan-item-not-in-program', {
+                  item: `${outside().code} - ${outside().name}`,
+                })}
+              </Alert>
+            )}
+          </Show>
+        </Show>
         <ItemSearch
           label={t('label.item')}
           hideLabel
@@ -760,7 +943,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           selectedItem={(() => {
             const item = itemInfo();
             if (item) return { id: item.id, code: item.code, name: item.name };
-            return props.initialItem;
+            return props.initialItem ?? scan()?.item;
           })()}
           // NO excludeItemIds: the search offers the whole addable catalogue,
           // including items already dispensed on this prescription (issue
@@ -769,7 +952,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           // EXISTING allocation for this invoice — so a second visit edits
           // (and lands on its batches) rather than duplicating.
           masterListId={props.programId}
-          disabled={isEdit}
+          disabled={itemLocked() || saving()}
           onSelect={item => {
             if (!item) return;
             setItemId(item.id);
@@ -873,6 +1056,18 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             one per skipped category, each its own sentence at info (expired /
             unusable VVM; held stock is hidden, not reported — .59/.60) — the
             split-pack warning (.58), an adjusted manual entry (.19). */}
+          {/* The scan narrowed the rows — said here, since the Batches
+              section is closed and its disabled rows unseen; Show all
+              clears it (.210, .211). */}
+          <Show when={scanNarrowing(lines)}>
+            {narrowing => (
+              <ScanNarrowedNotice
+                batch={narrowing().batch}
+                nothingLeft={narrowing().nothingLeft}
+                onShowAll={() => setLines({}, { scanExcluded: false })}
+              />
+            )}
+          </Show>
           <Show when={warnings().length > 0}>
             <div class={styles.warningStack}>
               <For each={warnings()}>
@@ -898,13 +1093,16 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             }
           >
             {/* The batch grid folds behind a Batches disclosure, closed on
-              open (OMS-REG-DIS-03.56) — issuing allocates without it; the
-              user expands it for batch detail or per-batch entry. While
+              open (OMS-REG-DIS-03.56) — issuing allocates without it, unless
+              it passed over expired stock (.75); the user expands it for
+              batch detail or per-batch entry. While
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
             <Accordion
               collapsible
+              value={batchesOpen() ? ['batches'] : []}
+              onValueChange={value => setBatchesOpen(value.includes('batches'))}
               variant="card"
               // The dialog's main line table lives in here: in the
               // full-screen sheet the card runs to the sheet edges and the
@@ -940,7 +1138,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                     rows={[...lines]}
                     rowKey={line => line.id}
                     rowState={line =>
-                      line.barred.length > 0 ? 'disabled' : undefined
+                      line.barred.length > 0 || line.scanExcluded
+                        ? 'disabled'
+                        : undefined
                     }
                     loading={gridData.loading}
                     showFullScreen={false}

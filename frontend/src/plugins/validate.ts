@@ -37,6 +37,85 @@ const SLOT_IDS: Record<SlotId, true> = {
   'internalOrder.sidePanelSection': true,
   'host.warningSuppression': true,
   'prescription.paymentForm': true,
+  'programEnrolment.form': true,
+  'encounter.form': true,
+  'patient.form': true,
+  'patient.toolbarTrigger': true,
+};
+
+/**
+ * The slots whose contribution is a document type's form, placed by the type
+ * it names (sdk-contract § the document form slots). `SlotId`-keyed like
+ * `SLOT_IDS`, so a renamed slot here is a type error.
+ */
+const DOCUMENT_FORM_SLOTS: Readonly<Partial<Record<SlotId, true>>> = {
+  'programEnrolment.form': true,
+  'encounter.form': true,
+  'patient.form': true,
+};
+
+const isVersionNumber = (value: unknown, count: number): value is number =>
+  Number.isInteger(value) &&
+  (value as number) >= 1 &&
+  (value as number) <= count;
+
+/*
+ * A form's versioning (sdk-contract § the document form slots): `versions`
+ * is every schema id of its type, oldest first, and required, since the host
+ * reads from it whether the plugin in the browser matches the one installed;
+ * `migrations` and `archived` are keyed by position in it. Checked as far as
+ * the shape goes; whether a step covers its versions is the plugin build's
+ * check, which has the schemas.
+ */
+const formVersioningProblem = (
+  entry: Record<string, unknown>
+): string | undefined => {
+  const { versions, migrations, archived } = entry;
+  if (versions === undefined) {
+    return 'declares no versions: pass the generated forms/<type>/versions.ts';
+  }
+  if (
+    !Array.isArray(versions) ||
+    versions.length === 0 ||
+    !versions.every(v => typeof v === 'string' && v.length > 0) ||
+    new Set(versions).size !== versions.length
+  ) {
+    return 'has versions that are not a list of distinct schema ids';
+  }
+  const count = versions.length;
+  if (migrations !== undefined) {
+    if (!Array.isArray(migrations)) return 'has migrations that are not a list';
+    for (const step of migrations as unknown[]) {
+      const record =
+        typeof step === 'object' && step !== null
+          ? (step as Record<string, unknown>)
+          : undefined;
+      const from = record?.['from'];
+      const to =
+        record?.['to'] ?? (typeof from === 'number' ? from + 1 : undefined);
+      if (
+        !isVersionNumber(from, count) ||
+        !isVersionNumber(to, count) ||
+        (to as number) <= from
+      ) {
+        return `has a migration step whose versions are not within 1 to ${count}, from an earlier to a later one`;
+      }
+    }
+  }
+  if (archived !== undefined) {
+    if (typeof archived !== 'object' || archived === null) {
+      return 'has archived forms that are not an object keyed by version';
+    }
+    for (const [key, form] of Object.entries(archived)) {
+      if (
+        !isVersionNumber(Number(key), count - 1) ||
+        typeof form !== 'function'
+      ) {
+        return `has an archived form for version ${key}, which is not an earlier version of its ${count} or not a component`;
+      }
+    }
+  }
+  return undefined;
 };
 
 /**
@@ -56,6 +135,16 @@ const VALUE_RENDERING_SLOTS: readonly string[] = ['internalOrderLine.column'];
  */
 const RESOLVER_SLOTS: Readonly<Partial<Record<SlotId, string>>> = {
   'host.warningSuppression': 'suppresses',
+};
+
+/**
+ * The slots whose contributions are TRIGGERS — a button the host draws from
+ * the contribution's `label` and runs its `onClick` (sdk-contract § the patient
+ * toolbar trigger slot), so a `Component` there was built against a surface
+ * this host does not have. `SlotId`-keyed like `SLOT_IDS`.
+ */
+const TRIGGER_SLOTS: Readonly<Partial<Record<SlotId, true>>> = {
+  'patient.toolbarTrigger': true,
 };
 
 /** Every slot id the host recognises; anything else is refused. */
@@ -318,6 +407,8 @@ export const validateLoadedModule = (
     // fine, twice in one slot is not: the pair is the render key and the anchor
     // target, so a duplicate would make placement and suppression ambiguous.
     const seen = new Set<string>();
+    // `<slot>/<documentType>` → the contribution id rendering it.
+    const formsByType = new Map<string, string>();
     for (const entry of contributions as readonly unknown[]) {
       if (!isRecord(entry)) {
         return { kind: 'refused', message: 'a contribution is not an object' };
@@ -390,7 +481,28 @@ export const validateLoadedModule = (
           };
         }
       }
-      if (resolverField === undefined) {
+      if (TRIGGER_SLOTS[slot as SlotId]) {
+        const problem =
+          typeof entry['label'] !== 'string' || entry['label'].length === 0
+            ? 'has no label key'
+            : typeof entry['onClick'] !== 'function'
+              ? 'has no onClick function'
+              : entry['visible'] !== undefined &&
+                  typeof entry['visible'] !== 'function'
+                ? 'has a visible that is not a function'
+                : entry['icon'] !== undefined &&
+                    typeof entry['icon'] !== 'function'
+                  ? 'has an icon that is not a component'
+                  : entry['Component'] !== undefined
+                    ? 'carries a Component — the host draws a trigger from its label'
+                    : undefined;
+        if (problem) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" ${problem}`,
+          };
+        }
+      } else if (resolverField === undefined) {
         const hasComponent = typeof entry['Component'] === 'function';
         const hasValue =
           VALUE_RENDERING_SLOTS.includes(slot) &&
@@ -403,6 +515,35 @@ export const validateLoadedModule = (
               : `contribution "${slot}/${id}" has no Component function`,
           };
         }
+      }
+      // A form names the document type it renders, and a plugin renders a
+      // type one way: two of its own forms for one type would leave the
+      // host guessing, knowably from this module alone. Two PLUGINS claiming
+      // a type is a load-order fact, resolved where the form renders.
+      if (DOCUMENT_FORM_SLOTS[slot as SlotId]) {
+        const documentType = entry['documentType'];
+        if (typeof documentType !== 'string' || documentType.length === 0) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" names no document type to render`,
+          };
+        }
+        const versioningProblem = formVersioningProblem(entry);
+        if (versioningProblem) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" ${versioningProblem}`,
+          };
+        }
+        const formKey = `${slot}/${documentType}`;
+        const prior = formsByType.get(formKey);
+        if (prior !== undefined) {
+          return {
+            kind: 'refused',
+            message: `contributions "${slot}/${prior}" and "${slot}/${id}" both render document type "${documentType}"`,
+          };
+        }
+        formsByType.set(formKey, id);
       }
       const key = `${slot}/${id}`;
       if (seen.has(key)) {

@@ -15,6 +15,7 @@ use repository::{
 
 use super::{
     document::DocumentNode,
+    document_registry::{DocumentRegistryNode, document_registry_node},
     encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
     patient::PatientNode,
     program_event::{
@@ -229,6 +230,15 @@ impl ProgramEnrolmentNode {
             .ok_or(Error::new("Program without document"))?;
 
         Ok(result)
+    }
+
+    /// The registry entry of the document's type, resolved from the row's own
+    /// type without loading the document.
+    pub async fn document_registry(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<DocumentRegistryNode>> {
+        document_registry_node(ctx, &self.allowed_ctx, &self.row().document_type).await
     }
 
     /// The program document

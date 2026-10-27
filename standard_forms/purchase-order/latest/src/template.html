@@ -121,18 +121,15 @@
   </div>
 
   <table class="totals">
-    <tr excel-type="total-row">
-      <td>{{ t(k="label.cost-subtotal", f="Subtotal") }}</td>
-      <td>{{ po.orderTotalBeforeDiscount | round(precision=2) }} {{ po.currency.code }}</td>
-    </tr>
-    <tr excel-type="total-row">
-      <td>{{ t(k="label.supplier-discount", f="Supplier discount") }}</td>
-      <td>{{ po.supplierDiscountAmount | round(precision=2) }} {{ po.currency.code }}</td>
-    </tr>
     <tr excel-type="total-row" class="grand_total">
       <td>{{ t(k="heading.total-cost", f="Total cost") }}</td>
       <td>{{ po.totalCost | round(precision=2) }} {{ po.currency.code }}</td>
     </tr>
+    {% if po.supplierDiscountAmount > 0 %}
+    <tr excel-type="total-row" class="discount_note">
+      <td colspan="2">{{ t(k="label.includes-supplier-discount-of", f="Includes supplier discount of") }} {{ po.supplierDiscountAmount | round(precision=2) }} {{ po.currency.code }}</td>
+    </tr>
+    {% endif %}
     <tr excel-type="total-row">
       <td>{{ t(k="label.exchange-rate", f="Exchange rate") }}</td>
       <td>1 {{ po.currency.code }} = {{ po.foreignExchangeRate | default(value="") }} {{ data.currencies.nodes[0].code }}</td>

@@ -8,14 +8,15 @@ use std::collections::HashMap;
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct ProgramEnrolmentLoaderInput {
     pub patient_id: String,
-    pub program: String,
+    /// The program's id (not its context id: the two can differ).
+    pub program_id: String,
     pub allowed_ctx: Vec<String>,
 }
 impl ProgramEnrolmentLoaderInput {
-    pub fn new(patient_id: &str, program: &str, allowed_ctx: Vec<String>) -> Self {
+    pub fn new(patient_id: &str, program_id: &str, allowed_ctx: Vec<String>) -> Self {
         ProgramEnrolmentLoaderInput {
             patient_id: patient_id.to_string(),
-            program: program.to_string(),
+            program_id: program_id.to_string(),
             allowed_ctx,
         }
     }
@@ -40,24 +41,24 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
     ) -> Result<HashMap<ProgramEnrolmentLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        // allowed_ctx -> Vec<(patient_id, program)>
+        // allowed_ctx -> Vec<(patient_id, program_id)>
         let mut map = HashMap::<Vec<String>, Vec<(String, String)>>::new();
         for item in inputs {
             let entry = map.entry(item.allowed_ctx.clone()).or_default();
-            entry.push((item.patient_id.clone(), item.program.clone()))
+            entry.push((item.patient_id.clone(), item.program_id.clone()))
         }
         let mut out = HashMap::<ProgramEnrolmentLoaderInput, Self::Value>::new();
 
         for (allowed_ctx, patient_program_list) in map.into_iter() {
             let program_to_patients_map = patient_program_list.into_iter().fold(
                 HashMap::<String, Vec<String>>::new(),
-                |mut prev, (patient_id, program)| {
-                    let entry = prev.entry(program).or_default();
+                |mut prev, (patient_id, program_id)| {
+                    let entry = prev.entry(program_id).or_default();
                     entry.push(patient_id);
                     prev
                 },
             );
-            for (program, patient_id) in program_to_patients_map {
+            for (program_id, patient_id) in program_to_patients_map {
                 let entries = self
                     .service_provider
                     .program_enrolment_service
@@ -67,7 +68,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                         None,
                         Some(
                             ProgramEnrolmentFilter::new()
-                                .context_id(EqualFilter::equal_to(program.to_owned()))
+                                .program_id(EqualFilter::equal_to(program_id.to_owned()))
                                 .patient_id(EqualFilter::equal_any(patient_id)),
                         ),
                         allowed_ctx.clone(),
@@ -77,7 +78,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                     out.insert(
                         ProgramEnrolmentLoaderInput::new(
                             &program_enrolment.patient_row.id,
-                            &program,
+                            &program_id,
                             allowed_ctx.clone(),
                         ),
                         program_enrolment,

@@ -802,6 +802,7 @@ const LineEditContent = (
                       ref={requestedField.ref}
                       disabled={disabled() || saving()}
                       value={requestedDisplay()}
+                      emptyValue={0}
                       onChange={onRequestedChange}
                     />
                     <Select

@@ -41,6 +41,7 @@ export type ForecastLineFragment = {
   itemQuantity: number;
   ancillaryQuantity: number;
   wastageRate: number;
+  ownWastageRate: number;
   principalUsableConsumption: number;
   monthlyConsumption: number;
 }>;
