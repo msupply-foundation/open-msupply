@@ -9,7 +9,7 @@ use diesel::{
 table! {
     name_store_join (id) {
         id -> Text,
-        inactive -> Bool,
+        visible -> Bool,
     }
 }
 
@@ -31,8 +31,8 @@ impl MigrationFragment for Migrate {
         "inactivate_kept_name_store_joins"
     }
 
-    /// Active patient joins whose latest row from OG is a delete or an inactive upsert
-    /// are joins OG removed; set them inactive.
+    /// Visible patient joins whose latest row from OG is a delete or an inactive upsert
+    /// are joins OG removed; set them not visible.
     ///
     /// Changelog rows are stamped with OG's site id so the store's site pulls them and
     /// they aren't pushed back to OG.
@@ -63,7 +63,7 @@ impl MigrationFragment for Migrate {
         for chunk in kept_joins.chunks(500) {
             diesel::update(name_store_join::table)
                 .filter(name_store_join::id.eq_any(chunk.iter().map(|join| &join.id)))
-                .set(name_store_join::inactive.eq(true))
+                .set(name_store_join::visible.eq(false))
                 .execute(connection.lock().connection())?;
 
             let changelog_rows: Vec<_> = chunk
@@ -95,7 +95,7 @@ struct KeptJoin {
     store_id: String,
 }
 
-/// Active patient joins whose latest sync_buffer row from OG is a delete or an inactive
+/// Visible patient joins whose latest sync_buffer row from OG is a delete or an inactive
 /// upsert.
 fn kept_joins_query(og_site_id: i32) -> String {
     let is_inactive = if cfg!(feature = "postgres") {
@@ -118,7 +118,7 @@ fn kept_joins_query(og_site_id: i32) -> String {
         JOIN name n ON n.id = nl.name_id
         JOIN latest ON latest.record_id = nsj.id
         JOIN sync_buffer sb ON sb.cursor = latest.cursor
-        WHERE nsj.inactive = FALSE
+        WHERE nsj.visible = TRUE
           AND n.type = 'PATIENT'
           AND CASE
                 WHEN sb.action = 'DELETE' THEN TRUE
@@ -204,13 +204,13 @@ mod tests {
         )
         .unwrap();
 
-        let inactive: Vec<String> = name_store_join::table
-            .filter(name_store_join::inactive.eq(true))
+        let not_visible: Vec<String> = name_store_join::table
+            .filter(name_store_join::visible.eq(false))
             .order(name_store_join::id)
             .select(name_store_join::id)
             .load(connection.lock().connection())
             .unwrap();
-        assert_eq!(inactive, vec!["kept_by_delete", "kept_by_inactive"]);
+        assert_eq!(not_visible, vec!["kept_by_delete", "kept_by_inactive"]);
 
         let logged: Vec<(String, Option<i32>)> = changelog::table
             .filter(changelog::table_name.eq("name_store_join"))

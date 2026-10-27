@@ -14,7 +14,7 @@ table! {
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
-        inactive -> Bool,
+        visible -> Bool,
     }
 }
 
@@ -37,8 +37,8 @@ impl MigrationFragment for Migrate {
         "recreate_joins_for_deleted_patients"
     }
 
-    /// Joins OG sent for a deleted patient that no longer exist are recreated as
-    /// inactive from OG's sync_buffer rows, and the patient is logged again so the
+    /// Joins OG sent for a deleted patient that no longer exist are recreated not
+    /// visible from OG's sync_buffer rows, and the patient is logged again so the
     /// deletion reaches the stores' sites through them.
     ///
     /// Changelog rows are stamped with OG's site id so the sites pull them and they
@@ -84,7 +84,7 @@ impl MigrationFragment for Migrate {
                         name_store_join::store_id.eq(&join.store_id),
                         name_store_join::name_is_customer.eq(join.is_customer),
                         name_store_join::name_is_supplier.eq(join.is_supplier),
-                        name_store_join::inactive.eq(true),
+                        name_store_join::visible.eq(false),
                     )
                 })
                 .collect();
@@ -284,12 +284,12 @@ mod tests {
 
         let joins: Vec<(String, bool)> = name_store_join::table
             .order(name_store_join::id)
-            .select((name_store_join::id, name_store_join::inactive))
+            .select((name_store_join::id, name_store_join::visible))
             .load(connection.lock().connection())
             .unwrap();
         assert_eq!(
             joins,
-            vec![("join_a".to_string(), false), ("join_b".to_string(), true)]
+            vec![("join_a".to_string(), true), ("join_b".to_string(), false)]
         );
 
         let logged: Vec<(String, String, Option<i32>)> = changelog::table

@@ -14,7 +14,7 @@ table! {
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
-        inactive -> Bool,
+        visible -> Bool,
     }
 }
 
@@ -25,10 +25,10 @@ impl MigrationFragment for Migrate {
         "inactivate_pulled_name_store_joins"
     }
 
-    /// Patient joins whose latest pulled sync_buffer row is an inactive upsert are set
-    /// inactive, or recreated as inactive if missing.
+    /// Patient joins whose latest pulled sync_buffer row says they aren't visible are set
+    /// not visible, or recreated not visible if missing.
     ///
-    /// No changelog rows: central already has these joins inactive.
+    /// No changelog rows: central already has these joins not visible.
     ///
     /// Remotes only: skip sites that have not pushed over v6/v7.
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -40,8 +40,8 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
             {pulled}
-            UPDATE name_store_join SET inactive = TRUE
-            WHERE inactive = FALSE
+            UPDATE name_store_join SET visible = FALSE
+            WHERE visible = TRUE
               AND id IN (SELECT id FROM pulled)
               AND name_link_id IN (
                 SELECT nl.id FROM name_link nl
@@ -49,7 +49,7 @@ impl MigrationFragment for Migrate {
                 WHERE n.type = 'PATIENT'
               );
             "#,
-            pulled = inactive_rows_cte()
+            pulled = not_visible_rows_cte()
         )?;
 
         let missing_joins: Vec<MissingJoin> =
@@ -73,7 +73,7 @@ impl MigrationFragment for Migrate {
                         name_store_join::store_id.eq(&join.store_id),
                         name_store_join::name_is_customer.eq(join.is_customer),
                         name_store_join::name_is_supplier.eq(join.is_supplier),
-                        name_store_join::inactive.eq(true),
+                        name_store_join::visible.eq(false),
                     )
                 })
                 .collect();
@@ -102,18 +102,19 @@ struct MissingJoin {
     is_supplier: bool,
 }
 
-/// Joins whose latest sync_buffer row is an inactive upsert. Rows from central are OMS
-/// rows (`name_id`, `store_id`), rows from OG are legacy rows (`name_ID`, `store_ID`)
-fn inactive_rows_cte() -> String {
-    let (is_inactive, name_id, store_id) = if cfg!(feature = "postgres") {
+/// Joins whose latest sync_buffer row is an upsert that isn't visible. Rows from central
+/// are OMS rows (`name_id`, `store_id`, `visible`), rows from OG are legacy rows
+/// (`name_ID`, `store_ID`, `inactive`)
+fn not_visible_rows_cte() -> String {
+    let (is_not_visible, name_id, store_id) = if cfg!(feature = "postgres") {
         (
-            "(sb.data::jsonb ->> 'inactive') = 'true'",
+            "((sb.data::jsonb ->> 'visible') = 'false' OR (sb.data::jsonb ->> 'inactive') = 'true')",
             "COALESCE(sb.data::jsonb ->> 'name_id', sb.data::jsonb ->> 'name_ID')",
             "COALESCE(sb.data::jsonb ->> 'store_id', sb.data::jsonb ->> 'store_ID')",
         )
     } else {
         (
-            "json_extract(sb.data, '$.inactive') = 1",
+            "(json_extract(sb.data, '$.visible') = 0 OR json_extract(sb.data, '$.inactive') = 1)",
             "COALESCE(json_extract(sb.data, '$.name_id'), json_extract(sb.data, '$.name_ID'))",
             "COALESCE(json_extract(sb.data, '$.store_id'), json_extract(sb.data, '$.store_ID'))",
         )
@@ -132,13 +133,13 @@ fn inactive_rows_cte() -> String {
                 sb.cursor
             FROM latest
             JOIN sync_buffer sb ON sb.cursor = latest.cursor
-            WHERE sb.action = 'UPSERT' AND {is_inactive}
+            WHERE sb.action = 'UPSERT' AND {is_not_visible}
         )
         "#
     )
 }
 
-/// Patient joins pulled as inactive that no longer exist, where the patient has no join
+/// Patient joins pulled as not visible that no longer exist, where the patient has no join
 /// for that store. Latest first.
 fn missing_joins_query() -> String {
     format!(
@@ -159,7 +160,7 @@ fn missing_joins_query() -> String {
           )
         ORDER BY pulled.cursor DESC
         "#,
-        inactive_rows_cte()
+        not_visible_rows_cte()
     )
 }
 
@@ -216,7 +217,7 @@ mod tests {
                     ('facility', 'facility', 'store_a', true, false);
                 INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data, source_site_id) VALUES
                     ('from_central', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                        '{"id":"from_central","name_id":"patient_a","store_id":"store_a","name_is_customer":true,"name_is_supplier":false,"inactive":true}', 1),
+                        '{"id":"from_central","name_id":"patient_a","store_id":"store_a","name_is_customer":true,"name_is_supplier":false,"visible":false}', 1),
                     -- Deleted on pull from OG, so recreated
                     ('from_og', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
                         '{"ID":"from_og","name_ID":"patient_a","store_ID":"store_b","inactive":true}', 1),
@@ -242,17 +243,17 @@ mod tests {
             .select((
                 name_store_join::id,
                 name_store_join::store_id,
-                name_store_join::inactive,
+                name_store_join::visible,
             ))
             .load(connection.lock().connection())
             .unwrap();
         assert_eq!(
             joins,
             vec![
-                ("facility".to_string(), "store_a".to_string(), false),
-                ("from_central".to_string(), "store_a".to_string(), true),
-                ("from_og".to_string(), "store_b".to_string(), true),
-                ("sent_again".to_string(), "store_a".to_string(), false),
+                ("facility".to_string(), "store_a".to_string(), true),
+                ("from_central".to_string(), "store_a".to_string(), false),
+                ("from_og".to_string(), "store_b".to_string(), false),
+                ("sent_again".to_string(), "store_a".to_string(), true),
             ]
         );
 
