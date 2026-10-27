@@ -40,9 +40,39 @@ docker --version && docker buildx version
 docker run --rm --platform linux/arm64 debian:trixie-slim uname -m   # -> aarch64
 ```
 
+### Build cache limits
+
+**Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 1.4% of the disk (2.5 GB on this one), and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
+
+`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. The limits are tracked in [`.github/deploy/host/daemon.json`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/deploy/host/daemon.json), and the daily [host check](#systemd) gives the commands to write it when the box's differs. Then:
+
+```bash
+sudo systemctl restart docker
+docker buildx inspect | grep -iA6 'gc policy'
+```
+
+Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s` and `Max Used Space: 50GiB`, and rule #1 `Max Used Space: 70GiB` with `Min Free Space: 50GiB` (docker shows the file's GB as GiB). Anything else means docker did not take the file as meant, and it says nothing about it: an unknown key under `builder` is silently ignored, and a malformed filter fails every GC pass rather than the restart. **The syntax is easy to get wrong** — each filter is `key=value` with ONE `=` (docker adds the second), and how long to keep is the `until` filter, not a field of its own.
+
+- **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
+- **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 50 GB holds the ones pull requests and develop merges use; a rarely built one (an arm64 release, say) is evicted and builds cold. `docker buildx du --verbose` shows what they actually take.
+- **The second bounds the whole build cache** at 70 GB and keeps 50 GB of the disk free, for images, deployments' databases and what a CI job writes while it runs: its test archive, postgres's test databases, sqlite's `test_output`. GC runs only when a build finishes, so the free space has to last a whole test run — at 30 GB, a postgres run filled the disk.
+- `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
+
 ## Sizing
 
-Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
+Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer.
+
+**Nothing on the host caps a lane's memory.** A job's real work does not run in the runner's process tree: `docker buildx build` compiles inside dockerd's BuildKit, and `docker run` containers run under containerd. A limit on the runner's systemd unit only ever covers the runner and the `docker` client, so it cannot stop a build. What bounds memory is how much each build runs at once (cargo's job count) and limits set on the containers themselves — add lanes only as far as the busiest days leave headroom, and watch available memory when you do.
+
+**Add swap.** With none, a brief spike past free memory goes straight to the OOM killer, which may pick a deployment's postgres; with some, it slows down instead:
+
+```bash
+sudo fallocate -l 16G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+`docker-deploy-services.yaml`'s daily [host check](#systemd) reports a box with no swap. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. The box has 194 GB, and the build cache limits above are sized for it - with a bigger disk, raise them. 500 GB is not excessive.
 
 ## User and directories
 
@@ -106,64 +136,15 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 ### systemd
 
-The build lanes share one template; `%i` is the lane. Written with a heredoc so `$USER` and `$HOME` resolve to you.
+The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
+
+**`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees. A lane running under a unit set up by hand (`actions-runner-<lane>.service`) shows as `UNTRACKED`, and the commands move it onto `actions-runner@<lane>`. A lane that is installed but not enabled is left alone: lanes are switched off on purpose, to keep the box within its memory.
+
+On a new box, before any lane can run that workflow, copy the two files from the repo by hand with `@USER@`/`@HOME@` filled in, then:
 
 ```bash
-sudo tee /etc/systemd/system/actions-runner@.service >/dev/null <<EOF
-[Unit]
-Description=GitHub Actions runner %i
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-User=$USER
-WorkingDirectory=$HOME/actions-runner-%i
-ExecStart=$HOME/actions-runner-%i/run.sh
-Restart=always
-RestartSec=5
-# One cold build cannot starve the deployments and the other lanes: past this
-# the kernel reclaims from the lane rather than from the rest of the machine.
-MemoryHigh=10G
-# run.sh traps SIGTERM and passes it to the runner, which finishes or cancels
-# the job it holds instead of dying mid-job. `mixed` sends the SIGTERM to
-# run.sh alone, and SIGKILLs whatever is left only after TimeoutStopSec.
-Environment=RUNNER_MANUALLY_TRAP_SIG=1
-KillMode=mixed
-TimeoutStopSec=5min
-
-[Install]
-WantedBy=multi-user.target
-EOF
 sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4
-```
-
-The deploy lane has a unit of its own, with the same stop behaviour but **no memory cap** — it is the lane that tears a stack down when the box is full:
-
-```bash
-sudo tee /etc/systemd/system/actions-runner-deploy.service >/dev/null <<EOF
-[Unit]
-Description=GitHub Actions runner deploy
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-User=$USER
-WorkingDirectory=$HOME/actions-runner-deploy
-ExecStart=$HOME/actions-runner-deploy/run.sh
-Restart=always
-RestartSec=5
-Environment=RUNNER_MANUALLY_TRAP_SIG=1
-KillMode=mixed
-TimeoutStopSec=5min
-
-[Install]
-WantedBy=multi-user.target
-EOF
-sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner-deploy
+sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e actions-runner-deploy
 ```
 
 ```bash
@@ -179,7 +160,7 @@ Adding a build lane is installing and registering `actions-runner-5`, then `syst
 
 Every deployment runs here: the named ones from `docker-named-deployment.yaml` (`develop`, the RC servers, ad-hoc ones) and every PR preview from `docker-pr-preview.yaml`. How to *use* them is on the [Docker page](../../docker/).
 
-Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>` (`http://` while they are [on the VPN only](#vpn-only-deployments)), where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest.
+Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>` (`http://` while they are [on the VPN only](#vpn-only-deployments)), where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest — including images that were built but never deployed, which no deploy or teardown ever sees.
 
 **Today `build`, `deploy` and `e2e` share one machine and one daemon.** The workflows assume nothing about that — splitting them is moving the deploy lane, not changing a workflow — but while they share:
 
@@ -214,7 +195,10 @@ Everything else a deployment needs to remember is a **label on its container**, 
 
 The labels come from `docker/compose.deploy.yaml` as of the commit whose workflow is running — develop's for a dispatch — not the commit being deployed. That is also how older release tags deploy; see the [Docker page](../../docker/).
 
-**`docker-expire.yaml` reaps expired deployments daily** and its summary lists everything deployed and when each expires — the quickest answer to "what is on this box". Run it with `dry_run` to preview.
+**`docker-expire.yaml` reaps expired deployments daily** and its summary lists everything deployed and when each expires — the quickest answer to "what is on this box". Run it with `dry_run` to preview. The same sweep also:
+
+- **tears down the preview of any closed pull request**, whatever its label says. A PR's own close normally does that, but GitHub runs no `pull_request` workflow on a PR with merge conflicts, so before the close moved to `pull_request_target` a preview closed in conflict ran on for good.
+- **removes `msupplyfoundation/omsupply` images no container is running that are over a day old** — a build whose deploy was cancelled by the next push, or failed, leaves one, and at several GB each they were most of what filled the disk. Removing one costs at most a rebuild if that commit is deployed again.
 
 **Teardown marks the GitHub deployment inactive** (clearing the "Active" badge and dead link) but leaves the empty environment row in repository settings — deleting it needs Administration: write.
 

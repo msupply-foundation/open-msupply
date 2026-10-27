@@ -25,4 +25,14 @@ impl AncillaryItemMutations {
     ) -> Result<DeleteAncillaryItemResponse> {
         delete_ancillary_item(ctx, store_id, input)
     }
+
+    /// Sets an item's own wastage rate (%) as an ancillary supply
+    async fn set_supply_wastage_rate(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: SetSupplyWastageRateInput,
+    ) -> Result<SetSupplyWastageRateResponse> {
+        set_supply_wastage_rate(ctx, store_id, input)
+    }
 }

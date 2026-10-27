@@ -414,11 +414,18 @@ export type AncillaryDeltaNode = {
 export type AncillaryItemMutations = {
   __typename: 'AncillaryItemMutations';
   deleteAncillaryItem: DeleteAncillaryItemResponse;
+  /** Sets an item's own wastage rate (%) as an ancillary supply */
+  setSupplyWastageRate: SetSupplyWastageRateResponse;
   upsertAncillaryItem: UpsertAncillaryItemResponse;
 };
 
 export type AncillaryItemMutationsDeleteAncillaryItemArgs = {
   input: DeleteAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemMutationsSetSupplyWastageRateArgs = {
+  input: SetSupplyWastageRateInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -469,6 +476,8 @@ export type AncillaryRatioPrincipalNode = {
   itemQuantity: Scalars['Float']['output'];
   /** This principal's share of the line's monthly demand */
   monthlyConsumption: Scalars['Float']['output'];
+  /** The ancillary's own wastage rate (%) as a supply, added on top of the ratio; 0 when none */
+  ownWastageRate: Scalars['Float']['output'];
   /** The principal line's monthly demand */
   principalMonthlyConsumption: Scalars['Float']['output'];
   /** The principal's monthly demand net of the deducted wastage */
@@ -1399,6 +1408,7 @@ export type CampaignConnector = {
 };
 
 export type CampaignFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
@@ -1429,11 +1439,10 @@ export type CampaignMutationsUpsertCampaignArgs = {
 
 export type CampaignNode = {
   __typename: 'CampaignNode';
-  endDate?: Maybe<Scalars['NaiveDate']['output']>;
+  code: Scalars['String']['output'];
   id: Scalars['String']['output'];
   kind: CampaignKindNode;
   name: Scalars['String']['output'];
-  startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
 export enum CampaignSortFieldInput {
@@ -6092,6 +6101,12 @@ export type ItemNode = {
    */
   stockOnHand: Scalars['Int']['output'];
   strength?: Maybe<Scalars['String']['output']>;
+  /**
+   * This item's own wastage rate (%) as an ancillary supply, added on top of what the
+   * links ordering it give (e.g. syringes broken or dropped); 0 when none. Stored on
+   * those links (`ancillaryFor`), so an item no link orders has none.
+   */
+  supplyWastageRate: Scalars['Float']['output'];
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
   universalCode: Scalars['String']['output'];
@@ -11357,6 +11372,25 @@ export type SetSiteMultiDeviceNode = {
   id: Scalars['Int']['output'];
 };
 
+export type SetSupplyWastageRateError = {
+  __typename: 'SetSupplyWastageRateError';
+  error: SetSupplyWastageRateErrorInterface;
+};
+
+export type SetSupplyWastageRateErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type SetSupplyWastageRateInput = {
+  itemId: Scalars['String']['input'];
+  /** Percent, at least 0 and below 100; 0 clears it */
+  wastageRate: Scalars['Float']['input'];
+};
+
+export type SetSupplyWastageRateResponse =
+  | SetSupplyWastageRateError
+  | SupplyWastageRateNode;
+
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
   nodes: Array<ShippingMethodNode>;
@@ -12089,6 +12123,18 @@ export type SupplyRequestedQuantityInput = {
 export type SupplyRequestedQuantityResponse =
   | RequisitionLineConnector
   | SupplyRequestedQuantityError;
+
+/** The rate saved for the item */
+export type SupplyWastageRateNode = {
+  __typename: 'SupplyWastageRateNode';
+  itemId: Scalars['String']['output'];
+  wastageRate: Scalars['Float']['output'];
+};
+
+export type SupplyWastageRateOutOfRange = SetSupplyWastageRateErrorInterface & {
+  __typename: 'SupplyWastageRateOutOfRange';
+  description: Scalars['String']['output'];
+};
 
 /**
  * State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync
@@ -13859,11 +13905,11 @@ export type UpsertCampaignErrorInterface = {
 };
 
 export type UpsertCampaignInput = {
-  endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** Omit to leave the stored code alone; blank clears it */
+  code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   kind?: InputMaybe<CampaignKindNode>;
   name: Scalars['String']['input'];
-  startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpsertCampaignResponse = CampaignNode | UpsertCampaignError;

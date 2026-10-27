@@ -4,8 +4,9 @@ pub mod item;
 pub mod item_variant;
 pub mod packaging_variant;
 use ancillary_item::{
-    DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem, UpsertAncillaryItemError,
-    delete_ancillary_item, get_ancillary_items, upsert_ancillary_item,
+    DeleteAncillaryItem, DeleteAncillaryItemError, SetSupplyWastageRate, SetSupplyWastageRateError,
+    UpsertAncillaryItem, UpsertAncillaryItemError, delete_ancillary_item, get_ancillary_items,
+    set_supply_wastage_rate, upsert_ancillary_item,
 };
 use bundled_item::{
     DeleteBundledItem, DeleteBundledItemError, UpsertBundledItem, UpsertBundledItemError,
@@ -146,6 +147,14 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteAncillaryItem,
     ) -> Result<String, DeleteAncillaryItemError> {
         delete_ancillary_item(ctx, input)
+    }
+
+    fn set_supply_wastage_rate(
+        &self,
+        ctx: &ServiceContext,
+        input: SetSupplyWastageRate,
+    ) -> Result<f64, SetSupplyWastageRateError> {
+        set_supply_wastage_rate(ctx, input)
     }
 }
 
