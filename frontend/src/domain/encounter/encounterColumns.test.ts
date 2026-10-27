@@ -11,9 +11,12 @@ import {
 // spec/patients/cases/OMS-REG-DIS-02.61. t() falls back to the key with no
 // dictionary loaded, so the timing chip reads as its two keys.
 
-const now = new Date('2026-10-20T10:00:00Z');
-const past = '2026-10-19T10:00:00Z';
-const ahead = '2026-10-21T10:00:00Z';
+// Local-day instants (the timing is judged by the device's calendar day), so
+// the tests read the same in every zone: noon today, noon the days either
+// side.
+const now = new Date(2026, 9, 20, 12, 0);
+const past = new Date(2026, 9, 19, 12, 0).toISOString();
+const ahead = new Date(2026, 9, 21, 12, 0).toISOString();
 const MISSED = 'label.encounter label.encounter-status-missed';
 const SCHEDULED = 'label.encounter label.encounter-status-scheduled';
 
@@ -45,8 +48,19 @@ describe('statusEventTexts', () => {
 });
 
 describe('encounterTiming', () => {
-  it('is missed for a Scheduled encounter whose start has passed (OMS-REG-DIS-11.15)', () => {
+  it('is missed for a Scheduled encounter whose day has passed (OMS-REG-DIS-11.15)', () => {
     expect(encounterTiming('PENDING', past, now)).toBe('missed');
+  });
+
+  it('is neither for a Scheduled encounter due today, whatever the hour', () => {
+    const earlierToday = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+    const laterToday = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    expect(
+      encounterTiming('PENDING', earlierToday.toISOString(), now)
+    ).toBeUndefined();
+    expect(
+      encounterTiming('PENDING', laterToday.toISOString(), now)
+    ).toBeUndefined();
   });
 
   it('is scheduled for a Scheduled encounter whose start is ahead (OMS-REG-DIS-11.16)', () => {

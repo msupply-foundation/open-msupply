@@ -238,12 +238,14 @@ ARG CARGO_BUILD_JOBS
 # context's mtimes, and a runner's checkout keeps a file's mtime until git
 # rewrites it, so an unchanged file can be older than a build of a DIFFERENT
 # version of it that another branch, or CI's base-commit build, left in this
-# shared mount - and cargo would link that one. Touched inside the same RUN, so
-# it never survives as a cached layer: either BuildKit reuses this whole step,
-# whose output came from identical inputs, or the step runs and every workspace
-# crate recompiles. Dependencies are untouched: they live in the registry
-# mount, keyed by version. Also covers the files build scripts watch outside
-# server/ (locales, generated reports).
+# shared mount - and cargo would link that one. It happened: develop's images
+# reported 3.4 after the bump to 3.5, the version being package.json compiled
+# into repository. Touched inside the same RUN, so it never survives as a
+# cached layer: either BuildKit reuses this whole step, whose output came from
+# identical inputs, or the step runs and every workspace crate recompiles.
+# Dependencies are untouched: they live in the registry mount, keyed by
+# version. Also covers the files build scripts watch outside server/ (locales,
+# generated reports).
 #
 # The registry mount is sharing=shared: it is append-mostly downloaded .crate
 # files and cargo does its own locking, exactly as it does on a dev machine

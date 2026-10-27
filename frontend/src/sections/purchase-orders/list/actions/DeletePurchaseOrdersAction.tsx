@@ -1,7 +1,12 @@
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import type { Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -132,6 +137,12 @@ export const DeletePurchaseOrdersDialog = (
         { storeId: props.storeId, id: order.id },
         { returnGraphqlErrors: true }
       );
+      // The permission is per store, so every other order would be refused too.
+      if (result.kind === 'graphqlError' && isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        props.onClose();
+        return;
+      }
       outcomes.push(deleteOutcome(order.id, result));
     }
     const summary = summariseOutcomes(outcomes);

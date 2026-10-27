@@ -33,7 +33,7 @@ vi.mock('@/api/graphql', async importOriginal => {
   };
 });
 
-const { buildScannedInsertInput, resolveAssetScan } =
+const { buildScannedInsertInput, resolveAssetScan, scannedAssetFacts } =
   await import('./assetScan');
 
 const GS = '\u001d';
@@ -51,6 +51,7 @@ const draft = {
   assetNumber: '12345:SN-9',
   serialNumber: 'SN-9',
   catalogueItemId: 'cat-1',
+  catalogueItem: { code: 'E003/042', model: 'TCW 2000 AC' },
   warrantyStart: '2024-01-01',
   warrantyEnd: '2029-01-01',
   installationDate: '2026-09-23',
@@ -200,5 +201,26 @@ describe('buildScannedInsertInput', () => {
       lockedFieldsJson:
         '{"serialNumber":true,"catalogueItemId":true,"warrantyStart":true,"warrantyEnd":true}',
     });
+  });
+});
+
+describe('scannedAssetFacts', () => {
+  it('OMS-REG-CCE-04.38 shows what will be created: model and code, serial, asset number', () => {
+    expect(scannedAssetFacts(draft)).toEqual([
+      { label: 'label.model', value: 'TCW 2000 AC (E003/042)' },
+      { label: 'label.serial', value: 'SN-9' },
+      { label: 'label.asset-number', value: '12345:SN-9' },
+    ]);
+  });
+
+  it('OMS-REG-CCE-04.38 leaves out what the label did not supply', () => {
+    expect(
+      scannedAssetFacts({
+        ...draft,
+        catalogueItem: null,
+        serialNumber: null,
+        assetNumber: '12345:',
+      })
+    ).toEqual([{ label: 'label.asset-number', value: '12345:' }]);
   });
 });
