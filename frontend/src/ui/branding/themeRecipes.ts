@@ -461,6 +461,7 @@ export const ROLES: Record<RoleName, RoleSpec> = {
       received: ['--status-received'],
       verified: ['--status-verified'],
       cancelled: ['--status-cancelled'],
+      overdue: ['--status-overdue'],
       finalised: ['--status-finalised'],
     },
     tokens: [], // per-member only; a status is set, never derived

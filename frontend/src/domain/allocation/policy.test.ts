@@ -16,7 +16,11 @@ import {
   availableUnits,
   distinctPackSizes,
 } from './units';
-import { deriveIssueWarnings } from './warnings';
+import {
+  deriveIssueWarnings,
+  distributionOutcome,
+  expiredSkipReport,
+} from './warnings';
 
 // The shared barred-batch policy, FEFO comparator, lens conversion, and
 // warning derivation (spec/stock-allocation).
@@ -481,6 +485,28 @@ describe('deriveIssueWarnings', () => {
         warning => warning.kind
       )
     ).toEqual(['over-allocated', 'skipped-barred']);
+  });
+});
+
+// rules.md § reporting — the expired skip report by outcome, shared by every
+// issuing line editor (OMS-REG-SMV-11.44).
+describe('expiredSkipReport', () => {
+  const report = (shortfallUnits: number, expiredStockPreventIssue: boolean) =>
+    expiredSkipReport(
+      distributionOutcome(
+        { shortfallUnits },
+        prefs({ expiredStockPreventIssue })
+      )
+    );
+
+  it('a met request warns against picking the expired stock, guard or not', () => {
+    expect(report(0, false)).toBe('skipped');
+    expect(report(0, true)).toBe('skipped');
+  });
+
+  it('a short request says whether the expired stock can be issued by hand', () => {
+    expect(report(5, false)).toBe('not-auto-allocated');
+    expect(report(5, true)).toBe('cannot-issue');
   });
 });
 

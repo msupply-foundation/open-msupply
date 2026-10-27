@@ -104,9 +104,7 @@ fn map_error(error: ServiceError) -> Result<UpsertCampaignErrorInterface> {
         // Generic errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
-        ServiceError::CampaignDoesNotExist => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

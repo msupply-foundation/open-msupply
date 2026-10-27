@@ -2524,7 +2524,6 @@
   "messages.results-found": "Foram encontrados {{totalCount}} resultados",
   "messages.results-over-limit": "Mostrando apenas os primeiros {{limit}} resultados; por favor refine sua busca",
   "messages.rnr-not-all-lines-confirmed": "Nem todas as linhas foram confirmadas. Tens certeza de que gostaria de finalizar?",
-  "messages.save-encounter-as-visited": "Salvar consulta como 'Visitado'?",
   "messages.saved": "Salvo",
   "messages.scan-disabled-warning": "Não foi possível escanear. Por favor, feche a janela modal de edição do item para continuar",
   "messages.scanner-connected": "Conectado",

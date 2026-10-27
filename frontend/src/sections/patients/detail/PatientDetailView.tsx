@@ -54,6 +54,7 @@ import type { InsurancePolicyFragment } from './insurance/insurance.generated';
 import { ProgramEnrolmentsPanel } from './programs/ProgramEnrolmentsPanel';
 import { EncountersPanel } from './programs/EncountersPanel';
 import {
+  encounterTypesFor,
   fetchFormRegistries,
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
@@ -69,6 +70,7 @@ import {
 } from '@/sections/program-enrolment/EnrolmentModal';
 import {
   CreateEncounterDialog,
+  startsNow,
   type CreatedEncounter,
 } from './programs/CreateEncounterDialog';
 import { EncounterFormModal } from './programs/EncounterFormModal';
@@ -240,12 +242,8 @@ const PatientDetailView: Component = () => {
       gated(immunisationContexts)
     );
   const enrolledTypes = () => new Set(enrolments().map(e => e.type));
-  const encounterRegistries = () => {
-    const contexts = new Set(enrolments().map(e => e.contextId));
-    return registries().filter(
-      r => r.category === 'ENCOUNTER' && contexts.has(r.contextId)
-    );
-  };
+  const encounterRegistries = () =>
+    encounterTypesFor(registries(), enrolments());
   const canAddEncounter = () => enrolments().length > 0;
 
   // A new enrolment or encounter is refused at the click, before its picker
@@ -288,8 +286,7 @@ const PatientDetailView: Component = () => {
   // scheduled, and the patient's encounter list shows it.
   const encounterCreated = (created: CreatedEncounter) => {
     setCreateEncounterOpen(false);
-    const soon = Date.now() + 5 * 60 * 1000;
-    if (new Date(created.startDatetime).getTime() <= soon) {
+    if (startsNow(created.startDatetime)) {
       openEncounter({ id: created.encounterId });
       return;
     }
