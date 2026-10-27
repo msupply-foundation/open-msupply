@@ -61,6 +61,13 @@ describe('measure', () => {
     expect(m.app.css.total).toBe(gz(files['assets/index-EEEEEEEE.css']));
     // Badge is shared, so it's app weight, not discovery-only.
     expect(m.discoveryOnly.js.count).toBe(1);
+    // Up front is the static imports only: the lazy chunk is left out.
+    expect(Object.keys(m.upfront.js.byName).sort()).toEqual([
+      'assets/Badge.js',
+      'assets/index.js',
+    ]);
+    expect(m.upfront.js.total).toBe(appJs[0] + appJs[1]);
+    expect(m.upfront.css.total).toBe(m.app.css.total);
     expect(Object.keys(m.app.js.byName).sort()).toEqual([
       'assets/Badge.js',
       'assets/index.js',
@@ -78,13 +85,21 @@ describe('measure', () => {
 });
 
 describe('compareSizes', () => {
-  const sizes = (js, css = {}) => {
+  // Every chunk counts as up front unless named in `lazy`.
+  const sizes = (js, css = {}, lazy = []) => {
     const part = byName => ({
       total: Object.values(byName).reduce((a, b) => a + b, 0),
       count: Object.keys(byName).length,
       byName,
     });
-    return { app: { js: part(js), css: part(css) } };
+    const upfront = byName =>
+      Object.fromEntries(
+        Object.entries(byName).filter(([n]) => !lazy.includes(n))
+      );
+    return {
+      app: { js: part(js), css: part(css) },
+      upfront: { js: part(upfront(js)), css: part(upfront(css)) },
+    };
   };
   const base = sizes({ 'assets/index.js': 100_000, 'assets/Badge.js': 2_000 });
 
@@ -108,20 +123,54 @@ describe('compareSizes', () => {
     expect(compareSizes(base, cssOnly).significant).toBe(true);
   });
 
-  it('lists new, removed and moved chunks, biggest first', () => {
-    const pr = sizes({
-      'assets/index.js': 100_000 + CHUNK_BYTES,
-      'assets/Feature.js': 5_000,
-    });
+  it('lists new, removed and moved chunks, biggest first, and how each loads', () => {
+    const pr = sizes(
+      {
+        'assets/index.js': 100_000 + CHUNK_BYTES,
+        'assets/Feature.js': 5_000,
+      },
+      {},
+      ['assets/Feature.js']
+    );
     const md = compareSizes(base, pr, { baseSha: '0123456789abcdef' }).markdown;
     expect(md).toContain('against `0123456789`');
     const rows = md.split('\n').filter(l => l.startsWith('| `'));
     expect(rows).toEqual([
-      '| `assets/Feature.js` | new | 4.9 KB | +4.9 KB |',
-      '| `assets/Badge.js` | 2.0 KB | removed | −2.0 KB |',
-      '| `assets/index.js` | 97.7 KB | 98.2 KB | +0.5 KB |',
+      '| `assets/Feature.js` | lazily | new | 4.9 KB | +4.9 KB |',
+      '| `assets/Badge.js` | up front | 2.0 KB | removed | −2.0 KB |',
+      '| `assets/index.js` | up front | 97.7 KB | 98.2 KB | +0.5 KB |',
     ]);
     expect(md).toContain('bundle-size-by-pr.md');
+  });
+
+  it('reports up front and total separately', () => {
+    const pr = sizes(
+      {
+        'assets/index.js': 100_000,
+        'assets/Badge.js': 2_000,
+        'assets/Lazy.js': 3_000,
+      },
+      {},
+      ['assets/Lazy.js']
+    );
+    const md = compareSizes(base, pr).markdown;
+    expect(md).toContain(
+      '| JS up front | 99.6 KB (2 chunks) | 99.6 KB (2 chunks) | ±0.0 KB'
+    );
+    expect(md).toContain(
+      '| JS total (tracked) | 99.6 KB (2 chunks) | 102.5 KB (3 chunks) | +2.9 KB'
+    );
+  });
+
+  it('is significant when code moves up front without changing the total', () => {
+    const lazyBase = sizes(
+      { 'assets/index.js': 100_000, 'assets/Badge.js': 2_000 },
+      {},
+      ['assets/Badge.js']
+    );
+    const r = compareSizes(lazyBase, base);
+    expect(base.app.js.total).toBe(lazyBase.app.js.total);
+    expect(r.significant).toBe(true);
   });
 
   it('leaves out chunks that barely moved', () => {

@@ -6,7 +6,9 @@
 // reachable from index.html plus the shared-module facade entries; chunks
 // only the discovery page reaches are the shells' cost, never served to a
 // browser by a server, so they are reported on their own line and excluded
-// from the tracked series.
+// from the tracked series. "Up front" is the part of the served app the page
+// loads before the first screen: index.html's static imports, which it
+// preloads. The rest, the plugin facades included, is fetched lazily.
 //
 //   pnpm build && node scripts/bundle-size.mjs [dist] [--json]
 //
@@ -18,6 +20,7 @@ import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 const DISCOVERY_PAGE = 'discovery.html';
+const APP_PAGE = 'index.html';
 
 // assets/Badge-BiJqBSfC.js → assets/Badge.js: the name a chunk keeps from
 // build to build, so two builds can be compared chunk by chunk.
@@ -30,14 +33,17 @@ export const measure = dist => {
   );
 
   // Every manifest key reachable from the given roots, static and dynamic
-  // imports alike (a dynamic import is still shipped weight).
-  const reach = roots => {
+  // imports alike (a dynamic import is still shipped weight). With
+  // staticOnly, just what loads before the first screen: the chunks the page
+  // preloads, not the ones a screen fetches when it opens.
+  const reach = (roots, { staticOnly = false } = {}) => {
     const seen = new Set();
     const walk = key => {
       if (seen.has(key) || !manifest[key]) return;
       seen.add(key);
       for (const k of manifest[key].imports ?? []) walk(k);
-      for (const k of manifest[key].dynamicImports ?? []) walk(k);
+      if (!staticOnly)
+        for (const k of manifest[key].dynamicImports ?? []) walk(k);
     };
     roots.forEach(walk);
     return seen;
@@ -63,7 +69,11 @@ export const measure = dist => {
   };
 
   const entries = Object.keys(manifest).filter(k => manifest[k].isEntry);
-  const app = reach(entries.filter(k => k !== DISCOVERY_PAGE));
+  const appEntries = entries.filter(k => k !== DISCOVERY_PAGE);
+  const app = reach(appEntries);
+  // The page alone, not the shared-module facades: those load only when an
+  // installed plugin imports them, after sign-in.
+  const upfront = reach([APP_PAGE], { staticOnly: true });
   const all = reach(entries);
   const appJs = jsFiles(app);
   const appCss = cssFiles(app);
@@ -74,6 +84,7 @@ export const measure = dist => {
 
   return {
     app: { js: sizes(appJs), css: sizes(appCss) },
+    upfront: { js: sizes(jsFiles(upfront)), css: sizes(cssFiles(upfront)) },
     discoveryOnly: { js: sizes(discoveryOnlyJs), css: sizes(discoveryOnlyCss) },
   };
 };
@@ -88,12 +99,18 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   if (json) {
     console.log(JSON.stringify(m));
   } else {
-    const { app, discoveryOnly } = m;
+    const { app, upfront, discoveryOnly } = m;
     console.log(
       `served app JS gzip:      ${kb(app.js.total)} (${app.js.count} chunks)  <- the tracked number`
     );
     console.log(
       `served app CSS gzip:     ${kb(app.css.total)} (${app.css.count} files)`
+    );
+    console.log(
+      `  of which up front JS:  ${kb(upfront.js.total)} (${upfront.js.count} chunks)`
+    );
+    console.log(
+      `  of which up front CSS: ${kb(upfront.css.total)} (${upfront.css.count} files)`
     );
     console.log(
       `discovery-only JS gzip:  ${kb(discoveryOnly.js.total)} (${discoveryOnly.js.count} chunks)`

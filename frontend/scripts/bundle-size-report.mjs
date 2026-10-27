@@ -4,9 +4,10 @@
 //
 //   node scripts/bundle-size-report.mjs base.json pr.json [--base <sha>]
 //
-// Prints { significant, markdown }. `significant` is whether the tracked
-// numbers moved enough to be worth a comment: a PR that doesn't change the
-// bundle gets no comment (the job summary still has the table).
+// Prints { significant, markdown }. `significant` is whether the total JS or
+// CSS, or the JS loaded up front, moved enough to be worth a comment: a PR
+// that doesn't change the bundle gets no comment (the job summary still has
+// the table).
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -23,8 +24,8 @@ const kb = n => `${(n / 1024).toFixed(1)} KB`;
 const signedKb = n =>
   `${n > 0 ? '+' : n < 0 ? '−' : '±'}${(Math.abs(n) / 1024).toFixed(1)} KB`;
 const pct = (delta, base) =>
-  base
-    ? ` (${delta >= 0 ? '+' : '−'}${Math.abs((100 * delta) / base).toFixed(1)}%)`
+  base && delta
+    ? ` (${delta > 0 ? '+' : '−'}${Math.abs((100 * delta) / base).toFixed(1)}%)`
     : '';
 
 const chunkRows = (base, pr) => {
@@ -42,14 +43,22 @@ const chunkRows = (base, pr) => {
 };
 
 export const compareSizes = (base, pr, { baseSha } = {}) => {
-  const js = pr.app.js.total - base.app.js.total;
-  const css = pr.app.css.total - base.app.css.total;
-  const significant =
-    Math.abs(js) >= SIGNIFICANT_BYTES || Math.abs(css) >= SIGNIFICANT_BYTES;
+  const moved = part => Math.abs(part(pr).total - part(base).total);
+  // Up front on its own too: code moving from a lazy chunk into the first
+  // screen's load leaves the total alone but is exactly what to catch.
+  const significant = [m => m.app.js, m => m.app.css, m => m.upfront.js].some(
+    part => moved(part) >= SIGNIFICANT_BYTES
+  );
 
   const row = (label, b, p, unit) =>
     `| ${label} | ${kb(b.total)} (${b.count} ${unit}) | ${kb(p.total)} (${p.count} ${unit}) | ${signedKb(p.total - b.total)}${pct(p.total - b.total, b.total)} |`;
 
+  const upfrontNames = new Set(
+    [base, pr].flatMap(m => [
+      ...Object.keys(m.upfront.js.byName),
+      ...Object.keys(m.upfront.css.byName),
+    ])
+  );
   const chunks = [
     ...chunkRows(base.app.js.byName, pr.app.js.byName),
     ...chunkRows(base.app.css.byName, pr.app.css.byName),
@@ -61,8 +70,12 @@ export const compareSizes = (base, pr, { baseSha } = {}) => {
     '',
     '| | Base | This PR | Change |',
     '|---|---|---|---|',
-    row('JS (tracked)', base.app.js, pr.app.js, 'chunks'),
-    row('CSS', base.app.css, pr.app.css, 'files'),
+    row('JS up front', base.upfront.js, pr.upfront.js, 'chunks'),
+    row('JS total (tracked)', base.app.js, pr.app.js, 'chunks'),
+    row('CSS up front', base.upfront.css, pr.upfront.css, 'files'),
+    row('CSS total', base.app.css, pr.app.css, 'files'),
+    '',
+    '_Up front_ is what loads before the first screen; the rest of the total loads when a screen that needs it opens.',
   ];
   if (chunks.length) {
     const shown = chunks.slice(0, MAX_CHUNK_ROWS);
@@ -70,11 +83,11 @@ export const compareSizes = (base, pr, { baseSha } = {}) => {
       '',
       `<details><summary>Chunks that changed by ${kb(CHUNK_BYTES)} or more, appeared or went (${chunks.length})</summary>`,
       '',
-      '| Chunk | Base | This PR | Change |',
-      '|---|---|---|---|',
+      '| Chunk | Loads | Base | This PR | Change |',
+      '|---|---|---|---|---|',
       ...shown.map(
         r =>
-          `| \`${r.name}\` | ${r.base === undefined ? 'new' : kb(r.base)} | ${r.pr === undefined ? 'removed' : kb(r.pr)} | ${signedKb(r.delta)} |`
+          `| \`${r.name}\` | ${upfrontNames.has(r.name) ? 'up front' : 'lazily'} | ${r.base === undefined ? 'new' : kb(r.base)} | ${r.pr === undefined ? 'removed' : kb(r.pr)} | ${signedKb(r.delta)} |`
       ),
       ...(chunks.length > shown.length
         ? ['', `…and ${chunks.length - shown.length} more.`]
