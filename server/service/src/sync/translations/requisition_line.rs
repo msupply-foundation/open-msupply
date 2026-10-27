@@ -594,6 +594,7 @@ mod tests {
                         item_quantity: 1.0,
                         ancillary_quantity: 2.0,
                         wastage_rate: 0.0,
+                        own_wastage_rate: 0.0,
                     }],
                 })
                 .to_json(),

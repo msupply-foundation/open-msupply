@@ -87,3 +87,25 @@ export type DeleteAncillaryItemResult = {
 export const DeleteAncillaryItem = {
   query: "mutation deleteAncillaryItem($storeId: String!, $input: DeleteAncillaryItemInput!) {\n  centralServer {\n    ancillaryItem {\n      deleteAncillaryItem(storeId: $storeId, input: $input) {\n        __typename\n        ... on DeleteResponse {\n          id\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeleteAncillaryItemResult, DeleteAncillaryItemVariables>;
+
+export type SetSupplyWastageRateVariables = {
+  storeId: string;
+  input: {
+    itemId: string;
+    wastageRate: number;
+  };
+};
+
+export type SetSupplyWastageRateResult = {
+  centralServer: {
+  ancillaryItem: {
+  setSupplyWastageRate: {
+  __typename: "SetSupplyWastageRateError" | "SupplyWastageRateNode";
+};
+};
+};
+};
+
+export const SetSupplyWastageRate = {
+  query: "mutation setSupplyWastageRate($storeId: String!, $input: SetSupplyWastageRateInput!) {\n  centralServer {\n    ancillaryItem {\n      setSupplyWastageRate(storeId: $storeId, input: $input) {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<SetSupplyWastageRateResult, SetSupplyWastageRateVariables>;
