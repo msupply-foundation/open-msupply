@@ -2344,7 +2344,6 @@
   "messages.results-found": "{{totalCount}} نتیجه پیدا شد",
   "messages.results-over-limit": "فقط {{limit}} نتیجه اول نمایش داده می‌شود - لطفاً جستجوی خود را دقیق‌تر کنید",
   "messages.rnr-not-all-lines-confirmed": "همه خطوط به عنوان تأیید‌شده علامت‌گذاری نشده‌اند. آیا آماده نهایی کردن هستید؟",
-  "messages.save-encounter-as-visited": "رویارویی را به عنوان بازدید شده ذخیره کنید؟",
   "messages.saved": "ذخیره شد",
   "messages.scan-disabled-warning": "امکان اسکن وجود ندارد. لطفاً برای ادامه، صفحه کوچک واکسین ها و مواد خشک را ببندید",
   "messages.scanner-connected": "وصل گردید",
