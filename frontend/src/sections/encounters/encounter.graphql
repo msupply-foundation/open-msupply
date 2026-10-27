@@ -1,0 +1,135 @@
+# The encounter record screen's header facts: who the encounter is for (with
+# their date of birth, for the age the header shows), its program and its
+# document's name, which the document form host loads the document by. The
+# document itself, draft and all, is the form host's (domain/documentForm).
+# Deleted encounters are included, so a link to one opens rather than
+# answering not-found.
+
+fragment EncounterRecord on EncounterNode {
+  __typename
+  id
+  type
+  patientId
+  patient {
+    __typename
+    id
+    name
+    dateOfBirth
+  }
+  document {
+    __typename
+    name
+  }
+  programEnrolment {
+    __typename
+    # The vaccination card shows for an immunisation enrolment
+    # (spec/vaccination-card S2); the Medical file button opens the enrolment
+    # by its document's name.
+    id
+    isImmunisationProgram
+    document {
+      __typename
+      name
+      documentRegistry {
+        __typename
+        name
+      }
+    }
+  }
+}
+
+query encounterRecord($storeId: String!, $id: String!) {
+  encounters(
+    storeId: $storeId
+    filter: { id: { equalTo: $id }, includeDeleted: true }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...EncounterRecord
+      }
+    }
+  }
+}
+
+# The side panel's Previous encounters: the patient's earlier encounters of
+# the same type, newest first — started on or before the open encounter's
+# visit date (the bound is inclusive; the caller drops the open one and any
+# at the same instant). Scoped to the programs the user may read, like the
+# list; the resolver leaves deleted ones out. One more than the panel shows,
+# since the open encounter is among them.
+query encounterPrevious(
+  $storeId: String!
+  $patientId: String!
+  $type: String!
+  $before: DateTime!
+  $first: Int!
+) {
+  encounters(
+    storeId: $storeId
+    filter: {
+      patientId: { equalTo: $patientId }
+      type: { equalTo: $type }
+      startDatetime: { beforeOrEqualTo: $before }
+    }
+    sort: { key: startDatetime, desc: true }
+    page: { first: $first }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        startDatetime
+        status
+      }
+    }
+  }
+}
+
+# After Save as visited, what to suggest for the next visit (nextVisit.ts):
+# the date the encounter type's configuration works out from the visit just
+# saved, with its label, which the prompt offers as the reason. Read after
+# the save, since the server derives it from the saved document's events.
+query encounterNextVisit($storeId: String!, $id: String!) {
+  encounters(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        suggestedNextEncounter {
+          __typename
+          startDatetime
+          label
+        }
+      }
+    }
+  }
+}
+
+# For an immunisation enrolment, each dose's suggested date and label: the
+# next visit is suggested for the earliest still to come
+# (spec/vaccination-card rules § effects on the encounter).
+query encounterNextDoses($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    ... on VaccinationCardNode {
+      __typename
+      id
+      items {
+        __typename
+        id
+        label
+        suggestedDate
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

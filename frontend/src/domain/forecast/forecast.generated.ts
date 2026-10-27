@@ -20,6 +20,7 @@ export type ForecastLineFragment = {
   coverageRate: number;
   wastageRate: number;
   targetPopulation: number;
+  annualDosesPerPerson: number | null;
   lossFactor: number;
   annualTargetDoses: number;
   dosesPerUnit: number;
@@ -40,6 +41,7 @@ export type ForecastLineFragment = {
   itemQuantity: number;
   ancillaryQuantity: number;
   wastageRate: number;
+  ownWastageRate: number;
   principalUsableConsumption: number;
   monthlyConsumption: number;
 }>;

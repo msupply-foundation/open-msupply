@@ -120,6 +120,15 @@ RUN set -eux; \
         "libpq-dev:${DEB}" "libfontconfig-dev:${DEB}"; \
     fi; \
     rm -rf /var/lib/apt/lists/*
+# Debug builds only: release already has neither. Full debuginfo was most of a
+# debug image - 5.8GB on disk against 1GB compressed - and line tables still
+# give file:line in panics and backtraces. Incremental compilation is wasted on
+# a cache mount every build changes. Also what lets CI's test builds
+# (.github/ci/server.Dockerfile, which sets the same) share the debug cache
+# mounts: cargo fingerprints both, so a mismatch keeps two copies of every
+# crate in the one mount.
+ENV CARGO_INCREMENTAL=0 \
+    CARGO_PROFILE_DEV_DEBUG=line-tables-only
 WORKDIR /src
 COPY server server
 # Resolved once and sourced by both build stages, so the cross recipe lives in
@@ -198,18 +207,23 @@ COPY standard_forms/generated standard_forms/generated
 # is absent or stale, which is not this build.
 FROM server-base AS server-build-sqlite
 ARG TARGETARCH
+ARG CARGO_PROFILE
+# How many rustc processes at once. Unset compiles one per CPU, and the build
+# lanes share one machine: four builds at that width outgrew its RAM. Declared
+# here so a value passed in reaches cargo as an env var; see docker-image.yaml.
+ARG CARGO_BUILD_JOBS
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
 #
-# It deliberately does NOT carry CARGO_PROFILE. Cargo already separates profiles
-# into target/debug and target/release with their own fingerprints, so the two
-# coexist in one mount without interfering - and keeping the id as it is means
-# adding debug builds does not orphan the warm release cache that every release
-# and every develop merge depends on. The cost is a bigger mount (a debug target
-# dir is several times a release one, and the dev profile has incremental
-# compilation on by default); `docker builder prune --filter
-# type=exec.cachemount` is the release valve.
+# It also carries CARGO_PROFILE, and the registry mount does too - and that is
+# a trust boundary, not tidiness. Debug builds compile pull-request code: every
+# preview is one, and CI's test builds (.github/ci/server.Dockerfile) share the
+# debug mounts. Build scripts and proc-macros run with write access to every
+# mount they are given, so a release build sharing them would compile from
+# whatever an unreviewed branch left there. Release builds come only from
+# develop, RCs and tags, and keep mounts no pull request ever touches. Callers
+# pass `release` or `debug`, never `dev`, so each profile has one id.
 #
 # sharing=private, not locked: if two builds want the SAME id at once (a tag
 # build overlapping a develop merge, say), locked makes the second wait for the
@@ -218,14 +232,30 @@ ARG TARGETARCH
 # it is cold rather than free, and orphaned private caches accumulate on disk
 # (`docker builder prune --filter type=exec.cachemount`).
 #
+# Every file under /src gets a fresh mtime before cargo runs - correctness, not
+# speed. Cargo decides a workspace crate is fresh by comparing its sources'
+# mtimes with when it last built them, never their contents. COPY keeps the
+# context's mtimes, and a runner's checkout keeps a file's mtime until git
+# rewrites it, so an unchanged file can be older than a build of a DIFFERENT
+# version of it that another branch, or CI's base-commit build, left in this
+# shared mount - and cargo would link that one. It happened: develop's images
+# reported 3.4 after the bump to 3.5, the version being package.json compiled
+# into repository. Touched inside the same RUN, so it never survives as a
+# cached layer: either BuildKit reuses this whole step, whose output came from
+# identical inputs, or the step runs and every workspace crate recompiles.
+# Dependencies are untouched: they live in the registry mount, keyed by
+# version. Also covers the files build scripts watch outside server/ (locales,
+# generated reports).
+#
 # The registry mount is sharing=shared: it is append-mostly downloaded .crate
 # files and cargo does its own locking, exactly as it does on a dev machine
 # running two projects at once. Leaving it `locked` would serialise EVERY pair
 # of concurrent builds on the registry even when their target dirs differ,
 # which defeats the per-db and per-arch ids entirely.
-RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/target,sharing=private \
-    --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
+    --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
+    find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -236,12 +266,18 @@ RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/tar
 
 FROM server-base AS server-build-postgres
 ARG TARGETARCH
+ARG CARGO_PROFILE
+# How many rustc processes at once. Unset compiles one per CPU, and the build
+# lanes share one machine: four builds at that width outgrew its RAM. Declared
+# here so a value passed in reaches cargo as an env var; see docker-image.yaml.
+ARG CARGO_BUILD_JOBS
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
-RUN --mount=type=cache,id=cargo-target-postgres-$TARGETARCH,target=/src/server/target,sharing=private \
-    --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+RUN --mount=type=cache,id=cargo-target-postgres-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
+    --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
+    find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \

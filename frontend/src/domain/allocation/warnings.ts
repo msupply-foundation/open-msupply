@@ -6,7 +6,7 @@
 // ui-standards/controls.md § action feedback — never a toast).
 
 import type { Distribution } from './distributeIssue';
-import type { BarReason } from './policy';
+import type { AllocationPreferences, BarReason } from './policy';
 
 export type IssueWarning =
   /** Whole-pack rounding issued more than requested (OMS-REG-SMV-11.11). */
@@ -63,4 +63,37 @@ export const deriveIssueWarnings = (
         options.allocatedUnits + distribution.wholePackGapUnits,
     });
   return warnings;
+};
+
+/** What a line editor's expired skip report turns on (rules § reporting). */
+export interface DistributionOutcome {
+  /** The request was covered in full. */
+  met: boolean;
+  /** Expired stock stays manually issuable (its guard preference is off). */
+  expiredIssuable: boolean;
+}
+
+export const distributionOutcome = (
+  distribution: Pick<Distribution, 'shortfallUnits'>,
+  prefs: Pick<AllocationPreferences, 'expiredStockPreventIssue'>
+): DistributionOutcome => ({
+  met: distribution.shortfallUnits <= 0,
+  expiredIssuable: !prefs.expiredStockPreventIssue,
+});
+
+/**
+ * Which sentence a line editor's expired skip report reads, by outcome
+ * (rules § reporting; OMS-REG-SMV-11.44): a met request warns against picking
+ * the expired stock; a short one says whether it can still be issued by hand.
+ * Every issuing editor reports from this, so they read the same; each maps
+ * the variant to its own i18n key.
+ */
+export type ExpiredSkipReport =
+  'skipped' | 'not-auto-allocated' | 'cannot-issue';
+
+export const expiredSkipReport = (
+  outcome: DistributionOutcome
+): ExpiredSkipReport => {
+  if (outcome.met) return 'skipped';
+  return outcome.expiredIssuable ? 'not-auto-allocated' : 'cannot-issue';
 };

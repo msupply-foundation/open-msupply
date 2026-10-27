@@ -159,6 +159,7 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
         .min_idle(Some(1))
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
+            synchronous_off: true,
         }))
         .build(connection_manager)
         .expect("Failed to connect to database");

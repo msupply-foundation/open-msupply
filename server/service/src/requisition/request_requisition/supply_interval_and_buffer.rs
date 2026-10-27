@@ -216,11 +216,17 @@ mod test {
             })
             .unwrap();
         assert_eq!(
-            update(Some(3.5), None),
+            update(Some(5.0), None),
             Err(UpdateError::CannotChangeTargetMonthsOfStock)
         );
         assert_eq!(update(Some(4.0), Some(1.0)), Ok(4.0));
         assert_eq!(update(None, Some(2.0)), Ok(4.0));
+        // A target set before the store fixed it can move onto the store's, and not back off
+        assert_eq!(update(Some(3.5), None), Ok(3.5));
+        assert_eq!(
+            update(Some(4.0), None),
+            Err(UpdateError::CannotChangeTargetMonthsOfStock)
+        );
         // and a new order takes the store's supply interval + safety buffer, whatever
         // target is sent
         assert_eq!(insert("fixed_given_target", Some(1.0)), 3.5);

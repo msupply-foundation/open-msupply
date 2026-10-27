@@ -43,6 +43,9 @@ pub struct InsertInput {
     pub shipped_pack_size: Option<f64>,
     pub purchase_order_line_id: Option<String>,
     pub reason_option_id: Option<String>,
+    /// The barcode scanned or typed for the line, as read; recorded on the line
+    /// and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+    pub barcode: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -119,6 +122,7 @@ impl InsertInput {
             shipped_pack_size,
             purchase_order_line_id,
             reason_option_id,
+            barcode,
         } = self;
 
         ServiceInput {
@@ -152,7 +156,7 @@ impl InsertInput {
             reason_option_id,
             // Default
             stock_line_id: None,
-            barcode: None,
+            barcode,
             stock_on_hold: false,
         }
     }
@@ -208,6 +212,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
         | ServiceError::PurchaseOrderLineDoesNotExist
+        | ServiceError::PurchaseOrderLineNotFromLinkedOrder
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)

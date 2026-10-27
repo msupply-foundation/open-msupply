@@ -1,5 +1,4 @@
 use async_graphql::*;
-use chrono::NaiveDate;
 use graphql_core::{
     ContextExt,
     simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
@@ -16,8 +15,8 @@ use service::{
 pub struct UpsertCampaignInput {
     pub id: String,
     pub name: String,
-    pub start_date: Option<NaiveDate>,
-    pub end_date: Option<NaiveDate>,
+    /// Omit to leave the stored code alone; blank clears it
+    pub code: Option<String>,
     pub kind: Option<CampaignKindNode>,
 }
 
@@ -35,7 +34,8 @@ pub enum UpsertCampaignResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertCampaignErrorInterface {
-    DuplicateName(UniqueValueViolation),
+    // A duplicate name or code; `field` says which
+    UniqueValueViolation(UniqueValueViolation),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
@@ -68,8 +68,7 @@ impl UpsertCampaignInput {
         UpsertCampaign {
             id: self.id,
             name: self.name,
-            start_date: self.start_date,
-            end_date: self.end_date,
+            code: self.code,
             kind: self.kind.map(Into::into),
         }
     }
@@ -93,16 +92,19 @@ fn map_error(error: ServiceError) -> Result<UpsertCampaignErrorInterface> {
     let graphql_error = match error {
         // Structured errors
         ServiceError::DuplicateName => {
-            return Ok(UpsertCampaignErrorInterface::DuplicateName(
+            return Ok(UpsertCampaignErrorInterface::UniqueValueViolation(
                 UniqueValueViolation(UniqueValueKey::Name),
+            ));
+        }
+        ServiceError::DuplicateCode => {
+            return Ok(UpsertCampaignErrorInterface::UniqueValueViolation(
+                UniqueValueViolation(UniqueValueKey::Code),
             ));
         }
         // Generic errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
-        ServiceError::CampaignDoesNotExist | ServiceError::InvalidDates => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

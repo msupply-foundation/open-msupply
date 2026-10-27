@@ -1,4 +1,4 @@
-import { t, tPlural } from '../../intl';
+import { t, tPlural, type LocaleKey } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
 import { roundedText } from '../../intl/numberDisplay';
 import type {
@@ -86,13 +86,25 @@ export const courseTitle = (course: PopulationCourse): string =>
 // places — monthly demand keeps its fraction.
 export type ForecastStep = { substitution: string; result: string };
 
+// Whether step 1 counts the course's average doses per person per year in place
+// of its number of doses: only for a course that sets one, so a course counting
+// every dose (births) reads as it always has.
+const countsDosesPerPerson = (course: PopulationCourse): boolean =>
+  course.annualDosesPerPerson != null;
+
+/** Step 1's formula wording, matching its substitution's factors. */
+export const annualTargetFormulaKey = (course: PopulationCourse): LocaleKey =>
+  countsDosesPerPerson(course)
+    ? 'description.annual-target-doses-calculation-with-doses-per-person'
+    : 'description.annual-target-doses-calculation';
+
 export const populationSteps = (
   course: PopulationCourse
 ): [ForecastStep, ForecastStep] => [
   {
-    // 1. Annual target doses = target population × doses × (coverage/100) ×
-    // loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
+    // 1. Annual target doses = target population × (doses per person per year
+    // ?? doses) × (coverage/100) × loss factor.
+    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.annualDosesPerPerson ?? course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
     result: `= ${roundedText(course.annualTargetDoses)} ${t('label.doses-per-year')}`,
   },
   {
@@ -113,6 +125,20 @@ export const principalWastageDeduction = (
   principal.wastageRate > 0
     ? t('description.less-principal-wastage', {
         rate: formatNumber(principal.wastageRate),
+      })
+    : undefined;
+
+/**
+ * The ancillary's own wastage as a supply, added on top of the ratio — "÷ (1 −
+ * 20% own wastage)" — or undefined when it has none (spec/internal-orders › the
+ * Ancillary ratio method).
+ */
+export const supplyWastageAddition = (
+  principal: AncillaryRatioPrincipal
+): string | undefined =>
+  principal.ownWastageRate > 0
+    ? t('description.plus-supply-wastage', {
+        rate: formatNumber(principal.ownWastageRate),
       })
     : undefined;
 

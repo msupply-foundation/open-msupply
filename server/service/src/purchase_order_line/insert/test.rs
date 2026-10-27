@@ -401,4 +401,47 @@ mod insert {
         assert_eq!(stats.supplier_discountable_total, 60.0);
         assert_eq!(stats.order_total_after_discount, 79.0);
     }
+
+    #[actix_rt::test]
+    async fn insert_purchase_order_line_defaults_pack_size_to_the_items() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_purchase_order_line_defaults_pack_size_to_the_items",
+            MockDataInserts::all(),
+        )
+        .await;
+        repository::ItemRowRepository::new(&connection)
+            .upsert_one(&repository::ItemRow {
+                default_pack_size: 12.0,
+                ..mock_item_a()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        service_provider
+            .purchase_order_line_service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "line_default_pack".to_string(),
+                    purchase_order_id: repository::mock::mock_purchase_order_a().id,
+                    item_id_or_code: mock_item_a().id,
+                    requested_number_of_units: Some(24.0),
+                    price_per_pack_before_discount: Some(5.0),
+                    price_per_pack_after_discount: Some(5.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let line = PurchaseOrderLineRowRepository::new(&connection)
+            .find_one_by_id("line_default_pack")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.requested_pack_size, 12.0);
+        // 2 packs at 5.00
+        assert_eq!(line.line_total, 10.0);
+    }
 }

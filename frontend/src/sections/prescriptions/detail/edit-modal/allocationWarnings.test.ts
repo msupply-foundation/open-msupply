@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import type { IssueWarning } from '@/domain/allocation';
 import {
   issueWarningMessages,
   manualEntryMessages,
+  reportsExpiredSkip,
 } from './allocationWarnings';
+
+const units = { doses: false, dosesPerUnit: 1 };
+const short = { met: false, expiredIssuable: true };
 
 describe('issueWarningMessages (stock-allocation § reporting → banner descriptors)', () => {
   it('reports each skipped category as its own whole-sentence message (OMS-REG-SMV-11.7 — DIS-03.59)', () => {
@@ -14,7 +19,8 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
             reasons: ['on-hold', 'expired', 'unusable-vvm'],
           },
         ],
-        { doses: false, dosesPerUnit: 1 }
+        units,
+        short
       )
     ).toEqual([
       { key: 'messages.stock-on-hold' },
@@ -25,19 +31,47 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
 
   it('reports only the categories that applied (.59)', () => {
     expect(
-      issueWarningMessages([{ kind: 'skipped-barred', reasons: ['expired'] }], {
-        doses: false,
-        dosesPerUnit: 1,
-      })
+      issueWarningMessages(
+        [{ kind: 'skipped-barred', reasons: ['expired'] }],
+        units,
+        short
+      )
     ).toEqual([{ key: 'messages.stock-expired' }]);
+  });
+
+  it('a met request warns against picking the expired stock (DIS-03.76)', () => {
+    expect(
+      issueWarningMessages(
+        [{ kind: 'skipped-barred', reasons: ['expired', 'unusable-vvm'] }],
+        units,
+        { met: true, expiredIssuable: true }
+      )
+    ).toEqual([
+      { key: 'messages.stock-expired-skipped' },
+      { key: 'messages.stock-unusable-vvm' },
+    ]);
+  });
+
+  it('a short request under the expired guard says the stock cannot be issued (.77)', () => {
+    expect(
+      issueWarningMessages(
+        [{ kind: 'skipped-barred', reasons: ['expired'] }],
+        units,
+        { met: false, expiredIssuable: false }
+      )
+    ).toEqual([{ key: 'messages.stock-expired-cannot-issue' }]);
   });
 
   it('maps the split-pack warning to units (OMS-REG-SMV-11.32 — DIS-03.58)', () => {
     expect(
-      issueWarningMessages([{ kind: 'partial-packs', nearestAboveUnits: 30 }], {
-        doses: false,
-        dosesPerUnit: 2,
-      })
+      issueWarningMessages(
+        [{ kind: 'partial-packs', nearestAboveUnits: 30 }],
+        {
+          doses: false,
+          dosesPerUnit: 2,
+        },
+        short
+      )
     ).toEqual([
       { key: 'messages.partial-pack-warning-units', nearestAbove: 30 },
     ]);
@@ -45,10 +79,14 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
 
   it('converts the split-pack figure under the doses lens (.58)', () => {
     expect(
-      issueWarningMessages([{ kind: 'partial-packs', nearestAboveUnits: 30 }], {
-        doses: true,
-        dosesPerUnit: 2,
-      })
+      issueWarningMessages(
+        [{ kind: 'partial-packs', nearestAboveUnits: 30 }],
+        {
+          doses: true,
+          dosesPerUnit: 2,
+        },
+        short
+      )
     ).toEqual([
       { key: 'messages.partial-pack-warning-doses', nearestAbove: 60 },
     ]);
@@ -61,9 +99,44 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
           { kind: 'over-allocated', units: 3 },
           { kind: 'shortfall', units: 5 },
         ],
-        { doses: false, dosesPerUnit: 1 }
+        units,
+        short
       )
     ).toEqual([]);
+  });
+});
+
+describe('reportsExpiredSkip (what opens the Batches section — DIS-03.75)', () => {
+  it('opens it the same under the doses lens', () => {
+    const doses = { doses: true, dosesPerUnit: 10 };
+    const skipped: IssueWarning[] = [
+      { kind: 'skipped-barred', reasons: ['expired'] },
+    ];
+    for (const outcome of [short, { met: true, expiredIssuable: true }])
+      expect(
+        reportsExpiredSkip(issueWarningMessages(skipped, doses, outcome))
+      ).toBe(reportsExpiredSkip(issueWarningMessages(skipped, units, outcome)));
+    expect(
+      issueWarningMessages(skipped, doses, { met: true, expiredIssuable: true })
+    ).toEqual([{ key: 'messages.stock-expired-skipped' }]);
+  });
+
+  it('is set by any expired sentence', () => {
+    for (const key of [
+      'messages.stock-expired',
+      'messages.stock-expired-skipped',
+      'messages.stock-expired-cannot-issue',
+    ] as const)
+      expect(reportsExpiredSkip([{ key }])).toBe(true);
+  });
+
+  it('is not set by unusable-VVM stock or the pack warnings', () => {
+    expect(
+      reportsExpiredSkip([
+        { key: 'messages.stock-unusable-vvm' },
+        { key: 'messages.partial-pack-warning-units', nearestAbove: 10 },
+      ])
+    ).toBe(false);
   });
 });
 

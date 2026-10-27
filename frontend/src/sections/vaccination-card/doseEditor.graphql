@@ -1,0 +1,128 @@
+# The dose editor (spec/vaccination-card ui-surface S3): the dose and its
+# course (items, skip flag — vaccineCourseDose answers without authentication,
+# contract § access), the dose's vaccination when it has one, the store's
+# batches of a chosen item, and the two writes.
+
+fragment DoseEditorVaccination on VaccinationNode {
+  __typename
+  id
+  vaccinationDate
+  clinicianId
+  given
+  givenStoreId
+  notGivenReason
+  comment
+  facilityNameId
+  facilityFreeText
+  facilityName
+  item {
+    __typename
+    id
+    name
+  }
+  stockLine {
+    __typename
+    id
+    batch
+    itemId
+    expiryDate
+    availableNumberOfPacks
+    packSize
+    onHold
+  }
+  invoice {
+    __typename
+    id
+  }
+}
+
+query vaccinationDose($doseId: String!) {
+  vaccineCourseDose(id: $doseId) {
+    __typename
+    ... on VaccineCourseDoseNode {
+      id
+      label
+      minAgeMonths
+      maxAgeMonths
+      customAgeLabel
+      vaccineCourse {
+        __typename
+        id
+        name
+        canSkipDose
+        vaccineCourseItems {
+          __typename
+          id
+          itemId
+          name
+        }
+      }
+    }
+  }
+}
+
+query doseVaccination($storeId: String!, $id: String!) {
+  vaccination(storeId: $storeId, id: $id) {
+    ...DoseEditorVaccination
+  }
+}
+
+query vaccineBatches($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    __typename
+    ... on ItemConnector {
+      nodes {
+        __typename
+        id
+        doses
+        availableBatches(storeId: $storeId) {
+          __typename
+          nodes {
+            __typename
+            id
+            batch
+            expiryDate
+            availableNumberOfPacks
+            packSize
+            onHold
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
+  insertVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      id
+      invoice {
+        __typename
+        id
+      }
+    }
+  }
+}
+
+mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
+  updateVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      id
+      invoice {
+        __typename
+        id
+      }
+    }
+    ... on UpdateVaccinationError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

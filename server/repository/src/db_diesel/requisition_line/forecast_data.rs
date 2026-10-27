@@ -35,6 +35,11 @@ pub struct PopulationForecastCourse {
     pub coverage_rate: f64,
     pub wastage_rate: f64,
     pub target_population: f64,
+    /// The course's average doses a person gets in a year, used in place of
+    /// `number_of_doses` when set. None on a course without one, a forecast made before
+    /// courses carried it, or one converted from the legacy shape
+    #[serde(default)]
+    pub annual_doses_per_person: Option<f64>,
     pub loss_factor: f64,
     pub annual_target_doses: f64,
     pub doses_per_unit: f64,
@@ -61,6 +66,10 @@ pub struct AncillaryRatioPrincipal {
     /// captured by an older site, which never deducted it)
     #[serde(default)]
     pub wastage_rate: f64,
+    /// The ancillary's own wastage rate (%) as a supply, added on top of what the ratio
+    /// gives (e.g. syringes broken or dropped); 0 on a forecast captured by an older site
+    #[serde(default)]
+    pub own_wastage_rate: f64,
 }
 
 impl AncillaryRatioPrincipal {
@@ -70,10 +79,12 @@ impl AncillaryRatioPrincipal {
     }
 
     pub fn monthly_consumption(&self) -> f64 {
-        if self.item_quantity == 0.0 {
+        if self.item_quantity == 0.0 || !(0.0..100.0).contains(&self.own_wastage_rate) {
             return 0.0;
         }
-        self.principal_usable_consumption() * self.ancillary_quantity / self.item_quantity
+        self.principal_usable_consumption() * self.ancillary_quantity
+            / self.item_quantity
+            / (1.0 - self.own_wastage_rate / 100.0)
     }
 }
 
@@ -240,6 +251,7 @@ pub fn forecast_from_legacy(
                 coverage_rate: course.coverage_rate,
                 wastage_rate: course.wastage_rate,
                 target_population: course.target_population,
+                annual_doses_per_person: None,
                 loss_factor: course.loss_factor,
                 annual_target_doses: course.annual_target_doses,
                 doses_per_unit: course.doses_per_unit as f64,

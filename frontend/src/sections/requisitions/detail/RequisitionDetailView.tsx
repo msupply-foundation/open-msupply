@@ -1207,7 +1207,10 @@ const RequisitionDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="documents">
-                <RequisitionDocumentsTab node={node()} />
+                <RequisitionDocumentsTab
+                  node={node()}
+                  onChanged={() => void refetch()}
+                />
               </TabPanel>
               <TabPanel value="log">
                 {/* The shared activity-log surface; oldest first per

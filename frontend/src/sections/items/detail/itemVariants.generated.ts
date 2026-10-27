@@ -36,6 +36,7 @@ export type ItemVariantsResult = {
   packagingLevel: number;
   packSize: number | null;
   volumePerUnit: number | null;
+  barcode: string | null;
 }>;
   bundledItemVariants: Array<{
   id: string;
@@ -64,7 +65,7 @@ export type ItemVariantsResult = {
 };
 
 export const ItemVariants = {
-  query: "query itemVariants($storeId: String!, $itemId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        variants {\n          id\n          name\n          itemId\n          itemName\n          locationTypeId\n          locationType {\n            id\n            name\n            minTemperature\n            maxTemperature\n          }\n          manufacturerId\n          manufacturer(storeId: $storeId) {\n            id\n            name\n          }\n          vvmType\n          packagingVariants {\n            id\n            name\n            packagingLevel\n            packSize\n            volumePerUnit\n          }\n          bundledItemVariants {\n            id\n            ratio\n            bundledItemVariantId\n            bundledItemVariant {\n              id\n              name\n              itemName\n            }\n          }\n          bundlesWith {\n            id\n            ratio\n            principalItemVariantId\n            principalItemVariant {\n              id\n              name\n              itemId\n              itemName\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query itemVariants($storeId: String!, $itemId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        variants {\n          id\n          name\n          itemId\n          itemName\n          locationTypeId\n          locationType {\n            id\n            name\n            minTemperature\n            maxTemperature\n          }\n          manufacturerId\n          manufacturer(storeId: $storeId) {\n            id\n            name\n          }\n          vvmType\n          packagingVariants {\n            id\n            name\n            packagingLevel\n            packSize\n            volumePerUnit\n            barcode\n          }\n          bundledItemVariants {\n            id\n            ratio\n            bundledItemVariantId\n            bundledItemVariant {\n              id\n              name\n              itemName\n            }\n          }\n          bundlesWith {\n            id\n            ratio\n            principalItemVariantId\n            principalItemVariant {\n              id\n              name\n              itemId\n              itemName\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ItemVariantsResult, ItemVariantsVariables>;
 
 export type ItemVariantLocationTypesVariables = {

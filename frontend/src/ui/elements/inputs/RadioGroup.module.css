@@ -285,3 +285,28 @@
   outline: 2px solid var(--secondary-main);
   outline-offset: -2px;
 }
+
+/* Error state (the `error` prop): the unchosen rims go red, and the message —
+   icon + text, as Checkbox's — sits under the options. Nothing rests on the
+   colour alone. */
+.root[data-error] .input:not(:checked) {
+  box-shadow: inset 0 0 0 1px var(--error-main);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--error-main);
+}
+
+/* The glyph takes the error text's own colour — part of the line, not a
+   caution of its own (as Checkbox's). */
+.errorIcon {
+  font-size: 0.875em;
+  color: inherit;
+  flex-shrink: 0;
+}

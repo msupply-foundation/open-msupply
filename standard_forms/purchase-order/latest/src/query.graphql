@@ -51,7 +51,6 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       foreignExchangeRate
       status
       confirmedDatetime
-      orderTotalBeforeDiscount
       orderTotalAfterDiscount
       supplierDiscountAmount
       currency {

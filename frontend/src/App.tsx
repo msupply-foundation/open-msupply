@@ -52,6 +52,7 @@ import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { assetCatalogueRoutes } from './sections/asset-catalogue';
 import { patientsRoutes } from './sections/patients';
+import { encountersRoutes } from './sections/encounters';
 import { cliniciansRoutes } from './sections/clinicians';
 import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
 import { coldChainMonitoringRoutes } from './sections/cold-chain-monitoring';
@@ -121,6 +122,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
+  'dispensary/encounter': encountersRoutes,
   'dispensary/clinicians': cliniciansRoutes,
   // ONE section, TWO destinations: the same list and detail screens, differing
   // only in whether the list is pinned to the active store (spec/cold-chain-
@@ -390,8 +392,9 @@ export const App: Component = () => {
       </Switch>
       {/* Manual barcode input (spec/settings § Devices — barcode scanner):
           mounted once for the whole app because any screen that scans can
-          raise it, and it must sit ABOVE an open capture window without
-          covering what that window just filled in. Renders nothing unless
+          raise it, and it must sit ABOVE the screen that is scanning (the
+          receiving strip, a line editor) without covering what a scan just
+          filled in. Renders nothing unless
           the manual source has opened the prompt. */}
       <ManualScanInput />
       {/* The camera scan's UI (platform/barcodeSources/camera.ts): the

@@ -567,6 +567,7 @@ mod tests {
                         coverage_rate: 100.0,
                         wastage_rate: 0.0,
                         target_population: 1200.0,
+                        annual_doses_per_person: None,
                         loss_factor: 1.0,
                         annual_target_doses: 1200.0,
                         doses_per_unit: 1.0,
@@ -593,6 +594,7 @@ mod tests {
                         item_quantity: 1.0,
                         ancillary_quantity: 2.0,
                         wastage_rate: 0.0,
+                        own_wastage_rate: 0.0,
                     }],
                 })
                 .to_json(),

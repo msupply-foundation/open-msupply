@@ -18,6 +18,10 @@ export type AssetFromGs1DataResult = {
   assetNumber: string | null;
   serialNumber: string | null;
   catalogueItemId: string | null;
+  catalogueItem: {
+  code: string;
+  model: string;
+} | null;
   warrantyStart: string | null;
   warrantyEnd: string | null;
   installationDate: string | null;
@@ -38,5 +42,5 @@ export type AssetFromGs1DataResult = {
 };
 
 export const AssetFromGs1Data = {
-  query: "query assetFromGs1Data($storeId: String!, $gs1: [Gs1DataElement!]!) {\n  assetFromGs1Data(storeId: $storeId, gs1: $gs1) {\n    __typename\n    ... on AssetNode {\n      id\n      assetNumber\n      serialNumber\n      catalogueItemId\n      warrantyStart\n      warrantyEnd\n      installationDate\n      lockedFields {\n        serialNumber\n        catalogueItemId\n        warrantyStart\n        warrantyEnd\n      }\n    }\n    ... on ScannedDataParseError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "query assetFromGs1Data($storeId: String!, $gs1: [Gs1DataElement!]!) {\n  assetFromGs1Data(storeId: $storeId, gs1: $gs1) {\n    __typename\n    ... on AssetNode {\n      id\n      assetNumber\n      serialNumber\n      catalogueItemId\n      catalogueItem {\n        code\n        model\n      }\n      warrantyStart\n      warrantyEnd\n      installationDate\n      lockedFields {\n        serialNumber\n        catalogueItemId\n        warrantyStart\n        warrantyEnd\n      }\n    }\n    ... on ScannedDataParseError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<AssetFromGs1DataResult, AssetFromGs1DataVariables>;

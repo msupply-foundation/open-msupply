@@ -61,8 +61,8 @@ export const startKeyboardDispatcher = (): (() => void) => {
     if (shortcut.tier === 'global' && isTextEntry(document.activeElement))
       return;
 
-    // Claim the key from the browser, but ONLY once matched: Ctrl+S is Save,
-    // Mod+K is Chrome's omnibox, Alt+letter hits Firefox accesskeys. An
+    // Claim the key from the browser, but ONLY once matched: Mod+K is Chrome's
+    // omnibox, Alt+letter hits Firefox accesskeys. An
     // unmatched key is never touched (kdd/keyboard-layer § one preventDefault
     // policy).
     event.preventDefault();

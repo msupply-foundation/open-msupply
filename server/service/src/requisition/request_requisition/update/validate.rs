@@ -58,11 +58,13 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    // Program orders, rejected above, take their target from the order type
-    if input
-        .max_months_of_stock
-        .is_some_and(|months| months != requisition_row.max_months_of_stock)
-        && fixed_target_months_of_stock(connection, store_id)?.is_some()
+    // Program orders, rejected above, take their target from the order type. Where the store
+    // fixes the target, the only change allowed is onto it: an order whose target differs (set
+    // before the store fixed it, or since the store's interval changed) can be brought back.
+    if let Some(months) = input.max_months_of_stock
+        && months != requisition_row.max_months_of_stock
+        && let Some(fixed) = fixed_target_months_of_stock(connection, store_id)?
+        && months != fixed.total_months()
     {
         return Err(OutError::CannotChangeTargetMonthsOfStock);
     }

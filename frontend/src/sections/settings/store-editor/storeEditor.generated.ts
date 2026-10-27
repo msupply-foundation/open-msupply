@@ -55,7 +55,7 @@ export type StorePreferencesVariables = {
 
 export type StorePreferencesResult = {
   preferenceDescriptions: Array<{
-  key: "allowTrackingOfStockByDonor" | "authorisePurchaseOrder" | "customTranslations" | "customTranslationsV2" | "genderOptions" | "preventTransfersMonthsBeforeInitialisation" | "showContactTracing" | "syncRecordsDisplayThreshold" | "adjustForNumberOfDaysOutOfStock" | "daysInMonth" | "expiredStockPreventIssue" | "expiredStockIssueThreshold" | "itemMarginOverridesSupplierMargin" | "transferStockToInternalCustomersAtCostPrice" | "isGaps" | "displayPopulationBasedForecasting" | "globalTableConfigs" | "backdating" | "receivePaymentsFromPrescriptions" | "globalLogo" | "decimalPlacesForNumbers" | "blindStocktake" | "manageVaccinesInDoses" | "manageVvmStatusForStock" | "orderInPacks" | "sortByVvmStatusThenExpiry" | "useSimplifiedMobileUi" | "disableManualReturns" | "requisitionAutoFinalise" | "inboundShipmentAutoVerify" | "warningForExcessRequest" | "canCreateInternalOrderFromARequisition" | "selectDestinationStoreForAnInternalOrder" | "canChangeTargetMonthsOfStock" | "externalInboundShipmentLinesMustBeAuthorised" | "numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts" | "numberOfMonthsThresholdToShowLowStockAlertsForProducts" | "numberOfMonthsThresholdToShowOverStockAlertsForProducts" | "firstThresholdForExpiringItems" | "secondThresholdForExpiringItems" | "skipIntermediateStatusesInOutbound" | "storeCustomColour" | "warnWhenMissingRecentStocktake" | "invoiceStatusOptions" | "showIndicativePriceInRequisitions" | "doNotPrintPlaceholderLineLabels";
+  key: "allowTrackingOfStockByDonor" | "authorisePurchaseOrder" | "customTranslations" | "customTranslationsV2" | "genderOptions" | "preventTransfersMonthsBeforeInitialisation" | "showContactTracing" | "syncRecordsDisplayThreshold" | "adjustForNumberOfDaysOutOfStock" | "daysInMonth" | "expiredStockPreventIssue" | "expiredStockIssueThreshold" | "itemMarginOverridesSupplierMargin" | "transferStockToInternalCustomersAtCostPrice" | "isGaps" | "displayPopulationBasedForecasting" | "globalTableConfigs" | "backdating" | "receivePaymentsFromPrescriptions" | "globalLogo" | "decimalPlacesForNumbers" | "blindStocktake" | "manageVaccinesInDoses" | "manageVvmStatusForStock" | "orderInPacks" | "sortByVvmStatusThenExpiry" | "useSimplifiedMobileUi" | "disableManualReturns" | "requisitionAutoFinalise" | "inboundShipmentAutoVerify" | "warningForExcessRequest" | "canCreateInternalOrderFromARequisition" | "selectDestinationStoreForAnInternalOrder" | "canChangeTargetMonthsOfStock" | "externalInboundShipmentLinesMustBeAuthorised" | "numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts" | "numberOfMonthsThresholdToShowLowStockAlertsForProducts" | "numberOfMonthsThresholdToShowOverStockAlertsForProducts" | "firstThresholdForExpiringItems" | "secondThresholdForExpiringItems" | "skipIntermediateStatusesInOutbound" | "storeCustomColour" | "warnWhenMissingRecentStocktake" | "invoiceStatusOptions" | "showIndicativePriceInRequisitions" | "doNotPrintPlaceholderLineLabels" | "promptForBatchAndExpiryOnInboundShipments";
   valueType: "BOOLEAN" | "INTEGER" | "FLOAT" | "MULTI_CHOICE" | "CUSTOM_TRANSLATIONS" | "CUSTOM_TRANSLATIONS_V2" | "WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA" | "BACKDATING_DATA" | "STRING" | "COLOUR" | "IMAGE";
   value: unknown;
   storeOverride: {
@@ -195,6 +195,10 @@ export type UpsertStorePreferencesVariables = {
     value: boolean;
   }> | null;
     doNotPrintPlaceholderLineLabels?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    promptForBatchAndExpiryOnInboundShipments?: Array<{
     storeId: string;
     value: boolean;
   }> | null;

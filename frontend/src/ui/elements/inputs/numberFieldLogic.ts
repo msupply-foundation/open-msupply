@@ -31,6 +31,11 @@ export type NumberFieldConstraints = {
   decimalMin?: number;
   /** Plain `String(value)` display — no grouping, no locale digits. */
   noFormatting?: boolean;
+  /**
+   * What an empty field stands for, for a parent that never stores empty:
+   * clearing commits it, and an empty field left shows it (#1336).
+   */
+  emptyValue?: number;
 };
 
 export type ProcessedInput =
@@ -40,9 +45,14 @@ export type ProcessedInput =
  * A committed value plus, when the round/clamp CHANGED what the text parsed
  * to, the number the user actually entered — how the component detects an
  * adjusted entry (its `onClamped`). Absent whenever the entry committed
- * as typed.
+ * as typed. `emptied` marks a keystroke that emptied a field with an
+ * `emptyValue` — see `commitReports`.
  */
-export type CommitResult = { value: number | undefined; adjustedFrom?: number };
+export type CommitResult = {
+  value: number | undefined;
+  adjustedFrom?: number;
+  emptied?: true;
+};
 
 // Matches Latin, Arabic-Indic and extended-Arabic digits — the three digit
 // systems our locales produce (LOCALE_META numberLocale: Arabic-Indic for
@@ -87,6 +97,25 @@ const gateRegex = (
       ? `(?:${escapeRegex(symbols.decimal)}${DIGIT}{0,${o.decimalLimit}})?`
       : '';
   return new RegExp(`^${sign}${DIGIT}*${frac}$`);
+};
+
+/**
+ * How many characters an input event put in: the new text minus what it
+ * shares with the previous text at both ends. A keystroke puts in at most one
+ * (typing over a selection replaces it with one); a paste, drop or autofill
+ * can put in many.
+ */
+const insertedLength = (raw: string, previous: string): number => {
+  const shortest = Math.min(raw.length, previous.length);
+  let start = 0;
+  while (start < shortest && raw[start] === previous[start]) start++;
+  let end = 0;
+  while (
+    end < shortest - start &&
+    raw[raw.length - 1 - end] === previous[previous.length - 1 - end]
+  )
+    end++;
+  return raw.length - start - end;
 };
 
 /** Valid-so-far text that doesn't yet parse to a committable number. */
@@ -151,17 +180,28 @@ export const editString = (
  * Process one input event's raw text. Not accepted → the component restores
  * the previous DOM value. Accepted → `text` is what the field shows; `commit`
  * (when present) is the value for onChange — undefined meaning cleared.
+ * `previous` is the field's text before this event (omitted = empty).
  */
 export const processInput = (
   raw: string,
   o: NumberFieldConstraints,
-  locale: SupportedLocale
+  locale: SupportedLocale,
+  previous = ''
 ): ProcessedInput => {
   const symbols = getNumberSymbols(locale);
   const text = normalize(raw, symbols);
 
+  // Emptied: the text stays empty — so the next figure typed replaces it
+  // whole — while the commit says what empty stands for.
   if (text === '')
-    return { accepted: true, text, commit: { value: undefined } };
+    return {
+      accepted: true,
+      text,
+      commit:
+        o.emptyValue === undefined
+          ? { value: undefined }
+          : { value: o.emptyValue, emptied: true },
+    };
 
   const gate = gateRegex(o, symbols);
   if (gate.test(text)) {
@@ -175,9 +215,14 @@ export const processInput = (
     };
   }
 
-  // Gate failed — usually a paste ("$1,234.567", "-5" where negatives are
-  // banned, over-precise decimals). Try to repair: parse what was given,
-  // strip a banned sign, round to the decimal limit, and re-gate the result.
+  // Gate failed on a single keystroke: drop it and leave the text as it was.
+  // Repairing it would rewrite text the user is still building — "0.00" + "0"
+  // would round to "0", so the next "1" reads "01".
+  if (insertedLength(raw, previous) <= 1) return { accepted: false };
+
+  // Gate failed on a paste ("$1,234.567", "-5" where negatives are banned,
+  // over-precise decimals). Try to repair: parse what was given, strip a
+  // banned sign, round to the decimal limit, and re-gate the result.
   const parsed = parseNumber(text, symbols.decimal);
   if (Number.isNaN(parsed)) return { accepted: false };
   const signed = o.min >= 0 ? Math.abs(parsed) : parsed;
@@ -193,7 +238,8 @@ export const processInput = (
 
 /**
  * Blur/Enter: parse whatever text is present, produce the final (rounded,
- * clamped) value and its canonical display text. Unparseable → cleared.
+ * clamped) value and its canonical display text. Unparseable → cleared, or
+ * `emptyValue` shown, when the field has one.
  */
 export const finalizeText = (
   text: string,
@@ -202,7 +248,10 @@ export const finalizeText = (
 ): { value: number | undefined; text: string; adjustedFrom?: number } => {
   const symbols = getNumberSymbols(locale);
   const parsed = parseNumber(normalize(text, symbols), symbols.decimal);
-  if (Number.isNaN(parsed)) return { value: undefined, text: '' };
+  if (Number.isNaN(parsed))
+    return o.emptyValue === undefined
+      ? { value: undefined, text: '' }
+      : { value: o.emptyValue, text: displayString(o.emptyValue, o, locale) };
   const value = commitValue(parsed, o);
   return {
     value,
@@ -237,3 +286,48 @@ export const isIncomplete = (text: string, locale: SupportedLocale): boolean =>
     normalize(text, getNumberSymbols(locale)),
     getNumberSymbols(locale)
   );
+
+/**
+ * Whether a commit reaches the parent's onChange. Only a change does — except
+ * a keystroke that empties a field with an `emptyValue`, which always does:
+ * before emptyValue that keystroke committed `undefined`, a change from the
+ * parent's number, so the parent always heard it, and a handler that does
+ * more than store the figure (cancel a pending auto-allocation, mark the
+ * draft dirty) still must when the field already held its emptyValue.
+ * emptyValue changes what a clear reports, never whether it does.
+ */
+export const commitReports = (
+  value: number | undefined,
+  before: number | undefined,
+  emptied = false
+): boolean => emptied || value !== before;
+
+/** The field's last commit, and what the parent made of it (its echo). */
+export type LastCommit = {
+  value: number | undefined;
+  echo: number | undefined;
+};
+
+/**
+ * Parent → display sync: whether a new parent `value` rewrites the text.
+ * Not when it is the field's own commit echoing back, transformed or not —
+ * the typed text survives until blur, and an emptied field stays empty under
+ * the `emptyValue` it committed (#1336); not when the text already denotes
+ * it; not mid-entry on an incomplete string.
+ */
+export const valueRewritesText = (
+  value: number | undefined,
+  text: string,
+  focused: boolean,
+  lastCommitted: LastCommit | undefined,
+  locale: SupportedLocale
+): boolean => {
+  if (
+    lastCommitted &&
+    (value === lastCommitted.value || value === lastCommitted.echo)
+  )
+    return false;
+  if (textRepresents(text, value, locale)) return false;
+  if (focused && isIncomplete(text, locale)) return false;
+  return true;
+};

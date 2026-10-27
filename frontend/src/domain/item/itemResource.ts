@@ -62,11 +62,19 @@ export type ItemLookup =
  */
 export const lookUpItemById = async (
   storeId: string,
-  id: string
+  id: string,
+  // Scope the answer to one master list (a program's catalogue, as the item
+  // search scopes it): an item outside it answers `missing`.
+  options: { masterListId?: string } = {}
 ): Promise<ItemLookup> => {
   const result = await graphqlFetch(ItemsWithStock, {
     storeId,
-    filter: { id: { equalTo: id } },
+    filter: {
+      id: { equalTo: id },
+      ...(options.masterListId
+        ? { masterListId: { equalTo: options.masterListId } }
+        : {}),
+    },
     page: { first: 1 },
   });
   if (result.kind !== 'success') return { kind: 'failed' };
@@ -153,7 +161,11 @@ export const itemPageFetcher =
     // (spec/purchase-orders rules › choosing the item). Omitted = no filter.
     ignoreForOrders?: () => boolean | undefined,
     // Offer service items as well as stock (purchase order line editor).
-    includeServiceItems?: () => boolean | undefined
+    includeServiceItems?: () => boolean | undefined,
+    // Restrict to one item category, by name — a prescription written from a
+    // program form offers the items of the method chosen (the form library's
+    // PrescriptionInput). Omitted = every category.
+    categoryName?: () => string | undefined
   ) =>
   async (
     search: string,
@@ -163,6 +175,7 @@ export const itemPageFetcher =
     const stockOnHand = hasStockOnHand?.();
     const scopedList = masterListId?.();
     const barred = ignoreForOrders?.();
+    const category = categoryName?.();
     const result = await graphqlFetch(ItemsWithStock, {
       storeId,
       filter: {
@@ -176,6 +189,7 @@ export const itemPageFetcher =
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
         ...(scopedList ? { masterListId: { equalTo: scopedList } } : {}),
         ...(barred !== undefined ? { ignoreForOrders: barred } : {}),
+        ...(category !== undefined ? { categoryName: category } : {}),
       },
       // Sort by item name ascending — stable across pages so infinite scroll
       // doesn't reshuffle rows as new pages append.

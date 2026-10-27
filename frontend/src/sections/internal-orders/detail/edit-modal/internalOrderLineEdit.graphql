@@ -158,6 +158,7 @@ query internalOrderLineForecastPreview(
             coverageRate
             wastageRate
             targetPopulation
+            annualDosesPerPerson
             lossFactor
             annualTargetDoses
             dosesPerUnit
@@ -177,6 +178,7 @@ query internalOrderLineForecastPreview(
             itemQuantity
             ancillaryQuantity
             wastageRate
+            ownWastageRate
             principalUsableConsumption
             monthlyConsumption
           }

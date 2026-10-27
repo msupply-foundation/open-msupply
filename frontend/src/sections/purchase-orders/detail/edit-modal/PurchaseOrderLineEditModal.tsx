@@ -1,6 +1,6 @@
 import { createMemo, createSignal, onCleanup, Show, type JSX } from 'solid-js';
 import { generateUUID } from '@/uuid';
-import { graphqlFetch } from '@/api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { MAX_FRACTION_DIGITS, formatCurrency, roundedText, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -260,9 +260,10 @@ const LineEditContent = (
       props.onSaved();
       return true;
     }
-    setErrorMessage(
-      result.kind === 'error' ? result.message : t('error.cant-save')
-    );
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
+    // Only a refusal is said here — a Forbidden or a transport failure is
+    // already up in a global modal — but any failure clears the last one.
+    setErrorMessage(result.kind === 'error' ? result.message : undefined);
     return false;
   };
 
@@ -455,6 +456,7 @@ const LineEditContent = (
                       disabled={saving()}
                       ref={packsField.ref}
                       value={linePacks(draft()!)}
+                      emptyValue={0}
                       onChange={value =>
                         patch(packsEntered(draft()!, value ?? 0))
                       }
@@ -474,13 +476,14 @@ const LineEditContent = (
                   >
                     <NumberField
                       label={t('label.pack-size')}
-                      min={0}
+                      min={1}
                       decimalLimit={2}
                       data-testid="pack-size-input"
                       disabled={saving()}
                       value={draft()!.requestedPackSize}
+                      emptyValue={1}
                       onChange={value =>
-                        patch(packSizeEntered(draft()!, value ?? 0))
+                        patch(packSizeEntered(draft()!, value ?? 1))
                       }
                     />
                   </Show>
@@ -580,6 +583,7 @@ const LineEditContent = (
                     disabled={saving()}
                     ref={priceField.ref}
                     value={draft()!.pricePerPackBeforeDiscount}
+                    emptyValue={0}
                     onChange={value =>
                       setPrice('pricePerPackBeforeDiscount', value)
                     }
@@ -608,6 +612,7 @@ const LineEditContent = (
                       data-testid="discount-percentage-input"
                       disabled={saving()}
                       value={draft()!.discountPercentage}
+                      emptyValue={0}
                       onChange={value => setPrice('discountPercentage', value)}
                     />
                   </Show>
@@ -630,6 +635,7 @@ const LineEditContent = (
                       data-testid="price-after-discount-input"
                       disabled={saving()}
                       value={draft()!.pricePerPackAfterDiscount}
+                      emptyValue={0}
                       onChange={value =>
                         setPrice('pricePerPackAfterDiscount', value)
                       }

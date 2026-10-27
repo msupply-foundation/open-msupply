@@ -10,8 +10,7 @@ const CAMPAIGN1: (&str, &str) = (
     r#"{
         "id": "CAMPAIGN1",
         "name": "COVID-19 Campaign",
-        "start_date": "2023-01-01",
-        "end_date": "2023-12-31",
+        "code": "COVID-19",
         "deleted_datetime": null
     }"#,
 );
@@ -20,12 +19,13 @@ fn campaign1() -> CampaignRow {
     CampaignRow {
         id: CAMPAIGN1.0.to_string(),
         name: "COVID-19 Campaign".to_string(),
-        start_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 1, 1).unwrap()),
-        end_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 12, 31).unwrap()),
+        code: "COVID-19".to_string(),
         ..Default::default()
     }
 }
 
+// As sent by a central server from before campaigns had a code: the dates it still
+// carries are ignored, and the code comes in blank
 const CAMPAIGN2: (&str, &str) = (
     "CAMPAIGN2",
     r#"{
@@ -41,8 +41,6 @@ fn campaign2() -> CampaignRow {
     CampaignRow {
         id: CAMPAIGN2.0.to_string(),
         name: "Polio Vaccination Campaign".to_string(),
-        start_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 6, 1).unwrap()),
-        end_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 6, 30).unwrap()),
         ..Default::default()
     }
 }
