@@ -4,17 +4,18 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_inactive_to_name_store_join"
+        "add_visible_to_name_store_join"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Whether the name is visible in the store, as OG's `inactive` on the join.
-        // An inactive join still routes the name's records to the store's site
+        // Whether the name is visible in the store: the inverse of OG's `inactive` on
+        // the join. A join that isn't visible still routes the name's records to the
+        // store's site
         sql!(
             connection,
             r#"
                 ALTER TABLE name_store_join
-                ADD COLUMN inactive BOOLEAN NOT NULL DEFAULT FALSE;
+                ADD COLUMN visible BOOLEAN NOT NULL DEFAULT TRUE;
             "#
         )?;
 
@@ -31,17 +32,17 @@ mod test {
     table! {
         name_store_join (id) {
             id -> Text,
-            inactive -> Bool,
+            visible -> Bool,
         }
     }
 
     #[actix_rt::test]
-    async fn migration_add_inactive_to_name_store_join() {
+    async fn migration_add_visible_to_name_store_join() {
         let previous_version = v3_02_00::V3_02_00.version();
         let version = v3_04_00::V3_04_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!("migration_{version}_add_inactive_to_name_store_join"),
+            db_name: &format!("migration_{version}_add_visible_to_name_store_join"),
             version: Some(previous_version),
             ..Default::default()
         })
@@ -67,10 +68,10 @@ mod test {
         migrate(&connection, Some(version), MigrationConfig::default()).unwrap();
 
         let rows = name_store_join::table
-            .select((name_store_join::id, name_store_join::inactive))
+            .select((name_store_join::id, name_store_join::visible))
             .load::<(String, bool)>(connection.lock().connection())
             .unwrap();
 
-        assert_eq!(rows, vec![("join".to_string(), false)]);
+        assert_eq!(rows, vec![("join".to_string(), true)]);
     }
 }

@@ -251,7 +251,7 @@ mod insert {
                     store_id: String::from("store_b"),
                     name_is_customer: false,
                     name_is_supplier: true,
-                    inactive: false,
+                    visible: true,
                 }],
                 ..Default::default()
             },
@@ -349,7 +349,7 @@ mod insert {
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
-                    inactive: false,
+                    visible: true,
                 }],
                 rnr_forms: vec![RnRFormRow {
                     status: RnRFormStatus::Finalised,

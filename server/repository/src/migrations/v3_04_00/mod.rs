@@ -9,7 +9,6 @@ mod add_cancelled_status_to_purchase_order;
 mod add_code_to_location_type;
 mod add_exclude_principal_wastage_to_ancillary_item;
 mod add_forecast_method_to_requisition_line;
-mod add_inactive_to_name_store_join;
 mod add_is_auto_created_to_item_variant;
 mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
@@ -20,6 +19,7 @@ mod add_stock_campaign_change_activity_log_type;
 mod add_sync_log_indexes;
 mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
+mod add_visible_to_name_store_join;
 mod backfill_purchase_order_custom_fields;
 mod barcode_proposals;
 mod prescription_request_occupation_prominent;
@@ -70,7 +70,7 @@ impl Migration for V3_04_00 {
             Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
             Box::new(add_is_auto_created_to_item_variant::Migrate),
             Box::new(barcode_proposals::Migrate),
-            Box::new(add_inactive_to_name_store_join::Migrate),
+            Box::new(add_visible_to_name_store_join::Migrate),
         ]
     }
 }

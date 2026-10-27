@@ -697,10 +697,10 @@ impl SyncTranslation for InvoiceTranslation {
         // On central, a prescription can arrive for a patient with no
         // name_store_join for its store (possible in OG). Without one the patient
         // doesn't sync to the site holding the prescription and integration there
-        // fails on FK constraints, so synthesize an inactive join: it routes the
-        // patient to the site without marking them visible in the store. An OG join
-        // for this name & store later replaces it (see the name_store_join
-        // translator's dedup)
+        // fails on FK constraints, so synthesize a join with `visible = false`: it
+        // routes the patient to the site without making them visible in the store.
+        // An OG join for this name & store later replaces it (see the
+        // name_store_join translator's dedup)
         if CentralServerConfig::is_central_server()
             && result.r#type == InvoiceType::Prescription
             && name.r#type == NameRowType::Patient
@@ -720,7 +720,7 @@ impl SyncTranslation for InvoiceTranslation {
                     store_id: result.store_id.clone(),
                     name_is_customer: true,
                     name_is_supplier: false,
-                    inactive: true,
+                    visible: false,
                 }));
             }
         }
@@ -1782,7 +1782,7 @@ mod tests {
     }
 
     /// On central, a prescription for a patient with no name_store_join in its
-    /// store synthesizes an inactive one
+    /// store synthesizes one that isn't visible
     #[actix_rt::test]
     async fn test_prescription_synthesizes_name_store_join_on_central() {
         use crate::sync::test_util_set_is_central_server;
@@ -1865,12 +1865,12 @@ mod tests {
             synthesized_join
         );
         assert!(
-            synthesized_join.contains("inactive: true"),
+            synthesized_join.contains("visible: false"),
             "{}",
             synthesized_join
         );
 
-        // Once the patient has a join in the store, even an inactive one, no join
+        // Once the patient has a join in the store, even one that isn't visible, no join
         // is synthesized
         NameStoreJoinRepository::new(&connection)
             .upsert_one_without_changelog(&NameStoreJoinRow {
@@ -1879,7 +1879,7 @@ mod tests {
                 store_id: "store_b".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
-                inactive: true,
+                visible: false,
             })
             .unwrap();
 
