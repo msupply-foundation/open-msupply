@@ -2799,6 +2799,7 @@
   "messages.counting": "Counting…",
   "messages.create-asset-from-scan": "Nothing in the register matches this label. Create a new asset from it?",
   "messages.create-outbound-from-requisition": "Are you sure you want to create an outbound shipment from this customer requisition?",
+  "messages.create-patient-not-allowed": "You don't have permission to create patients",
   "messages.created-clinician": "Successfully created clinician",
   "messages.created-new-vaccine-course": "Successfully created vaccine course",
   "messages.currency-rate-info": "The number of local (home) currency units per one PO currency unit. For example, if local is NZD and PO is USD, a rate of 1.6 means 1 USD = 1.6 NZD.",

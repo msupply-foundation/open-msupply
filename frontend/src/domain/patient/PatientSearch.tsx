@@ -4,6 +4,7 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
 import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
+import { hasPermission } from '../../store/storeContext';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   patientSearchPageFetcher,
@@ -49,7 +50,9 @@ export interface PatientSearchProps {
    * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
    * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
    * patient-create flow from this callback and selects the result via
-   * `onSelect`.
+   * `onSelect`. Disabled, with the reason as its tooltip, for a user without
+   * patient-mutate permission: the server would refuse the save at the end of
+   * the flow (spec/patients § configuration gates).
    */
   onCreatePatient?: () => void;
   /**
@@ -161,12 +164,19 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
+    // Without patient-mutate permission it is disabled, its reason on the
+    // control, rather than opening a create flow whose save can only fail.
     listboxFooter={query => (
       <Show when={props.onCreatePatient && query().trim() !== ''}>
         <Button
           variant="secondary"
           icon={<PlusCircleIcon />}
-          disabled={props.disabled}
+          disabled={props.disabled || !hasPermission('PATIENT_MUTATE')}
+          title={
+            hasPermission('PATIENT_MUTATE')
+              ? undefined
+              : t('messages.create-patient-not-allowed')
+          }
           data-testid="create-patient-button"
           onClick={() => props.onCreatePatient?.()}
         >
