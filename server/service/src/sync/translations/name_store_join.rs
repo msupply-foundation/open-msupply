@@ -99,8 +99,9 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         };
 
-        // An inactive patient join is kept so the store's site still receives the
-        // patient's records, a deletion included. Other names' joins are deleted
+        // A patient join OG sets inactive is kept with `visible = false`, so the store's
+        // site still receives the patient's records, a deletion included. Other names'
+        // joins are deleted
         if inactive && name.r#type != NameRowType::Patient {
             return Ok(PullTranslateResult::delete(NameStoreJoinRowDelete(data.id)));
         }
@@ -133,7 +134,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             // remaining as null, for now always names properties for name_is_supplier/customer
             name_is_customer: name.is_customer,
             name_is_supplier: name.is_supplier,
-            inactive,
+            visible: !inactive,
         };
 
         // On central, keep the incoming OG join for a patient and delete any other
@@ -193,7 +194,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
                     store_id,
                     name_is_customer,
                     name_is_supplier,
-                    inactive,
+                    visible,
                 },
             name,
         } = NameStoreJoinRepository::new(connection)
@@ -209,7 +210,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             store_id,
             name_is_customer: Some(name_is_customer),
             name_is_supplier: Some(name_is_supplier),
-            inactive: Some(inactive),
+            inactive: Some(!visible),
         };
 
         Ok(PushTranslateResult::upsert(
@@ -224,8 +225,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        // A patient join is set inactive rather than deleted, as in the upsert
-        // translation; prescriptions on the store's site keep their patient
+        // A patient join is kept with `visible = false` rather than deleted, as in the
+        // upsert translation; prescriptions on the store's site keep their patient
         if let Some(NameStoreJoin {
             name_store_join,
             name,
@@ -237,7 +238,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             && name.r#type == NameRowType::Patient
         {
             return Ok(PullTranslateResult::upsert(NameStoreJoinRow {
-                inactive: true,
+                visible: false,
                 ..name_store_join
             }));
         }
@@ -309,7 +310,7 @@ mod tests {
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
-            inactive: false,
+            visible: true,
         };
         NameStoreJoinRepository::new(&connection)
             .upsert_one_without_changelog(&join)
@@ -385,7 +386,7 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: false,
                 name_is_supplier: true,
-                inactive: false,
+                visible: true,
             })
             .unwrap();
 
@@ -488,7 +489,7 @@ mod tests {
                 name_id: "testId".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
-                inactive: false,
+                visible: true,
             })
             .unwrap();
 
@@ -514,7 +515,7 @@ mod tests {
                     name_id: "testId".to_string(),
                     name_is_customer: patient.is_customer,
                     name_is_supplier: patient.is_supplier,
-                    inactive: false,
+                    visible: true,
                 }),
                 IntegrationOperation::delete(NameStoreJoinRowDelete(synthesized_id)),
             ])
@@ -528,7 +529,7 @@ mod tests {
                 name_id: "patient2".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
-                inactive: false,
+                visible: true,
             })
             .unwrap();
 
@@ -554,7 +555,7 @@ mod tests {
                     name_id: "patient2".to_string(),
                     name_is_customer: patient.is_customer,
                     name_is_supplier: patient.is_supplier,
-                    inactive: false,
+                    visible: true,
                 }),
                 IntegrationOperation::delete(NameStoreJoinRowDelete("og_join_old".to_string())),
             ])
@@ -577,7 +578,7 @@ mod tests {
                 name_id: "patient2".to_string(),
                 name_is_customer: patient.is_customer,
                 name_is_supplier: patient.is_supplier,
-                inactive: false,
+                visible: true,
             })
         );
 
@@ -589,7 +590,7 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: false,
                 name_is_supplier: true,
-                inactive: false,
+                visible: true,
             })
             .unwrap();
 
@@ -614,12 +615,12 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: facility_name.is_customer,
                 name_is_supplier: facility_name.is_supplier,
-                inactive: false,
+                visible: true,
             })
         );
     }
 
-    /// OG's delete or inactive record sets a patient join inactive and deletes
+    /// OG's delete or inactive record keeps a patient join, not visible, and deletes
     /// other joins. An inactive join this server never had is ignored
     #[actix_rt::test]
     async fn test_name_store_join_inactive_keeps_patient_joins_only() {
@@ -637,7 +638,7 @@ mod tests {
             name_id: "testId".to_string(),
             name_is_customer: true,
             name_is_supplier: false,
-            inactive: false,
+            visible: true,
         };
         let facility_join = NameStoreJoinRow {
             id: "facility_join".to_string(),
@@ -645,7 +646,7 @@ mod tests {
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
-            inactive: false,
+            visible: true,
         };
         let repo = NameStoreJoinRepository::new(&connection);
         repo.upsert_one_without_changelog(&patient_join).unwrap();
@@ -689,24 +690,24 @@ mod tests {
             .find_one_by_id("testId")
             .unwrap()
             .unwrap();
-        let inactive_patient_join = NameStoreJoinRow {
-            inactive: true,
+        let patient_join_not_visible = NameStoreJoinRow {
+            visible: false,
             name_is_customer: patient.is_customer,
             name_is_supplier: patient.is_supplier,
             ..patient_join.clone()
         };
 
-        // Patient join: a delete or an inactive record both keep the row, inactive
+        // Patient join: a delete or an inactive record both keep the row, not visible
         assert_eq!(
             pull_delete(&delete_record("patient_join")),
             PullTranslateResult::upsert(NameStoreJoinRow {
-                inactive: true,
+                visible: false,
                 ..patient_join.clone()
             })
         );
         assert_eq!(
             pull_upsert(&inactive_record(&patient_join)),
-            PullTranslateResult::upsert(inactive_patient_join)
+            PullTranslateResult::upsert(patient_join_not_visible)
         );
 
         // Facility join: a delete or an inactive record both delete it
@@ -728,21 +729,22 @@ mod tests {
             PullTranslateResult::Ignored("Is inactive and not found".to_string())
         );
 
-        // Pushed with its inactive flag
-        let inactive_join = NameStoreJoinRow {
-            inactive: true,
+        // Pushed to OG as inactive
+        let join_not_visible = NameStoreJoinRow {
+            visible: false,
             ..patient_join
         };
-        repo.upsert_one_without_changelog(&inactive_join).unwrap();
+        repo.upsert_one_without_changelog(&join_not_visible)
+            .unwrap();
         let PushTranslateResult::PushRecord(pushed) = translator
             .try_translate_to_upsert_sync_record(
                 &connection,
                 &ChangelogRow {
                     table_name: ChangelogTableName::NameStoreJoin,
-                    record_id: inactive_join.id.clone(),
+                    record_id: join_not_visible.id.clone(),
                     ..Default::default()
                 },
-                Row::NameStoreJoin(inactive_join),
+                Row::NameStoreJoin(join_not_visible),
             )
             .unwrap()
         else {
@@ -751,15 +753,15 @@ mod tests {
         assert_eq!(pushed[0].record.record_data["inactive"], json!(true));
     }
 
-    /// A patient with a prescription in the store keeps an inactive join there
+    /// A patient with a prescription in the store keeps its join there, not visible
     /// when OG deletes or inactivates it, so the prescription's site still gets
     /// the patient
     #[actix_rt::test]
-    async fn test_name_store_join_kept_inactive_for_patient_with_prescription() {
+    async fn test_name_store_join_kept_not_visible_for_patient_with_prescription() {
         let translator = NameStoreJoinTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "test_name_store_join_kept_inactive_for_patient_with_prescription",
+            "test_name_store_join_kept_not_visible_for_patient_with_prescription",
             MockDataInserts::none().names().stores(),
         )
         .await;
@@ -770,7 +772,7 @@ mod tests {
             name_id: "testId".to_string(),
             name_is_customer: true,
             name_is_supplier: false,
-            inactive: false,
+            visible: true,
         };
         NameStoreJoinRepository::new(&connection)
             .upsert_one_without_changelog(&join)
@@ -801,7 +803,7 @@ mod tests {
         assert_eq!(
             translation_result,
             PullTranslateResult::upsert(NameStoreJoinRow {
-                inactive: true,
+                visible: false,
                 ..join.clone()
             })
         );
@@ -832,7 +834,7 @@ mod tests {
         assert_eq!(
             translation_result,
             PullTranslateResult::upsert(NameStoreJoinRow {
-                inactive: true,
+                visible: false,
                 name_is_customer: patient.is_customer,
                 name_is_supplier: patient.is_supplier,
                 ..join

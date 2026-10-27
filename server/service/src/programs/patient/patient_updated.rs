@@ -35,14 +35,14 @@ pub fn create_patient_name_store_join(
         store_id: store_id.to_string(),
         name_is_customer: true,
         name_is_supplier: false,
-        inactive: false,
+        visible: true,
     };
     NameStoreJoinRepository::new(con).upsert_one(&row)?;
     Ok(row)
 }
 
 /// Adds the patient to the store (fetching them from central): creates the
-/// name_store_join, or sets an inactive one active
+/// name_store_join, or makes an existing one visible
 pub fn activate_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
@@ -52,9 +52,9 @@ pub fn activate_patient_name_store_join(
     let join = create_patient_name_store_join(con, store_id, name_id, name_store_join_id)?;
     let id = join.id.clone();
 
-    if join.inactive {
+    if !join.visible {
         NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
-            inactive: false,
+            visible: true,
             ..join
         })?;
     }
@@ -592,7 +592,7 @@ mod test {
         assert_eq!(updated_patient_2, updated_patient);
     }
 
-    /// Fetching a patient into a store reactivates an inactive join; a save doesn't
+    /// Fetching a patient into a store makes its join visible; a save doesn't
     #[actix_rt::test]
     async fn test_activate_patient_name_store_join() {
         use super::{activate_patient_name_store_join, create_patient_name_store_join};
@@ -605,33 +605,33 @@ mod test {
         .await;
         let repo = NameStoreJoinRepository::new(&connection);
         repo.upsert_one_without_changelog(&NameStoreJoinRow {
-            id: "inactive_join".to_string(),
+            id: "join_not_visible".to_string(),
             store_id: "store_a".to_string(),
             name_id: "testId".to_string(),
             name_is_customer: true,
             name_is_supplier: false,
-            inactive: true,
+            visible: false,
         })
         .unwrap();
-        let is_inactive = || {
-            repo.find_one_by_id("inactive_join")
+        let is_visible = || {
+            repo.find_one_by_id("join_not_visible")
                 .unwrap()
                 .unwrap()
-                .inactive
+                .visible
         };
 
-        // A save keeps the existing join, still inactive
+        // A save keeps the existing join, still not visible
         let join = create_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
-        assert_eq!(join.id, "inactive_join");
-        assert!(join.inactive);
-        assert!(is_inactive());
+        assert_eq!(join.id, "join_not_visible");
+        assert!(!join.visible);
+        assert!(!is_visible());
 
-        // Fetching the patient into the store makes it active
+        // Fetching the patient into the store makes it visible
         let id = activate_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
-        assert_eq!(id, "inactive_join");
-        assert!(!is_inactive());
+        assert_eq!(id, "join_not_visible");
+        assert!(is_visible());
 
-        // With no join, one is created active
+        // With no join, one is created visible
         let id = activate_patient_name_store_join(
             &connection,
             "store_b",
@@ -640,7 +640,7 @@ mod test {
         )
         .unwrap();
         assert_eq!(id, "new_join");
-        assert!(!repo.find_one_by_id("new_join").unwrap().unwrap().inactive);
+        assert!(repo.find_one_by_id("new_join").unwrap().unwrap().visible);
     }
 
     #[test]

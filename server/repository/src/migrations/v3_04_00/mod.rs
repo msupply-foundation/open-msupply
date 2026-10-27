@@ -6,10 +6,10 @@ mod add_barcode_auto_confirm_processor_cursor_pg_enum;
 mod add_campaign_id_to_invoice;
 mod add_campaign_to_requisition_line;
 mod add_cancelled_status_to_purchase_order;
+mod add_code_to_campaign;
 mod add_code_to_location_type;
 mod add_exclude_principal_wastage_to_ancillary_item;
 mod add_forecast_method_to_requisition_line;
-mod add_inactive_to_name_store_join;
 mod add_is_auto_created_to_item_variant;
 mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
@@ -20,6 +20,7 @@ mod add_stock_campaign_change_activity_log_type;
 mod add_sync_log_indexes;
 mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
+mod add_visible_to_name_store_join;
 mod backfill_purchase_order_custom_fields;
 mod barcode_proposals;
 mod inactivate_kept_name_store_joins;
@@ -63,6 +64,7 @@ impl Migration for V3_04_00 {
             Box::new(add_kind_to_campaign::Migrate),
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
+            Box::new(add_code_to_campaign::Migrate),
             Box::new(add_annual_doses_per_person_to_vaccine_course::Migrate),
             Box::new(add_plugin_ownership_to_document_registry::Migrate),
             Box::new(requeue_plugin_rows_for_upgraded_sites::Migrate),
@@ -73,7 +75,7 @@ impl Migration for V3_04_00 {
             Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
             Box::new(add_is_auto_created_to_item_variant::Migrate),
             Box::new(barcode_proposals::Migrate),
-            Box::new(add_inactive_to_name_store_join::Migrate),
+            Box::new(add_visible_to_name_store_join::Migrate),
             Box::new(inactivate_kept_name_store_joins::Migrate),
             Box::new(recreate_joins_for_deleted_patients::Migrate),
             Box::new(inactivate_pulled_name_store_joins::Migrate),

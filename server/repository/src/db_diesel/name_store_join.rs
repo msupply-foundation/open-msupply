@@ -19,7 +19,7 @@ define_linked_tables!(
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
-        inactive -> Bool,
+        visible -> Bool,
     },
     links: {
         name_link_id -> name_id,
@@ -28,16 +28,34 @@ define_linked_tables!(
     }
 );
 
-#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Queryable, Debug, PartialEq, Eq, Clone, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
-    #[serde(default)]
-    pub inactive: bool,
+    // Absent in rows from older sites, where every join is visible
+    #[serde(default = "default_true")]
+    pub visible: bool,
     pub name_id: String,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for NameStoreJoinRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            store_id: Default::default(),
+            name_is_customer: Default::default(),
+            name_is_supplier: Default::default(),
+            visible: true,
+            name_id: Default::default(),
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]

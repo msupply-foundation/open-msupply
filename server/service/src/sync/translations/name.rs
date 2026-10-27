@@ -436,8 +436,8 @@ impl SyncTranslation for NameTranslation {
         } = legacy;
 
         // Patients only; other names ignore `is_deleted`. A deletion stays unless
-        // OG says the patient isn't deleted: another sender (a v6 site's push) may
-        // not have the deletion yet
+        // A remote may push a patient edit via v6 before it pulls the deletion, so the
+        // remote's `is_deleted: false` doesn't override central's `deleted_datetime`
         let deleted_datetime = if legacy_type != LegacyNameRowType::Patient {
             None
         } else if is_deleted {

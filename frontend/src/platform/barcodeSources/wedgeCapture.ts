@@ -117,9 +117,10 @@ const act = (outcome: WedgeOutcome | undefined, handlers: ScanHandlers): void =>
       return;
     case 'corrupt':
       // Never hand up a code with a character missing: it would be learned
-      // into the registry as a distinct, wrong key, and no screen in the app
-      // can list or correct one (spec/barcode-scanning/rules.md § The book
-      // has no maintenance surface). The keystrokes go with the failure —
+      // into the registry as a distinct, wrong key that someone would have to
+      // find and move by hand from the item's Barcodes tab
+      // (spec/barcode-scanning/rules.md § Maintaining mappings). The
+      // keystrokes go with the failure —
       // the key that could not be placed is the only thing that explains it,
       // and is usually a separator spelled a way this app does not know yet.
       unleak();
