@@ -2290,9 +2290,9 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_errors() {
-        use chrono::{DateTime, FixedOffset};
+        use chrono::{DateTime, FixedOffset, SubsecRound};
 
-        let now = Utc::now().fixed_offset();
+        let now = Utc::now().trunc_subsecs(6).fixed_offset();
         let two_days_ago = now - Duration::days(2);
         fn new_inbound() -> InvoiceRow {
             InvoiceRow {
@@ -2455,13 +2455,13 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_success() {
-        use chrono::{DateTime, FixedOffset};
+        use chrono::{DateTime, FixedOffset, SubsecRound};
         use repository::{
             LocationMovementRow, LocationMovementRowRepository,
             location_movement::{LocationMovementFilter, LocationMovementRepository},
         };
 
-        let now = Utc::now().fixed_offset();
+        let now = Utc::now().trunc_subsecs(6).fixed_offset();
         let three_days_ago = now - Duration::days(3);
 
         fn received_inbound(received_datetime: DateTime<FixedOffset>) -> InvoiceRow {

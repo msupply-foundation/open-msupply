@@ -115,6 +115,10 @@ impl DatabaseSettings {
 #[derive(Debug)]
 pub struct SqliteConnectionOptions {
     pub busy_timeout_ms: Option<u32>,
+    /// `PRAGMA synchronous = OFF`: sqlite stops asking the OS to flush each commit to disk.
+    /// Test databases only - they are thrown away, and on Linux every flush really reaches the
+    /// disk, which made the sqlite test suite several times slower there than on macOS.
+    pub synchronous_off: bool,
 }
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
@@ -131,6 +135,11 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 
         conn.batch_execute("PRAGMA foreign_keys = ON;")
             .expect("Can't enable foreign_keys in sqlite");
+
+        if self.synchronous_off {
+            conn.batch_execute("PRAGMA synchronous = OFF;")
+                .expect("Can't set synchronous in sqlite");
+        }
 
         Ok(())
     }
@@ -266,6 +275,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
+            synchronous_off: false,
         }))
         .max_size(
             settings
