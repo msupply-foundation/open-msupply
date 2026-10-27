@@ -134,7 +134,7 @@ fn not_visible_rows_cte() -> String {
         WITH latest AS (
             SELECT record_id, MAX(cursor) AS cursor
             FROM sync_buffer
-            WHERE table_name = 'name_store_join'
+            WHERE table_name = 'name_store_join' AND is_integrated = TRUE
             GROUP BY record_id
         ),
         pulled AS (
@@ -224,18 +224,18 @@ mod tests {
                     ('from_central', 'patient_a', 'store_a', true, false),
                     ('sent_again', 'patient_b', 'store_a', true, false),
                     ('facility', 'facility', 'store_a', true, false);
-                INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data, source_site_id) VALUES
+                INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data, source_site_id, is_integrated) VALUES
                     ('from_central', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                        '{"id":"from_central","name_id":"patient_a","store_id":"store_a","name_is_customer":true,"name_is_supplier":false,"visible":false}', 1),
+                        '{"id":"from_central","name_id":"patient_a","store_id":"store_a","name_is_customer":true,"name_is_supplier":false,"visible":false}', 1, TRUE),
                     -- Deleted on pull from OG, so recreated
                     ('from_og', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                        '{"ID":"from_og","name_ID":"patient_a","store_ID":"store_b","inactive":true}', 1),
+                        '{"ID":"from_og","name_ID":"patient_a","store_ID":"store_b","inactive":true}', 1, TRUE),
                     ('sent_again', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                        '{"ID":"sent_again","name_ID":"patient_b","store_ID":"store_a","inactive":true}', 1),
+                        '{"ID":"sent_again","name_ID":"patient_b","store_ID":"store_a","inactive":true}', 1, TRUE),
                     ('sent_again', '2025-01-02 00:00:00', 'name_store_join', 'UPSERT',
-                        '{"ID":"sent_again","name_ID":"patient_b","store_ID":"store_a","inactive":false}', 1),
+                        '{"ID":"sent_again","name_ID":"patient_b","store_ID":"store_a","inactive":false}', 1, TRUE),
                     ('facility', '2025-01-01 00:00:00', 'name_store_join', 'UPSERT',
-                        '{"ID":"facility","name_ID":"facility","store_ID":"store_a","inactive":true}', 1);
+                        '{"ID":"facility","name_ID":"facility","store_ID":"store_a","inactive":true}', 1, TRUE);
                 "#,
             )
             .unwrap();

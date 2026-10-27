@@ -37,7 +37,7 @@ impl MigrationFragment for Migrate {
         "recreate_joins_for_deleted_patients"
     }
 
-    /// Joins OG sent for a deleted patient that no longer exist are recreated not
+    /// Joins pulled from OG for a deleted patient that no longer exist are recreated not
     /// visible from OG's sync_buffer rows, and the patient is logged again so the
     /// deletion reaches the stores' sites through them.
     ///
@@ -63,12 +63,12 @@ impl MigrationFragment for Migrate {
             return Ok(());
         };
 
-        let sent_joins: Vec<SentJoin> =
-            diesel::sql_query(sent_joins_query(og_site_id)).load(connection.lock().connection())?;
+        let pulled_joins: Vec<PulledJoin> = diesel::sql_query(pulled_joins_query(og_site_id))
+            .load(connection.lock().connection())?;
 
-        // One join per patient and store, the latest OG sent
+        // One join per patient and store, the latest pulled from OG
         let mut seen = BTreeSet::new();
-        let joins: Vec<SentJoin> = sent_joins
+        let joins: Vec<PulledJoin> = pulled_joins
             .into_iter()
             .filter(|join| seen.insert((join.name_id.clone(), join.store_id.clone())))
             .collect();
@@ -139,7 +139,7 @@ impl MigrationFragment for Migrate {
 }
 
 #[derive(QueryableByName)]
-struct SentJoin {
+struct PulledJoin {
     #[diesel(sql_type = Text)]
     id: String,
     #[diesel(sql_type = Text)]
@@ -154,9 +154,9 @@ struct SentJoin {
     is_supplier: bool,
 }
 
-/// Joins OG sent for deleted patients, where the patient now has no join for that
+/// Joins pulled from OG for deleted patients, where the patient now has no join for that
 /// store. Latest first.
-fn sent_joins_query(og_site_id: i32) -> String {
+fn pulled_joins_query(og_site_id: i32) -> String {
     let (name_id, store_id) = if cfg!(feature = "postgres") {
         (
             "sb.data::jsonb ->> 'name_ID'",
@@ -178,27 +178,27 @@ fn sent_joins_query(og_site_id: i32) -> String {
               AND source_site_id = {og_site_id}
             GROUP BY record_id
         ),
-        sent AS (
+        pulled AS (
             SELECT sb.record_id AS id, {name_id} AS name_link_id, {store_id} AS store_id,
                 sb.cursor
             FROM latest
             JOIN sync_buffer sb ON sb.cursor = latest.cursor
         )
-        SELECT sent.id, sent.name_link_id, sent.store_id, n.id AS name_id,
+        SELECT pulled.id, pulled.name_link_id, pulled.store_id, n.id AS name_id,
             n.is_customer, n.is_supplier
-        FROM sent
-        JOIN name_link nl ON nl.id = sent.name_link_id
+        FROM pulled
+        JOIN name_link nl ON nl.id = pulled.name_link_id
         JOIN name n ON n.id = nl.name_id
-        JOIN store ON store.id = sent.store_id
+        JOIN store ON store.id = pulled.store_id
         WHERE n.type = 'PATIENT'
           AND n.deleted_datetime IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM name_store_join nsj WHERE nsj.id = sent.id)
+          AND NOT EXISTS (SELECT 1 FROM name_store_join nsj WHERE nsj.id = pulled.id)
           AND NOT EXISTS (
             SELECT 1 FROM name_store_join nsj
             JOIN name_link l ON l.id = nsj.name_link_id
-            WHERE l.name_id = n.id AND nsj.store_id = sent.store_id
+            WHERE l.name_id = n.id AND nsj.store_id = pulled.store_id
           )
-        ORDER BY sent.cursor DESC
+        ORDER BY pulled.cursor DESC
         "#
     )
 }
