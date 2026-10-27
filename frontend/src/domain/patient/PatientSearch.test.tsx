@@ -2,11 +2,10 @@ import { children, createRoot, type JSX } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
- * The picker's Create patient button is withheld from a user without
- * patient-mutate permission: disabled, with the reason as its tooltip, rather
- * than opening a create flow whose save the server refuses
- * (spec/patients § configuration gates). The combobox and the button are
- * stand-ins that record their props, so this runs without a DOM.
+ * The picker's Create patient button is hidden from a user without
+ * patient-mutate permission, rather than opening a create flow whose save the
+ * server refuses (spec/patients § configuration gates). The combobox and the
+ * button are stand-ins that record their props, so this runs without a DOM.
  */
 
 interface ComboboxProps {
@@ -71,23 +70,18 @@ const createButton = (
   });
 
 describe('PatientSearch’s Create patient button', () => {
-  it('is offered with no tooltip to a user who may create patients', () => {
+  it('is offered to a user who may create patients', () => {
     const button = createButton();
     expect(button?.['data-testid']).toBe('create-patient-button');
-    expect(button?.disabled).toBe(false);
-    expect(button?.title).toBeUndefined();
+    expect(button?.disabled).toBeFalsy();
   });
 
-  it('is disabled, saying why, for a user who may not create patients', () => {
+  it('is not offered to a user who may not create patients', () => {
     canMutatePatients = false;
-    const button = createButton();
-    expect(button?.disabled).toBe(true);
-    expect(button?.title).toBe('messages.create-patient-not-allowed');
+    expect(createButton()).toBeUndefined();
   });
 
-  it('is disabled along with the picker, with no permission tooltip', () => {
-    const button = createButton({ disabled: true });
-    expect(button?.disabled).toBe(true);
-    expect(button?.title).toBeUndefined();
+  it('is disabled along with the picker', () => {
+    expect(createButton({ disabled: true })?.disabled).toBe(true);
   });
 });

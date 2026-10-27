@@ -50,9 +50,9 @@ export interface PatientSearchProps {
    * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
    * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
    * patient-create flow from this callback and selects the result via
-   * `onSelect`. Disabled, with the reason as its tooltip, for a user without
-   * patient-mutate permission: the server would refuse the save at the end of
-   * the flow (spec/patients § configuration gates).
+   * `onSelect`. Not offered to a user without patient-mutate permission: the
+   * server would refuse the save at the end of the flow (spec/patients §
+   * configuration gates).
    */
   onCreatePatient?: () => void;
   /**
@@ -164,19 +164,21 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
-    // Without patient-mutate permission it is disabled, its reason on the
-    // control, rather than opening a create flow whose save can only fail.
+    // Hidden without patient-mutate permission, as the clinician picker's
+    // create entry is: a create flow whose save can only fail is a blocked
+    // affordance (ui-standards/controls § blocked affordances).
     listboxFooter={query => (
-      <Show when={props.onCreatePatient && query().trim() !== ''}>
+      <Show
+        when={
+          props.onCreatePatient &&
+          query().trim() !== '' &&
+          hasPermission('PATIENT_MUTATE')
+        }
+      >
         <Button
           variant="secondary"
           icon={<PlusCircleIcon />}
-          disabled={props.disabled || !hasPermission('PATIENT_MUTATE')}
-          title={
-            hasPermission('PATIENT_MUTATE')
-              ? undefined
-              : t('messages.create-patient-not-allowed')
-          }
+          disabled={props.disabled}
           data-testid="create-patient-button"
           onClick={() => props.onCreatePatient?.()}
         >
