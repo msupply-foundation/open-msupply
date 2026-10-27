@@ -28,6 +28,8 @@ and are linked from the relevant pages.
 - [Sync styles, changelog generation & outgoing filters](sync_styles/) — the plain-English
   reference for transports, sync styles, per-table classification, changelog row metadata,
   outgoing filters, and translation directions (generated from code).
+- [Data owned by Legacy mSupply](legacy-central-data/) — tables OMS only pulls from legacy
+  mSupply and can't create or update, with the code evidence and edge cases.
 - [Adding a new synced table](adding-a-table/) — step-by-step guides for adding a table and
   wiring it into sync (V7-only, or integrating an existing v5/v6 table).
 
