@@ -20,6 +20,7 @@ import {
   populationSteps,
   principalItemLabel,
   principalWastageDeduction,
+  supplyWastageAddition,
   targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
@@ -151,7 +152,8 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
   const principalUnits = (units: number, principal: AncillaryRatioPrincipal) =>
     `${roundedText(units)} ${measureWord('units', principal.item?.unitName ?? null, units)}`;
   // The principal's monthly demand — less its wastage where the link excludes
-  // that, so the step to the contribution reads true — × the ratio.
+  // that, so the step to the contribution reads true — × the ratio, then the
+  // ancillary's own wastage on top.
   const principalCaption = (principal: AncillaryRatioPrincipal) => {
     const demand = principalUnits(
       principal.principalMonthlyConsumption,
@@ -161,7 +163,9 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
     const usable = deduction
       ? `${demand} ${deduction} = ${principalUnits(principal.principalUsableConsumption, principal)}`
       : demand;
-    return `${usable} × ${ancillaryRatio(principal)}`;
+    const addition = supplyWastageAddition(principal);
+    const ratio = `${usable} × ${ancillaryRatio(principal)}`;
+    return addition ? `${ratio} ${addition}` : ratio;
   };
 
   return (
