@@ -122,6 +122,18 @@ export const InitialisationStatus = {
   query: "query initialisationStatus {\n  initialisationStatus {\n    status\n    siteName\n  }\n}",
 } as TypedDocument<InitialisationStatusResult, InitialisationStatusVariables>;
 
+export type InitialisationStatusAtStartupVariables = Record<string, never>;
+
+export type InitialisationStatusAtStartupResult = {
+  initialisationStatus: {
+  status: "INITIALISED" | "INITIALISING" | "PRE_INITIALISATION";
+};
+};
+
+export const InitialisationStatusAtStartup = {
+  query: "query initialisationStatusAtStartup {\n  initialisationStatus {\n    status\n  }\n}",
+} as TypedDocument<InitialisationStatusAtStartupResult, InitialisationStatusAtStartupVariables>;
+
 export type IsCentralServerVariables = Record<string, never>;
 
 export type IsCentralServerResult = {
