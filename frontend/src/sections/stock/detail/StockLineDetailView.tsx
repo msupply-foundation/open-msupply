@@ -56,6 +56,7 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { createConfirmOnLeave } from '@/domain/confirmOnLeave';
 import {
   barcodeFieldFill,
   createScanControl,
@@ -123,7 +124,6 @@ const StockLineDetailView: Component = () => {
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string | undefined>();
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
-  const [discardOpen, setDiscardOpen] = createSignal(false);
   const [adjustOpen, setAdjustOpen] = createSignal(false);
   const [repackOpen, setRepackOpen] = createSignal(false);
   // A full repack's new line, offered once the repack modal has closed (spec
@@ -146,7 +146,7 @@ const StockLineDetailView: Component = () => {
     disabled: () =>
       saving() ||
       confirmSaveOpen() ||
-      discardOpen() ||
+      leaveGuard.open() ||
       adjustOpen() ||
       repackOpen() ||
       vvmEntry() !== undefined,
@@ -289,12 +289,17 @@ const StockLineDetailView: Component = () => {
       });
   };
 
-  const leave = () => navigate(`/${params.storeId}/inventory/stock`);
+  // Any leave with unsaved edits prompts to discard (OMS-REG-INV-02.37).
+  // Discard re-seeds: a leave to another stock line keeps this view mounted.
+  const leaveGuard = createConfirmOnLeave({
+    isDirty,
+    onDiscard: () => {
+      const l = line();
+      if (l) seedFor(l);
+    },
+  });
 
-  const onCancelOrClose = () => {
-    if (isDirty()) setDiscardOpen(true);
-    else leave();
-  };
+  const leave = () => navigate(`/${params.storeId}/inventory/stock`);
 
   const afterQuantityChange = () => {
     void refetch();
@@ -361,7 +366,7 @@ const StockLineDetailView: Component = () => {
       vvmEntry() !== undefined ||
       repackedToLineId() !== undefined ||
       confirmSaveOpen() ||
-      discardOpen(),
+      leaveGuard.open(),
   });
 
   const tabs = (): TabDef[] => [
@@ -372,7 +377,7 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('stock'), onClick: onCancelOrClose },
+    { label: t('stock'), onClick: leave },
     { label: l.itemName },
   ];
 
@@ -444,7 +449,7 @@ const StockLineDetailView: Component = () => {
                             ? 'dialog-button-cancel'
                             : 'dialog-button-close'
                         }
-                        onClick={onCancelOrClose}
+                        onClick={leave}
                       >
                         {isDirty() ? t('button.cancel') : t('button.close')}
                       </Button>
@@ -852,12 +857,12 @@ const StockLineDetailView: Component = () => {
               />
               {/* Discard prompt when leaving with unsaved edits. */}
               <ConfirmDialog
-                open={discardOpen()}
+                open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
-                onConfirm={leave}
-                onClose={() => setDiscardOpen(false)}
+                onConfirm={leaveGuard.confirm}
+                onClose={leaveGuard.cancel}
               />
             </Page>
           </Tabs>
