@@ -2769,6 +2769,7 @@
   "report.collected-by": "Collected by",
   "report.comments": "Comments",
   "report.confirm-date": "Confirm date",
+  "report.confirm-delivery-date-by-email": "Please confirm the delivery date by return email.",
   "report.confirmed-date": "Confirmed date",
   "report.consolidated-amc-clients": "Consolidated AMC of clients",
   "report.consumption": "Consumption",

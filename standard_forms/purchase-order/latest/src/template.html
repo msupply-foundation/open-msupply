@@ -166,8 +166,9 @@
 
 <div class="closing">
   <div class="instructions">
-    {% if po.additionalInstructions %}
     <div class="label">{{ t(k="label.notes", f="Notes") }}</div>
+    <div>{{ t(k="report.confirm-delivery-date-by-email", f="Please confirm the delivery date by return email.") }}</div>
+    {% if po.additionalInstructions %}
     <div class="instructions_text">{{ po.additionalInstructions }}</div>
     {% endif %}
   </div>
