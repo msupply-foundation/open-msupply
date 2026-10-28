@@ -65,21 +65,44 @@ describe('emptyForm', () => {
 describe('formFromVariant', () => {
   it('seeds every field from the row, including its existing packaging', () => {
     const row = variantRow();
-    expect(formFromVariant(row)).toEqual({
+    const form = formFromVariant(row);
+    expect(form).toMatchObject({
       name: 'Bottle of 100',
       locationTypeId: 'loc-type-1',
       manufacturerId: 'manufacturer-1',
       vvmType: 'VVM30',
-      packaging: [
-        {
-          id: 'pv-1',
-          name: 'Primary',
-          packagingLevel: 1,
-          packSize: 1,
-          volumePerUnit: 0.5,
-        },
-      ],
     });
+    expect(form.packaging[0]).toEqual({
+      id: 'pv-1',
+      name: 'Primary',
+      packagingLevel: 1,
+      packSize: 1,
+      volumePerUnit: 0.5,
+    });
+  });
+
+  it('fills in a blank row for each seeded level the variant lacks', () => {
+    const form = formFromVariant(
+      variantRow({
+        packagingVariants: [
+          {
+            id: 'pv-2',
+            name: 'Box',
+            packagingLevel: 2,
+            packSize: 10,
+            volumePerUnit: 2,
+            barcode: null,
+          },
+        ],
+      })
+    );
+    expect(form.packaging.map(row => row.packagingLevel)).toEqual([1, 2, 3]);
+    expect(form.packaging[1]).toMatchObject({ id: 'pv-2', packSize: 10 });
+    expect(form.packaging[0].packSize).toBeUndefined();
+    expect(form.packaging[2].volumePerUnit).toBeUndefined();
+    // Blank rows still aren't saved: re-saving sends only the stored level.
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants?.map(row => row.id)).toEqual(['pv-2']);
   });
 
   it("treats null location type/manufacturer/vvm as none ('')", () => {
@@ -122,12 +145,21 @@ describe('isFormValid', () => {
     expect(isFormValid({ ...validForm(), name: '   ' })).toBe(false);
   });
 
-  it('is invalid when a packaging row has a blank or zero pack size', () => {
+  it('is invalid when an entered packaging row has a blank or zero pack size', () => {
     const form = validForm();
     form.packaging[0].packSize = undefined;
     expect(isFormValid(form)).toBe(false);
     form.packaging[0].packSize = 0;
     expect(isFormValid(form)).toBe(false);
+  });
+
+  // OMS-REG-CAT-05.21 — the seeded rows are a starting point, not a rule.
+  it('skips fully blank packaging rows', () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    expect(isFormValid(form)).toBe(true);
   });
 
   it('is invalid when a packaging row has a blank or zero volume per unit', () => {
@@ -175,6 +207,17 @@ describe('buildUpsertInput', () => {
         },
       ],
     });
+  });
+
+  it('leaves fully blank packaging rows out of the save', () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants?.map(row => row.packagingLevel)).toEqual([
+      1,
+    ]);
   });
 
   it('sends null (not omitted) to clear an unset location type/manufacturer/vvm', () => {

@@ -1,5 +1,5 @@
 import { generateUUID } from '../../../uuid';
-import { t } from '../../../intl';
+import { t, type LocaleKey } from '../../../intl';
 import type {
   UpsertItemVariantResult,
   UpsertItemVariantVariables,
@@ -45,6 +45,21 @@ export type DraftItemVariant = {
   packaging: DraftPackagingRow[];
 };
 
+/** The three seeded levels (rules.md § item variants and packaging). */
+const SEEDED_LEVELS: [number, LocaleKey][] = [
+  [1, 'label.primary'],
+  [2, 'label.secondary'],
+  [3, 'label.tertiary'],
+];
+
+const blankRow = (packagingLevel: number, labelKey: LocaleKey) => ({
+  id: generateUUID(),
+  name: t(labelKey),
+  packagingLevel,
+  packSize: undefined,
+  volumePerUnit: undefined,
+});
+
 /**
  * A fresh create form: three seeded packaging rows — Primary/Secondary/
  * Tertiary at levels 1/2/3 (rules.md § item variants and packaging;
@@ -56,62 +71,66 @@ export const emptyForm = (): DraftItemVariant => ({
   locationTypeId: '',
   manufacturerId: '',
   vvmType: '',
-  packaging: [
-    {
-      id: generateUUID(),
-      name: t('label.primary'),
-      packagingLevel: 1,
-      packSize: undefined,
-      volumePerUnit: undefined,
-    },
-    {
-      id: generateUUID(),
-      name: t('label.secondary'),
-      packagingLevel: 2,
-      packSize: undefined,
-      volumePerUnit: undefined,
-    },
-    {
-      id: generateUUID(),
-      name: t('label.tertiary'),
-      packagingLevel: 3,
-      packSize: undefined,
-      volumePerUnit: undefined,
-    },
-  ],
+  packaging: SEEDED_LEVELS.map(([level, key]) => blankRow(level, key)),
 });
 
-/** Seed the edit form from the clicked variant card. */
-export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => ({
-  name: variant.name,
-  locationTypeId: variant.locationTypeId ?? '',
-  manufacturerId: variant.manufacturerId ?? '',
-  vvmType: variant.vvmType ?? '',
-  packaging: variant.packagingVariants.map(row => ({
+/**
+ * Seed the edit form from the clicked variant card. Any seeded level the
+ * variant doesn't have comes back as a blank row: blank rows aren't saved
+ * (isBlankRow), and the grid has no add-row control, so without this a level
+ * left out once could never be added again.
+ */
+export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => {
+  const saved = variant.packagingVariants.map(row => ({
     id: row.id,
     name: row.name,
     packagingLevel: row.packagingLevel,
     packSize: row.packSize ?? undefined,
     volumePerUnit: row.volumePerUnit ?? undefined,
-  })),
-});
+  }));
+  const missing = SEEDED_LEVELS.filter(
+    ([level]) => !saved.some(row => row.packagingLevel === level)
+  ).map(([level, key]) => blankRow(level, key));
+  return {
+    name: variant.name,
+    locationTypeId: variant.locationTypeId ?? '',
+    manufacturerId: variant.manufacturerId ?? '',
+    vvmType: variant.vvmType ?? '',
+    packaging: [...saved, ...missing].sort(
+      (a, b) => a.packagingLevel - b.packagingLevel
+    ),
+  };
+};
 
 /**
- * ui-surface S3 — Save disabled until the name is set and every packaging row
- * has a POSITIVE pack size and volume per unit (rules.md's "positive"
- * requirement; the client-side mirror of the server's LessThanZero guard).
+ * A row with both pack size and volume blank hasn't been entered: the seeded
+ * rows are "a starting point, not a rule" (rules.md § item variants and
+ * packaging), so a blank one is left out of the save rather than blocking it
+ * (OMS-REG-CAT-05.21 — matches the React front end's getIsComplete).
+ */
+const isBlankRow = (row: DraftPackagingRow): boolean =>
+  row.packSize === undefined && row.volumePerUnit === undefined;
+
+/**
+ * ui-surface S3 — Save disabled until the name is set and every entered
+ * packaging row has a POSITIVE pack size and volume per unit (rules.md's
+ * "positive" requirement; the client-side mirror of the server's LessThanZero
+ * guard). Blank rows are skipped.
  */
 export const isFormValid = (form: DraftItemVariant): boolean =>
   form.name.trim() !== '' &&
   form.packaging.every(
-    row => (row.packSize ?? 0) > 0 && (row.volumePerUnit ?? 0) > 0
+    row =>
+      isBlankRow(row) ||
+      ((row.packSize ?? 0) > 0 && (row.volumePerUnit ?? 0) > 0)
   );
 
 /**
  * The upsert input — always the FULL current field set: packagingVariants is
  * a full-replacement set (contract.md ⚠️ wire trap, rules.md § item variants
  * and packaging) — an omitted row is a deletion, so every save resends every
- * current row. `locationTypeId`/`manufacturerId`/`vvmType` are
+ * current row — except blank ones, which were never entered (so blanking an
+ * existing row's pack size and volume removes it). `locationTypeId`/`manufacturerId`/`vvmType` are
  * NullableStringUpdate wrappers — `{ value: null }` clears, `{ value: id }`
  * sets; always sent (never omitted) so an edit can also clear a previously-set
  * value.
@@ -127,13 +146,15 @@ export const buildUpsertInput = (
   locationTypeId: { value: form.locationTypeId || null },
   manufacturerId: { value: form.manufacturerId || null },
   vvmType: { value: form.vvmType || null },
-  packagingVariants: form.packaging.map(row => ({
-    id: row.id,
-    name: row.name,
-    packagingLevel: row.packagingLevel,
-    packSize: row.packSize ?? 0,
-    volumePerUnit: row.volumePerUnit ?? 0,
-  })),
+  packagingVariants: form.packaging
+    .filter(row => !isBlankRow(row))
+    .map(row => ({
+      id: row.id,
+      name: row.name,
+      packagingLevel: row.packagingLevel,
+      packSize: row.packSize ?? 0,
+      volumePerUnit: row.volumePerUnit ?? 0,
+    })),
 });
 
 type UpsertError = Extract<
