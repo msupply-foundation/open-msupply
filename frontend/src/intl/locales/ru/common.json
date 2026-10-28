@@ -2051,7 +2051,6 @@
   "messages.results-found": "Найдено {{totalCount}} результатов",
   "messages.results-over-limit": "Показаны только первые {{limit}} результатов - пожалуйста, уточните поиск",
   "messages.rnr-not-all-lines-confirmed": "Не все строки были отмечены как подтвержденные. Вы уверены, что готовы завершить работу?",
-  "messages.save-encounter-as-visited": "Сохранить прием как 'Посещенный'?",
   "messages.saved": "Сохранено",
   "messages.scanner-connected": "Подключено",
   "messages.scanner-disconnected": "Не подключено",

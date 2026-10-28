@@ -6,7 +6,10 @@ use repository::{
 use std::collections::HashSet;
 
 use super::compute::{AncillaryPlan, compute_ancillary_plan};
-use crate::requisition::request_requisition::wastage_rates;
+use crate::{
+    item::ancillary_item::supply_wastage_rates_of,
+    requisition::request_requisition::principal_wastage_rates,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum GetAncillaryPlanError {
@@ -47,6 +50,9 @@ pub fn get_ancillary_plan(
     let ancillary_rows =
         AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
+    // Every ancillary's own wastage rate as a supply, carried on the links to it
+    let supply_wastage_rates = supply_wastage_rates_of(&ancillary_rows);
+
     // The wastage rates, in the order's store, of the principals whose links exclude them
     let principal_ids: Vec<String> = ancillary_rows
         .iter()
@@ -55,11 +61,17 @@ pub fn get_ancillary_plan(
         .collect::<HashSet<String>>()
         .into_iter()
         .collect();
-    let wastage_rates = wastage_rates(connection, &requisition.store_id, &principal_ids)?;
+    let wastage_rates = principal_wastage_rates(
+        connection,
+        &requisition.store_id,
+        &principal_ids,
+        &supply_wastage_rates,
+    )?;
 
     Ok(compute_ancillary_plan(
         &line_rows,
         &ancillary_rows,
         &wastage_rates,
+        &supply_wastage_rates,
     ))
 }

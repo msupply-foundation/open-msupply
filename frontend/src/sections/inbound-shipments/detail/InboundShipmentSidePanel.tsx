@@ -303,7 +303,10 @@ export const InboundShipmentSidePanel: Component<
         <Show when={props.node.currency && !props.node.currency.isHomeCurrency}>
           <FieldRow label={t('label.foreign-currency-total')}>
             <span>
-              {formatCurrency(pricing().foreignCurrencyTotalAfterTax ?? 0)}
+              {formatCurrency(
+                pricing().foreignCurrencyTotalAfterTax ?? 0,
+                props.node.currency?.code
+              )}
             </span>
           </FieldRow>
         </Show>

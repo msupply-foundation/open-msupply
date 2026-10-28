@@ -7,6 +7,7 @@ use repository::{
     ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
 };
 
+use super::supply_wastage_rates_of;
 use crate::{service_provider::ServiceContext, sync::CentralServerConfig};
 
 #[derive(PartialEq, Debug)]
@@ -52,7 +53,8 @@ pub fn upsert_ancillary_item(
             validate(connection, &input)?;
             let repo = AncillaryItemRowRepository::new(connection);
             let existing = repo.find_one_by_id(&input.id)?;
-            let new_row = generate(input.clone(), existing);
+            let wastage_rate = supply_wastage_rate(connection, &input, existing.as_ref())?;
+            let new_row = generate(input.clone(), existing, wastage_rate);
 
             repo.upsert_one(&new_row)?;
 
@@ -96,6 +98,7 @@ fn generate(
         exclude_principal_wastage,
     }: UpsertAncillaryItem,
     existing: Option<AncillaryItemRow>,
+    wastage_rate: f64,
 ) -> AncillaryItemRow {
     AncillaryItemRow {
         id,
@@ -106,7 +109,32 @@ fn generate(
         deleted_datetime: None,
         exclude_principal_wastage: exclude_principal_wastage
             .unwrap_or(existing.is_some_and(|row| row.exclude_principal_wastage)),
+        wastage_rate,
     }
+}
+
+/// The ancillary's own wastage rate, which every link to it carries: kept from the link
+/// being edited, else taken from the ancillary's other links, so a new link orders at the
+/// rate already set for the supply.
+fn supply_wastage_rate(
+    connection: &StorageConnection,
+    input: &UpsertAncillaryItem,
+    existing: Option<&AncillaryItemRow>,
+) -> Result<f64, RepositoryError> {
+    if let Some(existing) = existing
+        && existing.ancillary_item_id == input.ancillary_item_id
+    {
+        return Ok(existing.wastage_rate);
+    }
+    let other_links = AncillaryItemRepository::new(connection).query_by_filter(
+        AncillaryItemFilter::new()
+            .ancillary_item_id(EqualFilter::equal_to(input.ancillary_item_id.clone()))
+            .id(EqualFilter::not_equal_to(input.id.clone())),
+    )?;
+    Ok(supply_wastage_rates_of(&other_links)
+        .get(&input.ancillary_item_id)
+        .copied()
+        .unwrap_or(0.0))
 }
 
 fn validate(
