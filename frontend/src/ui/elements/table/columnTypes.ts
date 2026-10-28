@@ -151,9 +151,10 @@ declare module '@tanstack/solid-table' {
      * CSS is DataTable's.
      *
      * The ring is colour alone, so it never carries the error by itself: the
-     * cell's own renderer still states it in words (a message beneath the
-     * value, a labelled StatusMarker), and the column decides both the
-     * wording and where it goes. The ring only points the eye at the cell.
+     * cell's own renderer still states it in words on screen (a short message
+     * beneath the value; an icon whose label only a screen reader announces
+     * does not count), and the column decides the wording. The ring only
+     * points the eye at the cell.
      *
      * Read per cell at render, so a page can drive it from an error signal
      * without rebuilding its columns. Method-style for the same reason as

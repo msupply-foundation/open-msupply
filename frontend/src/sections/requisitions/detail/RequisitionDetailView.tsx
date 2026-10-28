@@ -810,7 +810,9 @@ const RequisitionDetailView: Component = () => {
     },
     // Reason — the line's variance reason; extended gate. Flagged when a
     // header save was rejected for a missing reason (OMS-REG-DIST-06.19): a
-    // labelled marker beside the reason text, and the cell ringed.
+    // marker beside the reason text, and the cell ringed.
+    // TO-DO(#1782): state the missing reason in words on screen beneath the
+    // reason; the marker's label reaches screen readers only.
     ...(showExtended()
       ? ([
           {

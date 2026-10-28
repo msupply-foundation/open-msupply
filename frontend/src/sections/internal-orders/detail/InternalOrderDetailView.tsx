@@ -906,6 +906,9 @@ const InternalOrderDetailView: Component = () => {
             // A send's reasons backstop flags every offending line's Reason
             // cell (OMS-REG-REPL-04.81): a red alert beside the (usually empty)
             // reason text, and the cell ringed (cellTone above).
+            // TO-DO(#1782): state the missing reason in words on screen
+            // beneath the reason; the marker's label reaches screen readers
+            // only.
             cell: info => {
               const line = info.row.original;
               return (

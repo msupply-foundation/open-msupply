@@ -29,7 +29,6 @@ import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
-import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
@@ -743,9 +742,9 @@ const RowStatesDemo = () => {
 
 // Cell errors (meta.cellTone): an error about ONE field of a line rings that
 // field's cell — here the quantity of a line that would take stock below zero
-// — and the cell states it in words beside the value. One predicate drives
+// — and the cell states it in words beneath the value. One predicate drives
 // both. The button clears and re-stamps the errors, as a page does when the
-// server answers again: the ring takes no room, so nothing in the row moves.
+// server answers again: the ring takes no room; only the message adds a line.
 const CellErrorsDemo = () => {
   const [stamped, setStamped] = createSignal(true);
   const quantityError = (row: StockLine) =>
@@ -770,17 +769,24 @@ const CellErrorsDemo = () => {
           quantityError(row) ? 'error' : undefined,
       }),
       size: remToPx(8),
-      // Marker and number inline, so the cell's own alignment places them:
-      // at the end in table view (a number column), at the start on a card.
+      // The number, and the error in words beneath it: the cell's own
+      // alignment places both, at the end in table view (a number column)
+      // and at the start on a card.
       cell: info => (
         <>
-          <Show when={quantityError(info.row.original)}>
-            <StatusMarker
-              severity="error"
-              label="Would take stock below zero"
-            />{' '}
-          </Show>
           {info.row.original.quantity}
+          <Show when={quantityError(info.row.original)}>
+            <span
+              style={{
+                display: 'block',
+                color: 'var(--error-main)',
+                'font-size': 'var(--text-xs)',
+                'white-space': 'normal',
+              }}
+            >
+              Would take stock below zero
+            </span>
+          </Show>
         </>
       ),
     },
@@ -1815,11 +1821,11 @@ export const TableCardShowcase = () => (
             An error about <em>one field</em> of a line rings that field's cell:{' '}
             <code>meta.cellTone</code>, a function from the row to{' '}
             <code>'error'</code> or nothing, set on the column the error is
-            about. The ring is colour, so the cell also says it in words (here a
-            labelled <code>StatusMarker</code>) — drive both from one predicate.
-            It is an outline, so clearing or stamping it moves nothing. Flip to
-            cards and the ring goes round the value. Full rules are in{' '}
-            <code>CARD_TABLE_MODEL.md</code>.
+            about. The ring is colour, so the cell also says it in words on
+            screen, here a short message beneath the value — drive both from one
+            predicate. The ring is an outline, so it takes no room; only the
+            message adds a line. Flip to cards and the ring goes round the
+            value. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <CellErrorsDemo />
         </DashboardCard>
