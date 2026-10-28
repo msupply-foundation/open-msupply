@@ -3979,6 +3979,7 @@
   "stocktake.line-error.reason-not-valid": "That adjustment reason isn't valid for this change.",
   "stocktake.line-error.reduced-below-zero": "This count would reduce stock below zero.",
   "stocktake.line-error.snapshot-mismatch": "Stock changed since the snapshot — recount this line.",
+  "stocktake.line-error.stock-reserved": "Some packs are reserved elsewhere",
   "stocktake.lines.change-location": "Change location",
   "stocktake.lines.change-location-message": "This will change the location of all selected lines.",
   "stocktake.lines.change-location-success": "Location changed.",
