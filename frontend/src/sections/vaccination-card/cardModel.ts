@@ -155,29 +155,6 @@ export const STATUS_COLOUR: Record<DoseStatus, string> = {
   LATE: 'var(--status-overdue)',
 };
 
-/**
- * The patient's age as the card's summary states it: weeks under three
- * months, months under two years, then years.
- *
- * Months are COMPLETED CALENDAR MONTHS, compared on y/m/d: one completes on
- * the day of the month it was born on. Dividing days by the average month
- * reads a month short on a birthday — two years is 730 days, 23.98 average
- * months.
- */
-export const patientAgeLabel = (dateOfBirth: string, today: string): string => {
-  const days = Math.floor(
-    (Date.parse(today) - Date.parse(dateOfBirth)) / 86_400_000
-  );
-  const [birthY, birthM, birthD] = dateOfBirth.split('-').map(Number);
-  const [todayY, todayM, todayD] = today.split('-').map(Number);
-  const months =
-    (todayY - birthY) * 12 + (todayM - birthM) - (todayD < birthD ? 1 : 0);
-  if (months < 3)
-    return t('label.age-weeks-short', { count: Math.floor(days / 7) });
-  if (months < 24) return t('label.age-months-short', { count: months });
-  return t('label.age-years-short', { count: Math.floor(months / 12) });
-};
-
 /** The reason codes the editor offers, and their labels. */
 export const NOT_GIVEN_REASONS: { value: string; key: LocaleKey }[] = [
   { value: 'REFUSED', key: 'label.refused' },
