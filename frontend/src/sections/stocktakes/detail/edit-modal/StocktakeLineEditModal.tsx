@@ -1934,6 +1934,7 @@ const StocktakeLineEditContent = (
               label={t('heading.add-item')}
               hideLabel
               storeId={props.storeId}
+              includeHiddenWithStock
               disabled={mode() === 'update'}
               focusTarget={itemSearch}
               value={currentItem()?.id}
