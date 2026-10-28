@@ -78,6 +78,7 @@ import {
   type StockLinesByItemResult,
 } from '../lines/stocktakeDetail.generated';
 import {
+  variantUpdateField,
   variantVolumeForLine,
   variantVolumePerPack,
 } from '../lines/itemVariant';
@@ -1091,10 +1092,8 @@ const StocktakeLineEditContent = (
         campaignId: { value: line.campaign?.id ?? null },
         programId: { value: line.program?.id ?? null },
         // Item variant — NullableStringUpdate wrapper on UPDATE, sent only
-        // once the user set or cleared it (see variantEdited).
-        ...(line.variantEdited
-          ? { itemVariantId: { value: line.itemVariantId ?? null } }
-          : {}),
+        // once the user set or cleared it (see variantUpdateField).
+        ...variantUpdateField(line),
       });
     }
     return { insert, update, delete: deletes.map(id => ({ id })) };

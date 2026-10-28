@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { variantVolumeForLine, variantVolumePerPack } from './itemVariant';
+import {
+  variantUpdateField,
+  variantVolumeForLine,
+  variantVolumePerPack,
+} from './itemVariant';
 
 // Anchor: spec/stocktakes/cases/OMS-REG-INV-03.93 — choosing an item variant
 // seeds the batch's volume per pack from the variant's packaging level that
@@ -65,5 +69,34 @@ describe('variantVolumeForLine', () => {
     // An auto-created barcode-only variant never appears in the item's variant
     // list, so there is nothing to re-seed from and the batch's volume stands.
     expect(variantVolumeForLine(variants, 'auto', 5)).toBeUndefined();
+  });
+});
+
+// Anchor: spec/stocktakes/cases/OMS-REG-INV-03.93 — on UPDATE the item-variant
+// field only rides along once the user set OR cleared the variant on the line,
+// and then as the NullableStringUpdate wrapper. In particular, clearing the
+// variant on an existing line must send `{ value: null }` (the explicit "none"
+// that drops it), not omit the field.
+describe('variantUpdateField', () => {
+  it('clears the variant on an existing line with { value: null }', () => {
+    // Existing line's variant cleared: variantEdited set, itemVariantId null.
+    expect(
+      variantUpdateField({ variantEdited: true, itemVariantId: null })
+    ).toEqual({ itemVariantId: { value: null } });
+  });
+
+  it('sets a chosen variant with { value: id }', () => {
+    expect(
+      variantUpdateField({ variantEdited: true, itemVariantId: 'v1' })
+    ).toEqual({ itemVariantId: { value: 'v1' } });
+  });
+
+  it('omits the field on a line whose variant was never touched', () => {
+    // A hidden auto-created variant the field can't list stays untouched: with
+    // variantEdited unset the field is absent, so the server keeps it.
+    expect(variantUpdateField({ itemVariantId: 'hidden' })).toEqual({});
+    expect(
+      variantUpdateField({ variantEdited: false, itemVariantId: 'hidden' })
+    ).toEqual({});
   });
 });

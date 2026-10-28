@@ -51,3 +51,22 @@ export const variantVolumeForLine = (
     ? variantVolumePerPack(variant.packagingVariants, packSize)
     : undefined;
 };
+
+// The item-variant field a stocktake-line UPDATE carries (buildBatch). The
+// field rides along only once the user set OR cleared the variant on the line
+// (variantEdited); until then it is omitted, so a variant the user never
+// touched — including an auto-created barcode-only one the field can't list —
+// is left as the server holds it (OMS-REG-INV-03.93, .95). When it does ride
+// along it is the NullableStringUpdate wrapper `{ value: id | null }`: a chosen
+// id sets the variant, and clearing it on an existing line sends
+// `{ value: null }`, the explicit "none" that drops it — distinct from omitting
+// the field. (INSERT carries the id as a plain scalar, since its input has no
+// nullable wrapper — see the insert branch's known limitation in ui-surface.md
+// S4.)
+export const variantUpdateField = (line: {
+  variantEdited?: boolean;
+  itemVariantId?: string | null;
+}): { itemVariantId: { value: string | null } } | Record<string, never> =>
+  line.variantEdited
+    ? { itemVariantId: { value: line.itemVariantId ?? null } }
+    : {};
