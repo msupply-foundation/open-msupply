@@ -52,7 +52,9 @@ export interface PatientSearchProps {
    * patient-create flow from this callback and selects the result via
    * `onSelect`. Not offered to a user without patient-mutate permission: the
    * server would refuse the save at the end of the flow (spec/patients §
-   * configuration gates).
+   * configuration gates). That permission check reads the store the user is
+   * logged into, not `props.storeId` — every caller passes the current store,
+   * so the two agree today.
    */
   onCreatePatient?: () => void;
   /**
@@ -164,7 +166,7 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
-    // Hidden without patient-mutate permission (OMS-REG-DIS-02.40), as the
+    // Hidden without patient-mutate permission (OMS-REG-DIS-03.18/.78), as the
     // clinician picker's create entry is: nothing on the screen can grant the
     // permission, so a create flow whose save can only fail is permanently
     // dead (ui-standards/controls § blocked affordances).

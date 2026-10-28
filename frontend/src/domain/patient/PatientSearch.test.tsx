@@ -10,9 +10,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 /*
  * The picker's Create patient button is hidden from a user without
  * patient-mutate permission, rather than opening a create flow whose save the
- * server refuses (OMS-REG-DIS-02.40, spec/patients § configuration gates). The
- * combobox and the button are stand-ins that record their props while
- * rendered, so this runs without a DOM.
+ * server refuses (OMS-REG-DIS-03.18/.78, spec/patients § configuration
+ * gates). The combobox and the button are stand-ins that record their props
+ * while rendered, so this runs without a DOM.
  */
 
 interface ComboboxProps {
@@ -78,7 +78,7 @@ const createButton = (
     return seen.button;
   });
 
-describe('OMS-REG-DIS-02.40 — PatientSearch’s Create patient button', () => {
+describe('OMS-REG-DIS-03.18/.78 — PatientSearch’s Create patient button', () => {
   it('is offered to a user who may create patients', () => {
     const button = createButton();
     expect(button?.['data-testid']).toBe('create-patient-button');
