@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   batchIsBlank,
   expiryIsBlank,
+  figuresAtPackSize,
   lacksBatchOrExpiry,
   missingBatchField,
   newBatchDefaultsFromLine,
@@ -192,5 +193,62 @@ describe('perUnitAtPackSize', () => {
 
   it('is zero where the item has no default pack size', () => {
     expect(perUnitAtPackSize(10, 0, 50)).toBe(0);
+  });
+});
+
+// What a pack-size change does to a batch's figures, by shipment kind
+// (spec/inbound-shipments/rules.md › new-batch defaults). The base is the
+// item's defaults on a new batch, or the source's figures on a duplicate.
+describe('figuresAtPackSize', () => {
+  const manual = { purchaseOrderLinked: false, costLocked: false };
+  const transfer = { purchaseOrderLinked: false, costLocked: true };
+  const purchaseOrder = { purchaseOrderLinked: true, costLocked: true };
+  const itemDefaults = {
+    packSize: 100,
+    costPricePerPack: 10,
+    sellPricePerPack: 10,
+    volumePerPack: 0.5,
+  };
+
+  it('OMS-REG-REPL-09.11 clears both prices away from the base pack size where cost can be typed', () => {
+    expect(figuresAtPackSize(itemDefaults, 50, manual)).toEqual({
+      volumePerPack: 0.25,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+    });
+  });
+
+  it('leaves the prices alone at the base pack size where cost can be typed', () => {
+    expect(figuresAtPackSize(itemDefaults, 100, manual)).toEqual({
+      volumePerPack: 0.5,
+    });
+  });
+
+  it('OMS-REG-REPL-09.44 moves both prices at the price per unit on a transfer', () => {
+    expect(figuresAtPackSize(itemDefaults, 50, transfer)).toEqual({
+      volumePerPack: 0.25,
+      costPricePerPack: 5,
+      sellPricePerPack: 5,
+    });
+  });
+
+  it('OMS-REG-REPL-09.42 .45 keeps an order line price and moves only the volume', () => {
+    expect(figuresAtPackSize(itemDefaults, 200, purchaseOrder)).toEqual({
+      volumePerPack: 1,
+    });
+  });
+
+  it("OMS-REG-REPL-09.46 scales a transfer duplicate from its source's own cost and sell price", () => {
+    const source = {
+      packSize: 10,
+      costPricePerPack: 5,
+      sellPricePerPack: 8,
+      volumePerPack: 0.2,
+    };
+    expect(figuresAtPackSize(source, 20, transfer)).toEqual({
+      volumePerPack: 0.4,
+      costPricePerPack: 10,
+      sellPricePerPack: 16,
+    });
   });
 });

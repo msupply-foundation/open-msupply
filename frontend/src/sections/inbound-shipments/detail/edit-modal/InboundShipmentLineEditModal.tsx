@@ -50,8 +50,10 @@ import {
   orderLinePrice,
   packDifference,
   perUnitAtPackSize,
+  figuresAtPackSize,
   type MissingBatchField,
   type NewBatchDefaults,
+  type PackSizeBase,
 } from '../inboundShipmentLine';
 import {
   AlertTriangleIcon,
@@ -254,6 +256,12 @@ type DraftBatch = {
    * every pack-size change at the item's volume per unit (OMS-REG-REPL-09.45).
    */
   volumeOverridden: boolean;
+  /**
+   * A duplicated batch's source figures, which its pack-size changes scale
+   * from in place of the item's defaults (OMS-REG-REPL-09.46). Absent on
+   * every other batch.
+   */
+  duplicatedFrom?: PackSizeBase;
 };
 
 // The three authorisation states a line can hold (the fragment's non-null set).
@@ -771,16 +779,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   // Pack-size / price edits (spec rules › new-batch defaults): a pack-size
-  // change moves each still-prefilled (non-overridden) price by whether cost
-  // can be typed. Where it can, moving off the item default clears both to
-  // zero for the user to enter (OMS-REG-REPL-09.10/.11). On a transfer cost is
-  // read-only, so a zero could never be corrected: both follow the pack size
-  // at the default's price per unit instead (.44). An order line's price is
-  // kept: it is the order's price per pack at any pack size, as the server's
-  // cost recalculation applies it (.42). Volume per pack follows the pack size
-  // at the item's volume per unit on every shipment (.45). Editing a price or
-  // the volume marks it overridden so a later pack-size change leaves it
-  // alone.
+  // change moves the volume and each price the user hasn't typed, from the
+  // item's defaults or, on a duplicate, from its source's figures
+  // (figuresAtPackSize has the rules, OMS-REG-REPL-09.11/.42/.44–.46). Editing
+  // a price or the volume marks it overridden so a later pack-size change
+  // leaves it alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -788,27 +791,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = d.find(x => x.id === id);
         if (!b) return;
         b.packSize = value;
-        if (!chosen) return;
-        if (!b.volumeOverridden)
-          b.volumePerPack = perUnitAtPackSize(
-            chosen.volumePerPack,
-            chosen.defaultPackSize,
-            value
-          );
-        if (props.purchaseOrderId) return;
-        const reprice = (price: number) => {
-          if (!b.costOverridden) b.costPricePerPack = price;
-          if (!b.sellOverridden) b.sellPricePerPack = price;
-        };
-        if (props.costLocked)
-          reprice(
-            perUnitAtPackSize(
-              chosen.prefillPricePerPack,
-              chosen.defaultPackSize,
-              value
-            )
-          );
-        else if (value !== chosen.defaultPackSize) reprice(0);
+        const base: PackSizeBase | undefined =
+          b.duplicatedFrom ??
+          (chosen
+            ? {
+                packSize: chosen.defaultPackSize,
+                costPricePerPack: chosen.prefillPricePerPack,
+                sellPricePerPack: chosen.prefillPricePerPack,
+                volumePerPack: chosen.volumePerPack,
+              }
+            : undefined);
+        if (!base) return;
+        const next = figuresAtPackSize(base, value, {
+          purchaseOrderLinked: !!props.purchaseOrderId,
+          costLocked: props.costLocked,
+        });
+        if (!b.volumeOverridden) b.volumePerPack = next.volumePerPack;
+        if (next.costPricePerPack !== undefined && !b.costOverridden)
+          b.costPricePerPack = next.costPricePerPack;
+        if (next.sellPricePerPack !== undefined && !b.sellOverridden)
+          b.sellPricePerPack = next.sellPricePerPack;
       })
     );
   };
@@ -842,13 +844,31 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         }
       })
     );
+  // A duplicate starts with its source's figures, and nothing on it counts as
+  // typed yet: a saved source marks every figure overridden, and a copy of
+  // those flags would leave a transfer's read-only cost at the source's pack
+  // size for good (OMS-REG-REPL-09.46).
   const duplicateBatch = (id: string) => {
     const newId = generateUUID();
     setBatches(
       produce(d => {
         const index = d.findIndex(b => b.id === id);
-        if (index >= 0)
-          d.splice(index + 1, 0, { ...d[index], id: newId, isNew: true });
+        if (index < 0) return;
+        const source = d[index];
+        d.splice(index + 1, 0, {
+          ...source,
+          id: newId,
+          isNew: true,
+          costOverridden: false,
+          sellOverridden: false,
+          volumeOverridden: false,
+          duplicatedFrom: {
+            packSize: source.packSize,
+            costPricePerPack: source.costPricePerPack,
+            sellPricePerPack: source.sellPricePerPack,
+            volumePerPack: source.volumePerPack,
+          },
+        });
       })
     );
     batchFields.focus(newId);
@@ -1919,6 +1939,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     size="small"
                     icon={<CopyIcon />}
                     label={t('label.duplicate-batch')}
+                    data-testid="duplicate-batch-button"
                     disabled={saving()}
                     onClick={() => duplicateBatch(b.id)}
                   />

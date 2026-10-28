@@ -98,6 +98,48 @@ export const perUnitAtPackSize = (
 ): number => (defaultPackSize > 0 ? (perPack / defaultPackSize) * packSize : 0);
 
 /**
+ * The figures a batch's pack-size change starts from: the item's defaults for
+ * a new batch, or the source batch's figures as they were when it was
+ * duplicated. Fixed for the batch's life, so a figure is always scaled from
+ * here and never from its current value, and nothing compounds.
+ */
+export type PackSizeBase = {
+  packSize: number;
+  costPricePerPack: number;
+  sellPricePerPack: number;
+  volumePerPack: number;
+};
+
+/**
+ * What a batch's figures become at `packSize` (spec rules › new-batch
+ * defaults, OMS-REG-REPL-09.11/.42/.44/.45/.46). Volume per pack follows at
+ * the base's volume per unit on every shipment. The prices go by whether cost
+ * can be typed: kept on a PO-linked shipment, since an order line's price
+ * applies at any pack size; at the base's price per unit on a transfer, where
+ * a zero cost could never be corrected; and on a shipment with no source link,
+ * cleared to zero away from the base's pack size for the receiver to enter. A
+ * price left out is left as it is.
+ */
+export const figuresAtPackSize = (
+  base: PackSizeBase,
+  packSize: number,
+  shipment: { purchaseOrderLinked: boolean; costLocked: boolean }
+): Partial<PackSizeBase> & { volumePerPack: number } => {
+  const perUnit = (perPack: number) =>
+    perUnitAtPackSize(perPack, base.packSize, packSize);
+  const volumePerPack = perUnit(base.volumePerPack);
+  if (shipment.purchaseOrderLinked) return { volumePerPack };
+  if (shipment.costLocked)
+    return {
+      volumePerPack,
+      costPricePerPack: perUnit(base.costPricePerPack),
+      sellPricePerPack: perUnit(base.sellPricePerPack),
+    };
+  if (packSize === base.packSize) return { volumePerPack };
+  return { volumePerPack, costPricePerPack: 0, sellPricePerPack: 0 };
+};
+
+/**
  * The defaults for another batch of an item already on the shipment, read off
  * one of its existing lines: the order line it cites on a PO-linked shipment,
  * else the item.
