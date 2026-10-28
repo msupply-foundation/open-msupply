@@ -574,8 +574,13 @@ const start = async (): Promise<void> => {
 
   // The new front end's scanner (./hidScanner). Events go to whatever page
   // the window is showing; a page that does not listen ignores them.
+  // HIDAsync, not HID: see HidLibrary in ./hidScanner for why. Non-exclusive
+  // so that on a Mac a device opened while pairing is not seized from the OS.
   const hidScanner = new HidScanner(
-    { devices: () => HID.devices(), open: path => new HID.HID(path) },
+    {
+      devices: () => HID.devices(),
+      open: path => HID.HIDAsync.open(path, { nonExclusive: true }),
+    },
     {
       get: () => {
         const stored = store.get(HID_SCANNER_KEY, null);
@@ -614,10 +619,10 @@ const start = async (): Promise<void> => {
   window.webContents.on('did-start-navigation', details => {
     if (details.isMainFrame && !details.isSameDocument) {
       hidScanner.cancelPair();
-      hidScanner.stop();
+      void hidScanner.stop();
     }
   });
-  window.on('closed', () => hidScanner.dispose());
+  window.on('closed', () => void hidScanner.dispose());
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
