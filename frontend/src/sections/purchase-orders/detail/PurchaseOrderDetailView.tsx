@@ -17,6 +17,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
@@ -797,7 +798,22 @@ const PurchaseOrderDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <HeaderToolbar>
+                  {/* Says why every field is closed — a compact chip at the
+                      cluster's end, the internal-order read-only notices'
+                      pattern. */}
+                  <HeaderToolbar
+                    alert={
+                      <Show when={!canMutate()}>
+                        <Alert
+                          severity="info"
+                          compact
+                          testId="no-edit-permission-notice"
+                        >
+                          {t('info.cannot-edit-purchase-order-no-permission')}
+                        </Alert>
+                      </Show>
+                    }
+                  >
                     <PurchaseOrderDetailToolbar
                       storeId={params.storeId}
                       node={node()}
