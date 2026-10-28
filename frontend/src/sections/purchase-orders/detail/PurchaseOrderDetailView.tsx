@@ -393,6 +393,12 @@ const PurchaseOrderDetailView: Component = () => {
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
+  // The order's own fields save as they are edited, so without the change
+  // permission they close in every state: an open one would keep showing a
+  // value the server refused (rules § availability). The line editor and the
+  // actions stay as they are — their refusal is the permission-denied notice.
+  const canMutate = () => hasPermission('PURCHASE_ORDER_MUTATE');
+  const fieldsDisabled = () => isDisabled() || !canMutate();
   // A line with no quantity — not yet ordered (spec S7) — on an order and a
   // line that can still change. Sent orders and closed lines need no more work.
   const isOpenPlaceholder = (line: Line) =>
@@ -736,7 +742,8 @@ const PurchaseOrderDetailView: Component = () => {
                   storeId={params.storeId}
                   node={node()}
                   lineCount={lineCount()}
-                  disabled={isDisabled()}
+                  disabled={fieldsDisabled()}
+                  readOnly={!canMutate()}
                   edit={edit}
                   onSaveField={saveField}
                   onDeleted={toList}
@@ -794,8 +801,11 @@ const PurchaseOrderDetailView: Component = () => {
                     <PurchaseOrderDetailToolbar
                       storeId={params.storeId}
                       node={node()}
-                      disabled={isDisabled()}
-                      expectedDateDisabled={!canSetExpectedDate(status())}
+                      disabled={fieldsDisabled()}
+                      readOnly={!canMutate()}
+                      expectedDateDisabled={
+                        !canMutate() || !canSetExpectedDate(status())
+                      }
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
                       datesVary={field => deliveryDatesVary(lineSet(), field)}
@@ -955,7 +965,10 @@ const PurchaseOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="details">
-                <PurchaseOrderDetailsTab disabled={isDisabled()} edit={edit} />
+                <PurchaseOrderDetailsTab
+                  disabled={fieldsDisabled()}
+                  edit={edit}
+                />
               </TabPanel>
               <TabPanel value="documents">
                 <PurchaseOrderDocumentsTab
@@ -968,6 +981,7 @@ const PurchaseOrderDetailView: Component = () => {
                 <CustomFieldsEditTab
                   scope="purchase_order"
                   values={node().customFields}
+                  disabled={!canMutate()}
                   onSave={saveCustomFields}
                 />
               </TabPanel>
