@@ -186,9 +186,9 @@ const hasIntroducedStock = (status: string): boolean =>
 // happen, and the user meets the finalised refusal instead. Nor is this a gate
 // (that is `isDeletable`); the status only picks the copy, and the list's bulk
 // delete still submits a Verified selection (issue #1134). Shipped and
-// Delivered hold no stock yet, so they get the
-// plain confirmation too — telling someone their Shipped shipment "has already
-// been received" was both false and alarming.
+// Delivered hold no stock yet, so they get the plain confirmation too —
+// telling someone their Shipped shipment "has already been received" was
+// both false and alarming.
 export const deleteRemovesStock = (status: string): boolean =>
   hasIntroducedStock(status) && status !== 'VERIFIED';
 
