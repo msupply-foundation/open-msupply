@@ -164,9 +164,10 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
-    // Hidden without patient-mutate permission, as the clinician picker's
-    // create entry is: a create flow whose save can only fail is a blocked
-    // affordance (ui-standards/controls § blocked affordances).
+    // Hidden without patient-mutate permission (OMS-REG-DIS-02.40), as the
+    // clinician picker's create entry is: nothing on the screen can grant the
+    // permission, so a create flow whose save can only fail is permanently
+    // dead (ui-standards/controls § blocked affordances).
     listboxFooter={query => (
       <Show
         when={
