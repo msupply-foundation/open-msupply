@@ -525,34 +525,21 @@ The Stock Donor example uses the `tableStateLoader` slot to bulk-fetch plugin da
 
 > TODO: notes on plugin column ordering once it's been added to the framework.
 
-## Prebuilt bundles for deployment
+## Bundles for deployment
 
-Some bundles are committed as ready-to-install artifacts under
-[`client/packages/plugins/prebuilt-bundles/`](https://github.com/msupply-foundation/open-msupply/tree/develop/client/packages/plugins/prebuilt-bundles),
-so deploying one needs no toolchain at all — no yarn, no cargo, no plugin
-checkout, just `remote_server_cli install-plugin-bundle`. That directory's
-README says what each holds and how to regenerate it.
+A plugin's bundle carries its frontend for **both** UIs. A site can switch between the old React UI and the new SolidJS one on demand, so whoever installs a plugin needs both, and one file means nobody can install half of it. `pnpm build:plugins --react` in `frontend/` builds them: the SolidJS parts through the SolidJS preset, and each plugin's React parts (its `react/` directory, imported with the old `<country>-plugins` repo) with this toolchain — `yarn install` then `yarn build-plugin`, as `remote_server_cli generate-plugin-bundle` does. CI runs it on every merge that touches a plugin and publishes the result to the Launchpad, so deploying one needs no toolchain, just the downloaded file and `remote_server_cli install-plugin-bundle`. Which React parts are not built yet, and why, is listed in [`frontend/scripts/reactPlugins.mjs`](https://github.com/msupply-foundation/open-msupply/blob/develop/frontend/scripts/reactPlugins.mjs).
 
-The CIV plugin is the worked example, and it is worth understanding because a
-site can switch between the old React UI and the new SolidJS one on demand, so
-a server holds **both** frontend bundles at once:
+CIV's bundle is the worked example:
 
-- `civ_plugins_react_1.0.1.json` (prebuilt here) — the React half, for `/old-ui/`.
-- `frontend/dist/bundles/civ_plugins.json` (`pnpm build:plugins` in `frontend/`)
-  — the SolidJS half **plus the backend half**, which is BoaJS and
-  runtime-agnostic, so one backend row answers both UIs.
+| Row | From |
+| --- | --- |
+| `frontend_civ_plugins_solid_3_0_0` | `private/plugins/civ/` — the SolidJS UI |
+| `frontend_civ_plugins_react_3_0_0` | `private/plugins/civ/react/frontend/latest/` — the React UI, `/old-ui/` |
+| `backend_civ_plugins_3_0_0` | `private/plugins/civ/backend/` — BoaJS and runtime-agnostic, so one row answers both UIs |
 
-Installing is an additive per-row upsert and the row id carries the runtime
-(`frontend_civ_plugins_react_1_0_1` vs `frontend_civ_plugins_solid_3_0_0`), so
-the two never upsert over each other. Discovery then filters on `host_runtime`
-— exact equality against the runtime the asking client declares, with a client
-declaring none (the old UI as it shipped) resolving to `react` — and picks the
-highest version *within* that runtime.
+Installing is an additive per-row upsert and a frontend row's id carries the runtime, so the two frontends never upsert over each other. Discovery then filters on `host_runtime` — exact equality against the runtime the asking client declares, with a client declaring none (the old UI as it shipped) resolving to `react` — and picks the highest version *within* that runtime.
 
-The React bundle's version stays **below 3.0** deliberately: the load gate is
-`plugin.major < server.major`, so at `1.0.1` it loads on 2.x and 3.x servers
-alike, while the SolidJS bundle at `3.0.0` loads only where a 3.x server can
-serve its host.
+All of a plugin's parts share **one version**, and the build refuses parts that disagree: a bundle is released and listed under one. A version also never goes down, since discovery would keep serving the higher one already installed. Once a country has a SolidJS backend at `<country>/backend/`, its React backend goes, so there is one backend per plugin; the build refuses two.
 
 ## Compatibility / versioning
 

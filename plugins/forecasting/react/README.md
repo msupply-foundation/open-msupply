@@ -2,7 +2,7 @@
 
 > **Imported from [msupply-foundation/open-msupply-forecasting-plugins](https://github.com/msupply-foundation/open-msupply-forecasting-plugins)** (Oct 2026, `main` with history — each commit's `Source:` trailer links its original). File issues in this repo now, not there. Built bundles were stripped from history; they live on the bundle server.
 >
-> This is the plugin for the **React UI**. There is no SolidJS port yet. Build it from `server/` with `cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../plugins/forecasting/react -o <bundle>.json` (or `generate-and-install-plugin-bundle` to install it as well). Steps further down that name `client/packages/plugins/<name>/` predate the import — the paths here now point into `client/` from where they sit.
+> This is the plugin for the **React UI**. There is no SolidJS port yet. `pnpm build:plugins --react` in `frontend/` builds it into the plugin's bundle once it builds again; until then `frontend/scripts/reactPlugins.mjs` lists it as not built. Steps further down that name `client/packages/plugins/<name>/` predate the import — the paths here now point into `client/` from where they sit.
 >
 > **It does not build against today's `client/` yet:** the backend's requisition-line transform no longer matches `TransformRequestRequisitionLineOutput`, and both frontends pass props `ValueInfoRow` no longer takes — drift since its last commit, not the import.
 
