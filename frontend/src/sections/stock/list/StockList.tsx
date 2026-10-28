@@ -18,10 +18,14 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getFlagCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { PauseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
   DEFAULT_PAGE_SIZE,
@@ -189,8 +193,9 @@ const StockList: Component = () => {
   // Column order follows the current open-mSupply Stock ListView (Code · Name ·
   // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
   // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost
-  // · Sell · Total · Manufacturer · Supplier). Each column also declares its
-  // card slot per spec/stock S1 › card view.
+  // · Sell · Total · Manufacturer · Supplier), plus On hold after Batch, which
+  // that view lacks. Each column also declares its card slot per spec/stock S1
+  // › card view.
   //
   // The card HEADER is Name-then-Code (the split for this screen), but the
   // TABLE keeps OMS's Code-first order — the one place the two views want a
@@ -241,6 +246,21 @@ const StockList: Component = () => {
       sortKey: 'batch',
       header: () => t('label.batch'),
       ...getCellDefinition('batch', { headerPosition: 'badge' }),
+    },
+    {
+      // On hold — card: badge, a warning chip beside Batch, so held lines
+      // show without opening each one (#1787).
+      c: { key: 'onHold' },
+      sortKey: 'onHold',
+      header: () => t('label.on-hold'),
+      ...getFlagCell(
+        t('label.on-hold'),
+        { headerPosition: 'badge' },
+        'warning',
+        () => <PauseIcon />
+      ),
+      // A marker cell is narrow; the header word is the binding constraint.
+      size: remToPx(5.5),
     },
     {
       // Expiry — card: always shown.
