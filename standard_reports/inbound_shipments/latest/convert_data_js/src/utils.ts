@@ -44,6 +44,8 @@ export const processInvoiceLines = (
         costPricePerPack: (line.costPricePerPack).toFixed(2),
         totalCost: isLast ? (itemTotals.get(groupKey)!).toFixed(2) : "-",
         otherPartyName: invoice.otherPartyName,
+        invoiceNumber: invoice.invoiceNumber,
+        receivedDatetime: invoice.receivedDatetime,
       });
     });
   });
