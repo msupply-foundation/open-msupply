@@ -126,6 +126,8 @@ describe('HidScanner', () => {
     it('pairs the device that scans the pairing barcode, and closes the rest', async () => {
       const t = setup();
       const { pairing } = await startPairing(t);
+      // The handles pairing opened; the paired scanner is then held afresh.
+      const pairingHandles = [...t.handles.values()];
       t.handles.get('scanner')?.emit('data', Buffer.from(PAIRING_REPORT));
 
       const result = await pairing;
@@ -139,7 +141,7 @@ describe('HidScanner', () => {
       });
       expect(t.stored()?.vendorId).toBe(0x05e0);
       await flush();
-      expect([...t.handles.values()].every(h => h.closed)).toBe(true);
+      expect(pairingHandles.every(h => h.closed)).toBe(true);
       expect(t.changed).toHaveBeenCalled();
     });
 
@@ -350,6 +352,49 @@ describe('HidScanner', () => {
       expect(t.reports).toHaveLength(1);
     });
 
+    // Seen on Windows: three scans on a list screen straight after launch all
+    // landed on the first screen to listen, since that was the first open.
+    it('drops what was scanned before any screen listened, once held', async () => {
+      const t = setup();
+      await t.scanner.pairDevice(t.scanner.candidates()[0]?.key ?? '');
+      const fresh = new HidScanner(
+        {
+          devices: () => [device()],
+          open: async path => {
+            const handle = new FakeHandle();
+            t.handles.set(path, handle);
+            // A scan made while it was closed arrives as soon as it opens.
+            void Promise.resolve().then(() =>
+              handle.emit('data', Buffer.from(REPORT))
+            );
+            return handle as unknown as HidHandle;
+          },
+        },
+        { get: () => t.stored(), set: () => undefined },
+        { report: bytes => t.reports.push(bytes), changed: jest.fn() }
+      );
+      await fresh.hold();
+      await flush();
+      await fresh.start();
+      expect(t.reports).toHaveLength(0);
+    });
+
+    it('holds the scanner as soon as it is paired', async () => {
+      const t = await paired();
+      expect(t.handles.get('scanner')?.closed).toBe(false);
+      expect(t.opens('scanner')).toBe(2); // pairing, then held
+    });
+
+    it('holds nothing, quietly, when nothing is paired or plugged in', async () => {
+      const t = setup();
+      await t.scanner.hold();
+      expect(t.handles.size).toBe(0);
+      await t.scanner.pairDevice(t.scanner.candidates()[0]?.key ?? '');
+      await t.scanner.stop();
+      t.setDevices([keyboard]);
+      await expect(t.scanner.hold()).resolves.toBeUndefined();
+    });
+
     it('reuses the open device on a later start, rather than reopening it', async () => {
       const t = await paired();
       await t.scanner.start();
@@ -439,8 +484,9 @@ describe('HidScanner', () => {
     });
 
     it('fails to start when the scanner cannot be opened', async () => {
-      const t = await paired();
+      const t = setup();
       t.refuse.add('scanner');
+      await t.scanner.pairDevice(t.scanner.candidates()[0]?.key ?? '');
       expect(await t.scanner.start()).toEqual({
         ok: false,
         message: 'cannot open device',

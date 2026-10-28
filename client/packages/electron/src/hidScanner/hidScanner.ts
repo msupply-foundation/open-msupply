@@ -338,6 +338,7 @@ export class HidScanner {
     if (!device) return { ok: false, reason: 'not-found' };
     const scanner = describe(device);
     this.store.set(scanner);
+    await this.hold();
     this.events.changed();
     return { ok: true, scanner };
   }
@@ -402,6 +403,7 @@ export class HidScanner {
           const scanner = describe(device);
           this.store.set(scanner);
           finish({ ok: true, scanner });
+          void this.hold();
           this.events.changed();
         });
         // A device that errors while pairing (unplugged, or a read the OS
@@ -424,55 +426,29 @@ export class HidScanner {
   }
 
   /**
+   * Open the paired scanner, without forwarding, if it is not held already.
+   * Called at launch and after pairing, so the scanner is held before any
+   * screen listens: whatever was scanned while it was closed — even before
+   * the app started — arrives the moment it opens, and is dropped rather
+   * than landing on the first screen to listen. Quietly does nothing when
+   * nothing is paired or the scanner is not plugged in.
+   */
+  hold(): Promise<void> {
+    return this.serial(async () => {
+      await this.openPaired();
+    });
+  }
+
+  /**
    * Forward the paired scanner's reports until stop(), opening it if it is
    * not held already. A later start() reuses the held handle (see `held`).
    */
   start(): Promise<StartResult> {
     return this.serial(async () => {
       this.armed = false;
-      const paired = this.store.get();
-      if (!paired) return { ok: false, message: 'no scanner paired' };
-      const device = this.findPaired();
-      if (!device?.path) {
-        await this.release();
-        return { ok: false, message: 'paired scanner is not connected' };
-      }
-
-      if (this.held?.path !== device.path) {
-        // Not held yet, or the scanner has moved to another port.
-        await this.release();
-        let handle: HidHandle;
-        try {
-          handle = await this.hid.open(device.path);
-        } catch (e) {
-          return {
-            ok: false,
-            message: e instanceof Error ? e.message : String(e),
-          };
-        }
-
-        // Read for as long as it is held; forwarded only while armed.
-        handle.on('data', (data: unknown) => {
-          if (!this.armed || this.held?.handle !== handle) return;
-          const bytes = toBytes(data);
-          if (bytes && carriesData(bytes)) this.events.report(bytes);
-        });
-        // node-hid raises 'error' when the device goes away mid-read. Without
-        // a listener it becomes an uncaught exception, which ../electron.ts has
-        // to swallow by message.
-        handle.on('error', () => {
-          if (this.held?.handle !== handle) return;
-          // Dropped at once, so status() stops claiming it; the next start()
-          // opens it afresh.
-          this.held = undefined;
-          this.armed = false;
-          void closeQuietly(handle);
-          this.events.changed();
-        });
-        this.held = { handle, path: device.path };
-      }
-      this.armed = true;
-      return { ok: true };
+      const result = await this.openPaired();
+      if (result.ok) this.armed = true;
+      return result;
     });
   }
 
@@ -489,6 +465,51 @@ export class HidScanner {
   async dispose(): Promise<void> {
     this.cancelPair();
     await this.serial(() => this.release());
+  }
+
+  /** Hold the paired scanner open, reusing the held handle where it can. */
+  private async openPaired(): Promise<StartResult> {
+    const paired = this.store.get();
+    if (!paired) return { ok: false, message: 'no scanner paired' };
+    const device = this.findPaired();
+    if (!device?.path) {
+      await this.release();
+      return { ok: false, message: 'paired scanner is not connected' };
+    }
+    if (this.held?.path === device.path) return { ok: true };
+
+    // Not held yet, or the scanner has moved to another port.
+    await this.release();
+    let handle: HidHandle;
+    try {
+      handle = await this.hid.open(device.path);
+    } catch (e) {
+      return {
+        ok: false,
+        message: e instanceof Error ? e.message : String(e),
+      };
+    }
+
+    // Read for as long as it is held; forwarded only while armed.
+    handle.on('data', (data: unknown) => {
+      if (!this.armed || this.held?.handle !== handle) return;
+      const bytes = toBytes(data);
+      if (bytes && carriesData(bytes)) this.events.report(bytes);
+    });
+    // node-hid raises 'error' when the device goes away mid-read. Without a
+    // listener it becomes an uncaught exception, which ../electron.ts has to
+    // swallow by message.
+    handle.on('error', () => {
+      if (this.held?.handle !== handle) return;
+      // Dropped at once, so status() stops claiming it; the next start()
+      // opens it afresh.
+      this.held = undefined;
+      this.armed = false;
+      void closeQuietly(handle);
+      this.events.changed();
+    });
+    this.held = { handle, path: device.path };
+    return { ok: true };
   }
 
   /** Close the held device, handing it back to the OS. */

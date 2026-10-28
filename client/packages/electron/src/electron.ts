@@ -600,6 +600,8 @@ const start = async (): Promise<void> => {
       changed: () => window.webContents.send(IPC_MESSAGES.HID_SCANNER_CHANGED),
     }
   );
+  // Held from launch, so scans made before any screen listens are dropped.
+  void hidScanner.hold();
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_STATUS, () => hidScanner.status());
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_CANDIDATES, () =>
     hidScanner.candidates()
