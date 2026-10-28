@@ -128,6 +128,20 @@ export const principalWastageDeduction = (
       })
     : undefined;
 
+/**
+ * The ancillary's own wastage as a supply, added on top of the ratio — "÷ (1 −
+ * 20% own wastage)" — or undefined when it has none (spec/internal-orders › the
+ * Ancillary ratio method).
+ */
+export const supplyWastageAddition = (
+  principal: AncillaryRatioPrincipal
+): string | undefined =>
+  principal.ownWastageRate > 0
+    ? t('description.plus-supply-wastage', {
+        rate: formatNumber(principal.ownWastageRate),
+      })
+    : undefined;
+
 /** A principal's configured ratio, as ancillary : principal. */
 export const ancillaryRatio = (principal: AncillaryRatioPrincipal): string =>
   `${formatNumber(principal.ancillaryQuantity)} : ${formatNumber(principal.itemQuantity)}`;

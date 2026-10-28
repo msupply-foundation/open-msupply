@@ -54,7 +54,9 @@ import {
   formatMonthsOfStock,
   formatUnits,
   dosesEquivalent,
+  shouldShowDoses,
 } from '../list/itemStats';
+import { ItemPreferences } from '../itemPreferences.generated';
 import { decimalPlaces } from '@/intl/numberDisplay';
 import { formatCurrency } from '@/intl/currency';
 import { Num } from '@/ui/elements/typography/Num';
@@ -136,6 +138,22 @@ const ItemDetailView: Component = () => {
   // but keeping it non-suspending means NOTHING on this screen can trip the
   // boundary below: `data.loading` drives the spinner instead.
   const item = (): ItemDetailRow | undefined => gated(data);
+
+  // The doses preference gates the band's doses lines, as on the list
+  // (OMS-REG-CAT-04.35). Same non-suspending read as the item above.
+  const [prefsData] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(ItemPreferences, { storeId });
+      if (result.kind !== 'success') return undefined;
+      return result.data.preferences;
+    }
+  );
+  const showDoses = () =>
+    shouldShowDoses(
+      item()?.isVaccine ?? false,
+      gated(prefsData)?.manageVaccinesInDoses ?? false
+    );
 
   const backToList = () => {
     // Replace history so Back can't return to the missing record
@@ -291,7 +309,7 @@ const ItemDetailView: Component = () => {
                         value={formatUnits(i().stats.stockOnHand)}
                         href={stockHref()}
                       />
-                      <Show when={i().isVaccine}>
+                      <Show when={showDoses()}>
                         <Statistic
                           testId="item-stat-stock-on-hand-doses"
                           label={t('label.doses')}
@@ -315,6 +333,19 @@ const ItemDetailView: Component = () => {
                           decimalPlaces()
                         )}
                       />
+                      <Show when={showDoses()}>
+                        <Statistic
+                          testId="item-stat-amc-doses"
+                          label={t('label.doses')}
+                          value={formatUnits(
+                            dosesEquivalent(
+                              i().stats.averageMonthlyConsumption,
+                              i().doses
+                            ),
+                            decimalPlaces()
+                          )}
+                        />
+                      </Show>
                     </StatsPanel>
                     <StatsPanel
                       testId="item-stat-months-of-stock"

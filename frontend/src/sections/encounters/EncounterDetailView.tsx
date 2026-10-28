@@ -27,17 +27,18 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
-import { Dialog } from '../../ui/elements/feedback/Dialog';
-import {
-  CancelButton,
-  DialogSaveButton,
-} from '../../ui/elements/buttons/StandardButtons';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
-import { FileIcon, SaveIcon, SidebarIcon, XCircleIcon } from '../../ui/icons';
+import {
+  CheckCircleIcon,
+  FileIcon,
+  SaveIcon,
+  SidebarIcon,
+  XCircleIcon,
+} from '../../ui/icons';
 import { ALT_M } from '../../ui/utils/shortcuts';
 import { hasPermission } from '../../store/storeContext';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
-import { suggestsVisited, visitedFields } from '../../domain/encounter/visited';
+import { visitedFields } from '../../domain/encounter/visited';
 import {
   EncounterClinicianField,
   EncounterStatusMenu,
@@ -58,8 +59,14 @@ import {
   EnrolmentModal,
   type EnrolmentTarget,
 } from '../program-enrolment/EnrolmentModal';
+import {
+  CreateEncounterDialog,
+  startsNow,
+  type CreatedEncounter,
+} from '../patients/detail/programs/CreateEncounterDialog';
 import { fetchEncounterRecord } from './encounterRecord';
 import { EncounterSidePanel } from './EncounterSidePanel';
+import { fetchNextVisit, type NextVisit } from './nextVisit';
 
 /*
  * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI: the
@@ -89,10 +96,17 @@ import { EncounterSidePanel } from './EncounterSidePanel';
  * its archived form, with Edit to bring it into the current one, or in the
  * current form after migration.
  *
- * Save on an encounter still Pending whose visit date has passed asks first
- * whether to record it as visited (domain/encounter/visited.ts): Save keeps
- * it Pending; Save as visited sets the status and, where none is recorded,
- * the end time.
+ * The footer's save follows the status (the same prototype;
+ * the old client's Save progress and Mark as visited). A Scheduled or Missed
+ * visit, Pending as stored, offers Save as visited, which records the status
+ * and, where none is recorded, the end time (domain/encounter/visited.ts),
+ * then prompts to schedule the next visit: the create-encounter dialog,
+ * prefilled with the same type, the date the program suggests and what it
+ * is for (nextVisit.ts). Book writes the visit and leaves for the patient's
+ * Encounters tab; Not now stays. Save draft, beside it once something has
+ * changed, saves the visit as it stands. A Visited or Cancelled encounter
+ * offers Save, enabled once something has changed. A status picked from the
+ * chip is an edit like any other: the footer follows the draft.
  *
  * TO-DO: write this screen's spec (implementation-plan H26).
  */
@@ -153,25 +167,53 @@ const EncounterDetailView: Component = () => {
     onDiscard: form.discard,
   });
 
-  const [askingVisited, setAskingVisited] = createSignal(false);
-  const onSave = () => {
-    const saved = form.document()?.data as Partial<Encounter> | undefined;
-    if (suggestsVisited(saved, draft.data.status, new Date())) {
-      setAskingVisited(true);
-    } else {
-      void form.save();
+  // Save as visited: the status and end time, saved; a save that does not
+  // go through puts them back, so the footer still offers Save as visited.
+  // `savingAsVisited` keeps the footer as it was at the click (Save as
+  // visited busy, Close disabled) until the save and the next-visit reads
+  // end, since the new status would otherwise swap the footer at the click.
+  // The prompt opens only where the patient has a type to book.
+  const [nextVisit, setNextVisit] = createSignal<NextVisit>();
+  const [savingAsVisited, setSavingAsVisited] = createSignal(false);
+  const [draftOfferedAtClick, setDraftOfferedAtClick] = createSignal(false);
+  const saveAsVisited = async () => {
+    setDraftOfferedAtClick(form.canSave());
+    setSavingAsVisited(true);
+    try {
+      const before = {
+        status: draft.data.status,
+        endDatetime: draft.data.endDatetime,
+      };
+      const fields = visitedFields(draft.data.endDatetime, new Date());
+      draft.set('status', fields.status);
+      draft.set('endDatetime', fields.endDatetime);
+      const saved = await form.save();
+      if (!saved) {
+        draft.set('status', before.status);
+        draft.set('endDatetime', before.endDatetime);
+        return;
+      }
+      const enrolment = record()?.programEnrolment;
+      const next = await fetchNextVisit({
+        storeId: params.storeId,
+        patientId: record()?.patientId ?? '',
+        encounterId: params.encounterId,
+        immunisationEnrolmentId: enrolment?.isImmunisationProgram
+          ? enrolment.id
+          : undefined,
+      });
+      if (next.registries.length > 0) setNextVisit(next);
+    } finally {
+      setSavingAsVisited(false);
     }
   };
-  const saveAsIs = () => {
-    setAskingVisited(false);
-    void form.save();
-  };
-  const saveAsVisited = () => {
-    const fields = visitedFields(draft.data.endDatetime, new Date());
-    draft.set('status', fields.status);
-    draft.set('endDatetime', fields.endDatetime);
-    setAskingVisited(false);
-    void form.save();
+  const nextVisitCreated = (created: CreatedEncounter) => {
+    setNextVisit(undefined);
+    if (startsNow(created.startDatetime))
+      navigate(
+        `/${params.storeId}/dispensary/encounter/${created.encounterId}`
+      );
+    else leave();
   };
 
   // Delete: the document as stored, written again with the Deleted status,
@@ -368,20 +410,56 @@ const EncounterDetailView: Component = () => {
                       variant="secondary"
                       icon={<XCircleIcon />}
                       data-testid="cancel-button"
+                      disabled={savingAsVisited()}
                       onClick={leave}
                     >
                       {form.isDirty() ? t('button.cancel') : t('button.close')}
                     </Button>
                     <Show when={canMutate()}>
-                      <Button
-                        icon={<SaveIcon />}
-                        data-testid="save-button"
-                        loading={form.saving()}
-                        disabled={!form.canSave() || form.saving()}
-                        onClick={onSave}
+                      <Show
+                        when={
+                          draft.data.status === 'PENDING' || savingAsVisited()
+                        }
+                        fallback={
+                          <Button
+                            icon={<SaveIcon />}
+                            data-testid="save-button"
+                            loading={form.saving()}
+                            disabled={!form.canSave() || form.saving()}
+                            onClick={() => void form.save()}
+                          >
+                            {t('button.save')}
+                          </Button>
+                        }
                       >
-                        {t('button.save')}
-                      </Button>
+                        <Show
+                          when={
+                            savingAsVisited()
+                              ? draftOfferedAtClick()
+                              : form.canSave()
+                          }
+                        >
+                          <Button
+                            variant="secondary"
+                            icon={<SaveIcon />}
+                            data-testid="save-draft-button"
+                            loading={form.saving() && !savingAsVisited()}
+                            disabled={form.saving() || savingAsVisited()}
+                            onClick={() => void form.save()}
+                          >
+                            {t('button.save-draft')}
+                          </Button>
+                        </Show>
+                        <Button
+                          icon={<CheckCircleIcon />}
+                          data-testid="save-as-visited-button"
+                          loading={savingAsVisited()}
+                          disabled={draft.readOnly() || savingAsVisited()}
+                          onClick={() => void saveAsVisited()}
+                        >
+                          {t('button-save-as-visited')}
+                        </Button>
+                      </Show>
                     </Show>
                   </ContentFooterActions>
                 </ContentFooter>
@@ -449,34 +527,20 @@ const EncounterDetailView: Component = () => {
                 onClose={() => setEnrolmentTarget(undefined)}
                 onSaved={() => undefined}
               />
-              <Show when={askingVisited()}>
-                <Dialog
-                  open
-                  onClose={() => setAskingVisited(false)}
-                  title={t('messages.save-encounter-as-visited')}
-                  testId="save-as-visited-dialog"
-                  actions={
-                    <>
-                      <CancelButton
-                        data-testid="dialog-button-cancel"
-                        onClick={() => setAskingVisited(false)}
-                      />
-                      <DialogSaveButton
-                        data-testid="dialog-button-save"
-                        onClick={saveAsIs}
-                      />
-                      <Button
-                        variant="primary"
-                        confirms="continuing"
-                        data-testid="dialog-button-save-as-visited"
-                        onClick={saveAsVisited}
-                      >
-                        {t('button-save-as-visited')}
-                      </Button>
-                    </>
-                  }
-                />
-              </Show>
+              <CreateEncounterDialog
+                open={nextVisit() !== undefined}
+                storeId={params.storeId}
+                patientId={record()?.patientId ?? ''}
+                registries={nextVisit()?.registries ?? []}
+                defaultType={record()?.type}
+                nextVisit={{
+                  patientName: record()?.patient.name ?? '',
+                  startDatetime: nextVisit()?.startDatetime,
+                  reason: nextVisit()?.reason,
+                }}
+                onCreated={nextVisitCreated}
+                onClose={() => setNextVisit(undefined)}
+              />
               <ConfirmDialog
                 open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}

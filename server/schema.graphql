@@ -322,6 +322,10 @@ type AncillaryDeltaNode {
 type AncillaryItemMutations {
 	upsertAncillaryItem(storeId: String!, input: UpsertAncillaryItemInput!): UpsertAncillaryItemResponse!
 	deleteAncillaryItem(storeId: String!, input: DeleteAncillaryItemInput!): DeleteAncillaryItemResponse!
+	"""
+	Sets an item's own wastage rate (%) as an ancillary supply
+	"""
+	setSupplyWastageRate(storeId: String!, input: SetSupplyWastageRateInput!): SetSupplyWastageRateResponse!
 }
 
 type AncillaryItemNode {
@@ -380,6 +384,10 @@ type AncillaryRatioPrincipalNode {
 	The principal's wastage rate (%) deducted before the ratio applies; 0 when none
 	"""
 	wastageRate: Float!
+	"""
+	The ancillary's own wastage rate (%) as a supply, added on top of the ratio; 0 when none
+	"""
+	ownWastageRate: Float!
 	"""
 	The principal's monthly demand net of the deducted wastage
 	"""
@@ -5397,6 +5405,12 @@ type ItemNode {
 	other (principal) item.
 	"""
 	ancillaryFor: [AncillaryItemNode!]!
+	"""
+	This item's own wastage rate (%) as an ancillary supply, added on top of what the
+	links ordering it give (e.g. syringes broken or dropped); 0 when none. Stored on
+	those links (`ancillaryFor`), so an item no link orders has none.
+	"""
+	supplyWastageRate: Float!
 	itemDirections: [ItemDirectionNode!]!
 	warnings: [WarningNode!]!
 	categories: [ItemCategoryNode!]!
@@ -5756,7 +5770,15 @@ type LogLevelNode {
 
 type LogNode {
 	fileNames: [String!]
-	fileContent: [String!]
+	"""
+	The file's text, as written: at most its last 1 MiB. Download the whole file from
+	`/support/log/{name}`.
+	"""
+	content: String
+	"""
+	Whether `content` is only the end of a longer file.
+	"""
+	truncated: Boolean
 }
 
 type Logout {
@@ -9382,6 +9404,24 @@ type SetSiteMultiDeviceNode {
 	id: Int!
 }
 
+type SetSupplyWastageRateError {
+	error: SetSupplyWastageRateErrorInterface!
+}
+
+interface SetSupplyWastageRateErrorInterface {
+	description: String!
+}
+
+input SetSupplyWastageRateInput {
+	itemId: String!
+	"""
+	Percent, at least 0 and below 100; 0 clears it
+	"""
+	wastageRate: Float!
+}
+
+union SetSupplyWastageRateResponse = SetSupplyWastageRateError | SupplyWastageRateNode
+
 type ShippingMethodConnector {
 	totalCount: Int!
 	nodes: [ShippingMethodNode!]!
@@ -10071,6 +10111,18 @@ input SupplyRequestedQuantityInput {
 }
 
 union SupplyRequestedQuantityResponse = SupplyRequestedQuantityError | RequisitionLineConnector
+
+"""
+The rate saved for the item
+"""
+type SupplyWastageRateNode {
+	itemId: String!
+	wastageRate: Float!
+}
+
+type SupplyWastageRateOutOfRange implements SetSupplyWastageRateErrorInterface {
+	description: String!
+}
 
 """
 State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync

@@ -21,18 +21,18 @@ export const LogDisplay = ({
   setLogContent,
 }: {
   fileName: string;
-  setLogContent: (content: string[]) => void;
-  logContent: string[];
+  setLogContent: (content: string) => void;
+  logContent: string;
 }) => {
   const {
     logContents: { data, isLoading },
   } = useLog(fileName);
 
   useEffect(() => {
-    if (!!data?.fileContent) {
-      setLogContent(data.fileContent);
+    if (!!data?.content) {
+      setLogContent(data.content);
     }
-  }, [data?.fileContent]);
+  }, [data?.content]);
 
   if (isLoading) {
     return <BasicSpinner />;
@@ -55,7 +55,7 @@ export const LogFileModal = ({
   const t = useTranslation();
   const { success, warning } = useNotification();
   const [logToRender, setLogToRender] = useState('');
-  const [logContent, setLogContent] = useState<string[]>([]);
+  const [logContent, setLogContent] = useState('');
   const { Modal } = useDialog({ isOpen, onClose });
   const exportLog = useExportLog();
 
@@ -75,13 +75,13 @@ export const LogFileModal = ({
       warning(t('message.already-saving'))();
     } else {
       setIsSaving(true);
-      exportLog(logContent.toString(), logToRender);
+      exportLog(logContent, logToRender);
       setIsSaving(false);
     }
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(logContent.toString()).then(() => {
+    navigator.clipboard.writeText(logContent).then(() => {
       success(t('message.copy-success'))();
     });
   };
@@ -136,7 +136,7 @@ export const LogFileModal = ({
             {logToRender && (
               <DropdownMenuItem
                 onClick={() => {
-                  setLogContent([]);
+                  setLogContent('');
                 }}
               >
                 {logToRender}
@@ -153,7 +153,7 @@ export const LogFileModal = ({
                   key={i}
                   onClick={() => {
                     setLogToRender(fileName);
-                    setLogContent([]);
+                    setLogContent('');
                   }}
                 >
                   {fileName}
