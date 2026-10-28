@@ -318,59 +318,113 @@ describe('HidScanner', () => {
       expect(t.reports).toEqual([Uint8Array.from(REPORT)]);
     });
 
-    it('reopens the paired device on a later start, without doubling up', async () => {
+    it('forwards each report once, however often it is started', async () => {
       const t = await paired();
       await t.scanner.start();
-      const first = t.handles.get('scanner');
       await t.scanner.start();
-      expect(first?.closed).toBe(true);
       t.handles.get('scanner')?.emit('data', Buffer.from(REPORT));
       expect(t.reports).toHaveLength(1);
     });
 
-    it('closes the device on stop', async () => {
+    it('stops forwarding on stop, but keeps the device open', async () => {
       const t = await paired();
       await t.scanner.start();
       const handle = t.handles.get('scanner');
       await t.scanner.stop();
-      expect(handle?.closed).toBe(true);
+      expect(handle?.closed).toBe(false);
       handle?.emit('data', Buffer.from(REPORT));
       expect(t.reports).toHaveLength(0);
+      expect(t.scanner.status().connected).toBe(true);
+    });
+
+    // Closed between screens, the device handed everything scanned meanwhile
+    // to the next screen that opened it.
+    it('drops a scan made while stopped, rather than delivering it on the next start', async () => {
+      const t = await paired();
+      await t.scanner.start();
+      await t.scanner.stop();
+      t.handles.get('scanner')?.emit('data', Buffer.from(REPORT));
+      await t.scanner.start();
+      expect(t.reports).toHaveLength(0);
+      t.handles.get('scanner')?.emit('data', Buffer.from(REPORT));
+      expect(t.reports).toHaveLength(1);
+    });
+
+    it('reuses the open device on a later start, rather than reopening it', async () => {
+      const t = await paired();
+      await t.scanner.start();
+      const handle = t.handles.get('scanner');
+      await t.scanner.stop();
+      await t.scanner.start();
+      expect(t.opens('scanner')).toBe(2); // pairing, then the first start
+      expect(t.handles.get('scanner')).toBe(handle);
     });
 
     // A screen's start() and the previous screen's stop() arrive as separate
     // IPC calls, and opening takes a while: neither may undo the other.
     it('runs a stop and a start that overlap in the order they were asked', async () => {
       const t = await paired();
-      await t.scanner.start();
-      const old = t.handles.get('scanner');
-      const stopping = t.scanner.stop();
       const starting = t.scanner.start();
-      await Promise.all([stopping, starting]);
-      expect(old?.closed).toBe(true);
-      const current = t.handles.get('scanner');
-      expect(current).not.toBe(old);
-      expect(current?.closed).toBe(false);
-      expect(t.opens('scanner')).toBe(3); // pairing, then each start
+      const stopping = t.scanner.stop();
+      await Promise.all([starting, stopping]);
+      t.handles.get('scanner')?.emit('data', Buffer.from(REPORT));
+      expect(t.reports).toHaveLength(0);
+
+      const stoppingAgain = t.scanner.stop();
+      const startingAgain = t.scanner.start();
+      await Promise.all([stoppingAgain, startingAgain]);
+      t.handles.get('scanner')?.emit('data', Buffer.from(REPORT));
+      expect(t.reports).toHaveLength(1);
+      expect(t.opens('scanner')).toBe(2);
     });
 
-    it('ignores a report arriving from a handle that has been replaced', async () => {
+    it('finds the scanner again on another port, closing the old handle', async () => {
       const t = await paired();
       await t.scanner.start();
       const old = t.handles.get('scanner');
-      // Hold on to the listener, as a report in flight while closing would.
+      // Hold on to its listener, as a report in flight while closing would.
       const listener = old?.listeners('data')[0] as (data: unknown) => void;
-      await t.scanner.start();
+      t.setDevices([device({ path: 'scanner-moved' }), keyboard]);
+      expect(await t.scanner.start()).toEqual({ ok: true });
+      expect(t.handles.has('scanner-moved')).toBe(true);
+      expect(old?.closed).toBe(true);
       listener(Buffer.from(REPORT));
       expect(t.reports).toHaveLength(0);
     });
 
-    it('finds the scanner again on another port', async () => {
+    it('opens the device again after an unplug', async () => {
       const t = await paired();
-      t.setDevices([device({ path: 'scanner-moved' }), keyboard]);
+      await t.scanner.start();
+      const unplugged = t.handles.get('scanner');
+      unplugged?.emit('error', new Error('could not read'));
+      await flush();
+      expect(unplugged?.closed).toBe(true);
       expect(await t.scanner.start()).toEqual({ ok: true });
-      expect(t.handles.has('scanner-moved')).toBe(true);
+      expect(t.handles.get('scanner')).not.toBe(unplugged);
+      t.handles.get('scanner')?.emit('data', Buffer.from(REPORT));
+      expect(t.reports).toHaveLength(1);
     });
+
+    it('closes the device on forget, re-pairing, and dispose', async () => {
+      const acts: ((t: Awaited<ReturnType<typeof paired>>) => Promise<unknown>)[] = [
+        t => t.scanner.forget(),
+        async t => {
+          const { pairing } = await startPairing(t);
+          t.scanner.cancelPair();
+          return pairing;
+        },
+        t => t.scanner.pairDevice(t.scanner.candidates()[0]?.key ?? ''),
+        t => t.scanner.dispose(),
+      ];
+      for (const act of acts) {
+        const t = await paired();
+        await t.scanner.start();
+        const handle = t.handles.get('scanner');
+        await act(t);
+        expect(handle?.closed).toBe(true);
+      }
+    });
+
 
     it('fails to start when nothing is paired', async () => {
       const t = setup();

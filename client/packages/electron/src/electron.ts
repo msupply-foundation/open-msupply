@@ -615,7 +615,8 @@ const start = async (): Promise<void> => {
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_START, () => hidScanner.start());
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_STOP, () => hidScanner.stop());
   // A page navigating away (to another server, or back to discovery) must
-  // not leave the scanner held open by a screen that no longer exists.
+  // not leave the scanner armed for a screen that no longer exists. The
+  // device itself stays held (see HidScanner § held).
   window.webContents.on('did-start-navigation', details => {
     if (details.isMainFrame && !details.isSameDocument) {
       hidScanner.cancelPair();

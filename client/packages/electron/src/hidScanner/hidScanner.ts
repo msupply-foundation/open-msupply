@@ -24,8 +24,8 @@
 // Presence is asked, never polled. node-hid 2.x has no hotplug events, and
 // enumerating is synchronous, so a timer would block the main process on a
 // schedule to answer a question the page rarely asks. Instead status() and
-// start() enumerate when called, and an unplug while armed arrives as the
-// open handle's 'error'. A scanner re-plugged under an armed screen is
+// start() enumerate when called, and an unplug while the device is held
+// arrives as the open handle's 'error'. A scanner re-plugged under an armed screen is
 // therefore not picked up until the screen arms again — accepted, rather
 // than paying for a poll.
 
@@ -260,7 +260,19 @@ const closeQuietly = async (device: HidHandle | undefined) => {
 };
 
 export class HidScanner {
-  private armed: HidHandle | undefined;
+  /**
+   * The paired scanner, held open from the first start() until the pairing
+   * changes, the device errors or moves, or the window goes — NOT closed
+   * between screens. While it is closed, the scanner or the OS holds on to
+   * what is scanned and hands it all over when it is next opened: scans made
+   * on a screen that was not listening landed on the next one that did. Held
+   * open, they are read as they happen and dropped (spec/barcode-scanning
+   * rules § Triggering a scan: "A scan arriving with nobody listening is
+   * dropped silently").
+   */
+  private held: { handle: HidHandle; path: string } | undefined;
+  /** A screen is listening: reports go to the renderer. */
+  private armed = false;
   private pairing: { cancel: () => void } | undefined;
   /**
    * Opening and closing are asynchronous, so they run one at a time: a
@@ -277,7 +289,7 @@ export class HidScanner {
   ) {}
 
   /**
-   * Asked fresh every time: an armed handle is proof enough, otherwise look.
+   * Asked fresh every time: a held handle is proof enough, otherwise look.
    * While pairing every candidate is held open, which does not hide it from
    * enumeration.
    */
@@ -287,7 +299,7 @@ export class HidScanner {
       paired,
       connected:
         paired !== null &&
-        (this.armed !== undefined || this.findPaired() !== undefined),
+        (this.held !== undefined || this.findPaired() !== undefined),
     };
   }
 
@@ -316,11 +328,10 @@ export class HidScanner {
       .sort((a, b) => Number(b.scannerUsage) - Number(a.scannerUsage));
   }
 
-
   /** Pair a device picked from candidates(), without waiting for a scan. */
   async pairDevice(key: string): Promise<PairResult> {
     this.cancelPair();
-    await this.stop();
+    await this.serial(() => this.release());
     const device = possibleScannerInterfaces(this.devices()).find(
       d => keyOf(d) === key
     );
@@ -348,7 +359,8 @@ export class HidScanner {
     // Opened in turn, but not waited on for the scan: cancelPair() has to be
     // able to run while pairing waits.
     const opened = await this.serial(async () => {
-      await this.closeArmed();
+      // Closed, not just disarmed: pairing may pair a different device.
+      await this.release();
       const candidates = possibleScannerInterfaces(this.devices())
         .filter(
           device => device.path !== undefined && isScannerInterface(device)
@@ -406,66 +418,85 @@ export class HidScanner {
   }
 
   async forget(): Promise<void> {
-    await this.stop();
+    await this.serial(() => this.release());
     this.store.set(null);
     this.events.changed();
   }
 
-  /** Open the paired scanner and forward its reports until stop(). */
+  /**
+   * Forward the paired scanner's reports until stop(), opening it if it is
+   * not held already. A later start() reuses the held handle (see `held`).
+   */
   start(): Promise<StartResult> {
     return this.serial(async () => {
-      await this.closeArmed();
+      this.armed = false;
       const paired = this.store.get();
       if (!paired) return { ok: false, message: 'no scanner paired' };
       const device = this.findPaired();
       if (!device?.path) {
+        await this.release();
         return { ok: false, message: 'paired scanner is not connected' };
       }
 
-      let handle: HidHandle;
-      try {
-        handle = await this.hid.open(device.path);
-      } catch (e) {
-        return {
-          ok: false,
-          message: e instanceof Error ? e.message : String(e),
-        };
-      }
+      if (this.held?.path !== device.path) {
+        // Not held yet, or the scanner has moved to another port.
+        await this.release();
+        let handle: HidHandle;
+        try {
+          handle = await this.hid.open(device.path);
+        } catch (e) {
+          return {
+            ok: false,
+            message: e instanceof Error ? e.message : String(e),
+          };
+        }
 
-      handle.on('data', (data: unknown) => {
-        // A report landing while this handle closes belongs to nobody.
-        if (this.armed !== handle) return;
-        const bytes = toBytes(data);
-        if (bytes && carriesData(bytes)) this.events.report(bytes);
-      });
-      // node-hid raises 'error' when the device goes away mid-read. Without a
-      // listener it becomes an uncaught exception, which ../electron.ts has to
-      // swallow by message.
-      handle.on('error', () => {
-        if (this.armed !== handle) return;
-        this.armed = undefined;
-        void closeQuietly(handle);
-        this.events.changed();
-      });
-      this.armed = handle;
+        // Read for as long as it is held; forwarded only while armed.
+        handle.on('data', (data: unknown) => {
+          if (!this.armed || this.held?.handle !== handle) return;
+          const bytes = toBytes(data);
+          if (bytes && carriesData(bytes)) this.events.report(bytes);
+        });
+        // node-hid raises 'error' when the device goes away mid-read. Without
+        // a listener it becomes an uncaught exception, which ../electron.ts has
+        // to swallow by message.
+        handle.on('error', () => {
+          if (this.held?.handle !== handle) return;
+          // Dropped at once, so status() stops claiming it; the next start()
+          // opens it afresh.
+          this.held = undefined;
+          this.armed = false;
+          void closeQuietly(handle);
+          this.events.changed();
+        });
+        this.held = { handle, path: device.path };
+      }
+      this.armed = true;
       return { ok: true };
     });
   }
 
-  /** Close the scanner, handing it back to the OS. Safe when not started. */
+  /**
+   * Stop forwarding reports. The device stays held (see `held`), so what is
+   * scanned until the next start() is read and dropped. Safe when not started.
+   */
   stop(): Promise<void> {
-    return this.serial(() => this.closeArmed());
+    return this.serial(async () => {
+      this.armed = false;
+    });
   }
 
   async dispose(): Promise<void> {
     this.cancelPair();
-    await this.stop();
+    await this.serial(() => this.release());
   }
 
-  private async closeArmed(): Promise<void> {
-    const armed = this.armed;
-    this.armed = undefined;
-    await closeQuietly(armed);
+  /** Close the held device, handing it back to the OS. */
+  private async release(): Promise<void> {
+    const held = this.held;
+    this.armed = false;
+    this.held = undefined;
+    await closeQuietly(held?.handle);
   }
 
   private serial<T>(work: () => Promise<T>): Promise<T> {
