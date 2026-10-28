@@ -1,4 +1,4 @@
-import { defineWorkspace } from 'vitest/config';
+import { configDefaults, defineWorkspace } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 import { BACKEND_COMMON } from './vite/backendPluginBuild';
 
@@ -14,17 +14,19 @@ import { BACKEND_COMMON } from './vite/backendPluginBuild';
  *   The environment stays `node`: components under test render no DOM (they
  *   return values and run effects), so nothing needs a document, and the suite
  *   costs no jsdom dependency.
- * - `backend-plugins`: CIV's BoaJS half (`plugins/civ/backend/src`). Two
- *   differences, both about running code written for another host: the
- *   `@common` specifier resolves to the server-generated `backendCommon`, and
+ * - `backend-plugins`: the BoaJS halves that import `@common` (each plugin's
+ *   `backend/src`, CIV's first). Two differences, both about running code
+ *   written for another host: the `@common` specifier resolves to the
+ *   server-generated `backendCommon`, and
  *   `globals: true` lets the suites keep the bare `describe`/`it`/`expect`
  *   they arrived with from msupply-foundation/civ-plugins.
  *
- *   Named rather than globbed across every plugin, for the same reason
- *   tsconfig.backend-plugins.json carries an exclude: cook_islands' half
- *   needs neither — it imports no `@common` module, and imports its test
- *   functions from `vitest` explicitly — so it runs in the `node` project
- *   with everything else, and a glob here would run it a second time.
+ *   Globbed, so a new country plugin's backend tests run without naming the
+ *   country in this published file, and with the same exclude
+ *   tsconfig.backend-plugins.json carries: cook_islands' half needs neither —
+ *   it imports no `@common` module, and imports its test functions from
+ *   `vitest` explicitly — so it runs in the `node` project with everything
+ *   else, and the glob alone would run it a second time.
  *
  *   `@common` comes from vite/backendPluginBuild.ts's own constant rather than
  *   a second copy of the path: what the suites import has to be what the build
@@ -65,7 +67,8 @@ export default defineWorkspace([
     resolve: { alias: { '@common': BACKEND_COMMON } },
     test: {
       name: 'backend-plugins',
-      include: ['plugins/civ/backend/src/**/*.test.ts'],
+      include: ['plugins/*/backend/src/**/*.test.ts'],
+      exclude: [...configDefaults.exclude, 'plugins/cook_islands/**'],
       globals: true,
       environment: 'node',
     },

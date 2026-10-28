@@ -33,6 +33,7 @@ const item: CaptureItem = {
   name: 'Paracetamol',
   defaultPackSize: 10,
   defaultSellPricePerPack: 5,
+  volumePerPack: 0.5,
 };
 
 const known = (packSize: number | null): BarcodeLookup => ({
@@ -387,6 +388,7 @@ describe('captureBatch', () => {
           manufactureDate: undefined,
           costPricePerPack: 5,
           sellPricePerPack: 5,
+          volumePerPack: 0.5,
           barcode: GTIN,
         },
       ],
@@ -439,12 +441,27 @@ describe('captureBatch', () => {
     expect(line?.sellPricePerPack).toBe(0);
   });
 
-  it('prices are zero where a source link locks cost', () => {
-    const line = captureBatch(draft, undefined, {
+  it('OMS-REG-REPL-09.44 where a source link locks cost, prices follow the pack size at the default price per unit', () => {
+    // Default 5.00 for a pack of 10 → 10.00 for a pack of 20.
+    const line = captureBatch({ ...draft, packSize: 20 }, undefined, {
       ...context,
       costLocked: true,
     })?.insertInboundShipmentLines?.[0];
-    expect(line?.costPricePerPack).toBe(0);
+    expect(line?.costPricePerPack).toBe(10);
+    expect(line?.sellPricePerPack).toBe(10);
+  });
+
+  it("OMS-REG-REPL-09.43 a new line at the default pack size carries the item's volume per pack", () => {
+    const line = captureBatch(draft, undefined, context)
+      ?.insertInboundShipmentLines?.[0];
+    expect(line?.volumePerPack).toBe(0.5);
+  });
+
+  it('OMS-REG-REPL-09.45 at another pack size the volume per pack keeps the volume per unit', () => {
+    // 0.5 for a pack of 10 → 1.0 for a pack of 20.
+    const line = captureBatch({ ...draft, packSize: 20 }, undefined, context)
+      ?.insertInboundShipmentLines?.[0];
+    expect(line?.volumePerPack).toBe(1);
   });
 
   it('builds nothing while refused', () => {

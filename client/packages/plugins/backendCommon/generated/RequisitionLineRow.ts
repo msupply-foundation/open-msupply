@@ -36,5 +36,6 @@ export type RequisitionLineRow = {
    * module). Holds no months-of-stock figure: the requisition's thresholds supply those.
    */
   forecast_data: string | null;
+  campaign_id: string | null;
   item_link_id: string;
 };

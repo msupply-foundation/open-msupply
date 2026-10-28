@@ -117,12 +117,11 @@ fn validate(
     if let Some(code) = input.code.as_deref().map(str::trim)
         && !code.is_empty()
     {
-        let campaigns_with_duplicate_code = CampaignRepository::new(connection)
-            .query_by_filter(
-                CampaignFilter::new()
-                    .code(StringFilter::equal_to(code))
-                    .id(EqualFilter::not_equal_to(input.id.to_string())),
-            )?;
+        let campaigns_with_duplicate_code = CampaignRepository::new(connection).query_by_filter(
+            CampaignFilter::new()
+                .code(StringFilter::equal_to(code))
+                .id(EqualFilter::not_equal_to(input.id.to_string())),
+        )?;
 
         if !campaigns_with_duplicate_code.is_empty() {
             return Err(UpsertCampaignError::DuplicateCode);
@@ -165,7 +164,9 @@ mod test {
 
         // The code is stored trimmed, separate from the name
         assert_eq!(
-            save("ri", "Routine immunisation", Some(" RI ")).unwrap().code,
+            save("ri", "Routine immunisation", Some(" RI "))
+                .unwrap()
+                .code,
             "RI"
         );
 
