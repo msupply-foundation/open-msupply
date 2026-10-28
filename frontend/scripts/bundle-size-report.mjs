@@ -112,11 +112,6 @@ export const compareSizes = (base, pr, { baseSha } = {}) => {
       '</details>'
     );
   }
-  if (significant)
-    lines.push(
-      '',
-      'This changes the tracked number: add a row to `frontend/kdd/bundle-size-by-pr.md` when it merges.'
-    );
   return { significant, markdown: lines.join('\n') };
 };
 

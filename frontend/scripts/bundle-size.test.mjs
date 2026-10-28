@@ -197,7 +197,8 @@ describe('compareSizes', () => {
       '| `assets/Badge.js` | up front | 2.0 KB | removed | −2.0 KB |',
       '| `assets/index.js` | up front | 97.7 KB | 98.2 KB | +0.5 KB |',
     ]);
-    expect(md).toContain('bundle-size-by-pr.md');
+    // The comment is the record now: nothing to copy into the KDD by hand.
+    expect(md).not.toContain('bundle-size-by-pr.md');
   });
 
   it('reports up front and total separately', () => {
