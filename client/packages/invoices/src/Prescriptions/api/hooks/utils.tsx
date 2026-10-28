@@ -334,7 +334,7 @@ export const allocateQuantities =
           (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
           !stockLine?.onHold &&
           !location?.onHold &&
-          !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
+          !(!!expiryDate && DateUtils.isExpired(expiryDate))
       )
       .sort(SortUtils.byExpiryAsc);
 

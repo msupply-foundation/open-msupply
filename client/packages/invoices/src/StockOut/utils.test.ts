@@ -235,6 +235,14 @@ describe('canAutoAllocate ', () => {
     });
     expect(canAutoAllocate(expiredLine, 0)).toEqual(false);
 
+    // A batch is usable to the end of its expiry day
+    const expiringTodayLine = createTestLine({
+      availablePacks: 10,
+      expiryDate: '2025-12-15',
+      onHold: false,
+    });
+    expect(canAutoAllocate(expiringTodayLine, 0)).toEqual(true);
+
     // Tests the expiry threshold value
     const almostExpiredLine = createTestLine({
       availablePacks: 10,
