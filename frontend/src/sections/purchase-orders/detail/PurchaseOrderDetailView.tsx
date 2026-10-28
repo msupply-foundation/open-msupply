@@ -396,8 +396,9 @@ const PurchaseOrderDetailView: Component = () => {
   const isDisabled = () => !isOpenToChange(status());
   // The order's own fields save as they are edited, so without the change
   // permission they close in every state: an open one would keep showing a
-  // value the server refused (rules § availability). The line editor and the
-  // actions stay as they are — their refusal is the permission-denied notice.
+  // value the server refused (rules § availability). An existing line closes
+  // in the editor too; adding and the actions stay as they are — their
+  // refusal is the permission-denied notice.
   const canMutate = () => hasPermission('PURCHASE_ORDER_MUTATE');
   const fieldsDisabled = () => isDisabled() || !canMutate();
   // A line with no quantity — not yet ordered (spec S7) — on an order and a
@@ -1021,6 +1022,7 @@ const PurchaseOrderDetailView: Component = () => {
                   requestedDeliveryDate: node().requestedDeliveryDate,
                   supplierDiscountPercentage: node().supplierDiscountPercentage,
                 }}
+                canMutate={canMutate()}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}
                 initialLine={editor()?.line}
