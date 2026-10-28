@@ -191,8 +191,13 @@ export const fetchPluginMetadata = async (): Promise<
 
 /*
  * The app's real dependencies.
+ *
+ * Exported only so a test can pin `importBundle`: a bare `import()` in its
+ * place passes every pipeline test and the dev server alike, and breaks only
+ * in a production build — where a broken plugin then reads as a stale app
+ * (./importPluginBundle.ts).
  */
-const appDeps: LoadPluginsDeps = {
+export const appDeps: LoadPluginsDeps = {
   fetchMetadata: fetchPluginMetadata,
   // Not a bare `import()`: one compiled here would report a broken plugin as a
   // stale app (./importPluginBundle.ts).

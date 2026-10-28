@@ -3,7 +3,9 @@ import { HOST_RUNTIME, PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
 import { definePlugin } from '../plugin-sdk/definePlugin';
 import type { PluginDiagnostic } from './diagnostics';
 import { FrontendPluginMetadata } from './frontendPluginMetadata.generated';
+import { importPluginBundle } from './importPluginBundle';
 import {
+  appDeps,
   fetchPluginMetadata,
   loadPlugins,
   type LoadPluginsDeps,
@@ -246,5 +248,18 @@ describe('fetchPluginMetadata — declaring which host is asking', () => {
     graphqlFetch.mockResolvedValue({ kind: 'unexpectedError' });
 
     expect(await fetchPluginMetadata()).toBeUndefined();
+  });
+});
+
+/*
+ * The app's real importer (issue #575). The pipeline tests above inject their
+ * own, and the dev server never wraps an `import()`, so a bare one put back
+ * here would pass both — and in a production build report every broken plugin
+ * as a stale app. importPluginBundle.test.ts checks that module's build output;
+ * this checks the app uses it.
+ */
+describe('appDeps — importing a plugin bundle', () => {
+  it('goes through importPluginBundle, not an import() compiled here', () => {
+    expect(appDeps.importBundle).toBe(importPluginBundle);
   });
 });
