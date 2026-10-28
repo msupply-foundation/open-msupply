@@ -85,16 +85,40 @@ describe('row groups — the rows drawn', () => {
 });
 
 // ui-standards § tables › row groups: the group row's label leads the first
-// visible column, so hiding or reordering the grouped column never drops it.
+// figure-free visible column, so hiding or reordering a column never drops it
+// and never hides a column's own subtotal.
 describe('row groups — where the label sits', () => {
-  it('leads the first visible column', () => {
-    expect(groupLabelColumnId(['itemCode', 'itemName', 'numberOfPacks'])).toBe(
-      'itemCode'
-    );
+  const col = (id: string, aggregates = false) => ({ id, aggregates });
+
+  it('leads the first visible column when it shows no figure', () => {
+    expect(
+      groupLabelColumnId([
+        col('itemCode'),
+        col('itemName'),
+        col('numberOfPacks', true),
+      ])
+    ).toBe('itemCode');
   });
   it('falls to the next column when the grouped column is hidden, so the label and count never vanish', () => {
-    // itemCode (the grouped column) hidden → the first visible column leads.
-    expect(groupLabelColumnId(['itemName', 'numberOfPacks'])).toBe('itemName');
+    // itemCode (the grouped column) hidden → the first visible column leads,
+    // and it shows no figure of its own, so the label lands cleanly.
+    expect(
+      groupLabelColumnId([col('itemName'), col('numberOfPacks', true)])
+    ).toBe('itemName');
+  });
+  it('skips a leading aggregating column so its subtotal is not hidden', () => {
+    // An aggregating column is first (e.g. Packs to move): the label skips it
+    // and lands on the next figure-free column, keeping the subtotal.
+    expect(
+      groupLabelColumnId([col('packsToMove', true), col('itemName')])
+    ).toBe('itemName');
+  });
+  it('falls back to the first visible column when every column aggregates', () => {
+    // No figure-free column to host the label: it shares the first cell, and
+    // the row renderer draws the figure after it so neither is lost.
+    expect(
+      groupLabelColumnId([col('packsToMove', true), col('totalValue', true)])
+    ).toBe('packsToMove');
   });
   it('has no label cell when nothing is visible', () => {
     expect(groupLabelColumnId([])).toBeUndefined();

@@ -40,19 +40,32 @@ export interface GroupableRow<R> {
   subRows: R[];
 }
 
+/** A visible column, for choosing where a group row's label sits. */
+export interface GroupLabelColumn {
+  id: string;
+  /** The column shows its own figure on a group row (a subtotal or a shared
+   * value) — a figure the label must not stand in for. */
+  aggregates: boolean;
+}
+
 /**
  * The column a group row's label — its grouped value and line count — sits in:
- * the FIRST visible column, not the grouped column's own cell. The grouped
- * column is user-hideable and re-orderable, so pinning the label to it would
- * drop the value and count whenever that column is hidden (and move it around
- * when the column is reordered). Leading with the first visible column keeps
- * the label present and in one place however the columns are arranged
- * (ui-standards § tables › row groups). `columnIds` are the row's visible
- * columns in render order; undefined when none are visible.
+ * the first visible column that has NO group-row figure of its own, so the
+ * label never hides a column's subtotal or shared value. The label is not
+ * pinned to the grouped column's own cell, which is user-hideable and
+ * re-orderable — pinning it there would drop the value and count whenever that
+ * column is hidden, and move it around on reorder. Leading with the first
+ * figure-free visible column keeps the label present and in one sensible place
+ * however the columns are arranged. When every visible column aggregates, the
+ * label falls back to the first visible column and shares the cell with that
+ * column's figure (the row renderer draws the figure after the label), so no
+ * subtotal is lost (ui-standards § tables › row groups). `columns` are the
+ * row's visible columns in render order; undefined when none are visible.
  */
 export const groupLabelColumnId = (
-  columnIds: readonly string[]
-): string | undefined => columnIds[0];
+  columns: readonly GroupLabelColumn[]
+): string | undefined =>
+  (columns.find(column => !column.aggregates) ?? columns[0])?.id;
 
 /**
  * The rows a table draws, in order, from its top-level rows. A plain row

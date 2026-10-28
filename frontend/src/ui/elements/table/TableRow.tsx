@@ -189,16 +189,17 @@ export function TableRow<T>(props: {
   // every line in it.
   const isGroup = () => props.row.getIsGrouped();
   // A group row's label (grouped value + line count) leads the first VISIBLE
-  // column — not the grouped column's own cell, which is user-hideable and
-  // re-orderable (groupLabelColumnId). The grouped value is read from the
-  // grouped column's cell wherever it sits, so the label reads the same value
-  // whether or not that column is on screen.
+  // column that shows no figure of its own — not the grouped column's own
+  // cell, which is user-hideable and re-orderable, and not a column whose
+  // subtotal the label would hide (groupLabelColumnId). The grouped value is
+  // read from the grouped column's cell wherever it sits, so the label reads
+  // the same value whether or not that column is on screen.
   const labelColumnId = () =>
     groupLabelColumnId(
       props.row
         .getVisibleCells()
         .filter(cell => props.cellVisible(cell))
-        .map(cell => cell.column.id)
+        .map(cell => ({ id: cell.column.id, aggregates: cellAggregates(cell) }))
     );
   const groupedCell = () =>
     props.row.getAllCells().find(cell => cell.getIsGrouped());
@@ -422,23 +423,28 @@ export function TableRow<T>(props: {
                 }}
               >
                 {/* A group row (rowGroup) shows the grouped value with its line
-                  count in the first visible column (labelColumnId), and a
-                  figure only in a column that aggregates; every other cell is
-                  blank. The value is read from the grouped column's own cell,
-                  so it reads the same whether or not that column is on screen.
-                  A grouped cell continuing the previous row's value
-                  (meta.groupRows) renders nothing. */}
+                  count in the first figure-free visible column (labelColumnId),
+                  and a figure only in a column that aggregates; every other
+                  cell is blank. The value is read from the grouped column's own
+                  cell, so it reads the same whether or not that column is on
+                  screen. When every visible column aggregates, the label lands
+                  on one and that column's figure is drawn after it, so no
+                  subtotal is lost. A grouped cell continuing the previous row's
+                  value (meta.groupRows) renders nothing. */}
                 {isGroup() ? (
                   cell.column.id === labelColumnId() ? (
-                    <span class={styles.groupLabel}>
-                      {renderCellContent(groupedCell() ?? cell)}
-                      <span
-                        class={styles.groupCount}
-                        data-testid="group-line-count"
-                      >
-                        ({props.row.subRows.length})
+                    <>
+                      <span class={styles.groupLabel}>
+                        {renderCellContent(groupedCell() ?? cell)}
+                        <span
+                          class={styles.groupCount}
+                          data-testid="group-line-count"
+                        >
+                          ({props.row.subRows.length})
+                        </span>
                       </span>
-                    </span>
+                      <Show when={cellAggregates(cell)}>{content()}</Show>
+                    </>
                   ) : (
                     <Show when={cellAggregates(cell)}>{content()}</Show>
                   )
