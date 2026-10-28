@@ -46,7 +46,10 @@ export interface PatientEditor {
    * refetch).
    */
   doSave: (afterSave?: () => void) => Promise<void>;
-  /** Re-seeds the draft from the current node, discarding local edits. */
+  /**
+   * Re-seeds the draft from the current node, or from what was last saved
+   * until the re-read of it lands, discarding local edits.
+   */
   resetDraft: () => void;
 }
 
@@ -64,6 +67,16 @@ export const createPatientEditor = (
 ): PatientEditor => {
   const [edit, setEdit] = createStore<PatientDraft>(emptyDraft());
   const [seededId, setSeededId] = createSignal<string>();
+  // After a save: the patient as read before it, and the draft as saved. The
+  // caller's re-read keeps returning that patient until it lands (the state
+  // gate re-runs `node` as the read starts), so the draft is not seeded from
+  // it, and what was saved is the dirty check's baseline meanwhile. A save
+  // that leaves the read byte-identical lands no new patient
+  // (api/graphql.ts › structural sharing); what was saved stays the baseline.
+  const [saved, setSaved] = createSignal<{
+    over: PatientNode;
+    draft: PatientDraft;
+  }>();
 
   // Duplicate-code check (spec/patients § generating a code), run on the save
   // attempt below, store-scoped; skipped while the code is still the one the
@@ -91,12 +104,14 @@ export const createPatientEditor = (
 
   createEffect(
     on(params.node, n => {
-      if (n && n.id !== seededId()) {
-        const seed = seedDraft(n);
-        setEdit(seed);
-        setSeededId(n.id);
-        armForSeed(seed);
-      }
+      if (!n) return;
+      const after = saved();
+      if (n.id === seededId() && (!after || n === after.over)) return;
+      const seed = seedDraft(n);
+      setEdit(seed);
+      setSeededId(n.id);
+      setSaved(undefined);
+      armForSeed(seed);
     })
   );
 
@@ -110,7 +125,7 @@ export const createPatientEditor = (
   const isDirty = createMemo(() => {
     const n = params.node();
     if (!n || seededId() === undefined) return false;
-    return !draftEquals(edit, seedDraft(n));
+    return !draftEquals(edit, saved()?.draft ?? seedDraft(n));
   });
 
   const [saving, setSaving] = createSignal(false);
@@ -119,8 +134,8 @@ export const createPatientEditor = (
 
   // Full-replace edit (OMS-REG-DIS-02.41): toUpdateInput sends every field. On
   // success, re-seed from the refreshed record (name is recomputed server-side)
-  // by clearing seededId so the seed effect re-runs once the caller's own
-  // refetch lands a fresh node.
+  // once the caller's own refetch lands it; until then the form shows, and is
+  // compared against, what was saved.
   const doSave = async (afterSave?: () => void) => {
     const n = params.node();
     if (!n || !isDraftValid(edit) || saving()) return;
@@ -137,7 +152,9 @@ export const createPatientEditor = (
       return;
     }
     setSaveError('');
-    setSeededId(undefined);
+    const draft = { ...edit };
+    setSaved({ over: n, draft });
+    armForSeed(draft);
     afterSave?.();
   };
 
@@ -159,11 +176,12 @@ export const createPatientEditor = (
     setConfirmSaveOpen(true);
   };
 
-  // Re-seed the edit buffer from the fetched patient, making the form pristine.
+  // Re-seed the edit buffer from the fetched patient, or what was saved over
+  // it, making the form pristine.
   const resetDraft = () => {
     const n = params.node();
     if (!n) return;
-    const seed = seedDraft(n);
+    const seed = { ...(saved()?.draft ?? seedDraft(n)) };
     setEdit(seed);
     armForSeed(seed);
   };
