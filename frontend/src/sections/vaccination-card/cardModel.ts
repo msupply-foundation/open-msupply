@@ -16,11 +16,6 @@ export type CardRow = CardNode['items'][number];
 export type DoseStatus = NonNullable<CardRow['status']>;
 
 /**
- * Days in the average month the server uses (util
- * AVG_NUMBER_OF_DAYS_IN_A_MONTH).
- */
-const DAYS_PER_MONTH = 30.4375;
-/**
  * Weeks per month for the infant schedule's labels: the course editor's own
  * convention, where a six-week dose is entered as 1.5 months and 6/10/14 weeks
  * as 1.5/2.5/3.5 (spec/immunisation-programs rules § doses).
@@ -163,12 +158,20 @@ export const STATUS_COLOUR: Record<DoseStatus, string> = {
 /**
  * The patient's age as the card's summary states it: weeks under three
  * months, months under two years, then years.
+ *
+ * Months are COMPLETED CALENDAR MONTHS, compared on y/m/d: one completes on
+ * the day of the month it was born on. Dividing days by the average month
+ * reads a month short on a birthday — two years is 730 days, 23.98 average
+ * months.
  */
 export const patientAgeLabel = (dateOfBirth: string, today: string): string => {
   const days = Math.floor(
     (Date.parse(today) - Date.parse(dateOfBirth)) / 86_400_000
   );
-  const months = Math.floor(days / DAYS_PER_MONTH);
+  const [birthY, birthM, birthD] = dateOfBirth.split('-').map(Number);
+  const [todayY, todayM, todayD] = today.split('-').map(Number);
+  const months =
+    (todayY - birthY) * 12 + (todayM - birthM) - (todayD < birthD ? 1 : 0);
   if (months < 3)
     return t('label.age-weeks-short', { count: Math.floor(days / 7) });
   if (months < 24) return t('label.age-months-short', { count: months });

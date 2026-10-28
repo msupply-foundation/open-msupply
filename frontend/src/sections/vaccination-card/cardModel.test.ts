@@ -273,6 +273,37 @@ describe("OMS-REG-DIS-06.69 — the patient's age in the summary", () => {
       'label.age-years-short {"count":3}'
     );
   });
+  it('reads a patient born today as no weeks old', () => {
+    expect(patientAgeLabel('2026-10-28', '2026-10-28')).toBe(
+      'label.age-weeks-short {"count":0}'
+    );
+  });
+  it('counts a month or year complete on the day it comes round', () => {
+    // Second birthday: two years, not 23 months.
+    expect(patientAgeLabel('2024-10-27', '2026-10-27')).toBe(
+      'label.age-years-short {"count":2}'
+    );
+    expect(patientAgeLabel('2024-10-28', '2026-10-27')).toBe(
+      'label.age-months-short {"count":23}'
+    );
+    // First birthday: twelve months, not eleven.
+    expect(patientAgeLabel('2025-10-28', '2026-10-28')).toBe(
+      'label.age-months-short {"count":12}'
+    );
+    expect(patientAgeLabel('2025-11-28', '2026-10-28')).toBe(
+      'label.age-months-short {"count":11}'
+    );
+    expect(patientAgeLabel('2025-11-29', '2026-10-28')).toBe(
+      'label.age-months-short {"count":10}'
+    );
+    // Three months to the day leaves weeks for months.
+    expect(patientAgeLabel('2026-01-28', '2026-04-28')).toBe(
+      'label.age-months-short {"count":3}'
+    );
+    expect(patientAgeLabel('2026-01-29', '2026-04-28')).toBe(
+      'label.age-weeks-short {"count":12}'
+    );
+  });
 });
 
 describe('OMS-REG-DIS-06.77 — the editor of an Overdue dose', () => {
