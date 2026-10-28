@@ -11,9 +11,9 @@ import nativeImportUrl from './nativeImport.js?url&no-inline';
  * the app's own chunks, which only go missing when a new build replaces them.
  * A plugin bundle fails for reasons of its own (an SDK export this host no
  * longer has, a throw while evaluating) and fails again after every reload, so
- * it held the app behind "a new version is available" with no way past
- * (issue #575). Its failure belongs to the loader's catch: recorded, skipped,
- * the app running on.
+ * a wrapped `import()` would hold the app behind "a new version is available"
+ * with no way past. A plugin's failure belongs to the loader's catch instead:
+ * recorded, skipped, the app running on.
  *
  * ./nativeImport.js is a `?url` asset, copied as written, so its `import()` is
  * the browser's own. `no-inline` is load-bearing: the file is under Vite's
@@ -29,8 +29,8 @@ import nativeImportUrl from './nativeImport.js?url&no-inline';
  * whichever module imports it (kdd/plugin-loading). Those are app chunks too,
  * but the bundle fetches them with the browser's own `import()`, outside the
  * helper: one gone missing is a stale app recorded as this plugin failing to
- * load. Unlike issue #575 it does not outlast a reload, which brings the new
- * build's import map.
+ * load. That misreport does not outlast a reload, which brings the new build's
+ * import map.
  */
 export const importPluginBundle = async (url: string): Promise<unknown> => {
   const { default: nativeImport } = (await import(

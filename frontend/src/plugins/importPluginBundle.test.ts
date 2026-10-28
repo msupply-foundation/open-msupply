@@ -3,12 +3,11 @@ import { build } from 'vite';
 import { describe, expect, it } from 'vitest';
 
 /*
- * Issue #575 at the layer it lives in: the production build. The build wraps
- * each `import()` it compiles in Vite's preload helper, whose
- * `vite:preloadError` the app reads as "a new build has replaced this one"
- * (src/staleBundle.ts). The import that takes a plugin bundle's URL must not be
- * one of them, or a broken plugin reads as a stale app — one silent reload,
- * then a modal no refresh clears.
+ * The production build wraps each `import()` it compiles in Vite's preload
+ * helper, whose `vite:preloadError` the app reads as "a new build has replaced
+ * this one" (src/staleBundle.ts). The import that takes a plugin bundle's URL
+ * must not be one of them, or a broken plugin reads as a stale app — one silent
+ * reload, then a modal no refresh clears.
  *
  * Only a build adds the helper, and node cannot run the import itself, so this
  * builds the real module beside a control — a plain `import()` of a URL — and

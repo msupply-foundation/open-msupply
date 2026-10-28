@@ -252,11 +252,11 @@ describe('fetchPluginMetadata — declaring which host is asking', () => {
 });
 
 /*
- * The app's real importer (issue #575). The pipeline tests above inject their
- * own, and the dev server never wraps an `import()`, so a bare one put back
- * here would pass both — and in a production build report every broken plugin
- * as a stale app. importPluginBundle.test.ts checks that module's build output;
- * this checks the app uses it.
+ * The app's real importer. The pipeline tests above inject their own, and the
+ * dev server never wraps an `import()`, so a bare one put back here would pass
+ * both — and in a production build report every broken plugin as a stale app.
+ * importPluginBundle.test.ts checks that module's build output; this checks the
+ * app uses it.
  */
 describe('appDeps — importing a plugin bundle', () => {
   it('goes through importPluginBundle, not an import() compiled here', () => {
