@@ -52,10 +52,13 @@ const stageDiscoveryPage = (): void => {
 // with what each needs at runtime. The webpack plugin packages only .webpack/,
 // so these are copied into the app's own node_modules after the copy step.
 //
-// node-hid: its JS, plus the native binary for the target only — a local
-// build (electron-rebuild, which `premake` runs) if there is one, else the
-// shipped prebuild; pkg-prebuilds tries them in that order. pkg-prebuilds is
-// what finds the binary, and has no dependencies of its own.
+// node-hid: its JS, plus the prebuilt binary for the target only. Node-API,
+// so the one binary serves Electron too. Nothing it could be compiled from
+// goes with it — no binding.gyp, sources or local build: packaging rebuilds
+// any native module it finds a binding.gyp for, and that rebuild fails (its
+// build-time dependency, node-addon-api, is not shipped) and could not
+// cross-compile anyway. pkg-prebuilds is what finds the binary, and has no
+// dependencies of its own.
 const shipExternals = (buildPath: string, platform: string, arch: string) => {
   const target = (name: string) => path.join(buildPath, 'node_modules', name);
   const source = (name: string, from = __dirname) =>
@@ -68,16 +71,11 @@ const shipExternals = (buildPath: string, platform: string, arch: string) => {
     filter: file => {
       const relative = path.relative(nodeHid, file).split(path.sep);
       switch (relative[0]) {
+        case 'binding.gyp':
         case 'src':
         case 'hidapi':
-          return false;
         case 'build':
-          // build/, build/Release/ and the binary itself — not the objects.
-          return (
-            relative.length < 3 ||
-            (relative[1] === 'Release' &&
-              (relative.length === 2 || file.endsWith('.node')))
-          );
+          return false;
         case 'prebuilds':
           return relative.length < 2 || relative[1] === prebuild;
         default:
