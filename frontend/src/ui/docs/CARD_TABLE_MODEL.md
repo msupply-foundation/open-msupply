@@ -220,7 +220,7 @@ The ring is colour alone, so it is **never the only signal**: the column's own `
 ```tsx
 // In the Counted cell (a badge on cards): dropped from the badge.
 <Show when={reducedBelowZero(line)}>
-  <span class={styles.lineError} data-cell-message>{t('error.reduced-below-zero')}</span>
+  <span class={styles.lineError} data-cell-message>{t('stocktake.line-error.stock-reserved')}</span>
 </Show>
 
 // CARD-ONLY body field carrying it, on the lines that have it.
@@ -232,7 +232,7 @@ The ring is colour alone, so it is **never the only signal**: the column's own `
     hideFromColumnSettings: true,
     hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
   },
-  cell: () => <span class={styles.lineError}>{t('error.reduced-below-zero')}</span>,
+  cell: () => <span class={styles.lineError}>{t('stocktake.line-error.stock-reserved')}</span>,
 }
 ```
 

@@ -870,7 +870,7 @@ const StocktakeDetailView: Component = () => {
           )}
           <Show when={reducedBelowZero(info.row.original)}>
             <span class={styles.lineError} data-cell-message>
-              {t('error.reduced-below-zero')}
+              {t('stocktake.line-error.stock-reserved')}
             </span>
           </Show>
         </>
@@ -888,7 +888,7 @@ const StocktakeDetailView: Component = () => {
         hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
       },
       cell: () => (
-        <span class={styles.lineError}>{t('error.reduced-below-zero')}</span>
+        <span class={styles.lineError}>{t('stocktake.line-error.stock-reserved')}</span>
       ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
