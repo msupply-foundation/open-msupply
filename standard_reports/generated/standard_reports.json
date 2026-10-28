@@ -739,7 +739,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "inbound-shipments_2_17_2_false",
+      "id": "inbound-shipments_2_18_0_false",
       "name": "Inbound Shipments",
       "description": null,
       "template": {
@@ -750,7 +750,7 @@
           "query": [
             "query.graphql"
           ],
-          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChvPT57Y29uc3Qgcj1gJHtvLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQociwodC5nZXQocil8fDApK28uY29zdFByaWNlUGVyUGFjaypvLm51bWJlck9mUGFja3MpLGEuc2V0KHIsKGEuZ2V0KHIpfHwwKSsxKX0pfSk7Y29uc3Qgbz1bXSxyPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShyLmdldChpKXx8MCkrMTtyLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO28ucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjay50b0ZpeGVkKDIpLHRvdGFsQ29zdDpzP3QuZ2V0KGkpLnRvRml4ZWQoMik6Ii0iLG90aGVyUGFydHlOYW1lOmUub3RoZXJQYXJ0eU5hbWV9KX0pfSkse2RhdGE6e2xpbmVzOm8uc29ydCgoZSx0KT0+ZS5pdGVtTmFtZS5sb2NhbGVDb21wYXJlKHQuaXRlbU5hbWUpfHxlLm90aGVyUGFydHlOYW1lLmxvY2FsZUNvbXBhcmUodC5vdGhlclBhcnR5TmFtZSkpfX19KShlPy5kYXRhPy5pbnZvaWNlcyl9ZXhwb3J0e2UgYXMgY29udmVydF9kYXRhfTs=",
+          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChyPT57Y29uc3Qgbz1gJHtyLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQobywodC5nZXQobyl8fDApK3IuY29zdFByaWNlUGVyUGFjaypyLm51bWJlck9mUGFja3MpLGEuc2V0KG8sKGEuZ2V0KG8pfHwwKSsxKX0pfSk7Y29uc3Qgcj1bXSxvPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IG09bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjay50b0ZpeGVkKDIpLHRvdGFsQ29zdDptP3QuZ2V0KGkpLnRvRml4ZWQoMik6Ii0iLG90aGVyUGFydHlOYW1lOmUub3RoZXJQYXJ0eU5hbWUsaW52b2ljZU51bWJlcjplLmludm9pY2VOdW1iZXIscmVjZWl2ZWREYXRldGltZTplLnJlY2VpdmVkRGF0ZXRpbWV9KX0pfSkse2RhdGE6e2xpbmVzOnIuc29ydCgoZSx0KT0+ZS5pdGVtTmFtZS5sb2NhbGVDb21wYXJlKHQuaXRlbU5hbWUpfHxlLm90aGVyUGFydHlOYW1lLmxvY2FsZUNvbXBhcmUodC5vdGhlclBhcnR5TmFtZSkpfX19KShlPy5kYXRhPy5pbnZvaWNlcyl9ZXhwb3J0e2UgYXMgY29udmVydF9kYXRhfTs=",
           "convert_data_type": "BoaJs"
         },
         "entries": {
@@ -758,13 +758,13 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{% set timezone = arguments.timezone | default(value=\"UTC\") %}\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n        <td>{{t(k=\"label.invoice-number\", f=\"Invoice number\")}}</td>\n        <td>{{t(k=\"report.received-date\", f=\"Received date\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td style=\"text-align: right\">{{line.invoiceNumber}}</td>\n        <td>\n          {% if line.receivedDatetime %}\n          {{line.receivedDatetime | date(format=\"%d/%m/%Y\", timezone=timezone)}}\n          {% endif %}\n        </td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
             }
           },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
-              "query": "query InboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: INBOUND_SHIPMENT }\n      status: { equalAny: [RECEIVED, VERIFIED] }\n      otherPartyId: { equalTo: $otherPartyId }\n      receivedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "query": "query InboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: INBOUND_SHIPMENT }\n      status: { equalAny: [RECEIVED, VERIFIED] }\n      otherPartyId: { equalTo: $otherPartyId }\n      receivedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        invoiceNumber\n        receivedDatetime\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
           },
@@ -776,13 +776,13 @@
       },
       "context": "REPORT",
       "sub_context": "Replenishment",
-      "argument_schema_id": "for_report_inbound-shipments_2_17_2_false",
+      "argument_schema_id": "for_report_inbound-shipments_2_18_0_false",
       "comment": null,
       "is_custom": false,
-      "version": "2.17.2",
+      "version": "2.18.0",
       "code": "inbound-shipments",
       "form_schema": {
-        "id": "for_report_inbound-shipments_2_17_2_false",
+        "id": "for_report_inbound-shipments_2_18_0_false",
         "type": "reportArgument",
         "json_schema": {
           "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1881,7 +1881,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "outbound-shipments_2_10_3_false",
+      "id": "outbound-shipments_2_11_0_false",
       "name": "Outbound Shipments",
       "description": null,
       "template": {
@@ -1892,7 +1892,7 @@
           "query": [
             "query.graphql"
           ],
-          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChyPT57Y29uc3Qgbz1gJHtyLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQobywodC5nZXQobyl8fDApK3IuY29zdFByaWNlUGVyUGFjaypyLm51bWJlck9mUGFja3MpLGEuc2V0KG8sKGEuZ2V0KG8pfHwwKSsxKX0pfSk7Y29uc3Qgcj1bXSxvPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjayx0b3RhbENvc3Q6cz90LmdldChpKS50b0ZpeGVkKDIpOiItIixvdGhlclBhcnR5TmFtZTplLm90aGVyUGFydHlOYW1lfSl9KX0pLHtkYXRhOntsaW5lczpyLnNvcnQoKGUsdCk9PmUuaXRlbU5hbWUubG9jYWxlQ29tcGFyZSh0Lml0ZW1OYW1lKXx8ZS5vdGhlclBhcnR5TmFtZS5sb2NhbGVDb21wYXJlKHQub3RoZXJQYXJ0eU5hbWUpKX19fSkoZT8uZGF0YT8uaW52b2ljZXMpfWV4cG9ydHtlIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaChyPT57Y29uc3Qgbz1gJHtyLml0ZW0uY29kZX0tJHtlLm90aGVyUGFydHlOYW1lfWA7dC5zZXQobywodC5nZXQobyl8fDApK3IuY29zdFByaWNlUGVyUGFjaypyLm51bWJlck9mUGFja3MpLGEuc2V0KG8sKGEuZ2V0KG8pfHwwKSsxKX0pfSk7Y29uc3Qgcj1bXSxvPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaChlPT57ZS5saW5lcy5ub2Rlcy5mb3JFYWNoKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IG09bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjayx0b3RhbENvc3Q6bT90LmdldChpKS50b0ZpeGVkKDIpOiItIixvdGhlclBhcnR5TmFtZTplLm90aGVyUGFydHlOYW1lLGludm9pY2VOdW1iZXI6ZS5pbnZvaWNlTnVtYmVyLHNoaXBwZWREYXRldGltZTplLnNoaXBwZWREYXRldGltZX0pfSl9KSx7ZGF0YTp7bGluZXM6ci5zb3J0KChlLHQpPT5lLml0ZW1OYW1lLmxvY2FsZUNvbXBhcmUodC5pdGVtTmFtZSl8fGUub3RoZXJQYXJ0eU5hbWUubG9jYWxlQ29tcGFyZSh0Lm90aGVyUGFydHlOYW1lKSl9fX0pKGU/LmRhdGE/Lmludm9pY2VzKX1leHBvcnR7ZSBhcyBjb252ZXJ0X2RhdGF9Ow==",
           "convert_data_type": "BoaJs"
         },
         "entries": {
@@ -1900,13 +1900,13 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{% set timezone = arguments.timezone | default(value=\"UTC\") %}\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.invoice-number\", f=\"Invoice number\")}}</td>\n        <td>{{t(k=\"report.shipped-date\", f=\"Shipped date\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td style=\"text-align: right\">{{line.invoiceNumber}}</td>\n        <td>\n          {% if line.shippedDatetime %}\n          {{line.shippedDatetime | date(format=\"%d/%m/%Y\", timezone=timezone)}}\n          {% endif %}\n        </td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
             }
           },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
-              "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        invoiceNumber\n        shippedDatetime\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
           },
@@ -1918,13 +1918,13 @@
       },
       "context": "REPORT",
       "sub_context": "Distribution",
-      "argument_schema_id": "for_report_outbound-shipments_2_10_3_false",
+      "argument_schema_id": "for_report_outbound-shipments_2_11_0_false",
       "comment": null,
       "is_custom": false,
-      "version": "2.10.3",
+      "version": "2.11.0",
       "code": "outbound-shipments",
       "form_schema": {
-        "id": "for_report_outbound-shipments_2_10_3_false",
+        "id": "for_report_outbound-shipments_2_11_0_false",
         "type": "reportArgument",
         "json_schema": {
           "$schema": "http://json-schema.org/draft-07/schema#",
