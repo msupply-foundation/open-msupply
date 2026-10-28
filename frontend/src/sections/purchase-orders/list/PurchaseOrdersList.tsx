@@ -288,7 +288,11 @@ const PurchaseOrdersList: Component = () => {
       cell: info =>
         info.row.original.lines.totalCount === 0
           ? '-'
-          : formatCurrencyCell(info.getValue<number>()),
+          : // In the PO's own currency, as the detail view shows it.
+            formatCurrencyCell(
+              info.getValue<number>(),
+              info.row.original.currency?.code
+            ),
       size: remToPx(8),
     },
     {

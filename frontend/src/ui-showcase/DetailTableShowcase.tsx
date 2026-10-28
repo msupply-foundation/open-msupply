@@ -241,6 +241,8 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
       isVaccine: false,
       doses: 1,
       defaultPackSize: packSize,
+      itemStoreProperties: null,
+      volumePerPack: 0,
     },
     donor: null,
     manufacturer: man ? { id: `man-${i}`, name: man } : null,
