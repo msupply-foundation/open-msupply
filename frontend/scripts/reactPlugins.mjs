@@ -19,6 +19,11 @@
  * in the part's own directory, resolving webpack, React and
  * `@openmsupply-client/*` from the repo root's node_modules — so a build
  * needs the root `yarn install` as well as this front end's `pnpm install`.
+ *
+ * A plugin whose React parts fail — disagree with its other parts, or don't
+ * build against today's client/ — gets no bundle and is reported, and the run
+ * goes on (build-plugins.mjs). It fails again every run until it is fixed,
+ * which is the reminder.
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
@@ -28,37 +33,9 @@ const REPO_ROOT = resolve('..');
 
 const PARTS = ['frontend/latest', 'backend/latest'];
 
-/*
- * What is not built, by repo-relative path — a plugin directory or one part —
- * and why. A plugin listed whole gets no React rows at all; with no SolidJS
- * parts either, it gets no bundle. A part is only listed alone when the
- * bundle is complete without it: a bundle missing a part its other parts call
- * is the half-installed plugin this whole arrangement exists to prevent.
- */
-export const NOT_BUILT = {
-  'plugins/open_msupply':
-    "the React UI's reference plugins — examples, not a deployment's plugin",
-  'plugins/forecasting':
-    "type errors against today's client/ plugin types (drift since its last commit)",
-  'private/plugins/congo':
-    "its backend has type errors against today's client/ plugin types, and its frontend calls it",
-  'private/plugins/niger':
-    'its backend no longer matches TransformRequestRequisitionLineOutput',
-  'private/plugins/liberia/react/frontend/latest':
-    "installs its own webpack, which clashes with the shared config's — and registers no contributions",
-};
-
-const notBuilt = path => {
-  const rel = relative(REPO_ROOT, resolve(path));
-  return Object.entries(NOT_BUILT).find(
-    ([listed]) => rel === listed || rel.startsWith(`${listed}/`)
-  )?.[1];
-};
-
 /**
- * A plugin directory's React parts, each with its manifest read and `skipped`
- * set to the reason when it is not built. Empty for a directory with no
- * `react/`.
+ * A plugin directory's React parts, each with its manifest read. Empty for a
+ * directory with no `react/`.
  */
 export const discoverReactParts = pluginDir => {
   const parts = [];
@@ -78,7 +55,6 @@ export const discoverReactParts = pluginDir => {
       variantType: manifest.omSupplyPlugin.variant_type,
       // The CLI's default, for every manifest written before the field.
       hostRuntime: manifest.omSupplyPlugin.host_runtime ?? 'react',
-      skipped: notBuilt(dir),
     });
   }
   return parts;

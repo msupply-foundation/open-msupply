@@ -29,7 +29,8 @@
  * it needs the repo root's `yarn install` and a webpack build per part, which
  * the bundle-publishing workflow pays and an ordinary frontend check does not.
  * Their manifests are checked against the SolidJS parts on every run either
- * way, so a code or version that disagrees fails CI, not the publish.
+ * way. A plugin whose React parts fail a check or the build is reported and,
+ * with --react, left without a bundle; it never stops the other plugins.
  *
  * Faithfulness rules, mirrored from server/cli/src/plugins.rs and
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
@@ -41,8 +42,9 @@
  *     code+version alone would make the second bundle silently overwrite the
  *     first on the primary key. It is also what the file route is keyed on now
  *     that a server keeps every compatible version of a code;
- *   - host_runtime = the SDK's HOST_RUNTIME, which says this bundle is for THIS
- *     host: a server offers it only to a client declaring the same runtime;
+ *   - host_runtime = the SDK's HOST_RUNTIME for a SolidJS row, which says it
+ *     is for THIS host (a React part's comes from its manifest, defaulting to
+ *     `react`): a server offers a row only to a client declaring its runtime;
  *   - hash = sha256 over the files sorted by name, name bytes then content
  *     bytes, hex — the server computes this at bind time and the client appends
  *     it as `?v=`.
@@ -58,6 +60,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -381,36 +384,48 @@ const backendPlugins = discoverBackendPlugins();
  *     sources for one plugin's backend, whichever installed last winning.
  */
 const reactParts = [];
-const skippedReactParts = [];
+/*
+ * Plugin directory -> why its React parts fail. Such a plugin is never fatal
+ * to the run: with --react its bundle is dropped (a bundle without the React
+ * frontend a site may switch to is half a plugin) and every other plugin is
+ * still built and published; without, its SolidJS bundle is unaffected.
+ */
+const reactFailures = new Map();
 for (const dir of inRepoPluginDirs()) {
   const parts = discoverReactParts(dir);
-  skippedReactParts.push(...parts.filter(part => part.skipped));
-  const built = parts.filter(part => !part.skipped);
-  if (built.length === 0) continue;
+  if (parts.length === 0) continue;
   const solid = [readManifest(dir), readBackendManifest(join(dir, 'backend'))];
-  const all = [...solid.filter(Boolean), ...built];
+  const all = [...solid.filter(Boolean), ...parts];
   const named = part => `${part.code}@${part.version} (${part.dir})`;
+  const reactBackend = parts.find(part => part.target === 'backend');
+  const solidRuntime = parts.find(part => part.hostRuntime === HOST_RUNTIME);
   if (new Set(all.map(part => part.code)).size > 1) {
-    throw new Error(
-      `${dir}: its parts declare different plugin codes — ` +
-        `${all.map(named).join(', ')}. One plugin, one code.`
+    reactFailures.set(
+      dir,
+      `its parts declare different plugin codes — ${all.map(named).join(', ')}. ` +
+        'One plugin, one code.'
     );
-  }
-  if (new Set(all.map(part => part.version)).size > 1) {
-    throw new Error(
-      `${dir}: its parts declare different versions — ` +
-        `${all.map(named).join(', ')}. A plugin has one version; bump them ` +
-        'together.'
+  } else if (new Set(all.map(part => part.version)).size > 1) {
+    reactFailures.set(
+      dir,
+      `its parts declare different versions — ${all.map(named).join(', ')}. ` +
+        'A plugin has one version; bump them together.'
     );
-  }
-  const reactBackend = built.find(part => part.target === 'backend');
-  if (solid[1] && reactBackend) {
-    throw new Error(
-      `${dir}: two backends — backend/ and ${reactBackend.dir}. Delete ` +
-        'the React one: backend/ answers both UIs.'
+  } else if (solid[1] && reactBackend) {
+    reactFailures.set(
+      dir,
+      `two backends — backend/ and ${reactBackend.dir}. Delete the React ` +
+        'one: backend/ answers both UIs.'
     );
+  } else if (solidRuntime) {
+    reactFailures.set(
+      dir,
+      `${solidRuntime.dir} declares host_runtime "${HOST_RUNTIME}", which ` +
+        "is this front end's; its row would replace the SolidJS one."
+    );
+  } else {
+    reactParts.push(...parts.map(part => ({ ...part, pluginDir: dir })));
   }
-  reactParts.push(...built);
 }
 
 if (
@@ -480,28 +495,41 @@ verifyRoundTrip(packed.map(p => p.row));
 // it cannot load a module-federation container.
 const reactFrontendRows = [];
 const reactBackendRows = [];
+const packReactPart = part => {
+  const dist = join(part.dir, 'dist');
+  if (part.target === 'frontend') {
+    const { row } = packFrontendRow(part, dist, part.hostRuntime);
+    verifyRoundTrip([row], () => dist);
+    return row;
+  }
+  const path = join(dist, 'plugin.js');
+  const row = packBackendPlugin(part, path);
+  if (
+    Buffer.compare(readFileSync(path), Buffer.from(row.bundle_base64, 'base64'))
+  ) {
+    throw new Error(`Round-trip mismatch for ${row.id}`);
+  }
+  return row;
+};
 if (WITH_REACT && reactParts.length > 0) {
   checkReactToolchain();
-  for (const part of reactParts) buildReactPart(part);
+  const rows = [];
   for (const part of reactParts) {
-    const dist = join(part.dir, 'dist');
-    if (part.target === 'frontend') {
-      const { row } = packFrontendRow(part, dist, part.hostRuntime);
-      verifyRoundTrip([row], () => dist);
-      reactFrontendRows.push(row);
-    } else {
-      const path = join(dist, 'plugin.js');
-      const row = packBackendPlugin(part, path);
-      if (
-        Buffer.compare(
-          readFileSync(path),
-          Buffer.from(row.bundle_base64, 'base64')
-        ) !== 0
-      ) {
-        throw new Error(`Round-trip mismatch for ${row.id}`);
-      }
-      reactBackendRows.push(row);
+    if (reactFailures.has(part.pluginDir)) continue;
+    try {
+      buildReactPart(part);
+      rows.push({ part, row: packReactPart(part) });
+    } catch (error) {
+      reactFailures.set(part.pluginDir, error.message);
     }
+  }
+  // All of a plugin's React parts or none: a frontend without the backend it
+  // calls is the half-installed plugin a bundle exists to rule out.
+  for (const { part, row } of rows) {
+    if (reactFailures.has(part.pluginDir)) continue;
+    (part.target === 'frontend' ? reactFrontendRows : reactBackendRows).push(
+      row
+    );
   }
 }
 
@@ -570,6 +598,22 @@ for (const row of formRows) {
 
 mkdirSync(OUT_DIR, { recursive: true });
 mkdirSync(BUNDLE_DIR, { recursive: true });
+
+// With --react, a plugin whose React parts failed gets no bundle at all —
+// nor a stale one from an earlier run.
+if (WITH_REACT) {
+  for (const dir of reactFailures.keys()) {
+    const codes = [
+      readManifest(dir)?.code,
+      readBackendManifest(join(dir, 'backend'))?.code,
+      ...discoverReactParts(dir).map(part => part.code),
+    ];
+    for (const code of codes.filter(Boolean)) {
+      bundles.delete(code);
+      rmSync(join(BUNDLE_DIR, `${code}.json`), { force: true });
+    }
+  }
+}
 for (const [code, bundle] of bundles) {
   writeFileSync(
     join(BUNDLE_DIR, `${code}.json`),
@@ -625,8 +669,15 @@ if (!WITH_REACT && reactParts.length > 0) {
       'built — pass --react to pack them into their bundles'
   );
 }
-for (const part of skippedReactParts) {
-  console.info(`[build-plugins] not built: ${part.dir} — ${part.skipped}`);
+// Reported, not thrown (see reactFailures). In a GitHub Actions --react run
+// each is an error annotation, so a publish that left a plugin out says so.
+const annotate = WITH_REACT && process.env.GITHUB_ACTIONS ? '::error::' : '';
+for (const [dir, why] of reactFailures) {
+  console.warn(
+    `${annotate}[build-plugins] ${dir}: React UI parts fail` +
+      (WITH_REACT ? ', no bundle' : '') +
+      ` — ${why}`
+  );
 }
 for (const row of formRows) {
   const versions = row.document_types.reduce(
