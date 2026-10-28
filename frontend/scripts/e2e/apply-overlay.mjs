@@ -45,7 +45,7 @@
  *
  * Every entry may carry a "why" string — ignored here, required by review:
  * the overlay is the deployment's assumptions made concrete, and each entry
- * should say which one it is (plugins/<dir>/README.md § Deployment
+ * should say which one it is (private/plugins/<dir>/README.md § Deployment
  * assumptions).
  */
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';

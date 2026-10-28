@@ -7,9 +7,9 @@ import {
   Switch,
 } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
-import v2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
-import v1Fixture from '../../../plugins/examples/demo_program/forms/DemoEncounter/fixtures/v1.json';
+import v1 from '../../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
+import v2 from '../../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
+import v1Fixture from '../../../../plugins/examples/demo_program/forms/DemoEncounter/fixtures/v1.json';
 
 /*
  * Opening an older document through the form host

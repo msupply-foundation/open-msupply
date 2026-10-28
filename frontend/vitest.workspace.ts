@@ -1,6 +1,7 @@
 import { configDefaults, defineWorkspace } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 import { BACKEND_COMMON } from './vite/backendPluginBuild';
+import { PLUGIN_SHARED_DEPS } from './vitest.config';
 
 /*
  * Three vitest projects, because the kinds of unit test need different module
@@ -15,9 +16,9 @@ import { BACKEND_COMMON } from './vite/backendPluginBuild';
  *   return values and run effects), so nothing needs a document, and the suite
  *   costs no jsdom dependency.
  * - `backend-plugins`: the BoaJS halves that import `@common` (each plugin's
- *   `backend/src`, CIV's first). Two differences, both about running code
- *   written for another host: the `@common` specifier resolves to the
- *   server-generated `backendCommon`, and
+ *   `backend/src`, CIV's first — `private/plugins/civ/backend/src`). Two
+ *   differences, both about running code written for another host: the
+ *   `@common` specifier resolves to the server-generated `backendCommon`, and
  *   `globals: true` lets the suites keep the bare `describe`/`it`/`expect`
  *   they arrived with from msupply-foundation/civ-plugins.
  *
@@ -54,21 +55,38 @@ export default defineWorkspace([
   {
     plugins: [solid()],
     define,
-    resolve: { alias, conditions: ['browser', 'development'] },
+    resolve: {
+      alias,
+      conditions: ['browser', 'development'],
+      dedupe: PLUGIN_SHARED_DEPS,
+    },
     test: {
       name: 'solid',
       // Plugins' component-shaped tests run here too: same reason as the
       // host's — reactivity only tracks under the browser conditions.
-      include: ['src/**/*.test.tsx', 'plugins/*/src/**/*.test.tsx'],
+      include: [
+        'src/**/*.test.tsx',
+        '../plugins/*/src/**/*.test.tsx',
+        '../private/plugins/*/src/**/*.test.tsx',
+      ],
       environment: 'node',
     },
   },
   {
-    resolve: { alias: { '@common': BACKEND_COMMON } },
+    resolve: {
+      alias: { '@common': BACKEND_COMMON },
+      dedupe: PLUGIN_SHARED_DEPS,
+    },
     test: {
       name: 'backend-plugins',
-      include: ['plugins/*/backend/src/**/*.test.ts'],
-      exclude: [...configDefaults.exclude, 'plugins/cook_islands/**'],
+      include: [
+        '../plugins/*/backend/src/**/*.test.ts',
+        '../private/plugins/*/backend/src/**/*.test.ts',
+      ],
+      exclude: [
+        ...configDefaults.exclude,
+        '../private/plugins/cook_islands/**',
+      ],
       globals: true,
       environment: 'node',
     },

@@ -11,7 +11,7 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { NameById } from '../names.generated';
 import { suppliersListPath } from '../list/namesListLogic';
-import { detailFromResult } from './nameDetail';
+import { detailFromResult, isStoreName } from './nameDetail';
 import { SupplierDetailsTab } from './SupplierDetailsTab';
 import { CustomFieldsView } from '../../../domain/customFields';
 import { ContactsTab } from './ContactsTab';
@@ -20,10 +20,10 @@ import { PurchaseOrdersTab } from './PurchaseOrdersTab';
 // S4 — Supplier detail page (read-only), routed at
 // /{storeId}/replenishment/suppliers/:nameId (OMS-REG-REPL-08.11/.19,
 // OMS-REG-REPL-08.11/.19). Page-level tabs: Details · Custom fields · Contacts
-// · Purchase orders. No page actions, no footer — read-only throughout
-// (OMS-REG-DIST-08.12, OMS-REG-REPL-08.12). The single-name read backs the
-// Details and Custom fields tabs; Contacts and Purchase orders fetch their own
-// data.
+// · Purchase orders (external suppliers only). No page actions, no footer —
+// read-only throughout (OMS-REG-DIST-08.12, OMS-REG-REPL-08.12). The
+// single-name read backs the Details and Custom fields tabs; Contacts and
+// Purchase orders fetch their own data.
 
 const SupplierDetailPage: Component = () => {
   const params = useParams<{ storeId: string; nameId: string }>();
@@ -34,7 +34,6 @@ const SupplierDetailPage: Component = () => {
   // urls](../../../../spec/ui-standards/conventions.md)). The default (Details)
   // carries no param, keeping the base URL clean.
   const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-  const tab = () => searchParams.tab ?? 'details';
   const setTab = (value: string) =>
     setSearchParams({ tab: value === 'details' ? undefined : value });
 
@@ -51,6 +50,20 @@ const SupplierDetailPage: Component = () => {
   );
   const name = () => data.latest;
 
+  // An internal supplier (a name that is itself a store) has no Purchase
+  // orders tab: an order only ever goes to an external supplier
+  // (OMS-REG-REPL-08.24). Hidden once the read says so, so an external
+  // supplier's tabs don't shift when it lands.
+  const isInternal = () => {
+    const n = name();
+    return n != null && isStoreName(n);
+  };
+  // A link to an internal supplier's Purchase orders tab lands on Details.
+  const tab = () => {
+    const value = searchParams.tab ?? 'details';
+    return value === 'purchase-orders' && isInternal() ? 'details' : value;
+  };
+
   const backToList = () => navigate(suppliersListPath(params.storeId));
 
   // Tab order mirrors the current app: Details · Custom fields · Purchase
@@ -59,7 +72,9 @@ const SupplierDetailPage: Component = () => {
   const tabDefs = () => [
     { value: 'details', label: t('name.tab.details') },
     { value: 'custom-fields', label: t('name.tab.custom-fields') },
-    { value: 'purchase-orders', label: t('name.tab.purchase-orders') },
+    ...(isInternal()
+      ? []
+      : [{ value: 'purchase-orders', label: t('name.tab.purchase-orders') }]),
     { value: 'contacts', label: t('name.tab.contacts') },
   ];
 
@@ -118,9 +133,11 @@ const SupplierDetailPage: Component = () => {
               <TabPanel value="custom-fields">
                 <CustomFieldsView scope="supplier" values={n().customFields} />
               </TabPanel>
-              <TabPanel value="purchase-orders">
-                <PurchaseOrdersTab supplierName={n().name} />
-              </TabPanel>
+              <Show when={!isInternal()}>
+                <TabPanel value="purchase-orders">
+                  <PurchaseOrdersTab supplierName={n().name} />
+                </TabPanel>
+              </Show>
               <TabPanel value="contacts">
                 <ContactsTab nameId={params.nameId} />
               </TabPanel>

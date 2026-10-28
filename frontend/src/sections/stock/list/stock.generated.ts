@@ -199,9 +199,10 @@ export type StockLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    onHold?: boolean | null;
   } | null;
   sort?: Array<{
-    key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry" | "campaign";
+    key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry" | "campaign" | "onHold";
     desc?: boolean | null;
   }> | null;
   page?: {

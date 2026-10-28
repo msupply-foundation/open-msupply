@@ -115,6 +115,7 @@ export const suppliersListPath = (storeId: string): string =>
 // A supplier row navigates to its own detail page (OMS-REG-REPL-08.11/.19).
 export const supplierDetailPath = (storeId: string, nameId: string): string =>
   `${suppliersListPath(storeId)}/${nameId}`;
-// A purchase order opens in the purchase-order area (OMS-REG-REPL-08.23).
-export const purchaseOrderAreaPath = (storeId: string): string =>
-  `/${storeId}/replenishment/purchase-order`;
+// A purchase order row opens that order in the purchase-order area
+// (OMS-REG-REPL-08.23).
+export const purchaseOrderDetailPath = (storeId: string, id: string): string =>
+  `/${storeId}/replenishment/purchase-order/${id}`;
