@@ -49,8 +49,8 @@ describe('OMS-REG-INV-02.8 — stockToCsv', () => {
   it('produces a header row + one row per line', () => {
     expect(rows).toHaveLength(2);
   });
-  it('has the full spec/stock S1 column set (19 columns)', () => {
-    expect(rows[0].split(',')).toHaveLength(19);
+  it('has the full spec/stock S1 column set (20 columns)', () => {
+    expect(rows[0].split(',')).toHaveLength(20);
   });
   it('derives units (packs × pack size) and total value (packs × cost)', () => {
     // SOH units = 12 × 100 = 1200; available = 10 × 100 = 1000; total = 12 × 2
