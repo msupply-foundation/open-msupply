@@ -16,15 +16,21 @@ import nativeImportUrl from './nativeImport.js?url&no-inline';
  * the app running on.
  *
  * ./nativeImport.js is a `?url` asset, copied as written, so its `import()` is
- * the browser's own. `no-inline` keeps it a same-origin file rather than a
- * `data:` URL, and a file rather than code built at run time (`new Function`),
- * so a content security policy needs neither `data:` nor `unsafe-eval` for it.
- * Importing that file goes through the helper as any app chunk does — if it is
- * missing, the app really is stale.
+ * the browser's own. `no-inline` is load-bearing: the file is under Vite's
+ * inline limit, and inlined it becomes a `data:` module, against which the
+ * root-relative `/frontend_plugins/…` URL cannot resolve — every plugin would
+ * fail to load. As a same-origin file, and not code built at run time
+ * (`new Function`), it also asks a content security policy for neither
+ * `data:` nor `unsafe-eval`. Importing that file goes through the helper as
+ * any app chunk does — if it is missing, the app really is stale.
  *
  * Shared specifiers inside the bundle (`solid-js`, `@openmsupply/plugin-sdk`)
  * resolve through the host's import map to the host's own live instances,
- * whichever module imports it (kdd/plugin-loading).
+ * whichever module imports it (kdd/plugin-loading). Those are app chunks too,
+ * but the bundle fetches them with the browser's own `import()`, outside the
+ * helper: one gone missing is a stale app recorded as this plugin failing to
+ * load. Unlike issue #575 it does not outlast a reload, which brings the new
+ * build's import map.
  */
 export const importPluginBundle = async (url: string): Promise<unknown> => {
   const { default: nativeImport } = (await import(

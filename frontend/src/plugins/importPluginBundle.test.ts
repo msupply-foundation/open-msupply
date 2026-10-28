@@ -70,7 +70,7 @@ const text = (file: Output): string =>
     ? file.source
     : new TextDecoder().decode(file.source));
 
-// An entry's own code and every chunk it statically imports.
+// An entry's own code and every chunk it directly imports.
 const entryGraph = (output: Output[], name: string): string => {
   const byName = new Map(output.map(file => [file.fileName, file]));
   const entry = output.find(
