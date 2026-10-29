@@ -229,6 +229,26 @@ describe('HidScanner', () => {
       expect(t.stored()).toBeNull();
     });
 
+    it('can be cancelled while its devices are still opening', async () => {
+      const t = setup();
+      const pairing = t.scanner.pair();
+      t.scanner.cancelPair();
+      expect(await pairing).toEqual({ ok: false, reason: 'cancelled' });
+      await flush();
+      expect([...t.handles.values()].every(h => h.closed)).toBe(true);
+    });
+
+    it('gives way to a second pairing started while the first is opening', async () => {
+      const t = setup();
+      const first = t.scanner.pair();
+      const second = t.scanner.pair();
+      expect(await first).toEqual({ ok: false, reason: 'cancelled' });
+      await flush();
+      t.handles.get('scanner')?.emit('data', Buffer.from(PAIRING_REPORT));
+      expect(await second).toMatchObject({ ok: true });
+      expect(t.opens('scanner')).toBe(1);
+    });
+
     it('says so when no scanner interface is attached', async () => {
       const t = setup([dongle, keyboard]);
       expect(await t.scanner.pair()).toEqual({
