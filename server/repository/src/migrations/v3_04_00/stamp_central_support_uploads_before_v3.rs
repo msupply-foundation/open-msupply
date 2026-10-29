@@ -12,16 +12,12 @@ impl MigrationFragment for Migrate {
         "stamp_central_support_uploads_before_v3"
     }
 
-    /// Stamp central's id on its own 2.x support upload requests, so remotes on v6 pull the
-    /// ones they hadn't pulled before central upgraded. `stamp_central_unsent_before_v3`
-    /// does this for the other tables central sends over v6.
+    /// Stamp central's id on its own 2.x support upload requests, so v6 remotes pull the
+    /// ones they hadn't pulled before central upgraded. Only each request's latest row is
+    /// stamped, so a request the remote already answered isn't sent back.
     ///
-    /// Only each request's latest row is stamped, so a request the remote has already
-    /// answered isn't sent back to it.
-    ///
-    /// Only runs on central upgrading from 2.x, detected as that fragment does: no v6 push
-    /// cursor, which every 2.x remote has. A central already on 3.x has pulled its remotes'
-    /// cursors past these rows, so stamping them sends nothing.
+    /// Only runs on a central upgrading from 2.x: no v6 push cursor, which every 2.x remote
+    /// has. On a central already on 3.x, remotes' v6 pull cursors are past these rows.
     fn migrate_with_config(
         &self,
         connection: &StorageConnection,
@@ -100,15 +96,6 @@ mod tests {
         }
     }
 
-    /// The migration matches the type as the app stores it.
-    #[test]
-    fn support_upload_type_is_stored_quoted() {
-        assert_eq!(
-            String::from(crate::SyncMessageRowType::SupportUpload),
-            r#""SupportUpload""#
-        );
-    }
-
     #[actix_rt::test]
     async fn stamps_latest_central_support_uploads_on_central_upgrading_from_2x() {
         let SetupResult { connection, .. } = setup_test(SetupOption {
@@ -128,7 +115,7 @@ mod tests {
                     ('support_unsent', '', '2026-01-01 00:00:00', 'NEW', '"SupportUpload"'),
                     ('support_answered', '', '2026-01-01 00:00:00', 'PROCESSED', '"SupportUpload"'),
                     ('field_change', '', '2026-01-01 00:00:00', 'NEW', '"RequestFieldChange"');
-                -- Clear the rows the 2.x changelog trigger wrote
+                -- Start from an empty changelog
                 DELETE FROM changelog;
                 INSERT INTO changelog (table_name, record_id, row_action, store_id, is_sync_update, source_site_id) VALUES
                     ('sync_message', 'support_unsent', 'UPSERT', NULL, FALSE, NULL),

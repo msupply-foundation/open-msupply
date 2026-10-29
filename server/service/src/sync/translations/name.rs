@@ -749,7 +749,7 @@ mod tests {
         }
     }
 
-    /// The v6 pull selects name rows, but names reach remotes only from legacy central.
+    /// The v6 pull selects name rows, but names reach v5/v6 remotes only from legacy central.
     #[test]
     fn name_is_not_sent_over_v6_pull() {
         let changelog = ChangelogRow {

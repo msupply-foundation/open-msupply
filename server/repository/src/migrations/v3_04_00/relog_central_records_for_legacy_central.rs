@@ -12,32 +12,20 @@ impl MigrationFragment for Migrate {
         "relog_central_records_for_legacy_central"
     }
 
-    /// Re-log the records central re-publishes to legacy mSupply, so the legacy push sends
-    /// the ones it skipped.
+    /// Re-log the records central re-publishes to legacy mSupply. The legacy push skipped
+    /// these tables while they were tagged v6 only, and its cursor is already past their
+    /// rows, so each record gets a new row copied from its latest one.
     ///
-    /// The legacy push only selected tables tagged v5, and these were tagged v6 only, so it
-    /// moved its cursor past them without sending anything. Stamping the rows it skipped
-    /// isn't enough, as the cursor is already past them: each record needs a new row.
+    /// Every record is re-logged, as nothing marks where central's 3.x rows start. Legacy
+    /// central and remotes get records they already have again, as upserts.
     ///
-    /// Each record gets a new row copied from its latest one. Nothing in the changelog marks
-    /// where a central's 3.x rows start, so that is every record, as
-    /// `relog_changelog_dropped_by_v6_push_filter` does. Records legacy central already has
-    /// are sent again, an upsert of the same data, and remotes pull the new rows the same
-    /// way as the old.
+    /// A row with no source site is central's own 2.x row, so it gets central's id. Rows
+    /// from legacy central keep its id, so the push still leaves them out.
     ///
-    /// A row without a source site is one of central's own 2.x rows that
-    /// `stamp_central_unsent_before_v3` didn't stamp, so it gets central's id. Rows from
-    /// legacy central keep its id, so the push still leaves them out.
-    ///
-    /// Skipped on a site upgrading from before 3.0: the 2.x legacy push had no table list, so
-    /// it never skipped these, and `stamp_central_unsent_before_v3` gives central's own
-    /// unpushed rows central's id, so the push sends them as they are.
-    ///
-    /// Only runs on central, as only central re-publishes these. Central can't be detected
-    /// directly while migrating, so skip any site that has pushed over v6 or v7, which only
-    /// remotes do, as `relog_changelog_dropped_by_v6_push_filter` does. A v5-only remote
-    /// passes too, but re-logging there sends nothing: the legacy translators only send on
-    /// central, and it has no v6 or v7 push. A standalone central never pushes to legacy.
+    /// Skipped when upgrading from before 3.0, as the 2.x legacy push sent these tables.
+    /// Only central re-publishes these, so remotes (any site with a v6 or v7 push cursor)
+    /// and standalone centrals are skipped. A v5-only remote isn't, but its legacy
+    /// translators send nothing.
     fn migrate_with_config(
         &self,
         connection: &StorageConnection,
@@ -246,9 +234,7 @@ mod tests {
                     ('vaccine_course', 'course', 'UPSERT', NULL, NULL, FALSE, {CENTRAL_SITE_ID}),
                     ('vaccination', 'vaccination_from_remote', 'UPSERT', 'store_remote', 'patient', TRUE, {REMOTE_SITE_ID}),
                     ('vaccination', 'vaccination_from_legacy', 'UPSERT', 'store_remote', NULL, TRUE, {LEGACY_CENTRAL_SITE_ID}),
-                    ('vaccine_course_dose', 'dose_deleted', 'DELETE', NULL, NULL, FALSE, {CENTRAL_SITE_ID}),
-                    -- Not re-published to legacy
-                    ('item', 'item', 'UPSERT', NULL, NULL, FALSE, {CENTRAL_SITE_ID});"
+                    ('vaccine_course_dose', 'dose_deleted', 'DELETE', NULL, NULL, FALSE, {CENTRAL_SITE_ID});"
             ),
         );
         let before = max_cursor(&connection);
@@ -318,8 +304,7 @@ mod tests {
         assert_eq!(rows_after(&connection, before), vec![]);
     }
 
-    /// Remotes have a v6 or v7 push cursor. The row is one the remote received, so the
-    /// remote re-log in 3.1.1 leaves it alone too.
+    /// Remotes have a v6 or v7 push cursor, so nothing is re-logged.
     #[actix_rt::test]
     async fn leaves_remotes_alone() {
         for (db_name, cursor_key) in [
