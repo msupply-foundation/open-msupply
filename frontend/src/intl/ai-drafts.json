@@ -1,0 +1,1896 @@
+{
+  "fr": {
+    "button.add-note": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.add-with-all-lines-from-po": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.choose-scanner": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.confirm-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.enrol": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.enter-batch": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.enter-batch-and-expiry": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.enter-expiry-date": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.forget-scanner": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.go-to-new-line": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.install-plugin": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.link-without-lines": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.make-variant": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.new-activity": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.pair-any-device": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.pair-by-scanning": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.pair-scanner": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.print-all-labels": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.print-selected-labels": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.ready-to-dispense": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.remove-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.stay": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.torch": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "button.use-as-reference": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.annual-doses-per-person": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.annual-target-doses-calculation-with-doses-per-person": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.barcode-target-auto-created": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.exclude-principal-wastage": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.less-principal-wastage": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.monthly-units-calculation": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.plus-supply-wastage": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "description.supply-wastage-rate": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.change-mode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.connecting": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.connecting-standalone": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.manual-url": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.mode-client": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.mode-heading": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.mode-server": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.no-host": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.search-again": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.standalone-unreachable": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "discovery.this-machine": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.camera-google-module-unavailable": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.camera-permission-denied": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.cannot-change-target-months": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-category-missing_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-category-missing_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-category-missing_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-category-not-supported": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-date": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-date-time": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-format": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-format-example": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-number": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-option": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-invalid-value": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-number-max": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-number-min": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-previously-recorded": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.document-schema-unusable": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.form-plugin-type-ambiguous": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.form-plugin-type-category": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.form-plugin-type-owned": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.import-columns-not-recognised": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.import-no-rows": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.maintenance-mode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.maintenance-mode-integration-incomplete_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.maintenance-mode-integration-incomplete_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.maintenance-mode-integration-incomplete_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.monthly-demand-is-zero": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.no-activities": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.no-dispensing-records": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.no-equipment-for-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.patient-form-not-loaded": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.patient-form-settings-not-read": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.pause-processors": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.pause-sync-api": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.plugin-shared-id-backend-removed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.prescription-not-created": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.prescription-not-read": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.purchase-order-line-duplicate": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.supply-wastage-rate-out-of-range": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.sync-api-paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.sync-api-paused-hint": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "error.unable-to-make-variant": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "filename.cce-rows-to-fix": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "filename.prescription-requests": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.course": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.course-dose": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.document-kept-values": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.document-undeclared-values": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.dose-schedule": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.enrol-in-program": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.forecast": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.forecasting": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.forms-blank-old-ui": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.forms-on-server": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.more": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "heading.some-not-closed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.accept-blank-old-ui": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.activities": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.activity": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.add-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.advanced": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.after-tidying": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.age-months-short": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.age-weeks-short": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.age-years-short": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.annual-doses-per-person": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-confirmed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-confirmed-barcode-only": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-decoder": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-format": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-proposed-by": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-scanner-desktop-hid": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-scanner-keyboard-wedge": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-scanner-manual": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-scanner-web-hid": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-status": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-target": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-target-auto-created": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-target-new-packaging": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcode-target-pack-size": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.barcodes": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.camera-mode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.camera-mode-bundled": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.camera-mode-google": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.cancel-purchase-order": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.change-status": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.characters": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.cost-discount": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.cost-discount-percentage": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.cost-order-total": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.costs": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.course-details": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.custom-field-scope-prescription-request": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.custom-field-scope-purchase-order": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.customer-target-stock": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.datetime-range": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.delivery-dates": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.discount": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.dispensation": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.doses-given": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.doses-given-of": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.end-datetime": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.enrolled": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.exclude-principal-wastage": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.excursion": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.expected": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.filter-activities-by-kind": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.forecast-method": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.forecast-method-amc": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.forecast-method-ancillary-ratio": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.forecast-method-population": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.form-outcome-created": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.form-outcome-taken-over": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.form-outcome-unchanged": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.form-outcome-updated": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.form-plugin-code": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.go-to-step": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.held-by": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.in-stock-on-order-elsewhere": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.item-code": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.leave-unchanged": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.likely-scanner": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.line-status": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.looked-up-as": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.maintenance-mode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.maintenance-mode-info": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.modified": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.modified-by": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.monthly-demand": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.monthly-units-calculation": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.months-of-stock-forecast-demand": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.needs-a-reason": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.no-batch-or-expiry-date": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.no-expiry-date": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.not-a-date": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.not-for-this-campaign": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.off": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.on": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.on-order-elsewhere": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.order-quantity-in-packs": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.order-quantity-in-unit": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pairing-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.past-age-window": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-processors": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-processors-info": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-sync": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-sync-api": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-sync-api-info": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-sync-info-central": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.pause-sync-info-remote": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.per-pack-after-discount": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.per-pack-before-discount": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.per-unit-after-discount": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.po-price-before-discount": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.population-served": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.preference-global-value": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.prescription-request": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.previous-versions-of_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.previous-versions-of_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.previous-versions-of_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.program-activity": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.program-for-key": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.rates-per-store": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.raw-keys": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.raw-report": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.reads-as-gs1": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.reads-as-plain": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.reads-as-retail": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.reads-as-unreadable": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.reference-scan": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.routine": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.runtime": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanned-with": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-input-built-in": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-input-camera": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-input-keyboard": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-input-usb": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-state-active": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-state-not-connected": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-state-off": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.scanner-state-ready": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.service": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.service-charges": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.status-due": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.supplier-comment": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.supplier-discount-applied": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.supply-interval-plus-buffer": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.supply-wastage-rate": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.symbology-id": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.take-over-forms": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.units-per-month": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.units-requested": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "label.uploaded-by": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.prescription-request-created": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.prescription-request-deleted": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.prescription-request-dispensed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.prescription-request-ready-to-dispense": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.prescription-request-updated": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.purchase-order-cancelled": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "log.stock-campaign-change": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "login.maintenance-mode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "message.select-purchase-order-for-shipment": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "message.server-log-truncated": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.annual-doses-per-person-blank": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.barcode-mapped-to-several-items": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-batch-or-expiry_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-batch-or-expiry_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-batch-or-expiry_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-batch_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-batch_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-batch_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-expiry_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-expiry_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.batches-without-expiry_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.camera-mark-frames": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.camera-scan-hint": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.camera-scan-legend": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cancel-purchase-order-deletes-shipments_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cancel-purchase-order-deletes-shipments_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cancel-purchase-order-deletes-shipments_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cancel-purchase-order-not-allowed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cannot-delete-purchase-order": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cant-delete-generated-dispensation": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.cant-delete-verified-shipment": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.close-line-editor-to-scan": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-cancel-purchase-order": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-activities_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-activities_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-activities_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-lines_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-lines_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-lines_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-record": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-records_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-records_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-dispensing-records_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-document-latest-version": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-document-version": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-plugins_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-plugins_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-plugins_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-delete-service-charge": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-make-variant": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-batch-or-expiry_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-batch-or-expiry_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-batch-or-expiry_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-batch_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-batch_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-batch_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-expiry_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-expiry_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-missing-expiry_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-ready-to-dispense": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-remove-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.confirm-withdraw-barcode-proposal": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.create-asset-from-scan": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.dashboard-no-widgets": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.document-archived-version": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.document-form-out-of-step": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.document-form-unavailable": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.document-unknown-version": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.dose-due-at": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.doses-can-be-given-today_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.doses-can-be-given-today_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.doses-can-be-given-today_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.enrol-before-encounter": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.enrolment-changed-since-opened": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.enrolment-form-not-installed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-activity-code-already-exists": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-activity-name-already-exists": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-deleting-assets_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-deleting-assets_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-deleting-assets_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-deleting-purchase-orders_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-deleting-purchase-orders_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-deleting-purchase-orders_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.error-saving-activity": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.forecast-method-unavailable-no-population-served": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.forecast-method-unavailable-no-principal": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.forecast-method-unavailable-no-vaccine-course": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.forecast-method-unavailable-population-preference": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.form-outcome-detail": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.form-outcome-detail-no-program": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.form-plugin-choose-programs": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.form-plugin-installed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.forms-blank-old-ui": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.forms-on-server": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.fridge-tag-import-in-progress": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.full-repack-go-to-new-line": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.import-error-purchase-order-lines": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.issued-stock-not-for-activity_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.issued-stock-not-for-activity_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.issued-stock-not-for-activity_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.item-not-on-internal-order": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.less-than": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.lines-need-reason_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.lines-need-reason_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.lines-need-reason_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.location-in-use-unspecified": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.maintenance-mode-on": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.maintenance-mode-pending_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.maintenance-mode-pending_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.maintenance-mode-pending_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-barcodes": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-batch-entered": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-expiry-date-entered": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-lines-prescription-request": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-permission-for-landing-screen": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-permission-for-screen": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-previous-encounters": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-programs-configured": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-programs-on-server": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-scan-reference": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-service-charges-configured": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.no-shared-programs": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.packs-over_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.packs-over_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.packs-over_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.packs-short_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.packs-short_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.packs-short_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.preference-overridden-at-stores_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.preference-overridden-at-stores_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.preference-overridden-at-stores_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.prescription-not-in-store": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.prescription-verified": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.processors-paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.program-key-bound": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.program-key-current": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.program-key-forms": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.program-key-moves": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.programs-shared-only": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.purchase-order-expected-dates-vary": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.purchase-order-requested-dates-vary": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.reason-for-extra-packs_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.reason-for-extra-packs_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.reason-for-extra-packs_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.reason-for-missing-packs_many": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.reason-for-missing-packs_one": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.reason-for-missing-packs_other": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.receiving-barcode-not-recognised": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.receiving-item-not-in-store": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.receiving-new-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.receiving-no-product-code": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-contains-invisible": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-differs-from-reference": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-has-no-code": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-item-check-failed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-item-checking": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-item-not-in-program": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-item-not-in-store": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-looked-up-differently": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-matched-no-stock": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-matches-reference": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-narrowed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-narrowed-to-batch": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-no-item-number": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-not-linked": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-several-items": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-still-working": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-to-fill-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scan-to-test-scanner": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-advanced-hint": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-built-in": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-camera-simple": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-desktop-hid-disconnected": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-desktop-hid-unpaired": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-keyboard": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-manual-off": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-not-on-device": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-usb-recommended": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-web-hid-unpaired": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-detail-web-hid-unsupported": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-forget-unsupported": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-in-use": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-not-connected-set-up": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-pair-no-devices": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-pair-scan-prompt": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-pair-timeout": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-ready": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-set-up-in-devices": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.scanner-working": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.stock-evolution-saved-method": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.stock-expired-cannot-issue": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.stock-expired-skipped": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.stock-other-campaign": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.supply-wastage-rate-not-ancillary": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.sync-api-paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.sync-api-paused-modal": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.sync-maintenance-mode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.sync-paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.target-mos-differs-from-store": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "messages.target-mos-set-by-store": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "placeholder.choose-program": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "preference.canChangeTargetMonthsOfStock": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "preference.decimalPlacesForNumbers": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "preference.promptForBatchAndExpiryOnInboundShipments": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "preference.transferStockToInternalCustomersAtCostPrice": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "reorder.drag-handle": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "reorder.move-down": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "reorder.move-to-bottom": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "reorder.move-to-top": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "reorder.move-up": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "report.quantity-received": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.AssetCatalogueItemDoesNotExist": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.AssetCatalogueItemInUse": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.AssetLogReasonAlreadyExists": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.CannotCancelPurchaseOrder": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.CannotReopenCancelledPurchaseOrder": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.DemographicIndicatorAlreadyExistsForThisYear": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.NotACentralServer": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.ReasonDoesNotExist": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "server-error.ShipmentDeleteError": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "settings.type-barcodes-by-hand": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "status.dispensed": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "status.ready-to-dispense": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "stocktake.line-error.stock-reserved": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "sync-info.maintenance": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "sync-info.paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "sync-status.footer-maintenance": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "sync-status.footer-paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "sync-status.footer-sync-api-paused": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "title.confirm-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "title.create-activity": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "title.edit-activity": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "title.make-variant": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "title.remove-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "title.which-item-is-this-barcode": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    },
+    "tooltip.set-from-manufacturer-label": {
+      "date": "2026-10-29",
+      "ref": "fr-backlog-trial"
+    }
+  }
+}

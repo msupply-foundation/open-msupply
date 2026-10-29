@@ -9778,6 +9778,7 @@ input StocktakeLineFilterInput {
 	itemCodeOrName: StringFilterInput
 	itemId: EqualFilterStringInput
 	stockLineId: EqualFilterStringInput
+	campaignId: EqualFilterStringInput
 }
 
 type StocktakeLineNode {
