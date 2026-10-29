@@ -23,10 +23,10 @@ use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, CurrenciesResponse,
-    CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse, DeleteResponse, DiagnosisNode,
-    MasterListFilterInput, PeriodScheduleFilterInput, PeriodScheduleRowResponse,
-    StorePreferenceNode,
+    AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, ConsumptionOptionsInput,
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse,
+    DeleteResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
+    PeriodScheduleRowResponse, StockEvolutionOptionsInput, StorePreferenceNode,
 };
 use mutations::{
     barcode::{
@@ -73,7 +73,6 @@ use queries::{
     },
     insurance_providers::{InsuranceProvidersResponse, insurance_providers},
     migration_status::{MigrationStatusNode, migration_status},
-    requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     requisition_line_forecast_preview::RequisitionLineForecastPreviewInput,
     shipping_method::{ShippingMethodFilterInput, ShippingMethodsResponse, get_shipping_methods},
     sync_settings::{SyncSettingsNode, sync_settings},
