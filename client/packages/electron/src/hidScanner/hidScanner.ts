@@ -315,7 +315,10 @@ export class HidScanner {
     for (const device of possibleScannerInterfaces(this.devices())) {
       const id = physicalId(device);
       const current = physical.get(id);
-      if (!current || (isScannerInterface(device) && !isScannerInterface(current))) {
+      if (
+        !current ||
+        (isScannerInterface(device) && !isScannerInterface(current))
+      ) {
         physical.set(id, device);
       }
     }
@@ -357,9 +360,23 @@ export class HidScanner {
   async pair(): Promise<PairResult> {
     this.cancelPair();
 
+    // Registered before anything is opened, so a cancel — or another pair()
+    // — that arrives while devices are still opening is not lost. Until the
+    // wait begins, cancelling only marks it; the opening stops at the next
+    // device and closes what it opened.
+    let cancelled = false;
+    const pairing = {
+      cancel: () => {
+        cancelled = true;
+      },
+    };
+    this.pairing = pairing;
+
     // Opened in turn, but not waited on for the scan: cancelPair() has to be
     // able to run while pairing waits.
     const opened = await this.serial(async () => {
+      const handles: { device: Device; handle: HidHandle }[] = [];
+      if (cancelled) return handles;
       // Closed, not just disarmed: pairing may pair a different device.
       await this.release();
       const candidates = possibleScannerInterfaces(this.devices())
@@ -367,8 +384,8 @@ export class HidScanner {
           device => device.path !== undefined && isScannerInterface(device)
         )
         .slice(0, MAX_PAIRING_OPEN);
-      const handles: { device: Device; handle: HidHandle }[] = [];
       for (const device of candidates) {
+        if (cancelled) break;
         try {
           handles.push({
             device,
@@ -381,10 +398,18 @@ export class HidScanner {
       }
       return handles;
     });
-    if (opened.length === 0) return { ok: false, reason: 'no-devices' };
+    if (cancelled) {
+      opened.forEach(({ handle }) => void closeQuietly(handle));
+      return { ok: false, reason: 'cancelled' };
+    }
+    if (opened.length === 0) {
+      this.pairing = undefined;
+      return { ok: false, reason: 'no-devices' };
+    }
 
     return new Promise<PairResult>(resolve => {
       const finish = (result: PairResult) => {
+        if (this.pairing !== pairing) return;
         clearTimeout(timeout);
         this.pairing = undefined;
         opened.forEach(({ handle }) => void closeQuietly(handle));
@@ -394,12 +419,13 @@ export class HidScanner {
         () => finish({ ok: false, reason: 'timeout' }),
         this.timing.pairTimeoutMs
       );
-      this.pairing = { cancel: () => finish({ ok: false, reason: 'cancelled' }) };
+      pairing.cancel = () => finish({ ok: false, reason: 'cancelled' });
 
       for (const { device, handle } of opened) {
         handle.on('data', (data: unknown) => {
           const bytes = toBytes(data);
-          if (!bytes || !carriesPairingCode(bytes) || !this.pairing) return;
+          if (!bytes || !carriesPairingCode(bytes) || this.pairing !== pairing)
+            return;
           const scanner = describe(device);
           this.store.set(scanner);
           finish({ ok: true, scanner });
