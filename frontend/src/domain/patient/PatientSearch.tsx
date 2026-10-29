@@ -51,14 +51,12 @@ export interface PatientSearchProps {
    * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
    * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
    * patient-create flow from this callback and selects the result via
-   * `onSelect`. For a user without patient-mutate permission it stays visible
-   * but disabled, with the reason shown in place — perceivable without hover
-   * and on touch (an `InfoTooltip` beside the button, not a hover-only native
-   * `title`) — since the server would refuse the save at the end of the flow
-   * (spec/patients S4, § configuration gates; ui-standards/controls § blocked
-   * affordances). That permission check reads the store the user is logged
-   * into, not `props.storeId` — every caller passes the current store, so the
-   * two agree today.
+   * `onSelect`. For a user without patient-mutate permission it is disabled,
+   * with the reason in an `InfoTooltip` beside it, because the server refuses
+   * the save at the end of the flow (spec/patients § configuration gates).
+   * That permission check reads the store the user is logged into, not
+   * `props.storeId` — every caller passes the current store, so the two agree
+   * today.
    */
   onCreatePatient?: () => void;
   /**
@@ -170,15 +168,12 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
-    // Without patient-mutate permission the entry stays visible but disabled,
-    // its reason shown beside it (OMS-REG-DIS-03.18/.78): the create it opens
-    // could only end in a write the server refuses, but the control stays
-    // perceivable with the why in place rather than silently vanishing
-    // (ui-standards/controls § blocked affordances). The reason rides an
-    // InfoTooltip, not a native `title`, so it opens on tap/focus and is
-    // readable on a touch device too. Disabling the whole picker (`disabled`)
-    // greys the entry without the permission note — that block is the record's,
-    // not this control's.
+    // Without patient-mutate permission the entry is disabled and an
+    // InfoTooltip beside it gives the reason (OMS-REG-DIS-03.18/.78). The
+    // tooltip opens on tap and focus as well as hover, so the reason is
+    // readable on touch (ui-standards/controls § blocked affordances). When the
+    // whole picker is `disabled` the entry is disabled with no permission note:
+    // that block belongs to the record, not to this control.
     listboxFooter={query => (
       <Show when={props.onCreatePatient && query().trim() !== ''}>
         <Button

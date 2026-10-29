@@ -9,12 +9,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The picker's Create patient button stays visible but disabled for a user
- * without patient-mutate permission, with the reason shown beside it, rather
- * than opening a create flow whose save the server refuses (OMS-REG-DIS-03
- * .18/.78, spec/patients § configuration gates). The reason rides an
- * InfoTooltip — which opens on tap/focus, not hover only — so it is readable
- * on a touch device. The combobox, button and tooltip are stand-ins that
- * record their props while rendered, so this runs without a DOM.
+ * without patient-mutate permission, with the reason in an InfoTooltip beside
+ * it, because the server refuses the save at the end of the create flow
+ * (OMS-REG-DIS-03.18/.78, spec/patients § configuration gates). The
+ * combobox, button and tooltip are stand-ins that record their props while
+ * rendered, so this runs without a DOM.
  */
 
 interface ComboboxProps {
