@@ -31,6 +31,9 @@ export type TableConfig = {
   // persist with the rest of config.
   viewMode?: ViewMode;
   viewDensity?: Density;
+  // Rows gathered under their group rows (DataTable rowGroup). Only `true` is
+  // ever stored: turning grouping off writes `undefined`, back to the default.
+  groupRows?: boolean;
 };
 
 // The keys of TableConfig — the four things `setConfig` can write, one per
@@ -51,6 +54,7 @@ export const CONFIG_KEYS: readonly TableConfigKey[] = [
   'columnVisibility',
   'viewMode',
   'viewDensity',
+  'groupRows',
 ] as const;
 
 // A config split by breakpoint band. For now only `base` and `compact` (the
@@ -89,6 +93,7 @@ export const resolveTableConfig = (
     columnVisibility: pick('columnVisibility'),
     viewMode: pick('viewMode'),
     viewDensity: pick('viewDensity'),
+    groupRows: pick('groupRows'),
   };
 };
 

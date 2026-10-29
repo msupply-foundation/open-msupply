@@ -10,7 +10,7 @@ export type LogLevelRowFragment = {
 
 export type LogRowFragment = {
   __typename: 'LogNode';
-  fileContent?: Array<string> | null;
+  content?: string | null;
   fileNames?: Array<string> | null;
 };
 
@@ -27,7 +27,7 @@ export type LogFileNamesQuery = {
   __typename: 'Queries';
   logFileNames: {
     __typename: 'LogNode';
-    fileContent?: Array<string> | null;
+    content?: string | null;
     fileNames?: Array<string> | null;
   };
 };
@@ -40,7 +40,7 @@ export type LogContentsByFileNameQuery = {
   __typename: 'Queries';
   logContents: {
     __typename: 'LogNode';
-    fileContent?: Array<string> | null;
+    content?: string | null;
     fileNames?: Array<string> | null;
   };
 };
@@ -54,7 +54,7 @@ export const LogLevelRowFragmentDoc = gql`
 export const LogRowFragmentDoc = gql`
   fragment LogRow on LogNode {
     __typename
-    fileContent
+    content
     fileNames
   }
 `;
