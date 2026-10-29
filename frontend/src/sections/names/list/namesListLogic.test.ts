@@ -7,7 +7,7 @@ import {
   DEFAULT_STATE,
   isStoreName,
   PAGE_SIZE_OPTIONS,
-  purchaseOrderAreaPath,
+  purchaseOrderDetailPath,
   roleRelationshipFilter,
   suppliersListPath,
   supplierDetailPath,
@@ -239,8 +239,10 @@ describe('store scoping: requires authentication and an active store', () => {
   });
 });
 
-describe('OMS-REG-REPL-08.23 Purchase Orders tab references the purchase-order area', () => {
-  it('builds the purchase-order area path a PO row navigates to', () => {
-    expect(purchaseOrderAreaPath('A')).toBe('/A/replenishment/purchase-order');
+describe('OMS-REG-REPL-08.23 Purchase Orders tab opens the purchase order', () => {
+  it('builds the path of the purchase order a PO row navigates to', () => {
+    expect(purchaseOrderDetailPath('A', 'po-1')).toBe(
+      '/A/replenishment/purchase-order/po-1'
+    );
   });
 });

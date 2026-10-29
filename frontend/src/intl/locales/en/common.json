@@ -535,6 +535,7 @@
   "error.failed-to-save-vaccination": "Failed to save vaccination!",
   "error.failed-to-save-vaccine-course": "Failed to save vaccine course",
   "error.fetch-notifications": "Unable to display cold chain notifications",
+  "error.field-cannot-be-negative": "{{field}} cannot be negative",
   "error.field-must-be-specified": "{{field}} must be specified",
   "error.field-required": "This field is required.",
   "error.file-exceeds-size-limit": "'{{filename}}' exceeds the maximum file size of {{maxSize}}",

@@ -1,6 +1,6 @@
 import { createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import patientSchema from '../../../plugins/examples/demo_program/forms/Patient/v1.json';
+import patientSchema from '../../../../plugins/examples/demo_program/forms/Patient/v1.json';
 
 /*
  * A patient document through the form host (kdd/custom-forms/specs.md §

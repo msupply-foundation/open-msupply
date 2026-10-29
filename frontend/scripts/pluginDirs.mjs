@@ -4,18 +4,21 @@
  * schemas), so the two walk the same set.
  */
 import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 /*
- * The in-repo plugin directories. `plugins/*` holds the real country plugins;
- * `plugins/examples/*` holds the reference plugins that prove the mechanism.
- * `plugins/examples` itself is a grouping directory, not a plugin, so it is
- * walked one level deeper rather than read as an entry in its own right. The
- * dev loop (vite/devPlugins.ts) does NOT walk these: building everything is
- * packaging, serving everything at once is a broken dev session.
+ * The in-repo plugin directories, both outside frontend/: `private/plugins/*`
+ * holds the real country plugins (never published to the public mirror), and
+ * `plugins/*` the public ones — today only `plugins/examples/*`, the reference
+ * plugins that prove the mechanism. `plugins/examples` itself is a grouping
+ * directory, not a plugin, so it is walked one level deeper rather than read
+ * as an entry in its own right. A root missing altogether is skipped: the
+ * public mirror has no `private/`. The dev loop (vite/devPlugins.ts) does NOT
+ * walk these: building everything is packaging, serving everything at once is
+ * a broken dev session.
  */
-const PLUGINS_ROOT = 'plugins';
-const EXAMPLES_DIR = 'examples';
+const PLUGIN_ROOTS = ['../plugins', '../private/plugins'];
+const EXAMPLES_DIR = '../plugins/examples';
 
 export const inRepoPluginDirs = () => {
   const dirs = [];
@@ -24,15 +27,18 @@ export const inRepoPluginDirs = () => {
     for (const entry of readdirSync(root, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       const dir = join(root, entry.name);
-      if (root === PLUGINS_ROOT && entry.name === EXAMPLES_DIR) walk(dir);
+      if (dir === EXAMPLES_DIR) walk(dir);
       else dirs.push(dir);
     }
   };
-  walk(PLUGINS_ROOT);
+  PLUGIN_ROOTS.forEach(walk);
   return dirs;
 };
 
 // Out-of-tree plugin checkouts (the civ-plugins dev loop), comma- or
-// colon-separated.
+// colon-separated, relative to the repo root as in the dev loop.
 export const envPluginDirs = () =>
-  (process.env.OMS_PLUGIN_DIRS ?? '').split(/[,:]/).filter(Boolean);
+  (process.env.OMS_PLUGIN_DIRS ?? '')
+    .split(/[,:]/)
+    .filter(Boolean)
+    .map(dir => resolve('..', dir));

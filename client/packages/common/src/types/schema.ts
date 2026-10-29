@@ -11555,6 +11555,7 @@ export type StockLineFilterInput = {
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   name?: InputMaybe<StringFilterInput>;
+  onHold?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<StringFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   vvmStatusId?: InputMaybe<EqualFilterStringInput>;
@@ -11644,6 +11645,7 @@ export enum StockLineSortFieldInput {
   LocationCode = 'locationCode',
   ManufactureDate = 'manufactureDate',
   NumberOfPacks = 'numberOfPacks',
+  OnHold = 'onHold',
   PackSize = 'packSize',
   SellPricePerPack = 'sellPricePerPack',
   SupplierName = 'supplierName',

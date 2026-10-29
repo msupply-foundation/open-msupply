@@ -1,6 +1,6 @@
 # `demo_program` — the custom-forms demo program
 
-The reference **form plugin**: one small program, modelled on an HIV care program, that exercises the custom-forms mechanism end to end ([`kdd/custom-forms/implementation-plan.md` § The demo program](../../../kdd/custom-forms/implementation-plan.md#the-demo-program-agreed-as-a-starting-point)). Plugin code `demo_program`, program key `demo`. It lives under `examples/`, so no deployment receives it. How form plugins work in general is [`plugins/README.md` § Form plugins](../../README.md#form-plugins).
+The reference **form plugin**: one small program, modelled on an HIV care program, that exercises the custom-forms mechanism end to end ([`kdd/custom-forms/implementation-plan.md` § The demo program](../../../frontend/kdd/custom-forms/implementation-plan.md#the-demo-program-agreed-as-a-starting-point)). Plugin code `demo_program`, program key `demo`. It lives under `examples/`, so no deployment receives it. How form plugins work in general is [`private/plugins/README.md` § Form plugins](../../../private/plugins/README.md#form-plugins).
 
 ## What it owns
 
@@ -20,7 +20,7 @@ Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.
 - a Field rule copying `extension.demo.regimen` into a `currentRegimen` event;
 - two Schedule rules from `extension.demo.nextVisit`, producing a `followUpStatus` event of "Due" at 0 days and "Overdue" at 30 days.
 
-`VaccinationEncounter` is a deployed type the plugin takes over: an illustrative deployment's vaccination encounter, by the recipe in [`plugins/README.md` § Form plugins](../../README.md#form-plugins). [`forms/VaccinationEncounter/type.ts`](forms/VaccinationEncounter/type.ts) is the deployment's own type file with the base type imported from the SDK and the enum written as a union. Its v1 is the deployment's schema exactly (the type regenerated it), declared in `forms/forms.json` under the deployment's schema id, so documents saved before the take-over keep their version. [`legacy-ui.json`](forms/VaccinationEncounter/legacy-ui.json) is the deployment's JSON Forms UI schema, verbatim, for sites still on the old client; install writes it to the type's versions, and nothing in the plugin reads it. v2 is additive, with no migration, so v1 documents open in the current form as they are; the old client lists `Novavax` (from the schema) but shows no batch number, which its saves keep. [`fixtures/v1.json`](forms/VaccinationEncounter/fixtures/v1.json) is a document the old client wrote at v1, which the build checks validates unchanged against v2.
+`VaccinationEncounter` is a deployed type the plugin takes over: an illustrative deployment's vaccination encounter, by the recipe in [`private/plugins/README.md` § Form plugins](../../../private/plugins/README.md#form-plugins). [`forms/VaccinationEncounter/type.ts`](forms/VaccinationEncounter/type.ts) is the deployment's own type file with the base type imported from the SDK and the enum written as a union. Its v1 is the deployment's schema exactly (the type regenerated it), declared in `forms/forms.json` under the deployment's schema id, so documents saved before the take-over keep their version. [`legacy-ui.json`](forms/VaccinationEncounter/legacy-ui.json) is the deployment's JSON Forms UI schema, verbatim, for sites still on the old client; install writes it to the type's versions, and nothing in the plugin reads it. v2 is additive, with no migration, so v1 documents open in the current form as they are; the old client lists `Novavax` (from the schema) but shows no batch number, which its saves keep. [`fixtures/v1.json`](forms/VaccinationEncounter/fixtures/v1.json) is a document the old client wrote at v1, which the build checks validates unchanged against v2.
 
 ## Its forms
 
@@ -48,9 +48,9 @@ pnpm build:plugins     # emits, checks the versions, then packs dist/bundles/dem
 Install it on a dev server, choosing the program for the `demo` key and taking over the server's existing `Patient` entry, and the vaccination encounter's where the server has one (on a server without it, install creates the entry). The demo's `Patient` type carries no legacy UI schema, so the old client's patient form goes blank after the take-over, and `--blank-old-ui Patient` says that is intended:
 
 ```bash
-OMS_USERNAME=<user> OMS_PASSWORD=<pass> pnpm plugin:install plugins/examples/demo_program \
+OMS_USERNAME=<user> OMS_PASSWORD=<pass> pnpm plugin:install ../plugins/examples/demo_program \
   --program demo=DemoProgram --take-over Patient --blank-old-ui Patient \
   --take-over VaccinationEncounter
 ```
 
-`DemoProgram` is the program id [`kdd/custom-forms/demo-program-seed.sql`](../../../kdd/custom-forms/demo-program-seed.sql) seeds. Serve the browser half from source with `OMS_PLUGIN_DIRS=plugins/examples/demo_program pnpm dev`.
+`DemoProgram` is the program id [`kdd/custom-forms/demo-program-seed.sql`](../../../frontend/kdd/custom-forms/demo-program-seed.sql) seeds. Serve the browser half from source with `OMS_PLUGIN_DIRS=plugins/examples/demo_program pnpm dev`.

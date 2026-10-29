@@ -9576,6 +9576,7 @@ input StockLineFilterInput {
 	isActive: Boolean
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
+	onHold: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
@@ -9645,6 +9646,7 @@ enum StockLineSortFieldInput {
 	sellPricePerPack
 	vvmStatusThenExpiry
 	campaign
+	onHold
 }
 
 input StockLineSortInput {

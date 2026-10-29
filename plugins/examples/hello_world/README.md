@@ -1,7 +1,7 @@
 # `hello_world` — writing a frontend plugin
 
 The reference plugin. Copy this directory to start a new one; the contract it
-satisfies is [`spec/plugins/sdk-contract.md`](../../../spec/plugins/sdk-contract.md).
+satisfies is [`spec/plugins/sdk-contract.md`](../../../frontend/spec/plugins/sdk-contract.md).
 
 ## The four files
 
@@ -120,7 +120,7 @@ and open any internal order's detail screen to see them:
 | `orphan`     | the **degradation**, behind `?pluginBadAnchor`: an anchor naming a column that does not exist puts the column at the table's end and says so in diagnostics                                                                                                              |
 
 Anchor by a **published column id** — the frozen set is
-[`spec/internal-orders/ui-surface.md` § S8](../../../spec/internal-orders/ui-surface.md#s8--plugin-slot-regions).
+[`spec/internal-orders/ui-surface.md` § S8](../../../frontend/spec/internal-orders/ui-surface.md#s8--plugin-slot-regions).
 A column's stored identity is `<pluginCode>.<contributionId>`, so two plugins can
 both contribute a `total` and each keeps its own persisted show/hide state.
 
@@ -164,7 +164,7 @@ Two rules a real panel must follow, both visible here:
 placement: inside a menu group of the plugin's own (declared under
 `navSections`), inside a host section, at the root of the upper list, or none
 at all (routed, no menu entry)
-([`sdk-contract` § the page contribution](../../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
+([`sdk-contract` § the page contribution](../../../frontend/spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
 A placement the host does not provide is refused, naming it (OMS-REG-PLG-04.11). Turn
 this plugin's section on with **`?pluginPages`**:
 
@@ -195,7 +195,7 @@ no-permission notice in place of the screen.
 ### The configuration editor
 
 `configuration: { defaultConfig, Editor }` is the plugin's settings editor
-([sdk-contract § the configuration contribution](../../../spec/plugins/sdk-contract.md#the-configuration-contribution-specified-in-full)).
+([sdk-contract § the configuration contribution](../../../frontend/spec/plugins/sdk-contract.md#the-configuration-contribution-specified-in-full)).
 Manage › Plugins shows it on the central server once this plugin is installed and loaded, and saves the
 whole value as one installation-wide `configuration` record. The editor here is one field, a greeting; the
 dashboard stat reads the saved record and shows it in place of the default. Two things it demonstrates:
@@ -263,7 +263,7 @@ In this repo:
 pnpm build:plugins
 ```
 
-builds every `plugins/examples/*` and `plugins/*` (plus anything in `OMS_PLUGIN_DIRS`),
+builds every `plugins/examples/*`, `plugins/*` and `private/plugins/*` (plus anything in `OMS_PLUGIN_DIRS`),
 packs each into its **own** `dist/bundles/<code>.json` — the artifact
 `remote_server_cli install-plugin-bundle` uploads, one per plugin so a server
 only ever gets the plugin you meant — and writes
