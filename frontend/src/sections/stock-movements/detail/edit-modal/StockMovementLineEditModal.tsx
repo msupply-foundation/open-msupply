@@ -15,6 +15,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import {
   CancelButton,
+  DialogAddLineButton,
   DialogSaveButton,
   SaveAndNextButton,
 } from '@/ui/elements/buttons/StandardButtons';
@@ -334,12 +335,27 @@ export const StockMovementLineEditModal: Component<
               onClick={() => void onSaveAndNext()}
             />
           </Show>
-          <DialogSaveButton
-            data-testid="dialog-button-save"
-            disabled={!valid()}
-            loading={saving()}
-            onClick={() => void onSave()}
-          />
+          {/* The confirm names what it does: "Add line" while adding, the
+              standard Save while editing (ui-surface S3 › layout). Both are
+              icon-less plain confirms with Alt+S, from StandardButtons. */}
+          <Show
+            when={isUpdate()}
+            fallback={
+              <DialogAddLineButton
+                data-testid="dialog-button-save"
+                disabled={!valid()}
+                loading={saving()}
+                onClick={() => void onSave()}
+              />
+            }
+          >
+            <DialogSaveButton
+              data-testid="dialog-button-save"
+              disabled={!valid()}
+              loading={saving()}
+              onClick={() => void onSave()}
+            />
+          </Show>
         </>
       }
     >

@@ -59,6 +59,7 @@ The SIDE_PANEL.md sign-off checklist passes on every composition item; its final
 
 ## Deferred / open
 
+- **Reason-cell error has no visible words** — the Reason cell a missing-reason rejection rings shows its error as a `StatusMarker` whose label only assistive technology announces, so a sighted user sees an icon and the ring with no words; the header banner states the rejection without naming lines. [`spec/ui-standards/tables.md` § Cell errors](../../../spec/ui-standards/tables.md#cell-errors) requires the words on screen — the fix is a short message beneath the reason, as the stocktake Snapshot and Counted cells do (PR #1712 review).
 - The **server-paginated line table** interim (client-side filter/sort over the nested connection) stays, blocked on open-msupply PR #12526 — identical in the mirror, documented in-code and in the spec README.
 - Reactivity BENIGN notes recorded by the audit (mount-time `context.latest` race, `<For>` over replaced node arrays, object-replacing single-draft signal) match the reference verticals' documented shape — for the KDD owner's reconciliation, not this vertical's defects.
 

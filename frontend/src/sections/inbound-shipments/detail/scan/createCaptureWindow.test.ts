@@ -198,6 +198,7 @@ describe('createCaptureWindow', () => {
       isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
+      volumePerPack: 0,
     });
     capture.update({ quantity: 3 });
     calls.length = 0;
