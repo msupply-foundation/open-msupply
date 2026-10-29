@@ -12,7 +12,7 @@ use crate::{
     asset_class_row::{AssetClassRow, AssetClassRowRepository},
     asset_row::AssetRow,
     mock::{
-        MockData, MockDataInserts, mock_item_a, mock_location_1, mock_location_2,
+        MockData, MockDataInserts, mock_item_a, mock_item_b, mock_location_1, mock_location_2,
         mock_location_in_another_store, mock_location_on_hold, mock_name_store_b, mock_store_a,
         mock_store_b,
     },
@@ -855,6 +855,72 @@ async fn test_changelog_outgoing_sync_records() {
     assert_eq!(outgoing_results[1].record_id, central_asset_id);
 }
 
+/// The v6 pull: `all_data_for_site` with the v6 transport takes tables whose transport
+/// includes v6. Its site and initialising conditions are tested in
+/// `test_changelog_outgoing_sync_records`.
+#[actix_rt::test]
+async fn test_changelog_outgoing_v6_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_v6_sync_records",
+        MockDataInserts::none().names().stores().items(),
+    )
+    .await;
+
+    let site1_id = mock_store_a().site_id;
+    let central_site_id = 999;
+    assert_ne!(central_site_id, site1_id);
+
+    let from_central = || ChangelogSyncType::SyncTypeV5V6 {
+        source_site_id: Some(central_site_id),
+    };
+
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // Central data, tagged for v6 → pulled.
+    let asset_class_id = "asset_class".to_string();
+    AssetClassRow {
+        id: asset_class_id.clone(),
+        ..Default::default()
+    }
+    .upsert_sync(&connection, from_central())
+    .unwrap();
+
+    // Central data, tagged for both v5 and v6 → pulled.
+    mock_name_store_b()
+        .upsert_sync(&connection, from_central())
+        .unwrap();
+
+    // Central data, tagged for v5 only → not pulled.
+    mock_item_a()
+        .upsert_sync(&connection, from_central())
+        .unwrap();
+
+    let outgoing_results: Vec<String> = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(
+                site1_id,
+                false,
+                Some(SyncVersions {
+                    is_v6: true,
+                    is_v5: false,
+                }),
+            ),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows
+        .into_iter()
+        .map(|row| row.record_id)
+        .collect();
+    assert_eq!(
+        outgoing_results,
+        vec![asset_class_id, mock_name_store_b().id]
+    );
+}
+
 #[actix_rt::test]
 async fn test_changelog_outgoing_multi_device_sync_records() {
     let (_, connection, _, _) = test_db::setup_all(
@@ -1624,174 +1690,70 @@ async fn test_update_source_site_id_removes_rows_from_legacy_push() {
     assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 0);
 }
 
-fn insert_changelog_row(
-    connection: &StorageConnection,
-    cursor: i64,
-    table_name: ChangelogTableName,
-    record_id: &str,
-    store_id: Option<&str>,
-    source_site_id: Option<i32>,
-) {
-    #[derive(Insertable)]
-    #[diesel(table_name = changelog_with_links)]
-    struct TestChangelogInsert<'a> {
-        cursor: i64,
-        table_name: ChangelogTableName,
-        record_id: &'a str,
-        row_action: RowActionType,
-        store_id: Option<&'a str>,
-        source_site_id: Option<i32>,
-    }
+/// The legacy push takes tables tagged for v5, unless the row came from legacy central.
+#[actix_rt::test]
+async fn test_changelog_legacy_push_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_legacy_push_records",
+        MockDataInserts::none().names().stores().items(),
+    )
+    .await;
 
-    diesel::insert_into(changelog_with_links::table)
-        .values(&TestChangelogInsert {
-            cursor,
-            table_name,
-            record_id,
-            row_action: RowActionType::Upsert,
-            store_id,
-            source_site_id,
-        })
-        .execute(connection.lock().connection())
+    let legacy_central_site_id = 1;
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(legacy_central_site_id),
+        )
         .unwrap();
-}
+    let central_site_id = 999;
+    let from_central = || ChangelogSyncType::SyncTypeV5V6 {
+        source_site_id: Some(central_site_id),
+    };
+    let from_legacy_central = || ChangelogSyncType::SyncTypeV5V6 {
+        source_site_id: Some(legacy_central_site_id),
+    };
 
-fn record_ids(connection: &StorageConnection, filter: ChangelogCondition::Inner) -> Vec<String> {
-    ChangelogRepository::new(connection)
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // Tagged for v5 only → pushed.
+    mock_item_a()
+        .upsert_sync(&connection, from_central())
+        .unwrap();
+
+    // Tagged for both v5 and v6 → pushed.
+    mock_name_store_b()
+        .upsert_sync(&connection, from_central())
+        .unwrap();
+
+    // Tagged for v6 only → not pushed.
+    AssetClassRow {
+        id: "asset_class".to_string(),
+        ..Default::default()
+    }
+    .upsert_sync(&connection, from_central())
+    .unwrap();
+
+    // Tagged for v5, but from legacy central → not pushed back.
+    mock_item_b()
+        .upsert_sync(&connection, from_legacy_central())
+        .unwrap();
+
+    let outgoing_results: Vec<String> = ChangelogRepository::new(&connection)
         .query(
-            filter,
+            ChangelogFilter::all_data_for_legacy_central(&connection).unwrap(),
             CursorAndLimit {
-                cursor: 0,
-                limit: 100,
+                cursor: cursor_before,
+                limit: 1000,
             },
         )
         .unwrap()
         .rows
         .into_iter()
         .map(|row| row.record_id)
-        .collect()
-}
-
-/// Central re-publishes vaccine courses, vaccinations and encounters to legacy mSupply, so
-/// the legacy push selects them with the other v5 tables, unless legacy central sent them.
-#[actix_rt::test]
-async fn test_legacy_push_includes_tables_central_republishes() {
-    let (_, connection, _, _) = setup_all(
-        "test_legacy_push_includes_tables_central_republishes",
-        MockDataInserts::none(),
-    )
-    .await;
-    delete_all_changelog(&connection);
-
-    const LEGACY_CENTRAL_SITE_ID: i32 = 1;
-    const CENTRAL_SITE_ID: i32 = 999;
-    const REMOTE_SITE_ID: i32 = 7;
-    KeyValueStoreRepository::new(&connection)
-        .set_i32(
-            KeyType::SettingsSyncCentralServerSiteId,
-            Some(LEGACY_CENTRAL_SITE_ID),
-        )
-        .unwrap();
-
-    use ChangelogTableName::*;
-    let rows = [
-        (VaccineCourse, "course", CENTRAL_SITE_ID),
-        (VaccineCourseDose, "dose", CENTRAL_SITE_ID),
-        (VaccineCourseItem, "course_item", CENTRAL_SITE_ID),
-        (Vaccination, "vaccination_from_remote", REMOTE_SITE_ID),
-        (Encounter, "encounter", CENTRAL_SITE_ID),
-        (
-            Vaccination,
-            "vaccination_from_legacy",
-            LEGACY_CENTRAL_SITE_ID,
-        ),
-        (Name, "name", CENTRAL_SITE_ID),
-        // V6 only
-        (AssetClass, "asset_class", CENTRAL_SITE_ID),
-    ];
-    for (cursor, (table_name, record_id, source_site_id)) in rows.into_iter().enumerate() {
-        insert_changelog_row(
-            &connection,
-            cursor as i64 + 1,
-            table_name,
-            record_id,
-            None,
-            Some(source_site_id),
-        );
-    }
-
+        .collect();
     assert_eq!(
-        record_ids(
-            &connection,
-            ChangelogFilter::all_data_for_legacy_central(&connection).unwrap()
-        ),
-        vec![
-            "course",
-            "dose",
-            "course_item",
-            "vaccination_from_remote",
-            "encounter",
-            "name",
-        ]
-    );
-}
-
-/// A v6 pull takes every table whose transport includes v6, so support upload requests
-/// (`sync_message`, which also goes to legacy mSupply) reach v5/v6 remotes. V5-only tables
-/// stay out.
-#[actix_rt::test]
-async fn test_v6_pull_includes_v5_v6_tables() {
-    let (_, connection, _, _) = setup_all(
-        "test_v6_pull_includes_v5_v6_tables",
-        MockDataInserts::none().names().stores(),
-    )
-    .await;
-    delete_all_changelog(&connection);
-
-    const CENTRAL_SITE_ID: i32 = 999;
-    let site_id = mock_store_a().site_id;
-    let store_id = mock_store_a().id;
-    let other_store_id = mock_store_b().id;
-
-    use ChangelogTableName::*;
-    let rows = [
-        (SyncMessage, "message_to_site", Some(store_id.as_str())),
-        (
-            SyncMessage,
-            "message_to_other_site",
-            Some(other_store_id.as_str()),
-        ),
-        (VaccineCourse, "course", None),
-        (AssetClass, "asset_class", None),
-        // The name translator doesn't send names over a v6 pull, so this row is
-        // selected but never sent.
-        (Name, "name", None),
-        // V5 only
-        (Item, "item", None),
-    ];
-    for (cursor, (table_name, record_id, store_id)) in rows.into_iter().enumerate() {
-        insert_changelog_row(
-            &connection,
-            cursor as i64 + 1,
-            table_name,
-            record_id,
-            store_id,
-            Some(CENTRAL_SITE_ID),
-        );
-    }
-
-    assert_eq!(
-        record_ids(
-            &connection,
-            ChangelogFilter::all_data_for_site(
-                site_id,
-                false,
-                Some(SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                }),
-            )
-        ),
-        vec!["message_to_site", "course", "asset_class", "name"]
+        outgoing_results,
+        vec![mock_item_a().id, mock_name_store_b().id]
     );
 }
