@@ -5770,7 +5770,15 @@ type LogLevelNode {
 
 type LogNode {
 	fileNames: [String!]
-	fileContent: [String!]
+	"""
+	The file's text, as written: at most its last 1 MiB. Download the whole file from
+	`/support/log/{name}`.
+	"""
+	content: String
+	"""
+	Whether `content` is only the end of a longer file.
+	"""
+	truncated: Boolean
 }
 
 type Logout {
@@ -9568,6 +9576,7 @@ input StockLineFilterInput {
 	isActive: Boolean
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
+	onHold: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
@@ -9637,6 +9646,7 @@ enum StockLineSortFieldInput {
 	sellPricePerPack
 	vvmStatusThenExpiry
 	campaign
+	onHold
 }
 
 input StockLineSortInput {
@@ -9770,6 +9780,7 @@ input StocktakeLineFilterInput {
 	itemCodeOrName: StringFilterInput
 	itemId: EqualFilterStringInput
 	stockLineId: EqualFilterStringInput
+	campaignId: EqualFilterStringInput
 }
 
 type StocktakeLineNode {

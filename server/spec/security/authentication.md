@@ -10,8 +10,7 @@ Every operational GraphQL operation that touches data calls `validate_auth(ctx, 
 
 Special REST cases that must authenticate with the **session cookie** (browser-download endpoints):
 
-- `GET /support/database` — requires ServerAdmin; validated via `validate_request` (`server/server/src/support/database.rs:19-22`, cookie parsing in `server/server/src/support/mod.rs:30-63`). Returns `401` on failure.
-- `POST /support/vacuum` — **currently missing auth; this is confirmed finding F-1 and is a bug, not a pinned behavior.** The pinned behavior once fixed: same cookie+ServerAdmin validation as `/support/database`.
+- `GET /support/database`, `GET /support/log/{file_name}` and `POST /support/vacuum` — require ServerAdmin, validated by `validate_server_admin` (`server/server/src/authentication.rs`): the same token lookup as every other REST endpoint (`Authorization: Bearer …`, then the `session_{suffix}` cookie), then the ServerAdmin permission check. Return `401` on failure. A log file name must be a bare file name in the log directory (`LogServiceTrait::get_log_file_path`), so it can't reach files outside it.
 
 ### INV-AUTH-2 — Central sync (v5/v6) delegates credential validation to the legacy mSupply server
 
@@ -36,7 +35,7 @@ Verified per the audit: `me` (own data only); `patients`, `patient`, `patientSea
 ```text
 # Session-cookie auth on support endpoints:
 curl -i http://<server>/support/database            # expect 401 without cookie
-curl -i -X POST http://<server>/support/vacuum      # expect 401 once F-1 is fixed
+curl -i -X POST http://<server>/support/vacuum      # expect 401 without cookie
 
 # Sync auth delegating to legacy (fails closed):
 # point a test site's KV sync URL at an unreachable host, attempt v5 pull —

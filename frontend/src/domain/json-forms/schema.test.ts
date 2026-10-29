@@ -419,6 +419,43 @@ describe('cleanArguments', () => {
       cleanArguments(enumFields, { venCategory: undefined, sort: 'name' })
     ).toEqual({ sort: 'name' });
   });
+
+  it('sends a field whose schema declares default: null as null when left empty (OMS-REG-RPT-10.16)', () => {
+    // Afghanistan's Vaccine Utilisation month: its SQL binds $month, which
+    // must be present (null = the current month), as the React UI sends it.
+    const monthFields = parseArgumentSchema({
+      jsonSchema: {
+        type: 'object',
+        allOf: [{ $ref: '#/definitions/Filters' }],
+        definitions: {
+          Filters: {
+            properties: {
+              month: {
+                format: 'date-time',
+                type: ['string', 'null'],
+                default: null,
+              },
+            },
+          },
+        },
+      },
+      uiSchema: {
+        type: 'VerticalLayout',
+        elements: [{ type: 'Control', scope: '#/properties/month' }],
+      },
+    });
+    const seed = seedDefaults(monthFields, {});
+    expect(seed.month).toBeNull();
+    expect(cleanArguments(monthFields, { month: null })).toEqual({
+      month: null,
+    });
+    // Cleared after picking, or absent from a reopened form: still null.
+    expect(cleanArguments(monthFields, { month: '' })).toEqual({ month: null });
+    expect(cleanArguments(monthFields, {})).toEqual({ month: null });
+    expect(
+      cleanArguments(monthFields, { month: '2026-09-30T12:00:00.000Z' })
+    ).toEqual({ month: '2026-09-30T12:00:00.000Z' });
+  });
 });
 
 // The Pending Encounters shape (real backend fixture, abridged): a required
