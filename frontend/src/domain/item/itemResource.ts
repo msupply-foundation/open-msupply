@@ -30,6 +30,11 @@ export type ItemOption = {
    * prefills a new inbound line's cost AND sell price (OMS-REG-REPL-09.10/.11).
    */
   defaultSellPricePerPack: number;
+  /**
+   * The item's volume per pack — a new inbound line's starting volume
+   * (OMS-REG-REPL-09.43).
+   */
+  volumePerPack: number;
 };
 
 type ItemNode = Extract<
@@ -94,6 +99,7 @@ export const lookUpItemById = async (
       defaultPackSize: node.defaultPackSize,
       defaultSellPricePerPack:
         node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+      volumePerPack: node.volumePerPack,
     },
   };
 };
@@ -212,6 +218,7 @@ export const itemPageFetcher =
         defaultPackSize: node.defaultPackSize,
         defaultSellPricePerPack:
           node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        volumePerPack: node.volumePerPack,
       })),
       totalCount: items.totalCount,
     };

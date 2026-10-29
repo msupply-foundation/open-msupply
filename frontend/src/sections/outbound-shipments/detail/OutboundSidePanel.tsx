@@ -3,6 +3,7 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import { formatCurrency } from '../../../intl/currency';
 import {
   SidePanelActions,
   SidePanelSection,
@@ -83,10 +84,7 @@ export interface OutboundSidePanelProps {
 }
 
 const money = (value: number | null | undefined): string =>
-  formatNumber(value ?? 0, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  formatCurrency(value ?? 0);
 
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
@@ -425,7 +423,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         <FieldRow label={t('label.total')}>
           <Text variant="body">
             {pricing().foreignCurrencyTotalAfterTax != null
-              ? money(pricing().foreignCurrencyTotalAfterTax)
+              ? formatCurrency(
+                  pricing().foreignCurrencyTotalAfterTax!,
+                  props.node.currency?.code
+                )
               : '—'}
           </Text>
         </FieldRow>

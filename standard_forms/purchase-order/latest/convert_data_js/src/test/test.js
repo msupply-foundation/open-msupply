@@ -53,6 +53,76 @@ describe("Test all", () => {
     expect(prices).toEqual(["0.0125", "4.90", "1.2346"]);
   });
 
+  it("prints thousands separators", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.purchaseOrder.orderTotalAfterDiscount = 1234567.891;
+    input.data.purchaseOrder.lines.nodes = [
+      {
+        lineNumber: 1,
+        requestedNumberOfUnits: 40000,
+        requestedPackSize: 1000,
+        pricePerPackAfterSupplierDiscount: 1250.5,
+        lineTotalAfterSupplierDiscount: 50020,
+      },
+    ];
+
+    const po = convert_data(input).data.purchaseOrder;
+    const line = po.lines.nodes[0];
+
+    expect(line.packSizeText).toBe("1,000");
+    expect(line.totalQuantityText).toBe("40,000");
+    expect(line.pricePerPack).toBe("1,250.50");
+    expect(line.lineCost).toBe("50,020.00");
+    expect(po.totalCostText).toBe("1,234,567.89");
+  });
+
+  it("rounds the number of packs", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.purchaseOrder.lines.nodes = [
+      { lineNumber: 1, requestedNumberOfUnits: 282.48, requestedPackSize: 23.54 },
+      { lineNumber: 2, requestedNumberOfUnits: 10, requestedPackSize: 4 },
+    ];
+
+    const packs = convert_data(input).data.purchaseOrder.lines.nodes.map(
+      (line) => line.requestedNumberOfPacks,
+    );
+
+    expect(packs).toEqual([12, 2.5]);
+  });
+
+  it("shows the exchange rate only for a foreign currency order", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.currencies = { nodes: [{ code: "NZD" }] };
+
+    input.data.purchaseOrder.currency = { code: "NZD" };
+    expect(
+      convert_data(JSON.parse(JSON.stringify(input))).data.purchaseOrder
+        .isForeignCurrency,
+    ).toBe(false);
+
+    input.data.purchaseOrder.currency = { code: "USD" };
+    expect(convert_data(input).data.purchaseOrder.isForeignCurrency).toBe(true);
+  });
+
+  it("shows the supplier item code column only when a stock line has one", () => {
+    const input = JSON.parse(JSON.stringify(inputData));
+    input.data.purchaseOrder.lines.nodes = [
+      { lineNumber: 1, item: { type: "STOCK" } },
+      { lineNumber: 2, item: { type: "SERVICE" }, supplierItemCode: "FRT" },
+    ];
+    expect(convert_data(input).data.purchaseOrder.hasSupplierItemCodes).toBe(
+      false,
+    );
+
+    input.data.purchaseOrder.lines.nodes = [
+      { lineNumber: 1, item: { type: "STOCK" }, supplierItemCode: "SUP-1" },
+      { lineNumber: 2, item: { type: "STOCK" } },
+    ];
+    expect(convert_data(input).data.purchaseOrder.hasSupplierItemCodes).toBe(
+      true,
+    );
+  });
+
   it("moves service lines into the charges", () => {
     const input = JSON.parse(JSON.stringify(inputData));
     input.data.purchaseOrder.lines.nodes = [

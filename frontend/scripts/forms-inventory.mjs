@@ -1,7 +1,7 @@
 /*
  * The take-over inventory: what a deployment's database holds for its program
  * forms, read before (and to check) moving them into a form plugin
- * (plugins/MIGRATING-PROGRAMS.md § 3). It reads a Postgres copy of the
+ * (private/plugins/MIGRATING-PROGRAMS.md § 3). It reads a Postgres copy of the
  * deployment's central server, with `psql` and the connection psql takes from
  * PGHOST, PGPORT, PGUSER, PGDATABASE and PGPASSWORD. Every query runs in a
  * read-only transaction, so it cannot change the database, and nothing it
@@ -50,8 +50,8 @@
  *             replaced, never a value.
  *
  * Usage, from frontend/:
- *   pnpm forms:inventory report [--plugin plugins/<dir>] [--out <dir>]
- *     > inventory.md
+ *   pnpm forms:inventory report [--plugin ../private/plugins/<dir>]
+ *     [--out <dir>] > inventory.md
  *   pnpm forms:inventory pick --type <documentType> --where "<SQL on j>"
  *     [--limit 5] [--with-names]
  *   pnpm forms:inventory fixture --doc <document id> --out <file>
