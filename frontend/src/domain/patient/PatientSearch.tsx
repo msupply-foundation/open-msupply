@@ -2,6 +2,7 @@ import { Show, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
+import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';
 import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import { hasPermission } from '../../store/storeContext';
@@ -50,11 +51,14 @@ export interface PatientSearchProps {
    * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
    * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
    * patient-create flow from this callback and selects the result via
-   * `onSelect`. Not offered to a user without patient-mutate permission: the
-   * server would refuse the save at the end of the flow (spec/patients §
-   * configuration gates). That permission check reads the store the user is
-   * logged into, not `props.storeId` — every caller passes the current store,
-   * so the two agree today.
+   * `onSelect`. For a user without patient-mutate permission it stays visible
+   * but disabled, with the reason shown in place — perceivable without hover
+   * and on touch (an `InfoTooltip` beside the button, not a hover-only native
+   * `title`) — since the server would refuse the save at the end of the flow
+   * (spec/patients S4, § configuration gates; ui-standards/controls § blocked
+   * affordances). That permission check reads the store the user is logged
+   * into, not `props.storeId` — every caller passes the current store, so the
+   * two agree today.
    */
   onCreatePatient?: () => void;
   /**
@@ -166,27 +170,33 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
-    // Hidden without patient-mutate permission (OMS-REG-DIS-03.18/.78), as the
-    // clinician picker's create entry is: nothing on the screen can grant the
-    // permission, so a create flow whose save can only fail is permanently
-    // dead (ui-standards/controls § blocked affordances).
+    // Without patient-mutate permission the entry stays visible but disabled,
+    // its reason shown beside it (OMS-REG-DIS-03.18/.78): the create it opens
+    // could only end in a write the server refuses, but the control stays
+    // perceivable with the why in place rather than silently vanishing
+    // (ui-standards/controls § blocked affordances). The reason rides an
+    // InfoTooltip, not a native `title`, so it opens on tap/focus and is
+    // readable on a touch device too. Disabling the whole picker (`disabled`)
+    // greys the entry without the permission note — that block is the record's,
+    // not this control's.
     listboxFooter={query => (
-      <Show
-        when={
-          props.onCreatePatient &&
-          query().trim() !== '' &&
-          hasPermission('PATIENT_MUTATE')
-        }
-      >
+      <Show when={props.onCreatePatient && query().trim() !== ''}>
         <Button
           variant="secondary"
           icon={<PlusCircleIcon />}
-          disabled={props.disabled}
+          disabled={props.disabled || !hasPermission('PATIENT_MUTATE')}
           data-testid="create-patient-button"
           onClick={() => props.onCreatePatient?.()}
         >
           {t('label.create-patient')}
         </Button>
+        <Show when={!props.disabled && !hasPermission('PATIENT_MUTATE')}>
+          <InfoTooltip
+            text={t('messages.create-patient-not-allowed')}
+            label={t('messages.create-patient-not-allowed')}
+            triggerTestId="create-patient-disabled-reason"
+          />
+        </Show>
       </Show>
     )}
   />
