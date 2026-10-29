@@ -10,7 +10,8 @@
  *
  * The payload is opaque to the host: `input` and `output` are this plugin's
  * contract with its own callers, so a plugin with two halves declares them in
- * a module both import (`plugins/civ/shared/types.ts` is the worked example).
+ * a module both import (`private/plugins/civ/shared/types.ts` is the worked
+ * example).
  */
 
 import { BackendPlugins } from '@common/types';

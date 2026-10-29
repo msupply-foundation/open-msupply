@@ -33,7 +33,7 @@
  * with its own module state instead of the host's live one.
  *
  * Usage: node codegen/run.js [path ...]
- *   A path narrows the run to documents under it, e.g. `plugins`.
+ *   A path narrows the run to documents under it, e.g. `../private/plugins`.
  *   SCHEMA_URL opts INTO introspecting a running server instead of the pin —
  *   for checking a branch whose backend has not reached schema.graphql
  *   yet. What it generates must not be committed: the pin is what the
@@ -84,7 +84,7 @@ function pinnedSchema() {
 
 async function main() {
   // Positional args narrow the run to documents under those paths, e.g.
-  //   node codegen/run.cjs plugins
+  //   node codegen/run.cjs ../private/plugins
   // Generating is destructive, so narrowing is how a run avoids rewriting
   // documents it has no business touching.
   const filters = process.argv.slice(2);

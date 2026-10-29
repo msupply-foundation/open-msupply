@@ -555,11 +555,11 @@ describe('plugin profiles', () => {
     'frontend/src/plugins/loader.ts': "import '../plugin-sdk';",
     'frontend/src/plugin-sdk/index.ts': "import { x } from './api';",
     'frontend/src/plugin-sdk/api.ts': 'export const x = 1;',
-    'frontend/plugins/island/package.json': '{}',
-    'frontend/plugins/island/src/nav.tsx':
+    'private/plugins/island/package.json': '{}',
+    'private/plugins/island/src/nav.tsx':
       "import { x } from '@openmsupply/plugin-sdk';",
-    'frontend/plugins/other/package.json': '{}',
-    'frontend/plugins/other/src/a.tsx':
+    'private/plugins/other/package.json': '{}',
+    'private/plugins/other/src/a.tsx':
       "import { x } from '@openmsupply/plugin-sdk';",
     'frontend/e2e/specs/login-regression.spec.ts': '',
     'frontend/e2e/specs/plugins/island/island-regression.spec.ts': '',
@@ -594,12 +594,12 @@ describe('plugin profiles', () => {
       'island-regression',
     ]);
     expect(checkConfig(raw, orphan)).toContain(
-      'specs/plugins/gone/ has no plugin: frontend/plugins/gone/package.json is missing'
+      'specs/plugins/gone/ has no plugin: private/plugins/gone/package.json is missing'
     );
   });
 
   it('charges the plugin, the loader, and the SDK (through the plugin) to its suite', () => {
-    expect(reach('frontend/plugins/island/src/nav.tsx')).toEqual([
+    expect(reach('private/plugins/island/src/nav.tsx')).toEqual([
       ['island-regression', 0],
     ]);
     expect(reach('frontend/src/plugins/loader.ts')).toEqual([
@@ -611,7 +611,7 @@ describe('plugin profiles', () => {
   });
 
   it('ignores a plugin no profile loads', () => {
-    expect(classify('frontend/plugins/other/src/a.tsx', pctx).via).toBe(
+    expect(classify('private/plugins/other/src/a.tsx', pctx).via).toBe(
       'ignore'
     );
   });

@@ -15,15 +15,22 @@ const fs = require("fs");
 const path = require("path");
 
 const FRONTEND_DIR = path.resolve(__dirname, "..");
+const REPO_DIR = path.resolve(FRONTEND_DIR, "..");
 
 const SRC_DIR = path.join(FRONTEND_DIR, "src");
 
 /*
- * Everything under plugins/ builds through the plugin preset, so it all takes
- * the SDK import: the per-deployment plugins, and the reference plugins they
- * are modelled on at plugins/examples/ (frontend/CLAUDE.md § country plugins).
+ * Everything under the two plugin roots beside frontend/ builds through the
+ * plugin preset, so it all takes the SDK import: the per-deployment plugins in
+ * private/plugins/, and the public ones in plugins/ — the reference plugins
+ * they are modelled on among them, at plugins/examples/ (frontend/CLAUDE.md §
+ * country plugins). The public mirror has no private/; a missing root just
+ * yields no documents.
  */
-const PLUGIN_DIRS = [path.join(FRONTEND_DIR, "plugins")];
+const PLUGIN_DIRS = [
+  path.join(REPO_DIR, "plugins"),
+  path.join(REPO_DIR, "private", "plugins"),
+];
 
 /** The SDK re-exports the host's own `TypedDocument`; same type, bare specifier. */
 const PLUGIN_SDK_SPECIFIER = "@openmsupply/plugin-sdk";
@@ -76,8 +83,8 @@ const graphqlImportFor = (file, outPath) => {
  * Every document codegen generates from, host first.
  *
  * `filters` narrows the run to documents under the given paths (relative to
- * frontend/, or absolute) — `allDocuments(["plugins"])` regenerates only the
- * plugin trees. Narrowing exists so a run can leave files alone that a
+ * frontend/, or absolute) — `allDocuments(["../private/plugins"])`
+ * regenerates only the country plugins' documents. Narrowing exists so a run can leave files alone that a
  * mismatched schema would otherwise rewrite: generating is destructive, and an
  * unrelated document regenerated against the wrong server lands as silent
  * churn in someone's diff. No filters means every document.

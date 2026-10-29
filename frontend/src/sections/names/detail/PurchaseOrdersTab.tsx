@@ -15,7 +15,7 @@ import {
 import { remToPx } from '../../../ui/utils/rem';
 import { SupplierPurchaseOrders } from '../names.generated';
 import type { SupplierPurchaseOrdersResult } from '../names.generated';
-import { purchaseOrderAreaPath } from '../list/namesListLogic';
+import { purchaseOrderDetailPath } from '../list/namesListLogic';
 // The status label mapping is the purchase-order vertical's, not this
 // screen's: this tab only lists another vertical's records (spec/names
 // ui-surface S4 — named, not owned).
@@ -24,11 +24,9 @@ import { poStatusLabel } from '@/sections/purchase-orders/purchaseOrderStatus';
 // S4 Purchase orders tab — a read-only reference list of the supplier's
 // purchase orders (OMS-REG-REPL-08.23). The DATA is owned by the purchase-order
 // vertical (contract › record detail: cross-vertical, named not owned); this
-// tab only lists them, and selecting a row opens the purchase-order area. The
-// PO vertical isn't built in this scope, so a row navigates to the PO area
-// landing (deep-link to a specific PO awaits that vertical — see BUILD_REPORT).
-// It is the standard data table (with its view-control toolbar), matching the
-// list views (spec/ui-standards/ detail-views › tabs).
+// tab only lists them, and selecting a row opens that purchase order in the
+// purchase-order area. It is the standard data table (with its view-control
+// toolbar), matching the list views (spec/ui-standards/ detail-views › tabs).
 
 type PoRow = SupplierPurchaseOrdersResult['purchaseOrders']['nodes'][number];
 
@@ -122,7 +120,9 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
       }
       // Selecting a purchase order opens it in the purchase-order area
       // (OMS-REG-REPL-08.23).
-      onRowClick={() => navigate(purchaseOrderAreaPath(params.storeId))}
+      onRowClick={row =>
+        navigate(purchaseOrderDetailPath(params.storeId, row.id))
+      }
     />
   );
 };

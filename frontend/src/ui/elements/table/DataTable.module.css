@@ -380,6 +380,39 @@
   font-size: 92.857%;
 }
 
+/* A marked cell (meta.cellTone → data-cell-tone): a ring in the error tone
+   around the one field of a line the error is about. Drawn as an OUTLINE so it
+   takes no room — a cell that flips state mid-edit changes no width and moves
+   no neighbour — and so it composes with what the cell already paints:
+   backgrounds (row tints, selection, the hover wash) and the frozen block's
+   seam, which is a box-shadow. In table view it sits inside the cell's own
+   edge (a negative offset), clear of the collapsed borders; it is square
+   because a collapsed-border cell takes no border-radius. In card view it sits
+   just outside the value, rounded like a field. The column's renderer states
+   the error in words beside it (ColumnMeta.cellTone). */
+.td[data-cell-tone='error'] {
+  outline: 2px solid var(--error-main);
+  outline-offset: -2px;
+}
+
+/* In card view the ring goes round the value's wrapper, which is a block for
+   every value a column can ring, ringed or not: one box, so a value holding a
+   block of its own (a message stacked beneath a number) keeps one ring, and
+   ringing it changes nothing but the outline. It hugs its content, so the
+   ring sits round the value rather than spanning the field like an empty
+   input; card fields set their values at the start, which is where it sits. */
+.cardToneValue {
+  display: block;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
+.card [data-cell-tone='error'] {
+  outline: 2px solid var(--error-main);
+  outline-offset: 0.125rem;
+  border-radius: var(--radius-sm);
+}
+
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
    pinned to the block-end of the scroll area so a summed total stays visible
    while the rows scroll, styled like the header band (toolbar grey, medium
@@ -683,6 +716,62 @@ tbody > tr:last-child > :is(.td, .selectCell) {
      parity); a compact 40px row leaves a negligible 1px block overhang. */
   --checkbox-hit-inset-inline: 0.75rem;
   --checkbox-hit-inset-block: 0.75rem;
+}
+
+/* Row grouping (DataTable rowGroup). The expander column is a second leading
+   box beside the selection column and takes every .selectCell rule (width,
+   pinning, fills, tints); this only drops the padding its button doesn't
+   need. */
+.expanderCell {
+  padding-inline: 0;
+}
+
+/* The expand/collapse chevron, on a group row and (as the double chevron) in
+   the column header. Collapsed points to the inline-end, expanded points
+   down; the turn mirrors in RTL so collapsed points at the row's text. */
+.groupExpander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transition: transform var(--motion-base);
+}
+
+:dir(rtl) .groupExpander {
+  transform: rotate(90deg);
+}
+
+.groupExpander[data-expanded] {
+  transform: none;
+}
+
+.groupExpander:hover {
+  color: var(--text-body);
+}
+
+/* A group row's grouped value with its line count beside it. */
+.groupLabel {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: baseline;
+}
+
+.groupCount {
+  color: var(--text-secondary);
+}
+
+/* A group row reads as the heading of the rows it gathers. */
+tr[data-group-row] > .td {
+  font-weight: var(--weight-medium);
 }
 
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
@@ -1729,6 +1818,16 @@ tr[data-accent='error'] > :first-child::before {
 
 .cardBadge [data-flag-chip] {
   display: inline-flex;
+}
+
+/* A message a cell stacks beneath its value ([data-cell-message] — a line
+   error under a count) is dropped from a card's BADGE slot: the badge sits
+   beside the card title and never shrinks, so a sentence there would take
+   the title's room. A page that puts such a column in the badge carries the
+   message in a card-only body field instead (CARD_TABLE_MODEL.md § cellTone).
+   Table view and body fields keep it. */
+.cardBadge [data-cell-message] {
+  display: none;
 }
 
 /* Inline row-status badges (StatusBadge cluster beside a name/batch value —

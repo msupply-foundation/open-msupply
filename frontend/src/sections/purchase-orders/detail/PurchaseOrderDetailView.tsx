@@ -338,7 +338,7 @@ const PurchaseOrderDetailView: Component = () => {
       params.id,
       list.id
     );
-    if (result.kind === 'done') refetchAll();
+    if (result.kind === 'done') void refetchAll();
     else if (result.kind === 'error') setNotice(result.message);
     else if (result.kind === 'forbidden')
       reportPermissionDenied(result.permissions);
@@ -400,11 +400,10 @@ const PurchaseOrderDetailView: Component = () => {
     line.status !== 'CLOSED' &&
     line.requestedNumberOfUnits === 0;
 
-  const refetchAll = () => {
-    void refetchInfo();
-    void refetchLines();
-    void refetchLineSet();
-  };
+  // Resolves once all three re-reads have landed, for a caller that has to
+  // hold something on screen until then.
+  const refetchAll = () =>
+    Promise.all([refetchInfo(), refetchLines(), refetchLineSet()]);
 
   // Nothing on this screen is saved by hand — there is no save action anywhere
   // on it (rules § an order's own screen). A save the domain refuses leaves the
@@ -482,7 +481,10 @@ const PurchaseOrderDetailView: Component = () => {
       date,
       fields
     );
-    refetchAll();
+    // Wait for the re-read: the toolbar shows the picked day until this
+    // resolves, so dropping it any earlier flashes the old date back for a
+    // moment before the new one lands.
+    await refetchAll();
     if (outcome.forbidden) {
       reportPermissionDenied(outcome.forbidden);
       return { ok: false };
@@ -502,7 +504,7 @@ const PurchaseOrderDetailView: Component = () => {
     if (result.kind === 'saved') {
       // A move cascades onto the lines (their requested dates, their statuses),
       // so the page and the set are both re-read.
-      refetchAll();
+      void refetchAll();
       return { ok: true };
     }
     if (result.kind === 'error') {
@@ -516,7 +518,7 @@ const PurchaseOrderDetailView: Component = () => {
   const onLinesChanged = () => {
     setSelectedIds([]);
     setBlockedLines([]);
-    refetchAll();
+    void refetchAll();
   };
 
   // Where height is scarce the band gives way to the order total alone, on
