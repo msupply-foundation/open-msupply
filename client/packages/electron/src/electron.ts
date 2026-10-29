@@ -777,7 +777,9 @@ process.on('uncaughtException', error => {
   }
 
   // When running the barcode scanner discovery on windows, you can get this error which we want to ignore
-  if (error.message === 'could not read from HID device') return;
+  // node-hid 3 appends the OS's reason, e.g. ": ReadFile: (0x00000005) Access
+  // is denied."
+  if (error.message.startsWith('could not read from HID device')) return;
 
   // TODO bugsnag ?
   dialog.showErrorBox('Error', error.stack || error.message);
