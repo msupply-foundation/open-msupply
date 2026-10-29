@@ -993,17 +993,21 @@ const StocktakeLineEditContent = (
       isNew: true,
       snapshotNumberOfPacks: 0,
       countedNumberOfPacks: null,
-      // The duplicate carries a stock link only when the source was itself
-      // opting a stock line in (stockLineId — buildBatch then inserts against
-      // that stock). A copy of an existing line inserts by item, with no stock
-      // behind it, so the source's stockLine node must not ride along — it
-      // would misreport the link and read-only the copy's pack size
-      // (packSizeEditable keys off it).
-      stockLine: line.stockLineId ? unwrap(line).stockLine : null,
-      // A copy inserted by item has no stock line for the server to take a
-      // variant from, so it sends the source's own. A copy opting in stock
-      // keeps the source's choice, like the source would.
-      variantEdited: line.stockLineId ? line.variantEdited : true,
+      // A duplicate is a fresh batch with no stock behind it, so it always
+      // inserts by item. It must not keep the source's stockLineId: a stock
+      // line can sit on a stocktake only once, so a second insert against it
+      // fails with StockLineAlreadyExistsInStocktake (issue #1741). Nor the
+      // source's stockLine node — it would misreport the link and read-only
+      // the copy's pack size (packSizeEditable keys off it).
+      stockLineId: undefined,
+      stockLine: null,
+      // With no stock line for the server to take a variant from, the copy
+      // sends the source's own.
+      variantEdited: true,
+      // Duplicating is a request to count the copy, even when the source is
+      // an opted-out batch — an unticked copy would be silently left out of
+      // the save.
+      countThisLine: true,
     };
     setDraft(
       produce(lines => {
