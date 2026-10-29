@@ -8,7 +8,12 @@ import { Select } from '../../../../ui/elements/selectors/Select';
 import { DateTimeField } from '../../../../ui/elements/inputs/DateTimeField';
 import { TextArea } from '../../../../ui/elements/inputs/TextArea';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
-import { PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import {
+  CalendarIcon,
+  PlusCircleIcon,
+  XCircleIcon,
+} from '../../../../ui/icons';
 import { createFormValidation } from '../../../../ui/layout/Form/formValidation';
 import { ClinicianSelect, type Clinician } from '../../../../domain/clinician';
 import type { Encounter } from '../../../../plugin-sdk/documents';
@@ -26,6 +31,16 @@ export interface CreatedEncounter {
   startDatetime: string;
 }
 
+/** What the prompt after Save as visited opens with. */
+export interface NextVisitPrompt {
+  /** The patient, named since the prompt opens over the encounter screen. */
+  patientName: string;
+  /** The suggested date, where the program suggests one. */
+  startDatetime?: string;
+  /** What the visit is for, where the program says. */
+  reason?: string;
+}
+
 export interface CreateEncounterDialogProps {
   open: boolean;
   storeId: string;
@@ -37,9 +52,25 @@ export interface CreateEncounterDialogProps {
   registries: FormRegistryFragment[];
   /** Preselected type: the patient's latest encounter's, as the old client. */
   defaultType?: string;
+  /**
+   * Opened as the prompt after Save as visited rather than
+   * as New encounter: titled "Schedule the next visit" over "Saved as
+   * visited.", its note asked for as the reason, Not now and Book for its
+   * buttons, and the visit date and reason starting from the suggestion.
+   */
+  nextVisit?: NextVisitPrompt;
   onCreated: (created: CreatedEncounter) => void;
   onClose: () => void;
 }
+
+/**
+ * Whether a visit starts now, give or take: a created encounter whose visit
+ * is under way opens, one booked for later stays on the patient's list.
+ */
+export const startsNow = (
+  startDatetime: string,
+  now: number = Date.now()
+): boolean => new Date(startDatetime).getTime() <= now + 5 * 60 * 1000;
 
 /*
  * "New encounter" (the old client's create dialog): the type, the visit date,
@@ -48,6 +79,11 @@ export interface CreateEncounterDialogProps {
  * future, stays on the patient: that is how a follow-up is scheduled. The
  * encounter's own form is on its record screen; nothing of it is asked for
  * here.
+ *
+ * The same dialog is the encounter screen's prompt to schedule the next visit
+ * after Save as visited (`nextVisit`; Product's program-enrolment prototype):
+ * the same fields, prefilled with the visit type just saved, the date the
+ * program suggests and what it is for, written as the visit's note.
  */
 export const CreateEncounterDialog = (
   props: CreateEncounterDialogProps
@@ -67,10 +103,12 @@ const CreateEncounterBody = (
   };
   const [registryId, setRegistryId] = createSignal(initialType());
   const [startDatetime, setStartDatetime] = createSignal<string | null>(
-    new Date().toISOString()
+    props.nextVisit
+      ? (props.nextVisit.startDatetime ?? null)
+      : new Date().toISOString()
   );
   const [clinician, setClinician] = createSignal<Clinician | null>(null);
-  const [note, setNote] = createSignal('');
+  const [note, setNote] = createSignal(props.nextVisit?.reason ?? '');
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
 
@@ -151,8 +189,34 @@ const CreateEncounterBody = (
       width="form"
       dismissable={!saving()}
       onClose={props.onClose}
-      title={t('label.new-encounter')}
-      testId="create-encounter-dialog"
+      title={
+        props.nextVisit
+          ? t('heading.schedule-next-visit')
+          : t('label.new-encounter')
+      }
+      testId={
+        props.nextVisit
+          ? 'schedule-next-visit-dialog'
+          : 'create-encounter-dialog'
+      }
+      description={
+        <Show when={props.nextVisit}>
+          {next => (
+            <Stack gap="sm">
+              <Alert severity="success" compact>
+                {t('messages.saved-as-visited')}
+              </Alert>
+              <LabelledValue
+                label={t('label.patient')}
+                size="small"
+                layout="inline"
+              >
+                {next().patientName}
+              </LabelledValue>
+            </Stack>
+          )}
+        </Show>
+      }
       actionsLead={
         <Show when={saveError()}>
           <Alert severity="error">{saveError()}</Alert>
@@ -164,19 +228,20 @@ const CreateEncounterBody = (
             variant="secondary"
             icon={<XCircleIcon />}
             confirms="cancel"
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
-            {t('button.cancel')}
+            {props.nextVisit ? t('button.not-now') : t('button.cancel')}
           </Button>
           <Button
-            icon={<PlusCircleIcon />}
+            icon={props.nextVisit ? <CalendarIcon /> : <PlusCircleIcon />}
             confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={chosenOutOfStep()}
             onClick={() => void create()}
           >
-            {t('button.create')}
+            {props.nextVisit ? t('button.book') : t('button.create')}
           </Button>
         </>
       }
@@ -222,7 +287,7 @@ const CreateEncounterBody = (
             inputTestId="create-encounter-clinician"
           />
           <TextArea
-            label={t('label.visit-notes')}
+            label={props.nextVisit ? t('label.reason') : t('label.visit-notes')}
             rows={3}
             value={note()}
             onInput={e => setNote(e.currentTarget.value)}

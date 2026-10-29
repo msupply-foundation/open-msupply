@@ -315,6 +315,29 @@ export const saveBlob = async (
   }
 };
 
+// saveBlob for a file the shell has already staged in the cache natively (the
+// server log, readServerLog.ts): the SAF picker, the staged file copied to the
+// pick, then the staged file deleted. `path` is the file's cache-relative path.
+export const saveStagedFile = async (
+  staged: { uri: string; path: string },
+  fileName: string,
+  mimeType: string
+): Promise<SaveBlobResult> => {
+  try {
+    const plugin = await getFileTransfer();
+    const { saved } = await plugin.save({
+      srcUri: staged.uri,
+      fileName: sanitizeFileName(fileName),
+      mimeType,
+    });
+    return { ok: true, saved };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  } finally {
+    deleteCached(staged.path);
+  }
+};
+
 // openDocument's "keep this" counterpart. Web: fetch (the session cookie
 // authenticates) and hand the blob to the browser-download affordance.
 // Android: the SAF picker opens immediately, then the shell streams the file

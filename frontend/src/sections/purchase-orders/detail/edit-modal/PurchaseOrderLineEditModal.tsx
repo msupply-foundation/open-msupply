@@ -1,6 +1,6 @@
 import { createMemo, createSignal, onCleanup, Show, type JSX } from 'solid-js';
 import { generateUUID } from '@/uuid';
-import { graphqlFetch } from '@/api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { MAX_FRACTION_DIGITS, formatCurrency, roundedText, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -260,9 +260,10 @@ const LineEditContent = (
       props.onSaved();
       return true;
     }
-    setErrorMessage(
-      result.kind === 'error' ? result.message : t('error.cant-save')
-    );
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
+    // Only a refusal is said here — a Forbidden or a transport failure is
+    // already up in a global modal — but any failure clears the last one.
+    setErrorMessage(result.kind === 'error' ? result.message : undefined);
     return false;
   };
 
@@ -436,7 +437,7 @@ const LineEditContent = (
                     when={gates().drafting}
                     fallback={
                       <LabelledValue
-                        label={t('label.requested-packs')}
+                        label={t('label.order-quantity-in-packs')}
                         variant="field"
                         data-testid="packs-value"
                       >
@@ -448,7 +449,7 @@ const LineEditContent = (
                     }
                   >
                     <NumberField
-                      label={t('label.requested-packs')}
+                      label={t('label.order-quantity-in-packs')}
                       min={0}
                       decimalLimit={10}
                       data-testid="packs-input"
@@ -487,7 +488,9 @@ const LineEditContent = (
                     />
                   </Show>
                   <LabelledValue
-                    label={t('label.requested-units')}
+                    label={t('label.order-quantity-in-unit', {
+                      unit: facts()!.unitName || t('label.units'),
+                    })}
                     variant="field"
                     data-testid="requested-units-value"
                   >

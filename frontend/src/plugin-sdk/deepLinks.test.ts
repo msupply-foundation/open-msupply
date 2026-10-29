@@ -48,7 +48,7 @@ const wednesday = new Date(2026, 6, 22); // 2026-07-22
 describe('task-list targets', () => {
   // The registry's own spellings (src/nav/navConfig.ts), one builder each, so
   // a plugin tile never hand-encodes a host route (OMS-REG-PLG-04.6/.9;
-  // plugins/cook_islands/ui-surface.md § S2).
+  // private/plugins/cook_islands/ui-surface.md § S2).
   it('names each core list as the navigation registry spells it', () => {
     expect(inboundShipmentListPath()).toBe('replenishment/inbound-shipment');
     expect(outboundShipmentListPath()).toBe('distribution/outbound-shipment');
@@ -61,7 +61,7 @@ describe('task-list targets', () => {
 
   it('addresses one stocktake as the section routes it (:stocktakeId)', () => {
     // The record page behind a count — the Cook Islands count log's row
-    // target (plugins/cook_islands/ui-surface.md § S5). The segment is
+    // target (private/plugins/cook_islands/ui-surface.md § S5). The segment is
     // encoded so an id can never smuggle a separator.
     expect(stocktakeDetailPath('abc123')).toBe('inventory/stocktakes/abc123');
     expect(stocktakeDetailPath('a/b')).toBe('inventory/stocktakes/a%2Fb');

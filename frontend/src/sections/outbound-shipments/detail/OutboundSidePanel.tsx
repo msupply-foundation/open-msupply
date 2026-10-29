@@ -3,6 +3,7 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import { formatCurrency } from '../../../intl/currency';
 import {
   SidePanelActions,
   SidePanelSection,
@@ -83,10 +84,7 @@ export interface OutboundSidePanelProps {
 }
 
 const money = (value: number | null | undefined): string =>
-  formatNumber(value ?? 0, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  formatCurrency(value ?? 0);
 
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
@@ -339,7 +337,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
-        <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
+        {/* The STORED shipment rate (the entity's own taxPercentage), not
+            pricing.taxPercentage: that is the server's whole-invoice blend of
+            service and stock tax, so pre-filling the input with it would save
+            the blend as the shipment's rate. */}
+        <FieldRow label={taxLabel(props.node.taxPercentage ?? 0)}>
           {/* The tax AMOUNT is the input's helperText, not a value floated to
               its right (SIDE_PANEL.md rule 3 — a value beside the input breaks
               the panel's value-alignment column). A percentage is a short
@@ -356,7 +358,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             disabled={
               props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
             }
-            value={pricing().taxPercentage ?? undefined}
+            value={props.node.taxPercentage ?? undefined}
             helperText={money(
               taxAmount(
                 pricing().stockTotalBeforeTax,
@@ -421,7 +423,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         <FieldRow label={t('label.total')}>
           <Text variant="body">
             {pricing().foreignCurrencyTotalAfterTax != null
-              ? money(pricing().foreignCurrencyTotalAfterTax)
+              ? formatCurrency(
+                  pricing().foreignCurrencyTotalAfterTax!,
+                  props.node.currency?.code
+                )
               : '—'}
           </Text>
         </FieldRow>

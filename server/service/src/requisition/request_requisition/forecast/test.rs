@@ -44,6 +44,7 @@ fn link(
         ancillary_quantity,
         deleted_datetime: None,
         exclude_principal_wastage: false,
+        wastage_rate: 0.0,
     }
 }
 
@@ -308,6 +309,50 @@ async fn forecast_ancillary_excludes_principal_wastage() {
         panic!("expected an Ancillary ratio breakdown");
     };
     assert_eq!(forecast.principals[0].wastage_rate, 0.0);
+}
+
+#[actix_rt::test]
+async fn forecast_ancillary_adds_the_supply_wastage() {
+    let (vaccine, b, c, d) = (
+        mock_vaccine_item_a().id,
+        mock_item_b().id,
+        mock_item_c().id,
+        mock_item_d().id,
+    );
+    // store_a gives the vaccine a 50% wastage rate. b (syringes) is used for the doses given
+    // and 20% of them break. c (safety boxes) follows the syringes, broken ones included.
+    // d excludes the syringes' wastage, which as no course covers them is their own 20%.
+    let mut syringe = link(&vaccine, &b, 1.0, 1.0);
+    syringe.exclude_principal_wastage = true;
+    syringe.wastage_rate = 20.0;
+    let mut lid = link(&b, &d, 1.0, 1.0);
+    lid.exclude_principal_wastage = true;
+    let setup = Setup::new(
+        "forecast_ancillary_adds_the_supply_wastage",
+        vec![syringe, link(&b, &c, 100.0, 1.0), lid],
+    )
+    .await;
+
+    setup.add(&vaccine);
+    setup.set_demand(&vaccine, 100.0);
+
+    // 50 doses given ÷ (1 − 20%) = 62.5 syringes
+    let line_b = setup.add(&b);
+    assert_eq!(line_b.forecast_monthly_consumption, 62.5);
+    let Some(ForecastData::AncillaryRatio(forecast)) = line_b
+        .forecast_data
+        .as_deref()
+        .and_then(ForecastData::from_json)
+    else {
+        panic!("expected an Ancillary ratio breakdown");
+    };
+    assert_eq!(forecast.principals[0].wastage_rate, 50.0);
+    assert_eq!(forecast.principals[0].own_wastage_rate, 20.0);
+
+    // 62.5 syringes ÷ 100 = 0.625 safety boxes
+    assert_eq!(setup.add(&c).forecast_monthly_consumption, 0.625);
+    // 62.5 syringes less their own 20% = 50
+    assert_eq!(setup.add(&d).forecast_monthly_consumption, 50.0);
 }
 
 #[actix_rt::test]

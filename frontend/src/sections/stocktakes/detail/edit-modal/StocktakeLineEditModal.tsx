@@ -49,6 +49,7 @@ import {
 import { ItemSearch } from '@/domain/item';
 import { VvmStatusSelect } from '@/domain/vvmStatus';
 import { NameSearch } from '@/domain/name';
+import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
@@ -70,10 +71,17 @@ import {
 } from '@/ui/icons';
 import {
   StockLinesByItem,
+  StocktakeItemVariants,
   StocktakeLines,
+  type StocktakeItemVariantsResult,
   type StocktakeLineFragment,
   type StockLinesByItemResult,
 } from '../lines/stocktakeDetail.generated';
+import {
+  variantUpdateField,
+  variantVolumeForLine,
+  variantVolumePerPack,
+} from '../lines/itemVariant';
 import {
   runBatchStocktakeLines,
   type BatchStocktakeLinesInput,
@@ -134,13 +142,25 @@ type ItemStockLine = Extract<
   { __typename: 'StockLineConnector' }
 >['nodes'][number];
 
+// One of the edited item's variants (from stocktakeItemVariants).
+type ItemVariant = Extract<
+  StocktakeItemVariantsResult['items'],
+  { __typename: 'ItemConnector' }
+>['nodes'][number]['variants'][number];
+
 // A draft row: the line fragment plus client-only bookkeeping (see the original
-// notes) — isNew / stockLineId / countThisLine / deleted.
+// notes) — isNew / stockLineId / countThisLine / deleted / variantEdited.
 type DraftLine = Omit<StocktakeLineFragment, 'volumePerPack'> & {
   isNew?: boolean;
   stockLineId?: string;
   countThisLine: boolean;
   deleted?: boolean;
+  // Whether the user set or cleared the item variant in this visit. Save sends
+  // the variant only then: the server keeps a line's variant on an update that
+  // omits it, and an insert from stock takes the stock line's own — which
+  // matters for an auto-created barcode-only variant, kept out of the item's
+  // variant list and so never shown here, which a save must not wipe.
+  variantEdited?: boolean;
   // The wire fragment types volumePerPack non-null (defaults 0 on the server),
   // but the editor lets the user CLEAR it — an empty input persists no volume.
   // So the draft widens it to nullable; the input types accept null too.
@@ -188,6 +208,22 @@ const fetchExistingLines = async (
     page: { first: ITEM_LINES_PAGE },
   });
   return result.kind === 'success' ? result.data.stocktakeLines.nodes : [];
+};
+
+// Fetch the item's variants for the Item variant field. [] on a failed fetch,
+// which just leaves the field hidden (graphqlFetch already surfaced the error).
+const fetchItemVariants = async (
+  storeId: string,
+  itemId: string
+): Promise<ItemVariant[]> => {
+  const result = await graphqlFetch(StocktakeItemVariants, {
+    storeId,
+    itemId,
+  });
+  return result.kind === 'success' &&
+    result.data.items.__typename === 'ItemConnector'
+    ? (result.data.items.nodes[0]?.variants ?? [])
+    : [];
 };
 
 // How many lines one presence probe may return: a page of search results is
@@ -295,6 +331,9 @@ const buildDraft = async (
     manufacturer: sl.manufacturer,
     campaign: sl.campaign,
     program: sl.program,
+    // Shown only; the insert leaves it to the server to carry the stock
+    // line's variant over unless the user picks another (variantEdited).
+    itemVariantId: sl.itemVariant?.id ?? null,
   }));
   return [...fromExisting, ...fromStock].sort(compareBatchOrder);
 };
@@ -464,6 +503,11 @@ const StocktakeLineEditContent = (
   // The item currently being edited; undefined = add mode with no item picked
   // yet (the search state).
   const [currentItem, setCurrentItem] = createSignal<StocktakeLineEditItem>();
+  // The current item's variants, behind the Item variant field — empty (field
+  // hidden) for an item with none, and until they load. A plain signal set by
+  // seedItem, not a resource, so loading an item never suspends the open
+  // dialog.
+  const [variants, setVariants] = createSignal<ItemVariant[]>([]);
   // Mode: 'update' (opened from a row — "OK & next" steps to the next item) or
   // 'add' ("Add item", or fallen into when an update walk runs out — "OK &
   // next" clears the selector to add another). Only ever flips update → add,
@@ -664,16 +708,23 @@ const StocktakeLineEditContent = (
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setLineErrors(new Map());
+    setVariants([]);
     setLoadingLines(true);
-    const existing =
+    // The variants load alongside the batches — awaited together, so a failed
+    // existing-lines fetch (or a sibling's) can't leave the variants promise
+    // unhandled.
+    const [existing, itemVariants] = await Promise.all([
       knownExisting ??
-      (await fetchExistingLines(props.storeId, props.stocktakeId, item.id));
+        fetchExistingLines(props.storeId, props.stocktakeId, item.id),
+      fetchItemVariants(props.storeId, item.id),
+    ]);
     const seeded = await buildDraft(
       props.storeId,
       item,
       existing,
       existing.length === 0
     );
+    setVariants(itemVariants);
     setDraft(reconcile(seeded, { key: 'id' }));
     // Focus the requested batch, else the first row — the focus effect runs
     // when loadingLines flips false below.
@@ -734,6 +785,7 @@ const StocktakeLineEditContent = (
     setMode('add');
     setCurrentItem(undefined);
     setLineErrors(new Map());
+    setVariants([]);
     setDraft(reconcile([], { key: 'id' }));
     itemSearch.focus();
   };
@@ -772,6 +824,40 @@ const StocktakeLineEditContent = (
     const index = draft.findIndex(line => line.id === id);
     if (index >= 0) setDraft(index, field, value as never);
     clearLineError(id);
+  };
+
+  // Set (or clear) a batch's item variant. Choosing one also fills the batch's
+  // manufacturer from it, when it names one, and its volume per pack from the
+  // packaging level matching the batch's pack size, when one has a volume
+  // (variantVolumePerPack) — both stay editable afterwards. Clearing touches
+  // nothing else.
+  const chooseVariant = (line: DraftLine, variant: ItemVariant | null) => {
+    update(line.id, 'itemVariantId', variant?.id ?? null);
+    update(line.id, 'variantEdited', true);
+    if (!variant) return;
+    if (variant.manufacturer) {
+      update(line.id, 'manufacturer', {
+        id: variant.manufacturer.id,
+        name: variant.manufacturer.name,
+      });
+    }
+    const volume = variantVolumePerPack(
+      variant.packagingVariants,
+      line.packSize
+    );
+    if (volume !== undefined) update(line.id, 'volumePerPack', volume);
+  };
+
+  // Set a batch's pack size. The variant seeds the volume per pack from the
+  // packaging level matching the pack size, so a pack-size change re-seeds it
+  // from the line's chosen variant (OMS-REG-INV-03.93) — otherwise the saved
+  // volume would stay the one worked out for the pack size at the moment the
+  // variant was picked. Only the volume stays as-is when no level matches the
+  // new pack size (variantVolumeForLine returns undefined).
+  const setPackSize = (line: DraftLine, value: number | null) => {
+    update(line.id, 'packSize', value);
+    const volume = variantVolumeForLine(variants(), line.itemVariantId, value);
+    if (volume !== undefined) update(line.id, 'volumePerPack', volume);
   };
 
   // Update a line's counted packs AND drop a now-mismatched reason: recounting
@@ -873,6 +959,7 @@ const StocktakeLineEditContent = (
           manufacturer: null,
           campaign: null,
           program: null,
+          itemVariantId: null,
         })
       )
     );
@@ -913,6 +1000,10 @@ const StocktakeLineEditContent = (
       // would misreport the link and read-only the copy's pack size
       // (packSizeEditable keys off it).
       stockLine: line.stockLineId ? unwrap(line).stockLine : null,
+      // A copy inserted by item has no stock line for the server to take a
+      // variant from, so it sends the source's own. A copy opting in stock
+      // keeps the source's choice, like the source would.
+      variantEdited: line.stockLineId ? line.variantEdited : true,
     };
     setDraft(
       produce(lines => {
@@ -969,6 +1060,9 @@ const StocktakeLineEditContent = (
           // independent fields: a line may carry either, both or neither.
           campaignId: line.campaign?.id ?? null,
           programId: line.program?.id ?? null,
+          // Item variant — plain scalar on INSERT, sent only once the user
+          // set it (see variantEdited).
+          ...(line.variantEdited ? { itemVariantId: line.itemVariantId } : {}),
         });
         continue;
       }
@@ -997,6 +1091,9 @@ const StocktakeLineEditContent = (
         // each sent at its own current value.
         campaignId: { value: line.campaign?.id ?? null },
         programId: { value: line.program?.id ?? null },
+        // Item variant — NullableStringUpdate wrapper on UPDATE, sent only
+        // once the user set or cleared it (see variantUpdateField).
+        ...variantUpdateField(line),
       });
     }
     return { insert, update, delete: deletes.map(id => ({ id })) };
@@ -1260,7 +1357,7 @@ const StocktakeLineEditContent = (
             // where no stock stands behind the row (packSizeEditable).
             disabled={!line.countThisLine || !packSizeEditable(line)}
             value={line.packSize ?? undefined}
-            onChange={value => update(line.id, 'packSize', value ?? null)}
+            onChange={value => setPackSize(line, value ?? null)}
           />
         );
       },
@@ -1699,11 +1796,45 @@ const StocktakeLineEditContent = (
         );
       },
     },
+    // Item variant (Pricing & additional info) — offered only when the item
+    // has variants (spec S4), so the column is built into the set only then.
+    // Choosing one fills the manufacturer and volume per pack (chooseVariant);
+    // saved via itemVariantId in buildBatch, only once edited. Sits before
+    // Manufacturer, which it fills, so the two pair on a card row.
+    ...(variants().length > 0
+      ? [
+          {
+            c: { id: 'itemVariant' },
+            header: () => t('label.item-variant'),
+            cardGroup: 'pricing',
+            meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <Combobox<ItemVariant>
+                  size="small"
+                  label={t('label.item-variant')}
+                  hideLabel
+                  items={variants()}
+                  itemToString={v => v.name}
+                  itemToValue={v => v.id}
+                  disabled={!line.countThisLine}
+                  value={line.itemVariantId ?? undefined}
+                  placeholder={t('label.none')}
+                  onChange={variant => chooseVariant(line, variant)}
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
     // Manufacturer (Pricing & additional info) — UNGATED (no store preference;
     // spec S4 lists it alongside donor but without a gate). An async
     // manufacturer picker
     // (NameSearch role="manufacturer") over the draft's manufacturer NameNode;
-    // saved via manufacturerId in buildBatch.
+    // saved via manufacturerId in buildBatch. Changing it clears an item
+    // variant picked from the list, which named the old manufacturer (as the
+    // new-stock modal does).
     {
       c: { id: 'manufacturer' },
       header: () => t('label.manufacturer'),
@@ -1728,13 +1859,17 @@ const StocktakeLineEditContent = (
                 : undefined
             }
             placeholder={t('label.none')}
-            onSelect={name =>
+            onSelect={name => {
               update(
                 line.id,
                 'manufacturer',
                 name ? { id: name.id, name: name.name } : null
-              )
-            }
+              );
+              if (variants().some(v => v.id === line.itemVariantId)) {
+                update(line.id, 'itemVariantId', null);
+                update(line.id, 'variantEdited', true);
+              }
+            }}
           />
         );
       },

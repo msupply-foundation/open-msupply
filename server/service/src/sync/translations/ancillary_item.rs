@@ -36,6 +36,7 @@ impl SyncTranslation for AncillaryItemTranslation {
             ancillary_quantity,
             deleted_datetime,
             exclude_principal_wastage,
+            wastage_rate,
             item_id,
             ancillary_item_id,
         } = serde_json::from_value::<AncillaryItemRow>(sync_record.data.0.clone())?;
@@ -48,6 +49,7 @@ impl SyncTranslation for AncillaryItemTranslation {
             ancillary_quantity,
             deleted_datetime,
             exclude_principal_wastage,
+            wastage_rate,
             item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
             ancillary_item_id: check_fk(
                 ancillary_item_id,

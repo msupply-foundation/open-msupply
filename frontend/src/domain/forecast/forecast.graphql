@@ -44,6 +44,7 @@ fragment ForecastLine on RequisitionLineNode {
         itemQuantity
         ancillaryQuantity
         wastageRate
+        ownWastageRate
         principalUsableConsumption
         monthlyConsumption
       }

@@ -241,8 +241,7 @@ fn process_single_log_file(
             ))
         })?;
 
-    let log_content_string = log_content.join("\n");
-    let log_bytes = log_content_string.as_bytes();
+    let log_bytes = log_content.as_bytes();
 
     let file = static_file_service
         .store_file(
@@ -388,8 +387,8 @@ mod tests {
     /// `get_log_content` independently. Per-file failures use the file name as the key.
     struct MockLogService {
         file_names: Result<Vec<String>, String>,
-        // file_name -> Result<content_lines, error_string>
-        contents: std::collections::HashMap<String, Result<Vec<String>, String>>,
+        // file_name -> Result<content, error_string>
+        contents: std::collections::HashMap<String, Result<String, String>>,
     }
 
     impl Default for MockLogService {
@@ -410,7 +409,7 @@ mod tests {
             &self,
             _ctx: &ServiceContext,
             file_name: Option<String>,
-        ) -> Result<(String, Vec<String>), anyhow::Error> {
+        ) -> Result<(String, String), anyhow::Error> {
             let file_name = file_name.unwrap_or_default();
             let content = self
                 .contents
@@ -418,7 +417,7 @@ mod tests {
                 .cloned()
                 .unwrap_or_else(|| Err(format!("no mock content for '{}'", file_name)));
             content
-                .map(|lines| (file_name, lines))
+                .map(|content| (file_name, content))
                 .map_err(|e| anyhow!(e))
         }
     }
@@ -567,10 +566,7 @@ mod tests {
             "bad.log".to_string(),
             Err("Permission denied (os error 13)".to_string()),
         );
-        contents.insert(
-            "good.log".to_string(),
-            Ok(vec!["hello".to_string(), "world".to_string()]),
-        );
+        contents.insert("good.log".to_string(), Ok("hello\nworld".to_string()));
         let mock = MockLogService {
             file_names: Ok(vec!["bad.log".to_string(), "good.log".to_string()]),
             contents,

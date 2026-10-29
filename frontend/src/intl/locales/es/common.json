@@ -1556,7 +1556,6 @@
   "messages.results-found": "Se encontraron {{totalCount}} resultados",
   "messages.results-over-limit": "Mostrando solo los primeros {{limit}} resultados; por favor refina tu búsqueda",
   "messages.rnr-not-all-lines-confirmed": "No todas las líneas han sido confirmadas. ¿Estás seguro de que estás listo para finalizar?",
-  "messages.save-encounter-as-visited": "¿Guardar el encuentro como visitado?",
   "messages.saved": "Guardado",
   "messages.scanner-connected": "Conectado",
   "messages.scanner-disconnected": "No conectado",

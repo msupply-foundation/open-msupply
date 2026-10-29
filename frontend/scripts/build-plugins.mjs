@@ -1,8 +1,8 @@
 /*
  * Build + pack frontend plugins.
  *
- * For each discovered plugin (in-repo `plugins/examples/*` and `plugins/*`, plus
- * anything named by OMS_PLUGIN_DIRS) this:
+ * For each discovered plugin (in-repo `plugins/examples/*`, `plugins/*` and
+ * `private/plugins/*`, plus anything named by OMS_PLUGIN_DIRS) this:
  *   1. builds it to a single-file ES module
  *      `dist/frontend_plugins/{code}/{code}.js`
  *      through the shared preset (vite/pluginBuild.ts) — shared specifiers stay
@@ -11,7 +11,7 @@
  *      installable server artifact, byte-for-byte in the format
  *      `remote_server_cli generate-plugin-bundle` produces. Both of a plugin's
  *      halves go in its own bundle and nobody else's; a plugin's BACKEND half
- *      (`plugins/<dir>/backend`, BoaJS code) is built here too, from its own
+ *      (`<plugin dir>/backend`, BoaJS code) is built here too, from its own
  *      source, through `vite/backendPluginBuild.ts` — so ONE command produces
  *      a country plugin's whole bundle. A plugin with a FORM half
  *      (`forms/forms.json`) has its current schema versions emitted from
@@ -39,6 +39,8 @@
  *     it as `?v=`.
  *
  * Usage: pnpm build:plugins   [OMS_PLUGIN_DIRS=../civ-plugins/frontend/latest]
+ *   (OMS_PLUGIN_DIRS entries are relative to the repo root, as in the dev
+ *   loop.)
  */
 import { createHash } from 'node:crypto';
 import {
@@ -135,7 +137,7 @@ const readBackendManifest = dir => {
     throw new Error(
       `${dir}: declares a backend plugin but has neither ${BACKEND_ENTRY} ` +
         'nor prebuilt/plugin.js — ship source to build from (see ' +
-        'plugins/civ/backend/README.md) or a committed build to pack verbatim'
+        'private/plugins/civ/backend/README.md) or a committed build to pack verbatim'
     );
   }
   const code = manifest.name;
@@ -290,9 +292,9 @@ const packPlugin = plugin => {
      *
      * The plugin-API integer is NOT packed alongside it. That gate is
      * module-side and stays there (spec/plugins/sdk-contract.md § versioning):
-     * `plugins/examples/api_too_new` declares 999 in its MODULE and is refused by the
-     * loader after the bundle evaluates, which is the gate that fixture exists
-     * to exercise.
+     * `plugins/examples/api_too_new` declares 999 in its MODULE and is refused
+     * by the loader after the bundle evaluates, which is the gate that fixture
+     * exists to exercise.
      *
      * Not overridable per plugin, deliberately.
      */
@@ -423,11 +425,11 @@ const formRows = formPlugins.map(({ plugin, declaration }) =>
  * it.
  *
  * The code is also what pairs a plugin's halves where it HAS two —
- * `plugins/civ` and `plugins/civ/backend` both declare `civ_plugins` — so
- * grouping by it puts both in one bundle, the unit that has to be installed
- * together. A plugin with only one half (frontend-only like the examples,
- * backend-only like BES) simply gets a bundle with one populated list;
- * nothing here requires a pair.
+ * `private/plugins/civ` and `private/plugins/civ/backend` both declare
+ * `civ_plugins` — so grouping by it puts both in one bundle, the unit that has
+ * to be installed together. A plugin with only one half (frontend-only like
+ * the examples, backend-only like BES) simply gets a bundle with one populated
+ * list; nothing here requires a pair.
  *
  * A form half joins its plugin's bundle the same way, keyed by the frontend
  * manifest's code, as a third list. `form_plugins` is optional in the Rust

@@ -79,12 +79,8 @@ export const PurchaseOrderSidePanel: Component<
   >({});
   const save = async (field: ReportingField, patch: PurchaseOrderPatch) => {
     const result = await props.onSaveField(patch);
-    setSaveErrors(
-      field,
-      result.ok
-        ? undefined
-        : (result.message ?? t('messages.error-saving-purchase-order'))
-    );
+    // No message = already up in a global modal (permission or transport).
+    setSaveErrors(field, result.ok ? undefined : result.message);
   };
 
   const money = (value: number) => formatCurrency(value, currency());

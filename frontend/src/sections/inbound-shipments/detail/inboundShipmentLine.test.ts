@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   batchIsBlank,
   expiryIsBlank,
+  figuresAtPackSize,
   lacksBatchOrExpiry,
   missingBatchField,
+  newBatchDefaultsFromLine,
+  orderLinePrice,
   packDifference,
+  perUnitAtPackSize,
 } from './inboundShipmentLine';
 
 // The Difference figure's DIRECTION (spec/inbound-shipments/ui-surface.md
@@ -95,5 +99,156 @@ describe('missingBatchField', () => {
 
   it('names either when different batches lack different fields', () => {
     expect(missingBatchField([noBatch, noExpiry])).toBe('either');
+  });
+});
+
+// A new batch's starting figures (spec/inbound-shipments/rules.md › new-batch
+// defaults) when "Add batch" is used on an item opened from its row.
+describe('newBatchDefaultsFromLine', () => {
+  const item = {
+    id: 'item-1',
+    code: 'PARA',
+    name: 'Paracetamol',
+    unitName: 'Tab',
+    isVaccine: false,
+    doses: 1,
+    defaultPackSize: 10,
+    itemStoreProperties: { defaultSellPricePerPack: 4 },
+    volumePerPack: 0.25,
+  };
+  const orderLine = {
+    id: 'pol-1',
+    lineNumber: 1,
+    requestedPackSize: 20,
+    requestedNumberOfUnits: 200,
+    shippedNumberOfUnits: 0,
+    inTransitNumberOfUnits: 0,
+    receivedNumberOfUnits: 0,
+    pricePerPackBeforeDiscount: 12,
+    pricePerPackAfterDiscount: 10,
+    pricePerPackAfterSupplierDiscount: 9,
+  };
+
+  it("OMS-REG-REPL-09.40 seeds from the item's default pack size and price", () => {
+    expect(
+      newBatchDefaultsFromLine({ item, purchaseOrderLine: null }, undefined)
+    ).toEqual({
+      defaultPackSize: 10,
+      prefillPricePerPack: 4,
+      volumePerPack: 0.25,
+    });
+  });
+
+  it('prices at zero where the store has no default sell price', () => {
+    expect(
+      newBatchDefaultsFromLine(
+        {
+          item: { ...item, itemStoreProperties: null },
+          purchaseOrderLine: null,
+        },
+        undefined
+      ).prefillPricePerPack
+    ).toBe(0);
+  });
+
+  it('OMS-REG-REPL-09.42 .45 seeds from the cited order line at the shipment rate, its volume at the order pack size', () => {
+    // The item's 0.25 belongs to its pack of 10; the order's pack of 20 holds
+    // twice as much.
+    expect(
+      newBatchDefaultsFromLine({ item, purchaseOrderLine: orderLine }, 1.5)
+    ).toEqual({
+      defaultPackSize: 20,
+      prefillPricePerPack: 13.5,
+      volumePerPack: 0.5,
+    });
+  });
+});
+
+describe('orderLinePrice', () => {
+  it('is the price net of supplier discount at a home-currency rate of one', () => {
+    expect(orderLinePrice(9, undefined)).toBe(9);
+  });
+
+  it('converts a foreign price at the shipment rate', () => {
+    expect(orderLinePrice(9, 2)).toBe(18);
+  });
+
+  it('reads a rate of 0 as 1, as the server recalculation does', () => {
+    expect(orderLinePrice(9, 0)).toBe(9);
+  });
+});
+
+// What a transfer's read-only cost (OMS-REG-REPL-09.44) and any batch's
+// volume per pack (.45) follow on a pack-size change
+// (spec/inbound-shipments/rules.md › new-batch defaults).
+describe('perUnitAtPackSize', () => {
+  it('keeps the default price per unit at another pack size', () => {
+    expect(perUnitAtPackSize(10, 100, 50)).toBe(5);
+    expect(perUnitAtPackSize(10, 100, 200)).toBe(20);
+  });
+
+  it('is the default price at the default pack size', () => {
+    expect(perUnitAtPackSize(10, 100, 100)).toBe(10);
+  });
+
+  it('is zero where the item has no default pack size', () => {
+    expect(perUnitAtPackSize(10, 0, 50)).toBe(0);
+  });
+});
+
+// What a pack-size change does to a batch's figures, by shipment kind
+// (spec/inbound-shipments/rules.md › new-batch defaults). The base is the
+// item's defaults on a new batch, or the source's figures on a duplicate.
+describe('figuresAtPackSize', () => {
+  const manual = { purchaseOrderLinked: false, costLocked: false };
+  const transfer = { purchaseOrderLinked: false, costLocked: true };
+  const purchaseOrder = { purchaseOrderLinked: true, costLocked: true };
+  const itemDefaults = {
+    packSize: 100,
+    costPricePerPack: 10,
+    sellPricePerPack: 10,
+    volumePerPack: 0.5,
+  };
+
+  it('OMS-REG-REPL-09.11 clears both prices away from the base pack size where cost can be typed', () => {
+    expect(figuresAtPackSize(itemDefaults, 50, manual)).toEqual({
+      volumePerPack: 0.25,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+    });
+  });
+
+  it('leaves the prices alone at the base pack size where cost can be typed', () => {
+    expect(figuresAtPackSize(itemDefaults, 100, manual)).toEqual({
+      volumePerPack: 0.5,
+    });
+  });
+
+  it('OMS-REG-REPL-09.44 moves both prices at the price per unit on a transfer', () => {
+    expect(figuresAtPackSize(itemDefaults, 50, transfer)).toEqual({
+      volumePerPack: 0.25,
+      costPricePerPack: 5,
+      sellPricePerPack: 5,
+    });
+  });
+
+  it('OMS-REG-REPL-09.42 .45 keeps an order line price and moves only the volume', () => {
+    expect(figuresAtPackSize(itemDefaults, 200, purchaseOrder)).toEqual({
+      volumePerPack: 1,
+    });
+  });
+
+  it("OMS-REG-REPL-09.46 scales a transfer duplicate from its source's own cost and sell price", () => {
+    const source = {
+      packSize: 10,
+      costPricePerPack: 5,
+      sellPricePerPack: 8,
+      volumePerPack: 0.2,
+    };
+    expect(figuresAtPackSize(source, 20, transfer)).toEqual({
+      volumePerPack: 0.4,
+      costPricePerPack: 10,
+      sellPricePerPack: 16,
+    });
   });
 });

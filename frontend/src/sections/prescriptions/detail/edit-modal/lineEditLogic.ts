@@ -8,6 +8,7 @@ import {
   type BarReason,
   type IssueWarning,
 } from '@/domain/allocation';
+import { scanExclusions, type IssueScan } from '@/domain/barcode';
 import type {
   PrescriptionEditLinesResult,
   SavePrescriptionItemLinesVariables,
@@ -33,6 +34,15 @@ export interface DraftLine extends ServerDraftLine {
    * preference or not (OMS-REG-SMV-11.4–.6/.28).
    */
   autoBarred: readonly BarReason[];
+  /**
+   * Ruled out by the scan (spec/barcode-scanning rules § Issuing by
+   * scanning): the batch its label named, or another box's barcode. Not a
+   * bar — the stock is fine — but the scan asked for other stock, so the row
+   * is disabled, never
+   * distributed to, and not counted as available. Never set on a row this
+   * dispensing record already draws from.
+   */
+  scanExcluded: boolean;
 }
 
 /**
@@ -58,16 +68,40 @@ const showLine = (line: ServerDraftLine): boolean =>
 export const seedDraftLines = (
   lines: readonly ServerDraftLine[],
   prefs: AllocationPreferences,
-  today?: Date
-): DraftLine[] =>
-  lines
+  today?: Date,
+  /** The scan's batch and barcode, narrowing the rows to them. */
+  scan?: Pick<IssueScan, 'batch' | 'code'>
+): DraftLine[] => {
+  const shown = lines
     .filter(showLine)
-    .sort((a, b) => fillOrderCompare(a, b, prefs))
-    .map(line => ({
-      ...line,
-      barred: barReasons(line, prefs, today),
-      autoBarred: autoAllocateBarReasons(line, prefs, today),
-    }));
+    .sort((a, b) => fillOrderCompare(a, b, prefs));
+  // Narrowed among the rows the dispenser can see.
+  const excluded = scanExclusions(shown, scan);
+  return shown.map(line => ({
+    ...line,
+    barred: barReasons(line, prefs, today),
+    autoBarred: autoAllocateBarReasons(line, prefs, today),
+    scanExcluded: excluded.has(line.id),
+  }));
+};
+
+/**
+ * What a scan's narrowing left on offer, when it narrowed anything (.210,
+ * .212): the one batch left, where it left one — a barcode alone can leave
+ * several batches of the same box — and whether it left nothing at all.
+ */
+export const scanNarrowing = (
+  lines: readonly DraftLine[]
+): { batch?: string; nothingLeft: boolean } | undefined => {
+  if (!lines.some(line => line.scanExcluded)) return undefined;
+  const left = lines.filter(line => !line.scanExcluded);
+  const batches = new Set(left.map(line => line.batch ?? ''));
+  const [only] = batches;
+  return {
+    batch: batches.size === 1 && only ? only : undefined,
+    nothingLeft: left.length === 0,
+  };
+};
 
 /**
  * Units available across usable rows. Held stock never counts — the editable
@@ -78,6 +112,7 @@ export const draftAvailableUnits = (lines: readonly DraftLine[]): number =>
   lines.reduce(
     (sum, line) =>
       line.barred.length > 0 ||
+      line.scanExcluded ||
       line.stockLineOnHold ||
       (line.location?.onHold ?? false)
         ? sum
@@ -104,8 +139,14 @@ export const allocateUnits = (
 } => {
   // Distribution filters on the AUTO bar — expired/unusable-VVM stock is
   // never auto-dispensed even with the issue prefs off (OMS-REG-SMV-11.5/.28).
+  // A scan-excluded row offers nothing — not a reported skip: staying out of
+  // the other batches is what the scan asked for.
   const distribution = distributeIssue(
-    lines.map(line => ({ ...line, barred: line.autoBarred })),
+    lines.map(line => ({
+      ...line,
+      barred: line.autoBarred,
+      availablePacks: line.scanExcluded ? 0 : line.availablePacks,
+    })),
     requestedUnits,
     { partialPacks: true }
   );

@@ -132,6 +132,7 @@ mod test {
             store_id: mock_store_b().id,
             name_is_customer: true,
             name_is_supplier: false,
+            visible: true,
         }
     }
 
@@ -280,5 +281,52 @@ mod test {
                 }
             );
         }
+    }
+
+    #[actix_rt::test]
+    async fn duplicate_outbound_shipment_merges_batches_into_one_placeholder() {
+        let source = InvoiceRow {
+            id: "duplicate_os_multi_batch".to_string(),
+            ..mock_outbound_shipment_a()
+        };
+        let batch = |id: &str, pack_size: f64, number_of_packs: f64| InvoiceLineRow {
+            id: id.to_string(),
+            invoice_id: source.id.clone(),
+            pack_size,
+            number_of_packs,
+            ..mock_outbound_shipment_a_invoice_lines()[0].clone()
+        };
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "duplicate_outbound_shipment_merges_batches_into_one_placeholder",
+            MockDataInserts::all(),
+            MockData {
+                name_store_joins: vec![customer_visible_to_store_b()],
+                full_master_lists: vec![master_list_visible_to_store_b(&["item_a"])],
+                invoices: vec![source.clone()],
+                invoice_lines: vec![
+                    batch("multi_batch_ones", 1.0, 3.0),
+                    batch("multi_batch_tens", 10.0, 2.0),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+        let duplicate = service_provider
+            .invoice_service
+            .duplicate_outbound_shipment(&context, source.id)
+            .unwrap();
+
+        let new_lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&duplicate.invoice.invoice_row.id)
+            .unwrap();
+        assert_eq!(new_lines.len(), 1);
+        assert_eq!(new_lines[0].r#type, InvoiceLineType::UnallocatedStock);
+        assert_eq!(new_lines[0].pack_size, 1.0);
+        assert_eq!(new_lines[0].number_of_packs, 3.0 + 2.0 * 10.0);
     }
 }

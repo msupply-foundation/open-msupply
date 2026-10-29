@@ -16,7 +16,10 @@ import { t, tPlural } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
+import {
+  Alert,
+  type AlertSeverity,
+} from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
@@ -79,6 +82,7 @@ import {
   barReasons,
   clampManualPacks,
   deriveIssueWarnings,
+  distributionOutcome,
   isExpired,
   rowHasAllocatableStock,
   distributeIssue,
@@ -88,17 +92,21 @@ import {
   dosesToPacks,
   type AllocateUnit,
   type AllocationPreferences,
+  type DistributionOutcome,
   type IssueWarning,
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { activityMismatch, issueWarningMessages } from './allocationWarnings';
 import { Num } from '@/ui/elements/typography/Num';
 import {
-  learnIssueScan,
-  scannedBatchExclusions,
+  proposeIssuedBarcode,
+  scanExclusions,
+  batchLabelNarrowing,
+  ScanNarrowedNotice,
+  type BatchLabelReceiver,
   type IssueScan,
   type IssueScanReceiver,
-} from './issueScan';
+} from '@/domain/barcode';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
 // quantity to issue and distribute it across batches. The batch grid is the
@@ -301,23 +309,32 @@ interface OutboundLineEditModalProps {
   /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
   /**
-   * Opened by a scan (spec/barcode-scanning rules § Learning a code while
-   * issuing) — add mode, on the scan's item where the code resolved. The
-   * editor carries it until its first successful save, which learns the code.
+   * Opened by a scan (spec/barcode-scanning rules § Issuing by scanning) —
+   * add mode, on the scan's item where the code resolved. The editor carries
+   * it until its first successful save, which proposes the barcode.
    */
   scan?: IssueScan;
   /**
-   * The line saved but the code could not be learned (.48). The editor may
-   * already be closing, so the view shows it, not the editor.
-   */
-  onScanNotice?: (message: string) => void;
-  /**
    * While the editor waits for an item (add mode, nothing chosen — "Add
-   * item", or after Save & next), it takes a scan as its pick: the screen
-   * hands the resolved scan here instead of dropping it. Called with
-   * `undefined` once an item is chosen, while saving, and on close.
+   * item", or after Save & next), it takes a scan as its pick: the screen's
+   * scan host hands the resolved scan here instead of discarding it. Called
+   * with `undefined` once an item is chosen, while saving, and on close.
    */
   onScanReceiver?: (receiver: IssueScanReceiver | undefined) => void;
+  /**
+   * A scan arrived while this editor was open (or while the scan that opened
+   * it was still being looked up) and was discarded — say so here, where the
+   * user is looking, rather than behind the dialog (spec/barcode-scanning
+   * rules § Issuing by scanning: "the user is told to close the
+   * line editor to scan"; OMS-REG-BAC-01.141).
+   */
+  scanDiscarded?: boolean;
+  /**
+   * While it is open on an item, it takes a batch label's batch and narrows
+   * its stock to it (OMS-REG-BAC-01.192). Called with `undefined` while it
+   * has no item, while loading or saving, and on close.
+   */
+  onBatchLabelReceiver?: (receiver: BatchLabelReceiver | undefined) => void;
 }
 
 // The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
@@ -372,34 +389,56 @@ export const OutboundLineEditModal = (
 // over-allocation surfaced (OMS-REG-SMV-11.11) and every skipped category reported
 // (OMS-REG-SMV-11.7) — is the pure issueWarningMessages (unit-tested in
 // ./allocationWarnings); here we only resolve its keys/params via t(), reusing
-// the same ported vocabulary the bulk allocate report uses. The shortfall is
-// NOT reported here — outbound surfaces it as the dedicated placeholder notice
-// (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
+// the same ported vocabulary the bulk allocate report uses. While NEW the
+// shortfall is NOT reported here — it becomes the placeholder, surfaced as the
+// dedicated placeholder notice — so deriveIssueWarnings reports it only past
+// NEW, where no placeholder can be created and the save issues what was
+// allocated (OMS-REG-DIST-03.23, OMS-REG-SMV-11.13).
 //
 // Each banner carries the test id of the category it reports (e2e/TESTIDS.md
 // › Distribution), so a suite can tell an over-allocation from a skip report
-// without reading copy.
-type IssueBanner = { testId: string; message: string };
+// without reading copy. A skip is info — allocation handled it (stock-
+// allocation ui-surface § severity); over-allocation is a warning.
+type IssueBanner = {
+  testId: string;
+  message: string;
+  severity: AlertSeverity;
+};
 const warningMessages = (
   derived: readonly IssueWarning[],
-  requestedUnits: number
+  requestedUnits: number,
+  lens: AllocateUnit,
+  outcome: DistributionOutcome
 ): IssueBanner[] =>
-  issueWarningMessages(derived, requestedUnits).map(message =>
-    message.key === 'messages.over-allocated'
-      ? {
+  issueWarningMessages(derived, requestedUnits, lens, outcome).map(message => {
+    switch (message.key) {
+      case 'messages.over-allocated':
+        return {
           testId: 'outbound-over-allocated-warning',
           message: t(message.key, {
             quantity: roundedText(message.quantity),
             issueQuantity: roundedText(message.issueQuantity),
           }),
-        }
-      : {
-          testId: 'outbound-skipped-stock-warning',
+          severity: 'warning',
+        };
+      case 'warning.cannot-create-placeholder-units':
+      case 'warning.cannot-create-placeholder-packs':
+      case 'warning.cannot-create-placeholder-doses':
+        return {
+          testId: 'outbound-shortfall-warning',
           message: t(message.key, {
-            reasons: message.reasons.map(reason => t(reason)).join(', '),
+            allocatedQuantity: roundedText(message.allocatedQuantity),
           }),
-        }
-  );
+          severity: 'warning',
+        };
+      default:
+        return {
+          testId: `outbound-skipped-stock-warning-${message.reason}`,
+          message: t(message.key),
+          severity: 'info',
+        };
+    }
+  });
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
@@ -532,9 +571,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // allocate's ordering — with rows holding nothing allocatable sunk to
     // the bottom (OMS-REG-SMV-11.37). Snapshot the seeded allocation first: the
     // on-hold manual exception and the sinking both judge it (OMS-REG-SMV-11.35/.36).
-    const sorted = [...data.draftLines].sort((a, b) =>
-      fillOrderCompare(a, b, allocationPrefs())
-    );
+    // Each row is COPIED before it reaches the draft store: the store writes
+    // edits into the objects it holds, and graphqlFetch hands back the same
+    // parsed response when the server's answer is unchanged — so seeding the
+    // raw rows would write a cancelled edit into that shared response, and the
+    // next open would show it as if it were saved.
+    const sorted = data.draftLines
+      .map(line => ({ ...line }))
+      .sort((a, b) => fillOrderCompare(a, b, allocationPrefs()));
     seededPacksById = new Map(
       sorted.map(line => [line.id, line.numberOfPacks])
     );
@@ -544,14 +588,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds = new Set(
       sorted.filter(line => !rowHasAllocatableStock(line)).map(line => line.id)
     );
-    // A scanned batch narrows the issue to itself where the item holds it
-    // (.44/.45); the batches it rules out sink and disable with the
-    // non-allocatable ones, as in the old app.
-    scanExcludedIds = scannedBatchExclusions(sorted, scan()?.batch);
-    for (const id of scanExcludedIds) nonAllocatableIds.add(id);
+    // A scanned batch narrows the issue to itself (.44), and the scanned
+    // barcode to stock from the same box (.190); the rows they rule out sink
+    // and disable with the non-allocatable ones until the user clears it.
+    const excluded = scanExclusions(sorted, scan());
+    setScanExcludedIds(excluded);
+    const sunk = (line: DraftLine) =>
+      nonAllocatableIds.has(line.id) || excluded.has(line.id);
     const ordered = [
-      ...sorted.filter(line => !nonAllocatableIds.has(line.id)),
-      ...sorted.filter(line => nonAllocatableIds.has(line.id)),
+      ...sorted.filter(line => !sunk(line)),
+      ...sorted.filter(sunk),
     ];
     setDraft(reconcile(ordered, { key: 'id' }));
     // Per ITEM, so any row backed by an existing line answers for all of them.
@@ -602,8 +648,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // A scan that narrowed to its batch lands on that batch's packs, as the
     // old app does.
     const scannedRow = () =>
-      scanExcludedIds.size > 0
-        ? sorted.find(line => !scanExcludedIds.has(line.id))?.id
+      excluded.size > 0
+        ? sorted.find(line => !excluded.has(line.id))?.id
         : undefined;
     const focusRow = rowId() ?? scannedRow();
     if (focusRow) batchFields.focus(focusRow);
@@ -631,6 +677,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             testId: 'outbound-auto-allocated-notice',
             message: t('messages.auto-allocated-lines'),
+            severity: 'warning',
           },
           ...prev,
         ]);
@@ -678,9 +725,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   });
 
   // A scan while waiting for an item picks it, as the scan that opened the
-  // editor would have (spec/barcode-scanning rules § Learning a code while
-  // issuing): locked where the code resolved, else the no-match warning over
-  // the still-choosable picker. The scan is then this editor's to learn.
+  // editor would have (spec/barcode-scanning rules § Issuing by scanning):
+  // locked where the code resolved, else the no-match warning over the
+  // still-choosable picker. The scan is then this editor's to propose.
   const receiveScan: IssueScanReceiver = next => {
     setScan(next);
     if (next.item) void seedItem(next.item);
@@ -691,6 +738,32 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     props.onScanReceiver?.(waiting ? receiveScan : undefined);
   });
   onCleanup(() => props.onScanReceiver?.(undefined));
+
+  // A batch label scanned while the editor is open on an item narrows its
+  // stock to that batch, replacing any batch a scan narrowed to (.192). The
+  // rows are not re-fetched or reordered — the user may already be entering
+  // quantities — only disabled or re-enabled in place; a quantity entered
+  // since the editor opened moves onto the label's batch.
+  const receiveBatchLabel: BatchLabelReceiver = batch => {
+    const { excluded, redistribute } = batchLabelNarrowing(
+      draft,
+      seededPacksById,
+      { batch, code: scan()?.code }
+    );
+    setScanExcludedIds(excluded);
+    if (redistribute)
+      distribute(lensToUnits(issueValue() ?? null, allocateIn()) ?? 0);
+    const row =
+      excluded.size > 0
+        ? draft.find(line => !excluded.has(line.id))?.id
+        : undefined;
+    if (row) batchFields.focus(row);
+  };
+  createEffect(() => {
+    const ready = item() !== undefined && !saving() && !loadingLines();
+    props.onBatchLabelReceiver?.(ready ? receiveBatchLabel : undefined);
+  });
+  onCleanup(() => props.onBatchLabelReceiver?.(undefined));
 
   // The shared barred-batch policy (spec/stock-allocation § barred batches,
   // OMS-REG-SMV-11.4–.6/.26/.31), fed outbound's resolved preferences — the module owns no
@@ -716,9 +789,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // row's status differs from this (its change won't survive the set-save).
   let seededVvmIdById = new Map<string, string | null>();
   let nonAllocatableIds = new Set<string>();
-  // The batches a scanned batch rules out (a subset of nonAllocatableIds):
-  // unlike the rest, they may hold stock, so distribution must skip them too.
-  let scanExcludedIds = new Set<string>();
+  // The rows a scan rules out (.44, .190): unlike the non-allocatable ones
+  // they may hold stock, so distribution must skip them too. A signal, since
+  // a batch label can narrow the open editor's rows in place (.192).
+  const [scanExcludedIds, setScanExcludedIds] = createSignal(new Set<string>());
   const isBarred = (line: DraftLine): boolean =>
     barReasons(
       {
@@ -735,9 +809,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Nothing to allocate OR adjust here — sunk to the bottom, disabled
   // (OMS-REG-SMV-11.37), like the manual bar.
   const isNonAllocatable = (line: DraftLine): boolean =>
-    nonAllocatableIds.has(line.id);
+    nonAllocatableIds.has(line.id) || scanExcludedIds().has(line.id);
   const rowDisabled = (line: DraftLine): boolean =>
     isBarred(line) || isNonAllocatable(line);
+  // What a scan's narrowing left on offer (.210): the one batch left, where
+  // it left one, and whether it left nothing — Show all clears it.
+  const scanNarrowing = () => {
+    const excluded = scanExcludedIds();
+    if (excluded.size === 0) return undefined;
+    const left = draft.filter(line => !excluded.has(line.id));
+    const batches = new Set(left.map(line => line.batch ?? ''));
+    const [only] = batches;
+    return {
+      batch: batches.size === 1 && only ? only : undefined,
+      nothingLeft: left.length === 0,
+    };
+  };
   const inputsDisabled = (line: DraftLine): boolean =>
     !props.editable || rowDisabled(line);
   // Calendar-expired batch (D112) — the card's error tone + Expired badge.
@@ -785,7 +872,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // app's canAutoAllocate contract).
   const willAutoAllocate = (line: DraftLine): boolean => {
     if (line.availablePacks <= 0) return false;
-    if (scanExcludedIds.has(line.id)) return false;
+    if (scanExcludedIds().has(line.id)) return false;
     if (lineAutoBarReasons(line).length > 0) return false;
     const lens = allocateIn();
     return lens.kind !== 'packs' || line.packSize === lens.size;
@@ -863,8 +950,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
   // routine fills usable batches oldest-expiry-first in whole packs
   // (src/domain/allocation distributeIssue — OMS-REG-SMV-11.1/.9–.11's client face); the
-  // shortfall becomes the placeholder (NEW only), and each condition raises
-  // its warning banner.
+  // shortfall becomes the placeholder (NEW only; past NEW it is a warning
+  // banner instead), and each condition raises its warning banner.
   const distribute = (units: number) => {
     const lens = allocateIn();
     const result = distributeIssue(
@@ -873,7 +960,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         packSize: line.packSize,
         // Not a reported skip — staying out of the other batches is what
         // the scan asked for.
-        availablePacks: scanExcludedIds.has(line.id) ? 0 : line.availablePacks,
+        availablePacks: scanExcludedIds().has(line.id)
+          ? 0
+          : line.availablePacks,
         barred: lineAutoBarReasons(line),
       })),
       units,
@@ -886,12 +975,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     }
     setPlaceholderUnits(props.isNew ? result.shortfallUnits : 0);
     // Structured per-category + over-allocation warnings from the shared policy
-    // (OMS-REG-SMV-11.7/.11). Shortfall is surfaced separately as the placeholder notice,
-    // so it is excluded here (reportShortfall:false).
+    // (OMS-REG-SMV-11.7/.11). While NEW the shortfall is surfaced separately as
+    // the placeholder notice; past NEW it has no placeholder to land in, so it
+    // is reported here instead (OMS-REG-SMV-11.13).
     setWarnings(
       warningMessages(
-        deriveIssueWarnings(result, { reportShortfall: false }),
-        units
+        deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
+        units,
+        lens,
+        distributionOutcome(result, allocationPrefs())
       )
     );
     setDirty(true);
@@ -900,6 +992,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // against the current quantity, e.g. after raising it back above zero).
     setZeroConfirm(false);
     setVvmConfirm(false);
+    return result;
   };
 
   // NumberField hands us a committed number (already numeric-only and clamped
@@ -907,11 +1000,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // when the field is cleared.
   const onIssueChange = (value: number | undefined) => {
     setIssueValue(value);
-    const units = lensToUnits(value ?? null, allocateIn());
+    const units = lensToUnits(value ?? null, allocateIn()) ?? 0;
     // Clearing (or blanking) the Issue field distributes 0 — resetting every
     // batch's packs and the placeholder, not leaving the last distribution
     // behind.
-    distribute(units ?? 0);
+    const result = distribute(units);
+    // Past NEW a shortfall has no placeholder to hold it, so — as the old app
+    // does — the Issue field drops to what was allocated, beside the shortfall
+    // warning. Written inside onChange, so NumberField keeps the typed text
+    // until blur and only then shows this figure (never mid-typing). The drop
+    // can land on the value already held — the line holding everything
+    // available — so the field declares `parentAnswersSynchronously`.
+    if (!props.isNew && result.shortfallUnits > 0)
+      setIssueValue(
+        roundedLensValue(units - result.shortfallUnits, allocateIn())
+      );
   };
 
   // The Issue field mirrors a manual per-batch edit (OMS-REG-SMV-11.24/.25,
@@ -956,6 +1059,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 quantity: roundedText(appliedQuantity),
                 issueQuantity: roundedText(value),
               }),
+              severity: 'warning',
             },
           ]
         : []
@@ -1020,6 +1124,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           // variance reasons are echoed through (see ./saveLineInputs).
           lines: toSaveLineInputs(draft, transferComment()),
           placeholderQuantity: placeholderUnits(),
+          // The scanned barcode (.139): the server records it on the lines;
+          // it's proposed for the item once they've saved.
+          ...(scan()?.code ? { barcode: scan()?.code } : {}),
         },
       },
       // Wire trap (contract § issuing lines): saveOutboundShipmentItemLines
@@ -1033,20 +1140,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     }
     if (result.kind !== 'success') return false;
     props.onCommitted();
-    learnScan(current.id);
-    return true;
-  };
-
-  // Saving the line learns the scanned code (.46) — after the line, never
-  // instead of it: a failure is reported and the saved line stands (.48). A
-  // code already in the book is not re-saved (.47), and a scan with no code
-  // learns nothing. Either way the scan is spent: it named this item only.
-  const learnScan = (itemId: string) => {
-    const spent = scan();
+    // The lines are saved whatever this does (proposeIssuedBarcode).
+    void proposeIssuedBarcode(props.storeId, scan(), current.id);
+    // The scan is spent: it named this item only.
     setScan(undefined);
-    void learnIssueScan(props.storeId, spent, itemId, draft).then(notice => {
-      if (notice) props.onScanNotice?.(notice);
-    });
+    return true;
   };
 
   // Save guards (spec S4 § save), in the old app's precedence: a zero-packs
@@ -1233,13 +1331,20 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The row-status badges follow (Expired / Near expiry / On hold —
       // ui-standards § table interaction, D111/D112): word chips in table
       // view; cards hide them ([data-row-badges]) and carry the states as
-      // their after-the-title chips instead.
+      // their after-the-title chips instead. A batch on an auto-created
+      // variant, which only holds a barcode, has no marker: the variant list
+      // leaves it out (decisions/2026-09-30_barcodes.md, Option 6).
       cell: info => {
         const line = info.row.original;
         return (
           <span class={styles.batchCell}>
             {line.batch ?? '—'}
-            <Show when={line.itemVariantId}>
+            <Show
+              when={
+                variants().some(variant => variant.id === line.itemVariantId) &&
+                line.itemVariantId
+              }
+            >
               {variantId => (
                 <Popover
                   trigger={<InfoIcon />}
@@ -1863,9 +1968,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               height — NumberField's "small" (2.25rem) and Select's "sm"
               (1.75rem — the Pagination scale) don't align with each other. */}
             <div class={styles.issueGroup}>
+              {/* onIssueChange answers in place, and past New its answer can
+                  be the figure the field already holds (an over-request where
+                  the line holds everything available) — which the field could
+                  not tell from no answer, so it is told (NumberField's
+                  contract). */}
               <NumberField
                 label={t('label.issue')}
                 min={0}
+                parentAnswersSynchronously
                 data-testid="issue-quantity-input"
                 ref={issueField.ref}
                 value={issueValue()}
@@ -1959,6 +2070,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </div>
       </InsetPanel>
 
+      <Show when={props.scanDiscarded}>
+        <Alert severity="warning" testId="scan-discarded">
+          {t('messages.close-line-editor-to-scan')}
+        </Alert>
+      </Show>
+
       {/* The grid + footer + banners keep their own item gate — the header
           row above renders its picker item-less in add mode. Before a pick, a
           centred prompt says what the empty body is waiting for (as the
@@ -1992,6 +2109,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             clipped here, hiding the first and last columns (the chain rule on
             DialogProps.size, #246). */}
         <div class={styles.workArea} {...DIALOG_SCROLL}>
+          {/* A scan narrowed the batches: say so, and let the user clear it
+              (.211) — the rows it ruled out sink and disable. */}
+          <Show when={scanNarrowing()}>
+            {narrowing => (
+              <ScanNarrowedNotice
+                batch={narrowing().batch}
+                nothingLeft={narrowing().nothingLeft}
+                onShowAll={() => setScanExcludedIds(new Set<string>())}
+              />
+            )}
+          </Show>
           {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
               disabled (OMS-REG-SMV-11.26/.31). */}
           <div class={styles.batchGrid}>
@@ -2077,7 +2205,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {/* Stacked warning banners (spec S4 § warnings). */}
             <For each={warnings()}>
               {banner => (
-                <Alert severity="warning" testId={banner.testId}>
+                <Alert severity={banner.severity} testId={banner.testId}>
                   {banner.message}
                 </Alert>
               )}

@@ -92,15 +92,10 @@ import {
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
 import {
-  issueScanTarget,
-  resolveIssueScan,
-  type IssueScan,
-  type IssueScanReceiver,
-} from './edit-modal/issueScan';
-import {
-  createScanControl,
+  createIssueScanHost,
   ScanButton,
-  shownScanNotice,
+  ScanStatus,
+  type IssueScan,
 } from '@/domain/barcode';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -286,17 +281,11 @@ const OutboundDetailView: Component = () => {
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
   // - { scan }: opened by a scan — add mode, on the scanned item where the
-  //   code resolved (spec/barcode-scanning rules § Learning a code while
-  //   issuing).
+  //   code resolved (spec/barcode-scanning rules § Issuing by scanning).
   type EditState =
     { item?: LineEditItem; lineId?: string; scan?: IssueScan } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
-  // Every open goes through here: a stale learn-failure notice from an
-  // earlier scan describes a save the user has moved on from.
-  const openEditor = (state: NonNullable<EditState>) => {
-    setScanNotice(undefined);
-    setEditState(state);
-  };
+  const openEditor = (state: NonNullable<EditState>) => setEditState(state);
   const [serviceOpen, setServiceOpen] = createSignal(false);
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
@@ -704,57 +693,30 @@ const OutboundDetailView: Component = () => {
     },
   });
 
-  // Issuing by scanning (spec/barcode-scanning rules § Learning a code while
-  // issuing; ui-surface S3 page actions "Add from scanner"): a scan opens the
+  // Issuing by scanning (spec/barcode-scanning rules § Issuing by scanning;
+  // ui-surface S3 page actions "Add from scanner"): a scan opens the
   // line editor on the item its code means, or empty with a warning when it
-  // means nothing yet. The scanner arms on arrival and stays armed while the
-  // shipment is editable. Gated on `.state` for the same reason as Alt+N
-  // above — the control's `disabled` feeds Ctrl+S's palette entry.
+  // means nothing yet. With a hardware scanner the screen listens from
+  // arrival while the shipment is editable; a camera scans per press. Gated
+  // on `.state` so a refetch never reads as "not editable" and stops the
+  // scanner mid-visit.
   const scanDisabled = () => {
     if (data.state !== 'ready' && data.state !== 'refreshing') return true;
     const current = data.latest;
     return !current || !isEditable(current.status);
   };
-  // The line saved but its code was not learned (.48) — reported here, since
-  // the editor may already have closed. Cleared by the next scan, or the
-  // next time the editor opens.
-  const [scanNotice, setScanNotice] = createSignal<string>();
-  let resolvingScan = false;
-  // The open editor, while it waits for an item. Not a signal: read only at
-  // the moment a scan lands, never tracked.
-  let scanReceiver: IssueScanReceiver | undefined;
-  const scanTarget = () =>
-    issueScanTarget({
-      resolving: resolvingScan,
-      editorOpen: editState() != null,
-      editorWaiting: scanReceiver !== undefined,
-    });
-  const scan = createScanControl({
+  // The shared issuing host (domain/barcode createIssueScanHost): one scan
+  // at a time, scans into an editor still waiting for an item, and the
+  // notices beside the action. Not `disabled` while the editor is open —
+  // that would stop the scanner behind every edit.
+  const issueScan = createIssueScanHost({
     owner: 'outbound-shipment',
+    storeId: () => params.storeId,
     disabled: scanDisabled,
-    onScan: read => {
-      // One scan at a time, and none into an editor that already has an
-      // item (issueScanTarget). Dropped, not queued — and not `disabled`,
-      // which would disarm the scanner behind every edit.
-      if (scanTarget() === 'drop') return;
-      resolvingScan = true;
-      setScanNotice(undefined);
-      void resolveIssueScan(params.storeId, read)
-        .then(result => {
-          resolvingScan = false;
-          if (!result) return;
-          const target = scanTarget();
-          if (target === 'editor') scanReceiver?.(result);
-          else if (target === 'open' && !scanDisabled())
-            openEditor({ scan: result });
-        })
-        .finally(() => (resolvingScan = false));
-    },
+    editorOpen: () => editState() != null,
+    openEditor: result => openEditor({ scan: result }),
   });
-  const scanNoticeShown = shownScanNotice(scan, () => {
-    const text = scanNotice();
-    return text === undefined ? undefined : { severity: 'warning', text };
-  });
+  const scan = issueScan.control;
 
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
@@ -1199,11 +1161,10 @@ const OutboundDetailView: Component = () => {
                       visible={current().status === 'NEW'}
                       onCommitted={onLineOpsCommitted}
                     />
-                    {/* Add from scanner (S3 page-action matrix) — editability-
-                        gated like Add item: hidden from SHIPPED onward. */}
-                    <Show when={editable()}>
-                      <ScanButton control={scan} />
-                    </Show>
+                    {/* Add from scanner (S3 page-action matrix): a camera's
+                        Scan action, shown at every status and disabled once
+                        the shipment can't be edited, as on receiving. */}
+                    <ScanButton control={scan} />
                     {/* Export/Print — the reports vertical's record-screen
                         selector (reports S4), available at every status. A
                         self-contained action (static import), mirroring the
@@ -1227,7 +1188,7 @@ const OutboundDetailView: Component = () => {
                   </HeaderButtons>
                   {/* A scan's outcome, inline beside the action that took it
                       — never a toast (controls › action feedback). */}
-                  <Show when={scanNoticeShown()}>
+                  <Show when={issueScan.noticeShown()}>
                     {notice => (
                       <Toolbar>
                         <Alert
@@ -1242,7 +1203,7 @@ const OutboundDetailView: Component = () => {
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       + FieldRow (ui/docs/PAGES.md § header field cluster). The
                       line filters live in the DataTable's own toolbar below. */}
-                  <HeaderToolbar>
+                  <HeaderToolbar alert={<ScanStatus control={scan} />}>
                     <OutboundDetailToolbar
                       storeId={params.storeId}
                       node={current()}
@@ -1458,7 +1419,7 @@ const OutboundDetailView: Component = () => {
               <OutboundLineEditModal
                 open={editState() != null}
                 onClose={() => {
-                  scanReceiver = undefined;
+                  issueScan.editorClosed();
                   setEditState(undefined);
                 }}
                 storeId={params.storeId}
@@ -1480,11 +1441,15 @@ const OutboundDetailView: Component = () => {
                 initialItem={editState()?.item}
                 initialLineId={editState()?.lineId}
                 scan={editState()?.scan}
-                onScanNotice={setScanNotice}
-                onScanReceiver={receiver => (scanReceiver = receiver)}
+                onScanReceiver={issueScan.setReceiver}
+                onBatchLabelReceiver={issueScan.setBatchLabelReceiver}
+                scanDiscarded={issueScan.discarded()}
                 nextItem={nextItem}
                 onCommitted={onLineOpsCommitted}
               />
+              {/* "Which item is this barcode?" for a barcode mapped to several
+                  items (barcode-scanning rules § Looking a barcode up). */}
+              <issueScan.Chooser />
               {/* The shared service-charges editor (spec S5) with outbound's
                   wire twins; a committed batch refetches like any other
                   line-level change (the totals are entity aggregates). */}

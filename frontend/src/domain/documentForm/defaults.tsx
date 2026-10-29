@@ -20,7 +20,7 @@ import type {
   Note,
   ProgramEnrolment,
 } from '../../plugin-sdk/documents';
-import type { Draft } from './draft';
+import { nameFieldInSummary, type Draft } from './draft';
 import type { FormRegistryFragment } from './documentForm.generated';
 import { DateInput, DateTimeInput, TextInput } from './fields';
 import { withFirstNoteText } from './notes';
@@ -28,6 +28,8 @@ import type { JsonSchema } from './schemaNode';
 import { validateDocument } from './validation';
 
 interface NoteBoxProps {
+  draft: unknown;
+  path: string;
   label: string;
   notes: readonly Note[] | undefined;
   onChange: (notes: Note[] | undefined) => void;
@@ -36,25 +38,30 @@ interface NoteBoxProps {
 }
 
 // One free-text note over the document's notes list (see withFirstNoteText).
-const NoteBox = (props: NoteBoxProps): JSX.Element => (
-  <TextArea
-    label={props.label}
-    rows={3}
-    value={props.notes?.[0]?.text ?? ''}
-    onInput={e =>
-      props.onChange(
-        withFirstNoteText(
-          props.notes,
-          e.currentTarget.value,
-          { id: authUser()?.userId, name: userDisplayName() },
-          new Date().toISOString()
+// Named to the draft as every field is, so the host knows the form renders
+// the notes itself (the encounter panel's own Notes box then stands down).
+const NoteBox = (props: NoteBoxProps): JSX.Element => {
+  nameFieldInSummary(props);
+  return (
+    <TextArea
+      label={props.label}
+      rows={3}
+      value={props.notes?.[0]?.text ?? ''}
+      onInput={e =>
+        props.onChange(
+          withFirstNoteText(
+            props.notes,
+            e.currentTarget.value,
+            { id: authUser()?.userId, name: userDisplayName() },
+            new Date().toISOString()
+          )
         )
-      )
-    }
-    disabled={props.disabled}
-    data-testid={props.testId}
-  />
-);
+      }
+      disabled={props.disabled}
+      data-testid={props.testId}
+    />
+  );
+};
 
 export interface DefaultFormProps<T> {
   draft: Draft<T>;
@@ -87,6 +94,8 @@ export const DefaultEnrolmentForm = (
       testId="enrolment-patient-id"
     />
     <NoteBox
+      draft={props.draft}
+      path={ENROLMENT_FORM_PATHS.notes}
       label={t('label.notes')}
       notes={props.draft.data.notes}
       onChange={notes => props.draft.set(ENROLMENT_FORM_PATHS.notes, notes)}
@@ -141,6 +150,8 @@ export const DefaultEncounterForm = (
       testId="encounter-end-datetime"
     />
     <NoteBox
+      draft={props.draft}
+      path="notes"
       label={t('label.visit-notes')}
       notes={props.draft.data.notes}
       onChange={notes => props.draft.set('notes', notes)}

@@ -101,9 +101,9 @@ const dateRange = (from: Date | null, to: Date | null) => ({
 
 // ── Task-list targets ────────────────────────────────────────────────────────
 // The unfiltered core lists a contribution launches into (e.g. the Cook
-// Islands navigator's task tiles — plugins/cook_islands/ui-surface.md § S2).
-// Each returns the path as the navigation registry spells it, from one place,
-// so a plugin never spells (or misspells) a host route.
+// Islands navigator's task tiles — private/plugins/cook_islands/ui-surface.md
+// § S2). Each returns the path as the navigation registry spells it, from one
+// place, so a plugin never spells (or misspells) a host route.
 
 export const inboundShipmentListPath = (): string =>
   'replenishment/inbound-shipment';
@@ -128,7 +128,7 @@ export const prescriptionListPath = dispensingListPath;
 
 /**
  * One prescription's detail screen, by invoice id — what the Afghanistan
- * Daily Tally's submitted summary opens per cohort (plugins/afghanistan
+ * Daily Tally's submitted summary opens per cohort (private/plugins/afghanistan
  * ui-surface § S6). URI-encoded like the stocktake builder below.
  */
 export const prescriptionDetailPath = (prescriptionId: string): string =>
@@ -139,9 +139,9 @@ export const stocktakeListPath = (): string => 'inventory/stocktakes';
 /**
  * One stocktake's detail screen — the record page behind a count, which is
  * what the Cook Islands count log opens from a row
- * (plugins/cook_islands/stocktake/ui-surface.md § S5). A record path, not a
- * filtered list: it takes the record's id and nothing else. The segment is
- * URI-encoded so an id can never smuggle a path separator, though real ids
+ * (private/plugins/cook_islands/stocktake/ui-surface.md § S5). A record path,
+ * not a filtered list: it takes the record's id and nothing else. The segment
+ * is URI-encoded so an id can never smuggle a path separator, though real ids
  * are host-minted UUIDs.
  */
 export const stocktakeDetailPath = (stocktakeId: string): string =>

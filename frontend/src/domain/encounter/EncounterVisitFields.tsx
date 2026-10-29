@@ -6,14 +6,21 @@
  * encounter modal, so the form itself gets the same draft in both mounts and
  * never renders them.
  */
-import type { JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import { t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
 import { DateTimeField } from '../../ui/elements/inputs/DateTimeField';
 import { Select } from '../../ui/elements/selectors/Select';
+import { StatusMenu } from '../../ui/elements/feedback/StatusMenu';
 import { ClinicianSelect } from '../clinician';
 import type { Draft } from '../documentForm/draft';
 import type { Encounter, EncounterStatus } from '../../plugin-sdk/documents';
+import {
+  ENCOUNTER_STATUS_COLOUR,
+  encounterDisplayLabel,
+  encounterStatusChip,
+  SETTABLE_STATUSES,
+} from './encounterStatus';
 
 // The statuses a user can set. DELETED is a record's removal, not a visit's
 // outcome, and has no place in the picker.
@@ -91,3 +98,46 @@ export const EncounterStatusField = (props: VisitFieldProps): JSX.Element => (
     testId="encounter-status"
   />
 );
+
+/*
+ * The status as the record screen shows it: a chip beside the title that
+ * opens the same three choices (Product's program-enrolment prototype). The
+ * chip reads Missed, in the error tone, for a Scheduled encounter whose
+ * visit day has passed — the old client's "Encounter Missed" note — so the
+ * menu marks the stored status, not the word shown. Picking a status edits
+ * the draft, as the field above does; Save records it. A deleted encounter
+ * shows its chip alone: Delete is final here, not a status to pick back
+ * from (the old client's select let it be).
+ */
+export const EncounterStatusMenu = (props: {
+  draft: Draft<Encounter>;
+}): JSX.Element => {
+  const chip = () =>
+    encounterStatusChip(
+      props.draft.data.status,
+      props.draft.data.startDatetime,
+      new Date()
+    );
+  return (
+    <Show when={chip()}>
+      {chip => (
+        <StatusMenu<EncounterStatus>
+          label={chip().label}
+          colour={chip().colour}
+          options={SETTABLE_STATUSES.map(s => ({
+            value: s,
+            label: encounterDisplayLabel(s),
+            colour: ENCOUNTER_STATUS_COLOUR[s],
+          }))}
+          value={props.draft.data.status}
+          onSelect={v => props.draft.set('status', v)}
+          triggerLabel={`${t('label.status')}: ${chip().label}. ${t('label.change-status')}`}
+          disabled={
+            props.draft.readOnly() || props.draft.data.status === 'DELETED'
+          }
+          testId="encounter-status"
+        />
+      )}
+    </Show>
+  );
+};

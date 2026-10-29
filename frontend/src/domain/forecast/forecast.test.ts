@@ -10,6 +10,7 @@ import {
   populationSteps,
   principalItemLabel,
   principalWastageDeduction,
+  supplyWastageAddition,
   targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
@@ -116,6 +117,7 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
     itemQuantity: 100,
     ancillaryQuantity: 1,
     wastageRate: 0,
+    ownWastageRate: 0,
     principalUsableConsumption: 100,
     monthlyConsumption: 1,
   };
@@ -138,6 +140,18 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
         monthlyConsumption: 0.5,
       })
     ).toBe('− 50% wastage');
+    setDictionaries({});
+  });
+
+  // Rules › the Ancillary ratio method: the ancillary's own wastage as a supply
+  // is added on top of the ratio, shown only when it has some.
+  it('shows the supply wastage added, only when there is some', () => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+    expect(supplyWastageAddition(principal)).toBeUndefined();
+    expect(supplyWastageAddition({ ...principal, ownWastageRate: 20 })).toBe(
+      '÷ (1 − 20% own wastage)'
+    );
     setDictionaries({});
   });
 

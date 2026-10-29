@@ -2,7 +2,7 @@
   @page {
     size: A4 landscape;
     @bottom-right {
-      font-family: Tahoma;
+      font-family: Arial, Helvetica, sans-serif;
       font-size: 8pt;
       /* do not allow formatter to add a line break in the content */
       /* prettier-ignore*/
@@ -14,8 +14,8 @@
 body,
 th,
 td {
-  font-family: Tahoma;
-  font-size: 8pt;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9pt;
 }
 
 body > table {
@@ -31,43 +31,40 @@ th {
   text-align: start;
 }
 
-.logo {
-  display: block;
-  height: 72px;
+td {
+  vertical-align: top;
 }
 
+.muted {
+  color: #555;
+}
+
+.label {
+  font-size: 8pt;
+  color: #555;
+}
+
+/* Repeated at the top of every page */
 .header_section {
   width: 100%;
-  border-bottom: 0.5px solid black;
-  font-family: Tahoma;
-  font-size: 8pt;
+  border-bottom: 1.5px solid black;
 }
 
 .header_section td {
-  vertical-align: top;
-  padding-bottom: 6pt;
+  vertical-align: bottom;
+  padding-bottom: 4pt;
 }
 
 .header_title {
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-  font-size: 24pt;
+  font-size: 20pt;
   font-weight: bold;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 .header_number {
-  font-family: Tahoma;
-  font-size: 10pt;
-  font-weight: normal;
-  text-transform: none;
-}
-
-.header_logo {
   text-align: end;
-}
-
-.header_logo .logo {
-  display: inline-block;
+  font-size: 10pt;
 }
 
 .heading_message {
@@ -76,51 +73,93 @@ th {
   padding: 6pt 0;
 }
 
-.boxes,
-.details,
+.top {
+  width: 100%;
+  margin-top: 12pt;
+}
+
+.purchaser {
+  display: flex;
+  gap: 12pt;
+  padding-right: 24pt;
+}
+
+.logo {
+  display: block;
+  max-height: 60px;
+  max-width: 140px;
+}
+
+.purchaser_name {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+.party {
+  width: 36%;
+  padding: 16pt 16pt 0 0;
+}
+
+.party_name {
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+.side {
+  width: 28%;
+}
+
+.party + .party + .side {
+  padding-top: 16pt;
+}
+
+.box {
+  width: 100%;
+  border: 0.5px solid #999;
+}
+
+.box td {
+  padding: 3pt 8pt;
+}
+
+.box_label {
+  font-weight: bold;
+}
+
+.box_value {
+  text-align: end;
+}
+
+.po_number {
+  font-size: 11pt;
+  font-weight: bold;
+}
+
 .lines {
   width: 100%;
-  margin-top: 10pt;
+  margin-top: 20pt;
 }
 
-.boxes th,
-.details th,
+/* Repeat the column headings on every page */
+.lines thead {
+  display: table-header-group;
+}
+
 .lines th {
-  background: #333;
-  color: white;
-  padding: 3pt 4pt;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.boxes td,
-.details td {
-  border: 0.5px solid black;
-  padding: 4pt;
-  vertical-align: top;
-}
-
-.boxes th,
-.boxes td {
-  width: calc(100% / 3);
-}
-
-.details th,
-.details td {
-  width: calc(100% / 3);
-}
-
-.details td {
-  height: 10pt;
+  font-size: 8pt;
+  font-weight: normal;
+  color: #555;
+  vertical-align: bottom;
+  padding: 0 4pt 4pt;
+  border-bottom: 1.5px solid black;
 }
 
 .lines td {
-  padding: 3pt 4pt;
-  vertical-align: top;
+  padding: 5pt 4pt;
 }
 
 .lines tbody.line {
-  border-bottom: 0.5px solid #999;
+  border-bottom: 0.5px solid #ccc;
   page-break-inside: avoid;
 }
 
@@ -132,10 +171,10 @@ th {
   text-align: end;
 }
 
-.lines tr.comment td {
-  padding-top: 0;
-  font-style: italic;
-  color: #444;
+.lines .comment {
+  font-size: 8pt;
+  color: #333;
+  margin-top: 2pt;
 }
 
 .charges {
@@ -144,16 +183,16 @@ th {
 }
 
 .charges th {
-  background: #333;
-  color: white;
-  padding: 3pt 4pt;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  font-size: 8pt;
+  font-weight: normal;
+  color: #555;
+  padding: 0 4pt 4pt;
+  border-bottom: 1.5px solid black;
 }
 
 .charges td {
   padding: 3pt 4pt;
-  border-bottom: 0.5px solid #999;
+  border-bottom: 0.5px solid #ccc;
 }
 
 .charges .number {
@@ -162,14 +201,48 @@ th {
 
 .summary {
   display: flex;
-  justify-content: space-between;
-  gap: 20pt;
-  margin-top: 12pt;
+  justify-content: flex-end;
+  margin-top: 8pt;
+  page-break-inside: avoid;
+}
+
+.totals {
+  width: 28%;
+}
+
+.totals td {
+  padding: 3pt 8pt;
+  text-align: end;
+}
+
+.totals td:first-child {
+  font-weight: bold;
+  text-align: start;
+}
+
+.totals .grand_total td {
+  border-top: 1.5px solid black;
+}
+
+.totals .exchange_rate td {
+  border-top: 0.5px solid black;
+}
+
+.totals .discount_note td {
+  font-weight: normal;
+  font-style: italic;
+  text-align: end;
+}
+
+.closing {
+  display: flex;
+  gap: 30pt;
+  margin-top: 24pt;
   page-break-inside: avoid;
 }
 
 .instructions {
-  flex: 1;
+  flex: 55;
 }
 
 .instructions_text {
@@ -177,37 +250,25 @@ th {
   margin-top: 2pt;
 }
 
-.totals td {
-  padding: 2pt 4pt;
-  text-align: end;
-}
-
-.totals td:first-child {
-  font-weight: bold;
-}
-
-.totals .grand_total td {
-  border-top: 0.5px solid black;
-  border-bottom: 0.5px solid black;
-}
-
-.totals .discount_note td {
-  font-weight: normal;
-  font-style: italic;
-}
-
 .signatures {
-  display: grid;
-  grid-template-columns: 2fr 1fr 2fr 1fr;
-  gap: 20pt 30pt;
-  margin-top: 40pt;
-  page-break-inside: avoid;
+  flex: 45;
+  display: flex;
+  gap: 24pt;
+}
+
+.signature {
+  flex: 1;
 }
 
 .signature_line {
-  border-bottom: 0.5px solid black;
-  height: 24pt;
-  margin-bottom: 2pt;
+  max-width: 60mm;
+  border-bottom: 0.5px solid #666;
+  height: 26pt;
+}
+
+.signature_name {
+  margin-top: 3pt;
+  min-height: 1.2em;
 }
 
 .watermark {

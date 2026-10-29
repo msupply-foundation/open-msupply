@@ -96,6 +96,7 @@ export type ParsedField =
       nullable: boolean;
       readOnly: boolean;
       required: boolean;
+      default?: unknown;
       /**
        * True for `format: 'date-time'` — rendered as the date & time input;
        * the stored/submitted value is a UTC RFC3339 instant
@@ -450,6 +451,7 @@ export const parseArgumentSchema = (raw: {
             nullable,
             readOnly,
             required: isRequired,
+            default: prop.default,
             dateTime: prop.format === 'date-time',
             dateOnly: options?.dateOnly === true,
             dateAsEndOfDay: options?.dateAsEndOfDay === true,
@@ -798,7 +800,11 @@ export const scheduleCascadeWrites = {
  * back to JSON numbers (so a numeric argument never leaves as a string; an
  * unparseable leftover like a lone '.' is dropped like an empty), and widen
  * each date-range field to its `DatetimeFilterInput` wire shape (see
- * `toDatetimeFilter`).
+ * `toDatetimeFilter`). A field whose schema declares `default: null` is the
+ * exception: left empty it is sent as null, never omitted, as the React UI
+ * sends it — a report's SQL can only bind a `$param` that is present, and
+ * such a report reads null as "not chosen" (e.g. Afghanistan's Vaccine
+ * Utilisation month: blank = the current month).
  */
 export const cleanArguments = (
   fields: ParsedField[],
@@ -807,6 +813,9 @@ export const cleanArguments = (
   const numberKeys = new Set(
     fields.filter(field => field.kind === 'number').map(field => field.key)
   );
+  const nullDefaultKeys = fields
+    .filter(field => 'default' in field && field.default === null)
+    .map(field => field.key);
   const dateRangeKeys = new Set(
     fields.filter(field => field.kind === 'dateRange').map(field => field.key)
   );
@@ -824,6 +833,9 @@ export const cleanArguments = (
       continue;
     }
     cleaned[key] = value;
+  }
+  for (const key of nullDefaultKeys) {
+    if (!(key in cleaned)) cleaned[key] = null;
   }
   return cleaned;
 };

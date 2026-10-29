@@ -3,21 +3,21 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 
+use crate::authentication::validate_server_admin;
+
 pub async fn get_database(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     settings: Data<Settings>,
 ) -> Result<HttpResponse, Error> {
-    use super::validate_request;
     use actix_files as fs;
     use actix_web::http::header::ContentDisposition;
     use actix_web::http::header::DispositionParam;
     use actix_web::http::header::DispositionType;
     use std::path::Path;
 
-    let auth_result = validate_request(request.clone(), &service_provider, &auth_data);
-    if auth_result.is_err() {
+    if validate_server_admin(&request, &service_provider, &auth_data).is_err() {
         return Ok(HttpResponse::Unauthorized().body("Access Denied"));
     }
 
@@ -122,8 +122,7 @@ pub async fn vacuum_database(
 ) -> HttpResponse {
     // Same ServerAdmin session-cookie requirement as GET /support/database — an
     // unauthenticated VACUUM is a sustained database lock-out (DoS) primitive.
-    let auth_result = super::validate_request(request, &service_provider, &auth_data);
-    if auth_result.is_err() {
+    if validate_server_admin(&request, &service_provider, &auth_data).is_err() {
         return HttpResponse::Unauthorized().body("Access Denied");
     }
 

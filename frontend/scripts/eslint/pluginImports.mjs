@@ -6,8 +6,9 @@
  * build time alike, and the build would bundle a frozen copy of whatever it
  * reached: the host's source, another plugin, build config. Only lint closes
  * that, so this rule resolves each relative import against its file and
- * holds it inside the plugin's own folder, `plugins/<dir>/`, however deep the
- * file sits, and holds a package import to the two the contract names.
+ * holds it inside the plugin's own folder (`private/plugins/<dir>/`, or
+ * `plugins/<dir>/` for a public one), however deep the file sits, and holds a
+ * package import to the two the contract names.
  *
  * Tests are exempt: they run under vitest and never ship, and read the
  * server's schema, vitest and node modules.
