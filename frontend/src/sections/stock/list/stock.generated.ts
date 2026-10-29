@@ -43,6 +43,10 @@ export type StockLineRowFragment = {
   id: string;
   name: string;
 } | null;
+  campaign: {
+  id: string;
+  name: string;
+} | null;
 };
 
 export type StockLinesVariables = {
@@ -220,5 +224,5 @@ export type StockLinesResult = {
 };
 
 export const StockLines = {
-  query: "query stockLines($storeId: String!, $filter: StockLineFilterInput, $sort: [StockLineSortInput!], $page: PaginationInput) {\n  stockLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StockLineRow\n      }\n    }\n  }\n}\n\nfragment StockLineRow on StockLineNode {\n  id\n  itemId\n  itemName\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  totalNumberOfPacks\n  availableNumberOfPacks\n  costPricePerPack\n  sellPricePerPack\n  onHold\n  supplierName\n  locationName\n  volumePerPack\n  totalVolume\n  location {\n    id\n    code\n    name\n  }\n  vvmStatus {\n    id\n    description\n  }\n  item {\n    id\n    code\n    unitName\n    isVaccine\n    doses\n    masterLists(storeId: $storeId) {\n      id\n      name\n    }\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n}",
+  query: "query stockLines($storeId: String!, $filter: StockLineFilterInput, $sort: [StockLineSortInput!], $page: PaginationInput) {\n  stockLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StockLineRow\n      }\n    }\n  }\n}\n\nfragment StockLineRow on StockLineNode {\n  id\n  itemId\n  itemName\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  totalNumberOfPacks\n  availableNumberOfPacks\n  costPricePerPack\n  sellPricePerPack\n  onHold\n  supplierName\n  locationName\n  volumePerPack\n  totalVolume\n  location {\n    id\n    code\n    name\n  }\n  vvmStatus {\n    id\n    description\n  }\n  item {\n    id\n    code\n    unitName\n    isVaccine\n    doses\n    masterLists(storeId: $storeId) {\n      id\n      name\n    }\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  campaign {\n    id\n    name\n  }\n}",
 } as TypedDocument<StockLinesResult, StockLinesVariables>;

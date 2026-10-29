@@ -40,6 +40,7 @@ const line = {
     ],
   },
   manufacturer: null,
+  campaign: { id: 'c1', name: 'Measles 2026' },
 } as unknown as StockLineRowFragment;
 
 describe('OMS-REG-INV-02.8 — stockToCsv', () => {
@@ -49,8 +50,15 @@ describe('OMS-REG-INV-02.8 — stockToCsv', () => {
   it('produces a header row + one row per line', () => {
     expect(rows).toHaveLength(2);
   });
-  it('has the full spec/stock S1 column set (19 columns)', () => {
-    expect(rows[0].split(',')).toHaveLength(19);
+  it('has the full spec/stock S1 column set (20 columns)', () => {
+    expect(rows[0].split(',')).toHaveLength(20);
+  });
+  it("carries the line's activity between Manufacturer and Supplier", () => {
+    const header = rows[0].split(',');
+    const at = header.indexOf('label.activity');
+    expect(header[at - 1]).toBe('label.manufacturer');
+    expect(header[at + 1]).toBe('label.supplier');
+    expect(rows[1].split(',')[at]).toBe('Measles 2026');
   });
   it('derives units (packs × pack size) and total value (packs × cost)', () => {
     // SOH units = 12 × 100 = 1200; available = 10 × 100 = 1000; total = 12 × 2

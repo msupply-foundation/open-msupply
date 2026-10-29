@@ -20,3 +20,7 @@ plugins/*/backend/prebuilt
 
 # Lockfile
 pnpm-lock.yaml
+
+# The French PMs' glossary, downloaded as-is from their Google Doc and replaced
+# wholesale on each download — reformatting it would make every update a noisy diff.
+src/intl/translation-guides/*.html

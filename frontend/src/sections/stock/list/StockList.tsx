@@ -194,8 +194,8 @@ const StockList: Component = () => {
   // Column order follows the current open-mSupply Stock ListView (Code · Name ·
   // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
   // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost
-  // · Sell · Total · Manufacturer · Supplier). Each column also declares its
-  // card slot per spec/stock S1 › card view.
+  // · Sell · Total · Manufacturer · Activity · Supplier). Each column also
+  // declares its card slot per spec/stock S1 › card view.
   //
   // The card HEADER is Name-then-Code (the split for this screen), but the
   // TABLE keeps OMS's Code-first order — the one place the two views want a
@@ -375,6 +375,15 @@ const StockList: Component = () => {
       header: () => t('label.manufacturer'),
       cardGroup: 'more',
       ...getCellDefinition('manufacturer'),
+    },
+    {
+      // Activity (the line's campaign) — card: More details. Sorts by the
+      // campaign's name server-side.
+      c: { accessor: r => r.campaign?.name ?? '', id: 'campaign' },
+      sortKey: 'campaign',
+      header: () => t('label.activity'),
+      cardGroup: 'more',
+      ...getCellDefinition('activity'),
     },
     {
       // Supplier — card: More details. Blank renders "Inventory adjustment".

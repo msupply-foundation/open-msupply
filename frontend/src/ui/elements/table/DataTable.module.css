@@ -718,6 +718,62 @@ tbody > tr:last-child > :is(.td, .selectCell) {
   --checkbox-hit-inset-block: 0.75rem;
 }
 
+/* Row grouping (DataTable rowGroup). The expander column is a second leading
+   box beside the selection column and takes every .selectCell rule (width,
+   pinning, fills, tints); this only drops the padding its button doesn't
+   need. */
+.expanderCell {
+  padding-inline: 0;
+}
+
+/* The expand/collapse chevron, on a group row and (as the double chevron) in
+   the column header. Collapsed points to the inline-end, expanded points
+   down; the turn mirrors in RTL so collapsed points at the row's text. */
+.groupExpander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transition: transform var(--motion-base);
+}
+
+:dir(rtl) .groupExpander {
+  transform: rotate(90deg);
+}
+
+.groupExpander[data-expanded] {
+  transform: none;
+}
+
+.groupExpander:hover {
+  color: var(--text-body);
+}
+
+/* A group row's grouped value with its line count beside it. */
+.groupLabel {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: baseline;
+}
+
+.groupCount {
+  color: var(--text-secondary);
+}
+
+/* A group row reads as the heading of the rows it gathers. */
+tr[data-group-row] > .td {
+  font-weight: var(--weight-medium);
+}
+
 /* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
    A pinned cell needs a FULLY OPAQUE background so the horizontally-scrolling content never shows
    through the frozen cell (or through the seam between the two leading columns). All get z 1 —
