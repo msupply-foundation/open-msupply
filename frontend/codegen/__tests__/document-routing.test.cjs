@@ -30,16 +30,16 @@ const importFor = file => graphqlImportFor(file, outFor(file));
 
 // ── which documents are a plugin's ────────────────────────────────────────────
 
-test("a document under plugins/ is a plugin document", () => {
+test("a document under private/plugins/ is a plugin document", () => {
   assert.equal(
-    isPluginDocument(at("plugins", "cook_islands", "src", "figures.graphql")),
+    isPluginDocument(at("..", "private", "plugins", "cook_islands", "src", "figures.graphql")),
     true
   );
 });
 
 test("a document under plugins/examples/ is a plugin document — reference plugins build through the same preset", () => {
   assert.equal(
-    isPluginDocument(at("plugins", "examples", "hello_world", "src", "q.graphql")),
+    isPluginDocument(at("..", "plugins", "examples", "hello_world", "src", "q.graphql")),
     true
   );
 });
@@ -61,14 +61,14 @@ test("a src/ path that merely starts with a plugin dir's name is not a plugin do
 
 test("a plugin document imports TypedDocument from the SDK by bare specifier", () => {
   assert.equal(
-    importFor(at("plugins", "cook_islands", "src", "strip", "figures.graphql")),
+    importFor(at("..", "private", "plugins", "cook_islands", "src", "strip", "figures.graphql")),
     PLUGIN_SDK_SPECIFIER
   );
 });
 
 test("the SDK specifier does not vary with how deep the plugin document sits", () => {
-  const shallow = importFor(at("plugins", "civ", "q.graphql"));
-  const deep = importFor(at("plugins", "civ", "a", "b", "c", "d", "q.graphql"));
+  const shallow = importFor(at("..", "private", "plugins", "civ", "q.graphql"));
+  const deep = importFor(at("..", "private", "plugins", "civ", "a", "b", "c", "d", "q.graphql"));
   assert.equal(shallow, deep);
   assert.equal(deep, PLUGIN_SDK_SPECIFIER);
 });
@@ -85,7 +85,7 @@ test("a host document beside src/api/graphql gets a './'-prefixed relative path"
 });
 
 test("a plugin import is bare — never relative, which is what would inline the host client", () => {
-  const emitted = importFor(at("plugins", "cook_islands", "src", "q.graphql"));
+  const emitted = importFor(at("..", "private", "plugins", "cook_islands", "src", "q.graphql"));
   assert.ok(!emitted.startsWith("."), `expected a bare specifier, got ${emitted}`);
 });
 
@@ -96,7 +96,7 @@ test("walk ignores a directory that does not exist rather than throwing", () => 
 });
 
 test("walk skips node_modules and dist", () => {
-  const found = walk(at("plugins"));
+  const found = walk(at("..", "private", "plugins"));
   const skipped = found.filter(f =>
     f.split(path.sep).some(seg => seg === "node_modules" || seg === "dist")
   );
@@ -121,9 +121,9 @@ test("no filters means every document", () => {
   assert.deepEqual(allDocuments([]), allDocuments());
 });
 
-// Only the country plugins carry documents, and the public mirror publishes
-// just plugins/examples/ — so there this has nothing to narrow to.
-const pluginDocuments = allDocuments(["plugins"]);
+// Only the country plugins carry documents, and the public mirror has no
+// private/ — so there this has nothing to narrow to.
+const pluginDocuments = allDocuments(["../private/plugins"]);
 
 test("a filter narrows the run to that tree", {
   skip: pluginDocuments.length === 0 && "no plugin documents in this tree",
@@ -135,11 +135,11 @@ test("a filter narrows the run to that tree", {
 });
 
 test("a filter genuinely excludes — narrowing is smaller than the whole", () => {
-  assert.ok(allDocuments(["plugins"]).length < allDocuments().length);
+  assert.ok(allDocuments(["../private/plugins"]).length < allDocuments().length);
 });
 
 test("filters accept several trees at once", () => {
-  const both = allDocuments(["plugins", "src"]);
+  const both = allDocuments(["../plugins", "../private/plugins", "src"]);
   assert.deepEqual(both.sort(), allDocuments().sort());
 });
 
@@ -149,8 +149,8 @@ test("a filter matching nothing yields nothing rather than everything", () => {
 });
 
 test("a filter is a path boundary, not a string prefix", () => {
-  // "plugin" must not sweep in "plugins/".
-  assert.deepEqual(allDocuments(["plugin"]), []);
+  // "../private/plugin" must not sweep in "../private/plugins/".
+  assert.deepEqual(allDocuments(["../private/plugin"]), []);
 });
 
 // ── the backstop over what is actually on disk ───────────────────────────────
@@ -179,7 +179,7 @@ test("every committed plugin .generated.ts imports only the SDK", () => {
     assert.ok(
       fs.existsSync(file),
       `${path.relative(FRONTEND, file)} is missing — its .graphql has never ` +
-        `been generated (run: node codegen/run.cjs plugins)`
+        `been generated (run: node codegen/run.cjs ../private/plugins)`
     );
     for (const line of fs.readFileSync(file, "utf8").split("\n")) {
       const match = line.match(/^\s*import\s[^;]*?from\s+["']([^"']+)["']/);

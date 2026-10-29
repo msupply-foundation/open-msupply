@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupPositions } from './rowGroups';
+import { displayedRows, groupLabelColumnId, groupPositions } from './rowGroups';
 
 // ui-standards § tables › grouped rows: a grouped column shows a value once per
 // run of equal consecutive values, its cells joined across the run.
@@ -37,5 +37,90 @@ describe('grouped rows — runs of equal values', () => {
   it('handles no rows and one row', () => {
     expect(groupPositions([])).toEqual([]);
     expect(flags(['a'])).toEqual(['--']);
+  });
+});
+
+// ui-standards § tables › row groups: rows gathered under an expandable group
+// row; a group of one is drawn as its row.
+interface FakeRow {
+  id: string;
+  getIsGrouped: () => boolean;
+  getIsExpanded: () => boolean;
+  subRows: FakeRow[];
+}
+const line = (id: string): FakeRow => ({
+  id,
+  getIsGrouped: () => false,
+  getIsExpanded: () => false,
+  subRows: [],
+});
+const group = (id: string, rows: FakeRow[], expanded = false): FakeRow => ({
+  id,
+  getIsGrouped: () => true,
+  getIsExpanded: () => expanded,
+  subRows: rows,
+});
+const ids = (rows: FakeRow[]) => displayedRows(rows).map(row => row.id);
+
+describe('row groups — the rows drawn', () => {
+  it('draws a collapsed group as its group row alone', () => {
+    expect(ids([group('g', [line('a'), line('b')])])).toEqual(['g']);
+  });
+  it('follows an expanded group row with its rows', () => {
+    expect(ids([group('g', [line('a'), line('b')], true)])).toEqual([
+      'g',
+      'a',
+      'b',
+    ]);
+  });
+  it('draws a group of one as that row, expanded or not', () => {
+    expect(ids([group('g', [line('a')])])).toEqual(['a']);
+    expect(ids([group('g', [line('a')], true)])).toEqual(['a']);
+  });
+  it('keeps ungrouped rows and the order of groups', () => {
+    expect(
+      ids([line('x'), group('g', [line('a'), line('b')], true), line('y')])
+    ).toEqual(['x', 'g', 'a', 'b', 'y']);
+  });
+});
+
+// ui-standards § tables › row groups: the group row's label leads the first
+// figure-free visible column, so hiding or reordering a column never drops it
+// and never hides a column's own subtotal.
+describe('row groups — where the label sits', () => {
+  const col = (id: string, aggregates = false) => ({ id, aggregates });
+
+  it('leads the first visible column when it shows no figure', () => {
+    expect(
+      groupLabelColumnId([
+        col('itemCode'),
+        col('itemName'),
+        col('numberOfPacks', true),
+      ])
+    ).toBe('itemCode');
+  });
+  it('falls to the next column when the grouped column is hidden, so the label and count never vanish', () => {
+    // itemCode (the grouped column) hidden → the first visible column leads,
+    // and it shows no figure of its own, so the label lands cleanly.
+    expect(
+      groupLabelColumnId([col('itemName'), col('numberOfPacks', true)])
+    ).toBe('itemName');
+  });
+  it('skips a leading aggregating column so its subtotal is not hidden', () => {
+    // An aggregating column is first (e.g. Packs to move): the label skips it
+    // and lands on the next figure-free column, keeping the subtotal.
+    expect(
+      groupLabelColumnId([col('packsToMove', true), col('itemName')])
+    ).toBe('itemName');
+  });
+  it('falls back to the first visible column when every column aggregates', () => {
+    // No figure-free column to host the label: it shares the first cell, and
+    // the row renderer draws the figure after it so neither is lost.
+    expect(
+      groupLabelColumnId([col('packsToMove', true), col('totalValue', true)])
+    ).toBe('packsToMove');
+  });
+  it('has no label cell when nothing is visible', () => {
+    expect(groupLabelColumnId([])).toBeUndefined();
   });
 });

@@ -47,11 +47,16 @@ query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
           id
           lineNumber
           requestedPackSize
+          # A new batch's cost and sell price, before the shipment's rate
+          # (spec rules › new-batch defaults).
+          pricePerPackAfterSupplierDiscount
           item {
             id
             code
             name
             type
+            defaultPackSize
+            volumePerPack
           }
         }
       }
