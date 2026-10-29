@@ -92,7 +92,7 @@ impl ChangelogTableName {
             NameStoreJoin => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
             ItemStoreJoin => SyncStyle {

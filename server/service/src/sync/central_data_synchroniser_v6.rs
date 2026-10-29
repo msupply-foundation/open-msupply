@@ -21,10 +21,11 @@ use super::{
 };
 
 use repository::{
-    ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
-    KeyValueStoreRepository, QueryWithData, RepositoryError, StorageConnection,
-    SyncBufferRepository,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName, CursorAndLimit,
+    FilterBuilder, KeyType, KeyValueStoreRepository, QueryWithData, RepositoryError,
+    StorageConnection, SyncBufferRepository,
 };
+use strum::IntoEnumIterator;
 use thiserror::Error;
 
 /// Run an idempotent v6 read, retrying it if the response body is cut off mid-read.
@@ -180,7 +181,8 @@ impl SynchroniserV6 {
         self.require_sync_api_unpaused().await?;
 
         let changelog_repo = ChangelogRepository::new(connection);
-        let change_log_filter = build_v6_push_filter(connection)?;
+        let active_stores = ActiveStoresOnSite::get(connection)?;
+        let change_log_filter = build_v6_push_filter(active_stores.site_id);
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV6);
 
         loop {
@@ -287,32 +289,24 @@ impl SynchroniserV6 {
     }
 }
 
-/// Returns the changelog filter for v6 push: records edited on this site
-/// (source_site_id matching this site_id), touching one of this site's active
-/// stores.
-fn build_v6_push_filter(
-    connection: &StorageConnection,
-) -> Result<ChangelogCondition::Inner, RemotePushErrorV6> {
+/// Returns the changelog filter for v6 push: records edited on this site, in tables
+/// tagged for v6, for one of this site's stores or with no store.
+fn build_v6_push_filter(site_id: i32) -> ChangelogCondition::Inner {
     use ChangelogCondition as C;
 
-    let active_stores = ActiveStoresOnSite::get(connection)?;
-    let store_ids = active_stores.store_ids();
+    let table_names: Vec<_> = ChangelogTableName::iter()
+        // OMS central takes all records that have a V6 transport tag
+        .filter(|table| table.sync_style().transport.is_v6)
+        .collect();
 
-    // Records that originate on this site are stamped with this site's id, so
-    // these are the ones to send to central over v6. Records arriving via sync
-    // from central carry the sending site's id, so this excludes them. Which
-    // tables actually get sent is decided later, when the rows are translated
-    // with PushToOmSupplyCentral.
-    Ok(C::And(vec![
-        C::source_site_id::equal(active_stores.site_id),
-        C::Or(
-            store_ids
-                .into_iter()
-                .map(C::store_id::equal)
-                .chain(std::iter::once(C::store_id::is_null()))
-                .collect(),
-        ),
-    ]))
+    C::And(vec![
+        ChangelogFilter::all_data_edited_on_site(site_id),
+        C::table_name::any(table_names),
+        C::Or(vec![
+            C::store_id::is_null(),
+            C::store_site_id::matching(site_id),
+        ]),
+    ])
 }
 
 #[cfg(test)]
@@ -328,77 +322,110 @@ mod tests {
     };
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        ChangeLogInsertRow, ChangelogTableName, RowActionType,
-        mock::{MockDataInserts, mock_store_a, mock_store_b},
+        AssetRow, ChangelogSyncType, NameOmsFieldsRow, NameStoreJoinRow, StocktakeRow, Upsert,
+        mock::{MockDataInserts, mock_name_store_b, mock_store_a, mock_store_b},
         test_db::setup_all,
     };
 
-    /// Local edits are stamped with this site's id (SourceSiteId::CurrentSiteId),
-    /// records pulled from central carry the sending site's id. The push filter
-    /// must keep the former and drop the latter.
+    /// Local edits are stamped with this site's id, records pulled from central carry the
+    /// sending site's id. The push filter must keep the former and drop the latter, in
+    /// tables tagged for v6.
     #[actix_rt::test]
     async fn test_build_v6_push_filter() {
-        let (_, connection, _, _) =
-            setup_all("test_build_v6_push_filter", MockDataInserts::all()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_build_v6_push_filter",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
 
-        let this_site_id = mock_store_a().site_id;
+        let site1_id = mock_store_a().site_id;
+        let site1_store_id = mock_store_a().id;
         let central_site_id = 999;
-        assert_ne!(this_site_id, central_site_id);
-
-        KeyValueStoreRepository::new(&connection)
-            .set_i32(KeyType::SettingsSyncSiteId, Some(this_site_id))
-            .unwrap();
-
-        let changelog_repo = ChangelogRepository::new(&connection);
-        // Ignore changelog rows created by the mock setup
-        let cursor = changelog_repo.max_cursor().unwrap() as i64;
-
-        let insert = |record_id: &str, store_id: Option<String>, source_site_id: Option<i32>| {
-            changelog_repo
-                .insert(&ChangeLogInsertRow {
-                    table_name: ChangelogTableName::NameOmsFields,
-                    record_id: record_id.to_string(),
-                    row_action: RowActionType::Upsert,
-                    store_id,
-                    source_site_id,
-                    ..Default::default()
-                })
-                .unwrap()
+        assert_ne!(central_site_id, site1_id);
+        let from_site1 = || ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
         };
 
-        // Kept: authored here, no store (e.g. name_oms_fields)
-        insert("local_no_store", None, Some(this_site_id));
-        // Kept: authored here, for a store active on this site
-        insert(
-            "local_active_store",
-            Some(mock_store_a().id),
-            Some(this_site_id),
-        );
-        // Dropped: arrived from central
-        insert("from_central", None, Some(central_site_id));
-        // Dropped: authored here, but for a store on another site
-        insert(
-            "local_other_store",
-            Some(mock_store_b().id),
-            Some(this_site_id),
-        );
+        let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
 
-        let filter = build_v6_push_filter(&connection).unwrap();
-        let mut record_ids: Vec<String> = changelog_repo
-            .query(filter, CursorAndLimit { cursor, limit: 100 })
+        // v6 table with no store → pushed.
+        let name_oms_fields_id = mock_store_a().name_id;
+        NameOmsFieldsRow {
+            id: name_oms_fields_id.clone(),
+            properties: None,
+        }
+        .upsert_sync(&connection, from_site1())
+        .unwrap();
+
+        // v6 table, for this site's store → pushed.
+        let asset_id = "asset".to_string();
+        AssetRow {
+            id: asset_id.clone(),
+            store_id: Some(site1_store_id.clone()),
+            ..Default::default()
+        }
+        .upsert_sync(&connection, from_site1())
+        .unwrap();
+
+        // Tagged for both v5 and v6 → pushed.
+        let name_store_join_id = "name_store_join".to_string();
+        NameStoreJoinRow {
+            id: name_store_join_id.clone(),
+            store_id: site1_store_id.clone(),
+            name_id: mock_name_store_b().id,
+            ..Default::default()
+        }
+        .upsert_sync(&connection, from_site1())
+        .unwrap();
+
+        // Arrived from central → not pushed.
+        AssetRow {
+            id: "asset_from_central".to_string(),
+            store_id: Some(site1_store_id.clone()),
+            ..Default::default()
+        }
+        .upsert_sync(
+            &connection,
+            ChangelogSyncType::SyncTypeV5V6 {
+                source_site_id: Some(central_site_id),
+            },
+        )
+        .unwrap();
+
+        // For a store on another site → not pushed.
+        AssetRow {
+            id: "asset_for_other_store".to_string(),
+            store_id: Some(mock_store_b().id),
+            ..Default::default()
+        }
+        .upsert_sync(&connection, from_site1())
+        .unwrap();
+
+        // Tagged for v5 only → not pushed.
+        StocktakeRow {
+            id: "stocktake".to_string(),
+            store_id: site1_store_id.clone(),
+            ..Default::default()
+        }
+        .upsert_sync(&connection, from_site1())
+        .unwrap();
+
+        let outgoing_results: Vec<String> = ChangelogRepository::new(&connection)
+            .query(
+                build_v6_push_filter(site1_id),
+                CursorAndLimit {
+                    cursor: cursor_before,
+                    limit: 1000,
+                },
+            )
             .unwrap()
             .rows
             .into_iter()
             .map(|row| row.record_id)
             .collect();
-        record_ids.sort();
-
         assert_eq!(
-            record_ids,
-            vec![
-                "local_active_store".to_string(),
-                "local_no_store".to_string()
-            ]
+            outgoing_results,
+            vec![name_oms_fields_id, asset_id, name_store_join_id]
         );
     }
 
