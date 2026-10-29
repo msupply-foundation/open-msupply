@@ -3,8 +3,11 @@
  * safe to run on any branch. Compares every catalog against <ref> (default:
  * the merge-base with origin/develop) and fails if this branch:
  *   - changed or removed an existing translation in a non-English catalog
- *     (drafts only ever add keys; existing wording is the translation team's —
- *     filling an existing empty value counts as adding)
+ *     (existing wording is the translation team's). Two exceptions: filling
+ *     an existing empty value counts as adding, and an AI draft that
+ *     `ai-drafts.json` listed at <ref> — still awaiting review — may be
+ *     revised (the listing at <ref>, so adding a human translation's key to
+ *     the list on this branch doesn't unlock it)
  *   - touched an overlay catalog at all (a locale with a `base`, e.g. fr-DJ)
  *   - added a translation whose `{{tokens}}` / `$t()` references differ from
  *     the English (a plural form may drop or add `{{count}}`)
@@ -56,6 +59,23 @@ for (const file of await catalogFiles('en')) {
 }
 
 const manifest = await readJson(manifestPath, {});
+// The drafts awaiting review at <ref>: the only existing values a branch may
+// revise. Read at the base, never from the working tree.
+let draftsAtBase = {};
+try {
+  draftsAtBase = JSON.parse(
+    execFileSync(
+      'git',
+      ['show', `${base}:./${manifestPath.replace(/^\.\//, '')}`],
+      {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }
+    )
+  );
+} catch {
+  // No manifest at the base: nothing is revisable.
+}
 
 for (const locale of registry.codes) {
   if (locale === 'en') continue;
@@ -82,8 +102,13 @@ for (const locale of registry.codes) {
     for (const [key, value] of Object.entries(before)) {
       if (!Object.hasOwn(now, key)) {
         errors.push(`${label}: removed existing key ${key}`);
-      } else if (now[key] !== value && value !== '') {
-        // Filling an empty value is an addition — it renders blank otherwise.
+      } else if (
+        now[key] !== value &&
+        value !== '' &&
+        !Object.hasOwn(draftsAtBase[locale] ?? {}, key)
+      ) {
+        // Filling an empty value is an addition — it renders blank otherwise;
+        // an unreviewed AI draft may be revised.
         errors.push(`${label}: changed existing translation of ${key}`);
       }
     }

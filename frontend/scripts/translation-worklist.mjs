@@ -16,13 +16,16 @@
  *     supported locale except English and overlays (a locale with a `base`,
  *     e.g. `fr-DJ`), which are never written.
  *
- *   apply <locale> <proposals.json> [--ref <name>]
+ *   apply <locale> <proposals.json> [--ref <name>] [--revise]
  *     Inserts `{ key: translation }` into the locale's catalogs. Refuses
  *     the whole batch if any key already exists, isn't an English key (or a
  *     plural form of one), isn't a plural category the locale uses, or drops
  *     or invents a placeholder. Records each key in `src/intl/ai-drafts.json`
  *     against the date and <ref> (default: the current branch) so native
- *     speakers can find the drafts in Weblate later.
+ *     speakers can find the drafts in Weblate later. With --revise, a key
+ *     that already exists may be overwritten only while it is still listed
+ *     in `ai-drafts.json` — an unreviewed draft, e.g. corrected after a team
+ *     glossary arrives; a human translation is still refused.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -49,7 +52,7 @@ import {
 
 const usage = [
   'Usage: node scripts/translation-worklist.mjs build [locale…] [--base <ref>] [--backlog | --keys k1,k2] [--out <dir>] [--chunk-size <n>]',
-  '       node scripts/translation-worklist.mjs apply <locale> <proposals.json> [--ref <name>]',
+  '       node scripts/translation-worklist.mjs apply <locale> <proposals.json> [--ref <name>] [--revise]',
 ].join('\n');
 
 const parseArgs = argv => {
@@ -57,7 +60,7 @@ const parseArgs = argv => {
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--backlog') flags.backlog = true;
+    if (arg === '--backlog' || arg === '--revise') flags[arg.slice(2)] = true;
     else if (arg.startsWith('--')) {
       const value = argv[index + 1];
       if (value === undefined) fail(`${arg} needs a value.\n${usage}`);
@@ -436,6 +439,8 @@ const apply = async (locale, proposalsFile, flags) => {
 
   const proposals = await readJson(proposalsFile);
   const categories = pluralCategories(registry, locale);
+  const manifest = await readJson(manifestPath, {});
+  const drafted = manifest[locale] ?? {};
 
   const en = {};
   const fileOf = {};
@@ -465,9 +470,14 @@ const apply = async (locale, proposalsFile, flags) => {
       );
     } else if (!catalogs[file]) {
       problems.push(`${key}: ${locale} has no ${file}`);
-    } else if (Object.hasOwn(catalogs[file], key)) {
+    } else if (
+      Object.hasOwn(catalogs[file], key) &&
+      !(flags.revise && Object.hasOwn(drafted, key))
+    ) {
       problems.push(
-        `${key}: already translated — existing translations are never changed`
+        flags.revise
+          ? `${key}: a human translation (not in ${manifestPath}) — never changed`
+          : `${key}: already translated — existing translations are never changed (--revise corrects unreviewed AI drafts)`
       );
     } else {
       const problem = placeholderProblem(english, value, key);
@@ -483,7 +493,6 @@ const apply = async (locale, proposalsFile, flags) => {
 
   const ref = flags.ref ?? currentBranch();
   const date = new Date().toISOString().slice(0, 10);
-  const manifest = await readJson(manifestPath, {});
   manifest[locale] ??= {};
   let count = 0;
   for (const [file, entries] of Object.entries(additions)) {
@@ -498,7 +507,7 @@ const apply = async (locale, proposalsFile, flags) => {
   }
   await writeJson(manifestPath, manifest);
   console.log(
-    `${locale}: inserted ${count} key(s); recorded in ${manifestPath}`
+    `${locale}: ${flags.revise ? 'wrote' : 'inserted'} ${count} key(s); recorded in ${manifestPath}`
   );
 };
 
