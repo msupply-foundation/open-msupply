@@ -13,6 +13,7 @@ import { SyncIcon } from './ui/icons';
 export const StaleBundleModal: Component = () => (
   <Dialog
     open={staleBundleDetected()}
+    testId="stale-bundle-modal"
     dismissable={false}
     onClose={() => {}}
     title={t('error.new-version-available')}
