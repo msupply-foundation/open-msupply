@@ -252,10 +252,10 @@ Each changelog row carries a small set of metadata fields. Each filter joins thr
 | **table_name** | Which table the row refers to. | Every filter — "table is in the set of tables I care about". |
 | **record_id** | Primary key of the source row. | Used to fetch the actual record when batching. |
 | **row_action** | Upsert or Delete. | Controls whether the receiver upserts or deletes. |
-| **store_id** | The store this record belongs to (optional). | Remote / RemoteOwned routing (joined to the store's site). For broadcast rows this must be null, to disambiguate hybrid tables. |
+| **store_id** | The store this record belongs to (optional). | Remote / RemoteOwned routing (joined to the store's site); also the v6 push filter ("store's site = this site, or no store"). For broadcast rows this must be null, to disambiguate hybrid tables. |
 | **transfer_store_id** | The "other party" store for cross-store records. | Transfer routing (joined to the counterpart store's site). |
 | **patient_link_id** | The patient this record refers to. | Patient routing (joined via name-store-join → store → site, so any site that knows the patient receives the record). |
-| **source_site_id** | The site that originally caused this changelog row. | Echo guards (don't push back to where it came from); also the v7 push filter ("rows authored here"). |
+| **source_site_id** | The site that originally caused this changelog row. | Echo guards (don't push back to where it came from); also the v6 and v7 push filters ("rows authored here"). |
 | **is_sync_update** | Set on rows integrated from sync before 3.0; current code doesn't set it, so new rows default to false. | Not used by the outgoing filters. |
 
 The source-site field is always populated. When a record is authored locally, it's the current site. When a record is integrated from another site, the original source is preserved. This is what powers every echo guard.
@@ -285,7 +285,7 @@ For deletes, the same generator is used; only the `row_action` field changes.
 
 ## 6. Outgoing-sync filters
 
-Eight filters compose the metadata above into "this site, this transport" predicates. The distribution-keyed filters read the **distribution** axis, and for the v6 pulls also the **transport flag**; the legacy-push and v6-push filters read the **transport flag**; the v7 push filter reads only the source-site field; the two multi-device filters additionally intersect with the per-table **multi-device flag**.
+Eight filters compose the metadata above into "this site, this transport" predicates. The distribution-keyed filters read the **distribution** axis, and for the v6 pulls also the **transport flag**; the legacy-push and all-data-edited-on-site-for-v6 filters read the **transport flag**; the v7 push filter reads only the source-site field; the two multi-device filters additionally intersect with the per-table **multi-device flag**.
 
 | Filter | Used by | What it returns | Echo guard |
 | --- | --- | --- | --- |
@@ -293,7 +293,7 @@ Eight filters compose the metadata above into "this site, this transport" predic
 | **multi-device-all-data-for-site** | v7 central pull to a site flagged multi-device | The same per-distribution predicates as all-data-for-site (it shares that logic), intersected with the tables tagged for multi-device sync. | **None** — unlike all-data-for-site, the self-source exclusion is deliberately dropped: the devices on a multi-device site share one site id, so a row the site sourced must still relay to its other devices. |
 | **patient-data-for-site** | v6 patient pull and v7 patient pull (used together with an explicit patient id) | Just the Patient clause from above, intersected with the requested patient id. | None at this layer — caller composes additional conditions. |
 | **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Every table whose transport flag includes **v5**. It does not look at authoring or distribution. The per-table translator still gates what actually ships: a selected table only pushes when its translator declares a legacy changelog mapping, and the `Name`/`NameStoreJoin` translators additionally route per row by source site (see §7). | Exclude rows whose source-site is the legacy central server itself. |
-| **v6-push** | v6 push (remote → OMS central) | Rows whose source-site = this site, in tables whose transport flag includes **v6**, that carry one of this site's active stores or no store. It does not look at authoring or distribution. The per-table translator still gates what actually ships: a selected table only pushes when its translator opts in to the OMS-central push. | Implicit — the source-site predicate is the echo guard. |
+| **all-data-edited-on-site-for-v6** | v6 push (remote → OMS central) | Rows whose source-site = this site, in tables whose transport flag includes **v6**, whose store's site = this site, or with no store. It does not look at authoring or distribution. The per-table translator still gates what actually ships: a selected table only pushes when its translator opts in to the OMS-central push. | Implicit — the source-site predicate is the echo guard. |
 | **all-data-edited-on-site** | v7 push from an ordinary site (remote → OMS central) | Just "rows whose source-site = this site". No per-style filtering, no transport-flag filtering — the per-table translators are not consulted because v7 has no per-table translation. | Implicit — the predicate itself is the echo guard. |
 | **all-data-edited-on-multi-device-site** | v7 push from a site flagged multi-device | "Rows whose source-site = this site", intersected with the tables tagged for multi-device sync. | Implicit — the source-site predicate is the echo guard. |
 | **data-for-store** | v7 store-transfer pull (when a store moves to this site, request all of that store's data) | Remote + RemoteOwned tables matched on store-id, Transfer tables matched on transfer-store-id, and Patient tables for patients with a name-store-join at that store, for one specific store, ignoring transport flags. | None. |

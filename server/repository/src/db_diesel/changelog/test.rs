@@ -5,10 +5,10 @@ use crate::{
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, ShippingMethodRow,
-    ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow, StoreRowRepository,
-    SyncVersions, Upsert, VaccinationRow, VaccinationRowRepository,
+    LocationRowRepository, NameOmsFieldsRow, NameRow, NameStoreJoinRow, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RowActionType,
+    ShippingMethodRow, ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow,
+    StoreRowRepository, SyncVersions, Upsert, VaccinationRow, VaccinationRowRepository,
     asset_class_row::{AssetClassRow, AssetClassRowRepository},
     asset_row::AssetRow,
     mock::{
@@ -1101,6 +1101,96 @@ async fn test_changelog_edited_on_multi_device_site_push_records() {
         .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, md_edited_id);
+}
+
+/// The v6 push sends rows this site authored, in tables tagged for v6, for its own stores
+/// or with no store.
+#[actix_rt::test]
+async fn test_changelog_edited_on_site_v6_push_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_edited_on_site_v6_push_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let site1_id = mock_store_a().site_id;
+    let site1_store_id = mock_store_a().id;
+    let central_site_id = 999;
+    assert_ne!(central_site_id, site1_id);
+
+    let from_site1 = || ChangelogSyncType::SyncTypeV5V6 {
+        source_site_id: Some(site1_id),
+    };
+    let from_central = || ChangelogSyncType::SyncTypeV5V6 {
+        source_site_id: Some(central_site_id),
+    };
+
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // v6 table with no store → pushed.
+    let name_oms_fields_id = mock_store_a().name_id;
+    NameOmsFieldsRow {
+        id: name_oms_fields_id.clone(),
+        properties: None,
+    }
+    .upsert_sync(&connection, from_site1())
+    .unwrap();
+
+    // Tagged for both v5 and v6, for this site's store → pushed.
+    let name_store_join_id = "name_store_join".to_string();
+    NameStoreJoinRow {
+        id: name_store_join_id.clone(),
+        store_id: site1_store_id.clone(),
+        name_id: mock_name_store_b().id,
+        ..Default::default()
+    }
+    .upsert_sync(&connection, from_site1())
+    .unwrap();
+
+    // v6 table for this site's store, but arrived from central → not pushed.
+    AssetRow {
+        id: "asset_from_central".to_string(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(&connection, from_central())
+    .unwrap();
+
+    // v6 table, but for a store on another site → not pushed.
+    AssetRow {
+        id: "asset_for_other_store".to_string(),
+        store_id: Some(mock_store_b().id),
+        ..Default::default()
+    }
+    .upsert_sync(&connection, from_site1())
+    .unwrap();
+
+    // Tagged for v5 only → not pushed.
+    StocktakeRow {
+        id: "stocktake".to_string(),
+        store_id: site1_store_id.clone(),
+        ..Default::default()
+    }
+    .upsert_sync(&connection, from_site1())
+    .unwrap();
+
+    let outgoing_results: Vec<String> = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_edited_on_site_for_v6(site1_id),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows
+        .into_iter()
+        .map(|row| row.record_id)
+        .collect();
+    assert_eq!(
+        outgoing_results,
+        vec![name_oms_fields_id, name_store_join_id]
+    );
 }
 
 #[actix_rt::test]
