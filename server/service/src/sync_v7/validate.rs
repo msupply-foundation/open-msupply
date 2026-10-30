@@ -1,3 +1,4 @@
+use log::warn;
 use repository::{Authoring, ChangelogTableName, SyncBufferRow};
 use thiserror::Error;
 
@@ -23,6 +24,8 @@ pub enum ValidationError {
     StoreNotActiveOnSourceSite,
     #[error("Non-multi-device data received on a multi-device site")]
     NonMultiDeviceDataOnMultiDeviceSite,
+    #[error("User permissions are managed on central and can't be pushed by a remote site")]
+    PermissionsManagedOnCentral,
 }
 
 pub(crate) fn validate_on_remote(
@@ -95,6 +98,25 @@ pub(crate) fn validate_on_central(
     use Authoring::*;
     let sync_style = table_name.sync_style();
 
+    // User permissions are managed on central (#1639). Sites only receive them, so refuse
+    // every pushed row whatever its store - the store check below only reads the outer
+    // store_id, not the store_id inside the row, so it can't stop a site granting itself
+    // access to another site's store. These tables stay `Remote` in their sync style
+    // because remotes rely on that to accept the rows central sends them.
+    if matches!(
+        table_name,
+        ChangelogTableName::UserPermission | ChangelogTableName::UserStoreJoin
+    ) {
+        warn!(
+            "Site {} pushed a {} record over v7 ({} '{}'); user permissions are managed on central, so it was ignored",
+            sync_buffer_row.source_site_id,
+            table_name,
+            sync_buffer_row.action,
+            sync_buffer_row.record_id
+        );
+        return Err(ValidationError::PermissionsManagedOnCentral);
+    }
+
     // A multi-device site only pushes multi-device tables — reject anything else, then
     // fall through so what passes is still checked by its authoring arm below.
     if is_multi_device && !sync_style.multi_device_site {
@@ -133,7 +155,7 @@ pub(crate) fn validate_on_central(
 mod tests {
     use super::*;
     use ChangelogTableName::*;
-    use repository::{NameRow, Store, StoreRow};
+    use repository::{NameRow, Store, StoreRow, SyncAction};
 
     // Site 1 is "this site" with one active store, "store_a".
     // Site 2 is some other site.
@@ -518,6 +540,53 @@ mod tests {
                 false,
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
+        );
+    }
+
+    #[test]
+    fn on_central_refuses_user_permissions() {
+        // #1639: user permissions are managed on central, so a site may not push them —
+        // not for its own store, not for another site's store, and not as a delete.
+        let source_site_stores = vec!["remote_store_a".to_string()];
+
+        for table in [UserPermission, UserStoreJoin] {
+            for store_id in [Some("remote_store_a"), Some("store_a"), None] {
+                for action in [SyncAction::Upsert, SyncAction::Delete] {
+                    for is_multi_device in [false, true] {
+                        assert_eq!(
+                            validate_on_central(
+                                &SyncBufferRow {
+                                    store_id: store_id.map(Into::into),
+                                    action: action.clone(),
+                                    source_site_id: 2,
+                                    ..Default::default()
+                                },
+                                &table,
+                                &source_site_stores,
+                                is_multi_device,
+                            ),
+                            Err(ValidationError::PermissionsManagedOnCentral),
+                            "{table} {action} for store {store_id:?}, multi-device {is_multi_device}"
+                        );
+                    }
+                }
+            }
+        }
+
+        // Remotes still accept the permission rows central sends for their stores.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &UserPermission,
+                &site(),
+                false,
+                false,
+            ),
+            Ok(())
         );
     }
 
