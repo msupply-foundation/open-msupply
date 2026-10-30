@@ -31,6 +31,7 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     t('label.pack-sell-price'),
     t('label.total'),
     t('label.manufacturer'),
+    t('label.activity'),
     t('label.supplier'),
   ];
   const data = rows.map(l => [
@@ -53,6 +54,7 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     l.sellPricePerPack,
     l.totalNumberOfPacks * l.costPricePerPack,
     l.manufacturer?.name ?? '',
+    l.campaign?.name ?? '',
     l.supplierName && l.supplierName.length > 0
       ? l.supplierName
       : t('label.inventory-adjustment'),

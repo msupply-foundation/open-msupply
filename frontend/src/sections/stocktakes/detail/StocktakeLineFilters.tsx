@@ -1,15 +1,17 @@
-import { type Component } from 'solid-js';
+import { createMemo, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { FilterBar, type Filter } from '@/ui/elements/selectors/FilterBar';
 import { Badge } from '@/ui/elements/feedback/Badge';
 import { stocktakeDetailFilters } from './stocktakeDetailFilters';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import type { LocationWithVolume } from '@/domain/location';
+import { campaignsResource } from '@/domain/campaign';
 
 // The detail line table's filters, rendered in the DataTable's own toolbar
 // (ui-standards → tables › filtering): the item code/name search as the
-// screen's default filter, plus an addable Location chip. Which is which lives
-// in the definitions (stocktakeDetailFilters).
+// screen's default filter, plus addable Location and Activity chips. Which is
+// which lives in the definitions (stocktakeDetailFilters). Activity is offered
+// only while the campaign register has entries.
 //
 // Plus one SPECIAL chip, the "errors" filter (issue #791 follow-up): it doesn't
 // map to a wire filter key the user types into — it's a boolean toggle whose
@@ -47,7 +49,20 @@ export const StocktakeLineFilters: Component<
   // mount). The location chip's render reads `props.locations` through this
   // accessor, so the live list flows in without rebuilding the array on every
   // location refetch.
-  const filters = stocktakeDetailFilters(() => props.locations);
+  const allFilters = stocktakeDetailFilters(() => props.locations);
+  // Filtering the stable array keeps each Filter's identity, so FilterBar's
+  // <For> reuses its chips when the register loads — no remount.
+  const filters = createMemo(() => {
+    const hasCampaigns = campaignsResource.noSuspense().length > 0;
+    // Offer Activity while the register has entries OR the filter already
+    // carries a value — otherwise a URL with a campaignId while the register is
+    // empty or still loading (a stale link to a deleted campaign) would narrow
+    // the table with no chip to see or clear it.
+    const campaignFilterActive = props.filter.campaignId != null;
+    return allFilters.filter(
+      f => f.key !== 'campaignId' || hasCampaigns || campaignFilterActive
+    );
+  });
 
   // The errors chip definition. Its render is display-only (a count badge) —
   // there's nothing to type — and removing the chip clears the flag. Built once
@@ -66,7 +81,7 @@ export const StocktakeLineFilters: Component<
 
   return (
     <FilterBar
-      filters={filters}
+      filters={filters()}
       filter={props.filter}
       onChange={props.onFilterChange}
       extra={{

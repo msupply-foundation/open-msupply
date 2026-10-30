@@ -1,4 +1,4 @@
-import { createResource, createSignal } from 'solid-js';
+import { Show, createResource, createSignal } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
@@ -33,7 +33,7 @@ import {
   rememberPageSize,
 } from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
-import { stockPreferences } from '../../../store/storeContext';
+import { hasPermission, stockPreferences } from '../../../store/storeContext';
 import {
   StockLines,
   type StockLineRowFragment,
@@ -107,6 +107,10 @@ const StockList: Component = () => {
   });
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
+  // New stock is an inventory adjustment (spec/stock rules › Permissions,
+  // OMS-REG-SMV-02.42): without the permission the button, the empty state's
+  // add and Alt+N are all withheld, matching the detail view's Adjust.
+  const canAdjust = () => hasPermission('INVENTORY_ADJUSTMENT_MUTATE');
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2,
   // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
@@ -116,6 +120,7 @@ const StockList: Component = () => {
   createAddAction({
     name: 'button.new-stock',
     run: () => setCreateOpen(true),
+    disabled: () => !canAdjust(),
   });
 
   const variables = (): StockLinesVariables => ({
@@ -193,9 +198,9 @@ const StockList: Component = () => {
   // Column order follows the current open-mSupply Stock ListView (Code · Name ·
   // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
   // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost
-  // · Sell · Total · Manufacturer · Supplier), plus On hold after Batch, which
-  // that view lacks. Each column also declares its card slot per spec/stock S1
-  // › card view.
+  // · Sell · Total · Manufacturer · Activity · Supplier), plus On hold after
+  // Batch, which that view lacks. Each column also declares its card slot per
+  // spec/stock S1 › card view.
   //
   // The card HEADER is Name-then-Code (the split for this screen), but the
   // TABLE keeps OMS's Code-first order — the one place the two views want a
@@ -392,6 +397,15 @@ const StockList: Component = () => {
       ...getCellDefinition('manufacturer'),
     },
     {
+      // Activity (the line's campaign) — card: More details. Sorts by the
+      // campaign's name server-side.
+      c: { accessor: r => r.campaign?.name ?? '', id: 'campaign' },
+      sortKey: 'campaign',
+      header: () => t('label.activity'),
+      cardGroup: 'more',
+      ...getCellDefinition('activity'),
+    },
+    {
       // Supplier — card: More details. Blank renders "Inventory adjustment".
       c: { accessor: r => r.supplierName ?? '', id: 'supplierName' },
       sortKey: 'supplierName',
@@ -410,14 +424,16 @@ const StockList: Component = () => {
   const crumbs = () => [{ label: t('stock') }];
 
   const emptyCreate = (): JSX.Element => (
-    <Button
-      variant="ghost"
-      shortcut={ALT_N}
-      data-testid="nothing-here-create-button"
-      onClick={() => setCreateOpen(true)}
-    >
-      {t('button.add-new-stock')}
-    </Button>
+    <Show when={canAdjust()}>
+      <Button
+        variant="ghost"
+        shortcut={ALT_N}
+        data-testid="nothing-here-create-button"
+        onClick={() => setCreateOpen(true)}
+      >
+        {t('button.add-new-stock')}
+      </Button>
+    </Show>
   );
 
   return (
@@ -427,14 +443,16 @@ const StockList: Component = () => {
         <Header>
           <Breadcrumb crumbs={crumbs()} />
           <HeaderButtons>
-            <Button
-              icon={<PlusCircleIcon />}
-              shortcut={ALT_N}
-              data-testid="new-stock-button"
-              onClick={() => setCreateOpen(true)}
-            >
-              {t('button.new-stock')}
-            </Button>
+            <Show when={canAdjust()}>
+              <Button
+                icon={<PlusCircleIcon />}
+                shortcut={ALT_N}
+                data-testid="new-stock-button"
+                onClick={() => setCreateOpen(true)}
+              >
+                {t('button.new-stock')}
+              </Button>
+            </Show>
             <ExportStockAction
               storeId={params.storeId}
               filter={() => query().filter}

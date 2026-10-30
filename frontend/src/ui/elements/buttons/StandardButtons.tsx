@@ -120,6 +120,19 @@ export const DialogSaveButton = (props: StandardButtonProps) => (
 );
 
 /**
+ * Primary confirm for a line editor's ADD mode — same plain confirm and Alt+S
+ * wiring as DialogSaveButton (D55), just labelled "Add line": a line-add dialog
+ * reads better confirming with the verb than with a bare "Save" (the editor's
+ * UPDATE mode keeps DialogSaveButton). Kept here, beside Save, so the confirm
+ * role and shortcut live in one place rather than hand-built at the call site.
+ */
+export const DialogAddLineButton = (props: StandardButtonProps) => (
+  <Button {...props} variant="primary" confirms="plain" shortcut={ALT_S}>
+    {t('button.add-line')}
+  </Button>
+);
+
+/**
  * Primary save that also advances to the next step in a multi-step flow. The
  * CONTINUING confirm: where it is present and enabled, Enter activates it in
  * preference to the plain Save (KB-E2, OMS-REG-KBD-02.9/.10).

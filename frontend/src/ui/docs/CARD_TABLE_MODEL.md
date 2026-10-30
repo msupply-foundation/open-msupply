@@ -38,25 +38,26 @@ A value that must look different in each view is simply **two columns** — one 
 
 Set on each column literal in your `columns()` array. Anything not about the card is the ordinary table column (see [CELL_TYPES.md](./CELL_TYPES.md)).
 
-| Field                           | Type                   | Default       | Effect                                                                                                                                                                                                                                                                                              |
-| ------------------------------- | ---------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `c`                             | identity union         | —             | The column's identity (`{ key }` / `{ id }` / `{ accessor, id }`). Two columns must have **distinct** resolved ids. See [columnTypes.ts](../elements/table/columnTypes.ts).                                                                                                                         |
-| `header`                        | `() => JSX.Element`    | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.                                                                                                                                |
-| `meta.textLabel`                | `() => string`         | — (`header`)  | The column's name **in words**, for a column whose grid header is empty or **iconic** (the comment glyph, the line editor's auto-allocation tick). Used wherever the icon can't stand in: the Columns popover row and the card field caption. Columns with a text header don't set it.              |
-| `sortKey`                       | `K`                    | —             | Makes the column sortable. In card view it feeds the Sort control — read from **every** column regardless of view, so a table-only column can still supply a card sort option.                                                                                                                      |
-| `cardGroup`                     | `G`                    | default group | Which body group this column joins in card view (typed; a typo is a compile error). Omit → the default ungrouped group. Ignored for header cells.                                                                                                                                                   |
-| `meta.headerPosition`           | `'primary' \| 'badge'` | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                                                                                                                                           |
-| `meta.showLabel`                | `boolean`              | slot-based    | Override the card label. Default: header cells **unlabelled**, body cells **labelled**. Set `true` to caption a header cell, `false` to drop a body label.                                                                                                                                          |
-| `meta.hideOnCard`               | `boolean`              | `false`       | Omit the column from **card** view entirely (a table-only column).                                                                                                                                                                                                                                  |
-| `meta.hideOnCardWhen`           | `(row) => boolean`     | —             | Omit this field from the cards of the **rows** it answers true for — the per-row counterpart of `hideOnCard`. Card view only; see [Withdrawing a field per row](#withdrawing-a-field-per-row).                                                                                                      |
-| `meta.hideOnTable`              | `boolean`              | `false`       | Omit the column from **table** view entirely (a card-only column).                                                                                                                                                                                                                                  |
-| `meta.hideFromColumnSettings`   | `boolean`              | `false`       | Keep the column out of the **Columns popover** — it **stays on screen** (forced visible whatever the persisted config says), just not user show/hide/move/pin. For structural columns — the card identity, a row-actions column, a field a card can't do without.                                   |
-| `meta.cardWidth`                | `number` or range      | — (equal)     | This field's width **range** in **card** view, per ui-standards § _Field Widths by Context_ › _By Content Type_ (numeric quantity `7.5–9`, currency `10–12`, lookups `12.5–36`). See below.                                                                                                         |
-| `meta.cardSpan`                 | `number`               | `1`           | Tracks this field takes of its group's `narrowLayout.columns` equal-track grid (≤1023px viewports only); ignored in every other layout. See [Field widths](#field-widths-metacardwidth).                                                                                                            |
-| `meta.align` / `meta.wrapLines` | —                      | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                                                                                                                                        |
-| `meta.controlLine`              | `boolean`              | `false`       | Table view, in an editor table with top-aligned cells (`cellAlign="start"`): holds a **short** cell (a row number, an icon button) to the row's input line — its content sits in a box one input tall and centres there, however the row grows beneath the inputs. Inert in a centre-aligned table. |
-| `meta.groupRows`                | `boolean`              | `false`       | Table view: shows a value **once per run** of equal consecutive values (rows as rendered — sorted, paged), joining the run's cells so a row tint runs through. A continuing cell is blank and names its value to assistive technology; an empty value never groups.                                 |
-| `meta.dividerEnd`               | `boolean`              | `false`       | Table view: a rule down the column's inline-end edge, header to footer — for a column that heads the ones after it, pinned or not.                                                                                                                                                                  |
+| Field                           | Type                            | Default       | Effect                                                                                                                                                                                                                                                                                              |
+| ------------------------------- | ------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `c`                             | identity union                  | —             | The column's identity (`{ key }` / `{ id }` / `{ accessor, id }`). Two columns must have **distinct** resolved ids. See [columnTypes.ts](../elements/table/columnTypes.ts).                                                                                                                         |
+| `header`                        | `() => JSX.Element`             | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.                                                                                                                                |
+| `meta.textLabel`                | `() => string`                  | — (`header`)  | The column's name **in words**, for a column whose grid header is empty or **iconic** (the comment glyph, the line editor's auto-allocation tick). Used wherever the icon can't stand in: the Columns popover row and the card field caption. Columns with a text header don't set it.              |
+| `sortKey`                       | `K`                             | —             | Makes the column sortable. In card view it feeds the Sort control — read from **every** column regardless of view, so a table-only column can still supply a card sort option.                                                                                                                      |
+| `cardGroup`                     | `G`                             | default group | Which body group this column joins in card view (typed; a typo is a compile error). Omit → the default ungrouped group. Ignored for header cells.                                                                                                                                                   |
+| `meta.headerPosition`           | `'primary' \| 'badge'`          | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                                                                                                                                           |
+| `meta.showLabel`                | `boolean`                       | slot-based    | Override the card label. Default: header cells **unlabelled**, body cells **labelled**. Set `true` to caption a header cell, `false` to drop a body label.                                                                                                                                          |
+| `meta.hideOnCard`               | `boolean`                       | `false`       | Omit the column from **card** view entirely (a table-only column).                                                                                                                                                                                                                                  |
+| `meta.hideOnCardWhen`           | `(row) => boolean`              | —             | Omit this field from the cards of the **rows** it answers true for — the per-row counterpart of `hideOnCard`. Card view only; see [Withdrawing a field per row](#withdrawing-a-field-per-row).                                                                                                      |
+| `meta.hideOnTable`              | `boolean`                       | `false`       | Omit the column from **table** view entirely (a card-only column).                                                                                                                                                                                                                                  |
+| `meta.hideFromColumnSettings`   | `boolean`                       | `false`       | Keep the column out of the **Columns popover** — it **stays on screen** (forced visible whatever the persisted config says), just not user show/hide/move/pin. For structural columns — the card identity, a row-actions column, a field a card can't do without.                                   |
+| `meta.cardWidth`                | `number` or range               | — (equal)     | This field's width **range** in **card** view, per ui-standards § _Field Widths by Context_ › _By Content Type_ (numeric quantity `7.5–9`, currency `10–12`, lookups `12.5–36`). See below.                                                                                                         |
+| `meta.cardSpan`                 | `number`                        | `1`           | Tracks this field takes of its group's `narrowLayout.columns` equal-track grid (≤1023px viewports only); ignored in every other layout. See [Field widths](#field-widths-metacardwidth).                                                                                                            |
+| `meta.align` / `meta.wrapLines` | —                               | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                                                                                                                                        |
+| `meta.controlLine`              | `boolean`                       | `false`       | Table view, in an editor table with top-aligned cells (`cellAlign="start"`): holds a **short** cell (a row number, an icon button) to the row's input line — its content sits in a box one input tall and centres there, however the row grows beneath the inputs. Inert in a centre-aligned table. |
+| `meta.groupRows`                | `boolean`                       | `false`       | Table view: shows a value **once per run** of equal consecutive values (rows as rendered — sorted, paged), joining the run's cells so a row tint runs through. A continuing cell is blank and names its value to assistive technology; an empty value never groups.                                 |
+| `meta.dividerEnd`               | `boolean`                       | `false`       | Table view: a rule down the column's inline-end edge, header to footer — for a column that heads the ones after it, pinned or not.                                                                                                                                                                  |
+| `meta.cellTone`                 | `(row) => 'error' \| undefined` | —             | Rings **this column's cell** on the rows it names — an error that belongs to one field of a line rather than the whole line. Both views; the cell's renderer still states the error in words. See [cellTone](#metacelltone--marking-one-cell).                                                      |
 
 `getCellDefinition(key, meta?)` merges its second argument into the column's `meta`, so card flags ride along with a preset: `...getCellDefinition('numberOfPacks', { headerPosition: 'badge', showLabel: true })`.
 
@@ -185,6 +186,55 @@ A page whose table rows must stay plain-text (a status-tinted table — spec D11
 ### Flag cells in the badge slot
 
 A `getFlagCell` check is anonymous by design in table view — its column header names it. In a card's **badge** slot there is no header, so the cell renders **two representations, one shown per view** (CSS-gated in DataTable.module.css): the bare check (`[data-flag]`) in table view, and a **`StatusBadge` chip** (`[data-flag-chip]`) on the card — label + optional icon in the flag's semantic `tone` (`getFlagCell(label, meta, tone, icon)`), including `'success'` for affirmative flags like the auto-allocation tick. A bespoke flag cell opts in by rendering the same pair. Status-flag chips sit directly **after the card title** (the identity stops absorbing the space when the badges are flags); action-bearing badge slots keep the corner. Body-slot card flags need none of this — they get a check with a `LabelledValue` caption like any body field.
+
+### `meta.cellTone` — marking one cell
+
+`meta.cellTone={(row) => 'error' | undefined}` is the row-tone vocabulary brought down to **one cell**: for an error that is about a single field of a line rather than the line as a whole — a variance with no reason (the Reason cell), a count that would take stock below zero (the Counted cell), a snapshot that no longer matches the stock (the Snapshot cell). An error about the whole line — a delete refused because the line came by transfer, an item that can't be ordered — is the row's, through `rowTone`, not any one cell's. It stamps `data-cell-tone` on the `<td>` in table view and on a wrapper round the value in card view, and DataTable draws a 2px ring in the error tone: inside the cell's edge and square in table view (collapsed-border cells take no radius), just outside the value and rounded in card view. It is an outline, so it takes no room — a cell that flips state mid-edit moves nothing — and it composes with every row channel above: tints, selection, the hover wash, the frozen block's seam, and a `rowTone` on the same row.
+
+The ring is colour alone, so it is **never the only signal**: the column's own `cell` renderer states the error in words on screen — a short message stacked beneath the value — and it is the column that decides the wording, not the table. An icon whose label only a screen reader announces is not the words ([tables › cell errors](../../../spec/ui-standards/tables.md#cell-errors)); it can sit beside the value as a shape cue, alongside the message. Give the ring and the words **one predicate**, so the cell can't show one without the other.
+
+```tsx
+{
+  c: { key: 'snapshotNumberOfPacks' },
+  header: () => t('label.snapshot-num-of-packs'),
+  ...getCellDefinition('snapshotNumberOfPacks', {
+    // Annotate the row type: the meta is built against the row-erased
+    // ColumnMeta, so an unannotated parameter infers as `never`.
+    cellTone: (line: Line) => (isMismatch(line) ? 'error' : undefined),
+  }),
+  cell: info => (
+    <>
+      <Num value={info.getValue<number>()} />
+      <Show when={isMismatch(info.row.original)}>
+        <span class={styles.lineError}>{t('error.snapshot-total-mismatch')}</span>
+      </Show>
+    </>
+  ),
+}
+```
+
+`cellTone` is called per cell at render, so drive it from the page's error signal directly; the columns don't rebuild when it changes. A cell that holds a **control** already has its own error state (an input's `error` prop rings the input), so an editor column doesn't also need `cellTone`.
+
+**A message under a value in the card's badge slot.** A badge sits beside the card title and never shrinks, so the table cell's message beneath the value can't come along: mark it `data-cell-message` and the badge slot drops it, leaving the ringed value. Carry the message in a card-only body field instead, withdrawn on the rows without the error — the stocktake detail's Counted column does this:
+
+```tsx
+// In the Counted cell (a badge on cards): dropped from the badge.
+<Show when={reducedBelowZero(line)}>
+  <span class={styles.lineError} data-cell-message>{t('stocktake.line-error.stock-reserved')}</span>
+</Show>
+
+// CARD-ONLY body field carrying it, on the lines that have it.
+{
+  c: { id: 'countedNumberOfPacksError' },
+  header: () => t('label.counted-num-of-packs'),
+  meta: {
+    hideOnTable: true,
+    hideFromColumnSettings: true,
+    hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
+  },
+  cell: () => <span class={styles.lineError}>{t('stocktake.line-error.stock-reserved')}</span>,
+}
+```
 
 ### What a dev writes
 

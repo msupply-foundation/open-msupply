@@ -122,6 +122,11 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     name
   }
+  # The line's item variant (ungated, spec/stocktakes S4), picked in the line editor from the
+  # item's variants (stocktakeItemVariants). The raw id, not the itemVariant node: an
+  # auto-created barcode-only variant is kept out of the item's variant list, and the editor
+  # never sends the field back unless the user changed it, so such a variant survives a save.
+  itemVariantId
   # Program and Activity (ungated fields, spec/stocktakes S4 — like manufacturer,
   # no store-preference gate). The line editor's Other tab offers them as TWO
   # independent pickers: the item's programs, and the campaign register behind
@@ -444,6 +449,12 @@ query stockLinesByItem(
           id
           name
         }
+        # Shows an opted-in batch's item variant. Null for an auto-created barcode-only
+        # variant; either way the insert omits the field unless the user picks one, and the
+        # server then carries the stock line's own variant over.
+        itemVariant {
+          id
+        }
         # Seed a new-batch draft's program/activity from the stock line it opts
         # in (ungated, like manufacturer — spec S4). Nodes so the pickers can
         # label the seeded values; the editor writes campaignId/programId on
@@ -455,6 +466,35 @@ query stockLinesByItem(
         program {
           id
           name
+        }
+      }
+    }
+  }
+}
+
+# The edited item's variants, for the line editor's Item variant field
+# (spec/stocktakes S4). Fetched per item when the editor loads it; an item with
+# none hides the field. Excludes auto-created barcode-only variants (the
+# server's default). Picking one seeds the batch's manufacturer and, from the
+# packaging level matching its pack size, its volume per pack.
+query stocktakeItemVariants($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        variants {
+          id
+          name
+          manufacturer(storeId: $storeId) {
+            id
+            name
+          }
+          packagingVariants {
+            id
+            packSize
+            volumePerUnit
+          }
         }
       }
     }

@@ -17,6 +17,7 @@ import {
   type ReadScan,
 } from '@/domain/barcode';
 import type { ItemOption } from '@/domain/item';
+import { perUnitAtPackSize } from '../inboundShipmentLine';
 import type { BatchInboundShipmentVariables } from '../inboundShipmentDetail.generated';
 
 /** A scan as the window receives it — never an unreadable one. */
@@ -25,7 +26,12 @@ export type CaptureRead = Exclude<ReadScan, { kind: 'unreadable' }>;
 /** What the window knows about the item in its Item field. */
 export type CaptureItem = Pick<
   ItemOption,
-  'id' | 'code' | 'name' | 'defaultPackSize' | 'defaultSellPricePerPack'
+  | 'id'
+  | 'code'
+  | 'name'
+  | 'defaultPackSize'
+  | 'defaultSellPricePerPack'
+  | 'volumePerPack'
 >;
 
 /** The six fields of the window, plus what the scan decided about them. */
@@ -312,10 +318,13 @@ export const saveRefusal = (
  * blank is never sent as a clear. An update with nothing to add is not sent:
  * undefined, and the window moves on as if it had saved.
  *
- * A new line's prices follow the inbound rule for any new manual line
- * (OMS-REG-REPL-09.10/.11): cost and sell price prefill from the item's
- * default sell price at its default pack size, and are zero at any other
- * pack size — or where the shipment's cost is locked by a source link.
+ * A new line follows the inbound new-batch defaults (OMS-REG-REPL-09.10/.11,
+ * .41, .43–.45): cost and sell price prefill from the item's default sell
+ * price at its default pack size. At any other pack size they are zero where
+ * cost can be typed, and follow the pack size at the default's price per unit
+ * where a source link locks cost, since a zero there could never be
+ * corrected. Volume per pack is the item's volume per unit at the line's pack
+ * size.
  */
 export const captureBatch = (
   draft: CaptureDraft,
@@ -347,8 +356,13 @@ export const captureBatch = (
       ],
     };
   }
-  const price =
-    !context.costLocked && draft.packSize === item.defaultPackSize
+  const price = context.costLocked
+    ? perUnitAtPackSize(
+        item.defaultSellPricePerPack,
+        item.defaultPackSize,
+        draft.packSize
+      )
+    : draft.packSize === item.defaultPackSize
       ? item.defaultSellPricePerPack
       : 0;
   return {
@@ -364,6 +378,11 @@ export const captureBatch = (
         manufactureDate: draft.manufactureDate ?? undefined,
         costPricePerPack: price,
         sellPricePerPack: price,
+        volumePerPack: perUnitAtPackSize(
+          item.volumePerPack,
+          item.defaultPackSize,
+          draft.packSize
+        ),
         ...(draft.barcode ? { barcode: draft.barcode } : {}),
       },
     ],
