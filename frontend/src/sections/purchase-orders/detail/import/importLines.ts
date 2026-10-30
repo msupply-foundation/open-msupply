@@ -63,8 +63,9 @@ export const buildTemplateCsv = (): string => {
 
 /**
  * Read a file into rows, each checked (OMS-FUN-PO-09.3/.7/.8): the pack size
- * must be greater than zero, the discount at most 100, the after-discount
- * price no greater than the before-discount price, and no two rows may repeat
+ * must be greater than zero, the packs and both prices not negative, the
+ * discount at most 100, the after-discount price no greater than the
+ * before-discount price, and no two rows may repeat
  * an item and pack size. The before-price and, where given, the after-price
  * are taken as written and the percentage is recovered from them; an absent
  * after-price is computed from the percentage instead. An unreadable date is
@@ -121,10 +122,17 @@ export const parseImportFile = (
     if (requestedPackSize <= 0)
       errors.push(t('error.pack-size-must-be-greater-than-zero'));
 
+    const negative = (value: number, name: string) => {
+      if (value < 0)
+        errors.push(t('error.field-cannot-be-negative', { field: name }));
+    };
+
     const packs = number(cells, t('label.requested-packs')) ?? 0;
+    negative(packs, t('label.requested-packs'));
 
     const before =
       number(cells, t('label.price-per-pack-before-discount')) ?? 0;
+    negative(before, t('label.price-per-pack-before-discount'));
     const discountCell = number(cells, t('label.discount-percentage'));
     if (discountCell !== undefined && discountCell > 100)
       errors.push(t('error.discount-exceeds-maximum'));
@@ -136,6 +144,7 @@ export const parseImportFile = (
         discountPercentage: discountCell ?? 0,
         pricePerPackAfterDiscount: 0,
       }).pricePerPackAfterDiscount;
+    negative(after, t('label.price-per-pack-after-discount'));
     if (after > before)
       errors.push(
         t('error.price-after-discount-cannot-exceed-price-before-discount')

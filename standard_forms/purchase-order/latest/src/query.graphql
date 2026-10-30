@@ -24,8 +24,8 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       }
       number
       reference
-      createdDatetime
       requestedDeliveryDate
+      shippingMethod
       authorisingOfficer1
       authorisingOfficer2
       additionalInstructions
@@ -36,10 +36,9 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           item {
             code
             name
-            unitName
             type
           }
-          expectedDeliveryDate
+          requestedDeliveryDate
           requestedNumberOfUnits
           requestedPackSize
           lineTotalAfterSupplierDiscount

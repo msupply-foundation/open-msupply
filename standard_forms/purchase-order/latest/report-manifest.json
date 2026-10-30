@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "3.4.1",
+  "version": "3.5.0",
   "code": "purchase-order",
   "context": "PURCHASE_ORDER",
   "name": "Purchase Order",

@@ -131,6 +131,31 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
+  // On hold — Any / Yes / No over the plain Boolean filter field (#1787); the
+  // wire value is the boolean itself, carried as its string form in the
+  // select.
+  onHold: {
+    label: () => t('label.on-hold'),
+    render: props => (
+      <FilterSelect
+        label={t('label.on-hold')}
+        testId={props.testId}
+        value={
+          props.filter().onHold == null ? '' : String(props.filter().onHold)
+        }
+        options={[
+          { value: '', label: t('label.any') },
+          { value: 'true', label: t('messages.yes') },
+          { value: 'false', label: t('messages.no') },
+        ]}
+        onChange={value =>
+          props.setPartialFilter({
+            onHold: value === '' ? null : value === 'true',
+          })
+        }
+      />
+    ),
+  },
   // VVM status — single-select of active VVM statuses. Offered only when
   // manageVvmStatusForStock is on (gated in filterFields below).
   vvmStatusId: {

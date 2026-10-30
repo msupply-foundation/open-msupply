@@ -30,17 +30,23 @@ half: how the sync runs, and what to do when something was published that should
   folder no rule has looked at yet — one near the top of the tree, or one sitting beside an
   existing carve-out. A new file inside a folder the mirror already publishes does not block: that
   folder's rule was reviewed when it was written.
-- **By hand, on release day** and whenever else a refresh is wanted: dispatch
-  `mirror-public.yaml` from `develop` (Actions → Public mirror sync → Run workflow). Leave `refs`
-  empty (develop, main and all release tags) or name the refs; leave `force` off. The `filter` job
+- **Daily, on release tags, and by hand.** `mirror-public.yaml` runs on a daily schedule
+  (15:17 UTC). Pushing a `vX.Y.Z` tag (no `-RC` or other suffix) runs
+  `mirror-public-on-release.yaml`, which dispatches the sync on `develop` straight away, so the tag
+  reaches the public repo in minutes and the release can be created there. A tag on an RC branch
+  cut before that workflow existed doesn't trigger it; the daily run picks it up. To refresh by
+  hand, dispatch `mirror-public.yaml` from `develop` (Actions → Public mirror sync → Run
+  workflow). Leave `refs` empty (develop, main and all release tags) or name the refs; leave
+  `force` off. The `filter` job
   clones the selected refs, runs `git filter-repo` through the rules and the commit-message
   rewrite (references to private repos become `internal#N` markers by `mirror_message.py`, and
   quoted commit SHAs are translated, ancestors only, by `mirror_hashes.py`), re-checks the filtered tree against the rules, and hands a bundle to the `push` job. The push job re-checks the tree again, mints a
   `tmf-ci-bot` App token scoped to the public repo only, and pushes **without force**. A
   non-fast-forward push fails — that is the alarm. Every run publishes develop, main and all
-  release tags, so the public develop is a snapshot as of the last dispatch.
-- **The `public-mirror` environment** on the push job allows dispatches from protected branches
-  only (`develop`, `main`), so the sync can never run from a branch with edited rules. It holds
+  release tags, so the public develop is at most a day behind.
+- **The `public-mirror` environment** on the push job allows runs from protected branches
+  only (`develop`, `main`), so the sync can never run from a branch with edited rules — which is
+  why a release tag dispatches the sync on `develop` rather than running it from the tag. It holds
   no secrets and adds no delay.
 - **How long it takes.** The filter pipeline is ~75 seconds for all 144 refs on a developer laptop — `filter-repo` itself is 29s over 40.8k commits — so budget a few minutes for the `filter` job on a hosted runner, most of it the `fetch-depth: 0` checkout and the 389MB artifact upload rather than the rewrite. A dispatch is cheap; this is not a reason to avoid running one.
 - **Where it publishes** is the `PUBLIC_MIRROR_REPO` repository variable (Settings → Secrets and variables → Actions → Variables), not a constant in the workflow. Normally `msupply-foundation/open-msupply`. Both jobs read it and fail closed when it is empty, which makes clearing it the stop button — see [stopping the sync](#runbook-stop-the-sync). Pointing it at a scratch repo is how a sync is rehearsed without editing a workflow on a protected branch; the variable is not the allowlist, because a token can only be minted for a repo `tmf-ci-bot` is installed on.
@@ -86,7 +92,7 @@ rarely and deliberately — every fork rebases.
 
 ## Runbook: stop the sync
 
-**Clear the `PUBLIC_MIRROR_REPO` variable** (Settings → Secrets and variables → Actions → Variables). Both jobs exit non-zero on an empty value, so a new dispatch fails in its first step and a run already filtering stops before it pushes — `push` re-reads the variable after the filter job. Set it back to `msupply-foundation/open-msupply` to re-enable, and note in the issue why it was stopped, since an absent variable records nothing by itself.
+**Clear the `PUBLIC_MIRROR_REPO` variable** (Settings → Secrets and variables → Actions → Variables). Both jobs exit non-zero on an empty value, so a new run (scheduled, tag-triggered or dispatched) fails in its first step — the daily run going red is the reminder that it is off — and a run already filtering stops before it pushes — `push` re-reads the variable after the filter job. Set it back to `msupply-foundation/open-msupply` to re-enable, and note in the issue why it was stopped, since an absent variable records nothing by itself.
 
 This blocks future pushes only. History already on the public repo stays there; removing that is the [leak runbook](#runbook-something-private-was-published).
 

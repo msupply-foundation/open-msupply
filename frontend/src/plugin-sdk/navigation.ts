@@ -132,9 +132,10 @@ export const navigateTo = (path: string, options?: NavigateOptions): void => {
  * every route navigation away from the calling page, for the life of the
  * component. Hold one with `preventDefault()` and replay it with
  * `retry(true)` — a page that saves before it leaves, and prompts only when
- * that save fails (plugins/afghanistan rules § drafts). A reload or tab close
- * is not a route leave: guard those with the browser's own `beforeunload`.
- * Bound by the shell, like `navigateTo`'s navigator (src/nav/hostBeforeLeave).
+ * that save fails (private/plugins/afghanistan rules § drafts). A reload or
+ * tab close is not a route leave: guard those with the browser's own
+ * `beforeunload`. Bound by the shell, like `navigateTo`'s navigator
+ * (src/nav/hostBeforeLeave).
  */
 export { onHostBeforeLeave as onBeforeLeave } from '../nav/hostBeforeLeave';
 export type { HostLeaveEvent as BeforeLeaveEvent } from '../nav/hostBeforeLeave';

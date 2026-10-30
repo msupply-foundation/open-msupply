@@ -678,6 +678,18 @@ const createSchemaGenerator = (sourceGlob: string) => {
  */
 const prettier = createRequire(import.meta.url)('prettier') as typeof Prettier;
 
+/*
+ * The repo's Prettier config, named rather than looked up from the file: the
+ * in-repo plugins sit beside frontend/ (../plugins, ../private/plugins), where
+ * Prettier's own search would never find it — the same reason `pnpm format`
+ * passes `--config`.
+ */
+const PRETTIER_CONFIG = fileURLToPath(
+  new URL('../.prettierrc', import.meta.url)
+);
+const prettierOptions = async (filePath: string) =>
+  (await prettier.resolveConfig(filePath, { config: PRETTIER_CONFIG })) ?? {};
+
 /**
  * The file text for a schema: sorted keys, then Prettier with the repo's own
  * config, so the file is byte-stable across runs and `pnpm format` leaves it
@@ -687,7 +699,7 @@ export const schemaFileText = async (
   schema: unknown,
   filePath: string
 ): Promise<string> => {
-  const options = (await prettier.resolveConfig(filePath)) ?? {};
+  const options = await prettierOptions(filePath);
   return prettier.format(serialise(schema, ''), {
     ...options,
     filepath: filePath,
@@ -725,7 +737,7 @@ export const versionsFileText = async (
     `export const versions = ${JSON.stringify(ids)} as const;`,
     '',
   ].join('\n');
-  const options = (await prettier.resolveConfig(filePath)) ?? {};
+  const options = await prettierOptions(filePath);
   return prettier.format(source, { ...options, filepath: filePath });
 };
 
