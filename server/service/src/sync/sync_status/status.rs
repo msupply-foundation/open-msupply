@@ -268,8 +268,9 @@ fn get_initialisation_status(
         ));
     }
 
-    // Existence checks only: the front end asks for this before every page load,
-    // so it mustn't cost more as a site's sync history grows.
+    // Existence checks only, so this doesn't cost more as a site's sync history
+    // grows. It runs at boot, on every sync cycle (`is_initialised`), in the
+    // subscription and on the initialisation and discovery schemas.
     let v7_repo = SyncLogV7Repository::new(&ctx.connection);
     let v7_has_any = v7_repo.exists(SyncLogV7Condition::TRUE)?;
     let v7_has_success = v7_repo.exists(SyncLogV7Condition::And(vec![

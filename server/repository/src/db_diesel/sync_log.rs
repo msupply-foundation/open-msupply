@@ -47,8 +47,7 @@ impl<'a> SyncLogV5V6Repository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
-    /// An EXISTS: stops at the first matching row instead of sorting the table,
-    /// which on a site with a long sync history can hold millions of rows.
+    /// Whether any row matches; stops at the first match.
     pub fn exists(&self, filter: Option<SyncLogV5V6Filter>) -> Result<bool, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(diesel::select(diesel::dsl::exists(query))

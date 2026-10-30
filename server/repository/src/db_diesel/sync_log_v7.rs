@@ -118,7 +118,7 @@ impl<'a> SyncLogV7Repository<'a> {
         Ok(())
     }
 
-    /// An EXISTS: stops at the first matching row instead of sorting the table.
+    /// Whether any row matches; stops at the first match.
     pub fn exists(&self, filter: SyncLogV7Condition::Inner) -> Result<bool, RepositoryError> {
         let query = sync_log_v7::table.filter(filter.to_boxed());
         Ok(diesel::select(diesel::dsl::exists(query))
