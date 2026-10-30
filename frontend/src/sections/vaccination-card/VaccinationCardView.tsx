@@ -93,9 +93,7 @@ const VaccinationCardView: Component = () => {
             >
               {/* An absent value beside a label shows a dash
                   (ui-standards › detail views). */}
-              <Show when={age()} fallback="—">
-                {shown => shown()}
-              </Show>
+              {age() || '—'}
             </LabelledValue>
             <LabelledValue
               label={t('label.date-of-birth')}
