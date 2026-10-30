@@ -2,6 +2,7 @@ pub mod changelog;
 pub use self::changelog::*;
 
 pub mod changelog_deduplication;
+pub use self::changelog_deduplication::{DedupRun, DedupStage};
 
 pub mod changelog_cursor_tracker;
 pub use self::changelog_cursor_tracker::*;
@@ -23,3 +24,5 @@ pub use self::partition::{PartitionTopUp, ensure_partition_lookahead};
 
 #[cfg(test)]
 mod test;
+#[cfg(all(test, feature = "postgres"))]
+mod test_helpers;

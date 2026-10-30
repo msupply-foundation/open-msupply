@@ -8,7 +8,7 @@ use diesel::{
 };
 
 /// Catch-all for rows above every range partition; the top-up moves them out.
-const DEFAULT_PARTITION: &str = "changelog_p_default";
+pub(super) const DEFAULT_PARTITION: &str = "changelog_p_default";
 
 /// Outcome of one [`ensure_partition_lookahead`] call.
 #[derive(Debug, PartialEq, Eq)]
@@ -209,30 +209,43 @@ fn set_default_lock_timeout(connection: &StorageConnection) -> Result<(), Reposi
 /// expose the SQLSTATE, only the message, so this matches the text. A server
 /// with a non-English `lc_messages` would report the timeout as a plain error
 /// instead of `LockedOut`; the loop still retries next tick either way.
-fn is_lock_timeout(error: &RepositoryError) -> bool {
+pub(super) fn is_lock_timeout(error: &RepositoryError) -> bool {
     match error {
         RepositoryError::DBError { extra, .. } => extra.contains("lock timeout"),
         _ => false,
     }
 }
 
-/// Returns the highest cursor upper bound across `changelog`'s partitions, or
-/// 0 if `changelog` isn't partitioned. Each partition's bound expression is
-/// `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull every expression then
-/// parse the `TO ('<upper>')` value in Rust.
+/// A range partition of `changelog`: `changelog_p_<lower>` holds the cursors
+/// `lower..upper`.
+#[derive(Debug, PartialEq, Eq)]
+pub(super) struct RangePartition {
+    pub name: String,
+    pub lower: i64,
+    pub upper: i64,
+}
+
+/// Every range partition of `changelog`, unordered; the DEFAULT has no bounds
+/// and is left out. Empty if `changelog` isn't partitioned. Each partition's
+/// bound expression is `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull
+/// every expression then parse the numbers in Rust.
 ///
-/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`). Only ever reached
-/// via `ensure_partition_lookahead`, which guards the postgres feature.
-fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`, which takes a read
+/// lock on each partition). Callers guard the postgres feature.
+pub(super) fn range_partitions(
+    connection: &StorageConnection,
+) -> Result<Vec<RangePartition>, RepositoryError> {
     #[derive(QueryableByName)]
-    struct BoundExpr {
+    struct PartitionRow {
+        #[diesel(sql_type = Text)]
+        name: String,
         #[diesel(sql_type = Text)]
         bound: String,
     }
 
-    let bounds: Vec<BoundExpr> = diesel::sql_query(
+    let rows: Vec<PartitionRow> = diesel::sql_query(
         r#"
-        SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
+        SELECT c.relname AS name, pg_get_expr(c.relpartbound, c.oid) AS bound
         FROM pg_inherits i
         JOIN pg_class c ON c.oid = i.inhrelid
         WHERE i.inhparent = 'changelog'::regclass
@@ -240,13 +253,27 @@ fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, Repo
     )
     .get_results(connection.lock().connection())?;
 
-    let max_upper = bounds
+    Ok(rows
         .into_iter()
-        .filter_map(|b| parse_upper_bound(&b.bound))
-        .max()
-        .unwrap_or(0);
+        .filter_map(|row| {
+            let (lower, upper) = parse_bounds(&row.bound)?;
+            Some(RangePartition {
+                name: row.name,
+                lower,
+                upper,
+            })
+        })
+        .collect())
+}
 
-    Ok(max_upper)
+/// Returns the highest cursor upper bound across `changelog`'s partitions, or
+/// 0 if `changelog` isn't partitioned.
+fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    Ok(range_partitions(connection)?
+        .into_iter()
+        .map(|partition| partition.upper)
+        .max()
+        .unwrap_or(0))
 }
 
 #[derive(QueryableByName)]
@@ -268,58 +295,45 @@ fn default_partition_stats(
     Ok(stats)
 }
 
-/// Extract the upper bound `N` from a partition bound expression of the shape
+/// Extract `(lower, upper)` from a partition bound expression of the shape
 /// `FOR VALUES FROM ('<lower>') TO ('<upper>')`. Returns `None` if the input
-/// doesn't match or the number doesn't parse (including the `DEFAULT` bound).
-fn parse_upper_bound(expr: &str) -> Option<i64> {
-    let (_, after_to) = expr.rsplit_once("TO (")?;
-    let (number, _) = after_to.split_once(')')?;
-    number.trim().trim_matches('\'').parse().ok()
+/// doesn't match or a number doesn't parse (including the `DEFAULT` bound).
+fn parse_bounds(expr: &str) -> Option<(i64, i64)> {
+    let (_, after_from) = expr.split_once("FROM (")?;
+    let (lower, after_lower) = after_from.split_once(')')?;
+    let (_, after_to) = after_lower.split_once("TO (")?;
+    let (upper, _) = after_to.split_once(')')?;
+    let parse = |number: &str| number.trim().trim_matches('\'').parse().ok();
+    Some((parse(lower)?, parse(upper)?))
 }
 
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
     use super::{
+        super::test_helpers::{
+            Bigint, TextValue, hold_open_transaction, partition_holding,
+            reset_to_tight_partition_layout, run_with_timeout,
+        },
         DEFAULT_PARTITION, PartitionTopUp, attach_range_partition,
-        create_standalone_partition_table, ensure_partition_lookahead, parse_upper_bound,
+        create_standalone_partition_table, ensure_partition_lookahead, parse_bounds,
     };
     use crate::{
         ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, StorageConnection,
-        StorageConnectionManager, migrations::ChangelogPartitionConfig, mock::MockDataInserts,
-        test_db,
+        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db,
     };
-    use diesel::{
-        prelude::*,
-        sql_types::{BigInt, Text},
-    };
+    use diesel::{prelude::*, sql_types::Text};
     use std::{
-        sync::mpsc,
         thread,
         time::{Duration, Instant},
     };
-
-    #[derive(QueryableByName)]
-    struct Bigint {
-        #[diesel(sql_type = BigInt)]
-        value: i64,
-    }
-
-    #[derive(QueryableByName)]
-    struct TextValue {
-        #[diesel(sql_type = Text)]
-        value: String,
-    }
 
     /// Feeds the parser real `pg_get_expr(relpartbound, ...)` output from a
     /// partitioned `changelog` so we're testing it against the exact string
     /// shape Postgres emits, not what we *think* it emits.
     #[actix_rt::test]
-    async fn parse_upper_bound_extracts_number_from_pg_expr() {
-        let (_, connection, _, _) = test_db::setup_all(
-            "parse_upper_bound_extracts_from_pg",
-            MockDataInserts::none(),
-        )
-        .await;
+    async fn parse_bounds_extracts_numbers_from_pg_expr() {
+        let (_, connection, _, _) =
+            test_db::setup_all("parse_bounds_extracts_from_pg", MockDataInserts::none()).await;
 
         reset_to_tight_partition_layout(&connection);
 
@@ -329,7 +343,7 @@ mod tests {
             bound: String,
         }
 
-        let mut upper_bounds: Vec<i64> = diesel::sql_query(
+        let mut bounds: Vec<(i64, i64)> = diesel::sql_query(
             r#"
             SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
             FROM pg_inherits i
@@ -340,16 +354,16 @@ mod tests {
         .get_results::<BoundExpr>(connection.lock().connection())
         .unwrap()
         .into_iter()
-        .filter_map(|b| parse_upper_bound(&b.bound))
+        .filter_map(|b| parse_bounds(&b.bound))
         .collect();
-        upper_bounds.sort();
+        bounds.sort();
 
-        // Tight layout = [1,3) and [3,5) → upper bounds 3 and 5.
-        assert_eq!(upper_bounds, vec![3, 5]);
+        // Tight layout = [1,3) and [3,5).
+        assert_eq!(bounds, vec![(1, 3), (3, 5)]);
 
         // Defensive cases — inputs the parser must reject without panicking.
-        assert_eq!(parse_upper_bound("DEFAULT"), None);
-        assert_eq!(parse_upper_bound(""), None);
+        assert_eq!(parse_bounds("DEFAULT"), None);
+        assert_eq!(parse_bounds(""), None);
     }
 
     /// 4 pre-seeded rows (cursors 1..=4) on a starting layout of two
@@ -934,50 +948,6 @@ mod tests {
         holder.release();
     }
 
-    /// Drop existing partitions, recreate two small ones [1,3), [3,5) plus the
-    /// DEFAULT, and reset the sequence so `max_sequence` matches the empty
-    /// changelog.
-    fn reset_to_tight_partition_layout(connection: &StorageConnection) {
-        diesel::sql_query(
-            r#"
-            DO $$
-            DECLARE part RECORD;
-            BEGIN
-                FOR part IN
-                    SELECT inhrelid::regclass::text AS partname
-                    FROM pg_inherits
-                    WHERE inhparent = 'changelog'::regclass
-                LOOP
-                    EXECUTE format('DROP TABLE %s', part.partname);
-                END LOOP;
-            END $$;
-            "#,
-        )
-        .execute(connection.lock().connection())
-        .unwrap();
-
-        diesel::sql_query(
-            "CREATE TABLE changelog_p_1 PARTITION OF changelog FOR VALUES FROM (1) TO (3);",
-        )
-        .execute(connection.lock().connection())
-        .unwrap();
-        diesel::sql_query(
-            "CREATE TABLE changelog_p_3 PARTITION OF changelog FOR VALUES FROM (3) TO (5);",
-        )
-        .execute(connection.lock().connection())
-        .unwrap();
-        // Same statement the 3.03.00 migration fragment uses.
-        diesel::sql_query(format!(
-            "CREATE TABLE {DEFAULT_PARTITION} PARTITION OF changelog DEFAULT"
-        ))
-        .execute(connection.lock().connection())
-        .unwrap();
-
-        diesel::sql_query("SELECT setval('changelog_cursor_seq', 1, false)")
-            .execute(connection.lock().connection())
-            .unwrap();
-    }
-
     /// Range partitions only; the DEFAULT is always present in the tight layout.
     fn count_range_partitions(connection: &StorageConnection) -> i64 {
         diesel::sql_query(
@@ -1026,16 +996,6 @@ mod tests {
         .unwrap();
     }
 
-    /// Which partition physically holds the row with this record_id.
-    fn partition_holding(connection: &StorageConnection, record_id: &str) -> String {
-        diesel::sql_query(format!(
-            "SELECT tableoid::regclass::text AS value FROM changelog WHERE record_id = '{record_id}'"
-        ))
-        .get_result::<TextValue>(connection.lock().connection())
-        .unwrap()
-        .value
-    }
-
     fn cursor_of(connection: &StorageConnection, record_id: &str) -> i64 {
         diesel::sql_query(format!(
             "SELECT cursor AS value FROM changelog WHERE record_id = '{record_id}'"
@@ -1059,60 +1019,5 @@ mod tests {
         .unwrap()
         .value
             == 1
-    }
-
-    /// A second session that runs `statement` inside a transaction and keeps
-    /// it open until `release()` — the stand-in for a long integration
-    /// transaction or any other lock holder.
-    struct OpenTransaction {
-        release: mpsc::Sender<()>,
-        handle: thread::JoinHandle<()>,
-    }
-
-    impl OpenTransaction {
-        fn release(self) {
-            let _ = self.release.send(());
-            self.handle.join().unwrap();
-        }
-    }
-
-    fn hold_open_transaction(
-        connection_manager: &StorageConnectionManager,
-        statement: &'static str,
-    ) -> OpenTransaction {
-        let holder = connection_manager.connection().unwrap();
-        let (ready_tx, ready_rx) = mpsc::channel();
-        let (release_tx, release_rx) = mpsc::channel::<()>();
-        let handle = thread::spawn(move || {
-            holder
-                .transaction_sync(|connection| {
-                    diesel::sql_query(statement)
-                        .execute(connection.lock().connection())
-                        .unwrap();
-                    ready_tx.send(()).unwrap();
-                    // Hold the transaction (and its locks) until released.
-                    let _ = release_rx.recv();
-                    Ok::<(), crate::RepositoryError>(())
-                })
-                .unwrap();
-        });
-        ready_rx
-            .recv_timeout(Duration::from_secs(10))
-            .expect("holder transaction did not start");
-        OpenTransaction {
-            release: release_tx,
-            handle,
-        }
-    }
-
-    /// Run blocking work on its own thread and fail the test if it has not
-    /// finished in 10 s — a hang is the failure mode under test.
-    fn run_with_timeout<T: Send + 'static>(work: impl FnOnce() -> T + Send + 'static) -> T {
-        let (tx, rx) = mpsc::channel();
-        thread::spawn(move || {
-            let _ = tx.send(work());
-        });
-        rx.recv_timeout(Duration::from_secs(10))
-            .expect("blocked for over 10 s — a lock is queued behind the partition top-up")
     }
 }
