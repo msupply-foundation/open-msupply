@@ -1,4 +1,4 @@
-import { createRoot } from 'solid-js';
+import { createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
@@ -394,6 +394,52 @@ describe('createPatientDetails', () => {
 
       expect(editor.edit.firstName).toBe('Sam');
       expect(editor.isDirty()).toBe(true);
+    });
+
+    // A re-read that fails keeps the saved draft as the baseline. Another
+    // patient opened on the same screen seeds from that patient and drops it,
+    // so the new patient isn't counted as edited.
+    it('drops the saved draft when another patient opens after a failed re-read', async () => {
+      fetchPatientRegistry.mockResolvedValue({ entry: undefined });
+      answerPatient();
+      const [patientId, setPatientId] = createSignal('patient-1');
+      const details = createRoot(d => {
+        dispose = d;
+        return createPatientDetails({ storeId: () => 'store', patientId });
+      });
+      await vi.waitFor(() => expect(details.editor.edit.code).toBe('CF0002'));
+      const editor = details.editor;
+
+      editor.setField('isDeceased', true);
+      graphqlFetch.mockImplementation(async (query: unknown) =>
+        query === UpdatePatient
+          ? {
+              kind: 'success',
+              data: {
+                updatePatient: { __typename: 'PatientNode', id: record.id },
+              },
+            }
+          : { kind: 'transportError' }
+      );
+      await editor.doSave(details.refetch);
+      expect(editor.edit.isDeceased).toBe(true);
+      expect(editor.isDirty()).toBe(false);
+
+      const other: PatientNode = {
+        ...record,
+        id: 'patient-2',
+        code: 'CF0003',
+        isDeceased: false,
+      };
+      graphqlFetch.mockImplementation(async (query: unknown) =>
+        query === Patient
+          ? { kind: 'success', data: { patient: other } }
+          : { kind: 'transportError' }
+      );
+      setPatientId('patient-2');
+      await vi.waitFor(() => expect(editor.edit.code).toBe('CF0003'));
+      expect(editor.edit.isDeceased).toBe(false);
+      expect(editor.isDirty()).toBe(false);
     });
   });
 });

@@ -102,14 +102,17 @@ export const createPatientEditor = (
 
   // Seed, and re-seed, from a patient of a different id than the one already
   // seeded — never from a fresh read of the same patient, which would wipe an
-  // unsaved edit. The after-save re-seed (from the save's own re-read) is
-  // doSave's, so the draft keeps showing what was saved until that read lands.
+  // unsaved edit. A different patient also drops any saved draft, which
+  // belongs to the one before. The after-save re-seed (from the save's own
+  // re-read) is doSave's, so the draft keeps showing what was saved until that
+  // read lands.
   createEffect(
     on(params.node, n => {
       if (n && n.id !== seededId()) {
         const seed = seedDraft(n);
         setEdit(seed);
         setSeededId(n.id);
+        setSaved(undefined);
         armForSeed(seed);
       }
     })
@@ -168,7 +171,9 @@ export const createPatientEditor = (
     // node as it now reads, so the form shows what was stored.
     if (reread === undefined) return;
     const fresh = params.node();
-    if (!fresh) return;
+    // Another patient opened while the re-read was out: the seed effect has
+    // already seeded from it.
+    if (!fresh || fresh.id !== n.id) return;
     const seed = seedDraft(fresh);
     setEdit(seed);
     setSeededId(fresh.id);
