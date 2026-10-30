@@ -230,8 +230,7 @@ fn starts_with_markup(path: &Path) -> std::io::Result<bool> {
     Ok(start.iter().find(|byte| !byte.is_ascii_whitespace()) == Some(&b'<'))
 }
 
-/// Refuses a help-document file a browser would run script from (#1640), judged by its
-/// extension, its declared type and its first bytes.
+/// Refuses a help-document file a browser would run script from (#1640).
 fn check_help_document_file_types(
     table_name: &str,
     files: &[TempFile],
@@ -240,6 +239,12 @@ fn check_help_document_file_types(
         return Ok(());
     }
 
+    refuse_files_that_run_script(files)
+}
+
+/// Refuses any file a browser would run script from if it opened it on the app's own
+/// origin (#1640), judged by its extension, its declared type and its first bytes.
+pub(crate) fn refuse_files_that_run_script(files: &[TempFile]) -> Result<(), actix_web::Error> {
     for f in files {
         let file_name = f.file_name.as_deref().unwrap_or("file");
         let active_extension = Path::new(file_name)
@@ -254,9 +259,7 @@ fn check_help_document_file_types(
 
         if active_extension || active_content_type || markup {
             return Err(InternalError::new(
-                format!(
-                    "'{file_name}' is a web page, SVG or XML file, which can't be uploaded as a help document"
-                ),
+                format!("'{file_name}' is a web page, SVG or XML file, which can't be uploaded"),
                 StatusCode::UNSUPPORTED_MEDIA_TYPE,
             )
             .into());
@@ -758,6 +761,7 @@ mod test {
     // help document's file, and an uploaded HTML file was served inline on the app's
     // origin, so its script ran for whoever opened it from the Help page.
 
+    use crate::upload::{config_upload, get_default_directory};
     use actix_web::http::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
     use actix_web::test::{self as actix_test, TestRequest};
     use repository::mock::{
@@ -1061,6 +1065,63 @@ mod test {
                 "notes.html",
                 "text/html",
                 "<p>notes</p>",
+            )
+            .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn upload_refuses_files_that_run_script() {
+        // `/upload` stages plugin and report bundles for any signed-in user, and `/files`
+        // serves what it stores inline on the app's origin, so it refuses the same files.
+        let harness = help_document_harness("upload_refuses_active_files").await;
+        let app = actix_test::init_service(
+            actix_web::App::new()
+                .app_data(harness.settings.clone())
+                .app_data(harness.auth_data.clone())
+                .app_data(get_default_directory(&harness.settings))
+                .configure(config_upload),
+        )
+        .await;
+
+        let refused = [
+            ("page.html", "text/html", "<script>alert(1)</script>"),
+            (
+                "bundle.json",
+                "application/json",
+                "<svg xmlns=\"http://www.w3.org/2000/svg\"/>",
+            ),
+        ];
+        for (file_name, content_type, body) in refused {
+            let response = actix_test::call_service(
+                &app,
+                upload_request(
+                    "/upload",
+                    &harness.user_cookie,
+                    file_name,
+                    content_type,
+                    body,
+                )
+                .to_request(),
+            )
+            .await;
+            assert_eq!(
+                response.status(),
+                StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                "{file_name} ({content_type}) should be refused"
+            );
+        }
+
+        let response = actix_test::call_service(
+            &app,
+            upload_request(
+                "/upload",
+                &harness.user_cookie,
+                "bundle.json",
+                "application/json",
+                "{\"code\": \"report\"}",
             )
             .to_request(),
         )
