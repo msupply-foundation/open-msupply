@@ -42,13 +42,14 @@ export interface PatientEditor {
   /** Arms validation; opens the confirm-save prompt once the draft is valid. */
   attemptSave: () => Promise<void>;
   /**
-   * Runs the write; `afterSave` fires only on success (e.g. the caller's own
-   * refetch).
+   * Runs the write; `afterSave` fires only on success. Its result — the
+   * caller's re-read of the patient — is awaited, then the draft re-seeds from
+   * the stored record and the after-save state ends.
    */
-  doSave: (afterSave?: () => void) => Promise<void>;
+  doSave: (afterSave?: () => void | Promise<unknown>) => Promise<void>;
   /**
-   * Re-seeds the draft from the current node, or from what was last saved
-   * until the re-read of it lands, discarding local edits.
+   * Re-seeds the draft from the current node, or from what was saved while its
+   * re-read is still out, discarding local edits.
    */
   resetDraft: () => void;
 }
@@ -67,16 +68,13 @@ export const createPatientEditor = (
 ): PatientEditor => {
   const [edit, setEdit] = createStore<PatientDraft>(emptyDraft());
   const [seededId, setSeededId] = createSignal<string>();
-  // After a save: the patient as read before it, and the draft as saved. The
-  // caller's re-read keeps returning that patient until it lands (the state
-  // gate re-runs `node` as the read starts), so the draft is not seeded from
-  // it, and what was saved is the dirty check's baseline meanwhile. A save
-  // that leaves the read byte-identical lands no new patient
-  // (api/graphql.ts › structural sharing); what was saved stays the baseline.
-  const [saved, setSaved] = createSignal<{
-    over: PatientNode;
-    draft: PatientDraft;
-  }>();
+  // The draft as saved, held from a successful save until the caller's re-read
+  // of the patient lands. The form shows it and the dirty/discard checks
+  // compare against it meanwhile, so the draft does not revert to the pre-save
+  // record the re-read still returns until it resolves (the state gate re-runs
+  // `node` as the read starts). doSave clears this and re-seeds from the
+  // re-read once it lands.
+  const [saved, setSaved] = createSignal<PatientDraft>();
 
   // Duplicate-code check (spec/patients § generating a code), run on the save
   // attempt below, store-scoped; skipped while the code is still the one the
@@ -102,16 +100,18 @@ export const createPatientEditor = (
     else validation.arm();
   };
 
+  // Seed, and re-seed, from a patient of a different id than the one already
+  // seeded — never from a fresh read of the same patient, which would wipe an
+  // unsaved edit. The after-save re-seed (from the save's own re-read) is
+  // doSave's, so the draft keeps showing what was saved until that read lands.
   createEffect(
     on(params.node, n => {
-      if (!n) return;
-      const after = saved();
-      if (n.id === seededId() && (!after || n === after.over)) return;
-      const seed = seedDraft(n);
-      setEdit(seed);
-      setSeededId(n.id);
-      setSaved(undefined);
-      armForSeed(seed);
+      if (n && n.id !== seededId()) {
+        const seed = seedDraft(n);
+        setEdit(seed);
+        setSeededId(n.id);
+        armForSeed(seed);
+      }
     })
   );
 
@@ -125,7 +125,7 @@ export const createPatientEditor = (
   const isDirty = createMemo(() => {
     const n = params.node();
     if (!n || seededId() === undefined) return false;
-    return !draftEquals(edit, saved()?.draft ?? seedDraft(n));
+    return !draftEquals(edit, saved() ?? seedDraft(n));
   });
 
   const [saving, setSaving] = createSignal(false);
@@ -133,10 +133,12 @@ export const createPatientEditor = (
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
 
   // Full-replace edit (OMS-REG-DIS-02.41): toUpdateInput sends every field. On
-  // success, re-seed from the refreshed record (name is recomputed server-side)
-  // once the caller's own refetch lands it; until then the form shows, and is
-  // compared against, what was saved.
-  const doSave = async (afterSave?: () => void) => {
+  // success the form holds the saved draft until the caller's re-read lands;
+  // awaiting `afterSave` (that re-read) then re-seeds from the record as stored
+  // — the name recomputed server-side, Code 2 of spaces stored as none — and
+  // ends the after-save state. A re-read that does not land (none requested, or
+  // it failed) keeps the saved draft as the baseline.
+  const doSave = async (afterSave?: () => void | Promise<unknown>) => {
     const n = params.node();
     if (!n || !isDraftValid(edit) || saving()) return;
     setSaving(true);
@@ -153,9 +155,25 @@ export const createPatientEditor = (
     }
     setSaveError('');
     const draft = { ...edit };
-    setSaved({ over: n, draft });
+    setSaved(draft);
     armForSeed(draft);
-    afterSave?.();
+    let reread: unknown;
+    try {
+      reread = await afterSave?.();
+    } catch {
+      return; // the re-read failed: keep the saved draft as the baseline
+    }
+    // `afterSave` returns the re-read patient; a result means it landed (even
+    // when structural sharing hands back the same object). Re-seed from the
+    // node as it now reads, so the form shows what was stored.
+    if (reread === undefined) return;
+    const fresh = params.node();
+    if (!fresh) return;
+    const seed = seedDraft(fresh);
+    setEdit(seed);
+    setSeededId(fresh.id);
+    setSaved(undefined);
+    armForSeed(seed);
   };
 
   // Save click: arm validation first, so an invalid form reveals its errors
@@ -176,12 +194,12 @@ export const createPatientEditor = (
     setConfirmSaveOpen(true);
   };
 
-  // Re-seed the edit buffer from the fetched patient, or what was saved over
-  // it, making the form pristine.
+  // Re-seed the edit buffer from the fetched patient, or the saved draft while
+  // its re-read is still out, making the form pristine.
   const resetDraft = () => {
     const n = params.node();
     if (!n) return;
-    const seed = { ...(saved()?.draft ?? seedDraft(n)) };
+    const seed = { ...(saved() ?? seedDraft(n)) };
     setEdit(seed);
     armForSeed(seed);
   };

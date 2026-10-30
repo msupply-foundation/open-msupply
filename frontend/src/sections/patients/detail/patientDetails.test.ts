@@ -309,20 +309,24 @@ describe('createPatientDetails', () => {
       expect(editor.isDirty()).toBe(true);
 
       const saved: PatientNode = { ...record, isDeceased: true };
-      let answerRead!: () => void;
+      let answerRead: (() => void) | undefined;
       answerSave(async () => {
         await new Promise<void>(resolve => (answerRead = resolve));
         return saved;
       });
-      await editor.doSave(details.refetch);
+      // The save awaits the re-read, so it does not resolve until the read
+      // lands below; hold the promise and let the read start first.
+      const done = editor.doSave(details.refetch);
+      await vi.waitFor(() => expect(answerRead).toBeTypeOf('function'));
 
-      // The re-read is out.
+      // The re-read is out: the form holds the saved draft, pristine.
       expect(details.node()).toBe(record);
       expect(editor.edit.isDeceased).toBe(true);
       expect(editor.isDirty()).toBe(false);
 
-      answerRead();
-      await vi.waitFor(() => expect(details.node()).toBe(saved));
+      answerRead!();
+      await done;
+      expect(details.node()).toBe(saved);
       expect(editor.edit.isDeceased).toBe(true);
       expect(editor.isDirty()).toBe(false);
     });
@@ -337,16 +341,59 @@ describe('createPatientDetails', () => {
 
       answerSave(async () => record);
       await editor.doSave(details.refetch);
-      await vi.waitFor(() =>
-        expect(patientReads()).toEqual([Patient, Patient])
-      );
-      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(patientReads()).toEqual([Patient, Patient]);
       expect(editor.isDirty()).toBe(false);
 
       editor.setField('firstName', 'Sam');
       expect(editor.isDirty()).toBe(true);
       editor.resetDraft();
       expect(editor.isDirty()).toBe(false);
+    });
+
+    // The re-read is the same object, so the draft must still re-seed from it:
+    // the spaces typed into Code 2 were stored as none, and the form shows
+    // that, not the spaces.
+    it('shows what was stored after a save the re-read shows no change in', async () => {
+      const details = await openSeeded();
+      const editor = details.editor;
+      expect(editor.edit.code2).toBe('');
+      editor.setField('code2', '  ');
+
+      answerSave(async () => record);
+      await editor.doSave(details.refetch);
+      expect(patientReads()).toEqual([Patient, Patient]);
+
+      expect(editor.edit.code2).toBe('');
+      expect(editor.isDirty()).toBe(false);
+    });
+
+    // The after-save state ends with the re-read, so a later read of the same
+    // patient (a background refresh) leaves an unsaved edit alone, as a new
+    // read of an already-seeded patient always does.
+    it('keeps a later edit when a new read of the same patient lands after a save', async () => {
+      const details = await openSeeded();
+      const editor = details.editor;
+
+      editor.setField('code2', '  ');
+      answerSave(async () => record);
+      await editor.doSave(details.refetch);
+      expect(patientReads()).toEqual([Patient, Patient]);
+      expect(editor.isDirty()).toBe(false);
+
+      editor.setField('firstName', 'Sam');
+      expect(editor.isDirty()).toBe(true);
+
+      const refreshed: PatientNode = { ...record };
+      graphqlFetch.mockImplementation(async (query: unknown) =>
+        query === Patient
+          ? { kind: 'success', data: { patient: refreshed } }
+          : { kind: 'transportError' }
+      );
+      await details.refetch();
+      await vi.waitFor(() => expect(details.node()).toBe(refreshed));
+
+      expect(editor.edit.firstName).toBe('Sam');
+      expect(editor.isDirty()).toBe(true);
     });
   });
 });
