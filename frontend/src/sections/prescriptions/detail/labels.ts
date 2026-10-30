@@ -1,4 +1,5 @@
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
+import { localisedDate } from '../../../intl/formatDateTime';
 import { roundedText } from '../../../intl/numberDisplay';
 
 // What a dispensing label says (spec/prescriptions/rules.md § label printing;
@@ -37,9 +38,11 @@ export const buildLabels = (
   const patientDetails = node.patient
     ? `${node.patient.name} - ${node.patient.code}`
     : '';
-  const details = `${storeName} - ${new Date(
+  // The app's date format, as the side panel shows it — not the runtime's
+  // toLocaleDateString, which follows the OS display language (internal #1838).
+  const details = `${storeName} - ${localisedDate(
     node.createdDatetime
-  ).toLocaleDateString()}${clinician}`;
+  )}${clinician}`;
 
   return [...byItem.values()].map(group => {
     const first = group[0];

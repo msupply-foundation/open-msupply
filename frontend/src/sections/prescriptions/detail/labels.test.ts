@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { localisedDate } from '../../../intl/formatDateTime';
 import { buildLabels } from './labels';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 
@@ -55,6 +56,25 @@ describe('buildLabels (.47 — one label per dispensed item)', () => {
     expect(labels[0].patientDetails).toBe('Ann Smith - P0042');
     expect(labels[0].details).toContain('Central Store');
     expect(labels[0].details).toContain('Franco, Steve');
+  });
+
+  it("dates the label in the app's format, not the runtime's locale", () => {
+    // An en-US runtime (e.g. the desktop app on a Windows machine with a US
+    // display language) — the side panel still shows 20/07/2026, so the
+    // label must too (internal #1838). The day is 19 or 20 depending on the
+    // test machine's time zone; either way, day first.
+    const runtimeLocale = vi
+      .spyOn(Date.prototype, 'toLocaleDateString')
+      .mockReturnValue('7/20/2026');
+    try {
+      const labels = buildLabels(prescription, 'Central Store');
+      expect(labels[0].details).toContain(
+        localisedDate(prescription.createdDatetime)
+      );
+      expect(labels[0].details).toMatch(/ - (19|20)\/07\/2026 - /);
+    } finally {
+      runtimeLocale.mockRestore();
+    }
   });
 
   it('labels only the given lines when a selection is printed', () => {
