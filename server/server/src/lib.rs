@@ -5,9 +5,10 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain, cors::cors_policy,
-    custom_translations::config_custom_translations, middleware::central_server_only,
-    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
+    cors::websocket_origin_check, custom_translations::config_custom_translations,
+    middleware::central_server_only, print::config_print, serve_frontend::config_serve_frontend,
+    static_files::config_static_files, support::config_support,
+    upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -327,6 +328,8 @@ pub async fn start_server(
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(closure_settings.clone()))
+            // Inside the logger, so a refused upgrade shows in the request log
+            .wrap(websocket_origin_check(&closure_settings))
             .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())

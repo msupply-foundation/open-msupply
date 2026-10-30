@@ -8,7 +8,8 @@ Scope: CORS policy, the auxiliary discovery server, the GraphQL playground, and 
 
 `is_develop()` = `cfg!(debug_assertions)` (`server/service/src/settings.rs:161-164`). Everything gated on it is a build-profile property:
 
-- permissive CORS (`server/server/src/cors.rs:6-8`)
+- permissive CORS (`cors_policy_for` in `server/server/src/cors.rs`)
+- WebSocket origin check skipped (`websocket_origin_check_for` in `server/server/src/cors.rs`, see INV-NET-6)
 - cert-free HTTP allowed (`server/server/src/certs.rs:93`)
 - plugin validation bypass (`server/service/src/plugin/plugin_files.rs:106-110`, see static-serving.md)
 - auto-create local config (`server/server/src/configuration.rs:111`)
@@ -18,7 +19,9 @@ Scope: CORS policy, the auxiliary discovery server, the GraphQL playground, and 
 
 ### INV-NET-2 — Production CORS is origin-allowlist + `Sec-Fetch-Site` heuristic, with a legacy loophole
 
-Production branch of `cors_policy` (`server/server/src/cors.rs:9-42`): fixed allowlist from config, then `allowed_origin_fn` permits `Sec-Fetch-Site: same-origin | same-site | none | <absent>`.
+Production branch of `cors_policy` (`server/server/src/cors.rs`): `allowed_origin_fn` calls `is_origin_allowed`, which permits an origin listed in `server.cors_origins`, or any origin when `Sec-Fetch-Site` is `same-origin | none | <absent>`.
+
+`same-site` is **not** allowed (#1644). It used to be, which let a page on any other subdomain of the same site (another `*.msupply.org` server, say) make credentialed requests. The shipped clients don't need it: the web UI at `/` and `/old-ui/` and the desktop and Android shells all load the UI from the server they talk to (same-origin), and non-browser clients send no `Sec-Fetch-Site`. A sibling origin that really does need access goes in `cors_origins`. One known case: the new Android shell's draft local mode (`frontend/kdd/android/android-spec.md`) has the page stay on the Capacitor origin `https://localhost` and call the embedded server at `https://localhost:8000`, which only worked through `same-site`. If it ships that way, the embedded server's `cors_origins` (`server/android/src/android.rs`) needs `https://localhost`.
 
 The `<absent> → allow` arm is a **2023 workaround** for a Chrome bug that omitted the header for bare-IP targets:
 
@@ -26,6 +29,15 @@ The `<absent> → allow` arm is a **2023 workaround** for a Chrome bug that omit
 - 2023-05-04 `d8306731ea` ("Fix cors for ip connection") flipped absent → **allow** for the Chrome-by-IP case.
 
 Current browsers send `Sec-Fetch-Site` on all cross-origin fetches including IP targets, and CORS binds only browsers (non-browser clients set any headers they like). The workaround is therefore **probably obsolete**, and tightening `<absent> → deny` is a pending hardening blocked only on confirming no still-supported client relies on it (audit Q5). Do not remove the arm without a release note, because the failure mode is silent breakage of whichever legacy client depended on the 2023 fix.
+
+### INV-NET-6 — WebSocket upgrades are held to the same origin rule as HTTP
+
+Browsers don't apply CORS to WebSocket upgrades, and actix-cors doesn't refuse a request from a disallowed origin: it only leaves out `Access-Control-Allow-Origin`, which a WebSocket never checks. Before #1644 a page on any origin could open `/graphql/ws` with the user's session cookie and run subscriptions (`cors_alone_does_not_refuse_a_websocket_upgrade` pins this).
+
+`websocket_origin_check` (`server/server/src/cors.rs`, wrapped on the main server app) answers `403` to any request carrying `Upgrade: websocket` whose `Origin` fails `is_origin_allowed`, the same function the HTTP policy uses, so the two can't drift apart. Develop builds skip it, matching `Cors::permissive()` (INV-NET-1).
+
+- **No `Origin` → allow.** Browsers always send `Origin` on a WebSocket upgrade, so a missing one means a non-browser client. That client holds no user's browser cookies and could send any `Origin` it liked, so refusing it protects nothing. HTTP behaves the same: actix-cors only checks requests that carry an `Origin`. (The desktop and Android shells are browsers here: their pages come from the server, so they send `Origin` and pass as `same-origin`.)
+- **`Origin` present, `Sec-Fetch-Site` absent → allow.** INV-NET-2's legacy arm applies here too, so a browser too old to send fetch metadata is let through from any origin. Same residual as HTTP; if that arm is ever removed, it goes for both.
 
 ### INV-NET-3 — The discovery server (port+1) is currently over-permissive; pinned intended behavior
 
@@ -45,6 +57,17 @@ Today there are no `limit_depth`/`limit_complexity` calls on any schema builder 
 # CORS production behavior:
 curl -s -o /dev/null -w '%{http_code}' -X OPTIONS http://<server>/graphql \
   -H 'Origin: http://evil.example' -H 'Access-Control-Request-Method: POST'   # expect 403-ish / no ACAO echo
+
+# Same-site origin not in cors_origins (#1644) — expect 400 / no ACAO echo:
+curl -s -o /dev/null -w '%{http_code}' -X OPTIONS http://<server>/graphql \
+  -H 'Origin: https://other.msupply.org' -H 'Access-Control-Request-Method: POST' \
+  -H 'Sec-Fetch-Site: same-site'
+
+# WebSocket upgrade from a disallowed origin (INV-NET-6) — expect 403 on release, 101 on a dev build:
+curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://<server>/graphql/ws \
+  -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' \
+  -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' -H 'Sec-WebSocket-Protocol: graphql-transport-ws' \
+  -H 'Origin: https://evil.example' -H 'Sec-Fetch-Site: cross-site'
 
 # Discovery server must not echo arbitrary origins (once F-3 fixed):
 curl -sv http://<server>:<port+1>/graphql -X OPTIONS -H 'Origin: http://evil.example' \
