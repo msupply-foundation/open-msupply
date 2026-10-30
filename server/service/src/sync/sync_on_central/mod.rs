@@ -343,7 +343,12 @@ fn site_authored_tables() -> HashSet<String> {
                 .sync_style()
                 .authoring
                 .iter()
-                .any(|authoring| !matches!(authoring, Authoring::Central | Authoring::LegacyOnly));
+                .any(|authoring| {
+                    !matches!(
+                        authoring,
+                        Authoring::Central | Authoring::CentralForStore | Authoring::LegacyOnly
+                    )
+                });
             if !site_may_author {
                 return None;
             }

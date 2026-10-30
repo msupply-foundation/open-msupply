@@ -24,8 +24,6 @@ pub enum ValidationError {
     StoreNotActiveOnSourceSite,
     #[error("Non-multi-device data received on a multi-device site")]
     NonMultiDeviceDataOnMultiDeviceSite,
-    #[error("User permissions are managed on central and can't be pushed by a remote site")]
-    PermissionsManagedOnCentral,
 }
 
 pub(crate) fn validate_on_remote(
@@ -54,8 +52,8 @@ pub(crate) fn validate_on_remote(
                 (None, None) => return Ok(()),
                 _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
             },
-            // Central stores may also edit these, so accept post-initialisation pushes.
-            Remote => match &sync_buffer_row.store_id {
+            // Central sends edits to these after initialisation, so accept them then too.
+            Remote | CentralForStore => match &sync_buffer_row.store_id {
                 None => last_err = ValidationError::NoStoreId,
                 Some(id) if !active_store_ids.iter().any(|s| s == id) => {
                     last_err = ValidationError::InactiveStore
@@ -98,25 +96,6 @@ pub(crate) fn validate_on_central(
     use Authoring::*;
     let sync_style = table_name.sync_style();
 
-    // User permissions are managed on central (#1639). Sites only receive them, so refuse
-    // every pushed row whatever its store - the store check below only reads the outer
-    // store_id, not the store_id inside the row, so it can't stop a site granting itself
-    // access to another site's store. These tables stay `Remote` in their sync style
-    // because remotes rely on that to accept the rows central sends them.
-    if matches!(
-        table_name,
-        ChangelogTableName::UserPermission | ChangelogTableName::UserStoreJoin
-    ) {
-        warn!(
-            "Site {} pushed a {} record over v7 ({} '{}'); user permissions are managed on central, so it was ignored",
-            sync_buffer_row.source_site_id,
-            table_name,
-            sync_buffer_row.action,
-            sync_buffer_row.record_id
-        );
-        return Err(ValidationError::PermissionsManagedOnCentral);
-    }
-
     // A multi-device site only pushes multi-device tables — reject anything else, then
     // fall through so what passes is still checked by its authoring arm below.
     if is_multi_device && !sync_style.multi_device_site {
@@ -130,6 +109,19 @@ pub(crate) fn validate_on_central(
     for style in &sync_style.authoring {
         match style {
             Central => last_err = ValidationError::CentralOnlyEditableByCentral,
+            // Refused whatever store the row names: the store check below reads only the
+            // outer store_id, not the one inside the row, so it can't stop a site writing
+            // rows for another site's store (#1639). Logged so repeat attempts show up.
+            CentralForStore => {
+                warn!(
+                    "Site {} pushed a {} record over v7 ({} '{}'), which only central may write, so it was ignored",
+                    sync_buffer_row.source_site_id,
+                    table_name,
+                    sync_buffer_row.action,
+                    sync_buffer_row.record_id
+                );
+                last_err = ValidationError::CentralOnlyEditableByCentral
+            }
             // Accept only if the row's store belongs to the source site —
             // this also rejects rows referencing central's own stores.
             Remote | RemoteOwned | Transfer => match &sync_buffer_row.store_id {
@@ -545,8 +537,9 @@ mod tests {
 
     #[test]
     fn on_central_refuses_user_permissions() {
-        // #1639: user permissions are managed on central, so a site may not push them —
-        // not for its own store, not for another site's store, and not as a delete.
+        // #1639: user permissions are managed on central (`CentralForStore`), so a site
+        // may not push them — not for its own store, not for another site's store, and
+        // not as a delete.
         let source_site_stores = vec!["remote_store_a".to_string()];
 
         for table in [UserPermission, UserStoreJoin] {
@@ -565,7 +558,7 @@ mod tests {
                                 &source_site_stores,
                                 is_multi_device,
                             ),
-                            Err(ValidationError::PermissionsManagedOnCentral),
+                            Err(ValidationError::CentralOnlyEditableByCentral),
                             "{table} {action} for store {store_id:?}, multi-device {is_multi_device}"
                         );
                     }

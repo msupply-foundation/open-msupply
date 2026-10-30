@@ -1561,7 +1561,7 @@ mod tests {
                 assert!(
                     row.integration_error
                         .unwrap()
-                        .contains("User permissions are managed on central")
+                        .contains("only editable by the central site")
                 );
             }
         }
