@@ -8,6 +8,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Button } from '@/ui/elements/buttons/Button';
+import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import {
@@ -338,17 +339,13 @@ const PurchaseOrdersList: Component = () => {
             {/* The outstanding-lines list (S5) is the vertical's second
                 screen — a separate slice; this is the way in the spec gives
                 it. */}
-            <Button
+            <LinkButton
               icon={<MenuLinesIcon />}
               data-testid="outstanding-lines-button"
-              onClick={() =>
-                navigate(
-                  `/${params.storeId}/replenishment/purchase-order/outstanding`
-                )
-              }
+              href={`/${params.storeId}/replenishment/purchase-order/outstanding`}
             >
               {t('button.outstanding-lines')}
-            </Button>
+            </LinkButton>
             {/* Export the orders list (every page of the current filter, in
                 the current order) as CSV or Excel. */}
             <ExportPurchaseOrdersAction

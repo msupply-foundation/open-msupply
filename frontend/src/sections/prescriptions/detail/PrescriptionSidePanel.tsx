@@ -1,5 +1,4 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { genderLabel } from '@/domain/patient';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -14,6 +13,7 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -78,7 +78,6 @@ type Diagnosis = DiagnosesActiveResult['diagnosesActive'][number];
 export const PrescriptionSidePanel: Component<
   PrescriptionSidePanelProps
 > = props => {
-  const navigate = useNavigate();
   const [cancelConfirm, setCancelConfirm] = createSignal(false);
   // The delete dialog's phase; undefined is closed. Phased rather than a
   // ConfirmDialog because a refusal has to be SHOWN: ConfirmDialog closes
@@ -359,17 +358,12 @@ export const PrescriptionSidePanel: Component<
             collapsible
           >
             <FieldRow label={t('label.prescription-request')}>
-              <Button
-                variant="ghost"
-                data-testid="source-prescription-request-link"
-                onClick={() =>
-                  navigate(
-                    `/${props.storeId}/dispensary/prescription-request/${request().id}`
-                  )
-                }
+              <RecordLink
+                testId="source-prescription-request-link"
+                href={`/${props.storeId}/dispensary/prescription-request/${request().id}`}
               >
                 {`#${request().prescriptionRequestNumber}`}
-              </Button>
+              </RecordLink>
             </FieldRow>
           </SidePanelSection>
         )}
