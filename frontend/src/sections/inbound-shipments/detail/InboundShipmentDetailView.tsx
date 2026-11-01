@@ -97,6 +97,7 @@ import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
   hasSourceLink,
+  isDeletable,
   isEditable,
   actionsLocked,
   sourceLinkOf,
@@ -121,7 +122,9 @@ import { createCaptureWindow } from './scan/createCaptureWindow';
 import {
   createScanControl,
   ScanButton,
+  ScanStatus,
   shownScanNotice,
+  type ScanNoticeShown,
 } from '@/domain/barcode';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { showsInternalOrderContext } from './internalOrderContext';
@@ -453,6 +456,9 @@ const InboundShipmentDetailView: Component = () => {
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // Delete keeps the server's own window, which still admits Shipped.
+  const deleteDisabled = () =>
+    writeBlocked() || !isDeletable(current()?.status ?? '');
   // The line-selection actions close earlier on a PO-linked shipment — at
   // Received (issue #873); its lines still open, and items are still added.
   const bulkLocked = () =>
@@ -571,11 +577,12 @@ const InboundShipmentDetailView: Component = () => {
     disabled: () => !current() || isDisabled(),
   });
 
-  // Receiving by scanning (spec/barcode-scanning rules § Learning a code while
-  // receiving; ui-surface S2): a scan opens the capture window, and each scan
-  // after that saves what it holds and loads the next box. The scanner arms on
-  // arrival; the action is disabled while the shipment is not editable (R1).
-  const [scanNotice, setScanNotice] = createSignal<string>();
+  // Receiving by scanning (spec/barcode-scanning rules § Receiving by
+  // scanning; ui-surface S2): a scan opens the capture window, and each scan
+  // after that saves what it holds and loads the next box. A hardware scanner
+  // listens from arrival while the shipment is editable; a camera scans per
+  // press (R1).
+  const [scanNotice, setScanNotice] = createSignal<ScanNoticeShown>();
   const capture = createCaptureWindow({
     storeId: () => params.storeId,
     invoiceId: () => current()?.id ?? params.invoiceId,
@@ -595,10 +602,7 @@ const InboundShipmentDetailView: Component = () => {
       void capture.receive(read);
     },
   });
-  const scanNoticeShown = shownScanNotice(scan, () => {
-    const text = scanNotice();
-    return text === undefined ? undefined : { severity: 'warning', text };
-  });
+  const scanNoticeShown = shownScanNotice(scan, scanNotice);
 
   // "OK & next" (update mode): the next distinct item for the editor to
   // advance to. Owned by the PARENT because the line table is server-paginated
@@ -1144,6 +1148,7 @@ const InboundShipmentDetailView: Component = () => {
                   storeId={params.storeId}
                   node={node()}
                   disabled={isDisabled()}
+                  deleteDisabled={deleteDisabled()}
                   hasLines={hasLines()}
                   scope={scope()}
                   edit={edit}
@@ -1195,8 +1200,9 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
-                    {/* Scan — the shared page-action scan button (spec S3
-                        page actions; barcode-scanning R1). */}
+                    {/* Scan — the camera's page-action Scan button (spec S3
+                        page actions; barcode-scanning R1). A hardware
+                        scanner's status ends the header field row below. */}
                     <ScanButton control={scan} />
                     <ExportPrintButton
                       context="INBOUND_SHIPMENT"
@@ -1249,11 +1255,14 @@ const InboundShipmentDetailView: Component = () => {
                       an equal share of the row like a field. */}
                   <HeaderToolbar
                     alert={
-                      <Alert severity="info" compact>
-                        {sourceLinkOf(node()) === 'none'
-                          ? t('messages.inbound-manual-info')
-                          : t('messages.inbound-automatic-info')}
-                      </Alert>
+                      <>
+                        <Alert severity="info" compact>
+                          {sourceLinkOf(node()) === 'none'
+                            ? t('messages.inbound-manual-info')
+                            : t('messages.inbound-automatic-info')}
+                        </Alert>
+                        <ScanStatus control={scan} />
+                      </>
                     }
                   >
                     <InboundShipmentDetailToolbar
@@ -1505,7 +1514,13 @@ const InboundShipmentDetailView: Component = () => {
 
               <InboundShipmentLineEditModal
                 open={editState() != null}
-                onClose={() => setEditState(undefined)}
+                onClose={() => {
+                  setEditState(undefined);
+                  // A scan it refused is over: its notice on the screen too.
+                  if (capture.discarded()) setScanNotice(undefined);
+                  capture.editorClosed();
+                }}
+                scanDiscarded={capture.discarded()}
                 storeId={params.storeId}
                 invoiceId={node().id}
                 isExternal={isExternal()}
@@ -1551,9 +1566,15 @@ const InboundShipmentDetailView: Component = () => {
                 onRequestNext={nextItem}
               />
               <CaptureWindow control={capture} />
+              {/* "Which item is this barcode?" — asked before the window opens
+                  when a barcode is mapped to several items. */}
+              <capture.Chooser />
               <AddFromMasterListModal
                 open={masterListOpen()}
-                onClose={() => setMasterListOpen(false)}
+                onClose={() => {
+                  setMasterListOpen(false);
+                  capture.editorClosed();
+                }}
                 storeId={params.storeId}
                 invoiceId={node().id}
                 onAdded={onLinesChanged}
@@ -1562,7 +1583,10 @@ const InboundShipmentDetailView: Component = () => {
                 {req => (
                   <AddFromInternalOrderModal
                     open={internalOrderOpen()}
-                    onClose={() => setInternalOrderOpen(false)}
+                    onClose={() => {
+                      setInternalOrderOpen(false);
+                      capture.editorClosed();
+                    }}
                     storeId={params.storeId}
                     invoiceId={node().id}
                     requisitionId={req().id}

@@ -1096,7 +1096,7 @@ mod report_to_excel_test {
             start.elapsed().as_millis()
         });
 
-        let duration_millisec = tokio::time::timeout(Duration::from_secs(10), handle)
+        let duration_millisec = tokio::time::timeout(Duration::from_secs(30), handle)
             .await
             .unwrap()
             .unwrap();
@@ -1104,8 +1104,10 @@ mod report_to_excel_test {
         // Note: this was tested on a M3 Macbook Pro and took around 1.6s. If your testing environment
         // is significantly slower it may fail this assertion! Just make it bigger... for lack of an
         // elegant way of scaling based on hardware info ;)
+        // CI's Linux build box takes ~3.9s, and up to ~6s while the other build lane runs its tests
+        // at the same time - nextest's threads-required only reserves the CPUs within one run.
         assert!(
-            duration_millisec < 5000,
+            duration_millisec < 15000,
             "Generate to excel should be FAST. Took: {}ms",
             duration_millisec
         );

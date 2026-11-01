@@ -178,6 +178,7 @@ query internalOrderLineForecastPreview(
             itemQuantity
             ancillaryQuantity
             wastageRate
+            ownWastageRate
             principalUsableConsumption
             monthlyConsumption
           }

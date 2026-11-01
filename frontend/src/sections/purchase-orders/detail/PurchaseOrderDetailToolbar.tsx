@@ -111,11 +111,8 @@ export const PurchaseOrderDetailToolbar: Component<
     setDateErrors(field, undefined);
     void props.onCascadeDate(field, date).then(result => {
       setDraft(undefined);
-      if (!result.ok)
-        setDateErrors(
-          field,
-          result.message ?? t('messages.error-saving-purchase-order')
-        );
+      // No message = already up in a global modal (permission or transport).
+      if (!result.ok) setDateErrors(field, result.message);
     });
   };
 

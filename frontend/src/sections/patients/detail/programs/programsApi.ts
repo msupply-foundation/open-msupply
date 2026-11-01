@@ -48,6 +48,22 @@ export const fetchFormRegistries = async (
   return result.data.documentRegistries.nodes;
 };
 
+/**
+ * The encounter types a patient can be given an encounter of: those of the
+ * programs they are enrolled in, since the server refuses an encounter in any
+ * other program. For the patient screen's New encounter and the encounter
+ * screen's prompt to schedule the next visit.
+ */
+export const encounterTypesFor = (
+  registries: readonly FormRegistryFragment[],
+  enrolments: readonly { contextId: string }[]
+): FormRegistryFragment[] => {
+  const contexts = new Set(enrolments.map(e => e.contextId));
+  return registries.filter(
+    r => r.category === 'ENCOUNTER' && contexts.has(r.contextId)
+  );
+};
+
 // The store's Patient registry entry, which puts the patient's Details tab on
 // the document path (spec/patients rules › two persistence paths): `entry` is
 // undefined when there is none. Undefined itself while unanswered or failed.

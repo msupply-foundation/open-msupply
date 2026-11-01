@@ -145,6 +145,9 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                 <th>{t('label.name')}</th>
                 <th data-numeric>{t('label.pack-size')}</th>
                 <th data-numeric>{t('label.volume-per-unit')}</th>
+                {/* Read-only: a packaging level's barcode is set and removed
+                    on the Barcodes tab, and editing the level keeps it. */}
+                <th>{t('label.barcode')}</th>
               </tr>
             </thead>
             <tbody>
@@ -165,6 +168,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                         <Num value={row.volumePerUnit} volume />
                       )}
                     </td>
+                    <td>{row.barcode ?? ''}</td>
                   </tr>
                 )}
               </For>

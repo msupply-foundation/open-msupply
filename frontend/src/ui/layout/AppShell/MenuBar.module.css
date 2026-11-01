@@ -262,7 +262,7 @@
   transform: rotate(-90deg);
 }
 
-:dir(rtl) .sectionChevron[data-open='false'] {
+[dir='rtl'] .sectionChevron[data-open='false'] {
   transform: rotate(90deg);
 }
 
@@ -445,11 +445,23 @@
   /* Same chrome as the docked rail — it IS the rail, in its other layout mode
      — floating over the scrim, where the shadow does the separating. */
   background: var(--surface-chrome);
+  /* Hidden as well as translated off-screen: the translate is the slide, the
+     visibility is the guarantee. Its DELAY is the same token as the travel it
+     waits on, so the panel stays visible for the whole slide out, then parks
+     (the side panel in Page.module.css does the same). */
+  visibility: hidden;
   transform: translateX(var(--hide-x));
-  transition: transform var(--motion-slow) ease;
+  transition:
+    transform var(--motion-slow) ease,
+    visibility 0s var(--motion-slow);
 }
 
-:dir(rtl) .overlayPanel {
+/* The root attribute, not :dir(rtl): the production build lowers :dir() into
+   a :lang() list of right-to-left languages (Lightning CSS, for its baseline
+   browser target), and Dari (prs) is not on that list, so a :dir() override
+   never matched in Dari (#1833). dir lives on <html> (App.tsx), as the
+   data-flip-rtl rule in index.css already relies on. */
+[dir='rtl'] .overlayPanel {
   --hide-x: 100%;
 }
 
@@ -457,8 +469,12 @@
    (translateX -100%), but its right-edge drop shadow would otherwise bleed
    back into the viewport as a stray shadow along the left edge. */
 .overlayPanel[data-open='true'] {
+  visibility: visible;
   box-shadow: var(--shadow-4);
   transform: none;
+  transition:
+    transform var(--motion-slow) ease,
+    visibility 0s;
 }
 
 .scrim {

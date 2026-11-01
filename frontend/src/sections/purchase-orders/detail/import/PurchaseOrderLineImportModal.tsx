@@ -1,6 +1,7 @@
 import { createMemo, createSignal, Show, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { generateUUID } from '@/uuid';
+import { reportPermissionDenied } from '@/api/graphql';
 import { saveBlob } from '@/platform/openDocument';
 import { readCsvFile } from '@/domain/reportFiles';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -102,7 +103,17 @@ export const PurchaseOrderLineImportModal: Component<
     const orderId = props.orderId;
     const attempted = rows();
     const failures: ImportRow[] = [];
-    for (let at = 0; at < attempted.length; at += IMPORT_BATCH_SIZE) {
+    const failed = (row: ImportRow, error: string): ImportRow => ({
+      ...row,
+      errors: [t('error.import-failed', { error })],
+    });
+    // A Forbidden mid-run (a permission revoked since the modal opened) goes
+    // to the permission-denied modal once, after the run. The permission is
+    // per store, so no further batch is sent: the rows not yet tried are
+    // carried back with the ones refused, all saying why.
+    let forbidden: string[] | undefined;
+    let at = 0;
+    for (; at < attempted.length && !forbidden; at += IMPORT_BATCH_SIZE) {
       const batch = attempted.slice(at, at + IMPORT_BATCH_SIZE);
       const settled = await Promise.all(
         batch.map(async row => {
@@ -110,24 +121,26 @@ export const PurchaseOrderLineImportModal: Component<
             storeId,
             rowToInsertInput(row, orderId)
           );
-          if (result.kind === 'saved') return null;
-          return {
-            ...row,
-            errors: [
-              t('error.import-failed', {
-                error:
-                  result.kind === 'error'
-                    ? result.message
-                    : t('messages.unknown-error'),
-              }),
-            ],
-          };
+          switch (result.kind) {
+            case 'saved':
+              return null;
+            case 'error':
+              return failed(row, result.message);
+            case 'forbidden':
+              forbidden = result.permissions;
+              return failed(row, t('error.permission-denied'));
+            default:
+              return failed(row, t('messages.unknown-error'));
+          }
         })
       );
-      settled.forEach(failed => failed && failures.push(failed));
+      settled.forEach(row => row && failures.push(row));
       setDone(Math.min(at + batch.length, attempted.length));
     }
+    for (const row of attempted.slice(at))
+      failures.push(failed(row, t('error.permission-denied')));
     setImporting(false);
+    if (forbidden) reportPermissionDenied(forbidden);
     props.onImported();
     if (failures.length === 0) {
       props.onClose();

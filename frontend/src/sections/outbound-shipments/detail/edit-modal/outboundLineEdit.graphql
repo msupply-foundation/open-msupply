@@ -25,6 +25,7 @@ query draftStockOutLines(
       inStorePacks
       availablePacks
       stockLineOnHold
+      barcode
       dosesPerUnit
       volumePerPack
       location {

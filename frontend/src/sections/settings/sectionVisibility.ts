@@ -1,6 +1,6 @@
 // Section/row visibility (spec/settings/rules.md § Access) — pure, so the
 // non-uniform gating is unit-testable (OMS-REG-SET-01.14, -02.11, -03.14,
-// -05.20, -05.23, -05.24).
+// -05.20, -05.24, -05.56).
 // Visibility is a UX convenience, never the only guard: every write is
 // independently checked server-side (rules § Access), and Configuration's
 // actions carry finer permissions past this section-level gate
@@ -45,12 +45,10 @@ export const showCentralSyncControls = (access: SettingsAccess): boolean =>
 export const showThemeAndLogoRows = (access: SettingsAccess): boolean =>
   access.serverAdmin;
 
-// Within Devices: the label-printer half is for any signed-in user
-// (OMS-REG-SET-05.20 — deliberately NO Server Admin requirement); the
-// barcode-scanner half is Server Admin only, strictly stricter
-// (OMS-REG-SET-05.23).
-export const showBarcodeScannerRows = (access: SettingsAccess): boolean =>
-  access.serverAdmin;
+// Within Devices there is no permission gate at all: the label printer
+// (OMS-REG-SET-05.20 — deliberately NO Server Admin requirement) and the
+// barcode scanner (OMS-REG-SET-05.56 — device-local state only, so nothing
+// for a permission to protect) are both for any signed-in user.
 
 // Also within Devices, and gated on the platform rather than permission: the
 // Print via USB row is absent on Android (OMS-REG-SET-05.41). The USB route

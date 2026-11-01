@@ -11,6 +11,7 @@ export type EncounterRecordFragment = {
   __typename: "PatientNode";
   id: string;
   name: string;
+  dateOfBirth: string | null;
 };
   document: {
   __typename: "DocumentNode";
@@ -22,6 +23,7 @@ export type EncounterRecordFragment = {
   isImmunisationProgram: boolean;
   document: {
   __typename: "DocumentNode";
+  name: string;
   documentRegistry: {
   __typename: "DocumentRegistryNode";
   name: string | null;
@@ -44,5 +46,86 @@ export type EncounterRecordResult = {
 };
 
 export const EncounterRecord = {
-  query: "query encounterRecord($storeId: String!, $id: String!) {\n  encounters(\n    storeId: $storeId\n    filter: {id: {equalTo: $id}, includeDeleted: true}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      nodes {\n        ...EncounterRecord\n      }\n    }\n  }\n}\n\nfragment EncounterRecord on EncounterNode {\n  __typename\n  id\n  type\n  patientId\n  patient {\n    __typename\n    id\n    name\n  }\n  document {\n    __typename\n    name\n  }\n  programEnrolment {\n    __typename\n    id\n    isImmunisationProgram\n    document {\n      __typename\n      documentRegistry {\n        __typename\n        name\n      }\n    }\n  }\n}",
+  query: "query encounterRecord($storeId: String!, $id: String!) {\n  encounters(\n    storeId: $storeId\n    filter: {id: {equalTo: $id}, includeDeleted: true}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      nodes {\n        ...EncounterRecord\n      }\n    }\n  }\n}\n\nfragment EncounterRecord on EncounterNode {\n  __typename\n  id\n  type\n  patientId\n  patient {\n    __typename\n    id\n    name\n    dateOfBirth\n  }\n  document {\n    __typename\n    name\n  }\n  programEnrolment {\n    __typename\n    id\n    isImmunisationProgram\n    document {\n      __typename\n      name\n      documentRegistry {\n        __typename\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<EncounterRecordResult, EncounterRecordVariables>;
+
+export type EncounterPreviousVariables = {
+  storeId: string;
+  patientId: string;
+  type: string;
+  before: string;
+  first: number;
+};
+
+export type EncounterPreviousResult = {
+  encounters: ({
+  __typename: "EncounterConnector";
+} & {
+  totalCount: number;
+  nodes: Array<{
+  __typename: "EncounterNode";
+  id: string;
+  startDatetime: string;
+  status: "PENDING" | "VISITED" | "CANCELLED" | "DELETED" | null;
+}>;
+});
+};
+
+export const EncounterPrevious = {
+  query: "query encounterPrevious($storeId: String!, $patientId: String!, $type: String!, $before: DateTime!, $first: Int!) {\n  encounters(\n    storeId: $storeId\n    filter: {patientId: {equalTo: $patientId}, type: {equalTo: $type}, startDatetime: {beforeOrEqualTo: $before}}\n    sort: {key: startDatetime, desc: true}\n    page: {first: $first}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      totalCount\n      nodes {\n        __typename\n        id\n        startDatetime\n        status\n      }\n    }\n  }\n}",
+} as TypedDocument<EncounterPreviousResult, EncounterPreviousVariables>;
+
+export type EncounterNextVisitVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type EncounterNextVisitResult = {
+  encounters: ({
+  __typename: "EncounterConnector";
+} & {
+  nodes: Array<{
+  __typename: "EncounterNode";
+  id: string;
+  suggestedNextEncounter: {
+  __typename: "SuggestedNextEncounterNode";
+  startDatetime: string;
+  label: string | null;
+} | null;
+}>;
+});
+};
+
+export const EncounterNextVisit = {
+  query: "query encounterNextVisit($storeId: String!, $id: String!) {\n  encounters(storeId: $storeId, filter: {id: {equalTo: $id}}) {\n    ... on EncounterConnector {\n      __typename\n      nodes {\n        __typename\n        id\n        suggestedNextEncounter {\n          __typename\n          startDatetime\n          label\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<EncounterNextVisitResult, EncounterNextVisitVariables>;
+
+export type EncounterNextDosesVariables = {
+  storeId: string;
+  programEnrolmentId: string;
+};
+
+export type EncounterNextDosesResult = {
+  vaccinationCard: ({
+  __typename: "VaccinationCardNode";
+} & {
+  id: string;
+  items: Array<{
+  __typename: "VaccinationCardItemNode";
+  id: string;
+  label: string;
+  suggestedDate: string | null;
+}>;
+}) | ({
+  __typename: "NodeError";
+} & {
+  error: {
+  __typename: "DatabaseError" | "RecordNotFound";
+  description: string;
+};
+});
+};
+
+export const EncounterNextDoses = {
+  query: "query encounterNextDoses($storeId: String!, $programEnrolmentId: String!) {\n  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {\n    ... on VaccinationCardNode {\n      __typename\n      id\n      items {\n        __typename\n        id\n        label\n        suggestedDate\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<EncounterNextDosesResult, EncounterNextDosesVariables>;

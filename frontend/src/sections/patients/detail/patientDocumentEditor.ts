@@ -195,13 +195,13 @@ export const createPatientDocumentEditor = (
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
 
   // A patient without a document opens pristine and saves only once edited,
-  // as the plain path does; a document migrated from an earlier version may
-  // be saved untouched, which re-pins it.
+  // as the plain path does; so does a document migrated from an earlier
+  // version, unless the migration changed it.
   const canSave = () =>
     documentForm.status() === 'ready' &&
     canMutate() &&
     documentForm.canSave() &&
-    (documentForm.isDirty() || documentForm.version().kind === 'migrated');
+    documentForm.isDirty();
 
   const attemptSave = async () => {
     documentForm.validation.arm();

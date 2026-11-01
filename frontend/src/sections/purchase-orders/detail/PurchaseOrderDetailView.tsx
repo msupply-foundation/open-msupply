@@ -9,7 +9,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { MAX_FRACTION_DIGITS, t } from '@/intl';
-import { graphqlFetch } from '@/api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
 import { Page } from '@/ui/layout/Page/Page';
@@ -338,8 +338,10 @@ const PurchaseOrderDetailView: Component = () => {
       params.id,
       list.id
     );
-    if (result.kind === 'done') refetchAll();
+    if (result.kind === 'done') void refetchAll();
     else if (result.kind === 'error') setNotice(result.message);
+    else if (result.kind === 'forbidden')
+      reportPermissionDenied(result.permissions);
   };
 
   // The editor's walk follows the table's current sort and filter (rules §
@@ -398,11 +400,10 @@ const PurchaseOrderDetailView: Component = () => {
     line.status !== 'CLOSED' &&
     line.requestedNumberOfUnits === 0;
 
-  const refetchAll = () => {
-    void refetchInfo();
-    void refetchLines();
-    void refetchLineSet();
-  };
+  // Resolves once all three re-reads have landed, for a caller that has to
+  // hold something on screen until then.
+  const refetchAll = () =>
+    Promise.all([refetchInfo(), refetchLines(), refetchLineSet()]);
 
   // Nothing on this screen is saved by hand — there is no save action anywhere
   // on it (rules § an order's own screen). A save the domain refuses leaves the
@@ -422,6 +423,7 @@ const PurchaseOrderDetailView: Component = () => {
       void refetchInfo();
       return { ok: true };
     }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
     return result.kind === 'error'
       ? { ok: false, message: result.message }
       : { ok: false };
@@ -467,13 +469,26 @@ const PurchaseOrderDetailView: Component = () => {
           requestedDeliveryDate: { value: date },
         })
       : undefined;
+    // The lines need the same permission as the order, so a Forbidden here
+    // ends the cascade before it starts.
+    if (orderWrite?.kind === 'forbidden') {
+      reportPermissionDenied(orderWrite.permissions);
+      return { ok: false };
+    }
     const outcome = await cascadeDeliveryDates(
       params.storeId,
       lineSet(),
       date,
       fields
     );
-    refetchAll();
+    // Wait for the re-read: the toolbar shows the picked day until this
+    // resolves, so dropping it any earlier flashes the old date back for a
+    // moment before the new one lands.
+    await refetchAll();
+    if (outcome.forbidden) {
+      reportPermissionDenied(outcome.forbidden);
+      return { ok: false };
+    }
     const message =
       (orderWrite?.kind === 'error' ? orderWrite.message : undefined) ??
       outcome.message;
@@ -489,20 +504,21 @@ const PurchaseOrderDetailView: Component = () => {
     if (result.kind === 'saved') {
       // A move cascades onto the lines (their requested dates, their statuses),
       // so the page and the set are both re-read.
-      refetchAll();
+      void refetchAll();
       return { ok: true };
     }
     if (result.kind === 'error') {
       if (result.blockedLines) setBlockedLines(result.blockedLines);
       return { ok: false, message: result.message };
     }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
     return { ok: false };
   };
 
   const onLinesChanged = () => {
     setSelectedIds([]);
     setBlockedLines([]);
-    refetchAll();
+    void refetchAll();
   };
 
   // Where height is scarce the band gives way to the order total alone, on

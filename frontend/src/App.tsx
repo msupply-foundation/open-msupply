@@ -18,7 +18,7 @@ import {
 } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
-import { InitialisationStatus } from './api/initialisation.generated';
+import { InitialisationStatusAtStartup } from './api/initialisation.generated';
 import { fetchServerInfo } from './api/serverInfo';
 import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
@@ -217,7 +217,7 @@ export const App: Component = () => {
     // Site branding rides along for the same reason: the login and
     // initialisation screens are themed, so it must land before they render.
     const [status] = await Promise.all([
-      graphqlFetch(InitialisationStatus, {}),
+      graphqlFetch(InitialisationStatusAtStartup, {}),
       fetchServerInfo(),
       fetchDisplaySettings(),
     ]);
@@ -392,8 +392,9 @@ export const App: Component = () => {
       </Switch>
       {/* Manual barcode input (spec/settings § Devices — barcode scanner):
           mounted once for the whole app because any screen that scans can
-          raise it, and it must sit ABOVE an open capture window without
-          covering what that window just filled in. Renders nothing unless
+          raise it, and it must sit ABOVE the screen that is scanning (the
+          receiving strip, a line editor) without covering what a scan just
+          filled in. Renders nothing unless
           the manual source has opened the prompt. */}
       <ManualScanInput />
       {/* The camera scan's UI (platform/barcodeSources/camera.ts): the

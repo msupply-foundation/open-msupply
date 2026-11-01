@@ -189,6 +189,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   return {
     id: `line-${i + 1}`,
     type: 'STOCK_IN',
+    barcode: null,
     itemId: `item-${i}`,
     itemName: item.name,
     itemCode: item.code,
@@ -240,6 +241,8 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
       isVaccine: false,
       doses: 1,
       defaultPackSize: packSize,
+      itemStoreProperties: null,
+      volumePerPack: 0,
     },
     donor: null,
     manufacturer: man ? { id: `man-${i}`, name: man } : null,

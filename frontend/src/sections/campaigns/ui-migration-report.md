@@ -2,6 +2,8 @@
 
 > `migrate-ui` run over the whole vertical (2026-08-18). Scope: `src/sections/campaigns/` — the register list (S1), the create/edit dialog (S2), and the delete confirmation (S3), plus the pure logic modules. **Status: complete — F1–F3 fixed + one spec edit, F4 withdrawn (spec-owned value), `pnpm check` + `pnpm test` green (174 files / 1714 tests), check-reactivity clean before AND after the fixes. Operator visual pass outstanding.**
 
+> **Since (2026-10-21, #991):** the campaign start and end dates were removed, so the two date columns F1 sized are gone from the register (now Name · Code · Kind) and the editor no longer uses `DateField`. The rest of this report stands as the record of the run.
+
 ## Coverage (post-fix)
 
 Rows = screens, columns = the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md). `—` = not applicable (no such surface).

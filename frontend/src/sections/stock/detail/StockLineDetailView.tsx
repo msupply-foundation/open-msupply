@@ -56,12 +56,14 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { createConfirmOnLeave } from '@/domain/confirmOnLeave';
 import {
   barcodeFieldFill,
   createScanControl,
+  proposeBarcode,
   ScanFieldButton,
   ScanNotice,
-  scanUnusableReason,
+  scanFieldHelper,
 } from '../../../domain/barcode';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
@@ -122,7 +124,6 @@ const StockLineDetailView: Component = () => {
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string | undefined>();
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
-  const [discardOpen, setDiscardOpen] = createSignal(false);
   const [adjustOpen, setAdjustOpen] = createSignal(false);
   const [repackOpen, setRepackOpen] = createSignal(false);
   // A full repack's new line, offered once the repack modal has closed (spec
@@ -132,18 +133,20 @@ const StockLineDetailView: Component = () => {
     { entry?: StockLineVvmLogFragment } | undefined
   >();
 
-  // The Barcode field's scan affordance (spec/stock S2; barcode-scanning
-  // rules § Setting a code on a stock line): a scan fills the code, batch and
-  // expiry into the draft, which saves like any other edit. Ctrl+S answers it
-  // too — but not behind one of this screen's dialogs, where the scan would
-  // land in a form the user cannot see.
+  // Scanning into the Barcode field (spec/stock S2; barcode-scanning rules §
+  // Setting a code on a stock line): a scan fills the code, batch and expiry
+  // into the draft, which saves like any other edit. With a hardware scanner
+  // the whole screen listens (OMS-REG-BAC-01.137) and the scan never also
+  // types into the focused field; with a camera the field's button takes one
+  // (.138). Not behind one of this screen's dialogs, where the scan would
+  // land in a form the user cannot see (.134).
   const scanner = createScanControl({
     owner: 'stock-line',
     mode: 'field',
     disabled: () =>
       saving() ||
       confirmSaveOpen() ||
-      discardOpen() ||
+      leaveGuard.open() ||
       adjustOpen() ||
       repackOpen() ||
       vvmEntry() !== undefined,
@@ -256,15 +259,16 @@ const StockLineDetailView: Component = () => {
     );
   });
 
-  const doSave = async () => {
+  // Saving records the barcode on the line, then proposes it for the line's
+  // item; it never changes the barcode for other items (barcode-scanning
+  // rules § Setting a barcode on a stock line).
+  const commitSave = async () => {
     const l = line();
     if (!l) return;
     setSaving(true);
     setSaveError(undefined);
-    const outcome = await runUpdateStockLine(
-      params.storeId,
-      buildPatch(edit, l)
-    );
+    const patch = buildPatch(edit, l);
+    const outcome = await runUpdateStockLine(params.storeId, patch);
     setSaving(false);
     if (!outcome) return;
     if (outcome.kind === 'error') {
@@ -276,14 +280,26 @@ const StockLineDetailView: Component = () => {
     const saved = outcome.data;
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
     seedFor(saved);
+    // The line is saved whatever this does; it's learned next time if not now.
+    if (patch.barcode)
+      void proposeBarcode(params.storeId, {
+        barcode: patch.barcode,
+        itemId: l.item.id,
+        packSize: l.packSize,
+      });
   };
+
+  // Any leave with unsaved edits prompts to discard (OMS-REG-INV-02.37).
+  // Discard re-seeds: a leave to another stock line keeps this view mounted.
+  const leaveGuard = createConfirmOnLeave({
+    isDirty,
+    onDiscard: () => {
+      const l = line();
+      if (l) seedFor(l);
+    },
+  });
 
   const leave = () => navigate(`/${params.storeId}/inventory/stock`);
-
-  const onCancelOrClose = () => {
-    if (isDirty()) setDiscardOpen(true);
-    else leave();
-  };
 
   const afterQuantityChange = () => {
     void refetch();
@@ -350,7 +366,7 @@ const StockLineDetailView: Component = () => {
       vvmEntry() !== undefined ||
       repackedToLineId() !== undefined ||
       confirmSaveOpen() ||
-      discardOpen(),
+      leaveGuard.open(),
   });
 
   const tabs = (): TabDef[] => [
@@ -361,7 +377,7 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('stock'), onClick: onCancelOrClose },
+    { label: t('stock'), onClick: leave },
     { label: l.itemName },
   ];
 
@@ -433,7 +449,7 @@ const StockLineDetailView: Component = () => {
                             ? 'dialog-button-cancel'
                             : 'dialog-button-close'
                         }
-                        onClick={onCancelOrClose}
+                        onClick={leave}
                       >
                         {isDirty() ? t('button.cancel') : t('button.close')}
                       </Button>
@@ -549,9 +565,9 @@ const StockLineDetailView: Component = () => {
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
                             }
-                            helperText={scanUnusableReason(scanner)}
+                            helperText={scanFieldHelper(scanner)}
                             endAction={
-                              scanner.available() ? (
+                              scanner.needsPress() ? (
                                 <ScanFieldButton control={scanner} />
                               ) : undefined
                             }
@@ -836,17 +852,17 @@ const StockLineDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-stock')}
                 confirmAction="save"
-                onConfirm={() => void doSave()}
+                onConfirm={() => void commitSave()}
                 onClose={() => setConfirmSaveOpen(false)}
               />
               {/* Discard prompt when leaving with unsaved edits. */}
               <ConfirmDialog
-                open={discardOpen()}
+                open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
-                onConfirm={leave}
-                onClose={() => setDiscardOpen(false)}
+                onConfirm={leaveGuard.confirm}
+                onClose={leaveGuard.cancel}
               />
             </Page>
           </Tabs>
