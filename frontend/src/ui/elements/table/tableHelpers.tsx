@@ -1,5 +1,9 @@
 import type { JSX } from 'solid-js';
-import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
+import type {
+  AggregationFn,
+  ColumnDefBase,
+  ColumnMeta,
+} from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import {
@@ -328,6 +332,18 @@ export const formatCurrencyCell = (
   value: number | null | undefined,
   code?: string | null
 ): string => (value == null ? '' : formatCurrency(value, code));
+
+// Row grouping (DataTable rowGroup): the value every row in a group shares, or
+// nothing when they differ — for a column that restates the grouped value (an
+// item's name beside its code). A plain TanStack AggregationFn; typed <any>
+// like TanStack's own built-ins, whose row type is invariant.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const sharedValue: AggregationFn<any> = (columnId, leafRows) => {
+  const first = leafRows[0]?.getValue(columnId);
+  return leafRows.every(row => row.getValue(columnId) === first)
+    ? first
+    : undefined;
+};
 
 // A summed footer's figure over the rows on screen.
 export const sumBy = <T,>(rows: T[], value: (row: T) => number): number =>

@@ -65,7 +65,7 @@
 #                     runs only
 #                     e2e/specs/plugins/<profile>/ (playwright.config.ts picks
 #                     the project from the same variable). A profile is a
-#                     plugin directory name: plugins/<profile>/, whose
+#                     plugin directory name: private/plugins/<profile>/, whose
 #                     package.json `name` is the plugin code. Profiles are
 #                     listed in e2e/README.md, not here — this script names
 #                     no deployment.
@@ -99,9 +99,9 @@ FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 # Resolve a plugin profile up front, before any build: an unknown one is a
 # typo, and should cost nothing.
 if [[ -n "$PLUGIN_PROFILE" ]]; then
-  PLUGIN_MANIFEST="$FE_DIR/plugins/$PLUGIN_PROFILE/package.json"
+  PLUGIN_MANIFEST="$FE_DIR/../private/plugins/$PLUGIN_PROFILE/package.json"
   if [[ "$PLUGIN_PROFILE" == */* || ! -f "$PLUGIN_MANIFEST" ]]; then
-    echo "Unknown E2E_PLUGIN_PROFILE '$PLUGIN_PROFILE': no plugins/$PLUGIN_PROFILE/package.json" >&2
+    echo "Unknown E2E_PLUGIN_PROFILE '$PLUGIN_PROFILE': no private/plugins/$PLUGIN_PROFILE/package.json" >&2
     exit 1
   fi
   if [[ ! -d "$FE_DIR/e2e/specs/plugins/$PLUGIN_PROFILE" ]]; then

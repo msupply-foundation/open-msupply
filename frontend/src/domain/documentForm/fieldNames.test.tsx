@@ -143,3 +143,31 @@ describe('the error summary names a field as it shows itself', () => {
     });
   });
 });
+
+describe('the host knows which parts of the document the form renders', () => {
+  it('names a path while a field at it, or beneath it, is on show', () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      c.reset({ code: 'GRY0001', extension: {} });
+      const [shown, setShown] = createSignal(true);
+      <Show when={shown()}>
+        <TextInput draft={c.draft} path="code" label="Identity number" />
+        <AutocompleteInput
+          draft={c.draft}
+          path="extension.nationality"
+          label="Nationalité"
+          options={[]}
+        />
+      </Show>;
+      expect(c.draft.namesField('code')).toBe(true);
+      // A field beneath the path counts: the form renders that part.
+      expect(c.draft.namesField('extension')).toBe(true);
+      expect(c.draft.namesField('extension.nationality')).toBe(true);
+      expect(c.draft.namesField('notes')).toBe(false);
+      setShown(false);
+      expect(c.draft.namesField('code')).toBe(false);
+      expect(c.draft.namesField('extension')).toBe(false);
+      dispose();
+    });
+  });
+});

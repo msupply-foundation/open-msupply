@@ -13,6 +13,10 @@ fail-fast = false
 
 [profile.ci.slow-timeout]
 period = "10s"
+# Kill a test after 60 periods (10 minutes), so a hung test fails the run
+# instead of holding a runner until the job's own timeout. The slowest real
+# test, rnr_form's performance test, takes about a minute.
+terminate-after = 60
 
 [profile.ci-sqlite]
 inherits = "ci"

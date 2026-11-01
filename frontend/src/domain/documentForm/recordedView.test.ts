@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
-import v1Fixture from '../../../plugins/examples/demo_program/forms/DemoEncounter/fixtures/v1.json';
+import v1 from '../../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
+import v1Fixture from '../../../../plugins/examples/demo_program/forms/DemoEncounter/fixtures/v1.json';
 import {
   holdsBeyondSchema,
   humanise,

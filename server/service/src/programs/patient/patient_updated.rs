@@ -11,13 +11,13 @@ use super::{
     patient_schema::{ContactDetails, SchemaGender, SchemaPatient},
 };
 
-// create name_store_join if not existing
+// create name_store_join if not existing. An existing join, active or not, is left as it is
 pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
     name_id: &str,
     name_store_join_id: Option<String>,
-) -> Result<String, RepositoryError> {
+) -> Result<NameStoreJoinRow, RepositoryError> {
     let existing = NameStoreJoinRepository::new(con)
         .query_by_filter(
             NameStoreJoinFilter::new()
@@ -26,17 +26,39 @@ pub fn create_patient_name_store_join(
         )?
         .pop();
     if let Some(existing) = existing {
-        return Ok(existing.name_store_join.id);
+        return Ok(existing.name_store_join);
     }
 
-    let id = name_store_join_id.unwrap_or_else(uuid);
-    NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
-        id: id.clone(),
+    let row = NameStoreJoinRow {
+        id: name_store_join_id.unwrap_or_else(uuid),
         name_id: name_id.to_string(),
         store_id: store_id.to_string(),
         name_is_customer: true,
         name_is_supplier: false,
-    })?;
+        visible: true,
+    };
+    NameStoreJoinRepository::new(con).upsert_one(&row)?;
+    Ok(row)
+}
+
+/// Adds the patient to the store (fetching them from central): creates the
+/// name_store_join, or makes an existing one visible
+pub fn activate_patient_name_store_join(
+    con: &StorageConnection,
+    store_id: &str,
+    name_id: &str,
+    name_store_join_id: Option<String>,
+) -> Result<String, RepositoryError> {
+    let join = create_patient_name_store_join(con, store_id, name_id, name_store_join_id)?;
+    let id = join.id.clone();
+
+    if !join.visible {
+        NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
+            visible: true,
+            ..join
+        })?;
+    }
+
     Ok(id)
 }
 
@@ -568,6 +590,57 @@ mod test {
         assert_eq!(name_row_update, name_row_update_2);
         let updated_patient_2 = patient_draft_document(&name_row_update, updated_patient.clone());
         assert_eq!(updated_patient_2, updated_patient);
+    }
+
+    /// Fetching a patient into a store makes its join visible; a save doesn't
+    #[actix_rt::test]
+    async fn test_activate_patient_name_store_join() {
+        use super::{activate_patient_name_store_join, create_patient_name_store_join};
+        use repository::{NameStoreJoinRepository, NameStoreJoinRow};
+
+        let (_, connection, _, _) = setup_all(
+            "test_activate_patient_name_store_join",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let repo = NameStoreJoinRepository::new(&connection);
+        repo.upsert_one_without_changelog(&NameStoreJoinRow {
+            id: "join_not_visible".to_string(),
+            store_id: "store_a".to_string(),
+            name_id: "testId".to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+            visible: false,
+        })
+        .unwrap();
+        let is_visible = || {
+            repo.find_one_by_id("join_not_visible")
+                .unwrap()
+                .unwrap()
+                .visible
+        };
+
+        // A save keeps the existing join, still not visible
+        let join = create_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
+        assert_eq!(join.id, "join_not_visible");
+        assert!(!join.visible);
+        assert!(!is_visible());
+
+        // Fetching the patient into the store makes it visible
+        let id = activate_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
+        assert_eq!(id, "join_not_visible");
+        assert!(is_visible());
+
+        // With no join, one is created visible
+        let id = activate_patient_name_store_join(
+            &connection,
+            "store_b",
+            "testId",
+            Some("new_join".to_string()),
+        )
+        .unwrap();
+        assert_eq!(id, "new_join");
+        assert!(repo.find_one_by_id("new_join").unwrap().unwrap().visible);
     }
 
     #[test]
