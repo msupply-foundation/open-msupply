@@ -1161,7 +1161,7 @@
   "label.age-months-short": "{{count}} mois",
   "label.age-weeks-count_many": "{{count}} semaines",
   "label.age-weeks-count_one": "{{count}} semaine",
-  "label.age-weeks-count_other": "",
+  "label.age-weeks-count_other": "{{count}} semaines",
   "label.age-weeks-short": "{{count}} sem.",
   "label.age-years-short": "{{count}} ans",
   "label.age-years_many": "{{count}} ans",
