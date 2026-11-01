@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { localisedDate } from '../../../intl/formatDateTime';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { loadDateFnsLocale, localisedDate } from '../../../intl/formatDateTime';
+import { setLocale } from '../../../intl/intl';
 import { buildLabels } from './labels';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 
@@ -75,6 +76,41 @@ describe('buildLabels (.47 — one label per dispensed item)', () => {
     } finally {
       runtimeLocale.mockRestore();
     }
+  });
+
+  describe('in a language with its own digits', () => {
+    afterEach(() => setLocale('en'));
+
+    // The server blanks non-ASCII digits when it writes the ZPL, so an Arabic
+    // label printed "Central Store -   /  /     " with no quantity.
+    it('prints the date and quantity in Latin digits', async () => {
+      await loadDateFnsLocale('ar');
+      setLocale('ar');
+      const [label] = buildLabels(prescription, 'Central Store');
+      expect(label.itemDetails).toBe('21 tablet Aspirin');
+      expect(label.details).toMatch(/ - (19|20)\/07\/2026 - /);
+      expect(label.details).not.toMatch(/[\u0660-\u0669\u06f0-\u06f9]/);
+    });
+
+    it("keeps the language's date order", async () => {
+      await loadDateFnsLocale('ps');
+      setLocale('ps');
+      const [label] = buildLabels(prescription, 'Central Store');
+      expect(label.details).toMatch(/ - 2026\/07\/(19|20) - /);
+    });
+
+    it('still marks a quantity the configured places rounded', () => {
+      setLocale('ar');
+      const third = {
+        ...prescription,
+        lines: {
+          nodes: [{ ...prescription.lines.nodes[0], numberOfPacks: 1 / 300 }],
+        },
+      } as PrescriptionFieldsFragment;
+      expect(buildLabels(third, 'Central Store')[0].itemDetails).toBe(
+        '0.33* tablet Aspirin'
+      );
+    });
   });
 
   it('labels only the given lines when a selection is printed', () => {

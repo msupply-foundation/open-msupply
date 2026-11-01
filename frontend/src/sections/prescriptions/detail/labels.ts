@@ -1,6 +1,7 @@
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
-import { localisedDate } from '../../../intl/formatDateTime';
-import { roundedText } from '../../../intl/numberDisplay';
+import { exportDate } from '../../../intl/formatDateTime';
+import { formatNumber } from '../../../intl/formatNumber';
+import { ROUNDED_MARK, decimalPlaces } from '../../../intl/numberDisplay';
 
 // What a dispensing label says (spec/prescriptions/rules.md § label printing;
 // OMS-REG-DIS-03.47): one label per dispensed ITEM — quantity summary +
@@ -18,6 +19,22 @@ export interface PrescriptionLabel {
 }
 
 type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
+
+// A label's figures keep Latin digits whatever the app's language: the server
+// writes the label as ZPL and blanks any non-ASCII digit (sanitise_fd_field in
+// server/service/src/print/label.rs), so an Arabic, Pashto or Dari label
+// printed its date and quantity as spaces.
+const LATIN = { numberingSystem: 'latn' } as const;
+
+// roundedText, in Latin digits: the configured places, marked when they lost
+// something.
+const printedQuantity = (units: number): string => {
+  const text = formatNumber(units, {
+    ...LATIN,
+    maximumFractionDigits: decimalPlaces(),
+  });
+  return text === formatNumber(units, LATIN) ? text : `${text}${ROUNDED_MARK}`;
+};
 
 /** Build one label per dispensed item (lines merged, units summed). */
 export const buildLabels = (
@@ -39,8 +56,9 @@ export const buildLabels = (
     ? `${node.patient.name} - ${node.patient.code}`
     : '';
   // The app's date format, as the side panel shows it — not the runtime's
-  // toLocaleDateString, which follows the OS display language (internal #1838).
-  const details = `${storeName} - ${localisedDate(
+  // toLocaleDateString, which follows the OS display language (internal #1838)
+  // — in Latin digits, as above.
+  const details = `${storeName} - ${exportDate(
     node.createdDatetime
   )}${clinician}`;
 
@@ -51,7 +69,7 @@ export const buildLabels = (
       0
     );
     return {
-      itemDetails: `${roundedText(units)} ${first.item.unitName ?? ''} ${first.itemName}`,
+      itemDetails: `${printedQuantity(units)} ${first.item.unitName ?? ''} ${first.itemName}`,
       itemDirections: group.find(line => line.note)?.note ?? '',
       warning: '',
       patientDetails,
