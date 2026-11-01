@@ -158,11 +158,6 @@ pub async fn start_server(
         .as_ref()
         .map(|s| s.batch_size.clone())
         .unwrap_or_default();
-    let disable_integration_transaction = settings
-        .sync
-        .as_ref()
-        .map(|s| s.disable_integration_transaction)
-        .unwrap_or(false);
     let relax_hardware_id_token_checks = settings
         .sync
         .as_ref()
@@ -183,7 +178,6 @@ pub async fn start_server(
         Some(settings.clone()),
         subscription_trigger,
         batch_size,
-        disable_integration_transaction,
         relax_hardware_id_token_checks,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
@@ -587,7 +581,7 @@ pub async fn start_server(
     ); // Upsert standard reports
 
     // Scheduled tasks
-    let schedule_plugin_task = schedule_plugin::spawn();
+    let schedule_plugin_task = schedule_plugin::spawn(service_provider.clone().into_inner());
     let changelog_partitions_task = changelog_partitions::spawn(
         service_provider.clone().into_inner(),
         changelog_partition_settings,

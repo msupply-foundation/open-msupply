@@ -90,7 +90,6 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         SubscriptionTriggerHandle::new_void(),
         BatchSize::default(),
         false,
-        false,
     ));
 
     let processors_task = processors.spawn(service_provider.clone());

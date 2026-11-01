@@ -324,13 +324,9 @@ impl SynchroniserV5V6 {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        // Without the outer transaction only in maintenance mode (#840), or while initialising
-        // with `disable_integration_transaction` set. See `integration_uses_transaction`.
-        let use_transaction = integration_uses_transaction(
-            &ctx.connection,
-            is_initialised,
-            self.settings.disable_integration_transaction,
-        )?;
+        // Without the outer transaction only in maintenance mode (#840) or while initialising
+        // (#845). See `integration_uses_transaction`.
+        let use_transaction = integration_uses_transaction(&ctx.connection, is_initialised)?;
         let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
             &self.service_provider,
             logger,
@@ -506,8 +502,8 @@ pub fn integrate_and_translate_sync_buffer(
     // and maintain logical data integrity, with a sub transaction for every upsert and every delete
     // (needed to 'skip' errors in postgres, see IntegrationRecords.integrate).
     //
-    // Without `use_transaction` (see `integration_uses_transaction`: maintenance mode, or initialising
-    // with `disable_integration_transaction`) there is no outer transaction, and each
+    // Without `use_transaction` (see `integration_uses_transaction`: maintenance mode, or
+    // initialising) there is no outer transaction, and each
     // INTEGRATION_COMMIT_SIZE chunk commits in its own transaction instead (see `process_action`).
 
     // Closure, to be run in a transaction or without a transaction
@@ -627,8 +623,8 @@ impl<'a> SyncBufferIntegrator<'a> {
                 let integrate_started = Instant::now();
                 // One transaction per `INTEGRATION_COMMIT_SIZE` chunk of the fetched batch.
                 // Inside the outer integration transaction this reuses it and changes nothing.
-                // Without it (maintenance mode, or initialising with
-                // `disable_integration_transaction`) each chunk commits on its own, instead of a
+                // Without it (maintenance mode, or initialising) each chunk commits on its own,
+                // instead of a
                 // WAL flush for every record and every buffer mark, which on Postgres made
                 // integration commit-bound. A failing write does not abort the chunk: its record
                 // is marked errored and the chunk carries on. On Postgres each write (a row and

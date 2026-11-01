@@ -11,6 +11,7 @@ use service::{
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     service_provider::ServiceProvider,
+    sync::is_initialised_or_log,
 };
 
 use super::{COOKIE_NAME, URL_PATH, validate_access};
@@ -47,6 +48,15 @@ async fn do_login(
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
 ) -> Result<Option<Cookie<'static>>, RepositoryError> {
+    // While the site initialises GraphQL has no login, so this is the only way to get a session
+    // and refusing it here keeps every session-authenticated route off the partial data the
+    // batched initial integration leaves behind (#845). Its writes would also never be pushed:
+    // initialisation moves the push cursor past everything written before it finishes.
+    if !is_initialised_or_log(&service_provider) {
+        error!("Cold chain login refused: site is not initialised");
+        return Ok(None);
+    }
+
     let service_context = service_provider.basic_context()?;
     let sync_settings = service_provider
         .settings
