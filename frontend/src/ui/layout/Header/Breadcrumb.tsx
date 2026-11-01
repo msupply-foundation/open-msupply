@@ -1,11 +1,10 @@
 import { children, For, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
-import { routerBase } from '../../../nav/storeRelativePath';
-import { onLinkClick } from '../../utils/linkClick';
+import { documentHref } from '../../../nav/storeRelativePath';
 import { useShellSection } from '../AppShell/shellContext';
 import styles from './Breadcrumb.module.css';
 
-export interface Crumb {
+interface CrumbBase {
   label: string;
   /**
    * A marker for THIS crumb, rendered immediately before its label — the
@@ -16,24 +15,43 @@ export interface Crumb {
    * `aria-hidden` and the leaf's <h1> keeps the label as its accessible name.
    */
   icon?: JSX.Element;
+}
+
+/**
+ * A crumb that goes somewhere — every ancestor crumb in the app. Rendered as a
+ * real link, so right-click → "Open link in new tab", Cmd/Ctrl-click and
+ * middle-click do what the browser does with any link, and a plain click is
+ * the router's (it intercepts anchors under its base, leave guards included).
+ */
+interface LinkCrumb extends CrumbBase {
   /**
-   * Link target for ancestor crumbs (navigate back up the trail). The last
-   * crumb is the current page and always renders as plain text, so its `to`
-   * is ignored. A path starting with '/' is router-space — the same string
-   * `navigate()` takes — and the crumb puts the mount in front, so the link's
-   * address is a real document URL: right-click → "Open link in new tab",
-   * Cmd/Ctrl-click and middle-click all work, as on any link (#271). A plain
-   * click is the router's (it intercepts anchors under its base, leave guards
-   * included). Anything else (the showcase's hash links) is used as it is.
+   * Where the crumb goes, router-space — the same string `navigate()` takes;
+   * the crumb puts the mount in front (crumbHref). A `#` fragment is the one
+   * exception, used as it is, for a hash-routed host (the showcase). Ignored on
+   * the last crumb, which is the current page and always plain text.
    */
   to?: string;
-  /**
-   * Runs on a plain click instead of following `to`; with a `to`, any other
-   * click is the browser's (linkClick.ts). Without a `to` the crumb has no
-   * address to open elsewhere — give it one wherever there is a route.
-   */
-  onClick?: () => void;
+  onClick?: never;
 }
+
+/**
+ * A crumb for a host with no routes to link to (a prototype swapping views in
+ * local state): rendered as a button, since there is no address for a link to
+ * carry. Anywhere there is a route, give the crumb its `to` instead.
+ */
+interface ActionCrumb extends CrumbBase {
+  onClick: () => void;
+  to?: never;
+}
+
+export type Crumb = LinkCrumb | ActionCrumb;
+
+/**
+ * A crumb's document href (#271): a `#` fragment as it is, anything else
+ * router-space with the mount in front.
+ */
+export const crumbHref = (to: string): string =>
+  to.startsWith('#') ? to : documentHref(to);
 
 export interface BreadcrumbProps {
   /**
@@ -65,10 +83,6 @@ export interface BreadcrumbProps {
  * links + separators carry no interaction contract worth buying. Ported from
  * the RnD prototype's Breadcrumbs.
  */
-/** A crumb's document href: a router-space `to` gets the mount in front. */
-const crumbHref = (crumb: Crumb): string | undefined =>
-  crumb.to?.startsWith('/') ? `${routerBase}${crumb.to}` : crumb.to;
-
 export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1;
   // The nav group's glyph for the current route, supplied by the shell — every
@@ -120,21 +134,24 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                     </Show>
                   }
                 >
-                  <a
-                    class={styles.link}
-                    href={crumbHref(crumb) ?? '#'}
-                    onClick={
-                      crumb.onClick &&
-                      (e => {
-                        const href = crumbHref(crumb);
-                        // No address: '#' is a placeholder, never followed.
-                        if (!href) e.preventDefault();
-                        onLinkClick(e, href, crumb.onClick!);
-                      })
+                  <Show
+                    when={crumb.to}
+                    fallback={
+                      <button
+                        type="button"
+                        class={`${styles.link} ${styles.action}`}
+                        onClick={() => crumb.onClick?.()}
+                      >
+                        {crumb.label}
+                      </button>
                     }
                   >
-                    {crumb.label}
-                  </a>
+                    {to => (
+                      <a class={styles.link} href={crumbHref(to())}>
+                        {crumb.label}
+                      </a>
+                    )}
+                  </Show>
                 </Show>
               </li>
             </>

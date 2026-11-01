@@ -1,5 +1,5 @@
 import type { JSX } from 'solid-js';
-import { routerBase } from '../../../nav/storeRelativePath';
+import { documentHref } from '../../../nav/storeRelativePath';
 import { isPlainClick } from '../../utils/linkClick';
 import styles from './DataTable.module.css';
 
@@ -34,7 +34,7 @@ import styles from './DataTable.module.css';
 export const RowLink = (props: { href: string }): JSX.Element => (
   <a
     class={styles.rowLink}
-    href={`${routerBase}${props.href}`}
+    href={documentHref(props.href)}
     tabindex={-1}
     aria-hidden="true"
   />

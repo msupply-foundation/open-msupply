@@ -42,7 +42,7 @@ import { bindHostPathname } from './hostLocation';
 import { bindHostSearch } from './hostSearchParams';
 import { dispatchHostBeforeLeave } from './hostBeforeLeave';
 import {
-  routerBase,
+  documentHref,
   storePath,
   storeRelativePath,
 } from './storeRelativePath';
@@ -180,7 +180,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // The same address as a document href — the mount in front, as a new tab or
   // a copied link needs (#271); `navigate` takes it router-space, without.
-  const menuHref = (to: string) => `${routerBase}${storeHref(to)}`;
+  const menuHref = (to: string) => documentHref(storeHref(to));
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
