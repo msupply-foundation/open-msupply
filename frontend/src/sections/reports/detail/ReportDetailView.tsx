@@ -346,7 +346,7 @@ const ReportDetailView: Component = () => {
   const crumbs = () => [
     {
       label: t('reports'),
-      onClick: () => navigate(`/${params.storeId}/reports`),
+      to: `/${params.storeId}/reports`,
     },
     { label: displayName() },
   ];

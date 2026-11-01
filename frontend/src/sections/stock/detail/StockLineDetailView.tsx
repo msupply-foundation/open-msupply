@@ -377,7 +377,7 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('stock'), onClick: leave },
+    { label: t('stock'), to: `/${params.storeId}/inventory/stock` },
     { label: l.itemName },
   ];
 

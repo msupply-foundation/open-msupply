@@ -1,5 +1,7 @@
 import { children, For, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
+import { routerBase } from '../../../nav/storeRelativePath';
+import { onLinkClick } from '../../utils/linkClick';
 import { useShellSection } from '../AppShell/shellContext';
 import styles from './Breadcrumb.module.css';
 
@@ -17,15 +19,18 @@ export interface Crumb {
   /**
    * Link target for ancestor crumbs (navigate back up the trail). The last
    * crumb is the current page and always renders as plain text, so its `to`
-   * is ignored. Until routing is decided these are plain hrefs (the
-   * showcase uses hash links); a router makes them real routes later.
+   * is ignored. A path starting with '/' is router-space — the same string
+   * `navigate()` takes — and the crumb puts the mount in front, so the link's
+   * address is a real document URL: right-click → "Open link in new tab",
+   * Cmd/Ctrl-click and middle-click all work, as on any link (#271). A plain
+   * click is the router's (it intercepts anchors under its base, leave guards
+   * included). Anything else (the showcase's hash links) is used as it is.
    */
   to?: string;
   /**
-   * Interim navigation for pages that swap views with local state (list ↔
-   * detail) while routing is undecided: renders the crumb as a link and runs
-   * the callback instead of following `to`. A router replaces these with
-   * real routed hrefs later.
+   * Runs on a plain click instead of following `to`; with a `to`, any other
+   * click is the browser's (linkClick.ts). Without a `to` the crumb has no
+   * address to open elsewhere — give it one wherever there is a route.
    */
   onClick?: () => void;
 }
@@ -60,6 +65,10 @@ export interface BreadcrumbProps {
  * links + separators carry no interaction contract worth buying. Ported from
  * the RnD prototype's Breadcrumbs.
  */
+/** A crumb's document href: a router-space `to` gets the mount in front. */
+const crumbHref = (crumb: Crumb): string | undefined =>
+  crumb.to?.startsWith('/') ? `${routerBase}${crumb.to}` : crumb.to;
+
 export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1;
   // The nav group's glyph for the current route, supplied by the shell — every
@@ -113,12 +122,14 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                 >
                   <a
                     class={styles.link}
-                    href={crumb.to ?? '#'}
+                    href={crumbHref(crumb) ?? '#'}
                     onClick={
                       crumb.onClick &&
                       (e => {
-                        e.preventDefault();
-                        crumb.onClick!();
+                        const href = crumbHref(crumb);
+                        // No address: '#' is a placeholder, never followed.
+                        if (!href) e.preventDefault();
+                        onLinkClick(e, href, crumb.onClick!);
                       })
                     }
                   >

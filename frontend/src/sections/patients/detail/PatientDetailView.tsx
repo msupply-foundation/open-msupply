@@ -352,7 +352,10 @@ const PatientDetailView: Component = () => {
   const displayName = () => node()?.name || t('label.new-patient');
 
   const crumbs = () => [
-    { label: t('label.patients'), onClick: leave },
+    {
+      label: t('label.patients'),
+      to: `/${params.storeId}/dispensary/patients`,
+    },
     { label: displayName() },
   ];
 
