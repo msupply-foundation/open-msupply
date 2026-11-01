@@ -279,11 +279,8 @@ const FILTERS: Filter<InboundListFilter>[] =
     // Set programmatically by the Type (`kind`) filter, never directly — see
     // inboundQueryInputs (manual = IS NULL, from-internal-order = IS NOT NULL).
     requisitionId: null,
-    // Custom-field property filtering (2026-07-21 schema refresh): the wire
-    // vehicle for the current app's user-facing property filter chips (a
-    // condition AST over store properties/custom fields). Dismissed only
-    // because spec/inbound-shipments S1 doesn't spec property filters yet —
-    // REVISIT with the custom-fields work, which should spec and expose it.
+    // Custom-field filtering rides the shared domain/customFields group
+    // (FilterBar `extra`), a separate state slice — not an InvoiceFilter chip.
     dynamicFilter: null,
     linkedInvoiceId: null,
     isProgramInvoice: null,
