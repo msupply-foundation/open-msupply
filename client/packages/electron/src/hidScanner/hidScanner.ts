@@ -24,12 +24,12 @@
 // Presence is asked, never polled. node-hid 2.x has no hotplug events, and
 // enumerating is synchronous, so a timer would block the main process on a
 // schedule to answer a question the page rarely asks. Instead status() and
-// start() enumerate when called, and an unplug while armed arrives as the
-// open handle's 'error'. A scanner re-plugged under an armed screen is
+// start() enumerate when called, and an unplug while the device is held
+// arrives as the open handle's 'error'. A scanner re-plugged under an armed screen is
 // therefore not picked up until the screen arms again — accepted, rather
 // than paying for a poll.
 
-import type { Device, HID } from 'node-hid';
+import type { Device, HIDAsync } from 'node-hid';
 
 /** The paired scanner, as remembered across restarts. */
 export type PairedHidScanner = {
@@ -67,10 +67,23 @@ export type HidScannerCandidate = PairedHidScanner & {
 
 export type StartResult = { ok: true } | { ok: false; message: string };
 
-/** The slice of node-hid this uses, so tests can stand in for it. */
+/** An open device: the slice of node-hid's HIDAsync this uses. */
+export type HidHandle = Pick<HIDAsync, 'on' | 'close'>;
+
+/**
+ * The slice of node-hid this uses, so tests can stand in for it.
+ *
+ * Devices are opened with HIDAsync, never the synchronous HID class. HID
+ * reads on a libuv pool thread, and closing it on Windows leaves that read
+ * running: hidapi's CancelIo only cancels I/O the closing thread started.
+ * The orphaned read then takes the device's next report, which is a scan lost
+ * for every handle on the device — the first scan on every screen after the
+ * first. HIDAsync reads on a thread of its own and stops it before closing,
+ * and Windows cancels a thread's I/O when the thread exits.
+ */
 export type HidLibrary = {
   devices: () => Device[];
-  open: (path: string) => HID;
+  open: (path: string) => Promise<HidHandle>;
 };
 
 export type HidScannerStore = {
@@ -90,12 +103,13 @@ const PAIR_TIMEOUT_MS = 30_000;
 /**
  * How many interfaces pairing opens at once — at most.
  *
- * node-hid 2.x reads each open device on a worker from libuv's thread pool
- * (4 threads unless UV_THREADPOOL_SIZE says otherwise), and a worker holds
- * its thread until that device reports. Pairing once opened sixteen devices
- * on a Mac: four quiet ones took every thread, the scanner's read was never
- * scheduled, and a beeping scanner paired nothing — while file writes and
- * everything else on the pool stalled too. Three leaves a thread free.
+ * node-hid 2.x read each open device on a worker from libuv's thread pool (4
+ * threads unless UV_THREADPOOL_SIZE says otherwise), and a worker held its
+ * thread until that device reported. Pairing once opened sixteen devices on
+ * a Mac: four quiet ones took every thread, the scanner's read was never
+ * scheduled, and a beeping scanner paired nothing. HIDAsync reads each
+ * device on a thread of its own, so the pool is no longer at stake; the cap
+ * stays as a bound on how much pairing holds open.
  */
 const MAX_PAIRING_OPEN = 3;
 
@@ -134,12 +148,11 @@ const KEYPAD = 0x07;
  *
  * On Windows — the only platform the desktop app is deployed on — this is a
  * precaution: hidapi opens devices shared, and the OS refuses to open a
- * keyboard or mouse at all. On macOS node-hid 2.x SEIZES whatever it opens
- * (hidapi's exclusive mode, which 2.x cannot turn off; node-hid 3.x's
- * `nonExclusive` option can), so a trackpad opened while pairing stops
- * working until pairing ends. That matters only for development on a Mac,
- * and is why every interface of a keyboard or mouse is left alone, not just
- * its input one. A scanner in keyboard
+ * keyboard or mouse at all. On macOS hidapi SEIZES whatever it opens unless
+ * told not to (../electron.ts opens with `nonExclusive`), and a trackpad
+ * seized while pairing stops working until pairing ends. That matters only
+ * for development on a Mac, and is why every interface of a keyboard or
+ * mouse is left alone, not just its input one. A scanner in keyboard
  * mode is exactly such a device, and is read as keystrokes instead
  * (frontend/src/platform/barcodeSources/keyboardWedge.ts).
  *
@@ -237,18 +250,36 @@ const toBytes = (data: unknown): Uint8Array | undefined => {
   return undefined;
 };
 
-const closeQuietly = (device: HID | undefined) => {
-  try {
-    device?.removeAllListeners();
-    device?.close();
-  } catch {
+// Listeners are left for close() to remove: it stops the read thread first,
+// and drops any read error raised while it does. Removed before, an error
+// from the dying read would have no listener and be thrown.
+const closeQuietly = async (device: HidHandle | undefined) => {
+  await device?.close().catch(() => {
     // Already closed, or unplugged underneath us.
-  }
+  });
 };
 
 export class HidScanner {
-  private armed: HID | undefined;
+  /**
+   * The paired scanner, held open from the first start() until the pairing
+   * changes, the device errors or moves, or the window goes — NOT closed
+   * between screens. While it is closed, the scanner or the OS holds on to
+   * what is scanned and hands it all over when it is next opened: scans made
+   * on a screen that was not listening landed on the next one that did. Held
+   * open, they are read as they happen and dropped (spec/barcode-scanning
+   * rules § Triggering a scan: "A scan arriving with nobody listening is
+   * dropped silently").
+   */
+  private held: { handle: HidHandle; path: string } | undefined;
+  /** A screen is listening: reports go to the renderer. */
+  private armed = false;
   private pairing: { cancel: () => void } | undefined;
+  /**
+   * Opening and closing are asynchronous, so they run one at a time: a
+   * start() racing the previous screen's stop() must neither close the new
+   * handle nor open a second one.
+   */
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(
     private readonly hid: HidLibrary,
@@ -258,7 +289,7 @@ export class HidScanner {
   ) {}
 
   /**
-   * Asked fresh every time: an armed handle is proof enough, otherwise look.
+   * Asked fresh every time: a held handle is proof enough, otherwise look.
    * While pairing every candidate is held open, which does not hide it from
    * enumeration.
    */
@@ -268,7 +299,7 @@ export class HidScanner {
       paired,
       connected:
         paired !== null &&
-        (this.armed !== undefined || this.findPaired() !== undefined),
+        (this.held !== undefined || this.findPaired() !== undefined),
     };
   }
 
@@ -284,7 +315,10 @@ export class HidScanner {
     for (const device of possibleScannerInterfaces(this.devices())) {
       const id = physicalId(device);
       const current = physical.get(id);
-      if (!current || (isScannerInterface(device) && !isScannerInterface(current))) {
+      if (
+        !current ||
+        (isScannerInterface(device) && !isScannerInterface(current))
+      ) {
         physical.set(id, device);
       }
     }
@@ -298,15 +332,16 @@ export class HidScanner {
   }
 
   /** Pair a device picked from candidates(), without waiting for a scan. */
-  pairDevice(key: string): PairResult {
+  async pairDevice(key: string): Promise<PairResult> {
     this.cancelPair();
-    this.stop();
+    await this.serial(() => this.release());
     const device = possibleScannerInterfaces(this.devices()).find(
       d => keyOf(d) === key
     );
     if (!device) return { ok: false, reason: 'not-found' };
     const scanner = describe(device);
     this.store.set(scanner);
+    await this.hold();
     this.events.changed();
     return { ok: true, scanner };
   }
@@ -322,52 +357,85 @@ export class HidScanner {
    * paired from the list instead. Of those opened, the one whose report
    * carries the pairing code is remembered and the rest are closed.
    */
-  pair(): Promise<PairResult> {
+  async pair(): Promise<PairResult> {
     this.cancelPair();
-    this.stop();
 
-    const candidates = possibleScannerInterfaces(this.devices())
-      .filter(device => device.path !== undefined && isScannerInterface(device))
-      .slice(0, MAX_PAIRING_OPEN);
-    const opened: { device: Device; handle: HID }[] = [];
-    for (const device of candidates) {
-      try {
-        opened.push({ device, handle: this.hid.open(device.path as string) });
-      } catch {
-        // The OS would not hand it over — a device in use elsewhere, or one
-        // this user may not open. Not a scanner we can use either way.
+    // Registered before anything is opened, so a cancel — or another pair()
+    // — that arrives while devices are still opening is not lost. Until the
+    // wait begins, cancelling only marks it; the opening stops at the next
+    // device and closes what it opened.
+    let cancelled = false;
+    const pairing = {
+      cancel: () => {
+        cancelled = true;
+      },
+    };
+    this.pairing = pairing;
+
+    // Opened in turn, but not waited on for the scan: cancelPair() has to be
+    // able to run while pairing waits.
+    const opened = await this.serial(async () => {
+      const handles: { device: Device; handle: HidHandle }[] = [];
+      if (cancelled) return handles;
+      // Closed, not just disarmed: pairing may pair a different device.
+      await this.release();
+      const candidates = possibleScannerInterfaces(this.devices())
+        .filter(
+          device => device.path !== undefined && isScannerInterface(device)
+        )
+        .slice(0, MAX_PAIRING_OPEN);
+      for (const device of candidates) {
+        if (cancelled) break;
+        try {
+          handles.push({
+            device,
+            handle: await this.hid.open(device.path as string),
+          });
+        } catch {
+          // The OS would not hand it over — a device in use elsewhere, or one
+          // this user may not open. Not a scanner we can use either way.
+        }
       }
+      return handles;
+    });
+    if (cancelled) {
+      opened.forEach(({ handle }) => void closeQuietly(handle));
+      return { ok: false, reason: 'cancelled' };
     }
     if (opened.length === 0) {
-      return Promise.resolve({ ok: false, reason: 'no-devices' });
+      this.pairing = undefined;
+      return { ok: false, reason: 'no-devices' };
     }
 
     return new Promise<PairResult>(resolve => {
       const finish = (result: PairResult) => {
+        if (this.pairing !== pairing) return;
         clearTimeout(timeout);
         this.pairing = undefined;
-        opened.forEach(({ handle }) => closeQuietly(handle));
+        opened.forEach(({ handle }) => void closeQuietly(handle));
         resolve(result);
       };
       const timeout = setTimeout(
         () => finish({ ok: false, reason: 'timeout' }),
         this.timing.pairTimeoutMs
       );
-      this.pairing = { cancel: () => finish({ ok: false, reason: 'cancelled' }) };
+      pairing.cancel = () => finish({ ok: false, reason: 'cancelled' });
 
       for (const { device, handle } of opened) {
         handle.on('data', (data: unknown) => {
           const bytes = toBytes(data);
-          if (!bytes || !carriesPairingCode(bytes) || !this.pairing) return;
+          if (!bytes || !carriesPairingCode(bytes) || this.pairing !== pairing)
+            return;
           const scanner = describe(device);
           this.store.set(scanner);
           finish({ ok: true, scanner });
+          void this.hold();
           this.events.changed();
         });
         // A device that errors while pairing (unplugged, or a read the OS
         // refuses) is simply not the scanner.
         handle.on('error', () => {
-          closeQuietly(handle);
+          void closeQuietly(handle);
         });
       }
     });
@@ -377,30 +445,80 @@ export class HidScanner {
     this.pairing?.cancel();
   }
 
-  forget(): void {
-    this.stop();
+  async forget(): Promise<void> {
+    await this.serial(() => this.release());
     this.store.set(null);
     this.events.changed();
   }
 
-  /** Open the paired scanner and forward its reports until stop(). */
-  start(): StartResult {
-    this.stop();
+  /**
+   * Open the paired scanner, without forwarding, if it is not held already.
+   * Called at launch and after pairing, so the scanner is held before any
+   * screen listens: whatever was scanned while it was closed — even before
+   * the app started — arrives the moment it opens, and is dropped rather
+   * than landing on the first screen to listen. Quietly does nothing when
+   * nothing is paired or the scanner is not plugged in.
+   */
+  hold(): Promise<void> {
+    return this.serial(async () => {
+      await this.openPaired();
+    });
+  }
+
+  /**
+   * Forward the paired scanner's reports until stop(), opening it if it is
+   * not held already. A later start() reuses the held handle (see `held`).
+   */
+  start(): Promise<StartResult> {
+    return this.serial(async () => {
+      this.armed = false;
+      const result = await this.openPaired();
+      if (result.ok) this.armed = true;
+      return result;
+    });
+  }
+
+  /**
+   * Stop forwarding reports. The device stays held (see `held`), so what is
+   * scanned until the next start() is read and dropped. Safe when not started.
+   */
+  stop(): Promise<void> {
+    return this.serial(async () => {
+      this.armed = false;
+    });
+  }
+
+  async dispose(): Promise<void> {
+    this.cancelPair();
+    await this.serial(() => this.release());
+  }
+
+  /** Hold the paired scanner open, reusing the held handle where it can. */
+  private async openPaired(): Promise<StartResult> {
     const paired = this.store.get();
     if (!paired) return { ok: false, message: 'no scanner paired' };
     const device = this.findPaired();
     if (!device?.path) {
+      await this.release();
       return { ok: false, message: 'paired scanner is not connected' };
     }
+    if (this.held?.path === device.path) return { ok: true };
 
-    let handle: HID;
+    // Not held yet, or the scanner has moved to another port.
+    await this.release();
+    let handle: HidHandle;
     try {
-      handle = this.hid.open(device.path);
+      handle = await this.hid.open(device.path);
     } catch (e) {
-      return { ok: false, message: e instanceof Error ? e.message : String(e) };
+      return {
+        ok: false,
+        message: e instanceof Error ? e.message : String(e),
+      };
     }
 
+    // Read for as long as it is held; forwarded only while armed.
     handle.on('data', (data: unknown) => {
+      if (!this.armed || this.held?.handle !== handle) return;
       const bytes = toBytes(data);
       if (bytes && carriesData(bytes)) this.events.report(bytes);
     });
@@ -408,24 +526,30 @@ export class HidScanner {
     // listener it becomes an uncaught exception, which ../electron.ts has to
     // swallow by message.
     handle.on('error', () => {
-      if (this.armed !== handle) return;
-      closeQuietly(handle);
-      this.armed = undefined;
+      if (this.held?.handle !== handle) return;
+      // Dropped at once, so status() stops claiming it; the next start()
+      // opens it afresh.
+      this.held = undefined;
+      this.armed = false;
+      void closeQuietly(handle);
       this.events.changed();
     });
-    this.armed = handle;
+    this.held = { handle, path: device.path };
     return { ok: true };
   }
 
-  /** Close the scanner, handing it back to the OS. Safe when not started. */
-  stop(): void {
-    closeQuietly(this.armed);
-    this.armed = undefined;
+  /** Close the held device, handing it back to the OS. */
+  private async release(): Promise<void> {
+    const held = this.held;
+    this.armed = false;
+    this.held = undefined;
+    await closeQuietly(held?.handle);
   }
 
-  dispose(): void {
-    this.cancelPair();
-    this.stop();
+  private serial<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(work, work);
+    this.queue = run.catch(() => undefined);
+    return run;
   }
 
   private devices(): Device[] {

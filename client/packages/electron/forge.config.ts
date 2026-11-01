@@ -4,7 +4,7 @@ import { MakerZIP } from '@electron-forge/maker-zip';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import { MakerDMG } from '@electron-forge/maker-dmg';
 import { execFileSync } from 'child_process';
-import { existsSync } from 'fs';
+import { cpSync, existsSync } from 'fs';
 import path from 'path';
 
 import { mainConfig } from './webpack.main.config';
@@ -48,8 +48,57 @@ const stageDiscoveryPage = (): void => {
   );
 };
 
+// Modules the main bundle leaves external (webpack.main.config.ts § externals),
+// with what each needs at runtime. The webpack plugin packages only .webpack/,
+// so these are copied into the app's own node_modules after the copy step.
+//
+// node-hid: its JS, plus the prebuilt binary for the target only. Node-API,
+// so the one binary serves Electron too. Nothing it could be compiled from
+// goes with it — no binding.gyp, sources or local build: packaging rebuilds
+// any native module it finds a binding.gyp for, and that rebuild fails (its
+// build-time dependency, node-addon-api, is not shipped) and could not
+// cross-compile anyway. pkg-prebuilds is what finds the binary, and has no
+// dependencies of its own.
+const shipExternals = (buildPath: string, platform: string, arch: string) => {
+  const target = (name: string) => path.join(buildPath, 'node_modules', name);
+  const source = (name: string, from = __dirname) =>
+    path.dirname(require.resolve(`${name}/package.json`, { paths: [from] }));
+
+  const nodeHid = source('node-hid');
+  const prebuild = `HID-${platform}-${arch}`;
+  cpSync(nodeHid, target('node-hid'), {
+    recursive: true,
+    filter: file => {
+      const relative = path.relative(nodeHid, file).split(path.sep);
+      switch (relative[0]) {
+        case 'binding.gyp':
+        case 'src':
+        case 'hidapi':
+        case 'build':
+          return false;
+        case 'prebuilds':
+          return relative.length < 2 || relative[1] === prebuild;
+        default:
+          return true;
+      }
+    },
+  });
+  if (!existsSync(path.join(target('node-hid'), 'prebuilds', prebuild))) {
+    throw new Error(`node-hid ships no prebuild for ${platform}-${arch}`);
+  }
+
+  // Resolved as node-hid would resolve it. Where it is nested under node-hid
+  // rather than hoisted, the copy above has already brought it along.
+  const pkgPrebuilds = source('pkg-prebuilds', nodeHid);
+  if (!pkgPrebuilds.startsWith(nodeHid + path.sep)) {
+    cpSync(pkgPrebuilds, target('pkg-prebuilds'), { recursive: true });
+  }
+};
+
 const config: ForgeConfig = {
   hooks: {
+    packageAfterCopy: async (_config, buildPath, _electron, platform, arch) =>
+      shipExternals(buildPath, platform, arch),
     // Before packaging, whichever command started it. Deliberately not
     // `generateAssets`, which also runs for `yarn start` — an unpackaged run
     // serves the page straight out of frontend/dist (src/discoveryHost.ts
