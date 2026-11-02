@@ -16,9 +16,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import {
   Tabs,
   TabList,
@@ -31,7 +30,6 @@ import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
-  InfoIcon,
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
@@ -506,22 +504,12 @@ const SupplierReturnDetailView: Component = () => {
       <Show
         when={info()}
         fallback={
-          <Dialog
-            open
+          <NotFoundNotice
             testId="return-not-found-notice"
-            icon={<InfoIcon />}
             title={t('error.return-not-found')}
             description={t('messages.click-to-return-to-returns')}
             onClose={() =>
               navigate(`/${params.storeId}/replenishment/supplier-return`)
-            }
-            actions={
-              <OkButton
-                data-testid="dialog-button-ok"
-                onClick={() =>
-                  navigate(`/${params.storeId}/replenishment/supplier-return`)
-                }
-              />
             }
           />
         }

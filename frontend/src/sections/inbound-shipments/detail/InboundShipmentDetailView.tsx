@@ -31,14 +31,8 @@ import {
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Comment } from '../../../ui/elements/feedback/Comment';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import {
-  CloseIcon,
-  InfoIcon,
-  PlusCircleIcon,
-  SidebarIcon,
-} from '../../../ui/icons';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import {
   DataTable,
   type Column,
@@ -1147,24 +1141,12 @@ const InboundShipmentDetailView: Component = () => {
         when={info()}
         fallback={
           <Show when={!data.loading} fallback={<Spinner center />}>
-            <Dialog
-              open
+            <NotFoundNotice
               testId="shipment-not-found-notice"
-              icon={<InfoIcon />}
               title={t('error.shipment-not-found')}
               description={t('messages.click-to-return-to-shipments')}
               onClose={() =>
                 navigate(`/${params.storeId}/replenishment/inbound-shipment`)
-              }
-              actions={
-                <OkButton
-                  data-testid="dialog-button-ok"
-                  onClick={() =>
-                    navigate(
-                      `/${params.storeId}/replenishment/inbound-shipment`
-                    )
-                  }
-                />
               }
             />
           </Show>

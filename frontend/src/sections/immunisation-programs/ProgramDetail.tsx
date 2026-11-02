@@ -9,8 +9,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Button } from '@/ui/elements/buttons/Button';
-import { OkButton } from '@/ui/elements/buttons/StandardButtons';
-import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { NotFoundNotice } from '@/ui/elements/feedback/NotFoundNotice';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
@@ -21,7 +20,7 @@ import {
 } from '@/ui/elements/table/DataTable';
 import { getNumberCell } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
-import { InfoIcon, PlusCircleIcon } from '@/ui/icons';
+import { PlusCircleIcon } from '@/ui/icons';
 import { guardCentralDataEdit } from '@/store/storeContext';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { initialPageSize, rememberPageSize } from '@/list/pageSize';
@@ -202,16 +201,11 @@ const ProgramDetail: Component = () => {
         // Spinner while the program read is in flight; one that settles with
         // no program is the not-found alert, OK back to the list.
         <Show when={!program.loading} fallback={<Spinner center />}>
-          <Dialog
-            open
+          <NotFoundNotice
             testId="immunisation-program-not-found-notice"
-            icon={<InfoIcon />}
             title={t('error.immunisation-program-not-found')}
             description={t('messages.click-to-return-to-immunisation-programs')}
             onClose={backToList}
-            actions={
-              <OkButton data-testid="dialog-button-ok" onClick={backToList} />
-            }
           />
         </Show>
       }

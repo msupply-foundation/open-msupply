@@ -21,8 +21,7 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
@@ -34,12 +33,7 @@ import {
   AccordionTrigger,
 } from '../../../ui/elements/accordion/Accordion';
 import type { LocaleKey } from '../../../intl';
-import {
-  DownloadIcon,
-  InfoIcon,
-  PrinterIcon,
-  SlidersIcon,
-} from '../../../ui/icons';
+import { DownloadIcon, PrinterIcon, SlidersIcon } from '../../../ui/icons';
 import { Report as ReportDocument } from '../api/reports.generated';
 import type { ReportResult, ReportVariables } from '../api/reports.generated';
 // Generation and the label helper are the cross-vertical ones owned by
@@ -439,16 +433,11 @@ const ReportDetailView: Component = () => {
       {/* The typed not-found miss — a blocking alert whose OK returns to the
           list, over the region's spinner. */}
       <Show when={notFound()}>
-        <Dialog
-          open
+        <NotFoundNotice
           testId="report-not-found-notice"
-          icon={<InfoIcon />}
           title={t('error.report-does-not-exist')}
           description={t('messages.click-to-return-to-reports')}
           onClose={backToList}
-          actions={
-            <OkButton data-testid="dialog-button-ok" onClick={backToList} />
-          }
         />
       </Show>
       <Switch fallback={<></>}>

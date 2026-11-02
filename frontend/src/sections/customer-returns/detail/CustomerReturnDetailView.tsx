@@ -22,8 +22,7 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import {
   Tabs,
@@ -32,7 +31,6 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import {
-  InfoIcon,
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
@@ -591,22 +589,12 @@ const CustomerReturnDetailView: Component = () => {
       <Show
         when={info()}
         fallback={
-          <Dialog
-            open
+          <NotFoundNotice
             testId="return-not-found-notice"
-            icon={<InfoIcon />}
             title={t('error.return-not-found')}
             description={t('messages.click-to-return-to-returns')}
             onClose={() =>
               navigate(`/${params.storeId}/distribution/customer-return`)
-            }
-            actions={
-              <OkButton
-                data-testid="dialog-button-ok"
-                onClick={() =>
-                  navigate(`/${params.storeId}/distribution/customer-return`)
-                }
-              />
             }
           />
         }

@@ -18,17 +18,11 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
-import { OkButton } from '@/ui/elements/buttons/StandardButtons';
-import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { NotFoundNotice } from '@/ui/elements/feedback/NotFoundNotice';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import {
-  InfoIcon,
-  SidebarIcon,
-  MinusCircleIcon,
-  PlusCircleIcon,
-} from '@/ui/icons';
+import { SidebarIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
 import {
   DataTable,
   type CardGroup,
@@ -1024,21 +1018,11 @@ const StocktakeDetailView: Component = () => {
       <Show
         when={info()}
         fallback={
-          <Dialog
-            open
+          <NotFoundNotice
             testId="stocktake-not-found-notice"
-            icon={<InfoIcon />}
             title={t('error.stocktake-not-found')}
             description={t('messages.click-to-return')}
             onClose={() => navigate(`/${params.storeId}/inventory/stocktakes`)}
-            actions={
-              <OkButton
-                data-testid="dialog-button-ok"
-                onClick={() =>
-                  navigate(`/${params.storeId}/inventory/stocktakes`)
-                }
-              />
-            }
           />
         }
       >

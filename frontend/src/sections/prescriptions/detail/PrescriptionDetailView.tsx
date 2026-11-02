@@ -19,8 +19,7 @@ import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFo
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
@@ -578,21 +577,11 @@ const PrescriptionDetailView: Component = () => {
         // Spinner while the first read is in flight; a read that settles with
         // no prescription is the not-found alert (OMS-REG-DIS-03.53).
         <Show when={!data.loading} fallback={<Spinner center />}>
-          <Dialog
-            open
+          <NotFoundNotice
             testId="prescription-not-found-notice"
-            icon={<InfoIcon />}
             title={t('error.prescription-not-found')}
             description={t('messages.click-to-return-to-prescriptions')}
             onClose={() => navigate(`/${params.storeId}/dispensary/dispensing`)}
-            actions={
-              <OkButton
-                data-testid="dialog-button-ok"
-                onClick={() =>
-                  navigate(`/${params.storeId}/dispensary/dispensing`)
-                }
-              />
-            }
           />
         </Show>
       }

@@ -12,8 +12,7 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../ui/elements/table/tableHelpers';
@@ -29,7 +28,6 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import {
   CloseIcon,
-  InfoIcon,
   PlusCircleIcon,
   SidebarIcon,
   TrashIcon,
@@ -236,24 +234,12 @@ const PrescriptionRequestDetailView: Component = () => {
         // Spinner while the first read is in flight; a read that settles with
         // no request is the not-found alert.
         <Show when={!data.loading} fallback={<Spinner center />}>
-          <Dialog
-            open
+          <NotFoundNotice
             testId="prescription-request-not-found-notice"
-            icon={<InfoIcon />}
             title={t('error.prescription-request-not-found')}
             description={t('messages.click-to-return-to-prescription-requests')}
             onClose={() =>
               navigate(`/${params.storeId}/dispensary/prescription-request`)
-            }
-            actions={
-              <OkButton
-                data-testid="dialog-button-ok"
-                onClick={() =>
-                  navigate(
-                    `/${params.storeId}/dispensary/prescription-request`
-                  )
-                }
-              />
             }
           />
         </Show>

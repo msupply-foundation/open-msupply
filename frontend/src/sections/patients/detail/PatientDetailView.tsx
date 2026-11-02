@@ -28,15 +28,9 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
-import {
-  InfoIcon,
-  PlusCircleIcon,
-  SaveIcon,
-  XCircleIcon,
-} from '../../../ui/icons';
+import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
@@ -415,21 +409,11 @@ const PatientDetailView: Component = () => {
           // settles the path (patientDetails.ts), and that refetch must not
           // flash the alert.
           <Show when={!data.loading} fallback={<Spinner center />}>
-            <Dialog
-              open
+            <NotFoundNotice
               testId="patient-not-found-notice"
-              icon={<InfoIcon />}
               title={t('error.patient-not-found')}
               description={t('messages.click-to-return-to-patients')}
               onClose={() => navigate(`/${params.storeId}/dispensary/patients`)}
-              actions={
-                <OkButton
-                  data-testid="dialog-button-ok"
-                  onClick={() =>
-                    navigate(`/${params.storeId}/dispensary/patients`)
-                  }
-                />
-              }
             />
           </Show>
         }
