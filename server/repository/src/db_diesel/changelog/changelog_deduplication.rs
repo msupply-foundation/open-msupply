@@ -23,35 +23,6 @@ use std::time::Instant;
 const CONCURRENT_LOCK_TIMEOUT: &str = "5s";
 
 impl<'a> ChangelogRepository<'a> {
-    /// Drop the whole-table `index_changelog_dedup` an earlier release's dedup
-    /// built; a partitioned index, so it cannot be dropped concurrently. Takes
-    /// no lock when it does not exist. `None` on lock timeout.
-    pub fn drop_whole_table_index(&self) -> Result<Option<()>, RepositoryError> {
-        if !cfg!(feature = "postgres") {
-            return Ok(Some(()));
-        }
-        let result = self.connection.transaction_sync(|connection| {
-            // Takes ACCESS EXCLUSIVE on `changelog`: while it waits, every
-            // changelog read and insert queues behind it.
-            diesel::sql_query("SET LOCAL lock_timeout = '500ms'")
-                .execute(connection.lock().connection())?;
-            diesel::sql_query("DROP INDEX IF EXISTS index_changelog_dedup")
-                .execute(connection.lock().connection())?;
-            Ok::<(), RepositoryError>(())
-        });
-        match result {
-            Ok(()) => Ok(Some(())),
-            Err(error) => {
-                let error = error.to_inner_error();
-                if is_lock_timeout(&error) {
-                    Ok(None)
-                } else {
-                    Err(error)
-                }
-            }
-        }
-    }
-
     /// Build the helper indexes for the window `(marker, max]`, then
     /// `changelog_dead`, the set of cursors to delete. Step 1: within the window,
     /// keep each record's newest row and mark its older rows for deletion. Step 2:

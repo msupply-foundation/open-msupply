@@ -78,10 +78,6 @@ fn run_dedup(
     let repo = ChangelogRepository::new(connection);
     let kv = KeyValueStoreRepository::new(connection);
 
-    if repo.drop_whole_table_index()?.is_none() {
-        return Ok(None);
-    }
-
     // Marker: highest cursor already fully deduped. `i64` to match cursor type.
     let marker = kv.get_i64(KeyType::ChangelogDedupCursor)?.unwrap_or(0);
     // Safe upper bound — never windows past an in-flight changelog transaction.
