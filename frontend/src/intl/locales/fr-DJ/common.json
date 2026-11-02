@@ -255,6 +255,7 @@
   "messages.outbound-shipment-created-on": "Sortie de stock créée le {{date}}",
   "messages.over-allocated": "En raison des boites disponibles, une quantité totale de {{quantity}} a été allouée au lieu de {{issueQuantity}}",
   "messages.partial-pack-warning-units": "Vous avez délivré un nombre non entier de boites. Êtes-vous sûr de pouvoir le faire ? Si ce n'est pas le cas, vous devrez délivrer {{nearestAbove}} unités pour délivrer des boites entières.",
+  "messages.prescription-not-in-store": "La délivrance de cette consultation ne peut pas être affichée dans ce dépôt : elle a été créée dans un autre dépôt, ou n'a jamais été enregistrée.",
   "outbound-shipment": "Sorties de stock",
   "outbound-shipments": "Sorties de stock",
   "patients": "Patient(e)s",

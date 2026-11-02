@@ -1160,7 +1160,7 @@
   "label.age-months-count_other": "{{count}} mois",
   "label.age-weeks-count_many": "{{count}} semaines",
   "label.age-weeks-count_one": "{{count}} semaine",
-  "label.age-weeks-count_other": "",
+  "label.age-weeks-count_other": "{{count}} semaines",
   "label.age-years_many": "{{count}} ans",
   "label.age-years_one": "{{count}} an",
   "label.age-years_other": "{{count}} ans",
