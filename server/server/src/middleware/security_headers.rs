@@ -15,14 +15,15 @@ use sha2::{Digest, Sha256};
 
 /// Policy for the app pages (both front ends) and the API. Scripts and outbound requests are
 /// limited to our own origin, so a script that does get injected can't load more code from, or
-/// send data to, another host. Inline styles stay allowed: the React front end's MUI/emotion
-/// styling and printed reports both rely on them.
+/// send data to, another host. The one exception is the Zebra Browser Print service on the user's
+/// own machine (http on 9100, https on 9101), which label printing talks to. Inline styles stay
+/// allowed: the React front end's MUI/emotion styling and printed reports both rely on them.
 const APP_POLICY: &str = "default-src 'self'; \
     script-src 'self'; \
     style-src 'self' 'unsafe-inline'; \
     img-src 'self' data: blob:; \
     font-src 'self' data:; \
-    connect-src 'self'; \
+    connect-src 'self' http://127.0.0.1:9100 https://127.0.0.1:9101; \
     frame-src 'self' blob:; \
     object-src 'none'; \
     base-uri 'self'; \
