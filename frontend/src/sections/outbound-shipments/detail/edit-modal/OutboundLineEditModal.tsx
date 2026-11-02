@@ -683,20 +683,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         ]);
     }
 
-    // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): an
-    // item with exactly ONE distinct pack size opens in packs-of-that-size —
-    // with the store's pack-to-one preference every batch is pack size 1, so
-    // this reads "packs of 1" rather than the item's unit. Applied AFTER
-    // auto-allocation so the distribution ran in units; the switch only
-    // re-expresses the seeded quantity (a single-pack-size item's packs lens
-    // fills the very same batches, so nothing moves). A vaccine on the doses
-    // lens is left in units as before — the doses default is a separate parity
-    // gap, not touched here.
+    // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): a
+    // vaccine under manage-vaccines-in-doses opens in doses, so a number typed
+    // as doses isn't issued as that many units (#1935). Otherwise an item with
+    // exactly ONE distinct pack size opens in packs-of-that-size — with the
+    // store's pack-to-one preference every batch is pack size 1, so this reads
+    // "packs of 1" rather than the item's unit. Applied AFTER auto-allocation
+    // so the distribution ran in units; the switch only re-expresses the
+    // seeded quantity, so nothing moves.
     const sizes = distinctPackSizes();
     const onlySize = sizes.length === 1 ? sizes[0] : undefined;
-    const vaccineInDoses = prefs().manageVaccinesInDoses && !!item()?.isVaccine;
-    if (!vaccineInDoses && onlySize)
-      switchLensTo({ kind: 'packs', size: onlySize });
+    if (prefs().manageVaccinesInDoses && picked.isVaccine)
+      switchLensTo({ kind: 'doses', dosesPerUnit: picked.doses ?? 1 });
+    else if (onlySize) switchLensTo({ kind: 'packs', size: onlySize });
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by
