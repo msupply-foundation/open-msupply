@@ -803,6 +803,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           <ItemSearch
             label={t('label.item')}
             storeId={props.storeId}
+            includeHiddenWithStock
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
             value={current()?.itemId}
