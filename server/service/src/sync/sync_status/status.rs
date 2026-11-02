@@ -224,6 +224,12 @@ pub trait SyncStatusTrait: Sync + Send {
         get_initialisation_status(ctx)
     }
 
+    /// The name an initialised site goes by, without re-checking that it is
+    /// initialised.
+    fn get_initialised_site_name(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
+        get_initialised_site_name(ctx)
+    }
+
     fn is_initialised(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
         Ok(matches!(
             self.get_initialisation_status(ctx)?,
@@ -256,57 +262,61 @@ fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
     // Standalone central never syncs upstream, so can't tell initialisation from sync logs.
-    if KeyValueStoreRepository::new(&ctx.connection)
-        .get_bool(KeyType::IsStandaloneCentral)?
-        .unwrap_or(false)
-    {
-        let site_name = SiteRowRepository::new(&ctx.connection)
-            .find_one_by_id(STANDALONE_CENTRAL_SITE_ID)?
-            .map(|s| s.name)
-            .unwrap_or_default();
-        return Ok(InitialisationStatus::Initialised(site_name));
+    if is_standalone_central(ctx)? {
+        return Ok(InitialisationStatus::Initialised(
+            get_initialised_site_name(ctx)?,
+        ));
     }
 
+    // Existence checks only, so this doesn't cost more as a site's sync history
+    // grows. It runs at boot, on every sync cycle (`is_initialised`), in the
+    // subscription and on the initialisation and discovery schemas.
     let v7_repo = SyncLogV7Repository::new(&ctx.connection);
-    let v7_has_any = v7_repo.query_one(SyncLogV7Condition::TRUE)?.is_some();
-    let v7_has_success = v7_repo
-        .query_one(SyncLogV7Condition::And(vec![
-            SyncLogV7Condition::FinishedDatetime::is_not_null(),
-            SyncLogV7Condition::Error::is_null(),
-        ]))?
-        .is_some();
+    let v7_has_any = v7_repo.exists(SyncLogV7Condition::TRUE)?;
+    let v7_has_success = v7_repo.exists(SyncLogV7Condition::And(vec![
+        SyncLogV7Condition::FinishedDatetime::is_not_null(),
+        SyncLogV7Condition::Error::is_null(),
+    ]))?;
 
     // V5/V6 — checked regardless of V7 state so a previously-initialised site
     // isn't downgraded to Initialising if a V7 attempt fails.
-    let v5_latest = SyncLogV5V6Repository::new(&ctx.connection)
-        .query(
-            Pagination::one(),
-            None,
-            Some(Sort {
-                key: SyncLogV5V6SortField::DoneDatetime,
-                desc: Some(true),
-            }),
-        )?
-        .pop();
-    let v5_has_success = v5_latest
-        .as_ref()
-        .map(|l| l.sync_log_row.finished_datetime.is_some())
-        .unwrap_or(false);
-    let v5_has_any = v5_latest.is_some();
+    let v5_repo = SyncLogV5V6Repository::new(&ctx.connection);
+    let v5_has_any = v5_repo.exists(None)?;
+    let v5_has_success = v5_repo.exists(Some(
+        SyncLogV5V6Filter::new().finished_datetime(DatetimeFilter::is_null(false)),
+    ))?;
 
     if v7_has_success || v5_has_success {
-        // Get sync site name
-        // Safe to unwrap since sync settings will be available after initialisation
-        let site_name = SettingsService::new(None)
-            .sync_settings(ctx)?
-            .unwrap()
-            .username;
-        return Ok(InitialisationStatus::Initialised(site_name));
+        return Ok(InitialisationStatus::Initialised(
+            get_initialised_site_name(ctx)?,
+        ));
     }
     if v7_has_any || v5_has_any {
         return Ok(InitialisationStatus::Initialising);
     }
     Ok(InitialisationStatus::PreInitialisation)
+}
+
+fn is_standalone_central(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+    Ok(KeyValueStoreRepository::new(&ctx.connection)
+        .get_bool(KeyType::IsStandaloneCentral)?
+        .unwrap_or(false))
+}
+
+/// A standalone central goes by its own site's name, any other site by its
+/// sync username. Read on each call: an admin can change the sync settings
+/// while the server runs.
+fn get_initialised_site_name(ctx: &ServiceContext) -> Result<String, RepositoryError> {
+    if is_standalone_central(ctx)? {
+        return Ok(SiteRowRepository::new(&ctx.connection)
+            .find_one_by_id(STANDALONE_CENTRAL_SITE_ID)?
+            .map(|s| s.name)
+            .unwrap_or_default());
+    }
+    Ok(SettingsService::new(None)
+        .sync_settings(ctx)?
+        .map(|s| s.username)
+        .unwrap_or_default())
 }
 
 /// During initial sync remote server asks central server to initialise remote data
