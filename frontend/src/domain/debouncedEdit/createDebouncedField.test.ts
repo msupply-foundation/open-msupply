@@ -142,6 +142,32 @@ describe('createDebouncedField', () => {
     });
   });
 
+  it('leaving the field while a save is on its way sends the latest edit once that save is answered, and holds it until then', async () => {
+    const server = fakeServer(10);
+    await createRoot(async dispose => {
+      const field = createDebouncedField({
+        value: server.stored,
+        save: server.save,
+        delayMs: 500,
+      });
+      field.onFocus();
+      field.set(0);
+      vi.advanceTimersByTime(500);
+      field.set(5);
+      field.onBlur(); // typed, then Tab — the 0 is still on its way
+      expect(server.sent).toEqual([0]);
+      expect(field.value()).toBe(5);
+      await server.answer(); // the 0 lands; the 5 goes now
+      expect(server.sent).toEqual([0, 5]);
+      expect(field.value()).toBe(5);
+      await server.answer();
+      // Nothing left to send: the field follows the server again.
+      server.setStored(7);
+      expect(field.value()).toBe(7);
+      dispose();
+    });
+  });
+
   it('shows the server figure when nothing is being edited, and follows it', () => {
     const server = fakeServer(10);
     createRoot(dispose => {
