@@ -1,0 +1,19 @@
+query examplePluginConfiguration(
+  $pluginCode: String!
+  $storeId: String!
+) {
+  pluginData(
+    pluginCode: $pluginCode
+    storeId: $storeId
+    filter: { dataIdentifier: { equalTo: "configuration" } }
+  ) {
+    __typename
+    ... on PluginDataConnector {
+      nodes {
+        id
+        data
+        storeId
+      }
+    }
+  }
+}
