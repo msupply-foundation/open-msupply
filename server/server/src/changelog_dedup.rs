@@ -1,5 +1,4 @@
 use chrono::Local;
-use repository::{ChangelogRepository, DedupRun, DedupStage};
 use service::{
     service_provider::ServiceProvider, settings::ChangelogDedupSettings, sync::CentralServerConfig,
 };
@@ -14,12 +13,10 @@ use tokio::task::JoinHandle;
 ///
 /// - **Central-only**: dedup runs only on the central server. Checked per-tick
 ///   (not at spawn) because central-ness can flip at runtime after sync init.
-/// - **Postgres-only**: `ChangelogRepository::dedup` is a no-op under SQLite
-///   (remotes have small, unpartitioned changelogs and don't need it).
+/// - **Postgres-only**: `run_dedup` is a no-op under SQLite (remotes have small,
+///   unpartitioned changelogs and don't need it).
 /// - **Time-window-gated**: if a `time_window` is configured, a run only starts
 ///   while the local clock is within it.
-/// - **Never blocking**: its index DDL runs concurrently and under a lock
-///   timeout. A run that times out (`LockedOut`) is retried next tick.
 pub fn spawn(
     service_provider: Arc<ServiceProvider>,
     settings: ChangelogDedupSettings,
@@ -48,39 +45,68 @@ pub fn spawn(
 
             // Diesel calls are blocking; run on a blocking worker so we don't
             // stall the async runtime.
-            let batch_size = settings.batch_size();
-            let result = tokio::task::spawn_blocking(move || {
-                ChangelogRepository::new(&ctx.connection).dedup(batch_size)
-            })
-            .await;
+            let settings = settings.clone();
+            let result = tokio::task::spawn_blocking(move || run_dedup(&ctx, &settings)).await;
 
             match result {
-                Ok(Ok(DedupRun::Completed {
-                    removed,
-                    indexes_left,
-                })) => {
+                Ok(Ok(Some(removed))) => {
                     if removed > 0 {
                         log::info!("changelog dedup task removed {removed} duplicate row(s)")
                     }
-                    if indexes_left {
-                        log::warn!(
-                            "changelog dedup task: lock timeout while dropping the helper \
-                             indexes; the next run drops them"
-                        )
-                    }
                 }
-                Ok(Ok(DedupRun::LockedOut(stage))) => {
-                    let stage = match stage {
-                        DedupStage::LegacyIndex => "dropping index_changelog_dedup",
-                        DedupStage::HelperIndexes => "building the helper indexes",
-                    };
-                    log::warn!(
-                        "changelog dedup task: lock timeout while {stage}; will retry next tick"
-                    )
+                Ok(Ok(None)) => {
+                    log::warn!("changelog dedup task: lock timeout; will retry next tick")
                 }
                 Ok(Err(e)) => log::error!("changelog dedup task: {e:?}"),
                 Err(e) => log::error!("changelog dedup task: join error: {e:?}"),
             }
         }
     })
+}
+
+/// Run one dedup pass over the window `(marker, max]`, deleting in committed
+/// batches. Advances the `ChangelogDedupCursor` marker after completion.
+/// `None` when a lock timeout stopped the run before any delete; the marker is
+/// unchanged, so the next tick redoes the window.
+fn run_dedup(
+    ctx: &service::service_provider::ServiceContext,
+    settings: &ChangelogDedupSettings,
+) -> Result<Option<u64>, repository::RepositoryError> {
+    use repository::{ChangelogRepository, KeyType, KeyValueStoreRepository};
+
+    let connection = &ctx.connection;
+    let repo = ChangelogRepository::new(connection);
+    let kv = KeyValueStoreRepository::new(connection);
+
+    if repo.drop_whole_table_index()?.is_none() {
+        return Ok(None);
+    }
+
+    // Marker: highest cursor already fully deduped. `i64` to match cursor type.
+    let marker = kv.get_i64(KeyType::ChangelogDedupCursor)?.unwrap_or(0);
+    // Safe upper bound — never windows past an in-flight changelog transaction.
+    let max = repo.max_cursor()? as i64;
+    if max <= marker {
+        return Ok(Some(0));
+    }
+
+    if repo.prepare_dead_set(marker, max)?.is_none() {
+        return Ok(None);
+    }
+
+    let batch_size = settings.batch_size();
+    let mut total: u64 = 0;
+    loop {
+        let n = repo.delete_dead_batch(batch_size)?;
+        total += n;
+        if n == 0 {
+            break;
+        }
+    }
+
+    repo.finish_dead_set()?;
+    // Advance the dedup cursor after it has finished
+    kv.set_i64(KeyType::ChangelogDedupCursor, Some(max))?;
+
+    Ok(Some(total))
 }

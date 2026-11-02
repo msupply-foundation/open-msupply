@@ -8,7 +8,7 @@ use diesel::{
 };
 
 /// Catch-all for rows above every range partition; the top-up moves them out.
-pub(super) const DEFAULT_PARTITION: &str = "changelog_p_default";
+const DEFAULT_PARTITION: &str = "changelog_p_default";
 
 /// Outcome of one [`ensure_partition_lookahead`] call.
 #[derive(Debug, PartialEq, Eq)]
@@ -218,7 +218,6 @@ pub(super) fn is_lock_timeout(error: &RepositoryError) -> bool {
 
 /// A range partition of `changelog`: `changelog_p_<lower>` holds the cursors
 /// `lower..upper`.
-#[derive(Debug, PartialEq, Eq)]
 pub(super) struct RangePartition {
     pub name: String,
     pub lower: i64,
@@ -230,8 +229,8 @@ pub(super) struct RangePartition {
 /// bound expression is `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull
 /// every expression then parse the numbers in Rust.
 ///
-/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`, which takes a read
-/// lock on each partition). Callers guard the postgres feature.
+/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`). Callers guard the
+/// postgres feature.
 pub(super) fn range_partitions(
     connection: &StorageConnection,
 ) -> Result<Vec<RangePartition>, RepositoryError> {
@@ -307,25 +306,39 @@ fn parse_bounds(expr: &str) -> Option<(i64, i64)> {
     Some((parse(lower)?, parse(upper)?))
 }
 
+/// The helpers here are shared with the dedup tests.
 #[cfg(all(test, feature = "postgres"))]
-mod tests {
+pub(super) mod tests {
     use super::{
-        super::test_helpers::{
-            Bigint, TextValue, hold_open_transaction, partition_holding,
-            reset_to_tight_partition_layout, run_with_timeout,
-        },
         DEFAULT_PARTITION, PartitionTopUp, attach_range_partition,
         create_standalone_partition_table, ensure_partition_lookahead, parse_bounds,
     };
     use crate::{
         ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, StorageConnection,
-        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db,
+        StorageConnectionManager, migrations::ChangelogPartitionConfig, mock::MockDataInserts,
+        test_db,
     };
-    use diesel::{prelude::*, sql_types::Text};
+    use diesel::{
+        prelude::*,
+        sql_types::{BigInt, Text},
+    };
     use std::{
+        sync::mpsc,
         thread,
         time::{Duration, Instant},
     };
+
+    #[derive(QueryableByName)]
+    struct Bigint {
+        #[diesel(sql_type = BigInt)]
+        value: i64,
+    }
+
+    #[derive(QueryableByName)]
+    struct TextValue {
+        #[diesel(sql_type = Text)]
+        value: String,
+    }
 
     /// Feeds the parser real `pg_get_expr(relpartbound, ...)` output from a
     /// partitioned `changelog` so we're testing it against the exact string
@@ -948,6 +961,70 @@ mod tests {
         holder.release();
     }
 
+    /// Drop existing partitions, recreate one `changelog_p_<lower>` per
+    /// `(lower, upper)` range (cursors `lower..upper`, upper excluded) plus the
+    /// DEFAULT, and reset the sequence so `max_sequence` matches the empty
+    /// changelog.
+    fn reset_partition_layout(connection: &StorageConnection, ranges: &[(i64, i64)]) {
+        diesel::sql_query(
+            r#"
+            DO $$
+            DECLARE part RECORD;
+            BEGIN
+                FOR part IN
+                    SELECT inhrelid::regclass::text AS partname
+                    FROM pg_inherits
+                    WHERE inhparent = 'changelog'::regclass
+                LOOP
+                    EXECUTE format('DROP TABLE %s', part.partname);
+                END LOOP;
+            END $$;
+            "#,
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
+
+        for (lower, upper) in ranges {
+            diesel::sql_query(format!(
+                "CREATE TABLE changelog_p_{lower} PARTITION OF changelog \
+                 FOR VALUES FROM ({lower}) TO ({upper});"
+            ))
+            .execute(connection.lock().connection())
+            .unwrap();
+        }
+        // Same statement the 3.03.00 migration fragment uses.
+        diesel::sql_query(format!(
+            "CREATE TABLE {DEFAULT_PARTITION} PARTITION OF changelog DEFAULT"
+        ))
+        .execute(connection.lock().connection())
+        .unwrap();
+
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 1, false)")
+            .execute(connection.lock().connection())
+            .unwrap();
+    }
+
+    /// Two small partitions [1,3), [3,5) plus the DEFAULT.
+    fn reset_to_tight_partition_layout(connection: &StorageConnection) {
+        reset_partition_layout(connection, &[(1, 3), (3, 5)]);
+    }
+
+    /// One partition, changelog_p_1, for cursors 1-8, plus the DEFAULT.
+    pub(crate) fn reset_to_one_partition(connection: &StorageConnection) {
+        reset_partition_layout(connection, &[(1, 9)]);
+    }
+
+    /// Two partitions: cursors 1-4 in changelog_p_1, 5-8 in changelog_p_5, plus
+    /// the DEFAULT.
+    pub(crate) fn reset_to_two_partitions(connection: &StorageConnection) {
+        reset_partition_layout(connection, &[(1, 5), (5, 9)]);
+    }
+
+    /// The two-partition layout plus an empty changelog_p_9 for cursors 9-12.
+    pub(crate) fn reset_to_three_partitions(connection: &StorageConnection) {
+        reset_partition_layout(connection, &[(1, 5), (5, 9), (9, 13)]);
+    }
+
     /// Range partitions only; the DEFAULT is always present in the tight layout.
     fn count_range_partitions(connection: &StorageConnection) -> i64 {
         diesel::sql_query(
@@ -996,6 +1073,16 @@ mod tests {
         .unwrap();
     }
 
+    /// Which partition physically holds the row with this record_id.
+    fn partition_holding(connection: &StorageConnection, record_id: &str) -> String {
+        diesel::sql_query(format!(
+            "SELECT tableoid::regclass::text AS value FROM changelog WHERE record_id = '{record_id}'"
+        ))
+        .get_result::<TextValue>(connection.lock().connection())
+        .unwrap()
+        .value
+    }
+
     fn cursor_of(connection: &StorageConnection, record_id: &str) -> i64 {
         diesel::sql_query(format!(
             "SELECT cursor AS value FROM changelog WHERE record_id = '{record_id}'"
@@ -1019,5 +1106,62 @@ mod tests {
         .unwrap()
         .value
             == 1
+    }
+
+    /// A second session that runs `statement` inside a transaction and keeps
+    /// it open until `release()` — the stand-in for a long integration
+    /// transaction or any other lock holder.
+    pub(crate) struct OpenTransaction {
+        release: mpsc::Sender<()>,
+        handle: thread::JoinHandle<()>,
+    }
+
+    impl OpenTransaction {
+        pub(crate) fn release(self) {
+            let _ = self.release.send(());
+            self.handle.join().unwrap();
+        }
+    }
+
+    pub(crate) fn hold_open_transaction(
+        connection_manager: &StorageConnectionManager,
+        statement: &'static str,
+    ) -> OpenTransaction {
+        let holder = connection_manager.connection().unwrap();
+        let (ready_tx, ready_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel::<()>();
+        let handle = thread::spawn(move || {
+            holder
+                .transaction_sync(|connection| {
+                    diesel::sql_query(statement)
+                        .execute(connection.lock().connection())
+                        .unwrap();
+                    ready_tx.send(()).unwrap();
+                    // Hold the transaction (and its locks) until released.
+                    let _ = release_rx.recv();
+                    Ok::<(), crate::RepositoryError>(())
+                })
+                .unwrap();
+        });
+        ready_rx
+            .recv_timeout(Duration::from_secs(10))
+            .expect("holder transaction did not start");
+        OpenTransaction {
+            release: release_tx,
+            handle,
+        }
+    }
+
+    /// Run blocking work on its own thread and fail the test if it has not
+    /// finished in 10 s — a hang is the failure mode under test.
+    pub(crate) fn run_with_timeout<T: Send + 'static>(
+        work: impl FnOnce() -> T + Send + 'static,
+    ) -> T {
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            let _ = tx.send(work());
+        });
+        rx.recv_timeout(Duration::from_secs(10))
+            .expect("blocked for over 10 s — a lock is queued behind the operation under test")
     }
 }

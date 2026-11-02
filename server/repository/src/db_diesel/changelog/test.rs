@@ -1515,6 +1515,471 @@ async fn test_compatibility_query_clamped_by_in_flight_tx() {
     assert_eq!(ids, vec!["clinician_in_flight", "clinician_committed"]);
 }
 
+#[cfg(feature = "postgres")]
+use super::partition::tests::{
+    hold_open_transaction, reset_to_one_partition, reset_to_three_partitions,
+    reset_to_two_partitions, run_with_timeout,
+};
+#[cfg(feature = "postgres")]
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
+
+/// Windowed changelog dedup (postgres-only). Verifies:
+/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
+/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
+/// - the second run dedups the new window AND removes the old-part leftover of a record
+///   that reappears, from a partition the window does not cover;
+/// - the dead-set table + helper indexes are dropped afterwards.
+/// Insert a single changelog row with an explicit cursor (table is always Invoice).
+#[cfg(feature = "postgres")]
+fn dedup_test_insert(
+    connection: &StorageConnection,
+    cursor: i64,
+    record_id: &str,
+    store_id: Option<&str>,
+    action: RowActionType,
+) {
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct Ins<'a> {
+        cursor: i64,
+        table_name: ChangelogTableName,
+        record_id: &'a str,
+        row_action: RowActionType,
+        store_id: Option<&'a str>,
+        is_sync_update: bool,
+    }
+    diesel::insert_into(changelog_with_links::table)
+        .values(&Ins {
+            cursor,
+            table_name: ChangelogTableName::Invoice,
+            record_id,
+            row_action: action,
+            store_id,
+            is_sync_update: false,
+        })
+        .execute(connection.lock().connection())
+        .unwrap();
+}
+
+/// Insert rows with explicit cursors and align the sequence with the highest
+/// one, so a later cursor-less insert lands above them.
+#[cfg(feature = "postgres")]
+fn dedup_test_seed(connection: &StorageConnection, rows: &[(i64, &str, RowActionType)]) {
+    for (cursor, record_id, action) in rows {
+        dedup_test_insert(
+            connection,
+            *cursor,
+            record_id,
+            Some("store1"),
+            action.clone(),
+        );
+    }
+    let max = rows.iter().map(|(cursor, ..)| *cursor).max().unwrap();
+    diesel::sql_query(format!("SELECT setval('changelog_cursor_seq', {max})"))
+        .execute(connection.lock().connection())
+        .unwrap();
+}
+
+/// rec_a: 3 upserts (only @3 survives). rec_b: single. rec_d: upsert@5 + delete@6 (both survive).
+#[cfg(feature = "postgres")]
+const DEDUP_TEST_SIX_ROWS: [(i64, &str, RowActionType); 6] = [
+    (1, "rec_a", RowActionType::Upsert),
+    (2, "rec_a", RowActionType::Upsert),
+    (3, "rec_a", RowActionType::Upsert),
+    (4, "rec_b", RowActionType::Upsert),
+    (5, "rec_d", RowActionType::Upsert),
+    (6, "rec_d", RowActionType::Delete),
+];
+
+/// All changelog cursors that remain, ascending.
+#[cfg(feature = "postgres")]
+fn dedup_test_surviving_cursors(connection: &StorageConnection) -> Vec<i64> {
+    #[derive(QueryableByName)]
+    struct C {
+        #[diesel(sql_type = diesel::sql_types::BigInt)]
+        cursor: i64,
+    }
+    diesel::sql_query("SELECT cursor FROM changelog ORDER BY cursor")
+        .get_results::<C>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .map(|c| c.cursor)
+        .collect()
+}
+
+/// Drive one dedup run over the window `(marker, max]` (batch size 2 to exercise
+/// the batch loop) and return the number of rows deleted.
+#[cfg(feature = "postgres")]
+fn dedup_test_run(connection: &StorageConnection, marker: i64, max: i64) -> u64 {
+    let repo = ChangelogRepository::new(connection);
+    repo.prepare_dead_set(marker, max).unwrap().unwrap();
+    let mut total = 0u64;
+    loop {
+        let n = repo.delete_dead_batch(2).unwrap();
+        total += n;
+        if n == 0 {
+            break;
+        }
+    }
+    repo.finish_dead_set().unwrap();
+    total
+}
+
+/// Whether a relation (table or index) currently exists.
+#[cfg(feature = "postgres")]
+fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> bool {
+    #[derive(QueryableByName)]
+    struct Exists {
+        #[diesel(sql_type = diesel::sql_types::Bool)]
+        present: bool,
+    }
+    let result: Exists = diesel::sql_query(format!(
+        "SELECT to_regclass('{name}') IS NOT NULL AS present"
+    ))
+    .get_result(connection.lock().connection())
+    .unwrap();
+    result.present
+}
+
+/// Every index named `index_changelog_dedup*` with whether it is valid.
+#[cfg(feature = "postgres")]
+fn dedup_test_indexes(connection: &StorageConnection) -> Vec<(String, bool)> {
+    #[derive(QueryableByName)]
+    struct Index {
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        name: String,
+        #[diesel(sql_type = diesel::sql_types::Bool)]
+        valid: bool,
+    }
+    diesel::sql_query(
+        "SELECT c.relname AS name, x.indisvalid AS valid \
+         FROM pg_class c JOIN pg_index x ON x.indexrelid = c.oid \
+         WHERE c.relname LIKE 'index\\_changelog\\_dedup%' ORDER BY c.relname",
+    )
+    .get_results::<Index>(connection.lock().connection())
+    .unwrap()
+    .into_iter()
+    .map(|i| (i.name, i.valid))
+    .collect()
+}
+
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_windowed() {
+    use crate::test_db::SetupResult;
+    use RowActionType::Upsert;
+
+    let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
+        db_name: "test_changelog_dedupe_windowed",
+        inserts: MockDataInserts::none(),
+        ..Default::default()
+    })
+    .await;
+    delete_all_changelog(&connection);
+    reset_to_two_partitions(&connection);
+
+    // The marker (KeyType::ChangelogDedupCursor) is persisted by the task layer, not
+    // the repo; here we drive the repo helpers directly over explicit (marker, max]
+    // windows, so the marker is just a local value.
+
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+
+    // Run 1: window (0, 6].
+    let deleted = dedup_test_run(&connection, 0, 6);
+    assert_eq!(deleted, 2, "run 1 should delete rec_a @1,@2");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
+
+    // rec_a reappears at @7 — its old survivor @3 is now stranded below the marker,
+    // in changelog_p_1 which the next window does not cover.
+    dedup_test_insert(&connection, 7, "rec_a", Some("store1"), Upsert);
+
+    // Run 2: window (6, 7]. Step 1 keeps @7; step 2 removes the old rec_a @3.
+    let deleted = dedup_test_run(&connection, 6, 7);
+    assert_eq!(deleted, 1, "run 2 should delete the stranded rec_a @3");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![4, 5, 6, 7]);
+
+    // dead-set table + helper indexes dropped.
+    assert!(
+        !dedup_test_relation_exists(&connection, "changelog_dead"),
+        "changelog_dead should be dropped"
+    );
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
+/// The helper index goes only on the range partitions the window overlaps.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_helper_indexes_only_on_windowed_partitions() {
+    let (_, connection, _, _) = setup_all(
+        "test_changelog_dedupe_helper_indexes_only_on_windowed_partitions",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    reset_to_three_partitions(&connection);
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+    let repo = ChangelogRepository::new(&connection);
+
+    // (4, 6]: cursors 5 and 6, both in changelog_p_5.
+    assert_eq!(repo.prepare_dead_set(4, 6).unwrap(), Some(()));
+    assert_eq!(
+        dedup_test_indexes(&connection),
+        vec![("index_changelog_dedup_changelog_p_5".to_string(), true)]
+    );
+    repo.finish_dead_set().unwrap();
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+
+    // (3, 6]: cursor 4 is in changelog_p_1, so both lower partitions.
+    assert_eq!(repo.prepare_dead_set(3, 6).unwrap(), Some(()));
+    assert_eq!(
+        dedup_test_indexes(&connection),
+        vec![
+            ("index_changelog_dedup_changelog_p_1".to_string(), true),
+            ("index_changelog_dedup_changelog_p_5".to_string(), true),
+        ]
+    );
+    repo.finish_dead_set().unwrap();
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
+/// An open insert transaction (as a long sync integration holds) makes the
+/// index build time out, and never makes another insert wait.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_not_blocked_by_open_insert_transaction() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "test_changelog_dedupe_not_blocked_by_open_insert_transaction",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    reset_to_one_partition(&connection);
+    // Rows 1-4; the holder's insert below takes cursor 5 in the same partition.
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS[..4]);
+
+    // Session A: an open transaction with an uncommitted insert, as an
+    // integration holds for hours. Its row lock on changelog_p_1 makes the
+    // index build wait.
+    let holder = hold_open_transaction(
+        &connection_manager,
+        "INSERT INTO changelog (table_name, record_id, row_action) \
+         VALUES ('invoice', 'held-open', 'UPSERT')",
+    );
+
+    // Session B: the dedup's index build, over (0, 4]. Waits on A.
+    let dedup_connection = connection_manager.connection().unwrap();
+    let started = Instant::now();
+    let run = thread::spawn(move || {
+        ChangelogRepository::new(&dedup_connection)
+            .prepare_dead_set(0, 4)
+            .unwrap()
+    });
+    // Let B's build reach its wait before C starts.
+    thread::sleep(Duration::from_millis(500));
+
+    // Session C: an ordinary insert while B waits on A. Must not wait.
+    let insert_connection = connection_manager.connection().unwrap();
+    let waited = run_with_timeout(move || {
+        let started = Instant::now();
+        diesel::sql_query(
+            "INSERT INTO changelog (table_name, record_id, row_action) \
+             VALUES ('invoice', 'concurrent', 'UPSERT')",
+        )
+        .execute(insert_connection.lock().connection())
+        .unwrap();
+        started.elapsed()
+    });
+    assert!(
+        waited < Duration::from_secs(1),
+        "insert waited {waited:?} behind the dedup"
+    );
+
+    // B gives up at the 5 s lock timeout, well before A commits, leaving the
+    // half-built index marked INVALID.
+    assert_eq!(run.join().unwrap(), None);
+    let waited = started.elapsed();
+    assert!(
+        waited < Duration::from_secs(10),
+        "dedup waited {waited:?}; lock_timeout did not fire"
+    );
+    assert_eq!(
+        dedup_test_surviving_cursors(&connection),
+        vec![1, 2, 3, 4, 6]
+    );
+    assert_eq!(
+        dedup_test_indexes(&connection),
+        vec![("index_changelog_dedup_changelog_p_1".to_string(), false)],
+        "the interrupted build leaves an INVALID index"
+    );
+
+    holder.release();
+
+    // (0, 6]: A's @5 and C's @6 are single rows; rec_a @1,@2 go.
+    assert_eq!(dedup_test_run(&connection, 0, 6), 2);
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
+/// A lock that blocks the index build (as VACUUM holds) makes it time out
+/// with nothing left behind.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_locked_out_acquiring_lock_then_completes() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "test_changelog_dedupe_locked_out_acquiring_lock_then_completes",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    reset_to_one_partition(&connection);
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+
+    let holder = hold_open_transaction(
+        &connection_manager,
+        "LOCK TABLE changelog_p_1 IN SHARE UPDATE EXCLUSIVE MODE",
+    );
+
+    let repo = ChangelogRepository::new(&connection);
+    let started = Instant::now();
+    assert_eq!(repo.prepare_dead_set(0, 6).unwrap(), None);
+    let waited = started.elapsed();
+    assert!(
+        waited < Duration::from_secs(10),
+        "dedup waited {waited:?}; lock_timeout did not fire"
+    );
+    assert_eq!(
+        dedup_test_surviving_cursors(&connection),
+        vec![1, 2, 3, 4, 5, 6]
+    );
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+
+    holder.release();
+
+    assert_eq!(dedup_test_run(&connection, 0, 6), 2);
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
+/// The drop at the end times out: the run still completes, the next run
+/// reuses the index and drops it.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_leaves_helper_indexes_when_drop_times_out() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "test_changelog_dedupe_leaves_helper_indexes_when_drop_times_out",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    reset_to_one_partition(&connection);
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+    let repo = ChangelogRepository::new(&connection);
+
+    assert_eq!(repo.prepare_dead_set(0, 6).unwrap(), Some(()));
+    let holder = hold_open_transaction(
+        &connection_manager,
+        "LOCK TABLE changelog_p_1 IN SHARE UPDATE EXCLUSIVE MODE",
+    );
+    repo.finish_dead_set().unwrap();
+    // The drop timed out acquiring its lock, before it marked the index INVALID.
+    assert_eq!(
+        dedup_test_indexes(&connection),
+        vec![("index_changelog_dedup_changelog_p_1".to_string(), true)]
+    );
+    holder.release();
+
+    assert_eq!(dedup_test_run(&connection, 0, 6), 2);
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
+/// The whole-table `index_changelog_dedup` an earlier release built is dropped.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_drops_whole_table_index() {
+    let (_, connection, _, _) = setup_all(
+        "test_changelog_dedupe_drops_whole_table_index",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    reset_to_two_partitions(&connection);
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+    // The whole-table index the 3.0-3.4 dedup built, left behind mid-run.
+    diesel::sql_query(
+        "CREATE INDEX index_changelog_dedup ON changelog \
+         (table_name, record_id, row_action, cursor DESC)",
+    )
+    .execute(connection.lock().connection())
+    .unwrap();
+    assert!(dedup_test_relation_exists(
+        &connection,
+        "index_changelog_dedup"
+    ));
+
+    let repo = ChangelogRepository::new(&connection);
+    assert_eq!(repo.drop_whole_table_index().unwrap(), Some(()));
+    assert!(!dedup_test_relation_exists(
+        &connection,
+        "index_changelog_dedup"
+    ));
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
+/// Dropping the whole-table index needs ACCESS EXCLUSIVE on `changelog`, which an
+/// open insert transaction blocks. The drop gives up at the short lock timeout.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_locked_out_dropping_whole_table_index_then_completes() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "test_changelog_dedupe_locked_out_dropping_whole_table_index",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    reset_to_one_partition(&connection);
+    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+    // The whole-table index the 3.0-3.4 dedup built, left behind mid-run.
+    diesel::sql_query(
+        "CREATE INDEX index_changelog_dedup ON changelog \
+         (table_name, record_id, row_action, cursor DESC)",
+    )
+    .execute(connection.lock().connection())
+    .unwrap();
+
+    let holder = hold_open_transaction(
+        &connection_manager,
+        "INSERT INTO changelog (table_name, record_id, row_action) \
+         VALUES ('invoice', 'held-open', 'UPSERT')",
+    );
+
+    let repo = ChangelogRepository::new(&connection);
+    let started = Instant::now();
+    assert_eq!(repo.drop_whole_table_index().unwrap(), None);
+    let waited = started.elapsed();
+    // Bounded by the 500 ms lock timeout, not by the holder.
+    assert!(
+        waited < Duration::from_secs(5),
+        "dedup waited {waited:?}; lock_timeout did not fire"
+    );
+    assert!(dedup_test_relation_exists(
+        &connection,
+        "index_changelog_dedup"
+    ));
+
+    holder.release();
+
+    assert_eq!(repo.drop_whole_table_index().unwrap(), Some(()));
+    assert!(!dedup_test_relation_exists(
+        &connection,
+        "index_changelog_dedup"
+    ));
+    assert_eq!(dedup_test_indexes(&connection), vec![]);
+}
+
 /// The v3_00_00 backfills stamp `source_site_id = 0` when the central site id isn't known
 /// (see `repair_source_site_id`). `0` is not a real site id, so the legacy push reads those
 /// rows as locally authored and sends central reference data upward. Pins both halves: that
