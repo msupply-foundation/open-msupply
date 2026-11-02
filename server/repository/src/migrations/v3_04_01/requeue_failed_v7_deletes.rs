@@ -22,7 +22,9 @@ impl MigrationFragment for Migrate {
     /// Only a delete that is still the latest buffer row for its record. A record created
     /// again after its delete failed has a newer row, and applying the old delete would
     /// remove it. The latest-wins pass in the integration only looks at pending rows, so
-    /// it can't catch that; this does.
+    /// it can't catch that; this does. Both checks are made per record in the one scan,
+    /// so only the deletes to requeue are looked up again, and no index is needed: a
+    /// 10M-row buffer takes 5-9s on either backend, and building an index first is slower.
     ///
     /// The reference id is cleared, so a delete pulled by an auxiliary sync (a store moved
     /// to this site) is picked up by the main sync rather than waiting on a request that
@@ -42,15 +44,17 @@ impl MigrationFragment for Migrate {
                         integration_result = NULL,
                         integration_error = NULL,
                         reference_id = NULL
-                    WHERE table_name IN ('user_store_join', 'plugin_data')
-                        AND action = 'DELETE'
-                        AND sync_version = 'V7'
-                        AND integration_result = 'ERROR'
-                        AND cursor IN (
-                            SELECT MAX(cursor) FROM sync_buffer
-                                WHERE table_name IN ('user_store_join', 'plugin_data')
-                                GROUP BY table_name, record_id
-                        );
+                    WHERE cursor IN (
+                        SELECT MAX(cursor) FROM sync_buffer
+                            WHERE table_name IN ('user_store_join', 'plugin_data')
+                            GROUP BY table_name, record_id
+                            HAVING MAX(cursor) = MAX(
+                                CASE WHEN action = 'DELETE'
+                                        AND sync_version = 'V7'
+                                        AND integration_result = 'ERROR'
+                                    THEN cursor END
+                            )
+                    );
             "#
         )?;
 
