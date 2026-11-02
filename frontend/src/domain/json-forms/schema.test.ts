@@ -369,6 +369,7 @@ describe('parseArgumentSchema — numbers, dates, readOnly, required', () => {
       required: false,
       dateTime: false,
       dateOnly: false,
+      monthOnly: false,
       dateAsEndOfDay: false,
       disableFuture: false,
       minKey: undefined,
@@ -455,6 +456,34 @@ describe('cleanArguments', () => {
     expect(
       cleanArguments(monthFields, { month: '2026-09-30T12:00:00.000Z' })
     ).toEqual({ month: '2026-09-30T12:00:00.000Z' });
+  });
+
+  it('edits a monthOnly date-time element as a month, submitted as its 1st (OMS-REG-RPT-10.44)', () => {
+    // Afghanistan's Vaccine Utilisation month (its arguments_ui.json).
+    const [month] = parseArgumentSchema({
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          month: { format: 'date-time', type: ['string', 'null'] },
+        },
+      },
+      uiSchema: {
+        type: 'VerticalLayout',
+        elements: [
+          {
+            type: 'Control',
+            scope: '#/properties/month',
+            options: { monthOnly: true },
+          },
+        ],
+      },
+    });
+    if (month.kind !== 'date') throw new Error('expected date');
+    expect(month).toMatchObject({ dateTime: true, monthOnly: true });
+    // The React UI's startOfMonth(picked).toISOString().
+    expect(dateArgumentValue(month, '2026-10-01')).toBe(
+      new Date(2026, 9, 1).toISOString()
+    );
   });
 });
 
@@ -913,6 +942,7 @@ describe('date options (OMS-REG-RPT-10.40)', () => {
     expect(plain).toMatchObject({
       dateTime: false,
       dateOnly: false,
+      monthOnly: false,
       dateAsEndOfDay: false,
       disableFuture: false,
       minKey: undefined,

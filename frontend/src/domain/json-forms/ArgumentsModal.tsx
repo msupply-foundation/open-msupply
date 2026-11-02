@@ -489,7 +489,8 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match
                 when={
-                  field.kind === 'date' && (!field.dateTime || field.dateOnly)
+                  field.kind === 'date' &&
+                  (!field.dateTime || field.dateOnly || field.monthOnly)
                     ? field
                     : undefined
                 }
@@ -497,13 +498,16 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {/* Calendar-day entry: plain `format: 'date'` fields, and
                     date-time fields whose element asks for date-only entry
-                    (OMS-REG-RPT-10.40) — those still store an instant (the picked day
-                    widened, dateArgumentValue), so a bare date never reaches
-                    the data query's DateTime variables. Bounds resolve live
-                    from the sibling values (min/max scope refs + no-future). */}
+                    (OMS-REG-RPT-10.40) or month-only entry (OMS-REG-RPT-10.44) —
+                    those still store an instant (the picked day widened,
+                    dateArgumentValue; a month is its 1st), so a bare date never
+                    reaches the data query's DateTime variables. Bounds resolve
+                    live from the sibling values (min/max scope refs +
+                    no-future). */}
                 {dateField => (
                   <DateField
                     label={dateField.label}
+                    monthOnly={dateField.monthOnly}
                     value={dateArgumentDay(values[dateField.key])}
                     min={
                       dateFieldBounds(dateField, values, localTodayIso()).min
@@ -525,7 +529,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match
                 when={
-                  field.kind === 'date' && field.dateTime && !field.dateOnly
+                  field.kind === 'date' &&
+                  field.dateTime &&
+                  !field.dateOnly &&
+                  !field.monthOnly
                     ? field
                     : undefined
                 }

@@ -111,6 +111,12 @@ export type ParsedField =
        */
       dateOnly: boolean;
       /**
+       * uiSchema `options.monthOnly` — edited as a month (the month picker);
+       * the value is the month's 1st, submitted as that day's start instant
+       * on a date-time field, as the React UI sends it.
+       */
+      monthOnly: boolean;
+      /**
        * uiSchema `options.dateAsEndOfDay` — widen to the day's inclusive end.
        */
       dateAsEndOfDay: boolean;
@@ -454,6 +460,7 @@ export const parseArgumentSchema = (raw: {
             default: prop.default,
             dateTime: prop.format === 'date-time',
             dateOnly: options?.dateOnly === true,
+            monthOnly: options?.monthOnly === true,
             dateAsEndOfDay: options?.dateAsEndOfDay === true,
             disableFuture: options?.disableFuture === true,
             minKey: scopeKey(options?.min),

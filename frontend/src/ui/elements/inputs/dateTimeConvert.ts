@@ -237,8 +237,10 @@ export const formatIsoDate = (
 /**
  * Typed date text → ISO `YYYY-MM-DD`, interpreting the day/month/year ORDER
  * from `format`. Lenient about separators (`/ - .`, spaces) and month form
- * (numeric or a localised name). '' → null (cleared); anything unparseable or
- * out-of-range → undefined (invalid — the caller keeps the text for a fix).
+ * (numeric or a localised name). A format with no day token (`MMM yyyy`, a
+ * month-only field) reads a month and year as that month's 1st. '' → null
+ * (cleared); anything unparseable or out-of-range → undefined (invalid — the
+ * caller keeps the text for a fix).
  */
 export const parseDateInput = (
   text: string,
@@ -254,17 +256,18 @@ export const parseDateInput = (
     if (!order.includes(kind)) order.push(kind);
     return tok;
   });
-  if (order.length !== 3) return undefined;
+  const monthOnly = order.length === 2 && !order.includes('d');
+  if (order.length !== 3 && !monthOnly) return undefined;
 
   // Parts: runs of digits or letters, in order (month names have letters).
   const parts = s.match(/\p{L}+|\d+/gu);
-  if (!parts || parts.length !== 3) return undefined;
+  if (!parts || parts.length !== order.length) return undefined;
 
   const names = monthNames();
-  let day = 0;
+  let day = monthOnly ? 1 : 0;
   let month = 0;
   let year = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < order.length; i++) {
     const part = parts[i];
     const kind = order[i];
     if (kind === 'M' && /\D/.test(part)) {

@@ -40,6 +40,13 @@ export interface DateFieldProps {
    * same pattern read-only dates render with (#774).
    */
   format?: string;
+  /**
+   * Pick a whole month: the calendar opens on its month grid, the field shows
+   * and reads `MMM yyyy` (unless `format` says otherwise), and the value is
+   * the month's 1st. `min`/`max` bound by month — a month holding any
+   * in-range day stays selectable.
+   */
+  monthOnly?: boolean;
   helperText?: string;
   error?: string;
   /** Advisory warning below the field (FieldShell's `warning`). */
@@ -70,6 +77,9 @@ export interface DateFieldProps {
   testId?: string;
 }
 
+/** A month-only field's display + typed-entry format, e.g. "Oct 2026". */
+const MONTH_FORMAT = 'MMM yyyy';
+
 /*
  * Calendar-date input (spec: ui-standards/inputs.md § Dates & times). A typed
  * text field (type e.g. "23/04/2023") paired with a corvu calendar popover (see
@@ -84,7 +94,11 @@ export interface DateFieldProps {
 export const DateField = (props: DateFieldProps) => {
   const autoId = createUniqueId();
   const id = () => props.id ?? autoId;
-  const fmt = () => props.format ?? defaultDateFormat();
+  const fmt = () =>
+    props.format ?? (props.monthOnly ? MONTH_FORMAT : defaultDateFormat());
+  // Month-only bounds compare by month (`YYYY-MM`): the month holding `min`
+  // is in range though its 1st is earlier.
+  const bound = (iso: string) => (props.monthOnly ? iso.slice(0, 7) : iso);
 
   // Local text buffer for typing; resynced from the external value only when
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
@@ -119,9 +133,13 @@ export const DateField = (props: DateFieldProps) => {
       (parsed === null && props.required) ||
       // A valid date, but TYPED earlier than min — the calendar already makes
       // such days unselectable; this closes the typed path.
-      (parsed != null && props.min !== undefined && parsed < props.min) ||
+      (parsed != null &&
+        props.min !== undefined &&
+        bound(parsed) < bound(props.min)) ||
       // A valid date, but TYPED later than max — same as min, other bound.
-      (parsed != null && props.max !== undefined && parsed > props.max)
+      (parsed != null &&
+        props.max !== undefined &&
+        bound(parsed) > bound(props.max))
     ) {
       setText(formatIsoDate(props.value, fmt())); // invalid → revert
       return;
@@ -183,6 +201,7 @@ export const DateField = (props: DateFieldProps) => {
                 // again → null) — the commit() guard below only covers the
                 // typed path.
                 required={props.required}
+                monthOnly={props.monthOnly}
                 onSelect={d => {
                   apply(d ? dateToIsoDate(d) : null);
                   close();

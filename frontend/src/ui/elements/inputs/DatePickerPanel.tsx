@@ -36,6 +36,11 @@ export type DatePickerPanelProps = {
       value: Date | null;
       /** Picked local date, or null when deselected. */
       onSelect: (date: Date | null) => void;
+      /**
+       * Pick a whole month: the panel opens on the month grid and a month
+       * pick selects its 1st (the year grid still navigates). No day grid.
+       */
+      monthOnly?: boolean;
     }
   | {
       mode: 'range';
@@ -73,7 +78,10 @@ const YEARS_PER_PAGE = 16;
  * `data-outside` flag we compute (corvu exposes no such attribute).
  */
 export const DatePickerPanel = (props: DatePickerPanelProps) => {
-  const [view, setView] = createSignal<'day' | 'month' | 'year'>('day');
+  const monthOnly = () => props.mode !== 'range' && !!props.monthOnly;
+  const [view, setView] = createSignal<'day' | 'month' | 'year'>(
+    monthOnly() ? 'month' : 'day'
+  );
   const [yearBase, setYearBase] = createSignal(0);
 
   // The date the calendar should focus on (single value, or a range's start).
@@ -104,6 +112,20 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     if (props.min && dateToIsoDate(day) < dateToIsoDate(props.min)) return true;
     if (props.max && dateToIsoDate(day) > dateToIsoDate(props.max)) return true;
     return false;
+  };
+
+  // Month-only: a month is out of range when none of its days are in range.
+  const monthDisabled = (year: number, monthIndex: number): boolean =>
+    disabled(new Date(year, monthIndex, 1)) &&
+    disabled(new Date(year, monthIndex + 1, 0));
+
+  const monthSelected = (ctx: CalendarCtx, monthIndex: number): boolean => {
+    if (props.mode === 'range' || !props.monthOnly)
+      return ctx.month.getMonth() === monthIndex;
+    return (
+      props.value?.getFullYear() === ctx.month.getFullYear() &&
+      props.value.getMonth() === monthIndex
+    );
   };
 
   const navBtn = (label: string, onClick: () => void, icon: JSX.Element) => (
@@ -253,10 +275,16 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               <button
                 type="button"
                 class={styles.pickCell}
-                data-selected={ctx.month.getMonth() === i() ? '' : undefined}
+                data-selected={monthSelected(ctx, i()) ? '' : undefined}
+                disabled={
+                  monthOnly() && monthDisabled(ctx.month.getFullYear(), i())
+                }
                 onClick={() => {
-                  ctx.setMonth(new Date(ctx.month.getFullYear(), i()));
-                  setView('day');
+                  const picked = new Date(ctx.month.getFullYear(), i(), 1);
+                  ctx.setMonth(picked);
+                  if (props.mode !== 'range' && props.monthOnly)
+                    props.onSelect(picked);
+                  else setView('day');
                 }}
               >
                 {monthShort(i())}

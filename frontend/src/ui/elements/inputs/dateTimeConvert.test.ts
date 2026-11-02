@@ -188,6 +188,14 @@ describe('default date format (numeric, #774)', () => {
     expect(parseDateInput('09/19/2026', 'MM/dd/yyyy')).toBe('2026-09-19');
   });
 
+  it('reads a month-only format as the 1st of that month', () => {
+    expect(formatIsoDate('2026-10-01', 'MMM yyyy')).toBe('Oct 2026');
+    expect(parseDateInput('Oct 2026', 'MMM yyyy')).toBe('2026-10-01');
+    expect(parseDateInput('october 26', 'MMM yyyy')).toBe('2026-10-01');
+    expect(parseDateInput('10/2026', 'MMM yyyy')).toBe('2026-10-01');
+    expect(parseDateInput('13 Oct 2026', 'MMM yyyy')).toBeUndefined();
+  });
+
   // Every language the app can be read in, so a date-fns locale added later is
   // covered too: its default must be one day, one month and one year token
   // between separators, and a date shown in it must read back as that day.
