@@ -226,6 +226,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
+      volumePerPack: 0,
     };
   };
 

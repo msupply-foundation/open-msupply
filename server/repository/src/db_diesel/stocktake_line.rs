@@ -22,6 +22,7 @@ pub struct StocktakeLineFilter {
     pub item_code_or_name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<EqualFilter<String>>,
+    pub campaign_id: Option<EqualFilter<String>>,
 }
 
 impl StocktakeLineFilter {
@@ -51,6 +52,11 @@ impl StocktakeLineFilter {
 
     pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
         self.stock_line_id = Some(filter);
+        self
+    }
+
+    pub fn campaign_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.campaign_id = Some(filter);
         self
     }
 }
@@ -181,6 +187,7 @@ impl<'a> StocktakeLineRepository<'a> {
             apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
             apply_equal_filter!(query, f.item_id, item::id);
             apply_equal_filter!(query, f.stock_line_id, stocktake_line::stock_line_id);
+            apply_equal_filter!(query, f.campaign_id, stocktake_line::campaign_id);
         }
 
         query
@@ -232,4 +239,48 @@ fn apply_item_filter(
         return query.filter(item::id.eq_any(item_ids));
     }
     query
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        EqualFilter, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+        mock::{MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_stocktake_a},
+        test_db,
+    };
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_campaign_filter() {
+        let line_with_campaign = StocktakeLineRow {
+            id: "stocktake_line_with_campaign".to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            campaign_id: Some(mock_campaign_a().id),
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_campaign_filter",
+            MockDataInserts::all(),
+            MockData {
+                stocktake_lines: vec![line_with_campaign.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let lines = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                    .campaign_id(EqualFilter::equal_to(mock_campaign_a().id)),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(
+            lines.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
+            vec![line_with_campaign.id]
+        );
+    }
 }

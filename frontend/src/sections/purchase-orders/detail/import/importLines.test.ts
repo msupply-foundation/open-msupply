@@ -122,6 +122,25 @@ describe('OMS-FUN-PO-09.7 — the three value checks', () => {
   });
 });
 
+describe('OMS-FUN-PO-09.13 — no negative packs or prices', () => {
+  it.each([
+    ['packs', { packs: '-5' }],
+    ['before-price', { before: '-3', after: '-3' }],
+    ['after-price', { before: '12', after: '-3' }],
+  ])('rejects negative %s', (_, over) => {
+    const parsed = parse(row(over));
+    if (!Array.isArray(parsed)) throw new Error(parsed);
+    expect(parsed[0]!.errors).toContain('error.field-cannot-be-negative');
+    expect(canImport(parsed)).toBe(false);
+  });
+
+  it('accepts zero packs and zero prices', () => {
+    const parsed = parse(row({ packs: '0', before: '0', after: '0' }));
+    if (!Array.isArray(parsed)) throw new Error(parsed);
+    expect(hasErrors(parsed)).toBe(false);
+  });
+});
+
 describe('OMS-FUN-PO-09.8 / .4 — the same item twice', () => {
   it('rejects both rows repeating an item and pack size', () => {
     const parsed = parse(row(), row({ packs: '7' }));
