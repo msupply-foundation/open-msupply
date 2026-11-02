@@ -1,0 +1,33 @@
+{
+  "name": "bes-plugins",
+  "omSupplyPlugin": {
+    "target": "backend",
+    "//": "Fields here must match PluginTypes in backend_plugin_row repository",
+    "types": [
+      "graphql_query"
+    ],
+    "variant_type": "BOA_JS"
+  },
+  "version": "1.0.0",
+  "description": "Backend plugins for BES",
+  "main": "plugin.js",
+  "scripts": {
+    "generate-graphql-types": "graphql-codegen",
+    "build-plugin": "webpack"
+  },
+  "repository": "https://github.com/msupply-foundation/bes-plugins.git",
+  "license": "MIT",
+  "devDependencies": {
+    "@graphql-codegen/cli": "^6.1.1",
+    "@graphql-codegen/import-types-preset": "^3.0.1",
+    "@graphql-codegen/typescript": "^5.0.7",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.0.2",
+    "webpack": "^5.76.2",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "uuidv7": "^1.0.0"
+  }
+}
