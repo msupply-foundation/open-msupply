@@ -233,7 +233,7 @@ pub enum FormPluginInstallError {
         "{document_type} declares no legacyUiSchema: its entry's current version has a UI schema \
          and the version this install makes current has none, so sites still on the old client \
          would show its form blank from now on. Copy the deployment's UI schema into the type as \
-         its legacyUiSchema (plugins/README.md, taking over a deployed type), or pass \
+         its legacyUiSchema (private/plugins/README.md, taking over a deployed type), or pass \
          --blank-old-ui {document_type} if no site using this type runs the old client"
     )]
     BlanksOldUi { document_type: String },
@@ -241,7 +241,7 @@ pub enum FormPluginInstallError {
         "{document_type} is taken over with a registry config other than the deployment's: its \
          event rules or nextEncounter would change or be dropped. Carry the deployment's config \
          exactly, its events in the type's events.json and its nextEncounter in forms.json \
-         (plugins/MIGRATING-PROGRAMS.md, step 6), and change them in a later install"
+         (private/plugins/MIGRATING-PROGRAMS.md, step 6), and change them in a later install"
     )]
     TakeOverChangesConfig { document_type: String },
     #[error(
@@ -249,7 +249,7 @@ pub enum FormPluginInstallError {
          the version this server's {document_type} entry is on: the bundle carries another \
          deployment's versions of the type, or leaves out this one's current version. Declare \
          each of this deployment's versions with its \"id\", oldest first \
-         (plugins/MIGRATING-PROGRAMS.md, step 2)"
+         (private/plugins/MIGRATING-PROGRAMS.md, step 2)"
     )]
     TakeOverMissesCurrentVersion {
         document_type: String,

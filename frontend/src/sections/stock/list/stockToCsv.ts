@@ -16,6 +16,7 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     t('label.name'),
     t('label.master-lists'),
     t('label.batch'),
+    t('label.on-hold'),
     t('label.expiry-date'),
     t('label.manufacture-date'),
     t('label.vvm-status'),
@@ -30,6 +31,7 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     t('label.pack-sell-price'),
     t('label.total'),
     t('label.manufacturer'),
+    t('label.activity'),
     t('label.supplier'),
   ];
   const data = rows.map(l => [
@@ -37,6 +39,7 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     l.itemName,
     (l.item.masterLists ?? []).map(m => m.name).join('; '),
     l.batch ?? '',
+    l.onHold ? t('messages.yes') : t('messages.no'),
     l.expiryDate ? exportDate(l.expiryDate) : '',
     l.manufactureDate ? exportDate(l.manufactureDate) : '',
     l.item.isVaccine ? (l.vvmStatus?.description ?? '') : '',
@@ -51,6 +54,7 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     l.sellPricePerPack,
     l.totalNumberOfPacks * l.costPricePerPack,
     l.manufacturer?.name ?? '',
+    l.campaign?.name ?? '',
     l.supplierName && l.supplierName.length > 0
       ? l.supplierName
       : t('label.inventory-adjustment'),

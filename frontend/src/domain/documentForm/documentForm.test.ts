@@ -1,8 +1,8 @@
 import { createRoot } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import { setDictionaries, setLocale } from '../../intl/intl';
-import encounterV2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
-import enrolmentV1 from '../../../plugins/examples/demo_program/forms/DemoProgramEnrolment/v1.json';
+import encounterV2 from '../../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
+import enrolmentV1 from '../../../../plugins/examples/demo_program/forms/DemoProgramEnrolment/v1.json';
 import type { Encounter } from '../../plugin-sdk/documents';
 import { createDraft, pathLabel } from './draft';
 import {

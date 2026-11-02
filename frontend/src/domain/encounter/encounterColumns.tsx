@@ -7,7 +7,12 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { getChipListCell } from '@/ui/elements/table/ChipListCell';
 import { remToPx } from '@/ui/utils/rem';
+import {
+  dateToIsoDate,
+  utcToLocalDay,
+} from '@/ui/elements/inputs/dateTimeConvert';
 import { statusEventTexts } from '@/domain/program/programEvents';
+import type { EncounterStatus } from '@/plugin-sdk/documents';
 
 /*
  * The encounter columns (spec/encounters/ui-surface.md S1 › columns), shared
@@ -15,8 +20,6 @@ import { statusEventTexts } from '@/domain/program/programEvents';
  * them without Patient. Rows are each screen's own generated query rows; this
  * names only the fields the columns read.
  */
-
-type EncounterStatus = 'PENDING' | 'VISITED' | 'CANCELLED' | 'DELETED';
 
 export type EncounterColumnRow = {
   id: string;
@@ -40,9 +43,13 @@ export const encounterStatusLabel = (status: EncounterStatus | null): string =>
     : '';
 
 /**
- * A Scheduled encounter's timing: missed once its start has passed, scheduled
- * while it is ahead, judged against `now` (spec/encounters/rules.md §
- * additional information). Any other status has none.
+ * A Scheduled encounter's timing: missed once the day of its start has
+ * passed, scheduled while that day is still ahead, judged against `now` by
+ * the device's local calendar day (spec/encounters/rules.md § additional
+ * information). A visit due today is neither: it is the day's work, not a
+ * visit missed by the hour — a New encounter opens with its start about
+ * now, and must not greet the clinician with an alarm. Any other status has
+ * none.
  */
 export const encounterTiming = (
   status: EncounterStatus | null,
@@ -50,9 +57,11 @@ export const encounterTiming = (
   now: Date
 ): 'missed' | 'scheduled' | undefined => {
   if (status !== 'PENDING') return undefined;
-  const untilStart = new Date(startDatetime).getTime() - now.getTime();
-  if (untilStart < 0) return 'missed';
-  if (untilStart > 0) return 'scheduled';
+  const day = utcToLocalDay(startDatetime);
+  if (!day) return undefined;
+  const today = dateToIsoDate(now);
+  if (day < today) return 'missed';
+  if (day > today) return 'scheduled';
   return undefined;
 };
 

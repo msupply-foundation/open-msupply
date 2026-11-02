@@ -33,4 +33,11 @@ export {
   type AllocateUnit,
   type UnitCountableBatch,
 } from './units';
-export { deriveIssueWarnings, type IssueWarning } from './warnings';
+export {
+  deriveIssueWarnings,
+  distributionOutcome,
+  expiredSkipReport,
+  type DistributionOutcome,
+  type ExpiredSkipReport,
+  type IssueWarning,
+} from './warnings';

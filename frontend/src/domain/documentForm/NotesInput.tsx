@@ -30,8 +30,8 @@ import { HStack } from '../../ui/layout/Stack/HStack';
 import { Stack } from '../../ui/layout/Stack/Stack';
 import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
 import type { Note } from '../../plugin-sdk/documents';
-import type { Draft } from './draft';
 import type { FieldProps } from './fields';
+import { nameFieldInSummary, type Draft } from './draft';
 import type { NotesPath } from './paths';
 import {
   flippedFromOpen,
@@ -93,6 +93,9 @@ export const NotesInput = <T, P extends NotesPath<T>>(
   props: NotesInputProps<T, P>
 ): JSX.Element => {
   const d = () => props.draft as unknown as UntypedNotesDraft;
+  // Named to the draft as every library field is: the error summary names
+  // the list as the control does, and the host knows the form renders it.
+  nameFieldInSummary(props);
   const labelId = createUniqueId();
   const itemKey = (position: number) =>
     `${props.testId ?? 'notes'}-${position}`;

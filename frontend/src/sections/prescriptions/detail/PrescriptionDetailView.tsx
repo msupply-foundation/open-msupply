@@ -365,7 +365,7 @@ const PrescriptionDetailView: Component = () => {
   // mirroring the footer control's `loading`. Runs the HEADER control's print,
   // which is the control that advertises the badge.
   createAction({
-    name: 'button.print-prescription-label',
+    name: 'button.print-all-labels',
     shortcut: ALT_L,
     run: () => void runPrintLabels('header'),
     disabled: () => !info() || printingLabels(),
@@ -605,7 +605,7 @@ const PrescriptionDetailView: Component = () => {
                     options={[
                       {
                         value: 'labels',
-                        label: t('button.print-prescription-label'),
+                        label: t('button.print-all-labels'),
                       },
                       {
                         value: 'report',
@@ -746,7 +746,7 @@ const PrescriptionDetailView: Component = () => {
                     onClick={() => void runPrintLabels('bulk', selectedIds())}
                   >
                     {printText(printOutcomeOf('bulk')) ??
-                      t('button.print-prescription-label')}
+                      t('button.print-selected-labels')}
                   </Button>
                   <ContentFooterActions>
                     <Button

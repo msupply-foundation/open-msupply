@@ -219,6 +219,10 @@
   --status-verified: #38a169;
   /* Cancelled — the error tone (a terminated record). */
   --status-cancelled: var(--error-main);
+  /* Overdue — the error tone too (a thing that should have happened and has
+     not: a vaccine dose past its age window, a scheduled visit that was
+     missed). Its own token, so an overdue chip is never spelt "cancelled". */
+  --status-overdue: var(--error-main);
   /* Stocktake terminal "done" status (integration branch) — reuses the
      verified hue. */
   --status-finalised: #38a169;
@@ -681,6 +685,7 @@
   --status-received: #7a9dff;
   --status-verified: #48c78e;
   --status-cancelled: var(--error-main);
+  --status-overdue: var(--error-main);
   --status-finalised: #48c78e;
 
   /* Feedback severities — same lift as the rest of the dark palette */
