@@ -1,0 +1,163 @@
+# Open mSupply Forecasting plugins
+
+> **Imported from [msupply-foundation/open-msupply-forecasting-plugins](https://github.com/msupply-foundation/open-msupply-forecasting-plugins)** (Oct 2026, `main` with history — each commit's `Source:` trailer links its original). File issues in this repo now, not there. Built bundles were stripped from history; they live on the bundle server.
+>
+> This is the plugin for the **React UI**. There is no SolidJS port yet. Build it from `server/` with `cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../plugins/forecasting/react -o <bundle>.json` (or `generate-and-install-plugin-bundle` to install it as well). Steps further down that name `client/packages/plugins/<name>/` predate the import — the paths here now point into `client/` from where they sit.
+>
+> **It does not build against today's `client/` yet:** the backend's requisition-line transform no longer matches `TransformRequestRequisitionLineOutput`, and both frontends pass props `ValueInfoRow` no longer takes — drift since its last commit, not the import.
+
+## Translation Note
+Since we can't currently translate the column names in plugins, this plugin will install with French, we'll need to either solve the core problem or fork this repo if a french version is needed in future.
+
+Contains a suite of "forecasting" plugins for **Open mSupply**:
+
+## Back-end
+
+- `transform_request_requisition_lines`:
+  - On insert of new requisition_lines, it calculates a "Forecast quantity" for each line. The formula/logic for calculating this is detailed [below](#forecasting-calculation).
+  - this new value is saved to "plugin_data" so it can be fetched as a new "column" by the front-end plugin
+  - the existing field "suggested_quantity" is also modified -- the value stored in it is the new "forecast_quantity" minus the current stock on hand. This modified value will be displayed by the normal detail view in the front-end.
+  - The displayed values will be in _units_, not _doses_ for consistency with existing columns, although the dose quantity is returned with the plugin data, so it can be modified to display doses in the future.
+
+## Front-end
+
+- `ForecastQuantity`: consists of two components:
+  - `ForecastQuantityColumn`: inserts a new column on an **Internal Order** -- "Forecast amount", which is displayed to the right of "Suggested Quantity" and displays the forecast value calculated above (and fetched from the "plugin_data" associated with a requisition_line record).
+  - `ForecastQuantityField`: Displays this same value on the "Detail" modal for each item.
+
+## Forecasting calculation
+
+For a requisition line item to be able to calculate a forecast quantity, several things must be configured:
+
+- it must be a **vaccine item**
+- it must be part of a **vaccine course**
+- the vaccine course must be associated with a **demographic**
+- the following store properties must be defined:
+  - Stock Safety Buffer (months)
+  - Supply Interval (Months between deliveries)
+  - Population Served
+
+_You can quickly enable these properties for your store by going to: Settings -> Configuration -> Initialise store properties for population based forecasting_
+
+If _any_ of these values are not defined, the forecast totals will be returned as `null`.
+
+From this data, we calculate (or retrieve) the following intermediate values for _each_ vaccine course that the item is a part of:
+
+- **Target Population** `= Population served X Population percentage`
+  - `Population served` comes from store properties
+  - `Population percentage` comes from the Demographic associated with the vaccine course; in other words: the proportion of the total population this vaccine course is targeting.
+- **Loss Factor** `= 1 / (1 - Wastage rate)`
+  - `Wastage rate` comes from the vaccine course, i.e. what proportion of the stock do we expect to have to throw out?. The `Loss Factor` is basically an "inverse" of the `Wastage rate`, i.e. what do I need to multiply my required stock by to allow for wastage?
+- **Coverage Rate**: from vaccine course, i.e. what proportion of the target population do we expect to actually vaccinate?
+- **Number of Doses** in vaccine course schedule
+- **Number of Months** `= Stock Safety Buffer + Supply Interval`
+  - How many months to forecast for, i.e. the number of months for which we want to actually supply, plus some number of "buffer" months
+- **Doses per Unit**
+  - How many vaccine doses are there for each base unit used in Open mSupply. For example, OMS records stock in "Vials", and there could be 50 doses per vial.
+
+From these values we can calculate:
+
+**Annual target stock** `= Target Population X Number of Doses X Coverage Rate X Loss Factor`
+
+This value is in individual vaccine **doses**.
+
+And then, finally, we can calculate the required "target" doses:
+
+**Forecast Quantity** (in doses) `= Annual target stock / 12 * Number of Months`
+
+And in units:
+
+**Forecast Unit Quantity** `= Forecast Quantity / Doses per Unit`
+
+As mentioned earlier, these quantities are for _each vaccine course_, so we need to add them all up to get the total forecast amounts for each item.
+
+The back-end plugin returns an object containing the final totals, plus breakdowns of each course, for example:
+
+```json
+{
+  "forecastTotalDoses": 62500,
+  "forecastTotalUnits": 1250,
+  "vaccineCourses": [
+    {
+      "courseTitle": "Covid vaccination (Children)",
+      "numberOfDoses": 4,
+      "coverageRate": 80,
+      "targetPopulation": 25000,
+      "lossFactor": 2,
+      "annualTargetDoses": 160000,
+      "bufferStockMonths": 0,
+      "supplyPeriodMonths": 3,
+      "dosesPerUnit": 50,
+      "forecastDoses": 40000,
+      "forecastUnits": 800
+    },
+    {
+      "courseTitle": "Measles program (Adults)",
+      "numberOfDoses": 2,
+      "coverageRate": 90,
+      "targetPopulation": 40000,
+      "lossFactor": 1.25,
+      "annualTargetDoses": 90000,
+      "bufferStockMonths": 0,
+      "supplyPeriodMonths": 3,
+      "dosesPerUnit": 50,
+      "forecastDoses": 22500,
+      "forecastUnits": 450
+    }
+  ]
+}
+```
+
+The value `forecastTotalUnits` is the number that will show up in the Requisition table and detail view. The other values are for if we want to (in future) display the individual components and the calculation somewhere in the UI.
+
+## TO-DO:
+
+Would like to combine this repo in a common "open msupply public plugins" repo, but in order to do that we need to be able to store multiple plugin structures within one repo, which doesn't currently work with the plugin folder structure.
+
+## HOW TO:
+
+To install these plugins, follow the normal procedure for installing Open mSupply plugins...
+
+As a dev....
+
+If you need to clean up your submodule...
+
+```bash
+rm .gitmodules
+git submodule deinit -f --all
+rm -rf .git/modules
+rm -rf /client/packages/plugins/open-msupply-forecasting-plugins`
+```
+
+Checkout this repo as a submodule...
+
+```bash
+git submodule add https://github.com/msupply-foundation/open-msupply-forecasting-plugins ./packages/plugins/open-msupply-forecasting-plugins
+```
+
+> REMEBER NOT TO COMMIT YOUR SUBMODULES
+
+Build the plugin bundle file...
+
+```
+cd server
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i '../client/packages/plugins/open-msupply-forecasting-plugins/' --out-file ../client/packages/plugins/open-msupply-forecasting-plugins/bundle.json
+```
+
+Install on the server (especially for backend plugin)...
+
+```bash
+ cargo run --bin remote_server_cli install-plugin-bundle --path ../client/packages/plugins/open-msupply-forecasting-plugins/bundle.json --url=http://localhost:8890 --username=admin --password=pass
+```
+
+Or use the `generate-and-install-plugin-bundle`
+
+```bash
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/open-msupply-forecasting-plugins/backend' --url 'http://localhost:8000' --username "admin" --password pass
+```
+
+As a normal user, you'll need to use the open-msupply-cli on OMS Central Server
+
+```bash
+ remote_server_cli.exe install-plugin-bundle --path ./path/to/bundle.json --url 'http://localhost:8000' --username "admin" --password pass
+```

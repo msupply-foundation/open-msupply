@@ -20,5 +20,13 @@ codegen
 # build is packed verbatim, so reformatting it would change what ships.
 **/backend/prebuilt
 
+# The React-UI plugins imported from the *-plugins repos: old-UI code, kept
+# byte-for-byte as imported rather than reformatted to this front end's style.
+**/plugins/*/react
+
 # Lockfile
 pnpm-lock.yaml
+
+# The French PMs' glossary, downloaded as-is from their Google Doc and replaced
+# wholesale on each download — reformatting it would make every update a noisy diff.
+src/intl/translation-guides/*.html

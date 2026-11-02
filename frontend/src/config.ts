@@ -35,6 +35,12 @@ export const PRINT_LABEL_ASSET_URL = '/print/label-qr';
 // Proxied to the backend in dev (see vite.config.ts).
 export const SUPPORT_DATABASE_URL = '/support/database';
 
+// GET /support/log/{name} streams one server log file whole, as it is on disk
+// (a rotated .gz stays compressed). Same auth as the database download. The
+// viewer's GraphQL query only carries the end of a file; this is the full one.
+export const supportLogUrl = (fileName: string) =>
+  `/support/log/${encodeURIComponent(fileName)}`;
+
 // Fridge-sensor (Berlinger fridge-tag / Q-tag) log import
 // (spec/cold-chain-monitoring/contract.md § importing a fridge-sensor file) —
 // REST, not GraphQL: POST multipart (field "files") with `?store-id=<id>`,

@@ -62,7 +62,10 @@ export type CaptureWindowOptions = {
   storeId: Accessor<string>;
   invoiceId: Accessor<string>;
   isExternal: Accessor<boolean>;
-  /** Cost is locked by a source link — a new line's prices start at zero. */
+  /**
+   * Cost is locked by a source link — a new line's prices follow its pack size
+   * rather than clearing to zero.
+   */
   costLocked: Accessor<boolean>;
   /**
    * The line editor or another editing window is open: a scan is refused
