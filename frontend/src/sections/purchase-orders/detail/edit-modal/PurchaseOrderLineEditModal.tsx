@@ -437,7 +437,7 @@ const LineEditContent = (
                     when={gates().drafting}
                     fallback={
                       <LabelledValue
-                        label={t('label.requested-packs')}
+                        label={t('label.order-quantity-in-packs')}
                         variant="field"
                         data-testid="packs-value"
                       >
@@ -449,7 +449,7 @@ const LineEditContent = (
                     }
                   >
                     <NumberField
-                      label={t('label.requested-packs')}
+                      label={t('label.order-quantity-in-packs')}
                       min={0}
                       decimalLimit={10}
                       data-testid="packs-input"
@@ -488,7 +488,9 @@ const LineEditContent = (
                     />
                   </Show>
                   <LabelledValue
-                    label={t('label.requested-units')}
+                    label={t('label.order-quantity-in-unit', {
+                      unit: facts()!.unitName || t('label.units'),
+                    })}
                     variant="field"
                     data-testid="requested-units-value"
                   >

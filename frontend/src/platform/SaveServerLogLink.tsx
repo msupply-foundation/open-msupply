@@ -8,7 +8,7 @@ import { t } from '../intl';
 // Android the embedded server's log is the only diagnostic a user can share
 // before the site is initialised — the server-log GraphQL API needs an
 // authenticated session and doesn't exist in the pre-init schema, so this
-// screen reads the log file natively (src/platform/readServerLog.ts) and hands
+// screen copies the log file natively (src/platform/readServerLog.ts) and hands
 // it to the platform save flow. Only the initialisation screen carries it (as
 // in the current app — NOT the login screen, which is post-initialisation and
 // can reach logs through the authenticated app). Renders nothing off Android:

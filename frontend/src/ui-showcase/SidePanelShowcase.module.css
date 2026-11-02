@@ -22,7 +22,7 @@
     visibility 0s var(--motion-slow);
 }
 
-:dir(rtl) .panelHolder {
+[dir='rtl'] .panelHolder {
   --hide-x: -100%;
 }
 

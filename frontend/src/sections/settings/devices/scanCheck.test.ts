@@ -37,6 +37,7 @@ const paracetamol: ItemOption = {
   doses: 1,
   defaultPackSize: 1,
   defaultSellPricePerPack: 0,
+  volumePerPack: 0,
 };
 
 const barcode = {
