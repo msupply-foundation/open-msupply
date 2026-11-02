@@ -226,6 +226,29 @@ describe('default date format (numeric, #774)', () => {
       setLocale('en');
     }
   });
+  // A month-only field's format round-trips in every app language: shown in
+  // `MMM yyyy` and re-typed, it still lands on that month's 1st. French short
+  // names end in a dot (`oct.`, `janv.`) and no longer match the typed text
+  // once the dot is separated off, so they survive only through the long-name
+  // prefix fallback — this pins that fallback.
+  it('round-trips the month format of every language', async () => {
+    try {
+      for (const language of Object.keys(
+        DATE_FNS_LOADERS
+      ) as SupportedLocale[]) {
+        await loadDateFnsLocale(language);
+        setLocale(language);
+        const shown = formatIsoDate('2026-10-01', 'MMM yyyy');
+        expect(shown, `${language}: "${shown}"`).not.toBe('');
+        expect(
+          parseDateInput(shown, 'MMM yyyy'),
+          `${language}: "${shown}"`
+        ).toBe('2026-10-01');
+      }
+    } finally {
+      setLocale('en');
+    }
+  });
 });
 
 describe('dateToOffsetIso (offset-preserving serialization)', () => {

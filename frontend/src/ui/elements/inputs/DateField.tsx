@@ -100,6 +100,10 @@ export const DateField = (props: DateFieldProps) => {
   // is in range though its 1st is earlier.
   const bound = (iso: string) => (props.monthOnly ? iso.slice(0, 7) : iso);
 
+  // Bumped each time the picker popover opens — the panel survives close, so
+  // it re-seeds its navigation view via this (DatePickerPanel's `openCount`).
+  const [openCount, setOpenCount] = createSignal(0);
+
   // Local text buffer for typing; resynced from the external value only when
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
   // never mid-typing, so keystrokes don't get clobbered.
@@ -190,6 +194,7 @@ export const DateField = (props: DateFieldProps) => {
             triggerClass={styles.iconBtn}
             triggerLabel="Open calendar"
             triggerProps={{ disabled: props.disabled }}
+            onOpen={() => setOpenCount(count => count + 1)}
             trigger={<CalendarIcon class={styles.calendarIcon} />}
           >
             {close => (
@@ -202,6 +207,7 @@ export const DateField = (props: DateFieldProps) => {
                 // typed path.
                 required={props.required}
                 monthOnly={props.monthOnly}
+                openCount={openCount()}
                 onSelect={d => {
                   apply(d ? dateToIsoDate(d) : null);
                   close();

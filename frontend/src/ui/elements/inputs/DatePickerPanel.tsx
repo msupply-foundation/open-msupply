@@ -30,6 +30,13 @@ export type DatePickerPanelProps = {
    * can't; a calendar pick bypasses the text commit).
    */
   required?: boolean;
+  /**
+   * Bumped by the host popover each time it re-opens (Popover's `onOpen`):
+   * the panel stays mounted after its first open, so a month-only field's
+   * picker would otherwise resume on whatever grid the user left (the year
+   * grid, say) instead of opening on the month grid (OMS-REG-RPT-10.44).
+   */
+  openCount?: number;
 } & (
   | {
       mode?: 'single';
@@ -82,6 +89,19 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
   const [view, setView] = createSignal<'day' | 'month' | 'year'>(
     monthOnly() ? 'month' : 'day'
   );
+  // Re-open → straight back to the field's default view. Deferred: the bump
+  // for the FIRST open fires before this panel mounts, and the initial state
+  // already is that default, so only a later re-open resets. Month-only
+  // fields are the ones a spec case pins (see `openCount`).
+  createEffect(
+    on(
+      () => props.openCount,
+      () => {
+        if (monthOnly()) setView('month');
+      },
+      { defer: true }
+    )
+  );
   const [yearBase, setYearBase] = createSignal(0);
 
   // The date the calendar should focus on (single value, or a range's start).
@@ -114,10 +134,17 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     return false;
   };
 
-  // Month-only: a month is out of range when none of its days are in range.
+  // Month-only: a month is out of range only when NO day of it is in range —
+  // its last day before `min`, or its first day after `max`. Comparing the
+  // month's two ends (not its 1st and its last) keeps a month holding both
+  // bounds inside it selectable — e.g. min = the 2nd and max = today leaves
+  // the intervening days valid (OMS-REG-RPT-10.44).
   const monthDisabled = (year: number, monthIndex: number): boolean =>
-    disabled(new Date(year, monthIndex, 1)) &&
-    disabled(new Date(year, monthIndex + 1, 0));
+    (props.min !== undefined &&
+      dateToIsoDate(new Date(year, monthIndex + 1, 0)) <
+        dateToIsoDate(props.min)) ||
+    (props.max !== undefined &&
+      dateToIsoDate(new Date(year, monthIndex, 1)) > dateToIsoDate(props.max));
 
   const monthSelected = (ctx: CalendarCtx, monthIndex: number): boolean => {
     if (props.mode === 'range' || !props.monthOnly)
@@ -276,6 +303,12 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
                 type="button"
                 class={styles.pickCell}
                 data-selected={monthSelected(ctx, i()) ? '' : undefined}
+                // In monthOnly mode the grid holds the field's VALUE, not just
+                // navigation — the pick is announced as pressed, so the chosen
+                // month isn't signalled by colour alone (ui/CLAUDE.md 9).
+                aria-pressed={
+                  monthOnly() && monthSelected(ctx, i()) ? 'true' : undefined
+                }
                 disabled={
                   monthOnly() && monthDisabled(ctx.month.getFullYear(), i())
                 }

@@ -1039,6 +1039,71 @@ describe('date options (OMS-REG-RPT-10.40)', () => {
   });
 });
 
+// A month-only field with sibling bounds (OMS-REG-RPT-10.44): the bounds
+// compare by month — a month holding any in-range day is in range, so a
+// sibling bound falling mid-month doesn't reject the month's 1st — the same
+// rule the picker grid and DateField's typed path apply.
+const monthOptionsSchema = {
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      month: { type: 'string', format: 'date-time' },
+      start: { type: 'string', format: 'date-time' },
+    },
+  },
+  uiSchema: {
+    elements: [
+      {
+        type: 'Control',
+        scope: '#/properties/month',
+        label: 'Month',
+        options: {
+          monthOnly: true,
+          min: '#/properties/start',
+          disableFuture: true,
+        },
+      },
+    ],
+  },
+};
+
+describe('month options (OMS-REG-RPT-10.44)', () => {
+  const fields = parseArgumentSchema(monthOptionsSchema);
+  const month = byKey(fields, 'month');
+  if (month.kind !== 'date') throw new Error('expected date');
+  // Device-local midnights, so the instant reads back as the same day.
+  const at = (monthIndex: number, day: number) =>
+    new Date(2026, monthIndex, day).toISOString();
+
+  it('accepts the month holding a mid-month min bound', () => {
+    // min = 15 Oct; the submitted 1 Oct is in range by month.
+    const values = { month: at(9, 1), start: at(9, 15) };
+    expect(dateFieldViolation(month, values, '2026-11-03')).toBeUndefined();
+  });
+
+  it('accepts the month holding a mid-month max bound', () => {
+    // The value is the 1st; the max sibling falls on the 3rd — same month.
+    const values = { month: at(10, 1), start: at(10, 3) };
+    expect(dateFieldViolation(month, values, '2026-11-03')).toBeUndefined();
+  });
+
+  it('flags a month before the min bound', () => {
+    const values = { month: at(8, 1), start: at(9, 15) };
+    expect(dateFieldViolation(month, values, '2026-11-03')).toBe('min');
+  });
+
+  it('accepts the current month against a today ceiling', () => {
+    // disableFuture caps at today = 3 Nov; the 1 Nov value is that month.
+    const values = { start: undefined, month: at(10, 1) };
+    expect(dateFieldViolation(month, values, '2026-11-03')).toBeUndefined();
+  });
+
+  it('flags a month after today when future days are disallowed', () => {
+    const values = { start: undefined, month: at(11, 1) };
+    expect(dateFieldViolation(month, values, '2026-11-03')).toBe('future');
+  });
+});
+
 describe('read-only marking — both wire homes (OMS-REG-RPT-10.11)', () => {
   // stock-status / item-usage mark read-only on the uiSchema element
   // (options.readonly, lowercase); expiring-items uses the jsonSchema property

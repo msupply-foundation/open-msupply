@@ -726,11 +726,23 @@ export const dateFieldBounds = (
 };
 
 /**
+ * The comparable unit for a value/bound pair: a month-only field
+ * (OMS-REG-RPT-10.44) compares by `YYYY-MM` — a month holding any in-range
+ * day is in range, so a `min` falling mid-month doesn't reject the month's
+ * 1st — while a day field compares days untouched. Slicing BOTH sides keeps a
+ * stored instant's day component out of a month comparison.
+ */
+const comparableDay = (field: DateField, day: string): string =>
+  field.monthOnly ? day.slice(0, 7) : day;
+
+/**
  * Which bound (if any) the field's current value violates — 'future' when the
  * element disallows future days and the day is past today, else 'min'/'max'
  * against the live sibling bounds. The picker can't produce a violation
  * (out-of-range days are unselectable) but typed entry can; a violation shows
- * at the field and blocks OK (OMS-REG-RPT-10.40).
+ * at the field and blocks OK (OMS-REG-RPT-10.40). Month-only fields compare
+ * by month (see `comparableDay`) — the same rule the picker grid and the
+ * typed path apply, so the three agree.
  */
 export const dateFieldViolation = (
   field: DateField,
@@ -739,11 +751,17 @@ export const dateFieldViolation = (
 ): 'future' | 'min' | 'max' | undefined => {
   const day = dateArgumentDay(values[field.key]);
   if (!day) return undefined;
-  if (field.disableFuture && day > today) return 'future';
+  if (
+    field.disableFuture &&
+    comparableDay(field, day) > comparableDay(field, today)
+  )
+    return 'future';
   const min = field.minKey ? dateArgumentDay(values[field.minKey]) : '';
-  if (min && day < min) return 'min';
+  if (min && comparableDay(field, day) < comparableDay(field, min))
+    return 'min';
   const max = field.maxKey ? dateArgumentDay(values[field.maxKey]) : '';
-  if (max && day > max) return 'max';
+  if (max && comparableDay(field, day) > comparableDay(field, max))
+    return 'max';
   return undefined;
 };
 
