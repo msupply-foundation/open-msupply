@@ -10180,6 +10180,7 @@ export type QueriesReportsArgs = {
 export type QueriesRequisitionArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<RequisitionNodeType>;
 };
 
 export type QueriesRequisitionByNumberArgs = {
@@ -10482,6 +10483,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
+  QueryReportErrorInterface &
   RequisitionLineChartErrorInterface &
   RequisitionLineForecastPreviewErrorInterface &
   RequisitionLineStatsErrorInterface &

@@ -102,7 +102,12 @@ pub enum RequisitionResponse {
     Response(RequisitionNode),
 }
 
-pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<RequisitionResponse> {
+pub fn get_requisition(
+    ctx: &Context<'_>,
+    store_id: &str,
+    id: &str,
+    r#type: Option<RequisitionNodeType>,
+) -> Result<RequisitionResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -120,6 +125,13 @@ pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Re
         Some(store_id),
         id,
     )?;
+    // A named type narrows the read: a requisition of the other type is
+    // RecordNotFound rather than handed back to be shown as the wrong kind.
+    let requisition_option = requisition_option.filter(|requisition| {
+        r#type.is_none_or(|r#type| {
+            requisition.requisition_row.r#type == RequisitionType::from(r#type)
+        })
+    });
 
     let response = match requisition_option {
         Some(requisition) => {
