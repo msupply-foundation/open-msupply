@@ -12,6 +12,8 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../ui/elements/table/tableHelpers';
@@ -27,6 +29,7 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import {
   CloseIcon,
+  InfoIcon,
   PlusCircleIcon,
   SidebarIcon,
   TrashIcon,
@@ -82,21 +85,20 @@ const PrescriptionRequestDetailView: Component = () => {
   const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
 
   // The request — header, side panel, AND lines in one read (a small line set;
-  // no server paging). A not-found (bad id) promotes to the global modal. The
-  // first read shows the local spinner; saves merge via mutate, line saves
-  // refetch.
+  // no server paging). A bad id — another record's, another store's request,
+  // a made-up one — answers RecordNotFound and resolves to undefined: the
+  // not-found deep-link alert renders below (#1746). It is deliberately NOT
+  // routed to the global unexpected-error modal (no mapSuccessToError): that
+  // would offer a useless reload of the same bad id and shadow the local
+  // notice. The first read shows the local spinner; saves merge via mutate,
+  // line saves refetch.
   const [data, { mutate, refetch }] = createResource(
     () => ({
       storeId: params.storeId,
       id: params.requestId,
     }),
     async variables => {
-      const result = await graphqlFetch(PrescriptionRequestDetail, variables, {
-        mapSuccessToError: d =>
-          d.prescriptionRequest.__typename === 'RecordNotFound'
-            ? d.prescriptionRequest.description
-            : undefined,
-      });
+      const result = await graphqlFetch(PrescriptionRequestDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.prescriptionRequest.__typename ===
         'PrescriptionRequestNode'
@@ -228,7 +230,35 @@ const PrescriptionRequestDetailView: Component = () => {
   ];
 
   return (
-    <Show when={info()} fallback={<Spinner center />}>
+    <Show
+      when={info()}
+      fallback={
+        // Spinner while the first read is in flight; a read that settles with
+        // no request is the not-found alert.
+        <Show when={!data.loading} fallback={<Spinner center />}>
+          <Dialog
+            open
+            testId="prescription-request-not-found-notice"
+            icon={<InfoIcon />}
+            title={t('error.prescription-request-not-found')}
+            description={t('messages.click-to-return-to-prescription-requests')}
+            onClose={() =>
+              navigate(`/${params.storeId}/dispensary/prescription-request`)
+            }
+            actions={
+              <OkButton
+                data-testid="dialog-button-ok"
+                onClick={() =>
+                  navigate(
+                    `/${params.storeId}/dispensary/prescription-request`
+                  )
+                }
+              />
+            }
+          />
+        </Show>
+      }
+    >
       {node => (
         <Tabs value={activeTab()} onValueChange={setActiveTab}>
           <Page

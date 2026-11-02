@@ -28,8 +28,15 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
-import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
+import {
+  InfoIcon,
+  PlusCircleIcon,
+  SaveIcon,
+  XCircleIcon,
+} from '../../../ui/icons';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
@@ -124,7 +131,11 @@ const PatientDetailView: Component = () => {
     patientId: () => params.patientId,
   });
   // The screen's own read suspends for its first load (the Suspense below);
-  // everything under it reads the patient through patientDetails.node.
+  // everything under it reads the patient through patientDetails.node. The
+  // server answers null — not an error — for an id that is not one of this
+  // store's patients (another name's, another record's, a made-up one), so
+  // the read settles undefined and the not-found deep-link alert renders
+  // below (#1746).
   const { patient: data, refetch } = patientDetails;
   const node = () => data.latest ?? undefined;
   const editor = patientDetails.editor;
@@ -397,7 +408,32 @@ const PatientDetailView: Component = () => {
 
   return (
     <Suspense fallback={<Spinner center />}>
-      <Show when={node()}>
+      <Show
+        when={node()}
+        fallback={
+          // `!data.loading`: the read re-keys once the Patient registry
+          // settles the path (patientDetails.ts), and that refetch must not
+          // flash the alert.
+          <Show when={!data.loading} fallback={<Spinner center />}>
+            <Dialog
+              open
+              testId="patient-not-found-notice"
+              icon={<InfoIcon />}
+              title={t('error.patient-not-found')}
+              description={t('messages.click-to-return-to-patients')}
+              onClose={() => navigate(`/${params.storeId}/dispensary/patients`)}
+              actions={
+                <OkButton
+                  data-testid="dialog-button-ok"
+                  onClick={() =>
+                    navigate(`/${params.storeId}/dispensary/patients`)
+                  }
+                />
+              }
+            />
+          </Show>
+        }
+      >
         {n => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page

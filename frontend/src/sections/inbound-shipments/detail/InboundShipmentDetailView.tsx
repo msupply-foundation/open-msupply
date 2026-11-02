@@ -31,7 +31,14 @@ import {
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Comment } from '../../../ui/elements/feedback/Comment';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
+import {
+  CloseIcon,
+  InfoIcon,
+  PlusCircleIcon,
+  SidebarIcon,
+} from '../../../ui/icons';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import {
   DataTable,
   type Column,
@@ -298,18 +305,18 @@ const InboundShipmentDetailView: Component = () => {
 
   // Header/side-panel/footer node. `type` is the permission scope selector and
   // must match the shipment's own scope — which the URL carries, put there by
-  // whatever surfaced this shipment (see inboundShipmentHref). ONE request: a
-  // RecordNotFound here is a real missing record, promoted to the global
-  // unexpected-error modal, and never the wrong-scope kind.
+  // whatever surfaced this shipment (see inboundShipmentHref). The `type` also
+  // filters, so another invoice kind's id, another store's shipment, or a bad
+  // id all come back as a NodeError (RecordNotFound) and resolve to undefined —
+  // the not-found deep-link alert renders below (#1746). That NodeError is
+  // deliberately NOT routed to the global unexpected-error modal (no
+  // mapSuccessToError): it would offer a useless reload of the same bad id and
+  // shadow the local notice — the same call the outbound and return details
+  // make.
   const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId, type: scope() }),
     async variables => {
-      const result = await graphqlFetch(InboundShipment, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
+      const result = await graphqlFetch(InboundShipment, variables);
       return result.kind === 'success' &&
         result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
@@ -1133,9 +1140,36 @@ const InboundShipmentDetailView: Component = () => {
     // info()/rows() are read non-suspending (above), so the initial-load
     // spinner comes from this <Show> fallback, not from the <Suspense> (which
     // stays only as the lazy-route-chunk boundary). Once the node is present it
-    // stays rendered through every refetch — no remount of the open editor.
+    // stays rendered through every refetch — no remount of the open editor. A
+    // read that settles with no shipment is the not-found deep-link alert.
     <Suspense fallback={<Spinner center />}>
-      <Show when={info()} fallback={<Spinner center />}>
+      <Show
+        when={info()}
+        fallback={
+          <Show when={!data.loading} fallback={<Spinner center />}>
+            <Dialog
+              open
+              testId="shipment-not-found-notice"
+              icon={<InfoIcon />}
+              title={t('error.shipment-not-found')}
+              description={t('messages.click-to-return-to-shipments')}
+              onClose={() =>
+                navigate(`/${params.storeId}/replenishment/inbound-shipment`)
+              }
+              actions={
+                <OkButton
+                  data-testid="dialog-button-ok"
+                  onClick={() =>
+                    navigate(
+                      `/${params.storeId}/replenishment/inbound-shipment`
+                    )
+                  }
+                />
+              }
+            />
+          </Show>
+        }
+      >
         {node => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page

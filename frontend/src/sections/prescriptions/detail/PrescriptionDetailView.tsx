@@ -19,6 +19,8 @@ import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFo
 import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
@@ -155,22 +157,22 @@ const PrescriptionDetailView: Component = () => {
   const [printOutcome, setPrintOutcome] = createSignal<LabelPrintOutcome>();
 
   // The prescription — header, side panel, AND lines in one read (a
-  // prescription's line set is small; no server paging needed). A NodeError
-  // (bad id) promotes to the global modal (OMS-REG-DIS-03.53's blocking
-  // surface). The first read suspends into the local <Suspense>; saves merge
-  // via mutate, line saves refetch.
+  // prescription's line set is small; no server paging needed). The read pins
+  // `type: PRESCRIPTION`, so another invoice kind's id, another store's
+  // prescription, and a bad id all come back as a NodeError (RecordNotFound)
+  // and resolve to undefined — the blocking not-found alert renders below
+  // (OMS-REG-DIS-03.53; #1746). That NodeError is deliberately NOT routed to
+  // the global unexpected-error modal (no mapSuccessToError): it would offer a
+  // useless reload of the same bad id and shadow the local notice — the same
+  // call the outbound and return details make. Saves merge via mutate, line
+  // saves refetch.
   const [data, { mutate, refetch }] = createResource(
     () => ({
       storeId: params.storeId,
       id: params.prescriptionId,
     }),
     async variables => {
-      const result = await graphqlFetch(PrescriptionDetail, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
+      const result = await graphqlFetch(PrescriptionDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
@@ -570,7 +572,31 @@ const PrescriptionDetailView: Component = () => {
   ];
 
   return (
-    <Show when={info()} fallback={<Spinner center />}>
+    <Show
+      when={info()}
+      fallback={
+        // Spinner while the first read is in flight; a read that settles with
+        // no prescription is the not-found alert (OMS-REG-DIS-03.53).
+        <Show when={!data.loading} fallback={<Spinner center />}>
+          <Dialog
+            open
+            testId="prescription-not-found-notice"
+            icon={<InfoIcon />}
+            title={t('error.prescription-not-found')}
+            description={t('messages.click-to-return-to-prescriptions')}
+            onClose={() => navigate(`/${params.storeId}/dispensary/dispensing`)}
+            actions={
+              <OkButton
+                data-testid="dialog-button-ok"
+                onClick={() =>
+                  navigate(`/${params.storeId}/dispensary/dispensing`)
+                }
+              />
+            }
+          />
+        </Show>
+      }
+    >
       {node => (
         <Tabs value={activeTab()} onValueChange={setActiveTab}>
           <Page
