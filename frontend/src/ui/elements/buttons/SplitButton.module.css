@@ -215,13 +215,19 @@
 }
 
 /* A page header whose labelled actions don't fit (Header measures it — see
-   Button.module.css): every icon-bearing split button's main half collapses. */
-[data-actions-collapsed] > [data-header-buttons] .main:has(.icon) {
+   Button.module.css): every icon-bearing split button's main half collapses —
+   except inside a dialog opened from the header, which keeps its labels. */
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .main:has(.icon):not(dialog *) {
   min-inline-size: 3rem;
   padding-inline: 0.75rem;
 }
 
-[data-actions-collapsed] > [data-header-buttons] .main:has(.icon) .label {
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .main:has(.icon):not(dialog *)
+  .label {
   position: absolute;
   inline-size: 1px;
   block-size: 1px;

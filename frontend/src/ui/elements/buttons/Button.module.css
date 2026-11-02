@@ -181,13 +181,22 @@
 /* A page header whose labelled actions don't fit beside its title — Header
    MEASURES that and sets data-actions-collapsed (no breakpoint): every
    icon-bearing button in the cluster sheds its label to the icon, opted in or
-   not. Labels stay while they fit, so a tablet with room keeps them. */
-[data-actions-collapsed] > [data-header-buttons] .button:has(.icon) {
+   not. Labels stay while they fit, so a tablet with room keeps them.
+   `:not(dialog *)` stops it at a dialog's edge: a native <dialog> renders
+   where it is mounted, so one opened from a header action (Export/Print's
+   "Select a form") sits inside the cluster, but its footer is not part of the
+   header's row and keeps its labels (OMS-1499). */
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .button:has(.icon):not(dialog *) {
   min-inline-size: 3rem;
   padding-inline: 0.75rem;
 }
 
-[data-actions-collapsed] > [data-header-buttons] .button:has(.icon) .label {
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .button:has(.icon):not(dialog *)
+  .label {
   position: absolute;
   inline-size: 1px;
   block-size: 1px;
