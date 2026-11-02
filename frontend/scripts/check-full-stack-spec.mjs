@@ -1,21 +1,22 @@
 /*
- * Full-stack spec check — IMPLEMENTING.md C9 and C10.
+ * Full-stack spec check — IMPLEMENTING.md C9.
  *
  * A full-stack vertical (its README opens with `> **Scope: full stack.**`)
- * describes the server in its contract.md, and two of those sections must stay
- * true to the code:
+ * decides its tables in data.md, and the server's code must match:
  *
- *   C10  Proposed API is SDL for what the server doesn't export yet. Once
- *        server/schema.graphql has a name, its block is deleted, so a proposed
- *        name that is also in the schema fails — the copy would drift.
- *   C9   Data lists every table the vertical owns. Each table the server's code
- *        already defines (a diesel `table!` block under server/repository/src)
- *        must have the same columns, each nullable or not as stated. A table
- *        the code doesn't have yet is listed as not built, without failing.
+ *   C9   Each table the server's code already defines (a diesel `table!` block
+ *        under server/repository/src) has the same columns as data.md, each
+ *        nullable or not as stated. For a table the vertical only extends
+ *        (`(existing)` on its heading), data.md lists just the columns the
+ *        vertical adds, and only those are compared. A table the code doesn't
+ *        have yet is listed as not built, without failing.
  *
- * Both compare what the spec says with what the server has. Neither asks the
- * spec to be complete — a spec is written in stages, and one with no
- * contract.md or Data section yet is listed, not failed. Completeness is
+ * A full-stack vertical has no contract.md: the builder designs the API from
+ * the rules, and the exported schema records it. One that still has a
+ * contract.md fails, so a half-converted vertical can't pass.
+ *
+ * The check doesn't ask the spec to be complete — a spec is written in stages,
+ * and one with no data.md yet is listed, not failed. Completeness is
  * AUTHORING.md's definition of done.
  *
  * Plain Node, no dependencies: server CI runs it too, without an install, so
@@ -35,91 +36,6 @@ export const isFullStack = readme => {
   return heading.startsWith('# ') && FULL_STACK_LINE.test(first);
 };
 
-/** A `## <title>` section's body, up to the next `##` outside a code fence. */
-export const section = (markdown, title) => {
-  const lines = markdown.split('\n');
-  let inFence = false;
-  let start = -1;
-  const body = [];
-  for (const line of lines) {
-    if (line.startsWith('```')) inFence = !inFence;
-    if (!inFence && line.startsWith('## ')) {
-      if (start >= 0) break;
-      if (line.slice(3).trim() === title) {
-        start = 0;
-        continue;
-      }
-    }
-    if (start >= 0) body.push(line);
-  }
-  return start >= 0 ? body.join('\n') : null;
-};
-
-const graphqlBlocks = markdown =>
-  [...markdown.matchAll(/^```graphql\n([\s\S]*?)^```/gm)].map(m => m[1]);
-
-const DEFINITION =
-  /^\s*(extend\s+)?(type|input|enum|union|interface|scalar)\s+([A-Za-z_]\w*)/gm;
-
-/** Field names declared directly inside `{ … }` of a type body. */
-const topLevelFields = body => {
-  const fields = [];
-  let parens = 0;
-  for (const m of body.matchAll(/[A-Za-z_]\w*|[()]/g)) {
-    if (m[0] === '(') parens++;
-    else if (m[0] === ')') parens--;
-    else if (parens === 0) {
-      const after = body.slice(m.index + m[0].length).trimStart();
-      if (after.startsWith('(') || after.startsWith(':')) fields.push(m[0]);
-    }
-  }
-  return fields;
-};
-
-/** Names a type body opened at `index` declares, up to its matching brace. */
-const bodyAt = (text, index) => {
-  const open = text.indexOf('{', index);
-  if (open < 0) return '';
-  let depth = 0;
-  for (let i = open; i < text.length; i++) {
-    if (text[i] === '{') depth++;
-    else if (text[i] === '}' && --depth === 0) return text.slice(open + 1, i);
-  }
-  return text.slice(open + 1);
-};
-
-/**
- * What an SDL text declares: the names of the types it defines, and the
- * fields it adds to each root (`Queries`, `Mutations`), whether by `type` or
- * `extend type`.
- */
-export const sdlNames = source => {
-  // Descriptions are prose: a word followed by a colon there isn't a field.
-  const sdl = source.replace(/"""[\s\S]*?"""|"(?:[^"\\\n]|\\.)*"/g, '');
-  const types = new Set();
-  const roots = { Queries: new Set(), Mutations: new Set() };
-  for (const m of sdl.matchAll(DEFINITION)) {
-    const [, extend, , name] = m;
-    if (name in roots) {
-      for (const f of topLevelFields(bodyAt(sdl, m.index))) roots[name].add(f);
-    } else if (!extend) {
-      types.add(name);
-    }
-  }
-  return { types, roots };
-};
-
-/** Proposed names already in the schema: each one is a C10 failure. */
-export const exportedProposals = (proposedSdl, schemaSdl) => {
-  const proposed = sdlNames(proposedSdl);
-  const schema = sdlNames(schemaSdl);
-  const found = [...proposed.types].filter(t => schema.types.has(t));
-  for (const root of Object.keys(proposed.roots))
-    for (const f of proposed.roots[root])
-      if (schema.roots[root].has(f)) found.push(`${root}.${f}`);
-  return found;
-};
-
 const cells = row =>
   row
     .trim()
@@ -129,19 +45,26 @@ const cells = row =>
 
 const unquote = text => text.replace(/`/g, '').trim();
 
+const TABLE_HEADING = /^## `(\w+)`(.*)$/;
+
 /**
- * The tables a Data section lists: a `### name` heading for each, then a
- * markdown table with Column and Null headers.
- * Returns name → column → nullable.
+ * The tables a data.md decides: a `` ## `name` `` heading for each, ending
+ * `(existing)` for a table the vertical only extends, then a markdown table
+ * with Column and Null headers. Any other `##` heading (Permissions) ends the
+ * table before it.
+ * Returns name → { existing, columns: column → nullable }.
  */
-export const dataTables = sectionText => {
+export const dataTables = markdown => {
   const tables = new Map();
   let current = null;
   let header = null;
-  for (const line of sectionText.split('\n')) {
-    if (line.startsWith('### ')) {
-      current = new Map();
-      tables.set(unquote(line.slice(4)), current);
+  for (const line of markdown.split('\n')) {
+    if (line.startsWith('## ')) {
+      const m = TABLE_HEADING.exec(line);
+      current = m
+        ? { existing: /\(existing\)/.test(m[2]), columns: new Map() }
+        : null;
+      if (m) tables.set(m[1], current);
       header = null;
       continue;
     }
@@ -155,11 +78,24 @@ export const dataTables = sectionText => {
       continue;
     }
     if (row.every(c => /^:?-+:?$/.test(c))) continue;
+    if (!header.includes('column')) continue;
     const column = unquote(row[header.indexOf('column')] ?? '');
     const isNull = (row[header.indexOf('null')] ?? '').toLowerCase();
-    if (column) current.set(column, isNull === 'yes');
+    if (column) current.columns.set(column, isNull === 'yes');
   }
   return tables;
+};
+
+/** The text inside the first `{ … }` at or after `index`, braces balanced. */
+const bodyAt = (text, index) => {
+  const open = text.indexOf('{', index);
+  if (open < 0) return '';
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}' && --depth === 0) return text.slice(open + 1, i);
+  }
+  return text.slice(open + 1);
 };
 
 const COLUMN = /(?:#\[sql_name\s*=\s*"(\w+)"\]\s*)?(\w+)\s*->\s*([^,\n]+)/g;
@@ -232,7 +168,7 @@ const rustFiles = dir =>
       });
 
 /** Every problem across the full-stack verticals in `specDir`. */
-export const check = ({ specDir, schemaPath, repositoryDir }) => {
+export const check = ({ specDir, repositoryDir }) => {
   const verticals = readdirSync(specDir)
     .filter(name => existsSync(join(specDir, name, 'README.md')))
     .filter(name =>
@@ -246,36 +182,24 @@ export const check = ({ specDir, schemaPath, repositoryDir }) => {
   if (verticals.length === 0)
     return { verticals, problems, notBuilt, noData, tablesChecked };
 
-  const schema = readFileSync(schemaPath, 'utf8');
   const code = new Map();
   for (const file of rustFiles(repositoryDir))
     for (const [name, columns] of codeTables(readFileSync(file, 'utf8')))
       if (columns.size > (code.get(name)?.size ?? -1)) code.set(name, columns);
 
   for (const vertical of verticals) {
-    const contractPath = join(specDir, vertical, 'contract.md');
-    if (!existsSync(contractPath)) {
+    if (existsSync(join(specDir, vertical, 'contract.md')))
+      problems.push(
+        `${vertical}: a full-stack vertical has no contract.md — its tables go in data.md`
+      );
+    const dataPath = join(specDir, vertical, 'data.md');
+    if (!existsSync(dataPath)) {
       noData.push(vertical);
       continue;
     }
-    const contract = readFileSync(contractPath, 'utf8');
-
-    const proposed = section(contract, 'Proposed API');
-    if (proposed !== null)
-      for (const name of exportedProposals(
-        graphqlBlocks(proposed).join('\n'),
-        schema
-      ))
-        problems.push(
-          `${vertical}: Proposed API still declares ${name}, which schema.graphql exports — delete its block (C10)`
-        );
-
-    const data = section(contract, 'Data');
-    if (data === null) {
-      noData.push(vertical);
-      continue;
-    }
-    for (const [table, columns] of dataTables(data)) {
+    for (const [table, { existing, columns }] of dataTables(
+      readFileSync(dataPath, 'utf8')
+    )) {
       const built = code.get(table);
       if (!built) {
         notBuilt.push(`${vertical}: ${table}`);
@@ -292,6 +216,7 @@ export const check = ({ specDir, schemaPath, repositoryDir }) => {
             `${vertical}: ${table}.${column} is ${nullable ? 'nullable' : 'not nullable'} in the spec but ${built.get(column) ? 'nullable' : 'not nullable'} in the code (C9)`
           );
       }
+      if (existing) continue;
       for (const column of built.keys())
         if (!columns.has(column))
           problems.push(
@@ -310,14 +235,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   }
   const { verticals, problems, notBuilt, noData, tablesChecked } = check({
     specDir: '../spec',
-    schemaPath: '../server/schema.graphql',
     repositoryDir: '../server/repository/src',
   });
   if (problems.length > 0) {
     console.error(
       `Full-stack spec out of step with the server:\n  ${problems.join('\n  ')}`
     );
-    console.error('\nSee spec/AUTHORING.md → The back-end sections.');
+    console.error('\nSee spec/AUTHORING.md → data.md.');
     process.exit(1);
   }
   console.log(
@@ -327,8 +251,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
           (notBuilt.length > 0
             ? `; not built yet: ${notBuilt.join(', ')}`
             : '') +
-          (noData.length > 0
-            ? `; no Data section yet: ${noData.join(', ')}`
-            : '')
+          (noData.length > 0 ? `; no data.md yet: ${noData.join(', ')}` : '')
   );
 }

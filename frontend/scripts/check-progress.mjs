@@ -10,7 +10,8 @@
  * other derived files honest.
  *
  * The derivation is PROGRESS.md's own "What each column means" table:
- *   Spec      spec/<vertical>/ exists — README, rules, contract, ui-surface
+ *   Spec      spec/<vertical>/ exists — README, rules, ui-surface, and
+ *             contract (front end) or data (full stack)
  *   Cases     spec/<vertical>/cases/ holds at least one file
  *   Build     src/sections/<vertical>/ exists
  *   e2e       e2e/specs/<vertical>-regression.spec.ts exists (the stem may
@@ -36,7 +37,8 @@ import { join } from 'node:path';
 
 const FILE = '../spec/PROGRESS.md';
 const SPEC_DIR = '../spec';
-const SPEC_FILES = ['README.md', 'rules.md', 'contract.md', 'ui-surface.md'];
+const SPEC_FILES = ['README.md', 'rules.md', 'ui-surface.md'];
+const FULL_STACK_LINE = /^> \*\*Scope: full stack\.\*\* /m;
 
 // spec/ is not published to the public mirror (.github/mirror/rules.txt), and
 // this file lives inside it, so there is nothing to check there — skip rather
@@ -73,11 +75,22 @@ const reports = dirs('exploratory/reports').flatMap(date =>
   readdirSync(join('exploratory/reports', date)).map(name => `${date}/${name}`)
 );
 
+// A full-stack vertical decides its tables in data.md and has no contract.md.
+const specContract = vertical => {
+  const readme = join(SPEC_DIR, vertical, 'README.md');
+  return existsSync(readme) &&
+    FULL_STACK_LINE.test(readFileSync(readme, 'utf8'))
+    ? 'data.md'
+    : 'contract.md';
+};
+
 const derive = vertical => {
   // The suite is named for the vertical, give or take a plural.
   const suiteStems = [vertical, vertical.replace(/s$/, ''), `${vertical}s`];
   return {
-    spec: SPEC_FILES.every(f => existsSync(join(SPEC_DIR, vertical, f)))
+    spec: [...SPEC_FILES, specContract(vertical)].every(f =>
+      existsSync(join(SPEC_DIR, vertical, f))
+    )
       ? '✅'
       : '—',
     cases:

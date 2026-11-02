@@ -6,16 +6,13 @@ import {
   check,
   codeTables,
   dataTables,
-  exportedProposals,
   isFullStack,
-  sdlNames,
-  section,
 } from './check-full-stack-spec.mjs';
 
 const FULL = '> **Scope: full stack.** Specifies the whole area.';
 const FRONT = '> **Scope: front end.** Specifies the front end.';
 
-/** A repo with spec/, server/schema.graphql and server/repository/src. */
+/** A repo with spec/ and server/repository/src. */
 const fakeRepo = files => {
   const root = mkdtempSync(join(tmpdir(), 'full-stack-spec-'));
   for (const [path, body] of Object.entries(files)) {
@@ -24,32 +21,21 @@ const fakeRepo = files => {
   }
   return check({
     specDir: join(root, 'spec'),
-    schemaPath: join(root, 'server/schema.graphql'),
     repositoryDir: join(root, 'server/repository/src'),
   });
 };
 
-const SCHEMA = `type Queries {
-  procurements(storeId: String!, filter: ProcurementFilterInput): ProcurementsResponse!
-}
-type Mutations {
-  insertLocation(storeId: String!, input: InsertLocationInput!): InsertLocationResponse!
-}
-type LocationNode {
-  id: String!
-}
-`;
+const PROCUREMENT_TABLE = `## \`procurement\`
 
-const contract = ({ proposed = '', data = '' }) =>
-  `# Contract\n\n## A rule\n\nMapping.\n\n## Proposed API\n\n${proposed}\n\n## Data\n\n${data}\n\n## Contract surface (index)\n`;
-
-const PROCUREMENT_TABLE = `### \`procurement\`
+A procurement is its own table, not an invoice type: it has no stock lines.
 
 | Column | Type | Null | References | Serves |
 | --- | --- | --- | --- | --- |
 | \`id\` | id | no | | |
 | \`store_id\` | id | no | \`store\` | |
 | \`comment\` | text | yes | | |
+
+**Sync:** authored on the store's site; reaches that site only; v7.
 `;
 
 const PROCUREMENT_ROW = `table! {
@@ -69,58 +55,35 @@ describe('isFullStack', () => {
   });
 });
 
-describe('section', () => {
-  it('stops at the next level-two heading outside a code fence', () => {
-    const md =
-      '## Data\n\nrows\n```graphql\n## not a heading\n```\n## Sync\n\nx';
-    expect(section(md, 'Data')).toContain('## not a heading');
-    expect(section(md, 'Data')).not.toContain('x');
-    expect(section(md, 'Permissions')).toBeNull();
-  });
-});
-
-describe('sdlNames', () => {
-  it('collects type definitions and root fields, not extended types', () => {
-    const { types, roots } = sdlNames(`
-      type ProcurementNode { id: String! }
-      input InsertProcurementInput { name: String }
-      extend type Mutations {
-        insertProcurement(
-          storeId: String!
-          input: InsertProcurementInput!
-        ): InsertProcurementResponse!
-      }
-      extend type Queries { procurement(id: String!): ProcurementNode }
-    `);
-    expect([...types]).toEqual(['ProcurementNode', 'InsertProcurementInput']);
-    expect([...roots.Mutations]).toEqual(['insertProcurement']);
-    expect([...roots.Queries]).toEqual(['procurement']);
-  });
-});
-
-describe('exportedProposals (C10)', () => {
-  it('names each proposed type or operation the schema already has', () => {
-    const proposed = `
-      type LocationNode { id: String! }
-      type ProcurementNode { id: String! }
-      extend type Queries { procurements(storeId: String!): ProcurementsResponse! }
-      extend type Mutations { insertProcurement(storeId: String!): Boolean }
-    `;
-    expect(exportedProposals(proposed, SCHEMA)).toEqual([
-      'LocationNode',
-      'Queries.procurements',
-    ]);
-  });
-});
-
 describe('dataTables', () => {
   it('reads each table heading, its columns and Null', () => {
     const tables = dataTables(PROCUREMENT_TABLE);
     expect([...tables.keys()]).toEqual(['procurement']);
-    expect([...tables.get('procurement')]).toEqual([
+    expect(tables.get('procurement').existing).toBe(false);
+    expect([...tables.get('procurement').columns]).toEqual([
       ['id', false],
       ['store_id', false],
       ['comment', true],
+    ]);
+  });
+
+  it('marks an extended table, and stops at a heading that is not a table', () => {
+    const tables = dataTables(`## \`invoice\` (existing)
+
+| Column | Type | Null | References | Serves |
+| --- | --- | --- | --- | --- |
+| \`procurement_id\` | id | yes | \`procurement\` | |
+
+## Permissions
+
+| Action | Permission | Granted |
+| --- | --- | --- |
+| Create a procurement | \`ProcurementMutate\` | central server |
+`);
+    expect([...tables.keys()]).toEqual(['invoice']);
+    expect(tables.get('invoice').existing).toBe(true);
+    expect([...tables.get('invoice').columns]).toEqual([
+      ['procurement_id', true],
     ]);
   });
 });
@@ -177,15 +140,14 @@ describe('codeTables', () => {
 });
 
 describe('check', () => {
-  const vertical = (contractText, scope = FULL) => ({
+  const vertical = (dataText, scope = FULL) => ({
     'spec/procurement/README.md': `# Procurement\n\n${scope}\n`,
-    'spec/procurement/contract.md': contractText,
-    'server/schema.graphql': SCHEMA,
+    'spec/procurement/data.md': dataText,
   });
 
-  it('passes when every built table matches and nothing proposed is exported', () => {
+  it('passes when every built table matches', () => {
     const result = fakeRepo({
-      ...vertical(contract({ data: PROCUREMENT_TABLE })),
+      ...vertical(PROCUREMENT_TABLE),
       'server/repository/src/db_diesel/procurement_row.rs': PROCUREMENT_ROW,
     });
     expect(result.problems).toEqual([]);
@@ -193,14 +155,14 @@ describe('check', () => {
   });
 
   it('lists a table the code has no definition of as not built, without failing', () => {
-    const result = fakeRepo(vertical(contract({ data: PROCUREMENT_TABLE })));
+    const result = fakeRepo(vertical(PROCUREMENT_TABLE));
     expect(result.problems).toEqual([]);
     expect(result.notBuilt).toEqual(['procurement: procurement']);
   });
 
   it('fails on a column missing from either side or with different Null (C9)', () => {
     const result = fakeRepo({
-      ...vertical(contract({ data: PROCUREMENT_TABLE })),
+      ...vertical(PROCUREMENT_TABLE),
       'server/repository/src/db_diesel/procurement_row.rs': `table! {
           procurement (id) {
               id -> Text,
@@ -216,53 +178,66 @@ describe('check', () => {
     ]);
   });
 
+  it('compares only the added columns of an extended table', () => {
+    const extended = `## \`invoice\` (existing)
+
+| Column | Type | Null | References | Serves |
+| --- | --- | --- | --- | --- |
+| \`procurement_id\` | id | yes | \`procurement\` | |
+`;
+    const invoice = nullable => `table! {
+        invoice (id) {
+            id -> Text,
+            name_link_id -> Text,
+            procurement_id -> ${nullable ? 'Nullable<Text>' : 'Text'},
+        }
+    }`;
+    const matches = fakeRepo({
+      ...vertical(extended),
+      'server/repository/src/db_diesel/invoice_row.rs': invoice(true),
+    });
+    expect(matches.problems).toEqual([]);
+    const differs = fakeRepo({
+      ...vertical(extended),
+      'server/repository/src/db_diesel/invoice_row.rs': invoice(false),
+    });
+    expect(differs.problems).toEqual([
+      'procurement: invoice.procurement_id is nullable in the spec but not nullable in the code (C9)',
+    ]);
+  });
+
   it("ignores a migration's partial copy of a table", () => {
     const result = fakeRepo({
-      ...vertical(contract({ data: PROCUREMENT_TABLE })),
+      ...vertical(PROCUREMENT_TABLE),
       'server/repository/src/migrations/v3_05_00/mod.rs':
         'table! { procurement (id) { id -> Text, } }',
     });
     expect(result.notBuilt).toEqual(['procurement: procurement']);
   });
 
-  it('fails on a proposed name the schema exports (C10)', () => {
-    const proposed =
-      '```graphql\nextend type Mutations { insertLocation(storeId: String!): Boolean }\n```';
-    const result = fakeRepo(
-      vertical(contract({ proposed, data: PROCUREMENT_TABLE }))
-    );
+  it('fails on a full-stack vertical that has a contract.md', () => {
+    const result = fakeRepo({
+      ...vertical(PROCUREMENT_TABLE),
+      'spec/procurement/contract.md': '# Contract\n',
+    });
     expect(result.problems).toEqual([
-      'procurement: Proposed API still declares Mutations.insertLocation, which schema.graphql exports — delete its block (C10)',
+      'procurement: a full-stack vertical has no contract.md — its tables go in data.md',
     ]);
   });
 
-  it('lists a full-stack vertical with no contract or Data section yet, without failing', () => {
-    const noContract = fakeRepo({
+  it('lists a full-stack vertical with no data.md yet, without failing', () => {
+    const result = fakeRepo({
       'spec/procurement/README.md': `# Procurement\n\n${FULL}\n`,
-      'server/schema.graphql': SCHEMA,
     });
-    expect(noContract.problems).toEqual([]);
-    expect(noContract.noData).toEqual(['procurement']);
-
-    const noData = fakeRepo(vertical('# Contract\n\n## A rule\n'));
-    expect(noData.problems).toEqual([]);
-    expect(noData.noData).toEqual(['procurement']);
-  });
-
-  it('still checks Proposed API when there is no Data section yet', () => {
-    const proposed =
-      '```graphql\nextend type Mutations { insertLocation(storeId: String!): Boolean }\n```';
-    const result = fakeRepo(
-      vertical(
-        `# Contract\n\n## Proposed API\n\n${proposed}\n\n## Contract surface (index)\n`
-      )
-    );
-    expect(result.problems).toHaveLength(1);
+    expect(result.problems).toEqual([]);
     expect(result.noData).toEqual(['procurement']);
   });
 
   it('skips front-end verticals', () => {
-    const result = fakeRepo(vertical('# Contract\n', FRONT));
+    const result = fakeRepo({
+      ...vertical(PROCUREMENT_TABLE, FRONT),
+      'spec/procurement/contract.md': '# Contract\n',
+    });
     expect(result.verticals).toEqual([]);
     expect(result.problems).toEqual([]);
   });
