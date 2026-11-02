@@ -10,7 +10,10 @@ use crate::{
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
-use self::middleware::{compress as compress_middleware, logger as logger_middleware};
+use self::middleware::{
+    compress as compress_middleware, logger as logger_middleware,
+    security_headers as security_headers_middleware,
+};
 use actix_cors::Cors;
 use chrono::{NaiveDateTime, Utc};
 use graphql_core::loader::{LoaderRegistry, get_loaders};
@@ -324,10 +327,12 @@ pub async fn start_server(
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
+    let is_https = certificates.is_https();
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(closure_settings.clone()))
             .wrap(logger_middleware())
+            .wrap(security_headers_middleware(is_https))
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
             // needed for static files service

@@ -1,0 +1,286 @@
+use std::{
+    future::{Ready, ready},
+    sync::LazyLock,
+};
+
+use actix_web::{
+    Error,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
+    http::header::{self, HeaderMap, HeaderName, HeaderValue},
+};
+use base64::{Engine, prelude::BASE64_STANDARD};
+use futures_util::future::LocalBoxFuture;
+use regex::Regex;
+use sha2::{Digest, Sha256};
+
+/// Policy for the app pages (both front ends) and the API. Scripts and outbound requests are
+/// limited to our own origin, so a script that does get injected can't load more code from, or
+/// send data to, another host. Inline styles stay allowed: the React front end's MUI/emotion
+/// styling and printed reports both rely on them.
+const APP_POLICY: &str = "default-src 'self'; \
+    script-src 'self'; \
+    style-src 'self' 'unsafe-inline'; \
+    img-src 'self' data: blob:; \
+    font-src 'self' data:; \
+    connect-src 'self'; \
+    frame-src 'self' blob:; \
+    object-src 'none'; \
+    base-uri 'self'; \
+    form-action 'self'; \
+    frame-ancestors 'self'";
+
+/// Policy for files we hand back as-is (report output and uploaded attachments). `sandbox`
+/// without `allow-scripts` stops an uploaded HTML file running script even when opened directly.
+/// `frame-ancestors 'self'` rather than `'none'`, as the front end shows these in an iframe.
+const FILE_POLICY: &str = "default-src 'none'; \
+    img-src 'self' data:; \
+    style-src 'unsafe-inline'; \
+    sandbox; \
+    frame-ancestors 'self'";
+
+const HSTS: &str = "max-age=31536000";
+
+static INLINE_SCRIPT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?is)<script\b([^>]*)>(.*?)</script\s*>").unwrap());
+static SRC_ATTRIBUTE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\bsrc\s*=").unwrap());
+
+/// The app policy for an HTML page served from the front end's dist, allowing each inline script
+/// already in that file by its hash: the build's import map (which plugin bundles resolve
+/// `solid-js` and the plugin SDK through) and the pre-paint and browser-warning scripts. The
+/// hashes change with every build, so they're worked out from the file rather than configured. A
+/// script injected into the page later isn't in the file, so it's still blocked.
+pub fn app_policy_for_document(html: &str) -> String {
+    let hashes: Vec<String> = INLINE_SCRIPT
+        .captures_iter(html)
+        .filter(|script| !SRC_ATTRIBUTE.is_match(&script[1]))
+        .map(|script| {
+            let digest = Sha256::digest(script[2].as_bytes());
+            format!("'sha256-{}'", BASE64_STANDARD.encode(digest))
+        })
+        .collect();
+
+    if hashes.is_empty() {
+        return APP_POLICY.to_string();
+    }
+    APP_POLICY.replacen(
+        "script-src 'self'",
+        &format!("script-src 'self' {}", hashes.join(" ")),
+        1,
+    )
+}
+
+fn content_security_policy(path: &str) -> Option<&'static str> {
+    if path == "/files" || path.starts_with("/sync_files/") {
+        return Some(FILE_POLICY);
+    }
+    // GET /graphql serves the GraphiQL playground, which loads its scripts from unpkg
+    if path == "/graphql" {
+        return None;
+    }
+    Some(APP_POLICY)
+}
+
+/// Sets security response headers (CSP, X-Frame-Options, nosniff, and HSTS when serving over
+/// TLS). A header the handler already set is left alone.
+pub struct SecurityHeaders {
+    is_https: bool,
+}
+
+impl SecurityHeaders {
+    pub fn new(is_https: bool) -> Self {
+        Self { is_https }
+    }
+}
+
+impl<S, B> Transform<S, ServiceRequest> for SecurityHeaders
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Response = ServiceResponse<B>;
+    type Error = Error;
+    type InitError = ();
+    type Transform = SecurityHeadersMiddleware<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        ready(Ok(SecurityHeadersMiddleware {
+            service,
+            is_https: self.is_https,
+        }))
+    }
+}
+
+pub struct SecurityHeadersMiddleware<S> {
+    service: S,
+    is_https: bool,
+}
+
+impl<S, B> Service<ServiceRequest> for SecurityHeadersMiddleware<S>
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Response = ServiceResponse<B>;
+    type Error = Error;
+    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    forward_ready!(service);
+
+    fn call(&self, req: ServiceRequest) -> Self::Future {
+        let policy = content_security_policy(req.path());
+        let is_https = self.is_https;
+        let fut = self.service.call(req);
+
+        Box::pin(async move {
+            let mut res = fut.await?;
+            let headers = res.headers_mut();
+
+            if let Some(policy) = policy {
+                set_if_absent(headers, header::CONTENT_SECURITY_POLICY, policy);
+            }
+            set_if_absent(headers, header::X_FRAME_OPTIONS, "SAMEORIGIN");
+            set_if_absent(headers, header::X_CONTENT_TYPE_OPTIONS, "nosniff");
+            // Browsers ignore HSTS sent over plain HTTP, to IP-address hosts, or over a
+            // connection with certificate errors, so self-signed LAN installs are unaffected
+            if is_https {
+                set_if_absent(headers, header::STRICT_TRANSPORT_SECURITY, HSTS);
+            }
+
+            Ok(res)
+        })
+    }
+}
+
+fn set_if_absent(headers: &mut HeaderMap, name: HeaderName, value: &'static str) {
+    if !headers.contains_key(&name) {
+        headers.insert(name, HeaderValue::from_static(value));
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::{App, HttpResponse, test, web};
+
+    async fn headers_for(is_https: bool, path: &str) -> HeaderMap {
+        let app = test::init_service(
+            App::new()
+                .wrap(SecurityHeaders::new(is_https))
+                .default_service(web::to(HttpResponse::Ok)),
+        )
+        .await;
+        let res = test::call_service(&app, test::TestRequest::get().uri(path).to_request()).await;
+        res.headers().clone()
+    }
+
+    fn csp(headers: &HeaderMap) -> Option<&str> {
+        headers
+            .get(header::CONTENT_SECURITY_POLICY)
+            .map(|v| v.to_str().unwrap())
+    }
+
+    #[actix_web::test]
+    async fn app_pages_get_the_app_policy() {
+        for path in ["/", "/some/route", "/old-ui/some/route"] {
+            let headers = headers_for(false, path).await;
+            assert_eq!(csp(&headers), Some(APP_POLICY), "{path}");
+            assert_eq!(headers.get(header::X_FRAME_OPTIONS).unwrap(), "SAMEORIGIN");
+            assert_eq!(
+                headers.get(header::X_CONTENT_TYPE_OPTIONS).unwrap(),
+                "nosniff"
+            );
+        }
+    }
+
+    #[actix_web::test]
+    async fn served_files_get_the_file_policy() {
+        for path in ["/files?id=abc", "/sync_files/asset/record/file"] {
+            assert_eq!(
+                csp(&headers_for(false, path).await),
+                Some(FILE_POLICY),
+                "{path}"
+            );
+        }
+    }
+
+    #[actix_web::test]
+    async fn graphql_playground_has_no_policy() {
+        let headers = headers_for(false, "/graphql").await;
+        assert_eq!(csp(&headers), None);
+        assert_eq!(
+            headers.get(header::X_CONTENT_TYPE_OPTIONS).unwrap(),
+            "nosniff"
+        );
+    }
+
+    #[actix_web::test]
+    async fn hsts_only_over_https() {
+        assert!(
+            !headers_for(false, "/")
+                .await
+                .contains_key(header::STRICT_TRANSPORT_SECURITY)
+        );
+        assert_eq!(
+            headers_for(true, "/")
+                .await
+                .get(header::STRICT_TRANSPORT_SECURITY)
+                .unwrap(),
+            HSTS
+        );
+    }
+
+    #[actix_web::test]
+    async fn handler_set_header_is_kept() {
+        let app = test::init_service(
+            App::new()
+                .wrap(SecurityHeaders::new(false))
+                .default_service(web::to(|| async {
+                    HttpResponse::Ok()
+                        .insert_header((header::X_FRAME_OPTIONS, "DENY"))
+                        .finish()
+                })),
+        )
+        .await;
+        let res = test::call_service(&app, test::TestRequest::get().uri("/").to_request()).await;
+        assert_eq!(res.headers().get(header::X_FRAME_OPTIONS).unwrap(), "DENY");
+    }
+
+    #[actix_web::test]
+    async fn document_policy_allows_the_pages_own_inline_scripts_by_hash() {
+        let html = r#"<html><head>
+            <script>abc</script>
+            <script type="importmap"></script>
+            <script type="module" crossorigin src="/assets/index.js"></script>
+        </head></html>"#;
+
+        let policy = app_policy_for_document(html);
+
+        // sha256("abc") and sha256(""); the external script gets no hash
+        assert!(
+            policy.contains(
+                "script-src 'self' 'sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=' \
+                 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=';"
+            ),
+            "{policy}"
+        );
+        assert_eq!(policy.matches("'sha256-").count(), 2, "{policy}");
+        assert_eq!(
+            policy.replacen(
+                " 'sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=' \
+                 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
+                "",
+                1
+            ),
+            APP_POLICY
+        );
+    }
+
+    #[actix_web::test]
+    async fn document_policy_without_inline_scripts_is_the_app_policy() {
+        let html = r#"<html><script src="/pre.js"></script></html>"#;
+        assert_eq!(app_policy_for_document(html), APP_POLICY);
+    }
+}

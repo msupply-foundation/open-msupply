@@ -45,6 +45,7 @@ futures = { workspace = true }
 simple-log = { workspace = true }
 rcgen = { workspace = true }
 regex = { workspace = true }
+sha2 = { workspace = true }
 actix-multipart = { workspace = true }
 futures-util = { workspace = true }
 serde_json = { workspace = true }
