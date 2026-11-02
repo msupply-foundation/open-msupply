@@ -60,6 +60,44 @@ export const discoverReactParts = pluginDir => {
   return parts;
 };
 
+/**
+ * Why a plugin directory's React parts can't go in its bundle, or null if
+ * they can. `solid` is the directory's SolidJS frontend and backend manifests
+ * (either may be missing), `parts` its React parts, `hostRuntime` the SolidJS
+ * front end's.
+ *
+ * `blocking` is set when the plugin has a SolidJS part: its two UIs have
+ * drifted apart, so a PR that does it fails rather than quietly leaving the
+ * plugin off the Launchpad. A React-only plugin's failure is only reported,
+ * so one nobody has fixed yet doesn't fail every PR.
+ */
+export const checkReactParts = (solid, parts, hostRuntime) => {
+  const present = solid.filter(Boolean);
+  const all = [...present, ...parts];
+  const named = part => `${part.code}@${part.version} (${part.dir})`;
+  const reactBackend = parts.find(part => part.target === 'backend');
+  const solidRuntime = parts.find(part => part.hostRuntime === hostRuntime);
+  let why = null;
+  if (new Set(all.map(part => part.code)).size > 1) {
+    why =
+      `its parts declare different plugin codes — ${all.map(named).join(', ')}. ` +
+      'One plugin, one code.';
+  } else if (new Set(all.map(part => part.version)).size > 1) {
+    why =
+      `its parts declare different versions — ${all.map(named).join(', ')}. ` +
+      'A plugin has one version; bump them together.';
+  } else if (solid[1] && reactBackend) {
+    why =
+      `two backends — backend/ and ${reactBackend.dir}. Delete the React ` +
+      'one: backend/ answers both UIs.';
+  } else if (solidRuntime) {
+    why =
+      `${solidRuntime.dir} declares host_runtime "${hostRuntime}", which ` +
+      "is this front end's; its row would replace the SolidJS one.";
+  }
+  return why && { why, blocking: present.length > 0 };
+};
+
 /** Fails the run unless the repo root's yarn install has been done. */
 export const checkReactToolchain = () => {
   if (!existsSync(join(REPO_ROOT, 'node_modules', 'webpack'))) {

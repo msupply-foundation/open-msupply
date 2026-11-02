@@ -31,6 +31,8 @@
  * Their manifests are checked against the SolidJS parts on every run either
  * way. A plugin whose React parts fail a check or the build is reported and,
  * with --react, left without a bundle; it never stops the other plugins.
+ * Without --react, a plugin whose SolidJS and React parts disagree fails the
+ * run, so the PR that lets them drift apart fails its check.
  *
  * Faithfulness rules, mirrored from server/cli/src/plugins.rs and
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
@@ -77,6 +79,7 @@ import { checkFormVersions } from '../vite/formVersionChecks.ts';
 import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
 import {
   buildReactPart,
+  checkReactParts,
   checkReactToolchain,
   discoverReactParts,
 } from './reactPlugins.mjs';
@@ -385,44 +388,24 @@ const backendPlugins = discoverBackendPlugins();
  */
 const reactParts = [];
 /*
- * Plugin directory -> why its React parts fail. Such a plugin is never fatal
- * to the run: with --react its bundle is dropped (a bundle without the React
- * frontend a site may switch to is half a plugin) and every other plugin is
- * still built and published; without, its SolidJS bundle is unaffected.
+ * Plugin directory -> why its React parts fail. With --react such a plugin
+ * is never fatal to the run: its bundle is dropped (a bundle without the
+ * React frontend a site may switch to is half a plugin) and every other
+ * plugin is still built and published. Without, its SolidJS bundle is
+ * unaffected, but a blocking failure fails the run once everything is
+ * reported (see checkReactParts).
  */
 const reactFailures = new Map();
+/* The directories whose failure fails the run: see checkReactParts. */
+const blockingReactFailures = new Set();
 for (const dir of inRepoPluginDirs()) {
   const parts = discoverReactParts(dir);
   if (parts.length === 0) continue;
   const solid = [readManifest(dir), readBackendManifest(join(dir, 'backend'))];
-  const all = [...solid.filter(Boolean), ...parts];
-  const named = part => `${part.code}@${part.version} (${part.dir})`;
-  const reactBackend = parts.find(part => part.target === 'backend');
-  const solidRuntime = parts.find(part => part.hostRuntime === HOST_RUNTIME);
-  if (new Set(all.map(part => part.code)).size > 1) {
-    reactFailures.set(
-      dir,
-      `its parts declare different plugin codes — ${all.map(named).join(', ')}. ` +
-        'One plugin, one code.'
-    );
-  } else if (new Set(all.map(part => part.version)).size > 1) {
-    reactFailures.set(
-      dir,
-      `its parts declare different versions — ${all.map(named).join(', ')}. ` +
-        'A plugin has one version; bump them together.'
-    );
-  } else if (solid[1] && reactBackend) {
-    reactFailures.set(
-      dir,
-      `two backends — backend/ and ${reactBackend.dir}. Delete the React ` +
-        'one: backend/ answers both UIs.'
-    );
-  } else if (solidRuntime) {
-    reactFailures.set(
-      dir,
-      `${solidRuntime.dir} declares host_runtime "${HOST_RUNTIME}", which ` +
-        "is this front end's; its row would replace the SolidJS one."
-    );
+  const failure = checkReactParts(solid, parts, HOST_RUNTIME);
+  if (failure) {
+    reactFailures.set(dir, failure.why);
+    if (failure.blocking) blockingReactFailures.add(dir);
   } else {
     reactParts.push(...parts.map(part => ({ ...part, pluginDir: dir })));
   }
@@ -670,14 +653,18 @@ if (!WITH_REACT && reactParts.length > 0) {
   );
 }
 // Reported, not thrown (see reactFailures). In a GitHub Actions --react run
-// each is an error annotation, so a publish that left a plugin out says so.
-const annotate = WITH_REACT && process.env.GITHUB_ACTIONS ? '::error::' : '';
+// each is an error annotation, so a publish that left a plugin out says so;
+// without --react, so is a blocking one, which a PR's check fails on.
 for (const [dir, why] of reactFailures) {
+  const blocking = !WITH_REACT && blockingReactFailures.has(dir);
+  const annotate =
+    (WITH_REACT || blocking) && process.env.GITHUB_ACTIONS ? '::error::' : '';
   console.warn(
     `${annotate}[build-plugins] ${dir}: React UI parts fail` +
       (WITH_REACT ? ', no bundle' : '') +
       ` — ${why}`
   );
+  if (blocking) process.exitCode = 1;
 }
 for (const row of formRows) {
   const versions = row.document_types.reduce(
