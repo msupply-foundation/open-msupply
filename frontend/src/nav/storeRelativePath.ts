@@ -99,8 +99,9 @@ export const storePath = (storeId: string, path: string): string => {
  * href without the mount points outside the app, the router declines to
  * intercept it, and the browser loads a page that isn't this app — while at
  * the root mount, where local dev and CI run, the two spellings agree and
- * nothing shows. So every raw anchor's href comes through here, and a
- * component that renders the router's own `<A>` passes the router-space path
- * instead, since `<A>` resolves the mount itself and would apply it twice.
+ * nothing shows. So every raw anchor's href comes through here
+ * (scripts/check-nav-links.mjs fails a hand-built one), and a component that
+ * renders the router's own `<A>` passes the router-space path instead, since
+ * `<A>` resolves the mount itself and would apply it twice.
  */
 export const documentHref = (path: string): string => `${routerBase}${path}`;

@@ -122,7 +122,7 @@ describe('storePath', () => {
  * here, so a link copied, Cmd/Ctrl-clicked or middle-clicked on a nested
  * mount lands inside the app rather than at the same path outside it.
  */
-describe('documentHref', () => {
+describe('documentHref (OMS-REG-NAV-02.5)', () => {
   it('leaves a router-space path alone at the root mount', async () => {
     const { documentHref } = await at('/');
     expect(documentHref('/STORE1/inventory/stock')).toBe(

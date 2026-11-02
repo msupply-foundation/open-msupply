@@ -14,7 +14,7 @@ const at = async (base: string) => {
 
 afterEach(() => vi.unstubAllEnvs());
 
-describe('crumbHref', () => {
+describe('crumbHref (OMS-REG-NAV-02.5)', () => {
   it('links a router-space path at the root mount', async () => {
     const { crumbHref } = await at('/');
     expect(crumbHref('/STORE1/catalogue/items')).toBe(

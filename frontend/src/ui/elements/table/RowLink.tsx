@@ -35,6 +35,7 @@ export const RowLink = (props: { href: string }): JSX.Element => (
   <a
     class={styles.rowLink}
     href={documentHref(props.href)}
+    data-testid="row-link"
     tabindex={-1}
     aria-hidden="true"
   />
