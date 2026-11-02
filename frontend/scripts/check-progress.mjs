@@ -25,6 +25,11 @@
  * Both lists this compares are read from PROGRESS.md itself — the cross-cutting
  * folders it says are "Not listed", and the rows it has — so adding a vertical
  * means editing one file, not two.
+ *
+ * It also checks that every spec folder, listed or not, opens its README with a
+ * scope line (`> **Scope: front end.**` or `> **Scope: full stack.**`) as the
+ * first line under the heading — AUTHORING.md → Scope. Tools read it to decide
+ * whether a vertical has a server leg.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -146,14 +151,37 @@ for (const listed of rows.keys())
       `${listed}: has a row but no spec/${listed}/ (or it is "Not listed")`
     );
 
+const SCOPE_LINE = /^> \*\*Scope: (front end|full stack)\.\*\* /;
+const scopeProblems = [];
+for (const folder of dirs(SPEC_DIR)
+  .filter(n => !FRAMEWORK_DIRS.has(n))
+  .sort()) {
+  const readme = join(SPEC_DIR, folder, 'README.md');
+  if (!existsSync(readme)) {
+    scopeProblems.push(`${folder}: no README.md`);
+    continue;
+  }
+  const [heading, ...rest] = readFileSync(readme, 'utf8').split('\n');
+  const first = rest.find(line => line.trim() !== '') ?? '';
+  if (!heading.startsWith('# ') || !SCOPE_LINE.test(first))
+    scopeProblems.push(
+      `${folder}: README.md has no scope line under its heading`
+    );
+}
+
 if (problems.length > 0) {
   console.error(`${FILE} does not match the tree:\n  ${problems.join('\n  ')}`);
   console.error(
     `\nTick the cell in the PR that delivers the step (see "Keeping it true").`
   );
-  process.exit(1);
 }
+if (scopeProblems.length > 0)
+  console.error(
+    `Spec folders without a scope line:\n  ${scopeProblems.join('\n  ')}\n\n` +
+      'Open the README with `> **Scope: front end.**` or `> **Scope: full stack.**` (see spec/AUTHORING.md → Scope).'
+  );
+if (problems.length > 0 || scopeProblems.length > 0) process.exit(1);
 
 console.log(
-  `PROGRESS OK — ${verticals.length} vertical(s), every cell matches the tree`
+  `PROGRESS OK — ${verticals.length} vertical(s), every cell matches the tree; every spec folder declares its scope`
 );
