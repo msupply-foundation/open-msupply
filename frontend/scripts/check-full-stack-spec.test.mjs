@@ -236,11 +236,29 @@ describe('check', () => {
     ]);
   });
 
-  it('fails when a full-stack contract has no Data section', () => {
-    const result = fakeRepo(vertical('# Contract\n\n## A rule\n'));
-    expect(result.problems).toEqual([
-      'procurement: full stack, but contract.md has no Data section',
-    ]);
+  it('lists a full-stack vertical with no contract or Data section yet, without failing', () => {
+    const noContract = fakeRepo({
+      'spec/procurement/README.md': `# Procurement\n\n${FULL}\n`,
+      'server/schema.graphql': SCHEMA,
+    });
+    expect(noContract.problems).toEqual([]);
+    expect(noContract.noData).toEqual(['procurement']);
+
+    const noData = fakeRepo(vertical('# Contract\n\n## A rule\n'));
+    expect(noData.problems).toEqual([]);
+    expect(noData.noData).toEqual(['procurement']);
+  });
+
+  it('still checks Proposed API when there is no Data section yet', () => {
+    const proposed =
+      '```graphql\nextend type Mutations { insertLocation(storeId: String!): Boolean }\n```';
+    const result = fakeRepo(
+      vertical(
+        `# Contract\n\n## Proposed API\n\n${proposed}\n\n## Contract surface (index)\n`
+      )
+    );
+    expect(result.problems).toHaveLength(1);
+    expect(result.noData).toEqual(['procurement']);
   });
 
   it('skips front-end verticals', () => {

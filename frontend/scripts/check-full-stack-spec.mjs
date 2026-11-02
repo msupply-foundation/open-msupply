@@ -13,6 +13,11 @@
  *        must have the same columns, each nullable or not as stated. A table
  *        the code doesn't have yet is listed as not built, without failing.
  *
+ * Both compare what the spec says with what the server has. Neither asks the
+ * spec to be complete — a spec is written in stages, and one with no
+ * contract.md or Data section yet is listed, not failed. Completeness is
+ * AUTHORING.md's definition of done.
+ *
  * Plain Node, no dependencies: server CI runs it too, without an install, so
  * a server change that drifts from a spec fails there and not only on the
  * next front-end PR.
@@ -236,9 +241,10 @@ export const check = ({ specDir, schemaPath, repositoryDir }) => {
     .sort();
   const problems = [];
   const notBuilt = [];
+  const noData = [];
   let tablesChecked = 0;
   if (verticals.length === 0)
-    return { verticals, problems, notBuilt, tablesChecked };
+    return { verticals, problems, notBuilt, noData, tablesChecked };
 
   const schema = readFileSync(schemaPath, 'utf8');
   const code = new Map();
@@ -249,7 +255,7 @@ export const check = ({ specDir, schemaPath, repositoryDir }) => {
   for (const vertical of verticals) {
     const contractPath = join(specDir, vertical, 'contract.md');
     if (!existsSync(contractPath)) {
-      problems.push(`${vertical}: full stack, but has no contract.md`);
+      noData.push(vertical);
       continue;
     }
     const contract = readFileSync(contractPath, 'utf8');
@@ -266,9 +272,7 @@ export const check = ({ specDir, schemaPath, repositoryDir }) => {
 
     const data = section(contract, 'Data');
     if (data === null) {
-      problems.push(
-        `${vertical}: full stack, but contract.md has no Data section`
-      );
+      noData.push(vertical);
       continue;
     }
     for (const [table, columns] of dataTables(data)) {
@@ -295,7 +299,7 @@ export const check = ({ specDir, schemaPath, repositoryDir }) => {
           );
     }
   }
-  return { verticals, problems, notBuilt, tablesChecked };
+  return { verticals, problems, notBuilt, noData, tablesChecked };
 };
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
@@ -304,7 +308,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     console.log('full-stack spec skipped — no spec/ in this tree');
     process.exit(0);
   }
-  const { verticals, problems, notBuilt, tablesChecked } = check({
+  const { verticals, problems, notBuilt, noData, tablesChecked } = check({
     specDir: '../spec',
     schemaPath: '../server/schema.graphql',
     repositoryDir: '../server/repository/src',
@@ -320,6 +324,11 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     verticals.length === 0
       ? 'full-stack spec OK — no full-stack verticals'
       : `full-stack spec OK — ${verticals.length} vertical(s), ${tablesChecked} table(s) match the code` +
-          (notBuilt.length > 0 ? `; not built yet: ${notBuilt.join(', ')}` : '')
+          (notBuilt.length > 0
+            ? `; not built yet: ${notBuilt.join(', ')}`
+            : '') +
+          (noData.length > 0
+            ? `; no Data section yet: ${noData.join(', ')}`
+            : '')
   );
 }
