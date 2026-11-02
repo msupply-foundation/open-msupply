@@ -217,7 +217,8 @@ describe('issue = doses', () => {
 describe('canAutoAllocate ', () => {
   it('canAutoAllocateTests', () => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2025-12-15T12:00:00Z'));
+    // Local noon, so "today" is 2025-12-15 in every timezone
+    jest.setSystemTime(new Date('2025-12-15T12:00:00'));
 
     const availableLine = createTestLine({ availablePacks: 10 });
     expect(canAutoAllocate(availableLine, 0)).toEqual(true);
