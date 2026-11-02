@@ -78,6 +78,7 @@ describe('formFromVariant', () => {
       packagingLevel: 1,
       packSize: 1,
       volumePerUnit: 0.5,
+      barcode: '5012345678900',
     });
   });
 
@@ -103,6 +104,43 @@ describe('formFromVariant', () => {
     // Blank rows still aren't saved: re-saving sends only the stored level.
     const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
     expect(input.packagingVariants?.map(row => row.id)).toEqual(['pv-2']);
+  });
+
+  // A barcode added on the Barcodes tab as a new packaging level, with no
+  // pack size given: no pack size, no volume. Leaving it out of a save would
+  // delete the barcode everywhere.
+  it('keeps a packaging row that holds a barcode but no values', () => {
+    const form = formFromVariant(
+      variantRow({
+        packagingVariants: [
+          {
+            id: 'pv-1',
+            name: 'Primary',
+            packagingLevel: 1,
+            packSize: 1,
+            volumePerUnit: 0.5,
+            barcode: null,
+          },
+          {
+            id: 'pv-barcode',
+            name: '5012345678900',
+            packagingLevel: 1,
+            packSize: null,
+            volumePerUnit: null,
+            barcode: 'gtin:05012345678900',
+          },
+        ],
+      })
+    );
+    expect(isFormValid(form)).toBe(true);
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants).toContainEqual({
+      id: 'pv-barcode',
+      name: '5012345678900',
+      packagingLevel: 1,
+      packSize: null,
+      volumePerUnit: null,
+    });
   });
 
   it("treats null location type/manufacturer/vvm as none ('')", () => {
@@ -168,6 +206,24 @@ describe('isFormValid', () => {
     expect(isFormValid(form)).toBe(false);
   });
 
+  // The Barcodes tab sets no volume and only sometimes a pack size, so a row
+  // holding a barcode mustn't lock the variant's Save.
+  it('lets a packaging row that holds a barcode leave pack size and volume blank', () => {
+    const form = validForm();
+    form.packaging[0].barcode = 'gtin:05012345678900';
+    form.packaging[0].volumePerUnit = undefined;
+    expect(isFormValid(form)).toBe(true);
+    form.packaging[0].packSize = undefined;
+    expect(isFormValid(form)).toBe(true);
+  });
+
+  it('is invalid when a packaging row that holds a barcode has a zero value', () => {
+    const form = validForm();
+    form.packaging[0].barcode = 'gtin:05012345678900';
+    form.packaging[0].packSize = 0;
+    expect(isFormValid(form)).toBe(false);
+  });
+
   it('is valid with a name and every packaging row positive', () => {
     expect(isFormValid(validForm())).toBe(true);
   });
@@ -217,6 +273,22 @@ describe('buildUpsertInput', () => {
     const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
     expect(input.packagingVariants?.map(row => row.packagingLevel)).toEqual([
       1,
+    ]);
+  });
+
+  it('sends a blank value on a row that holds a barcode as null, not 0', () => {
+    const form = validForm();
+    form.packaging[0].barcode = 'gtin:05012345678900';
+    form.packaging[0].volumePerUnit = undefined;
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants).toEqual([
+      {
+        id: 'pv-1',
+        name: 'Primary',
+        packagingLevel: 1,
+        packSize: 1,
+        volumePerUnit: null,
+      },
     ]);
   });
 

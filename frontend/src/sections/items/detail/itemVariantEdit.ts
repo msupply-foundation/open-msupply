@@ -23,8 +23,8 @@ export type ItemVariantRow = NonNullable<
  * user-edited (the reference app's grid renders it read-only; rules.md's
  * seeded 1/2/3 is "a starting point, not a rule" for the row SET, not a
  * licence to renumber an existing row). `packSize`/`volumePerUnit` are
- * `undefined` while the input is blank, saved as invalid (0) so Save catches
- * it rather than silently defaulting.
+ * `undefined` while the input is blank. `barcode` is read-only here: barcodes
+ * are set and removed on the Barcodes tab, never through this form.
  */
 export type DraftPackagingRow = {
   id: string;
@@ -32,6 +32,7 @@ export type DraftPackagingRow = {
   packagingLevel: number;
   packSize: number | undefined;
   volumePerUnit: number | undefined;
+  barcode?: string;
 };
 
 export type DraftItemVariant = {
@@ -87,6 +88,7 @@ export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => {
     packagingLevel: row.packagingLevel,
     packSize: row.packSize ?? undefined,
     volumePerUnit: row.volumePerUnit ?? undefined,
+    barcode: row.barcode ?? undefined,
   }));
   const missing = SEEDED_LEVELS.filter(
     ([level]) => !saved.some(row => row.packagingLevel === level)
@@ -103,34 +105,47 @@ export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => {
 };
 
 /**
- * A row with both pack size and volume blank hasn't been entered: the seeded
- * rows are "a starting point, not a rule" (rules.md § item variants and
+ * A row with no pack size, no volume and no barcode hasn't been entered: the
+ * seeded rows are "a starting point, not a rule" (rules.md § item variants and
  * packaging), so a blank one is left out of the save rather than blocking it
- * (OMS-REG-CAT-05.21 — matches the React front end's getIsComplete).
+ * (OMS-REG-CAT-05.21). A row holding a barcode is never blank: leaving it out
+ * would delete the barcode everywhere, and mark it removed so auto-confirm
+ * won't bring it back.
  */
 const isBlankRow = (row: DraftPackagingRow): boolean =>
-  row.packSize === undefined && row.volumePerUnit === undefined;
+  row.packSize === undefined && row.volumePerUnit === undefined && !row.barcode;
+
+const isPositiveOrBlank = (value: number | undefined): boolean =>
+  value === undefined || value > 0;
+
+/**
+ * A row holding a barcode was made on the Barcodes tab, which sets no volume
+ * and only sometimes a pack size, so either may stay blank. Every other
+ * entered row needs both.
+ */
+const isRowValid = (row: DraftPackagingRow): boolean =>
+  row.barcode
+    ? isPositiveOrBlank(row.packSize) && isPositiveOrBlank(row.volumePerUnit)
+    : isBlankRow(row) ||
+      ((row.packSize ?? 0) > 0 && (row.volumePerUnit ?? 0) > 0);
 
 /**
  * ui-surface S3 — Save disabled until the name is set and every entered
  * packaging row has a POSITIVE pack size and volume per unit (rules.md's
  * "positive" requirement; the client-side mirror of the server's LessThanZero
- * guard). Blank rows are skipped.
+ * guard). Blank rows are skipped; a row holding a barcode may leave either
+ * blank.
  */
 export const isFormValid = (form: DraftItemVariant): boolean =>
-  form.name.trim() !== '' &&
-  form.packaging.every(
-    row =>
-      isBlankRow(row) ||
-      ((row.packSize ?? 0) > 0 && (row.volumePerUnit ?? 0) > 0)
-  );
+  form.name.trim() !== '' && form.packaging.every(isRowValid);
 
 /**
  * The upsert input — always the FULL current field set: packagingVariants is
  * a full-replacement set (contract.md ⚠️ wire trap, rules.md § item variants
  * and packaging) — an omitted row is a deletion, so every save resends every
  * current row — except blank ones, which were never entered (so blanking an
- * existing row's pack size and volume removes it). `locationTypeId`/`manufacturerId`/`vvmType` are
+ * existing row without a barcode removes it). A value left blank goes as null,
+ * as the server stores it. `locationTypeId`/`manufacturerId`/`vvmType` are
  * NullableStringUpdate wrappers — `{ value: null }` clears, `{ value: id }`
  * sets; always sent (never omitted) so an edit can also clear a previously-set
  * value.
@@ -152,8 +167,8 @@ export const buildUpsertInput = (
       id: row.id,
       name: row.name,
       packagingLevel: row.packagingLevel,
-      packSize: row.packSize ?? 0,
-      volumePerUnit: row.volumePerUnit ?? 0,
+      packSize: row.packSize ?? null,
+      volumePerUnit: row.volumePerUnit ?? null,
     })),
 });
 
