@@ -36,7 +36,7 @@ const requested = new Set(
 
 // The "## Verticals" section of spec/README.md, bullets like
 // "- [`stocktakes/`](./stocktakes/) — … **(reference implementation)**".
-const readme = readFileSync('spec/README.md', 'utf8');
+const readme = readFileSync('../spec/README.md', 'utf8');
 const section = readme.split(/^## Verticals$/m)[1]?.split(/^## /m)[0] ?? '';
 const verticals = [...section.matchAll(/^- \[`([\w-]+)\/`\][^\n]*/gm)].map(
   ([line, name]) => ({

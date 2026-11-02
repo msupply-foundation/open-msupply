@@ -1,6 +1,6 @@
 # Discovery — the shells' bundled pre-server page
 
-The implementation of the client-mode half of **[`spec/desktop/`](../../spec/desktop/README.md)** that lives in this repo: the **server discovery page** (issue #172 › "Page code") — the one screen of the product that cannot be served by a server, because it runs before a server has been chosen. Everything after a successful connection (initialisation status, auth, the app itself) is served by the connected server, exactly as the spec's § switching servers requires. Both shells host the same page: the Electron desktop shell and the Android app's client mode.
+The implementation of the client-mode half of **[`spec/desktop/`](../../../spec/desktop/README.md)** that lives in this repo: the **server discovery page** (issue #172 › "Page code") — the one screen of the product that cannot be served by a server, because it runs before a server has been chosen. Everything after a successful connection (initialisation status, auth, the app itself) is served by the connected server, exactly as the spec's § switching servers requires. Both shells host the same page: the Electron desktop shell and the Android app's client mode.
 
 ## What's here vs what a host owns
 

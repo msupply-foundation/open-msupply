@@ -1,8 +1,8 @@
 # Cold chain — Sensors — build report
 
-Built from [`spec/cold-chain-sensors/`](../../../spec/cold-chain-sensors/) per [`spec/IMPLEMENTING.md`](../../../spec/IMPLEMENTING.md).
+Built from [`spec/cold-chain-sensors/`](../../../../spec/cold-chain-sensors/) per [`spec/IMPLEMENTING.md`](../../../../spec/IMPLEMENTING.md).
 
-**Target stack:** SolidJS + Vite, with the shared component library in [`src/ui/`](../../ui/), resolved through the roles in [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite, with the shared component library in [`src/ui/`](../../ui/), resolved through the roles in [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
 One routed screen (the list) and one modal over it, plus its save confirmation. No create, no delete, no detail view — devices register themselves through the cold-chain API, and retirement is the active flag.
 
@@ -10,7 +10,7 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 
 `listState` = `list/listState.test.ts` · `sensorEdit` = `list/sensorEdit.test.ts` · `sensorDisplay` = `list/sensorDisplay.test.ts` · `access` = `access.test.ts` · `volume` = `src/domain/location/volume.test.ts` (the shared picker's own tests, where this field's behaviour lives). **live** = driven through the built screen against a real `remote_server` (v3.02.00) on seeded data — see [Live verification](#live-verification).
 
-Anchors are `OMS-REG-CCE-03.<n>` — the behaviours of [`spec/cold-chain-sensors/cases/`](../../../spec/cold-chain-sensors/cases/). That case is the source of truth.
+Anchors are `OMS-REG-CCE-03.<n>` — the behaviours of [`spec/cold-chain-sensors/cases/`](../../../../spec/cold-chain-sensors/cases/). That case is the source of truth.
 
 | Behaviour                                                        | Covered by                                                                                                           |
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -56,7 +56,7 @@ Anchors are `OMS-REG-CCE-03.<n>` — the behaviours of [`spec/cold-chain-sensors
 | **.50** hand-off is single-use                                   | **live** — param stripped; a re-render did not re-open it                                                            |
 | navigation gate: read permission withheld                        | `access` — nav entry absent, route `denied`; server refusal _server-owned_                                           |
 | rules § permissions: change permission withheld                  | _server-owned_ — the client has no separate gate for it                                                              |
-| startup gate: unauthenticated                                    | _owned by [`startup/`](../../../spec/startup/)_ — the shared auth path, not this vertical                            |
+| startup gate: unauthenticated                                    | _owned by [`startup/`](../../../../spec/startup/)_ — the shared auth path, not this vertical                            |
 | precondition: both permissions held                              | `access`; **live** (the whole screen)                                                                                |
 | Flow — name and place an arrival                                 | **live** — hand-off → rename → assign → confirm, and the readings followed                                           |
 | Flow — move to another fridge                                    | **live** — assign, re-attribution, activity trail                                                                    |
@@ -65,7 +65,7 @@ Anchors are `OMS-REG-CCE-03.<n>` — the behaviours of [`spec/cold-chain-sensors
 
 ### Exempt but listed
 
-- **Store ownership, the page floor and the change permission** (rules/contract, not behaviours — [rules](../../../spec/cold-chain-sensors/rules.md)) — a server rejection with no client path to reach it. The list only ever shows the active store's sensors, so the UI cannot address another store's sensor or a non-existent id, and it never sends a page below one. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-sensors/contract.md#the-error-union-is-decorative); none has a colocated test because there is nothing in this code to exercise.
+- **Store ownership, the page floor and the change permission** (rules/contract, not behaviours — [rules](../../../../spec/cold-chain-sensors/rules.md)) — a server rejection with no client path to reach it. The list only ever shows the active store's sensors, so the UI cannot address another store's sensor or a non-existent id, and it never sends a page below one. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../../spec/cold-chain-sensors/contract.md#the-error-union-is-decorative); none has a colocated test because there is nothing in this code to exercise.
 - **Unauthenticated access** (owned by startup) — unauthenticated access is the shared startup gate, covered by that vertical.
 - **`.36`** — that the fullness tabs are not _rendered_ needs a rendered widget, and vitest here runs in the node environment with no DOM and no component-render harness at all, so no colocated test can hold it. Its consequence is held instead: `visibleLocations` proves a suppressed filter narrows nothing, which is the half that fails invisibly. The render half is live-verified and owed to the e2e suite, which already contracts `location-fullness-*` ids for it.
 
