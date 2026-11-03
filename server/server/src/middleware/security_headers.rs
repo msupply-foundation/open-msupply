@@ -67,7 +67,10 @@ const HSTS: &str = "max-age=31536000";
 
 static INLINE_SCRIPT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?is)<script\b([^>]*)>(.*?)</script\s*>").unwrap());
-static SRC_ATTRIBUTE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\bsrc\s*=").unwrap());
+// Anchored on a boundary that is start-of-attributes or whitespace, not `\b`, so `data-src=` (and
+// any other `*-src=`) is not mistaken for the script's own `src` and left unhashed.
+static SRC_ATTRIBUTE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)(?:^|\s)src\s*=").unwrap());
 
 /// The app policy for an HTML page served from the front end's dist, allowing each inline script
 /// already in that file by its hash: the build's import map (which plugin bundles resolve
@@ -320,5 +323,15 @@ mod test {
     async fn document_policy_without_inline_scripts_is_the_app_policy() {
         let html = r#"<html><script src="/pre.js"></script></html>"#;
         assert_eq!(app_policy_for_document(html), APP_POLICY);
+    }
+
+    #[actix_web::test]
+    async fn an_inline_script_with_a_data_src_attribute_still_gets_a_hash() {
+        // `data-src` is not the script's own `src`, so this inline script must be hashed, not
+        // treated as external and left out (which would block it under the policy).
+        let html = r#"<html><script data-src="/not-a-source">inline body</script></html>"#;
+        let policy = app_policy_for_document(html);
+        assert!(policy.contains("'sha256-"), "{policy}");
+        assert_eq!(policy.matches("'sha256-").count(), 1, "{policy}");
     }
 }
