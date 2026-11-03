@@ -2099,74 +2099,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </Stack>
         }
       >
-        {/* The working area: the batch grid and the advisories under it scroll
-            TOGETHER, so a message costs nothing until you reach the end of the
-            cards (the table lays out at content height here — DataTable's
-            `fitContent` — instead of owning a scroll box of its own). */}
-        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
-            dialog body and its main table, so in the full-screen sheet the
-            Dialog widens it to the sheet edges the way it widens its own
-            scroll region — otherwise the grid's edge-to-edge bleed would be
-            clipped here, hiding the first and last columns (the chain rule on
-            DialogProps.size, #246). */}
-        <div class={styles.workArea} {...DIALOG_SCROLL}>
-          {/* A scan narrowed the batches: say so, and let the user clear it
-              (.211) — the rows it ruled out sink and disable. */}
-          <Show when={scanNarrowing()}>
-            {narrowing => (
-              <ScanNarrowedNotice
-                batch={narrowing().batch}
-                nothingLeft={narrowing().nothingLeft}
-                onShowAll={() => setScanExcludedIds(new Set<string>())}
-              />
-            )}
-          </Show>
-          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
-              disabled (OMS-REG-SMV-11.26/.31). */}
-          <div class={styles.batchGrid}>
-            <DataTable
-              dialogTable
-              columns={columns()}
-              rows={draftRows()}
-              rowKey={line => line.id}
-              loading={loadingLines()}
-              cardGroups={CARD_GROUPS}
-              showCardToggle
-              showFullScreen={false}
-              // The controls ride the header row instead of a toolbar of their
-              // own a few pixels above the cards — a whole row of a modal whose
-              // scarce axis is vertical. With nothing else to put in it, the
-              // table's toolbar row then doesn't render at all.
-              controlsMount={tableControls()}
-              // Lay out at content height so THIS modal's scroll area (the work
-              // area around us) scrolls the cards and the advisories under them
-              // as one. Card view only — see the prop.
-              fitContent
-              // The ONE row colour this grid spends: the disabled grey on a
-              // barred or non-allocatable batch (OMS-REG-SMV-11.26/.31/.37). Its former
-              // status tints — expired red, held amber, allocated green — are
-              // gone (2026-08-21, D111 revised); the badges beside each batch
-              // code, the On-hold column, the reddened Expiry-date cell and
-              // the issued figures carry every one of those facts in words.
-              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-              emptyMessage={t('messages.no-stock-available')}
-              config={tableConfig.config()}
-              setConfig={tableConfig.setConfig}
-              configIsDefault={tableConfig.isConfigDefault()}
-              onSaveGlobalDefault={
-                tableConfig.canSaveGlobalDefault()
-                  ? tableConfig.saveGlobalTableConfig
-                  : undefined
-              }
-            />
-          </div>
-
-          {/* ADVISORY messages — they inform, they don't gate the save, so they
-              live in the flow after the last card and scroll away with it
-              rather than holding pinned height over the grid. Anything that
-              gates Save (a rejection, the zero-allocation and VVM
-              confirmations) is in the footer's message slot instead, pinned
-              beside the button it blocks. */}
+        {/* ADVISORY messages — they inform, they don't gate the save. Pinned
+            above the batch grid rather than after the last card: with many
+            batches a message under the grid sat a long scroll away and was
+            missed (issue #885), where the other line editors all put theirs
+            above the table. Anything that gates Save (a rejection, the
+            zero-allocation and VVM confirmations) is in the footer's message
+            slot instead, pinned beside the button it blocks. Gated as a whole
+            so an empty stack spends no gap over the grid. */}
+        <Show
+          when={
+            placeholderUnits() > 0 ||
+            activityMismatchBanner() ||
+            warnings().length > 0
+          }
+        >
           <Stack gap="sm">
             {/* The shortfall that became a placeholder — a consequence of the
                 Issue entry, so it reads with the batches it failed to fill,
@@ -2212,6 +2159,68 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               )}
             </For>
           </Stack>
+        </Show>
+
+        {/* The working area: the batch grid scrolls here, under the pinned
+            advisories (the table lays out at content height — DataTable's
+            `fitContent` — instead of owning a scroll box of its own). */}
+        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
+            dialog body and its main table, so in the full-screen sheet the
+            Dialog widens it to the sheet edges the way it widens its own
+            scroll region — otherwise the grid's edge-to-edge bleed would be
+            clipped here, hiding the first and last columns (the chain rule on
+            DialogProps.size, #246). */}
+        <div class={styles.workArea} {...DIALOG_SCROLL}>
+          {/* A scan narrowed the batches: say so, and let the user clear it
+              (.211) — the rows it ruled out sink and disable. */}
+          <Show when={scanNarrowing()}>
+            {narrowing => (
+              <ScanNarrowedNotice
+                batch={narrowing().batch}
+                nothingLeft={narrowing().nothingLeft}
+                onShowAll={() => setScanExcludedIds(new Set<string>())}
+              />
+            )}
+          </Show>
+          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
+              disabled (OMS-REG-SMV-11.26/.31). */}
+          <div class={styles.batchGrid}>
+            <DataTable
+              dialogTable
+              columns={columns()}
+              rows={draftRows()}
+              rowKey={line => line.id}
+              loading={loadingLines()}
+              cardGroups={CARD_GROUPS}
+              showCardToggle
+              showFullScreen={false}
+              // The controls ride the header row instead of a toolbar of their
+              // own a few pixels above the cards — a whole row of a modal whose
+              // scarce axis is vertical. With nothing else to put in it, the
+              // table's toolbar row then doesn't render at all.
+              controlsMount={tableControls()}
+              // Lay out at content height so THIS modal's scroll area (the work
+              // area around us) scrolls the cards, under the pinned advisories.
+              // Card view only — see the prop.
+              fitContent
+              // The ONE row colour this grid spends: the disabled grey on a
+              // barred or non-allocatable batch (OMS-REG-SMV-11.26/.31/.37). Its former
+              // status tints — expired red, held amber, allocated green — are
+              // gone (2026-08-21, D111 revised); the badges beside each batch
+              // code, the On-hold column, the reddened Expiry-date cell and
+              // the issued figures carry every one of those facts in words.
+              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+              emptyMessage={t('messages.no-stock-available')}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
+              configIsDefault={tableConfig.isConfigDefault()}
+              onSaveGlobalDefault={
+                tableConfig.canSaveGlobalDefault()
+                  ? tableConfig.saveGlobalTableConfig
+                  : undefined
+              }
+            />
+          </div>
         </div>
       </Show>
     </Dialog>

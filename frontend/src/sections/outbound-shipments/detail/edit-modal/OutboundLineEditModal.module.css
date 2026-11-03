@@ -73,13 +73,13 @@
 
 /* The "placeholder added" info notice fills what's left of the row, wrapping
    to its own full row when the header is tight. */
-/* The working area — the ONE scroll box between the header panel and the
-   footer, holding the batch grid and the advisory messages under it. They
-   scroll together, so a message costs nothing while the user is working in the
-   cards and is met at the end of them; a pinned band would have spent that
-   height on every screen, which on a tablet is most of a card. The table lays
-   out at content height inside it (DataTable's fitContent), so this is the
-   only scroller — no box inside a box. */
+/* The working area — the ONE scroll box between the advisory messages and the
+   footer, holding the batch grid. The advisories sit above it, pinned: under
+   the grid they were a long scroll away with many batches and got missed
+   (issue #885). They only render when something is reported, so a clean
+   allocation spends no height on them. The table lays out at content height
+   inside it (DataTable's fitContent), so this is the only scroller — no box
+   inside a box. */
 .workArea {
   display: flex;
   flex: 1;
