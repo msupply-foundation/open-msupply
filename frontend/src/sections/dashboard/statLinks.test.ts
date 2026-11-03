@@ -204,21 +204,21 @@ describe('prescription links', () => {
 });
 
 describe('inventory links', () => {
-  // OMS-REG-DB-01.55, OMS-REG-DB-01.41 — expired: expiry on or before today.
-  it('OMS-REG-DB-01.55: expired filters expiry ≤ today', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.41 — expired: expiry before today (#1786).
+  it('OMS-REG-DB-01.55: expired filters expiry < today', () => {
     expect(filterOf(expiredHref('s1', wednesday))).toEqual({
-      expiryDate: { beforeOrEqualTo: '2026-07-22' },
+      expiryDate: { beforeOrEqualTo: '2026-07-21' }, // yesterday
     });
   });
 
   // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: exactly the count's
-  // window, (today, today + 30d] — today's expiries are the expired
-  // stat's (D71).
-  it('OMS-REG-DB-01.55: expiring soon spans tomorrow … today + 30 days', () => {
+  // window, [today, today + 30d] — a batch expiring today is still usable
+  // (D71, #1786).
+  it('OMS-REG-DB-01.55: expiring soon spans today … today + 30 days', () => {
     expect(DAYS_TILL_EXPIRED).toBe(30);
     expect(filterOf(expiringSoonHref('s1', wednesday))).toEqual({
       expiryDate: {
-        afterOrEqualTo: '2026-07-23', // tomorrow — today itself is "expired"
+        afterOrEqualTo: '2026-07-22', // today — not yet expired
         beforeOrEqualTo: '2026-08-21', // +30d
       },
     });

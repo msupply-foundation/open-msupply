@@ -527,7 +527,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
 
 describe('Allocated quantities - behaviour for expired lines', () => {
   const now = Date.now();
-  const expiredDate = new Date(now - 100000).toISOString();
+  const expiredDate = '2023-01-01';
   const notExpiredDate = new Date(now + 100000).toISOString();
 
   const expiringLastLine = createTestLine({
@@ -548,10 +548,10 @@ describe('Allocated quantities - behaviour for expired lines', () => {
 
   /* **********************************************************
    * input lines:  [{ availableNumberOfPacks: 10, packSize: 1, expiryDate: 100000 },
-   *                { availableNumberOfPacks: 10, packSize: 1, expiryDate: -100000 },
+   *                { availableNumberOfPacks: 10, packSize: 1, expiryDate: 2023-01-01 },
    *                { itemId: 'placeholder' } }]
    * expected:     [{ numberOfPacks: 10, isUpdated: false, expiryDate: 100000 },
-   *                { numberOfPacks: 0, isUpdated: true, expiryDate: -100000 },
+   *                { numberOfPacks: 0, isUpdated: true, expiryDate: 2023-01-01 },
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('does not allocate any quantity to expired lines', () => {
