@@ -37,10 +37,27 @@ const APP_POLICY: &str = "default-src 'self'; \
     form-action 'self'; \
     frame-ancestors 'self'";
 
-/// Policy for files we hand back as-is (report output and uploaded attachments). `sandbox`
-/// without `allow-scripts` stops an uploaded HTML file running script even when opened directly.
-/// `frame-ancestors 'self'` rather than `'none'`, as the front end shows these in an iframe.
-const FILE_POLICY: &str = "default-src 'none'; \
+/// Policy for generated reports and exports served from `/files`. A report document runs its own
+/// scripts (frontend/spec/reports/ui-surface.md OMS-REG-RPT-11.7 — a template may chart, paginate
+/// or lay itself out in script), so unlike an uploaded file this one must be allowed to.
+/// `sandbox allow-scripts` without `allow-same-origin` keeps the document on an opaque origin,
+/// where its scripts run but reach no cookie, no storage, and no part of the app; this matches the
+/// `sandbox="allow-scripts"` the front end frames it with (ReportDetailView.tsx). `connect-src
+/// 'none'` means a report's script still can't send anything out, and everything else stays at
+/// `default-src 'none'` bar the inline styles and data-URL images a report lays itself out with.
+const FILES_POLICY: &str = "default-src 'none'; \
+    img-src 'self' data:; \
+    style-src 'unsafe-inline'; \
+    script-src 'unsafe-inline'; \
+    connect-src 'none'; \
+    sandbox allow-scripts; \
+    frame-ancestors 'self'";
+
+/// Policy for uploaded attachments served from `/sync_files` (the #1640 path). `sandbox` without
+/// `allow-scripts` stops an uploaded HTML file running script even when opened directly — a user
+/// upload is never meant to run, unlike a generated report (`FILES_POLICY`). `frame-ancestors
+/// 'self'` rather than `'none'`, as the front end shows these in an iframe.
+const SYNC_FILES_POLICY: &str = "default-src 'none'; \
     img-src 'self' data:; \
     style-src 'unsafe-inline'; \
     sandbox; \
@@ -78,8 +95,12 @@ pub fn app_policy_for_document(html: &str) -> String {
 }
 
 fn content_security_policy(path: &str) -> Option<&'static str> {
-    if path == "/files" || path.starts_with("/sync_files/") {
-        return Some(FILE_POLICY);
+    // Generated reports/exports run their own scripts; uploaded attachments never may.
+    if path == "/files" {
+        return Some(FILES_POLICY);
+    }
+    if path.starts_with("/sync_files/") {
+        return Some(SYNC_FILES_POLICY);
     }
     // GET /graphql serves the GraphiQL playground, which loads its scripts from unpkg
     if path == "/graphql" {
@@ -204,14 +225,22 @@ mod test {
     }
 
     #[actix_web::test]
-    async fn served_files_get_the_file_policy() {
-        for path in ["/files?id=abc", "/sync_files/asset/record/file"] {
-            assert_eq!(
-                csp(&headers_for(false, path).await),
-                Some(FILE_POLICY),
-                "{path}"
-            );
-        }
+    async fn generated_files_may_run_scripts_but_uploads_may_not() {
+        // A generated report (`/files`) runs its own scripts under `sandbox allow-scripts`…
+        let files = headers_for(false, "/files?id=abc").await;
+        assert_eq!(csp(&files), Some(FILES_POLICY));
+        assert!(csp(&files).unwrap().contains("sandbox allow-scripts"));
+        assert!(csp(&files).unwrap().contains("script-src 'unsafe-inline'"));
+        assert!(csp(&files).unwrap().contains("connect-src 'none'"));
+
+        // …while an uploaded attachment (`/sync_files`) keeps the strict `sandbox` that runs none.
+        let sync_files = headers_for(false, "/sync_files/asset/record/file").await;
+        assert_eq!(csp(&sync_files), Some(SYNC_FILES_POLICY));
+        assert!(csp(&sync_files).unwrap().contains("sandbox;"));
+        assert!(!csp(&sync_files).unwrap().contains("allow-scripts"));
+
+        // The two routes get different policies.
+        assert_ne!(csp(&files), csp(&sync_files));
     }
 
     #[actix_web::test]
