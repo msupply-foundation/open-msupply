@@ -1646,6 +1646,20 @@ fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> boo
     result.present
 }
 
+/// The session's `lock_timeout` setting.
+#[cfg(feature = "postgres")]
+fn dedup_test_lock_timeout(connection: &StorageConnection) -> String {
+    #[derive(QueryableByName)]
+    struct Setting {
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        lock_timeout: String,
+    }
+    diesel::sql_query("SHOW lock_timeout")
+        .get_result::<Setting>(connection.lock().connection())
+        .unwrap()
+        .lock_timeout
+}
+
 /// Every index named `index_changelog_dedup*` with whether it is valid.
 #[cfg(feature = "postgres")]
 fn dedup_test_indexes(connection: &StorageConnection) -> Vec<(String, bool)> {
@@ -1763,8 +1777,8 @@ async fn test_changelog_dedup_not_blocked_by_open_insert_transaction() {
     dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS[..4]);
 
     // Session A: an open transaction with an uncommitted insert, as an
-    // integration holds for hours. Its row lock on changelog_p_1 makes the
-    // index build wait.
+    // integration holds for hours. Its ROW EXCLUSIVE lock on changelog_p_1
+    // makes the index build wait.
     let holder = hold_open_transaction(
         &connection_manager,
         "INSERT INTO changelog (table_name, record_id, row_action) \
@@ -1842,8 +1856,14 @@ async fn test_changelog_dedup_locked_out_acquiring_lock_then_completes() {
     );
 
     let repo = ChangelogRepository::new(&connection);
+    let default_lock_timeout = dedup_test_lock_timeout(&connection);
     let started = Instant::now();
     assert!(is_lock_timeout(&repo.prepare_dead_set(0, 6).unwrap_err()));
+    assert_eq!(
+        dedup_test_lock_timeout(&connection),
+        default_lock_timeout,
+        "lock_timeout not reset"
+    );
     let waited = started.elapsed();
     assert!(
         waited < Duration::from_secs(10),

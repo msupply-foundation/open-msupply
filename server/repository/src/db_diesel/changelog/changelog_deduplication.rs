@@ -4,8 +4,8 @@
 //! Dedup keeps only the newest row per (table_name, record_id, row_action) group
 //! and deletes the rest.
 //!
-//! Every statement that can wait on a lock runs under a `lock_timeout`; a
-//! timeout comes back as an error for the caller to retry.
+//! The `CREATE INDEX CONCURRENTLY` and `DROP INDEX CONCURRENTLY` statements
+//! run under a `lock_timeout`.
 //!
 //! These helpers MUST be called outside a `transaction_sync` (each statement
 //! autocommits): Postgres refuses `CONCURRENTLY` inside a transaction, and the
