@@ -79,13 +79,16 @@
    (issue #885). They only render when something is reported, so a clean
    allocation spends no height on them. The table lays out at content height
    inside it (DataTable's fitContent), so this is the only scroller — no box
-   inside a box. */
+   inside a box. The floor matches .batchGrid's: on a short screen (landscape
+   tablet with the keyboard up) with banners showing, flex would otherwise hand
+   this box 0px and the user would see the banners but no batches; with it,
+   the dialog body scrolls past the banners to the grid instead. */
 .workArea {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: var(--space-3);
-  min-block-size: 0;
+  min-block-size: 16rem;
   overflow-y: auto;
 }
 

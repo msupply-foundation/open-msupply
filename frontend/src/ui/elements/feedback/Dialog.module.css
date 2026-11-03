@@ -585,7 +585,7 @@
    bleed goes only to a table that is the whole region (the sole child, or
    the sole child of a sole-child wrapper), so its header row sits on the
    heading's rule. A marked table mid-flow — under the outbound editor's
-   header panel with advisories after it, under the returns editors' field
+   advisories, under the returns editors' field
    cluster — keeps the 1rem gap on the side it shares with a neighbour. The
    header, the footer banner and the actions keep their inset: a picker or a
    button against the sheet edge gains nothing. A hidden title (.header
@@ -606,8 +606,8 @@
    sheet edges inline, and block-wise to the rule it starts at (the heading
    strip, when it follows one or is the region's first child) and to the
    actions' rule (when it is the region's last child); the table's block
-   bleed is then handed down that chain and no other. The editor's
-   advisories inside the same scroller keep its inset. */
+   bleed is then handed down that chain and no other. Anything else
+   inside the same scroller keeps its inset. */
 .dialog[data-fullscreen][open] .scroll {
   margin-inline: calc(-1 * var(--dialog-pad-inline));
   margin-block: calc(-1 * var(--dialog-gap));
@@ -636,8 +636,8 @@
 
 /* An editor's own scroll box between the body and its table (the chain
    rule above): widened to the sheet edges the way .scroll is, so the table's
-   inline bleed shows instead of being clipped; its content — the editor's
-   advisories under the grid — keeps the inset. */
+   inline bleed shows instead of being clipped; its other content (the
+   outbound editor's scan notice) keeps the inset. */
 .dialog[data-fullscreen][open] .scroll [data-dialog-scroll] {
   margin-inline: calc(-1 * var(--dialog-pad-inline));
   padding-inline: var(--dialog-pad-inline);

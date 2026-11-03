@@ -414,10 +414,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
 
   /**
    * Lay out at CONTENT height instead of owning a scroll box: the table grows
-   * to fit its rows and whatever scroller the host provides scrolls it — so
-   * content the host puts BELOW the table (a modal's advisory messages) scrolls
-   * with the rows instead of being pinned under a table that scrolls
-   * internally.
+   * to fit its rows and whatever scroller the host provides scrolls it — one
+   * scroller for the rows and anything the host puts beside them in it,
+   * instead of a box inside a box.
    *
    * Card view only, and deliberately: a row-view table scrolls HORIZONTALLY in
    * that same box (20 columns is normal here), and CSS cannot give one axis
