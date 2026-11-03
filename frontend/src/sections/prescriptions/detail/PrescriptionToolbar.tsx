@@ -11,10 +11,8 @@ import {
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
-import {
-  localTodayIso,
-  utcToLocalParts,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
 import {
   prescriptionDateInstant,

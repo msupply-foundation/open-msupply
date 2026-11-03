@@ -10,7 +10,7 @@ import {
   type SchedulesWithPeriodsResult,
 } from './program.generated';
 import { createStoreScopedResource } from '../../api/storeScopedResource';
-import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../intl/calendarDate';
 import { currentStoreId } from '../../store/storeContext';
 
 // One program-enrolment registry node — a pickable program. The picker

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  localTodayIso,
-  utcToLocalDay,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso, utcToLocalDay } from '../../../intl/calendarDate';
 import {
   newPrescriptionDate,
   prescriptionDateInstant,

@@ -4,7 +4,7 @@ import { FormRow } from '../../ui/layout/Form/FormRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { DateField } from '../../ui/elements/inputs/DateField';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
-import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../intl/calendarDate';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';

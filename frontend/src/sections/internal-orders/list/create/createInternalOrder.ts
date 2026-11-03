@@ -1,7 +1,7 @@
 import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
-import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { localIsoDaysAgo } from '../../../../intl/calendarDate';
 import {
   InsertInternalOrder,
   InsertProgramInternalOrder,

@@ -31,7 +31,7 @@ import { t, tPlural } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
 import { userDisplayName } from '@/auth/authContext';
 import { shallowEqual } from '@/typeHelpers';
-import { dayBefore } from '@/intl/dateArithmetic';
+import { dayBefore } from '@/intl/calendarDate';
 import {
   InsertStocktake,
   type InsertStocktakeVariables,

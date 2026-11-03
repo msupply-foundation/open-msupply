@@ -23,12 +23,8 @@
 //
 // Pure: `today` is injected so the window maths is unit-testable.
 
-import {
-  addDays,
-  dateToIsoDate,
-  startOfWeek,
-  utcBoundsFromLocalDays,
-} from '@/ui/elements/inputs/dateTimeConvert';
+import { addDays, startOfWeek } from '@/ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate, utcBoundsFromLocalDays } from '@/intl/calendarDate';
 import {
   expiredStockPath,
   expiringBetweenThresholdsStockPath,

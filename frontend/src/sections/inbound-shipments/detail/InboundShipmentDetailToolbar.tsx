@@ -3,14 +3,14 @@ import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import { addDays } from '../../../ui/elements/inputs/dateTimeConvert';
 import {
-  addDays,
   dateToIsoDate,
   dateToOffsetIso,
   isoDateToDate,
   localTodayIso,
   utcToLocalDay,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+} from '../../../intl/calendarDate';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';

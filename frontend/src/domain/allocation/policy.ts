@@ -6,10 +6,8 @@
 // preference fields), so any issue-side vertical can feed it from its own
 // preferences query.
 
-import {
-  addDays,
-  dateToIsoDate,
-} from '../../ui/elements/inputs/dateTimeConvert';
+import { addDays } from '../../ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate } from '../../intl/calendarDate';
 
 /**
  * The preference values that shape barring and ordering (consumer-resolved).

@@ -20,10 +20,7 @@ import {
   wouldGoBelowZero,
   backdatedDatetime as computeBackdatedDatetime,
 } from '../stockCalc';
-import {
-  localTodayIso,
-  localIsoDaysAgo,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso, localIsoDaysAgo } from '../../../intl/calendarDate';
 import {
   HistoricalStockLines,
   type StockLineDetailFragment,

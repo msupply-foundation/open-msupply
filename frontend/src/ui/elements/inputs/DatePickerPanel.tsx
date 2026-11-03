@@ -9,7 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
-import { dateToIsoDate } from './dateTimeConvert';
+import { dateToIsoDate } from '../../../intl/calendarDate';
 import { locale } from '../../../intl';
 import styles from './DatePickerPanel.module.css';
 

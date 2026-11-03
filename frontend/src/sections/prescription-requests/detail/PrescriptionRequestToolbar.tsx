@@ -18,10 +18,8 @@ import {
   CustomFieldsToolbar,
   EMPTY_FIELD_VALUE,
 } from '../../../domain/customFields';
-import {
-  localTodayIso,
-  utcToLocalParts,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import {
   prescriptionRequestDateInstant,
   type UpdateInput,

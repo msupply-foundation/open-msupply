@@ -38,7 +38,7 @@ import {
 } from '../../../domain/barcode';
 import { stockPreferences } from '../../../store/storeContext';
 import { runInsertStockLine } from '../stockApi';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import {
   NewStockItem,

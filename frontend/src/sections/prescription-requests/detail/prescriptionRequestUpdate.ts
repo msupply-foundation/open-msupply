@@ -1,8 +1,5 @@
 import { graphqlFetch } from '../../../api/graphql';
-import {
-  localDayToUtc,
-  localTodayIso,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { localDayToUtc, localTodayIso } from '../../../intl/calendarDate';
 import {
   UpdatePrescriptionRequest,
   type PrescriptionRequestFieldsFragment,
@@ -58,5 +55,9 @@ export const prescriptionRequestDateInstant = (isoDay: string): string =>
  * date at all: the server stamps the creation moment (contract § creation).
  * Only an earlier day is a real backdate, riding as its end-of-day instant.
  */
-export const newPrescriptionRequestDate = (isoDay: string): string | undefined =>
-  isoDay === localTodayIso() ? undefined : prescriptionRequestDateInstant(isoDay);
+export const newPrescriptionRequestDate = (
+  isoDay: string
+): string | undefined =>
+  isoDay === localTodayIso()
+    ? undefined
+    : prescriptionRequestDateInstant(isoDay);

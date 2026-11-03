@@ -6,7 +6,7 @@ import {
   backdatingGate,
   withinBackdateBounds,
 } from './backdating';
-import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate } from '../../../intl/calendarDate';
 
 describe('backdatingGate (OMS-REG-DIST-04.23)', () => {
   it('is enabled while NEW with the preference on and the panel editable', () => {

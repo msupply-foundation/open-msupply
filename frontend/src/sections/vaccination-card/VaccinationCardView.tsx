@@ -8,7 +8,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '@/intl/calendarDate';
 import { fetchCard, fetchCardPatient } from './cardApi';
 import { cardCounts, patientAgeLabel } from './cardModel';
 import {

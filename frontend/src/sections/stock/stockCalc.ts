@@ -3,7 +3,7 @@
 // mirror the server's rules for the UI's previews / pre-validation; the server
 // remains the guard for every MUST.
 
-import { localDayToUtc } from '../../ui/elements/inputs/dateTimeConvert';
+import { localDayToUtc } from '../../intl/calendarDate';
 
 // Units = packs × pack size; value = packs × cost price (spec/stock rules — a
 // quantity in units is packs × pack size, never a stored field).

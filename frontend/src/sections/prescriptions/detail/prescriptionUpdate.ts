@@ -1,8 +1,5 @@
 import { graphqlFetch } from '../../../api/graphql';
-import {
-  localDayToUtc,
-  localTodayIso,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { localDayToUtc, localTodayIso } from '../../../intl/calendarDate';
 import {
   UpdatePrescription,
   DeletePrescriptionLines,

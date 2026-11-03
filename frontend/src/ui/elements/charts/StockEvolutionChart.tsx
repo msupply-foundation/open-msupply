@@ -1,6 +1,7 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
+import { wireToDate } from '../../../intl/calendarDate';
 import { roundedText } from '../../../intl/numberDisplay';
 import { SvgPlot, linePath } from './svgPlot';
 
@@ -45,11 +46,11 @@ export const StockEvolutionChart = (props: {
           maxValue={maxValue()}
           width={props.width}
           height={props.height}
-          xLabel={i => format(new Date(data()[i].date), 'd/M')}
+          xLabel={i => format(wireToDate(data()[i].date), 'd/M')}
           tooltip={i => (
             <>
               <div class={styles.tooltipHead}>
-                {format(new Date(data()[i].date), 'd MMM')}
+                {format(wireToDate(data()[i].date), 'd MMM')}
               </div>
               <div>
                 {t('label.stock-level')}: {fmt(data()[i].stockOnHand)}

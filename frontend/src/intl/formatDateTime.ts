@@ -14,6 +14,7 @@ import { enGB } from 'date-fns/locale/en-GB';
 import type { SupportedLocale } from './locales';
 import { locale, t, tPlural } from './intl';
 import { intlNumberFormat } from './formatNumber';
+import { wireToDate } from './calendarDate';
 
 // The rest load on demand, one chunk each, alongside the language's dictionary
 // (changeLanguage → loadLocaleAssets): a date-fns locale is 7–14 KB gzipped and
@@ -68,22 +69,13 @@ export const loadDateFnsLocale = async (l: SupportedLocale): Promise<void> => {
 const dateFnsLocale = (l?: SupportedLocale): Locale =>
   dateFnsLocales()[l ?? locale()] ?? enGB;
 
-const toDate = (value: Date | string | number): Date =>
-  value instanceof Date ? value : new Date(value);
-
-// A calendar date (`YYYY-MM-DD`) carries no zone, but parsing one as an INSTANT
-// puts it at UTC midnight: west of Greenwich that is the previous local day,
-// and east of it the local morning is still "before" the date. Ages of the very
-// young are what notice — a baby born today reads as a day old in New York, and
-// in Auckland the date of birth looks like the future and no age shows at all.
-// Split the fields and build a local date instead.
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-
-const toCalendarDate = (value: Date | string | number): Date => {
-  if (typeof value !== 'string' || !DATE_ONLY.test(value)) return toDate(value);
-  const [y, m, d] = value.split('-').map(Number);
-  return new Date(y, m - 1, d);
-};
+// Every formatter reads its value through `wireToDate`: a bare calendar day
+// (`YYYY-MM-DD`, a GraphQL NaiveDate) is the LOCAL day it names, anything else
+// is an instant. `new Date('2025-10-01')` would read the day as UTC midnight —
+// the previous evening west of Greenwich — and show the day before (#1500).
+// Ages of the very young notice the other side too: a baby born today reads as
+// a day old in New York, and in Auckland the date of birth looks like the
+// future and no age shows at all.
 
 /*
  * date-fns writes Latin digits in every language, while numbers on the same row
@@ -119,13 +111,13 @@ const localiseDigits = (formatted: string): string => {
 // functions in the app's direct-call style; each reads locale() so use within
 // an effect stays reactive.
 export const localisedDate = (value: Date | string | number): string =>
-  localiseDigits(format(toDate(value), 'P', { locale: dateFnsLocale() }));
+  localiseDigits(format(wireToDate(value), 'P', { locale: dateFnsLocale() }));
 
 export const localisedTime = (value: Date | string | number): string =>
-  localiseDigits(format(toDate(value), 'p', { locale: dateFnsLocale() }));
+  localiseDigits(format(wireToDate(value), 'p', { locale: dateFnsLocale() }));
 
 export const localisedDateTime = (value: Date | string | number): string =>
-  localiseDigits(format(toDate(value), 'Pp', { locale: dateFnsLocale() }));
+  localiseDigits(format(wireToDate(value), 'Pp', { locale: dateFnsLocale() }));
 
 /**
  * A timestamp in UTC, for a field that is LABELLED as UTC — an export column,
@@ -135,7 +127,7 @@ export const localisedDateTime = (value: Date | string | number): string =>
  * because the point of the value is to be the same for every reader.
  */
 export const utcDateTime = (value: Date | string | number): string =>
-  toDate(value).toISOString().slice(0, 16).replace('T', ' ');
+  wireToDate(value).toISOString().slice(0, 16).replace('T', ' ');
 
 /**
  * An explicit date pattern. Digits are left Latin: the caller chose the shape,
@@ -146,7 +138,8 @@ export const utcDateTime = (value: Date | string | number): string =>
 export const customDate = (
   value: Date | string | number,
   formatString: string
-): string => format(toDate(value), formatString, { locale: dateFnsLocale() });
+): string =>
+  format(wireToDate(value), formatString, { locale: dateFnsLocale() });
 
 /**
  * A date for a FILE rather than a screen — the CSV exports, and anything else
@@ -160,7 +153,7 @@ export const customDate = (
  * Anything a user reads on screen wants {@link localisedDate} instead.
  */
 export const exportDate = (value: Date | string | number): string =>
-  format(toDate(value), 'P', { locale: dateFnsLocale() });
+  format(wireToDate(value), 'P', { locale: dateFnsLocale() });
 
 /**
  * The app language's NUMERIC short-date pattern — the `P` that
@@ -231,7 +224,7 @@ export const localisedTimeAgo = (
   value: Date | string | number,
   now: Date = new Date()
 ): string => {
-  const then = toDate(value);
+  const then = wireToDate(value);
   const elapsed = now.getTime() - then.getTime();
   const tag = INTL_TAGS[locale()];
   /*
@@ -278,7 +271,7 @@ export const localisedTimeAgo = (
 // for a missing or future date of birth, so callers fall back to the date.
 export const getDisplayAge = (dateOfBirth: Date | string | number): string => {
   const now = new Date();
-  const dob = toCalendarDate(dateOfBirth);
+  const dob = wireToDate(dateOfBirth);
   if (dob.getTime() > now.getTime()) return '';
   const years = differenceInYears(now, dob);
   if (years >= 1) return tPlural('label.age-years', years);

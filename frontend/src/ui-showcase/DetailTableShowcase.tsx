@@ -7,10 +7,7 @@ import {
   type SortState,
 } from '../ui/elements/table/DataTable';
 import { getCellDefinition } from '../ui/elements/table/tableHelpers';
-import {
-  dateToIsoDate,
-  localDayToUtc,
-} from '../ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate, localDayToUtc } from '../intl/calendarDate';
 import {
   resolveTableConfig,
   type Band,

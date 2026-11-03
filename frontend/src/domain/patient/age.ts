@@ -1,5 +1,5 @@
 import { getDisplayAge } from '../../intl';
-import { isoDateToDate } from '../../ui/elements/inputs/dateTimeConvert';
+import { isoDateToDate } from '../../intl/calendarDate';
 
 // A patient's age and date of birth (spec/patients rules › age), shared by
 // the plain-path patient form and the document-path patient fields.

@@ -31,7 +31,7 @@ import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import {
   DownloadIcon,

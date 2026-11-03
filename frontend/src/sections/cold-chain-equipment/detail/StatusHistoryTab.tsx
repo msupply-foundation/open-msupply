@@ -4,6 +4,7 @@ import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { localisedDate, t } from '@/intl';
+import { utcBoundsFromLocalDays } from '@/intl/calendarDate';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -56,26 +57,23 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
   const [toDate, setToDate] = createSignal('');
   const [kind, setKind] = createSignal<LogEventFilter>('all');
 
-  const variables = createMemo(() => ({
-    storeId: props.storeId,
-    filter: {
-      assetId: { equalTo: props.assetId },
-      ...logKindFilter(kind(), ASSET_STATUSES),
-      // Each picked day is the DEVICE-LOCAL day, widened to instants
-      // (ui-standards/inputs § timezone authority).
-      ...(fromDate() || toDate()
-        ? {
-            logDatetime: {
-              ...(fromDate()
-                ? { afterOrEqualTo: startOfLocalDay(fromDate()) }
-                : {}),
-              ...(toDate() ? { beforeOrEqualTo: endOfLocalDay(toDate()) } : {}),
-            },
-          }
-        : {}),
-    },
-    sort: [{ key: 'logDatetime' as const, desc: true }],
-  }));
+  const variables = createMemo(() => {
+    // Each picked day is the DEVICE-LOCAL day, widened to instants
+    // (ui-standards/inputs § timezone authority).
+    const logDatetime = utcBoundsFromLocalDays(
+      fromDate() || null,
+      toDate() || null
+    );
+    return {
+      storeId: props.storeId,
+      filter: {
+        assetId: { equalTo: props.assetId },
+        ...logKindFilter(kind(), ASSET_STATUSES),
+        ...(logDatetime ? { logDatetime } : {}),
+      },
+      sort: [{ key: 'logDatetime' as const, desc: true }],
+    };
+  });
 
   // Read non-suspending: this tab first fetches when it is opened, under an
   // already-open screen's boundary (kdd/solid-reactivity-pitfalls § no
@@ -261,11 +259,3 @@ const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
     </TimelineItem>
   );
 };
-
-/** The picked day's first instant, in the user's own zone. */
-const startOfLocalDay = (date: string): string =>
-  new Date(`${date}T00:00:00`).toISOString();
-
-/** The picked day's inclusive last instant, in the user's own zone. */
-const endOfLocalDay = (date: string): string =>
-  new Date(`${date}T23:59:59.999`).toISOString();

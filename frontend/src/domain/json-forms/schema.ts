@@ -31,10 +31,7 @@
 //
 // Labels arrive pre-translated (OMS-REG-RPT-10.3) and are used verbatim.
 
-import {
-  localDayToUtc,
-  utcToLocalDay,
-} from '../../ui/elements/inputs/dateTimeConvert';
+import { localDayToUtc, utcToLocalDay } from '../../intl/calendarDate';
 
 /** One option for an enum select: raw schema value + its display label. */
 export interface EnumOption {

@@ -18,7 +18,7 @@ import { gated } from '../../../api/gated';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FormColumns } from '../../../ui/layout/Form/FormColumns';

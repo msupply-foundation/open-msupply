@@ -4,11 +4,8 @@
 // component resolves the returned message KEYS via t() and owns the
 // stocktake-conflict query).
 
-import {
-  addDays,
-  dateToIsoDate,
-  localDayToUtc,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { addDays } from '../../../ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate, localDayToUtc } from '../../../intl/calendarDate';
 
 export type BackdatingReasonKey =
   | 'messages.received-date-backdating-not-enabled'

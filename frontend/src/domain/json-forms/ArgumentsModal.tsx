@@ -47,7 +47,7 @@ import {
 } from '../reasonOptions/reasonOptionsResource';
 import { ScheduleFormFields } from './ScheduleFormFields';
 import { storeContext, currentStoreId } from '../../store/storeContext';
-import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../intl/calendarDate';
 import {
   cleanArguments,
   dateArgumentDay,

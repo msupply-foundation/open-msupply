@@ -9,7 +9,7 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import {
   ClinicianSelect,

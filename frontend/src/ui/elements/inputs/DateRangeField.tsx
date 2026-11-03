@@ -5,12 +5,8 @@ import type { FocusTarget } from '../../utils/createFocusTarget';
 import { t } from '../../../intl';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
-import {
-  dateToIsoDate,
-  defaultDateFormat,
-  formatIsoDate,
-  isoDateToDate,
-} from './dateTimeConvert';
+import { defaultDateFormat, formatIsoDate } from './dateTimeConvert';
+import { dateToIsoDate, isoDateToDate } from '../../../intl/calendarDate';
 import styles from './DateTimeFields.module.css';
 
 /** A date range as ISO calendar dates (`YYYY-MM-DD`), either side nullable. */

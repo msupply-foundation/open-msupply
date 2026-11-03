@@ -15,7 +15,7 @@ import { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
-import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../intl/calendarDate';
 import { TimeField } from '../ui/elements/inputs/TimeField';
 import {
   DateRangeField,

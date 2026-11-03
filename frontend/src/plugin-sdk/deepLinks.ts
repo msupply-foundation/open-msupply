@@ -50,7 +50,8 @@
  * small shared chunk linked by both importers (the SDK entry and the
  * dashboard's statLinks), fetched with whichever side loads first.
  */
-import { addDays, dateToIsoDate } from '../ui/elements/inputs/dateTimeConvert';
+import { addDays } from '../ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate } from '../intl/calendarDate';
 import type { StockLinesVariables } from '../sections/stock/list/stock.generated';
 
 // The stock list filter object, exactly the generated GraphQL filter shape —

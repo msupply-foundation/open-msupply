@@ -4,6 +4,7 @@ import type {
   InsertAssetLogVariables,
 } from '../equipment.generated';
 import type { AssetStatus } from '../equipment';
+import { dateToIsoDate, isoDateToDate } from '@/intl/calendarDate';
 
 // The status-entry and temperature-mapping form logic (spec/cold-chain-
 // equipment › rules § functional status / temperature mapping, ui-surface
@@ -161,15 +162,8 @@ const mappingInstant = (date: string, now: Date): string => {
  * is always in the past — so a date this accepts is never one the server
  * refuses.
  */
-export const isMappingDateValid = (date: string, now: Date): boolean => {
-  if (!date) return false;
-  const picked = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(picked.getTime())) return false;
-  return startOfLocalDay(picked) <= startOfLocalDay(now);
-};
-
-const startOfLocalDay = (date: Date): number =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+export const isMappingDateValid = (date: string, now: Date): boolean =>
+  isoDateToDate(date) !== null && date <= dateToIsoDate(now);
 
 /** Which kinds the history filter offers, and what each narrows to. */
 export type LogEventFilter = 'all' | 'status' | 'mapping';
@@ -185,7 +179,10 @@ export type LogEventFilter = 'all' | 'status' | 'mapping';
 export const logKindFilter = (
   kind: LogEventFilter,
   statuses: readonly AssetStatus[]
-): { status?: { equalAny: AssetStatus[] }; type?: { equalTo: 'TEMPERATURE_MAPPING' } } => {
+): {
+  status?: { equalAny: AssetStatus[] };
+  type?: { equalTo: 'TEMPERATURE_MAPPING' };
+} => {
   if (kind === 'status') return { status: { equalAny: [...statuses] } };
   if (kind === 'mapping') return { type: { equalTo: 'TEMPERATURE_MAPPING' } };
   return {};

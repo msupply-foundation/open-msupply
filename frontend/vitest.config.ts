@@ -1,5 +1,13 @@
 import { defineConfig } from 'vitest/config';
 
+// Run west of UTC unless told otherwise. A date bug that reads a calendar day
+// as UTC midnight shows the day BEFORE west of Greenwich and nothing at all
+// east of it, so a suite run in New Zealand or Timor-Leste would pass with the
+// bug in place (#1500). Set here, before the test workers start, so they all
+// inherit it; a `TZ` already in the environment wins, which is how CI also runs
+// the suite east of UTC.
+process.env.TZ ??= 'America/Los_Angeles';
+
 // Unit tests (intl, codegen helpers) run in node. The deterministic e2e
 // suites that need the real backend live under e2e/ (Playwright, not vitest).
 export default defineConfig({

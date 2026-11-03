@@ -67,7 +67,7 @@ import {
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
 import { totalVolume } from '../stockCalc';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import {

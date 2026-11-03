@@ -49,9 +49,9 @@ vi.mock('../../ui/layout/Stack/Stack', () => ({
 vi.mock('../../intl', () => ({
   t: (key: string) => key,
   formatNumber: (n: number) => `#${n}`,
-  // A calendar date is built as the local day, whatever the zone.
-  localisedDate: (d: Date) =>
-    `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`,
+  // Reading a calendar date as the local day is localisedDate's own job
+  // (formatDateTime.test.ts); here it only has to receive the stored day.
+  localisedDate: (v: string) => `on ${v}`,
   localisedDateTime: (v: string) => `at ${v}`,
 }));
 
@@ -93,7 +93,7 @@ describe('DocumentAsRecorded', () => {
       })
     ).toEqual([
       'Visit = at 2026-03-02T09:15:00Z',
-      'Birth = 27/2/2026',
+      'Birth = on 2026-02-27',
       'Positive = common.no',
       'Weight = #68',
       'Visit notes = Reports feeling well',

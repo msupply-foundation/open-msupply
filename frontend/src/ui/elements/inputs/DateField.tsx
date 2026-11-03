@@ -11,13 +11,12 @@ import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  dateToIsoDate,
   defaultDateFormat,
   formatIsoDate,
   formatPlaceholder,
-  isoDateToDate,
   parseDateInput,
 } from './dateTimeConvert';
+import { dateToIsoDate, isoDateToDate } from '../../../intl/calendarDate';
 import styles from './DateTimeFields.module.css';
 
 export interface DateFieldProps {

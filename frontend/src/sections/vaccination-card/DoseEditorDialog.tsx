@@ -42,7 +42,7 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { RecordLink } from '@/ui/elements/typography/RecordLink';
 import { Stack } from '@/ui/layout/Stack/Stack';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '@/intl/calendarDate';
 import { ClinicianSelect, cliniciansResource } from '@/domain/clinician';
 import {
   confirmsSkip,

@@ -7,10 +7,7 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { getChipListCell } from '@/ui/elements/table/ChipListCell';
 import { remToPx } from '@/ui/utils/rem';
-import {
-  dateToIsoDate,
-  utcToLocalDay,
-} from '@/ui/elements/inputs/dateTimeConvert';
+import { dateToIsoDate, utcToLocalDay } from '@/intl/calendarDate';
 import { statusEventTexts } from '@/domain/program/programEvents';
 import type { EncounterStatus } from '@/plugin-sdk/documents';
 

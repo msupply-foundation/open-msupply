@@ -15,7 +15,7 @@ import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
+import { localTodayIso } from '@/intl/calendarDate';
 import { Text } from '@/ui/elements/typography/Text';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { CheckIcon } from '@/ui/icons';
