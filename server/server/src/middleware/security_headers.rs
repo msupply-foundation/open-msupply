@@ -114,6 +114,10 @@ fn content_security_policy(path: &str) -> Option<&'static str> {
 
 /// Sets security response headers (CSP, X-Frame-Options, nosniff, and HSTS when serving over
 /// TLS). A header the handler already set is left alone.
+///
+/// A handler that returns `Err(actix_web::Error)` rather than a response is passed straight
+/// through (`fut.await?` below), so its error response goes out with none of these headers.
+/// actix's own `DefaultHeaders` behaves the same way, so this is left as is.
 pub struct SecurityHeaders {
     is_https: bool,
 }
