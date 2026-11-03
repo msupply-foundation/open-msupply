@@ -18,8 +18,15 @@ use sha2::{Digest, Sha256};
 /// send data to, another host. The one exception is the Zebra Browser Print service on the user's
 /// own machine (http on 9100, https on 9101), which label printing talks to. Inline styles stay
 /// allowed: the React front end's MUI/emotion styling and printed reports both rely on them.
+///
+/// `script-src` keeps `'unsafe-eval'`: JSON Forms / AJV compile every document-form validator with
+/// `new Function(...)` (ajv/dist/compile/index.js), so without it the old UI's patient, encounter
+/// and program-enrolment forms throw on open and the Solid front end silently loses its
+/// client-side validation. This is a narrower relaxation than `'unsafe-inline'` would be: injected
+/// code still can't be loaded from, or send data to, another host (`connect-src`, `img-src` and
+/// the script hosts stay locked down), so the data-exfiltration path #1669 is about stays closed.
 const APP_POLICY: &str = "default-src 'self'; \
-    script-src 'self'; \
+    script-src 'self' 'unsafe-eval'; \
     style-src 'self' 'unsafe-inline'; \
     img-src 'self' data: blob:; \
     font-src 'self' data:; \
@@ -259,11 +266,12 @@ mod test {
 
         let policy = app_policy_for_document(html);
 
-        // sha256("abc") and sha256(""); the external script gets no hash
+        // sha256("abc") and sha256(""); the external script gets no hash. The hashes land right
+        // after 'self', before 'unsafe-eval' (source order in a CSP list doesn't matter).
         assert!(
             policy.contains(
                 "script-src 'self' 'sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=' \
-                 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=';"
+                 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=' 'unsafe-eval';"
             ),
             "{policy}"
         );
