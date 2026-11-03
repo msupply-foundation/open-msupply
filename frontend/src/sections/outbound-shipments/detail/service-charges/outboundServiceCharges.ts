@@ -11,20 +11,30 @@ import type {
   ServiceChargeSaveResult,
   ServiceChargeSeed,
 } from '../../../../domain/invoice';
-import { OutboundLines } from '../outboundDetail.generated';
+import {
+  OutboundLines,
+  type OutboundLineFragment,
+} from '../outboundDetail.generated';
 import { SaveOutboundServiceLines } from './serviceCharges.generated';
 
-export const fetchOutboundServiceCharges = async (
+// The shipment's SERVICE lines; undefined when the read failed.
+export const fetchOutboundServiceLines = async (
   storeId: string,
   invoiceId: string
-): Promise<ServiceChargeSeed[] | undefined> => {
+): Promise<OutboundLineFragment[] | undefined> => {
   const result = await graphqlFetch(OutboundLines, {
     storeId,
     filter: { invoiceId: { equalTo: invoiceId }, type: { equalTo: 'SERVICE' } },
     page: { first: 100 },
   });
-  if (result.kind !== 'success') return undefined;
-  return result.data.invoiceLines.nodes.map(line => ({
+  return result.kind === 'success' ? result.data.invoiceLines.nodes : undefined;
+};
+
+export const fetchOutboundServiceCharges = async (
+  storeId: string,
+  invoiceId: string
+): Promise<ServiceChargeSeed[] | undefined> =>
+  (await fetchOutboundServiceLines(storeId, invoiceId))?.map(line => ({
     id: line.id,
     itemId: line.itemId,
     name: line.itemName,
@@ -32,7 +42,6 @@ export const fetchOutboundServiceCharges = async (
     taxPercentage: line.taxPercentage ?? null,
     note: line.note ?? null,
   }));
-};
 
 export const saveOutboundServiceCharges = async (
   storeId: string,
