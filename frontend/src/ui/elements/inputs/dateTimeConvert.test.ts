@@ -226,11 +226,13 @@ describe('default date format (numeric, #774)', () => {
       setLocale('en');
     }
   });
-  // A month-only field's format round-trips in every app language: shown in
-  // `MMM yyyy` and re-typed, it still lands on that month's 1st. French short
-  // names end in a dot (`oct.`, `janv.`) and no longer match the typed text
-  // once the dot is separated off, so they survive only through the long-name
-  // prefix fallback — this pins that fallback.
+  // A month-only field's format round-trips in every app language: every
+  // month, shown by its short (`MMM yyyy`) or long (`MMMM yyyy`) name and
+  // re-typed, still lands on that month's 1st. French short names end in a dot
+  // (`oct.`, `janv.`) and no longer match the typed text once the dot is
+  // separated off, so they survive only through the long-name prefix fallback.
+  // Lao names carry vowel signs (combining marks, not letters) next to their
+  // dots (`ມິ.ຖ.`, `ຕຸລາ`), so every month is tried, not just one.
   it('round-trips the month format of every language', async () => {
     try {
       for (const language of Object.keys(
@@ -238,12 +240,17 @@ describe('default date format (numeric, #774)', () => {
       ) as SupportedLocale[]) {
         await loadDateFnsLocale(language);
         setLocale(language);
-        const shown = formatIsoDate('2026-10-01', 'MMM yyyy');
-        expect(shown, `${language}: "${shown}"`).not.toBe('');
-        expect(
-          parseDateInput(shown, 'MMM yyyy'),
-          `${language}: "${shown}"`
-        ).toBe('2026-10-01');
+        for (const format of ['MMM yyyy', 'MMMM yyyy']) {
+          for (let month = 1; month <= 12; month++) {
+            const iso = `2026-${String(month).padStart(2, '0')}-01`;
+            const shown = formatIsoDate(iso, format);
+            expect(shown, `${language} ${format}: "${shown}"`).not.toBe('');
+            expect(
+              parseDateInput(shown, 'MMM yyyy'),
+              `${language} ${format}: "${shown}"`
+            ).toBe(iso);
+          }
+        }
       }
     } finally {
       setLocale('en');

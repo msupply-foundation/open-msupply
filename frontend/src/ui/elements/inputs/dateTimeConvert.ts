@@ -260,6 +260,8 @@ export const parseDateInput = (
   if (order.length !== 3 && !monthOnly) return undefined;
 
   // Parts: runs of digits or letters, in order (month names have letters).
+  // "Letters" include combining marks: Lao vowel signs (the `ິ` in `ມິ.ຖ.`,
+  // the `ຸ` in `ຕຸລາ`) are marks, not letters, and a name must stay one run.
   // Some languages abbreviate a month with INTERNAL dots (Lao `ຕ.ລ.`), which
   // this split would cut into two letter runs — drop a separator that sits
   // between two LETTERS, in the text, so both sides see the same token; the
@@ -267,17 +269,17 @@ export const parseDateInput = (
   // mark). A separator between digits stands (`23.04.2023` must stay three
   // parts).
   const parts = s
-    .replace(/(?<=\p{L})[.,'’](?=\p{L})/gu, '')
-    .match(/\p{L}+|\d+/gu);
+    .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+    .match(/[\p{L}\p{M}]+|\d+/gu);
   if (!parts || parts.length !== order.length) return undefined;
 
   const names = monthNames().map(n => ({
     short: n.short
-      .replace(/(?<=\p{L})[.,'’](?=\p{L})/gu, '')
-      .replace(/(?<=\p{L})[.,'’]+$/u, ''),
+      .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+      .replace(/(?<=[\p{L}\p{M}])[.,'’]+$/u, ''),
     long: n.long
-      .replace(/(?<=\p{L})[.,'’](?=\p{L})/gu, '')
-      .replace(/(?<=\p{L})[.,'’]+$/u, ''),
+      .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+      .replace(/(?<=[\p{L}\p{M}])[.,'’]+$/u, ''),
   }));
   let day = monthOnly ? 1 : 0;
   let month = 0;
