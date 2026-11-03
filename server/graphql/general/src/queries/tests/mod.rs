@@ -6,3 +6,4 @@ mod legacy_barcode;
 mod login;
 mod master_lists;
 mod names;
+mod stock_counts;
