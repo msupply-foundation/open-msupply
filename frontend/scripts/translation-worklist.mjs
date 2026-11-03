@@ -52,18 +52,41 @@ const usage = [
   '       node scripts/translation-worklist.mjs apply <locale> <proposals.json> [--base <ref>] [--update]',
 ].join('\n');
 
-const parseArgs = argv => {
+// Each command's flags: `true` for a switch, `false` for one taking a value.
+// Anything else is refused, so a typo such as `--updte` can't be ignored.
+const commandFlags = {
+  build: {
+    base: false,
+    backlog: true,
+    keys: false,
+    out: false,
+    'chunk-size': false,
+  },
+  apply: { base: false, update: true },
+};
+
+const parseArgs = (command, argv) => {
+  const known = commandFlags[command] ?? {};
   const flags = {};
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--backlog' || arg === '--update') flags[arg.slice(2)] = true;
-    else if (arg.startsWith('--')) {
-      const value = argv[index + 1];
-      if (value === undefined) fail(`${arg} needs a value.\n${usage}`);
-      flags[arg.slice(2)] = value;
-      index += 1;
-    } else positional.push(arg);
+    if (!arg.startsWith('--')) {
+      positional.push(arg);
+      continue;
+    }
+    const name = arg.slice(2);
+    if (!Object.hasOwn(known, name)) fail(`Unknown flag ${arg}.\n${usage}`);
+    if (known[name]) {
+      flags[name] = true;
+      continue;
+    }
+    const value = argv[index + 1];
+    if (value === undefined || value.startsWith('--')) {
+      fail(`${arg} needs a value.\n${usage}`);
+    }
+    flags[name] = value;
+    index += 1;
   }
   return { flags, positional };
 };
@@ -495,7 +518,7 @@ const apply = async (locale, proposalsFile, flags) => {
 };
 
 const [command, ...rest] = process.argv.slice(2);
-const { flags, positional } = parseArgs(rest);
+const { flags, positional } = parseArgs(command, rest);
 if (command === 'build') await build(positional, flags);
 else if (command === 'apply') await apply(positional[0], positional[1], flags);
 else fail(usage);
