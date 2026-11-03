@@ -686,12 +686,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): a
     // vaccine under manage-vaccines-in-doses opens in doses, so a number typed
     // as doses isn't issued as that many units (OMS-REG-DIST-03.47). Otherwise
-    // an item with
-    // exactly ONE distinct pack size opens in packs-of-that-size — with the
-    // store's pack-to-one preference every batch is pack size 1, so this reads
-    // "packs of 1" rather than the item's unit. Applied AFTER auto-allocation
-    // so the distribution ran in units; the switch only re-expresses the
-    // seeded quantity, so nothing moves.
+    // an item with exactly ONE distinct pack size opens in packs-of-that-size —
+    // with the store's pack-to-one preference every batch is pack size 1, so
+    // this reads "packs of 1" rather than the item's unit. Applied AFTER
+    // auto-allocation so the distribution ran in units; the switch only
+    // re-expresses the seeded quantity, so nothing moves.
     const sizes = distinctPackSizes();
     const onlySize = sizes.length === 1 ? sizes[0] : undefined;
     if (prefs().manageVaccinesInDoses && picked.isVaccine)
