@@ -233,6 +233,82 @@ describe('check', () => {
     expect(result.noData).toEqual(['procurement']);
   });
 
+  it('checks a full-stack vertical nested in another folder', () => {
+    const result = fakeRepo({
+      'spec/procurement/README.md': `# Procurement\n\n${FRONT}\n`,
+      'spec/procurement/contract.md': '# Contract\n',
+      'spec/procurement/plan/README.md': `# Plan\n\n${FULL}\n`,
+      'spec/procurement/plan/data.md': PROCUREMENT_TABLE,
+      'server/repository/src/db_diesel/procurement_row.rs': `table! {
+          procurement (id) {
+              id -> Text,
+              store_id -> Text,
+          }
+      }`,
+    });
+    expect(result.verticals).toEqual(['procurement/plan']);
+    expect(result.problems).toEqual([
+      'procurement/plan: procurement.comment is in the spec but not the code (C9)',
+    ]);
+  });
+
+  it('compares a parent and a nested vertical each against its own data.md', () => {
+    // The core lists every column of its table; the stage lists only a table
+    // of its own and the column it adds to a table outside procurement.
+    const stage = `## \`procurement_plan_hint\`
+
+| Column | Type | Null | References | Serves |
+| --- | --- | --- | --- | --- |
+| \`id\` | id | no | | |
+| \`procurement_id\` | id | no | \`procurement\` | |
+
+## \`purchase_order\` (existing)
+
+| Column | Type | Null | References | Serves |
+| --- | --- | --- | --- | --- |
+| \`procurement_id\` | id | yes | \`procurement\` | |
+`;
+    const files = {
+      ...vertical(PROCUREMENT_TABLE),
+      'spec/procurement/plan/README.md': `# Plan\n\n${FULL}\n`,
+      'spec/procurement/plan/data.md': stage,
+      'server/repository/src/db_diesel/procurement_row.rs': PROCUREMENT_ROW,
+      'server/repository/src/db_diesel/purchase_order_row.rs': `table! {
+          purchase_order (id) {
+              id -> Text,
+              procurement_id -> Nullable<Text>,
+          }
+      }`,
+    };
+    const clean = fakeRepo(files);
+    expect(clean.verticals).toEqual(['procurement', 'procurement/plan']);
+    expect(clean.problems).toEqual([]);
+    expect(clean.tablesChecked).toBe(2);
+    expect(clean.notBuilt).toEqual(['procurement/plan: procurement_plan_hint']);
+
+    const drifted = fakeRepo({
+      ...files,
+      'server/repository/src/db_diesel/procurement_row.rs': `table! {
+          procurement (id) {
+              id -> Text,
+              store_id -> Text,
+              comment -> Nullable<Text>,
+              hint -> Text,
+          }
+      }`,
+      'server/repository/src/db_diesel/purchase_order_row.rs': `table! {
+          purchase_order (id) {
+              id -> Text,
+              procurement_id -> Text,
+          }
+      }`,
+    });
+    expect(drifted.problems).toEqual([
+      'procurement: procurement.hint is in the code but not the spec (C9)',
+      'procurement/plan: purchase_order.procurement_id is nullable in the spec but not nullable in the code (C9)',
+    ]);
+  });
+
   it('skips front-end verticals', () => {
     const result = fakeRepo({
       ...vertical(PROCUREMENT_TABLE, FRONT),
