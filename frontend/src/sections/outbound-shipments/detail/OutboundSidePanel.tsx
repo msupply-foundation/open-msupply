@@ -33,7 +33,7 @@ import { CurrencyModal } from '../../../domain/invoice';
 import { isDeletable } from '../outboundStatus';
 import { changeShipmentCurrency, type OutboundNode } from './outboundUpdate';
 import { graphqlFetch } from '../../../api/graphql';
-import { createDebouncedField } from '../../../domain/debouncedEdit';
+import { createDebouncedField } from '@/domain/debouncedEdit';
 import {
   FullOutbound,
   type OutboundLineFragment,

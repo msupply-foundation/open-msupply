@@ -168,6 +168,53 @@ describe('createDebouncedField', () => {
     });
   });
 
+  it('a refused save shows the typed figure while focused, and the server figure once left', async () => {
+    const server = fakeServer(10);
+    await createRoot(async dispose => {
+      const field = createDebouncedField({
+        value: server.stored,
+        // Refused: answered, but nothing stored.
+        save: async (value: number) => {
+          server.sent.push(value);
+        },
+        delayMs: 500,
+      });
+      field.onFocus();
+      field.set(5);
+      vi.advanceTimersByTime(500);
+      await Promise.resolve();
+      expect(server.sent).toEqual([5]);
+      expect(field.value()).toBe(5); // still being edited
+      field.onBlur();
+      expect(field.value()).toBe(10);
+      dispose();
+    });
+  });
+
+  it('keeps the draft when the field is refocused while a save is on its way', async () => {
+    const server = fakeServer(10);
+    await createRoot(async dispose => {
+      const field = createDebouncedField({
+        value: server.stored,
+        save: server.save,
+        delayMs: 500,
+      });
+      field.onFocus();
+      field.set(5);
+      field.onBlur(); // the 5 goes now…
+      field.onFocus(); // …and the field is back in hand before it is answered
+      server.setStored(7); // someone else's figure lands meanwhile
+      await server.answer();
+      expect(server.stored()).toBe(5);
+      expect(field.value()).toBe(5);
+      server.setStored(7);
+      expect(field.value()).toBe(5); // still held: the field is focused
+      field.onBlur();
+      expect(field.value()).toBe(7);
+      dispose();
+    });
+  });
+
   it('shows the server figure when nothing is being edited, and follows it', () => {
     const server = fakeServer(10);
     createRoot(dispose => {
