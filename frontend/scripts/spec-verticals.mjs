@@ -7,7 +7,8 @@
  * inside it (spec/procurement/plan/). A vertical's name is its path under
  * spec/ (`procurement/plan`). A file outside spec/ that is named for a
  * vertical — its src/sections/ folder, e2e suite, exploratory workflow —
- * uses its stem, the name with `-` for `/` (`procurement-plan`).
+ * uses its stem, the name with `-` for `/` (`procurement-plan`). Two
+ * verticals with one stem would share those files, so no two may have one.
  *
  * Every top-level folder is a spec area and must declare its scope. Below
  * that, a folder with a README.md must declare its scope too, and a folder
@@ -78,3 +79,20 @@ export const specFolders = specDir => {
 /** Every vertical under `specDir`: the folders that declare a scope. */
 export const specVerticals = specDir =>
   specFolders(specDir).filter(folder => folder.scope !== null);
+
+/**
+ * A problem for each stem two or more verticals share, such as
+ * `procurement/plan` and a top-level `procurement-plan`: they would share one
+ * src/sections/ folder, e2e suite and exploratory workflow.
+ */
+export const stemClashes = verticals => {
+  const byStem = new Map();
+  for (const { name } of verticals)
+    byStem.set(stem(name), [...(byStem.get(stem(name)) ?? []), name]);
+  return [...byStem]
+    .filter(([, names]) => names.length > 1)
+    .map(
+      ([shared, names]) =>
+        `${names.join(' and ')} share the stem ${shared}, so they would share one src/sections/ folder, e2e suite and workflow`
+    );
+};

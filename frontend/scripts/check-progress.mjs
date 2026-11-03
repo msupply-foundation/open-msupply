@@ -36,11 +36,12 @@
  * nested folder with a README opens its README with a scope line
  * (`> **Scope: front end.**` or `> **Scope: full stack.**`) as the first line
  * under the heading — AUTHORING.md → Scope. Tools read it to decide whether a
- * vertical has a server leg.
+ * vertical has a server leg. And no two verticals may share a stem, since
+ * they would share every file named for it outside spec/.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { specFolders, stem } from './spec-verticals.mjs';
+import { specFolders, stem, stemClashes } from './spec-verticals.mjs';
 
 const FILE = '../spec/PROGRESS.md';
 const SPEC_DIR = '../spec';
@@ -171,6 +172,8 @@ const scopeProblems = folders
       : `${name}: no README.md`
   );
 
+const clashes = stemClashes(folders.filter(({ scope }) => scope !== null));
+
 if (problems.length > 0) {
   console.error(`${FILE} does not match the tree:\n  ${problems.join('\n  ')}`);
   console.error(
@@ -182,7 +185,13 @@ if (scopeProblems.length > 0)
     `Spec folders without a scope line:\n  ${scopeProblems.join('\n  ')}\n\n` +
       'Open the README with `> **Scope: front end.**` or `> **Scope: full stack.**` (see spec/AUTHORING.md → Scope).'
   );
-if (problems.length > 0 || scopeProblems.length > 0) process.exit(1);
+if (clashes.length > 0)
+  console.error(
+    `Verticals sharing a stem:\n  ${clashes.join('\n  ')}\n\n` +
+      'Rename one of them (see spec/AUTHORING.md → Nested verticals).'
+  );
+if (problems.length > 0 || scopeProblems.length > 0 || clashes.length > 0)
+  process.exit(1);
 
 console.log(
   `PROGRESS OK — ${verticals.length} vertical(s), every cell matches the tree; every spec folder declares its scope`

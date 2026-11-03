@@ -7,6 +7,7 @@ import {
   specFolders,
   specVerticals,
   stem,
+  stemClashes,
 } from './spec-verticals.mjs';
 
 const FULL = '> **Scope: full stack.** Specifies the whole area.';
@@ -89,5 +90,26 @@ describe('specFolders', () => {
       'templates/area/README.md': `# Area\n\n${FRONT}\n`,
     });
     expect(specFolders(dir).map(f => f.name)).toEqual(['purchase-orders']);
+  });
+});
+
+describe('stemClashes', () => {
+  it('reports verticals that share a stem, and nothing when none do', () => {
+    const dir = fakeSpec({
+      'procurement/README.md': `# Procurement\n\n${FULL}\n`,
+      'procurement/plan/README.md': `# Plan\n\n${FULL}\n`,
+      'procurement-plan/README.md': `# Plan\n\n${FULL}\n`,
+      'a-b/README.md': `# A-B\n\n${FRONT}\n`,
+      'a-b/c/README.md': `# C\n\n${FRONT}\n`,
+      'a/README.md': `# A\n\n${FRONT}\n`,
+      'a/b-c/README.md': `# B-C\n\n${FRONT}\n`,
+    });
+    expect(stemClashes(specVerticals(dir))).toEqual([
+      'a-b/c and a/b-c share the stem a-b-c, so they would share one src/sections/ folder, e2e suite and workflow',
+      'procurement-plan and procurement/plan share the stem procurement-plan, so they would share one src/sections/ folder, e2e suite and workflow',
+    ]);
+    expect(
+      stemClashes([{ name: 'procurement' }, { name: 'procurement/plan' }])
+    ).toEqual([]);
   });
 });
