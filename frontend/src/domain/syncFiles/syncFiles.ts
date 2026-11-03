@@ -23,7 +23,14 @@ export const uploadSyncFiles = async (
   if (sent.kind === 'unreachable') return { ok: false, message: sent.message };
   return sent.response.ok
     ? { ok: true }
-    : { ok: false, message: `HTTP ${sent.response.status}` };
+    : {
+        // The server's body names the reason (the file type it refused, the
+        // size cap) — status alone hides it
+        ok: false,
+        message:
+          (await sent.response.text().catch(() => '')) ||
+          `HTTP ${sent.response.status}`,
+      };
 };
 
 export const deleteSyncFile = async (

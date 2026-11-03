@@ -159,11 +159,20 @@ fn check_help_document_editable(
         auth_data,
         Resource::MutateHelpDocuments,
     )
-    .map_err(|_err| {
-        InternalError::new(
-            "You don't have permission to change help documents",
-            StatusCode::FORBIDDEN,
-        )
+    .map_err(|err| {
+        // A denied permission is the caller's fault — a 403 with the reason. Anything
+        // else (a poisoned session store, a database error) is the server's — 500, so
+        // monitoring looks at the server rather than the caller.
+        match &err {
+            service::auth::AuthError::Denied(_) => InternalError::new(
+                "You don't have permission to change help documents".to_string(),
+                StatusCode::FORBIDDEN,
+            ),
+            service::auth::AuthError::InternalError(reason) => InternalError::new(
+                reason.clone(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        }
     })?;
 
     let connection = service_provider
@@ -220,12 +229,19 @@ fn is_active_content_type(content_type: &Mime) -> bool {
 }
 
 /// Whether a file's own bytes are markup (HTML, SVG or XML), whatever its name says.
-/// All of these start with `<` once a byte order mark and whitespace are skipped.
+/// All of these start with `<` once a byte order mark and whitespace are skipped. A
+/// byte-encoded (UTF-16/32) byte order mark is markup in itself: `<` isn't the first
+/// byte of markup in those encodings, and no help document or staged bundle needs
+/// UTF-16/32 text.
+const WIDE_BOMS: &[&[u8]] = &[b"\xFF\xFE", b"\xFE\xFF", b"\x00\x00\xFE\xFF"];
 fn starts_with_markup(path: &Path) -> std::io::Result<bool> {
     let mut start = Vec::new();
     std::fs::File::open(path)?
         .take(1024)
         .read_to_end(&mut start)?;
+    if WIDE_BOMS.iter().any(|bom| start.starts_with(bom)) {
+        return Ok(true);
+    }
     let start = start.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(&start);
     Ok(start.iter().find(|byte| !byte.is_ascii_whitespace()) == Some(&b'<'))
 }
@@ -243,7 +259,8 @@ fn check_help_document_file_types(
 }
 
 /// Refuses any file a browser would run script from if it opened it on the app's own
-/// origin (#1640), judged by its extension, its declared type and its first bytes.
+/// origin (#1640), judged by its extension, the type its stored name serves as, its
+/// declared type and its first bytes.
 pub(crate) fn refuse_files_that_run_script(files: &[TempFile]) -> Result<(), actix_web::Error> {
     for f in files {
         let file_name = f.file_name.as_deref().unwrap_or("file");
@@ -253,11 +270,18 @@ pub(crate) fn refuse_files_that_run_script(files: &[TempFile]) -> Result<(), act
             .is_some_and(|extension| {
                 ACTIVE_FILE_EXTENSIONS.contains(&extension.to_ascii_lowercase().as_str())
             });
+        // The extension list can't name every extension the server serves as an XML
+        // document (`.xsd`, `.wsdl`, `.dtd` → `text/xml`; `.rdf`, `.atom`, `.xul`, … →
+        // `+xml`), and keeping it in step with `mime_guess`'s table would drift. The
+        // stored file carries the upload's name, so the download route serves exactly
+        // this type — refuse when THAT is a type the browser runs script from.
+        let served_content_type =
+            is_active_content_type(&mime_guess::from_path(file_name).first_or_octet_stream());
         let active_content_type = f.content_type.as_ref().is_some_and(is_active_content_type);
         let markup = starts_with_markup(f.file.path())
             .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
-        if active_extension || active_content_type || markup {
+        if active_extension || served_content_type || active_content_type || markup {
             return Err(InternalError::new(
                 format!("'{file_name}' is a web page, SVG or XML file, which can't be uploaded"),
                 StatusCode::UNSUPPORTED_MEDIA_TYPE,
@@ -391,9 +415,10 @@ async fn upload_sync_file(
     request: HttpRequest,
     auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
-    // For now, we just check that the user is authenticated
-    // In future we might want to check that the user has access to the record
-    // Access to the file UUID should normally only be exposed to users with access from the frontend
+    // Access follows the record kind: a purchase order refuses documents after it is
+    // sent/finalised/cancelled, and a help document needs the server-admin permission
+    // on the central server (#1640). The file UUID is normally only exposed to users
+    // who already have access to the record.
     let user = validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
         InternalError::new(
             "You need to be logged in",
@@ -495,9 +520,9 @@ async fn download_sync_file(
     auth_data: Data<AuthData>,
     service_provider: Data<ServiceProvider>,
 ) -> Result<HttpResponse, Error> {
-    // For now, we just check that the user is authenticated
-    // In future we might want to check that the user has access to the record
-    // Access to the file UUID should normally only be exposed to users with access from the frontend
+    // Downloading stays signed-in-only: reading a document is universal, editing is
+    // not (the record-kind checks live on the upload/delete routes — #1640). The file
+    // UUID is normally only exposed to users who already have access to the record.
     validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
         InternalError::new(
             "You need to be logged in",
@@ -757,9 +782,11 @@ mod test {
         assert_eq!(uploader(&second), Some("user2".to_string()));
     }
 
-    // Help-document file routes (#1640): any signed-in user could upload or delete a
-    // help document's file, and an uploaded HTML file was served inline on the app's
-    // origin, so its script ran for whoever opened it from the Help page.
+    // Help-document file routes (#1640): upload and delete need the server-admin
+    // permission on the central server; download stays open to any signed-in user;
+    // the delete route refuses a file that belongs to another table or record; and
+    // the download route serves an already-stored HTML/SVG/XML file as a
+    // download, never inline on the app's origin.
 
     use crate::upload::{config_upload, get_default_directory};
     use actix_web::http::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
@@ -858,17 +885,22 @@ mod test {
     }
 
     /// A multipart upload of one file in the `files` field, as the front ends send it.
+    /// The body is a byte slice so the tests can send byte-encoded content (a
+    /// UTF-16 byte order mark) a `&str` can't hold.
     fn upload_request(
         uri: &str,
         cookie: &str,
         file_name: &str,
         content_type: &str,
-        body: &str,
+        body: impl AsRef<[u8]>,
     ) -> TestRequest {
         let boundary = "test-boundary";
-        let payload = format!(
-            "--{boundary}\r\nContent-Disposition: form-data; name=\"files\"; filename=\"{file_name}\"\r\nContent-Type: {content_type}\r\n\r\n{body}\r\n--{boundary}--\r\n"
-        );
+        let mut payload = format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"files\"; filename=\"{file_name}\"\r\nContent-Type: {content_type}\r\n\r\n"
+        )
+        .into_bytes();
+        payload.extend_from_slice(body.as_ref());
+        payload.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
         TestRequest::post()
             .uri(uri)
             .insert_header(("Cookie", cookie.to_string()))
@@ -981,16 +1013,19 @@ mod test {
         .await;
         assert_eq!(response.status(), StatusCode::FORBIDDEN);
 
-        // Nor by naming another table in the URL, which has no such check
-        let response = actix_test::call_service(
-            &app,
-            delete(
-                format!("/sync_files/invoice/some_invoice/{file_id}"),
-                &harness.user_cookie,
-            ),
-        )
-        .await;
-        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        // Nor by naming another table (or another record) in the URL: the file must
+        // belong to both
+        for table_name in ["invoice", "purchase_order"] {
+            let response = actix_test::call_service(
+                &app,
+                delete(
+                    format!("/sync_files/{table_name}/some_{table_name}/{file_id}"),
+                    &harness.user_cookie,
+                ),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{table_name}");
+        }
         assert_eq!(
             help_document_file_ids(&harness.service_provider),
             vec![file_id.clone()]
@@ -1093,6 +1128,14 @@ mod test {
                 "application/json",
                 "<svg xmlns=\"http://www.w3.org/2000/svg\"/>",
             ),
+            // An XML type the extension list doesn't know, but one /files will
+            // serve as `text/xml` from the stored name
+            (
+                "schema.xsd",
+                "text/xml",
+                "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"/>",
+            ),
+            ("feed.rdf", "application/octet-stream", "<rdf:RDF/>"),
         ];
         for (file_name, content_type, body) in refused {
             let response = actix_test::call_service(
@@ -1113,6 +1156,30 @@ mod test {
                 "{file_name} ({content_type}) should be refused"
             );
         }
+
+        // Markup in a byte-encoded file: a UTF-16LE byte order mark plus UTF-16LE
+        // XML script, whatever the harmless name and type say
+        let utf16_script: Vec<u8> = [0xFFu8, 0xFE]
+            .into_iter()
+            .chain(
+                "<x:script xmlns:x=\"http://www.w3.org/1999/xhtml\">alert(1)</x:script>"
+                    .encode_utf16()
+                    .flat_map(u16::to_le_bytes),
+            )
+            .collect();
+        let response = actix_test::call_service(
+            &app,
+            upload_request(
+                "/upload",
+                &harness.user_cookie,
+                "notes.txt",
+                "text/plain",
+                utf16_script,
+            )
+            .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
 
         let response = actix_test::call_service(
             &app,
@@ -1139,7 +1206,9 @@ mod test {
             ("guide.pdf", "inline"),
             ("photo.png", "inline"),
             ("notes.txt", "inline"),
-            // Stored before uploads were checked, or under another table
+            // The upload checks never applied to what is already stored: a file
+            // uploaded before #1640, or stored under a table the type checks don't
+            // cover, still downloads rather than inline-opening on the app's origin
             ("guide.html", "attachment"),
             ("diagram.svg", "attachment"),
             ("data.xml", "attachment"),
@@ -1182,6 +1251,36 @@ mod test {
                 "{file_name}"
             );
         }
+    }
+
+    /// The `/files` route serves generated report output inline (the report viewer
+    /// frames it), so its responses carry `nosniff` like `/sync_files` does.
+    #[actix_rt::test]
+    async fn files_route_sends_nosniff() {
+        let harness = help_document_harness("files_route_sends_nosniff").await;
+        let app = sync_files_app!(harness);
+        let file_service = StaticFileService::new(&harness.settings.server.base_dir).unwrap();
+        let file = file_service
+            .store_file(
+                "report.html",
+                StaticFileCategory::Temporary,
+                b"<h1>report</h1>",
+            )
+            .unwrap();
+
+        let response = actix_test::call_service(
+            &app,
+            TestRequest::get()
+                .uri(&format!("/files?id={}", file.id))
+                .insert_header(("Cookie", harness.user_cookie.clone()))
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers().get(X_CONTENT_TYPE_OPTIONS).unwrap(),
+            "nosniff"
+        );
     }
 
     #[test]
