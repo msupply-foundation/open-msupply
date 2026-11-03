@@ -1,6 +1,6 @@
 # Population-Based Forecasting
 
-Population is one of a request requisition line's three **forecast methods** — AMC, Population, and Ancillary ratio. Every method yields the line's **monthly demand**; turning that into a suggested quantity (target months, reorder threshold, stock on hand) works the same for every method. The behaviour is specced in [`frontend/spec/internal-orders/rules.md` › Forecasting](../frontend/spec/internal-orders/rules.md#forecasting), and the storage and sync design in [`decisions/2026-10-05_requisition_line_forecast_methods.md`](../decisions/2026-10-05_requisition_line_forecast_methods.md).
+Population is one of a request requisition line's three **forecast methods** — AMC, Population, and Ancillary ratio. Every method yields the line's **monthly demand**; turning that into a suggested quantity (target months, reorder threshold, stock on hand) works the same for every method. The behaviour is specced in [`spec/internal-orders/rules.md` › Forecasting](../spec/internal-orders/rules.md#forecasting), and the storage and sync design in [`decisions/2026-10-05_requisition_line_forecast_methods.md`](../decisions/2026-10-05_requisition_line_forecast_methods.md).
 
 ## Implementation
 

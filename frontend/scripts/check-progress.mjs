@@ -29,8 +29,8 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const FILE = 'spec/PROGRESS.md';
-const SPEC_DIR = 'spec';
+const FILE = '../spec/PROGRESS.md';
+const SPEC_DIR = '../spec';
 const SPEC_FILES = ['README.md', 'rules.md', 'contract.md', 'ui-surface.md'];
 
 // spec/ is not published to the public mirror (.github/mirror/rules.txt), and
@@ -110,7 +110,12 @@ for (const line of text.split('\n')) {
   });
 }
 
-const verticals = dirs(SPEC_DIR).filter(name => !notListed.has(name));
+// Folders of the spec framework itself, not spec areas.
+const FRAMEWORK_DIRS = new Set(['templates']);
+
+const verticals = dirs(SPEC_DIR).filter(
+  name => !notListed.has(name) && !FRAMEWORK_DIRS.has(name)
+);
 const problems = [];
 
 for (const vertical of verticals.sort()) {

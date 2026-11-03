@@ -99,16 +99,26 @@ function cellField<T>(
   cell: TanCell<T, unknown>,
   isHeader: boolean
 ): JSX.Element {
-  // The value node — wrapped in a data-mono span for code-like columns
-  // (meta.mono) so the monospace font reaches the card too (table view applies
-  // it on the <td>). Only the VALUE is wrapped, never the field label.
+  // The value node — wrapped in a span for code-like columns (meta.mono) so the
+  // monospace font reaches the card too, and for a column that can mark a cell
+  // (meta.cellTone) so the ring has the value to draw around. A ringable
+  // value's wrapper is a block whether or not it is ringed, so the ring coming
+  // and going changes nothing else about it. Table view puts both on the <td>.
+  // Only the VALUE is wrapped, never the field label.
   const value = () => {
+    const meta = cell.column.columnDef.meta;
     const content = renderTemplate(
       cell.column.columnDef.cell,
       cell.getContext()
     );
-    return cell.column.columnDef.meta?.mono ? (
-      <span data-mono="">{content}</span>
+    return meta?.mono || meta?.cellTone ? (
+      <span
+        class={meta.cellTone ? styles.cardToneValue : undefined}
+        data-mono={meta.mono ? '' : undefined}
+        data-cell-tone={meta.cellTone?.(cell.row.original)}
+      >
+        {content}
+      </span>
     ) : (
       content
     );

@@ -192,7 +192,7 @@
    inline-start (right) edge, so the flood runs right → left — the same two
    half-arcs, anchored at the right point (top counterclockwise, bottom
    clockwise). */
-:dir(rtl) .step[data-state='active'] .circle {
+[dir='rtl'] .step[data-state='active'] .circle {
   background:
     linear-gradient(var(--bg-white), var(--bg-white)) padding-box,
     conic-gradient(
@@ -214,7 +214,7 @@
    inline-end, i.e. right → left, so the same keyframes run in reverse and
    the band parks past the LEFT end. The band's gradient is symmetric, so
    only the travel flips. */
-:dir(rtl) .step[data-state='active']::before {
+[dir='rtl'] .step[data-state='active']::before {
   background-position-x: -43%;
   animation-direction: reverse;
 }

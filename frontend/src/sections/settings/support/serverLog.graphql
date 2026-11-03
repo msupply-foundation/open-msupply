@@ -10,6 +10,7 @@ query logFileNames {
 
 query logContents($fileName: String) {
   logContents(fileName: $fileName) {
-    fileContent
+    content
+    truncated
   }
 }

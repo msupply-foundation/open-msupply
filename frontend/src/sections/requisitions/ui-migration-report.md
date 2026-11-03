@@ -2,7 +2,7 @@
 
 **Status: FIXES APPLIED — `pnpm check` ✅ · `pnpm test` (1315) ✅ · post-fix reactivity pass ✅ · operator visual pass OUTSTANDING.**
 
-Scope: the whole `src/sections/requisitions/` vertical, audited against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md), the [component registry](../../../spec/ui-standards/components.md), the binding [`SIDE_PANEL.md`](../../ui/docs/SIDE_PANEL.md) contract, the stocktakes reference, and the sibling verticals — above all **internal-orders**, the freshly-migrated mirror. The audit ran five parallel passes (list, detail, panel+editor, reactivity, spec-consistency); every finding was verified in source before fixing (one agent claim was disproven and dropped — `messages.confirm-delete-requisitions` exists at `en/common.json:2469`).
+Scope: the whole `src/sections/requisitions/` vertical, audited against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md), the [component registry](../../../../spec/ui-standards/components.md), the binding [`SIDE_PANEL.md`](../../ui/docs/SIDE_PANEL.md) contract, the stocktakes reference, and the sibling verticals — above all **internal-orders**, the freshly-migrated mirror. The audit ran five parallel passes (list, detail, panel+editor, reactivity, spec-consistency); every finding was verified in source before fixing (one agent claim was disproven and dropped — `messages.confirm-delete-requisitions` exists at `en/common.json:2469`).
 
 ## Coverage table (greened)
 
@@ -59,6 +59,7 @@ The SIDE_PANEL.md sign-off checklist passes on every composition item; its final
 
 ## Deferred / open
 
+- **Reason-cell error has no visible words** — the Reason cell a missing-reason rejection rings shows its error as a `StatusMarker` whose label only assistive technology announces, so a sighted user sees an icon and the ring with no words; the header banner states the rejection without naming lines. [`spec/ui-standards/tables.md` § Cell errors](../../../../spec/ui-standards/tables.md#cell-errors) requires the words on screen — the fix is a short message beneath the reason, as the stocktake Snapshot and Counted cells do (PR #1712 review).
 - The **server-paginated line table** interim (client-side filter/sort over the nested connection) stays, blocked on open-msupply PR #12526 — identical in the mirror, documented in-code and in the spec README.
 - Reactivity BENIGN notes recorded by the audit (mount-time `context.latest` race, `<For>` over replaced node arrays, object-replacing single-draft signal) match the reference verticals' documented shape — for the KDD owner's reconciliation, not this vertical's defects.
 
