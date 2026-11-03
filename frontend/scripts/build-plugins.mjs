@@ -22,6 +22,18 @@
  *      `frontendPluginMetadata` discovery response, so the built app can load
  *      them through its production path without a server.
  *
+ * With `--react`, a plugin's React-UI parts (`<dir>/react/`, the old UI's
+ * frontend and, for a country with no SolidJS backend, its backend) are built
+ * with the legacy client toolchain and packed into the SAME bundle — one file
+ * installs the plugin for both UIs (scripts/reactPlugins.mjs). Off by default:
+ * it needs the repo root's `yarn install` and a webpack build per part, which
+ * the bundle-publishing workflow pays and an ordinary frontend check does not.
+ * Their manifests are checked against the SolidJS parts on every run either
+ * way. A plugin whose React parts fail a check or the build is reported and,
+ * with --react, left without a bundle; it never stops the other plugins.
+ * Without --react, a plugin whose SolidJS and React parts disagree fails the
+ * run, so the PR that lets them drift apart fails its check.
+ *
  * Faithfulness rules, mirrored from server/cli/src/plugins.rs and
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
  *   - entry_point = the dist file whose name starts with the plugin code;
@@ -32,13 +44,15 @@
  *     code+version alone would make the second bundle silently overwrite the
  *     first on the primary key. It is also what the file route is keyed on now
  *     that a server keeps every compatible version of a code;
- *   - host_runtime = the SDK's HOST_RUNTIME, which says this bundle is for THIS
- *     host: a server offers it only to a client declaring the same runtime;
+ *   - host_runtime = the SDK's HOST_RUNTIME for a SolidJS row, which says it
+ *     is for THIS host (a React part's comes from its manifest, defaulting to
+ *     `react`): a server offers a row only to a client declaring its runtime;
  *   - hash = sha256 over the files sorted by name, name bytes then content
  *     bytes, hex — the server computes this at bind time and the client appends
  *     it as `?v=`.
  *
- * Usage: pnpm build:plugins   [OMS_PLUGIN_DIRS=../civ-plugins/frontend/latest]
+ * Usage: pnpm build:plugins [--react]
+ *          [OMS_PLUGIN_DIRS=../civ-plugins/frontend/latest]
  *   (OMS_PLUGIN_DIRS entries are relative to the repo root, as in the dev
  *   loop.)
  */
@@ -48,6 +62,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -62,10 +77,18 @@ import {
 } from '../vite/formPlugins.ts';
 import { checkFormVersions } from '../vite/formVersionChecks.ts';
 import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
+import {
+  buildReactPart,
+  checkReactParts,
+  checkReactToolchain,
+  discoverReactParts,
+} from './reactPlugins.mjs';
 
 const OUT_DIR = 'dist/frontend_plugins';
 const BACKEND_OUT_DIR = 'dist/backend_plugins';
 const BUNDLE_DIR = 'dist/bundles';
+
+const WITH_REACT = process.argv.includes('--react');
 
 // Where a plugin's entry module may live, in preference order. `plugin.tsx` at
 // the root is the examples' shape; `src/plugin.ts(x)` is the out-of-tree one.
@@ -209,8 +232,8 @@ const discoverBackendPlugins = () => {
   return found;
 };
 
-const packBackendPlugin = plugin => {
-  const bytes = readFileSync(backendBundlePath(plugin));
+const packBackendPlugin = (plugin, path = backendBundlePath(plugin)) => {
+  const bytes = readFileSync(path);
   /* eslint-disable camelcase -- the Rust BackendPluginRow's field names. */
   return {
     id: `backend_${plugin.code}_${plugin.version.replaceAll('.', '_')}`,
@@ -246,8 +269,12 @@ const buildPlugin = plugin =>
 const byName = (a, b) =>
   a.file_name < b.file_name ? -1 : a.file_name > b.file_name ? 1 : 0;
 
-const packPlugin = plugin => {
-  const dir = join(OUT_DIR, plugin.code);
+/*
+ * One frontend row from a built dist directory — a SolidJS part from
+ * OUT_DIR, a React part from its own `dist/` — with the host runtime it was
+ * built for.
+ */
+const packFrontendRow = (plugin, dir, hostRuntime) => {
   const files = [];
   let entryPoint;
   for (const dirent of readdirSync(dir, { withFileTypes: true })) {
@@ -268,7 +295,7 @@ const packPlugin = plugin => {
   }
 
   const versionId = plugin.version.replaceAll('.', '_');
-  const runtimeId = HOST_RUNTIME.replaceAll('.', '_');
+  const runtimeId = hostRuntime.replaceAll('.', '_');
   /* eslint-disable camelcase -- the Rust FrontendPluginRow's field names. */
   const row = {
     id: `frontend_${plugin.code}_${runtimeId}_${versionId}`,
@@ -296,9 +323,11 @@ const packPlugin = plugin => {
      * by the loader after the bundle evaluates, which is the gate that fixture
      * exists to exercise.
      *
-     * Not overridable per plugin, deliberately.
+     * Not overridable per plugin, deliberately. A React part's comes from
+     * its manifest, defaulting to `react` as the CLI does: nothing here
+     * builds it against an SDK that could say otherwise.
      */
-    host_runtime: HOST_RUNTIME,
+    host_runtime: hostRuntime,
   };
   /* eslint-enable camelcase */
 
@@ -320,12 +349,15 @@ const packPlugin = plugin => {
   return { row, meta };
 };
 
+const packPlugin = plugin =>
+  packFrontendRow(plugin, join(OUT_DIR, plugin.code), HOST_RUNTIME);
+
 // Every base64 blob must decode back to the exact bytes on disk — proves the
 // install → serve round trip reproduces what the app imports.
-const verifyRoundTrip = rows => {
+const verifyRoundTrip = (rows, dirOf = row => join(OUT_DIR, row.code)) => {
   for (const row of rows) {
     for (const file of row.files) {
-      const onDisk = readFileSync(join(OUT_DIR, row.code, file.file_name));
+      const onDisk = readFileSync(join(dirOf(row), file.file_name));
       const packed = Buffer.from(file.file_content_base64, 'base64');
       if (Buffer.compare(onDisk, packed) !== 0) {
         throw new Error(
@@ -338,7 +370,52 @@ const verifyRoundTrip = rows => {
 
 const plugins = discoverPlugins();
 const backendPlugins = discoverBackendPlugins();
-if (plugins.length === 0 && backendPlugins.length === 0) {
+
+/*
+ * The React parts, checked against the SolidJS parts of the same directory
+ * whether or not this run builds them: they go into the same bundle, so the
+ * rules that hold for a plugin's two halves hold across all of its parts.
+ *   - ONE CODE: it is what groups rows into a bundle, and a React frontend's
+ *     code is also its webpack module-federation name.
+ *   - ONE VERSION: a bundle is released and listed under one (see
+ *     .github/scripts/publish-bundles.mjs). It never goes down: discovery
+ *     serves the highest installed version per code and runtime, so a lower
+ *     one would lose to the row it was meant to replace.
+ *   - ONE BACKEND: a backend half is BoaJS and runtime-agnostic, so one row
+ *     answers both UIs. Once a country has `<dir>/backend/`, its React
+ *     backend has to go (private/plugins/README.md) — two would be two
+ *     sources for one plugin's backend, whichever installed last winning.
+ */
+const reactParts = [];
+/*
+ * Plugin directory -> why its React parts fail. With --react such a plugin
+ * is never fatal to the run: its bundle is dropped (a bundle without the
+ * React frontend a site may switch to is half a plugin) and every other
+ * plugin is still built and published. Without, its SolidJS bundle is
+ * unaffected, but a blocking failure fails the run once everything is
+ * reported (see checkReactParts).
+ */
+const reactFailures = new Map();
+/* The directories whose failure fails the run: see checkReactParts. */
+const blockingReactFailures = new Set();
+for (const dir of inRepoPluginDirs()) {
+  const parts = discoverReactParts(dir);
+  if (parts.length === 0) continue;
+  const solid = [readManifest(dir), readBackendManifest(join(dir, 'backend'))];
+  const failure = checkReactParts(solid, parts, HOST_RUNTIME);
+  if (failure) {
+    reactFailures.set(dir, failure.why);
+    if (failure.blocking) blockingReactFailures.add(dir);
+  } else {
+    reactParts.push(...parts.map(part => ({ ...part, pluginDir: dir })));
+  }
+}
+
+if (
+  plugins.length === 0 &&
+  backendPlugins.length === 0 &&
+  !(WITH_REACT && reactParts.length > 0)
+) {
   console.warn('[build-plugins] no plugins discovered');
   process.exit(0);
 }
@@ -395,10 +472,54 @@ for (const plugin of backendPlugins) {
 const packed = plugins.map(packPlugin);
 verifyRoundTrip(packed.map(p => p.row));
 
+// The React parts, after the SolidJS ones so a SolidJS failure surfaces
+// without waiting on webpack. Their frontend rows go into the bundles only,
+// never metadata.json: that is this front end's own discovery response, and
+// it cannot load a module-federation container.
+const reactFrontendRows = [];
+const reactBackendRows = [];
+const packReactPart = part => {
+  const dist = join(part.dir, 'dist');
+  if (part.target === 'frontend') {
+    const { row } = packFrontendRow(part, dist, part.hostRuntime);
+    verifyRoundTrip([row], () => dist);
+    return row;
+  }
+  const path = join(dist, 'plugin.js');
+  const row = packBackendPlugin(part, path);
+  if (
+    Buffer.compare(readFileSync(path), Buffer.from(row.bundle_base64, 'base64'))
+  ) {
+    throw new Error(`Round-trip mismatch for ${row.id}`);
+  }
+  return row;
+};
+if (WITH_REACT && reactParts.length > 0) {
+  checkReactToolchain();
+  const rows = [];
+  for (const part of reactParts) {
+    if (reactFailures.has(part.pluginDir)) continue;
+    try {
+      buildReactPart(part);
+      rows.push({ part, row: packReactPart(part) });
+    } catch (error) {
+      reactFailures.set(part.pluginDir, error.message);
+    }
+  }
+  // All of a plugin's React parts or none: a frontend without the backend it
+  // calls is the half-installed plugin a bundle exists to rule out.
+  for (const { part, row } of rows) {
+    if (reactFailures.has(part.pluginDir)) continue;
+    (part.target === 'frontend' ? reactFrontendRows : reactBackendRows).push(
+      row
+    );
+  }
+}
+
 // The same proof for the backend rows: each blob must decode back to the exact
 // bytes on disk — packing is transport, never transformation. For a prebuilt
 // that is the committed artifact; for a built one, what the build just wrote.
-const backendRows = backendPlugins.map(packBackendPlugin);
+const backendRows = backendPlugins.map(plugin => packBackendPlugin(plugin));
 for (const [i, row] of backendRows.entries()) {
   const onDisk = readFileSync(backendBundlePath(backendPlugins[i]));
   if (Buffer.compare(onDisk, Buffer.from(row.bundle_base64, 'base64')) !== 0) {
@@ -446,7 +567,13 @@ const bundleFor = code => {
   return bundle;
 };
 for (const { row } of packed) bundleFor(row.code).frontend_plugins.push(row);
+for (const row of reactFrontendRows) {
+  bundleFor(row.code).frontend_plugins.push(row);
+}
 for (const row of backendRows) bundleFor(row.code).backend_plugins.push(row);
+for (const row of reactBackendRows) {
+  bundleFor(row.code).backend_plugins.push(row);
+}
 for (const row of formRows) {
   (bundleFor(row.plugin_code).form_plugins ??= []).push(row);
 }
@@ -454,6 +581,22 @@ for (const row of formRows) {
 
 mkdirSync(OUT_DIR, { recursive: true });
 mkdirSync(BUNDLE_DIR, { recursive: true });
+
+// With --react, a plugin whose React parts failed gets no bundle at all —
+// nor a stale one from an earlier run.
+if (WITH_REACT) {
+  for (const dir of reactFailures.keys()) {
+    const codes = [
+      readManifest(dir)?.code,
+      readBackendManifest(join(dir, 'backend'))?.code,
+      ...discoverReactParts(dir).map(part => part.code),
+    ];
+    for (const code of codes.filter(Boolean)) {
+      bundles.delete(code);
+      rmSync(join(BUNDLE_DIR, `${code}.json`), { force: true });
+    }
+  }
+}
 for (const [code, bundle] of bundles) {
   writeFileSync(
     join(BUNDLE_DIR, `${code}.json`),
@@ -490,6 +633,39 @@ for (const [i, row] of backendRows.entries()) {
       `${(bytes / 1024).toFixed(1)} KB  ${origin}  [${row.types.join(', ')}]`
   );
 }
+for (const row of [...reactFrontendRows, ...reactBackendRows]) {
+  const bytes = row.files
+    ? row.files.reduce(
+        (sum, file) =>
+          sum + Buffer.from(file.file_content_base64, 'base64').length,
+        0
+      )
+    : Buffer.from(row.bundle_base64, 'base64').length;
+  console.info(
+    `[build-plugins] ${row.id}  ${(bytes / 1024).toFixed(1)} KB  ` +
+      'built (React UI toolchain)'
+  );
+}
+if (!WITH_REACT && reactParts.length > 0) {
+  console.info(
+    `[build-plugins] ${reactParts.length} React UI part(s) checked, not ` +
+      'built — pass --react to pack them into their bundles'
+  );
+}
+// Reported, not thrown (see reactFailures). In a GitHub Actions --react run
+// each is an error annotation, so a publish that left a plugin out says so;
+// without --react, so is a blocking one, which a PR's check fails on.
+for (const [dir, why] of reactFailures) {
+  const blocking = !WITH_REACT && blockingReactFailures.has(dir);
+  const annotate =
+    (WITH_REACT || blocking) && process.env.GITHUB_ACTIONS ? '::error::' : '';
+  console.warn(
+    `${annotate}[build-plugins] ${dir}: React UI parts fail` +
+      (WITH_REACT ? ', no bundle' : '') +
+      ` — ${why}`
+  );
+  if (blocking) process.exitCode = 1;
+}
 for (const row of formRows) {
   const versions = row.document_types.reduce(
     (sum, entry) => sum + entry.versions.length,
@@ -511,7 +687,8 @@ for (const [code, bundle] of bundles) {
   console.info(`[build-plugins] ${join(BUNDLE_DIR, `${code}.json`)}  ${rows}`);
 }
 console.info(
-  `[build-plugins] packed ${packed.length} frontend + ${backendRows.length} ` +
+  `[build-plugins] packed ${packed.length + reactFrontendRows.length} ` +
+    `frontend + ${backendRows.length + reactBackendRows.length} ` +
     `backend + ${formRows.length} form into ${bundles.size} per-plugin ` +
     `bundle(s); round-trip verified; wrote ${BUNDLE_DIR}/ + ` +
     `${OUT_DIR}/metadata.json`

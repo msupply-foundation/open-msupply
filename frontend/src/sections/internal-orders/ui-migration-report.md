@@ -179,7 +179,7 @@ Verified after the library pass: `pnpm check` green, `pnpm test` green (1315), r
 
 ## Open gap
 
-**Reason-cell error has no visible words** — the Reason cell a missing-reason rejection rings shows its error as a `StatusMarker` whose label only assistive technology announces, so a sighted user sees an icon and the ring with no words; the header banner states the rejection without naming lines. [`spec/ui-standards/tables.md` § Cell errors](../../../spec/ui-standards/tables.md#cell-errors) requires the words on screen — the fix is a short message beneath the reason, as the stocktake Snapshot and Counted cells do (PR #1712 review).
+**Reason-cell error has no visible words** — the Reason cell a missing-reason rejection rings shows its error as a `StatusMarker` whose label only assistive technology announces, so a sighted user sees an icon and the ring with no words; the header banner states the rejection without naming lines. [`spec/ui-standards/tables.md` § Cell errors](../../../../spec/ui-standards/tables.md#cell-errors) requires the words on screen — the fix is a short message beneath the reason, as the stocktake Snapshot and Counted cells do (PR #1712 review).
 
 ## Verification (done)
 
