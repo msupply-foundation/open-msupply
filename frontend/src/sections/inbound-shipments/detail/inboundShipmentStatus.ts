@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { t, type LocaleKey } from '../../../intl';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 
 // The inbound-shipment status lifecycle (spec/inbound-shipments › status
@@ -66,6 +66,34 @@ export const hasSourceLink = (
   isExternalScope: boolean,
   linkedShipment: { id: string } | null | undefined
 ): boolean => isExternalScope || !!linkedShipment;
+
+// The detail's kind banner (spec/inbound-shipments › ui-surface), as a message
+// key — or none. One per source link:
+//   none — says the status will not update automatically: nobody else moves it.
+//   purchaseOrder — no banner (issue #1588). It was built here and stays
+//     editable, and the header already links its PO, so neither message fits:
+//     the transfer copy told the user another store made it and that they
+//     could not edit it.
+//   transfer — says the sending store created it, plus, while the sender still
+//     holds it (before Delivered), that details can't be edited until then.
+export const kindBannerKey = (info: {
+  inboundType: InboundInfoFragment['inboundType'];
+  linkedShipment?: { id: string } | null;
+  status: string;
+}): LocaleKey | undefined => {
+  switch (sourceLinkOf(info)) {
+    case 'none':
+      return 'messages.inbound-manual-info';
+    case 'purchaseOrder':
+      return undefined;
+    case 'transfer':
+      return SENDER_HELD.includes(info.status as InboundStatus)
+        ? 'messages.inbound-automatic-info'
+        : 'info.automatic-shipment';
+  }
+};
+
+const SENDER_HELD: InboundStatus[] = ['NEW', 'PICKED', 'SHIPPED'];
 
 const FLOWS: Record<SourceLink, InboundStatus[]> = {
   none: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],

@@ -10,6 +10,7 @@ import {
   isDeletable,
   isEditable,
   actionsLocked,
+  kindBannerKey,
   reachableStatuses,
   sourceLinkOf,
   statusDatetime,
@@ -87,6 +88,50 @@ describe('sourceLinkOf (REPL-03.10 / .11 / .12 — which shipments reach Picked 
       ).toBe(expected.linked);
     });
   }
+});
+
+// The kind banner picks its copy by source link (issue #1588: a PO-linked
+// shipment was told another store created it and that it could not be edited).
+describe('kindBannerKey', () => {
+  it('tells a shipment with no source link its status will not update automatically', () => {
+    for (const inboundType of [
+      'MANUAL_EXTERNAL',
+      'FROM_REQUISITION',
+    ] as const) {
+      expect(kindBannerKey({ inboundType, status: 'RECEIVED' })).toBe(
+        'messages.inbound-manual-info'
+      );
+    }
+  });
+
+  it('shows no banner on a PO-linked shipment, at any status', () => {
+    for (const status of [
+      'NEW',
+      'SHIPPED',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]) {
+      expect(
+        kindBannerKey({ inboundType: 'FROM_PURCHASE_ORDER', status })
+      ).toBeUndefined();
+    }
+  });
+
+  it('adds the no-edit sentence to a transfer only while the sender holds it', () => {
+    const transfer = (status: string) =>
+      kindBannerKey({
+        inboundType: 'MANUAL_INTERNAL',
+        linkedShipment: { id: 'outbound-1' },
+        status,
+      });
+    for (const status of ['NEW', 'PICKED', 'SHIPPED']) {
+      expect(transfer(status)).toBe('messages.inbound-automatic-info');
+    }
+    for (const status of ['DELIVERED', 'RECEIVED', 'VERIFIED']) {
+      expect(transfer(status)).toBe('info.automatic-shipment');
+    }
+  });
 });
 
 // .10/.11: Picked and Shipped appear only where they are reachable — and .12:
@@ -350,7 +395,11 @@ describe('the track keeps the current stage (OMS-REG-REPL-03.28)', () => {
   });
 
   it('excludes a stage the shipment is not resting on', () => {
-    expect(stages('RECEIVED', allowed)).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
+    expect(stages('RECEIVED', allowed)).toEqual([
+      'NEW',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
   });
 
   it('tracks the plain flow index while the preference is unrestrictive', () => {

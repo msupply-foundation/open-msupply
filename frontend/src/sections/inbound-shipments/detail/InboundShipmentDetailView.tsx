@@ -100,7 +100,7 @@ import {
   isDeletable,
   isEditable,
   actionsLocked,
-  sourceLinkOf,
+  kindBannerKey,
   supplierIsStore,
 } from './inboundShipmentStatus';
 import { packDifference } from './inboundShipmentLine';
@@ -1246,8 +1246,9 @@ const InboundShipmentDetailView: Component = () => {
                   </Show>
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       (ui/docs/PAGES.md § header field cluster). The kind banner
-                      (spec S3: manual shipments don't auto-advance; a
-                      transfer/automatic one is driven by the sending side) is
+                      (spec S3, kindBannerKey: manual shipments don't
+                      auto-advance; a transfer is driven by the sending side;
+                      a PO-linked one has none, issue #1588) is
                       the cluster's `alert`: a COMPACT Alert, which is what the
                       slot takes — it hugs its content at the end of the field
                       row on the bottom baseline and drops to its own line when
@@ -1256,11 +1257,13 @@ const InboundShipmentDetailView: Component = () => {
                   <HeaderToolbar
                     alert={
                       <>
-                        <Alert severity="info" compact>
-                          {sourceLinkOf(node()) === 'none'
-                            ? t('messages.inbound-manual-info')
-                            : t('messages.inbound-automatic-info')}
-                        </Alert>
+                        <Show when={kindBannerKey(node())}>
+                          {key => (
+                            <Alert severity="info" compact>
+                              {t(key())}
+                            </Alert>
+                          )}
+                        </Show>
                         <ScanStatus control={scan} />
                       </>
                     }
