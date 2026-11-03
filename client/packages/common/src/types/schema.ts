@@ -692,7 +692,7 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['DateTime']['output'];
@@ -2241,7 +2241,7 @@ export type CustomFieldOptionNode = {
    * this field when building a picker, so a deleted option can be read but
    * not newly selected.
    */
-  deletedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  deletedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -11445,14 +11445,14 @@ export type SiteNode = {
   appVersion?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   /** First time the remote completed an initialising pull. */
-  firstSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  firstSyncDatetime?: Maybe<Scalars['DateTime']['output']>;
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isMultiDevice: Scalars['Boolean']['output'];
   /** Last time the remote made any authenticated v7 request. */
-  lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  lastConnectionDatetime?: Maybe<Scalars['DateTime']['output']>;
   /** Last time the remote fully pulled from this central server. */
-  lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  lastSyncDatetime?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
   /**
    * Which sync flow the site runs. Hardware-id / token clearing is only

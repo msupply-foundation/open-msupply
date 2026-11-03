@@ -59,9 +59,9 @@ describe('the timestamp columns (ui-surface S1 § columns — "date & time", bla
   });
 
   it('renders a real value through the shared localised date-and-time formatter', () => {
-    // Server-local wall clock (NaiveDateTime, no offset), so the text carries
-    // both halves of the instant the register reports.
-    const rendered = dateTimeText('2026-08-06T05:13:46');
+    // A UTC instant (DateTime), so the text carries both halves of the
+    // instant the register reports, in the user's own zone.
+    const rendered = dateTimeText('2026-08-06T05:13:46+00:00');
     expect(rendered).not.toBe('');
     expect(rendered).toMatch(/\d/);
   });
