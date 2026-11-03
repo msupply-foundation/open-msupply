@@ -740,6 +740,76 @@ const RowStatesDemo = () => {
   );
 };
 
+// Cell errors (meta.cellTone): an error about ONE field of a line rings that
+// field's cell — here the quantity of a line that would take stock below zero
+// — and the cell states it in words beneath the value. One predicate drives
+// both. The button clears and re-stamps the errors, as a page does when the
+// server answers again: the ring takes no room; only the message adds a line.
+const CellErrorsDemo = () => {
+  const [stamped, setStamped] = createSignal(true);
+  const quantityError = (row: StockLine) =>
+    stamped() && (row.id === 'sl-2' || row.id === 'sl-3');
+  const { config, setConfig } = createViewConfig('table');
+  const columns = (): Column<StockLine, SortKey>[] => [
+    {
+      c: { key: 'code' },
+      header: () => 'Code',
+      ...getCellDefinition<StockLine>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => 'Name',
+      ...getCellDefinition<StockLine>('name', { headerPosition: 'primary' }),
+    },
+    {
+      c: { key: 'quantity' },
+      header: () => 'Quantity',
+      ...getNumberCell<StockLine>({
+        cellTone: (row: StockLine) =>
+          quantityError(row) ? 'error' : undefined,
+      }),
+      size: remToPx(8),
+      // The number, and the error in words beneath it: the cell's own
+      // alignment places both, at the end in table view (a number column)
+      // and at the start on a card.
+      cell: info => (
+        <>
+          {info.row.original.quantity}
+          <Show when={quantityError(info.row.original)}>
+            <span
+              style={{
+                display: 'block',
+                color: 'var(--error-main)',
+                'font-size': 'var(--text-xs)',
+                'white-space': 'normal',
+              }}
+            >
+              Would take stock below zero
+            </span>
+          </Show>
+        </>
+      ),
+    },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Button variant="secondary" onClick={() => setStamped(on => !on)}>
+          {stamped() ? 'Clear the errors' : 'Stamp the errors'}
+        </Button>
+      </div>
+      <DataTable
+        columns={columns()}
+        rows={DATA.slice(0, 4)}
+        rowKey={r => r.id}
+        showCardToggle
+        config={config()}
+        setConfig={setConfig}
+      />
+    </Stack>
+  );
+};
+
 // ============================================================================
 // § The card model
 // ============================================================================
@@ -1744,6 +1814,20 @@ export const TableCardShowcase = () => (
             <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · Cell errors">
+          <Lead>
+            An error about <em>one field</em> of a line rings that field's cell:{' '}
+            <code>meta.cellTone</code>, a function from the row to{' '}
+            <code>'error'</code> or nothing, set on the column the error is
+            about. The ring is colour, so the cell also says it in words on
+            screen, here a short message beneath the value — drive both from one
+            predicate. The ring is an outline, so it takes no room; only the
+            message adds a line. Flip to cards and the ring goes round the
+            value. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
+          </Lead>
+          <CellErrorsDemo />
         </DashboardCard>
 
         <DashboardCard title="Table basics · An editor table">

@@ -1,6 +1,6 @@
 # Demographics — build report
 
-**Target stack:** SolidJS + Vite, shared component library in [`src/ui/`](../../ui/), roles resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md). Built from [`spec/demographics`](../../../spec/demographics/README.md) (`rules.md` → `contract.md` → `ui-surface.md`), pattern-matched to the reference vertical `src/sections/stocktakes/`, to `src/sections/custom-fields/` (the other draft-edited central grid) and to the patient editor (`src/sections/patients/detail/patientEditor.ts`, the logic-module shape).
+**Target stack:** SolidJS + Vite, shared component library in [`src/ui/`](../../ui/), roles resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md). Built from [`spec/demographics`](../../../../spec/demographics/README.md) (`rules.md` → `contract.md` → `ui-surface.md`), pattern-matched to the reference vertical `src/sections/stocktakes/`, to `src/sections/custom-fields/` (the other draft-edited central grid) and to the patient editor (`src/sections/patients/detail/patientEditor.ts`, the logic-module shape).
 
 **Shape.** One screen (`ui-surface` S1) plus the shared leave confirmation (S2). The whole screen is one draft over one grid, so the vertical is a calculation, a draft store and a save:
 
@@ -17,7 +17,7 @@ One locale key was minted: `server-error.DemographicIndicatorAlreadyExistsForThi
 
 ## Anchor coverage
 
-Behaviour anchors: the behaviours of the case [`OMS-REG-MNG-03`](../../../spec/demographics/cases/OMS-REG-MNG-03%20-%20Validate%20Demographics%20Management.md), the source of truth — shown below as `.n` (`.12` is `OMS-REG-MNG-03.12`), as the colocated tests cite them.
+Behaviour anchors: the behaviours of the case [`OMS-REG-MNG-03`](../../../../spec/demographics/cases/OMS-REG-MNG-03%20-%20Validate%20Demographics%20Management.md), the source of truth — shown below as `.n` (`.12` is `OMS-REG-MNG-03.12`), as the colocated tests cite them.
 
 | Anchor            | Statement (abbrev.)                                                 | Test                                                                                                                                                      |
 | ----------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |

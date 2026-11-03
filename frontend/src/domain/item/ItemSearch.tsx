@@ -89,6 +89,11 @@ export interface ItemSearchProps {
    * which offers the items of the method a program form has chosen.
    */
   categoryName?: string;
+  /**
+   * Also offer hidden items that have stock on hand (server-side
+   * ItemFilterInput.isVisibleOrOnHand). Default: visible items only.
+   */
+  includeHiddenWithStock?: boolean;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
   /**
@@ -139,7 +144,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     () => props.masterListId,
     () => (props.orderableOnly ? false : undefined),
     () => props.includeServiceItems,
-    () => props.categoryName
+    () => props.categoryName,
+    () => props.includeHiddenWithStock
   );
 
   // itemId → already-on-document, filled page-by-page by the caller's
@@ -226,6 +232,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       isService: false,
       defaultPackSize: 1,
       defaultSellPricePerPack: 0,
+      volumePerPack: 0,
     };
   };
 

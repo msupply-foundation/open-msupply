@@ -1,6 +1,6 @@
 # Build report — items
 
-**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
 Added by a later scoped run (`/spec-build items`, "build now, flag gaps"). Gates re-run green repo-wide: `pnpm check` ✓ · `pnpm test` ✓ (289, incl. 15 new items AC tests) · `pnpm build` ✓. Only `src/App.tsx` (one route registration) and `src/sections/items/` were touched. Built against a `:8890` (`fe-auth-contract`) introspection — the default `:8000` backend lacks the items schema (see the codegen flag below).
 
@@ -58,7 +58,7 @@ The Barcodes tab moved onto the barcode KDD's Option 6 (`decisions/2026-09-30_ba
 | **S1 list**         | ✅ built          | Page/Header/Toolbar/FilterBar/DataTable/Pagination. Always-present code-or-name search; chip filters: lens, min/max MOS, master-list (gated), at-risk (gated). Columns Code/Name(sortable)/Master-lists(chip)/Unit/Stock-on-hand/AMC/MOS(blank-at-zero) + one per non-hidden custom-field definition (boolean → `BooleanCell`). Server pagination; row → detail. |
 | **S2 detail**       | ✅ built          | Stats band (`StatsPanel`/`Statistic` in the header `Toolbar`, above the tabs) + URL-driven deep-linkable tabs. Built: General/Store/Master-lists/Ledger(`ItemLedgerPanel`)/Ancillary(`ItemAncillaryPanel`)/Custom-fields/Variants(`ItemVariantsPanel`)/Log(`ActivityLogPanel`) + not-found→list.                                                                 |
 
-## Behaviour coverage (`OMS-REG-CAT-04/05/06/08.*` — [cases](../../../spec/items/cases/))
+## Behaviour coverage (`OMS-REG-CAT-04/05/06/08.*` — [cases](../../../../spec/items/cases/))
 
 | Behaviour                                                                                                                              | Where                                                                                                            | Status                                                   |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
