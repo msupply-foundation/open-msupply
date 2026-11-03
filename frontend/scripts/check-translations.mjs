@@ -2,52 +2,47 @@
  * Guard for AI-drafted translations — the `translate` skill's last step, and
  * safe to run on any branch. Compares every catalog against <ref> (default:
  * the merge-base with origin/develop) and fails if this branch:
- *   - changed or removed an existing translation in a non-English catalog
- *     (existing wording is the translation team's). Two exceptions: filling
- *     an existing empty value counts as adding, and an AI draft that
- *     `ai-drafts.json` listed at <ref> — still awaiting review — may be
- *     revised (the listing at <ref>, so adding a human translation's key to
- *     the list on this branch doesn't unlock it)
+ *   - changed an existing translation in a non-English catalog (existing
+ *     wording is the translation team's). Filling an existing empty value
+ *     counts as adding. With --update — a terminology or glossary change the
+ *     developer asked for — changes are listed instead of failing
+ *   - removed an existing key, or deleted a catalog file that had keys
  *   - touched an overlay catalog at all (a locale with a `base`, e.g. fr-DJ)
- *   - added a translation whose `{{tokens}}` / `$t()` references differ from
- *     the English (a plural form may drop or add `{{count}}`)
+ *   - added or changed a translation whose `{{tokens}}` / `$t()` references
+ *     differ from the English (a plural form may drop or add `{{count}}`)
  *   - added a plural key the locale doesn't use, or left an added plural
  *     without every CLDR category the locale needs
  *   - left a catalog out of codepoint key order
- *   - has an `ai-drafts.json` entry for a key the catalog doesn't contain
  *
- * Usage: node scripts/check-translations.mjs [--base <ref>]
+ * It compares a branch against its base, so it isn't a CI check: Weblate's
+ * own commits change existing translations, which is what it refuses.
+ *
+ * Usage: node scripts/check-translations.mjs [--base <ref>] [--update]
  */
-import { execFileSync } from 'node:child_process';
 import {
   catalogFiles,
   codepointCompare,
   englishSourceFor,
   fail,
   isOverlay,
-  manifestPath,
   placeholderProblem,
   pluralCategories,
   readCatalogAt,
   readJson,
   readLocaleRegistry,
+  resolveBase,
   catalogPath,
   splitPlural,
 } from './lib/locale-catalog.mjs';
 
 const args = process.argv.slice(2);
 const baseIndex = args.indexOf('--base');
-let base = baseIndex === -1 ? undefined : args[baseIndex + 1];
-if (baseIndex !== -1 && !base) fail('--base needs a git ref.');
-if (!base) {
-  try {
-    base = execFileSync('git', ['merge-base', 'HEAD', 'origin/develop'], {
-      encoding: 'utf8',
-    }).trim();
-  } catch {
-    fail('Could not find a merge-base with origin/develop; pass --base <ref>.');
-  }
+const baseArg = baseIndex === -1 ? undefined : args[baseIndex + 1];
+if (baseIndex !== -1 && (!baseArg || baseArg.startsWith('--'))) {
+  fail('--base needs a git ref.');
 }
+const base = resolveBase(baseArg);
+const update = args.includes('--update');
 
 const registry = await readLocaleRegistry();
 const errors = [];
@@ -58,33 +53,23 @@ for (const file of await catalogFiles('en')) {
   Object.assign(en, await readJson(catalogPath('en', file)));
 }
 
-const manifest = await readJson(manifestPath, {});
-// The drafts awaiting review at <ref>: the only existing values a branch may
-// revise. Read at the base, never from the working tree.
-let draftsAtBase = {};
-try {
-  draftsAtBase = JSON.parse(
-    execFileSync(
-      'git',
-      ['show', `${base}:./${manifestPath.replace(/^\.\//, '')}`],
-      {
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-      }
-    )
-  );
-} catch {
-  // No manifest at the base: nothing is revisable.
-}
-
 for (const locale of registry.codes) {
   if (locale === 'en') continue;
   const overlay = isOverlay(registry, locale);
   const categories = pluralCategories(registry, locale);
   const merged = {};
   const added = [];
+  const changed = [];
 
-  for (const file of await catalogFiles(locale)) {
+  const files = await catalogFiles(locale);
+  // A catalog file deleted on this branch is never in `files`; catch it here.
+  for (const file of await catalogFiles('en')) {
+    if (files.includes(file)) continue;
+    const gone = Object.keys(readCatalogAt(base, locale, file)).length;
+    if (gone) errors.push(`${locale}/${file}: deleted, with ${gone} key(s)`);
+  }
+
+  for (const file of files) {
     const label = `${locale}/${file}`;
     const now = await readJson(catalogPath(locale, file));
     const before = readCatalogAt(base, locale, file);
@@ -102,14 +87,20 @@ for (const locale of registry.codes) {
     for (const [key, value] of Object.entries(before)) {
       if (!Object.hasOwn(now, key)) {
         errors.push(`${label}: removed existing key ${key}`);
-      } else if (
-        now[key] !== value &&
-        value !== '' &&
-        !Object.hasOwn(draftsAtBase[locale] ?? {}, key)
-      ) {
-        // Filling an empty value is an addition — it renders blank otherwise;
-        // an unreviewed AI draft may be revised.
-        errors.push(`${label}: changed existing translation of ${key}`);
+      } else if (now[key] !== value) {
+        if (overlay) {
+          errors.push(`${label}: overlay catalog changed ${key}`);
+        } else if (value === '') {
+          // Filling an empty value is an addition — it renders blank otherwise.
+          added.push({ key, value: now[key], label });
+        } else {
+          changed.push({ key, value: now[key], label });
+          if (!update) {
+            errors.push(
+              `${label}: changed existing translation of ${key} (allowed only with --update, for a terminology change the developer asked for)`
+            );
+          }
+        }
       }
     }
 
@@ -124,7 +115,7 @@ for (const locale of registry.codes) {
   }
 
   const pluralBases = new Set();
-  for (const { key, value, label } of added) {
+  for (const { key, value, label } of [...added, ...changed]) {
     const english = englishSourceFor(en, key);
     if (english === undefined) {
       notes.push(`${label}: ${key} has no English source`);
@@ -154,19 +145,12 @@ for (const locale of registry.codes) {
     }
   }
 
-  const drafted = manifest[locale] ?? {};
-  for (const key of Object.keys(drafted)) {
-    if (!Object.hasOwn(merged, key)) {
-      errors.push(`${manifestPath}: ${locale}/${key} isn't in the catalog`);
-    }
-  }
-  const undrafted = added.filter(({ key }) => !Object.hasOwn(drafted, key));
-  if (undrafted.length) {
+  if (added.length) notes.push(`${locale}: ${added.length} key(s) added`);
+  if (update && changed.length) {
     notes.push(
-      `${locale}: ${undrafted.length} added key(s) aren't in ${manifestPath} (fine for human translations)`
+      `${locale}: ${changed.length} existing translation(s) changed (--update): ${changed.map(({ key }) => key).join(', ')}`
     );
   }
-  if (added.length) notes.push(`${locale}: ${added.length} key(s) added`);
 }
 
 for (const note of notes) console.log(`  ${note}`);

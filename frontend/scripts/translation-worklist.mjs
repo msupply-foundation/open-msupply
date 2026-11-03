@@ -16,43 +16,40 @@
  *     supported locale except English and overlays (a locale with a `base`,
  *     e.g. `fr-DJ`), which are never written.
  *
- *   apply <locale> <proposals.json> [--ref <name>] [--revise]
- *     Inserts `{ key: translation }` into the locale's catalogs. Refuses
- *     the whole batch if any key already exists, isn't an English key (or a
+ *   apply <locale> <proposals.json> [--base <ref>] [--update]
+ *     Writes `{ key: translation }` into the locale's catalogs. By default a
+ *     key may be written only if it had no translation at <ref> (default:
+ *     the merge-base with origin/develop), so this branch's own drafts can be
+ *     corrected but nothing translated before it can. --update lifts that,
+ *     for a terminology or glossary change the developer asked for. Refuses
+ *     the whole batch if any key is refused, isn't an English key (or a
  *     plural form of one), isn't a plural category the locale uses, or drops
- *     or invents a placeholder. Records each key in `src/intl/ai-drafts.json`
- *     against the date and <ref> (default: the current branch) so native
- *     speakers can find the drafts in Weblate later. With --revise, a key
- *     that already exists may be overwritten only while it is still listed
- *     in `ai-drafts.json` — an unreviewed draft, e.g. corrected after a team
- *     glossary arrives; a human translation is still refused.
+ *     or invents a placeholder.
  */
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
   catalogFiles,
   catalogPath,
   codepointCompare,
-  currentBranch,
   englishSourceFor,
   fail,
   guidesRoot,
   isOverlay,
-  manifestPath,
   placeholderProblem,
   placeholdersOf,
   pluralCategories,
   readCatalogAt,
   readJson,
   readLocaleRegistry,
+  resolveBase,
   splitPlural,
   writeJson,
 } from './lib/locale-catalog.mjs';
 
 const usage = [
   'Usage: node scripts/translation-worklist.mjs build [locale…] [--base <ref>] [--backlog | --keys k1,k2] [--out <dir>] [--chunk-size <n>]',
-  '       node scripts/translation-worklist.mjs apply <locale> <proposals.json> [--ref <name>] [--revise]',
+  '       node scripts/translation-worklist.mjs apply <locale> <proposals.json> [--base <ref>] [--update]',
 ].join('\n');
 
 const parseArgs = argv => {
@@ -60,7 +57,7 @@ const parseArgs = argv => {
   const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--backlog' || arg === '--revise') flags[arg.slice(2)] = true;
+    if (arg === '--backlog' || arg === '--update') flags[arg.slice(2)] = true;
     else if (arg.startsWith('--')) {
       const value = argv[index + 1];
       if (value === undefined) fail(`${arg} needs a value.\n${usage}`);
@@ -197,16 +194,6 @@ const buildSimilarity = (en, translated) => {
 // carries that as well as the whole and keeps the worklist small.
 const clip = text => (text.length > 220 ? `${text.slice(0, 220)}…` : text);
 
-const mergeBaseWithDevelop = () => {
-  try {
-    return execFileSync('git', ['merge-base', 'HEAD', 'origin/develop'], {
-      encoding: 'utf8',
-    }).trim();
-  } catch {
-    fail('Could not find a merge-base with origin/develop; pass --base <ref>.');
-  }
-};
-
 const build = async (locales, flags) => {
   const registry = await readLocaleRegistry();
   const targets = locales.length
@@ -226,9 +213,7 @@ const build = async (locales, flags) => {
   if (flags.backlog && flags.keys) fail('Use --backlog or --keys, not both.');
 
   const base =
-    flags.backlog || flags.keys
-      ? undefined
-      : (flags.base ?? mergeBaseWithDevelop());
+    flags.backlog || flags.keys ? undefined : resolveBase(flags.base);
   const out = flags.out ?? 'translation-worklist';
   const chunkSize = Number(flags['chunk-size'] ?? 150);
   const explicitKeys = flags.keys
@@ -439,8 +424,7 @@ const apply = async (locale, proposalsFile, flags) => {
 
   const proposals = await readJson(proposalsFile);
   const categories = pluralCategories(registry, locale);
-  const manifest = await readJson(manifestPath, {});
-  const drafted = manifest[locale] ?? {};
+  const base = resolveBase(flags.base);
 
   const en = {};
   const fileOf = {};
@@ -450,8 +434,10 @@ const apply = async (locale, proposalsFile, flags) => {
     for (const key of Object.keys(catalog)) fileOf[key] = file;
   }
   const catalogs = {};
+  const before = {};
   for (const file of await catalogFiles(locale)) {
     catalogs[file] = await readJson(catalogPath(locale, file));
+    before[file] = readCatalogAt(base, locale, file);
   }
 
   const problems = [];
@@ -471,13 +457,13 @@ const apply = async (locale, proposalsFile, flags) => {
     } else if (!catalogs[file]) {
       problems.push(`${key}: ${locale} has no ${file}`);
     } else if (
-      Object.hasOwn(catalogs[file], key) &&
-      !(flags.revise && Object.hasOwn(drafted, key))
+      !flags.update &&
+      Object.hasOwn(before[file], key) &&
+      before[file][key] !== ''
     ) {
+      // An empty value renders blank, so filling it counts as adding.
       problems.push(
-        flags.revise
-          ? `${key}: a human translation (not in ${manifestPath}) — never changed`
-          : `${key}: already translated — existing translations are never changed (--revise corrects unreviewed AI drafts)`
+        `${key}: translated before this branch — only --update changes it, for a terminology change the developer asked for`
       );
     } else {
       const problem = placeholderProblem(english, value, key);
@@ -491,23 +477,20 @@ const apply = async (locale, proposalsFile, flags) => {
     );
   }
 
-  const ref = flags.ref ?? currentBranch();
-  const date = new Date().toISOString().slice(0, 10);
-  manifest[locale] ??= {};
-  let count = 0;
+  let inserted = 0;
+  let overwritten = 0;
   for (const [file, entries] of Object.entries(additions)) {
+    for (const key of Object.keys(entries)) {
+      if (Object.hasOwn(catalogs[file], key)) overwritten += 1;
+      else inserted += 1;
+    }
     await writeJson(catalogPath(locale, file), {
       ...catalogs[file],
       ...entries,
     });
-    for (const key of Object.keys(entries)) {
-      manifest[locale][key] = { date, ref };
-      count += 1;
-    }
   }
-  await writeJson(manifestPath, manifest);
   console.log(
-    `${locale}: ${flags.revise ? 'wrote' : 'inserted'} ${count} key(s); recorded in ${manifestPath}`
+    `${locale}: inserted ${inserted} key(s), overwrote ${overwritten} against ${base.slice(0, 10)}`
   );
 };
 

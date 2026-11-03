@@ -14,7 +14,6 @@ import path from 'node:path';
 
 export const localesRoot = './src/intl/locales';
 export const localesModule = './src/intl/locales.ts';
-export const manifestPath = './src/intl/ai-drafts.json';
 export const guidesRoot = './src/intl/translation-guides';
 
 // `{{token}}` interpolations and `$t(key)` nesting — both must survive
@@ -144,10 +143,36 @@ export const readCatalogAt = (ref, locale, file = 'common.json') => {
   }
 };
 
-export const currentBranch = () =>
-  execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
-    encoding: 'utf8',
-  }).trim();
+/*
+ * The ref a branch's catalogs are compared against: <ref> as given, or the
+ * merge-base with origin/develop. A ref git doesn't know fails here, because
+ * `readCatalogAt` would read it as empty catalogs and every key would look new.
+ */
+export const resolveBase = ref => {
+  if (ref === undefined) {
+    try {
+      return execFileSync('git', ['merge-base', 'HEAD', 'origin/develop'], {
+        encoding: 'utf8',
+      }).trim();
+    } catch {
+      fail(
+        'Could not find a merge-base with origin/develop; pass --base <ref>.'
+      );
+    }
+  }
+  try {
+    execFileSync(
+      'git',
+      ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`],
+      {
+        stdio: 'ignore',
+      }
+    );
+  } catch {
+    fail(`Unknown git ref "${ref}".`);
+  }
+  return ref;
+};
 
 // Usage errors are the user's typo, not a crash — report and exit, no stack.
 export const fail = message => {
