@@ -1,4 +1,5 @@
 use chrono::Local;
+use repository::is_lock_timeout;
 use service::{
     service_provider::ServiceProvider, settings::ChangelogDedupSettings, sync::CentralServerConfig,
 };
@@ -49,12 +50,12 @@ pub fn spawn(
             let result = tokio::task::spawn_blocking(move || run_dedup(&ctx, &settings)).await;
 
             match result {
-                Ok(Ok(Some(removed))) => {
+                Ok(Ok(removed)) => {
                     if removed > 0 {
                         log::info!("changelog dedup task removed {removed} duplicate row(s)")
                     }
                 }
-                Ok(Ok(None)) => {
+                Ok(Err(e)) if is_lock_timeout(&e) => {
                     log::warn!("changelog dedup task: lock timeout; will retry next tick")
                 }
                 Ok(Err(e)) => log::error!("changelog dedup task: {e:?}"),
@@ -65,13 +66,11 @@ pub fn spawn(
 }
 
 /// Run one dedup pass over the window `(marker, max]`, deleting in committed
-/// batches. Advances the `ChangelogDedupCursor` marker after completion.
-/// `None` when a lock timeout stopped the run before any delete; the marker is
-/// unchanged, so the next tick redoes the window.
+/// batches. Advances the `ChangelogDedupCursor` marker after completion
 fn run_dedup(
     ctx: &service::service_provider::ServiceContext,
     settings: &ChangelogDedupSettings,
-) -> Result<Option<u64>, repository::RepositoryError> {
+) -> Result<u64, repository::RepositoryError> {
     use repository::{ChangelogRepository, KeyType, KeyValueStoreRepository};
 
     let connection = &ctx.connection;
@@ -83,12 +82,10 @@ fn run_dedup(
     // Safe upper bound — never windows past an in-flight changelog transaction.
     let max = repo.max_cursor()? as i64;
     if max <= marker {
-        return Ok(Some(0));
+        return Ok(0);
     }
 
-    if repo.prepare_dead_set(marker, max)?.is_none() {
-        return Ok(None);
-    }
+    repo.prepare_dead_set(marker, max)?;
 
     let batch_size = settings.batch_size();
     let mut total: u64 = 0;
@@ -104,5 +101,5 @@ fn run_dedup(
     // Advance the dedup cursor after it has finished
     kv.set_i64(KeyType::ChangelogDedupCursor, Some(max))?;
 
-    Ok(Some(total))
+    Ok(total)
 }

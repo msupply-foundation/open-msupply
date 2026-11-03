@@ -1521,6 +1521,8 @@ use super::partition::tests::{
     reset_to_two_partitions, run_with_timeout,
 };
 #[cfg(feature = "postgres")]
+use crate::is_lock_timeout;
+#[cfg(feature = "postgres")]
 use std::{
     thread,
     time::{Duration, Instant},
@@ -1615,7 +1617,7 @@ fn dedup_test_surviving_cursors(connection: &StorageConnection) -> Vec<i64> {
 #[cfg(feature = "postgres")]
 fn dedup_test_run(connection: &StorageConnection, marker: i64, max: i64) -> u64 {
     let repo = ChangelogRepository::new(connection);
-    repo.prepare_dead_set(marker, max).unwrap().unwrap();
+    repo.prepare_dead_set(marker, max).unwrap();
     let mut total = 0u64;
     loop {
         let n = repo.delete_dead_batch(2).unwrap();
@@ -1668,12 +1670,12 @@ fn dedup_test_indexes(connection: &StorageConnection) -> Vec<(String, bool)> {
 
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
-async fn test_changelog_dedupe_windowed() {
+async fn test_changelog_dedup_windowed() {
     use crate::test_db::SetupResult;
     use RowActionType::Upsert;
 
     let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
-        db_name: "test_changelog_dedupe_windowed",
+        db_name: "test_changelog_dedup_windowed",
         inserts: MockDataInserts::none(),
         ..Default::default()
     })
@@ -1712,9 +1714,9 @@ async fn test_changelog_dedupe_windowed() {
 /// The helper index goes only on the range partitions the window overlaps.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
-async fn test_changelog_dedupe_helper_indexes_only_on_windowed_partitions() {
+async fn test_changelog_dedup_helper_indexes_only_on_windowed_partitions() {
     let (_, connection, _, _) = setup_all(
-        "test_changelog_dedupe_helper_indexes_only_on_windowed_partitions",
+        "test_changelog_dedup_helper_indexes_only_on_windowed_partitions",
         MockDataInserts::none(),
     )
     .await;
@@ -1724,7 +1726,7 @@ async fn test_changelog_dedupe_helper_indexes_only_on_windowed_partitions() {
     let repo = ChangelogRepository::new(&connection);
 
     // (4, 6]: cursors 5 and 6, both in changelog_p_5.
-    assert_eq!(repo.prepare_dead_set(4, 6).unwrap(), Some(()));
+    repo.prepare_dead_set(4, 6).unwrap();
     assert_eq!(
         dedup_test_indexes(&connection),
         vec![("index_changelog_dedup_changelog_p_5".to_string(), true)]
@@ -1733,7 +1735,7 @@ async fn test_changelog_dedupe_helper_indexes_only_on_windowed_partitions() {
     assert_eq!(dedup_test_indexes(&connection), vec![]);
 
     // (3, 6]: cursor 4 is in changelog_p_1, so both lower partitions.
-    assert_eq!(repo.prepare_dead_set(3, 6).unwrap(), Some(()));
+    repo.prepare_dead_set(3, 6).unwrap();
     assert_eq!(
         dedup_test_indexes(&connection),
         vec![
@@ -1749,9 +1751,9 @@ async fn test_changelog_dedupe_helper_indexes_only_on_windowed_partitions() {
 /// index build time out, and never makes another insert wait.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
-async fn test_changelog_dedupe_not_blocked_by_open_insert_transaction() {
+async fn test_changelog_dedup_not_blocked_by_open_insert_transaction() {
     let (_, connection, connection_manager, _) = setup_all(
-        "test_changelog_dedupe_not_blocked_by_open_insert_transaction",
+        "test_changelog_dedup_not_blocked_by_open_insert_transaction",
         MockDataInserts::none(),
     )
     .await;
@@ -1772,11 +1774,8 @@ async fn test_changelog_dedupe_not_blocked_by_open_insert_transaction() {
     // Session B: the dedup's index build, over (0, 4]. Waits on A.
     let dedup_connection = connection_manager.connection().unwrap();
     let started = Instant::now();
-    let run = thread::spawn(move || {
-        ChangelogRepository::new(&dedup_connection)
-            .prepare_dead_set(0, 4)
-            .unwrap()
-    });
+    let run =
+        thread::spawn(move || ChangelogRepository::new(&dedup_connection).prepare_dead_set(0, 4));
     // Let B's build reach its wait before C starts.
     thread::sleep(Duration::from_millis(500));
 
@@ -1799,7 +1798,7 @@ async fn test_changelog_dedupe_not_blocked_by_open_insert_transaction() {
 
     // B gives up at the 5 s lock timeout, well before A commits, leaving the
     // half-built index marked INVALID.
-    assert_eq!(run.join().unwrap(), None);
+    assert!(is_lock_timeout(&run.join().unwrap().unwrap_err()));
     let waited = started.elapsed();
     assert!(
         waited < Duration::from_secs(10),
@@ -1827,9 +1826,9 @@ async fn test_changelog_dedupe_not_blocked_by_open_insert_transaction() {
 /// with nothing left behind.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
-async fn test_changelog_dedupe_locked_out_acquiring_lock_then_completes() {
+async fn test_changelog_dedup_locked_out_acquiring_lock_then_completes() {
     let (_, connection, connection_manager, _) = setup_all(
-        "test_changelog_dedupe_locked_out_acquiring_lock_then_completes",
+        "test_changelog_dedup_locked_out_acquiring_lock_then_completes",
         MockDataInserts::none(),
     )
     .await;
@@ -1844,7 +1843,7 @@ async fn test_changelog_dedupe_locked_out_acquiring_lock_then_completes() {
 
     let repo = ChangelogRepository::new(&connection);
     let started = Instant::now();
-    assert_eq!(repo.prepare_dead_set(0, 6).unwrap(), None);
+    assert!(is_lock_timeout(&repo.prepare_dead_set(0, 6).unwrap_err()));
     let waited = started.elapsed();
     assert!(
         waited < Duration::from_secs(10),
@@ -1867,9 +1866,9 @@ async fn test_changelog_dedupe_locked_out_acquiring_lock_then_completes() {
 /// reuses the index and drops it.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
-async fn test_changelog_dedupe_leaves_helper_indexes_when_drop_times_out() {
+async fn test_changelog_dedup_leaves_helper_indexes_when_drop_times_out() {
     let (_, connection, connection_manager, _) = setup_all(
-        "test_changelog_dedupe_leaves_helper_indexes_when_drop_times_out",
+        "test_changelog_dedup_leaves_helper_indexes_when_drop_times_out",
         MockDataInserts::none(),
     )
     .await;
@@ -1878,7 +1877,7 @@ async fn test_changelog_dedupe_leaves_helper_indexes_when_drop_times_out() {
     dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
     let repo = ChangelogRepository::new(&connection);
 
-    assert_eq!(repo.prepare_dead_set(0, 6).unwrap(), Some(()));
+    repo.prepare_dead_set(0, 6).unwrap();
     let holder = hold_open_transaction(
         &connection_manager,
         "LOCK TABLE changelog_p_1 IN SHARE UPDATE EXCLUSIVE MODE",

@@ -5,7 +5,7 @@
 //! and deletes the rest.
 //!
 //! Every statement that can wait on a lock runs under a `lock_timeout`; a
-//! timeout is reported as `None` for the caller to retry.
+//! timeout comes back as an error for the caller to retry.
 //!
 //! These helpers MUST be called outside a `transaction_sync` (each statement
 //! autocommits): Postgres refuses `CONCURRENTLY` inside a transaction, and the
@@ -23,14 +23,14 @@ use std::time::Instant;
 const CONCURRENT_LOCK_TIMEOUT: &str = "5s";
 
 impl<'a> ChangelogRepository<'a> {
-    /// Build the helper indexes for the window `(marker, max]`, then
-    /// `changelog_dead`, the set of cursors to delete. Step 1: within the window,
-    /// keep each record's newest row and mark its older rows for deletion. Step 2:
-    /// for any record in the window that also has rows at/below the marker (kept
-    /// by a previous run), mark those for deletion too. `None` on lock timeout.
-    pub fn prepare_dead_set(&self, marker: i64, max: i64) -> Result<Option<()>, RepositoryError> {
+    /// Build `changelog_dead` — the set of cursors to delete — for the window
+    /// `(marker, max]`. Step 1: within the window, keep each record's newest row and
+    /// mark its older rows for deletion. Step 2: for any record in the window that
+    /// also has rows at/below the marker (kept by a previous run), mark those for
+    /// deletion too.
+    pub fn prepare_dead_set(&self, marker: i64, max: i64) -> Result<(), RepositoryError> {
         if !cfg!(feature = "postgres") {
-            return Ok(Some(()));
+            return Ok(());
         }
         log::info!("changelog dedup: prepare_dead_set window ({marker}, {max}]");
 
@@ -39,7 +39,7 @@ impl<'a> ChangelogRepository<'a> {
         // `IF NOT EXISTS` reuses an index a previous run left behind, and skips
         // an INVALID one from an interrupted build (that partition is scanned
         // this run).
-        let built = self.with_lock_timeout(CONCURRENT_LOCK_TIMEOUT, |connection| {
+        self.with_lock_timeout(CONCURRENT_LOCK_TIMEOUT, |connection| {
             for partition in range_partitions(connection)?
                 .into_iter()
                 // Partition holds `lower..upper`; the window holds `marker + 1..=max`.
@@ -54,9 +54,6 @@ impl<'a> ChangelogRepository<'a> {
             }
             Ok(())
         })?;
-        if built.is_none() {
-            return Ok(None);
-        }
 
         // Fresh dead-set table each run (drop any leftover from an aborted run).
         diesel::sql_query("DROP TABLE IF EXISTS changelog_dead")
@@ -118,7 +115,7 @@ impl<'a> ChangelogRepository<'a> {
             t.elapsed()
         );
 
-        Ok(Some(()))
+        Ok(())
     }
 
     /// Delete one batch of dead cursors from `changelog` (and pop them from
@@ -159,55 +156,45 @@ impl<'a> ChangelogRepository<'a> {
         }
         diesel::sql_query("DROP TABLE IF EXISTS changelog_dead")
             .execute(self.connection.lock().connection())?;
-        self.with_lock_timeout(CONCURRENT_LOCK_TIMEOUT, |connection| {
-            for index in helper_index_names(connection)? {
-                diesel::sql_query(format!("DROP INDEX CONCURRENTLY IF EXISTS {index}"))
+        let dropped = self.with_lock_timeout(CONCURRENT_LOCK_TIMEOUT, |connection| {
+            #[derive(QueryableByName)]
+            struct Index {
+                #[diesel(sql_type = Text)]
+                name: String,
+            }
+            // Every helper index, valid or not.
+            let indexes = diesel::sql_query(
+                "SELECT relname AS name FROM pg_class \
+                 WHERE relkind = 'i' AND relname ~ '^index_changelog_dedup_changelog_p_[0-9]+$'",
+            )
+            .get_results::<Index>(connection.lock().connection())?;
+            for index in indexes {
+                diesel::sql_query(format!("DROP INDEX CONCURRENTLY IF EXISTS {}", index.name))
                     .execute(connection.lock().connection())?;
             }
             Ok(())
-        })?;
-        Ok(())
+        });
+        match dropped {
+            Err(error) if !is_lock_timeout(&error) => Err(error),
+            _ => Ok(()),
+        }
     }
 
     /// Run `work` with the session's `lock_timeout` set, resetting it on every
     /// exit path so the pooled connection goes back clean (`SET LOCAL` needs a
-    /// transaction, which `CONCURRENTLY` refuses). A lock timeout maps to `None`.
+    /// transaction, which `CONCURRENTLY` refuses).
     fn with_lock_timeout<T>(
         &self,
         timeout: &str,
         work: impl FnOnce(&StorageConnection) -> Result<T, RepositoryError>,
-    ) -> Result<Option<T>, RepositoryError> {
+    ) -> Result<T, RepositoryError> {
         diesel::sql_query(format!("SET lock_timeout = '{timeout}'"))
             .execute(self.connection.lock().connection())?;
         let result = work(self.connection);
         let reset =
             diesel::sql_query("RESET lock_timeout").execute(self.connection.lock().connection());
-        match result {
-            Ok(value) => {
-                reset?;
-                Ok(Some(value))
-            }
-            Err(error) if is_lock_timeout(&error) => {
-                reset?;
-                Ok(None)
-            }
-            Err(error) => Err(error),
-        }
+        let value = result?;
+        reset?;
+        Ok(value)
     }
-}
-
-/// Every helper index, valid or not, by name.
-fn helper_index_names(connection: &StorageConnection) -> Result<Vec<String>, RepositoryError> {
-    #[derive(QueryableByName)]
-    struct Index {
-        #[diesel(sql_type = Text)]
-        name: String,
-    }
-    let names = diesel::sql_query(
-        "SELECT relname AS name FROM pg_class \
-         WHERE relkind = 'i' AND relname ~ '^index_changelog_dedup_changelog_p_[0-9]+$' \
-         ORDER BY relname",
-    )
-    .get_results::<Index>(connection.lock().connection())?;
-    Ok(names.into_iter().map(|i| i.name).collect())
 }

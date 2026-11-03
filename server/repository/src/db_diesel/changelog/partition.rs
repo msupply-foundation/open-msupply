@@ -209,7 +209,7 @@ fn set_default_lock_timeout(connection: &StorageConnection) -> Result<(), Reposi
 /// expose the SQLSTATE, only the message, so this matches the text. A server
 /// with a non-English `lc_messages` would report the timeout as a plain error
 /// instead of `LockedOut`; the loop still retries next tick either way.
-pub(super) fn is_lock_timeout(error: &RepositoryError) -> bool {
+pub fn is_lock_timeout(error: &RepositoryError) -> bool {
     match error {
         RepositoryError::DBError { extra, .. } => extra.contains("lock timeout"),
         _ => false,
@@ -235,14 +235,14 @@ pub(super) fn range_partitions(
     connection: &StorageConnection,
 ) -> Result<Vec<RangePartition>, RepositoryError> {
     #[derive(QueryableByName)]
-    struct PartitionRow {
+    struct BoundExpr {
         #[diesel(sql_type = Text)]
         name: String,
         #[diesel(sql_type = Text)]
         bound: String,
     }
 
-    let rows: Vec<PartitionRow> = diesel::sql_query(
+    let bounds: Vec<BoundExpr> = diesel::sql_query(
         r#"
         SELECT c.relname AS name, pg_get_expr(c.relpartbound, c.oid) AS bound
         FROM pg_inherits i
@@ -252,12 +252,12 @@ pub(super) fn range_partitions(
     )
     .get_results(connection.lock().connection())?;
 
-    Ok(rows
+    Ok(bounds
         .into_iter()
-        .filter_map(|row| {
-            let (lower, upper) = parse_bounds(&row.bound)?;
+        .filter_map(|b| {
+            let (lower, upper) = parse_bounds(&b.bound)?;
             Some(RangePartition {
-                name: row.name,
+                name: b.name,
                 lower,
                 upper,
             })
