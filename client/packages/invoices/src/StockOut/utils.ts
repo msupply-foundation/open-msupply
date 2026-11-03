@@ -182,17 +182,16 @@ export const canAutoAllocate = (
   expiryThresholdDays: number,
   requiredPackSize?: number
 ) => {
-  const lastAllowableDate = line.expiryDate
-    ? DateUtils.addDays(new Date(line.expiryDate), -expiryThresholdDays)
-    : undefined;
-
   return (
     showLines(line) &&
     // should not auto-allocate from on-hold lines
     !line.stockLineOnHold &&
     !line.location?.onHold &&
     // shouldn't auto-allocate expired lines
-    !(!!lastAllowableDate && DateUtils.isExpired(lastAllowableDate)) &&
+    !(
+      !!line.expiryDate &&
+      DateUtils.isExpired(line.expiryDate, expiryThresholdDays)
+    ) &&
     // should not be able to auto-allocate lines with unusable VVM status
     !line.vvmStatus?.unusable &&
     // if pack size is specified, should match the line's pack size
@@ -245,8 +244,7 @@ export const getAutoAllocationAlerts = (
   const alerts: StockOutAlert[] = [];
 
   const hasExpired = draftLines.some(
-    ({ expiryDate }) =>
-      !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
+    ({ expiryDate }) => !!expiryDate && DateUtils.isExpired(expiryDate)
   );
 
   // Explain why some stock lines are not allocated from
