@@ -2,8 +2,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { setDictionaries, setLocale } from '../../../intl/intl';
 import commonEn from '../../../intl/locales/en/common.json';
 import {
+  fixedTargetOptions,
   intervalAndBufferBehindTarget,
   storeFixedIntervalAndBuffer,
+  targetDiffersFromFixed,
+  targetDiffersFromStoreMessage,
   targetMonthOptions,
   targetSetByStoreMessage,
   thresholdMonthOptions,
@@ -153,5 +156,30 @@ describe('intervalAndBufferBehindTarget (OMS-REG-REPL-17.17)', () => {
         program: { id: 'p', name: 'EPI' },
       })
     ).toBeUndefined();
+  });
+});
+
+describe('a target that differs from the one the store fixes (OMS-REG-REPL-17.18)', () => {
+  it('differs only when the target is not the supply interval + safety buffer', () => {
+    expect(targetDiffersFromFixed(6, intervalAndBuffer)).toBe(true);
+    expect(targetDiffersFromFixed(3.5, intervalAndBuffer)).toBe(false);
+  });
+
+  it("offers only the order's own target and the store's", () => {
+    const options = fixedTargetOptions(6, 0, intervalAndBuffer);
+    expect(options.map(o => o.value)).toEqual(['3.5', '6']);
+    expect(options.every(o => !o.disabled)).toBe(true);
+  });
+
+  it("can't move below the reorder threshold", () => {
+    const options = fixedTargetOptions(6, 4, intervalAndBuffer);
+    expect(options.find(o => o.value === '3.5')?.disabled).toBe(true);
+  });
+
+  it('names the target it can only be changed to', () => {
+    const message = targetDiffersFromStoreMessage(intervalAndBuffer);
+    expect(message).toContain('3 months');
+    expect(message).toContain('0.5 months');
+    expect(message).toContain('3.5 months');
   });
 });

@@ -6,7 +6,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { MinusCircleIcon } from '@/ui/icons';
-import { graphqlFetch } from '@/api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { hasPermission } from '@/store/storeContext';
 import { PurchaseOrderShipments } from '../purchaseOrderDetail.generated';
 import { updatePurchaseOrder } from '../purchaseOrderUpdate';
@@ -75,6 +75,7 @@ export const CancelPurchaseOrderAction: Component<
       setPhase('error');
       return;
     }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
     // A transport failure is already up in the global modal.
     close();
   };

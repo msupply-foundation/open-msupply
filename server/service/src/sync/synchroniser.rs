@@ -357,8 +357,24 @@ impl SynchroniserV5V6 {
         // for the v7 URL. On success, persist KV + carry cursors over and
         // kick off a v7 get_token in the background. On failure, surface the
         // error so the sync log records it and the frontend can show it.
-        if !CentralServerConfig::is_central_server() {
-            self.try_upgrade_to_v7(ctx).await?;
+        if !CentralServerConfig::is_central_server()
+            && let Err(error) = self.try_upgrade_to_v7(ctx).await
+        {
+            // The v5+v6 part of the cycle finished and its records are integrated; only
+            // the move to v7 was refused. Legacy central refuses it until every store on
+            // the site has moved to open mSupply central, and the site keeps syncing over
+            // v5/v6 until then, so the processors those records need still run:
+            // transfers, reloading plugins, numbering, support uploads. Not on a site
+            // that hasn't finished initialising, though: its next cycle moves the push
+            // cursors past anything they write (`advance_push_cursor` above), so those
+            // rows would never be pushed. There they wait, with the one-off
+            // initialisation triggers below, for a cycle that completes.
+            if is_initialised {
+                ctx.processors_trigger.trigger_all();
+                ctx.processors_trigger
+                    .trigger_processor(ProcessorType::SupportUploadFiles);
+            }
+            return Err(error);
         }
 
         // Deliberately *after* try_upgrade_to_v7, and as late in the cycle as possible. On

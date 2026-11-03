@@ -103,6 +103,7 @@ query vaccineCourseForEdit($id: String!) {
         demographicId
         coverageRate
         wastageRate
+        annualDosesPerPerson
         useInGapsCalculations
         canSkipDose
         demographic {

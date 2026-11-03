@@ -103,8 +103,13 @@ export const readText = (text: string, aimId?: string): ReadScan => {
   const openedWithSeparator = content.startsWith(GS);
   content = trimSeparators(content);
 
-  const elements = parseGs1(content, isGs1AimId(symbology) || openedWithSeparator);
-  return elements ? { kind: 'gs1', content, elements } : { kind: 'raw', content };
+  const elements = parseGs1(
+    content,
+    isGs1AimId(symbology) || openedWithSeparator
+  );
+  return elements
+    ? { kind: 'gs1', content, elements }
+    : { kind: 'raw', content };
 };
 
 /** Read a scan as the hardware layer delivered it. */
@@ -132,7 +137,7 @@ export const itemNumber = (scan: ReadScan): string | undefined => {
 };
 
 /**
- * The code a scan is looked up — and learned — by, or `undefined` where it
+ * The code a scan is looked up by, or `undefined` where it
  * has none (rules § Reading a scan, "Which part of the scan is the code"):
  *
  * - a structured label: its item number. One WITHOUT an item number — the
@@ -149,6 +154,35 @@ export const scanCode = (scan: ReadScan): string | undefined => {
   if (scan.kind === 'gs1') return gs1Value(scan, '01');
   if (scan.kind === 'unreadable') return undefined;
   return scan.content === '' ? undefined : scan.content;
+};
+
+/**
+ * The batch-and-expiry half of a box printed with two barcodes: a structured
+ * label with no item number, so no code, that supplies something to receive
+ * (rules § Receiving by scanning, "A batch label fills in the entry on
+ * screen"). It adds to the entry or editor already open rather than starting
+ * a new one (.186, .192). A label with neither — a shipping container's
+ * code alone — is not one: it is not recognised (.202).
+ */
+export const isBatchLabel = (scan: ReadScan): boolean => {
+  if (scan.kind !== 'gs1' || gs1Value(scan, '01') !== undefined) return false;
+  const { batch, expiryDate, manufactureDate, quantity, packSize } =
+    labelFields(scan);
+  return [batch, expiryDate, manufactureDate, quantity, packSize].some(
+    value => value !== undefined
+  );
+};
+
+/**
+ * Whether two barcodes are the same barcode number: a product number with
+ * its leading zeros, as the server stores it, so a 13-digit scan equals the
+ * 14-digit barcode on a line. Only used to compare; the app always sends a
+ * barcode as it was read.
+ */
+export const sameBarcode = (a: string, b: string): boolean => {
+  const comparable = (barcode: string) =>
+    isRetailGtin(barcode) ? barcode.padStart(14, '0') : barcode.trim();
+  return comparable(a) === comparable(b);
 };
 
 /** What a stock screen pre-fills from a label. Every part optional. */
@@ -178,7 +212,10 @@ const date = (value: string | undefined, today: Date): string | undefined =>
  * item number (a retail barcode). `today` anchors the GS1 century window;
  * pass it only in tests.
  */
-export const labelFields = (scan: ReadScan, today: Date = new Date()): LabelFields => {
+export const labelFields = (
+  scan: ReadScan,
+  today: Date = new Date()
+): LabelFields => {
   const fields: LabelFields = {};
   const set = <K extends keyof LabelFields>(key: K, value: LabelFields[K]) => {
     if (value !== undefined) fields[key] = value;

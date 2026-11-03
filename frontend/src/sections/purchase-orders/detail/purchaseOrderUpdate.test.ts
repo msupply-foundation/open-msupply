@@ -15,7 +15,8 @@ import {
 // is the test subject's input. No dictionary is loaded here, so t() falls back
 // to its key and translateServerError to its sentence-cased identifier.
 
-vi.mock('../../../api/graphql', () => ({
+vi.mock('../../../api/graphql', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../api/graphql')>()),
   graphqlFetch: vi.fn(),
 }));
 const fetchMock = vi.mocked(graphqlFetch);
@@ -41,6 +42,21 @@ const untyped = (details?: string) =>
     message: 'Bad user input',
     errors: [
       { message: 'Bad user input', extensions: details ? { details } : {} },
+    ],
+  }) as never;
+
+const forbidden = () =>
+  ({
+    kind: 'graphqlError',
+    message: 'Forbidden',
+    errors: [
+      {
+        message: 'Forbidden',
+        extensions: {
+          details:
+            'Missing permission: PurchaseOrderMutate, Required permissions: And([HasStoreAccess, HasPermission(PurchaseOrderMutate)]), Store: Some("s1")',
+        },
+      },
     ],
   }) as never;
 
@@ -114,6 +130,13 @@ describe('updatePurchaseOrder', () => {
     ).toEqual({ kind: 'error', message: 'Bad user input' });
   });
 
+  it('hands a Forbidden back apart from a refusal, naming the missing permission', async () => {
+    fetchMock.mockResolvedValue(forbidden());
+    expect(
+      await updatePurchaseOrder('s1', { id: 'po-1', status: 'FINALISED' })
+    ).toEqual({ kind: 'forbidden', permissions: ['PurchaseOrderMutate'] });
+  });
+
   it('reports a transport failure as failed, with nothing to say', async () => {
     fetchMock.mockResolvedValue({ kind: 'unauthenticated' } as never);
     expect(await updatePurchaseOrder('s1', { id: 'po-1' })).toEqual({
@@ -155,6 +178,14 @@ describe('deletePurchaseOrderLines', () => {
     });
   });
 
+  it('hands a Forbidden back with no refusal to report', async () => {
+    fetchMock.mockResolvedValue(forbidden());
+    expect(await deletePurchaseOrderLines('s1', ['l1'])).toEqual({
+      applied: 0,
+      forbidden: ['PurchaseOrderMutate'],
+    });
+  });
+
   it('reads the untyped state gate as nothing applied', async () => {
     fetchMock.mockResolvedValue(untyped('CannotEditPurchaseOrder'));
     expect(await deletePurchaseOrderLines('s1', ['l1'])).toEqual({
@@ -186,6 +217,28 @@ describe('closePurchaseOrderLines', () => {
       { storeId: 's1', input: { id: 'l2', status: 'CLOSED' } },
       { storeId: 's1', input: { id: 'l3', status: 'CLOSED' } },
     ]);
+  });
+
+  it('stops at a Forbidden, keeping what went and what was refused before it', async () => {
+    fetchMock
+      .mockResolvedValueOnce(saved('updatePurchaseOrderLine'))
+      .mockResolvedValueOnce(
+        refused(
+          'updatePurchaseOrderLine',
+          'UpdatePurchaseOrderLineError',
+          'RecordNotFound',
+          'gone'
+        )
+      )
+      .mockResolvedValueOnce(forbidden());
+    expect(
+      await closePurchaseOrderLines('s1', ['l1', 'l2', 'l3', 'l4'])
+    ).toEqual({
+      applied: 1,
+      message: 'gone',
+      forbidden: ['PurchaseOrderMutate'],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -246,6 +299,20 @@ describe('cascadeDeliveryDates', () => {
         'expectedDeliveryDate',
       ])
     ).toEqual({ applied: 1, message: 'Cannot Edit Sent Purchase Order' });
+  });
+
+  it('sends no further line once one is Forbidden', async () => {
+    fetchMock.mockResolvedValue(forbidden());
+    expect(
+      await cascadeDeliveryDates('s1', lines, '2026-04-01', [
+        'expectedDeliveryDate',
+      ])
+    ).toEqual({
+      applied: 0,
+      message: undefined,
+      forbidden: ['PurchaseOrderMutate'],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 

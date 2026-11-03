@@ -27,7 +27,7 @@ import {
 } from '@/ui/elements/table/DataTable';
 import { createTableConfig } from '@/api/createTableConfig';
 import { useUrlQueryState } from '@/list/urlQueryState';
-import { sortRows } from '@/list/sortRows';
+import { createSortedOnDemand } from '@/list/createSortedOnDemand';
 import { ALT_M } from '@/ui/utils/shortcuts';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
@@ -314,10 +314,10 @@ const RnrFormDetailView: Component = () => {
   });
 
   // Sorted first in its own memo, so each (undebounced) search keystroke
-  // costs only the O(n) prefix scan below, never a re-sort.
-  const sortedLines = createMemo(() =>
-    sortRows(draft.lines, sort(), sortValue)
-  );
+  // costs only the O(n) prefix scan below, never a re-sort. Sorted on demand:
+  // an edit never moves its row (issue #1742) — only choosing a sort, or a
+  // reseed, re-orders.
+  const sortedLines = createSortedOnDemand(() => draft.lines, sort, sortValue);
 
   // OMS-REG-REPL-07.50: prefix match on item name or code, case-insensitive.
   const visibleLines = createMemo(() => {

@@ -49,6 +49,7 @@ pub fn generate_empty_invoice_lines(
                     manufacturer_id: None,
                     legacy_goods_received_line_id: None,
                     transfer_comment: None,
+                    barcode: None,
                     vvm_status_id: None,
                     reason_option_id: None,
                     // The shipment's default campaign (issue #996)

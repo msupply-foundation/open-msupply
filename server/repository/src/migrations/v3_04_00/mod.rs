@@ -1,20 +1,37 @@
 use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
+mod add_annual_doses_per_person_to_vaccine_course;
+mod add_barcode_auto_confirm_processor_cursor_pg_enum;
 mod add_campaign_id_to_invoice;
 mod add_campaign_to_requisition_line;
 mod add_cancelled_status_to_purchase_order;
+mod add_code_to_campaign;
 mod add_code_to_location_type;
 mod add_exclude_principal_wastage_to_ancillary_item;
 mod add_forecast_method_to_requisition_line;
+mod add_is_auto_created_to_item_variant;
 mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
 mod add_not_installed_status_to_asset_status_enum;
+mod add_plugin_ownership_to_document_registry;
+mod add_purchase_order_custom_fields;
 mod add_stock_campaign_change_activity_log_type;
+mod add_sync_log_indexes;
 mod add_temperature_summary_table;
 mod add_uploader_to_sync_file_reference;
+mod add_visible_to_name_store_join;
+mod add_wastage_rate_to_ancillary_item;
+mod backfill_purchase_order_custom_fields;
+mod barcode_proposals;
+mod inactivate_kept_name_store_joins;
+mod inactivate_pulled_name_store_joins;
 mod prescription_request_occupation_prominent;
+mod recreate_joins_for_deleted_patients;
 mod refresh_who_pqs_catalogue;
+mod remove_charges_from_purchase_order;
+mod requeue_plugin_rows_for_upgraded_sites;
+mod seed_barcode_auto_confirm_processor_cursor;
 mod update_default_asset_log_reasons;
 
 pub(crate) struct V3_04_00;
@@ -42,9 +59,28 @@ impl Migration for V3_04_00 {
             Box::new(add_forecast_method_to_requisition_line::Migrate),
             Box::new(add_cancelled_status_to_purchase_order::Migrate),
             Box::new(add_exclude_principal_wastage_to_ancillary_item::Migrate),
+            Box::new(remove_charges_from_purchase_order::Migrate),
+            Box::new(add_purchase_order_custom_fields::Migrate),
+            Box::new(backfill_purchase_order_custom_fields::Migrate),
             Box::new(add_kind_to_campaign::Migrate),
             Box::new(add_campaign_to_requisition_line::Migrate),
             Box::new(add_stock_campaign_change_activity_log_type::Migrate),
+            Box::new(add_code_to_campaign::Migrate),
+            Box::new(add_annual_doses_per_person_to_vaccine_course::Migrate),
+            Box::new(add_plugin_ownership_to_document_registry::Migrate),
+            Box::new(requeue_plugin_rows_for_upgraded_sites::Migrate),
+            Box::new(add_sync_log_indexes::Migrate),
+            Box::new(add_barcode_auto_confirm_processor_cursor_pg_enum::Migrate),
+            // Seeded before the proposals below go into the changelog, so the
+            // processor on central looks at its own store's proposals too
+            Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
+            Box::new(add_is_auto_created_to_item_variant::Migrate),
+            Box::new(barcode_proposals::Migrate),
+            Box::new(add_wastage_rate_to_ancillary_item::Migrate),
+            Box::new(add_visible_to_name_store_join::Migrate),
+            Box::new(inactivate_kept_name_store_joins::Migrate),
+            Box::new(recreate_joins_for_deleted_patients::Migrate),
+            Box::new(inactivate_pulled_name_store_joins::Migrate),
         ]
     }
 }
@@ -465,6 +501,325 @@ mod test {
                 central("2f734462-c76d-4b08-b8d2-40b250538d46"),
                 central("646c80b2-2ff7-4c50-916b-18ff3df5cfb5"),
                 central("ba800d96-2cf6-44e8-8fbb-41fedb154265"),
+            ]
+        );
+    }
+
+    /// Existing orders take their category and user fields from the sync buffer.
+    #[actix_rt::test]
+    async fn migration_3_04_00_backfill_purchase_order_custom_fields() {
+        use diesel::sql_types::{Bool, Nullable, Text};
+
+        #[derive(QueryableByName)]
+        struct CustomFields {
+            #[diesel(sql_type = Nullable<Text>)]
+            custom_fields: Option<String>,
+        }
+        #[derive(QueryableByName)]
+        struct Integrated {
+            #[diesel(sql_type = Text)]
+            record_id: String,
+            #[diesel(sql_type = Bool)]
+            is_integrated: bool,
+        }
+
+        let previous_version = V3_02_00.version();
+        let version = V3_04_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}_backfill_purchase_order_custom_fields"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('supplier_name', 'FACILITY', false, true, 'SUP1', 'Supplier');",
+        );
+        run(
+            &connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('supplier_name_link', 'supplier_name');",
+        );
+        run(
+            &connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'supplier_name_link', 'STORE1', 1);",
+        );
+        for (id, number) in [("po_mapped", 1), ("po_blank", 2)] {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('{id}', 'store_id', 'supplier_name_link', {number}, 'NEW', '2026-01-01 00:00:00', 1.0);"
+                ),
+            );
+        }
+        let buffer = |id: &str, table: &str, data: &str| {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO sync_buffer (record_id, received_datetime, integration_datetime, table_name, action, data, is_integrated, source_site_id) VALUES ('{id}', '2026-01-01 00:00:00', '2026-01-01 00:00:00', '{table}', 'UPSERT', '{data}', true, 1);"
+                ),
+            );
+        };
+        buffer(
+            "po_mapped",
+            "purchase_order",
+            r#"{"ID":"po_mapped","category_ID":"CAT_1","user_field_1":"Grant 42","user_field_2":""}"#,
+        );
+        buffer(
+            "po_blank",
+            "purchase_order",
+            r#"{"ID":"po_blank","category_ID":"","user_field_1":"","user_field_2":""}"#,
+        );
+        // A later record for the same order wins over the earlier one
+        buffer(
+            "po_mapped",
+            "purchase_order",
+            r#"{"ID":"po_mapped","category_ID":"CAT_1","user_field_1":"Grant 43","user_field_2":""}"#,
+        );
+        buffer(
+            "CAT_1",
+            "purchase_order_category",
+            r#"{"ID":"CAT_1","Description":"Emergency"}"#,
+        );
+        buffer(
+            "label_1",
+            "pref_blob",
+            r#"{"ID":"label_1","item":"purchase_cust1_field","type":"t"}"#,
+        );
+        buffer(
+            "other_pref",
+            "pref_blob",
+            r#"{"ID":"other_pref","item":"po_notes","type":"t"}"#,
+        );
+
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
+
+        let value = |id: &str| {
+            sql_query(format!(
+                "SELECT CAST(custom_fields AS TEXT) AS custom_fields FROM purchase_order WHERE id = '{id}'"
+            ))
+            .get_result::<CustomFields>(connection.lock().connection())
+            .unwrap()
+            .custom_fields
+            .map(|raw| serde_json::from_str::<serde_json::Value>(&raw).unwrap())
+        };
+        assert_eq!(
+            value("po_mapped"),
+            Some(serde_json::json!({
+                "purchase_order_category": "CAT_1",
+                "purchase_order_user_field_1": "Grant 43",
+            }))
+        );
+        assert_eq!(value("po_blank"), None);
+
+        let mut integrated: Vec<(String, bool)> = sql_query(
+            "SELECT record_id, is_integrated FROM sync_buffer WHERE table_name <> 'purchase_order'",
+        )
+        .load::<Integrated>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .map(|row| (row.record_id, row.is_integrated))
+        .collect();
+        integrated.sort();
+        assert_eq!(
+            integrated,
+            vec![
+                ("CAT_1".to_string(), false),
+                ("label_1".to_string(), false),
+                ("other_pref".to_string(), true),
+            ]
+        );
+    }
+
+    table! {
+        barcode_proposal (id) {
+            id -> Text,
+            value -> Text,
+            item_link_id -> Text,
+            pack_size -> Nullable<Double>,
+            store_id -> Text,
+            user_id -> Text,
+        }
+    }
+
+    table! {
+        stock_line (id) {
+            id -> Text,
+            barcode -> Nullable<Text>,
+        }
+    }
+
+    /// Existing barcodes become proposals from a store on this site, in standard
+    /// form, so they sync up to central. Ones that are the same barcode for the
+    /// same item once in standard form become one proposal. The barcode table and
+    /// its changelog entries go. Stock lines get the barcode's value in place of
+    /// its id.
+    #[actix_rt::test]
+    async fn migration_3_04_00_barcodes() {
+        let previous_version = V3_02_00.version();
+        let version = V3_04_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}_barcodes"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        run(
+            &connection,
+            "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_SITE_ID', 1);",
+        );
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');",
+        );
+        run(
+            &connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');",
+        );
+        // The proposals go to the first store on this site
+        for (store, site) in [("a_other_site", 2), ("b_store", 1), ("c_store", 1)] {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('{store}', 'store_name_link', '{store}', {site});"
+                ),
+            );
+        }
+        for item in ["item_a", "item_b"] {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('{item}', '{item}', '{item}', 1.0, 'STOCK', '');"
+                ),
+            );
+            run(
+                &connection,
+                &format!("INSERT INTO item_link (id, item_id) VALUES ('{item}', '{item}');"),
+            );
+        }
+
+        // EAN-13 and its GTIN-14 form, for the same item: one proposal
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id, pack_size) VALUES ('b1', '9506682101352', 'item_a', 10);",
+        );
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b2', '09506682101352', 'item_a');",
+        );
+        // The same barcode for another item: its own proposal
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b3', ' 09506682101352', 'item_b');",
+        );
+        // Not a GTIN: plain
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b4', 'ABC-1', 'item_b');",
+        );
+        // Blank: dropped
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b5', '  ', 'item_b');",
+        );
+        for id in ["b1", "b2", "b3", "b4", "b5"] {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO changelog (table_name, record_id, row_action) VALUES ('barcode', '{id}', 'UPSERT');"
+                ),
+            );
+        }
+        for (stock_line, barcode) in [("s1", "b2"), ("s2", "b4")] {
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold, barcode_id) VALUES ('{stock_line}', 'item_a', 'b_store', 1, 0, 0, 1, 1, false, '{barcode}');"
+                ),
+            );
+        }
+        run(
+            &connection,
+            "INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold) VALUES ('s3', 'item_a', 'b_store', 1, 0, 0, 1, 1, false);",
+        );
+
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
+
+        let proposals: Vec<(String, String, Option<f64>, String, String)> = barcode_proposal::table
+            .select((
+                barcode_proposal::value,
+                barcode_proposal::item_link_id,
+                barcode_proposal::pack_size,
+                barcode_proposal::store_id,
+                barcode_proposal::user_id,
+            ))
+            .order((
+                barcode_proposal::value.asc(),
+                barcode_proposal::item_link_id.asc(),
+            ))
+            .load(connection.lock().connection())
+            .unwrap();
+        let proposal = |value: &str, item: &str, pack_size: Option<f64>| {
+            (
+                value.to_string(),
+                item.to_string(),
+                pack_size,
+                "b_store".to_string(),
+                "omsupply_system".to_string(),
+            )
+        };
+        assert_eq!(
+            proposals,
+            vec![
+                proposal("gtin:09506682101352", "item_a", Some(10.0)),
+                proposal("gtin:09506682101352", "item_b", None),
+                proposal("plain:ABC-1", "item_b", None),
+            ]
+        );
+
+        // Each proposal is in the changelog for its store, to sync up
+        let proposal_changelogs: Vec<(Option<String>, Option<i32>)> = changelog::table
+            .filter(changelog::table_name.eq("barcode_proposal"))
+            .select((changelog::store_id, changelog::source_site_id))
+            .load(connection.lock().connection())
+            .unwrap();
+        assert_eq!(
+            proposal_changelogs,
+            vec![(Some("b_store".to_string()), Some(1)); 3]
+        );
+        assert_eq!(
+            changelog::table
+                .filter(changelog::table_name.eq("barcode"))
+                .count()
+                .get_result::<i64>(connection.lock().connection())
+                .unwrap(),
+            0
+        );
+
+        let stock_lines: Vec<(String, Option<String>)> = stock_line::table
+            .select((stock_line::id, stock_line::barcode))
+            .order(stock_line::id.asc())
+            .load(connection.lock().connection())
+            .unwrap();
+        assert_eq!(
+            stock_lines,
+            vec![
+                ("s1".to_string(), Some("gtin:09506682101352".to_string())),
+                ("s2".to_string(), Some("plain:ABC-1".to_string())),
+                ("s3".to_string(), None),
             ]
         );
     }

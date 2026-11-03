@@ -158,6 +158,7 @@ pub fn generate(
             legacy_goods_received_line_id: None,
             // No requisition link on the copy, so no request to explain.
             transfer_comment: None,
+            barcode: None,
         });
     }
 

@@ -674,10 +674,10 @@ mod tests {
         seed_builtin_custom_fields(&connection).unwrap();
 
         // No legacy definition is deleted by the builtin sweep, and no key is
-        // shared between the families: 25 legacy + 4 builtin rows, each with the
+        // shared between the families: 28 legacy + 4 builtin rows, each with the
         // kind its own seeder gave it.
         let all = field_repo.find_all().unwrap();
-        assert_eq!(all.len(), 29, "a key collided between the two families");
+        assert_eq!(all.len(), 32, "a key collided between the two families");
         assert!(
             all.iter()
                 .filter(|row| row.kind == CustomFieldKind::Legacy)

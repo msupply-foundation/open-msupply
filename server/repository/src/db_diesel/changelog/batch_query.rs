@@ -18,7 +18,7 @@ const ROW_FETCH_BATCH_SIZE: usize = 500;
 #[derive(Debug, Clone)]
 pub enum Row {
     ActivityLog(ActivityLogRow),
-    Barcode(BarcodeRow),
+    BarcodeProposal(BarcodeProposalRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
     Currency(CurrencyRow),
@@ -280,9 +280,9 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::ActivityLog(r));
                 }
             }
-            ChangelogTableName::Barcode => {
-                for r in BarcodeRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::Barcode(r));
+            ChangelogTableName::BarcodeProposal => {
+                for r in BarcodeProposalRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::BarcodeProposal(r));
                 }
             }
             ChangelogTableName::Clinician => {

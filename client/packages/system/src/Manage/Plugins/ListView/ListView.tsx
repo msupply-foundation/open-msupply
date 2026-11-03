@@ -26,7 +26,7 @@ export const PluginsList = () => {
 
   const {
     query: { data, isError, isFetching },
-    install: { installMutation, installLoading },
+    install: { installMutation, installLoading, previewUploadedPlugin },
     uninstall: { uninstallMutation, uninstallLoading },
   } = useInstalledPlugins();
 
@@ -172,6 +172,7 @@ export const PluginsList = () => {
           isOpen={isOpen}
           onClose={onClose}
           install={installMutation}
+          preview={previewUploadedPlugin}
           isInstalling={installLoading}
         />
       )}

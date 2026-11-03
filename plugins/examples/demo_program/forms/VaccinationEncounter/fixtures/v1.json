@@ -1,0 +1,18 @@
+{
+  "createdBy": {
+    "id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "username": "Admin"
+  },
+  "createdDatetime": "2026-10-05T01:51:26.480Z",
+  "endDatetime": "2026-10-05T14:52:10+13:00",
+  "extension": {
+    "clientOfferedVaccination": true,
+    "manufacturer": "Pfizer",
+    "vaccinationDate": "2026-10-05"
+  },
+  "location": {
+    "storeId": "80004C94067A4CE5A34FC343EB1B4306"
+  },
+  "startDatetime": "2026-10-05T14:51:32+13:00",
+  "status": "VISITED"
+}

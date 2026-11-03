@@ -8,6 +8,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
         name(storeId: $storeId) {
           address1
           address2
+          country
           phone
           email
         }
@@ -17,8 +18,17 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
         code
         address1
         address2
+        country
+        phone
+        email
       }
       number
+      reference
+      requestedDeliveryDate
+      shippingMethod
+      authorisingOfficer1
+      authorisingOfficer2
+      additionalInstructions
       headingMessage
       lines {
         nodes {
@@ -26,12 +36,13 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           item {
             code
             name
-            unitName
+            type
           }
-          expectedDeliveryDate
+          requestedDeliveryDate
           requestedNumberOfUnits
           requestedPackSize
           lineTotalAfterSupplierDiscount
+          pricePerPackAfterSupplierDiscount
           supplierItemCode
           comment
         }
@@ -39,14 +50,8 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       foreignExchangeRate
       status
       confirmedDatetime
-      orderTotalBeforeDiscount
       orderTotalAfterDiscount
       supplierDiscountAmount
-      agentCommission
-      documentCharge
-      communicationsCharge
-      insuranceCharge
-      freightCharge
       currency {
         code
       }

@@ -192,11 +192,15 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'encounter.form',
       'host.warningSuppression',
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
+      'patient.form',
+      'patient.toolbarTrigger',
       'prescription.paymentForm',
+      'programEnrolment.form',
     ]);
   });
 
@@ -359,6 +363,228 @@ describe('validateLoadedModule', () => {
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
       'names no warning to suppress'
     );
+  });
+
+  describe('the patient toolbar trigger slot', () => {
+    const onClick = () => undefined;
+    const withTrigger = (trigger: Record<string, unknown>) =>
+      asModule(
+        definePlugin({
+          manifest: {
+            code: 'demo',
+            version: '1.0.0',
+            pluginApiVersion: PLUGIN_API_VERSION,
+          },
+          contributions: [
+            { slot: 'patient.toolbarTrigger', id: 'follow-up', ...trigger },
+          ] as never,
+        })
+      );
+
+    it('accepts a label key and a handler, with an icon and a record gate', () => {
+      expect(
+        validateLoadedModule(
+          'demo',
+          withTrigger({
+            label: 'button.record-follow-up',
+            icon: Component,
+            visible: () => true,
+            onClick,
+          })
+        ).kind
+      ).toBe('ok');
+    });
+
+    it('refuses a trigger with no label or no handler', () => {
+      expect(
+        refusal(validateLoadedModule('demo', withTrigger({ onClick })))
+      ).toContain('"patient.toolbarTrigger/follow-up" has no label key');
+      expect(
+        refusal(validateLoadedModule('demo', withTrigger({ label: 'x' })))
+      ).toContain('has no onClick function');
+    });
+
+    it('refuses a trigger carrying a Component — the host draws it', () => {
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            withTrigger({ label: 'x', onClick, Component })
+          )
+        )
+      ).toContain('carries a Component');
+    });
+
+    it('refuses a visible or an icon that is not a function', () => {
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            withTrigger({ label: 'x', onClick, visible: true })
+          )
+        )
+      ).toContain('has a visible that is not a function');
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            withTrigger({ label: 'x', onClick, icon: 'plus' })
+          )
+        )
+      ).toContain('has an icon that is not a component');
+    });
+  });
+
+  describe('the document form slots', () => {
+    const withForms = (contributions: readonly unknown[]) =>
+      definePlugin({
+        manifest: {
+          code: 'demo',
+          version: '1.0.0',
+          pluginApiVersion: PLUGIN_API_VERSION,
+        },
+        contributions: contributions as never,
+      });
+
+    it('accepts a form naming the document type it renders, in each form slot', () => {
+      const module = withForms([
+        {
+          slot: 'programEnrolment.form',
+          id: 'enrolment',
+          documentType: 'DemoProgramEnrolment',
+          versions: ['DemoProgramEnrolment_v1'],
+          Component,
+        },
+        {
+          slot: 'encounter.form',
+          id: 'encounter',
+          documentType: 'DemoEncounter',
+          versions: ['DemoEncounter_v1'],
+          Component,
+        },
+      ]);
+      expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+    });
+
+    it('accepts a patient form, keyed by the Patient type', () => {
+      const module = withForms([
+        {
+          slot: 'patient.form',
+          id: 'patient',
+          documentType: 'Patient',
+          versions: ['Patient_v1'],
+          Component,
+        },
+      ]);
+      expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+    });
+
+    it('refuses a form naming no document type', () => {
+      const module = withForms([
+        { slot: 'encounter.form', id: 'encounter', Component },
+      ]);
+      expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+        '"encounter.form/encounter" names no document type to render'
+      );
+    });
+
+    it("refuses two of one plugin's forms for the same document type", () => {
+      const module = withForms([
+        {
+          slot: 'encounter.form',
+          id: 'first',
+          documentType: 'DemoEncounter',
+          versions: ['DemoEncounter_v1'],
+          Component,
+        },
+        {
+          slot: 'encounter.form',
+          id: 'second',
+          documentType: 'DemoEncounter',
+          versions: ['DemoEncounter_v1'],
+          Component,
+        },
+      ]);
+      expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+        'both render document type "DemoEncounter"'
+      );
+    });
+
+    it('lets one document type name be used in each form slot', () => {
+      // The pair is (slot, type): a category's slot never sees another
+      // category's documents, so the same name in two slots is no clash.
+      const module = withForms([
+        {
+          slot: 'programEnrolment.form',
+          id: 'enrolment',
+          documentType: 'Shared',
+          versions: ['Shared_v1'],
+          Component,
+        },
+        {
+          slot: 'encounter.form',
+          id: 'encounter',
+          documentType: 'Shared',
+          versions: ['Shared_v1'],
+          Component,
+        },
+      ]);
+      expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+    });
+
+    describe('versioning', () => {
+      const encounter = (versioning: Record<string, unknown>) =>
+        withForms([
+          {
+            slot: 'encounter.form',
+            id: 'encounter',
+            documentType: 'DemoEncounter',
+            Component,
+            ...versioning,
+          },
+        ]);
+      const outcome = (versioning: Record<string, unknown>) =>
+        validateLoadedModule('demo', asModule(encounter(versioning)));
+
+      it('accepts versions with migrations and archived forms keyed by them', () => {
+        expect(
+          outcome({
+            versions: ['v1', 'v2', 'v3'],
+            migrations: [{ from: 1 }, { from: 2, to: 3 }, { from: 1, to: 3 }],
+            archived: { 1: Component, 2: Component },
+          }).kind
+        ).toBe('ok');
+      });
+
+      it('refuses a form that declares no versions, with one version or more', () => {
+        expect(refusal(outcome({}))).toContain('declares no versions');
+        expect(refusal(outcome({ migrations: [{ from: 1 }] }))).toContain(
+          'declares no versions'
+        );
+      });
+
+      it('refuses versions that are not distinct schema ids', () => {
+        expect(refusal(outcome({ versions: ['v1', 'v1'] }))).toContain(
+          'not a list of distinct schema ids'
+        );
+      });
+
+      it('refuses a step outside the versions', () => {
+        expect(
+          refusal(
+            outcome({ versions: ['v1', 'v2'], migrations: [{ from: 2 }] })
+          )
+        ).toContain('not within 1 to 2');
+      });
+
+      it('refuses an archived form for the current version', () => {
+        expect(
+          refusal(
+            outcome({ versions: ['v1', 'v2'], archived: { 2: Component } })
+          )
+        ).toContain('archived form for version 2');
+      });
+    });
   });
 
   it('refuses an empty contribution id', () => {

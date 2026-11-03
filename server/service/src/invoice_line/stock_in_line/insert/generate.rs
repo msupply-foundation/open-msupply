@@ -1,5 +1,5 @@
 use crate::{
-    barcode::{self, BarcodeInput},
+    barcode::find_confirmed,
     invoice::common::{
         GenerateVVMStatusLogInput, calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update, generate_vvm_status_log,
@@ -12,10 +12,11 @@ use crate::{
     store_preference::get_store_preferences,
 };
 use repository::{
-    BarcodeRow, InvoiceLineRow, InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow,
+    InvoiceLineRow, InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow,
     PurchaseOrderRowRepository, RepositoryError, StockLineRow, StockLineRowRepository,
     StorageConnection, vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
+use util::barcode::standard_barcode;
 
 use super::InsertStockInLine;
 
@@ -23,7 +24,6 @@ pub struct GenerateResult {
     pub invoice: Option<InvoiceRow>,
     pub invoice_line: InvoiceLineRow,
     pub stock_line: Option<StockLineRow>,
-    pub barcode: Option<BarcodeRow>,
     pub vvm_status_log: Option<VVMStatusLogRow>,
 }
 
@@ -34,6 +34,7 @@ pub fn generate(
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
 ) -> Result<GenerateResult, RepositoryError> {
+    let input = with_scanned_item_variant(connection, input)?;
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
     let external_inbound_shipment_lines_must_be_authorised =
         ExternalInboundShipmentLinesMustBeAuthorised
@@ -70,8 +71,6 @@ pub fn generate(
         new_line = convert_invoice_line_to_single_pack(new_line);
     }
 
-    let barcode_option = generate_barcode(&input, connection)?;
-
     let (batch_option, vvm_status_log) = if should_create_stock_line_for_new_line(
         &input.r#type,
         &existing_invoice_row,
@@ -85,7 +84,6 @@ pub fn generate(
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: input.stock_on_hold,
-                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
                 overwrite_stock_levels: should_overwrite_stock_levels,
             },
         )?;
@@ -116,7 +114,6 @@ pub fn generate(
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
         invoice_line: new_line,
         stock_line: batch_option,
-        barcode: barcode_option,
         vvm_status_log,
     })
 }
@@ -149,7 +146,7 @@ fn generate_line(
         shipped_pack_size,
         purchase_order_line_id,
         reason_option_id,
-        barcode: _,
+        barcode,
         stock_on_hold: _,
         tax_percentage: _,
         r#type: _,
@@ -240,6 +237,29 @@ fn generate_line(
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment: None,
+        // An empty barcode is no barcode
+        barcode: barcode.as_deref().and_then(standard_barcode),
+    })
+}
+
+/// A scanned barcode confirmed for the item gives the line its item variant,
+/// unless the line has one already. A barcode that isn't confirmed yet leaves the
+/// line without one.
+fn with_scanned_item_variant(
+    connection: &StorageConnection,
+    input: InsertStockInLine,
+) -> Result<InsertStockInLine, RepositoryError> {
+    if input.item_variant_id.is_some() {
+        return Ok(input);
+    }
+    let Some(value) = input.barcode.as_deref().and_then(standard_barcode) else {
+        return Ok(input);
+    };
+    let item_variant_id =
+        find_confirmed(connection, &value, &input.item_id)?.map(|barcode| barcode.item_variant.id);
+    Ok(InsertStockInLine {
+        item_variant_id,
+        ..input
     })
 }
 
@@ -261,34 +281,4 @@ fn should_create_stock_line_for_new_line(
         }
         StockInType::InventoryAddition => true,
     }
-}
-
-fn generate_barcode(
-    input: &InsertStockInLine,
-    connection: &StorageConnection,
-) -> Result<Option<BarcodeRow>, RepositoryError> {
-    let gtin = &input.barcode;
-
-    let barcode = match gtin {
-        Some(gtin) => {
-            // don't create barcode if gtin is empty
-            if gtin.is_empty() {
-                return Ok(None);
-            }
-
-            let barcode_row = barcode::generate(
-                connection,
-                BarcodeInput {
-                    gtin: gtin.clone(),
-                    item_id: input.item_id.clone(),
-                    pack_size: Some(input.pack_size),
-                },
-            )?;
-
-            Some(barcode_row)
-        }
-        None => None,
-    };
-
-    Ok(barcode)
 }

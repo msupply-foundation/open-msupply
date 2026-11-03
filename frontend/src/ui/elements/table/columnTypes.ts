@@ -58,6 +58,23 @@ declare module '@tanstack/solid-table' {
      */
     controlLine?: boolean;
     /**
+     * Group consecutive rows that share this column's value (ui-standards §
+     * tables › grouped rows) — a schedule read by age, say. The value shows
+     * once, on the first row of its run; the run's cells in this column join,
+     * with no divider between them, so a row tint runs straight through. Every
+     * other column keeps its dividers: each row stays its own line. Runs follow
+     * the rows as rendered (sorted, paged); an empty value never groups. A
+     * continued cell is blank on screen but still names its value to assistive
+     * technology. TABLE view only: a card shows its own value.
+     */
+    groupRows?: boolean;
+    /**
+     * Draw a rule down this column's inline-end edge, header to footer
+     * (ui-standards § tables › grouped rows) — for a column that heads the ones
+     * after it, such as a grouped column. TABLE view only.
+     */
+    dividerEnd?: boolean;
+    /**
      * Where this column's cell renders in the CARD HEADER (card view). The
      * header is the card's top row: a big identity/title inline-start and a
      * badge/chip inline-end, both rendered WITHOUT their label. A column has a
@@ -124,6 +141,26 @@ declare module '@tanstack/solid-table' {
      * bivariant, which is what lets one erased meta serve every row type.
      */
     hideOnCardWhen?(row: TData): boolean;
+    /**
+     * Mark THIS column's cell on the rows the predicate names — the per-cell
+     * counterpart of the row-level `rowTone`, for an error that belongs to
+     * one field of a line rather than to the whole line: a variance with no
+     * reason (the Reason cell), a count that would take stock below zero (the
+     * Counted cell). 'error' draws an error-toned ring inside the cell in
+     * table view and around the value in card view, via data-cell-tone; the
+     * CSS is DataTable's.
+     *
+     * The ring is colour alone, so it never carries the error by itself: the
+     * cell's own renderer still states it in words on screen (a short message
+     * beneath the value; an icon whose label only a screen reader announces
+     * does not count), and the column decides the wording. The ring only
+     * points the eye at the cell.
+     *
+     * Read per cell at render, so a page can drive it from an error signal
+     * without rebuilding its columns. Method-style for the same reason as
+     * `hideOnCardWhen`.
+     */
+    cellTone?(row: TData): 'error' | undefined;
     /**
      * An explanation of what this column's figure means, as ALREADY-TRANSLATED
      * text — the header's tooltip content (spec/internal-orders § S3 lists the

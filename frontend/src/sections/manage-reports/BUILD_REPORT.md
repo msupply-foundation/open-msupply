@@ -1,8 +1,8 @@
 # Build report — manage-reports
 
-**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
-Scoped build: **manage-reports** only, generated from [`spec/manage-reports/`](../../../spec/manage-reports/) (reverse spec). A new vertical — nothing was wiped, because `src/sections/manage-reports/` did not exist. Gates at completion: `pnpm check` ✓ · `pnpm test` ✓ (2446 repo-wide, incl. 32 new for this vertical) · `pnpm build` ✓ (`ReportsList` chunk ~10 kB / gzip ~3.5 kB).
+Scoped build: **manage-reports** only, generated from [`spec/manage-reports/`](../../../../spec/manage-reports/) (reverse spec). A new vertical — nothing was wiped, because `src/sections/manage-reports/` did not exist. Gates at completion: `pnpm check` ✓ · `pnpm test` ✓ (2446 repo-wide, incl. 32 new for this vertical) · `pnpm build` ✓ (`ReportsList` chunk ~10 kB / gzip ~3.5 kB).
 
 Replaces the "Coming soon" fall-through at `manage/reports`: `'manage/reports': manageReportsRoutes` added to `sectionRoutes` in [`src/App.tsx`](../../App.tsx). The nav entry and its `centralAdmin` gate already existed ([`src/nav/navConfig.ts`](../../nav/navConfig.ts)) and were not touched.
 
@@ -10,7 +10,7 @@ Replaces the "Coming soon" fall-through at `manage/reports`: `'manage/reports': 
 
 ## Behaviour coverage
 
-Anchors are `OMS-REG-MNG-06.<n>` from [`cases/OMS-REG-MNG-06`](../../../spec/manage-reports/cases/OMS-REG-MNG-06%20-%20Validate%20Report%20Administration.md).
+Anchors are `OMS-REG-MNG-06.<n>` from [`cases/OMS-REG-MNG-06`](../../../../spec/manage-reports/cases/OMS-REG-MNG-06%20-%20Validate%20Report%20Administration.md).
 
 | Behaviour                                    | Coverage                                                                                      |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -59,7 +59,7 @@ The register's sort handling (one entry, passed through, no client re-sort) is t
 
 None outstanding. The partial-install behaviour was **observed in the running reference
 app** (three bundles, the middle one unreadable) rather than decided here, and the spec
-now states it: [rules § several files at once](../../../spec/manage-reports/rules.md#several-files-at-once),
+now states it: [rules § several files at once](../../../../spec/manage-reports/rules.md#several-files-at-once),
 behaviours `.16` `.24` `.25` `.26`.
 
 What the observation established, and the build now matches: the first failure ends the
@@ -69,7 +69,7 @@ dialog (45 → 46 rows); the chosen files are left untouched; and the message ca
 server's own words.
 
 **Toasts are not carried.** The reference reports both outcomes as toasts.
-[`ui-standards/controls.md` § action feedback](../../../spec/ui-standards/controls.md#action-feedback)
+[`ui-standards/controls.md` § action feedback](../../../../spec/ui-standards/controls.md#action-feedback)
 forbids that — an outcome belongs in the surface that initiated it, a success as the
 visible result, a failure as an inline notice. So success is the dialog closing plus the
 refreshed register, and failure is an inline notice in the open dialog.

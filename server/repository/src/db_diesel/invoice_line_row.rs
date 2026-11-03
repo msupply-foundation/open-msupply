@@ -60,6 +60,7 @@ define_linked_tables! {
         linked_invoice_line_id -> Nullable<Text>,
         legacy_goods_received_line_id -> Nullable<Text>,
         transfer_comment -> Nullable<Text>,
+        barcode -> Nullable<Text>,
     },
     links: {
         item_link_id -> item_id,
@@ -168,6 +169,10 @@ pub struct InvoiceLineRow {
     /// line by the shipment-transfer processor — nothing on the inbound side
     /// ever sets it. Legacy mSupply's `trans_line.transfer_comment`.
     pub transfer_comment: Option<String>,
+    /// The barcode scanned or entered for the line, or carried by the stock it
+    /// issues, in its standard form with its scheme (`util::barcode`). Not
+    /// necessarily a confirmed barcode.
+    pub barcode: Option<String>,
     // Resolved from link tables - must be last to match view column order
     pub item_id: String,
     pub donor_id: Option<String>,

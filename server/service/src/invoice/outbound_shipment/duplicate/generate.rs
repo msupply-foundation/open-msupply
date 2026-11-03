@@ -107,7 +107,16 @@ pub fn generate(
             continue;
         }
 
-        new_lines.push(generate_line(&new_invoice_id, line));
+        let new_line = generate_line(&new_invoice_id, line);
+        let existing_placeholder = new_lines.iter_mut().find(|l: &&mut InvoiceLineRow| {
+            l.r#type == InvoiceLineType::UnallocatedStock && l.item_id == new_line.item_id
+        });
+        match existing_placeholder {
+            Some(placeholder) if new_line.r#type == InvoiceLineType::UnallocatedStock => {
+                placeholder.number_of_packs += new_line.number_of_packs
+            }
+            _ => new_lines.push(new_line),
+        }
     }
 
     Ok(GenerateResult {
@@ -165,6 +174,7 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
             legacy_goods_received_line_id: None,
             // No requisition link on the copy, so no request to explain.
             transfer_comment: None,
+            barcode: None,
         };
     }
 
@@ -182,8 +192,8 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         item_name: line.item_name,
         item_code: line.item_code,
         item_variant_id: line.item_variant_id,
-        pack_size: line.pack_size,
-        number_of_packs: line.number_of_packs,
+        pack_size: 1.0,
+        number_of_packs: line.number_of_packs * line.pack_size,
         note: line.note,
         donor_id: line.donor_id,
         manufacturer_id: line.manufacturer_id,
@@ -215,5 +225,6 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment: None,
+        barcode: None,
     }
 }

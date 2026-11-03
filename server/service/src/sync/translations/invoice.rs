@@ -1,6 +1,6 @@
 use super::{
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
+    utils::{LegacyCustomFieldsBuilder, custom_field_string, merge_legacy_custom_fields},
 };
 use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
@@ -391,15 +391,6 @@ fn build_legacy_invoice_custom_fields(
     builder.build()
 }
 
-fn custom_field_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
-    custom_fields
-        .as_ref()?
-        .as_object()?
-        .get(key)?
-        .as_str()
-        .map(str::to_string)
-}
-
 /// Inverse of [`build_legacy_invoice_custom_fields`]: read the invoice type's
 /// category option id out of `custom_fields` for the v5 push back to OG.
 fn legacy_category_id_from_custom_fields(
@@ -704,17 +695,17 @@ impl SyncTranslation for InvoiceTranslation {
         let mut operations = Vec::new();
 
         // On central, a prescription can arrive for a patient with no
-        // name_store_join for the prescription's store (this configuration is
-        // possible in OG, see issue #12365). Without one the patient doesn't sync
-        // to the site holding the prescription and integration there fails on FK
-        // constraints, so synthesize the join here. If OG later authors a join for
-        // this name & store, the synthesized one is removed in its favour (see
-        // dedup in the name_store_join translator)
+        // name_store_join for its store (possible in OG). Without one the patient
+        // doesn't sync to the site holding the prescription and integration there
+        // fails on FK constraints, so synthesize a join with `visible = false`: it
+        // routes the patient to the site without making them visible in the store.
+        // An OG join for this name & store later replaces it (see the
+        // name_store_join translator's dedup)
         if CentralServerConfig::is_central_server()
             && result.r#type == InvoiceType::Prescription
             && name.r#type == NameRowType::Patient
         {
-            let is_visible = !NameStoreJoinRepository::new(connection)
+            let has_join = !NameStoreJoinRepository::new(connection)
                 .query_by_filter(
                     NameStoreJoinFilter::new()
                         .name_id(EqualFilter::equal_to(name.id.clone()))
@@ -722,13 +713,14 @@ impl SyncTranslation for InvoiceTranslation {
                 )?
                 .is_empty();
 
-            if !is_visible {
+            if !has_join {
                 operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
                     id: uuid(),
                     name_id: name.id.clone(),
                     store_id: result.store_id.clone(),
                     name_is_customer: true,
                     name_is_supplier: false,
+                    visible: false,
                 }));
             }
         }
@@ -1789,9 +1781,8 @@ mod tests {
         }
     }
 
-    /// On central, a prescription for a patient with no name_store_join in the
-    /// prescription's store synthesizes one so the patient syncs to the site
-    /// holding the prescription (issue #12365)
+    /// On central, a prescription for a patient with no name_store_join in its
+    /// store synthesizes one that isn't visible
     #[actix_rt::test]
     async fn test_prescription_synthesizes_name_store_join_on_central() {
         use crate::sync::test_util_set_is_central_server;
@@ -1873,8 +1864,14 @@ mod tests {
             "{}",
             synthesized_join
         );
+        assert!(
+            synthesized_join.contains("visible: false"),
+            "{}",
+            synthesized_join
+        );
 
-        // Once the patient is visible in the store, no join is synthesized
+        // Once the patient has a join in the store, even one that isn't visible, no join
+        // is synthesized
         NameStoreJoinRepository::new(&connection)
             .upsert_one_without_changelog(&NameStoreJoinRow {
                 id: "og_name_store_join".to_string(),
@@ -1882,6 +1879,7 @@ mod tests {
                 store_id: "store_b".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
+                visible: false,
             })
             .unwrap();
 

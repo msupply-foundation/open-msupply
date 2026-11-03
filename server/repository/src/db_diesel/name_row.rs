@@ -258,10 +258,15 @@ impl<'a> NameRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
+    // An already deleted name keeps its original deletion time
     fn _mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
-        diesel::update(name::table.filter(name::id.eq(name_id)))
-            .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
+        diesel::update(
+            name::table
+                .filter(name::id.eq(name_id))
+                .filter(name::deleted_datetime.is_null()),
+        )
+        .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

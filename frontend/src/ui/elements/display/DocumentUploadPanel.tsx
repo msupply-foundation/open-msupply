@@ -296,6 +296,7 @@ export const DocumentUploadPanel = (
         </span>
         <span
           class={styles.version}
+          data-testid="document-version"
           data-label={label('label.version', row.document.version)}
         >
           {row.document.version ?? ''}
@@ -406,6 +407,7 @@ export const DocumentUploadPanel = (
                           </span>
                           <span
                             class={styles.version}
+                            data-testid="document-version"
                             data-label={label(
                               'label.version',
                               document.version

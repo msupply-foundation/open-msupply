@@ -1,6 +1,5 @@
 use super::{
     DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
-    barcode_row::barcode,
     campaign_row::campaign,
     item_row::item,
     item_variant::item_variant_row::{ItemVariantRow, item_variant},
@@ -12,8 +11,8 @@ use super::{
 };
 
 use crate::{
-    BarcodeRow, DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort,
-    ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
+    DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort, ItemSortField,
+    MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
     campaign_row::CampaignRow,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
@@ -32,7 +31,6 @@ pub struct StockLine {
     pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
     pub supplier_name_row: Option<NameRow>,
-    pub barcode_row: Option<BarcodeRow>,
     pub item_variant_row: Option<ItemVariantRow>,
     pub vvm_status_row: Option<VVMStatusRow>,
     pub campaign_row: Option<CampaignRow>,
@@ -52,6 +50,7 @@ pub enum StockLineSortField {
     SellPricePerPack,
     VvmStatusThenExpiry,
     Campaign,
+    OnHold,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -73,6 +72,7 @@ pub struct StockLineFilter {
     pub is_active: Option<bool>,
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilter<String>>,
+    pub on_hold: Option<bool>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -83,7 +83,6 @@ type StockLineJoin = (
     Option<ItemVariantRow>,
     Option<LocationRow>,
     Option<NameRow>,
-    Option<BarcodeRow>,
     Option<VVMStatusRow>,
     Option<CampaignRow>,
 );
@@ -163,6 +162,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::Campaign => {
                     apply_sort_no_case!(query, sort, campaign::name);
+                }
+                StockLineSortField::OnHold => {
+                    apply_sort!(query, sort, stock_line::on_hold);
                 }
                 StockLineSortField::VvmStatusThenExpiry => {
                     // Complex sort, not using apply_sort
@@ -303,6 +305,7 @@ impl<'a> StockLineRepository<'a> {
                 is_active,
                 is_program_stock_line,
                 campaign_id,
+                on_hold,
             } = f;
 
             // OR filters must come first
@@ -337,6 +340,10 @@ impl<'a> StockLineRepository<'a> {
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));
+            }
+
+            if let Some(on_hold) = on_hold {
+                query = query.filter(stock_line::on_hold.eq(on_hold));
             }
 
             query = match has_packs_in_store {
@@ -384,7 +391,6 @@ fn query() -> _ {
         .left_join(item_variant::table)
         .left_join(location::table)
         .left_join(name::table)
-        .left_join(barcode::table)
         .left_join(vvm_status::table)
         .left_join(campaign::table)
 }
@@ -398,7 +404,6 @@ fn to_domain(
         item_variant_row,
         location_row,
         supplier_name_row,
-        barcode_row,
         vvm_status_row,
         campaign_row,
     ): StockLineJoin,
@@ -408,7 +413,6 @@ fn to_domain(
         item_row,
         location_row,
         supplier_name_row,
-        barcode_row,
         item_variant_row,
         vvm_status_row,
         campaign_row,
@@ -479,6 +483,11 @@ impl StockLineFilter {
         self.campaign_id = Some(filter);
         self
     }
+
+    pub fn on_hold(mut self, filter: bool) -> Self {
+        self.on_hold = Some(filter);
+        self
+    }
 }
 
 impl StockLine {
@@ -499,9 +508,7 @@ impl StockLine {
     }
 
     pub fn barcode(&self) -> Option<&str> {
-        self.barcode_row
-            .as_ref()
-            .map(|barcode_row| barcode_row.gtin.as_str())
+        self.stock_line_row.barcode.as_deref()
     }
 }
 
@@ -662,6 +669,90 @@ mod test {
                 Some(mock_store_a().id)
             )
             .unwrap()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_on_hold() {
+        fn line_held() -> StockLineRow {
+            StockLineRow {
+                id: "line_held".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                on_hold: true,
+                ..Default::default()
+            }
+        }
+
+        fn line_not_held() -> StockLineRow {
+            StockLineRow {
+                id: "line_not_held".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                on_hold: false,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stock_line_on_hold",
+            MockDataInserts::none().stores().items().names().units(),
+            MockData {
+                stock_lines: vec![line_held(), line_not_held()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = StockLineRepository::new(&connection);
+
+        // Filter
+        assert_eq!(
+            vec![from_row(line_held(), mock_item_a())],
+            repo.query(
+                Pagination::new(),
+                Some(StockLineFilter::new().on_hold(true)),
+                None,
+                Some(mock_store_a().id)
+            )
+            .unwrap()
+        );
+        assert_eq!(
+            vec![from_row(line_not_held(), mock_item_a())],
+            repo.query(
+                Pagination::new(),
+                Some(StockLineFilter::new().on_hold(false)),
+                None,
+                Some(mock_store_a().id)
+            )
+            .unwrap()
+        );
+
+        // Sort desc puts held lines first
+        let sort = StockLineSort {
+            key: StockLineSortField::OnHold,
+            desc: Some(true),
+        };
+        assert_eq!(
+            vec![
+                from_row(line_held(), mock_item_a()),
+                from_row(line_not_held(), mock_item_a())
+            ],
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
+        );
+        // Sort asc puts them last
+        let sort = StockLineSort {
+            key: StockLineSortField::OnHold,
+            desc: Some(false),
+        };
+        assert_eq!(
+            vec![
+                from_row(line_not_held(), mock_item_a()),
+                from_row(line_held(), mock_item_a())
+            ],
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
         );
     }
 

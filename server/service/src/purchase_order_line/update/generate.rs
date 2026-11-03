@@ -1,4 +1,4 @@
-use repository::{ItemRow, PurchaseOrderLineRow, RepositoryError};
+use repository::{ItemRow, ItemType, PurchaseOrderLineRow, RepositoryError};
 
 use crate::purchase_order_line::update::UpdatePurchaseOrderLineInput;
 
@@ -52,6 +52,10 @@ pub fn generate(
         status: status.unwrap_or(purchase_order_line.status),
         ..purchase_order_line
     };
+    // A service line carries no line discount
+    if item.r#type == ItemType::Service {
+        row.price_per_pack_after_discount = row.price_per_pack_before_discount;
+    }
     row.line_total = row.calculate_line_total();
 
     Ok(row)

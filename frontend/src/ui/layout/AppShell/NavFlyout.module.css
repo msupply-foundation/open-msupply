@@ -55,7 +55,7 @@
 
 /* The panel opens to the physical left in RTL, so it slides in from the other
    side. */
-:dir(rtl) .flyout:popover-open {
+[dir='rtl'] .flyout:popover-open {
   animation-name: flyout-in-rtl;
 }
 

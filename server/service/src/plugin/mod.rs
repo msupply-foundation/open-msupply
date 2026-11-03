@@ -24,6 +24,10 @@ use crate::{
     service_provider::ServiceContext,
     settings::Settings,
 };
+use form_plugin::{
+    FormInstallOptions, FormInstallPreview, FormPluginInstallError, InstalledDocumentType,
+    install_form_plugins, preview_form_plugins,
+};
 
 pub(crate) const SIGNATURE_TAG: &str = "SIGNATURE";
 pub(crate) const CERTIFICATE_TAG: &str = "CERTIFICATE";
@@ -38,12 +42,38 @@ pub(crate) const MANIFEST_FILE: &str = "manifest.json";
 pub(crate) const MANIFEST_SIGNATURE_FILE: &str = "manifest.signature";
 pub(crate) const PLUGIN_FILE: &str = "plugin.json";
 
+pub mod form_plugin;
 pub mod manifest;
 pub mod plugin_files;
 pub mod validation;
 
 #[derive(Error, Debug)]
 pub enum InstallUploadedPluginError {
+    #[error(transparent)]
+    UploadedFileJsonError(#[from] UploadedFileJsonError),
+    #[error(transparent)]
+    FormPlugin(#[from] FormPluginInstallError),
+    #[error(transparent)]
+    DatabaseError(#[from] RepositoryError),
+}
+
+/// What an install wrote: the bundle's rows, plus the registry entries its form
+/// plugins left behind, which depend on the programs chosen and on what was
+/// already installed.
+pub struct InstalledPluginBundle {
+    pub bundle: PluginBundle,
+    pub document_types: Vec<InstalledDocumentType>,
+}
+
+/// An uploaded bundle read before installing: its rows, and how its form
+/// plugins stand against this server, for the choices an install needs.
+pub struct UploadedPluginInfo {
+    pub bundle: PluginBundle,
+    pub form_install_preview: FormInstallPreview,
+}
+
+#[derive(Error, Debug)]
+pub enum GetUploadedPluginInfoError {
     #[error(transparent)]
     UploadedFileJsonError(#[from] UploadedFileJsonError),
     #[error(transparent)]
@@ -292,10 +322,16 @@ pub trait PluginServiceTrait: Sync + Send {
 
     fn get_uploaded_plugin_info(
         &self,
+        ctx: &ServiceContext,
         settings: &Settings,
         uploaded_file: UploadedFile,
-    ) -> Result<PluginBundle, UploadedFileJsonError> {
-        uploaded_file.as_json_file(settings)
+    ) -> Result<UploadedPluginInfo, GetUploadedPluginInfoError> {
+        let bundle: PluginBundle = uploaded_file.as_json_file(settings)?;
+        let form_install_preview = preview_form_plugins(&ctx.connection, &bundle.form_plugins)?;
+        Ok(UploadedPluginInfo {
+            bundle,
+            form_install_preview,
+        })
     }
 
     fn reload_all_plugins(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
@@ -428,29 +464,46 @@ pub trait PluginServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         settings: &Settings,
         uploaded_file: UploadedFile,
-    ) -> Result<PluginBundle, InstallUploadedPluginError> {
+        form_options: FormInstallOptions,
+    ) -> Result<InstalledPluginBundle, InstallUploadedPluginError> {
         let plugin_bundle: PluginBundle = uploaded_file.as_json_file(settings)?;
-        let result_bundle = ctx
+        let result = ctx
             .connection
-            .transaction_sync::<_, RepositoryError, _>(|connection| {
+            .transaction_sync::<_, InstallUploadedPluginError, _>(|connection| {
+                // In the same transaction as the plugin rows, so a refused form
+                // plugin leaves its code uninstalled too: forms whose document
+                // types the server cannot save are no use.
+                let document_types =
+                    install_form_plugins(connection, &plugin_bundle.form_plugins, &form_options)?;
+
                 let backend_repo = BackendPluginRowRepository::new(connection);
                 let frontend_repo = FrontendPluginRowRepository::new(connection);
 
+                // A row already installed as it is in the bundle is not written
+                // again: every write records a changelog row, and sync would
+                // re-send the whole base64 bundle to every site.
                 for row in plugin_bundle.backend_plugins.clone() {
-                    backend_repo.upsert_one(row.clone())?;
+                    if backend_repo.find_one_by_id(&row.id)?.as_ref() != Some(&row) {
+                        backend_repo.upsert_one(row)?;
+                    }
                 }
 
                 for row in plugin_bundle.frontend_plugins.clone() {
-                    frontend_repo.upsert_one(row.clone())?;
+                    if frontend_repo.find_one_by_id(&row.id)?.as_ref() != Some(&row) {
+                        frontend_repo.upsert_one(row)?;
+                    }
                 }
 
-                Ok(plugin_bundle)
+                Ok(InstalledPluginBundle {
+                    bundle: plugin_bundle,
+                    document_types,
+                })
             })
             .map_err(|error| error.to_inner_error())?;
 
         ctx.processors_trigger
             .trigger_processor(ProcessorType::LoadPlugin);
-        Ok(result_bundle)
+        Ok(result)
     }
 
     fn uninstall_plugin(
@@ -526,10 +579,12 @@ mod test {
         LEGACY_HOST_RUNTIME, PluginType, PluginTypes, RowActionType,
         mock::{MockData, MockDataInserts},
     };
+    use repository::{DocumentRegistryRowRepository, FormSchemaRowRepository};
 
     use super::{
-        FrontendPluginFileRequest, FrontendPluginFileRequestError, InstalledPluginKind,
-        UninstallPluginError,
+        FrontendPluginFileRequest, FrontendPluginFileRequestError, InstallUploadedPluginError,
+        InstalledPluginKind, UninstallPluginError,
+        form_plugin::{FormInstallOptions, FormPluginInstallError},
     };
 
     #[actix_rt::test]
@@ -702,6 +757,7 @@ mod test {
                 &service_context,
                 &settings,
                 UploadedFile { file_id: file.id },
+                FormInstallOptions::default(),
             )
             .unwrap();
 
@@ -717,6 +773,205 @@ mod test {
                 }
             ]
         )
+    }
+
+    /// A bundle in the format frontend/scripts/build-plugins.mjs packs, through
+    /// the upload path the CLI uses.
+    #[actix_rt::test]
+    async fn install_uploaded_form_plugin() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            settings,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "install_uploaded_form_plugin",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_lists()
+                .contexts()
+                .programs(),
+            MockData::default(),
+        )
+        .await;
+        let file_service = StaticFileService::new(&settings.server.base_dir).unwrap();
+        let upload = |name: &str, contents: &str| UploadedFile {
+            file_id: file_service
+                .store_file(name, StaticFileCategory::Temporary, contents.as_bytes())
+                .unwrap()
+                .id,
+        };
+
+        let installed = service_provider
+            .plugin_service
+            .install_uploaded_plugin(
+                &service_context,
+                &settings,
+                upload(
+                    "form_plugin_bundle",
+                    include_str!("test_fixtures/form_plugin_bundle.json"),
+                ),
+                FormInstallOptions {
+                    programs: [("demo".to_string(), "program_a".to_string())].into(),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let entries: Vec<_> = installed
+            .document_types
+            .iter()
+            .map(|d| (d.document_type.as_str(), d.context_id.as_str()))
+            .collect();
+        assert_eq!(
+            entries,
+            vec![("Patient", "Patient"), ("DemoEncounter", "program_a")]
+        );
+        let encounter = DocumentRegistryRowRepository::new(&connection)
+            .find_one_by_id("demo_program_DemoEncounter")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            encounter.form_schema_id.as_deref(),
+            Some("demo_program_DemoEncounter_v2_cccccccccccc")
+        );
+        assert!(encounter.config.unwrap().contains("followUpStatus"));
+
+        // A second plugin claiming an owned type is refused, and nothing of it
+        // is installed: not its registry entry, its schema, nor its code. Its
+        // first type, RivalVisit, is new and is written before DemoEncounter
+        // is refused, so its absence shows the refusal rolls back what the
+        // install had already written.
+        let error = service_provider
+            .plugin_service
+            .install_uploaded_plugin(
+                &service_context,
+                &settings,
+                upload(
+                    "rival_form_plugin_bundle",
+                    include_str!("test_fixtures/rival_form_plugin_bundle.json"),
+                ),
+                FormInstallOptions {
+                    programs: [("hiv".to_string(), "program_b".to_string())].into(),
+                    ..Default::default()
+                },
+            )
+            .err()
+            .unwrap();
+
+        assert!(
+            matches!(
+                &error,
+                InstallUploadedPluginError::FormPlugin(FormPluginInstallError::OwnedByAnotherPlugin { owner, .. })
+                    if owner == "demo_program"
+            ),
+            "{:?}",
+            error
+        );
+        assert_eq!(
+            FrontendPluginRowRepository::new(&connection)
+                .find_one_by_id("frontend_rival_solid_1_0_0")
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id("rival_DemoEncounter_v1_dddddddddddd")
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id("rival_RivalVisit_v1_eeeeeeeeeeee")
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            DocumentRegistryRowRepository::new(&connection)
+                .find_many_by_document_type("RivalVisit")
+                .unwrap(),
+            vec![]
+        );
+    }
+
+    /// Re-installing a bundle exactly as installed writes nothing anywhere, so
+    /// sync has nothing to send on: not the schemas or registry entries, and not
+    /// the plugin's own row with its base64 files.
+    #[actix_rt::test]
+    async fn reinstalling_an_unchanged_bundle_writes_nothing() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            settings,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "reinstalling_an_unchanged_bundle_writes_nothing",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_lists()
+                .contexts()
+                .programs(),
+            MockData::default(),
+        )
+        .await;
+        let file_service = StaticFileService::new(&settings.server.base_dir).unwrap();
+        let install = |name: &str| {
+            let file = file_service
+                .store_file(
+                    name,
+                    StaticFileCategory::Temporary,
+                    include_str!("test_fixtures/form_plugin_bundle.json").as_bytes(),
+                )
+                .unwrap();
+            service_provider
+                .plugin_service
+                .install_uploaded_plugin(
+                    &service_context,
+                    &settings,
+                    UploadedFile { file_id: file.id },
+                    FormInstallOptions {
+                        programs: [("demo".to_string(), "program_a".to_string())].into(),
+                        ..Default::default()
+                    },
+                )
+                .unwrap()
+        };
+
+        install("first_install");
+        assert_eq!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id("demo_program_DemoEncounter_v2_cccccccccccc")
+                .unwrap()
+                .unwrap()
+                .ui_schema,
+            serde_json::json!({ "type": "VerticalLayout", "elements": [] })
+        );
+
+        let changelog = ChangelogRepository::new(&connection);
+        let cursor = changelog.max_cursor().unwrap();
+        install("second_install");
+
+        let written = changelog
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: i64::MAX,
+                },
+            )
+            .unwrap()
+            .rows;
+        assert!(written.is_empty(), "{:?}", written);
     }
 
     #[actix_rt::test]

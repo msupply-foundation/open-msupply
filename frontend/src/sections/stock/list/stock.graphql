@@ -50,6 +50,11 @@ fragment StockLineRow on StockLineNode {
     id
     name
   }
+  # The line's activity (its campaign) — the Activity column and export field.
+  campaign {
+    id
+    name
+  }
 }
 
 # The flat stock-line list. The packs-on-hand gate (total > 0) is the client

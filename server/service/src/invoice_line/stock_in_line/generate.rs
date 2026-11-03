@@ -22,7 +22,6 @@ pub struct StockLineInput {
     pub stock_line_id: Option<String>,
     pub store_id: String,
     pub on_hold: bool,
-    pub barcode_id: Option<String>,
     pub supplier_id: String,
     pub overwrite_stock_levels: bool,
 }
@@ -52,6 +51,7 @@ pub fn generate_batch(
         campaign_id,
         program_id,
         volume_per_pack,
+        barcode,
         // Ignore other fields, this might be a problem when new fields are added
         ..
     }: InvoiceLineRow,
@@ -59,7 +59,6 @@ pub fn generate_batch(
         stock_line_id,
         store_id,
         on_hold,
-        barcode_id,
         supplier_id: supplier_link_id,
         overwrite_stock_levels,
     }: StockLineInput,
@@ -83,14 +82,14 @@ pub fn generate_batch(
         overwrite_stock_levels,
     );
 
-    let (barcode_id, supplier_link_id) = match existing_stock_line {
+    let (barcode, supplier_link_id) = match existing_stock_line {
         Some(stock_line) => (
             // if no new barcode, use the existing one if exists
-            barcode_id.or(stock_line.barcode_id),
+            barcode.or(stock_line.barcode),
             // if stock_line already has supplier, use that
             stock_line.supplier_id.or(Some(supplier_link_id)),
         ),
-        None => (barcode_id, Some(supplier_link_id)),
+        None => (barcode, Some(supplier_link_id)),
     };
 
     let stock_line_row = StockLineRow {
@@ -109,7 +108,7 @@ pub fn generate_batch(
         note,
         supplier_id: supplier_link_id,
         on_hold,
-        barcode_id,
+        barcode,
         item_variant_id,
         donor_id: donor_link_id,
         manufacturer_id,

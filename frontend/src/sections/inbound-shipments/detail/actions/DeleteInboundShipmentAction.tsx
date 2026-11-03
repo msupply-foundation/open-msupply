@@ -22,16 +22,21 @@ export interface DeleteInboundShipmentActionProps {
    * the confirmation says so, because that stock goes with it.
    */
   removesStock: () => boolean;
+  /**
+   * The server would refuse this delete outright — the shipment is Picked or
+   * Verified, its supplier's store is disabled, or the user can't edit it.
+   */
+  disabled: boolean;
   /** Deleted — the view leaves for the list. */
   onDeleted: () => void;
 }
 
 // Record-level delete from the detail side panel (spec S3 → side panel).
-// Offered at every status: deletability is the admissibility of an action, not
-// a standing property of the shipment, so it is SUBMITTED and the server's own
-// reason surfaced here rather than pre-screened (validation.md § actions;
-// issue #1134) — and it matches the list's bulk delete, which is the same
-// action on the same record.
+// Disabled where the shipment itself rules the delete out — Picked, Verified,
+// or a write block (isDeletable; issue #628), the same as outbound's and the
+// old client's. Anywhere else it is SUBMITTED and the server's own reason
+// surfaced rather than pre-screened (validation.md § actions; issue #1134),
+// since the remaining refusals depend on what happened to the stock.
 //
 // Past New the delete REVERSES the receipt: the server cascades to the lines
 // and the stock they created, refusing per-line once any of that stock has been
@@ -50,6 +55,7 @@ export const DeleteInboundShipmentAction: Component<
         variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-shipment-button"
+        disabled={props.disabled}
         onClick={() => setOpen(true)}
       >
         {t('button.delete')}

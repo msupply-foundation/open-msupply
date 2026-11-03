@@ -4,8 +4,8 @@
 // scanner produce EXACTLY these characters? That matters because the barcode
 // registry keys on the code "character for character, including case and any
 // spaces" (spec/barcode-scanning/rules.md § Looking a code up), and the
-// registry has no maintenance surface — a code learned wrong is wrong
-// permanently (rules § The book has no maintenance surface).
+// registry is corrected only by hand, from the item's Barcodes tab (rules §
+// Maintaining mappings) — so a code learned wrong costs someone a trip there.
 //
 // The characters that actually go wrong are the ones a plain <code> block
 // cannot show: the GS1 field separator, stray spaces, a terminator the

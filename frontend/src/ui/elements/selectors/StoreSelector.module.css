@@ -258,7 +258,7 @@
   opacity: 0.5;
 }
 
-:dir(rtl) .chevron {
+[dir='rtl'] .chevron {
   transform: scaleX(-1);
 }
 

@@ -231,6 +231,7 @@ export const AncillaryItemEditModal: Component<
             decimalLimit={4}
             disabled={saving() !== null}
             value={form().itemQuantity}
+            emptyValue={0}
             onChange={itemQuantity =>
               setForm({ ...form(), itemQuantity: itemQuantity ?? 0 })
             }
@@ -244,6 +245,7 @@ export const AncillaryItemEditModal: Component<
             decimalLimit={4}
             disabled={saving() !== null}
             value={form().ancillaryQuantity}
+            emptyValue={0}
             onChange={ancillaryQuantity =>
               setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
             }

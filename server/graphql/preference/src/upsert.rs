@@ -130,6 +130,7 @@ pub struct UpsertPreferencesInput {
     pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
+    pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -213,6 +214,7 @@ impl UpsertPreferencesInput {
             external_inbound_shipment_lines_must_be_authorised,
             show_indicative_price_in_requisitions,
             do_not_print_placeholder_line_labels,
+            prompt_for_batch_and_expiry_on_inbound_shipments,
         } = self;
 
         UpsertPreferences {
@@ -329,6 +331,10 @@ impl UpsertPreferencesInput {
             do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            prompt_for_batch_and_expiry_on_inbound_shipments:
+                prompt_for_batch_and_expiry_on_inbound_shipments
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }

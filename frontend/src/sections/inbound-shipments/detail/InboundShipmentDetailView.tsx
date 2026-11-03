@@ -39,6 +39,7 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import {
   CommentHeader,
+  formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
   getTextCell,
@@ -96,6 +97,7 @@ import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
   hasSourceLink,
+  isDeletable,
   isEditable,
   actionsLocked,
   sourceLinkOf,
@@ -106,16 +108,23 @@ import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
-import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
+import { InboundCostsPanel } from './tabs/InboundCostsPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
+import { InboundServiceChargesPanel } from './tabs/InboundServiceChargesPanel';
+import {
+  ServiceItems,
+  type ServiceChargesEditor,
+} from '../../../domain/invoice';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
 import { CaptureWindow } from './scan/CaptureWindow';
 import { createCaptureWindow } from './scan/createCaptureWindow';
 import {
   createScanControl,
   ScanButton,
+  ScanStatus,
   shownScanNotice,
+  type ScanNoticeShown,
 } from '@/domain/barcode';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { showsInternalOrderContext } from './internalOrderContext';
@@ -211,6 +220,25 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
+  const [serviceEditor, setServiceEditor] =
+    createSignal<ServiceChargesEditor>();
+  // Whether the store has a service item — read once the Service charges tab
+  // is first opened, never suspending (it arrives under the open screen).
+  const serviceTabOpened = createMemo(
+    prev => prev || activeTab() === 'service-charges',
+    false
+  );
+  const [serviceItems] = createResource(
+    () => (serviceTabOpened() ? params.storeId : undefined),
+    async storeId => {
+      const result = await graphqlFetch(ServiceItems, { storeId });
+      return result.kind === 'success' ? result.data.items.nodes : undefined;
+    }
+  );
+  const serviceConfigured = () => {
+    const items = gated(serviceItems);
+    return items ? items.length > 0 : undefined;
+  };
 
   // The line table's pager. It lives in the screen's bottom bar — the status
   // footer, or the selection footer while rows are ticked — rather than in a
@@ -428,6 +456,9 @@ const InboundShipmentDetailView: Component = () => {
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // Delete keeps the server's own window, which still admits Shipped.
+  const deleteDisabled = () =>
+    writeBlocked() || !isDeletable(current()?.status ?? '');
   // The line-selection actions close earlier on a PO-linked shipment — at
   // Received (issue #873); its lines still open, and items are still added.
   const bulkLocked = () =>
@@ -546,11 +577,12 @@ const InboundShipmentDetailView: Component = () => {
     disabled: () => !current() || isDisabled(),
   });
 
-  // Receiving by scanning (spec/barcode-scanning rules § Learning a code while
-  // receiving; ui-surface S2): a scan opens the capture window, and each scan
-  // after that saves what it holds and loads the next box. The scanner arms on
-  // arrival; the action is disabled while the shipment is not editable (R1).
-  const [scanNotice, setScanNotice] = createSignal<string>();
+  // Receiving by scanning (spec/barcode-scanning rules § Receiving by
+  // scanning; ui-surface S2): a scan opens the capture window, and each scan
+  // after that saves what it holds and loads the next box. A hardware scanner
+  // listens from arrival while the shipment is editable; a camera scans per
+  // press (R1).
+  const [scanNotice, setScanNotice] = createSignal<ScanNoticeShown>();
   const capture = createCaptureWindow({
     storeId: () => params.storeId,
     invoiceId: () => current()?.id ?? params.invoiceId,
@@ -570,10 +602,7 @@ const InboundShipmentDetailView: Component = () => {
       void capture.receive(read);
     },
   });
-  const scanNoticeShown = shownScanNotice(scan, () => {
-    const text = scanNotice();
-    return text === undefined ? undefined : { severity: 'warning', text };
-  });
+  const scanNoticeShown = shownScanNotice(scan, scanNotice);
 
   // "OK & next" (update mode): the next distinct item for the editor to
   // advance to. Owned by the PARENT because the line table is server-paginated
@@ -617,16 +646,17 @@ const InboundShipmentDetailView: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Financial / Currency / Delivery are PO-linked-only tabs (spec S3 tabs).
+  // Financial / Costs / Delivery are PO-linked-only tabs (spec S3 tabs).
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(isExternal()
       ? [
           { value: 'financial', label: t('label.financial') },
-          { value: 'currency', label: t('label.currency') },
+          { value: 'costs', label: t('label.costs') },
           { value: 'delivery', label: t('label.delivery') },
         ]
       : []),
+    { value: 'service-charges', label: t('label.service-charges') },
     { value: 'documents', label: t('label.documents') },
     { value: 'custom-fields', label: t('label.custom-fields') },
     { value: 'log', label: t('label.log') },
@@ -747,6 +777,7 @@ const InboundShipmentDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        footer: () => t('label.total'),
       },
       // PO line number — PO-linked shipments only.
       ...(isExternal()
@@ -1013,7 +1044,7 @@ const InboundShipmentDetailView: Component = () => {
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      // Prices — manual shipments only (PO-linked derive from the order).
+      // Pack prices — manual shipments only (PO-linked derive from the order).
       ...(isManual
         ? [
             {
@@ -1026,20 +1057,23 @@ const InboundShipmentDetailView: Component = () => {
               header: () => t('label.pack-sell-price'),
               ...getCellDefinition('sellPricePerPack'),
             } satisfies Column<Line, SortKey>,
-            {
-              c: {
-                // Placeholder lines (0 packs, nothing shipped) have no
-                // meaningful total — blank (null → empty currency cell) rather
-                // than a zero amount (ui-surface § line table).
-                accessor: line =>
-                  isPlaceholderLine(line) ? null : line.totalBeforeTax,
-                id: 'total',
-              },
-              header: () => t('label.total'),
-              ...getCellDefinition('total'),
-            } satisfies Column<Line, SortKey>,
           ]
         : []),
+      {
+        c: {
+          // Placeholder lines (0 packs, nothing shipped) have no
+          // meaningful total — blank (null → empty currency cell) rather
+          // than a zero amount (ui-surface § line table).
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalBeforeTax,
+          id: 'total',
+        },
+        header: () => t('label.total'),
+        ...getCellDefinition('total'),
+        // The whole shipment's, not this page's — the lines are server-paged.
+        footer: () =>
+          formatCurrencyCell(current()?.pricing.stockTotalBeforeTax),
+      },
       // Donor — gated by the donor-tracking preference.
       ...(prefs().allowTrackingOfStockByDonor
         ? [
@@ -1113,8 +1147,8 @@ const InboundShipmentDetailView: Component = () => {
                 <InboundShipmentSidePanel
                   storeId={params.storeId}
                   node={node()}
-                  open={sidePanelOpen()}
                   disabled={isDisabled()}
+                  deleteDisabled={deleteDisabled()}
                   hasLines={hasLines()}
                   scope={scope()}
                   edit={edit}
@@ -1122,7 +1156,6 @@ const InboundShipmentDetailView: Component = () => {
                   foreignCurrencyAllowed={prefs().issueInForeignCurrency}
                   onSaveField={saveField}
                   onSaved={onNodeSaved}
-                  onRefetch={refetchAll}
                   onDeleted={onDeleted}
                 />
               }
@@ -1142,6 +1175,19 @@ const InboundShipmentDetailView: Component = () => {
                       split button gains an icon for the same reason: collapsed
                       it is nothing but its icon. */}
                   <HeaderButtons>
+                    <Show
+                      when={activeTab() === 'service-charges' && !isDisabled()}
+                    >
+                      <Button
+                        data-testid="add-service-charge-button"
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
+                        disabled={serviceConfigured() !== true}
+                        onClick={() => setServiceEditor('add')}
+                      >
+                        {t('label.add-charge')}
+                      </Button>
+                    </Show>
                     <Show when={!isDisabled()}>
                       <SplitButton
                         icon={<PlusCircleIcon />}
@@ -1154,8 +1200,9 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
-                    {/* Scan — the shared page-action scan button (spec S3
-                        page actions; barcode-scanning R1). */}
+                    {/* Scan — the camera's page-action Scan button (spec S3
+                        page actions; barcode-scanning R1). A hardware
+                        scanner's status ends the header field row below. */}
                     <ScanButton control={scan} />
                     <ExportPrintButton
                       context="INBOUND_SHIPMENT"
@@ -1208,11 +1255,14 @@ const InboundShipmentDetailView: Component = () => {
                       an equal share of the row like a field. */}
                   <HeaderToolbar
                     alert={
-                      <Alert severity="info" compact>
-                        {sourceLinkOf(node()) === 'none'
-                          ? t('messages.inbound-manual-info')
-                          : t('messages.inbound-automatic-info')}
-                      </Alert>
+                      <>
+                        <Alert severity="info" compact>
+                          {sourceLinkOf(node()) === 'none'
+                            ? t('messages.inbound-manual-info')
+                            : t('messages.inbound-automatic-info')}
+                        </Alert>
+                        <ScanStatus control={scan} />
+                      </>
                     }
                   >
                     <InboundShipmentDetailToolbar
@@ -1411,8 +1461,8 @@ const InboundShipmentDetailView: Component = () => {
                 <TabPanel value="financial">
                   <InboundFinancialPanel node={node()} rows={rows()} />
                 </TabPanel>
-                <TabPanel value="currency">
-                  <InboundCurrencyPanel
+                <TabPanel value="costs">
+                  <InboundCostsPanel
                     node={node()}
                     disabled={isDisabled()}
                     onSave={saveField}
@@ -1422,6 +1472,18 @@ const InboundShipmentDetailView: Component = () => {
                   <InboundDeliveryPanel node={node()} rows={rows()} />
                 </TabPanel>
               </Show>
+              <TabPanel value="service-charges">
+                <InboundServiceChargesPanel
+                  storeId={params.storeId}
+                  invoiceId={node().id}
+                  isExternal={isExternal()}
+                  disabled={isDisabled()}
+                  serviceItems={gated(serviceItems)}
+                  editor={serviceEditor()}
+                  onEditorChange={setServiceEditor}
+                  onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
               <TabPanel value="documents">
                 <InboundDocumentsPanel
                   node={node()}
@@ -1452,7 +1514,13 @@ const InboundShipmentDetailView: Component = () => {
 
               <InboundShipmentLineEditModal
                 open={editState() != null}
-                onClose={() => setEditState(undefined)}
+                onClose={() => {
+                  setEditState(undefined);
+                  // A scan it refused is over: its notice on the screen too.
+                  if (capture.discarded()) setScanNotice(undefined);
+                  capture.editorClosed();
+                }}
+                scanDiscarded={capture.discarded()}
                 storeId={params.storeId}
                 invoiceId={node().id}
                 isExternal={isExternal()}
@@ -1491,14 +1559,22 @@ const InboundShipmentDetailView: Component = () => {
                   doses: prefs().manageVaccinesInDoses,
                   authorisation:
                     prefs().externalInboundShipmentLinesMustBeAuthorised,
+                  promptBatchExpiry:
+                    prefs().promptForBatchAndExpiryOnInboundShipments,
                 }}
                 onSaved={onLinesChanged}
                 onRequestNext={nextItem}
               />
               <CaptureWindow control={capture} />
+              {/* "Which item is this barcode?" — asked before the window opens
+                  when a barcode is mapped to several items. */}
+              <capture.Chooser />
               <AddFromMasterListModal
                 open={masterListOpen()}
-                onClose={() => setMasterListOpen(false)}
+                onClose={() => {
+                  setMasterListOpen(false);
+                  capture.editorClosed();
+                }}
                 storeId={params.storeId}
                 invoiceId={node().id}
                 onAdded={onLinesChanged}
@@ -1507,7 +1583,10 @@ const InboundShipmentDetailView: Component = () => {
                 {req => (
                   <AddFromInternalOrderModal
                     open={internalOrderOpen()}
-                    onClose={() => setInternalOrderOpen(false)}
+                    onClose={() => {
+                      setInternalOrderOpen(false);
+                      capture.editorClosed();
+                    }}
                     storeId={params.storeId}
                     invoiceId={node().id}
                     requisitionId={req().id}

@@ -140,6 +140,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             store_id: new_site_properties.store_id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            visible: true,
         };
         let name_store_join_json1 = json!({
             "ID": name_store_join_row1.id,
@@ -154,6 +155,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            visible: true,
         };
         let name_store_join_json2 = json!({
             "ID": name_store_join_row2.id,

@@ -178,6 +178,16 @@ impl ChangelogTableName {
                 transport: V7_ONLY,
                 multi_device_site: false,
             },
+            // Barcodes a store has learned (decisions/2026-09-30_barcodes.md): authored
+            // by the store's site and pushed up to central for review. Central never
+            // edits them, so like other RemoteOwned tables they only come back to the
+            // owning site when it initialises.
+            BarcodeProposal => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             Stocktake => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
@@ -408,12 +418,6 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
-            Barcode => SyncStyle {
-                authoring: vec![Central],
-                distribution: vec![D::Central],
-                transport: V5,
-                multi_device_site: false,
-            },
             Category => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
@@ -450,10 +454,14 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
+            // Legacy central sends its entries to v5/v6 sites itself. The v6 tag
+            // carries the ones a form plugin owns, which open mSupply central writes
+            // on install, to those sites; tagging both would take it out of the v6
+            // pull. Only owned entries go, see `OmDocumentRegistryTranslation`.
             DocumentRegistry => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V5,
+                transport: V6,
                 multi_device_site: false,
             },
             IndicatorColumn => SyncStyle {

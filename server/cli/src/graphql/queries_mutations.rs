@@ -1,9 +1,9 @@
 pub const INSTALL_PLUGINS: &str = r#"
-mutation Query($fileId: String!) {
+mutation Query($fileId: String!, $programs: [PluginProgramInput!], $takeOver: [String!], $blankOldUi: [String!]) {
   root: centralServer {
     __typename
     plugins {
-      installUploadedPlugin(fileId: $fileId) {
+      installUploadedPlugin(fileId: $fileId, programs: $programs, takeOver: $takeOver, blankOldUi: $blankOldUi) {
         pluginInfo
       }
     }

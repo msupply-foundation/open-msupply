@@ -16,7 +16,8 @@ use util::format_error;
 
 use crate::{
     apis::patient_v4::PatientV4,
-    programs::patient::patient_updated::create_patient_name_store_join,
+    processors::ProcessorType,
+    programs::patient::patient_updated::activate_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     static_files::{StaticFile, StaticFileService},
     sync::{
@@ -533,7 +534,7 @@ pub async fn patient_data_for_site(
         let nsj_id = ctx
             .connection
             .transaction_sync(|con| {
-                create_patient_name_store_join(
+                activate_patient_name_store_join(
                     con,
                     &store_id,
                     &patient_id,
@@ -688,6 +689,11 @@ fn integrate_for_site(
         },
         false,
     )?;
+
+    // Proposals pushed by the site may confirm a barcode, without waiting for
+    // central's own next sync to run its processors
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::BarcodeAutoConfirm);
     Ok(())
 }
 

@@ -9,7 +9,6 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
-import { DateField } from '@/ui/elements/inputs/DateField';
 import { Select } from '@/ui/elements/selectors/Select';
 import { campaignKindLabel } from '@/domain/campaign';
 import {
@@ -68,8 +67,8 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
     if (saving() || !canSaveCampaign(draft())) return; // re-entry guard
     setSaving(true);
     setError(undefined);
-    // returnGraphqlErrors, because the dates-out-of-order rejection is UNTYPED:
-    // without it that rejection would trip the global unexpected-error modal
+    // returnGraphqlErrors, because the server's Bad user input rejections are
+    // UNTYPED: without it they would trip the global unexpected-error modal
     // instead of surfacing inline, which is exactly the S4 contract broken.
     const result = await graphqlFetch(
       UpsertCampaign,
@@ -86,10 +85,14 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
         // Keyed to the Name field: its own message, not the generic one.
         setError(t('messages.error-activity-name-already-exists'));
         return;
+      case 'duplicate-code':
+        // Keyed to the Code field, like the name's.
+        setError(t('messages.error-activity-code-already-exists'));
+        return;
       case 'rejected':
         // The generic save message with the server's own description appended —
-        // `InvalidDates` resolves through the server-error table ("Invalid
-        // dates"); a plain description passes through.
+        // an untyped token resolves through the server-error table; a plain
+        // description passes through.
         setError(
           `${t('messages.error-saving-activity')} ${translateServerError(
             outcome.serverError
@@ -163,6 +166,24 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
             onBlur={() => setDraft({ ...draft(), name: draft().name.trim() })}
           />
         </FieldRow>
+        {/* The code is what other systems match on (e.g. an OpenLMIS program),
+            so the name above can be whatever users want to read. Optional —
+            only a deployment with an integration needs one — but unique when
+            set, and trimmed as the field is left. */}
+        <FieldRow label={t('label.code')}>
+          <TextField
+            label={t('label.code')}
+            hideLabel
+            width="full"
+            data-testid="campaign-code-input"
+            disabled={saving()}
+            value={draft().code ?? ''}
+            onInput={e => setDraft({ ...draft(), code: e.currentTarget.value })}
+            onBlur={() =>
+              setDraft({ ...draft(), code: draft().code?.trim() ?? '' })
+            }
+          />
+        </FieldRow>
         {/* Kind is a must-have pick, never empty: an activity is either a
             campaign or the routine one. */}
         <FieldRow label={t('label.kind')} required>
@@ -186,32 +207,6 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
                 kind: value === 'ROUTINE' ? 'ROUTINE' : 'CAMPAIGN',
               })
             }
-          />
-        </FieldRow>
-        {/* Both dates optional and independently clearable, and NEITHER is
-              bounded by the other: entering a start later than the end is
-              possible and is rejected on save, because the ordering rule is the
-              server's (rules § the campaign period). */}
-        <FieldRow label={t('label.start-date')}>
-          <DateField
-            label={t('label.start-date')}
-            hideLabel
-            width="full"
-            testId="campaign-start-date-input"
-            disabled={saving()}
-            value={draft().startDate ?? null}
-            onChange={value => setDraft({ ...draft(), startDate: value })}
-          />
-        </FieldRow>
-        <FieldRow label={t('label.end-date')}>
-          <DateField
-            label={t('label.end-date')}
-            hideLabel
-            width="full"
-            testId="campaign-end-date-input"
-            disabled={saving()}
-            value={draft().endDate ?? null}
-            onChange={value => setDraft({ ...draft(), endDate: value })}
           />
         </FieldRow>
       </Stack>

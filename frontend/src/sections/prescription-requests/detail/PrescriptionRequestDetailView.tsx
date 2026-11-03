@@ -52,7 +52,10 @@ import {
 import { PrescriptionRequestStatusFooter } from './PrescriptionRequestStatusFooter';
 import { ExportPrintAction } from './actions/ExportPrintAction';
 import { RequestLineEditModal } from './edit-modal/RequestLineEditModal';
-import { EditPatientModal } from '../../patients';
+// By its own path, not the patients section's index: App.tsx loads that
+// index for the routes, and the modal carries the document form host
+// (spec/patients S4 allow-edit), which must stay out of the startup bundle.
+import { EditPatientModal } from '../../patients/detail/EditPatientModal';
 
 // The prescription-request detail (spec/prescription-requests/ui-surface.md
 // S3): toolbar (patient / date of birth / clinician / date / diagnosis /

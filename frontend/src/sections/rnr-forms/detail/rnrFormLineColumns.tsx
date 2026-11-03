@@ -174,6 +174,7 @@ export const rnrFormLineColumns = ({
               ? t('error.rnr-negative-balance')
               : undefined
           }
+          emptyValue={0}
           onChange={v => update(line.id, 'initialBalance', v ?? 0)}
         />
       );
@@ -195,6 +196,7 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.quantityReceived}
+          emptyValue={0}
           onChange={v => update(line.id, 'quantityReceived', v ?? 0)}
         />
       );
@@ -216,6 +218,7 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.quantityConsumed}
+          emptyValue={0}
           onChange={v => update(line.id, 'quantityConsumed', v ?? 0)}
         />
       );
@@ -250,6 +253,7 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.losses}
+          emptyValue={0}
           onChange={v => update(line.id, 'losses', v ?? 0)}
         />
       );
@@ -275,6 +279,7 @@ export const rnrFormLineColumns = ({
           allowNegative
           disabled={disabled()}
           value={line.adjustments}
+          emptyValue={0}
           onChange={v => update(line.id, 'adjustments', v ?? 0)}
         />
       );
@@ -298,6 +303,7 @@ export const rnrFormLineColumns = ({
           max={periodLength()}
           disabled={disabled()}
           value={line.stockOutDuration}
+          emptyValue={0}
           onChange={v => update(line.id, 'stockOutDuration', v ?? 0)}
         />
       );

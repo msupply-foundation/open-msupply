@@ -1,0 +1,17 @@
+# The enrolments whose ID contains this one, ignoring case: the enrolment ID
+# field's duplicate check narrows them to the exact ID (spec/program-enrolment
+# contract § typing an ID, and duplicates). No type filter, so it spans every
+# program the caller may view.
+query enrolmentsHoldingId($storeId: String!, $id: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: { programEnrolmentId: { like: $id } }
+  ) {
+    ... on ProgramEnrolmentConnector {
+      nodes {
+        name
+        programEnrolmentId
+      }
+    }
+  }
+}

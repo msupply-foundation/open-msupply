@@ -215,6 +215,11 @@ impl PopulationForecastCourseNode {
     pub async fn target_population(&self) -> f64 {
         self.course.target_population
     }
+    /// The average doses a person gets in a year, counted in place of the number of
+    /// doses when set
+    pub async fn annual_doses_per_person(&self) -> Option<f64> {
+        self.course.annual_doses_per_person
+    }
     pub async fn loss_factor(&self) -> f64 {
         self.course.loss_factor
     }
@@ -280,6 +285,10 @@ impl AncillaryRatioPrincipalNode {
     /// The principal's wastage rate (%) deducted before the ratio applies; 0 when none
     pub async fn wastage_rate(&self) -> f64 {
         self.principal.wastage_rate
+    }
+    /// The ancillary's own wastage rate (%) as a supply, added on top of the ratio; 0 when none
+    pub async fn own_wastage_rate(&self) -> f64 {
+        self.principal.own_wastage_rate
     }
     /// The principal's monthly demand net of the deducted wastage
     pub async fn principal_usable_consumption(&self) -> f64 {

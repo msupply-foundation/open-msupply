@@ -1,9 +1,13 @@
 /* StatusMarker — inline severity-toned glyph (see StatusMarker.tsx). The span
- * centres the 1em icon against the text beside it; the severity maps to the
- * shared feedback tokens (colour words live only in tokens.css). */
+ * centres the 1em icon against the text beside it — in a flex row by the
+ * row's own alignment, in running text by vertical-align (an inline-flex box
+ * otherwise sits on the baseline and rides above the text's centre); the
+ * severity maps to the shared feedback tokens (colour words live only in
+ * tokens.css). */
 .marker {
   display: inline-flex;
   align-items: center;
+  vertical-align: middle;
 }
 
 .marker[data-severity='error'] {

@@ -26,7 +26,11 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getDateCell, getNumberCell } from '@/ui/elements/table/tableHelpers';
+import {
+  getDateCell,
+  getNumberCell,
+  sharedValue,
+} from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -51,8 +55,8 @@ import { StockMovementLineEditModal } from './edit-modal/StockMovementLineEditMo
 import type { MovementEditFields } from './stockMovementEdit';
 
 // The stock-movement detail view (spec/stock-movements/ui-surface.md S2):
-// header identity fields, the flat line table (loaded WITH the document — a
-// bounded working set, no pagination; group-by deferred per D63), the status
+// header identity fields, the line table (loaded WITH the document — a
+// bounded working set, no pagination — so it can group by item), the status
 // footer, the side panel, and the line editor. Read-only once FINALISED
 // (rules § editability — NEW and CONFIRMED are equally editable).
 
@@ -235,6 +239,8 @@ const StockMovementDetailView: Component = () => {
       sortKey: 'itemName',
       header: () => t('label.name'),
       meta: { wrapLines: 2 },
+      // A group row names its item beside the code it groups by.
+      aggregationFn: sharedValue,
     },
     {
       c: { accessor: row => row.stockLine?.batch ?? '', id: 'batch' },
@@ -281,6 +287,8 @@ const StockMovementDetailView: Component = () => {
       c: { key: 'numberOfPacks' },
       header: () => t('label.packs-to-move'),
       ...getNumberCell(),
+      // The per-item subtotal on a group row (ui-surface S2 § line table).
+      aggregationFn: 'sum',
     },
   ];
 
@@ -424,6 +432,12 @@ const StockMovementDetailView: Component = () => {
               columns={columns()}
               rows={sortedRows()}
               rowKey={r => r.id}
+              // Group by item (ui-surface S2 § line table): the whole line
+              // set is on screen, so a group's subtotal is the item's.
+              rowGroup={{
+                columnId: 'itemCode',
+                label: () => t('label.group-by-item'),
+              }}
               loading={data.loading}
               sort={sort()}
               onSort={(key, desc) => setSort({ key, desc })}

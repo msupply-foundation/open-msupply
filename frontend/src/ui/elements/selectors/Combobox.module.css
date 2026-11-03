@@ -95,12 +95,15 @@
   max-width: var(--input-max-compact);
 }
 
-/* Disabled: the same muted fill the disabled TextField uses (its
-   `.input:disabled`), so a read-only lookup — the locked item in edit mode, or
-   the customer field once the shipment is read-only / requisition-sourced —
-   reads as read-only rather than as an editable white field. */
+/* Disabled: the muted fill and border the disabled TextField and Select use
+   (`.input:disabled`, `.trigger[data-disabled]`), so a read-only lookup — the
+   locked item in edit mode, or the customer field once the shipment is
+   read-only / requisition-sourced — reads as read-only rather than as an
+   editable white field, and matches the disabled fields beside it. */
 .control:has(.input:disabled) {
   background: var(--bg-disabled);
+  border-color: var(--color-divider);
+  cursor: not-allowed;
 }
 
 /* The leading magnifier says "you can type here to search" — the one thing the
@@ -142,6 +145,7 @@
    specificity ascends (no-descending-specificity). */
 .input:disabled {
   color: var(--text-disabled);
+  cursor: not-allowed;
 }
 
 /* Clear and chevron share ONE slot (ux-testing/header-field-width.html § "Clear

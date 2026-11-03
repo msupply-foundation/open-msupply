@@ -4,11 +4,13 @@ import commonEn from '../../intl/locales/en/common.json';
 import {
   FORECAST_METHODS,
   ancillaryRatio,
+  annualTargetFormulaKey,
   courseTitle,
   forecastMethodLabel,
   populationSteps,
   principalItemLabel,
   principalWastageDeduction,
+  supplyWastageAddition,
   targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
@@ -31,6 +33,7 @@ const measles: PopulationCourse = {
   coverageRate: 60,
   wastageRate: 50,
   targetPopulation: 10000,
+  annualDosesPerPerson: null,
   lossFactor: 2,
   annualTargetDoses: 24000,
   dosesPerUnit: 2,
@@ -60,6 +63,42 @@ describe('OMS-REG-REPL-11.11 — each course walks annual target doses → month
   });
 });
 
+describe("OMS-REG-REPL-11.16 — step 1 counts a course's doses per person per year only when it sets one", () => {
+  // Td for pregnant women: 5 doses spread over about 2.5 pregnancies, so a
+  // woman reached gets 2 a year.
+  // 4 000 × 2 × (80 / 100) × 1 = 6 400 doses a year.
+  const td: PopulationCourse = {
+    courseName: 'Td',
+    demographicName: 'Pregnant women',
+    numberOfDoses: 5,
+    coverageRate: 80,
+    wastageRate: 0,
+    targetPopulation: 4000,
+    annualDosesPerPerson: 2,
+    lossFactor: 1,
+    annualTargetDoses: 6400,
+    dosesPerUnit: 1,
+    monthlyDoses: 533.3333333333334,
+    monthlyUnits: 533.3333333333334,
+  };
+
+  it('puts the doses per person per year into step 1 and its formula', () => {
+    const [annual] = populationSteps(td);
+    expect(annual.substitution).toBe('4,000 × 2 × (80 / 100) × 1');
+    expect(annualTargetFormulaKey(td)).toBe(
+      'description.annual-target-doses-calculation-with-doses-per-person'
+    );
+  });
+
+  it('leaves a course counting every dose as it was', () => {
+    const [annual] = populationSteps(measles);
+    expect(annual.substitution).toBe('10,000 × 2 × (60 / 100) × 2');
+    expect(annualTargetFormulaKey(measles)).toBe(
+      'description.annual-target-doses-calculation'
+    );
+  });
+});
+
 describe('courseTitle', () => {
   it('names the demographic in parentheses', () => {
     expect(courseTitle(measles)).toBe('Measles (General Population)');
@@ -78,6 +117,7 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
     itemQuantity: 100,
     ancillaryQuantity: 1,
     wastageRate: 0,
+    ownWastageRate: 0,
     principalUsableConsumption: 100,
     monthlyConsumption: 1,
   };
@@ -100,6 +140,18 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
         monthlyConsumption: 0.5,
       })
     ).toBe('− 50% wastage');
+    setDictionaries({});
+  });
+
+  // Rules › the Ancillary ratio method: the ancillary's own wastage as a supply
+  // is added on top of the ratio, shown only when it has some.
+  it('shows the supply wastage added, only when there is some', () => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+    expect(supplyWastageAddition(principal)).toBeUndefined();
+    expect(supplyWastageAddition({ ...principal, ownWastageRate: 20 })).toBe(
+      '÷ (1 − 20% own wastage)'
+    );
     setDictionaries({});
   });
 

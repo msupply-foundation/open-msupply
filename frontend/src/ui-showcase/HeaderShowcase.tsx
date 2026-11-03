@@ -269,6 +269,12 @@ export const HeaderShowcase = () => {
               <Breadcrumb
                 icon={<TruckIcon />}
                 crumbs={[{ label: 'Inbound Shipments' }, { label: '27' }]}
+                status={
+                  <StatusChip
+                    label="Received"
+                    colour="var(--status-received)"
+                  />
+                }
               />
               <HeaderButtons>
                 <Button icon={<PlusCircleIcon />}>Add item</Button>

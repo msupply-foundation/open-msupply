@@ -39,8 +39,7 @@ const Term = (props: {
 
 /*
  * The order's totals band above the status footer (spec S7 § totals band):
- * subtotal, less the supplier discount, plus the charges, giving the order
- * total.
+ * subtotal, less the supplier discount, giving the order total.
  */
 export const PurchaseOrderTotalsStrip: Component<
   PurchaseOrderTotalsStripProps
@@ -85,9 +84,6 @@ export const PurchaseOrderTotalsStrip: Component<
           </Term>
           <Term label={discountLabel()} testId="totals-discount-value">
             {discount()}
-          </Term>
-          <Term label={t('label.cost-charges')} testId="totals-charges-value">
-            {money(totals().charges)}
           </Term>
           {orderTotal()}
         </div>

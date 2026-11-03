@@ -90,6 +90,33 @@ export const resolveAssetScan = async (
   return { kind: 'draft', draft: response };
 };
 
+/** One labelled value in the create-from-scan confirmation. */
+export type ScannedAssetFact = {
+  label: 'label.model' | 'label.serial' | 'label.asset-number';
+  value: string;
+};
+
+/**
+ * What the create-from-scan confirmation shows will be created (ui-surface
+ * S7; OMS-REG-CCE-04.38): the catalogue item's model and code, the serial
+ * number, the asset number — each only where the label supplied it, so the
+ * user confirms the data rather than a bare "create it?".
+ */
+export const scannedAssetFacts = (
+  draft: ScannedAssetDraft
+): ScannedAssetFact[] => {
+  const facts: ScannedAssetFact[] = [];
+  const model = draft.catalogueItem
+    ? `${draft.catalogueItem.model} (${draft.catalogueItem.code})`
+    : undefined;
+  if (model) facts.push({ label: 'label.model', value: model });
+  if (draft.serialNumber)
+    facts.push({ label: 'label.serial', value: draft.serialNumber });
+  if (draft.assetNumber)
+    facts.push({ label: 'label.asset-number', value: draft.assetNumber });
+  return facts;
+};
+
 /**
  * A scanned draft as an insert input. Everything the label supplied is sent
  * with its lock — the frontend's obligation, since the server never consults

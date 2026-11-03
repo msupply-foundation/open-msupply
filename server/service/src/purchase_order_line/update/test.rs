@@ -557,4 +557,53 @@ mod update {
         });
         assert_eq!(line_total(), 0.0);
     }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_line_checks_the_manufacturer() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_line_checks_the_manufacturer",
+            MockDataInserts::all(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id.clone(), "".to_string())
+            .unwrap();
+        let service = service_provider.purchase_order_line_service;
+        service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "line_manufacturer".to_string(),
+                    purchase_order_id: mock_purchase_order_a().id,
+                    item_id_or_code: mock_item_a().id,
+                    requested_pack_size: Some(1.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let set = |manufacturer_id: &str| {
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id,
+                UpdatePurchaseOrderLineInput {
+                    id: "line_manufacturer".to_string(),
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some(manufacturer_id.to_string()),
+                    }),
+                    ..Default::default()
+                },
+            )
+        };
+
+        assert_eq!(
+            set(&repository::mock::mock_name_a().id).map(|_| ()),
+            Err(UpdatePurchaseOrderLineInputError::OtherPartyNotAManufacturer)
+        );
+        assert_eq!(
+            set("no_such_name").map(|_| ()),
+            Err(UpdatePurchaseOrderLineInputError::OtherPartyDoesNotExist)
+        );
+        assert!(set(&repository::mock::mock_name_store_b().id).is_ok());
+    }
 }

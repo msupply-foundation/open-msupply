@@ -4,9 +4,9 @@ import styles from './ContentFooterMessage.module.css';
 
 export interface ContentFooterMessageProps {
   /**
-   * A success confirmation to show — the record's save confirmation
-   * ("Shipment saved", "Saved"). The footer flashes it with createFlash, so it
-   * clears itself; undefined shows nothing.
+   * A success confirmation to show — the status the record just reached, in
+   * its crumb's own word ("Received", "Finalised"; issue #1127). The footer
+   * flashes it with createFlash, so it clears itself; undefined shows nothing.
    */
   message?: string;
   /**

@@ -324,7 +324,14 @@ mod test {
         service_provider::ServiceProvider,
     };
 
-    use repository::mock::test_helpers::make_movements;
+    use chrono::NaiveDate;
+    use repository::mock::test_helpers::{MakeMovements, make_movements_extended};
+
+    // A fixed period, so DOS doesn't depend on when the test runs: no daylight saving
+    // change falls in the 30 days before mid-January in any common timezone
+    fn period_end() -> NaiveDate {
+        NaiveDate::from_ymd_opt(2026, 1, 15).unwrap()
+    }
 
     pub(crate) fn mock_data() -> MockData {
         let test_stock_line = StockLineRow {
@@ -341,9 +348,11 @@ mod test {
             stock_lines: vec![test_stock_line.clone()],
             ..Default::default()
         }
-        .join(make_movements(
-            test_stock_line.clone(),
-            vec![
+        .join(make_movements_extended(MakeMovements {
+            stock_line: test_stock_line.clone(),
+            reference_datetime: period_end().and_hms_opt(12, 0, 0).unwrap(),
+            offset_days: 30,
+            date_quantity: vec![
                 (1, 3),
                 (5, -3),
                 (16, 3),
@@ -362,7 +371,7 @@ mod test {
                 https://www.tablesgenerator.com/text_tables (file -> paste table data)
                 */
             ],
-        ))
+        }))
     }
 
     #[actix_rt::test]
@@ -567,7 +576,7 @@ mod test {
                 &mock_store_a().id,
                 Some(1.0),
                 item_ids.clone(),
-                None,
+                Some(period_end()),
             )
             .unwrap();
 
@@ -595,7 +604,13 @@ mod test {
             .unwrap();
 
         let item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids, None)
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                Some(1.0),
+                item_ids,
+                Some(period_end()),
+            )
             .unwrap();
 
         // With DOS adjustment: 30 days / (30 - 15 dos) = 30/15 = 2

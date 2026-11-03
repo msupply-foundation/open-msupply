@@ -12,6 +12,7 @@ import type { SlotContext } from '../plugin-sdk/types';
 // those directly — as SIGNALS, since a store switch must re-evaluate every
 // `when` gate (spec/plugins/sdk-contract.md § gating is two-layered).
 const [storeId, setStoreId] = createSignal<string | undefined>(undefined);
+const [storeCode, setStoreCode] = createSignal<string | undefined>(undefined);
 const [storeMode, setStoreMode] = createSignal<
   'STORE' | 'DISPENSARY' | undefined
 >(undefined);
@@ -25,6 +26,7 @@ const [preferences, setPreferences] = createSignal<
 
 vi.mock('../store/storeContext', () => ({
   currentStoreId: () => storeId(),
+  currentStoreCode: () => storeCode(),
   currentStoreMode: () => storeMode(),
   storeContext: () => {
     const storePreferences = preferences();
@@ -36,6 +38,7 @@ import { slotContext } from './slotContext';
 
 beforeEach(() => {
   setStoreId(undefined);
+  setStoreCode(undefined);
   setStoreMode(undefined);
   setPreferences(undefined);
 });
@@ -119,6 +122,16 @@ describe('the rest of the session surface still rides along', () => {
       ctx.storePreferences.useConsumptionAndStockFromCustomersForInternalOrders
     ).toBe(true);
     expect(ctx.permissions).toEqual([]);
+  });
+
+  it('carries the store code, unknown until the store resolves', () => {
+    // The store part of an identifier a form generates: undefined rather than
+    // a guess, so a generator waits instead of issuing a wrong code.
+    expect(slotContext().storeCode).toBeUndefined();
+
+    setStoreId('store-a');
+    setStoreCode('GRY');
+    expect(slotContext().storeCode).toBe('GRY');
   });
 
   it('carries the understock threshold', () => {

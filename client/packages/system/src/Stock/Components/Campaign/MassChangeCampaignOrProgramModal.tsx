@@ -14,7 +14,7 @@ import { CampaignRowFragment } from '../../../Manage/Campaigns/api';
 
 interface ChangeCampaignOrProgramConfirmationModalProps<
   T extends {
-    campaign?: CampaignRowFragment | null;
+    campaign?: Pick<CampaignRowFragment, 'id' | 'name'> | null;
     program?: ProgramFragment | null;
     item?: { id: string; programs?: ProgramFragment[] | null } | null;
   },
@@ -28,7 +28,7 @@ interface ChangeCampaignOrProgramConfirmationModalProps<
 
 export const ChangeCampaignOrProgramConfirmationModal = <
   T extends {
-    campaign?: CampaignRowFragment | null;
+    campaign?: Pick<CampaignRowFragment, 'id' | 'name'> | null;
     program?: ProgramFragment | null;
     item?: { id: string; programs?: ProgramFragment[] | null } | null;
   },

@@ -1,4 +1,9 @@
-import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  type GraphqlErrorItem,
+} from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
 import { t } from '../../../intl';
 import { roundedText } from '../../../intl/numberDisplay';
@@ -45,6 +50,21 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
   return errors[0]?.message ?? translateServerError('UnknownError');
 };
 
+/** A Forbidden, naming the permissions the server said were missing. */
+export type Forbidden = { kind: 'forbidden'; permissions: string[] };
+
+// A Forbidden is kept apart from a refusal: it belongs in the app's
+// permission-denied modal, not inline. It is handed back rather than reported
+// here so a caller running several writes can stop at the first and report
+// it once — the permission is per store, so every later write would be
+// refused too.
+const untypedRejection = (
+  errors: GraphqlErrorItem[]
+): { kind: 'error'; message: string } | Forbidden =>
+  isForbidden(errors)
+    ? { kind: 'forbidden', permissions: missingPermissions(errors) }
+    : { kind: 'error', message: untypedRejectionMessage(errors) };
+
 /**
  * The outcome of an update. `blockedLines` carries the lines named by
  * `ItemsCannotBeOrdered` so the table can mark them (spec S18) — a state move
@@ -53,6 +73,7 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
 export type PurchaseOrderUpdateResult =
   | { kind: 'saved' }
   | { kind: 'error'; message: string; blockedLines?: string[] }
+  | Forbidden
   | { kind: 'failed' };
 
 export const updatePurchaseOrder = async (
@@ -64,8 +85,7 @@ export const updatePurchaseOrder = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updatePurchaseOrder;
   if (response.__typename === 'IdResponse') return { kind: 'saved' };
@@ -95,8 +115,7 @@ export const updatePurchaseOrderLine = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updatePurchaseOrderLine;
   return response.__typename === 'IdResponse'
@@ -120,8 +139,7 @@ export const insertPurchaseOrderLine = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.insertPurchaseOrderLine;
   if (response.__typename === 'IdResponse') return { kind: 'saved' };
@@ -144,6 +162,8 @@ export type LinesOutcome = {
   applied: number;
   /** The first refusal, to report once rather than per line. */
   message?: string;
+  /** Set when a Forbidden stopped the run, for the caller to report. */
+  forbidden?: string[];
 };
 
 /**
@@ -162,8 +182,12 @@ export const deletePurchaseOrderLines = async (
     { storeId, ids },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { applied: 0, message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') {
+    const rejection = untypedRejection(result.errors);
+    return rejection.kind === 'forbidden'
+      ? { applied: 0, forbidden: rejection.permissions }
+      : { applied: 0, message: rejection.message };
+  }
   if (result.kind !== 'success') return { applied: 0 };
   let applied = 0;
   let message: string | undefined;
@@ -182,6 +206,8 @@ const foldLineUpdates = async (
   let message: string | undefined;
   for (const input of inputs) {
     const result = await updatePurchaseOrderLine(storeId, input);
+    if (result.kind === 'forbidden')
+      return { applied, message, forbidden: result.permissions };
     if (result.kind === 'saved') applied += 1;
     else if (result.kind === 'error') message ??= result.message;
   }
@@ -189,9 +215,10 @@ const foldLineUpdates = async (
 };
 
 /**
- * Close every line in a selection for receipt, one call each. Stops at nothing
- * — a line that refuses is counted as a refusal and the rest still run, since
- * the server offers no bulk form and a partial close is the honest outcome.
+ * Close every line in a selection for receipt, one call each. Stops only at a
+ * Forbidden — a line that refuses is counted as a refusal and the rest still
+ * run, since the server offers no bulk form and a partial close is the honest
+ * outcome.
  */
 export const closePurchaseOrderLines = (
   storeId: string,
@@ -259,6 +286,7 @@ export const cascadeDeliveryDates = (
 export type AddFromMasterListResult =
   | { kind: 'done'; added: number }
   | { kind: 'error'; message: string }
+  | Forbidden
   | { kind: 'failed' };
 
 /**
@@ -276,8 +304,7 @@ export const addPurchaseOrderFromMasterList = async (
     { storeId, input: { purchaseOrderId, masterListId } },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.addToPurchaseOrderFromMasterList;
   if (response.__typename === 'PurchaseOrderLineConnector')

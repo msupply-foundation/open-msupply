@@ -6,7 +6,6 @@ import {
   useTranslation,
   BasicTextInput,
   TextArea,
-  CurrencyInput,
   Stack,
   NothingHere,
 } from '@openmsupply-client/common';
@@ -23,17 +22,6 @@ export const Details = ({ draft, onChange, disabled }: DetailsProps): ReactEleme
 
   if (!draft)
     return <NothingHere body={t('messages.no-purchase-order-details')} />;
-
-  const chargeFields = [
-    { key: 'agentCommission', label: t('label.agent-commission') },
-    { key: 'documentCharge', label: t('label.document-charge') },
-    {
-      key: 'communicationsCharge',
-      label: t('label.communication-charge'),
-    },
-    { key: 'insuranceCharge', label: t('label.insurance-charge') },
-    { key: 'freightCharge', label: t('label.freight-charge') },
-  ];
 
   return (
     <DetailContainer>
@@ -155,35 +143,6 @@ export const Details = ({ draft, onChange, disabled }: DetailsProps): ReactEleme
                 />
               }
             />
-          </Stack>
-          <Stack
-            spacing={2.5}
-            sx={{
-              flex: 1,
-              p: 2.5,
-            }}
-          >
-            {chargeFields.map(({ key, label }) => (
-              <InputWithLabelRow
-                key={key}
-                label={label}
-                labelWidth={'150px'}
-                Input={
-                  <CurrencyInput
-                    disabled={disabled}
-                    value={
-                      (draft?.[key as keyof PurchaseOrderFragment] as number) ??
-                      0
-                    }
-                    onChangeNumber={value =>
-                      onChange({
-                        [key]: value,
-                      } as Partial<PurchaseOrderFragment>)
-                    }
-                  />
-                }
-              />
-            ))}
           </Stack>
         </Stack>
       </Box>

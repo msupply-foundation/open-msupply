@@ -1,0 +1,11 @@
+/*
+ * Divider — a hairline rule (see Divider.tsx). The browser's own <hr> look
+ * (an inset, two-tone border with margins) is reset to a single divider-token
+ * line, flush with the content either side; the parent's gap spaces it.
+ */
+.divider {
+  align-self: stretch;
+  margin: 0;
+  border: 0;
+  border-block-start: 1px solid var(--color-divider);
+}

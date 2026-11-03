@@ -12,6 +12,8 @@ export interface CurrencySelectProps {
   hideLabel?: boolean;
   size?: 'default' | 'small';
   disabled?: boolean;
+  /** `data-testid` for the text `<input>` (e2e/TESTIDS.md). */
+  inputTestId?: string;
 }
 
 export const currencyLabel = (currency: Currency): string =>
@@ -31,6 +33,7 @@ export const CurrencySelect = (props: CurrencySelectProps): JSX.Element => (
     itemToValue={currency => currency.id}
     value={props.value}
     disabled={props.disabled}
+    inputTestId={props.inputTestId}
     onChange={currency => props.onChange(currency)}
   />
 );

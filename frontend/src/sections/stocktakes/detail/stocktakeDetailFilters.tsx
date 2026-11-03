@@ -1,11 +1,13 @@
 import { t } from '@/intl';
 import {
   FilterCombobox,
+  FilterSelect,
   FilterTextInput,
   constructFilters,
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
 import { type Location } from '@/domain/location';
+import { campaignKindLabel, campaignsResource } from '@/domain/campaign';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
@@ -18,9 +20,9 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 //
 // The detail table is server-filtered now (kdd/stocktake-line-editing), so the
 // only filters we can offer are the ones the backend supports: `itemCodeOrName`
-// (the item name/code search) and `locationId` (an exact-match location
-// picker), both addable chips in the table toolbar's FilterBar — the same
-// filter-chip model as the list. The
+// (the item name/code search), `locationId` (an exact-match location picker)
+// and `campaignId` (the line's Activity), all addable chips in the table
+// toolbar's FilterBar — the same filter-chip model as the list. The
 // filters the OLD client-side filter offered but the server can't do yet —
 // batch (no field), expiry-before (no field) — are TODOs below. The "show
 // error lines" filter IS built, but it doesn't belong here: it's a boolean
@@ -76,6 +78,33 @@ export const stocktakeDetailFilters = (
           onChange={location =>
             props.setPartialFilter({
               locationId: location ? { equalTo: location.id } : null,
+            })
+          }
+        />
+      ),
+    },
+    // Activity — single-select of the campaign register (both kinds), matching
+    // the line's campaign (server campaignId.equalTo). Each option reads back
+    // qualified by its kind, as the Activity picker does, since a name can
+    // repeat across the two kinds. Offered only while the register has entries
+    // (gated in StocktakeLineFilters).
+    campaignId: {
+      label: () => t('label.activity'),
+      render: props => (
+        <FilterSelect
+          label={t('label.activity')}
+          testId={props.testId}
+          value={props.filter().campaignId?.equalTo ?? ''}
+          options={[
+            { value: '', label: t('label.any') },
+            ...campaignsResource.noSuspense().map(c => ({
+              value: c.id,
+              label: `${campaignKindLabel(c.kind)} · ${c.name}`,
+            })),
+          ]}
+          onChange={value =>
+            props.setPartialFilter({
+              campaignId: value ? { equalTo: value } : null,
             })
           }
         />

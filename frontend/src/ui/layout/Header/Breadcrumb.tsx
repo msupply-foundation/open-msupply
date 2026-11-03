@@ -40,6 +40,14 @@ export interface BreadcrumbProps {
   icon?: JSX.Element;
   /** The trail, root first, current page last. The page owns this data. */
   crumbs: Crumb[];
+  /**
+   * The record's status, shown right after the leaf on the title's line — a
+   * StatusChip, or a StatusMenu where the status can be changed here (the
+   * encounter screen). Part of the trail so it wraps with the title and the
+   * header measures it with the crumbs; outside the leaf's <h1>, so the page's
+   * name stays the record's.
+   */
+  status?: JSX.Element;
 }
 
 /*
@@ -48,8 +56,9 @@ export interface BreadcrumbProps {
  * The leaf renders as the page's <h1> (the page title lives in the breadcrumb
  * tail, current-app style — so pages must not render another h1; see
  * kdd/page-composition, shell integration). Separators are aria-hidden list
- * items. Hand-rolled: links + separators carry no interaction contract worth
- * buying. Ported from the RnD prototype's Breadcrumbs.
+ * items. A `status` rides the end of the trail, after the leaf. Hand-rolled:
+ * links + separators carry no interaction contract worth buying. Ported from
+ * the RnD prototype's Breadcrumbs.
  */
 export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1;
@@ -63,6 +72,7 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
   // Resolved once — a JSX prop read twice builds two element trees
   // (kdd/solid-reactivity-pitfalls §3).
   const icon = children(() => props.icon ?? sectionIcon());
+  const status = children(() => props.status);
 
   return (
     <nav class={styles.breadcrumb} aria-label={t('label.breadcrumb')}>
@@ -120,6 +130,9 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
           )}
         </For>
       </ol>
+      <Show when={status()}>
+        <span class={styles.status}>{status()}</span>
+      </Show>
     </nav>
   );
 };

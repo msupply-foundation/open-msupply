@@ -25,7 +25,8 @@
             "lineTotalAfterSupplierDiscount": 43.56,
             "requestedNumberOfUnits": 242,
             "requestedPackSize": 11,
-            "supplierItemCode": null
+            "supplierItemCode": null,
+            "pricePerPackAfterSupplierDiscount": 1.98
           },
           "1": {
             "comment": "Third PO comment salbutamol.",
@@ -39,7 +40,8 @@
             "lineTotalAfterSupplierDiscount": 245,
             "requestedNumberOfUnits": 250,
             "requestedPackSize": 5,
-            "supplierItemCode": null
+            "supplierItemCode": null,
+            "pricePerPackAfterSupplierDiscount": 4.9
           },
           "2": {
             "comment": "This is a PO comment.",
@@ -53,7 +55,8 @@
             "lineTotalAfterSupplierDiscount": 9.5,
             "requestedNumberOfUnits": 10000,
             "requestedPackSize": 1000,
-            "supplierItemCode": null
+            "supplierItemCode": null,
+            "pricePerPackAfterSupplierDiscount": 0.95
           },
           "length": 3
         }
@@ -62,11 +65,6 @@
       "orderTotalAfterDiscount": 298.06,
       "orderTotalBeforeDiscount": 298.06,
       "supplierDiscountAmount": 0,
-      "agentCommission": 10,
-      "documentCharge": null,
-      "communicationsCharge": 2.5,
-      "insuranceCharge": null,
-      "freightCharge": 50.5,
       "status": "CONFIRMED",
       "store": {
         "logo": null,

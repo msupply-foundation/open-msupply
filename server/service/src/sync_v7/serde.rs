@@ -8,8 +8,9 @@ use util::json_without_nulls;
 
 use crate::sync_v7::{
     translations::{
-        invoice_line::translate_invoice_line, requisition_line::translate_requisition_line,
-        store::translate_store, sync_file_reference::translate_sync_file_reference,
+        invoice_line::translate_invoice_line, name::translate_name,
+        requisition_line::translate_requisition_line, store::translate_store,
+        sync_file_reference::translate_sync_file_reference,
         temperature_log::translate_temperature_log,
         temperature_summary::translate_temperature_summary,
     },
@@ -38,7 +39,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::Invoice(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::InvoiceLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::ActivityLog(r) => serde_json::to_value(r).map_err(map_serde_err),
-        Row::Barcode(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::BarcodeProposal(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Clinician(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::ClinicianStoreJoin(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Document(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -180,6 +181,9 @@ pub(crate) fn deserialize(
         ChangelogTableName::TemperatureLog => {
             return translate_temperature_log(connection, changelog_insert, data);
         }
+        ChangelogTableName::Name => {
+            return translate_name(connection, changelog_insert, data, sync_context);
+        }
         ChangelogTableName::TemperatureSummary => {
             return translate_temperature_summary(connection, changelog_insert, data);
         }
@@ -189,7 +193,6 @@ pub(crate) fn deserialize(
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
-        ChangelogTableName::Name => from_value::<NameRow>(data),
         ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
@@ -201,7 +204,7 @@ pub(crate) fn deserialize(
         ChangelogTableName::StockRelocationLine => from_value::<StockRelocationLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
         ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
-        ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
+        ChangelogTableName::BarcodeProposal => from_value::<BarcodeProposalRow>(data),
         ChangelogTableName::Clinician => from_value::<ClinicianRow>(data),
         ChangelogTableName::ClinicianStoreJoin => from_value::<ClinicianStoreJoinRow>(data),
         ChangelogTableName::Document => from_value::<DocumentRow>(data),

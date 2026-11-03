@@ -1,7 +1,8 @@
 // Invoice-domain modals both shipment verticals host: the service-charges
-// editor (outbound S5 / inbound S6) and the change-currency modal. The
-// modules own the shared surface + lookups only — each vertical supplies its
-// own writes as plain props (kdd/explicit-composition). Also home to the
+// editor (outbound S5 / inbound S6), its read-only table and the
+// change-currency modal. The modules own the shared surface + lookups only —
+// each vertical supplies its own writes as plain props
+// (kdd/explicit-composition). Also home to the
 // invoice-status-options display gate (statusGate) the invoice verticals
 // share, and to deleteRejection — why a cascading invoice delete was refused,
 // which reads the same on every vertical whose delete walks the lines. The
@@ -12,7 +13,14 @@ export {
   type ServiceChargeSeed,
   type ServiceChargeSaveResult,
   type ServiceChargesModalProps,
+  type ServiceItem,
 } from './ServiceChargesModal';
+export {
+  ServiceChargesTable,
+  type ServiceChargeLine,
+  type ServiceChargesEditor,
+  type ServiceChargesTableProps,
+} from './ServiceChargesTable';
 export {
   CurrencyModal,
   type CurrencyModalProps,
@@ -36,3 +44,4 @@ export {
   type ServiceChargeDraft,
   type ServiceChargeWrite,
 } from './serviceChargeBatch';
+export { ServiceItems } from './invoiceModals.generated';

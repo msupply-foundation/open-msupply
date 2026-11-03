@@ -7,6 +7,7 @@ import {
 import {
   canChangeStatus,
   hasSourceLink,
+  isDeletable,
   isEditable,
   actionsLocked,
   reachableStatuses,
@@ -166,7 +167,26 @@ describe('isEditable', () => {
     expect(isEditable('')).toBe(false);
     expect(isEditable('CANCELLED')).toBe(false);
   });
+});
 
+// Issue #628 / REPL-03 .29: the detail's Delete follows the server's own
+// delete window, not the edit gate.
+describe('isDeletable', () => {
+  it('deletes at New, Shipped, Delivered and Received', () => {
+    expect(isDeletable('NEW')).toBe(true);
+    expect(isDeletable('SHIPPED')).toBe(true);
+    expect(isDeletable('DELIVERED')).toBe(true);
+    expect(isDeletable('RECEIVED')).toBe(true);
+  });
+
+  it('is refused at Picked and Verified', () => {
+    expect(isDeletable('PICKED')).toBe(false);
+    expect(isDeletable('VERIFIED')).toBe(false);
+  });
+
+  it('treats an unknown status as not deletable', () => {
+    expect(isDeletable('')).toBe(false);
+  });
 });
 
 // Issue #873 / REPL-09 .25: Received closes a PO-linked shipment's

@@ -78,6 +78,7 @@ fragment RequisitionDetailLine on RequisitionLineNode {
         coverageRate
         wastageRate
         targetPopulation
+        annualDosesPerPerson
         lossFactor
         annualTargetDoses
         dosesPerUnit
@@ -97,6 +98,7 @@ fragment RequisitionDetailLine on RequisitionLineNode {
         itemQuantity
         ancillaryQuantity
         wastageRate
+        ownWastageRate
         principalUsableConsumption
         monthlyConsumption
       }

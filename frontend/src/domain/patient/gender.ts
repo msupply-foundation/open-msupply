@@ -1,6 +1,5 @@
-import { t } from '../../intl';
+import { hasTranslation, t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
-import { dictionaries, locale } from '../../intl/intl';
 import { patientPreferences } from '../../store/storeContext';
 import type { PatientSearchFragment } from './patient.generated';
 
@@ -11,12 +10,11 @@ export type Gender = NonNullable<PatientSearchFragment['patient']['gender']>;
 // Render a gender through its fixed label key, regardless of which configured
 // subset is offered (spec/patients S5). The finer-grained hormone/surgical
 // variants have no catalog key yet, so — like the activity-log event labels —
-// look the key up in the active dictionary first and fall back to a humanised
+// look the key up on the translation ladder first and fall back to a humanised
 // enum value when unmapped (keeps LocaleKey compile-safe, never renders blank).
 export const genderLabel = (gender: Gender): string => {
   const key = `gender.${gender.toLowerCase().replace(/_/g, '-')}` as LocaleKey;
-  const dict = dictionaries()[locale()];
-  if (dict?.[key] !== undefined) return t(key);
+  if (hasTranslation(key)) return t(key);
   return gender
     .toLowerCase()
     .replace(/_/g, ' ')

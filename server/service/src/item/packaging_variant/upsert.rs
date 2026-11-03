@@ -37,8 +37,8 @@ pub fn upsert_packaging_variant(
     let packaging_variant = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing, item_variant) = validate(connection, &input)?;
-            let new_packaging_variant = generate(input);
+            let (existing, item_variant, barcode) = validate(connection, &input)?;
+            let new_packaging_variant = generate(input, barcode);
             let repo = PackagingVariantRowRepository::new(connection);
 
             repo.upsert_one(&new_packaging_variant)?;
@@ -78,6 +78,7 @@ pub fn generate(
         pack_size,
         volume_per_unit,
     }: UpsertPackagingVariant,
+    barcode: Option<String>,
 ) -> PackagingVariantRow {
     PackagingVariantRow {
         id,
@@ -87,13 +88,19 @@ pub fn generate(
         pack_size,
         volume_per_unit,
         deleted_datetime: None,
+        barcode,
     }
 }
 
+/// Returns the existing packaging variant, its item variant, and the barcode it
+/// keeps: barcodes are only set and removed through the barcode service
 fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
-) -> Result<(Option<PackagingVariantRow>, ItemVariantRow), UpsertPackagingVariantError> {
+) -> Result<
+    (Option<PackagingVariantRow>, ItemVariantRow, Option<String>),
+    UpsertPackagingVariantError,
+> {
     let item_variant = match check_item_variant_exists(connection, &input.item_variant_id)? {
         Some(item_variant) => item_variant,
         None => return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist),
@@ -129,5 +136,9 @@ fn validate(
         ));
     }
 
-    Ok((old_packaging_variant, item_variant))
+    let barcode = old_packaging_variant
+        .as_ref()
+        .and_then(|packaging_variant| packaging_variant.barcode.clone());
+
+    Ok((old_packaging_variant, item_variant, barcode))
 }

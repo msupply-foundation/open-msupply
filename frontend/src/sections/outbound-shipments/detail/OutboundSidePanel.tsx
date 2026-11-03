@@ -1,8 +1,9 @@
-import { createSignal, For, Show, type Component, type JSX } from 'solid-js';
+import { createSignal, Show, type Component, type JSX } from 'solid-js';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import { formatCurrency } from '../../../intl/currency';
 import {
   SidePanelActions,
   SidePanelSection,
@@ -32,10 +33,7 @@ import { CurrencyModal } from '../../../domain/invoice';
 import { isDeletable } from '../outboundStatus';
 import { changeShipmentCurrency, type OutboundNode } from './outboundUpdate';
 import { graphqlFetch } from '../../../api/graphql';
-import {
-  FullOutbound,
-  type OutboundLineFragment,
-} from './outboundDetail.generated';
+import { FullOutbound } from './outboundDetail.generated';
 import type { OutboundFieldEdit } from './outboundEdit';
 import styles from './OutboundSidePanel.module.css';
 
@@ -46,11 +44,6 @@ import styles from './OutboundSidePanel.module.css';
 
 export interface OutboundSidePanelProps {
   node: OutboundNode;
-  /**
-   * The shipment's service lines (the view's dedicated read — the entity
-   * query no longer carries lines), for the Service-charges block's rows.
-   */
-  serviceLines: OutboundLineFragment[];
   /**
    * For the backdating control's stocktake-conflict check
    * (OMS-REG-DIST-04.27).
@@ -78,20 +71,14 @@ export interface OutboundSidePanelProps {
     shippingMethodId?: { value: string | null };
     backdatedDatetime?: string | null;
   }) => Promise<void>;
-  /** Open the service-charges editor (S5). */
-  onEditServiceCharges: () => void;
 }
 
 const money = (value: number | null | undefined): string =>
-  formatNumber(value ?? 0, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  formatCurrency(value ?? 0);
 
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
   const requisition = () => props.node.requisition;
-  const serviceLines = () => props.serviceLines;
   // Change-currency is offered only when the store allows foreign currency
   // and the customer isn't itself a store — and, like every header edit,
   // only while the shipment is editable: the server rejects all header
@@ -104,30 +91,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     !props.disabled;
 
   // Tax display derivations (rules.md § pricing): the amount is total − sub
-  // total floored at zero; the service group shows the EFFECTIVE rate (tax
-  // over subtotal), the items group shows the STORED shipment rate.
+  // total floored at zero; the items group shows the STORED shipment rate.
   const taxAmount = (
     before: number | null | undefined,
     after: number | null | undefined
   ) => Math.max((after ?? 0) - (before ?? 0), 0);
-  const effectiveTaxPct = (
-    before: number | null | undefined,
-    after: number | null | undefined
-  ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
   const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
   // A pricing group's heading (SIDE_PANEL.md rule 1 — never a FieldRow with a
   // bold label), with its gloss as an info tooltip AFTER the text (the doc's
-  // info-icon-after-heading recipe) and an optional group-level edit action.
+  // info-icon-after-heading recipe).
   // The text+tooltip row is an inline-level SPAN, not an HStack: these children
   // land inside SidePanelSubheading's <h3>, which takes phrasing content, and
   // HStack renders a <div>.
-  const groupHeading = (
-    label: string,
-    info: string,
-    action?: JSX.Element
-  ): JSX.Element => (
-    <SidePanelSubheading action={action}>
+  const groupHeading = (label: string, info: string): JSX.Element => (
+    <SidePanelSubheading>
       <span class={styles.groupHeading}>
         {label}
         <InfoTooltip text={info} label={label} placement="bottom-start" />
@@ -280,52 +258,18 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         title={t('heading.invoice-details')}
         collapsible
       >
-        {/* Service charges: a group heading carrying its info bubble and the S5
-            edit action (dimmed once read-only); one row per service line, then
-            sub total / effective tax / total. Service tax is edited per line in
-            S5. */}
-        {groupHeading(
-          t('heading.service-charges'),
-          t('messages.service-charges-description'),
-          <IconButton
-            bordered
-            size="small"
-            icon={<EditIcon />}
-            label={t('messages.edit-service-charges')}
-            data-testid="edit-service-charges-button"
-            disabled={props.disabled}
-            onClick={props.onEditServiceCharges}
-          />
-        )}
-        <For each={serviceLines()}>
-          {line => (
-            <FieldRow label={line.itemName}>
-              <Text variant="body">{money(line.totalBeforeTax)}</Text>
-            </FieldRow>
-          )}
-        </For>
-        <FieldRow label={t('heading.sub-total')}>
-          <Text variant="body">{money(pricing().serviceTotalBeforeTax)}</Text>
-        </FieldRow>
+        {/* Service charges: itemised and edited in the Service charges tab;
+            the after-tax total here. No info bubble — its effective-rate
+            gloss has no rate left to explain. */}
+        <SidePanelSubheading>
+          {t('heading.service-charges')}
+        </SidePanelSubheading>
         <FieldRow
-          label={taxLabel(
-            effectiveTaxPct(
-              pricing().serviceTotalBeforeTax,
-              pricing().serviceTotalAfterTax
-            )
-          )}
+          label={t('label.total')}
+          readOnly
+          valueTestId="service-charges-total"
         >
-          <Text variant="body">
-            {money(
-              taxAmount(
-                pricing().serviceTotalBeforeTax,
-                pricing().serviceTotalAfterTax
-              )
-            )}
-          </Text>
-        </FieldRow>
-        <FieldRow label={t('label.total')}>
-          <Text variant="body">{money(pricing().serviceTotalAfterTax)}</Text>
+          {money(pricing().serviceTotalAfterTax)}
         </FieldRow>
 
         {/* Items sell price: a group heading with its info bubble; sub total /
@@ -339,7 +283,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
-        <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
+        {/* The STORED shipment rate (the entity's own taxPercentage), not
+            pricing.taxPercentage: that is the server's whole-invoice blend of
+            service and stock tax, so pre-filling the input with it would save
+            the blend as the shipment's rate. */}
+        <FieldRow label={taxLabel(props.node.taxPercentage ?? 0)}>
           {/* The tax AMOUNT is the input's helperText, not a value floated to
               its right (SIDE_PANEL.md rule 3 — a value beside the input breaks
               the panel's value-alignment column). A percentage is a short
@@ -356,7 +304,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             disabled={
               props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
             }
-            value={pricing().taxPercentage ?? undefined}
+            value={props.node.taxPercentage ?? undefined}
             helperText={money(
               taxAmount(
                 pricing().stockTotalBeforeTax,
@@ -421,7 +369,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         <FieldRow label={t('label.total')}>
           <Text variant="body">
             {pricing().foreignCurrencyTotalAfterTax != null
-              ? money(pricing().foreignCurrencyTotalAfterTax)
+              ? formatCurrency(
+                  pricing().foreignCurrencyTotalAfterTax!,
+                  props.node.currency?.code
+                )
               : '—'}
           </Text>
         </FieldRow>

@@ -13,6 +13,7 @@ import {
   PRICE_DECIMALS,
   repriced,
   requestedDateEntered,
+  servicePriced,
   unitsFigure,
   type LineDraft,
 } from './purchaseOrderLineEdit';
@@ -34,6 +35,7 @@ const line = (
     code: 'AMOX',
     name: 'Amoxicillin',
     unitName: 'tablet',
+    type: 'STOCK',
     stats: { stockOnHand: 4200 },
   },
   unit: 'tablet',
@@ -63,7 +65,7 @@ const draft = (over: Partial<LineDraft> = {}): LineDraft => ({
 describe('OMS-FUN-PO-02.7 / .24 — what a new line is born as', () => {
   it('carries the default pack size, no quantity, no prices, and the order’s dates', () => {
     const born = newLineDraft(
-      { defaultPackSize: 100 },
+      { defaultPackSize: 100, type: 'STOCK' },
       { requestedDeliveryDate: '2026-10-01', latestExpectedDate: '2026-11-15' }
     );
     expect(born.requestedPackSize).toBe(100);
@@ -76,11 +78,38 @@ describe('OMS-FUN-PO-02.7 / .24 — what a new line is born as', () => {
 
   it('leaves the dates empty where the order has none', () => {
     const born = newLineDraft(
-      { defaultPackSize: 1 },
+      { defaultPackSize: 1, type: 'STOCK' },
       { requestedDeliveryDate: null, latestExpectedDate: undefined }
     );
     expect(born.requestedDeliveryDate).toBeNull();
     expect(born.expectedDeliveryDate).toBeNull();
+  });
+});
+
+describe('OMS-FUN-PO-02.28 — a service item makes a line of one charge', () => {
+  it('is born as one of one, whatever the item’s default pack size', () => {
+    const born = newLineDraft(
+      { defaultPackSize: 12, type: 'SERVICE' },
+      { requestedDeliveryDate: null, latestExpectedDate: null }
+    );
+    expect(born.requestedPackSize).toBe(1);
+    expect(born.requestedNumberOfUnits).toBe(1);
+  });
+
+  it('has one price: no line discount', () => {
+    expect(servicePriced(25)).toEqual({
+      pricePerPackBeforeDiscount: 25,
+      discountPercentage: 0,
+      pricePerPackAfterDiscount: 25,
+    });
+  });
+
+  it('is known as a service line when opened from its row', () => {
+    expect(factsFromLine(line()).isService).toBe(false);
+    expect(
+      factsFromLine(line({ item: { ...line().item, type: 'SERVICE' } }))
+        .isService
+    ).toBe(true);
   });
 });
 
@@ -393,7 +422,7 @@ describe('OMS-FUN-PO-02.1 / .7 — a new line’s insert', () => {
       'order-1',
       { itemId: 'item-1', unitName: 'tablet' },
       newLineDraft(
-        { defaultPackSize: 100 },
+        { defaultPackSize: 100, type: 'STOCK' },
         { requestedDeliveryDate: '2026-10-01', latestExpectedDate: null }
       )
     );

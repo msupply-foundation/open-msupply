@@ -15,7 +15,10 @@ mod population;
 pub use cascade::*;
 
 use super::{GenerateSuggestedQuantity, generate_suggested_quantity};
-use crate::preference::{DisplayPopulationBasedForecasting, Preference};
+use crate::{
+    item::ancillary_item::supply_wastage_rates,
+    preference::{DisplayPopulationBasedForecasting, Preference},
+};
 use population::CoveringCourses;
 use repository::{
     AncillaryRatioForecast, AncillaryRatioPrincipal, EqualFilter, ForecastData, ForecastMethod,
@@ -61,6 +64,8 @@ pub struct ForecastInputs {
     courses: CoveringCourses,
     /// Ancillary item → the configured links naming it as a principal's ancillary
     links_to: HashMap<String, Vec<AncillaryItemRow>>,
+    /// Each item's own wastage rate (%) as a supply, for the items and their principals
+    supply_wastage_rates: HashMap<String, f64>,
 }
 
 impl ForecastInputs {
@@ -84,7 +89,7 @@ impl ForecastInputs {
         }
 
         // The Ancillary-ratio forecast reads each principal's wastage rate as well
-        let course_item_ids: Vec<String> = item_ids
+        let item_and_principal_ids: Vec<String> = item_ids
             .iter()
             .cloned()
             .chain(links_to.values().flatten().map(|link| link.item_id.clone()))
@@ -95,19 +100,27 @@ impl ForecastInputs {
         Ok(ForecastInputs {
             population_preference,
             population_served: population_served(connection, store_id)?,
-            courses: CoveringCourses::load(connection, store_id, &course_item_ids)?,
+            courses: CoveringCourses::load(connection, store_id, &item_and_principal_ids)?,
+            supply_wastage_rates: supply_wastage_rates(connection, &item_and_principal_ids)?,
             links_to,
         })
     }
 
-    /// The wastage rate a link deducts from its principal's demand: the principal's
-    /// configured rate when the link excludes it, else none.
+    /// The wastage rate a link deducts from its principal's demand: the principal's when
+    /// the link excludes it, else none.
     fn principal_wastage_rate(&self, link: &AncillaryItemRow) -> f64 {
         if link.exclude_principal_wastage {
-            self.courses.wastage_rate(&link.item_id)
+            principal_wastage_rate(&self.courses, &self.supply_wastage_rates, &link.item_id)
         } else {
             0.0
         }
+    }
+
+    fn supply_wastage_rate(&self, item_id: &str) -> f64 {
+        self.supply_wastage_rates
+            .get(item_id)
+            .copied()
+            .unwrap_or(0.0)
     }
 
     /// The configured links from principals on the order to `item_id`.
@@ -206,6 +219,7 @@ impl ForecastInputs {
                         item_quantity: link.item_quantity,
                         ancillary_quantity: link.ancillary_quantity,
                         wastage_rate: self.principal_wastage_rate(link),
+                        own_wastage_rate: self.supply_wastage_rate(item_id),
                     })
                     .collect();
                 LineForecast {
@@ -312,13 +326,29 @@ pub fn apply_forecast(
     );
 }
 
-/// The wastage rate (%) of each of `item_ids` in `store_id`: the vaccine courses covering
-/// it, with the store's overrides, weighted as the item's Population forecast weights
-/// them. An item no course covers is absent.
-pub fn wastage_rates(
+/// The wastage rate (%) a link that excludes it deducts from `item_id`'s demand: the vaccine
+/// courses covering it, with the store's overrides, weighted as the item's Population
+/// forecast weights them; or for an item no course covers (a syringe feeding safety boxes)
+/// its own rate as a supply.
+fn principal_wastage_rate(
+    courses: &CoveringCourses,
+    supply_wastage_rates: &HashMap<String, f64>,
+    item_id: &str,
+) -> f64 {
+    if courses.covers(item_id) {
+        courses.wastage_rate(item_id)
+    } else {
+        supply_wastage_rates.get(item_id).copied().unwrap_or(0.0)
+    }
+}
+
+/// The wastage rate (%) a link that excludes it deducts from each of `item_ids` in
+/// `store_id` (see `principal_wastage_rate`), given each item's own rate as a supply.
+pub fn principal_wastage_rates(
     connection: &StorageConnection,
     store_id: &str,
     item_ids: &[String],
+    supply_wastage_rates: &HashMap<String, f64>,
 ) -> Result<HashMap<String, f64>, RepositoryError> {
     if item_ids.is_empty() {
         return Ok(HashMap::new());
@@ -326,8 +356,10 @@ pub fn wastage_rates(
     let courses = CoveringCourses::load(connection, store_id, item_ids)?;
     Ok(item_ids
         .iter()
-        .filter(|item_id| courses.covers(item_id))
-        .map(|item_id| (item_id.clone(), courses.wastage_rate(item_id)))
+        .map(|item_id| {
+            let rate = principal_wastage_rate(&courses, supply_wastage_rates, item_id);
+            (item_id.clone(), rate)
+        })
         .collect())
 }
 

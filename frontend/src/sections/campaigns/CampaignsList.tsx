@@ -49,9 +49,9 @@ import { DeleteCampaignsAction } from './DeleteCampaignsAction';
 //    slot is deliberately unfilled rather than wired to a filter the server
 //    drops (contract.md § backend gaps).
 //  - NO export. The register carries no CSV/Excel action.
-//  - The two date columns are NOT sortable: `CampaignSortFieldInput` has only
-//    `name`, so declaring a sortKey for them is impossible by construction (the
-//    generated union is the literal 'name').
+//  - Only Name sorts: `CampaignSortFieldInput` has only `name`, so declaring a
+//    sortKey for Code or Kind is impossible by construction (the generated
+//    union is the literal 'name').
 
 const CampaignsList: Component = () => {
   // storeId is guaranteed present: the section renders only inside
@@ -213,22 +213,16 @@ const CampaignsList: Component = () => {
       meta: { headerPosition: 'primary' },
     },
     {
+      c: { key: 'code' },
+      header: () => t('label.code'),
+      // No sortKey: `CampaignSortFieldInput` offers only `name`.
+      ...getCellDefinition('code'),
+    },
+    {
       c: { accessor: row => campaignKindLabel(row.kind), id: 'kind' },
       header: () => t('label.kind'),
       // No sortKey: `CampaignSortFieldInput` offers only `name`.
       ...getCellDefinition('kind'),
-    },
-    {
-      c: { key: 'startDate' },
-      header: () => t('label.start-date'),
-      // No sortKey: there is no server sort key for either date, so the header
-      // offers no sort control and its column menu no sort entry.
-      ...getCellDefinition('startDate'),
-    },
-    {
-      c: { key: 'endDate' },
-      header: () => t('label.end-date'),
-      ...getCellDefinition('endDate'),
     },
   ];
 
