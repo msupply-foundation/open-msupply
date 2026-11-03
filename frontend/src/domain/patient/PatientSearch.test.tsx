@@ -49,6 +49,10 @@ vi.mock('../../ui/elements/feedback/InfoTooltip', () => ({
     return null;
   },
 }));
+// A pass-through row, so the footer's button and reason still reach the mocks.
+vi.mock('../../ui/layout/Stack/HStack', () => ({
+  HStack: (p: { children?: JSX.Element }) => p.children,
+}));
 vi.mock('../../intl', () => ({
   t: (key: string) => key,
   localisedDate: (value: string) => value,

@@ -3,6 +3,7 @@ import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
 import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';
+import { HStack } from '../../ui/layout/Stack/HStack';
 import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import { hasPermission } from '../../store/storeContext';
@@ -176,22 +177,26 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // that block belongs to the record, not to this control.
     listboxFooter={query => (
       <Show when={props.onCreatePatient && query().trim() !== ''}>
-        <Button
-          variant="secondary"
-          icon={<PlusCircleIcon />}
-          disabled={props.disabled || !hasPermission('PATIENT_MUTATE')}
-          data-testid="create-patient-button"
-          onClick={() => props.onCreatePatient?.()}
-        >
-          {t('label.create-patient')}
-        </Button>
-        <Show when={!props.disabled && !hasPermission('PATIENT_MUTATE')}>
-          <InfoTooltip
-            text={t('messages.create-patient-not-allowed')}
-            label={t('messages.create-patient-not-allowed')}
-            triggerTestId="create-patient-disabled-reason"
-          />
-        </Show>
+        {/* A row so the reason's icon centres on the button: the footer is a
+            block, where the two inline boxes didn't line up. */}
+        <HStack gap="sm">
+          <Button
+            variant="secondary"
+            icon={<PlusCircleIcon />}
+            disabled={props.disabled || !hasPermission('PATIENT_MUTATE')}
+            data-testid="create-patient-button"
+            onClick={() => props.onCreatePatient?.()}
+          >
+            {t('label.create-patient')}
+          </Button>
+          <Show when={!props.disabled && !hasPermission('PATIENT_MUTATE')}>
+            <InfoTooltip
+              text={t('messages.create-patient-not-allowed')}
+              label={t('messages.create-patient-not-allowed')}
+              triggerTestId="create-patient-disabled-reason"
+            />
+          </Show>
+        </HStack>
       </Show>
     )}
   />
