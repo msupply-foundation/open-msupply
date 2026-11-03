@@ -1,8 +1,9 @@
 /*
  * Full-stack spec check — IMPLEMENTING.md C9.
  *
- * A full-stack vertical (its README opens with `> **Scope: full stack.**`)
- * decides its tables in data.md, and the server's code must match:
+ * A full-stack vertical (its README opens with `> **Scope: full stack.**`),
+ * at any depth under spec/ (spec-verticals.mjs), decides its tables in
+ * data.md, and the server's code must match:
  *
  *   C9   Each table the server's code already defines (a diesel `table!` block
  *        under server/repository/src) has the same columns as data.md, each
@@ -26,15 +27,10 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-
-const FULL_STACK_LINE = /^> \*\*Scope: full stack\.\*\* /;
+import { scopeOf, specVerticals } from './spec-verticals.mjs';
 
 /** Whether a README opens with the full-stack scope line under its heading. */
-export const isFullStack = readme => {
-  const [heading, ...rest] = readme.split('\n');
-  const first = rest.find(line => line.trim() !== '') ?? '';
-  return heading.startsWith('# ') && FULL_STACK_LINE.test(first);
-};
+export const isFullStack = readme => scopeOf(readme) === 'full stack';
 
 const cells = row =>
   row
@@ -167,14 +163,12 @@ const rustFiles = dir =>
         return name.endsWith('.rs') ? [path] : [];
       });
 
-/** Every problem across the full-stack verticals in `specDir`. */
+/** Every problem across the full-stack verticals in `specDir`, at any depth. */
 export const check = ({ specDir, repositoryDir }) => {
-  const verticals = readdirSync(specDir)
-    .filter(name => existsSync(join(specDir, name, 'README.md')))
-    .filter(name =>
-      isFullStack(readFileSync(join(specDir, name, 'README.md'), 'utf8'))
-    )
-    .sort();
+  const fullStack = specVerticals(specDir).filter(
+    ({ scope }) => scope === 'full stack'
+  );
+  const verticals = fullStack.map(({ name }) => name);
   const problems = [];
   const notBuilt = [];
   const noData = [];
@@ -187,12 +181,14 @@ export const check = ({ specDir, repositoryDir }) => {
     for (const [name, columns] of codeTables(readFileSync(file, 'utf8')))
       if (columns.size > (code.get(name)?.size ?? -1)) code.set(name, columns);
 
-  for (const vertical of verticals) {
-    if (existsSync(join(specDir, vertical, 'contract.md')))
+  // Each vertical's data.md is compared on its own, a nested one included:
+  // the tables a stage decides are its own, never its parent's.
+  for (const { name: vertical, dir } of fullStack) {
+    if (existsSync(join(dir, 'contract.md')))
       problems.push(
         `${vertical}: a full-stack vertical has no contract.md — its tables go in data.md`
       );
-    const dataPath = join(specDir, vertical, 'data.md');
+    const dataPath = join(dir, 'data.md');
     if (!existsSync(dataPath)) {
       noData.push(vertical);
       continue;

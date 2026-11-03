@@ -13,6 +13,8 @@
  * to be untouched by this run and are reported informationally, never as a
  * failure. Also flags any requested vertical missing its colocated
  * src/sections/<vertical>/BUILD_REPORT.md (the spec-build skill's Done bar).
+ * A nested vertical (`procurement/plan`) builds into src/sections/<stem>/,
+ * its name with `-` for `/` (spec-verticals.mjs).
  *
  * Usage: node scripts/spec-build-coverage.mjs <baseline-sha> <requested-csv>
  *   baseline-sha  — pre-wipe main (the workflow's source_sha output).
@@ -21,6 +23,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { stem } from './spec-verticals.mjs';
 
 const baseline = process.argv[2];
 if (!baseline) {
@@ -35,10 +38,11 @@ const requested = new Set(
 );
 
 // The "## Verticals" section of spec/README.md, bullets like
-// "- [`stocktakes/`](./stocktakes/) — … **(reference implementation)**".
+// "- [`stocktakes/`](./stocktakes/) — … **(reference implementation)**", or a
+// nested vertical's "- [`procurement/plan/`](./procurement/plan/) — …".
 const readme = readFileSync('../spec/README.md', 'utf8');
 const section = readme.split(/^## Verticals$/m)[1]?.split(/^## /m)[0] ?? '';
-const verticals = [...section.matchAll(/^- \[`([\w-]+)\/`\][^\n]*/gm)].map(
+const verticals = [...section.matchAll(/^- \[`([\w/-]+)\/`\][^\n]*/gm)].map(
   ([line, name]) => ({
     name,
     isReference: /\(reference implementation\)/.test(line),
@@ -64,7 +68,7 @@ const identicalToBaseline = name => {
       baseline,
       'HEAD',
       '--',
-      `src/sections/${name}`,
+      `src/sections/${stem(name)}`,
     ]);
     return true;
   } catch {
@@ -74,7 +78,7 @@ const identicalToBaseline = name => {
 
 let failures = 0;
 for (const { name, isReference } of verticals) {
-  const present = existsSync(`src/sections/${name}`);
+  const present = existsSync(`src/sections/${stem(name)}`);
   let verdict;
   if (isReference) {
     verdict = present
@@ -97,7 +101,7 @@ for (const { name, isReference } of verticals) {
 console.log('');
 const requestedList = [...requested];
 const missingReports = requestedList.filter(
-  v => !existsSync(`src/sections/${v}/BUILD_REPORT.md`)
+  v => !existsSync(`src/sections/${stem(v)}/BUILD_REPORT.md`)
 );
 if (requestedList.length && missingReports.length === 0) {
   console.log(
