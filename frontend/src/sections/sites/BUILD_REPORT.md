@@ -1,6 +1,6 @@
 # Sites — build report
 
-**Target stack:** SolidJS + Vite, with the shared component library in [`src/ui/`](../../ui/) resolved through the roles in [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md). Built from [`spec/sites/`](../../../spec/sites/) per [`spec/IMPLEMENTING.md`](../../../spec/IMPLEMENTING.md) (C1–C4, C7, C8 in force).
+**Target stack:** SolidJS + Vite, with the shared component library in [`src/ui/`](../../ui/) resolved through the roles in [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md). Built from [`spec/sites/`](../../../../spec/sites/) per [`spec/IMPLEMENTING.md`](../../../../spec/IMPLEMENTING.md) (C1–C4, C7, C8 in force).
 
 One screen (`manage/sites`, S1) and one modal (S2). No per-site route — the register is the whole read surface, and creating, editing, deleting, assigning stores and breaking a pairing all happen in the modal a row click opens.
 
@@ -14,7 +14,7 @@ Confirmed on the running implementation: the register's seven columns in spec or
 
 ## Anchor coverage
 
-Anchors are the behaviours of [`spec/sites/cases/OMS-FUN-SYC-002`](../../../spec/sites/cases/OMS-FUN-SYC-002%20-%20Remote%20Site%20Management%20in%20OMS%20Central.md). All paths below are relative to `src/sections/sites/list/`.
+Anchors are the behaviours of [`spec/sites/cases/OMS-FUN-SYC-002`](../../../../spec/sites/cases/OMS-FUN-SYC-002%20-%20Remote%20Site%20Management%20in%20OMS%20Central.md). All paths below are relative to `src/sections/sites/list/`.
 
 | Behaviour                                                      | Test file                                                                |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------ |

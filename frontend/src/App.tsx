@@ -18,7 +18,7 @@ import {
 } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
-import { InitialisationStatus } from './api/initialisation.generated';
+import { InitialisationStatusAtStartup } from './api/initialisation.generated';
 import { fetchServerInfo } from './api/serverInfo';
 import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
@@ -217,7 +217,7 @@ export const App: Component = () => {
     // Site branding rides along for the same reason: the login and
     // initialisation screens are themed, so it must land before they render.
     const [status] = await Promise.all([
-      graphqlFetch(InitialisationStatus, {}),
+      graphqlFetch(InitialisationStatusAtStartup, {}),
       fetchServerInfo(),
       fetchDisplaySettings(),
     ]);

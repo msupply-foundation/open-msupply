@@ -746,7 +746,7 @@ tbody > tr:last-child > :is(.td, .selectCell) {
   transition: transform var(--motion-base);
 }
 
-:dir(rtl) .groupExpander {
+[dir='rtl'] .groupExpander {
   transform: rotate(90deg);
 }
 
