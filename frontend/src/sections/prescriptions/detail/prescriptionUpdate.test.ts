@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { localTodayIso, utcToLocalDay } from '../../../intl/calendarDate';
+import {
+  todayCalendarDate,
+  instantToCalendarDate,
+} from '../../../intl/calendarDate';
 import {
   newPrescriptionDate,
   prescriptionDateInstant,
@@ -40,13 +43,13 @@ describe('prescriptionDateInstant', () => {
     expect(prescriptionDateInstant(day)).toBe(oms);
   });
 
-  it('round-trips through utcToLocalDay to the picked day, across a year boundary', () => {
-    expect(utcToLocalDay(prescriptionDateInstant('2026-07-15'))).toBe(
+  it('round-trips through instantToCalendarDate to the picked day, across a year boundary', () => {
+    expect(instantToCalendarDate(prescriptionDateInstant('2026-07-15'))).toBe(
       '2026-07-15'
     );
     // Widened end-of-day is the instant most likely to cross the date line off
     // UTC — it must still read back as the day the user picked.
-    expect(utcToLocalDay(prescriptionDateInstant('2025-12-31'))).toBe(
+    expect(instantToCalendarDate(prescriptionDateInstant('2025-12-31'))).toBe(
       '2025-12-31'
     );
   });
@@ -58,20 +61,20 @@ describe('prescriptionDateInstant', () => {
   // therefore never be in the future.
   it('sends the CURRENT MOMENT for today, not its end-of-day (#1211)', () => {
     const before = Date.now();
-    const iso = prescriptionDateInstant(localTodayIso());
+    const iso = prescriptionDateInstant(todayCalendarDate());
     const after = Date.now();
 
     const sent = Date.parse(iso);
     expect(sent).toBeGreaterThanOrEqual(before);
     expect(sent).toBeLessThanOrEqual(after);
     // Not the widened instant the other days get.
-    expect(iso).not.toBe(localDayEnd(localTodayIso()));
+    expect(iso).not.toBe(localDayEnd(todayCalendarDate()));
   });
 
   it('still reads back as today, so the field shows the day that was picked', () => {
-    expect(utcToLocalDay(prescriptionDateInstant(localTodayIso()))).toBe(
-      localTodayIso()
-    );
+    expect(
+      instantToCalendarDate(prescriptionDateInstant(todayCalendarDate()))
+    ).toBe(todayCalendarDate());
   });
 });
 
@@ -83,7 +86,7 @@ describe('prescriptionDateInstant', () => {
 // was created would be undispensable on it.
 describe('newPrescriptionDate', () => {
   it('sends NOTHING for today — today means "not backdated"', () => {
-    expect(newPrescriptionDate(localTodayIso())).toBeUndefined();
+    expect(newPrescriptionDate(todayCalendarDate())).toBeUndefined();
   });
 
   it('sends the end-of-day instant for an EARLIER day, as the edit path does', () => {

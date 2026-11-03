@@ -9,7 +9,7 @@
  */
 import { createMemo, For, Match, Show, Switch, type JSX } from 'solid-js';
 import { formatNumber, localisedDate, localisedDateTime, t } from '../../intl';
-import { isIsoDate } from '../../intl/calendarDate';
+import { isCalendarDate } from '../../intl/calendarDate';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import { Stack } from '../../ui/layout/Stack/Stack';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
@@ -31,7 +31,7 @@ const scalar = (value: unknown, format?: string): string => {
   if (typeof value === 'string') {
     // A calendar date is the recorded day wherever it is read: localisedDate
     // reads it as the local day, never as UTC midnight.
-    if (format === 'date' && isIsoDate(value)) return localisedDate(value);
+    if (format === 'date' && isCalendarDate(value)) return localisedDate(value);
     if (format === 'date-time' && parses(value)) {
       return localisedDateTime(value);
     }

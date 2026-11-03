@@ -1,38 +1,57 @@
 import { addDays } from 'date-fns';
 
 /*
- * Calendar days — the `YYYY-MM-DD` values the server sends as `NaiveDate`
- * (a date of birth, a batch expiry, a dose's suggested date) and the date
- * fields exchange. A calendar day has no time and no zone: 1 October is
- * 1 October wherever it is read. This module is the one place that converts
- * between that string and a JS `Date`, and every conversion reads and writes
- * the LOCAL day (device timezone), so the two directions are symmetric.
+ * Two kinds of date value cross the wire, and they must never be mixed up:
  *
- * The trap it exists to close: `new Date('2025-10-01')` parses a bare day as
- * UTC MIDNIGHT (ES spec), which is the evening of 30 September anywhere west
- * of Greenwich. Formatting that Date shows the day before. Never hand a bare
- * day to `new Date(...)` or `Date.parse` — go through {@link isoDateToDate} or
- * {@link wireToDate}.
+ * - A CALENDAR DATE is a day with no time and no zone: `YYYY-MM-DD`, the
+ *   GraphQL `NaiveDate` scalar (a date of birth, a batch expiry, a dose's
+ *   suggested date) and what a DateField holds. 1 October is 1 October
+ *   wherever it is read, so it is never converted, only read and written as
+ *   the LOCAL day.
+ * - An INSTANT is one moment, the same everywhere: an RFC 3339 timestamp in
+ *   UTC, the GraphQL `DateTime` scalar (created, received, sent). It is shown
+ *   in the user's own zone.
+ *
+ * This module is the one place that converts between them and a JS `Date`.
+ * The names say which kind goes in and which comes out (`calendarDateTo…`,
+ * `instantTo…`, `…ToCalendarDate`), and "local" always means the device's
+ * timezone.
+ *
+ * The trap it exists to close: `new Date('2025-10-01')` reads a calendar date
+ * as an instant, UTC MIDNIGHT (ES spec), which is the evening of 30 September
+ * anywhere west of Greenwich, so it shows as the day before (#1500). The
+ * mirror trap on the way out is `date.toISOString().slice(0, 10)`, which
+ * writes the UTC day: the day before for a local midnight east of Greenwich.
+ * Never do either — go through {@link calendarDateToDate} and
+ * {@link dateToCalendarDate}.
  *
  * No locale and no formatting here (that's formatDateTime.ts), and no Solid:
  * plain functions any layer can import.
  */
 
+/** A calendar date, `YYYY-MM-DD`: GraphQL `NaiveDate`. No time, no zone. */
+export type CalendarDate = string;
+
+/** An instant, an RFC 3339 timestamp: GraphQL `DateTime`. */
+export type Instant = string;
+
 const pad = (n: number): string => String(n).padStart(2, '0');
 
-const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** Whether `value` is a bare calendar day, `YYYY-MM-DD` (no time, no zone). */
-export const isIsoDate = (value: unknown): value is string =>
-  typeof value === 'string' && ISO_DATE.test(value);
+/** Whether `value` is a calendar date, `YYYY-MM-DD` (no time, no zone). */
+export const isCalendarDate = (value: unknown): value is CalendarDate =>
+  typeof value === 'string' && CALENDAR_DATE.test(value);
 
 /**
- * ISO calendar date `YYYY-MM-DD` → a local Date at midnight, or null for an
- * empty, malformed or impossible day (`2026-02-30` is refused rather than
- * rolled over into March).
+ * A calendar date → a Date at its LOCAL midnight, or null for an empty,
+ * malformed or impossible day (`2026-02-30` is refused rather than rolled
+ * over into March).
  */
-export const isoDateToDate = (iso: string | null | undefined): Date | null => {
-  const parts = iso ? ISO_DATE.exec(iso) : null;
+export const calendarDateToDate = (
+  day: CalendarDate | null | undefined
+): Date | null => {
+  const parts = day ? CALENDAR_DATE.exec(day) : null;
   if (!parts) return null;
   const [y, m, d] = parts.slice(1).map(Number) as [number, number, number];
   const date = new Date(y, m - 1, d);
@@ -43,118 +62,119 @@ export const isoDateToDate = (iso: string | null | undefined): Date | null => {
     : null;
 };
 
-/** A local Date → ISO calendar date `YYYY-MM-DD` (its day in the device tz). */
-export const dateToIsoDate = (d: Date): string =>
+/** A Date → the calendar date it falls on LOCALLY (device tz). */
+export const dateToCalendarDate = (d: Date): CalendarDate =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /**
- * Any date value from the server or a caller → a Date. A bare calendar day is
- * read as its LOCAL midnight; anything else (a timestamp, epoch ms, a Date) is
- * an instant and is read as one. The formatters all go through this, so a
- * `NaiveDate` shows the day it names and a `DateTime` shows the user's own
- * day and time.
+ * A value that may be either kind → a Date, for code that formats or compares
+ * whatever it is given (the formatters, the expiry cell, the charts). A
+ * calendar date is read as its LOCAL midnight; anything else (an instant,
+ * epoch ms, a Date) is read as the moment it names. So a `NaiveDate` shows the
+ * day it names and a `DateTime` shows the user's own day and time.
  */
-export const wireToDate = (value: Date | string | number): Date =>
+export const calendarDateOrInstantToDate = (
+  value: Date | CalendarDate | Instant | number
+): Date =>
   value instanceof Date
     ? value
-    : (isoDateToDate(typeof value === 'string' ? value : null) ??
+    : (calendarDateToDate(typeof value === 'string' ? value : null) ??
       new Date(value));
 
 /**
- * The user's LOCAL calendar day right now, ISO `YYYY-MM-DD` (device tz) — the
- * "today" day-comparisons and date-input bounds measure against, so a store
- * off UTC never misclassifies its own today. Impure (reads the clock).
+ * Today's LOCAL calendar date (device tz) — what day comparisons and date-field
+ * bounds measure against, so a store off UTC never misclassifies its own
+ * today. Impure (reads the clock).
  */
-export const localTodayIso = (): string => dateToIsoDate(new Date());
+export const todayCalendarDate = (): CalendarDate =>
+  dateToCalendarDate(new Date());
 
-/** The LOCAL calendar day `days` before today, ISO `YYYY-MM-DD` (device tz). */
-export const localIsoDaysAgo = (days: number): string =>
-  dateToIsoDate(addDays(new Date(), -days));
+/** The LOCAL calendar date `days` before today (device tz). */
+export const calendarDateDaysAgo = (days: number): CalendarDate =>
+  dateToCalendarDate(addDays(new Date(), -days));
 
 /**
- * The calendar date one day before the given ISO date (YYYY-MM-DD →
- * YYYY-MM-DD). Used to turn an EXCLUSIVE "expires before X" cut-off into the
- * INCLUSIVE `beforeOrEqualTo` the stock-line/item filters take. An unparseable
- * date passes through unchanged.
+ * The calendar date before `day`. Used to turn an EXCLUSIVE "expires before X"
+ * cut-off into the INCLUSIVE `beforeOrEqualTo` the stock-line/item filters
+ * take. An unparseable value passes through unchanged.
  */
-export const dayBefore = (isoDate: string): string => {
-  const date = isoDateToDate(isoDate);
-  return date ? dateToIsoDate(addDays(date, -1)) : isoDate;
+export const previousCalendarDate = (day: CalendarDate): CalendarDate => {
+  const date = calendarDateToDate(day);
+  return date ? dateToCalendarDate(addDays(date, -1)) : day;
 };
 
 /**
- * A local calendar day `YYYY-MM-DD` → its first instant (or inclusive last,
- * 23:59:59.999, with `{ endOfDay: true }`) as a UTC ISO instant, in the device
- * timezone (#456; ui-standards/list-views.md § Filters). The zoneless string
- * parses as local, so `toISOString()` gives the right instant — appending `Z`
- * to a bare day would read it in UTC, a day off for any device off UTC.
+ * A calendar date → the instant its LOCAL day starts (or, with
+ * `{ endOfDay: true }`, its inclusive last instant, 23:59:59.999), in UTC
+ * (#456; ui-standards/list-views.md § Filters). For filtering a `DateTime`
+ * field by a picked day. The zoneless string parses as local, so
+ * `toISOString()` gives the right instant — appending `Z` would read the day
+ * in UTC, a day off for any device off UTC.
  */
-export const localDayToUtc = (
-  isoDate: string,
+export const calendarDateToInstant = (
+  day: CalendarDate,
   opts?: { endOfDay?: boolean }
-): string =>
+): Instant =>
   new Date(
-    `${isoDate}T${opts?.endOfDay ? '23:59:59.999' : '00:00:00'}`
+    `${day}T${opts?.endOfDay ? '23:59:59.999' : '00:00:00'}`
   ).toISOString();
 
 /**
- * The inverse read-back: a stored UTC instant → the LOCAL calendar day it fell
- * on (device tz), so pick → store → display round-trips to the same day.
- * Never `.slice(0, 10)`: that reads the UTC day, off by one once the widened
- * instant crosses the date line. Empty/invalid → null.
+ * The inverse: an instant → the calendar date it falls on LOCALLY, so pick →
+ * store → display round-trips to the same day. Never `.slice(0, 10)`: that
+ * reads the UTC day, off by one once the instant crosses the date line.
+ * Empty/invalid → null.
  */
-export const utcToLocalDay = (
-  utc: string | null | undefined
-): string | null => {
-  if (!utc) return null;
-  const d = new Date(utc);
-  return Number.isNaN(d.getTime()) ? null : dateToIsoDate(d);
+export const instantToCalendarDate = (
+  instant: Instant | null | undefined
+): CalendarDate | null => {
+  if (!instant) return null;
+  const d = new Date(instant);
+  return Number.isNaN(d.getTime()) ? null : dateToCalendarDate(d);
 };
 
-/**
- * The day-range slice of a GraphQL `DatetimeFilterInput` — inclusive UTC
- * bounds.
- */
-export interface UtcDayBounds {
-  afterOrEqualTo?: string | null;
-  beforeOrEqualTo?: string | null;
+/** Inclusive UTC bounds: the day-range slice of a `DatetimeFilterInput`. */
+export interface InstantBounds {
+  afterOrEqualTo?: Instant | null;
+  beforeOrEqualTo?: Instant | null;
 }
 
 /**
- * A picked local-day range → inclusive wire bounds (from = day start, to = day
- * end), either side optional; both empty → null (the "added but empty" marker).
+ * A picked range of calendar dates → inclusive instant bounds (from = start of
+ * day, to = end of day), either side optional; both empty → null (the "added
+ * but empty" marker).
  */
-export const utcBoundsFromLocalDays = (
-  start: string | null,
-  end: string | null
-): UtcDayBounds | null =>
+export const instantBoundsFromCalendarDates = (
+  start: CalendarDate | null,
+  end: CalendarDate | null
+): InstantBounds | null =>
   start || end
     ? {
-        ...(start ? { afterOrEqualTo: localDayToUtc(start) } : {}),
+        ...(start ? { afterOrEqualTo: calendarDateToInstant(start) } : {}),
         ...(end
-          ? { beforeOrEqualTo: localDayToUtc(end, { endOfDay: true }) }
+          ? { beforeOrEqualTo: calendarDateToInstant(end, { endOfDay: true }) }
           : {}),
       }
     : null;
 
 /**
- * A `Date` → an RFC3339 instant keeping the device's local offset (e.g.
+ * A Date → an instant written with the device's local offset (e.g.
  * `…09:30:15+13:00`) instead of `Z`, at SECONDS precision (no milliseconds) —
- * byte-for-byte the current app's `Formatter.localIsoString`. Same instant as
- * `localDayToUtc`, but the wire string shows the local calendar day on its
+ * byte-for-byte the current app's `Formatter.localIsoString`. Same moment as
+ * `calendarDateToInstant`, but the string shows the local calendar date on its
  * face. Use for a wire field whose input preserves the offset AND whose server
  * records the wire-local date — the inbound received-date write (input
  * `DateTime<FixedOffset>`; its `INVOICE_DATE_BACKDATED` log formats in the wire
  * offset, so a `Z` value logs the day before off UTC — server-verified).
- * Elsewhere (filters, `DateTime<Utc>` inputs) only the instant matters, so use
- * `localDayToUtc`.
+ * Elsewhere (filters, `DateTime<Utc>` inputs) only the moment matters, so use
+ * `calendarDateToInstant`.
  */
-export const dateToOffsetIso = (d: Date): string => {
+export const dateToOffsetInstant = (d: Date): Instant => {
   const offsetMinutes = -d.getTimezoneOffset(); // minutes east of UTC
   const sign = offsetMinutes >= 0 ? '+' : '-';
   const abs = Math.abs(offsetMinutes);
   return (
-    `${dateToIsoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+    `${dateToCalendarDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
     `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
   );
 };

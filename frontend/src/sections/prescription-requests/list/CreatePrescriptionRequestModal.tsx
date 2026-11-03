@@ -9,7 +9,7 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../intl/calendarDate';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import {
   ClinicianSelect,
@@ -45,7 +45,7 @@ export const CreatePrescriptionRequestModal: Component<
   const navigate = useNavigate();
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
-  const [date, setDate] = createSignal<string>(localTodayIso());
+  const [date, setDate] = createSignal<string>(todayCalendarDate());
   const [clinicianId, setClinicianId] = createSignal<string>();
   // The default only ever applies to an UNTOUCHED field: once the user has
   // picked (or cleared) a clinician, the seed below leaves it alone.
@@ -67,7 +67,7 @@ export const CreatePrescriptionRequestModal: Component<
 
   const reset = () => {
     setPatient(null);
-    setDate(localTodayIso());
+    setDate(todayCalendarDate());
     setClinicianId(undefined);
     setClinicianTouched(false);
     setError(undefined);
@@ -170,8 +170,8 @@ export const CreatePrescriptionRequestModal: Component<
           hideLabel
           testId="date-field"
           value={date()}
-          max={localTodayIso()}
-          onChange={value => setDate(value ?? localTodayIso())}
+          max={todayCalendarDate()}
+          onChange={value => setDate(value ?? todayCalendarDate())}
         />
       </FieldRow>
       <FieldRow label={t('label.clinician')}>

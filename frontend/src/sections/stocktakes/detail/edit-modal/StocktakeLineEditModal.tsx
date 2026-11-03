@@ -25,7 +25,7 @@ import { HStack } from '@/ui/layout/Stack/HStack';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { localTodayIso } from '@/intl/calendarDate';
+import { todayCalendarDate } from '@/intl/calendarDate';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { BareCheckbox } from '@/ui/elements/inputs/BareCheckbox';
@@ -1634,7 +1634,7 @@ const StocktakeLineEditContent = (
             label={t('label.manufacture-date')}
             hideLabel
             size="small"
-            max={localTodayIso()}
+            max={todayCalendarDate()}
             disabled={!line.countThisLine}
             value={line.manufactureDate}
             onChange={v => update(line.id, 'manufactureDate', v)}

@@ -47,7 +47,7 @@ import {
 } from '../reasonOptions/reasonOptionsResource';
 import { ScheduleFormFields } from './ScheduleFormFields';
 import { storeContext, currentStoreId } from '../../store/storeContext';
-import { localTodayIso } from '../../intl/calendarDate';
+import { todayCalendarDate } from '../../intl/calendarDate';
 import {
   cleanArguments,
   dateArgumentDay,
@@ -376,7 +376,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   const dateError = (
     field: Extract<ParsedField, { kind: 'date' }>
   ): string | undefined => {
-    switch (dateFieldViolation(field, values, localTodayIso())) {
+    switch (dateFieldViolation(field, values, todayCalendarDate())) {
       case 'future':
         return t('error.date_disableFuture');
       case 'min':
@@ -408,7 +408,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     const outOfBounds = fields().some(
       field =>
         field.kind === 'date' &&
-        dateFieldViolation(field, values, localTodayIso()) !== undefined
+        dateFieldViolation(field, values, todayCalendarDate()) !== undefined
     );
     if (missing || outOfBounds) {
       setAttempted(true);
@@ -506,10 +506,12 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     label={dateField.label}
                     value={dateArgumentDay(values[dateField.key])}
                     min={
-                      dateFieldBounds(dateField, values, localTodayIso()).min
+                      dateFieldBounds(dateField, values, todayCalendarDate())
+                        .min
                     }
                     max={
-                      dateFieldBounds(dateField, values, localTodayIso()).max
+                      dateFieldBounds(dateField, values, todayCalendarDate())
+                        .max
                     }
                     disabled={dateField.readOnly}
                     required={dateField.required}

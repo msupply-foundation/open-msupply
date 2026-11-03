@@ -1,5 +1,8 @@
 import { graphqlFetch } from '../../../api/graphql';
-import { localDayToUtc, localTodayIso } from '../../../intl/calendarDate';
+import {
+  calendarDateToInstant,
+  todayCalendarDate,
+} from '../../../intl/calendarDate';
 import {
   UpdatePrescriptionRequest,
   type PrescriptionRequestFieldsFragment,
@@ -46,9 +49,9 @@ export const savePrescriptionRequest = async (
  * dispensation adopts a date shaped exactly as if it had been entered there.
  */
 export const prescriptionRequestDateInstant = (isoDay: string): string =>
-  isoDay === localTodayIso()
+  isoDay === todayCalendarDate()
     ? new Date().toISOString()
-    : localDayToUtc(isoDay, { endOfDay: true });
+    : calendarDateToInstant(isoDay, { endOfDay: true });
 
 /**
  * The prescription date for CREATION — `undefined` for today, meaning send no
@@ -58,6 +61,6 @@ export const prescriptionRequestDateInstant = (isoDay: string): string =>
 export const newPrescriptionRequestDate = (
   isoDay: string
 ): string | undefined =>
-  isoDay === localTodayIso()
+  isoDay === todayCalendarDate()
     ? undefined
     : prescriptionRequestDateInstant(isoDay);

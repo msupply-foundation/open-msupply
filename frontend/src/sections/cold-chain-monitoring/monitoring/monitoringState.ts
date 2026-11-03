@@ -1,6 +1,6 @@
 import { stripEmpty } from '@/typeHelpers';
 import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
-import type { IsoDateTimeRange } from '@/ui/elements/selectors/FilterBar';
+import type { InstantRange } from '@/ui/elements/selectors/FilterBar';
 import type {
   TemperatureBreachRowFragment,
   TemperatureBreachesVariables,
@@ -66,7 +66,7 @@ export const OFFERED_BREACH_TYPES: readonly BreachType[] = [
 export type MonitoringFilter = {
   sensorName?: string | null;
   locationCode?: string | null;
-  startDatetime?: IsoDateTimeRange | null;
+  startDatetime?: InstantRange | null;
   breachType?: BreachType | null;
   unacknowledged?: boolean | null;
 };

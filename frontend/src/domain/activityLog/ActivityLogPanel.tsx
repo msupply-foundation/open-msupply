@@ -5,7 +5,7 @@ import { createTableConfig } from '../../api/createTableConfig';
 import { hasTranslation, t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
 import { localisedDate } from '../../intl/formatDateTime';
-import { isIsoDate } from '../../intl/calendarDate';
+import { isCalendarDate } from '../../intl/calendarDate';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
@@ -55,7 +55,7 @@ const fieldLabel = (key: string): string => {
 // A calendar date on the wire is localised; any other string reads bare.
 const showValue = (value: unknown): string => {
   if (typeof value === 'string')
-    return isIsoDate(value) ? localisedDate(value) : value;
+    return isCalendarDate(value) ? localisedDate(value) : value;
   return JSON.stringify(value);
 };
 

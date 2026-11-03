@@ -7,7 +7,7 @@
 // preferences query.
 
 import { addDays } from '../../ui/elements/inputs/dateTimeConvert';
-import { dateToIsoDate } from '../../intl/calendarDate';
+import { dateToCalendarDate } from '../../intl/calendarDate';
 
 /**
  * The preference values that shape barring and ordering (consumer-resolved).
@@ -84,7 +84,7 @@ const expiredWithin = (
   thresholdDays: number,
   today: Date
 ): boolean =>
-  expiryDate.slice(0, 10) <= dateToIsoDate(addDays(today, thresholdDays));
+  expiryDate.slice(0, 10) <= dateToCalendarDate(addDays(today, thresholdDays));
 
 /**
  * Is this batch PAST its expiry date — literally, with no preference threshold

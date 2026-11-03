@@ -10,7 +10,10 @@
  */
 
 import { locale, localeDateFormat } from '../../../intl';
-import { dateToIsoDate, isoDateToDate } from '../../../intl/calendarDate';
+import {
+  dateToCalendarDate,
+  calendarDateToDate,
+} from '../../../intl/calendarDate';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -18,14 +21,14 @@ const pad = (n: number): string => String(n).padStart(2, '0');
  * A stored UTC instant → the local `{ date: 'YYYY-MM-DD', time: 'HH:mm' }` the
  * combined field edits (device tz). Empty/invalid → null.
  */
-export const utcToLocalParts = (
+export const instantToLocalParts = (
   utc: string | null | undefined
 ): { date: string; time: string } | null => {
   if (!utc) return null;
   const d = new Date(utc);
   if (Number.isNaN(d.getTime())) return null;
   return {
-    date: dateToIsoDate(d),
+    date: dateToCalendarDate(d),
     time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
   };
 };
@@ -36,7 +39,7 @@ export const utcToLocalParts = (
  * gives the right UTC instant. No date → null (an instant needs a day); a blank
  * time defaults to midnight.
  */
-export const localPartsToUtc = (
+export const localPartsToInstant = (
   dateIso: string,
   timeHHmm: string
 ): string | null => {
@@ -101,15 +104,15 @@ export const formatPlaceholder = (format: string): string => {
 };
 
 /**
- * An ISO date `YYYY-MM-DD` → a display string per a token `format` (`d`, `dd`,
+ * A calendar date `YYYY-MM-DD` → a display string per a token `format` (`d`, `dd`,
  * `M`, `MM`, `MMM`, `MMMM`, `yy`, `yyyy`; anything else is a literal). Month
  * names are in the app language. Empty/invalid → ''.
  */
-export const formatIsoDate = (
+export const formatCalendarDate = (
   iso: string | null | undefined,
   format = defaultDateFormat()
 ): string => {
-  const d = isoDateToDate(iso);
+  const d = calendarDateToDate(iso);
   if (!d) return '';
   const names = monthNames();
   return format.replace(TOKEN, tok => {
@@ -198,7 +201,7 @@ export const parseDateInput = (
     date.getDate() !== day
   )
     return undefined;
-  return dateToIsoDate(date);
+  return dateToCalendarDate(date);
 };
 
 /** A `{ hour, minute }` time value (Kobalte TimeField's shape). */

@@ -20,9 +20,9 @@ import { NumberField } from '../inputs/NumberField';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { DateRangeField } from '../inputs/DateRangeField';
 import {
-  localTodayIso,
-  utcBoundsFromLocalDays,
-  utcToLocalDay,
+  todayCalendarDate,
+  instantBoundsFromCalendarDates,
+  instantToCalendarDate,
 } from '../../../intl/calendarDate';
 import { DateTimeField } from '../inputs/DateTimeField';
 import { Combobox } from './Combobox';
@@ -1004,7 +1004,7 @@ export interface RangeBounds {
  * A date-range filter chip. The user picks a calendar-day range; `type` (the
  * target field's wire scalar) drives the conversion — kept here so no vertical
  * hand-rolls it (#456): `dateTime` widens each day to UTC day-start/day-end
- * bounds and reads back to the local day; `date` passes the plain ISO date
+ * bounds and reads back to the local day; `date` passes the calendar date
  * through. The value is the field's own wire bounds, so a vertical binds its
  * key directly.
  */
@@ -1025,12 +1025,13 @@ export const FilterDateRange = (props: FilterDateRangeProps) => {
   // just-added chip OPENS its calendar rather than merely focusing it.
   const chipFocus = useChipFocus();
   const toLocal = (bound: string | null | undefined): string | null =>
-    props.type === 'dateTime' ? utcToLocalDay(bound) : (bound ?? null);
+    props.type === 'dateTime' ? instantToCalendarDate(bound) : (bound ?? null);
   const toWire = (
     start: string | null,
     end: string | null
   ): RangeBounds | null => {
-    if (props.type === 'dateTime') return utcBoundsFromLocalDays(start, end);
+    if (props.type === 'dateTime')
+      return instantBoundsFromCalendarDates(start, end);
     return start || end
       ? {
           ...(start ? { afterOrEqualTo: start } : {}),
@@ -1050,7 +1051,7 @@ export const FilterDateRange = (props: FilterDateRangeProps) => {
           start: toLocal(props.value?.afterOrEqualTo),
           end: toLocal(props.value?.beforeOrEqualTo),
         }}
-        max={props.disableFuture ? localTodayIso() : undefined}
+        max={props.disableFuture ? todayCalendarDate() : undefined}
         onChange={({ start, end }) => props.onChange(toWire(start, end))}
       />
     </span>
@@ -1059,7 +1060,7 @@ export const FilterDateRange = (props: FilterDateRangeProps) => {
 
 /** A datetime range as UTC ISO instants, either side nullable — see
  * FilterDateTimeRange. */
-export interface IsoDateTimeRange {
+export interface InstantRange {
   start: string | null;
   end: string | null;
 }
@@ -1077,8 +1078,8 @@ export interface IsoDateTimeRange {
  * filter's bounds (e.g. after/beforeOrEqualTo).
  */
 export const FilterDateTimeRange = (props: {
-  value: IsoDateTimeRange;
-  onChange: (value: IsoDateTimeRange) => void;
+  value: InstantRange;
+  onChange: (value: InstantRange) => void;
   fromLabel: string;
   toLabel: string;
   disableFuture?: boolean;
@@ -1146,7 +1147,7 @@ export const FilterDate = (props: {
         data-testid={props.testId}
         ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         value={props.value}
-        max={props.disableFuture ? localTodayIso() : undefined}
+        max={props.disableFuture ? todayCalendarDate() : undefined}
         aria-label={props.label}
         onInput={e => props.onInput(e.currentTarget.value)}
       />

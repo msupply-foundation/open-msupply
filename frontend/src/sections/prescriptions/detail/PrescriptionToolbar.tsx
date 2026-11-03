@@ -11,8 +11,8 @@ import {
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
-import { utcToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
-import { localTodayIso } from '../../../intl/calendarDate';
+import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
 import {
   prescriptionDateInstant,
@@ -119,8 +119,8 @@ export const PrescriptionToolbar: Component<
   const shownDay = () => {
     const input = pending();
     if (input?.prescriptionDate)
-      return utcToLocalParts(input.prescriptionDate)?.date ?? null;
-    return utcToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
+      return instantToLocalParts(input.prescriptionDate)?.date ?? null;
+    return instantToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
   };
 
   // The shown program: same reasoning as shownDay — a pending pick while one
@@ -187,7 +187,7 @@ export const PrescriptionToolbar: Component<
           size="small"
           testId="date-field"
           value={shownDay()}
-          max={localTodayIso()}
+          max={todayCalendarDate()}
           disabled={props.disabled}
           onChange={day => {
             if (!day || day === shownDay()) return;

@@ -4,7 +4,7 @@ import type {
   InsertAssetLogVariables,
 } from '../equipment.generated';
 import type { AssetStatus } from '../equipment';
-import { dateToIsoDate, isoDateToDate } from '@/intl/calendarDate';
+import { dateToCalendarDate, calendarDateToDate } from '@/intl/calendarDate';
 
 // The status-entry and temperature-mapping form logic (spec/cold-chain-
 // equipment › rules § functional status / temperature mapping, ui-surface
@@ -163,7 +163,7 @@ const mappingInstant = (date: string, now: Date): string => {
  * refuses.
  */
 export const isMappingDateValid = (date: string, now: Date): boolean =>
-  isoDateToDate(date) !== null && date <= dateToIsoDate(now);
+  calendarDateToDate(date) !== null && date <= dateToCalendarDate(now);
 
 /** Which kinds the history filter offers, and what each narrows to. */
 export type LogEventFilter = 'all' | 'status' | 'mapping';

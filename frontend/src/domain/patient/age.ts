@@ -1,5 +1,5 @@
 import { getDisplayAge } from '../../intl';
-import { isoDateToDate } from '../../intl/calendarDate';
+import { calendarDateToDate } from '../../intl/calendarDate';
 
 // A patient's age and date of birth (spec/patients rules › age), shared by
 // the plain-path patient form and the document-path patient fields.
@@ -17,7 +17,7 @@ import { isoDateToDate } from '../../intl/calendarDate';
 // low. Integer comparison on local y/m/d has neither failure mode.
 export const ageFromDob = (dob: string | null): number | undefined => {
   if (!dob) return undefined;
-  const birth = isoDateToDate(dob);
+  const birth = calendarDateToDate(dob);
   if (!birth) return undefined;
   const now = new Date();
   const years = now.getFullYear() - birth.getFullYear();

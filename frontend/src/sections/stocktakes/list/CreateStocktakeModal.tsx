@@ -31,7 +31,7 @@ import { t, tPlural } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
 import { userDisplayName } from '@/auth/authContext';
 import { shallowEqual } from '@/typeHelpers';
-import { dayBefore } from '@/intl/calendarDate';
+import { previousCalendarDate } from '@/intl/calendarDate';
 import {
   InsertStocktake,
   type InsertStocktakeVariables,
@@ -173,7 +173,7 @@ export const CreateStocktakeModal = (props: {
       locationId: locationId ? { equalTo: locationId } : undefined,
       vvmStatusId: vvmStatusId ? { equalTo: vvmStatusId } : undefined,
       expiryDate: expiryDate
-        ? { beforeOrEqualTo: dayBefore(expiryDate) }
+        ? { beforeOrEqualTo: previousCalendarDate(expiryDate) }
         : undefined,
     };
   };
@@ -296,7 +296,9 @@ export const CreateStocktakeModal = (props: {
           // only appears when the pref is on, so vvmStatusId is otherwise
           // always '').
           vvmStatusId: vvmStatusId || undefined,
-          expiresBefore: expiryDate ? dayBefore(expiryDate) : undefined,
+          expiresBefore: expiryDate
+            ? previousCalendarDate(expiryDate)
+            : undefined,
           // The EFFECTIVE value, never the raw flag: the server rejects
           // includeAllMasterListItems without a masterListId (#1199).
           includeAllMasterListItems: includeAll(),

@@ -8,7 +8,7 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../../intl/calendarDate';
+import { todayCalendarDate } from '../../../../intl/calendarDate';
 import { Checkbox } from '../../../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FormColumns } from '../../../../ui/layout/Form/FormColumns';
@@ -66,7 +66,7 @@ type Draft = {
 };
 
 const Body: Component<InsuranceModalProps> = props => {
-  const today = localTodayIso();
+  const today = todayCalendarDate();
   const editing = () => props.policy !== undefined;
 
   const [draft, setDraft] = createStore<Draft>(

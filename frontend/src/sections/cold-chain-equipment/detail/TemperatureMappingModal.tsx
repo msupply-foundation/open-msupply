@@ -2,7 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { localTodayIso } from '@/intl/calendarDate';
+import { todayCalendarDate } from '@/intl/calendarDate';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
@@ -32,7 +32,7 @@ export const TemperatureMappingModal: Component<
   TemperatureMappingModalProps
 > = props => {
   // Defaults to today — the common case is recording a survey just done.
-  const [date, setDate] = createSignal(localTodayIso());
+  const [date, setDate] = createSignal(todayCalendarDate());
   const [comment, setComment] = createSignal('');
   const [saving, setSaving] = createSignal(false);
   // The observations field takes the opening focus: the date already carries
@@ -92,7 +92,7 @@ export const TemperatureMappingModal: Component<
           hideLabel
           // Nothing later than today is selectable — the server refuses a
           // datetime in the future.
-          max={localTodayIso()}
+          max={todayCalendarDate()}
           testId="mapping-date-input"
           disabled={saving()}
           value={date() || null}

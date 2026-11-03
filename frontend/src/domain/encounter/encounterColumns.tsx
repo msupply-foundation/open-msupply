@@ -7,7 +7,7 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { getChipListCell } from '@/ui/elements/table/ChipListCell';
 import { remToPx } from '@/ui/utils/rem';
-import { dateToIsoDate, utcToLocalDay } from '@/intl/calendarDate';
+import { dateToCalendarDate, instantToCalendarDate } from '@/intl/calendarDate';
 import { statusEventTexts } from '@/domain/program/programEvents';
 import type { EncounterStatus } from '@/plugin-sdk/documents';
 
@@ -54,9 +54,9 @@ export const encounterTiming = (
   now: Date
 ): 'missed' | 'scheduled' | undefined => {
   if (status !== 'PENDING') return undefined;
-  const day = utcToLocalDay(startDatetime);
+  const day = instantToCalendarDate(startDatetime);
   if (!day) return undefined;
-  const today = dateToIsoDate(now);
+  const today = dateToCalendarDate(now);
   if (day < today) return 'missed';
   if (day > today) return 'scheduled';
   return undefined;

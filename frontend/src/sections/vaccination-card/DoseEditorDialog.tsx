@@ -42,7 +42,7 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { RecordLink } from '@/ui/elements/typography/RecordLink';
 import { Stack } from '@/ui/layout/Stack/Stack';
-import { localTodayIso } from '@/intl/calendarDate';
+import { todayCalendarDate } from '@/intl/calendarDate';
 import { ClinicianSelect, cliniciansResource } from '@/domain/clinician';
 import {
   confirmsSkip,
@@ -188,7 +188,7 @@ export const DoseEditorDialog: Component<DoseEditorDialogProps> = props => {
                 courseItemIds: (
                   loadedData().dose.vaccineCourse.vaccineCourseItems ?? []
                 ).map(i => i.itemId),
-                today: localTodayIso(),
+                today: todayCalendarDate(),
               }}
               storeName={store()?.name ?? ''}
               onReady={setForm}

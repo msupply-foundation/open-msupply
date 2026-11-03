@@ -24,7 +24,10 @@
 // Pure: `today` is injected so the window maths is unit-testable.
 
 import { addDays, startOfWeek } from '@/ui/elements/inputs/dateTimeConvert';
-import { dateToIsoDate, utcBoundsFromLocalDays } from '@/intl/calendarDate';
+import {
+  dateToCalendarDate,
+  instantBoundsFromCalendarDates,
+} from '@/intl/calendarDate';
 import {
   expiredStockPath,
   expiringBetweenThresholdsStockPath,
@@ -52,10 +55,13 @@ export { DAYS_TILL_EXPIRED } from '@/plugin-sdk/deepLinks';
 
 // A local-day window → a datetime field's filter bounds: each day widened to
 // inclusive UTC instants via the shared conversion (#456). The remaining
-// dashboard-only windows all filter `DateTime` scalars; the `Date`-scalar
+// dashboard-only windows all filter `DateTime` scalars; the `NaiveDate`-scalar
 // windows (stock expiry) live with the promoted builders.
 const dayRange = (from: Date, to: Date) =>
-  utcBoundsFromLocalDays(dateToIsoDate(from), dateToIsoDate(to));
+  instantBoundsFromCalendarDates(
+    dateToCalendarDate(from),
+    dateToCalendarDate(to)
+  );
 
 /**
  * "This week" — Monday to the end of Sunday, the ISO week the counts are

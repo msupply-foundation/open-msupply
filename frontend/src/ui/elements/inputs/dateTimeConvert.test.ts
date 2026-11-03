@@ -7,7 +7,7 @@ import {
 import {
   addDays,
   defaultDateFormat,
-  formatIsoDate,
+  formatCalendarDate,
   formatPlaceholder,
   parseDateInput,
   startOfWeek,
@@ -44,8 +44,8 @@ describe('default date format (numeric, #774)', () => {
   });
 
   it('renders a value as digits only, zero-padded', () => {
-    expect(formatIsoDate('2026-09-19')).toBe('19/09/2026');
-    expect(formatIsoDate('2026-01-05')).toBe('05/01/2026');
+    expect(formatCalendarDate('2026-09-19')).toBe('19/09/2026');
+    expect(formatCalendarDate('2026-01-05')).toBe('05/01/2026');
   });
 
   it('hints the empty field as DD/MM/YYYY', () => {
@@ -65,8 +65,8 @@ describe('default date format (numeric, #774)', () => {
   });
 
   it('an explicit format still wins over the default', () => {
-    expect(formatIsoDate('2026-09-19', 'dd MMM yyyy')).toBe('19 Sep 2026');
-    expect(formatIsoDate('2026-09-19', 'MM/dd/yyyy')).toBe('09/19/2026');
+    expect(formatCalendarDate('2026-09-19', 'dd MMM yyyy')).toBe('19 Sep 2026');
+    expect(formatCalendarDate('2026-09-19', 'MM/dd/yyyy')).toBe('09/19/2026');
     expect(parseDateInput('09/19/2026', 'MM/dd/yyyy')).toBe('2026-09-19');
   });
 
@@ -91,7 +91,7 @@ describe('default date format (numeric, #774)', () => {
         expect(pattern.replace(tokens, ''), `${language}: ${pattern}`).toMatch(
           /^[^\p{L}]+$/u
         );
-        const shown = formatIsoDate('2026-09-14');
+        const shown = formatCalendarDate('2026-09-14');
         expect(parseDateInput(shown), `${language}: "${shown}"`).toBe(
           '2026-09-14'
         );

@@ -4,7 +4,7 @@ import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { localisedDate, t } from '@/intl';
-import { utcBoundsFromLocalDays } from '@/intl/calendarDate';
+import { instantBoundsFromCalendarDates } from '@/intl/calendarDate';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -60,7 +60,7 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
   const variables = createMemo(() => {
     // Each picked day is the DEVICE-LOCAL day, widened to instants
     // (ui-standards/inputs § timezone authority).
-    const logDatetime = utcBoundsFromLocalDays(
+    const logDatetime = instantBoundsFromCalendarDates(
       fromDate() || null,
       toDate() || null
     );

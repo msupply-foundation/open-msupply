@@ -10,7 +10,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../intl/calendarDate';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
@@ -38,7 +38,7 @@ export const CreatePrescriptionModal: Component<
   const navigate = useNavigate();
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
-  const [date, setDate] = createSignal<string>(localTodayIso());
+  const [date, setDate] = createSignal<string>(todayCalendarDate());
   const [reference, setReference] = createSignal('');
   const [clinicianId, setClinicianId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
@@ -51,7 +51,7 @@ export const CreatePrescriptionModal: Component<
 
   const reset = () => {
     setPatient(null);
-    setDate(localTodayIso());
+    setDate(todayCalendarDate());
     setReference('');
     setClinicianId(undefined);
     setProgramId(undefined);
@@ -158,8 +158,8 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           testId="date-field"
           value={date()}
-          max={localTodayIso()}
-          onChange={value => setDate(value ?? localTodayIso())}
+          max={todayCalendarDate()}
+          onChange={value => setDate(value ?? todayCalendarDate())}
         />
       </FieldRow>
       <FieldRow label={t('label.reference')}>
