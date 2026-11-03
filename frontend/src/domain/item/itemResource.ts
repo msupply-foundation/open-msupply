@@ -30,6 +30,11 @@ export type ItemOption = {
    * prefills a new inbound line's cost AND sell price (OMS-REG-REPL-09.10/.11).
    */
   defaultSellPricePerPack: number;
+  /**
+   * The item's volume per pack — a new inbound line's starting volume
+   * (OMS-REG-REPL-09.43).
+   */
+  volumePerPack: number;
 };
 
 type ItemNode = Extract<
@@ -94,6 +99,7 @@ export const lookUpItemById = async (
       defaultPackSize: node.defaultPackSize,
       defaultSellPricePerPack:
         node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+      volumePerPack: node.volumePerPack,
     },
   };
 };
@@ -165,7 +171,10 @@ export const itemPageFetcher =
     // Restrict to one item category, by name — a prescription written from a
     // program form offers the items of the method chosen (the form library's
     // PrescriptionInput). Omitted = every category.
-    categoryName?: () => string | undefined
+    categoryName?: () => string | undefined,
+    // Also offer hidden items that have stock on hand (isVisibleOrOnHand).
+    // Omitted = visible items only. The server then ignores hasStockOnHand.
+    includeHiddenWithStock?: () => boolean | undefined
   ) =>
   async (
     search: string,
@@ -183,7 +192,9 @@ export const itemPageFetcher =
           ? { equalAny: ['STOCK', 'SERVICE'] }
           : { equalTo: 'STOCK' },
         isActive: true,
-        isVisible: true,
+        ...(includeHiddenWithStock?.()
+          ? { isVisibleOrOnHand: true }
+          : { isVisible: true }),
         ...(stockOnHand !== undefined ? { hasStockOnHand: stockOnHand } : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
@@ -212,6 +223,7 @@ export const itemPageFetcher =
         defaultPackSize: node.defaultPackSize,
         defaultSellPricePerPack:
           node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        volumePerPack: node.volumePerPack,
       })),
       totalCount: items.totalCount,
     };

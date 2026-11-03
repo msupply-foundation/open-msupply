@@ -1,7 +1,7 @@
 # Stock items for the item-search selector (add-item flow), paginated for
 # infinite scroll: one page at a time (first/offset), server-side filtered by
-# codeOrName. type=STOCK + isActive/isVisibleOrOnHand mirror OMS's stock-item
-# search. `id: { notEqualAll }` drops caller-supplied ids — NOT items the
+# codeOrName. type=STOCK + isActive + isVisible (or isVisibleOrOnHand) mirror
+# OMS's stock-item search. `id: { notEqualAll }` drops caller-supplied ids — NOT items the
 # document already holds (a line editor offers those; D60), only structural
 # exclusions such as an item that cannot be its own bundled/ancillary variant.
 #
@@ -33,14 +33,15 @@ query itemsWithStock(
         # factor from the picker straight onto a new line, without a re-fetch.
         isVaccine
         doses
-        # defaultPackSize + the store's default sell price prefill a new inbound
-        # line's pack size, cost price, and sell price (spec/inbound-shipments
-        # OMS-REG-REPL-09.10/.11), carried from the picker onto the line without
-        # a re-fetch.
+        # defaultPackSize, the store's default sell price and volumePerPack
+        # seed a new inbound batch's pack size, prices and volume per pack
+        # (spec/inbound-shipments rules › new-batch defaults), carried from the
+        # picker onto the line without a re-fetch.
         defaultPackSize
         itemStoreProperties(storeId: $storeId) {
           defaultSellPricePerPack
         }
+        volumePerPack
         availableBatches(storeId: $storeId) {
           ... on StockLineConnector {
             __typename

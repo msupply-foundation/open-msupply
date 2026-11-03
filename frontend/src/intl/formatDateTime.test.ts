@@ -32,6 +32,9 @@ describe('getDisplayAge (spec/patients — age display)', () => {
   it('shows whole years once at least one year old', () => {
     expect(getDisplayAge(new Date(2024, 9, 1))).toBe('1 year'); // exactly 1y
     expect(getDisplayAge(new Date(1994, 5, 30))).toBe('31 years');
+    // A birthday counts on the day, whatever the leap days between (#1755).
+    expect(getDisplayAge('2023-10-01')).toBe('2 years');
+    expect(getDisplayAge('2023-10-02')).toBe('1 year');
   });
 
   it('shows months and days when under one year old', () => {

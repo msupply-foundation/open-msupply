@@ -1,6 +1,6 @@
 # Build report — dashboard
 
-**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
 Regenerated from `spec/dashboard/` (scoped `/spec-build dashboard`). One screen (S1) mounted at both the store root `/` (the landing screen) and the `dashboard` nav destination. Wire surface: the six split count queries in `dashboardCounts.graphql` plus the two-alias `prescriptionRequestCounts.graphql` (the requests list read for `totalCount` alone); the display-gate preferences and the read permissions both ride on the shared guard-3 `storeContext` query (its one new wire need — `PrescriptionRequestFilterInput.dispensedDatetime` — is a server addition, issue #515). Gates green: `pnpm check`, `pnpm test` (596 total; 46 dashboard across 5 files), `pnpm build` (DashboardPage = its own lazy chunk, 14.43 kB / **3.85 kB gzip**).
 

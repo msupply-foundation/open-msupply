@@ -77,7 +77,7 @@
   transform: translateX(1rem);
 }
 
-:dir(rtl) .input:checked + .track .thumb {
+[dir='rtl'] .input:checked + .track .thumb {
   transform: translateX(-1rem);
 }
 

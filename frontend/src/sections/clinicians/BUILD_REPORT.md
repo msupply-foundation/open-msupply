@@ -1,8 +1,8 @@
 # Clinicians — build report
 
-**Target stack:** SolidJS + Vite; shared component library in [`src/ui/`](../../ui/), resolved through the roles in [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite; shared component library in [`src/ui/`](../../ui/), resolved through the roles in [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
-Built from [`spec/clinicians/`](../../../spec/clinicians/) — `rules.md`, `contract.md`, `ui-surface.md`, and the behaviour-anchored case [`cases/OMS-FUN-DIS-004`](../../../spec/clinicians/cases/OMS-FUN-DIS-004%20-%20Verify%20insert%2C%20update%20of%20Clinicians%20details.md). One screen: the read-only Dispensary Clinicians list. No detail, no search/filters, no mutations.
+Built from [`spec/clinicians/`](../../../../spec/clinicians/) — `rules.md`, `contract.md`, `ui-surface.md`, and the behaviour-anchored case [`cases/OMS-FUN-DIS-004`](../../../../spec/clinicians/cases/OMS-FUN-DIS-004%20-%20Verify%20insert,%20update%20of%20Clinicians%20details.md). One screen: the read-only Dispensary Clinicians list. No detail, no search/filters, no mutations.
 
 Files: `clinicians.graphql` (+ generated), `cliniciansListLogic.ts` (+ `.test.ts`), `list/CliniciansList.tsx`, `index.tsx`. Wiring: `dispensary/clinicians → cliniciansRoutes` in `src/App.tsx` (nav entry already present in `navConfig`).
 
