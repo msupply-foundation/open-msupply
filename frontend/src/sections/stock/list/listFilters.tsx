@@ -131,6 +131,34 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
+  // Expiry status — All / Not expired / Expired over the plain Boolean filter
+  // field (#1820). Expired = expiry on or before today, the dashboard's
+  // definition; a line with no expiry is never expired. The list opens on
+  // "Not expired" (its DEFAULT_STATE); removing the chip shows all stock.
+  isExpired: {
+    label: () => t('label.expiry-status'),
+    render: props => (
+      <FilterSelect
+        label={t('label.expiry-status')}
+        testId={props.testId}
+        value={
+          props.filter().isExpired == null
+            ? ''
+            : String(props.filter().isExpired)
+        }
+        options={[
+          { value: '', label: t('label.all') },
+          { value: 'false', label: t('label.not-expired') },
+          { value: 'true', label: t('label.expired') },
+        ]}
+        onChange={value =>
+          props.setPartialFilter({
+            isExpired: value === '' ? null : value === 'true',
+          })
+        }
+      />
+    ),
+  },
   // On hold — Any / Yes / No over the plain Boolean filter field (#1787); the
   // wire value is the boolean itself, carried as its string form in the
   // select.

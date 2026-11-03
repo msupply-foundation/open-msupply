@@ -66,6 +66,8 @@ pub struct StockLineFilterInput {
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilterStringInput>,
     pub on_hold: Option<bool>,
+    /// true: expiry date on or before today. false: expiry date after today, or no expiry date
+    pub is_expired: Option<bool>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -89,6 +91,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             is_program_stock_line: f.is_program_stock_line,
             campaign_id: f.campaign_id.map(EqualFilter::from),
             on_hold: f.on_hold,
+            is_expired: f.is_expired,
         }
     }
 }

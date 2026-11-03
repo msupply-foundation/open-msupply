@@ -9577,6 +9577,10 @@ input StockLineFilterInput {
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
 	onHold: Boolean
+	"""
+	true: expiry date on or before today. false: expiry date after today, or no expiry date
+	"""
+	isExpired: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {

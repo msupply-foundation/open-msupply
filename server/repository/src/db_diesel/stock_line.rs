@@ -73,6 +73,8 @@ pub struct StockLineFilter {
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilter<String>>,
     pub on_hold: Option<bool>,
+    /// Expired = expiry date on or before today; a line with no expiry date is never expired
+    pub is_expired: Option<bool>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -306,6 +308,7 @@ impl<'a> StockLineRepository<'a> {
                 is_program_stock_line,
                 campaign_id,
                 on_hold,
+                is_expired,
             } = f;
 
             // OR filters must come first
@@ -344,6 +347,19 @@ impl<'a> StockLineRepository<'a> {
 
             if let Some(on_hold) = on_hold {
                 query = query.filter(stock_line::on_hold.eq(on_hold));
+            }
+
+            if let Some(is_expired) = is_expired {
+                // The server's local date: for a server on site, the same day its users see
+                let today = chrono::Local::now().date_naive();
+                query = match is_expired {
+                    true => query.filter(stock_line::expiry_date.le(today)),
+                    false => query.filter(
+                        stock_line::expiry_date
+                            .gt(today)
+                            .or(stock_line::expiry_date.is_null()),
+                    ),
+                };
             }
 
             query = match has_packs_in_store {
@@ -486,6 +502,11 @@ impl StockLineFilter {
 
     pub fn on_hold(mut self, filter: bool) -> Self {
         self.on_hold = Some(filter);
+        self
+    }
+
+    pub fn is_expired(mut self, filter: bool) -> Self {
+        self.is_expired = Some(filter);
         self
     }
 }
@@ -754,6 +775,56 @@ mod test {
             repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
                 .unwrap()
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_is_expired() {
+        let today = chrono::Local::now().date_naive();
+        fn line(id: &str, expiry_date: Option<NaiveDate>) -> StockLineRow {
+            StockLineRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                expiry_date,
+                ..Default::default()
+            }
+        }
+        let expired_yesterday = line("expired_yesterday", today.pred_opt());
+        let expires_today = line("expires_today", Some(today));
+        let expires_tomorrow = line("expires_tomorrow", today.succ_opt());
+        let no_expiry = line("no_expiry", None);
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stock_line_is_expired",
+            MockDataInserts::none().stores().items().names().units(),
+            MockData {
+                stock_lines: vec![
+                    expired_yesterday.clone(),
+                    expires_today.clone(),
+                    expires_tomorrow.clone(),
+                    no_expiry.clone(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = StockLineRepository::new(&connection);
+        let ids = |is_expired: bool| {
+            let mut ids: Vec<String> = repo
+                .query_by_filter(StockLineFilter::new().is_expired(is_expired), None)
+                .unwrap()
+                .into_iter()
+                .map(|l| l.stock_line_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        // Stock expiring today counts as expired, matching the dashboard
+        assert_eq!(ids(true), vec![expired_yesterday.id, expires_today.id]);
+        // Stock with no expiry date is never expired
+        assert_eq!(ids(false), vec![expires_tomorrow.id, no_expiry.id]);
     }
 
     /// Regression test for issue #11429: items with `total > 0, available = 0`
