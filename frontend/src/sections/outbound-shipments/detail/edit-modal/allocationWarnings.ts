@@ -72,12 +72,15 @@ export const issueWarningMessages = (
 ): IssueWarningMessage[] =>
   derived.flatMap((warning): IssueWarningMessage[] => {
     switch (warning.kind) {
+      // In the entry lens, like the shortfall below — the old app's
+      // getAllocatedQuantity: 101 doses entered reads "110 rather than 101",
+      // not the vials behind them (#2067).
       case 'over-allocated':
         return [
           {
             key: 'messages.over-allocated',
-            quantity: requestedUnits + warning.units,
-            issueQuantity: requestedUnits,
+            quantity: unitsToLens(requestedUnits + warning.units, lens),
+            issueQuantity: unitsToLens(requestedUnits, lens),
           },
         ];
       case 'skipped-barred':

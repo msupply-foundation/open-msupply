@@ -13,7 +13,7 @@ import {
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, tPlural } from '../../../../intl';
-import { roundedText } from '../../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
 import {
@@ -77,6 +77,8 @@ import { mirroredIssueValue, roundedLensValue } from './issueMirror';
 import {
   availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
+  availableDoses as sumAvailableDoses,
+  issuedDoses as sumIssuedDoses,
   distinctPackSizes as packSizesIn,
   autoAllocateBarReasons,
   barReasons,
@@ -88,6 +90,7 @@ import {
   distributeIssue,
   fillOrderCompare,
   lensToUnits,
+  unitsToLens,
   packsToDoses,
   dosesToPacks,
   type AllocateUnit,
@@ -921,6 +924,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Per-batch doses ⇔ packs uses the LINE's own pack size / doses-per-unit (a
   // variant may override the item's), so the grid converts row by row via the
   // shared domain helpers (packsToDoses / dosesToPacks).
+  const packsInLens = (line: DraftLine, packs: number) =>
+    dosesView() ? packsToDoses(packs, line.packSize, line.dosesPerUnit) : packs;
+  const inStoreFigure = (line: DraftLine) =>
+    packsInLens(line, line.inStorePacks);
+  const availableFigure = (line: DraftLine) =>
+    line.stockLineOnHold || line.location?.onHold
+      ? 0
+      : packsInLens(line, line.availablePacks);
 
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
@@ -1516,46 +1527,36 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       : []),
     {
       // In-store stock — re-expressed in doses under the doses lens (old-app
-      // parity). Static per row, so an accessor is safe: a lens flip rebuilds
-      // the whole column set (columns() reads the lens), unlike the in-place
-      // per-batch edits the canAllocate note covers.
-      c: {
-        accessor: line =>
-          dosesView()
-            ? packsToDoses(line.inStorePacks, line.packSize, line.dosesPerUnit)
-            : line.inStorePacks,
-        id: 'inStorePacks',
-      },
+      // parity). The cell reads the row, not info.getValue(): TanStack caches
+      // each row's accessor value by column id for as long as the row model
+      // lives, and a lens flip rebuilds the columns but not the rows — so a
+      // cached value would keep the previous lens's figure under the new
+      // header (#2067).
+      c: { accessor: inStoreFigure, id: 'inStorePacks' },
       header: () =>
         dosesView() ? t('label.in-store-doses') : t('label.in-store'),
       cardGroup: 'batch',
       ...getNumberCell(),
+      cell: info => (
+        <Num value={displayNumber(inStoreFigure(info.row.original))} />
+      ),
       // No CELL_DEF key — "In store (doses)" is the binding constraint.
       size: remToPx(7),
     },
     {
       // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
       // (old-app parity: nothing here may be issued); doses under the doses
-      // lens.
-      c: {
-        accessor: line => {
-          if (line.stockLineOnHold || line.location?.onHold) return 0;
-          return dosesView()
-            ? packsToDoses(
-                line.availablePacks,
-                line.packSize,
-                line.dosesPerUnit
-              )
-            : line.availablePacks;
-        },
-        id: 'availablePacks',
-      },
+      // lens. Read from the row for the reason In store is.
+      c: { accessor: availableFigure, id: 'availablePacks' },
       header: () =>
         dosesView()
           ? t('label.available-doses')
           : t('label.available-in-packs'),
       cardGroup: 'batch',
       ...getCellDefinition('availablePacks'),
+      cell: info => (
+        <Num value={displayNumber(availableFigure(info.row.original))} />
+      ),
     },
     {
       // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available —
@@ -1845,12 +1846,31 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           fallback={
             <Show when={item()}>
               <HStack gap="md">
+                {/* In doses under the doses lens (old-app parity — "Total
+                  doses"; #2067), in units under the units and packs lenses. */}
                 <span data-testid="outbound-unallocated-units">
-                  {t('label.unallocated')}: <Num value={placeholderUnits()} />
+                  {t('label.unallocated')}:{' '}
+                  <Num
+                    value={
+                      dosesView()
+                        ? unitsToLens(placeholderUnits(), allocateIn())
+                        : placeholderUnits()
+                    }
+                  />
                 </span>
                 <span data-testid="outbound-total-units">
-                  {t('label.total-units')}:{' '}
-                  <Num value={issuedUnits() + placeholderUnits()} />
+                  {dosesView()
+                    ? t('label.total-doses')
+                    : t('label.total-units')}
+                  :{' '}
+                  <Num
+                    value={
+                      dosesView()
+                        ? sumIssuedDoses(draft) +
+                          unitsToLens(placeholderUnits(), allocateIn())
+                        : issuedUnits() + placeholderUnits()
+                    }
+                  />
                 </span>
               </HStack>
             </Show>
@@ -2027,7 +2047,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     than a labelled input, and the row's end-alignment would
                     otherwise drop its label below theirs. */}
                   <span class={styles.availableValue}>
-                    <Num value={availableUnits()} /> {unitName()}
+                    {/* Under the doses lens: doses, with the units behind them
+                      (old-app parity — "Available: 99,968 doses (9,997
+                      vials)", whole numbers both; #2067). */}
+                    <Show
+                      when={dosesView()}
+                      fallback={
+                        <>
+                          <Num value={availableUnits()} /> {unitName()}
+                        </>
+                      }
+                    >
+                      {t('label.available-doses-with-units', {
+                        doseCount: roundedText(sumAvailableDoses(draft), 0),
+                        unitCount: roundedText(availableUnits(), 0),
+                        unitName: unitName(),
+                      })}
+                    </Show>
                   </span>
                 </LabelledValue>
               </div>
