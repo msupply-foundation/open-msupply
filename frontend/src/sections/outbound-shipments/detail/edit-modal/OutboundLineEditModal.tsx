@@ -90,7 +90,6 @@ import {
   distributeIssue,
   fillOrderCompare,
   lensToUnits,
-  unitsToLens,
   packsToDoses,
   dosesToPacks,
   type AllocateUnit,
@@ -443,6 +442,17 @@ const warningMessages = (
     }
   });
 
+// A distribution's warnings, held unresolved: the over-allocation and
+// shortfall figures read in the CURRENT lens, so a lens switch re-expresses
+// them in place (OMS-REG-SMV-11.45) — `switchLensTo` changes no allocation and
+// raises nothing new. Any other banner is already a resolved IssueBanner.
+type DistributionReport = {
+  derived: readonly IssueWarning[];
+  requestedUnits: number;
+  outcome: DistributionOutcome;
+};
+type WarningEntry = IssueBanner | DistributionReport;
+
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
     props.initialItem
@@ -503,7 +513,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // zero-pack lines, silently dropping that status change (spec S4 § save).
   const [vvmConfirm, setVvmConfirm] = createSignal(false);
   // Warnings raised by the last distribution (spec S4 § warnings).
-  const [warnings, setWarnings] = createSignal<IssueBanner[]>([]);
+  const [warnings, setWarnings] = createSignal<WarningEntry[]>([]);
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
@@ -933,6 +943,37 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ? 0
       : packsInLens(line, line.availablePacks);
 
+  // The placeholder and the requested total it falls short of, as the footer
+  // and the placeholder notice both read them: doses under the doses lens
+  // (old-app parity — "Total doses"; #2067), units under the units and packs
+  // lenses. One memo, so the two can't drift apart. The doses placeholder
+  // rounds as the Issue field does: 301 doses leaves 20.333333333 units,
+  // which would read back as 60.999999999 doses.
+  const placeholderFigures = createMemo(() => {
+    const placeholder = placeholderUnits();
+    if (!dosesView())
+      return { placeholder, total: issuedUnits() + placeholder };
+    const placeholderDoses = roundedLensValue(placeholder, allocateIn());
+    return {
+      placeholder: placeholderDoses,
+      total: sumIssuedDoses(draft) + placeholderDoses,
+    };
+  });
+
+  // The banners as shown: a distribution's report resolved in the current lens.
+  const banners = createMemo(() =>
+    warnings().flatMap(entry =>
+      'derived' in entry
+        ? warningMessages(
+            entry.derived,
+            entry.requestedUnits,
+            allocateIn(),
+            entry.outcome
+          )
+        : [entry]
+    )
+  );
+
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
   // bare second allocateIn() call is not narrowed).
@@ -988,14 +1029,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // (OMS-REG-SMV-11.7/.11). While NEW the shortfall is surfaced separately as
     // the placeholder notice; past NEW it has no placeholder to land in, so it
     // is reported here instead (OMS-REG-SMV-11.13).
-    setWarnings(
-      warningMessages(
-        deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
-        units,
-        lens,
-        distributionOutcome(result, allocationPrefs())
-      )
-    );
+    setWarnings([
+      {
+        derived: deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
+        requestedUnits: units,
+        outcome: distributionOutcome(result, allocationPrefs()),
+      },
+    ]);
     setDirty(true);
     // The allocation just changed — any earlier zero-allocation / unsaved-VVM
     // confirmation no longer applies (spec S4 § save; it must be re-earned
@@ -1846,31 +1886,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           fallback={
             <Show when={item()}>
               <HStack gap="md">
-                {/* In doses under the doses lens (old-app parity — "Total
-                  doses"; #2067), in units under the units and packs lenses. */}
+                {/* In doses under the doses lens, units otherwise — see
+                  placeholderFigures. */}
                 <span data-testid="outbound-unallocated-units">
                   {t('label.unallocated')}:{' '}
-                  <Num
-                    value={
-                      dosesView()
-                        ? unitsToLens(placeholderUnits(), allocateIn())
-                        : placeholderUnits()
-                    }
-                  />
+                  <Num value={placeholderFigures().placeholder} />
                 </span>
                 <span data-testid="outbound-total-units">
                   {dosesView()
                     ? t('label.total-doses')
                     : t('label.total-units')}
-                  :{' '}
-                  <Num
-                    value={
-                      dosesView()
-                        ? sumIssuedDoses(draft) +
-                          unitsToLens(placeholderUnits(), allocateIn())
-                        : issuedUnits() + placeholderUnits()
-                    }
-                  />
+                  : <Num value={placeholderFigures().total} />
                 </span>
               </HStack>
             </Show>
@@ -2206,15 +2232,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {/* The shortfall that became a placeholder — a consequence of the
                 Issue entry, so it reads with the batches it failed to fill,
                 not up in the header row where it reflowed the inputs as the
-                user typed. */}
+                user typed. In the footer's figures, doses under the doses
+                lens (old-app parity). */}
             <Show when={placeholderUnits() > 0}>
               <Alert severity="info" testId="outbound-placeholder-notice">
-                {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: roundedText(
-                    issuedUnits() + placeholderUnits()
-                  ),
-                  placeholderQuantity: roundedText(placeholderUnits()),
-                })}
+                {t(
+                  dosesView()
+                    ? 'messages.placeholder-allocated-doses'
+                    : 'messages.placeholder-allocated-units',
+                  {
+                    requestedQuantity: roundedText(placeholderFigures().total),
+                    placeholderQuantity: roundedText(
+                      placeholderFigures().placeholder
+                    ),
+                  }
+                )}
               </Alert>
             </Show>
 
@@ -2239,7 +2271,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             </Show>
 
             {/* Stacked warning banners (spec S4 § warnings). */}
-            <For each={warnings()}>
+            <For each={banners()}>
               {banner => (
                 <Alert severity={banner.severity} testId={banner.testId}>
                   {banner.message}

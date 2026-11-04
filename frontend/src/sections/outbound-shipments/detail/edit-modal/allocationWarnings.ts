@@ -7,6 +7,7 @@ import {
   type ExpiredSkipReport,
   type IssueWarning,
 } from '../../../../domain/allocation';
+import { roundedLensValue } from './issueMirror';
 
 // The line editor's inline banners, as message descriptors the editor
 // resolves via t()/formatNumber (spec/stock-allocation § reporting,
@@ -74,13 +75,14 @@ export const issueWarningMessages = (
     switch (warning.kind) {
       // In the entry lens, like the shortfall below — the old app's
       // getAllocatedQuantity: 101 doses entered reads "110 rather than 101",
-      // not the vials behind them (#2067).
+      // not the vials behind them (#2067). The request reads as the Issue field
+      // shows it: 182 doses round-trips through units as 182.000000001.
       case 'over-allocated':
         return [
           {
             key: 'messages.over-allocated',
             quantity: unitsToLens(requestedUnits + warning.units, lens),
-            issueQuantity: unitsToLens(requestedUnits, lens),
+            issueQuantity: roundedLensValue(requestedUnits, lens),
           },
         ];
       case 'skipped-barred':

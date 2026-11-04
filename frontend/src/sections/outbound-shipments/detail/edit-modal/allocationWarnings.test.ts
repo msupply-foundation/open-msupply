@@ -41,6 +41,25 @@ describe('issueWarningMessages (OMS-REG-SMV-11.7/.11/.13)', () => {
     ]);
   });
 
+  it('reads the request as the Issue field shows it, without the round trip’s float dust', () => {
+    // 182 doses at 3 doses/unit = 60.666666667 units, which × 3 is
+    // 182.000000001; the allocation rounds up to 61 units = 183 doses.
+    const requested = 60.666666667;
+    const derived: IssueWarning[] = [
+      { kind: 'over-allocated', units: 61 - requested },
+    ];
+    expect(
+      issueWarningMessages(
+        derived,
+        requested,
+        { kind: 'doses', dosesPerUnit: 3 },
+        short
+      )
+    ).toEqual([
+      { key: 'messages.over-allocated', quantity: 183, issueQuantity: 182 },
+    ]);
+  });
+
   it('reports each skipped category as its own sentence, on hold left to its badge (OMS-REG-SMV-11.7, #1168)', () => {
     const derived: IssueWarning[] = [
       {
