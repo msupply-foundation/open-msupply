@@ -14,18 +14,11 @@ source = "docs"
 
 **Feature documentation should be done by the team that implemented the feature. Please also update the [Introduction](https://docs.msupply.foundation/docs/introduction/introduction/) and [Permissions](https://docs.msupply.foundation/docs/administration/permissions/) pages if needed.**
 
-Any Pull Request (PR) that has changes to the functionality or User Interface (UI) needs to be labelled with `docs: external` and the `Documentation` part of the PR needs to be filled out. You do not have to write up the whole documentation here, just a couple of bullet points or screenshots to indicate what has been changed / how it should work.
+Any Pull Request (PR) that has changes to the functionality or User Interface (UI) needs to be labelled with `docs: external`.
 
 Any updates to the public docs should be done in a PR branched off the current `staging` branch in the [mSupply_docs](https://github.com/msupply-foundation/msupply_docs) repository and will be merged on release cycle's PR merged date.
 
-Example:
-
-```
-## 📃 Documentation
-<!-- Note down any areas which require documentation updates -->
-
-- [ ] New `issued` column in `Requisitions` indicates stock quantity already in shipments
-```
+Open the docs PR as a draft alongside your PR, with a link to your PR in its description. `pr-review` (and the automated review) flags a change users can see that has no docs PR, and `/update-user-docs` drafts one following this page.
 
 ### Documentation Standards
 
