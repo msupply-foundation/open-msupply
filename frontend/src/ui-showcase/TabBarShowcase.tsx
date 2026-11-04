@@ -1,4 +1,4 @@
-import { For, createSignal } from 'solid-js';
+import { For, createMemo, createSignal } from 'solid-js';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
@@ -93,12 +93,15 @@ const StepTabsDemo = () => {
   const [openTab, setOpenTab] = createSignal('plan');
 
   const statusDef = () => TENDER_STATUSES.find(s => s.value === status())!;
-  const tabs = () => {
+  // Built once per status or flag change, not on every read. The panels below
+  // come from the fixed tab list, so a change of marks never remounts them
+  // (kdd/solid-reactivity-pitfalls, No remounts on interaction).
+  const tabs = createMemo(() => {
     const notes: Record<string, string> =
       status() === 'planning' ? { ...PLANNING_NOTES } : {};
     if (flagSource()) notes.source = 'Incoterm not filled in';
     return tenderTabs(statusDef().current, notes);
-  };
+  });
 
   return (
     <>
@@ -131,7 +134,7 @@ const StepTabsDemo = () => {
             <TabList tabs={tabs()} />
           </Header>
           <div class={styles.panelBody}>
-            <For each={tabs()}>
+            <For each={PLAIN_TENDER_TABS}>
               {tab => (
                 <TabPanel value={tab.value}>
                   <p class={styles.panelText}>

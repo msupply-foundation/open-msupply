@@ -2,7 +2,6 @@ import {
   For,
   Show,
   createEffect,
-  createMemo,
   createSignal,
   on,
   onCleanup,
@@ -11,7 +10,8 @@ import {
 } from 'solid-js';
 import * as KTabs from '@kobalte/core/tabs';
 import { AlertTriangleIcon, CheckIcon } from '../../icons';
-import { stepTabName, type StepMark } from './stepTabName';
+import type { StepMark } from './stepTabName';
+import { createTabViews } from './tabViews';
 import styles from './Tabs.module.css';
 
 export type { StepMark } from './stepTabName';
@@ -128,21 +128,7 @@ export const TabList = (props: {
   let listEl: HTMLDivElement | undefined;
   const [pos, setPos] = createSignal<{ left: number; width: number }>();
 
-  // The strip is keyed by tab value, not TabDef object: a consumer that
-  // rebuilds its tabs as a record's marks change keeps the same triggers, so
-  // a focused tab is never thrown away (kdd/solid-reactivity-pitfalls, No
-  // remounts on interaction). Strings compare by value, so <For> keeps each
-  // value's trigger and only the defs behind them change.
-  const values = createMemo(() => props.tabs.map(tab => tab.value));
-  const byValue = createMemo(
-    () => new Map(props.tabs.map((tab, index) => [tab.value, { tab, index }]))
-  );
-  const stepNumbers = createMemo(() => {
-    const numbers = new Map<string, number>();
-    for (const tab of props.tabs)
-      if (tab.step) numbers.set(tab.value, numbers.size + 1);
-    return numbers;
-  });
+  const { values, view } = createTabViews(() => props.tabs);
 
   // Query the DOM rather than trusting context.selectedTab(): if the tabs
   // array is swapped the context can briefly hold a detached element.
@@ -197,17 +183,17 @@ export const TabList = (props: {
     >
       <For each={values()}>
         {value => {
-          const entry = () => byValue().get(value)!;
-          const tab = () => entry().tab;
-          const previous = () => props.tabs[entry().index - 1];
+          const tab = () => view(value).tab;
           return (
             <>
-              <Show when={tab().step && previous()?.step}>
-                <span
-                  class={styles.connector}
-                  data-reached={tab().step!.mark !== 'notStarted' || undefined}
-                  aria-hidden="true"
-                />
+              <Show when={view(value).connector}>
+                {connector => (
+                  <span
+                    class={styles.connector}
+                    data-reached={connector().reached || undefined}
+                    aria-hidden="true"
+                  />
+                )}
               </Show>
               <KTabs.Trigger
                 value={value}
@@ -220,24 +206,10 @@ export const TabList = (props: {
                   tab().testId ??
                   `tab-${value.toLowerCase().replace(/\s+/g, '-')}`
                 }
-                data-step-mark={
-                  tab().step?.mark === 'notStarted'
-                    ? 'not-started'
-                    : tab().step?.mark
-                }
+                data-step-mark={view(value).stepMark}
                 data-attention={tab().step?.attention ? '' : undefined}
-                aria-current={
-                  tab().step?.mark === 'current' ? 'step' : undefined
-                }
-                aria-label={
-                  tab().step
-                    ? stepTabName(
-                        tab().label,
-                        tab().step!.mark,
-                        tab().step!.attention
-                      )
-                    : undefined
-                }
+                aria-current={view(value).ariaCurrent}
+                aria-label={view(value).ariaLabel}
               >
                 <Show when={tab().step} fallback={tab().label}>
                   {step => (
@@ -249,7 +221,7 @@ export const TabList = (props: {
                       >
                         <Show
                           when={step().mark === 'done'}
-                          fallback={stepNumbers().get(value)}
+                          fallback={view(value).number}
                         >
                           <CheckIcon />
                         </Show>
