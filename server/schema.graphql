@@ -8249,7 +8249,11 @@ type Queries {
 		"""
 		Sort options (only first sort input is evaluated for this endpoint)
 		"""
-		sort: [StockLineSortInput!]
+		sort: [StockLineSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): StockLinesResponse!
 	"""
 	Query for items that have at least one stock_line matching `filter`
@@ -8271,7 +8275,11 @@ type Queries {
 		"""
 		Item-level sort (only first sort input is evaluated)
 		"""
-		sort: [ItemSortInput!]
+		sort: [ItemSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): ItemsResponse!
 	"""
 	Query for "historical_stock_line" entries
@@ -9582,6 +9590,11 @@ input StockLineFilterInput {
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
 	onHold: Boolean
+	"""
+	true: expiry date on or before today. false: expiry date after today, or no expiry date.
+	Today is in the query's `timezoneOffset`, or the server's timezone without one
+	"""
+	isExpired: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
