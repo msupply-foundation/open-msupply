@@ -1520,12 +1520,6 @@ use super::partition::tests::{
     hold_open_transaction, reset_to_one_partition, reset_to_two_partitions, run_with_timeout,
 };
 
-/// Windowed changelog dedup (postgres-only). Verifies:
-/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
-/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
-/// - the second run dedups the new window AND removes the old-part leftover of a record
-///   that reappears, from a partition the window does not cover;
-/// - the dead-set table is dropped afterwards.
 /// Insert a single changelog row with an explicit cursor (table is always Invoice).
 #[cfg(feature = "postgres")]
 fn dedup_test_insert(
@@ -1638,6 +1632,12 @@ fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> boo
     result.present
 }
 
+/// Windowed changelog dedup (postgres-only). Verifies:
+/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
+/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
+/// - the second run dedups the new window AND removes the old-part leftover of a record
+///   that reappears, from a partition the window does not cover;
+/// - the dead-set table is dropped afterwards.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
 async fn test_changelog_dedup_windowed() {
