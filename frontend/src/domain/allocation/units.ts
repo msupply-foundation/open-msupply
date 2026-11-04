@@ -126,8 +126,9 @@ export const availableUnits = (
 export const issuedUnits = (batches: readonly UnitCountableBatch[]): number =>
   batches.reduce((sum, line) => sum + line.numberOfPacks * line.packSize, 0);
 
-/** A batch the dose sums can read — its own doses per unit (a variant may
- * override the item's). */
+/** A batch the dose sums can read, carrying its doses per unit. The server
+ * sends the item's rate on every line (item variants lost their own in
+ * v2.9), so all batches of an item share it today. */
 export interface DoseCountableBatch extends UnitCountableBatch {
   dosesPerUnit: number;
 }
