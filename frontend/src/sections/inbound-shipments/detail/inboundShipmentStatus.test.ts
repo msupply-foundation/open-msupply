@@ -118,20 +118,26 @@ describe('kindBannerKey', () => {
     }
   });
 
-  it('adds the no-edit sentence to a transfer only while the sender holds it', () => {
-    const transfer = (status: string) =>
-      kindBannerKey({
-        inboundType: 'MANUAL_INTERNAL',
-        linkedShipment: { id: 'outbound-1' },
-        status,
-      });
-    for (const status of ['NEW', 'PICKED', 'SHIPPED']) {
-      expect(transfer(status)).toBe('messages.inbound-automatic-info');
-    }
-    for (const status of ['DELIVERED', 'RECEIVED', 'VERIFIED']) {
-      expect(transfer(status)).toBe('info.automatic-shipment');
-    }
-  });
+  // FROM_REQUISITION is how the usual transfer (internal order → requisition →
+  // outbound shipment) arrives: the server reads requisition_id first when it
+  // sets inboundType.
+  for (const inboundType of ['MANUAL_INTERNAL', 'FROM_REQUISITION'] as const) {
+    it(`adds the no-edit sentence to a ${inboundType} transfer only at Picked and Shipped`, () => {
+      const transfer = (status: string) =>
+        kindBannerKey({
+          inboundType,
+          linkedShipment: { id: 'outbound-1' },
+          status,
+        });
+      for (const status of ['PICKED', 'SHIPPED']) {
+        expect(transfer(status)).toBe('messages.inbound-automatic-info');
+      }
+      // New is editable, so it doesn't claim a lock.
+      for (const status of ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED']) {
+        expect(transfer(status)).toBe('info.automatic-shipment');
+      }
+    });
+  }
 });
 
 // .10/.11: Picked and Shipped appear only where they are reachable — and .12:

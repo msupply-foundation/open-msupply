@@ -74,8 +74,10 @@ export const hasSourceLink = (
 //     editable, and the header already links its PO, so neither message fits:
 //     the transfer copy told the user another store made it and that they
 //     could not edit it.
-//   transfer — says the sending store created it, plus, while the sender still
-//     holds it (before Delivered), that details can't be edited until then.
+//   transfer — says the sending store created it, plus, at Picked or Shipped,
+//     that details can't be edited until Delivered. Those are exactly the
+//     transfer statuses EDITABLE below leaves out before Delivered, so the
+//     sentence never claims a lock the screen doesn't apply (New is editable).
 export const kindBannerKey = (info: {
   inboundType: InboundInfoFragment['inboundType'];
   linkedShipment?: { id: string } | null;
@@ -87,13 +89,13 @@ export const kindBannerKey = (info: {
     case 'purchaseOrder':
       return undefined;
     case 'transfer':
-      return SENDER_HELD.includes(info.status as InboundStatus)
+      return AWAITING_DELIVERY.includes(info.status as InboundStatus)
         ? 'messages.inbound-automatic-info'
         : 'info.automatic-shipment';
   }
 };
 
-const SENDER_HELD: InboundStatus[] = ['NEW', 'PICKED', 'SHIPPED'];
+const AWAITING_DELIVERY: InboundStatus[] = ['PICKED', 'SHIPPED'];
 
 const FLOWS: Record<SourceLink, InboundStatus[]> = {
   none: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
