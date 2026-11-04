@@ -4,8 +4,11 @@ import { defineConfig } from 'vitest/config';
 // as UTC midnight shows the day BEFORE west of Greenwich and nothing at all
 // east of it, so a suite run in New Zealand or Timor-Leste would pass with the
 // bug in place (#1500). Set here, before the test workers start, so they all
-// inherit it; a `TZ` already in the environment wins, which is how CI also runs
-// the suite east of UTC. An empty `TZ` counts as unset: Node reads it as UTC.
+// inherit it; a `TZ` already in the environment wins. East of UTC the same
+// mistakes show differently (a day saved as the UTC day of local midnight lands
+// on the day before), so after changing date code also run
+// `TZ=Pacific/Auckland pnpm test`. An empty `TZ` counts as unset: Node reads
+// it as UTC.
 process.env.TZ ||= 'America/Los_Angeles';
 
 // Unit tests (intl, codegen helpers) run in node. The deterministic e2e
