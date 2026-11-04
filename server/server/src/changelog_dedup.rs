@@ -1,5 +1,4 @@
 use chrono::Local;
-use repository::is_lock_timeout;
 use service::{
     service_provider::ServiceProvider, settings::ChangelogDedupSettings, sync::CentralServerConfig,
 };
@@ -54,9 +53,6 @@ pub fn spawn(
                     if removed > 0 {
                         log::info!("changelog dedup task removed {removed} duplicate row(s)")
                     }
-                }
-                Ok(Err(e)) if is_lock_timeout(&e) => {
-                    log::warn!("changelog dedup task: lock timeout; will retry next tick")
                 }
                 Ok(Err(e)) => log::error!("changelog dedup task: {e:?}"),
                 Err(e) => log::error!("changelog dedup task: join error: {e:?}"),

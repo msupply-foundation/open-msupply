@@ -4,23 +4,15 @@
 //! Dedup keeps only the newest row per (table_name, record_id, row_action) group
 //! and deletes the rest.
 //!
-//! The `CREATE INDEX CONCURRENTLY` and `DROP INDEX CONCURRENTLY` statements
-//! run under a `lock_timeout`.
+//! No index or other DDL on `changelog`: a run only reads it and deletes in
+//! batches, so it never takes a lock that conflicts with an integration's inserts.
 //!
 //! These helpers MUST be called outside a `transaction_sync` (each statement
-//! autocommits): Postgres refuses `CONCURRENTLY` inside a transaction, and the
-//! per-batch deletes commit independently.
+//! autocommits): the per-batch deletes commit independently.
 
-use super::partition::{is_lock_timeout, range_partitions};
-use crate::{ChangelogRepository, RepositoryError, StorageConnection};
-use diesel::{
-    prelude::*,
-    sql_types::{BigInt, Text},
-};
+use crate::{ChangelogRepository, RepositoryError};
+use diesel::{prelude::*, sql_types::BigInt};
 use std::time::Instant;
-
-/// Waiting on a concurrent build or drop blocks nobody.
-const CONCURRENT_LOCK_TIMEOUT: &str = "5s";
 
 impl<'a> ChangelogRepository<'a> {
     /// Build `changelog_dead` — the set of cursors to delete — for the window
@@ -34,32 +26,20 @@ impl<'a> ChangelogRepository<'a> {
         }
         log::info!("changelog dedup: prepare_dead_set window ({marker}, {max}]");
 
-        // One `CREATE INDEX CONCURRENTLY` per range partition overlapping the
-        // window; never the DEFAULT partition, which the partition top-up locks.
-        // `IF NOT EXISTS` reuses an index a previous run left behind, and skips
-        // an INVALID one from an interrupted build (that partition is scanned
-        // this run).
-        self.with_lock_timeout(CONCURRENT_LOCK_TIMEOUT, |connection| {
-            for partition in range_partitions(connection)?
-                .into_iter()
-                // Partition holds `lower..upper`; the window holds `marker + 1..=max`.
-                .filter(|p| p.lower <= max && p.upper > marker + 1)
-            {
-                diesel::sql_query(format!(
-                    "CREATE INDEX CONCURRENTLY IF NOT EXISTS index_changelog_dedup_{0} ON {0} \
-                     (table_name, record_id, row_action, cursor DESC)",
-                    partition.name
-                ))
-                .execute(connection.lock().connection())?;
-            }
-            Ok(())
-        })?;
-
         // Fresh dead-set table each run (drop any leftover from an aborted run).
         diesel::sql_query("DROP TABLE IF EXISTS changelog_dead")
             .execute(self.connection.lock().connection())?;
 
+        // Both steps in one `CREATE TABLE AS`: Postgres can run it with parallel
+        // workers, which it never does for `INSERT … SELECT`.
+        //
         // Step 1: within the window, every row that is not the newest of its group.
+        //
+        // Step 2: handle records that reappear across the marker.
+        // Step 1 only looks inside the window, so it can't see a record's older row
+        // that lives below the marker (kept by a previous run). If such a record gets
+        // a new row in this window, that old row is now stale. So: for every group
+        // touched in the window, also mark its rows at/below the marker as dead.
         let t = Instant::now();
         diesel::sql_query(
             "CREATE TABLE changelog_dead AS \
@@ -69,24 +49,8 @@ impl<'a> ChangelogRepository<'a> {
                  ) AS rn \
                  FROM changelog \
                  WHERE cursor > $1 AND cursor <= $2 \
-             ) s WHERE rn > 1",
-        )
-        .bind::<BigInt, _>(marker)
-        .bind::<BigInt, _>(max)
-        .execute(self.connection.lock().connection())?;
-        log::info!(
-            "changelog dedup: step 1 (build dead-set) in {:?}",
-            t.elapsed()
-        );
-
-        // Step 2: handle records that reappear across the marker.
-        // Step 1 only looks inside the window, so it can't see a record's older row
-        // that lives below the marker (kept by a previous run). If such a record gets
-        // a new row in this window, that old row is now stale. So: for every group
-        // touched in the window, also mark its rows at/below the marker as dead.
-        let t = Instant::now();
-        diesel::sql_query(
-            "INSERT INTO changelog_dead \
+             ) s WHERE rn > 1 \
+             UNION ALL \
              SELECT old.cursor FROM changelog old \
              JOIN ( \
                  SELECT DISTINCT table_name, record_id, row_action \
@@ -98,7 +62,7 @@ impl<'a> ChangelogRepository<'a> {
         .bind::<BigInt, _>(max)
         .execute(self.connection.lock().connection())?;
         log::info!(
-            "changelog dedup: step 2 (old-part leftovers) in {:?}",
+            "changelog dedup: steps 1 and 2 (build dead-set) in {:?}",
             t.elapsed()
         );
 
@@ -147,54 +111,14 @@ impl<'a> ChangelogRepository<'a> {
         Ok(n as u64)
     }
 
-    /// Drop the dead-set table, then every helper index (found by name, so an
-    /// interrupted run's leftovers go too) with one `DROP INDEX CONCURRENTLY`
-    /// each. A lock timeout leaves the rest for the next run.
+    /// Drop the dead-set table after a run (idempotent via IF EXISTS for crash
+    /// recovery).
     pub fn finish_dead_set(&self) -> Result<(), RepositoryError> {
         if !cfg!(feature = "postgres") {
             return Ok(());
         }
         diesel::sql_query("DROP TABLE IF EXISTS changelog_dead")
             .execute(self.connection.lock().connection())?;
-        let dropped = self.with_lock_timeout(CONCURRENT_LOCK_TIMEOUT, |connection| {
-            #[derive(QueryableByName)]
-            struct Index {
-                #[diesel(sql_type = Text)]
-                name: String,
-            }
-            // Every helper index, valid or not.
-            let indexes = diesel::sql_query(
-                "SELECT relname AS name FROM pg_class \
-                 WHERE relkind = 'i' AND relname ~ '^index_changelog_dedup_changelog_p_[0-9]+$'",
-            )
-            .get_results::<Index>(connection.lock().connection())?;
-            for index in indexes {
-                diesel::sql_query(format!("DROP INDEX CONCURRENTLY IF EXISTS {}", index.name))
-                    .execute(connection.lock().connection())?;
-            }
-            Ok(())
-        });
-        match dropped {
-            Err(error) if !is_lock_timeout(&error) => Err(error),
-            _ => Ok(()),
-        }
-    }
-
-    /// Run `work` with the session's `lock_timeout` set, resetting it on every
-    /// exit path so the pooled connection goes back clean (`SET LOCAL` needs a
-    /// transaction, which `CONCURRENTLY` refuses).
-    fn with_lock_timeout<T>(
-        &self,
-        timeout: &str,
-        work: impl FnOnce(&StorageConnection) -> Result<T, RepositoryError>,
-    ) -> Result<T, RepositoryError> {
-        diesel::sql_query(format!("SET lock_timeout = '{timeout}'"))
-            .execute(self.connection.lock().connection())?;
-        let result = work(self.connection);
-        let reset =
-            diesel::sql_query("RESET lock_timeout").execute(self.connection.lock().connection());
-        let value = result?;
-        reset?;
-        Ok(value)
+        Ok(())
     }
 }

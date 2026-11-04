@@ -209,42 +209,30 @@ fn set_default_lock_timeout(connection: &StorageConnection) -> Result<(), Reposi
 /// expose the SQLSTATE, only the message, so this matches the text. A server
 /// with a non-English `lc_messages` would report the timeout as a plain error
 /// instead of `LockedOut`; the loop still retries next tick either way.
-pub fn is_lock_timeout(error: &RepositoryError) -> bool {
+fn is_lock_timeout(error: &RepositoryError) -> bool {
     match error {
         RepositoryError::DBError { extra, .. } => extra.contains("lock timeout"),
         _ => false,
     }
 }
 
-/// A range partition of `changelog`: `changelog_p_<lower>` holds the cursors
-/// `lower..upper`.
-pub(super) struct RangePartition {
-    pub name: String,
-    pub lower: i64,
-    pub upper: i64,
-}
-
-/// Every range partition of `changelog`, unordered; the DEFAULT has no bounds
-/// and is left out. Empty if `changelog` isn't partitioned. Each partition's
-/// bound expression is `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull
-/// every expression then parse the numbers in Rust.
+/// Returns the highest cursor upper bound across `changelog`'s partitions, or
+/// 0 if `changelog` isn't partitioned. Each partition's bound expression is
+/// `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull every expression then
+/// parse the `TO ('<upper>')` value in Rust.
 ///
-/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`). Callers guard the
-/// postgres feature.
-pub(super) fn range_partitions(
-    connection: &StorageConnection,
-) -> Result<Vec<RangePartition>, RepositoryError> {
+/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`). Only ever reached
+/// via `ensure_partition_lookahead`, which guards the postgres feature.
+fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, RepositoryError> {
     #[derive(QueryableByName)]
     struct BoundExpr {
-        #[diesel(sql_type = Text)]
-        name: String,
         #[diesel(sql_type = Text)]
         bound: String,
     }
 
     let bounds: Vec<BoundExpr> = diesel::sql_query(
         r#"
-        SELECT c.relname AS name, pg_get_expr(c.relpartbound, c.oid) AS bound
+        SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
         FROM pg_inherits i
         JOIN pg_class c ON c.oid = i.inhrelid
         WHERE i.inhparent = 'changelog'::regclass
@@ -252,27 +240,13 @@ pub(super) fn range_partitions(
     )
     .get_results(connection.lock().connection())?;
 
-    Ok(bounds
+    let max_upper = bounds
         .into_iter()
-        .filter_map(|b| {
-            let (lower, upper) = parse_bounds(&b.bound)?;
-            Some(RangePartition {
-                name: b.name,
-                lower,
-                upper,
-            })
-        })
-        .collect())
-}
-
-/// Returns the highest cursor upper bound across `changelog`'s partitions, or
-/// 0 if `changelog` isn't partitioned.
-fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, RepositoryError> {
-    Ok(range_partitions(connection)?
-        .into_iter()
-        .map(|partition| partition.upper)
+        .filter_map(|b| parse_upper_bound(&b.bound))
         .max()
-        .unwrap_or(0))
+        .unwrap_or(0);
+
+    Ok(max_upper)
 }
 
 #[derive(QueryableByName)]
@@ -294,24 +268,20 @@ fn default_partition_stats(
     Ok(stats)
 }
 
-/// Extract `(lower, upper)` from a partition bound expression of the shape
+/// Extract the upper bound `N` from a partition bound expression of the shape
 /// `FOR VALUES FROM ('<lower>') TO ('<upper>')`. Returns `None` if the input
-/// doesn't match or a number doesn't parse (including the `DEFAULT` bound).
-fn parse_bounds(expr: &str) -> Option<(i64, i64)> {
-    let (_, after_from) = expr.split_once("FROM (")?;
-    let (lower, after_lower) = after_from.split_once(')')?;
-    let (_, after_to) = after_lower.split_once("TO (")?;
-    let (upper, _) = after_to.split_once(')')?;
-    let parse = |number: &str| number.trim().trim_matches('\'').parse().ok();
-    Some((parse(lower)?, parse(upper)?))
+/// doesn't match or the number doesn't parse (including the `DEFAULT` bound).
+fn parse_upper_bound(expr: &str) -> Option<i64> {
+    let (_, after_to) = expr.rsplit_once("TO (")?;
+    let (number, _) = after_to.split_once(')')?;
+    number.trim().trim_matches('\'').parse().ok()
 }
 
-/// The helpers here are shared with the dedup tests.
 #[cfg(all(test, feature = "postgres"))]
 pub(super) mod tests {
     use super::{
         DEFAULT_PARTITION, PartitionTopUp, attach_range_partition,
-        create_standalone_partition_table, ensure_partition_lookahead, parse_bounds,
+        create_standalone_partition_table, ensure_partition_lookahead, parse_upper_bound,
     };
     use crate::{
         ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, StorageConnection,
@@ -344,9 +314,12 @@ pub(super) mod tests {
     /// partitioned `changelog` so we're testing it against the exact string
     /// shape Postgres emits, not what we *think* it emits.
     #[actix_rt::test]
-    async fn parse_bounds_extracts_numbers_from_pg_expr() {
-        let (_, connection, _, _) =
-            test_db::setup_all("parse_bounds_extracts_from_pg", MockDataInserts::none()).await;
+    async fn parse_upper_bound_extracts_number_from_pg_expr() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "parse_upper_bound_extracts_from_pg",
+            MockDataInserts::none(),
+        )
+        .await;
 
         reset_to_tight_partition_layout(&connection);
 
@@ -356,7 +329,7 @@ pub(super) mod tests {
             bound: String,
         }
 
-        let mut bounds: Vec<(i64, i64)> = diesel::sql_query(
+        let mut upper_bounds: Vec<i64> = diesel::sql_query(
             r#"
             SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
             FROM pg_inherits i
@@ -367,16 +340,16 @@ pub(super) mod tests {
         .get_results::<BoundExpr>(connection.lock().connection())
         .unwrap()
         .into_iter()
-        .filter_map(|b| parse_bounds(&b.bound))
+        .filter_map(|b| parse_upper_bound(&b.bound))
         .collect();
-        bounds.sort();
+        upper_bounds.sort();
 
-        // Tight layout = [1,3) and [3,5).
-        assert_eq!(bounds, vec![(1, 3), (3, 5)]);
+        // Tight layout = [1,3) and [3,5) → upper bounds 3 and 5.
+        assert_eq!(upper_bounds, vec![3, 5]);
 
         // Defensive cases — inputs the parser must reject without panicking.
-        assert_eq!(parse_bounds("DEFAULT"), None);
-        assert_eq!(parse_bounds(""), None);
+        assert_eq!(parse_upper_bound("DEFAULT"), None);
+        assert_eq!(parse_upper_bound(""), None);
     }
 
     /// 4 pre-seeded rows (cursors 1..=4) on a starting layout of two
@@ -1018,11 +991,6 @@ pub(super) mod tests {
     /// the DEFAULT.
     pub(crate) fn reset_to_two_partitions(connection: &StorageConnection) {
         reset_partition_layout(connection, &[(1, 5), (5, 9)]);
-    }
-
-    /// The two-partition layout plus an empty changelog_p_9 for cursors 9-12.
-    pub(crate) fn reset_to_three_partitions(connection: &StorageConnection) {
-        reset_partition_layout(connection, &[(1, 5), (5, 9), (9, 13)]);
     }
 
     /// Range partitions only; the DEFAULT is always present in the tight layout.
