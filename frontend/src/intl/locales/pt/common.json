@@ -2236,6 +2236,7 @@
   "messages.could-not-save": "Não foi possível salvar",
   "messages.create-new-asset-confirmation": "O ativo que escaneaste não está atualmente no sistema, mas a proporcionou dados GS1 adequados. Gostaria de criar um novo ativo com esses dados?",
   "messages.create-outbound-from-requisition": "Você tem certeza de que gostaria de criar um Envio a partir dessa requisição do beneficiário?",
+  "messages.create-patient-not-allowed": "Você não possui permissão para criar pacientes",
   "messages.created-clinician": "Clínico criado com sucesso",
   "messages.created-new-vaccine-course": "Esquema de vacinação criado com sucesso",
   "messages.currency-rate-info": "O número de unidades da moeda estrangeira (PO) por cada unidade da moeda local. Por exemplo, se a moeda local for o NZD e a moeda estrangeira for o USD, uma taxa de 0,6 significa que 1 NZD = 0,6 USD.",

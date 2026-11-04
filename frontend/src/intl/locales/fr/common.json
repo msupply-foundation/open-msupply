@@ -2966,6 +2966,7 @@
   "messages.create-asset-from-scan": "Rien dans le registre ne correspond à cette étiquette. Créer un nouvel équipement à partir de celle-ci ?",
   "messages.create-new-asset-confirmation": "L'équipement que vous avez scanné n'est pas actuellement dans le système, mais il a fourni les données GS1 appropriées. Souhaitez-vous créer un nouvel équipement avec ces données ?",
   "messages.create-outbound-from-requisition": "Êtes-vous sûr(e) de vouloir créer une livraison pour cette réquisition ?",
+  "messages.create-patient-not-allowed": "Création de patient impossible : vous n'avez pas la permission nécessaire",
   "messages.created-clinician": "Clinicien créé avec succès",
   "messages.created-new-vaccine-course": "Fiche vaccin créée avec succès",
   "messages.currency-rate-info": "Le taux exprime le quantité de monnaie étrangère pour une unité de monnaie locale. Par ex, si la monnaie locale est NZD et la monnaie de la commande d'achat est USD, le taux de 0,6 signifie 1 NZD =0.6 USD.",
