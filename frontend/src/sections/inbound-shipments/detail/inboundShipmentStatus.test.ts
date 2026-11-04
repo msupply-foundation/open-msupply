@@ -350,11 +350,7 @@ describe('the track keeps the current stage (OMS-REG-REPL-03.28)', () => {
   });
 
   it('excludes a stage the shipment is not resting on', () => {
-    expect(stages('RECEIVED', allowed)).toEqual([
-      'NEW',
-      'RECEIVED',
-      'VERIFIED',
-    ]);
+    expect(stages('RECEIVED', allowed)).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
   });
 
   it('tracks the plain flow index while the preference is unrestrictive', () => {
