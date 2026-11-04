@@ -1,10 +1,16 @@
 /*
  * Tab strip — centred, with a single sliding underline. The strip carries its
- * own bottom border so its edge reads as the boundary line wherever it sits;
- * the indicator is absolutely positioned over that border and animates between
+ * own bottom line so its edge reads as the boundary wherever it sits; the
+ * indicator is absolutely positioned over that line and animates between
  * labels. As the last child of a Header it becomes the header's bottom edge
  * (the header suppresses its own border and pulls the strip out to its edges —
  * see Header.module.css). Ported from the RnD prototype's Tabs.module.css.
+ *
+ * A strip wider than its box scrolls sideways (labels never wrap). `safe
+ * center` falls back to start alignment when the strip overflows, so the
+ * first tab can't be pushed out of reach past the start edge. A scroll box
+ * clips anything outside it, so the boundary line is an inset shadow and the
+ * underline sits on it, both inside the box.
  */
 /* The root div is a state boundary only — remove it from layout so children
    sit directly in the surrounding flex/grid (see Tabs.tsx). */
@@ -15,10 +21,14 @@
 .list {
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: safe center;
   gap: var(--space-4);
   padding-inline: var(--space-5);
-  border-block-end: 1px solid var(--header-border);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  /* A tab scrolled into view stops clear of the edge, not flush with it. */
+  scroll-padding-inline: var(--space-5);
+  box-shadow: inset 0 -1px 0 var(--header-border);
 }
 
 .trigger {
@@ -67,7 +77,7 @@
    RTL. */
 .indicator {
   position: absolute;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   height: 0.125rem;
   background: var(--primary-main);
@@ -75,6 +85,105 @@
     transform var(--motion-slow) ease,
     width var(--motion-slow) ease;
   pointer-events: none;
+}
+
+/* --- Step tabs ----------------------------------------------------------
+ * A step tab's content: the marker, then the label with any attention note
+ * beneath it. The three marks differ in shape, not only colour — a tick on a
+ * tinted disc (done), the number on a solid disc (current), the number in a
+ * hollow ring (not started) — and the mark is also in the tab's accessible
+ * name. The open tab keeps the underline and bold label every tab has, so it
+ * never reads as the current step.
+ */
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.marker {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+  border: 1px solid var(--text-secondary);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.marker[data-mark='done'] {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--primary-main) 15%, var(--bg-white));
+  color: var(--primary-dark);
+  font-size: 0.875rem;
+}
+
+.marker[data-mark='current'] {
+  border-color: var(--primary-main);
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+}
+
+/* The attention flag rides the marker's inline-end top corner, ringed in the
+   page colour so it reads against both the marker and the strip. */
+.attentionBadge {
+  position: absolute;
+  inset-block-start: -0.3125rem;
+  inset-inline-end: -0.4375rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg-white);
+  color: var(--warning-main);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* Room for the badge, so it doesn't run into the label. */
+.marker:has(.attentionBadge) {
+  margin-inline-end: var(--space-1);
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* The attention note: a quieter line under the label, in the warning tone
+   darkened toward body text for contrast (as StatusBadge's warning label). */
+.note {
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+  font-weight: var(--weight-regular);
+}
+
+/* The line between two adjacent steps, drawn level with the markers: the same
+   block padding as a trigger, so its centre line lands on theirs. Solid into
+   a step the record has reached, dotted into one it hasn't. */
+.connector {
+  flex: 0 1 2rem;
+  min-inline-size: 1rem;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding-block: var(--space-2) 0.125rem;
+  /* Halve the strip's gap on both sides, so a step sits nearer its line than
+     the plain tabs sit to each other. */
+  margin-inline: calc(-0.5 * var(--space-4));
+}
+
+.connector::before {
+  content: '';
+  inline-size: 100%;
+  border-block-start: 2px dotted var(--text-disabled);
+}
+
+.connector[data-reached]::before {
+  border-block-start: 1px solid var(--text-secondary);
 }
 
 /* The active panel fills its parent as a flex column: inside a fill-body Page

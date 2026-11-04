@@ -1,6 +1,8 @@
 import {
   For,
+  Show,
   createEffect,
+  createMemo,
   createSignal,
   on,
   onCleanup,
@@ -8,7 +10,11 @@ import {
   type JSX,
 } from 'solid-js';
 import * as KTabs from '@kobalte/core/tabs';
+import { AlertTriangleIcon, CheckIcon } from '../../icons';
+import { stepTabName, type StepMark } from './stepTabName';
 import styles from './Tabs.module.css';
+
+export type { StepMark } from './stepTabName';
 
 export interface TabDef {
   value: string;
@@ -25,6 +31,16 @@ export interface TabDef {
    * its own — e.g. the location picker's `location-fullness-*` filter.
    */
   testId?: string;
+  /**
+   * Make the tab a step in a record's fixed sequence (a tender's Plan → Items
+   * → Source …): it shows a numbered marker for its mark, worked out by the
+   * consumer from the record's status, and an optional attention note — a
+   * short line saying what must be fixed before the record can move on. The
+   * step is still an ordinary tab: it can be opened whatever its mark, and
+   * the open tab keeps its own look, apart from the current step's marker.
+   * Tabs without `step` (a Summary, a Log) sit before and after the steps.
+   */
+  step?: { mark: StepMark; attention?: string };
 }
 
 interface TabsProps {
@@ -87,6 +103,17 @@ export const Tabs = (props: TabsProps) => (
  * Must render inside a <Tabs> (it reads Kobalte's tabs context). Rendered as
  * the LAST child of a <Header>, it claims the header's bottom edge — see
  * Header.module.css.
+ *
+ * A strip wider than its box scrolls sideways rather than wrapping, and the
+ * selected tab is scrolled into view, so every label stays readable at phone
+ * width.
+ *
+ * Step tabs (TabDef.step) are numbered in order among the steps, and two
+ * steps side by side are joined by a connector — solid into a step the record
+ * has reached, dotted into one it hasn't. Connectors are aria-hidden siblings
+ * of the triggers, like the underline, so the underline spans only the tab.
+ * Each step's mark rides its accessible name (stepTabName) and aria-current
+ * marks the current step; the marker itself is decoration.
  */
 export const TabList = (props: {
   tabs: TabDef[];
@@ -101,6 +128,22 @@ export const TabList = (props: {
   let listEl: HTMLDivElement | undefined;
   const [pos, setPos] = createSignal<{ left: number; width: number }>();
 
+  // The strip is keyed by tab value, not TabDef object: a consumer that
+  // rebuilds its tabs as a record's marks change keeps the same triggers, so
+  // a focused tab is never thrown away (kdd/solid-reactivity-pitfalls, No
+  // remounts on interaction). Strings compare by value, so <For> keeps each
+  // value's trigger and only the defs behind them change.
+  const values = createMemo(() => props.tabs.map(tab => tab.value));
+  const byValue = createMemo(
+    () => new Map(props.tabs.map((tab, index) => [tab.value, { tab, index }]))
+  );
+  const stepNumbers = createMemo(() => {
+    const numbers = new Map<string, number>();
+    for (const tab of props.tabs)
+      if (tab.step) numbers.set(tab.value, numbers.size + 1);
+    return numbers;
+  });
+
   // Query the DOM rather than trusting context.selectedTab(): if the tabs
   // array is swapped the context can briefly hold a detached element.
   const measure = () => {
@@ -111,9 +154,22 @@ export const TabList = (props: {
     if (active) setPos({ left: active.offsetLeft, width: active.offsetWidth });
   };
 
+  // Bring the selected tab into view when the strip overflows. Guarded so a
+  // strip that fits never asks its ancestors to scroll.
+  const revealSelected = () => {
+    if (!listEl?.isConnected || listEl.scrollWidth <= listEl.clientWidth)
+      return;
+    listEl
+      .querySelector<HTMLElement>("[role='tab'][data-selected]")
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+
   onMount(() => {
     // Kobalte sets selectedTab in an effect of its own; measure after it.
-    queueMicrotask(measure);
+    queueMicrotask(() => {
+      measure();
+      revealSelected();
+    });
     // Labels reflow when the webfont lands (the prototype's underline sat
     // 1px off until the first interaction) — measure again then.
     document.fonts?.ready.then(measure);
@@ -130,6 +186,7 @@ export const TabList = (props: {
   createEffect(
     on([context.selectedTab, () => props.tabs], measure, { defer: true })
   );
+  createEffect(on(context.selectedTab, revealSelected, { defer: true }));
 
   return (
     <KTabs.List
@@ -138,22 +195,83 @@ export const TabList = (props: {
       data-tab-bar=""
       aria-label={props.label}
     >
-      <For each={props.tabs}>
-        {tab => (
-          <KTabs.Trigger
-            value={tab.value}
-            disabled={tab.disabled}
-            class={styles.trigger}
-            // Custom id when the strip has its own contracted scheme; otherwise
-            // tab-<value> per e2e/TESTIDS.md (value lowercased, spaces → '-').
-            data-testid={
-              tab.testId ??
-              `tab-${tab.value.toLowerCase().replace(/\s+/g, '-')}`
-            }
-          >
-            {tab.label}
-          </KTabs.Trigger>
-        )}
+      <For each={values()}>
+        {value => {
+          const entry = () => byValue().get(value)!;
+          const tab = () => entry().tab;
+          const previous = () => props.tabs[entry().index - 1];
+          return (
+            <>
+              <Show when={tab().step && previous()?.step}>
+                <span
+                  class={styles.connector}
+                  data-reached={tab().step!.mark !== 'notStarted' || undefined}
+                  aria-hidden="true"
+                />
+              </Show>
+              <KTabs.Trigger
+                value={value}
+                disabled={tab().disabled}
+                class={styles.trigger}
+                // Custom id when the strip has its own contracted scheme;
+                // otherwise tab-<value> per e2e/TESTIDS.md (value lowercased,
+                // spaces → '-').
+                data-testid={
+                  tab().testId ??
+                  `tab-${value.toLowerCase().replace(/\s+/g, '-')}`
+                }
+                data-step-mark={
+                  tab().step?.mark === 'notStarted'
+                    ? 'not-started'
+                    : tab().step?.mark
+                }
+                data-attention={tab().step?.attention ? '' : undefined}
+                aria-current={
+                  tab().step?.mark === 'current' ? 'step' : undefined
+                }
+                aria-label={
+                  tab().step
+                    ? stepTabName(
+                        tab().label,
+                        tab().step!.mark,
+                        tab().step!.attention
+                      )
+                    : undefined
+                }
+              >
+                <Show when={tab().step} fallback={tab().label}>
+                  {step => (
+                    <span class={styles.step}>
+                      <span
+                        class={styles.marker}
+                        data-mark={step().mark}
+                        aria-hidden="true"
+                      >
+                        <Show
+                          when={step().mark === 'done'}
+                          fallback={stepNumbers().get(value)}
+                        >
+                          <CheckIcon />
+                        </Show>
+                        <Show when={step().attention}>
+                          <span class={styles.attentionBadge}>
+                            <AlertTriangleIcon />
+                          </span>
+                        </Show>
+                      </span>
+                      <span class={styles.stepText}>
+                        {tab().label}
+                        <Show when={step().attention}>
+                          {note => <span class={styles.note}>{note()}</span>}
+                        </Show>
+                      </span>
+                    </span>
+                  )}
+                </Show>
+              </KTabs.Trigger>
+            </>
+          );
+        }}
       </For>
       <span
         class={styles.indicator}
