@@ -22,8 +22,8 @@ export interface NotFoundNoticeProps {
  * kind (ui-standards › detail views § not found): an acknowledgement with a
  * single OK (ui-standards › controls § an acknowledgement has nothing to
  * cancel). It is open while mounted, so mount it only where the miss applies —
- * typically a `<Show>` fallback behind the read's `!loading`, so a reload
- * never flashes it.
+ * a `<Show>` behind `notFound(read)` (api/gated.ts), so neither a reload nor a
+ * read that failed (the global error modal's case) ever shows it.
  */
 export const NotFoundNotice: Component<NotFoundNoticeProps> = props => (
   <Dialog

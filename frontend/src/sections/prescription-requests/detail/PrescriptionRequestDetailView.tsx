@@ -1,7 +1,7 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -84,12 +84,13 @@ const PrescriptionRequestDetailView: Component = () => {
 
   // The request — header, side panel, AND lines in one read (a small line set;
   // no server paging). A bad id — another record's, another store's request,
-  // a made-up one — answers RecordNotFound and resolves to undefined: the
-  // not-found deep-link alert renders below (#1746). It is deliberately NOT
-  // routed to the global unexpected-error modal (no mapSuccessToError): that
-  // would offer a useless reload of the same bad id and shadow the local
-  // notice. The first read shows the local spinner; saves merge via mutate,
-  // line saves refetch.
+  // a made-up one — answers RecordNotFound and resolves to null: the
+  // not-found deep-link alert renders below (#1746); a failed read resolves
+  // undefined and keeps the spinner, under the global error modal. The miss is
+  // deliberately NOT routed to the global unexpected-error modal (no
+  // mapSuccessToError): that would offer a useless reload of the same bad id
+  // and shadow the local notice. The first read shows the local spinner; saves
+  // merge via mutate, line saves refetch.
   const [data, { mutate, refetch }] = createResource(
     () => ({
       storeId: params.storeId,
@@ -101,12 +102,13 @@ const PrescriptionRequestDetailView: Component = () => {
       return result.data.prescriptionRequest.__typename ===
         'PrescriptionRequestNode'
         ? result.data.prescriptionRequest
-        : undefined;
+        : null;
     }
   );
   // Non-suspending read: neither the first load nor a post-save refetch ever
   // trips a Suspense boundary (kdd/solid-reactivity-pitfalls § no remounts).
-  const info = (): PrescriptionRequestFieldsFragment | undefined => gated(data);
+  const info = (): PrescriptionRequestFieldsFragment | undefined =>
+    gated(data) ?? undefined;
 
   const status = () => asRequestStatus(info()?.status ?? 'DISPENSED');
   const disabled = () => !isEditable(status());
@@ -231,9 +233,10 @@ const PrescriptionRequestDetailView: Component = () => {
     <Show
       when={info()}
       fallback={
-        // Spinner while the first read is in flight; a read that settles with
-        // no request is the not-found alert.
-        <Show when={!data.loading} fallback={<Spinner center />}>
+        // Spinner while the first read is in flight, or under the global error
+        // modal when it failed; a read the server answers as not found is the
+        // not-found alert.
+        <Show when={notFound(data)} fallback={<Spinner center />}>
           <NotFoundNotice
             testId="prescription-request-not-found-notice"
             title={t('error.prescription-request-not-found')}

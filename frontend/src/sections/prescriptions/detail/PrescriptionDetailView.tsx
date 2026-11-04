@@ -7,7 +7,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -159,12 +159,13 @@ const PrescriptionDetailView: Component = () => {
   // prescription's line set is small; no server paging needed). The read pins
   // `type: PRESCRIPTION`, so another invoice kind's id, another store's
   // prescription, and a bad id all come back as a NodeError (RecordNotFound)
-  // and resolve to undefined — the blocking not-found alert renders below
-  // (OMS-REG-DIS-03.53; #1746). That NodeError is deliberately NOT routed to
-  // the global unexpected-error modal (no mapSuccessToError): it would offer a
-  // useless reload of the same bad id and shadow the local notice — the same
-  // call the outbound and return details make. Saves merge via mutate, line
-  // saves refetch.
+  // and resolve to null — the blocking not-found alert renders below
+  // (OMS-REG-DIS-03.53; #1746); a failed read resolves undefined and keeps the
+  // spinner, under the global error modal. That NodeError is deliberately NOT
+  // routed to the global unexpected-error modal (no mapSuccessToError): it
+  // would offer a useless reload of the same bad id and shadow the local
+  // notice — the same call the outbound and return details make. Saves merge
+  // via mutate, line saves refetch.
   const [data, { mutate, refetch }] = createResource(
     () => ({
       storeId: params.storeId,
@@ -175,14 +176,15 @@ const PrescriptionDetailView: Component = () => {
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
   // Non-suspending read: neither the first load (pending → undefined → the
   // Show's spinner) nor a post-save refetch (refreshing → the previous node,
   // subtree kept — the open line-edit dialog included) ever trips a Suspense
   // boundary.
-  const info = (): PrescriptionFieldsFragment | undefined => gated(data);
+  const info = (): PrescriptionFieldsFragment | undefined =>
+    gated(data) ?? undefined;
 
   // Insurance providers — the payment-window and insurance-status gates
   // (OMS-REG-DIS-04.27; provider presence, not a preference — captured as-is).
@@ -574,9 +576,10 @@ const PrescriptionDetailView: Component = () => {
     <Show
       when={info()}
       fallback={
-        // Spinner while the first read is in flight; a read that settles with
-        // no prescription is the not-found alert (OMS-REG-DIS-03.53).
-        <Show when={!data.loading} fallback={<Spinner center />}>
+        // Spinner while the first read is in flight, or under the global error
+        // modal when it failed; a read the server answers as not found is the
+        // not-found alert (OMS-REG-DIS-03.53).
+        <Show when={notFound(data)} fallback={<Spinner center />}>
           <NotFoundNotice
             testId="prescription-not-found-notice"
             title={t('error.prescription-not-found')}

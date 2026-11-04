@@ -7,7 +7,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { reportPermissionDenied } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -128,8 +128,9 @@ const PatientDetailView: Component = () => {
   // everything under it reads the patient through patientDetails.node. The
   // server answers null — not an error — for an id that is not one of this
   // store's patients (another name's, another record's, a made-up one), so
-  // the read settles undefined and the not-found deep-link alert renders
-  // below (#1746).
+  // the read settles null and the not-found deep-link alert renders below
+  // (#1746); a failed read settles undefined and keeps the spinner, under the
+  // global error modal.
   const { patient: data, refetch } = patientDetails;
   const node = () => data.latest ?? undefined;
   const editor = patientDetails.editor;
@@ -405,10 +406,10 @@ const PatientDetailView: Component = () => {
       <Show
         when={node()}
         fallback={
-          // `!data.loading`: the read re-keys once the Patient registry
-          // settles the path (patientDetails.ts), and that refetch must not
-          // flash the alert.
-          <Show when={!data.loading} fallback={<Spinner center />}>
+          // `notFound`, not merely settled: the read re-keys once the
+          // Patient registry settles the path (patientDetails.ts), and that
+          // refetch must not flash the alert; nor may a failed read.
+          <Show when={notFound(data)} fallback={<Spinner center />}>
             <NotFoundNotice
               testId="patient-not-found-notice"
               title={t('error.patient-not-found')}

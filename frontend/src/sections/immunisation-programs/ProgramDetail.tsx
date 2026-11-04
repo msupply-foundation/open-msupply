@@ -2,7 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
-import { gated } from '@/api/gated';
+import { gated, notFound } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -198,9 +198,10 @@ const ProgramDetail: Component = () => {
     <Show
       when={found()}
       fallback={
-        // Spinner while the program read is in flight; one that settles with
-        // no program is the not-found alert, OK back to the list.
-        <Show when={!program.loading} fallback={<Spinner center />}>
+        // Spinner while the program read is in flight, or under the global
+        // error modal when it failed; one the server answers with no program
+        // is the not-found alert, OK back to the list.
+        <Show when={notFound(program)} fallback={<Spinner center />}>
           <NotFoundNotice
             testId="immunisation-program-not-found-notice"
             title={t('error.immunisation-program-not-found')}

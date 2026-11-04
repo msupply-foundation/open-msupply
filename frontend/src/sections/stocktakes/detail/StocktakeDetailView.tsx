@@ -8,7 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
-import { gated } from '@/api/gated';
+import { gated, notFound } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -302,11 +302,12 @@ const StocktakeDetailView: Component = () => {
 
   // Fetch the stocktake INFO (header/footer/side-panel fields — NOT the lines).
   // A bad id — another record's id, another store's stocktake, a made-up one —
-  // comes back as a NodeError (RecordNotFound) and resolves to undefined: the
-  // not-found deep-link alert renders below (#1746). That NodeError is
-  // deliberately NOT routed to the global unexpected-error modal (no
-  // mapSuccessToError): it would offer a useless reload of the same bad id and
-  // shadow the local notice — the same call the outbound and return details
+  // comes back as a NodeError (RecordNotFound) and resolves to null: the
+  // not-found deep-link alert renders below (#1746); a failed read resolves
+  // undefined and keeps the spinner, under the global error modal. That
+  // NodeError is deliberately NOT routed to the global unexpected-error modal
+  // (no mapSuccessToError): it would offer a useless reload of the same bad id
+  // and shadow the local notice — the same call the outbound and return details
   // make. Stocktake-LEVEL saves write back with `mutate` (no
   // refetch), but the Documents tab's upload/delete calls `refetchInfo` to
   // re-read the node's documents list — so `info` reads `.latest`
@@ -322,10 +323,11 @@ const StocktakeDetailView: Component = () => {
       if (result.kind !== 'success') return undefined;
       return result.data.stocktake.__typename === 'StocktakeNode'
         ? result.data.stocktake
-        : undefined;
+        : null;
     }
   );
-  const info = (): StocktakeInfoFragment | undefined => data.latest;
+  const info = (): StocktakeInfoFragment | undefined =>
+    data.latest ?? undefined;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query. Keyed on
   // the SERIALISED variables (a stable string) like the stocktakes LIST, so
@@ -518,7 +520,7 @@ const StocktakeDetailView: Component = () => {
       ...patch,
     });
     if (saved)
-      mutate((prev: StocktakeInfoNode | undefined) =>
+      mutate((prev: StocktakeInfoNode | null | undefined) =>
         prev ? { ...prev, ...saved } : prev
       );
   };
@@ -546,7 +548,7 @@ const StocktakeDetailView: Component = () => {
   // state in place with no refetch. A finalise can change lines (it may zero
   // uncounted lines), so we also refetch the lines page.
   const onFinalised = (saved: StocktakeInfoFragment) => {
-    mutate((prev: StocktakeInfoNode | undefined) =>
+    mutate((prev: StocktakeInfoNode | null | undefined) =>
       prev ? { ...prev, ...saved } : prev
     );
     void refetchAfterSave();
@@ -1014,16 +1016,22 @@ const StocktakeDetailView: Component = () => {
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy — a
           keyed Show would tear down + rebuild on every stocktake-level save
           (fresh node object), dropping focus from the field being typed. The
-          resolved-undefined fallback is the not-found deep-link alert. */}
+          fallback is the not-found deep-link alert once the server answers the
+          id as not found; a failed read keeps the spinner, under the global
+          error modal. */}
       <Show
         when={info()}
         fallback={
-          <NotFoundNotice
-            testId="stocktake-not-found-notice"
-            title={t('error.stocktake-not-found')}
-            description={t('messages.click-to-return')}
-            onClose={() => navigate(`/${params.storeId}/inventory/stocktakes`)}
-          />
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="stocktake-not-found-notice"
+              title={t('error.stocktake-not-found')}
+              description={t('messages.click-to-return')}
+              onClose={() =>
+                navigate(`/${params.storeId}/inventory/stocktakes`)
+              }
+            />
+          </Show>
         }
       >
         {node => (

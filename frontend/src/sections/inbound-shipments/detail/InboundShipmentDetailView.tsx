@@ -8,7 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -301,20 +301,21 @@ const InboundShipmentDetailView: Component = () => {
   // must match the shipment's own scope — which the URL carries, put there by
   // whatever surfaced this shipment (see inboundShipmentHref). The `type` also
   // filters, so another invoice kind's id, another store's shipment, or a bad
-  // id all come back as a NodeError (RecordNotFound) and resolve to undefined —
-  // the not-found deep-link alert renders below (#1746). That NodeError is
-  // deliberately NOT routed to the global unexpected-error modal (no
-  // mapSuccessToError): it would offer a useless reload of the same bad id and
-  // shadow the local notice — the same call the outbound and return details
+  // id all come back as a NodeError (RecordNotFound) and resolve to null — the
+  // not-found deep-link alert renders below (#1746); a failed read resolves
+  // undefined and keeps the spinner, under the global error modal. That
+  // NodeError is deliberately NOT routed to the global unexpected-error modal
+  // (no mapSuccessToError): it would offer a useless reload of the same bad id
+  // and shadow the local notice — the same call the outbound and return details
   // make.
   const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId, type: scope() }),
     async variables => {
       const result = await graphqlFetch(InboundShipment, variables);
-      return result.kind === 'success' &&
-        result.data.invoice.__typename === 'InvoiceNode'
+      if (result.kind !== 'success') return undefined;
+      return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
   // Header/side-panel/footer node — read NON-SUSPENDING (kdd/solid-reactivity-
@@ -325,7 +326,7 @@ const InboundShipmentDetailView: Component = () => {
   // gone, focus lost). gated keeps the previous node on screen
   // while it refreshes. Initial load (no live state) is handled by the <Show>
   // fallback below, not by suspending.
-  const info = (): InboundInfoFragment | undefined => gated(data);
+  const info = (): InboundInfoFragment | undefined => gated(data) ?? undefined;
 
   // One server-paginated page of the shipment's stock lines (invoiceId + type
   // forced; user filter/sort/page from the URL). Keyed on serialised variables
@@ -1135,12 +1136,13 @@ const InboundShipmentDetailView: Component = () => {
     // spinner comes from this <Show> fallback, not from the <Suspense> (which
     // stays only as the lazy-route-chunk boundary). Once the node is present it
     // stays rendered through every refetch — no remount of the open editor. A
-    // read that settles with no shipment is the not-found deep-link alert.
+    // read the server answers as not found is the not-found deep-link alert;
+    // a failed one keeps the spinner, under the global error modal.
     <Suspense fallback={<Spinner center />}>
       <Show
         when={info()}
         fallback={
-          <Show when={!data.loading} fallback={<Spinner center />}>
+          <Show when={notFound(data)} fallback={<Spinner center />}>
             <NotFoundNotice
               testId="shipment-not-found-notice"
               title={t('error.shipment-not-found')}
