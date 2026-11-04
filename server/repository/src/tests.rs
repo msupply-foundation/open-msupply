@@ -1004,6 +1004,7 @@ mod repository_test {
         #[diesel(sql_type = Text)]
         id: String,
     }
+
     /// The two boolean sub-select filters partition the requisitions, and
     /// `a_shipment_has_been_created(false)` is not blanked by the shipments
     /// raised without a requisition (a NULL `requisition_id` in the set).
@@ -1037,8 +1038,14 @@ mod repository_test {
         let with_shipment = ids(RequisitionFilter::new().a_shipment_has_been_created(true));
         let without_shipment = ids(RequisitionFilter::new().a_shipment_has_been_created(false));
 
-        // The requisitions some mock invoice links to; most mock invoices have
-        // no requisition at all.
+        // The bug needs an invoice with no requisition: its NULL in the
+        // sub-select used to blank the "no shipment" set.
+        let unlinked_invoices = sql_query(r#"select id from invoice where requisition_id is null"#)
+            .load::<Id>(connection.lock().connection())
+            .unwrap();
+        assert!(!unlinked_invoices.is_empty()); // Sanity check
+
+        // The requisitions some mock invoice links to.
         let linked: Vec<String> = sql_query(
             r#"select distinct requisition_id as id from invoice
                     where requisition_id is not null order by id asc"#,

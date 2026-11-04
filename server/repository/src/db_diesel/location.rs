@@ -146,8 +146,6 @@ impl<'a> LocationRepository<'a> {
                         query = query.filter(location::id.eq_any(sub_query));
                     }
                     false => {
-                        // `not(eq_any)` not `ne_all`: Postgres hashes `NOT (x = ANY(sub))` but
-                        // re-scans `x != ALL(sub)` once per outer row.
                         query = query.filter(not(location::id.eq_any(sub_query)));
                     }
                 }

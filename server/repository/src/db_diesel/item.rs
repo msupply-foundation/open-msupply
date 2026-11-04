@@ -382,9 +382,7 @@ impl<'a> ItemRepository<'a> {
                     query.filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed()))
                 }
 
-                // Items with no stock on hand.
-                // `not(eq_any)` not `ne_all`: Postgres hashes `NOT (x = ANY(sub))` but
-                // re-scans `x != ALL(sub)` once per outer row.
+                // Items with no stock on hand
                 (_, Some(false)) => query.filter(not(
                     item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())
                 )),
@@ -1010,6 +1008,63 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 0);
+
+        // has_stock_on_hand: item 3 is the only item with stock
+        let ids = |filter: ItemFilter| -> Vec<String> {
+            ItemRepository::new(&storage_connection)
+                .query(
+                    Pagination::new(),
+                    Some(filter),
+                    None,
+                    Some("name1_store".to_string()),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect()
+        };
+        assert_eq!(
+            ids(ItemFilter::new().has_stock_on_hand(true)),
+            vec!["item3"]
+        );
+        assert_eq!(
+            ids(ItemFilter::new().has_stock_on_hand(false)),
+            item_rows
+                .iter()
+                .map(|r| r.id.clone())
+                .filter(|id| id != "item3")
+                .collect::<Vec<String>>()
+        );
+    }
+
+    /// `is_program_item(false)` is the complement of `is_program_item(true)`.
+    #[actix_rt::test]
+    async fn test_item_query_filter_is_program_item() {
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_item_query_filter_is_program_item",
+            MockDataInserts::all(),
+        )
+        .await;
+        let ids = |filter: Option<ItemFilter>| -> Vec<String> {
+            let mut ids: Vec<String> = ItemRepository::new(&storage_connection)
+                .query(Pagination::all(), filter, None, None)
+                .unwrap()
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        let all = ids(None);
+        let program = ids(Some(ItemFilter::new().is_program_item(true)));
+        let not_program = ids(Some(ItemFilter::new().is_program_item(false)));
+        assert!(!program.is_empty()); // Sanity check
+        assert!(!not_program.is_empty()); // Sanity check
+        assert!(program.iter().all(|id| !not_program.contains(id)));
+        let mut both = [program, not_program].concat();
+        both.sort();
+        assert_eq!(both, all);
     }
 
     #[actix_rt::test]

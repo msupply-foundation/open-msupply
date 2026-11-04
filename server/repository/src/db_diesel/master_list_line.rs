@@ -140,8 +140,6 @@ impl<'a> MasterListLineRepository<'a> {
                 query = if ignore_for_orders {
                     query.filter(master_list_line::item_id.eq_any(ignored_item_ids))
                 } else {
-                    // `not(eq_any)` not `ne_all`: Postgres hashes `NOT (x = ANY(sub))` but
-                    // re-scans `x != ALL(sub)` once per outer row.
                     query.filter(not(master_list_line::item_id.eq_any(ignored_item_ids)))
                 };
             }

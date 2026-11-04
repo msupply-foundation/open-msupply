@@ -109,8 +109,6 @@ impl<'a> MasterListRepository<'a> {
                 if is_program {
                     query = query.filter(master_list::id.nullable().eq_any(program_join_query));
                 } else {
-                    // `not(eq_any)` not `ne_all`: Postgres hashes `NOT (x = ANY(sub))` but
-                    // re-scans `x != ALL(sub)` once per outer row.
                     query =
                         query.filter(not(master_list::id.nullable().eq_any(program_join_query)));
                 }
