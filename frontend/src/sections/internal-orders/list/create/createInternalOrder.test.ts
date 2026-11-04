@@ -125,4 +125,25 @@ describe('createGeneralOrder', () => {
     });
     expect(variables.input).not.toHaveProperty('maxMonthsOfStock');
   });
+
+  it('sends the chosen master list (OMS-REG-REPL-04.104)', async () => {
+    fetchMock.mockResolvedValue({
+      kind: 'success',
+      data: {
+        insertRequestRequisition: { __typename: 'RequisitionNode', id: 'new' },
+      },
+    } as never);
+    await createGeneralOrder('store-a', 'supplier-1', 'list-1');
+    const variables = fetchMock.mock.calls[0]?.[1] as {
+      input: Record<string, unknown>;
+    };
+    expect(variables.input).toMatchObject({ masterListId: 'list-1' });
+  });
+
+  it('turns a rejected create into an inline error (OMS-REG-REPL-04.50)', async () => {
+    fetchMock.mockResolvedValue({ kind: 'graphqlError' } as never);
+    const result = await createGeneralOrder('store-a', 'supplier-1', 'list-1');
+    expect(result.kind).toBe('error');
+    expect(fetchMock.mock.calls[0]?.[2]).toEqual({ returnGraphqlErrors: true });
+  });
 });
