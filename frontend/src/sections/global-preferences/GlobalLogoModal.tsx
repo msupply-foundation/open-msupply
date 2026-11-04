@@ -89,7 +89,7 @@ export const GlobalLogoModal: Component<{
     const result = await graphqlFetch(
       UpsertGlobalPreferences,
       { storeId: props.storeId, input: { globalLogo: draft() } },
-      { returnGraphqlErrors: true }
+      { background: true, returnGraphqlErrors: true }
     );
     setSaving(false);
     if (
