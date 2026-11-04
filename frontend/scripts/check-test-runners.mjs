@@ -145,7 +145,16 @@ if (!existsSync(PLAYWRIGHT_CONFIG)) {
 
 // Files no runner collects ON PURPOSE. Each needs a reason, so that "nothing
 // runs this" is a decision on the record rather than the default.
-const EXCLUDED = [];
+const EXCLUDED = [
+  // The React-UI plugins imported from the *-plugins repos, beside each
+  // country's SolidJS port. Their tests are Jest suites written for the old
+  // UI's toolchain (client/), and they do not build from where they sit yet —
+  // see private/internal/monorepo-migration/README.md, "Imports so far".
+  {
+    glob: '../{plugins,private/plugins}/*/react/**',
+    reason: 'React-UI plugin source, owned by the client/ toolchain',
+  },
+];
 
 // --- The files ----------------------------------------------------------
 

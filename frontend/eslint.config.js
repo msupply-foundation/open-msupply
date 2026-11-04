@@ -133,6 +133,9 @@ const config = tseslint.config(
       // A prebuilt bundle is a build artifact wherever it appears — it is
       // packed verbatim, so it is output, not source.
       '{plugins,private/plugins}/*/backend/prebuilt/**',
+      // The React-UI plugins imported from the *-plugins repos: old-UI code,
+      // linted (if at all) by client/'s config, not this one.
+      '{plugins,private/plugins}/*/react/**',
     ],
   },
 
