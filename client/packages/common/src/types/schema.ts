@@ -9509,6 +9509,10 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
+  /**
+   * A request requisition line's consumption history and stock evolution. Only the series
+   * the query selects are read; the others are null
+   */
   requisitionLineChart: RequisitionLineChartResponse;
   /**
    * An item's request line as the line editor's draft would save it, under a chosen
@@ -10796,8 +10800,9 @@ export type RequisitionLineForecastPreviewNode = {
    * The consumption history and stock evolution for the previewed line, as
    * `requisitionLineChart` gives them for a saved one — so an item being added charts
    * before its line exists. The draft's requested quantity isn't part of the preview, so
-   * the stock projection adds nothing at delivery. Null if the chart can't be read: the
-   * chart is context, so failing to read it doesn't fail the preview
+   * the stock projection adds nothing at delivery. Only the series the query selects are
+   * read; the others are null. Null if the chart can't be read: the chart is context, so
+   * failing to read it doesn't fail the preview
    */
   chart?: Maybe<ItemChartNode>;
   forecastBreakdown: ForecastBreakdownNode;
@@ -10976,9 +10981,10 @@ export type RequisitionNode = {
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
   /**
-   * The ordering store's supply interval and safety buffer (from its facility record) as
-   * they stand now, null when it carries no supply interval. A general
-   * order's default target months of stock.
+   * The ordering store's supply interval and safety buffer (from its facility record) and
+   * delivery lead time (from its store preferences) as they stand now, null when its
+   * facility record carries no supply interval. Their sum is a general order's default
+   * target months of stock.
    */
   supplyIntervalAndBuffer?: Maybe<SupplyIntervalAndBufferNode>;
   theirReference?: Maybe<Scalars['String']['output']>;
@@ -12124,6 +12130,8 @@ export type SupplierReturnLineNode = {
 
 export type SupplyIntervalAndBufferNode = {
   __typename: 'SupplyIntervalAndBufferNode';
+  /** How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset */
+  deliveryLeadTimeMonths: Scalars['Float']['output'];
   /** Zero when the facility record carries none */
   safetyBufferMonths: Scalars['Float']['output'];
   supplyIntervalMonths: Scalars['Float']['output'];
