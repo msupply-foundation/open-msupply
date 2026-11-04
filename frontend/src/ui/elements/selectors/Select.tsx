@@ -66,8 +66,10 @@ export interface SelectProps {
   disabled?: boolean;
   /**
    * Marks the field required: an asterisk on the label (TextField's marker, so
-   * a select and a text field read alike) plus `aria-required` on the trigger.
-   * Indication only — the gating stays with the form's own confirm rule.
+   * a select and a text field read alike). Indication only — the gating stays
+   * with the form's own confirm rule. No `aria-required`: the trigger is a
+   * `<button>` (Kobalte gives it `aria-haspopup`, not a combobox role), and
+   * ARIA does not allow the attribute there (axe `aria-allowed-attr`).
    */
   required?: boolean;
   /**
@@ -268,7 +270,6 @@ export const Select = (props: SelectProps) => {
           class={styles.trigger}
           data-testid={props.testId}
           aria-label={props.hideLabel ? props.label : undefined}
-          aria-required={props.required ? 'true' : undefined}
         >
           <KSelect.Value<SelectOption> class={styles.value}>
             {state => state.selectedOption().label}
