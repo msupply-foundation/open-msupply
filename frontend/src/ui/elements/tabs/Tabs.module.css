@@ -186,6 +186,13 @@
   border-block-start: 1px solid var(--text-secondary);
 }
 
+/* A marker is taller than a label, so the tight bottom that sets a label low
+   leaves it touching the underline. A strip with steps gives every tab, plain
+   ones included, the same room beneath, keeping all the labels level. */
+.list:has([data-step-mark]) :is(.trigger, .connector) {
+  padding-block-end: var(--space-2);
+}
+
 /* The active panel fills its parent as a flex column: inside a fill-body Page
    (a flex column with min-block-size 0) the panel becomes the flex child, so a
    single fill-and-scroll child (a DataTable) claims the full region and scrolls
