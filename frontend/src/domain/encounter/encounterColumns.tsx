@@ -132,6 +132,11 @@ export const encounterColumns = <R extends EncounterColumnRow>(options: {
       ...sortKey('Program'),
       header: () => t('label.program'),
       ...getTextCell(),
+      // Looked up in the cell, not read from info.getValue(): the names load
+      // separately from the rows, and TanStack caches each row's accessor
+      // value until the rows change — rows that arrived first would keep a
+      // blank Program after the names came in.
+      cell: info => options.programName(info.row.original.contextId),
       size: remToPx(14),
     },
     {

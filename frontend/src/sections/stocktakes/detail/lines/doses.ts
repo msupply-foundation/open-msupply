@@ -6,8 +6,10 @@
 //
 // A line's doses = number of individual vaccine doses the packs represent:
 //   packs × packSize × item.doses (doses-per-unit)
-// "Doses per unit" is the per-pack figure (packSize × item.doses); "Doses
-// counted" applies it to the counted packs.
+// "Doses per unit" is the item's own doses per unit (old-app parity — its
+// itemDoses column; spec rules § store-preference gates: "the item's configured
+// doses-per-unit"), NOT a per-pack figure; "Doses counted" applies it, through
+// the pack size, to the counted packs.
 
 // The minimal shape doses needs off a line/draft (a subset of both the detail
 // StocktakeLine fragment and the editor's DraftLine, so neither generated type
@@ -18,24 +20,21 @@ export interface DosesLine {
   countedNumberOfPacks?: number | null;
 }
 
-// Doses in ONE pack of this line — packSize × the item's doses-per-unit. Blank
-// (null) for a non-vaccine item, or when the pack size is unknown. A vaccine
-// with no doses-per-unit configured counts as 1 (spec/stocktakes › store-
-// preference gates, D58) — treating it as 0 would pin this at 0 regardless of
+// Doses in ONE unit of the item — the item's doses-per-unit, whatever the
+// line's pack size. Blank (null) for a non-vaccine item. A vaccine with no
+// doses-per-unit configured counts as 1 (spec/stocktakes › store-preference
+// gates, D58) — treating it as 0 would pin doses counted at 0 regardless of
 // what's counted, matching internal-orders' same-shaped fallback.
-export const dosesPerUnit = (line: DosesLine): number | null => {
-  if (!line.item.isVaccine) return null;
-  const packSize = line.packSize ?? null;
-  if (packSize == null) return null;
-  return packSize * (line.item.doses || 1);
-};
+export const dosesPerUnit = (line: DosesLine): number | null =>
+  line.item.isVaccine ? line.item.doses || 1 : null;
 
-// Total doses counted on this line — counted packs × doses-per-pack. Blank
-// (null) for a non-vaccine item, or before the line is counted / its pack size
-// is known.
+// Total doses counted on this line — counted packs × pack size × doses per
+// unit. Blank (null) for a non-vaccine item, or before the line is counted /
+// its pack size is known.
 export const dosesCounted = (line: DosesLine): number | null => {
   const perUnit = dosesPerUnit(line);
+  const packSize = line.packSize ?? null;
   const counted = line.countedNumberOfPacks ?? null;
-  if (perUnit == null || counted == null) return null;
-  return counted * perUnit;
+  if (perUnit == null || packSize == null || counted == null) return null;
+  return counted * packSize * perUnit;
 };

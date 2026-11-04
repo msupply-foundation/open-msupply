@@ -121,7 +121,11 @@ export const InboundFinancialPanel: Component<{
     // enough for the "Label (CODE)" headers these columns carry.
     ...getNumberCell(),
     size: remToPx(9),
-    cell: info => money(info.getValue<number>()),
+    // The cell recomputes from the row rather than reading info.getValue():
+    // TanStack caches each row's accessor value until the row model is
+    // rebuilt, and a currency change rebuilds the columns (new rate) but not
+    // the rows — a cached value would keep the old rate's figure.
+    cell: info => money(value(info.row.original)),
     ...(footerTotal !== undefined ? { footer: () => money(footerTotal) } : {}),
   });
 
@@ -135,7 +139,7 @@ export const InboundFinancialPanel: Component<{
     ...moneyColumn(id, header, value),
     cell: info =>
       info.row.original.purchaseOrderLine
-        ? format(info.getValue<number>())
+        ? format(value(info.row.original))
         : '',
   });
 
