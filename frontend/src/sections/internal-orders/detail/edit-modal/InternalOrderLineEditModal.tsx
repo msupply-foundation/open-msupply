@@ -15,6 +15,7 @@ import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
 import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -32,6 +33,13 @@ import {
   ConsumptionHistoryChart,
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../../ui/elements/accordion/Accordion';
+import { BarIcon } from '../../../../ui/icons';
 import { ItemSearch } from '../../../../domain/item';
 import { ActivitySelect } from '@/domain/campaign';
 import {
@@ -45,7 +53,11 @@ import type {
 import { toLineViewFromEditor } from '../pluginViews';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
-import { RequisitionLineChart } from './lineChart.generated';
+import {
+  InternalOrderLinePreviewStockEvolution,
+  RequisitionLineConsumptionChart,
+  RequisitionLineStockEvolution,
+} from './lineChart.generated';
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
 import {
   buildAddPreview,
@@ -54,6 +66,7 @@ import {
   modeToUnits,
   unitsToMode,
   statInMode,
+  monthsOfStockAfterOrder,
   saveNewLine,
   saveExistingLine,
   previewActivity,
@@ -75,8 +88,8 @@ import { Num } from '../../../../ui/elements/typography/Num';
 // any status; read-only opens with every control disabled). Panels: the item's
 // statistics, its stock movements (extended gate), the edits, and below them
 // the line's forecast (method + breakdown + the step into stock) and the
-// read-only context charts (target-quantity breakdown + consumption /
-// stock-evolution).
+// read-only context charts (the consumption history, then the target-quantity
+// breakdown and stock evolution under "Additional charts").
 
 export interface InternalOrderLineEditModalProps {
   open: boolean;
@@ -198,16 +211,15 @@ const LineEditContent = (
   let disposed = false;
   onCleanup(() => (disposed = true));
 
-  // The context charts' server data (spec S4 § charts): the consumption-history
-  // and stock-evolution series, keyed by a SAVED line's id — so it fetches only
-  // once a real line exists (edit mode, or an on-order item loaded in add
-  // mode). An unsaved add draft has no id to read by: its series come with
-  // its forecast preview instead (issue 1189), see chartData. The
-  // target-quantity breakdown is derived client-side from the line's stats,
-  // so it needs no read. Read
-  // NON-suspending (the `.state` gate) — the resource first-fetches on the
-  // interaction of opening/advancing, so a direct read would remount the modal
-  // (kdd/solid-reactivity-pitfalls § no remounts).
+  // The context charts' server data (spec S4 § charts). The consumption
+  // history is keyed by a SAVED line's id — so it fetches only once a real
+  // line exists (edit mode, or an on-order item loaded in add mode). An unsaved
+  // add draft has no id to read by: its history comes with its forecast
+  // preview instead (issue 1189), see consumptionHistory. The target-quantity
+  // breakdown is derived client-side from the line's stats, so it needs no
+  // read. Read NON-suspending (the `.state` gate) — the resource first-fetches
+  // on the interaction of opening/advancing, so a direct read would remount
+  // the modal (kdd/solid-reactivity-pitfalls § no remounts).
   // Keyed on the stable inputs only, compared by value: every setLine — a
   // draft method preview included — hands the editor a new line object, and a
   // key object rebuilt from it would otherwise refetch the chart each time.
@@ -230,18 +242,110 @@ const LineEditContent = (
     }
   );
   const [chart] = createResource(chartKey, async variables => {
-    const result = await graphqlFetch(RequisitionLineChart, variables);
+    const result = await graphqlFetch(
+      RequisitionLineConsumptionChart,
+      variables
+    );
     if (result.kind !== 'success') return undefined;
     const response = result.data.requisitionLineChart;
     return response.__typename === 'ItemChartNode' ? response : undefined;
   });
-  const chartData = () => {
+  // Null when there's no series — an order with no expected-delivery-date.
+  const consumptionHistory = () => {
     const editorLine = line();
-    return editorLine?.isNew ? editorLine.previewChart : gated(chart);
+    return editorLine?.isNew
+      ? editorLine.previewChart?.consumptionHistory
+      : gated(chart)?.consumptionHistory;
   };
-  // The history/evolution pair shows only when the server returned series (an
-  // order with no expected-delivery-date returns both null — then only the
-  // target-quantity breakdown shows, spec S4 § charts).
+
+  // "Additional charts" (OMS-REG-REPL-04.107): the target-quantity breakdown
+  // and stock evolution, closed to start. It stays as the user left it while
+  // the editor steps between lines.
+  const ADDITIONAL_CHARTS = 'additional-charts';
+  const [openCharts, setOpenCharts] = createSignal<string[]>([]);
+  const additionalChartsOpen = () => openCharts().includes(ADDITIONAL_CHARTS);
+
+  // The stock evolution, read only while "Additional charts" is open, so an
+  // editor that never opens it never asks the server to project it. A saved
+  // line's is read by its id; an unsaved draft's from a preview of the line
+  // its insert would create, under the draft's method and activity. Keyed and
+  // read like the consumption history above.
+  type EvolutionKey =
+    | { kind: 'saved'; storeId: string; lineId: string }
+    | {
+        kind: 'draft';
+        storeId: string;
+        requisitionId: string;
+        itemId: string;
+        method: ForecastMethod;
+        campaignId: string | null;
+      }
+    | false;
+  const evolutionKey = createMemo<EvolutionKey>(
+    () => {
+      const editorLine = line();
+      if (!editorLine || !additionalChartsOpen()) return false;
+      return editorLine.isNew
+        ? {
+            kind: 'draft',
+            storeId: props.storeId,
+            requisitionId: props.requisitionId,
+            itemId: editorLine.itemId,
+            method: editorLine.forecast.forecastMethod,
+            campaignId: campaign()?.id ?? null,
+          }
+        : { kind: 'saved', storeId: props.storeId, lineId: editorLine.lineId };
+    },
+    false,
+    {
+      equals: (prev, next) =>
+        prev === next ||
+        (prev !== false &&
+          next !== false &&
+          JSON.stringify(prev) === JSON.stringify(next)),
+    }
+  );
+  const fetchStockEvolution = async (key: Exclude<EvolutionKey, false>) => {
+    if (key.kind === 'saved') {
+      const result = await graphqlFetch(RequisitionLineStockEvolution, {
+        storeId: key.storeId,
+        lineId: key.lineId,
+      });
+      if (result.kind !== 'success') return undefined;
+      const response = result.data.requisitionLineChart;
+      return response.__typename === 'ItemChartNode'
+        ? response.stockEvolution
+        : undefined;
+    }
+    const result = await graphqlFetch(InternalOrderLinePreviewStockEvolution, {
+      storeId: key.storeId,
+      input: {
+        requisitionId: key.requisitionId,
+        itemId: key.itemId,
+        forecastMethod: key.method,
+        campaignId: { value: key.campaignId },
+      },
+    });
+    if (result.kind !== 'success') return undefined;
+    const response = result.data.requisitionLineForecastPreview;
+    return response.__typename === 'RequisitionLineForecastPreviewNode'
+      ? response.chart?.stockEvolution
+      : undefined;
+  };
+  // Each series carries the key it was read for, so a refetch for another line
+  // never shows the line before's chart while it loads.
+  const [evolution] = createResource(evolutionKey, async key => ({
+    key: JSON.stringify(key),
+    series: await fetchStockEvolution(key),
+  }));
+  const stockEvolution = () => {
+    const read = gated(evolution);
+    const key = evolutionKey();
+    return read && key && read.key === JSON.stringify(key)
+      ? read.series
+      : undefined;
+  };
+
   // The draft previews a method other than the saved line's — the stock
   // evolution series, projected server-side from the stored forecast, then
   // lags the draft until it is saved.
@@ -251,13 +355,6 @@ const LineEditContent = (
       !!editorLine &&
       !editorLine.isNew &&
       editorLine.forecast.forecastMethod !== editorLine.ownForecastMethod
-    );
-  };
-  const hasSeries = () => {
-    const data = chartData();
-    return !!(
-      data?.consumptionHistory?.nodes.length ||
-      data?.stockEvolution?.nodes.length
     );
   };
 
@@ -736,6 +833,25 @@ const LineEditContent = (
                     </>
                   }
                 />
+                {/* What the months of stock will be once the requested
+                  quantity arrives, taking it to arrive today; follows the
+                  Requested field as it's typed (OMS-REG-REPL-04.106). */}
+                <StatRow
+                  testId="line-mos-after-order"
+                  label={t('label.months-of-stock-after-order')}
+                  value={
+                    <>
+                      <Num
+                        value={monthsOfStockAfterOrder(
+                          editorLine(),
+                          requestedUnits()
+                        )}
+                      />{' '}
+                      {t('label.months')}
+                    </>
+                  }
+                  highlight
+                />
                 <Show when={props.showExtended}>
                   <StatRow
                     label={t('label.short-expiry')}
@@ -933,57 +1049,83 @@ const LineEditContent = (
             />
 
             {/* Then the read-only context charts, on every line whatever its
-              forecast method: the target-quantity breakdown (client-side from
-              the line's monthly demand and stock) atop the consumption-history
-              + stock-evolution pair. The pair needs the server's series
-              (chartData) — the saved line's, or an add-mode draft's preview;
-              absent them — an order with no expected-delivery-date — only the
-              breakdown shows. */}
+              forecast method: the consumption history (12 months), then
+              "Additional charts" — the target-quantity breakdown (client-side
+              from the line's monthly demand and stock) and the stock
+              evolution, closed to start (OMS-REG-REPL-04.107). The two series need the server's data —
+              the saved line's, or an add-mode draft's preview; absent them —
+              an order with no expected-delivery-date — they don't show. */}
             <div class={styles.charts}>
-              <div class={styles.breakdown}>
-                <h3 class={styles.chartHeading}>
-                  {t('heading.target-quantity')}
-                </h3>
-                <TargetQuantityBreakdown
-                  averageMonthlyConsumption={editorLine().monthlyDemand}
-                  availableStockOnHand={editorLine().availableStockOnHand}
-                  suggestedQuantity={editorLine().suggestedQuantity}
-                  thresholdMonths={props.minMonths}
-                  targetMonths={props.maxMonths}
-                  zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
-                />
-              </div>
-              <Show when={hasSeries() && chartData()}>
-                {data => (
-                  <div class={styles.chartPair}>
-                    <div class={styles.chartSection}>
-                      <h3 class={styles.chartHeading}>
-                        {t('heading.consumption-history')}
-                      </h3>
-                      <ConsumptionHistoryChart
-                        data={data().consumptionHistory?.nodes ?? []}
-                      />
-                    </div>
-                    <div class={styles.chartSection}>
-                      <h3 class={styles.chartHeading}>
-                        {t('heading.stock-evolution')}
-                      </h3>
-                      {/* The server projects the SAVED line's forecast; while
-                        the draft previews another method the chart can't
-                        follow it, so it says whose demand it draws (spec S4 ›
-                        context charts). */}
-                      <Show when={previewsOtherMethod()}>
-                        <p class={styles.chartNote}>
-                          {t('messages.stock-evolution-saved-method')}
-                        </p>
-                      </Show>
-                      <StockEvolutionChart
-                        data={data().stockEvolution?.nodes ?? []}
-                      />
-                    </div>
-                  </div>
-                )}
+              <Show when={consumptionHistory()?.nodes.length}>
+                <div class={styles.chartSection}>
+                  <h3 class={styles.chartHeading}>
+                    {t('heading.consumption-history')}
+                  </h3>
+                  <ConsumptionHistoryChart
+                    data={consumptionHistory()?.nodes ?? []}
+                  />
+                </div>
               </Show>
+              <Accordion
+                variant="card"
+                collapsible
+                value={openCharts()}
+                onValueChange={setOpenCharts}
+                class={styles.additionalCharts}
+              >
+                <AccordionItem value={ADDITIONAL_CHARTS}>
+                  <AccordionTrigger>
+                    <span class={styles.additionalChartsTrigger}>
+                      <BarIcon
+                        class={styles.additionalChartsIcon}
+                        aria-hidden="true"
+                      />
+                      {t('heading.additional-charts')}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div class={styles.additionalChartsBody}>
+                      <div class={styles.breakdown}>
+                        <h4 class={styles.chartHeading}>
+                          {t('heading.target-quantity')}
+                        </h4>
+                        <TargetQuantityBreakdown
+                          averageMonthlyConsumption={editorLine().monthlyDemand}
+                          availableStockOnHand={
+                            editorLine().availableStockOnHand
+                          }
+                          suggestedQuantity={editorLine().suggestedQuantity}
+                          thresholdMonths={props.minMonths}
+                          targetMonths={props.maxMonths}
+                          zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
+                        />
+                      </div>
+                      <Show when={evolution.loading && !stockEvolution()}>
+                        <Spinner />
+                      </Show>
+                      <Show when={stockEvolution()?.nodes.length}>
+                        <div class={styles.chartSection}>
+                          <h4 class={styles.chartHeading}>
+                            {t('heading.stock-evolution')}
+                          </h4>
+                          {/* The server projects the SAVED line's forecast;
+                            while the draft previews another method the chart
+                            can't follow it, so it says whose demand it draws
+                            (spec S4 › context charts). */}
+                          <Show when={previewsOtherMethod()}>
+                            <p class={styles.chartNote}>
+                              {t('messages.stock-evolution-saved-method')}
+                            </p>
+                          </Show>
+                          <StockEvolutionChart
+                            data={stockEvolution()?.nodes ?? []}
+                          />
+                        </div>
+                      </Show>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           </>
         )}

@@ -129,13 +129,15 @@ fragment InternalOrderInfo on RequisitionNode {
   }
   minMonthsOfStock
   maxMonthsOfStock
-  # The ordering store's supply interval + safety buffer (rules › target months
-  # of stock), null where its facility record carries no supply interval: it
+  # The ordering store's supply interval + safety buffer + delivery lead time
+  # (rules › target months of stock), null where its facility record carries no
+  # supply interval: it
   # explains a target the store fixes (the target select's lock tooltip) and
   # one it set (the forecast's target-months caption, OMS-REG-REPL-17.17).
   supplyIntervalAndBuffer {
     supplyIntervalMonths
     safetyBufferMonths
+    deliveryLeadTimeMonths
   }
   program {
     id

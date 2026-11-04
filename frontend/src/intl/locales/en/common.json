@@ -433,7 +433,7 @@
   "error.cannot-add-pack-size-of-zero": "Cannot add a variant with a pack size of zero",
   "error.cannot-add-with-no-abbreviation-and-name": "Cannot add a variant with no abbreviation and name",
   "error.cannot-backdate-prescription": "Stock is not available on specified date",
-  "error.cannot-change-target-months": "This store sets the target months of stock from its supply interval and safety buffer, so it cannot be changed.",
+  "error.cannot-change-target-months": "This store sets the target months of stock from its supply interval, safety buffer and delivery lead time, so it cannot be changed.",
   "error.cannot-delete-central-site": "Cannot delete the central server site.",
   "error.cannot-edit-purchase-order": "Cannot edit purchase order",
   "error.cannot-edit-requisition": "Cannot edit requisition.",
@@ -4191,5 +4191,10 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "label.supply-interval-plus-buffer-plus-lead-time": "supply interval {{supplyInterval}} + safety buffer {{safetyBuffer}} + delivery lead time {{leadTime}}",
+  "messages.target-mos-set-by-store-with-lead-time": "Set by this store: supply interval of {{supplyInterval}} months + safety buffer of {{safetyBuffer}} months + delivery lead time of {{leadTime}} months. The store does not allow it to be changed.",
+  "messages.target-mos-differs-from-store-with-lead-time": "This store fixes the target to its supply interval of {{supplyInterval}} months + safety buffer of {{safetyBuffer}} months + delivery lead time of {{leadTime}} months. This order's target differs, and can only be changed to {{total}} months.",
+  "label.months-of-stock-after-order": "MOS after this order",
+  "heading.additional-charts": "Additional charts"
 }
