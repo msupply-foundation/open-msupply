@@ -201,8 +201,10 @@ const LineEditContent = (
   // The context charts' server data (spec S4 § charts): the consumption-history
   // and stock-evolution series, keyed by a SAVED line's id — so it fetches only
   // once a real line exists (edit mode, or an on-order item loaded in add
-  // mode), never for an unsaved add draft. The target-quantity breakdown is
-  // derived client-side from the line's stats, so it needs no read. Read
+  // mode). An unsaved add draft has no id to read by: its series come with
+  // its forecast preview instead (issue 1189), see chartData. The
+  // target-quantity breakdown is derived client-side from the line's stats,
+  // so it needs no read. Read
   // NON-suspending (the `.state` gate) — the resource first-fetches on the
   // interaction of opening/advancing, so a direct read would remount the modal
   // (kdd/solid-reactivity-pitfalls § no remounts).
@@ -233,7 +235,10 @@ const LineEditContent = (
     const response = result.data.requisitionLineChart;
     return response.__typename === 'ItemChartNode' ? response : undefined;
   });
-  const chartData = () => gated(chart);
+  const chartData = () => {
+    const editorLine = line();
+    return editorLine?.isNew ? editorLine.previewChart : gated(chart);
+  };
   // The history/evolution pair shows only when the server returned series (an
   // order with no expected-delivery-date returns both null — then only the
   // target-quantity breakdown shows, spec S4 § charts).
@@ -930,9 +935,10 @@ const LineEditContent = (
             {/* Then the read-only context charts, on every line whatever its
               forecast method: the target-quantity breakdown (client-side from
               the line's monthly demand and stock) atop the consumption-history
-              + stock-evolution pair. The pair needs a saved line's server
-              series (chartData); absent it — an add-mode draft, or an order
-              with no expected-delivery-date — only the breakdown shows. */}
+              + stock-evolution pair. The pair needs the server's series
+              (chartData) — the saved line's, or an add-mode draft's preview;
+              absent them — an order with no expected-delivery-date — only the
+              breakdown shows. */}
             <div class={styles.charts}>
               <div class={styles.breakdown}>
                 <h3 class={styles.chartHeading}>
