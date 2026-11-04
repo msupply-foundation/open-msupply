@@ -2060,7 +2060,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     >
                       {t('label.available-doses-with-units', {
                         doseCount: roundedText(sumAvailableDoses(draft), 0),
-                        unitCount: roundedText(availableUnits(), 0),
+                        unitCount: roundedText(Math.round(availableUnits()), 0),
                         unitName: unitName(),
                       })}
                     </Show>
