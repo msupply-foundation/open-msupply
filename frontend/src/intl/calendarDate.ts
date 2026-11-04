@@ -71,15 +71,17 @@ export const dateToCalendarDate = (d: Date): CalendarDate =>
  * whatever it is given (the formatters, the expiry cell, the charts). A
  * calendar date is read as its LOCAL midnight; anything else (an instant,
  * epoch ms, a Date) is read as the moment it names. So a `NaiveDate` shows the
- * day it names and a `DateTime` shows the user's own day and time.
+ * day it names and a `DateTime` shows the user's own day and time. A value
+ * shaped like a calendar date that isn't a real day (`2026-02-30`) is an
+ * Invalid Date: handing it to `new Date` would roll it over at UTC midnight.
  */
 export const calendarDateOrInstantToDate = (
   value: Date | CalendarDate | Instant | number
-): Date =>
-  value instanceof Date
-    ? value
-    : (calendarDateToDate(typeof value === 'string' ? value : null) ??
-      new Date(value));
+): Date => {
+  if (value instanceof Date) return value;
+  if (isCalendarDate(value)) return calendarDateToDate(value) ?? new Date(NaN);
+  return new Date(value);
+};
 
 /**
  * Today's LOCAL calendar date (device tz) — what day comparisons and date-field

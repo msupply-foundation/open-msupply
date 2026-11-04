@@ -81,6 +81,12 @@ describe('calendarDateOrInstantToDate', () => {
     ).toBe(Date.parse(instant));
   });
 
+  it('reads an impossible day as an Invalid Date, never a rolled-over one', () => {
+    expect(
+      Number.isNaN(calendarDateOrInstantToDate('2026-02-30').getTime())
+    ).toBe(true);
+  });
+
   it('passes a Date through and reads epoch milliseconds as an instant', () => {
     const d = new Date(2025, 9, 1, 15, 30);
     expect(calendarDateOrInstantToDate(d)).toBe(d);
