@@ -4368,6 +4368,11 @@ input InsertRequestRequisitionInput {
 	Defaults to 2 weeks from now
 	"""
 	expectedDeliveryDate: NaiveDate
+	"""
+	Starts the order with a line for every item on this master list, each requesting its
+	suggested quantity. Created in one step: if the lines can't be added, no order is created
+	"""
+	masterListId: String
 }
 
 type InsertRequestRequisitionLineError {
