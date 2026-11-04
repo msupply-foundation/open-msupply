@@ -129,8 +129,10 @@ impl PluginInstance {
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
         let plugins = PLUGINS.read().unwrap();
 
+        // Debug, not info: get_all runs on hot read paths (every item query when a
+        // transform_item_store_properties plugin is installed)
         for plugin in plugins.iter() {
-            log::info!(
+            log::debug!(
                 "Plugin loaded: {} (version {})",
                 plugin.instance.code,
                 plugin.instance.version

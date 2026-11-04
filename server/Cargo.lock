@@ -4573,6 +4573,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
+ "base64",
  "chrono",
  "futures",
  "graphql_core",

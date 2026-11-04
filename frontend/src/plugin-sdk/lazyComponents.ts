@@ -17,6 +17,7 @@ import type { Component, JSX } from 'solid-js';
 import type { DataTableProps } from '../ui/elements/table/DataTable';
 import type { DialogProps } from '../ui/elements/feedback/Dialog';
 import type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
+import type { UploadZoneProps } from '../ui/elements/inputs/UploadZone';
 import type { RecordLinkProps } from './recordLink';
 import type {
   FilterBarProps,
@@ -479,6 +480,21 @@ export const EnrolmentIdField = LazyEnrolmentIdField as unknown as <
  * SDK. A dialog mounts only while open, so it is never the first render of
  * an already-open screen's Suspense boundary — the one case lazy is unsafe.
  */
+/*
+ * The drag-and-drop file target with a Browse button, the one every host
+ * import screen uses (purchase order lines, asset catalogue, name
+ * properties) — for a plugin page that takes a file in, such as the Laos
+ * Store prices upload (private/plugins/laos). Lazy like the dialogs: a
+ * CSS-bearing control a plugin-free deployment never draws from the SDK.
+ * Render it from the page's first paint, not on an interaction, so it is
+ * never the first render of an already-open screen's Suspense boundary.
+ */
+export const UploadZone: Component<UploadZoneProps> = lazy(() =>
+  import('../ui/elements/inputs/UploadZone').then(m => ({
+    default: m.UploadZone,
+  }))
+);
+
 export const Dialog: Component<DialogProps> = lazy(() =>
   import('../ui/elements/feedback/Dialog').then(m => ({ default: m.Dialog }))
 );
