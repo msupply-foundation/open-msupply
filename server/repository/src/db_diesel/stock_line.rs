@@ -23,6 +23,7 @@ use crate::{
     repository_error::RepositoryError,
 };
 
+use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -73,8 +74,8 @@ pub struct StockLineFilter {
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilter<String>>,
     pub on_hold: Option<bool>,
-    /// Expired = expiry date on or before today; a line with no expiry date is never expired
-    pub is_expired: Option<bool>,
+    /// Expired = expiry date on or before `today`; a line with no expiry date is never expired
+    pub is_expired: Option<(bool, /* today */ NaiveDate)>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -349,9 +350,7 @@ impl<'a> StockLineRepository<'a> {
                 query = query.filter(stock_line::on_hold.eq(on_hold));
             }
 
-            if let Some(is_expired) = is_expired {
-                // The server's local date: for a server on site, the same day its users see
-                let today = chrono::Local::now().date_naive();
+            if let Some((is_expired, today)) = is_expired {
                 query = match is_expired {
                     true => query.filter(stock_line::expiry_date.le(today)),
                     false => query.filter(
@@ -505,8 +504,8 @@ impl StockLineFilter {
         self
     }
 
-    pub fn is_expired(mut self, filter: bool) -> Self {
-        self.is_expired = Some(filter);
+    pub fn is_expired(mut self, is_expired: bool, today: NaiveDate) -> Self {
+        self.is_expired = Some((is_expired, today));
         self
     }
 }
@@ -779,7 +778,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_stock_line_is_expired() {
-        let today = chrono::Local::now().date_naive();
+        let today = NaiveDate::from_ymd_opt(2026, 11, 4).unwrap();
         fn line(id: &str, expiry_date: Option<NaiveDate>) -> StockLineRow {
             StockLineRow {
                 id: id.to_string(),
@@ -812,7 +811,7 @@ mod test {
         let repo = StockLineRepository::new(&connection);
         let ids = |is_expired: bool| {
             let mut ids: Vec<String> = repo
-                .query_by_filter(StockLineFilter::new().is_expired(is_expired), None)
+                .query_by_filter(StockLineFilter::new().is_expired(is_expired, today), None)
                 .unwrap()
                 .into_iter()
                 .map(|l| l.stock_line_row.id)

@@ -9959,6 +9959,7 @@ export type QueriesItemsByStockLineFilterArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesLedgerArgs = {
@@ -10250,6 +10251,7 @@ export type QueriesStockLinesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StockLineSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesStockRelocationArgs = {
@@ -11548,7 +11550,10 @@ export type StockLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
-  /** true: expiry date on or before today. false: expiry date after today, or no expiry date */
+  /**
+   * true: expiry date on or before today. false: expiry date after today, or no expiry date.
+   * Today is in the query's `timezoneOffset`, or the server's timezone without one
+   */
   isExpired?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStockLine?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;

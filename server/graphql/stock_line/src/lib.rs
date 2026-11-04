@@ -1,6 +1,6 @@
 pub mod mutations;
 use async_graphql::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
     ContextExt,
     generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput},
@@ -14,6 +14,7 @@ use repository::{
     StringFilter, location::LocationFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
+use util::timezone::offset_to_timezone;
 
 #[derive(Default, Clone)]
 pub struct StockLineQueries;
@@ -66,34 +67,44 @@ pub struct StockLineFilterInput {
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilterStringInput>,
     pub on_hold: Option<bool>,
-    /// true: expiry date on or before today. false: expiry date after today, or no expiry date
+    /// true: expiry date on or before today. false: expiry date after today, or no expiry date.
+    /// Today is in the query's `timezoneOffset`, or the server's timezone without one
     pub is_expired: Option<bool>,
 }
 
-impl From<StockLineFilterInput> for StockLineFilter {
-    fn from(f: StockLineFilterInput) -> Self {
+impl StockLineFilterInput {
+    /// `today` is the day `is_expired` compares expiry dates with
+    pub fn to_domain(self, today: NaiveDate) -> StockLineFilter {
         StockLineFilter {
-            expiry_date: f.expiry_date.map(DateFilter::from),
-            id: f.id.map(EqualFilter::from),
-            code: f.code.map(StringFilter::from),
-            name: f.name.map(StringFilter::from),
-            is_available: f.is_available,
-            item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
-            search: f.search.map(StringFilterInput::into),
-            item_id: f.item_id.map(EqualFilter::from),
-            location_id: f.location_id.map(EqualFilter::from),
+            expiry_date: self.expiry_date.map(DateFilter::from),
+            id: self.id.map(EqualFilter::from),
+            code: self.code.map(StringFilter::from),
+            name: self.name.map(StringFilter::from),
+            is_available: self.is_available,
+            item_code_or_name: self.item_code_or_name.map(StringFilterInput::into),
+            search: self.search.map(StringFilterInput::into),
+            item_id: self.item_id.map(EqualFilter::from),
+            location_id: self.location_id.map(EqualFilter::from),
             store_id: None,
-            vvm_status_id: f.vvm_status_id.map(EqualFilter::from),
-            has_packs_in_store: f.has_packs_in_store,
-            location: f.location.map(LocationFilter::from),
-            master_list: f.master_list.map(|f| f.to_domain()),
-            is_active: f.is_active,
-            is_program_stock_line: f.is_program_stock_line,
-            campaign_id: f.campaign_id.map(EqualFilter::from),
-            on_hold: f.on_hold,
-            is_expired: f.is_expired,
+            vvm_status_id: self.vvm_status_id.map(EqualFilter::from),
+            has_packs_in_store: self.has_packs_in_store,
+            location: self.location.map(LocationFilter::from),
+            master_list: self.master_list.map(|f| f.to_domain()),
+            is_active: self.is_active,
+            is_program_stock_line: self.is_program_stock_line,
+            campaign_id: self.campaign_id.map(EqualFilter::from),
+            on_hold: self.on_hold,
+            is_expired: self.is_expired.map(|is_expired| (is_expired, today)),
         }
     }
+}
+
+/// Today in the given offset (hours), or in the server's local timezone when there is none
+fn today_in(timezone_offset: Option<i32>) -> Result<NaiveDate> {
+    let timezone_offset = offset_to_timezone(&timezone_offset).ok_or(
+        StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()),
+    )?;
+    Ok(Utc::now().with_timezone(&timezone_offset).date_naive())
 }
 
 impl StockLineSortInput {
@@ -116,6 +127,7 @@ impl StockLineQueries {
         #[graphql(desc = "Filter option")] filter: Option<StockLineFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<StockLineSortInput>>,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
     ) -> Result<StockLinesResponse> {
         let user = validate_auth(
             ctx,
@@ -129,9 +141,10 @@ impl StockLineQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+        let today = today_in(timezone_offset)?;
         // always filter by store_id
         let filter = filter
-            .map(StockLineFilter::from)
+            .map(|f| f.to_domain(today))
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(store_id.to_string()));
 
@@ -169,6 +182,7 @@ impl StockLineQueries {
         #[graphql(desc = "Item-level sort (only first sort input is evaluated)")] sort: Option<
             Vec<ItemSortInput>,
         >,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
     ) -> Result<ItemsResponse> {
         let user = validate_auth(
             ctx,
@@ -182,9 +196,10 @@ impl StockLineQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+        let today = today_in(timezone_offset)?;
         // always filter by store_id (mirrors the `stock_lines` query)
         let filter = filter
-            .map(StockLineFilter::from)
+            .map(|f| f.to_domain(today))
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(store_id.to_string()));
 
