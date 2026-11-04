@@ -192,6 +192,7 @@ impl ProcessorsTrigger {
         self.trigger_processor(ProcessorType::RequisitionAutoFinalise);
         self.trigger_processor(ProcessorType::MergeSyncMessage);
         self.trigger_processor(ProcessorType::BarcodeAutoConfirm);
+        self.trigger_processor(ProcessorType::SupportUploadFiles);
     }
 
     /// Waits till all current events in the processor queue are handled.
