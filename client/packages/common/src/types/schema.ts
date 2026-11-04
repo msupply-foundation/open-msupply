@@ -4989,6 +4989,11 @@ export type InsertRequestRequisitionInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   /**
+   * Starts the order with a line for every item on this master list, each requesting its
+   * suggested quantity. Created in one step: if the lines can't be added, no order is created
+   */
+  masterListId?: InputMaybe<Scalars['String']['input']>;
+  /**
    * Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
    * facility record carries no supply interval. Ignored, the store's supply interval +
    * safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`

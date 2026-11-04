@@ -1944,6 +1944,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <ItemSearch
               label={t('label.item')}
               storeId={props.storeId}
+              includeHiddenWithStock
               disabled={itemLocked() || saving()}
               focusTarget={itemSearch}
               value={item()?.id}

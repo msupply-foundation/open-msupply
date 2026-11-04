@@ -97,6 +97,7 @@ import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
   hasSourceLink,
+  isDeletable,
   isEditable,
   actionsLocked,
   sourceLinkOf,
@@ -455,6 +456,9 @@ const InboundShipmentDetailView: Component = () => {
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // Delete keeps the server's own window, which still admits Shipped.
+  const deleteDisabled = () =>
+    writeBlocked() || !isDeletable(current()?.status ?? '');
   // The line-selection actions close earlier on a PO-linked shipment — at
   // Received (issue #873); its lines still open, and items are still added.
   const bulkLocked = () =>
@@ -1144,6 +1148,7 @@ const InboundShipmentDetailView: Component = () => {
                   storeId={params.storeId}
                   node={node()}
                   disabled={isDisabled()}
+                  deleteDisabled={deleteDisabled()}
                   hasLines={hasLines()}
                   scope={scope()}
                   edit={edit}

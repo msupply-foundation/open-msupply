@@ -42,8 +42,11 @@ export interface PatientDetails {
   patient: Resource<PatientNode | undefined>;
   /** The patient as last read, undefined while unresolved; never suspends. */
   node: Accessor<PatientNode | undefined>;
-  /** Re-reads the patient (after a save, which makes a new version). */
-  refetch: () => void;
+  /**
+   * Re-reads the patient (after a save, which makes a new version). Resolves
+   * with the re-read once it lands, so a save can await it.
+   */
+  refetch: () => Promise<PatientNode | undefined>;
   /** The plain path's editor: the patient record's own fields. */
   editor: PatientEditor;
   /** The document path's editor: the patient document, on the store's form. */
@@ -154,7 +157,7 @@ export const createPatientDetails = (
   return {
     patient,
     node,
-    refetch: () => void refetch(),
+    refetch: () => Promise.resolve(refetch()).then(n => n ?? undefined),
     editor,
     documentEditor,
     registry,

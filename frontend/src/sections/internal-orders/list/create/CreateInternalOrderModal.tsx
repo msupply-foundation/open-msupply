@@ -3,7 +3,6 @@ import {
   createMemo,
   createResource,
   createSignal,
-  onMount,
   Show,
   type Component,
   type JSX,
@@ -17,26 +16,26 @@ import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
-import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { StatusMarker } from '../../../../ui/elements/feedback/StatusMarker';
 import { AlertTriangleIcon } from '../../../../ui/icons';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+import { NameSearch } from '../../../../domain/name';
+import { NonProgramMasterLists } from '../../../../domain/masterList/masterList.generated';
 import { InternalOrderProgramSettings } from './createInternalOrder.generated';
 import { createGeneralOrder, createProgramOrder } from './createInternalOrder';
 
-// The create modal (spec/internal-orders S2). Two paths: a General order — pick
-// a supplier and the empty Draft is created immediately (no confirm) — and a
-// Program order — cascade supplier → program → order type → period, then
-// Create. The modal offers both as tabs (Program first) only when the store can
-// create program orders (its supplier-program settings are non-empty,
-// OMS-REG-REPL-04.46); otherwise the General path fills it. On success the
-// caller navigates to the new order (onCreated); a program rejection keeps the
-// dialog open with the error (OMS-REG-REPL-04.50). The general path's
-// rejections are unreachable / surfaced globally (contract › creation).
+// The create modal (spec/internal-orders S2): one form for both kinds of order.
+// Supplier first; then, where the store can create program orders (its
+// supplier-program settings are non-empty, OMS-REG-REPL-04.102), an optional
+// Program that decides the kind — none chosen makes a general order, one chosen
+// a program order with its order type → period cascade. While no program is
+// chosen an optional Master list starts the general order from that list
+// (OMS-REG-REPL-04.103/.104). Create submits either kind; on success the caller
+// navigates to the new order (onCreated), and a rejection keeps the dialog open
+// with the error (OMS-REG-REPL-04.50).
 
 // A cascade select is an id-valued autocomplete whose label the FieldRow shows.
 type CascadeOption = { id: string; label: string; disabled?: boolean };
@@ -49,6 +48,7 @@ const CascadeSelect = (props: {
   disabled?: boolean;
   noResultsMessage?: string;
   helperText?: string;
+  placeholder?: string;
   renderItem?: (option: CascadeOption) => JSX.Element;
   testId?: string;
 }): JSX.Element => (
@@ -64,6 +64,7 @@ const CascadeSelect = (props: {
     onChange={o => props.onChange(o?.id ?? null)}
     noResultsMessage={props.noResultsMessage}
     helperText={props.helperText}
+    placeholder={props.placeholder}
     renderItem={props.renderItem}
     inputTestId={props.testId}
   />
@@ -80,10 +81,10 @@ export interface CreateInternalOrderModalProps {
 export const CreateInternalOrderModal: Component<
   CreateInternalOrderModalProps
 > = props => {
-  // The program settings (and the tab gate) load when the modal opens; a
-  // spinner shows until they settle. Read non-suspending (gated on state) so
-  // the open modal never suspends the list screen behind it
-  // (kdd/solid-reactivity-pitfalls).
+  // The program settings (and the program-field gate) and the store's own
+  // master lists load when the modal opens; a spinner shows until the settings
+  // settle. Both read non-suspending (gated on state) so the open modal never
+  // suspends the list screen behind it (kdd/solid-reactivity-pitfalls).
   const [settings] = createResource(
     () => (props.open ? props.storeId : false),
     async storeId => {
@@ -94,66 +95,68 @@ export const CreateInternalOrderModal: Component<
       return result.data.supplierProgramRequisitionSettings;
     }
   );
+  const [masterLists] = createResource(
+    () => (props.open ? props.storeId : false),
+    async storeId => {
+      const result = await graphqlFetch(NonProgramMasterLists, { storeId });
+      if (result.kind !== 'success') return undefined;
+      return result.data.masterLists.nodes;
+    }
+  );
   const settled = () =>
     settings.state === 'ready' || settings.state === 'refreshing';
   const settingsList = () => gated(settings) ?? [];
   const programCapable = () => settingsList().length > 0;
 
-  const [tab, setTab] = createSignal('program');
-  const activeTab = () => (programCapable() ? tab() : 'general');
-
-  // Program-path selections. Each choice clears the ones below it
-  // (OMS-REG-REPL-04.47).
+  // Selections. Program, order type and period cascade: each choice clears the
+  // ones below it (OMS-REG-REPL-04.47).
   const [supplierId, setSupplierId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
   const [orderTypeId, setOrderTypeId] = createSignal<string>();
   const [periodId, setPeriodId] = createSignal<string>();
+  const [masterListId, setMasterListId] = createSignal<string>();
   const [error, setError] = createSignal<string>();
   const [submitting, setSubmitting] = createSignal(false);
 
-  // Fresh modal, fresh state (a reopen must not resurrect a prior cascade).
+  // Fresh modal, fresh state (a reopen must not resurrect a prior choice).
   createEffect(() => {
     if (props.open) {
-      setTab('program');
       setSupplierId();
       setProgramId();
       setOrderTypeId();
       setPeriodId();
+      setMasterListId();
       setError();
       setSubmitting(false);
     }
   });
 
-  // Program suppliers: deduped across every program setting, name-sorted;
-  // on-hold suppliers listed but not selectable (OMS-REG-REPL-04.47 supplier
-  // picker) — and textually marked, so the block never reads from the dimming
-  // alone (ui-standards controls.md § blocked affordances).
-  const suppliers = createMemo<CascadeOption[]>(() => {
-    const seen = new Map<string, CascadeOption>();
-    for (const setting of settingsList())
-      for (const supplier of setting.suppliers)
-        if (!seen.has(supplier.id))
-          seen.set(supplier.id, {
-            id: supplier.id,
-            label: supplier.isOnHold
-              ? `${supplier.name} (${t('label.on-hold')})`
-              : supplier.name,
-            disabled: supplier.isOnHold,
-          });
-    return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
-  });
+  const clearProgram = () => {
+    setProgramId();
+    setOrderTypeId();
+    setPeriodId();
+  };
 
-  // Programs the chosen supplier supplies, rendered "programName (tagName)".
-  const programs = createMemo<CascadeOption[]>(() => {
-    const supplier = supplierId();
-    if (!supplier) return [];
-    return settingsList()
-      .filter(setting => setting.suppliers.some(s => s.id === supplier))
-      .map(setting => ({
-        id: setting.programId,
-        label: `${setting.programName} (${setting.tagName})`,
-      }));
-  });
+  // Programs the given supplier supplies, rendered "programName (tagName)".
+  const programsFor = (supplier: string | undefined): CascadeOption[] =>
+    supplier
+      ? settingsList()
+          .filter(setting => setting.suppliers.some(s => s.id === supplier))
+          .map(setting => ({
+            id: setting.programId,
+            label: `${setting.programName} (${setting.tagName})`,
+          }))
+      : [];
+  const programs = createMemo(() => programsFor(supplierId()));
+
+  // A new supplier keeps the chosen program only if it supplies it too
+  // (OMS-REG-REPL-04.102).
+  const onSupplier = (id: string | undefined) => {
+    setSupplierId(id);
+    setError();
+    const program = programId();
+    if (program && !programsFor(id).some(p => p.id === program)) clearProgram();
+  };
 
   const selectedSetting = () =>
     settingsList().find(setting => setting.programId === programId());
@@ -174,31 +177,27 @@ export const CreateInternalOrderModal: Component<
       label: period.name,
     }));
   });
+  const masterListOptions = createMemo<CascadeOption[]>(() =>
+    (gated(masterLists) ?? []).map(list => ({ id: list.id, label: list.name }))
+  );
 
+  // No program → a general order, ready once a supplier is chosen
+  // (OMS-REG-REPL-04.101); a program → all four set (OMS-REG-REPL-04.47).
   const createReady = () =>
-    !!supplierId() && !!programId() && !!orderTypeId() && !!periodId();
+    !!supplierId() && (!programId() || (!!orderTypeId() && !!periodId()));
 
-  // General path: picking a supplier creates and navigates immediately
-  // (OMS-REG-REPL-04.6/.43).
-  const onGeneralSupplier = async (supplier: NameOption | null) => {
-    if (!supplier || submitting()) return;
-    setSubmitting(true);
-    const result = await createGeneralOrder(props.storeId, supplier.id);
-    setSubmitting(false);
-    if (result.kind === 'created') props.onCreated(result.id);
-    // A failed general create surfaced globally; no inline error to show.
-  };
-
-  const submitProgram = async () => {
+  const submit = async () => {
     if (!createReady() || submitting()) return;
     setSubmitting(true);
     setError();
-    const result = await createProgramOrder(
-      props.storeId,
-      supplierId()!,
-      orderTypeId()!,
-      periodId()!
-    );
+    const result = programId()
+      ? await createProgramOrder(
+          props.storeId,
+          supplierId()!,
+          orderTypeId()!,
+          periodId()!
+        )
+      : await createGeneralOrder(props.storeId, supplierId()!, masterListId());
     setSubmitting(false);
     if (result.kind === 'created') {
       props.onCreated(result.id);
@@ -208,118 +207,9 @@ export const CreateInternalOrderModal: Component<
     // 'failed' already surfaced globally.
   };
 
-  // The two path bodies are components so each mount point owns its own
-  // instance — the General path renders both as a tab and (no-program store) as
-  // the whole body, and a shared JSX node can't mount in two places.
-  // The supplier picker is the General path's only control, so it takes focus
-  // whenever that path appears (spec/internal-orders S2 — autofocus): on open
-  // for a store with no programs, and on switching to the General tab, whose
-  // panel mounts only while active. Declared here rather than as the Dialog's
-  // initialFocus because the Program tab, not this one, may open first.
+  // The supplier picker is the form's first control, so the dialog opens on it
+  // (spec/internal-orders S2 — autofocus).
   const supplierSearch = createFocusTarget();
-
-  const GeneralPath: Component = () => {
-    onMount(supplierSearch.focus);
-    return (
-      <Stack gap="md">
-        <FieldRow label={t('label.supplier-name')}>
-          <NameSearch
-            storeId={props.storeId}
-            role="supplier"
-            parties="internal"
-            label={t('label.supplier-name')}
-            hideLabel
-            clearable={false}
-            disabled={submitting()}
-            focusTarget={supplierSearch}
-            onSelect={supplier => void onGeneralSupplier(supplier)}
-          />
-        </FieldRow>
-      </Stack>
-    );
-  };
-
-  const ProgramPath: Component = () => (
-    <Stack gap="md">
-      <FieldRow label={t('label.supplier-name')}>
-        <CascadeSelect
-          label={t('label.supplier-name')}
-          options={suppliers()}
-          value={supplierId()}
-          onChange={id => {
-            setSupplierId(id ?? undefined);
-            setProgramId();
-            setOrderTypeId();
-            setPeriodId();
-            setError();
-          }}
-          testId="create-program-supplier"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.program')}>
-        <CascadeSelect
-          label={t('label.program')}
-          options={programs()}
-          value={programId()}
-          disabled={!supplierId()}
-          onChange={id => {
-            setProgramId(id ?? undefined);
-            setOrderTypeId();
-            setPeriodId();
-            setError();
-          }}
-          testId="create-program-program"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.order-type')}>
-        <CascadeSelect
-          label={t('label.order-type')}
-          options={orderTypes()}
-          value={orderTypeId()}
-          disabled={!programId()}
-          noResultsMessage={t('messages.not-configured')}
-          onChange={id => {
-            setOrderTypeId(id ?? undefined);
-            setPeriodId();
-            setError();
-          }}
-          renderItem={option => (
-            <HStack gap="sm">
-              {option.label}
-              <Show when={isEmergency(option.id)}>
-                <StatusMarker
-                  severity="error"
-                  icon={AlertTriangleIcon}
-                  label={t('label.emergency')}
-                />
-              </Show>
-            </HStack>
-          )}
-          testId="create-program-order-type"
-        />
-      </FieldRow>
-      <FieldRow label={t('label.period')}>
-        <CascadeSelect
-          label={t('label.period')}
-          options={periods()}
-          value={periodId()}
-          disabled={!orderTypeId()}
-          helperText={t('message.program-period')}
-          noResultsMessage={t('messages.period-not-available')}
-          onChange={id => {
-            setPeriodId(id ?? undefined);
-            setError();
-          }}
-          testId="create-program-period"
-        />
-      </FieldRow>
-      <Show when={error()}>
-        <Alert severity="error" testId="create-internal-order-error">
-          {error()}
-        </Alert>
-      </Show>
-    </Stack>
-  );
 
   return (
     <Dialog
@@ -331,10 +221,9 @@ export const CreateInternalOrderModal: Component<
       testId="create-internal-order-modal"
       widthRem={44}
       minBodyHeightRem={30}
-      // Cancel is the house way out on both paths (ui-standards › dialogs §
-      // chrome); Create sits beside it only on the Program path — the General
-      // path creates on supplier-select and has no confirm
-      // (OMS-REG-REPL-04.6/.43/.48, OMS-REG-REPL-12.2).
+      initialFocus={supplierSearch}
+      // Cancel, then Create (ui-standards › dialogs § chrome;
+      // OMS-REG-REPL-04.48/.101, OMS-REG-REPL-12.2).
       actions={
         <>
           <CancelButton
@@ -342,37 +231,121 @@ export const CreateInternalOrderModal: Component<
             disabled={submitting()}
             onClick={props.onClose}
           />
-          <Show when={activeTab() === 'program'}>
-            <Button
-              confirms="plain"
-              data-testid="create-program-order-button"
-              disabled={!createReady()}
-              loading={submitting()}
-              onClick={() => void submitProgram()}
-            >
-              {t('label.create')}
-            </Button>
-          </Show>
+          <Button
+            confirms="plain"
+            data-testid="create-internal-order-button"
+            disabled={!createReady()}
+            loading={submitting()}
+            onClick={() => void submit()}
+          >
+            {t('label.create')}
+          </Button>
         </>
       }
     >
       <Show when={settled()} fallback={<Spinner center label={t('loading')} />}>
-        <Show when={programCapable()} fallback={<GeneralPath />}>
-          <Tabs value={activeTab()} onValueChange={setTab}>
-            <TabList
-              tabs={[
-                { value: 'program', label: t('label.requisition-program') },
-                { value: 'general', label: t('label.requisition-general') },
-              ]}
+        <Stack gap="md">
+          <FieldRow label={t('label.supplier-name')}>
+            <NameSearch
+              storeId={props.storeId}
+              role="supplier"
+              parties="internal"
+              label={t('label.supplier-name')}
+              hideLabel
+              clearable={false}
+              disabled={submitting()}
+              focusTarget={supplierSearch}
+              onSelect={supplier => onSupplier(supplier?.id)}
             />
-            <TabPanel value="program">
-              <ProgramPath />
-            </TabPanel>
-            <TabPanel value="general">
-              <GeneralPath />
-            </TabPanel>
-          </Tabs>
-        </Show>
+          </FieldRow>
+          <Show when={programCapable()}>
+            <FieldRow label={t('label.program')}>
+              <CascadeSelect
+                label={t('label.program')}
+                options={programs()}
+                value={programId()}
+                disabled={!supplierId() || submitting()}
+                placeholder={t('label.program-none')}
+                helperText={
+                  programId()
+                    ? undefined
+                    : t('messages.no-program-general-order')
+                }
+                onChange={id => {
+                  clearProgram();
+                  setProgramId(id ?? undefined);
+                  setError();
+                }}
+                testId="create-internal-order-program"
+              />
+            </FieldRow>
+            <FieldRow label={t('label.order-type')}>
+              <CascadeSelect
+                label={t('label.order-type')}
+                options={orderTypes()}
+                value={orderTypeId()}
+                disabled={!programId() || submitting()}
+                noResultsMessage={t('messages.not-configured')}
+                onChange={id => {
+                  setOrderTypeId(id ?? undefined);
+                  setPeriodId();
+                  setError();
+                }}
+                renderItem={option => (
+                  <HStack gap="sm">
+                    {option.label}
+                    <Show when={isEmergency(option.id)}>
+                      <StatusMarker
+                        severity="error"
+                        icon={AlertTriangleIcon}
+                        label={t('label.emergency')}
+                      />
+                    </Show>
+                  </HStack>
+                )}
+                testId="create-internal-order-order-type"
+              />
+            </FieldRow>
+            <FieldRow label={t('label.period')}>
+              <CascadeSelect
+                label={t('label.period')}
+                options={periods()}
+                value={periodId()}
+                disabled={!orderTypeId() || submitting()}
+                helperText={t('message.program-period')}
+                noResultsMessage={t('messages.period-not-available')}
+                onChange={id => {
+                  setPeriodId(id ?? undefined);
+                  setError();
+                }}
+                testId="create-internal-order-period"
+              />
+            </FieldRow>
+          </Show>
+          {/* A program order takes its lines from its program, so the master
+              list is offered only for a general order (OMS-REG-REPL-04.103). */}
+          <Show when={!programId()}>
+            <FieldRow label={t('label.master-list')}>
+              <CascadeSelect
+                label={t('label.master-list')}
+                options={masterListOptions()}
+                value={masterListId()}
+                disabled={submitting()}
+                placeholder={t('label.master-list-none')}
+                onChange={id => {
+                  setMasterListId(id ?? undefined);
+                  setError();
+                }}
+                testId="create-internal-order-master-list"
+              />
+            </FieldRow>
+          </Show>
+          <Show when={error()}>
+            <Alert severity="error" testId="create-internal-order-error">
+              {error()}
+            </Alert>
+          </Show>
+        </Stack>
       </Show>
     </Dialog>
   );

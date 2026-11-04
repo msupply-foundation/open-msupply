@@ -66,7 +66,9 @@ use queries::{
     abbreviation::AbbreviationFilterInput,
     currency::currencies,
     display_settings::{DisplaySettingsHash, DisplaySettingsNode, display_settings},
-    initialisation_status::{InitialisationStatusNode, initialisation_status},
+    initialisation_status::{
+        InitialisationStatusNode, initialisation_status, operational_initialisation_status,
+    },
     insurance_policies::{
         InsuranceResponse, InsuranceSortInput, InsurancesResponse, insurance_policies,
         insurance_policy,
@@ -335,11 +337,8 @@ impl GeneralQueries {
     }
 
     /// Available without authorisation in operational and initialisation states
-    pub async fn initialisation_status(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+    pub async fn initialisation_status(&self) -> Result<InitialisationStatusNode> {
+        Ok(operational_initialisation_status())
     }
 
     /// Available without authorisation in all states (Operational, Initialisation and MigratingDatabase)

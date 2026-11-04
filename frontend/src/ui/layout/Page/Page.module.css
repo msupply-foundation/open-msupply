@@ -140,7 +140,7 @@
       visibility 0s;
   }
 
-  :dir(rtl) .panelSlot {
+  [dir='rtl'] .panelSlot {
     --hide-x: -100%;
   }
 

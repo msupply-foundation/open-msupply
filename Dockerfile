@@ -308,6 +308,11 @@ RUN --mount=type=cache,id=yarn,target=/root/.yarn/berry/cache,sharing=locked \
 # it made every frontend/-only merge redo ~4 minutes of yarn install and
 # build:old-ui - the critical path of a deploy build.
 COPY frontend frontend
+# tsc -b type-checks the plugins (tsconfig.backend-plugins.json) and the
+# example forms the documentForm tests import, all under plugins/ since they
+# moved out of frontend/. private/plugins is left out: the vite build never
+# bundles plugins, and private/ is absent from the public mirror.
+COPY plugins plugins
 # New FE, served at /
 # The displayed interface version (vite.config.ts § appVersion) comes from
 # RELEASE_VERSION or else `git describe` - and .git is not in the build

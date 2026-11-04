@@ -1,0 +1,15 @@
+{
+  "//rootDir": "client/tsconfig.json pins rootDir to client/, and this plugin lives outside it, so rootDir is overridden below",
+  "//": "Expecting for every plugin to be developed from 'common/packages/plugins/{plugin repo}/frontend/{version}'",
+  "extends": "../../../../../client/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../../../../..",
+    "outDir": "./dist",
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types",
+      "../../../../../node_modules/@types",
+      "../../../../../client/typings"
+    ]
+  }
+}

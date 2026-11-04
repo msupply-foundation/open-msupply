@@ -102,7 +102,7 @@ const assetParsers = {
 // without even the Store column that would name the owner.
 //
 // Left as-is here deliberately. It is captured as current behaviour in the new
-// front end's spec (frontend/spec/cold-chain-equipment/contract.md § the two
+// front end's spec (spec/cold-chain-equipment/contract.md § the two
 // destinations, "wire trap — the non-central store-code restriction is dead
 // code", confirmed live), and that front end was built to match it. Making the
 // restriction fire would re-scope the list on every non-central site and put

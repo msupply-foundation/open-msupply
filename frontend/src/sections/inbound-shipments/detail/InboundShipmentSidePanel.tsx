@@ -42,6 +42,11 @@ export interface InboundShipmentSidePanelProps {
   /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   /**
+   * The delete's own lock — looser than `disabled` by Shipped, where the
+   * server still deletes (rules § deletion).
+   */
+  deleteDisabled: boolean;
+  /**
    * Whether the shipment holds any stock-bearing lines — only those carry
    * stock, so this and the status together decide the delete confirmation's
    * stock warning.
@@ -344,12 +349,12 @@ export const InboundShipmentSidePanel: Component<
           heading + padding as the info sections above. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete — offered at every status, matching the list's bulk
-              delete: it is submitted and the server's own reason surfaced,
-              never pre-screened here (issue #1134). The confirmation warns
-              that the shipment's stock goes with it ONLY where the delete
-              would actually take stock: Received (Verified is refused
-              outright), and holding at least one line. */}
+          {/* Delete — disabled where the server refuses it outright
+              (Picked, Verified, a write block; issue #628); elsewhere it is
+              submitted and the server's own reason surfaced (issue #1134).
+              The confirmation warns that the shipment's stock goes with it
+              ONLY where the delete would actually take stock: Received, and
+              holding at least one line. */}
           <DeleteInboundShipmentAction
             storeId={props.storeId}
             invoiceId={props.node.id}
@@ -359,6 +364,7 @@ export const InboundShipmentSidePanel: Component<
             removesStock={() =>
               deleteRemovesStock(props.node.status) && props.hasLines
             }
+            disabled={props.deleteDisabled}
             onDeleted={props.onDeleted}
           />
           <DuplicateInboundShipmentAction

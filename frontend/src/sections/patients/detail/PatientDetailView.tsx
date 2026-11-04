@@ -670,7 +670,7 @@ const PatientDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
                 confirmAction="save"
-                onConfirm={() => void details().doSave(() => void refetch())}
+                onConfirm={() => void details().doSave(() => refetch())}
                 onClose={() => details().setConfirmSaveOpen(false)}
               />
               <ConfirmDialog
