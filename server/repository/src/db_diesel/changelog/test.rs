@@ -1516,9 +1516,7 @@ async fn test_compatibility_query_clamped_by_in_flight_tx() {
 }
 
 #[cfg(feature = "postgres")]
-use super::partition::tests::{
-    hold_open_transaction, reset_to_one_partition, reset_to_two_partitions, run_with_timeout,
-};
+use super::partition::tests::{hold_open_transaction, run_with_timeout};
 
 /// Insert a single changelog row with an explicit cursor (table is always Invoice).
 #[cfg(feature = "postgres")]
@@ -1551,36 +1549,6 @@ fn dedup_test_insert(
         .execute(connection.lock().connection())
         .unwrap();
 }
-
-/// Insert rows with explicit cursors and align the sequence with the highest
-/// one, so a later cursor-less insert lands above them.
-#[cfg(feature = "postgres")]
-fn dedup_test_seed(connection: &StorageConnection, rows: &[(i64, &str, RowActionType)]) {
-    for (cursor, record_id, action) in rows {
-        dedup_test_insert(
-            connection,
-            *cursor,
-            record_id,
-            Some("store1"),
-            action.clone(),
-        );
-    }
-    let max = rows.iter().map(|(cursor, ..)| *cursor).max().unwrap();
-    diesel::sql_query(format!("SELECT setval('changelog_cursor_seq', {max})"))
-        .execute(connection.lock().connection())
-        .unwrap();
-}
-
-/// rec_a: 3 upserts (only @3 survives). rec_b: single. rec_d: upsert@5 + delete@6 (both survive).
-#[cfg(feature = "postgres")]
-const DEDUP_TEST_SIX_ROWS: [(i64, &str, RowActionType); 6] = [
-    (1, "rec_a", RowActionType::Upsert),
-    (2, "rec_a", RowActionType::Upsert),
-    (3, "rec_a", RowActionType::Upsert),
-    (4, "rec_b", RowActionType::Upsert),
-    (5, "rec_d", RowActionType::Upsert),
-    (6, "rec_d", RowActionType::Delete),
-];
 
 /// All changelog cursors that remain, ascending.
 #[cfg(feature = "postgres")]
@@ -1636,13 +1604,13 @@ fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> boo
 /// - within a window, only the newest row per (table_name, record_id, row_action) survives;
 /// - UPSERT and DELETE for the same record survive separately (row_action in the key);
 /// - the second run dedups the new window AND removes the old-part leftover of a record
-///   that reappears, from a partition the window does not cover;
+///   that reappears;
 /// - the dead-set table is dropped afterwards.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
 async fn test_changelog_dedup_windowed() {
     use crate::test_db::SetupResult;
-    use RowActionType::Upsert;
+    use RowActionType::{Delete, Upsert};
 
     let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
         db_name: "test_changelog_dedup_windowed",
@@ -1651,21 +1619,25 @@ async fn test_changelog_dedup_windowed() {
     })
     .await;
     delete_all_changelog(&connection);
-    reset_to_two_partitions(&connection);
 
     // The marker (KeyType::ChangelogDedupCursor) is persisted by the task layer, not
     // the repo; here we drive the repo helpers directly over explicit (marker, max]
     // windows, so the marker is just a local value.
 
-    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS);
+    // rec_a: 3 upserts (only @3 survives). rec_b: single. rec_d: upsert@5 + delete@6 (both survive).
+    dedup_test_insert(&connection, 1, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 2, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 3, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 4, "rec_b", Some("store2"), Upsert);
+    dedup_test_insert(&connection, 5, "rec_d", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 6, "rec_d", Some("store1"), Delete);
 
     // Run 1: window (0, 6].
     let deleted = dedup_test_run(&connection, 0, 6);
     assert_eq!(deleted, 2, "run 1 should delete rec_a @1,@2");
     assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
 
-    // rec_a reappears at @7 — its old survivor @3 is now stranded below the marker,
-    // in changelog_p_1 which the next window does not cover.
+    // rec_a reappears at @7 — its old survivor @3 is now stranded below the marker.
     dedup_test_insert(&connection, 7, "rec_a", Some("store1"), Upsert);
 
     // Run 2: window (6, 7]. Step 1 keeps @7; step 2 removes the old rec_a @3.
@@ -1691,12 +1663,24 @@ async fn test_changelog_dedup_not_blocked_by_open_insert_transaction() {
     )
     .await;
 
-    reset_to_one_partition(&connection);
-    // Rows 1-4; the holder's insert below takes cursor 5 in the same partition.
-    dedup_test_seed(&connection, &DEDUP_TEST_SIX_ROWS[..4]);
+    delete_all_changelog(&connection);
+    // rec_a: 3 upserts (only @3 survives). rec_b: single.
+    for (cursor, record_id) in [(1, "rec_a"), (2, "rec_a"), (3, "rec_a"), (4, "rec_b")] {
+        dedup_test_insert(
+            &connection,
+            cursor,
+            record_id,
+            Some("store1"),
+            RowActionType::Upsert,
+        );
+    }
+    // Move the sequence past them, so the holder's insert below takes cursor 5.
+    diesel::sql_query("SELECT setval('changelog_cursor_seq', 4)")
+        .execute(connection.lock().connection())
+        .unwrap();
 
     // An open transaction with an uncommitted insert, as an integration holds
-    // for hours: a ROW EXCLUSIVE lock on changelog_p_1.
+    // for hours: a ROW EXCLUSIVE lock on changelog.
     let holder = hold_open_transaction(
         &connection_manager,
         "INSERT INTO changelog (table_name, record_id, row_action) \

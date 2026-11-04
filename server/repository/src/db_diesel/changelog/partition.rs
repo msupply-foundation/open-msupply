@@ -934,11 +934,10 @@ pub(super) mod tests {
         holder.release();
     }
 
-    /// Drop existing partitions, recreate one `changelog_p_<lower>` per
-    /// `(lower, upper)` range (cursors `lower..upper`, upper excluded) plus the
+    /// Drop existing partitions, recreate two small ones [1,3), [3,5) plus the
     /// DEFAULT, and reset the sequence so `max_sequence` matches the empty
     /// changelog.
-    fn reset_partition_layout(connection: &StorageConnection, ranges: &[(i64, i64)]) {
+    fn reset_to_tight_partition_layout(connection: &StorageConnection) {
         diesel::sql_query(
             r#"
             DO $$
@@ -957,14 +956,16 @@ pub(super) mod tests {
         .execute(connection.lock().connection())
         .unwrap();
 
-        for (lower, upper) in ranges {
-            diesel::sql_query(format!(
-                "CREATE TABLE changelog_p_{lower} PARTITION OF changelog \
-                 FOR VALUES FROM ({lower}) TO ({upper});"
-            ))
-            .execute(connection.lock().connection())
-            .unwrap();
-        }
+        diesel::sql_query(
+            "CREATE TABLE changelog_p_1 PARTITION OF changelog FOR VALUES FROM (1) TO (3);",
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
+        diesel::sql_query(
+            "CREATE TABLE changelog_p_3 PARTITION OF changelog FOR VALUES FROM (3) TO (5);",
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
         // Same statement the 3.03.00 migration fragment uses.
         diesel::sql_query(format!(
             "CREATE TABLE {DEFAULT_PARTITION} PARTITION OF changelog DEFAULT"
@@ -975,22 +976,6 @@ pub(super) mod tests {
         diesel::sql_query("SELECT setval('changelog_cursor_seq', 1, false)")
             .execute(connection.lock().connection())
             .unwrap();
-    }
-
-    /// Two small partitions [1,3), [3,5) plus the DEFAULT.
-    fn reset_to_tight_partition_layout(connection: &StorageConnection) {
-        reset_partition_layout(connection, &[(1, 3), (3, 5)]);
-    }
-
-    /// One partition, changelog_p_1, for cursors 1-8, plus the DEFAULT.
-    pub(crate) fn reset_to_one_partition(connection: &StorageConnection) {
-        reset_partition_layout(connection, &[(1, 9)]);
-    }
-
-    /// Two partitions: cursors 1-4 in changelog_p_1, 5-8 in changelog_p_5, plus
-    /// the DEFAULT.
-    pub(crate) fn reset_to_two_partitions(connection: &StorageConnection) {
-        reset_partition_layout(connection, &[(1, 5), (5, 9)]);
     }
 
     /// Range partitions only; the DEFAULT is always present in the tight layout.
