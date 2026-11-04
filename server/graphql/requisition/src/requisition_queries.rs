@@ -120,18 +120,14 @@ pub fn get_requisition(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
+    // A named type narrows the read: a requisition of the other type is
+    // RecordNotFound rather than handed back to be shown as the wrong kind.
     let requisition_option = service_provider.requisition_service.get_requisition(
         &service_context,
         Some(store_id),
         id,
+        r#type.map(RequisitionType::from),
     )?;
-    // A named type narrows the read: a requisition of the other type is
-    // RecordNotFound rather than handed back to be shown as the wrong kind.
-    let requisition_option = requisition_option.filter(|requisition| {
-        r#type.is_none_or(|r#type| {
-            requisition.requisition_row.r#type == RequisitionType::from(r#type)
-        })
-    });
 
     let response = match requisition_option {
         Some(requisition) => {
