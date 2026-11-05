@@ -1,0 +1,368 @@
+import { createResource, createSignal, Show, type Component } from 'solid-js';
+import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
+import { t } from '@/intl';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { Button } from '@/ui/elements/buttons/Button';
+import { Text } from '@/ui/elements/typography/Text';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { UploadZone } from '@/ui/elements/inputs/UploadZone';
+import { DownloadIcon } from '@/ui/icons';
+import { DataTable, type Column } from '@/ui/elements/table/DataTable';
+import { getNumberCell, getTextCell } from '@/ui/elements/table/tableHelpers';
+import { remToPx } from '@/ui/utils/rem';
+import { saveBlob } from '@/platform/openDocument';
+import { readCsvFile } from '@/domain/reportFiles';
+import { CSV_ACCEPT, isCsvFileName } from '@/domain/csvImport';
+import {
+  ConsumptionEstimates,
+  ReplaceConsumptionEstimates,
+} from './consumptionEstimates.generated';
+import {
+  applyServerResult,
+  buildLines,
+  buildTemplateCsv,
+  parseEstimateFile,
+  pivotEstimates,
+  type EstimateImportRow,
+  type EstimateTableRow,
+  type Month,
+} from './consumptionEstimateImport';
+
+/*
+ * The store editor's Consumption estimates tab (spec/settings/rules.md § The
+ * store editor › Consumption estimates): estimated monthly consumption for a
+ * store with no history of its own, which AMC adds on top of real consumption
+ * until it's older than the look-back period.
+ *
+ * Unlike the other tabs it is NOT part of the editor's draft: an upload is
+ * checked by the server (a dry run), reviewed, and then replaces the store's
+ * estimates by its own Save — the editor's Save and Cancel don't touch it.
+ *
+ * Reactivity: the read first fetches when the tab opens, under the editor's
+ * already-open dialog, so it goes through the `.state` gate and never suspends
+ * (kdd/solid-reactivity-pitfalls § no remounts on interaction).
+ */
+export const ConsumptionEstimatesPanel: Component<{
+  /** The signed-in store: the request's authorisation subject. */
+  storeId: string;
+  /** The store being edited, whose estimates these are. */
+  forStoreId: string;
+  /** Central server with the central-data permission. */
+  editable: boolean;
+}> = props => {
+  const [review, setReview] = createSignal<{
+    months: Month[];
+    rows: EstimateImportRow[];
+    lines: ReturnType<typeof buildLines>;
+  }>();
+  const [uploadError, setUploadError] = createSignal<string>();
+  const [saving, setSaving] = createSignal(false);
+  const [saveFailed, setSaveFailed] = createSignal(false);
+  const [confirmClear, setConfirmClear] = createSignal(false);
+
+  const [data, { refetch }] = createResource(
+    () =>
+      props.forStoreId
+        ? { storeId: props.storeId, forStoreId: props.forStoreId }
+        : undefined,
+    async ({ storeId, forStoreId }) => {
+      const result = await graphqlFetch(
+        ConsumptionEstimates,
+        { storeId, forStoreId },
+        { background: true }
+      );
+      return result.kind === 'success'
+        ? result.data.consumptionEstimates
+        : undefined;
+    }
+  );
+  const current = () => gated(data);
+  const table = () => pivotEstimates(current()?.estimates ?? []);
+
+  const downloadTemplate = async () => {
+    const csv = buildTemplateCsv(
+      current()?.amcLookBackMonths ?? 0,
+      current()?.estimates ?? [],
+      new Date()
+    );
+    await saveBlob(
+      new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
+      `${t('label.consumption-estimates')}.csv`
+    );
+  };
+
+  const replace = (
+    lines: ReturnType<typeof buildLines>['lines'],
+    dryRun: boolean
+  ) =>
+    graphqlFetch(
+      ReplaceConsumptionEstimates,
+      {
+        storeId: props.storeId,
+        input: { forStoreId: props.forStoreId, lines, dryRun },
+      },
+      { background: true, returnGraphqlErrors: true }
+    );
+
+  const onFile = async (file: File) => {
+    setUploadError(undefined);
+    setSaveFailed(false);
+    if (!isCsvFileName(file.name))
+      return setUploadError(t('messages.invalid-file'));
+    try {
+      // NOT file.text(): a spreadsheet saved on Windows uses the machine's
+      // legacy code page (domain/reportFiles § readCsvFile).
+      const parsed = parseEstimateFile(await readCsvFile(file), new Date());
+      if (parsed.kind === 'failed') {
+        return setUploadError(
+          t('messages.upload-error', { error: t('error.no-data') })
+        );
+      }
+      // The server checks the rows that passed our own checks, so every
+      // problem in the file shows at once. Nothing can be saved while any row
+      // has an error, so these are also the lines a save sends.
+      const lines = buildLines(
+        parsed.rows.filter(row => row.errors.length === 0)
+      );
+      let rows = parsed.rows;
+      if (lines.lines.length > 0) {
+        const result = await replace(lines.lines, true);
+        if (result.kind !== 'success') {
+          return setUploadError(
+            t('messages.upload-error', { error: t('error.problem-saving') })
+          );
+        }
+        rows = applyServerResult(
+          rows,
+          lines.origins,
+          result.data.centralServer.preferences.replaceConsumptionEstimates
+        );
+      }
+      setReview({ months: parsed.months, rows, lines });
+    } catch (error) {
+      setUploadError(t('messages.upload-error', { error: String(error) }));
+    }
+  };
+
+  const save = async (lines: ReturnType<typeof buildLines>['lines']) => {
+    setSaving(true);
+    setSaveFailed(false);
+    const result = await replace(lines, false);
+    setSaving(false);
+    if (
+      result.kind !== 'success' ||
+      result.data.centralServer.preferences.replaceConsumptionEstimates
+        .__typename !== 'ReplaceConsumptionEstimatesNode'
+    ) {
+      setSaveFailed(true);
+      return false;
+    }
+    setReview(undefined);
+    void refetch();
+    return true;
+  };
+
+  const reviewHasErrors = () =>
+    review()?.rows.some(row => row.errors.length > 0) ?? false;
+
+  const itemColumns = <T extends { code?: string; itemCode?: string }>(
+    code: (row: T) => string,
+    name: (row: T) => string
+  ): Column<T, never>[] => [
+    {
+      c: { accessor: code, id: 'code' },
+      header: () => t('label.code'),
+      ...getTextCell(),
+      size: remToPx(8),
+    },
+    {
+      c: { accessor: name, id: 'name' },
+      header: () => t('label.name'),
+      ...getTextCell(),
+      size: remToPx(16),
+    },
+  ];
+
+  const currentColumns = (): Column<EstimateTableRow, never>[] => [
+    ...itemColumns<EstimateTableRow>(
+      row => row.code,
+      row => row.name
+    ),
+    ...table().months.map((month): Column<EstimateTableRow, never> => ({
+      c: { accessor: row => row.quantities[month], id: `month-${month}` },
+      header: () => month,
+      ...getNumberCell(),
+      size: remToPx(7),
+    })),
+  ];
+
+  const reviewColumns = (): Column<EstimateImportRow, never>[] => [
+    {
+      c: { accessor: row => row.lineNumber, id: 'line' },
+      header: () => t('label.line-number'),
+      ...getNumberCell(),
+      size: remToPx(4),
+    },
+    ...itemColumns<EstimateImportRow>(
+      row => row.itemCode,
+      row => row.itemName
+    ),
+    ...(review()?.months ?? []).map(
+      (month): Column<EstimateImportRow, never> => ({
+        c: { accessor: row => row.cells[month] ?? '', id: `month-${month}` },
+        header: () => month,
+        ...getTextCell(),
+        size: remToPx(7),
+      })
+    ),
+    {
+      c: {
+        accessor: row => [...row.errors, ...row.warnings].join(' '),
+        id: 'message',
+      },
+      header: () => t('label.error-message'),
+      ...getTextCell(),
+      size: remToPx(20),
+    },
+  ];
+
+  return (
+    <Stack data-testid="consumption-estimates">
+      <Text variant="subtitle">
+        {t('messages.consumption-estimates-description')}
+      </Text>
+
+      <Show when={uploadError()}>
+        {message => (
+          <Alert severity="error" testId="consumption-estimates-upload-error">
+            {message()}
+          </Alert>
+        )}
+      </Show>
+      <Show when={saveFailed()}>
+        <Alert severity="error" testId="consumption-estimates-save-error">
+          {t('error.problem-saving')}
+        </Alert>
+      </Show>
+
+      <Show
+        when={review()}
+        fallback={
+          <>
+            <Show when={props.editable}>
+              <Stack gap="sm">
+                <UploadZone
+                  accept={CSV_ACCEPT}
+                  multiple={false}
+                  onFiles={files => {
+                    const file = files[0];
+                    if (file) void onFile(file);
+                  }}
+                  onRejected={() => setUploadError(t('messages.invalid-file'))}
+                />
+                <HStack gap="sm">
+                  <Button
+                    variant="ghost"
+                    icon={<DownloadIcon />}
+                    data-testid="consumption-estimates-download-template"
+                    onClick={() => void downloadTemplate()}
+                  >
+                    {t('button.download-consumption-estimates-template')}
+                  </Button>
+                  <Show when={(current()?.estimates.length ?? 0) > 0}>
+                    <Button
+                      variant="ghost"
+                      data-testid="consumption-estimates-clear"
+                      onClick={() => setConfirmClear(true)}
+                    >
+                      {t('button.clear-consumption-estimates')}
+                    </Button>
+                  </Show>
+                </HStack>
+              </Stack>
+            </Show>
+            <DataTable
+              columns={currentColumns()}
+              rows={table().rows}
+              rowKey={row => row.itemId}
+              loading={data.loading}
+              emptyMessage={t('messages.no-consumption-estimates')}
+              minBodyRem={12}
+            />
+          </>
+        }
+      >
+        {pending => (
+          <>
+            <Show
+              when={reviewHasErrors()}
+              fallback={
+                <Show when={pending().rows.some(row => row.warnings.length)}>
+                  <Alert
+                    severity="warning"
+                    testId="consumption-estimates-review-warning"
+                  >
+                    {t('messages.consumption-estimates-review-warning')}
+                  </Alert>
+                </Show>
+              }
+            >
+              <Alert
+                severity="warning"
+                testId="consumption-estimates-review-error"
+              >
+                {t('messages.import-error-on-upload')}
+              </Alert>
+            </Show>
+            <DataTable
+              columns={reviewColumns()}
+              rows={pending().rows}
+              rowKey={row => String(row.lineNumber)}
+              loading={saving()}
+              rowTone={row =>
+                row.errors.length > 0
+                  ? 'error'
+                  : row.warnings.length > 0
+                    ? 'warning'
+                    : undefined
+              }
+              emptyMessage={t('error.no-data')}
+              minBodyRem={12}
+            />
+            <HStack gap="sm" justify="end">
+              <Button
+                variant="secondary"
+                disabled={saving()}
+                data-testid="consumption-estimates-cancel"
+                onClick={() => setReview(undefined)}
+              >
+                {t('button.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                loading={saving()}
+                disabled={reviewHasErrors() || saving()}
+                data-testid="consumption-estimates-save"
+                onClick={() => void save(pending().lines.lines)}
+              >
+                {t('button.replace-consumption-estimates')}
+              </Button>
+            </HStack>
+          </>
+        )}
+      </Show>
+
+      <ConfirmDialog
+        open={confirmClear()}
+        onClose={() => setConfirmClear(false)}
+        message={t('messages.confirm-clear-consumption-estimates')}
+        confirmLabel={t('button.clear-consumption-estimates')}
+        confirmVariant="danger"
+        onConfirm={() => void save([])}
+      />
+    </Stack>
+  );
+};

@@ -1,0 +1,49 @@
+# The store editor's Consumption estimates tab (spec/settings/rules.md § The
+# store editor › Consumption estimates). `storeId` is the signed-in store the
+# request is authorised against; `forStoreId` the store being edited, which
+# from the facility register is another store.
+query consumptionEstimates($storeId: String!, $forStoreId: String!) {
+  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {
+    amcLookBackMonths
+    estimates {
+      itemId
+      item {
+        id
+        code
+        name
+      }
+      periodStart
+      periodEnd
+      quantity
+    }
+  }
+}
+
+# Replaces ALL of the store's estimates; an empty list clears them. `dryRun`
+# checks the lines and reports what would be saved, and which lines already
+# have real consumption, without saving. A line problem saves nothing.
+mutation replaceConsumptionEstimates(
+  $storeId: String!
+  $input: ReplaceConsumptionEstimatesInput!
+) {
+  centralServer {
+    preferences {
+      replaceConsumptionEstimates(storeId: $storeId, input: $input) {
+        __typename
+        ... on ReplaceConsumptionEstimatesNode {
+          overlaps {
+            line
+            actualQuantity
+          }
+        }
+        ... on ConsumptionEstimateLinesError {
+          errors {
+            line
+            problem
+            otherLine
+          }
+        }
+      }
+    }
+  }
+}

@@ -34,6 +34,7 @@ import {
 import { StoreGpsBlock } from './StoreGpsBlock';
 import { StorePropertyField } from './StorePropertyField';
 import { StorePreferencesPanel } from './StorePreferencesPanel';
+import { ConsumptionEstimatesPanel } from './ConsumptionEstimatesPanel';
 import {
   buildPreferencesVariables,
   canEditAnything,
@@ -385,6 +386,14 @@ export const StoreEditorModal = (props: {
             tabs={[
               { value: 'properties', label: t('label.properties') },
               { value: 'preferences', label: t('label.preferences') },
+              ...(props.facilityStoreId
+                ? [
+                    {
+                      value: 'consumption-estimates',
+                      label: t('label.consumption-estimates'),
+                    },
+                  ]
+                : []),
             ]}
           />
           <TabPanel value="properties">
@@ -430,6 +439,19 @@ export const StoreEditorModal = (props: {
               }
             />
           </TabPanel>
+          {/* Saved by its own action after a review, not by the editor's
+              Save (rules § The store editor › Consumption estimates). */}
+          <Show when={props.facilityStoreId}>
+            {forStoreId => (
+              <TabPanel value="consumption-estimates">
+                <ConsumptionEstimatesPanel
+                  storeId={props.storeId}
+                  forStoreId={forStoreId()}
+                  editable={prefsEditable()}
+                />
+              </TabPanel>
+            )}
+          </Show>
         </Tabs>
 
         <Show when={saveFailed()}>
