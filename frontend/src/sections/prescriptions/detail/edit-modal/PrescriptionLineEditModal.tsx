@@ -935,6 +935,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           label={t('label.item')}
           hideLabel
           storeId={props.storeId}
+          includeHiddenWithStock
           focusTarget={itemSearch}
           value={itemId()}
           // Prefer the full item once the grid fetch lands; until then fall

@@ -278,7 +278,7 @@ fn parse_upper_bound(expr: &str) -> Option<i64> {
 }
 
 #[cfg(all(test, feature = "postgres"))]
-mod tests {
+pub(super) mod tests {
     use super::{
         DEFAULT_PARTITION, PartitionTopUp, attach_range_partition,
         create_standalone_partition_table, ensure_partition_lookahead, parse_upper_bound,
@@ -1064,19 +1064,19 @@ mod tests {
     /// A second session that runs `statement` inside a transaction and keeps
     /// it open until `release()` — the stand-in for a long integration
     /// transaction or any other lock holder.
-    struct OpenTransaction {
+    pub(crate) struct OpenTransaction {
         release: mpsc::Sender<()>,
         handle: thread::JoinHandle<()>,
     }
 
     impl OpenTransaction {
-        fn release(self) {
+        pub(crate) fn release(self) {
             let _ = self.release.send(());
             self.handle.join().unwrap();
         }
     }
 
-    fn hold_open_transaction(
+    pub(crate) fn hold_open_transaction(
         connection_manager: &StorageConnectionManager,
         statement: &'static str,
     ) -> OpenTransaction {
@@ -1107,12 +1107,14 @@ mod tests {
 
     /// Run blocking work on its own thread and fail the test if it has not
     /// finished in 10 s — a hang is the failure mode under test.
-    fn run_with_timeout<T: Send + 'static>(work: impl FnOnce() -> T + Send + 'static) -> T {
+    pub(crate) fn run_with_timeout<T: Send + 'static>(
+        work: impl FnOnce() -> T + Send + 'static,
+    ) -> T {
         let (tx, rx) = mpsc::channel();
         thread::spawn(move || {
             let _ = tx.send(work());
         });
         rx.recv_timeout(Duration::from_secs(10))
-            .expect("blocked for over 10 s — a lock is queued behind the partition top-up")
+            .expect("blocked for over 10 s — a lock is queued behind the operation under test")
     }
 }
