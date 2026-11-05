@@ -1,7 +1,7 @@
 use chrono::{Duration, NaiveDate};
 use repository::{
-    ConsumptionEstimateSource, ConsumptionFilter, ConsumptionRepository, EqualFilter,
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+    ChangelogRepository, ConsumptionEstimateSource, ConsumptionFilter, ConsumptionRepository,
+    EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
     mock::{
         MockData, MockDataInserts, mock_item_a, mock_item_b, mock_store_a, mock_user_account_a,
     },
@@ -142,30 +142,85 @@ async fn replace_saves_replaces_and_clears() {
         ]
     );
 
-    // Uploading again replaces the lot
+    // Uploading again replaces the estimates of the items it names: item_b now
+    // has only July, and item_a, not named, is left alone
+    let changelog_before = estimate_changelog_count(&connection);
     let lines = vec![line(
         &mock_item_b().code,
         date(2026, 7, 1),
         date(2026, 7, 31),
         62.0,
     )];
-    replace_consumption_estimates(&ctx, replace(lines, false)).unwrap();
+    replace_consumption_estimates(&ctx, replace(lines.clone(), false)).unwrap();
     assert_eq!(
         get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
-        vec![ConsumptionEstimate {
-            item_id: mock_item_b().id,
-            period_start: date(2026, 7, 1),
-            period_end: date(2026, 7, 31),
-            quantity: 62.0,
-        }]
+        vec![
+            ConsumptionEstimate {
+                item_id: mock_item_a().id,
+                period_start: date(2026, 8, 1),
+                period_end: date(2026, 8, 31),
+                quantity: 310.0,
+            },
+            ConsumptionEstimate {
+                item_id: mock_item_a().id,
+                period_start: date(2026, 9, 1),
+                period_end: date(2026, 9, 30),
+                quantity: 300.0,
+            },
+            ConsumptionEstimate {
+                item_id: mock_item_b().id,
+                period_start: date(2026, 7, 1),
+                period_end: date(2026, 7, 31),
+                quantity: 62.0,
+            },
+        ]
     );
+    // September's 5 pieces deleted and July's 5 inserted; item_a untouched
+    assert_eq!(estimate_changelog_count(&connection) - changelog_before, 10);
 
-    // An empty list clears it
-    replace_consumption_estimates(&ctx, replace(vec![], false)).unwrap();
+    // The same file again writes nothing
+    let changelog_before = estimate_changelog_count(&connection);
+    replace_consumption_estimates(&ctx, replace(lines, false)).unwrap();
+    assert_eq!(estimate_changelog_count(&connection), changelog_before);
+
+    // Clearing removes them all
+    clear_consumption_estimates(&ctx, &mock_store_a().id, &source).unwrap();
     assert_eq!(
         get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
         vec![]
     );
+}
+
+/// Every changelog entry moves the cursor on by one, and nothing else writes
+/// to the changelog in these tests
+fn estimate_changelog_count(connection: &StorageConnection) -> u64 {
+    ChangelogRepository::new(connection).max_cursor().unwrap()
+}
+
+/// The pieces of a period add back up to what was entered, not to within
+/// floating point error of it
+#[actix_rt::test]
+async fn quantities_read_back_as_entered() {
+    let (_, connection, connection_manager, _) =
+        setup_all("consumption_estimate_rounding", MockDataInserts::all()).await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider
+        .context(mock_store_a().id, mock_user_account_a().id)
+        .unwrap();
+    let lines = vec![line(
+        &mock_item_a().code,
+        date(2026, 10, 1),
+        date(2026, 10, 31),
+        872.58,
+    )];
+    replace_consumption_estimates(&ctx, replace(lines, false)).unwrap();
+    let saved = get_consumption_estimates(
+        &connection,
+        &mock_store_a().id,
+        &ConsumptionEstimateSource::InitialUpload,
+    )
+    .unwrap();
+    assert_eq!(saved[0].quantity, 872.58);
 }
 
 #[actix_rt::test]
@@ -186,6 +241,8 @@ async fn replace_rejects_bad_lines_and_saves_nothing() {
         line(&item, today, today + Duration::days(1), 10.0),
         line(&item, date(2026, 4, 1), date(2026, 4, 30), -1.0),
         line(&item, date(2026, 1, 31), date(2026, 2, 27), 10.0),
+        // Plenty of items have no code: a blank one mustn't match them
+        line(" ", date(2026, 5, 1), date(2026, 5, 31), 10.0),
     ];
     assert_eq!(
         replace_consumption_estimates(&ctx, replace(lines, false)),
@@ -209,6 +266,10 @@ async fn replace_rejects_bad_lines_and_saves_nothing() {
             LineError {
                 line: 5,
                 problem: LineProblem::OverlapsLine(0)
+            },
+            LineError {
+                line: 6,
+                problem: LineProblem::ItemNotFound
             },
         ]))
     );

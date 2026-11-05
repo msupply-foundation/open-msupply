@@ -68,3 +68,22 @@ export type ReplaceConsumptionEstimatesResult = {
 export const ReplaceConsumptionEstimates = {
   query: "mutation replaceConsumptionEstimates($storeId: String!, $input: ReplaceConsumptionEstimatesInput!) {\n  centralServer {\n    preferences {\n      replaceConsumptionEstimates(storeId: $storeId, input: $input) {\n        __typename\n        ... on ReplaceConsumptionEstimatesNode {\n          overlaps {\n            line\n            actualQuantity\n          }\n        }\n        ... on ConsumptionEstimateLinesError {\n          errors {\n            line\n            problem\n            otherLine\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ReplaceConsumptionEstimatesResult, ReplaceConsumptionEstimatesVariables>;
+
+export type ClearConsumptionEstimatesVariables = {
+  storeId: string;
+  forStoreId: string;
+};
+
+export type ClearConsumptionEstimatesResult = {
+  centralServer: {
+  preferences: {
+  clearConsumptionEstimates: {
+  __typename: "OkResponse";
+};
+};
+};
+};
+
+export const ClearConsumptionEstimates = {
+  query: "mutation clearConsumptionEstimates($storeId: String!, $forStoreId: String!) {\n  centralServer {\n    preferences {\n      clearConsumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<ClearConsumptionEstimatesResult, ClearConsumptionEstimatesVariables>;

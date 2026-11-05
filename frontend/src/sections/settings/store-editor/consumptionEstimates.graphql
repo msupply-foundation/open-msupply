@@ -19,9 +19,10 @@ query consumptionEstimates($storeId: String!, $forStoreId: String!) {
   }
 }
 
-# Replaces ALL of the store's estimates; an empty list clears them. `dryRun`
-# checks the lines and reports what would be saved, and which lines already
-# have real consumption, without saving. A line problem saves nothing.
+# Gives each item named exactly the periods sent for it; items not named are
+# left alone, and unchanged periods aren't rewritten. `dryRun` checks the lines
+# and reports which already have real consumption, without saving. A line
+# problem saves nothing.
 mutation replaceConsumptionEstimates(
   $storeId: String!
   $input: ReplaceConsumptionEstimatesInput!
@@ -43,6 +44,17 @@ mutation replaceConsumptionEstimates(
             otherLine
           }
         }
+      }
+    }
+  }
+}
+
+# Removes all of the store's estimates.
+mutation clearConsumptionEstimates($storeId: String!, $forStoreId: String!) {
+  centralServer {
+    preferences {
+      clearConsumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {
+        __typename
       }
     }
   }

@@ -286,11 +286,6 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::BarcodeProposal(r));
                 }
             }
-            ChangelogTableName::ConsumptionEstimate => {
-                for r in ConsumptionEstimateRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::ConsumptionEstimate(r));
-                }
-            }
             ChangelogTableName::Clinician => {
                 for r in ClinicianRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::Clinician(r));
@@ -299,6 +294,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::ClinicianStoreJoin => {
                 for r in ClinicianStoreJoinRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::ClinicianStoreJoin(r));
+                }
+            }
+            ChangelogTableName::ConsumptionEstimate => {
+                for r in ConsumptionEstimateRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ConsumptionEstimate(r));
                 }
             }
             ChangelogTableName::Currency => {

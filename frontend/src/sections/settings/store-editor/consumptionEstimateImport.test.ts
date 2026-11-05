@@ -140,6 +140,23 @@ describe('parsing a file', () => {
     ]);
   });
 
+  it('rejects a month headed twice wherever it is filled in', () => {
+    const parsed = parseEstimateFile(
+      [
+        'label.code,label.name,2026-10,2026-10,2026-09',
+        'A,Item A,1,2,3',
+        'B,Item B,,,4',
+      ].join('\n'),
+      TODAY
+    );
+    if (parsed.kind !== 'ok') throw new Error('expected rows');
+    expect(parsed.months).toEqual(['2026-10', '2026-09']);
+    expect(parsed.rows.map(row => row.errors)).toEqual([
+      ['error.consumption-estimate-month-repeated'],
+      [],
+    ]);
+  });
+
   it('refuses a file with no heading or no rows', () => {
     expect(parseEstimateFile('a,b\n1,2', TODAY)).toEqual({
       kind: 'failed',

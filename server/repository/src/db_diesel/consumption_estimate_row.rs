@@ -109,6 +109,33 @@ impl<'a> ConsumptionEstimateRowRepository<'a> {
         Ok(())
     }
 
+    /// Deletes the rows in one statement, each with its own changelog entry so the
+    /// delete syncs
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        for chunk in ids.chunks(500) {
+            // Before the delete: the changelog reads each row for its store
+            let changelogs = self
+                .find_many_by_id(chunk)?
+                .iter()
+                .map(|row| {
+                    ConsumptionEstimateRow::generate_changelog(
+                        RowOrId::Row(row),
+                        self.connection,
+                        RowActionType::Delete,
+                        SourceSiteId::CurrentSiteId,
+                    )
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            ChangelogRepository::new(self.connection).batch_insert(changelogs)?;
+            diesel::delete(
+                consumption_estimate_with_links::table
+                    .filter(consumption_estimate_with_links::id.eq_any(chunk)),
+            )
+            .execute(self.connection.lock().connection())?;
+        }
+        Ok(())
+    }
+
     pub fn find_one_by_id(
         &self,
         id: &str,

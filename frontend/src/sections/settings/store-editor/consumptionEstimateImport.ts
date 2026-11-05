@@ -147,10 +147,13 @@ export type ParsedEstimateFile =
   | { kind: 'failed'; reason: ImportFileFailure };
 
 /*
- * Columns: the first is the item CODE and the second its NAME, whatever they
- * are titled; every other column headed by a month (`YYYY-MM`) is that month.
- * Any other column is ignored. A blank month cell is no estimate for that
- * month; a row with every month blank is skipped.
+ * Columns: the heading row is the first that names the code or name column
+ * as the template does (`Code`, `Name`, in the user's language). Under it the
+ * first column is the item CODE and the second its NAME; every other column
+ * headed by a month (`YYYY-MM`) is that month. Any other column is ignored. A
+ * blank month cell is no estimate for that month; a row with every month blank
+ * is skipped. A month headed twice is rejected wherever it's filled in, rather
+ * than one column silently winning.
  */
 export const parseEstimateFile = (
   text: string,
@@ -164,7 +167,12 @@ export const parseEstimateFile = (
   const monthColumns = header
     .map((title, index) => ({ month: title.trim(), index }))
     .filter(({ month, index }) => index >= 2 && monthPeriod(month));
-  const months = monthColumns.map(({ month }) => month);
+  const months = [...new Set(monthColumns.map(({ month }) => month))];
+  const repeated = new Set(
+    months.filter(
+      month => monthColumns.filter(column => column.month === month).length > 1
+    )
+  );
 
   const rows: EstimateImportRow[] = [];
   table.slice(headerIndex + 1).forEach((cells, offset) => {
@@ -188,7 +196,12 @@ export const parseEstimateFile = (
       const raw = (cells[index] ?? '').trim();
       row.cells[month] = raw;
       const quantity = parseImportNumber(raw, separator === ';');
-      if (quantity === undefined || quantity < 0) {
+      if (repeated.has(month)) {
+        const message = t('error.consumption-estimate-month-repeated', {
+          month,
+        });
+        if (!row.errors.includes(message)) row.errors.push(message);
+      } else if (quantity === undefined || quantity < 0) {
         row.errors.push(t('error.consumption-estimate-invalid', { month }));
       } else if (!isFinishedMonth(month, today)) {
         row.errors.push(

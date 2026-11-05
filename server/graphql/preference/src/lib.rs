@@ -115,8 +115,10 @@ impl PreferenceMutations {
         Ok(OkResponse)
     }
 
-    /// Replaces the store's estimated consumption. Nothing is saved if any line has
-    /// a problem; `dryRun` checks the lines without saving.
+    /// Replaces the estimated consumption of the items named: each ends up with
+    /// exactly the periods given, and unchanged periods aren't rewritten. Items not
+    /// named are left alone. Nothing is saved if any line has a problem; `dryRun`
+    /// checks the lines without saving.
     pub async fn replace_consumption_estimates(
         &self,
         ctx: &Context<'_>,
@@ -124,6 +126,17 @@ impl PreferenceMutations {
         input: ReplaceConsumptionEstimatesInput,
     ) -> Result<ReplaceConsumptionEstimatesResponse> {
         replace_estimates(ctx, store_id, input)
+    }
+
+    /// Removes all of a store's estimated consumption
+    pub async fn clear_consumption_estimates(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        for_store_id: String,
+    ) -> Result<OkResponse> {
+        clear_estimates(ctx, store_id, for_store_id)?;
+        Ok(OkResponse)
     }
 }
 

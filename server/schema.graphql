@@ -7027,10 +7027,16 @@ enum PreferenceKey {
 type PreferenceMutations {
 	upsertPreferences(storeId: String!, input: UpsertPreferencesInput!): OkResponse!
 	"""
-	Replaces the store's estimated consumption. Nothing is saved if any line has
-	a problem; `dryRun` checks the lines without saving.
+	Replaces the estimated consumption of the items named: each ends up with
+	exactly the periods given, and unchanged periods aren't rewritten. Items not
+	named are left alone. Nothing is saved if any line has a problem; `dryRun`
+	checks the lines without saving.
 	"""
 	replaceConsumptionEstimates(storeId: String!, input: ReplaceConsumptionEstimatesInput!): ReplaceConsumptionEstimatesResponse!
+	"""
+	Removes all of a store's estimated consumption
+	"""
+	clearConsumptionEstimates(storeId: String!, forStoreId: String!): OkResponse!
 }
 
 enum PreferenceNodeType {
@@ -8742,7 +8748,8 @@ input ReplaceConsumptionEstimatesInput {
 	"""
 	forStoreId: String!
 	"""
-	Replaces all of the store's estimates; an empty list clears them
+	Each item named ends up with exactly these periods; items not named are
+	left alone
 	"""
 	lines: [ConsumptionEstimateLineInput!]!
 	"""

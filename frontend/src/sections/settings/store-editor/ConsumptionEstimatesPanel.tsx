@@ -17,6 +17,7 @@ import { saveBlob } from '@/platform/openDocument';
 import { readCsvFile } from '@/domain/reportFiles';
 import { CSV_ACCEPT, isCsvFileName } from '@/domain/csvImport';
 import {
+  ClearConsumptionEstimates,
   ConsumptionEstimates,
   ReplaceConsumptionEstimates,
 } from './consumptionEstimates.generated';
@@ -38,8 +39,9 @@ import {
  * until it's older than the look-back period.
  *
  * Unlike the other tabs it is NOT part of the editor's draft: an upload is
- * checked by the server (a dry run), reviewed, and then replaces the store's
- * estimates by its own Save — the editor's Save and Cancel don't touch it.
+ * checked by the server (a dry run), reviewed, and then replaces the estimates
+ * of the items in the file by its own Save — the editor's Save and Cancel
+ * don't touch it. Items not in the file keep theirs.
  *
  * Reactivity: the read first fetches when the tab opens, under the editor's
  * already-open dialog, so it goes through the `.state` gate and never suspends
@@ -74,18 +76,25 @@ export const ConsumptionEstimatesPanel: Component<{
         { storeId, forStoreId },
         { background: true }
       );
+      // null, not undefined, for a failed read: "couldn't load" must not
+      // read as "no estimates"
       return result.kind === 'success'
         ? result.data.consumptionEstimates
-        : undefined;
+        : null;
     }
   );
-  const current = () => gated(data);
+  const current = () => gated(data) ?? undefined;
+  const loadFailed = () => gated(data) === null;
   const table = () => pivotEstimates(current()?.estimates ?? []);
 
+  // Only offered once the estimates have loaded: a template built before
+  // then would leave out the months and values the store already has
   const downloadTemplate = async () => {
+    const loaded = current();
+    if (!loaded) return;
     const csv = buildTemplateCsv(
-      current()?.amcLookBackMonths ?? 0,
-      current()?.estimates ?? [],
+      loaded.amcLookBackMonths,
+      loaded.estimates,
       new Date()
     );
     await saveBlob(
@@ -158,11 +167,24 @@ export const ConsumptionEstimatesPanel: Component<{
         .__typename !== 'ReplaceConsumptionEstimatesNode'
     ) {
       setSaveFailed(true);
-      return false;
+      return;
     }
     setReview(undefined);
     void refetch();
-    return true;
+  };
+
+  const clear = async () => {
+    setSaveFailed(false);
+    const result = await graphqlFetch(
+      ClearConsumptionEstimates,
+      { storeId: props.storeId, forStoreId: props.forStoreId },
+      { background: true, returnGraphqlErrors: true }
+    );
+    if (result.kind !== 'success') {
+      setSaveFailed(true);
+      return;
+    }
+    void refetch();
   };
 
   const reviewHasErrors = () =>
@@ -242,6 +264,11 @@ export const ConsumptionEstimatesPanel: Component<{
           </Alert>
         )}
       </Show>
+      <Show when={loadFailed()}>
+        <Alert severity="error" testId="consumption-estimates-load-error">
+          {t('error.problem-loading-consumption-estimates')}
+        </Alert>
+      </Show>
       <Show when={saveFailed()}>
         <Alert severity="error" testId="consumption-estimates-save-error">
           {t('error.problem-saving')}
@@ -252,7 +279,7 @@ export const ConsumptionEstimatesPanel: Component<{
         when={review()}
         fallback={
           <>
-            <Show when={props.editable}>
+            <Show when={props.editable && current()}>
               <Stack gap="sm">
                 <UploadZone
                   accept={CSV_ACCEPT}
@@ -361,7 +388,7 @@ export const ConsumptionEstimatesPanel: Component<{
         message={t('messages.confirm-clear-consumption-estimates')}
         confirmLabel={t('button.clear-consumption-estimates')}
         confirmVariant="danger"
-        onConfirm={() => void save([])}
+        onConfirm={() => void clear()}
       />
     </Stack>
   );

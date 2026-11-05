@@ -12,7 +12,7 @@ use service::{
     consumption_estimate::{
         ActualConsumptionOverlap, ConsumptionEstimate, ConsumptionEstimateInput, LineError,
         LineProblem, ReplaceConsumptionEstimates, ReplaceConsumptionEstimatesError,
-        get_consumption_estimates, replace_consumption_estimates,
+        clear_consumption_estimates, get_consumption_estimates, replace_consumption_estimates,
     },
     store_preference::get_store_preferences,
 };
@@ -109,7 +109,8 @@ pub struct ConsumptionEstimateLineInput {
 pub struct ReplaceConsumptionEstimatesInput {
     /// The store whose estimates these are
     pub for_store_id: String,
-    /// Replaces all of the store's estimates; an empty list clears them
+    /// Each item named ends up with exactly these periods; items not named are
+    /// left alone
     pub lines: Vec<ConsumptionEstimateLineInput>,
     /// Check the lines and report what would be saved, without saving
     pub dry_run: Option<bool>,
@@ -241,4 +242,21 @@ fn line_error_node(LineError { line, problem }: LineError) -> ConsumptionEstimat
         problem,
         other_line,
     }
+}
+
+/// Removes all of the store's estimates. `store_id` is the signed-in store the
+/// request is authorised against.
+pub fn clear_estimates(ctx: &Context<'_>, store_id: String, for_store_id: String) -> Result<()> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutatePreferences,
+            store_id: Some(store_id.clone()),
+            require_central_standalone: false,
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id, user.user_id)?;
+    clear_consumption_estimates(&service_context, &for_store_id, &SOURCE)?;
+    Ok(())
 }
