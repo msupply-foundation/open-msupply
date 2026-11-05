@@ -473,14 +473,6 @@ export const EnrolmentIdField = LazyEnrolmentIdField as unknown as <
 ) => JSX.Element;
 
 /*
- * The modal dialogs (ui-standards § menus, popovers & modals) — the
- * Afghanistan Daily Tally's submit confirmation and its leave prompt
- * (private/plugins/afghanistan ui-surface § S7, S10). Lazy by kdd/bundling's
- * rule: a dialog is heavy chrome a plugin-free deployment never opens from the
- * SDK. A dialog mounts only while open, so it is never the first render of
- * an already-open screen's Suspense boundary — the one case lazy is unsafe.
- */
-/*
  * The drag-and-drop file target with a Browse button, the one every host
  * import screen uses (purchase order lines, asset catalogue, name
  * properties) — for a plugin page that takes a file in, such as the Laos
@@ -495,6 +487,14 @@ export const UploadZone: Component<UploadZoneProps> = lazy(() =>
   }))
 );
 
+/*
+ * The modal dialogs (ui-standards § menus, popovers & modals) — the
+ * Afghanistan Daily Tally's submit confirmation and its leave prompt
+ * (private/plugins/afghanistan ui-surface § S7, S10). Lazy by kdd/bundling's
+ * rule: a dialog is heavy chrome a plugin-free deployment never opens from the
+ * SDK. A dialog mounts only while open, so it is never the first render of
+ * an already-open screen's Suspense boundary — the one case lazy is unsafe.
+ */
 export const Dialog: Component<DialogProps> = lazy(() =>
   import('../ui/elements/feedback/Dialog').then(m => ({ default: m.Dialog }))
 );
