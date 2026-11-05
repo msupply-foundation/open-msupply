@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t, tPlural, type LocaleKey } from '../../../../intl';
-import { roundedText } from '../../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
@@ -1422,6 +1422,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // controlLine: plain text, so in the top-aligned table it would ride the
       // top of its cell rather than sit on the inputs' line.
       ...getNumberCell({ hideOnCard: true, controlLine: true }),
+      // Read from the row, not info.getValue(): TanStack caches each row's
+      // accessor value until the row model is rebuilt, and packs / pack size
+      // are edited in place on the same draft row — a cached value would keep
+      // the figure from when the row was first drawn.
+      cell: info => (
+        <Num
+          value={displayNumber(
+            info.row.original.numberOfPacks * info.row.original.packSize
+          )}
+        />
+      ),
     },
     {
       c: { key: 'expiryDate' },
