@@ -585,8 +585,10 @@
    bleed goes only to a table that is the whole region (the sole child, or
    the sole child of a sole-child wrapper), so its header row sits on the
    heading's rule. A marked table mid-flow — under the outbound editor's
-   advisories, under the returns editors' field
-   cluster — keeps the 1rem gap on the side it shares with a neighbour. The
+   advisories when they show, under the returns editors' field cluster —
+   keeps the 1rem gap on the side it shares with a neighbour. (With no
+   advisories the outbound grid follows the heading strip directly and meets
+   its rule, so its top edge moves as they come and go.) The
    header, the footer banner and the actions keep their inset: a picker or a
    button against the sheet edge gains nothing. A hidden title (.header
    .srOnly, out of flow) leaves no rule to meet — unless the editor's own
@@ -636,8 +638,8 @@
 
 /* An editor's own scroll box between the body and its table (the chain
    rule above): widened to the sheet edges the way .scroll is, so the table's
-   inline bleed shows instead of being clipped; its other content (the
-   outbound editor's scan notice) keeps the inset. */
+   inline bleed shows instead of being clipped; any other content in it
+   keeps the inset. */
 .dialog[data-fullscreen][open] .scroll [data-dialog-scroll] {
   margin-inline: calc(-1 * var(--dialog-pad-inline));
   padding-inline: var(--dialog-pad-inline);

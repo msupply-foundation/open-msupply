@@ -910,6 +910,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       currentItem && props.requestedActivity?.(currentItem.id)
     );
   });
+  // Whether the advisory stack above the grid has anything to show — one
+  // place for the stack's members, so an advisory added to the stack can't be
+  // left out of the gate that renders it.
+  const hasAdvisories = createMemo(
+    () =>
+      !!scanNarrowing() ||
+      placeholderUnits() > 0 ||
+      !!activityMismatchBanner() ||
+      warnings().length > 0
+  );
   const distinctPackSizes = createMemo(() => packSizesIn(draftRows()));
 
   const unitName = () => item()?.unitName ?? t('label.unit');
@@ -2064,7 +2074,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               toolbar of their own a few pixels above the cards, spending a
               whole row of a modal whose scarce axis is vertical. Docked at the
               row's inline end by its own auto margin, so it holds that edge
-              whether or not the placeholder notice is beside it, and empty
+              however the pieces before it wrap, and empty
               (invisible) until an item is picked, since the table only exists
               then. */}
           <div ref={setTableControls} class={styles.headerTableControls} />
@@ -2100,21 +2110,29 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         }
       >
         {/* ADVISORY messages — they inform, they don't gate the save. Pinned
-            above the batch grid rather than after the last card: with many
-            batches a message under the grid sat a long scroll away and was
-            missed (issue #885), where the other line editors all put theirs
-            above the table. Anything that gates Save (a rejection, the
-            zero-allocation and VVM confirmations) is in the footer's message
-            slot instead, pinned beside the button it blocks. Gated as a whole
-            so an empty stack spends no gap over the grid. */}
-        <Show
-          when={
-            placeholderUnits() > 0 ||
-            activityMismatchBanner() ||
-            warnings().length > 0
-          }
-        >
+            above the batch grid, so they stay in view however many batches
+            the item has (issue #885); on a screen too short to pin them they
+            scroll away with the body instead (.workArea). Anything that gates
+            Save (a rejection, the zero-allocation and VVM confirmations) is in
+            the footer's message slot instead, pinned beside the button it
+            blocks. Gated as a whole so an empty stack spends no gap over the
+            grid. */}
+        <Show when={hasAdvisories()}>
           <Stack gap="sm">
+            {/* A scan narrowed the batches: say so, and let the user clear it
+                (.211) — the rows it ruled out sink and disable. It explains
+                what the grid no longer offers, so it stays with the other
+                advisories rather than scrolling away with the cards. */}
+            <Show when={scanNarrowing()}>
+              {narrowing => (
+                <ScanNarrowedNotice
+                  batch={narrowing().batch}
+                  nothingLeft={narrowing().nothingLeft}
+                  onShowAll={() => setScanExcludedIds(new Set<string>())}
+                />
+              )}
+            </Show>
+
             {/* The shortfall that became a placeholder — a consequence of the
                 Issue entry, so it reads with the batches it failed to fill,
                 not up in the header row where it reflowed the inputs as the
@@ -2171,17 +2189,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             clipped here, hiding the first and last columns (the chain rule on
             DialogProps.size, #246). */}
         <div class={styles.workArea} {...DIALOG_SCROLL}>
-          {/* A scan narrowed the batches: say so, and let the user clear it
-              (.211) — the rows it ruled out sink and disable. */}
-          <Show when={scanNarrowing()}>
-            {narrowing => (
-              <ScanNarrowedNotice
-                batch={narrowing().batch}
-                nothingLeft={narrowing().nothingLeft}
-                onShowAll={() => setScanExcludedIds(new Set<string>())}
-              />
-            )}
-          </Show>
           {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
               disabled (OMS-REG-SMV-11.26/.31). */}
           <div class={styles.batchGrid}>

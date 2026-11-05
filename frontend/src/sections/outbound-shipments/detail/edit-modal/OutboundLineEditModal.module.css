@@ -71,25 +71,31 @@
   gap: var(--space-4);
 }
 
-/* The "placeholder added" info notice fills what's left of the row, wrapping
-   to its own full row when the header is tight. */
-/* The working area — the ONE scroll box between the advisory messages and the
-   footer, holding the batch grid. The advisories sit above it, pinned: under
-   the grid they were a long scroll away with many batches and got missed
-   (issue #885). They only render when something is reported, so a clean
-   allocation spends no height on them. The table lays out at content height
-   inside it (DataTable's fitContent), so this is the only scroller — no box
-   inside a box. The floor matches .batchGrid's: on a short screen (landscape
-   tablet with the keyboard up) with banners showing, flex would otherwise hand
-   this box 0px and the user would see the banners but no batches; with it,
-   the dialog body scrolls past the banners to the grid instead. */
+/* The working area — the scroll box between the advisory messages and the
+   footer, holding the batch grid. The advisories sit above it, pinned, so they
+   stay in view however many batches the item has (issue #885); they only
+   render when something is reported, so a clean allocation spends no height
+   on them. The table lays out at content height inside it (DataTable's
+   fitContent), and the content above it fits the dialog body, so this is the
+   only scroller — no box inside a box. */
 .workArea {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-3);
-  min-block-size: 16rem;
+  min-block-size: 0;
   overflow-y: auto;
+}
+
+/* On a short screen (a landscape tablet with the keyboard up) there is no room
+   to pin the advisories: flex would hand this box next to nothing under them.
+   So it stops scrolling and takes its content height, and the dialog body is
+   the only scroller — the advisories scroll away above the cards, and the grid
+   keeps its floor (.batchGrid). */
+@media (max-height: 40rem) {
+  .workArea {
+    flex: none;
+    overflow-y: visible;
+  }
 }
 
 /* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it
