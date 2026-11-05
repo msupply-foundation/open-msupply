@@ -1,35 +1,17 @@
-use crate::types::ItemChartNode;
 use async_graphql::*;
 use graphql_core::{
     ContextExt,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
+use graphql_types::types::{ConsumptionOptionsInput, ItemChartNode, StockEvolutionOptionsInput};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    requisition_line::chart::{
-        ConsumptionHistoryOptions, RequisitionLineChartError, StockEvolutionOptions,
-    },
+    requisition_line::chart::RequisitionLineChartError,
     store_preference::get_store_preferences,
 };
 
 type ServiceError = RequisitionLineChartError;
-
-#[derive(InputObject)]
-pub struct ConsumptionOptionsInput {
-    /// Defaults to store preference amc_lookback_months
-    amc_lookback_months: Option<f64>,
-    /// Defaults to 12
-    number_of_data_points: Option<u32>,
-}
-
-#[derive(InputObject)]
-pub struct StockEvolutionOptionsInput {
-    /// Defaults to 30, number of data points for historic stock on hand in stock evolution chart
-    number_of_historic_data_points: Option<u32>,
-    /// Defaults to 20, number of data points for projected stock on hand in stock evolution chart
-    number_of_projected_data_points: Option<u32>,
-}
 
 #[derive(Interface)]
 #[graphql(name = "RequisitionLineChartErrorInterface")]
@@ -109,46 +91,6 @@ fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
     };
 
     Err(graphql_error.extend())
-}
-
-impl ConsumptionOptionsInput {
-    fn to_domain(
-        default_amc_lookback_months: f64,
-        from: Option<Self>,
-    ) -> ConsumptionHistoryOptions {
-        let default_number_of_datapoints = 3;
-
-        from.map(
-            |ConsumptionOptionsInput {
-                 amc_lookback_months,
-                 number_of_data_points,
-             }| ConsumptionHistoryOptions {
-                amc_lookback_months: amc_lookback_months.unwrap_or(default_amc_lookback_months),
-                number_of_data_points: number_of_data_points
-                    .unwrap_or(default_number_of_datapoints),
-            },
-        )
-        .unwrap_or(ConsumptionHistoryOptions {
-            amc_lookback_months: default_amc_lookback_months,
-            number_of_data_points: default_number_of_datapoints,
-        })
-    }
-}
-
-impl StockEvolutionOptionsInput {
-    fn to_domain(self) -> StockEvolutionOptions {
-        let StockEvolutionOptionsInput {
-            number_of_historic_data_points,
-            number_of_projected_data_points,
-        } = self;
-        let default = StockEvolutionOptions::default();
-        StockEvolutionOptions {
-            number_of_historic_data_points: number_of_historic_data_points
-                .unwrap_or(default.number_of_historic_data_points),
-            number_of_projected_data_points: number_of_projected_data_points
-                .unwrap_or(default.number_of_projected_data_points),
-        }
-    }
 }
 
 #[cfg(test)]

@@ -165,8 +165,17 @@ export const DateUtils = {
     fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
-  isExpired: (expiryDate: Date | string | number): boolean =>
-    isPast(expiryDate),
+  /**
+   * A batch is usable to the end of its expiry day, so it is expired only once
+   * that day has passed. `thresholdDays` brings the cutoff forward: expired
+   * when the expiry is before today + thresholdDays. A date-only string is
+   * read as that day in local time.
+   */
+  isExpired: (expiryDate: Date | string | number, thresholdDays = 0): boolean =>
+    isBefore(
+      typeof expiryDate === 'string' ? parseISO(expiryDate) : expiryDate,
+      addDays(startOfToday(), thresholdDays)
+    ),
   isAlmostExpired: (
     expiryDate: Date | string | number,
     threshold = MINIMUM_EXPIRY_MONTHS

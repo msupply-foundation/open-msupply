@@ -25,6 +25,9 @@ pub use self::requisition_line::*;
 pub mod forecast;
 pub use self::forecast::*;
 
+pub mod item_chart;
+pub use self::item_chart::*;
+
 pub mod stock_line;
 pub use self::stock_line::*;
 

@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    RepositoryError, RequisitionLine, RequisitionLineRow, StorageConnection,
+    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionRow, StorageConnection,
     requisition_row::RequisitionType,
 };
 use util::{date_with_months_offset, last_day_of_the_month};
@@ -12,7 +12,9 @@ pub use stock_evolution::*;
 
 use crate::service_provider::ServiceContext;
 
-use super::common::check_requisition_line_exists;
+use super::{
+    common::check_requisition_line_exists, request_requisition_line::RequisitionLineForecastPreview,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum RequisitionLineChartError {
@@ -51,25 +53,60 @@ pub fn get_requisition_line_chart(
     // Validate
     let requisition_line = validate(&ctx.connection, &ctx.store_id, requisition_line_id)?;
 
-    let suggested_quantity_calculation =
-        SuggestedQuantityCalculation::from_requisition_line(&requisition_line);
+    Ok(chart_for_line(
+        &ctx.connection,
+        &ctx.store_id,
+        &requisition_line.requisition_row,
+        &requisition_line.requisition_line_row,
+        consumption_history_options,
+        stock_evolution_options,
+    )?)
+}
 
-    let (expected_delivery_date, requisition_line_datetime) = match (
-        &requisition_line.requisition_row.expected_delivery_date,
-        &requisition_line.requisition_line_row.snapshot_datetime,
-    ) {
-        (Some(expected_delivery_date), Some(requisition_line_datetime)) => {
-            (expected_delivery_date, requisition_line_datetime)
-        }
-        _ => {
-            return Ok(ItemChart {
-                consumption_history: None,
-                stock_evolution: None,
-                reference_date: None,
-                suggested_quantity_calculation,
-            });
-        }
-    };
+/// The chart for a forecast preview's line — the line the editor's draft would save — so
+/// an item being added charts before its line exists (issue 1189). The draft's requested
+/// quantity isn't part of the preview, so the projection adds nothing at delivery.
+pub fn get_forecast_preview_chart(
+    connection: &StorageConnection,
+    store_id: &str,
+    preview: &RequisitionLineForecastPreview,
+    consumption_history_options: ConsumptionHistoryOptions,
+    stock_evolution_options: StockEvolutionOptions,
+) -> Result<ItemChart, RepositoryError> {
+    chart_for_line(
+        connection,
+        store_id,
+        &preview.requisition,
+        &preview.line,
+        consumption_history_options,
+        stock_evolution_options,
+    )
+}
+
+fn chart_for_line(
+    connection: &StorageConnection,
+    store_id: &str,
+    requisition: &RequisitionRow,
+    line: &RequisitionLineRow,
+    consumption_history_options: ConsumptionHistoryOptions,
+    stock_evolution_options: StockEvolutionOptions,
+) -> Result<ItemChart, RepositoryError> {
+    let suggested_quantity_calculation = SuggestedQuantityCalculation::from_rows(requisition, line);
+
+    let (expected_delivery_date, requisition_line_datetime) =
+        match (&requisition.expected_delivery_date, &line.snapshot_datetime) {
+            (Some(expected_delivery_date), Some(requisition_line_datetime)) => {
+                (expected_delivery_date, requisition_line_datetime)
+            }
+            _ => {
+                return Ok(ItemChart {
+                    consumption_history: None,
+                    stock_evolution: None,
+                    reference_date: None,
+                    suggested_quantity_calculation,
+                });
+            }
+        };
 
     let RequisitionLineRow {
         available_stock_on_hand,
@@ -77,12 +114,12 @@ pub fn get_requisition_line_chart(
         forecast_monthly_consumption,
         requested_quantity,
         ..
-    } = requisition_line.requisition_line_row;
-    let item_id = &requisition_line.item_row.id;
+    } = *line;
+    let item_id = &line.item_id;
 
     let mut consumption_history = get_historic_consumption_for_item(
-        &ctx.connection,
-        &ctx.store_id,
+        connection,
+        store_id,
         item_id,
         requisition_line_datetime.date(),
         consumption_history_options,
@@ -101,8 +138,8 @@ pub fn get_requisition_line_chart(
         mut projected_stock,
         mut historic_stock,
     } = get_stock_evolution_for_item(
-        &ctx.connection,
-        &ctx.store_id,
+        connection,
+        store_id,
         item_id,
         *requisition_line_datetime,
         available_stock_on_hand as u32,
@@ -150,19 +187,23 @@ impl From<RepositoryError> for OutError {
 
 impl SuggestedQuantityCalculation {
     pub fn from_requisition_line(from: &RequisitionLine) -> Self {
-        let threshold = if from.requisition_row.min_months_of_stock == 0.0 {
-            from.requisition_row.max_months_of_stock
+        Self::from_rows(&from.requisition_row, &from.requisition_line_row)
+    }
+
+    fn from_rows(requisition: &RequisitionRow, line: &RequisitionLineRow) -> Self {
+        let threshold = if requisition.min_months_of_stock == 0.0 {
+            requisition.max_months_of_stock
         } else {
-            from.requisition_row.min_months_of_stock
+            requisition.min_months_of_stock
         };
         // The suggestion works from the line's monthly demand, whatever its forecast method
-        let monthly_demand = from.requisition_line_row.forecast_monthly_consumption;
+        let monthly_demand = line.forecast_monthly_consumption;
         SuggestedQuantityCalculation {
             average_monthly_consumption: monthly_demand,
-            stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
+            stock_on_hand: line.available_stock_on_hand as u32,
             minimum_stock_on_hand: monthly_demand * threshold,
-            maximum_stock_on_hand: monthly_demand * from.requisition_row.max_months_of_stock,
-            suggested: from.requisition_line_row.suggested_quantity as u32,
+            maximum_stock_on_hand: monthly_demand * requisition.max_months_of_stock,
+            suggested: line.suggested_quantity as u32,
         }
     }
 }
@@ -170,10 +211,13 @@ impl SuggestedQuantityCalculation {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::service_provider::ServiceProvider;
+    use crate::{
+        requisition_line::request_requisition_line::RequisitionLineForecastPreviewInput,
+        service_provider::ServiceProvider,
+    };
     use repository::{
-        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, NameRow, RequisitionRow,
-        StockLineRow, StoreRow,
+        EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, NameRow,
+        RequisitionLineFilter, RequisitionLineRepository, StockLineRow, StoreRow,
         mock::{
             MockData, MockDataInserts, mock_item_a, mock_name_a,
             mock_new_response_requisition_for_update_test_line, mock_store_a, mock_store_b,
@@ -237,6 +281,81 @@ mod test {
             ),
             Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         );
+    }
+
+    #[actix_rt::test]
+    async fn get_forecast_preview_chart_for_an_unsaved_line() {
+        fn requisition(id: &str, expected_delivery_date: Option<NaiveDate>) -> RequisitionRow {
+            RequisitionRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_a().id,
+                expected_delivery_date,
+                r#type: RequisitionType::Request,
+                max_months_of_stock: 3.0,
+                min_months_of_stock: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "get_forecast_preview_chart_for_an_unsaved_line",
+            MockDataInserts::all(),
+            MockData {
+                requisitions: vec![
+                    requisition("with_delivery_date", Some(date_now())),
+                    requisition("without_delivery_date", None),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let chart = |requisition_id: &str| {
+            let preview = service_provider
+                .requisition_line_service
+                .get_requisition_line_forecast_preview(
+                    &context,
+                    RequisitionLineForecastPreviewInput {
+                        requisition_id: requisition_id.to_string(),
+                        item_id: mock_item_a().id,
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            get_forecast_preview_chart(
+                &connection,
+                &context.store_id,
+                &preview,
+                consumption_history_options(),
+                StockEvolutionOptions::default(),
+            )
+            .unwrap()
+        };
+
+        // The item isn't on the order, yet it charts — from the line adding it would create
+        let result = chart("with_delivery_date");
+        assert_eq!(result.consumption_history.map(|c| c.len()), Some(4));
+        assert!(result.stock_evolution.is_some_and(|s| !s.is_empty()));
+        assert!(result.reference_date.is_some());
+        // ...and nothing is saved
+        assert_eq!(
+            RequisitionLineRepository::new(&connection)
+                .count(Some(RequisitionLineFilter::new().requisition_id(
+                    EqualFilter::equal_to("with_delivery_date".to_string())
+                )))
+                .unwrap(),
+            0
+        );
+
+        // No expected delivery date → no series, as for a saved line
+        let result = chart("without_delivery_date");
+        assert_eq!(result.consumption_history, None);
+        assert_eq!(result.stock_evolution, None);
     }
 
     #[actix_rt::test]
