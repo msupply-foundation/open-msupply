@@ -108,3 +108,43 @@ async fn do_login(
 
     Ok(cookie)
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_web::web::{self, Data};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use service::{auth_data::AuthData, service_provider::ServiceProvider};
+    use std::sync::{Arc, RwLock};
+
+    use super::{LoginRequest, do_login};
+
+    // Before initialisation this is the only way to get a session, so it must refuse (#845).
+    #[actix_rt::test]
+    async fn login_is_refused_until_initialised() {
+        let (_, _, connection_manager, _) = setup_all(
+            "login_is_refused_until_initialised",
+            MockDataInserts::none(),
+        )
+        .await;
+        let service_provider = Data::new(ServiceProvider::new(connection_manager));
+        let auth_data = Data::new(AuthData {
+            session_store: Arc::new(RwLock::new(Default::default())),
+            cookie_suffix: "8000".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        });
+
+        // No sync log yet, so not initialised.
+        let cookie = do_login(
+            web::Json(LoginRequest {
+                username: "user".to_string(),
+                password: "password".to_string(),
+            }),
+            service_provider,
+            auth_data,
+        )
+        .await
+        .unwrap();
+        assert!(cookie.is_none());
+    }
+}
