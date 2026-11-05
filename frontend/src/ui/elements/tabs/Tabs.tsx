@@ -140,14 +140,27 @@ export const TabList = (props: {
     if (active) setPos({ left: active.offsetLeft, width: active.offsetWidth });
   };
 
-  // Bring the selected tab into view when the strip overflows. Guarded so a
-  // strip that fits never asks its ancestors to scroll.
+  // Bring the selected tab into view when the strip overflows, scrolling the
+  // strip alone: scrollIntoView would also scroll every box around it, so a
+  // strip mounted below the fold would pull the page down to it. Measured
+  // from screen positions rather than offsetLeft, so the same arithmetic
+  // holds right to left; the tab stops clear of the edge by the strip's
+  // scroll-padding.
   const revealSelected = () => {
     if (!listEl?.isConnected || listEl.scrollWidth <= listEl.clientWidth)
       return;
-    listEl
-      .querySelector<HTMLElement>("[role='tab'][data-selected]")
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const tab = listEl.querySelector<HTMLElement>(
+      "[role='tab'][data-selected]"
+    );
+    if (!tab) return;
+    const pad =
+      parseFloat(getComputedStyle(listEl).scrollPaddingInlineStart) || 0;
+    const strip = listEl.getBoundingClientRect();
+    const box = tab.getBoundingClientRect();
+    if (box.left < strip.left + pad)
+      listEl.scrollLeft += box.left - strip.left - pad;
+    else if (box.right > strip.right - pad)
+      listEl.scrollLeft += box.right - strip.right + pad;
   };
 
   onMount(() => {
@@ -211,14 +224,17 @@ export const TabList = (props: {
                 aria-current={view(value).ariaCurrent}
                 aria-label={view(value).ariaLabel}
               >
-                <Show when={tab().step} fallback={tab().label}>
+                <Show
+                  when={tab().step}
+                  fallback={
+                    <span class={styles.label} data-text={tab().label}>
+                      {tab().label}
+                    </span>
+                  }
+                >
                   {step => (
                     <span class={styles.step}>
-                      <span
-                        class={styles.marker}
-                        data-mark={step().mark}
-                        aria-hidden="true"
-                      >
+                      <span class={styles.marker} aria-hidden="true">
                         <Show
                           when={step().mark === 'done'}
                           fallback={view(value).number}
@@ -232,9 +248,15 @@ export const TabList = (props: {
                         </Show>
                       </span>
                       <span class={styles.stepText}>
-                        {tab().label}
+                        <span class={styles.label} data-text={tab().label}>
+                          {tab().label}
+                        </span>
                         <Show when={step().attention}>
-                          {note => <span class={styles.note}>{note()}</span>}
+                          {note => (
+                            <span class={styles.note} title={note()}>
+                              {note()}
+                            </span>
+                          )}
                         </Show>
                       </span>
                     </span>

@@ -65,6 +65,23 @@
   font-weight: var(--weight-bold);
 }
 
+/* A label always takes the width of its bold version: a hidden, zero-height
+   bold copy sits in a second grid row. Opening a tab then changes how two
+   labels look but not how wide any tab is, so the other tabs never shift as
+   the underline slides. The copy's alt text is empty, so a screen reader
+   doesn't read the label twice. */
+.label {
+  display: inline-grid;
+  justify-items: center;
+}
+
+.label::after {
+  content: attr(data-text) / '';
+  font-weight: var(--weight-bold);
+  visibility: hidden;
+  block-size: 0;
+}
+
 .trigger:focus-visible {
   outline: 2px solid var(--primary-main);
   outline-offset: -2px;
@@ -115,14 +132,20 @@
   font-weight: var(--weight-bold);
 }
 
-.marker[data-mark='done'] {
+/* Room for the attention badge, so it doesn't run into the label. */
+.marker:has(.attentionBadge) {
+  margin-inline-end: var(--space-1);
+}
+
+/* The mark comes from the trigger's data-step-mark, the same hook e2e reads. */
+.trigger[data-step-mark='done'] .marker {
   border-color: transparent;
   background: color-mix(in srgb, var(--primary-main) 15%, var(--bg-white));
   color: var(--primary-dark);
   font-size: 0.875rem;
 }
 
-.marker[data-mark='current'] {
+.trigger[data-step-mark='current'] .marker {
   border-color: var(--primary-main);
   background: var(--primary-main);
   color: var(--primary-contrast);
@@ -143,20 +166,26 @@
   line-height: 1;
 }
 
-/* Room for the badge, so it doesn't run into the label. */
-.marker:has(.attentionBadge) {
-  margin-inline-end: var(--space-1);
-}
-
 .stepText {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
+/* A step's label sits against its marker, so it keeps to the start. */
+.stepText > .label {
+  justify-items: start;
+}
+
 /* The attention note: a quieter line under the label, in the warning tone
-   darkened toward body text for contrast (as StatusBadge's warning label). */
+   darkened toward body text for contrast (as StatusBadge's warning label).
+   Capped so a long note can't push the rest of the strip out of view; a cut
+   note ends in an ellipsis, and the whole note is in the tab's accessible
+   name and its hover title. */
 .note {
+  max-inline-size: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
   font-weight: var(--weight-regular);
 }
