@@ -8,7 +8,9 @@ use service::{
     preference::PreferenceType,
 };
 
+mod consumption_estimate;
 mod upsert;
+use consumption_estimate::*;
 use upsert::*;
 
 #[derive(Default, Clone)]
@@ -78,6 +80,17 @@ impl PreferenceQueries {
             .map(|pref| PreferenceDescriptionNode { pref })
             .collect())
     }
+
+    /// The store's estimated consumption, entered for a store without consumption
+    /// history of its own and added on top of real consumption when calculating AMC
+    pub async fn consumption_estimates(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        for_store_id: String,
+    ) -> Result<ConsumptionEstimatesNode> {
+        consumption_estimates(ctx, store_id, for_store_id)
+    }
 }
 
 // --
@@ -100,6 +113,17 @@ impl PreferenceMutations {
         })?;
 
         Ok(OkResponse)
+    }
+
+    /// Replaces the store's estimated consumption. Nothing is saved if any line has
+    /// a problem; `dryRun` checks the lines without saving.
+    pub async fn replace_consumption_estimates(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: ReplaceConsumptionEstimatesInput,
+    ) -> Result<ReplaceConsumptionEstimatesResponse> {
+        replace_estimates(ctx, store_id, input)
     }
 }
 

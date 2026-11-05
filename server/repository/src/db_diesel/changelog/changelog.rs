@@ -78,6 +78,7 @@ diesel_string_enum! {
         Category,
         Clinician,
         ClinicianStoreJoin,
+        ConsumptionEstimate,
         Contact,
         ContactForm,
         ContactTrace,

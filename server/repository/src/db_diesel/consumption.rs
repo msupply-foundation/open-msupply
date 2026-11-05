@@ -19,6 +19,7 @@ table! {
         invoice_type -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
         name_id -> Text,
         name_properties -> Nullable<Text>,
+        is_estimate -> Bool,
     }
 }
 
@@ -32,6 +33,8 @@ pub struct ConsumptionRow {
     pub invoice_type: InvoiceType,
     pub name_id: String,
     pub name_properties: Option<String>,
+    /// From `consumption_estimate` rather than a shipment or prescription
+    pub is_estimate: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
@@ -74,6 +77,18 @@ impl<'a> ConsumptionRepository<'a> {
         //     "{}",
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
+
+        let result = query.load::<ConsumptionRow>(self.connection.lock().connection())?;
+
+        Ok(result)
+    }
+
+    /// Only consumption the store recorded itself, leaving out estimates
+    pub fn query_actual(
+        &self,
+        filter: Option<ConsumptionFilter>,
+    ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
+        let query = create_filtered_query(filter).filter(consumption::is_estimate.eq(false));
 
         let result = query.load::<ConsumptionRow>(self.connection.lock().connection())?;
 

@@ -176,6 +176,18 @@ input ActivityLogSortInput {
 	desc: Boolean
 }
 
+"""
+A line whose period already has real consumption for its item: the estimate is
+added on top of it
+"""
+type ActualConsumptionOverlapNode {
+	"""
+	Index into the input lines
+	"""
+	line: Int!
+	actualQuantity: Float!
+}
+
 type AddFromMasterListError {
 	error: AddFromMasterListErrorInterface!
 }
@@ -1516,6 +1528,62 @@ input ConfigureNamePropertyInput {
 
 type ConnectionError implements CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface {
 	description: String!
+}
+
+type ConsumptionEstimateLineErrorNode {
+	"""
+	Index into the input lines
+	"""
+	line: Int!
+	problem: ConsumptionEstimateLineProblem!
+	"""
+	For `OVERLAPS_LINE`: the earlier line it overlaps
+	"""
+	otherLine: Int
+}
+
+input ConsumptionEstimateLineInput {
+	itemIdOrCode: String!
+	periodStart: NaiveDate!
+	periodEnd: NaiveDate!
+	"""
+	In units
+	"""
+	quantity: Float!
+}
+
+enum ConsumptionEstimateLineProblem {
+	ITEM_NOT_FOUND
+	INVALID_PERIOD
+	PERIOD_IN_FUTURE
+	INVALID_QUANTITY
+	OVERLAPS_LINE
+}
+
+"""
+Nothing is saved when any line has a problem
+"""
+type ConsumptionEstimateLinesError {
+	errors: [ConsumptionEstimateLineErrorNode!]!
+}
+
+type ConsumptionEstimateNode {
+	itemId: String!
+	item: ItemNode!
+	periodStart: NaiveDate!
+	periodEnd: NaiveDate!
+	"""
+	In units
+	"""
+	quantity: Float!
+}
+
+type ConsumptionEstimatesNode {
+	estimates: [ConsumptionEstimateNode!]!
+	"""
+	The store's AMC look-back period: how many months of estimates count
+	"""
+	amcLookBackMonths: Float!
 }
 
 type ConsumptionHistoryConnector {
@@ -6958,6 +7026,11 @@ enum PreferenceKey {
 
 type PreferenceMutations {
 	upsertPreferences(storeId: String!, input: UpsertPreferencesInput!): OkResponse!
+	"""
+	Replaces the store's estimated consumption. Nothing is saved if any line has
+	a problem; `dryRun` checks the lines without saving.
+	"""
+	replaceConsumptionEstimates(storeId: String!, input: ReplaceConsumptionEstimatesInput!): ReplaceConsumptionEstimatesResponse!
 }
 
 enum PreferenceNodeType {
@@ -8474,6 +8547,11 @@ type Queries {
 	The list of preferences and their current values (used for the admin/edit page)
 	"""
 	preferenceDescriptions(storeId: String!, prefType: PreferenceNodeType!, prefContext: PreferenceDescriptionContext!): [PreferenceDescriptionNode!]!
+	"""
+	The store's estimated consumption, entered for a store without consumption
+	history of its own and added on top of real consumption when calculating AMC
+	"""
+	consumptionEstimates(storeId: String!, forStoreId: String!): ConsumptionEstimatesNode!
 	centralServer: CentralServerQueryNode!
 	activeVvmStatuses(storeId: String!): VvmstatusesResponse!
 	getVvmStatusLogByStockLine(storeId: String!, stockLineId: String!): VvmstatusLogResponse!
@@ -8657,6 +8735,28 @@ type RepackStockLineNode {
 	location: LocationNode
 	stockLine: StockLineNode
 }
+
+input ReplaceConsumptionEstimatesInput {
+	"""
+	The store whose estimates these are
+	"""
+	forStoreId: String!
+	"""
+	Replaces all of the store's estimates; an empty list clears them
+	"""
+	lines: [ConsumptionEstimateLineInput!]!
+	"""
+	Check the lines and report what would be saved, without saving
+	"""
+	dryRun: Boolean
+}
+
+type ReplaceConsumptionEstimatesNode {
+	estimates: [ConsumptionEstimateNode!]!
+	overlaps: [ActualConsumptionOverlapNode!]!
+}
+
+union ReplaceConsumptionEstimatesResponse = ReplaceConsumptionEstimatesNode | ConsumptionEstimateLinesError
 
 type ReportConnector {
 	totalCount: Int!

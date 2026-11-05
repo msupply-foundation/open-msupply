@@ -99,6 +99,7 @@ fn translate_delete(
         ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
         ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
         ChangelogTableName::BarcodeProposal => Box::new(BarcodeProposalRowDelete(id)),
+        ChangelogTableName::ConsumptionEstimate => Box::new(ConsumptionEstimateRowDelete(id)),
         ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
         ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
         ChangelogTableName::FormSchema => Box::new(FormSchemaRowDelete(id)),
