@@ -109,4 +109,38 @@ mod tests {
             assert_eq!(translation_result, record.translated_record);
         }
     }
+
+    /// The v6 pull selects every sync message, but only support uploads are sent to
+    /// remotes. Other messages reach v5/v6 sites from legacy central.
+    #[actix_rt::test]
+    async fn only_support_uploads_are_sent_over_v6() {
+        let (_, connection, _, _) = setup_all(
+            "only_support_uploads_are_sent_over_v6",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let is_sent = |r#type: SyncMessageRowType| {
+            let changelog = ChangelogRow {
+                table_name: ChangelogTableName::SyncMessage,
+                ..Default::default()
+            };
+            let message = SyncMessageRow {
+                r#type,
+                ..Default::default()
+            };
+            let result = OmSyncMessageTranslation
+                .try_translate_to_upsert_sync_record(
+                    &connection,
+                    &changelog,
+                    Row::SyncMessage(message),
+                )
+                .unwrap();
+            matches!(result, PushTranslateResult::PushRecord(_))
+        };
+
+        assert!(is_sent(SyncMessageRowType::SupportUpload));
+        assert!(!is_sent(SyncMessageRowType::RequestFieldChange));
+        assert!(!is_sent(SyncMessageRowType::Merge));
+    }
 }
