@@ -214,13 +214,14 @@ export const plugins = {
             variant_type: PluginVariantType::BoaJs,
         });
 
-        // The query still answers, with the item store properties as stored
+        // The query still answers, with the item store properties as stored:
+        // item_query_test1 has a row in store_b, item_query_test2 none
         let query = r#"query items($itemFilter: ItemFilterInput!) {
-            items(filter: $itemFilter, storeId: \"store_a\") {
+            items(filter: $itemFilter, storeId: \"store_b\") {
                 ... on ItemConnector {
                   nodes {
                       id
-                      itemStoreProperties(storeId: \"store_a\") {
+                      itemStoreProperties(storeId: \"store_b\") {
                           defaultSellPricePerPack
                       }
                   }
@@ -233,7 +234,10 @@ export const plugins = {
         let expected = json!({
             "items": {
                 "nodes": [
-                    { "id": "item_query_test1", "itemStoreProperties": null },
+                    {
+                        "id": "item_query_test1",
+                        "itemStoreProperties": { "defaultSellPricePerPack": 50.0 }
+                    },
                     { "id": "item_query_test2", "itemStoreProperties": null }
                 ]
             }
