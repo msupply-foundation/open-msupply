@@ -204,7 +204,7 @@ export const ImportIcon = DownloadIcon;
 export const ExportIcon = UploadIcon;
 
 /* File formats — a page lettered XLS or PDF, for an action that names the
-   format it produces. Side by side (the report selector's Export to Excel and
+   format it produces. Side by side (the report selector's Download Excel and
    Download PDF), two DownloadIcons could only be told apart by their labels,
    and a collapsed button has none. */
 /* Hugeicons: Xls01Icon */

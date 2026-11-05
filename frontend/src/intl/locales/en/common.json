@@ -108,6 +108,7 @@
   "button.details": "Details",
   "button.discard": "Discard",
   "button.download": "Download",
+  "button.download-excel": "Download Excel",
   "button.download-pdf": "Download PDF",
   "button.edit": "Edit",
   "button.edit-current-store": "Edit this store",

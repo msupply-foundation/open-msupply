@@ -34,7 +34,7 @@ import { reportLabel } from './reportLabel';
 // trigger and pass their context + record id + current sort (spec: "their
 // surfaces name the trigger, this vertical owns the dialog").
 //
-// Flow: list the context's reports → the user picks one and a format (Export to
+// Flow: list the context's reports → the user picks one and a format (Download
 // Excel / Print / Download PDF, all disabled until a report is selected;
 // Download PDF is not offered on Android) → if the report declares an argument
 // schema, S3 (ArgumentsModal) collects filters first → generate → fetch the
@@ -241,7 +241,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               data-testid="report-format-EXCEL"
               onClick={() => onFormat('EXCEL')}
             >
-              {t('button.export-to-excel')}
+              {t('button.download-excel')}
             </Button>
             <Button
               variant="secondary"
