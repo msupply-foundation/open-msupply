@@ -27,7 +27,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../../intl/calendarDate';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
@@ -1799,7 +1799,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             disabled={props.readOnly}
             size="small"
             value={b.manufactureDate}
-            max={localTodayIso()}
+            max={todayCalendarDate()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );

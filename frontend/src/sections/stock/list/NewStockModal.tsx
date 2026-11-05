@@ -38,7 +38,7 @@ import {
 } from '../../../domain/barcode';
 import { stockPreferences } from '../../../store/storeContext';
 import { runInsertStockLine } from '../stockApi';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import {
   NewStockItem,
@@ -147,7 +147,7 @@ const NewStockContent = (props: {
   });
 
   const prefs = () => stockPreferences();
-  const today = localTodayIso();
+  const today = todayCalendarDate();
 
   // The chosen item's defaults + variants (spec S3: seed pack size + sell
   // price; offer variants). Keyed on the item id; undefined until an item is

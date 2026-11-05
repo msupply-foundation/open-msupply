@@ -10,7 +10,7 @@ import {
   type SchedulesWithPeriodsResult,
 } from './program.generated';
 import { createStoreScopedResource } from '../../api/storeScopedResource';
-import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../intl/calendarDate';
 import { currentStoreId } from '../../store/storeContext';
 
 // One program-enrolment registry node — a pickable program. The picker
@@ -79,7 +79,7 @@ export const fetchPeriods = async (
   const result = await graphqlFetch(Periods, {
     storeId,
     programId: programId ?? null,
-    today: localTodayIso(),
+    today: todayCalendarDate(),
   });
   return result.kind === 'success' ? result.data.periods.nodes : [];
 };
