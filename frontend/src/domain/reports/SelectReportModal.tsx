@@ -9,7 +9,12 @@ import { Stack } from '../../ui/layout/Stack/Stack';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
-import { DownloadIcon, PrinterIcon, XCircleIcon } from '../../ui/icons';
+import {
+  ExcelFileIcon,
+  PdfFileIcon,
+  PrinterIcon,
+  XCircleIcon,
+} from '../../ui/icons';
 import { fetchReportFile, type GenerateResult } from '../reportFiles';
 import { isAndroid } from '../../platform';
 import { printBlob, saveBlob } from '../../platform/openDocument';
@@ -231,7 +236,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             </Button>
             <Button
               variant="secondary"
-              icon={<DownloadIcon />}
+              icon={<ExcelFileIcon />}
               disabled={disabled()}
               data-testid="report-format-EXCEL"
               onClick={() => onFormat('EXCEL')}
@@ -254,7 +259,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             <Show when={!isAndroid()}>
               <Button
                 variant="secondary"
-                icon={<DownloadIcon />}
+                icon={<PdfFileIcon />}
                 disabled={disabled()}
                 data-testid="report-format-PDF"
                 onClick={() => onFormat('PDF')}
