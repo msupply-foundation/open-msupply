@@ -1515,12 +1515,9 @@ async fn test_compatibility_query_clamped_by_in_flight_tx() {
     assert_eq!(ids, vec!["clinician_in_flight", "clinician_committed"]);
 }
 
-/// Windowed changelog dedup (postgres-only). Verifies:
-/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
-/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
-/// - the second run dedups the new window AND removes the old-part leftover of a record
-///   that reappears;
-/// - the dead-set table + concurrent index are dropped afterwards.
+#[cfg(feature = "postgres")]
+use super::partition::tests::{hold_open_transaction, run_with_timeout};
+
 /// Insert a single changelog row with an explicit cursor (table is always Invoice).
 #[cfg(feature = "postgres")]
 fn dedup_test_insert(
@@ -1603,14 +1600,20 @@ fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> boo
     result.present
 }
 
+/// Windowed changelog dedup (postgres-only). Verifies:
+/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
+/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
+/// - the second run dedups the new window AND removes the old-part leftover of a record
+///   that reappears;
+/// - the dead-set table is dropped afterwards.
 #[cfg(feature = "postgres")]
 #[actix_rt::test]
-async fn test_changelog_dedupe_windowed() {
+async fn test_changelog_dedup_windowed() {
     use crate::test_db::SetupResult;
     use RowActionType::{Delete, Upsert};
 
     let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
-        db_name: "test_changelog_dedupe_windowed",
+        db_name: "test_changelog_dedup_windowed",
         inserts: MockDataInserts::none(),
         ..Default::default()
     })
@@ -1642,15 +1645,55 @@ async fn test_changelog_dedupe_windowed() {
     assert_eq!(deleted, 1, "run 2 should delete the stranded rec_a @3");
     assert_eq!(dedup_test_surviving_cursors(&connection), vec![4, 5, 6, 7]);
 
-    // dead-set table + index dropped.
+    // dead-set table dropped.
     assert!(
         !dedup_test_relation_exists(&connection, "changelog_dead"),
         "changelog_dead should be dropped"
     );
-    assert!(
-        !dedup_test_relation_exists(&connection, "index_changelog_dedup"),
-        "index_changelog_dedup should be dropped"
+}
+
+/// An open insert transaction (as a long sync integration holds) does not
+/// make the dedup wait.
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedup_not_blocked_by_open_insert_transaction() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "test_changelog_dedup_not_blocked_by_open_insert_transaction",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    delete_all_changelog(&connection);
+    // rec_a: 3 upserts (only @3 survives). rec_b: single.
+    for (cursor, record_id) in [(1, "rec_a"), (2, "rec_a"), (3, "rec_a"), (4, "rec_b")] {
+        dedup_test_insert(
+            &connection,
+            cursor,
+            record_id,
+            Some("store1"),
+            RowActionType::Upsert,
+        );
+    }
+    // Move the sequence past them, so the holder's insert below takes cursor 5.
+    diesel::sql_query("SELECT setval('changelog_cursor_seq', 4)")
+        .execute(connection.lock().connection())
+        .unwrap();
+
+    // An open transaction with an uncommitted insert, as an integration holds
+    // for hours: a ROW EXCLUSIVE lock on changelog.
+    let holder = hold_open_transaction(
+        &connection_manager,
+        "INSERT INTO changelog (table_name, record_id, row_action) \
+         VALUES ('invoice', 'held-open', 'UPSERT')",
     );
+
+    // A whole dedup run over (0, 4] on another session completes while it is open.
+    let dedup_connection = connection_manager.connection().unwrap();
+    let deleted = run_with_timeout(move || dedup_test_run(&dedup_connection, 0, 4));
+    assert_eq!(deleted, 2, "rec_a @1,@2 go");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4]);
+
+    holder.release();
 }
 
 /// The v3_00_00 backfills stamp `source_site_id = 0` when the central site id isn't known

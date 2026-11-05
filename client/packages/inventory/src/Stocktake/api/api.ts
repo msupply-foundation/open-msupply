@@ -1,6 +1,5 @@
 import {
   FnUtils,
-  Formatter,
   InsertStocktakeLineInput,
   UpdateStocktakeLineInput,
   UpdateStocktakeInput,
@@ -63,16 +62,8 @@ const stocktakeParser = {
       countedNumberOfPacks: line.countedNumberOfPacks,
       sellPricePerPack: line.sellPricePerPack,
       id: line.id,
-      expiryDate: {
-        value: line.expiryDate
-          ? Formatter.naiveDate(new Date(line.expiryDate))
-          : null,
-      },
-      manufactureDate: {
-        value: line.manufactureDate
-          ? Formatter.naiveDate(new Date(line.manufactureDate))
-          : null,
-      },
+      expiryDate: { value: line.expiryDate || null },
+      manufactureDate: { value: line.manufactureDate || null },
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', {
         itemVariantId: line.itemVariantId,
@@ -98,12 +89,8 @@ const stocktakeParser = {
       sellPricePerPack: line.sellPricePerPack,
       stockLineId: line.stockLine?.id,
       stocktakeId: line.stocktakeId,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : undefined,
-      manufactureDate: line.manufactureDate
-        ? Formatter.naiveDate(new Date(line.manufactureDate))
-        : undefined,
+      expiryDate: line.expiryDate || undefined,
+      manufactureDate: line.manufactureDate || undefined,
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
