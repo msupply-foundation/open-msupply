@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
-use plugin_provider::{PluginResult, call_plugin, call_plugin_async};
+use plugin_provider::{PluginError, PluginResult, call_plugin, call_plugin_async};
 
 fn plugin_type() -> PluginType {
     PluginType::TransformItemStoreProperties
@@ -53,19 +53,34 @@ fn keep_requested(store_id: &str, item_ids: &[String], rows: &mut Vec<ItemStoreJ
     rows.retain(|row| row.store_id == store_id && item_ids.contains(&row.item_id));
 }
 
+// A plugin that fails leaves core's rows as they were: these reads sit behind
+// item search and the transfer processor, so a broken plugin costs the store
+// its plugin prices, not its item search or an inbound shipment
+fn fall_back(
+    store_id: &str,
+    error: PluginError,
+    core_rows: Vec<ItemStoreJoinRow>,
+) -> Vec<ItemStoreJoinRow> {
+    log::error!(
+        "transform_item_store_properties failed for store {store_id}, using item store properties as stored: {error:?}"
+    );
+    core_rows
+}
+
 // Helper
 impl PluginInstance {
     pub(crate) fn transform_item_store_properties(
         context: Context,
         store_id: &str,
         item_ids: &[String],
-        mut rows: Vec<ItemStoreJoinRow>,
-    ) -> PluginResult<Vec<ItemStoreJoinRow>> {
+        rows: Vec<ItemStoreJoinRow>,
+    ) -> Vec<ItemStoreJoinRow> {
         let plugins = PluginInstance::get_all(plugin_type());
         if plugins.is_empty() {
-            return Ok(rows);
+            return rows;
         }
 
+        let mut transformed = rows.clone();
         for plugin in plugins {
             let result = Trait::call(
                 &(*plugin),
@@ -73,14 +88,17 @@ impl PluginInstance {
                     context: context.clone(),
                     store_id: store_id.to_string(),
                     item_ids: item_ids.to_vec(),
-                    rows,
+                    rows: transformed,
                 },
-            )?;
-            rows = result.transformed_rows;
+            );
+            transformed = match result {
+                Ok(output) => output.transformed_rows,
+                Err(error) => return fall_back(store_id, error, rows),
+            };
         }
-        keep_requested(store_id, item_ids, &mut rows);
+        keep_requested(store_id, item_ids, &mut transformed);
 
-        Ok(rows)
+        transformed
     }
 
     /// Async sibling of `transform_item_store_properties` for callers on the async
@@ -89,29 +107,33 @@ impl PluginInstance {
         context: Context,
         store_id: &str,
         item_ids: &[String],
-        mut rows: Vec<ItemStoreJoinRow>,
-    ) -> PluginResult<Vec<ItemStoreJoinRow>> {
+        rows: Vec<ItemStoreJoinRow>,
+    ) -> Vec<ItemStoreJoinRow> {
         let plugins = PluginInstance::get_all(plugin_type());
         if plugins.is_empty() {
-            return Ok(rows);
+            return rows;
         }
 
+        let mut transformed = rows.clone();
         for plugin in plugins {
-            let result: Output = call_plugin_async(
+            let result: PluginResult<Output> = call_plugin_async(
                 Input {
                     context: context.clone(),
                     store_id: store_id.to_string(),
                     item_ids: item_ids.to_vec(),
-                    rows,
+                    rows: transformed,
                 },
                 plugin_type(),
                 plugin,
             )
-            .await?;
-            rows = result.transformed_rows;
+            .await;
+            transformed = match result {
+                Ok(output) => output.transformed_rows,
+                Err(error) => return fall_back(store_id, error, rows),
+            };
         }
-        keep_requested(store_id, item_ids, &mut rows);
+        keep_requested(store_id, item_ids, &mut transformed);
 
-        Ok(rows)
+        transformed
     }
 }

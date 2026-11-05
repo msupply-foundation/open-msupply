@@ -1,7 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use async_graphql::dataloader::Loader;
-use repository::{ItemStoreJoinRow, ItemStoreJoinRowRepository, StorageConnectionManager};
+use repository::{
+    ItemStoreJoinRow, ItemStoreJoinRowRepository, RepositoryError, StorageConnectionManager,
+};
 use service::backend_plugin::{
     plugin_provider::PluginInstance, types::transform_item_store_properties::Context,
 };
@@ -26,7 +28,7 @@ impl ItemStoreJoinLoaderInput {
 
 impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
     type Value = Vec<ItemStoreJoinRow>;
-    type Error = async_graphql::Error;
+    type Error = RepositoryError;
 
     async fn load(
         &self,
@@ -83,7 +85,7 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
                     &item_ids,
                     store_rows,
                 )
-                .await?,
+                .await,
             );
         }
 

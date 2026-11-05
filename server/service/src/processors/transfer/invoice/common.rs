@@ -374,8 +374,7 @@ fn get_item_properties_by_item(
         store_id,
         &item_ids,
         rows,
-    )
-    .map_err(|error| RepositoryError::as_db_error("Plugin error", error.to_string()))?;
+    );
 
     let mut by_item = HashMap::new();
     for row in rows {
@@ -775,6 +774,48 @@ export const plugins = {
 
         assert_eq!(lines.len(), 1);
         assert_eq!(lines[0].sell_price_per_pack, PLUGIN_SELL_PRICE_PER_PACK);
+    }
+
+    #[actix_rt::test]
+    async fn generate_inbound_lines_falls_back_when_transform_item_store_properties_plugin_fails() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "generate_inbound_lines_falls_back_when_transform_item_store_properties_plugin_fails",
+            MockDataInserts::all(),
+            transfer_at_cost_mock_data(),
+        )
+        .await;
+
+        PluginInstance::bind(BackendPluginRow {
+            id: "transform_item_store_properties".to_string(),
+            code: "transform_item_store_properties".to_string(),
+            version: Version::from_package_json().to_string(),
+            bundle_base64: BASE64_STANDARD.encode(
+                r#"export const plugins = {
+  transform_item_store_properties: () => { throw new Error("broken plugin"); },
+};"#,
+            ),
+            types: PluginTypes(vec![PluginType::TransformItemStoreProperties]),
+            variant_type: PluginVariantType::BoaJs,
+        });
+
+        let source_invoice = Invoice {
+            invoice_row: transfer_at_cost_invoice(),
+            name_row: mock_name_store_a(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+
+        // The shipment is still made, at the store's own default price
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
     }
 
     /// A customer invoice line from mSupply Legacy syncs with `sentQuantity: 0` and

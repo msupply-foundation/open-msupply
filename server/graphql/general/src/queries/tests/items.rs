@@ -190,4 +190,54 @@ export const plugins = {
         });
         assert_graphql_query!(&settings, query, &variables, &expected, None);
     }
+
+    #[actix_rt::test]
+    async fn test_graphql_item_store_properties_when_plugin_fails() {
+        let (_, _, _, settings) = setup_graphql_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_graphql_item_store_properties_when_plugin_fails",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        PluginInstance::bind(BackendPluginRow {
+            id: "transform_item_store_properties".to_string(),
+            code: "transform_item_store_properties".to_string(),
+            version: Version::from_package_json().to_string(),
+            bundle_base64: BASE64_STANDARD.encode(
+                r#"export const plugins = {
+  transform_item_store_properties: () => { throw new Error("broken plugin"); },
+};"#,
+            ),
+            types: PluginTypes(vec![PluginType::TransformItemStoreProperties]),
+            variant_type: PluginVariantType::BoaJs,
+        });
+
+        // The query still answers, with the item store properties as stored
+        let query = r#"query items($itemFilter: ItemFilterInput!) {
+            items(filter: $itemFilter, storeId: \"store_a\") {
+                ... on ItemConnector {
+                  nodes {
+                      id
+                      itemStoreProperties(storeId: \"store_a\") {
+                          defaultSellPricePerPack
+                      }
+                  }
+               }
+            }
+        }"#;
+        let variables = Some(json!({
+            "itemFilter": { "name": { "like": "item_query_test" } }
+        }));
+        let expected = json!({
+            "items": {
+                "nodes": [
+                    { "id": "item_query_test1", "itemStoreProperties": null },
+                    { "id": "item_query_test2", "itemStoreProperties": null }
+                ]
+            }
+        });
+        assert_graphql_query!(&settings, query, &variables, &expected, None);
+    }
 }
