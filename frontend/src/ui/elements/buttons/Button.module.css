@@ -185,7 +185,7 @@
    `:not(dialog *)` stops it at a dialog's edge: a native <dialog> renders
    where it is mounted, so one opened from a header action (Export/Print's
    "Select a form") sits inside the cluster, but its footer is not part of the
-   header's row and keeps its labels (OMS-1499). */
+   header's row and keeps its labels (#1449). */
 [data-actions-collapsed]
   > [data-header-buttons]
   .button:has(.icon):not(dialog *) {

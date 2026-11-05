@@ -20,7 +20,7 @@ export interface HeaderProps {
  * mounted beside its trigger (Export/Print's "Select a form") renders inside
  * the cluster but floats over the page, so it and its buttons are not
  * measured: counted, it sat off the buttons' row and collapsed the header at
- * any width (OMS-1499).
+ * any width (#1449).
  */
 const fits = (header: HTMLElement, actions: HTMLElement): boolean => {
   const controls = [...actions.children].filter(
