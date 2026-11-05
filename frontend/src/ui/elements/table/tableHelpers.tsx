@@ -200,12 +200,12 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
     const value = info.getValue<string | Date | null | undefined>();
     if (!value) return '';
     const almostExpired = isNearOrPastExpiry(value);
-    // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
-    // stable across the day) steps up from the near-expiry red to red + bold.
-    // Same day semantics as domain/allocation's isExpired, so the cell's
-    // tier always agrees with the row's Expired/Near-expiry badge.
-    const expired =
-      differenceInCalendarDays(asLocalDay(value), new Date()) <= 0;
+    // ACTUALLY expired (the expiry day has passed — a batch is usable to the
+    // end of its expiry day; calendar-day comparison, stable across the day)
+    // steps up from the near-expiry red to red + bold. Same day semantics as
+    // domain/allocation's isExpired, so the cell's tier always agrees with the
+    // row's Expired/Near-expiry badge.
+    const expired = differenceInCalendarDays(asLocalDay(value), new Date()) < 0;
     return (
       <span
         class={

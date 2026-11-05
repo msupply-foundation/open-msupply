@@ -189,6 +189,30 @@ query internalOrderLineForecastPreview(
         isAvailable
         unavailableReason
       }
+      # The previewed line's chart series (issue 1189) — what an unsaved
+      # add-mode draft charts, before its line exists. The same selection, and
+      # server option defaults, as the saved line's read (lineChart.graphql).
+      chart {
+        consumptionHistory {
+          nodes {
+            date
+            consumption
+            averageMonthlyConsumption
+            isHistoric
+            isCurrent
+          }
+        }
+        stockEvolution {
+          nodes {
+            date
+            stockOnHand
+            minimumStockOnHand
+            maximumStockOnHand
+            isHistoric
+            isProjected
+          }
+        }
+      }
     }
     ... on RequisitionLineForecastPreviewError {
       error {
