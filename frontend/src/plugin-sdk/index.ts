@@ -272,6 +272,7 @@ export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
 export type {
   DateRangeFieldProps,
+  CalendarDateRange,
   IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 

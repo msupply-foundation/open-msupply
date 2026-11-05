@@ -594,7 +594,7 @@ type AssetLogNode {
 	type: AssetLogTypeNodeType!
 	reason: AssetLogReasonNode
 	logDatetime: DateTime!
-	createdDatetime: NaiveDateTime!
+	createdDatetime: DateTime!
 	documents: SyncFileReferenceConnector!
 }
 
@@ -1843,7 +1843,7 @@ type CustomFieldOptionNode {
 	this field when building a picker, so a deleted option can be read but
 	not newly selected.
 	"""
-	deletedDatetime: NaiveDateTime
+	deletedDatetime: DateTime
 }
 
 union CustomFieldsResponse = CustomFieldConnector
@@ -9498,15 +9498,15 @@ type SiteNode {
 	"""
 	Last time the remote made any authenticated v7 request.
 	"""
-	lastConnectionDatetime: NaiveDateTime
+	lastConnectionDatetime: DateTime
 	"""
 	Last time the remote fully pulled from this central server.
 	"""
-	lastSyncDatetime: NaiveDateTime
+	lastSyncDatetime: DateTime
 	"""
 	First time the remote completed an initialising pull.
 	"""
-	firstSyncDatetime: NaiveDateTime
+	firstSyncDatetime: DateTime
 	isMultiDevice: Boolean!
 }
 

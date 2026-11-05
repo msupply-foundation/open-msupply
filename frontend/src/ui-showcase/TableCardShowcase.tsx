@@ -1,10 +1,10 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
-  dateToIsoDate,
-  localDayToUtc,
-  utcToLocalDay,
-} from '../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../intl/calendarDate';
 import {
   DataTable,
   type CardGroup,
@@ -146,7 +146,7 @@ const PACK_SIZES = [1, 10, 20, 30, 50, 100];
 // A stored instant for the given local calendar day, via the shared
 // conversion — so the mock rows display the intended day in any timezone.
 const isoDay = (month: number, day: number, year: number): string =>
-  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
+  calendarDateToInstant(dateToCalendarDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry red tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -1337,7 +1337,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN2044',
     numberOfPacks: 12,
     packSize: 100,
-    expiryDate: utcToLocalDay(monthsFromNow(14, 12)),
+    expiryDate: instantToCalendarDate(monthsFromNow(14, 12)),
     costPrice: 3.5,
     sellPrice: 4.73,
     location: 'A.01',
@@ -1348,7 +1348,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN3120',
     numberOfPacks: 6,
     packSize: 50,
-    expiryDate: utcToLocalDay(monthsFromNow(2, 8)),
+    expiryDate: instantToCalendarDate(monthsFromNow(2, 8)),
     costPrice: 5.2,
     sellPrice: 7.02,
     location: 'COLD.1',

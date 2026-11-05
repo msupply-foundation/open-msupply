@@ -13,7 +13,7 @@ import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { formatIsoDate } from '@/ui/elements/inputs/dateTimeConvert';
+import { formatCalendarDate } from '@/ui/elements/inputs/dateTimeConvert';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { Num } from '@/ui/elements/typography/Num';
 import { Text } from '@/ui/elements/typography/Text';
@@ -293,7 +293,7 @@ const LineEditContent = (
   // six decimals only where the figure needs it (spec S10 § pricing).
   const price = (value: number) =>
     formatCurrency(value, currency(), PRICE_DECIMALS);
-  const dateText = (value: string | null) => formatIsoDate(value) || EMPTY;
+  const dateText = (value: string | null) => formatCalendarDate(value) || EMPTY;
 
   return (
     <Dialog

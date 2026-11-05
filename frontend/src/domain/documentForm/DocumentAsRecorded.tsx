@@ -9,6 +9,7 @@
  */
 import { createMemo, For, Match, Show, Switch, type JSX } from 'solid-js';
 import { formatNumber, localisedDate, localisedDateTime, t } from '../../intl';
+import { isCalendarDate } from '../../intl/calendarDate';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import { Stack } from '../../ui/layout/Stack/Stack';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
@@ -17,8 +18,6 @@ import {
   type RecordedEntry,
   type UndeclaredValue,
 } from './recordedView';
-
-const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 // A stored date-time that does not parse is shown as stored, never as
 // "Invalid Date".
@@ -30,14 +29,9 @@ const scalar = (value: unknown, format?: string): string => {
   }
   if (typeof value === 'number') return formatNumber(value);
   if (typeof value === 'string') {
-    // A calendar date is the recorded day wherever it is read: built as a
-    // local date, not parsed as UTC midnight.
-    const day = format === 'date' ? DATE_ONLY.exec(value) : null;
-    if (day) {
-      return localisedDate(
-        new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
-      );
-    }
+    // A calendar date is the recorded day wherever it is read: localisedDate
+    // reads it as the local day, never as UTC midnight.
+    if (format === 'date' && isCalendarDate(value)) return localisedDate(value);
     if (format === 'date-time' && parses(value)) {
       return localisedDateTime(value);
     }
