@@ -249,16 +249,22 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
   });
 
   it('closes every field of an existing line without the change permission, in every state (OMS-REG-PO-01.34)', () => {
-    const gates = lineGates({
-      status: 'NEW',
-      lineStatus: 'NEW',
-      addMode: false,
-      canMutate: false,
-    });
-    expect(gates.drafting).toBe(false);
-    expect(gates.requestedDate).toBe(false);
-    expect(gates.expectedDate).toBe(false);
-    expect(gates.text).toBe(false);
+    for (const options of [
+      { status: 'NEW' as const, lineStatus: 'NEW' as const },
+      { status: 'REQUEST_APPROVAL' as const, lineStatus: 'NEW' as const },
+      { status: 'CONFIRMED' as const, lineStatus: 'NEW' as const },
+      { status: 'SENT' as const, lineStatus: 'SENT' as const },
+    ]) {
+      const gates = lineGates({
+        ...options,
+        addMode: false,
+        canMutate: false,
+      });
+      expect(gates.drafting, options.status).toBe(false);
+      expect(gates.requestedDate, options.status).toBe(false);
+      expect(gates.expectedDate, options.status).toBe(false);
+      expect(gates.text, options.status).toBe(false);
+    }
   });
 
   it('leaves a new line open without the change permission — the save is refused instead (OMS-REG-PO-01.33)', () => {
