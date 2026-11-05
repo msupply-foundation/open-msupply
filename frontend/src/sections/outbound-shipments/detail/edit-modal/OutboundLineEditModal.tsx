@@ -445,13 +445,40 @@ const warningMessages = (
 // A distribution's warnings, held unresolved: the over-allocation and
 // shortfall figures read in the CURRENT lens, so a lens switch re-expresses
 // them in place (OMS-REG-SMV-11.45) — `switchLensTo` changes no allocation and
-// raises nothing new. Any other banner is already a resolved IssueBanner.
+// raises nothing new. A manual entry's adjustment (below) is held the same
+// way; any other banner is already a resolved IssueBanner.
 type DistributionReport = {
   derived: readonly IssueWarning[];
   requestedUnits: number;
   outcome: DistributionOutcome;
 };
-type WarningEntry = IssueBanner | DistributionReport;
+// A manual per-batch entry the whole-pack clamp changed (OMS-REG-SMV-11.33),
+// held as packs with the line's own rates so it too reads in the current lens:
+// doses under the doses lens, otherwise packs (what the cell takes there).
+type AdjustedEntry = {
+  appliedPacks: number;
+  requestedPacks: number;
+  packSize: number;
+  dosesPerUnit: number;
+};
+type WarningEntry = IssueBanner | DistributionReport | AdjustedEntry;
+const adjustedEntryBanner = (
+  entry: AdjustedEntry,
+  lens: AllocateUnit
+): IssueBanner => {
+  const inLens = (packs: number) =>
+    lens.kind === 'doses'
+      ? packsToDoses(packs, entry.packSize, entry.dosesPerUnit)
+      : packs;
+  return {
+    testId: 'outbound-adjusted-entry-warning',
+    message: t('messages.over-allocated-line', {
+      quantity: roundedText(inLens(entry.appliedPacks)),
+      issueQuantity: roundedText(inLens(entry.requestedPacks)),
+    }),
+    severity: 'warning',
+  };
+};
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
@@ -970,7 +997,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             allocateIn(),
             entry.outcome
           )
-        : [entry]
+        : 'appliedPacks' in entry
+          ? [adjustedEntryBanner(entry, allocateIn())]
+          : [entry]
     )
   );
 
@@ -1101,15 +1130,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
       : applied;
     setWarnings(
-      value != null && appliedQuantity !== value
+      requestedPacks != null && appliedQuantity !== value
         ? [
             {
-              testId: 'outbound-adjusted-entry-warning',
-              message: t('messages.over-allocated-line', {
-                quantity: roundedText(appliedQuantity),
-                issueQuantity: roundedText(value),
-              }),
-              severity: 'warning',
+              appliedPacks: applied,
+              requestedPacks,
+              packSize: line.packSize,
+              dosesPerUnit: line.dosesPerUnit,
             },
           ]
         : []
