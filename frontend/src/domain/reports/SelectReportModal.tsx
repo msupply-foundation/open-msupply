@@ -10,8 +10,8 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import {
-  ExcelFileIcon,
-  PdfFileIcon,
+  DownloadIcon,
+  ExportIcon,
   PrinterIcon,
   XCircleIcon,
 } from '../../ui/icons';
@@ -236,7 +236,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             </Button>
             <Button
               variant="secondary"
-              icon={<ExcelFileIcon />}
+              icon={<ExportIcon />}
               disabled={disabled()}
               data-testid="report-format-EXCEL"
               onClick={() => onFormat('EXCEL')}
@@ -259,7 +259,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             <Show when={!isAndroid()}>
               <Button
                 variant="secondary"
-                icon={<PdfFileIcon />}
+                icon={<DownloadIcon />}
                 disabled={disabled()}
                 data-testid="report-format-PDF"
                 onClick={() => onFormat('PDF')}
