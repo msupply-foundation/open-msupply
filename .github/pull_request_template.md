@@ -15,7 +15,7 @@ _Author to complete._
 <!-- Include all expected breakpoints if relevant e.g. How does it look on tablet, vs desktop? -->
 
 <!-- Please include links to videos/demos of new functionality if possible -->
-<!-- AI AGENTS cannot attach images — leave the line below in place for the author to complete -->
+<!-- AI AGENTS: replace the line below with before and after screenshots of any visible change (the github-images skill says how to attach them) -->
 
 _Author to attach._
 

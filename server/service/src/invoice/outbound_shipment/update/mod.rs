@@ -1106,7 +1106,7 @@ mod test {
 
     #[actix_rt::test]
     async fn update_outbound_shipment_backdate_success() {
-        use chrono::{Duration, Utc};
+        use chrono::{Duration, SubsecRound, Utc};
 
         fn new_outbound() -> InvoiceRow {
             InvoiceRow {
@@ -1137,7 +1137,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = Utc::now() - Duration::days(2);
+        let two_days_ago = Utc::now().trunc_subsecs(6) - Duration::days(2);
 
         let result = service.update_outbound_shipment(
             &context,
@@ -1678,7 +1678,7 @@ mod test {
     // shipped_datetime so the item ledger reflects the backdated date.
     #[actix_rt::test]
     async fn update_outbound_shipment_backdate_status_transition_uses_backdated_datetime() {
-        use chrono::{Duration, Utc};
+        use chrono::{Duration, SubsecRound, Utc};
 
         fn new_outbound() -> InvoiceRow {
             InvoiceRow {
@@ -1709,7 +1709,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = Utc::now() - Duration::days(2);
+        let two_days_ago = Utc::now().trunc_subsecs(6) - Duration::days(2);
 
         // Step 1: Backdate the New invoice
         service
