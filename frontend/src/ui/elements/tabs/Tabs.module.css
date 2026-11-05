@@ -69,7 +69,10 @@
    bold copy sits in a second grid row. Opening a tab then changes how two
    labels look but not how wide any tab is, so the other tabs never shift as
    the underline slides. The copy's alt text is empty, so a screen reader
-   doesn't read the label twice. */
+   doesn't read the label twice. `overflow: clip` cuts off the line of text
+   that hangs below the zero-height copy, which would otherwise give the
+   scrolling strip a few pixels of vertical scroll; `hidden` would make the
+   copy a scroll box and let a squeezed strip shrink the label back. */
 .label {
   display: inline-grid;
   justify-items: center;
@@ -80,6 +83,7 @@
   font-weight: var(--weight-bold);
   visibility: hidden;
   block-size: 0;
+  overflow: clip;
 }
 
 .trigger:focus-visible {
