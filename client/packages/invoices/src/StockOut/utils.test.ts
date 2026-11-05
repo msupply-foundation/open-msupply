@@ -217,7 +217,8 @@ describe('issue = doses', () => {
 describe('canAutoAllocate ', () => {
   it('canAutoAllocateTests', () => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2025-12-15T12:00:00Z'));
+    // Local noon, so "today" is 2025-12-15 in every timezone
+    jest.setSystemTime(new Date('2025-12-15T12:00:00'));
 
     const availableLine = createTestLine({ availablePacks: 10 });
     expect(canAutoAllocate(availableLine, 0)).toEqual(true);
@@ -234,6 +235,14 @@ describe('canAutoAllocate ', () => {
       onHold: false,
     });
     expect(canAutoAllocate(expiredLine, 0)).toEqual(false);
+
+    // A batch is usable to the end of its expiry day
+    const expiringTodayLine = createTestLine({
+      availablePacks: 10,
+      expiryDate: '2025-12-15',
+      onHold: false,
+    });
+    expect(canAutoAllocate(expiringTodayLine, 0)).toEqual(true);
 
     // Tests the expiry threshold value
     const almostExpiredLine = createTestLine({

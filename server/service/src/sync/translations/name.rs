@@ -749,6 +749,25 @@ mod tests {
         }
     }
 
+    /// The v6 pull selects name rows, but names reach v5/v6 remotes only from legacy central.
+    #[test]
+    fn name_is_not_sent_over_v6_pull() {
+        let changelog = ChangelogRow {
+            table_name: ChangelogTableName::Name,
+            ..Default::default()
+        };
+        let sent_by = crate::sync::translations::all_translators()
+            .iter()
+            .filter(|translator| {
+                translator.should_translate_to_sync_record(
+                    &changelog,
+                    &ToSyncRecordTranslationType::PullFromOmSupplyCentral,
+                )
+            })
+            .count();
+        assert_eq!(sent_by, 0);
+    }
+
     #[test]
     fn build_legacy_custom_fields_none_when_all_absent() {
         let row = legacy_row_with_customs(None, None, None);
