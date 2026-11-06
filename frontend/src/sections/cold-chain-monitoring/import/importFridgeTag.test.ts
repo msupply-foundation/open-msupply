@@ -7,6 +7,7 @@ import {
   importFridgeTag,
   importUrl,
   importedOf,
+  rangeAsUtc,
   type ImportResponse,
 } from './importFridgeTag';
 
@@ -98,6 +99,45 @@ describe('OMS-REG-CCE-02.34 — a valid file imports and reports its counts', ()
     expect(
       classifyResponse(response({ numberOfLogs: 5, newSensorId: null })).kind
     ).toBe('imported');
+  });
+});
+
+describe('OMS-REG-CCE-02.37 — the file’s range reaches the phone’s filter as UTC', () => {
+  it('marks the route’s naive range as UTC', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify(
+              response({
+                numberOfLogs: 3,
+                startDatetime: '2026-09-10T00:00:00',
+                endDatetime: '2026-09-12T23:45:00',
+              })
+            ),
+            { status: 200 }
+          )
+      )
+    );
+    const outcome = await importFridgeTag(
+      'store-a',
+      new File(['a'], 'Fridge-tag 2.txt')
+    );
+    const imported = importedOf(outcome);
+    expect(imported?.response.startDatetime).toBe('2026-09-10T00:00:00Z');
+    expect(imported?.response.endDatetime).toBe('2026-09-12T23:45:00Z');
+  });
+
+  it('leaves a zoned or missing bound as it is', () => {
+    expect(rangeAsUtc('2026-09-10T00:00:00Z')).toBe('2026-09-10T00:00:00Z');
+    expect(rangeAsUtc('2026-09-10T00:00:00.000Z')).toBe(
+      '2026-09-10T00:00:00.000Z'
+    );
+    expect(rangeAsUtc('2026-09-10T12:00:00+12:00')).toBe(
+      '2026-09-10T12:00:00+12:00'
+    );
+    expect(rangeAsUtc(null)).toBeNull();
   });
 });
 
