@@ -41,7 +41,7 @@
       {% else %}{{t(k="label.finalised",f="Finalised")}}{% endif %}
     </td>
     <td class="header_details_label">{{t(k="label.printed",f="Printed")}}</td>
-    <td class="header_details_value">{{ now() | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
+    <td class="header_details_value">{{ now() | date(format="%d/%m/%Y") }}</td>
   </tr>
   <tr>
     <td class="header_details_label">{{t(k="label.created-by",f="Created by")}}</td>

@@ -44,7 +44,7 @@
     <div class="header-space-between">
         <span>{{ data.invoice.otherParty.code }}</span>
         <span id="date">
-            {{t(k="report.printed-date", f="Printed date") }}: {{ now() | date(format="%d/%m/%Y", timezone=arguments.timezone) }}
+            {{t(k="report.printed-date", f="Printed date") }}: {{ now() | date(format="%d/%m/%Y") }}
         </span>
     </div>
     <div class="header-space-between">

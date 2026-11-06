@@ -34,7 +34,7 @@
   <tr>
     <td class="header_section_field_left">{{ data.invoice.otherPartyName }}</td>
     <td id="date" class="header_section_field_right">
-      {{ t(k="report.printed-date", f="Printed date") }}: {{ now() | date(format="%d/%m/%Y", timezone=arguments.timezone) }}
+      {{ t(k="report.printed-date", f="Printed date") }}: {{ now() | date(format="%d/%m/%Y") }}
     </td>
   </tr>
 
