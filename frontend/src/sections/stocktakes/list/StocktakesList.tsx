@@ -256,8 +256,9 @@ const StocktakesList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: StocktakeRow) =>
-    navigate(`/${params.storeId}/inventory/stocktakes/${row.id}`);
+  const rowHref = (row: StocktakeRow) =>
+    `/${params.storeId}/inventory/stocktakes/${row.id}`;
+  const openRow = (row: StocktakeRow) => navigate(rowHref(row));
 
   // Columns and crumbs are accessors (not plain arrays): their text comes from
   // t(), which must be read in a reactive scope to re-translate on a language
@@ -385,6 +386,7 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         emptyMessage={`${t('error.no-stocktakes')} ${hasStocktake() ? '' : t('label.click-to-create-an')}`}
         // The empty-state action flips on whether the store has ANY stocktake
         // (mirrors OMS): a store with none is offered the once-per-store

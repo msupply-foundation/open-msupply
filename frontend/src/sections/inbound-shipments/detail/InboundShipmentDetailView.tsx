@@ -675,8 +675,7 @@ const InboundShipmentDetailView: Component = () => {
   const crumbs = (node: InboundInfoFragment) => [
     {
       label: t('inbound-shipment'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/inbound-shipment`),
+      to: `/${params.storeId}/replenishment/inbound-shipment`,
     },
     {
       label: String(node.invoiceNumber),

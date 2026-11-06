@@ -658,7 +658,7 @@ const StocktakeDetailView: Component = () => {
   const crumbs = (node: StocktakeInfoFragment) => [
     {
       label: t('stocktakes'),
-      onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
+      to: `/${params.storeId}/inventory/stocktakes`,
     },
     { label: String(node.stocktakeNumber) },
   ];
@@ -888,7 +888,9 @@ const StocktakeDetailView: Component = () => {
         hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
       },
       cell: () => (
-        <span class={styles.lineError}>{t('stocktake.line-error.stock-reserved')}</span>
+        <span class={styles.lineError}>
+          {t('stocktake.line-error.stock-reserved')}
+        </span>
       ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine

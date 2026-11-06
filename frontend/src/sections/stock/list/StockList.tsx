@@ -166,8 +166,8 @@ const StockList: Component = () => {
   const onFilterChange = (filter: StockFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
 
-  const openLine = (id: string) =>
-    navigate(`/${params.storeId}/inventory/stock/${id}`);
+  const lineHref = (id: string) => `/${params.storeId}/inventory/stock/${id}`;
+  const openLine = (id: string) => navigate(lineHref(id));
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
   // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
@@ -481,6 +481,7 @@ const StockList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={row => openLine(row.id)}
+        rowHref={row => lineHref(row.id)}
         showCardToggle
         cardGroups={CARD_GROUPS}
         emptyMessage={t('error.no-stock')}

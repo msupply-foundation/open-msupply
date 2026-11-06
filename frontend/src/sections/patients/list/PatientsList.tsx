@@ -169,8 +169,9 @@ const PatientsList: Component = () => {
   const onCustomFieldChange = (cf: CustomFieldFilterState) =>
     setQuery({ ...query(), cf, offset: 0 });
 
-  const openRow = (row: PatientRow) =>
-    navigate(`/${params.storeId}/dispensary/patients/${row.id}`);
+  const rowHref = (row: PatientRow) =>
+    `/${params.storeId}/dispensary/patients/${row.id}`;
+  const openRow = (row: PatientRow) => navigate(rowHref(row));
 
   // The program-enrolments chip column (program module only, OMS-REG-DIS-02.53,
   // OMS-REG-DIS-01.20/.44): one chip per enrolment as "{registry name}
@@ -303,6 +304,7 @@ const PatientsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // One filter menu, in the table's OWN toolbar — never the page header
         // (ui-standards/tables § Toolbar, binding). The default patient
         // filters plus the patient scope's configured custom-field filters as
