@@ -38,10 +38,10 @@ use super::{
 /// Pending sync buffer rows fetched per query during integration (v5/v6 and v7), so memory stays
 /// bounded however much is pending.
 pub(crate) const INTEGRATION_BATCH_SIZE: i64 = 10_000;
-/// Without the outer integration transaction, how many buffer rows commit together. Small enough
+/// Without the outer integration transaction (v5/v6 and v7), how many buffer rows commit together. Small enough
 /// to release SQLite's write lock regularly, large enough that commits are not the bottleneck on
 /// Postgres (one WAL flush per chunk rather than per record).
-const INTEGRATION_COMMIT_SIZE: usize = 500;
+pub(crate) const INTEGRATION_COMMIT_SIZE: usize = 500;
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 

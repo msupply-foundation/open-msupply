@@ -730,7 +730,7 @@ What a failing write leaves behind differs in mechanism but not in outcome. A wr
 
 On both, the record is marked errored and integration moves on, but its writes before the failing one stay saved and commit with the rest. The buffer row is not retried, so a record that fails part way stays half applied. #847 tracks making each record's writes all or nothing.
 
-During initialisation, only initialisation graphql endpoints are available, so it’s safe to reduce transactions (no transactions at all for postgres).
+During a site's first sync, only initialisation graphql endpoints are available, so there is no outer transaction. Instead every 500 buffer rows commit in their own transaction (`INTEGRATION_COMMIT_SIZE`, the same as v5/v6 integration without the outer transaction), with the per-write savepoint still in place on postgres. That avoids one huge transaction on postgres and a commit for every write on sqlite, and a restart keeps the chunks already committed. Auxiliary syncs (patient and store lookups, with a `reference_id`) run on a live site, so on postgres they keep the outer transaction; on sqlite they also commit in chunks.
 
 ##### Transaction performance {#transaction-performance}
 

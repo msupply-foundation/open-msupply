@@ -4,7 +4,7 @@ use crate::{
         sync_buffer::{
             write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
         },
-        synchroniser::INTEGRATION_BATCH_SIZE,
+        synchroniser::{INTEGRATION_BATCH_SIZE, INTEGRATION_COMMIT_SIZE},
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
 };
@@ -285,15 +285,18 @@ pub(crate) fn validate_translate_integrate<'a>(
     sync_context: SyncContext,
     is_initialising: bool,
 ) -> Result<(), RepositoryError> {
-    // During initialisation we don't need transaction as user can't access database
-    // and processors are not running, however we still want it for sqlite as it speeds it up
-    let dont_wrap_in_tx = is_initialising && cfg!(not(feature = "postgres"));
-    let wrap_in_outer_tx = !dont_wrap_in_tx;
+    // A site's first sync has no readers to protect (only the initialisation endpoints are up and processors
+    // aren't running), so instead of one outer transaction each `INTEGRATION_COMMIT_SIZE` chunk commits on its
+    // own (#845): no huge transaction on Postgres, no commit per write on SQLite, and a restart keeps what was
+    // committed. Auxiliary syncs (`reference_id`) run on a live site, so on Postgres they keep the outer
+    // transaction; SQLite never wrapped them, so a chunk transaction there only adds atomicity.
+    let commit_in_chunks =
+        is_initialising && (reference_id.is_none() || cfg!(not(feature = "postgres")));
+    let wrap_in_outer_tx = !commit_in_chunks;
 
-    // When not initialising, isolate each record + changelog write in its own
-    // nested transaction so a single failure doesn't roll back the whole batch.
-    // This is not needed for sqlite as it doesn't poison transaction on failure
-    let wrap_record_in_tx = wrap_in_outer_tx && cfg!(feature = "postgres");
+    // Isolate each record + changelog write in its own nested transaction so a single failure doesn't roll back
+    // the whole outer transaction or chunk. Not needed for sqlite as it doesn't poison a transaction on failure.
+    let wrap_record_in_tx = cfg!(feature = "postgres");
 
     // Even when initialising
     if wrap_in_outer_tx {
@@ -306,6 +309,7 @@ pub(crate) fn validate_translate_integrate<'a>(
                     reference_id,
                     sync_context,
                     wrap_record_in_tx,
+                    false,
                 )
             })
             .map_err(|e| e.to_inner_error());
@@ -318,6 +322,7 @@ pub(crate) fn validate_translate_integrate<'a>(
         reference_id,
         sync_context,
         wrap_record_in_tx,
+        commit_in_chunks,
     )
 }
 
@@ -328,6 +333,7 @@ fn validate_translate_integrate_inner<'a>(
     reference_id: Option<&str>,
     sync_context: SyncContext,
     wrap_record_in_tx: bool,
+    commit_in_chunks: bool,
 ) -> Result<(), RepositoryError> {
     // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
@@ -394,46 +400,61 @@ fn validate_translate_integrate_inner<'a>(
             }
             had_store_records |= *table == ChangelogTableName::Store;
 
-            for row in &rows {
-                let started = datetime_now();
-                let one_result = if wrap_record_in_tx {
-                    connection
-                        .transaction_sync_etc(
-                            |sub| validate_translate_integrate_one(sub, row, &sync_context),
-                            false,
-                        )
-                        .map_err(|e| e.to_inner_error())
-                } else {
-                    validate_translate_integrate_one(connection, row, &sync_context)
-                };
-                match one_result {
-                    Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
-                    Err(e @ Error::ValidationError(_)) => {
-                        write_sync_buffer_ignored(
-                            connection,
-                            row.cursor,
-                            started,
-                            &format_error(&e),
-                        )?;
+            let mut integrate_rows = |rows: &[SyncBufferRow]| -> Result<(), RepositoryError> {
+                for row in rows {
+                    let started = datetime_now();
+                    let one_result = if wrap_record_in_tx {
+                        connection
+                            .transaction_sync_etc(
+                                |sub| validate_translate_integrate_one(sub, row, &sync_context),
+                                false,
+                            )
+                            .map_err(|e| e.to_inner_error())
+                    } else {
+                        validate_translate_integrate_one(connection, row, &sync_context)
+                    };
+                    match one_result {
+                        Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
+                        Err(e @ Error::ValidationError(_)) => {
+                            write_sync_buffer_ignored(
+                                connection,
+                                row.cursor,
+                                started,
+                                &format_error(&e),
+                            )?;
+                        }
+                        Err(e) => {
+                            write_sync_buffer_error(
+                                connection,
+                                row.cursor,
+                                started,
+                                &format_error(&e),
+                            )?;
+                        }
                     }
-                    Err(e) => {
-                        write_sync_buffer_error(
-                            connection,
-                            row.cursor,
-                            started,
-                            &format_error(&e),
-                        )?;
+
+                    total -= 1;
+
+                    if let Some(logger) = logger.as_mut()
+                        && total / PROGRESS_INTERVAL <= last_progress
+                    {
+                        logger.progress(total)?;
+                        last_progress -= 1;
                     }
                 }
+                Ok(())
+            };
 
-                total -= 1;
-
-                if let Some(logger) = logger.as_mut()
-                    && total / PROGRESS_INTERVAL <= last_progress
-                {
-                    logger.progress(total)?;
-                    last_progress -= 1;
-                }
+            if !commit_in_chunks {
+                integrate_rows(&rows)?;
+                continue;
+            }
+            // Each row's buffer mark is written in the same chunk transaction as the row, so a crash leaves
+            // the chunk in progress pending again rather than half integrated.
+            for chunk in rows.chunks(INTEGRATION_COMMIT_SIZE) {
+                connection
+                    .transaction_sync(|_| integrate_rows(chunk))
+                    .map_err(|e| e.to_inner_error())?;
             }
         }
 
@@ -730,6 +751,131 @@ mod test {
                 .unwrap()
                 .is_some()
         );
+    }
+
+    /// A crash part way through integration. While initialising, each `INTEGRATION_COMMIT_SIZE` chunk commits
+    /// on its own (#845), so the chunks before the crash stay committed and the next run integrates only the rest.
+    /// A live sync keeps the outer transaction, so there the crash rolls back everything.
+    #[actix_rt::test]
+    async fn integrate_resumes_after_a_crash_only_while_initialising() {
+        // Fails marking this row integrated, which aborts the run like a crash would.
+        const CRASH_RECORD_ID: &str = "crash_here";
+        let (create_crash_trigger, drop_crash_trigger) = if cfg!(feature = "postgres") {
+            (
+                format!(
+                    r#"
+                    CREATE FUNCTION simulated_crash() RETURNS trigger AS $$
+                    BEGIN RAISE EXCEPTION 'simulated crash'; END $$ LANGUAGE plpgsql;
+                    CREATE TRIGGER simulated_crash BEFORE UPDATE ON sync_buffer FOR EACH ROW
+                    WHEN (NEW.record_id = '{CRASH_RECORD_ID}' AND NEW.is_integrated)
+                    EXECUTE FUNCTION simulated_crash();
+                    "#
+                ),
+                "DROP TRIGGER simulated_crash ON sync_buffer;",
+            )
+        } else {
+            (
+                format!(
+                    r#"
+                    CREATE TRIGGER simulated_crash BEFORE UPDATE ON sync_buffer
+                    WHEN NEW.record_id = '{CRASH_RECORD_ID}' AND NEW.is_integrated
+                    BEGIN SELECT RAISE(ABORT, 'simulated crash'); END;
+                    "#
+                ),
+                "DROP TRIGGER simulated_crash;",
+            )
+        };
+        let run = |connection: &StorageConnection, is_initialising: bool| {
+            validate_translate_integrate(
+                connection,
+                None,
+                SOURCE_SITE_ID,
+                None,
+                SyncContext::Remote {
+                    is_initialising,
+                    active_stores: ActiveStoresOnSite::get(connection).unwrap(),
+                    is_multi_device: false,
+                },
+                is_initialising,
+            )
+        };
+
+        for is_initialising in [true, false] {
+            let connection = setup(
+                &format!("integrate_resumes_after_a_crash_{is_initialising}"),
+                MockDataInserts::none(),
+            )
+            .await;
+
+            // Two full chunks, then one more row. The crash is in the second chunk.
+            let crash_index = INTEGRATION_COMMIT_SIZE + 10;
+            let ids: Vec<String> = (0..INTEGRATION_COMMIT_SIZE * 2 + 1)
+                .map(|i| match i == crash_index {
+                    true => CRASH_RECORD_ID.to_string(),
+                    false => format!("u{i:04}"),
+                })
+                .collect();
+            let rows: Vec<SyncBufferRowInsert> = ids
+                .iter()
+                .map(|id| buffer_row(id, SyncAction::Upsert, unit_data(id)))
+                .collect();
+            SyncBufferRepository::new(&connection)
+                .insert_many(&rows)
+                .unwrap();
+            connection.batch_execute(&create_crash_trigger).unwrap();
+
+            assert!(run(&connection, is_initialising).is_err());
+
+            let integrated: Vec<SyncBufferRow> = SyncBufferRepository::new(&connection)
+                .get_all()
+                .unwrap()
+                .into_iter()
+                .filter(|row| row.is_integrated)
+                .collect();
+            let unit_count = UnitRowRepository::new(&connection)
+                .find_many_by_id(&ids)
+                .unwrap()
+                .len();
+            if !is_initialising {
+                assert!(integrated.is_empty(), "the crash rolls back every row");
+                assert_eq!(unit_count, 0);
+                continue;
+            }
+            // Exactly the first chunk committed, with its rows and their buffer marks.
+            assert_eq!(
+                integrated
+                    .iter()
+                    .map(|row| row.record_id.as_str())
+                    .collect::<Vec<_>>(),
+                ids[..INTEGRATION_COMMIT_SIZE]
+                    .iter()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(unit_count, INTEGRATION_COMMIT_SIZE);
+
+            // Restart: only the pending rows are integrated, the first chunk isn't touched again.
+            connection.batch_execute(drop_crash_trigger).unwrap();
+            run(&connection, is_initialising).unwrap();
+
+            let pending = SyncBufferRepository::new(&connection)
+                .count_pending(SOURCE_SITE_ID, SyncVersion::V7, None, None)
+                .unwrap();
+            assert_eq!(pending, 0);
+            for before in integrated {
+                assert_eq!(
+                    buffer_at_cursor(&connection, before.cursor).integration_datetime,
+                    before.integration_datetime
+                );
+            }
+            assert_eq!(
+                UnitRowRepository::new(&connection)
+                    .find_many_by_id(&ids)
+                    .unwrap()
+                    .len(),
+                ids.len()
+            );
+        }
     }
 
     #[actix_rt::test]
