@@ -558,6 +558,7 @@
   "error.import-failed": "Import failed: {{error}}",
   "error.import-no-rows": "The file has a heading row but no rows beneath it to import.",
   "error.inbound-shipment-not-editable": "Inbound shipment is not editable.",
+  "error.inbound-shipments-in-progress": "Cannot cancel this purchase order because an inbound shipment against it has progressed past New.",
   "error.inbound-shipments-not-verified": "Cannot finalise this purchase order because there are external inbound shipments that have not been verified.",
   "error.integration-timeout-reached": "The central server took too long integrating pushed records. Please retry later.",
   "error.internal-error": "The server experienced a problem.",
