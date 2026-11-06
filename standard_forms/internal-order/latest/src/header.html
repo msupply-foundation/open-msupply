@@ -35,7 +35,7 @@
   <div class="header-space-between">
       <span >{{ data.requisition.otherParty.name }}</span>
       <span id="date">
-          {{t(k="report.printed-date", f="Printed date") }}: {{ now() | date(format="%d/%m/%Y") }}
+          {{t(k="report.printed-date", f="Printed date") }}: {{ now() | date(format="%d/%m/%Y", timezone=arguments.timezone) }}
       </span>
   </div>
   <div class="header-space-between">

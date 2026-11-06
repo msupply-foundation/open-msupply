@@ -3,7 +3,7 @@
 </style>
 
 {% macro formatDate(datetime) %} {% if datetime %}{{ datetime |
-date(format="%d/%m/%Y %H:%M:%S") }}{% endif %} {% endmacro input %}
+date(format="%d/%m/%Y %H:%M:%S", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}
 
 <div class="header">
   <h3>{{t(k="label.store", f="Store")}}: {{ data.store.storeName }}</h3>

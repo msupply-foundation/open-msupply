@@ -40,7 +40,7 @@
     </div>
     <div class="header_right_section">
         <span>{{ t(k="label.number", f="Number") }}: {{ data.invoice.invoiceNumber }}</span><br>
-        <span>{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</span><br>
+        <span>{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</span><br>
         <span>{{t(k="report.their-ref",f="Their ref")}}:
             {% if data.invoice.theirReference %}
             {{ data.invoice.theirReference }}

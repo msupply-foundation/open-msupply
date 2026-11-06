@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.20.1",
+  "version": "2.20.2",
   "code": "stock-movement",
   "context": "STOCK_MOVEMENT",
   "name": "Stock Movement",
