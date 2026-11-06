@@ -730,7 +730,7 @@ What a failing write leaves behind differs in mechanism but not in outcome. A wr
 
 On both, the record is marked errored and integration moves on, but its writes before the failing one stay saved and commit with the rest. The buffer row is not retried, so a record that fails part way stays half applied. #847 tracks making each record's writes all or nothing.
 
-During a site's first sync, only initialisation graphql endpoints are available, so there is no outer transaction. Instead every 500 buffer rows commit in their own transaction (`INTEGRATION_COMMIT_SIZE`, the same as v5/v6 integration without the outer transaction), with the per-write savepoint still in place on postgres. That avoids one huge transaction on postgres and a commit for every write on sqlite, and a restart keeps the chunks already committed. Auxiliary syncs (patient and store lookups, with a `reference_id`) run on a live site, so on postgres they keep the outer transaction; on sqlite they also commit in chunks.
+During a site's first sync, only initialisation graphql endpoints are available, so there is no outer transaction. Instead every 500 buffer rows commit in their own transaction (`INTEGRATION_COMMIT_SIZE`, the same as v5/v6 integration without the outer transaction), with the per-write savepoint still in place on postgres. That avoids one huge transaction on postgres and a commit for every write on sqlite, and a restart keeps the chunks already committed. Every other integration keeps the outer transaction, on both backends. That includes auxiliary syncs (patient and store lookups, with a `reference_id`): they use the initialisation pull rules, but the site is live.
 
 ##### Transaction performance {#transaction-performance}
 
@@ -798,7 +798,7 @@ This is generalised into the **`sync_request`** mechanism: an *auxiliary* (a.k.a
   * Otherwise all active rows are grouped together and assigned a **new uuid `reference_id`**, which is persisted on the rows *before* the run so a crash mid-run is recoverable.
   * Per-direction filters across the group are **OR**’d together.
 * The group runs with **dynamic temporary cursors** derived from the group `reference_id`: `pull_<reference_id>` and `push_<reference_id>`. These live in `key_value_store`, start at 0, advance as batches are pulled, and are **deleted when the group finishes successfully** so the KV blob doesn’t grow unbounded.
-* Auxiliary requests always run with `is_initialising = true`, so the central pull filter behaves like initialisation, since we’re backfilling full history for the filtered subset. Integration does not quite: the site is live, so on postgres it keeps the outer transaction, while on sqlite it commits in 500-row chunks like a first sync (see [Transaction](#transaction)).
+* Auxiliary requests always run with `is_initialising = true`, so the central pull filter behaves like initialisation, since we’re backfilling full history for the filtered subset. Integration does not: the site is live, so it keeps the outer transaction (see [Transaction](#transaction)).
 * On success every member row is stamped with `finished_datetime` and drops out of the active set. On failure the rows keep their `reference_id`, so the next tick re-picks them as the in-flight group and retries from where the cursor left off.
 
 **Keeping auxiliary records isolated from the main sync — important**

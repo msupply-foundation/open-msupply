@@ -288,10 +288,9 @@ pub(crate) fn validate_translate_integrate<'a>(
     // A site's first sync has no readers to protect (only the initialisation endpoints are up and processors
     // aren't running), so instead of one outer transaction each `INTEGRATION_COMMIT_SIZE` chunk commits on its
     // own (#845): no huge transaction on Postgres, no commit per write on SQLite, and a restart keeps what was
-    // committed. Auxiliary syncs (`reference_id`) run on a live site, so on Postgres they keep the outer
-    // transaction; SQLite never wrapped them, so a chunk transaction there only adds atomicity.
-    let commit_in_chunks =
-        is_initialising && (reference_id.is_none() || cfg!(not(feature = "postgres")));
+    // committed. Everything else keeps the outer transaction, including auxiliary syncs: they set
+    // `is_initialising` for the initialisation pull rules, but carry a `reference_id` and run on a live site.
+    let commit_in_chunks = is_initialising && reference_id.is_none();
     let wrap_in_outer_tx = !commit_in_chunks;
 
     // Isolate each record + changelog write in its own nested transaction so a single failure doesn't roll back
@@ -752,9 +751,10 @@ mod test {
         );
     }
 
-    /// A crash part way through integration. While initialising, each `INTEGRATION_COMMIT_SIZE` chunk commits
+    /// A crash part way through integration. In a site's first sync each `INTEGRATION_COMMIT_SIZE` chunk commits
     /// on its own (#845), so the chunks before the crash stay committed and the next run integrates only the rest.
-    /// A live sync keeps the outer transaction, so there the crash rolls back everything.
+    /// A live sync and an auxiliary sync (initialising pull rules, but a `reference_id` on a live site) keep the
+    /// outer transaction, so there the crash rolls back everything, on either backend.
     #[actix_rt::test]
     async fn integrate_resumes_after_a_crash_only_while_initialising() {
         // Fails marking this row integrated, which aborts the run like a crash would.
@@ -784,24 +784,29 @@ mod test {
                 "DROP TRIGGER simulated_crash;",
             )
         };
-        let run = |connection: &StorageConnection, is_initialising: bool| {
-            validate_translate_integrate(
-                connection,
-                None,
-                SOURCE_SITE_ID,
-                None,
-                SyncContext::Remote {
+        let run =
+            |connection: &StorageConnection, is_initialising: bool, reference_id: Option<&str>| {
+                validate_translate_integrate(
+                    connection,
+                    None,
+                    SOURCE_SITE_ID,
+                    reference_id,
+                    SyncContext::Remote {
+                        is_initialising,
+                        active_stores: ActiveStoresOnSite::get(connection).unwrap(),
+                        is_multi_device: false,
+                    },
                     is_initialising,
-                    active_stores: ActiveStoresOnSite::get(connection).unwrap(),
-                    is_multi_device: false,
-                },
-                is_initialising,
-            )
-        };
+                )
+            };
 
-        for is_initialising in [true, false] {
+        for (case, is_initialising, reference_id) in [
+            ("first_sync", true, None),
+            ("live_sync", false, None),
+            ("auxiliary_sync", true, Some("ref-1")),
+        ] {
             let connection = setup(
-                &format!("integrate_resumes_after_a_crash_{is_initialising}"),
+                &format!("integrate_resumes_after_a_crash_{case}"),
                 MockDataInserts::none(),
             )
             .await;
@@ -816,7 +821,10 @@ mod test {
                 .collect();
             let rows: Vec<SyncBufferRowInsert> = ids
                 .iter()
-                .map(|id| buffer_row(id, SyncAction::Upsert, unit_data(id)))
+                .map(|id| SyncBufferRowInsert {
+                    reference_id: reference_id.map(str::to_string),
+                    ..buffer_row(id, SyncAction::Upsert, unit_data(id))
+                })
                 .collect();
             SyncBufferRepository::new(&connection)
                 .insert_many(&rows)
@@ -824,10 +832,10 @@ mod test {
             connection.batch_execute(&create_crash_trigger).unwrap();
 
             // The trigger's error, not some earlier failure, so the rollback below is really tested.
-            let error = run(&connection, is_initialising).unwrap_err();
+            let error = run(&connection, is_initialising, reference_id).unwrap_err();
             assert!(
                 format!("{error:?}").contains("simulated crash"),
-                "{error:?}"
+                "{case}: {error:?}"
             );
 
             let integrated: Vec<SyncBufferRow> = SyncBufferRepository::new(&connection)
@@ -840,9 +848,12 @@ mod test {
                 .find_many_by_id(&ids)
                 .unwrap()
                 .len();
-            if !is_initialising {
-                assert!(integrated.is_empty(), "the crash rolls back every row");
-                assert_eq!(unit_count, 0);
+            if case != "first_sync" {
+                assert!(
+                    integrated.is_empty(),
+                    "{case}: the crash rolls back every row"
+                );
+                assert_eq!(unit_count, 0, "{case}");
                 continue;
             }
             // Exactly the first chunk committed, with its rows and their buffer marks.
@@ -860,7 +871,7 @@ mod test {
 
             // Restart: only the pending rows are integrated, the first chunk isn't touched again.
             connection.batch_execute(drop_crash_trigger).unwrap();
-            run(&connection, is_initialising).unwrap();
+            run(&connection, is_initialising, reference_id).unwrap();
 
             let pending = SyncBufferRepository::new(&connection)
                 .count_pending(SOURCE_SITE_ID, SyncVersion::V7, None, None)
