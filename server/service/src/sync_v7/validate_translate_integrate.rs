@@ -298,7 +298,6 @@ pub(crate) fn validate_translate_integrate<'a>(
     // the whole outer transaction or chunk. Not needed for sqlite as it doesn't poison a transaction on failure.
     let wrap_record_in_tx = cfg!(feature = "postgres");
 
-    // Even when initialising
     if wrap_in_outer_tx {
         return connection
             .transaction_sync(move |t_con| {
@@ -824,7 +823,12 @@ mod test {
                 .unwrap();
             connection.batch_execute(&create_crash_trigger).unwrap();
 
-            assert!(run(&connection, is_initialising).is_err());
+            // The trigger's error, not some earlier failure, so the rollback below is really tested.
+            let error = run(&connection, is_initialising).unwrap_err();
+            assert!(
+                format!("{error:?}").contains("simulated crash"),
+                "{error:?}"
+            );
 
             let integrated: Vec<SyncBufferRow> = SyncBufferRepository::new(&connection)
                 .get_all()

@@ -811,8 +811,12 @@ mod tests {
                 .unwrap();
             connection.batch_execute(&create_crash_trigger).unwrap();
 
+            // The trigger's error, not some earlier failure, so the rollback below is really tested.
+            let error = integrate_and_translate_sync_buffer(&connection, None, 0, use_transaction)
+                .unwrap_err();
             assert!(
-                integrate_and_translate_sync_buffer(&connection, None, 0, use_transaction).is_err()
+                format!("{error:?}").contains("simulated crash"),
+                "{error:?}"
             );
 
             let buffer = SyncBufferRepository::new(&connection).get_all().unwrap();

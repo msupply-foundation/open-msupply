@@ -798,7 +798,7 @@ This is generalised into the **`sync_request`** mechanism: an *auxiliary* (a.k.a
   * Otherwise all active rows are grouped together and assigned a **new uuid `reference_id`**, which is persisted on the rows *before* the run so a crash mid-run is recoverable.
   * Per-direction filters across the group are **OR**’d together.
 * The group runs with **dynamic temporary cursors** derived from the group `reference_id`: `pull_<reference_id>` and `push_<reference_id>`. These live in `key_value_store`, start at 0, advance as batches are pulled, and are **deleted when the group finishes successfully** so the KV blob doesn’t grow unbounded.
-* Auxiliary requests always run with `is_initialising = true` (the central pull filter and the integration transaction wrapping behave like initialisation, since we’re backfilling full history for the filtered subset).
+* Auxiliary requests always run with `is_initialising = true`, so the central pull filter behaves like initialisation, since we’re backfilling full history for the filtered subset. Integration does not quite: the site is live, so on postgres it keeps the outer transaction, while on sqlite it commits in 500-row chunks like a first sync (see [Transaction](#transaction)).
 * On success every member row is stamped with `finished_datetime` and drops out of the active set. On failure the rows keep their `reference_id`, so the next tick re-picks them as the in-flight group and retries from where the cursor left off.
 
 **Keeping auxiliary records isolated from the main sync — important**
