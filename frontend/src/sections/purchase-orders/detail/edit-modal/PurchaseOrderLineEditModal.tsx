@@ -83,6 +83,9 @@ export interface PurchaseOrderLineEditModalProps {
     requestedDeliveryDate: string | null | undefined;
     supplierDiscountPercentage: number | null;
   };
+  /** Whether the user holds the change permission — without it an existing
+   *  line opens with every field closed. */
+  canMutate: boolean;
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;
   /** How many lines the order has — a new line's number is the next. */
@@ -210,6 +213,7 @@ const LineEditContent = (
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
       addMode: !props.initialLine,
+      canMutate: props.canMutate,
     })
   );
   const closed = (open: boolean) => !open || saving();
