@@ -74,7 +74,8 @@ pub struct StockLineFilter {
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilter<String>>,
     pub on_hold: Option<bool>,
-    /// Expired = expiry date on or before `today`; a line with no expiry date is never expired
+    /// Expired = expiry date before `today` (a batch is usable to the end of its expiry day);
+    /// a line with no expiry date is never expired
     pub is_expired: Option<(bool, /* today */ NaiveDate)>,
 }
 
@@ -352,10 +353,10 @@ impl<'a> StockLineRepository<'a> {
 
             if let Some((is_expired, today)) = is_expired {
                 query = match is_expired {
-                    true => query.filter(stock_line::expiry_date.le(today)),
+                    true => query.filter(stock_line::expiry_date.lt(today)),
                     false => query.filter(
                         stock_line::expiry_date
-                            .gt(today)
+                            .ge(today)
                             .or(stock_line::expiry_date.is_null()),
                     ),
                 };
@@ -820,10 +821,13 @@ mod test {
             ids
         };
 
-        // Stock expiring today counts as expired, matching the dashboard
-        assert_eq!(ids(true), vec![expired_yesterday.id, expires_today.id]);
+        // Stock expiring today is still usable, so not expired, matching the dashboard
+        assert_eq!(ids(true), vec![expired_yesterday.id]);
         // Stock with no expiry date is never expired
-        assert_eq!(ids(false), vec![expires_tomorrow.id, no_expiry.id]);
+        assert_eq!(
+            ids(false),
+            vec![expires_today.id, expires_tomorrow.id, no_expiry.id]
+        );
     }
 
     /// Regression test for issue #11429: items with `total > 0, available = 0`
