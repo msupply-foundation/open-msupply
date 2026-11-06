@@ -1,20 +1,15 @@
 use std::future::{Ready, ready};
 
 use actix_web::{
-    Error, HttpResponse,
-    body::{BoxBody, EitherBody},
+    Error,
+    body::EitherBody,
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
-    http::{
-        StatusCode,
-        header::{self, HeaderValue},
-    },
-    web::Data,
+    http::StatusCode,
 };
 use futures_util::future::LocalBoxFuture;
-use service::{
-    service_provider::ServiceProvider,
-    sync::{CentralServerConfig, is_initialised_or_log},
-};
+use service::sync::CentralServerConfig;
+
+use super::initialised_only::reject;
 
 #[derive(Debug, Default)]
 pub(crate) struct CentralServerOnly {}
@@ -63,42 +58,11 @@ where
             );
         }
 
-        // A central learns it is central at the start of its first sync, before integration, and
-        // integrates that sync in batches (#845). Until it has finished, remotes would pull and
-        // push against partial data, e.g. a v7 remote could get a token from an early `site` row
-        // and finish its own initialisation without the rows integrated after it.
-        let is_initialised = req
-            .app_data::<Data<ServiceProvider>>()
-            .is_some_and(|service_provider| is_initialised_or_log(service_provider));
-        if !is_initialised {
-            return reject(
-                req,
-                StatusCode::SERVICE_UNAVAILABLE,
-                "Central server is still initialising, try again later.",
-            );
-        }
-
         // Pass on the request to the next service
         let fut = self.service.call(req);
 
         Box::pin(async move { fut.await.map(ServiceResponse::map_into_left_body) })
     }
-}
-
-fn reject<B: 'static>(
-    req: ServiceRequest,
-    status: StatusCode,
-    message: &'static str,
-) -> LocalBoxFuture<'static, Result<ServiceResponse<EitherBody<B>>, Error>> {
-    Box::pin(async move {
-        Ok(req.into_response({
-            let mut resp = HttpResponse::new(status);
-            resp.headers_mut()
-                .append(header::CONNECTION, HeaderValue::from_static("close"));
-            resp.map_body(|_head, _body| BoxBody::new(message))
-                .map_into_right_body()
-        }))
-    })
 }
 
 #[cfg(test)]
@@ -115,13 +79,16 @@ mod tests {
         sync::{test_util_set_is_central_server, test_util_set_is_initialised},
     };
 
-    use super::CentralServerOnly;
+    use crate::middleware::{central_server_only, initialised_only};
 
+    // Wrapped as `config_central` does: the last wrap runs first, so not-central (405) is checked
+    // before not-initialised (503).
     async fn central_route_status(service_provider: &Data<ServiceProvider>) -> StatusCode {
         let app = test::init_service(
             App::new().app_data(service_provider.clone()).service(
                 web::scope("central")
-                    .wrap(CentralServerOnly::default())
+                    .wrap(initialised_only("Central server is still initialising"))
+                    .wrap(central_server_only())
                     .route("/ping", web::get().to(HttpResponse::Ok)),
             ),
         )

@@ -197,7 +197,7 @@ pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
 }
 
 /// [`is_initialised`] for anything that must stay off this site's data until its first sync has
-/// integrated: the `/central` routes, schedule plugins, cold chain login and ledger fix. v5/v6 and
+/// integrated: the `/central` and cold chain APIs, schedule plugins and ledger fix. v5/v6 and
 /// v7 integration both commit in batches while the site initialises (see
 /// `integration_uses_transaction` and `validate_translate_integrate`), so until then the data is
 /// partial. A database error reads as not initialised, so callers refuse rather than panic.

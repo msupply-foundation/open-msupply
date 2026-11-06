@@ -109,7 +109,7 @@ pub fn is_locked_out(
 /// The outer transaction only exists to hide a half-integrated batch from changelog readers.
 /// - Maintenance mode on: every reader is paused, so it has no job. Run without it.
 /// - Site not yet initialised: every reader waits for initialisation (`is_initialised_or_log`
-///   gates the `/central` routes, schedule plugins, cold chain login and the timed ledger fix
+///   gates the `/central` and cold chain APIs, schedule plugins and the timed ledger fix
 ///   check; GraphQL only serves initialisation), so it has no job either (#845). Run without it,
 ///   which also means a restart resumes from the last committed batch instead of starting over.
 ///   The ledger fix triggered as initialisation completes isn't gated: integration has already
