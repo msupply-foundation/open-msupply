@@ -305,8 +305,18 @@ Deployments are seeded with datasets whose logins are known, and a logged-in use
 Signed out, anyone can open the Launchpad's Home, Downloads and Schema pages. Every other page asks for a sign-in, through a **Team sign in** button.
 
 - **Served by a different container:** `oms-dashboard-public` is Caddy serving plain files (`.github/deploy/dashboard/public.Caddyfile`). It holds no secret, has no docker socket and doesn't run `web.mjs`. The proxy's `launchpad_public` sends it the public page paths, `/assets/*` and `/public/*`, on both doors and without the gate.
-- **What it can serve is what is mounted into it:** `releases.json` from the `releases` container, and `<DEPLOY_BUNDLES_DIR>/public/schemas`. That directory is a copy of the schema store holding only releases, develop and main — what the public mirror carries — with the PR, branch, deployment, commit and run fields removed. `publish-schema.mjs` rewrites it after every capture, so it fills in at the next one (develop's next deploy, or **Add a release**).
+- **What it can serve is what is mounted into it:** `releases.json` from the `releases` container, and `<DEPLOY_BUNDLES_DIR>/public/schemas`. That directory is a copy of the schema store that names only releases, develop and main (what the public mirror carries) and sets their PR, deployment, commit and run fields to null. `publish-schema.mjs` rewrites it after every capture, and `docker-deploy-services.yaml` writes it once on each run, so it's never missing.
 - **Signed in**, Schema still reads the full store through `web.mjs`, with pull requests and branches.
+- **First rollout:** if the `public` container fails its health check on the run that adds it, there's no earlier image to roll back to. The Downloads page is then empty until it's fixed, because `web.mjs` no longer serves `/api/releases`.
+
+#### Database schemas
+
+The Schema page's schemas are captured per **image**, never from a deployment. A deployment's database may have been restored from any dump, a client's included, and the dump would bring along objects the migrations don't remove, plus partitions sized to its data. So `schema-publish.sh` starts the image in a throwaway container instead: empty, no network, long enough to run its migrations. It reads the schema there and removes the container.
+
+- **When:** after every deploy (`docker-deploy.yaml`, which never fails the deploy over it) and for releases (`publish-schema.yaml`, or **Add a release**).
+- **Once per image:** the store remembers which images it has captured, so a reseed, a restart or a second server on the same commit only files the schema under its name, without starting anything. A new image costs one throwaway server start: a minute or two on the box.
+- **Files:** each file is named by a hash of exactly what it holds. Two versions share a file only when their schemas are identical.
+- **Upgrading from schema 1:** an older store was captured from deployments. The first publish (or the services deploy) clears it, and develop and the PR previews come back as they next deploy. Dispatch `publish-schema.yaml` with the release tags you want listed, e.g. `v2.20.0 v3.00.00 v3.04.00`.
 
 There is no local HTTPS on the box any more: everything comes through the edge, which serves the real certificate. A box set up before this keeps the `oms-proxy_caddy-data` and `oms-proxy_caddy-config` volumes, which held the old internal CA — `docker volume rm` them, and anyone who trusted its root can remove it.
 
