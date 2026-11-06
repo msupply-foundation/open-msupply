@@ -132,8 +132,8 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
     ),
   },
   // Expiry status — All / Not expired / Expired over the plain Boolean filter
-  // field (#1820). Expired = expiry on or before today, the dashboard's
-  // definition; a line with no expiry is never expired. The list opens on
+  // field (#1820). Expired = expiry before today, the dashboard's definition
+  // (#1786); a line with no expiry is never expired. The list opens on
   // "Not expired" (its DEFAULT_STATE); removing the chip shows all stock.
   isExpired: {
     label: () => t('label.expiry-status'),

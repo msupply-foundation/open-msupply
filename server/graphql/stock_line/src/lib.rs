@@ -67,7 +67,7 @@ pub struct StockLineFilterInput {
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilterStringInput>,
     pub on_hold: Option<bool>,
-    /// true: expiry date on or before today. false: expiry date after today, or no expiry date.
+    /// true: expiry date before today. false: expiry date today or later, or no expiry date.
     /// Today is in the query's `timezoneOffset`, or the server's timezone without one
     pub is_expired: Option<bool>,
 }
