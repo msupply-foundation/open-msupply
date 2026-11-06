@@ -490,7 +490,12 @@ export function CardView<T, G extends string>(props: {
                       data-testid="select-row-checkbox"
                       disabled={props.selectionDisabled}
                       checked={row.getIsSelected()}
-                      onChange={row.getToggleSelectedHandler()}
+                      onChange={event => {
+                        row.getToggleSelectedHandler()(event);
+                        // A row the page drops from the selection: put the
+                        // box back (TableRow does the same).
+                        event.currentTarget.checked = row.getIsSelected();
+                      }}
                       onClick={event => event.stopPropagation()}
                     />
                   </Show>
