@@ -1,5 +1,6 @@
 use base64::prelude::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
+use chrono_tz::Tz;
 use log::error;
 use repository::{
     EqualFilter, Pagination, PaginationOption, Report, ReportFilter, ReportMetaData,
@@ -666,6 +667,41 @@ fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<Report
     )
 }
 
+/// Tera's built-in `now()`, in the user's timezone rather than the server's.
+/// Without a timezone (or with one chrono-tz doesn't know) it falls back to the
+/// server's, as the built-in does. Keeps the built-in's `utc` and `timestamp`
+/// arguments.
+fn now_function(
+    timezone: Option<Tz>,
+) -> impl Fn(&HashMap<String, serde_json::Value>) -> tera::Result<tera::Value> + Send + Sync {
+    move |args| now_at(Utc::now(), timezone, args)
+}
+
+fn now_at(
+    now: DateTime<Utc>,
+    timezone: Option<Tz>,
+    args: &HashMap<String, serde_json::Value>,
+) -> tera::Result<tera::Value> {
+    let flag = |name: &str| match args.get(name) {
+        Some(value) => value.as_bool().ok_or_else(|| {
+            tera::Error::msg(format!(
+                "Function `now` received {name}={value} but `{name}` can only be a boolean"
+            ))
+        }),
+        None => Ok(false),
+    };
+    let utc = flag("utc")?;
+    if flag("timestamp")? {
+        return Ok(now.timestamp().into());
+    }
+    let datetime = match (utc, timezone) {
+        (true, _) => now.to_rfc3339(),
+        (false, Some(timezone)) => now.with_timezone(&timezone).fixed_offset().to_rfc3339(),
+        (false, None) => now.with_timezone(&Local).to_rfc3339(),
+    };
+    Ok(datetime.into())
+}
+
 fn generate_report(
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
@@ -673,6 +709,11 @@ fn generate_report(
     localisations: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
+    let user_timezone = arguments
+        .as_ref()
+        .and_then(|arguments| arguments.get("timezone"))
+        .and_then(|timezone| timezone.as_str())
+        .and_then(|timezone| timezone.parse::<Tz>().ok());
     let report_data = ReportData { data, arguments };
     let report_data = transform_data(
         report_data,
@@ -716,6 +757,10 @@ fn generate_report(
         "t",
         localisations.get_translation_function(current_language),
     );
+
+    // Replaces Tera's built-in now(), which is the server's clock - UTC on
+    // Docker-hosted servers - so printed dates follow the user's clock instead.
+    tera.register_function("now", now_function(user_timezone));
 
     let mut templates: HashMap<String, String> = report
         .templates
@@ -1123,6 +1168,116 @@ mod report_generation_test {
 
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Nom"));
+    }
+}
+
+#[cfg(test)]
+mod now_test {
+    use std::collections::HashMap;
+
+    use chrono::{TimeZone, Utc};
+    use chrono_tz::Tz;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use serde_json::json;
+
+    use super::{ResolvedReportDefinition, generate_report, now_at};
+    use crate::{
+        report::definition::{ReportOutputType, TeraTemplate},
+        service_provider::ServiceProvider,
+    };
+
+    #[test]
+    fn now_is_in_the_users_timezone() {
+        let now = Utc.with_ymd_and_hms(2026, 11, 6, 1, 10, 0).unwrap();
+        let no_args = HashMap::new();
+
+        let kabul = now_at(now, Some(Tz::Asia__Kabul), &no_args).unwrap();
+        assert_eq!(kabul, json!("2026-11-06T05:40:00+04:30"));
+
+        // Behind UTC, so the printed date is the day before
+        let los_angeles = now_at(now, Some(Tz::America__Los_Angeles), &no_args).unwrap();
+        assert_eq!(los_angeles, json!("2026-11-05T17:10:00-08:00"));
+    }
+
+    #[test]
+    fn now_keeps_the_built_in_arguments() {
+        let now = Utc.with_ymd_and_hms(2026, 11, 6, 1, 10, 0).unwrap();
+        let kabul = Some(Tz::Asia__Kabul);
+
+        let utc = now_at(
+            now,
+            kabul,
+            &HashMap::from([("utc".to_string(), json!(true))]),
+        );
+        assert_eq!(utc.unwrap(), json!("2026-11-06T01:10:00+00:00"));
+
+        let timestamp = now_at(
+            now,
+            kabul,
+            &HashMap::from([("timestamp".to_string(), json!(true))]),
+        );
+        assert_eq!(timestamp.unwrap(), json!(now.timestamp()));
+
+        let not_a_boolean = now_at(
+            now,
+            kabul,
+            &HashMap::from([("utc".to_string(), json!("yes"))]),
+        );
+        assert!(not_a_boolean.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn report_now_follows_the_timezone_argument() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "report_now_follows_the_timezone_argument",
+            MockDataInserts::none(),
+        )
+        .await;
+        let localisations = ServiceProvider::new(connection_manager)
+            .localisations_service
+            .get_localisations(&connection)
+            .unwrap();
+
+        let template = TeraTemplate {
+            template: r#"{{ now() | date(format="%z") }}|{{ now() | date(format="%z", timezone="Asia/Kabul") }}"#
+                .to_string(),
+            output: ReportOutputType::Html,
+        };
+        let report = ResolvedReportDefinition {
+            name: "now.html".to_string(),
+            template: "now.html".to_string(),
+            templates: HashMap::from([("now.html".to_string(), template)]),
+            ..Default::default()
+        };
+        let render = |arguments| {
+            generate_report(
+                &report,
+                json!(null),
+                arguments,
+                &localisations,
+                Some("en".to_string()),
+            )
+            .unwrap()
+            .document
+        };
+
+        // Templates that already convert to the user's timezone are unaffected
+        assert_eq!(
+            render(Some(json!({ "timezone": "Asia/Kabul" }))),
+            "+0430|+0430"
+        );
+        assert_eq!(
+            render(Some(json!({ "timezone": "America/Los_Angeles" }))),
+            "-0800|+0430"
+        );
+
+        // Without a timezone, or with an unknown one, now() is the server's as before
+        let server_offset = chrono::Local::now().format("%z").to_string();
+        assert_eq!(render(None), format!("{server_offset}|+0430"));
+        assert_eq!(
+            render(Some(json!({ "timezone": "Narnia" }))),
+            format!("{server_offset}|+0430")
+        );
     }
 }
 
