@@ -407,7 +407,9 @@ const PurchaseOrderDetailView: Component = () => {
 
   // Nothing on this screen is saved by hand — there is no save action anywhere
   // on it (rules § an order's own screen). A save the domain refuses leaves the
-  // field showing what was typed until the screen is read again.
+  // field showing what was typed until the screen is read again — except the
+  // discounts, which show the order's figure again once left
+  // (createDebouncedField).
   const saveField = async (
     patch: PurchaseOrderPatch
   ): Promise<SaveFieldResult> => {
@@ -419,8 +421,9 @@ const PurchaseOrderDetailView: Component = () => {
     });
     if (result.kind === 'saved') {
       // The node carries derived money (both totals, the discount amount), so
-      // re-read rather than splicing the patch in.
-      void refetchInfo();
+      // re-read rather than splicing the patch in — awaited, so a buffered
+      // field (the discounts) shows the server's figure only once it is in.
+      await refetchInfo();
       return { ok: true };
     }
     if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
