@@ -85,8 +85,10 @@ const DEFAULT_STATE: StockListState = {
   // The search (batch or item code/name) is the list's default filter
   // (ui-standards § tables → filtering): seeded present-as-null so its chip is
   // on the bar from the start; stripEmpty keeps it out of the query until
-  // typed.
-  filter: { search: null },
+  // typed. Expired stock is hidden on open (#1820) — a removable chip, not a
+  // gate. A link that carries its own filter (the dashboard's expiry stats)
+  // replaces this whole default, so it lands on exactly the lines it counts.
+  filter: { search: null, isExpired: false },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,

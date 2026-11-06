@@ -2,11 +2,11 @@
 # mutations — general and program — plus the two reads that feed the modal and
 # its warning gate. An internal order is a REQUEST requisition.
 
-# Program-path data AND the program-tab gate (OMS-REG-REPL-04.46): the store's
-# supplier programs, each with its suppliers, order types, and the periods
-# already windowed (five historic + five future) and pruned of exhausted ones
-# server-side. Non-empty → the modal offers the Program tab; empty → general
-# only. Fetched when the modal opens (a spinner shows while it loads).
+# Program-path data AND the program-field gate (OMS-REG-REPL-04.102): the
+# store's supplier programs, each with its suppliers, order types, and the
+# periods already windowed (five historic + five future) and pruned of exhausted
+# ones server-side. Non-empty → the modal offers the Program field; empty →
+# general only. Fetched when the modal opens (a spinner shows while it loads).
 query internalOrderProgramSettings($storeId: String!) {
   supplierProgramRequisitionSettings(storeId: $storeId) {
     programId
@@ -57,12 +57,15 @@ query recentStocktakeItems($storeId: String!, $onOrAfter: NaiveDate) {
   }
 }
 
-# General create (OMS-REG-REPL-04.6/.43): the modal sends only id + otherPartyId and hard-codes
+# General create (OMS-REG-REPL-04.6/.101/.104): the modal sends id +
+# otherPartyId, plus masterListId when a master list is chosen, and hard-codes
 # the reorder threshold (0); the target is omitted so the server defaults it to
 # the store's supply interval + safety buffer, else 1; the resolver defaults the
-# expected delivery date to +2 weeks and creates no lines. On success the new
-# order's id is used to navigate to its detail screen; the typed supplier errors
-# are unreachable from the store-backed-supplier picker (contract wire trap).
+# expected delivery date to +2 weeks. Without a master list no lines are
+# created; with one, the server adds its stock items requesting their
+# suggestions in the same transaction. On success the new order's id is used to
+# navigate to its detail screen; the typed supplier errors are unreachable from
+# the store-backed-supplier picker (contract wire trap).
 mutation insertInternalOrder(
   $storeId: String!
   $input: InsertRequestRequisitionInput!

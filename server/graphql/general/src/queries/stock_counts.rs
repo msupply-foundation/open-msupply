@@ -22,8 +22,11 @@ impl StockCounts {
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.basic_context()?;
         let service = &service_provider.stock_expiry_count_service;
-        let date = Utc::now().with_timezone(&self.timezone_offset).date_naive();
-        Ok(service.count_expired_stock(&service_ctx, &self.store_id, None, Some(date))?)
+        // A batch is usable to the end of its expiry day, so expired means the
+        // expiry is before today; today's expiries count as expiring soon.
+        let yesterday =
+            Utc::now().with_timezone(&self.timezone_offset).date_naive() - Duration::days(1);
+        Ok(service.count_expired_stock(&service_ctx, &self.store_id, None, Some(yesterday))?)
     }
 
     async fn expiring_soon(&self, ctx: &Context<'_>) -> Result<i64> {

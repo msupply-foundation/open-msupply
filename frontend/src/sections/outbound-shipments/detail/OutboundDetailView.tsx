@@ -99,11 +99,11 @@ import {
 } from '@/domain/barcode';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { ServiceChargesModal } from '../../../domain/invoice';
 import {
-  fetchOutboundServiceCharges,
-  saveOutboundServiceCharges,
-} from './service-charges/outboundServiceCharges';
+  ServiceItems,
+  type ServiceChargesEditor,
+} from '../../../domain/invoice';
+import { OutboundServiceChargesPanel } from './service-charges/OutboundServiceChargesPanel';
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
 // the returns vertical — OMS-REG-DIST-04.21 hands over to it). Lazy so the
 // returns graph it pulls in stays out of this section's eager chunk, loading
@@ -121,8 +121,8 @@ import {
 } from './actions';
 
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
-// header (customer + customer reference + line search/filters), Details/Log
-// tabs, the flat read-only SERVER-paginated line table (row click opens the
+// header (customer + customer reference + line search/filters), Details /
+// Service charges / Custom fields / Log tabs, the flat read-only SERVER-paginated line table (row click opens the
 // line editor S4 on that row's item AND batch —
 // OMS-REG-DIST-03.27/OMS-REG-DIST-03.31), the side panel (S3 § side panel), and
 // the persistent status footer (hold / crumbs / status split button —
@@ -136,7 +136,7 @@ import {
 // a LINE-level change refetches the lines page AND the entity (the footer
 // totals are its server-side pricing aggregates — D45; placeholders and trims
 // move server-side too — kdd/state-management: refresh by direct call). Service
-// lines are their own small read (the S5 editor + side-panel rows).
+// lines are never in the line table — the Service charges tab reads its own.
 
 type Line = OutboundLineFragment;
 
@@ -286,7 +286,26 @@ const OutboundDetailView: Component = () => {
     { item?: LineEditItem; lineId?: string; scan?: IssueScan } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
   const openEditor = (state: NonNullable<EditState>) => setEditState(state);
-  const [serviceOpen, setServiceOpen] = createSignal(false);
+  const [activeTab, setActiveTab] = createSignal('details');
+  const [serviceEditor, setServiceEditor] =
+    createSignal<ServiceChargesEditor>();
+  // Whether the store has a service item — read once the Service charges tab
+  // is first opened, never suspending (it arrives under the open screen).
+  const serviceTabOpened = createMemo(
+    prev => prev || activeTab() === 'service-charges',
+    false
+  );
+  const [serviceItems] = createResource(
+    () => (serviceTabOpened() ? params.storeId : undefined),
+    async storeId => {
+      const result = await graphqlFetch(ServiceItems, { storeId });
+      return result.kind === 'success' ? result.data.items.nodes : undefined;
+    }
+  );
+  const serviceConfigured = () => {
+    const items = gated(serviceItems);
+    return items ? items.length > 0 : undefined;
+  };
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
@@ -418,26 +437,6 @@ const OutboundDetailView: Component = () => {
     setOffset: offset => setQuery({ ...query(), offset }),
   });
 
-  // Service lines — a small dedicated read (spec S5; the side panel's service
-  // rows). Never in the paginated table; refetched alongside the lines page
-  // (a bulk delete can remove service lines too).
-  const [serviceData, { refetch: refetchServiceLines }] = createResource(
-    () => ({ storeId: params.storeId, invoiceId: params.invoiceId }),
-    async variables => {
-      const result = await graphqlFetch(OutboundLines, {
-        storeId: variables.storeId,
-        filter: {
-          invoiceId: { equalTo: variables.invoiceId },
-          type: { equalTo: 'SERVICE' },
-        },
-        page: { first: 100 },
-      });
-      if (result.kind !== 'success') return undefined;
-      return result.data.invoiceLines.nodes;
-    }
-  );
-  const serviceLines = (): Line[] => serviceData.latest ?? [];
-
   // The store's locations (code/name only) for the Location filter chip.
   // Volume-blind — the chip narrows a line list, capacity is irrelevant.
   const [locationsData] = createResource(
@@ -457,7 +456,7 @@ const OutboundDetailView: Component = () => {
       // entity's server-side pricing aggregates (D45), so every line-level
       // change moves them — a lines-only refetch would leave the footer one
       // edit behind. `.latest` reads keep the refresh remount-free.
-      await Promise.all([refetchLines(), refetchServiceLines(), refetchInfo()]);
+      await Promise.all([refetchLines(), refetchInfo()]);
     } finally {
       setSilentRefetching(false);
     }
@@ -1102,7 +1101,7 @@ const OutboundDetailView: Component = () => {
         }
       >
         {current => (
-          <Tabs defaultValue="details">
+          <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
               fillBody
               sidePanelOpen={sidePanelOpen()}
@@ -1111,7 +1110,6 @@ const OutboundDetailView: Component = () => {
               sidePanelContent={
                 <OutboundSidePanel
                   node={current()}
-                  serviceLines={serviceLines()}
                   storeId={params.storeId}
                   disabled={!editable()}
                   foreignCurrencyAllowed={
@@ -1126,7 +1124,6 @@ const OutboundDetailView: Component = () => {
                     // like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
-                  onEditServiceCharges={() => setServiceOpen(true)}
                 />
               }
               header={
@@ -1141,6 +1138,20 @@ const OutboundDetailView: Component = () => {
                       on the breadcrumb's line, and the screen keeps that row's
                       height for table rows. */}
                   <HeaderButtons>
+                    <Show
+                      when={activeTab() === 'service-charges' && editable()}
+                    >
+                      <Button
+                        data-testid="add-service-charge-button"
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
+                        title={t('label.add-charge')}
+                        disabled={serviceConfigured() !== true}
+                        onClick={() => setServiceEditor('add')}
+                      >
+                        {t('label.add-charge')}
+                      </Button>
+                    </Show>
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
@@ -1225,6 +1236,10 @@ const OutboundDetailView: Component = () => {
                       {
                         value: 'details',
                         label: t('label.details'),
+                      },
+                      {
+                        value: 'service-charges',
+                        label: t('label.service-charges'),
                       },
                       {
                         value: 'custom-fields',
@@ -1389,6 +1404,19 @@ const OutboundDetailView: Component = () => {
                   }
                 />
               </TabPanel>
+              <TabPanel value="service-charges">
+                {/* The entity's pricing carries the side panel's service
+                    total, so a written charge re-reads it. */}
+                <OutboundServiceChargesPanel
+                  storeId={params.storeId}
+                  invoiceId={current().id}
+                  disabled={!editable()}
+                  serviceItems={gated(serviceItems)}
+                  editor={serviceEditor()}
+                  onEditorChange={setServiceEditor}
+                  onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
               <TabPanel value="custom-fields">
                 {/* Custom fields for the outbound_shipment scope — disabled once
                     the shipment is read-only (past PICKED). Prominent fields
@@ -1449,27 +1477,6 @@ const OutboundDetailView: Component = () => {
               {/* "Which item is this barcode?" for a barcode mapped to several
                   items (barcode-scanning rules § Looking a barcode up). */}
               <issueScan.Chooser />
-              {/* The shared service-charges editor (spec S5) with outbound's
-                  wire twins; a committed batch refetches like any other
-                  line-level change (the totals are entity aggregates). */}
-              <ServiceChargesModal
-                open={serviceOpen()}
-                onClose={() => setServiceOpen(false)}
-                storeId={params.storeId}
-                disabled={!editable()}
-                fetchCharges={() =>
-                  fetchOutboundServiceCharges(params.storeId, current().id)
-                }
-                save={async batch => {
-                  const result = await saveOutboundServiceCharges(
-                    params.storeId,
-                    current().id,
-                    batch
-                  );
-                  if (result.ok) onLineOpsCommitted();
-                  return result;
-                }}
-              />
               {/* Returns need a shipped shipment (OMS-REG-DIST-04.21) — an info-only
                   notice; the return flow is the returns vertical's. */}
               <Show when={returnNoticeOpen()}>

@@ -4368,6 +4368,11 @@ input InsertRequestRequisitionInput {
 	Defaults to 2 weeks from now
 	"""
 	expectedDeliveryDate: NaiveDate
+	"""
+	Starts the order with a line for every item on this master list, each requesting its
+	suggested quantity. Created in one step: if the lines can't be added, no order is created
+	"""
+	masterListId: String
 }
 
 type InsertRequestRequisitionLineError {
@@ -8244,7 +8249,11 @@ type Queries {
 		"""
 		Sort options (only first sort input is evaluated for this endpoint)
 		"""
-		sort: [StockLineSortInput!]
+		sort: [StockLineSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): StockLinesResponse!
 	"""
 	Query for items that have at least one stock_line matching `filter`
@@ -8266,7 +8275,11 @@ type Queries {
 		"""
 		Item-level sort (only first sort input is evaluated)
 		"""
-		sort: [ItemSortInput!]
+		sort: [ItemSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): ItemsResponse!
 	"""
 	Query for "historical_stock_line" entries
@@ -8820,6 +8833,14 @@ type RequisitionLineForecastPreviewNode {
 	The requisition's target months × the monthly demand
 	"""
 	targetStock: Float!
+	"""
+	The consumption history and stock evolution for the previewed line, as
+	`requisitionLineChart` gives them for a saved one — so an item being added charts
+	before its line exists. The draft's requested quantity isn't part of the preview, so
+	the stock projection adds nothing at delivery. Null if the chart can't be read: the
+	chart is context, so failing to read it doesn't fail the preview
+	"""
+	chart(consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): ItemChartNode
 	suggestedQuantity: Float!
 	averageMonthlyConsumption: Float!
 	availableStockOnHand: Float!
@@ -9577,6 +9598,11 @@ input StockLineFilterInput {
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
 	onHold: Boolean
+	"""
+	true: expiry date on or before today. false: expiry date after today, or no expiry date.
+	Today is in the query's `timezoneOffset`, or the server's timezone without one
+	"""
+	isExpired: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
