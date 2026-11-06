@@ -188,6 +188,21 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   rowClickable?: (row: T) => boolean;
   /**
+   * The address a clickable row opens — set it on every table whose rows
+   * navigate, so a row can be opened in a new tab like any link: right-click →
+   * "Open link in new tab" / "Copy link address", Cmd/Ctrl-click,
+   * middle-click (#271). Router-space, the same path `onRowClick` hands
+   * `navigate()`; the mount is added for the link (RowLink).
+   *
+   * A link, not a second way to open the row: a plain click still runs
+   * `onRowClick`, so its guards and side effects are untouched, and a
+   * modified click never does — the browser opens the link elsewhere, or, on
+   * a control the link can't reach, nothing happens. Rows that
+   * open a modal have no address and leave this unset; a row it answers
+   * undefined for, or that isn't clickable, gets no link.
+   */
+  rowHref?: (row: T) => string | undefined;
+  /**
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
    * row through the SAME `onRowClick` a mouse click uses, `Escape` clears the
@@ -1877,6 +1892,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
                         rowClickable={props.rowClickable}
+                        rowHref={props.rowHref}
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
@@ -1918,6 +1934,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
                             rowClickable={props.rowClickable}
+                            rowHref={props.rowHref}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}

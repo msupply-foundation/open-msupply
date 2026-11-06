@@ -4,7 +4,7 @@ Companion to [`ADDING_A_COMPONENT.md`](./ADDING_A_COMPONENT.md). That doc is for
 
 ## What "correct UI" means
 
-Correct = every UI role is filled by its **registered library component**, composed the way the **reference vertical** (`src/sections/stocktakes/`) and the **showcase** demonstrate — no bespoke look-alikes, no literal colours/sizes, no hand-rolled layout. The bar is conformance requirement **C3** in [`spec/IMPLEMENTING.md`](../../../spec/IMPLEMENTING.md#the-requirements).
+Correct = every UI role is filled by its **registered library component**, composed the way the **reference vertical** (`src/sections/stocktakes/`) and the **showcase** demonstrate — no bespoke look-alikes, no literal colours/sizes, no hand-rolled layout. The bar is conformance requirement **C3** in [`spec/IMPLEMENTING.md`](../../../../spec/IMPLEMENTING.md#the-requirements).
 
 ## More than one reference
 
@@ -46,11 +46,11 @@ Each row is a check; the migration is thorough only when every screen has been j
 
 ## Spec consistency — the durability check
 
-The spec is the source of truth `spec-build` regenerates from, so a migration is only durable if the migrated UI is **what regeneration would produce**. For each screen, run the test: _if this vertical were rebuilt from its spec today, would it come out looking like this?_ Reconcile the implementation with `spec/<vertical>/ui-surface.md` (its content, states, and Layout/region order, and the **roles** it names — each resolved to a component via the [registry](../../../spec/ui-standards/components.md)).
+The spec is the source of truth `spec-build` regenerates from, so a migration is only durable if the migrated UI is **what regeneration would produce**. For each screen, run the test: _if this vertical were rebuilt from its spec today, would it come out looking like this?_ Reconcile the implementation with `spec/<vertical>/ui-surface.md` (its content, states, and Layout/region order, and the **roles** it names — each resolved to a component via the [registry](../../../../spec/ui-standards/components.md)).
 
 When they disagree, which side is authoritative depends on _what_ disagrees:
 
-- **Pure-UI decisions** (which role/component, layout, composition, styling) — **the current UI standards + registry win.** Update the spec to match: fix the `ui-surface.md` role/content/Layout prose (roles, never component names or CSS — see [`spec/AUTHORING.md`](../../../spec/AUTHORING.md)), or the registry row.
+- **Pure-UI decisions** (which role/component, layout, composition, styling) — **the current UI standards + registry win.** Update the spec to match: fix the `ui-surface.md` role/content/Layout prose (roles, never component names or CSS — see [`spec/AUTHORING.md`](../../../../spec/AUTHORING.md)), or the registry row.
 - **Behaviour, content, or gating** (spec-owned) — **the spec wins.** A UI that does something the spec forbids is a bug to fix in the _implementation_, not a spec edit. Migration changes UI composition only; it never rewrites behaviour to match a drifted screen.
 
 Either way the end state is the same: implementation and spec back in agreement, so the next `spec-build` reproduces the correct UI instead of re-introducing the drift.

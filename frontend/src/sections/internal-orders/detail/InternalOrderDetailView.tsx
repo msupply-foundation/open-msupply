@@ -143,18 +143,19 @@ type SortKey =
   | 'requested';
 
 // The line filter, shaped like the wire filter the server-paginated lines
-// read will take (itemCodeOrName.like, hideOverMinimum — see the interim note
-// above), so the client-side match swaps to the server filter without a state
-// change.
+// read will take (itemCodeOrName.like, hideOverMinimum, hideZeroRequested —
+// see the interim note above), so the client-side match swaps to the server
+// filter without a state change.
 type LineFilter = {
   itemCodeOrName?: { like: string } | null;
   hideOverMinimum?: boolean | null;
+  hideZeroRequested?: boolean | null;
 };
 
 // The line table's filters (ui-standards § tables → filtering): the item
 // code/name search — the same chip the stocktake detail table keeps to hand —
-// and the hide-stock-over-minimum narrowing. Client-side for now, so no
-// debounce.
+// the hide-stock-over-minimum narrowing, and the optional hide-zero-quantity
+// narrowing (OMS-REG-REPL-04.105). Client-side for now, so no debounce.
 const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
   itemCodeOrName: {
     label: () => t('label.code-or-name'),
@@ -186,6 +187,21 @@ const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
         checked={props.filter().hideOverMinimum === true}
         onChange={checked =>
           props.setPartialFilter({ hideOverMinimum: checked ? true : null })
+        }
+      />
+    ),
+  },
+  hideZeroRequested: {
+    label: () => t('label.hide-zero-quantity'),
+    render: props => (
+      <FilterCheckbox
+        // Ticking hides the lines requesting nothing — a long order started
+        // from a master list is easier to work through. Unticked writes null.
+        label={t('label.hide-zero-quantity')}
+        testId={props.testId}
+        checked={props.filter().hideZeroRequested === true}
+        onChange={checked =>
+          props.setPartialFilter({ hideZeroRequested: checked ? true : null })
         }
       />
     ),
@@ -577,6 +593,8 @@ const InternalOrderDetailView: Component = () => {
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
+    if (lineFilter().hideZeroRequested === true)
+      lines = lines.filter(l => l.requestedQuantity !== 0);
     if (lineFilter().hideOverMinimum === true) {
       const months = monthsThreshold(node);
       // Stock against the threshold months of the line's monthly demand.
@@ -641,8 +659,7 @@ const InternalOrderDetailView: Component = () => {
   const crumbs = (node: InternalOrderInfoFragment) => [
     {
       label: t('internal-order'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/internal-order`),
+      to: `/${params.storeId}/replenishment/internal-order`,
     },
     { label: String(node.requisitionNumber) },
   ];
@@ -1354,7 +1371,8 @@ const InternalOrderDetailView: Component = () => {
                   }
                   emptyMessage={
                     (lineFilter().itemCodeOrName?.like ?? '').trim() ||
-                    lineFilter().hideOverMinimum === true
+                    lineFilter().hideOverMinimum === true ||
+                    lineFilter().hideZeroRequested === true
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }

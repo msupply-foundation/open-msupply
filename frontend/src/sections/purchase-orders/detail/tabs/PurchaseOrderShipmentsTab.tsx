@@ -57,6 +57,9 @@ export const PurchaseOrderShipmentsTab: Component<
   );
   const rows = (): Shipment[] => gated(data) ?? [];
 
+  const shipmentHref = (row: Shipment) =>
+    inboundShipmentHref(props.storeId, row.id, 'INBOUND_SHIPMENT_EXTERNAL');
+
   const columns = (): Column<Shipment, never>[] => [
     {
       c: { key: 'invoiceNumber' },
@@ -104,15 +107,8 @@ export const PurchaseOrderShipmentsTab: Component<
       // the inbound vertical's, so the scope param a shipment's screen needs
       // is put there by the vertical that owns it — a PO-linked shipment is
       // always the EXTERNAL scope.
-      onRowClick={row =>
-        navigate(
-          inboundShipmentHref(
-            props.storeId,
-            row.id,
-            'INBOUND_SHIPMENT_EXTERNAL'
-          )
-        )
-      }
+      onRowClick={row => navigate(shipmentHref(row))}
+      rowHref={shipmentHref}
       emptyMessage={t('error.no-inbound-shipments-linked')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}

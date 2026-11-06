@@ -240,8 +240,9 @@ const RequisitionsList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: Row) =>
-    navigate(`/${params.storeId}/distribution/customer-requisition/${row.id}`);
+  const rowHref = (row: Row) =>
+    `/${params.storeId}/distribution/customer-requisition/${row.id}`;
+  const openRow = (row: Row) => navigate(rowHref(row));
 
   // Inline customer colour-tag edit (spec S1 col 1 / OMS-REG-DIST-05.27):
   // write the colour through the shared header update and refetch on success.
@@ -461,6 +462,7 @@ const RequisitionsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // Restricted rows (OMS-REG-DIST-05.21): Finalised and
         // approval-blocked rows render visually read-only.
         rowState={row => (isRowRestricted(row) ? 'disabled' : undefined)}

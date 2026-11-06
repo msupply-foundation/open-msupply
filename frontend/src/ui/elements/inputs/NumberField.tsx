@@ -104,6 +104,13 @@ export interface NumberFieldProps extends Omit<
    * next figure typed replaces it whole; left empty, the field shows it.
    */
   emptyValue?: number;
+  /** Fired after the field's own focus handling (edit form, select-all). */
+  onFocus?: (event: FocusEvent) => void;
+  /**
+   * Fired after the field's own blur handling — so any commit the blur
+   * makes has already reached onChange (a buffered save flushes here).
+   */
+  onBlur?: (event: FocusEvent) => void;
 }
 
 /*
@@ -186,6 +193,8 @@ export const NumberField = (props: NumberFieldProps) => {
     'noFormatting',
     'defaultValue',
     'emptyValue',
+    'onFocus',
+    'onBlur',
     'width',
     'class',
   ]);
@@ -319,7 +328,7 @@ export const NumberField = (props: NumberFieldProps) => {
     const el = e.currentTarget;
     const raw = el.value;
     const caret = el.selectionStart ?? raw.length;
-    const result = processInput(raw, constraints(), locale());
+    const result = processInput(raw, constraints(), locale(), text());
     if (!result.accepted) {
       // Rejected: the text signal didn't change, so Solid won't touch the
       // DOM — put the previous value (and the caret) back ourselves.
@@ -398,9 +407,10 @@ export const NumberField = (props: NumberFieldProps) => {
     setFocused(true);
     setText(editString(local.value, constraints(), locale()));
     e.currentTarget.select();
+    local.onFocus?.(e);
   };
 
-  const handleBlur = () => {
+  const handleBlur = (e: FocusEvent) => {
     setFocused(false);
     if (dirty) finalize();
     // Untouched: just restore the display form focus stripped (grouping).
@@ -409,6 +419,7 @@ export const NumberField = (props: NumberFieldProps) => {
     // job — left armed, a later external change landing on the old commit or
     // echo (Save & next seeding a line with that quantity) would be skipped.
     lastCommitted = undefined;
+    local.onBlur?.(e);
   };
 
   // No minus key on mobile numeric/decimal keypads — negative-capable fields

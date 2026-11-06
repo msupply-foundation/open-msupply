@@ -4368,6 +4368,11 @@ input InsertRequestRequisitionInput {
 	Defaults to 2 weeks from now
 	"""
 	expectedDeliveryDate: NaiveDate
+	"""
+	Starts the order with a line for every item on this master list, each requesting its
+	suggested quantity. Created in one step: if the lines can't be added, no order is created
+	"""
+	masterListId: String
 }
 
 type InsertRequestRequisitionLineError {
@@ -8185,7 +8190,12 @@ type Queries {
 	insurancePolicy(storeId: String!, id: String!): InsuranceResponse!
 	insuranceProviders(storeId: String!): InsuranceProvidersResponse!
 	shippingMethods(storeId: String!, filter: ShippingMethodFilterInput): ShippingMethodsResponse!
-	requisition(storeId: String!, id: String!): RequisitionResponse!
+	requisition(		storeId: String!,		id: String!,
+		"""
+		Only a requisition of this type resolves; any other is RecordNotFound
+		"""
+		type: RequisitionNodeType
+	): RequisitionResponse!
 	requisitions(storeId: String!, page: PaginationInput, filter: RequisitionFilterInput, sort: [RequisitionSortInput!]): RequisitionsResponse!
 	requisitionByNumber(storeId: String!, requisitionNumber: Int!, type: RequisitionNodeType!): RequisitionResponse!
 	supplierProgramRequisitionSettings(storeId: String!): [SupplierProgramRequisitionSettingNode!]!
@@ -8244,7 +8254,11 @@ type Queries {
 		"""
 		Sort options (only first sort input is evaluated for this endpoint)
 		"""
-		sort: [StockLineSortInput!]
+		sort: [StockLineSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): StockLinesResponse!
 	"""
 	Query for items that have at least one stock_line matching `filter`
@@ -8266,7 +8280,11 @@ type Queries {
 		"""
 		Item-level sort (only first sort input is evaluated)
 		"""
-		sort: [ItemSortInput!]
+		sort: [ItemSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): ItemsResponse!
 	"""
 	Query for "historical_stock_line" entries
@@ -8544,7 +8562,7 @@ type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & Delet
 	description: String!
 }
 
-type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
+type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & QueryReportErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
 	description: String!
 }
 
@@ -9584,6 +9602,12 @@ input StockLineFilterInput {
 	isActive: Boolean
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
+	onHold: Boolean
+	"""
+	true: expiry date before today. false: expiry date today or later, or no expiry date.
+	Today is in the query's `timezoneOffset`, or the server's timezone without one
+	"""
+	isExpired: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
@@ -9653,6 +9677,7 @@ enum StockLineSortFieldInput {
 	sellPricePerPack
 	vvmStatusThenExpiry
 	campaign
+	onHold
 }
 
 input StockLineSortInput {

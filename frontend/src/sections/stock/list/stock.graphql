@@ -59,7 +59,9 @@ fragment StockLineRow on StockLineNode {
 
 # The flat stock-line list. The packs-on-hand gate (total > 0) is the client
 # sending hasPacksInStore: true (spec/stock contract › list). Only the first
-# sort entry is honoured server-side.
+# sort entry is honoured server-side. timezoneOffset is deliberately omitted,
+# as on the dashboard: isExpired's "today" is the server's local date
+# (spec/stock contract › list).
 query stockLines(
   $storeId: String!
   $filter: StockLineFilterInput

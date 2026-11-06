@@ -1,6 +1,6 @@
 # Internal-order DETAIL screen (spec/internal-orders S3).
 #
-# The header read is `requisition(storeId, id)` → RecordNotFound | RequisitionNode.
+# The header read is `requisition(storeId, id, type)` → RecordNotFound | RequisitionNode.
 # ⚠️ Interim divergence: the lines come from the NESTED `lines` connection
 # (client-side sort/filter/pagination), NOT a server-paginated root
 # `requisitionLines` query — that query does not exist in the pinned schema or
@@ -222,8 +222,12 @@ fragment InternalOrderInfo on RequisitionNode {
   }
 }
 
+# `type: REQUEST` filters: the server ANDs the type onto the id + store
+# filter, so the id of a customer requisition (RESPONSE) reads as RecordNotFound — the
+# not-found alert — instead of being handed back and rendered as this kind
+# (#1746).
 query internalOrderDetail($storeId: String!, $id: String!) {
-  requisition(storeId: $storeId, id: $id) {
+  requisition(storeId: $storeId, id: $id, type: REQUEST) {
     __typename
     ... on RequisitionNode {
       ...InternalOrderInfo

@@ -83,6 +83,9 @@ export interface PurchaseOrderLineEditModalProps {
     requestedDeliveryDate: string | null | undefined;
     supplierDiscountPercentage: number | null;
   };
+  /** Whether the user holds the change permission — without it an existing
+   *  line opens with every field closed. */
+  canMutate: boolean;
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;
   /** How many lines the order has — a new line's number is the next. */
@@ -210,6 +213,7 @@ const LineEditContent = (
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
       addMode: !props.initialLine,
+      canMutate: props.canMutate,
     })
   );
   const closed = (open: boolean) => !open || saving();
@@ -437,7 +441,7 @@ const LineEditContent = (
                     when={gates().drafting}
                     fallback={
                       <LabelledValue
-                        label={t('label.requested-packs')}
+                        label={t('label.order-quantity-in-packs')}
                         variant="field"
                         data-testid="packs-value"
                       >
@@ -449,7 +453,7 @@ const LineEditContent = (
                     }
                   >
                     <NumberField
-                      label={t('label.requested-packs')}
+                      label={t('label.order-quantity-in-packs')}
                       min={0}
                       decimalLimit={10}
                       data-testid="packs-input"
@@ -488,7 +492,9 @@ const LineEditContent = (
                     />
                   </Show>
                   <LabelledValue
-                    label={t('label.requested-units')}
+                    label={t('label.order-quantity-in-unit', {
+                      unit: facts()!.unitName || t('label.units'),
+                    })}
                     variant="field"
                     data-testid="requested-units-value"
                   >

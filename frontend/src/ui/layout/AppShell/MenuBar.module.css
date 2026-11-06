@@ -191,6 +191,8 @@
   color: var(--text-body);
   font-size: var(--text-sm);
   text-align: start;
+  /* A destination is a link when it has a URL (#271): no UA underline. */
+  text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
 }
