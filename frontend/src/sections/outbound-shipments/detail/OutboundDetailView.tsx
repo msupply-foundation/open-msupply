@@ -764,8 +764,7 @@ const OutboundDetailView: Component = () => {
   const crumbs = (current: OutboundNode) => [
     {
       label: t('outbound-shipments'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/outbound-shipment`),
+      to: `/${params.storeId}/distribution/outbound-shipment`,
     },
     { label: String(current.invoiceNumber) },
   ];

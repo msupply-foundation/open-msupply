@@ -317,9 +317,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     return [...local, ...central];
   });
 
+  const patientHref = (id: string) =>
+    `/${props.storeId}/dispensary/patients/${id}`;
   const openExisting = (id: string) => {
     props.onClose();
-    navigate(`/${props.storeId}/dispensary/patients/${id}`);
+    navigate(patientHref(id));
   };
 
   const openFetch = (row: MatchRow) => {
@@ -336,6 +338,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   // "click an existing patient below", so the row itself has to be the target.
   const openMatch = (row: MatchRow) =>
     row.kind === 'central' ? openFetch(row) : openExisting(row.id);
+  // Only a local match has an address; a central one opens a modal.
+  const matchHref = (row: MatchRow) =>
+    row.kind === 'central' ? undefined : patientHref(row.id);
 
   // Advance to the details step, seeding its form from the entered search
   // details (spec/patients step ③): the plain form's draft, and the new
@@ -695,6 +700,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   rows={matches()}
                   rowKey={row => `${row.kind}:${row.id}`}
                   onRowClick={openMatch}
+                  rowHref={matchHref}
                   showFullScreen={false}
                   emptyMessage={t('messages.no-matching-patients')}
                 />
