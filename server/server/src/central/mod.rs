@@ -16,7 +16,7 @@ pub fn config_central(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("central")
             // A central learns it is central at the start of its first sync, before integration,
-            // and integrates that sync in batches (#845). Until it has finished, remotes would
+            // and integrates that sync in batches (#845). Until it has finished, remotes could
             // pull and push against partial data, e.g. a v7 remote could get a token from an early
             // `site` row and finish its own initialisation without the rows integrated after it.
             // The last wrap runs first, so not-central (405) is checked before this (503).
