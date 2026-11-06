@@ -12,6 +12,7 @@ import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { NameSearch, type NameSeed } from '@/domain/name';
 import { ShippingMethodSelect } from '@/domain/shippingMethod';
+import { createDebouncedField } from '@/domain/debouncedEdit';
 import {
   CancelPurchaseOrderAction,
   DeletePurchaseOrderAction,
@@ -85,6 +86,22 @@ export const PurchaseOrderSidePanel: Component<
 
   const money = (value: number) => formatCurrency(value, currency());
 
+  // The two discounts save as they are typed. Each shows its own draft while
+  // it is being edited and the order's figure otherwise — so the other one
+  // follows the save, an answer to an earlier keystroke can't land over a
+  // later one, and once left an amount shows what the server made of it
+  // (createDebouncedField).
+  const discountPercentage = createDebouncedField({
+    value: () => props.node.supplierDiscountPercentage ?? undefined,
+    save: (value: number | undefined) =>
+      props.onSaveField({ supplierDiscountPercentage: value ?? 0 }),
+  });
+  const discountAmount = createDebouncedField({
+    value: () => props.node.supplierDiscountAmount,
+    save: (value: number) =>
+      props.onSaveField({ supplierDiscountAmount: value }),
+  });
+
   const status = () => props.node.status as PurchaseOrderStatus;
   const datesDisabled = () => !canRecordPostSendingDates(status());
   const moment = (value: string | null | undefined) =>
@@ -145,11 +162,11 @@ export const PurchaseOrderSidePanel: Component<
             max={100}
             decimalLimit={2}
             emptyValue={0}
-            value={props.node.supplierDiscountPercentage ?? undefined}
+            value={discountPercentage.value()}
             disabled={props.disabled}
-            onChange={value =>
-              void props.onSaveField({ supplierDiscountPercentage: value ?? 0 })
-            }
+            onChange={value => discountPercentage.set(value ?? 0)}
+            onFocus={discountPercentage.onFocus}
+            onBlur={discountPercentage.onBlur}
           />
         </FieldRow>
 
@@ -163,11 +180,11 @@ export const PurchaseOrderSidePanel: Component<
             currency={currency()}
             min={0}
             emptyValue={0}
-            value={props.node.supplierDiscountAmount}
+            value={discountAmount.value()}
             disabled={props.disabled || subtotal() === 0}
-            onChange={value =>
-              void props.onSaveField({ supplierDiscountAmount: value ?? 0 })
-            }
+            onChange={value => discountAmount.set(value ?? 0)}
+            onFocus={discountAmount.onFocus}
+            onBlur={discountAmount.onBlur}
           />
         </FieldRow>
 

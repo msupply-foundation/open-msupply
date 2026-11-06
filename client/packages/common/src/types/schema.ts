@@ -9964,6 +9964,7 @@ export type QueriesItemsByStockLineFilterArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesLedgerArgs = {
@@ -10256,6 +10257,7 @@ export type QueriesStockLinesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StockLineSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesStockRelocationArgs = {
@@ -10799,6 +10801,14 @@ export type RequisitionLineForecastPreviewNode = {
   __typename: 'RequisitionLineForecastPreviewNode';
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  /**
+   * The consumption history and stock evolution for the previewed line, as
+   * `requisitionLineChart` gives them for a saved one — so an item being added charts
+   * before its line exists. The draft's requested quantity isn't part of the preview, so
+   * the stock projection adds nothing at delivery. Null if the chart can't be read: the
+   * chart is context, so failing to read it doesn't fail the preview
+   */
+  chart?: Maybe<ItemChartNode>;
   forecastBreakdown: ForecastBreakdownNode;
   forecastMethod: ForecastMethodNode;
   forecastMethodOptions: Array<ForecastMethodOptionNode>;
@@ -10806,6 +10816,11 @@ export type RequisitionLineForecastPreviewNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** The requisition's target months × the monthly demand */
   targetStock: Scalars['Float']['output'];
+};
+
+export type RequisitionLineForecastPreviewNodeChartArgs = {
+  consumptionOptionsInput?: InputMaybe<ConsumptionOptionsInput>;
+  stockEvolutionOptionsInput?: InputMaybe<StockEvolutionOptionsInput>;
 };
 
 export type RequisitionLineForecastPreviewResponse =
@@ -11555,6 +11570,11 @@ export type StockLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * true: expiry date on or before today. false: expiry date after today, or no expiry date.
+   * Today is in the query's `timezoneOffset`, or the server's timezone without one
+   */
+  isExpired?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStockLine?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
