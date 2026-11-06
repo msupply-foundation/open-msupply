@@ -1831,11 +1831,10 @@ export function DataTable<T, K extends string, G extends string = never>(
                                 // The native click already flipped the DOM box;
                                 // when the controlled `checked` value doesn't
                                 // change (OFF from indeterminate, or a page
-                                // that narrows select-all to nothing —
-                                // AFG Daily Tally's drafts-only list), Solid's
-                                // binding never re-runs to undo it. Put the box
-                                // back to what the selection now holds, not
-                                // what was asked for.
+                                // whose onSelectionChange narrows select-all
+                                // to nothing), Solid's binding never re-runs
+                                // to undo it. Put the box back to what the
+                                // selection now holds, not what was asked for.
                                 e.currentTarget.checked =
                                   table.getIsAllRowsSelected();
                               }}
