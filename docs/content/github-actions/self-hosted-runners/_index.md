@@ -253,13 +253,21 @@ Deployments are plain HTTP on the VPN, which encrypts the hop already. What that
 
 #### The gate in front of every deployment
 
-Deployments are seeded with datasets whose logins are known, and a logged-in user can download a deployment's whole database — so the internet door lets nothing through without a GitHub sign-in. Caddy puts each request to the dashboard's `/auth/check` first (`forward_auth`), and only the dashboard's own `/auth/*` is let through unasked.
+Deployments are seeded with datasets whose logins are known, and a logged-in user can download a deployment's whole database — so the internet door lets nothing through without a GitHub sign-in. Caddy puts each request to the dashboard's `/auth/check` first (`forward_auth`). Let through unasked, on the dashboard's address only: its `/auth/*`, where sign-in starts; `/api/config`, which tells a signed-out page nobody is signed in; and [the Launchpad's public half](#the-launchpads-public-half).
 
 - **Who gets in:** anyone who can see this repository — the dashboard's own rule. Write access is still what the dashboard's buttons need.
 - **How:** signing in sets a second cookie, `oms_gate`, for the whole domain. It holds no token — a deployment runs some branch's code, so nothing sent to one may be worth stealing — and the proxy strips it before a request reaches a deployment. It ends when the dashboard session does: after at most 12 hours, on sign-out, or when the dashboard restarts.
 - **A page load** is sent to sign in and brought back to where it was going. **Anything else** — the app's own requests, a remote site syncing — gets a 401.
 - **No exception for sync:** sync credentials are in the seeded datasets, so they protect nothing. A remote site has to be in the office or on the VPN.
 - **If the dashboard is down**, every deployment is unreachable through the internet door. The open door does not depend on it.
+
+#### The Launchpad's public half
+
+Signed out, anyone can open the Launchpad's Home, Downloads and Schema pages. Every other page asks for a sign-in, through a **Team sign in** button.
+
+- **Served by a different container:** `oms-dashboard-public` is Caddy serving plain files (`.github/deploy/dashboard/public.Caddyfile`). It holds no secret, has no docker socket and doesn't run `web.mjs`. The proxy's `launchpad_public` sends it the public page paths, `/assets/*` and `/public/*`, on both doors and without the gate.
+- **What it can serve is what is mounted into it:** `releases.json` from the `releases` container, and `<DEPLOY_BUNDLES_DIR>/public/schemas`. That directory is a copy of the schema store holding only releases, develop and main — what the public mirror carries — with the PR, branch, deployment, commit and run fields removed. `publish-schema.mjs` rewrites it after every capture, so it fills in at the next one (develop's next deploy, or **Add a release**).
+- **Signed in**, Schema still reads the full store through `web.mjs`, with pull requests and branches.
 
 There is no local HTTPS on the box any more: everything comes through the edge, which serves the real certificate. A box set up before this keeps the `oms-proxy_caddy-data` and `oms-proxy_caddy-config` volumes, which held the old internal CA — `docker volume rm` them, and anyone who trusted its root can remove it.
 
@@ -292,7 +300,7 @@ chmod 600 ~/dashboard/.env
 **3. Run `docker-deploy-services.yaml`**, then open `https://<DEPLOY_DOMAIN>`. Its old address, `https://dashboard.<DEPLOY_DOMAIN>`, redirects there. The same sign-in is the [gate in front of every deployment](#the-gate-in-front-of-every-deployment) on the internet door. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
 
 - **The proxy finds it by name**: the bare domain goes to the container `dashboard` on port 8000, on `oms-edge`.
-- **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
+- **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases`, `oms-dashboard-public` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
 - **Buttons that dispatch a workflow branch** before it merges: add `DISPATCH_REF=<branch>` to `~/dashboard/.env` and rerun the workflow. The buttons dispatch on `develop` otherwise.
 
 ### Plugin bundles
