@@ -212,6 +212,45 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 - **A bad change does not take the box down.** A Caddyfile that does not validate, a `.mjs` that does not parse, or a dashboard page that fails its typecheck or tests fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
 - **Trying a change before it merges:** run the workflow from your branch. That branch's copy stays on the box until the next run from `develop` — at the latest the daily scheduled one, which also puts back anything changed on the box by hand.
 
+#### How a request gets in
+
+As set up today ([VPN-only deployments](#vpn-only-deployments)). The dotted line comes into use once the wildcard DNS record and certificate are added at the edge.
+
+```mermaid
+flowchart LR
+    inet[Internet] --> edge[Edge<br/>TLS]
+    office[Office / VPN] -->|dashboard| edge
+    office -->|deployments| open
+    edge --> gated
+    subgraph caddy[Caddy on the box]
+        gated[":8080<br/>sign-in required"]
+        open[":80<br/>open"]
+    end
+    gated --> dash[Dashboard]
+    gated -->|public pages| pub[Public half<br/>files only]
+    gated -.->|once wildcard DNS exists| deps
+    open --> deps[Deployments]
+    dash <--> gh[(GitHub)]
+```
+
+**The two doors.** Which one a request uses is decided by where it arrives, not by anything in the request: the edge only ever connects to `:8080`, and office/VPN machines reach `:80` directly. On `:8080`, Caddy asks the dashboard's `/auth/check` about every request first (`forward_auth`). The exceptions are the dashboard's own `/auth/*`, where sign-in starts, its `/api/config`, and [the public half](#the-launchpads-public-half), which goes to its own container and never reaches the dashboard. The bare domain must not resolve to the box on office/VPN DNS: `:80` would serve the dashboard over plain http, and sign-in breaks there. The proxy never looks at client addresses. If the edge is ever pointed at `:80`, the internet gets in without a sign-in.
+
+**What the dashboard holds.** Signing in goes through the GitHub App, and is refused unless that GitHub account can see the repository. Read access shows the page; write access adds the buttons. The GitHub token stays in the dashboard's memory and is never sent to the browser or written to disk. The client secret in `~/dashboard/.env` is the only credential on the box. Nothing calls GitHub while nobody has the page open.
+
+**The cookies**, for when a sign-in misbehaves:
+
+| cookie | set for | what it is | lasts |
+|---|---|---|---|
+| `oms_dash_state` | the bare domain | a sign-in in progress, checked when GitHub sends the browser back | 10 minutes, or until the sign-in completes |
+| `oms_dash_session` | the bare domain | the dashboard session, and through it the person's GitHub token | the token's own life (8 hours), never more than 12 |
+| `oms_gate` | the whole domain | opens the `:8080` door for this browser; points at the session and holds no token | exactly as long as the session |
+
+**What happens when the dashboard is down or restarted:**
+
+- **Restarted** (every deploy that changes `.github/deploy/dashboard/`): sessions are only in memory, so everyone is signed out, on the dashboard and through the gated door, and signs in again.
+- **Down:** the gated door answers every request with an error, because there is nothing to answer `/auth/check` - except the public pages, which don't depend on the dashboard. The open door keeps working: deployments on the VPN don't depend on the dashboard.
+- **GitHub down:** nobody can sign in, and the dashboard's GitHub details (commit subjects, "N behind", "deploying now") stop updating. What's running, and the state of each container, still come from `snapshot`.
+
 ### Reverse proxy
 
 | file | |
