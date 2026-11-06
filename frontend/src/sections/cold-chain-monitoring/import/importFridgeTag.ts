@@ -55,18 +55,6 @@ export const importedOf = (outcome: ImportOutcome): ImportedOutcome | null =>
 export const failedOf = (outcome: ImportOutcome): FailedOutcome | null =>
   outcome.kind === 'failed' ? outcome : null;
 
-/**
- * The route writes the file's range as a NAIVE date-time
- * (`2026-09-10T00:00:00`) — the stored moment, in UTC, with no zone (contract
- * ⚠️ the range is naive UTC). A `DateTime` filter rejects it and `new Date()`
- * would read it as local time, so it is marked UTC here, at the wire. A value
- * already carrying a zone passes through.
- */
-export const rangeAsUtc = (datetime: string | null): string | null =>
-  datetime && !/(Z|[+-]\d{2}:?\d{2})$/.test(datetime)
-    ? `${datetime}Z`
-    : datetime;
-
 /** A 200 response → imported or empty, on the two counts alone. */
 export const classifyResponse = (response: ImportResponse): ImportOutcome =>
   response.numberOfLogs === 0 && response.numberOfBreaches === 0
@@ -92,12 +80,7 @@ export const importFridgeTag = async (
     return { kind: 'failed', message: text || `HTTP ${response.status}` };
   }
   try {
-    const body = (await response.json()) as ImportResponse;
-    return classifyResponse({
-      ...body,
-      startDatetime: rangeAsUtc(body.startDatetime),
-      endDatetime: rangeAsUtc(body.endDatetime),
-    });
+    return classifyResponse((await response.json()) as ImportResponse);
   } catch (e) {
     return {
       kind: 'failed',
