@@ -478,8 +478,7 @@ const CustomerReturnDetailView: Component = () => {
   const crumbs = (node: CustomerReturnInfoFragment) => [
     {
       label: t('customer-returns'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/customer-return`),
+      to: `/${params.storeId}/distribution/customer-return`,
     },
     { label: String(node.invoiceNumber) },
   ];

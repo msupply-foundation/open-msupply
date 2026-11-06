@@ -405,8 +405,7 @@ const SupplierReturnDetailView: Component = () => {
   const crumbs = (node: SupplierReturnInfoFragment) => [
     {
       label: t('supplier-return'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/supplier-return`),
+      to: `/${params.storeId}/replenishment/supplier-return`,
     },
     { label: String(node.invoiceNumber) },
   ];

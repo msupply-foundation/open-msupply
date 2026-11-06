@@ -530,8 +530,14 @@ const InboundShipmentDetailView: Component = () => {
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
     void refetchLines();
   };
-  const onNodeSaved = (saved: InboundInfoFragment) =>
+  // The side panel's modal saves — currency (cascades the rate to line costs)
+  // and default donor (may apply to lines) — change the lines too, so refetch
+  // them as saveField does; splicing the node alone left the Financial tab on
+  // the old rate until a reload.
+  const onNodeSaved = (saved: InboundInfoFragment) => {
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
+    void refetchLines();
+  };
 
   const onDeleted = () =>
     navigate(`/${params.storeId}/replenishment/inbound-shipment`, {
@@ -671,8 +677,7 @@ const InboundShipmentDetailView: Component = () => {
   const crumbs = (node: InboundInfoFragment) => [
     {
       label: t('inbound-shipment'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/inbound-shipment`),
+      to: `/${params.storeId}/replenishment/inbound-shipment`,
     },
     {
       label: String(node.invoiceNumber),

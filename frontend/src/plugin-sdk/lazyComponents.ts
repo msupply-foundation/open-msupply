@@ -131,7 +131,7 @@ export const FilterSelect = LazyFilterSelect as unknown as <V extends string>(
 ) => JSX.Element;
 
 /** A chip's calendar-day range control (pick-only corvu range; `type: 'date'`
- * passes plain ISO days through as inclusive bounds). */
+ * passes calendar dates through as inclusive bounds). */
 export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
   import('../ui/elements/selectors/FilterBar').then(m => ({
     default: m.FilterDateRange,

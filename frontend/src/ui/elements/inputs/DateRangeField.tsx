@@ -5,27 +5,29 @@ import type { FocusTarget } from '../../utils/createFocusTarget';
 import { t } from '../../../intl';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
+import { defaultDateFormat, formatCalendarDate } from './dateTimeConvert';
 import {
-  dateToIsoDate,
-  defaultDateFormat,
-  formatIsoDate,
-  isoDateToDate,
-} from './dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToDate,
+} from '../../../intl/calendarDate';
 import styles from './DateTimeFields.module.css';
 
-/** A date range as ISO calendar dates (`YYYY-MM-DD`), either side nullable. */
-export interface IsoDateRange {
+/** A range of calendar dates (`YYYY-MM-DD`), either side nullable. */
+export interface CalendarDateRange {
   start: string | null;
   end: string | null;
 }
+
+/** @deprecated Renamed to {@link CalendarDateRange}; kept for plugins. */
+export type IsoDateRange = CalendarDateRange;
 
 export interface DateRangeFieldProps {
   label: string;
   /** Max-width cap — opt-in; defaults to `full` (see FieldShell). */
   width?: 'compact' | 'short' | 'long' | 'full';
-  value?: IsoDateRange;
+  value?: CalendarDateRange;
   /** Fired as the range is picked (start first, then end). */
-  onChange?: (value: IsoDateRange) => void;
+  onChange?: (value: CalendarDateRange) => void;
   /** Earliest selectable date, ISO `YYYY-MM-DD`. Earlier dates unselectable. */
   min?: string;
   /** Latest selectable date, ISO `YYYY-MM-DD`. Later dates unselectable. */
@@ -56,7 +58,7 @@ export interface DateRangeFieldProps {
   focusTarget?: FocusTarget;
 }
 
-const EMPTY: IsoDateRange = { start: null, end: null };
+const EMPTY: CalendarDateRange = { start: null, end: null };
 
 /*
  * One side of the range in the picker's footer: its label, the picked date (or
@@ -104,7 +106,7 @@ const RangeSide = (props: {
  * Date-range input (spec: ui-standards/inputs.md § Dates & times). The same
  * corvu calendar as DateField, in `range` mode — pick the start, then the end;
  * the popover closes once both are set. Value is a `{ start, end }` pair of
- * plain ISO `YYYY-MM-DD` dates (no timezone), passing straight through.
+ * calendar dates, `YYYY-MM-DD` (no timezone), passing straight through.
  *
  * The calendar can only ever fill start-then-end, so a ONE-SIDED range — "on or
  * before 12 Mar", which every layer above and below this field already carries
@@ -120,7 +122,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
   const range = () => props.value ?? EMPTY;
 
   const fmt = (iso: string | null) =>
-    formatIsoDate(iso, props.format ?? defaultDateFormat()) || null;
+    formatCalendarDate(iso, props.format ?? defaultDateFormat()) || null;
 
   const display = () => {
     const { start, end } = range();
@@ -177,15 +179,15 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
                 <DatePickerPanel
                   mode="range"
                   value={{
-                    from: isoDateToDate(range().start),
-                    to: isoDateToDate(range().end),
+                    from: calendarDateToDate(range().start),
+                    to: calendarDateToDate(range().end),
                   }}
-                  min={isoDateToDate(props.min) ?? undefined}
-                  max={isoDateToDate(props.max) ?? undefined}
+                  min={calendarDateToDate(props.min) ?? undefined}
+                  max={calendarDateToDate(props.max) ?? undefined}
                   onSelect={r => {
                     props.onChange?.({
-                      start: r.from ? dateToIsoDate(r.from) : null,
-                      end: r.to ? dateToIsoDate(r.to) : null,
+                      start: r.from ? dateToCalendarDate(r.from) : null,
+                      end: r.to ? dateToCalendarDate(r.to) : null,
                     });
                     if (r.from && r.to) close();
                   }}

@@ -18,10 +18,8 @@ import {
   CustomFieldsToolbar,
   EMPTY_FIELD_VALUE,
 } from '../../../domain/customFields';
-import {
-  localTodayIso,
-  utcToLocalParts,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import {
   prescriptionRequestDateInstant,
   type UpdateInput,
@@ -73,7 +71,7 @@ export const PrescriptionRequestToolbar: Component<
   });
 
   const shownDay = () =>
-    utcToLocalParts(props.node.prescriptionDatetime)?.date ?? null;
+    instantToLocalParts(props.node.prescriptionDatetime)?.date ?? null;
 
   // The active diagnoses the picker offers (the same consumed read
   // dispensing's side panel uses). Read non-suspending: this toolbar lives
@@ -146,7 +144,7 @@ export const PrescriptionRequestToolbar: Component<
           size="small"
           testId="date-field"
           value={shownDay()}
-          max={localTodayIso()}
+          max={todayCalendarDate()}
           disabled={props.disabled}
           onChange={day => {
             if (!day || day === shownDay()) return;

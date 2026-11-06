@@ -13,18 +13,20 @@ import type { FocusTarget } from '../../utils/createFocusTarget';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  dateToIsoDate,
   defaultDateFormat,
-  formatIsoDate,
+  formatCalendarDate,
   formatPlaceholder,
   hhmmToTime,
-  isoDateToDate,
-  localPartsToUtc,
+  localPartsToInstant,
   parseDateInput,
   timeToHhmm,
-  utcToLocalParts,
+  instantToLocalParts,
   type TimeValue,
 } from './dateTimeConvert';
+import {
+  dateToCalendarDate,
+  calendarDateToDate,
+} from '../../../intl/calendarDate';
 import styles from './DateTimeFields.module.css';
 
 export interface DateTimeFieldProps {
@@ -90,9 +92,9 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   const dateId = () => props.id ?? autoId; // label focuses the date input
   const fmt = () => props.format ?? defaultDateFormat();
 
-  const parts = () => utcToLocalParts(props.value);
+  const parts = () => instantToLocalParts(props.value);
   const [dateText, setDateText] = createSignal(
-    formatIsoDate(parts()?.date, fmt())
+    formatCalendarDate(parts()?.date, fmt())
   );
   const [time, setTime] = createSignal<TimeValue | undefined>(
     hhmmToTime(parts()?.time)
@@ -101,15 +103,15 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   // language — month names) changes.
   createEffect(
     on([() => props.value, locale], () => {
-      const p = utcToLocalParts(props.value);
-      setDateText(formatIsoDate(p?.date, fmt()));
+      const p = instantToLocalParts(props.value);
+      setDateText(formatCalendarDate(p?.date, fmt()));
       setTime(hhmmToTime(p?.time));
     })
   );
 
   const emit = (dateIso: string | null, t: TimeValue | undefined) =>
     props.onChange?.(
-      dateIso ? localPartsToUtc(dateIso, timeToHhmm(t) ?? '') : null
+      dateIso ? localPartsToInstant(dateIso, timeToHhmm(t) ?? '') : null
     );
 
   // Apply a committed date: write the local date buffer directly AND emit the
@@ -118,21 +120,21 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   // already updates its own buffer) — keeps date and time symmetric, no extra
   // state.
   const applyDate = (dateIso: string | null) => {
-    setDateText(formatIsoDate(dateIso, fmt()));
+    setDateText(formatCalendarDate(dateIso, fmt()));
     emit(dateIso, time());
   };
 
   const commitDate = () => {
     const parsed = parseDateInput(dateText(), fmt());
     if (parsed === undefined) {
-      setDateText(formatIsoDate(parts()?.date, fmt())); // invalid → revert
+      setDateText(formatCalendarDate(parts()?.date, fmt())); // invalid → revert
       return;
     }
     applyDate(parsed);
   };
 
   const boundDate = (utc: string | undefined) =>
-    isoDateToDate(utcToLocalParts(utc)?.date) ?? undefined;
+    calendarDateToDate(instantToLocalParts(utc)?.date) ?? undefined;
 
   return (
     <FieldShell
@@ -179,11 +181,11 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           >
             {close => (
               <DatePickerPanel
-                value={isoDateToDate(parts()?.date)}
+                value={calendarDateToDate(parts()?.date)}
                 min={boundDate(props.min)}
                 max={boundDate(props.max)}
                 onSelect={d => {
-                  applyDate(d ? dateToIsoDate(d) : null);
+                  applyDate(d ? dateToCalendarDate(d) : null);
                   close();
                 }}
               />

@@ -367,7 +367,7 @@ const ReportDetailView: Component = () => {
   const crumbs = () => [
     {
       label: t('reports'),
-      onClick: backToList,
+      to: `/${params.storeId}/reports`,
     },
     { label: displayName() },
   ];

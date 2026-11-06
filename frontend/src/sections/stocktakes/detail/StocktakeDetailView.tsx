@@ -668,7 +668,7 @@ const StocktakeDetailView: Component = () => {
   const crumbs = (node: StocktakeInfoFragment) => [
     {
       label: t('stocktakes'),
-      onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
+      to: `/${params.storeId}/inventory/stocktakes`,
     },
     { label: String(node.stocktakeNumber) },
   ];
@@ -776,8 +776,8 @@ const StocktakeDetailView: Component = () => {
       cardGroup: 'more',
       ...getCellDefinition('packSize'),
     },
-    // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
-    // vaccine rows only.
+    // Doses per unit (gated by manageVaccinesInDoses) — the item's doses per
+    // unit, whatever the pack size (see lines/doses.ts); vaccine rows only.
     ...(prefs().manageVaccinesInDoses
       ? [
           {

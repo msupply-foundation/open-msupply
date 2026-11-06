@@ -41,8 +41,12 @@ export interface PurchaseOrderSidePanelProps {
   /** How many lines the order has — with none, it has no totals to show. */
   lineCount: number;
   /** True once the order is Sent, Finalised or Cancelled (the comment and
-   *  the panel's three dates follow their own gates). */
+   *  the panel's three dates follow their own gates). Also true for a user
+   *  without the change permission. */
   disabled: boolean;
+  /** The user lacks the change permission: every field closes, the comment
+   *  and the three dates included. */
+  readOnly: boolean;
   edit: PurchaseOrderFieldEdit;
   /** Resolves with the verdict, so a refusal can be reported at the field. */
   onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
@@ -103,7 +107,8 @@ export const PurchaseOrderSidePanel: Component<
   });
 
   const status = () => props.node.status as PurchaseOrderStatus;
-  const datesDisabled = () => !canRecordPostSendingDates(status());
+  const datesDisabled = () =>
+    props.readOnly || !canRecordPostSendingDates(status());
   const moment = (value: string | null | undefined) =>
     value ? localisedDate(value) : '-';
   const sentDay = () => sentWireToDay(props.node.sentDatetime);
@@ -244,6 +249,7 @@ export const PurchaseOrderSidePanel: Component<
             label={t('label.comment')}
             hideLabel
             data-testid="comment-field"
+            disabled={props.readOnly}
             value={props.edit.state.comment}
             onInput={e => props.edit.setField('comment', e.currentTarget.value)}
             onBlur={() => props.edit.flush()}
@@ -283,6 +289,7 @@ export const PurchaseOrderSidePanel: Component<
               width="compact"
               testId="po-sent-field"
               value={sentDay()}
+              disabled={props.readOnly}
               error={saveErrors.sentDatetime}
               onChange={value =>
                 void save('sentDatetime', {
