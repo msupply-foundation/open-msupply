@@ -1,7 +1,6 @@
 import { For, Match, Show, Switch, type JSX } from 'solid-js';
-import { measureWord, t } from '../../intl';
+import { t } from '../../intl';
 import { formatNumber } from '../../intl/formatNumber';
-import { roundedText } from '../../intl/numberDisplay';
 import {
   Accordion,
   AccordionItem,
@@ -13,18 +12,17 @@ import { Select } from '../../ui/elements/selectors/Select';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import {
   FORECAST_METHODS,
-  ancillaryRatio,
-  annualTargetFormulaKey,
   courseTitle,
   forecastMethodLabel,
+  isOperator,
   populationSteps,
   principalItemLabel,
-  principalWastageDeduction,
-  supplyWastageAddition,
+  principalSteps,
   targetStockCaption,
   unavailableReasonMessage,
-  type AncillaryRatioPrincipal,
   type ForecastMethod,
+  type CalculationStep,
+  type Term,
   type ForecastMethodOption,
 } from './forecast';
 import type {
@@ -64,6 +62,12 @@ export interface ForecastBlockProps {
    */
   formatQuantity: (units: number) => string;
   /**
+   * The line's item's unit name — the measure of a breakdown's monthly demand
+   * and an ancillary ratio's own side, which stay in units whatever the entry
+   * mode. Omitted → the generic "units".
+   */
+  unitName?: string | null;
+  /**
    * The method select's options. Omitted → the read-only form: the method as
    * text, no select.
    */
@@ -84,20 +88,51 @@ export interface ForecastBlockProps {
   testId?: string;
 }
 
-// A single arithmetic step: its formula (tinted), the line's figures
-// substituted (muted), and the emphasised result.
-const CalculationStep = (props: {
-  title: string;
-  formula: string;
-  substitution: string;
-  result: string;
+// One term of a step: the value under the name of what it is. A reference to
+// an earlier step's result keeps that step's name, bold like its heading, so
+// the chain from one step to the next is visible.
+const TermCell = (props: { term: Term }): JSX.Element => (
+  <span class={styles.term} data-ref={props.term.ref ? '' : undefined}>
+    <span class={styles.termLabel}>{props.term.label}</span>
+    <span class={styles.termValue}>{props.term.value}</span>
+  </span>
+);
+
+// A breakdown's steps (forecast.ts › CalculationStep). Each opens on its
+// heading — the quantity it works out, and its result — with the working
+// beneath: "=", then its terms and operators, wrapping as the width needs.
+const CalculationSteps = (props: {
+  steps: CalculationStep[];
+  testId?: string;
 }): JSX.Element => (
-  <div class={styles.step}>
-    <div class={styles.stepTitle}>{props.title}</div>
-    <div class={styles.formula}>{props.formula}</div>
-    <div class={styles.substitution}>{props.substitution}</div>
-    <div class={styles.result}>{props.result}</div>
-  </div>
+  // role="list": the reset list style otherwise drops the list semantics in
+  // Safari / VoiceOver.
+  <ol class={styles.calculation} role="list" data-testid={props.testId}>
+    <For each={props.steps}>
+      {step => (
+        <li class={styles.step}>
+          <div class={styles.stepHeading}>
+            <span>{step.name}</span>
+            <span class={styles.stepResult}>{step.result}</span>
+          </div>
+          <Show when={step.terms.length > 0}>
+            <div class={styles.equation}>
+              <span class={styles.operator}>=</span>
+              <For each={step.terms}>
+                {term =>
+                  isOperator(term) ? (
+                    <span class={styles.operator}>{term}</span>
+                  ) : (
+                    <TermCell term={term} />
+                  )
+                }
+              </For>
+            </div>
+          </Show>
+        </li>
+      )}
+    </For>
+  </ol>
 );
 
 // A read-only figure row: label, right-aligned value, optional muted caption.
@@ -147,26 +182,7 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
   const quantity = (units: number) => props.formatQuantity(units);
   const monthlyDemand = () => quantity(props.line.forecastMonthlyConsumption);
 
-  // A quantity of the principal, in its own units: the entry mode's packs and
-  // doses are the ancillary item's, not the principal's.
-  const principalUnits = (units: number, principal: AncillaryRatioPrincipal) =>
-    `${roundedText(units)} ${measureWord('units', principal.item?.unitName ?? null, units)}`;
-  // The principal's monthly demand — less its wastage where the link excludes
-  // that, so the step to the contribution reads true — × the ratio, then the
-  // ancillary's own wastage on top.
-  const principalCaption = (principal: AncillaryRatioPrincipal) => {
-    const demand = principalUnits(
-      principal.principalMonthlyConsumption,
-      principal
-    );
-    const deduction = principalWastageDeduction(principal);
-    const usable = deduction
-      ? `${demand} ${deduction} = ${principalUnits(principal.principalUsableConsumption, principal)}`
-      : demand;
-    const addition = supplyWastageAddition(principal);
-    const ratio = `${usable} × ${ancillaryRatio(principal)}`;
-    return addition ? `${ratio} ${addition}` : ratio;
-  };
+  const unitName = () => props.unitName ?? null;
 
   return (
     <FormSection
@@ -220,35 +236,28 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
                 )}
               </Show>
               {/* Independent sections — each course opens on its own, all
-                collapsed to start. */}
-              <Accordion multiple variant="card">
+                open to start: the steps are the forecast's working. */}
+              <Accordion
+                multiple
+                variant="card"
+                defaultValue={population().courses.map(
+                  (_, index) => `course-${index}`
+                )}
+              >
                 <For each={population().courses}>
-                  {(course, index) => {
-                    // Re-derived on read so the figures re-format if the
-                    // locale changes while the editor is open.
-                    const steps = () => populationSteps(course);
-                    return (
-                      <AccordionItem value={`course-${index()}`}>
-                        <AccordionTrigger>
-                          {courseTitle(course)}
-                        </AccordionTrigger>
-                        <AccordionContent class={styles.steps}>
-                          <CalculationStep
-                            title={t('label.annual-target-doses-calculation')}
-                            formula={t(annualTargetFormulaKey(course))}
-                            substitution={steps()[0].substitution}
-                            result={steps()[0].result}
-                          />
-                          <CalculationStep
-                            title={t('label.monthly-units-calculation')}
-                            formula={t('description.monthly-units-calculation')}
-                            substitution={steps()[1].substitution}
-                            result={steps()[1].result}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  }}
+                  {(course, index) => (
+                    <AccordionItem value={`course-${index()}`}>
+                      <AccordionTrigger>{courseTitle(course)}</AccordionTrigger>
+                      <AccordionContent>
+                        {/* Re-derived on read so the figures re-format if
+                          the locale changes while the editor is open. */}
+                        <CalculationSteps
+                          steps={populationSteps(course, unitName())}
+                          testId="forecast-course"
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
                 </For>
               </Accordion>
             </>
@@ -261,16 +270,29 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
           }
         >
           {ancillary => (
-            <For each={ancillary().principals}>
-              {principal => (
-                <FigureRow
-                  label={principalItemLabel(principal)}
-                  value={quantity(principal.monthlyConsumption)}
-                  caption={principalCaption(principal)}
-                  testId="forecast-principal"
-                />
+            <Accordion
+              multiple
+              variant="card"
+              defaultValue={ancillary().principals.map(
+                (_, index) => `principal-${index}`
               )}
-            </For>
+            >
+              <For each={ancillary().principals}>
+                {(principal, index) => (
+                  <AccordionItem value={`principal-${index()}`}>
+                    <AccordionTrigger>
+                      {principalItemLabel(principal)}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <CalculationSteps
+                        steps={principalSteps(principal, unitName())}
+                        testId="forecast-principal"
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </For>
+            </Accordion>
           )}
         </Match>
       </Switch>

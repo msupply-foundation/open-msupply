@@ -396,6 +396,7 @@ export const RequisitionLineStats: Component<{
                   // the line's requisition). Undefined while the stats load:
                   // the caption waits rather than reading "× 0 months".
                   targetMonths={props.stats?.requestStoreStats.maxMonthsOfStock}
+                  unitName={props.unitName}
                   formatQuantity={units => {
                     const figure = unitsToMode(
                       units,

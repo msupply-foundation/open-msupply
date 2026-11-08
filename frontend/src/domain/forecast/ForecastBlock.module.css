@@ -24,39 +24,77 @@
   color: var(--text-secondary);
 }
 
-/* Each course's two steps, stacked with a comfortable gap. */
-.steps {
+/* A breakdown's steps, ruled apart. */
+.calculation {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .step {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
+  padding-block: var(--space-3);
 }
 
-.stepTitle {
+.step + .step {
+  border-block-start: 1px solid var(--color-divider);
+}
+
+/* The quantity the step works out, and its result at the row's end. */
+.stepHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
   font-weight: var(--weight-bold);
-  color: var(--text-body);
+  font-variant-numeric: tabular-nums;
 }
 
-/* The formula, on a tinted line. */
-.formula {
-  background: var(--bg-group-light);
-  border-radius: var(--radius-md);
-  padding: var(--space-2);
-  color: var(--text-body);
+.stepResult {
+  white-space: nowrap;
 }
 
-/* The line's figures substituted in — muted. */
-.substitution {
+/* The working: "=", then each term — its value centred under its name — with
+   the operators on the values' line, wrapping as the width needs. */
+.equation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2) var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.term {
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.termLabel {
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-/* The emphasised result. */
-.result {
+/* Wraps only when a value (a long ratio) is wider than the line. */
+.termValue {
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+.operator {
+  color: var(--text-secondary);
+}
+
+/* An earlier step's result used as a term: bold, like the step heading that
+   names it, so the chain between steps shows. */
+.term[data-ref] .termLabel {
   font-weight: var(--weight-bold);
-  color: var(--success-main);
+  color: var(--text-body);
 }

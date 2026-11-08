@@ -925,6 +925,7 @@ const LineEditContent = (
               targetMonths={props.maxMonths}
               targetIntervalAndBuffer={props.targetIntervalAndBuffer}
               formatQuantity={forecastQuantity}
+              unitName={current()?.unitName}
               options={editorLine().forecastMethodOptions}
               ownMethod={editorLine().ownForecastMethod}
               disabled={disabled() || saving() || previewing()}
