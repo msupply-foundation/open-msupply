@@ -1266,9 +1266,10 @@ mod now_test {
             render(Some(json!({ "timezone": "Asia/Kabul" }))),
             "+0430|+0430"
         );
+        // A zone without daylight saving, as this reads the real clock
         assert_eq!(
-            render(Some(json!({ "timezone": "America/Los_Angeles" }))),
-            "-0800|+0430"
+            render(Some(json!({ "timezone": "Pacific/Pago_Pago" }))),
+            "-1100|+0430"
         );
 
         // Without a timezone, or with an unknown one, now() is the server's as before
