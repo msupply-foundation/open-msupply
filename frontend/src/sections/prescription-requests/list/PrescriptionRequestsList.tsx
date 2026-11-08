@@ -191,8 +191,9 @@ const PrescriptionRequestsList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: RequestRow) =>
-    navigate(`/${params.storeId}/dispensary/prescription-request/${row.id}`);
+  const rowHref = (row: RequestRow) =>
+    `/${params.storeId}/dispensary/prescription-request/${row.id}`;
+  const openRow = (row: RequestRow) => navigate(rowHref(row));
 
   const columns = (): Column<RequestRow, SortKey>[] => [
     // The request number leads the table: it is how a paper script and a
@@ -319,6 +320,7 @@ const PrescriptionRequestsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         filters={
           <FilterBar
             filters={filterFields()}

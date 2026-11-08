@@ -3,7 +3,7 @@
 // mirror the server's rules for the UI's previews / pre-validation; the server
 // remains the guard for every MUST.
 
-import { localDayToUtc } from '../../ui/elements/inputs/dateTimeConvert';
+import { calendarDateToInstant } from '../../intl/calendarDate';
 
 // Units = packs × pack size; value = packs × cost price (spec/stock rules — a
 // quantity in units is packs × pack size, never a stored field).
@@ -85,5 +85,5 @@ export const backdatedDatetime = (
   if (!date || date === today) return undefined;
   // Local day → UTC via the shared conversion (#456): reduction at the day's
   // end, addition at its start (the input is DateTime<Utc>, so `Z` is right).
-  return localDayToUtc(date, { endOfDay: direction === 'REDUCTION' });
+  return calendarDateToInstant(date, { endOfDay: direction === 'REDUCTION' });
 };

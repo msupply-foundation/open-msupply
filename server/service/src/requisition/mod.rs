@@ -76,8 +76,9 @@ pub trait RequisitionServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id_option: Option<&str>,
         id: &str,
+        r#type: Option<RequisitionType>,
     ) -> Result<Option<Requisition>, RepositoryError> {
-        get_requisition(ctx, store_id_option, id)
+        get_requisition(ctx, store_id_option, id, r#type)
     }
 
     fn get_requisition_by_number(

@@ -8,6 +8,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Button } from '@/ui/elements/buttons/Button';
+import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import {
@@ -208,8 +209,9 @@ const PurchaseOrdersList: Component = () => {
     clearSelection();
   };
 
-  const openRow = (row: Row) =>
-    navigate(`/${params.storeId}/replenishment/purchase-order/${row.id}`);
+  const rowHref = (row: Row) =>
+    `/${params.storeId}/replenishment/purchase-order/${row.id}`;
+  const openRow = (row: Row) => navigate(rowHref(row));
 
   // Columns and crumbs are accessors (not plain arrays): their text comes from
   // t(), which must be read in a reactive scope to re-translate on a language
@@ -337,17 +339,13 @@ const PurchaseOrdersList: Component = () => {
             {/* The outstanding-lines list (S5) is the vertical's second
                 screen — a separate slice; this is the way in the spec gives
                 it. */}
-            <Button
+            <LinkButton
               icon={<MenuLinesIcon />}
               data-testid="outstanding-lines-button"
-              onClick={() =>
-                navigate(
-                  `/${params.storeId}/replenishment/purchase-order/outstanding`
-                )
-              }
+              href={`/${params.storeId}/replenishment/purchase-order/outstanding`}
             >
               {t('button.outstanding-lines')}
-            </Button>
+            </LinkButton>
             {/* Export the orders list (every page of the current filter, in
                 the current order) as CSV or Excel. */}
             <ExportPurchaseOrdersAction
@@ -376,6 +374,7 @@ const PurchaseOrdersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // A Sent or Finalised order is closed to change, which the row says
         // outright (OMS-FUN-PO-15.10) — a standing property of the record, so
         // the list mirrors it.

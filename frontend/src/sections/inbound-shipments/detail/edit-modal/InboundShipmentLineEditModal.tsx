@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t, tPlural, type LocaleKey } from '../../../../intl';
-import { roundedText } from '../../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
@@ -27,7 +27,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../../intl/calendarDate';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
@@ -1422,6 +1422,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // controlLine: plain text, so in the top-aligned table it would ride the
       // top of its cell rather than sit on the inputs' line.
       ...getNumberCell({ hideOnCard: true, controlLine: true }),
+      // Read from the row, not info.getValue(): TanStack caches each row's
+      // accessor value until the row model is rebuilt, and packs / pack size
+      // are edited in place on the same draft row — a cached value would keep
+      // the figure from when the row was first drawn.
+      cell: info => (
+        <Num
+          value={displayNumber(
+            info.row.original.numberOfPacks * info.row.original.packSize
+          )}
+        />
+      ),
     },
     {
       c: { key: 'expiryDate' },
@@ -1788,7 +1799,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             disabled={props.readOnly}
             size="small"
             value={b.manufactureDate}
-            max={localTodayIso()}
+            max={todayCalendarDate()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );

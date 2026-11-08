@@ -39,6 +39,7 @@ export type AddInternalOrderLineVariables = {
     maxMonthsOfStock?: number | null;
     minMonthsOfStock: number;
     expectedDeliveryDate?: string | null;
+    masterListId?: string | null;
   }> | null;
     insertRequestRequisitionLines?: Array<{
     id: string;
