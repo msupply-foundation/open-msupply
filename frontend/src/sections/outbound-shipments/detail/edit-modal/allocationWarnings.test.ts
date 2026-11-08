@@ -24,7 +24,7 @@ describe('issueWarningMessages (OMS-REG-SMV-11.7/.11/.13)', () => {
     expect(issueWarningMessages(derived, 0, units, short)).toEqual([
       { key: 'messages.stock-expired', reason: 'expired' },
       { key: 'messages.stock-unusable-vvm', reason: 'unusable-vvm' },
-      { key: 'messages.stock-other-campaign', reason: 'other-campaign' },
+      { key: 'messages.stock-other-activity', reason: 'other-campaign' },
     ]);
   });
 

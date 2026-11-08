@@ -716,7 +716,7 @@
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
-    "label.not-for-this-campaign": {
+    "label.not-for-this-activity": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
@@ -1716,7 +1716,7 @@
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
-    "messages.stock-other-campaign": {
+    "messages.stock-other-activity": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
@@ -1891,6 +1891,26 @@
     "tooltip.set-from-manufacturer-label": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
+    }
+  },
+  "prs": {
+    "label.not-for-this-activity": {
+      "date": "2026-11-09",
+      "ref": "issue-1948"
+    },
+    "messages.stock-other-activity": {
+      "date": "2026-11-09",
+      "ref": "issue-1948"
+    }
+  },
+  "ps": {
+    "label.not-for-this-activity": {
+      "date": "2026-11-09",
+      "ref": "issue-1948"
+    },
+    "messages.stock-other-activity": {
+      "date": "2026-11-09",
+      "ref": "issue-1948"
     }
   }
 }

@@ -27,7 +27,7 @@ import {
 const SKIP_MESSAGE = {
   expired: 'messages.stock-expired',
   'unusable-vvm': 'messages.stock-unusable-vvm',
-  'other-campaign': 'messages.stock-other-campaign',
+  'other-campaign': 'messages.stock-other-activity',
 } as const;
 type ReportedSkip = keyof typeof SKIP_MESSAGE;
 

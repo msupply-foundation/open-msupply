@@ -1777,11 +1777,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       // Other-campaign flag, CARD-ONLY — the companion to the table's "Not for
-      // this campaign" badge beside the batch code, which cards hide.
+      // this activity" badge beside the batch code, which cards hide.
       c: { accessor: lineOtherCampaign, id: 'otherCampaign' },
-      header: () => t('label.not-for-this-campaign'),
+      header: () => t('label.not-for-this-activity'),
       ...getFlagCell(
-        t('label.not-for-this-campaign'),
+        t('label.not-for-this-activity'),
         {
           headerPosition: 'badge',
           hideOnTable: true,
