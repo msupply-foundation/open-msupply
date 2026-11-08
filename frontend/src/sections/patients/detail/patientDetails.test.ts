@@ -50,6 +50,7 @@ import {
   type PatientNode,
 } from './patientDetails';
 import { Patient, PatientWithDocument } from './patient.generated';
+import { UpdatePatient } from './updatePatient.generated';
 
 const patientRegistry = {
   __typename: 'DocumentRegistryNode' as const,
@@ -271,6 +272,47 @@ describe('createPatientDetails', () => {
       expect(details.node()).toBe(record);
       expect(patientReads()).toEqual([Patient, PatientWithDocument]);
       expect(details.documentEditor.form.status()).toBe('idle');
+    });
+  });
+
+  // A save re-reads the patient and re-seeds the draft from what the server
+  // now holds (OMS-REG-DIS-02.41). The re-read keeps the record from before
+  // the save showing while it runs; the draft must not be re-seeded from that
+  // one, which would leave it holding the pre-save values against the saved
+  // record: dirty, and asking to discard on leave (#2025).
+  describe('after a save on the plain path', () => {
+    it('re-seeds from the record the save wrote, leaving the form pristine', async () => {
+      const details = await open(undefined);
+      const saved: PatientNode = { ...record, address1: 'after' };
+      let answerReread!: () => void;
+      graphqlFetch.mockImplementation(async (query: unknown) => {
+        if (query === UpdatePatient) {
+          return {
+            kind: 'success',
+            data: { updatePatient: { id: record.id } },
+          };
+        }
+        if (query === Patient) {
+          await new Promise<void>(resolve => (answerReread = resolve));
+          return { kind: 'success', data: { patient: saved } };
+        }
+        return { kind: 'transportError' };
+      });
+
+      const { editor } = details;
+      editor.setField('address1', 'after');
+      expect(editor.isDirty()).toBe(true);
+
+      await editor.doSave(() => details.refetch());
+      // The re-read is under way: the record from before the save still shows.
+      await vi.waitFor(() => expect(answerReread).toBeDefined());
+      expect(details.node()).toBe(record);
+      expect(editor.edit.address1).toBe('after');
+
+      answerReread();
+      await vi.waitFor(() => expect(details.node()).toBe(saved));
+      expect(editor.edit.address1).toBe('after');
+      expect(editor.isDirty()).toBe(false);
     });
   });
 });
