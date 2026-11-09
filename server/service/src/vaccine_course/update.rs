@@ -1,13 +1,17 @@
 use super::{
     query::get_vaccine_course,
-    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+    validate::{
+        check_annual_doses_per_person_is_valid, check_dose_min_ages_are_in_order,
+        check_vaccine_course_name_exists_for_program,
+    },
 };
 use crate::{
-    activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
-    nullable_update, service_provider::ServiceContext,
-    vaccine_course::validate::check_vaccine_course_exists, NullableUpdate, SingleRecordError,
+    NullableUpdate, SingleRecordError, activity_log::activity_log_entry,
+    demographic::validate::check_demographic_exists, nullable_update,
+    service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
 };
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
     vaccine_course::{
         vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
@@ -21,7 +25,6 @@ use repository::{
             VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -32,6 +35,7 @@ pub enum UpdateVaccineCourseError {
     CreatedRecordNotFound,
     DemographicDoesNotExist,
     VaccineDosesInUse,
+    AnnualDosesPerPersonNotPositive,
     DatabaseError(RepositoryError),
 }
 
@@ -97,6 +101,8 @@ pub struct UpdateVaccineCourse {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: Option<bool>,
+    /// None keeps the course's; a None value clears it
+    pub annual_doses_per_person: Option<NullableUpdate<f64>>,
 }
 
 pub fn update_vaccine_course(
@@ -173,10 +179,10 @@ pub fn validate(
         None => return Err(UpdateVaccineCourseError::VaccineCourseDoesNotExist),
     };
 
-    if let Some(demographic_id) = &input.demographic_id {
-        if check_demographic_exists(demographic_id, connection)?.is_none() {
-            return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
-        }
+    if let Some(demographic_id) = &input.demographic_id
+        && check_demographic_exists(demographic_id, connection)?.is_none()
+    {
+        return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
     }
 
     let name = match &(input.name) {
@@ -197,6 +203,15 @@ pub fn validate(
 
     if !check_dose_min_ages_are_in_order(&input.doses) {
         return Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(annual_doses_per_person),
+    }) = input.annual_doses_per_person
+    {
+        if !check_annual_doses_per_person_is_valid(annual_doses_per_person) {
+            return Err(UpdateVaccineCourseError::AnnualDosesPerPersonNotPositive);
+        }
     }
 
     let (doses_in_use, doses_to_delete) =
@@ -230,6 +245,7 @@ fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
+        annual_doses_per_person,
     }: UpdateVaccineCourse,
 ) -> Result<GenerateResult, RepositoryError> {
     let updated_course = VaccineCourseRow {
@@ -242,6 +258,10 @@ fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose: can_skip_dose.unwrap_or(old_row.can_skip_dose),
+        annual_doses_per_person: nullable_update(
+            &annual_doses_per_person,
+            old_row.annual_doses_per_person,
+        ),
     };
 
     let items_for_course = VaccineCourseItemRepository::new(connection).query_by_filter(

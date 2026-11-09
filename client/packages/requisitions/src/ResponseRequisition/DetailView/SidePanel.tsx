@@ -32,6 +32,7 @@ export const SidePanel: FC = () => {
           icon={<CopyIcon />}
           title={t('link.copy-to-clipboard')}
           onClick={copyToClipboard}
+          testId="copy-to-clipboard-button"
         />
       }
     >

@@ -1,6 +1,6 @@
 use repository::{
-    vaccine_course::vaccine_course_row::VaccineCourseRow, ChangelogRow, ChangelogTableName, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    vaccine_course::vaccine_course_row::VaccineCourseRow,
 };
 
 use crate::sync::translations::{
@@ -97,9 +97,9 @@ impl SyncTranslation for VaccineCourseTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_program_a, MockDataInserts},
-        test_db::setup_all,
         ProgramRow, ProgramRowRepository,
+        mock::{MockDataInserts, mock_program_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -22,10 +22,7 @@ impl Loader<String> for AllowedCustomFieldKeysByScopeLoader {
     type Value = HashSet<String>;
     type Error = async_graphql::Error;
 
-    async fn load(
-        &self,
-        scopes: &[String],
-    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(&self, scopes: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
         let mut result = HashMap::new();
@@ -63,7 +60,10 @@ impl Loader<String> for CustomFieldOptionsByCustomFieldIdLoader {
 
         let mut result: HashMap<String, Self::Value> = HashMap::new();
         for option in options {
-            result.entry(option.custom_field_id.clone()).or_default().push(option);
+            result
+                .entry(option.custom_field_id.clone())
+                .or_default()
+                .push(option);
         }
         Ok(result)
     }

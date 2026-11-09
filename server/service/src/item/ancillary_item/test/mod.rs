@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use repository::ancillary_item::AncillaryItemFilter;
-    use repository::mock::{mock_item_a, mock_item_b, mock_item_c, MockDataInserts};
-    use repository::test_db::setup_all;
     use repository::EqualFilter;
+    use repository::ancillary_item::AncillaryItemFilter;
+    use repository::mock::{MockDataInserts, mock_item_a, mock_item_b, mock_item_c};
+    use repository::test_db::setup_all;
 
     use crate::item::ancillary_item::{
         DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem,
@@ -34,6 +34,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -62,6 +63,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 0.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -77,6 +79,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -92,6 +95,7 @@ mod tests {
                     ancillary_item_id: "does_not_exist".to_string(),
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -107,6 +111,7 @@ mod tests {
                     ancillary_item_id: mock_item_a().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -122,10 +127,31 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: Some(true),
                 },
             )
             .unwrap();
         assert_eq!(row.ancillary_quantity, 1.0);
+        assert!(row.exclude_principal_wastage);
+
+        // Re-saving without the flag keeps it; saving it off clears it
+        let resave = |flag: Option<bool>| {
+            service
+                .upsert_ancillary_item(
+                    &context,
+                    UpsertAncillaryItem {
+                        id: "ab".to_string(),
+                        item_id: mock_item_a().id,
+                        ancillary_item_id: mock_item_b().id,
+                        item_quantity: 1.0,
+                        ancillary_quantity: 2.0,
+                        exclude_principal_wastage: flag,
+                    },
+                )
+                .unwrap()
+        };
+        assert!(resave(None).exclude_principal_wastage);
+        assert!(!resave(Some(false)).exclude_principal_wastage);
 
         // Cycle: B -> A would close A -> B -> A
         let err = service
@@ -137,6 +163,7 @@ mod tests {
                     ancillary_item_id: mock_item_a().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -152,6 +179,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 3.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap_err();
@@ -167,6 +195,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 5.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap();
@@ -191,6 +220,7 @@ mod tests {
                     ancillary_item_id: mock_item_c().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: None,
                 },
             )
             .unwrap();
@@ -212,5 +242,102 @@ mod tests {
             )
             .unwrap();
         assert_eq!(after_delete.count, 0);
+    }
+
+    #[actix_rt::test]
+    async fn supply_wastage_rate_service() {
+        use crate::item::ancillary_item::{
+            SetSupplyWastageRate, SetSupplyWastageRateError, supply_wastage_rates,
+        };
+        use repository::ancillary_item_row::AncillaryItemRowRepository;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "supply_wastage_rate_service",
+            MockDataInserts::none().items(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.item_service;
+        let set = |item_id: String, wastage_rate: f64| {
+            service.set_supply_wastage_rate(
+                &context,
+                SetSupplyWastageRate {
+                    item_id,
+                    wastage_rate,
+                },
+            )
+        };
+        let upsert_link = |id: &str, item_id: String, item_quantity: f64| {
+            service
+                .upsert_ancillary_item(
+                    &context,
+                    UpsertAncillaryItem {
+                        id: id.to_string(),
+                        item_id,
+                        ancillary_item_id: mock_item_b().id,
+                        item_quantity,
+                        ancillary_quantity: 1.0,
+                        exclude_principal_wastage: None,
+                    },
+                )
+                .unwrap()
+        };
+        let link_rate = |id: &str| {
+            AncillaryItemRowRepository::new(&connection)
+                .find_one_by_id(id)
+                .unwrap()
+                .unwrap()
+                .wastage_rate
+        };
+
+        test_util_set_is_central_server(false);
+        assert_eq!(
+            set(mock_item_b().id, 10.0),
+            Err(SetSupplyWastageRateError::NotCentralServer)
+        );
+
+        test_util_set_is_central_server(true);
+        assert_eq!(
+            set(mock_item_b().id, 100.0),
+            Err(SetSupplyWastageRateError::RateOutOfRange)
+        );
+        assert_eq!(
+            set(mock_item_b().id, -1.0),
+            Err(SetSupplyWastageRateError::RateOutOfRange)
+        );
+        assert_eq!(
+            set("no_such_item".to_string(), 10.0),
+            Err(SetSupplyWastageRateError::ItemDoesNotExist)
+        );
+        // The rate lives on the links ordering the item, so it needs one
+        assert_eq!(
+            set(mock_item_b().id, 10.0),
+            Err(SetSupplyWastageRateError::NotAnAncillaryItem)
+        );
+
+        // a → b, then b's rate set
+        upsert_link("ab", mock_item_a().id, 1.0);
+        assert_eq!(set(mock_item_b().id, 15.0), Ok(15.0));
+        assert_eq!(link_rate("ab"), 15.0);
+
+        // A new link to b orders at b's rate, and editing a link keeps it
+        upsert_link("cb", mock_item_c().id, 1.0);
+        assert_eq!(link_rate("cb"), 15.0);
+        upsert_link("ab", mock_item_a().id, 2.0);
+        assert_eq!(link_rate("ab"), 15.0);
+
+        // Setting it again updates every link to b
+        assert_eq!(set(mock_item_b().id, 20.0), Ok(20.0));
+        assert_eq!((link_rate("ab"), link_rate("cb")), (20.0, 20.0));
+        let rates =
+            supply_wastage_rates(&connection, &[mock_item_a().id, mock_item_b().id]).unwrap();
+        assert_eq!(rates.get(&mock_item_b().id), Some(&20.0));
+        assert_eq!(rates.get(&mock_item_a().id), None);
+
+        // 0 clears it
+        assert_eq!(set(mock_item_b().id, 0.0), Ok(0.0));
+        let rates = supply_wastage_rates(&connection, &[mock_item_b().id]).unwrap();
+        assert_eq!(rates.get(&mock_item_b().id), Some(&0.0));
     }
 }

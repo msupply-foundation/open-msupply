@@ -1,13 +1,13 @@
 use super::UpsertItemVariantWithPackaging;
 use crate::{
+    NullableUpdate,
     invoice_line::validate::check_item_exists,
     item::item_variant::UpsertItemVariantError,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-    NullableUpdate,
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 use repository::{
-    item_variant::item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
     EqualFilter, ItemLinkRowRepository, LocationTypeRowRepository, StorageConnection, StringFilter,
+    item_variant::item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
 };
 
 pub fn validate(
@@ -19,8 +19,11 @@ pub fn validate(
 
     check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
 
-    let existing_item_variant = ItemVariantRepository::new(connection)
-        .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(input.id.to_string())))?;
+    let existing_item_variant = ItemVariantRepository::new(connection).query_one(
+        ItemVariantFilter::new()
+            .id(EqualFilter::equal_to(input.id.to_string()))
+            .include_auto_created(),
+    )?;
 
     if let Some(existing_item_variant) = existing_item_variant.clone() {
         // Query Item Link to check if the item_id is the same
@@ -36,25 +39,31 @@ pub fn validate(
     }
 
     if let Some(NullableUpdate {
-        value: Some(ref manufacturer_id),
+        value: Some(manufacturer_id),
     }) = &input.manufacturer_id
     {
-        check_other_party(
+        match check_other_party(
             connection,
             store_id,
             manufacturer_id,
             CheckOtherPartyType::Manufacturer,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
-            OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
-            OtherPartyErrors::TypeMismatched => OtherPartyNotAManufacturer,
-            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-        })?;
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(OtherPartyDoesNotExist {}),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(OtherPartyNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error));
+                }
+            },
+        };
     };
 
     if let Some(NullableUpdate {
-        value: Some(ref location_type_id),
+        value: Some(location_type_id),
     }) = &input.location_type_id
     {
         // Check if the location type exists
@@ -65,12 +74,13 @@ pub fn validate(
         }
     };
 
-    // Check for duplicate name under the same item
+    // Check for duplicate name under the same item, auto-created variants included
     let item_variants_with_duplicate_name = ItemVariantRepository::new(connection)
         .query_by_filter(
             ItemVariantFilter::new()
                 .name(StringFilter::equal_to(input.name.trim()))
-                .item_id(EqualFilter::equal_to(input.item_id.to_string())),
+                .item_id(EqualFilter::equal_to(input.item_id.to_string()))
+                .include_auto_created(),
         )?;
 
     if item_variants_with_duplicate_name

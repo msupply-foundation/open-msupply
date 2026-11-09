@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    ContextExt, simple_generic_errors::RecordNotFound,
+    standard_graphql_error::StandardGraphqlError, standard_graphql_error::validate_auth,
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
@@ -90,25 +90,25 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::FinalisedRequisition => {
             return Ok(DeleteErrorInterface::FinalisedRequisition(
                 FinalisedRequisition {},
-            ))
+            ));
         }
         ServiceError::TransferredRequisition => {
             return Ok(DeleteErrorInterface::TransferredRequisition(
                 TransferredRequisition {},
-            ))
+            ));
         }
         ServiceError::RequisitionWithShipment => {
             return Ok(DeleteErrorInterface::RequisitionWithShipment(
                 RequisitionWithShipment {},
-            ))
+            ));
         }
         ServiceError::LineDeleteError { .. } => {
-            return Ok(DeleteErrorInterface::LineDeleteError(LineDeleteError {}))
+            return Ok(DeleteErrorInterface::LineDeleteError(LineDeleteError {}));
         }
 
         // Standard Graphql Errors
@@ -126,15 +126,15 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             response_requisition::{
                 DeleteResponseRequisition as ServiceInput,
                 DeleteResponseRequisitionError as ServiceError,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

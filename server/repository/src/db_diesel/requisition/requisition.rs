@@ -1,9 +1,10 @@
 use super::{
-    requisition_row::requisition,
     RequisitionFilter, RequisitionRow, RequisitionSort, RequisitionSortField,
+    requisition_row::requisition,
 };
 
 use crate::{
+    DBType, EqualFilter, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
     db_diesel::{
         invoice_row::invoice, name_row::name, period::period_row::period,
         program_requisition::program_row::program, store_row::store,
@@ -13,14 +14,10 @@ use crate::{
         apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, EqualFilter, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type RequisitionJoin = (
     RequisitionRow,

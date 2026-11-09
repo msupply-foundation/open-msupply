@@ -22,6 +22,7 @@ import {
   ValueInfoRow,
   ValueInfo,
   RepresentationValue,
+  ForecastMethodNode,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -36,11 +37,9 @@ import {
 } from './ModalContentPanels';
 import {
   CONSUMPTION_HISTORY_INFO,
-  FORECAST_QUANTITY_INFO,
   STOCK_DISTRIBUTION_INFO,
   STOCK_EVOLUTION_INFO,
 } from '../utils';
-import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -99,7 +98,8 @@ export const RequestLineEdit = ({
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
   const displayForecasting =
-    displayPopulationBasedForecasting && !!draft?.forecastTotalUnits;
+    displayPopulationBasedForecasting &&
+    draft?.forecastMethod === ForecastMethodNode.Population;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -182,7 +182,11 @@ export const RequestLineEdit = ({
             setIsEditingRequested={setIsEditingRequested}
           />
           {showExcessRequestWarning && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
+            <Alert
+              severity="warning"
+              sx={{ mt: 1 }}
+              data-testid="excess-request-warning"
+            >
               {t('warning.requested-exceeds-suggested')}
             </Alert>
           )}
@@ -195,6 +199,7 @@ export const RequestLineEdit = ({
                   update({ reason: value });
                 }}
                 fullWidth
+                inputTestId="variance-reason-input"
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
                 textSx={
@@ -219,6 +224,7 @@ export const RequestLineEdit = ({
             value={draft?.comment ?? ''}
             onChange={(value?: string) => update({ comment: value })}
             disabled={disabled}
+            testId="line-comment-field"
           />
         </ModalPanelArea>
       </>
@@ -282,9 +288,7 @@ export const RequestLineEdit = ({
                 renderValueInfoRows([
                   {
                     label: t('label.target-stock-population'),
-                    value: line?.forecastTotalUnits
-                      ? Math.ceil(line.forecastTotalUnits)
-                      : undefined,
+                    value: line ? Math.ceil(line.targetStock) : undefined,
                   },
                 ])}
               {showExtraFields &&
@@ -328,50 +332,46 @@ export const RequestLineEdit = ({
             gap: 2,
           }}
         >
-          {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) ? (
-            <ForecastCalculationDisplay vaccineCourses={line.vaccineCourses} />
-          ) : (
-            <>
-              {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
-                <Box
-                  sx={{
-                    width: '100%',
-                    maxWidth: 900,
-                    mx: 'auto',
-                    p: '8px 16px',
-                  }}
-                >
-                  <StockDistribution
-                    availableStockOnHand={line.itemStats?.availableStockOnHand}
-                    averageMonthlyConsumption={
-                      line.itemStats?.averageMonthlyConsumption
-                    }
-                    suggestedQuantity={line.suggestedQuantity}
-                  />
-                </Box>
-              )}
+          <>
+            {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
               <Box
-                display="flex"
-                justifyContent="center"
-                gap={2}
                 sx={{
-                  padding: 2,
-                  flexDirection: {
-                    xs: 'column',
-                    md: 'row',
-                  },
-                  alignItems: 'center',
+                  width: '100%',
+                  maxWidth: 900,
+                  mx: 'auto',
+                  p: '8px 16px',
                 }}
               >
-                {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-                  <ConsumptionHistory id={line.id} />
-                )}
-                {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-                  <StockEvolution id={line.id} />
-                )}
+                <StockDistribution
+                  availableStockOnHand={line.itemStats?.availableStockOnHand}
+                  averageMonthlyConsumption={
+                    line.itemStats?.averageMonthlyConsumption
+                  }
+                  suggestedQuantity={line.suggestedQuantity}
+                />
               </Box>
-            </>
-          )}
+            )}
+            <Box
+              display="flex"
+              justifyContent="center"
+              gap={2}
+              sx={{
+                padding: 2,
+                flexDirection: {
+                  xs: 'column',
+                  md: 'row',
+                },
+                alignItems: 'center',
+              }}
+            >
+              {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+                <ConsumptionHistory id={line.id} />
+              )}
+              {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+                <StockEvolution id={line.id} />
+              )}
+            </Box>
+          </>
         </Box>
       )}
     </>

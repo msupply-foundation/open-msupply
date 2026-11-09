@@ -3,8 +3,8 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 use crate::diesel_macros::apply_equal_filter;
 
 use super::{
-    preference_row::{preference, PreferenceRow},
     DBType, EqualFilter, Pagination, RepositoryError, StorageConnection,
+    preference_row::{PreferenceRow, preference},
 };
 
 #[derive(Clone, Default)]

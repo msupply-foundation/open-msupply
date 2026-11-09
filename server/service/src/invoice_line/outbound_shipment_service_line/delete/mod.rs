@@ -1,4 +1,4 @@
-use crate::{invoice_line::DeleteStockOutLine, service_provider::ServiceContext, WithDBError};
+use crate::{WithDBError, invoice_line::DeleteStockOutLine, service_provider::ServiceContext};
 use repository::{InvoiceLineRowRepository, RepositoryError};
 
 mod validate;
@@ -56,12 +56,12 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceLineRowRepository,
         mock::{
-            mock_draft_inbound_service_line, mock_draft_outbound_service_line,
-            mock_draft_outbound_shipped_service_line, mock_store_a, mock_store_b, MockDataInserts,
+            MockDataInserts, mock_draft_inbound_service_line, mock_draft_outbound_service_line,
+            mock_draft_outbound_shipped_service_line, mock_store_a, mock_store_b,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository,
     };
 
     use super::DeleteOutboundShipmentServiceLineError;

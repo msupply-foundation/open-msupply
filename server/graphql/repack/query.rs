@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::NodeError, standard_graphql_error::validate_auth, ContextExt,
+    ContextExt, simple_generic_errors::NodeError, standard_graphql_error::validate_auth,
 };
 use graphql_types::types::{RepackConnector, RepackNode};
 use service::auth::{Resource, ResourceAccessRequest};

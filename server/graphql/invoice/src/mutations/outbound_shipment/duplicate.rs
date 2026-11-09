@@ -1,7 +1,7 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_shipment::{
@@ -85,7 +85,7 @@ fn map_error(error: ServiceError) -> Result<DuplicateErrorInterface> {
         ServiceError::CustomerIsInactive => {
             return Ok(DuplicateErrorInterface::CustomerIsInactive(
                 CustomerIsInactive,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
@@ -106,16 +106,16 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_name_a, mock_outbound_shipment_c, mock_store_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
+        mock::{MockDataInserts, mock_name_a, mock_outbound_shipment_c, mock_store_a},
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             outbound_shipment::{
                 DuplicateOutboundShipment, DuplicateOutboundShipmentError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

@@ -2,9 +2,9 @@ use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::VaccineCourseDoseResponse;
 use mutations::{
-    delete_vaccine_course, insert_vaccine_course, update_vaccine_course,
     DeleteVaccineCourseResponse, InsertVaccineCourseInput, InsertVaccineCourseResponse,
-    UpdateVaccineCourseInput, UpdateVaccineCourseResponse,
+    UpdateVaccineCourseInput, UpdateVaccineCourseResponse, delete_vaccine_course,
+    insert_vaccine_course, update_vaccine_course,
 };
 use types::vaccine_course::{VaccineCourseResponse, VaccineCoursesResponse};
 

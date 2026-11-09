@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{Migration, version::Version};
 
 use crate::StorageConnection;
 
@@ -71,7 +71,12 @@ async fn migration_2_01_00() {
     assert!(!check_item_needs_translation(&connection));
 
     // Run this migration
-    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+    migrate(
+        &connection,
+        Some(version.clone()),
+        MigrationConfig::default(),
+    )
+    .unwrap();
     assert_eq!(get_database_version(&connection), version);
 
     // Check that the item row needs to be translated

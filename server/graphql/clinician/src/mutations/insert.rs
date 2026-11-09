@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::GenderTypeNode;
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_types::types::IdResponse;
+use graphql_types::types::patient::GenderTypeNode;
 use repository::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},

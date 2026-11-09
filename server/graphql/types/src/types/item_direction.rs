@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::InternalError;
-use repository::{item_direction::ItemDirection, ItemDirectionRow};
+use repository::{ItemDirectionRow, item_direction::ItemDirection};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]

@@ -1,6 +1,5 @@
 use chrono::NaiveDate;
 use repository::{
-    mock::{insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
     InvoiceStatus, InvoiceType, ItemRow, ItemRowRepository, ItemStoreJoinRow,
@@ -8,6 +7,7 @@ use repository::{
     LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow,
+    mock::{MockData, MockDataInserts, insert_extra_mock_data, mock_campaign_a},
 };
 use util::uuid::uuid;
 
@@ -24,7 +24,7 @@ use crate::{
     processors::{test_helpers::exec_concurrent, transfer::invoice::common::get_cost_plus_margin},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// This test is for requesting and responding store on the same site
@@ -121,6 +121,7 @@ async fn invoice_transfers() {
             .units()
             .currencies(),
         MockData {
+            campaigns: vec![mock_campaign_a()],
             names: vec![inbound_store_name.clone(), outbound_store_name.clone()],
             stores: vec![inbound_store.clone(), outbound_store.clone()],
             items: vec![
@@ -404,6 +405,7 @@ async fn invoice_transfers_with_merged_name() {
             .units()
             .currencies(),
         MockData {
+            campaigns: vec![mock_campaign_a()],
             names: vec![
                 inbound_store_name.clone(),
                 outbound_store_name.clone(),
@@ -641,6 +643,7 @@ impl InvoiceTransferTester {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap(),
             tax_percentage: Some(0.0),
+            campaign_id: Some(mock_campaign_a().id),
             ..Default::default()
         };
 
@@ -678,6 +681,8 @@ impl InvoiceTransferTester {
             stock_line_id: Some(stock_line1.id.clone()),
             location_id: Some(location.id.clone()),
             tax_percentage: Some(0.0),
+            // Must reach the receiving store's line.
+            transfer_comment: Some("Only 2 packs left in stock".to_string()),
             ..Default::default()
         };
 
@@ -952,6 +957,7 @@ impl InvoiceTransferTester {
             inbound_shipment.transport_reference,
             self.outbound_shipment.transport_reference
         );
+        assert_eq!(inbound_shipment.campaign_id, Some(mock_campaign_a().id));
         assert_eq!(
             inbound_shipment.comment,
             Some("Stock transfer (some comment)".to_string())
@@ -1546,6 +1552,11 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
     assert_eq!(inbound_line.stock_line_id, None);
     assert_eq!(inbound_line.location_id, None);
     assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+    // OMS-REG-ISH-01.15, OMS-REG-DIST-03.44.
+    assert_eq!(
+        inbound_line.transfer_comment,
+        outbound_line.transfer_comment
+    );
 }
 
 // Check pricing is calculated correctly for each line

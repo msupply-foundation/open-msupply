@@ -1,7 +1,7 @@
 use repository::{
-    mock::{mock_item_link_from_item, MockDataCollection},
     ItemLinkRowRepository, ItemRow, NameLinkRow, NameLinkRowRepository, NameRow, RepositoryError,
     StorageConnection,
+    mock::{MockDataCollection, mock_item_link_from_item},
 };
 
 // Changes all name_id values to "name_a" to merge all names into "name_a".

@@ -5,7 +5,7 @@ use repository::{
 };
 use util::hash::sha256;
 
-use super::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolmentError};
+use super::{UpsertProgramEnrolmentError, program_schema::SchemaProgramEnrolment};
 
 /// Callback called when a program enrolment document has been updated
 pub(crate) fn update_program_enrolment_row(

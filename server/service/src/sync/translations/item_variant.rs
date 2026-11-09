@@ -6,8 +6,9 @@ use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
 use super::{
-    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
+    utils::{RenamedKeys, from_renamed_keys_str, to_renamed_keys_value},
 };
 
 /// FK columns renamed during the entity-link abstraction. Central emits both the canonical
@@ -55,10 +56,8 @@ impl SyncTranslation for ItemVariantTranslation {
             created_datetime,
             created_by,
             manufacturer_id,
-        } = from_renamed_keys_str::<ItemVariantRow>(
-            &sync_record.data.0.to_string(),
-            RENAMED_KEYS,
-        )?;
+            is_auto_created,
+        } = from_renamed_keys_str::<ItemVariantRow>(&sync_record.data.0.to_string(), RENAMED_KEYS)?;
 
         let fk_check = fk_checker.with_table(connection, "item_variant", &id);
         let check_fk = fk_checker.with_table_required(connection, "item_variant", &id);
@@ -67,7 +66,11 @@ impl SyncTranslation for ItemVariantTranslation {
             id,
             name,
             item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
-            location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
+            location_type_id: fk_check(
+                location_type_id,
+                "location_type_id",
+                FkField::LocationType,
+            )?,
             deleted_datetime,
             vvm_type,
             created_datetime,
@@ -75,6 +78,7 @@ impl SyncTranslation for ItemVariantTranslation {
             // manufacturer is a name id resolved to name_link on upsert; name_link.id == name.id by
             // convention, so validating the name id against name_link is correct.
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
+            is_auto_created,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -122,8 +126,8 @@ impl SyncTranslation for ItemVariantTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, NameLinkRow,
-        NameLinkRowRepository,
+        ItemLinkRow, ItemLinkRowRepository, NameLinkRow, NameLinkRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

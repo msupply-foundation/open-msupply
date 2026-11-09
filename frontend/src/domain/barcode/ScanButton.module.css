@@ -1,0 +1,8 @@
+/* The scan affordances (spec/barcode-scanning ui-surface § R1). */
+
+.affordance {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}

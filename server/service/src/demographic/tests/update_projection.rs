@@ -2,7 +2,7 @@
 
 mod query {
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a},
         test_db::setup_all,
     };
 

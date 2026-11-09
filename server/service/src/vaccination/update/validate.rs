@@ -1,5 +1,5 @@
 use crate::{
-    common::{check_stock_line_exists, CommonStockLineError},
+    common::{CommonStockLineError, check_stock_line_exists},
     invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
@@ -8,9 +8,9 @@ use crate::{
     },
 };
 use repository::{
-    vaccine_course::vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
     StockLine, StorageConnection, Vaccination, VaccinationRow,
+    vaccine_course::vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
 };
 
 use super::{UpdateVaccination, UpdateVaccinationError};
@@ -60,16 +60,16 @@ pub fn validate(
             UpdateVaccinationError::InternalError("Encounter does not exist".to_string()),
         )?;
 
-    if let Some(clinician_id) = input.clinician_id.clone().and_then(|u| u.value) {
-        if !check_clinician_exists(&clinician_id, connection)? {
-            return Err(UpdateVaccinationError::ClinicianDoesNotExist);
-        }
+    if let Some(clinician_id) = input.clinician_id.clone().and_then(|u| u.value)
+        && !check_clinician_exists(&clinician_id, connection)?
+    {
+        return Err(UpdateVaccinationError::ClinicianDoesNotExist);
     }
 
-    if let Some(facility_name_id) = input.facility_name_id.clone().and_then(|u| u.value) {
-        if check_name_exists(connection, &facility_name_id)?.is_none() {
-            return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
-        }
+    if let Some(facility_name_id) = input.facility_name_id.clone().and_then(|u| u.value)
+        && check_name_exists(connection, &facility_name_id)?.is_none()
+    {
+        return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
     }
 
     // If not given, reason is required
@@ -254,10 +254,10 @@ fn validate_change_to_given(
 
     // If doses CAN'T be skipped, should only be able to change to given if all
     // previous doses in the course are given
-    if let Some(previous_vaccination) = previous_vaccination {
-        if !previous_vaccination.vaccination_row.given {
-            return Err(UpdateVaccinationError::NotNextDose);
-        }
+    if let Some(previous_vaccination) = previous_vaccination
+        && !previous_vaccination.vaccination_row.given
+    {
+        return Err(UpdateVaccinationError::NotNextDose);
     }
 
     Ok(())
@@ -267,10 +267,10 @@ fn validate_change_to_not_given(
     next_vaccination: Option<Vaccination>,
 ) -> Result<(), UpdateVaccinationError> {
     // Should only be able to change to not given if all next doses in the course are not given
-    if let Some(next_vaccination) = next_vaccination {
-        if next_vaccination.vaccination_row.given {
-            return Err(UpdateVaccinationError::NotMostRecentGivenDose);
-        }
+    if let Some(next_vaccination) = next_vaccination
+        && next_vaccination.vaccination_row.given
+    {
+        return Err(UpdateVaccinationError::NotMostRecentGivenDose);
     }
 
     Ok(())

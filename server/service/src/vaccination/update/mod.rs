@@ -1,13 +1,13 @@
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     invoice::{
-        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescription,
-        UpdatePrescriptionError, UpdatePrescriptionStatus,
+        InsertPrescriptionError, UpdatePrescription, UpdatePrescriptionError,
+        UpdatePrescriptionStatus, insert_prescription, update_prescription,
     },
-    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+    invoice_line::stock_out_line::{InsertStockOutLineError, insert_stock_out_line},
     service_provider::ServiceContext,
     vaccination::update::generate::CancelPrescription,
-    NullableUpdate,
 };
 
 use chrono::NaiveDate;
@@ -16,7 +16,7 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 use validate::validate;
 
 use super::{generate::CreatePrescription, query::get_vaccination};
@@ -142,10 +142,10 @@ impl From<UpdatePrescriptionError> for UpdateVaccinationError {
 mod update {
     use chrono::NaiveDate;
     use repository::mock::{
-        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_item_a,
-        mock_patient, mock_stock_line_a, mock_stock_line_b_vaccine_item_a,
-        mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b, mock_user_account_a,
-        mock_vaccination_a, mock_vaccine_course_a_dose_b, MockData, MockDataInserts,
+        MockData, MockDataInserts, mock_immunisation_encounter_a,
+        mock_immunisation_program_enrolment_a, mock_item_a, mock_patient, mock_stock_line_a,
+        mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a, mock_store_a,
+        mock_store_b, mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -153,9 +153,9 @@ mod update {
         VaccinationRowRepository,
     };
 
+    use crate::NullableUpdate;
     use crate::service_provider::ServiceProvider;
     use crate::vaccination::update::{UpdateVaccination, UpdateVaccinationError};
-    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn update_vaccination_errors() {
@@ -616,10 +616,12 @@ mod update {
             .unwrap();
 
         assert_eq!(created_invoices.len(), 2);
-        assert!(created_invoices
-            .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::Prescription
-                && inv.invoice_row.is_cancellation));
+        assert!(
+            created_invoices
+                .iter()
+                .any(|inv| inv.invoice_row.r#type == InvoiceType::Prescription
+                    && inv.invoice_row.is_cancellation)
+        );
 
         // Check new stock was introduced
         let stock_line = StockLineRowRepository::new(&context.connection)
@@ -677,10 +679,12 @@ mod update {
             .unwrap();
 
         assert_eq!(created_invoices.len(), 2);
-        assert!(created_invoices
-            .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::Prescription
-                && inv.invoice_row.is_cancellation));
+        assert!(
+            created_invoices
+                .iter()
+                .any(|inv| inv.invoice_row.r#type == InvoiceType::Prescription
+                    && inv.invoice_row.is_cancellation)
+        );
 
         // Check stock was re-introduced
         let stock_line = StockLineRowRepository::new(&context.connection)

@@ -1,6 +1,6 @@
 use repository::{
-    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     RepositoryError, StorageConnection,
+    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
 };
 
 pub fn active_vvm_statuses(

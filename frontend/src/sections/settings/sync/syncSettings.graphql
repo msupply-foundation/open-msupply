@@ -1,0 +1,110 @@
+# Synchronisation settings (spec/settings/contract.md § Synchronisation).
+# The query never returns the password — the form's password field always
+# starts blank (OMS-REG-SET-02.12).
+query syncSettings {
+  syncSettings {
+    url
+    username
+    intervalSeconds
+    batchSize
+    isPaused
+  }
+}
+
+# The pause switch has its own mutation so flipping it never re-sends the
+# credentials the form holds (spec/settings/contract.md § Synchronisation).
+mutation setSyncPaused($paused: Boolean!) {
+  setSyncPaused(paused: $paused) {
+    isPaused
+  }
+}
+
+# Success returns the settings themselves (no dedicated OK wrapper); failure is
+# one of the two sync-era error nodes. The V7 node's variant is aliased apart
+# from the V6 one, matching src/api/initialisation.graphql, so the generated
+# union keeps both enums distinct.
+mutation updateSyncSettings($input: SyncSettingsInput!) {
+  updateSyncSettings(input: $input) {
+    ... on SyncSettingsNode {
+      __typename
+      username
+    }
+    ... on SyncErrorNode {
+      __typename
+      variant
+      fullError
+    }
+    ... on SyncErrorV7Node {
+      __typename
+      variantV7: variant
+      fullError
+    }
+  }
+}
+
+# Central only (spec/settings/contract.md § Synchronisation): while paused,
+# central refuses remote sites' v6/v7 sync data requests (issue #717). Server
+# Admin is enforced server-side on both.
+query isSyncApiPaused {
+  isSyncApiPaused
+}
+
+mutation setSyncApiPaused($paused: Boolean!) {
+  centralServer {
+    general {
+      setSyncApiPaused(paused: $paused) {
+        isPaused
+      }
+    }
+  }
+}
+
+# Central only (spec/settings/contract.md § Synchronisation): while paused,
+# central's transfer and general processors drop their triggers (issue #840).
+# Server Admin is enforced server-side on both.
+query areProcessorsPaused {
+  areProcessorsPaused
+}
+
+mutation setProcessorsPaused($paused: Boolean!) {
+  centralServer {
+    general {
+      setProcessorsPaused(paused: $paused) {
+        isPaused
+      }
+    }
+  }
+}
+
+# Central only (issue #840): the switch that holds sync, the sync API and the
+# processors together, and how much of OMS central's own sync buffer is left
+# to integrate. Turning it off is refused while that count is above zero.
+query maintenanceMode {
+  maintenanceMode {
+    isOn
+    pendingIntegrationRecords
+  }
+}
+
+mutation setMaintenanceMode($on: Boolean!) {
+  centralServer {
+    general {
+      setMaintenanceMode(on: $on) {
+        __typename
+        ... on MaintenanceModeNode {
+          isOn
+          pendingIntegrationRecords
+        }
+        ... on SetMaintenanceModeError {
+          error {
+            __typename
+            description
+            ... on IntegrationIncomplete {
+              pendingIntegrationRecords
+            }
+          }
+        }
+      }
+    }
+  }
+}

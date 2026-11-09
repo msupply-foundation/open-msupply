@@ -1,9 +1,9 @@
-use super::{user_row::user_account, StorageConnection};
+use super::{StorageConnection, user_row::user_account};
 
 use crate::db_diesel::changelog::changelog::RowOrId;
-use crate::{repository_error::RepositoryError, Delete};
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, SourceSiteId, Upsert};
+use crate::{Delete, repository_error::RepositoryError};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -41,7 +41,18 @@ pub enum StocktakeStatus {
     Finalised,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Eq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = stocktake)]
 pub struct StocktakeRow {
     pub id: String,

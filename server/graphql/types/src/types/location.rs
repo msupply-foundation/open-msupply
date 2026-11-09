@@ -6,13 +6,13 @@ use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use graphql_core::loader::{LocationTypeLoader, VolumeUsedByLocationLoader};
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::StockLineByLocationIdLoader};
 use repository::StringFilter;
 use repository::{
-    location::{Location, LocationFilter, LocationSort, LocationSortField},
     EqualFilter, LocationRow,
+    location::{Location, LocationFilter, LocationSort, LocationSortField},
 };
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

@@ -353,13 +353,13 @@ Add this to your `style.css`:
 cargo run --bin remote_server_cli show-report --path ../standard_forms/equipment-request/latest --config ../standard_reports
 ```
 
-2. When happy, you can (re)generate it using the remote_server_cli `build-reports` command and then use `upsert-reports` to upload it to the OMS data file
+2. When happy, you can (re)generate it using `scripts/reports/build-reports.mjs` and then use the remote_server_cli `upsert-reports` command to upload it to the OMS data file
 
 ```
-// Run remote_server_cli build-reports from the server folder to (re)generate all standard forms and reports
-// Optionally you can build just a single report: use --path to specify the location of your report/form folder or --help to see all options
-cargo run --bin remote_server_cli build-reports
-cargo run --bin remote_server_cli build-reports --path ../standard_forms/equipment-request/latest
+// Run build-reports.mjs from the server folder to (re)generate all standard forms and reports
+// Optionally you can build just a single report: use --path to specify the location of your report/form folder
+node ../scripts/reports/build-reports.mjs
+node ../scripts/reports/build-reports.mjs --path ../standard_forms/equipment-request/latest
 //
 // Run remote_server_cli upsert-reports --overwrite from the server folder to upload (and replace) all standard forms and reports for your OMS data file
 // Optionally you can upload just a single report: use --path to specify the location of your generated report/form JSON file or --help to see all options

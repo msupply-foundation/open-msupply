@@ -1,11 +1,11 @@
 use crate::{
-    invoice::inbound_shipment::InboundShipmentType, invoice_line::query::get_invoice_line,
-    service_provider::ServiceContext, NullableUpdate, WithDBError,
+    NullableUpdate, WithDBError, invoice::inbound_shipment::InboundShipmentType,
+    invoice_line::query::get_invoice_line, service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, BarcodeRowRepository, InvoiceLine,
-    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
@@ -71,13 +71,8 @@ pub fn insert_stock_in_line(
                 invoice: invoice_user_update,
                 invoice_line,
                 stock_line,
-                barcode,
                 vvm_status_log,
             } = generate(connection, &ctx.user_id, input.clone(), item, invoice)?;
-
-            if let Some(barcode_row) = barcode {
-                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
-            }
 
             if let Some(stock_line_row) = stock_line {
                 StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
@@ -117,15 +112,17 @@ pub enum InsertStockInLineError {
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
+    SellPricePerPackBelowZero,
+    CostPricePerPackBelowZero,
     NewlyCreatedLineDoesNotExist,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramDoesNotExist,
     IncorrectLocationType,
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
+    PurchaseOrderLineNotFromLinkedOrder,
     WrongInboundShipmentType,
     CannotSetManufactureDateInFuture,
 }
@@ -151,33 +148,34 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        barcode::{BarcodeFilter, BarcodeRepository},
+        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+        PreferenceRow, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+        PurchaseOrderRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        barcode_proposal::{BarcodeProposalFilter, BarcodeProposalRepository},
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a,
-            mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
-            mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
-            mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
-            mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
-            mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
-            mock_user_account_a, mock_vaccine_item_a,
-            mock_vvm_status_a, MockData, MockDataInserts,
+            MockData, MockDataInserts, currency_b, mock_customer_return_a,
+            mock_customer_return_a_invoice_line_a, mock_donor_a, mock_immunisation_program_a,
+            mock_inbound_shipment_a, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a,
+            mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
+            mock_name_customer_a, mock_name_store_b, mock_outbound_shipment_e,
+            mock_purchase_order_a, mock_purchase_order_a_line_1, mock_purchase_order_b_line_1,
+            mock_shipment_variance_reason_option, mock_store_a, mock_store_b, mock_user_account_a,
+            mock_vaccine_item_a, mock_vvm_status_a,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
             vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
             vvm_status_log_row::VVMStatusLogRow,
         },
-        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, PreferenceRow,
-        StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
+        NullableUpdate,
         invoice_line::stock_in_line::{
-            insert::InsertStockInLine, InsertStockInLineError as ServiceError, StockInType,
+            InsertStockInLineError as ServiceError, StockInType, insert::InsertStockInLine,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     use super::super::insert_stock_in_line;
@@ -249,6 +247,38 @@ mod test {
                 None
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
+        );
+
+        // SellPricePerPackBelowZero
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    sell_price_per_pack: -1.0,
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::SellPricePerPackBelowZero)
+        );
+
+        // CostPricePerPackBelowZero
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    cost_price_per_pack: -1.0,
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CostPricePerPackBelowZero)
         );
 
         // ItemNotFound
@@ -523,6 +553,167 @@ mod test {
         .unwrap();
     }
 
+    /// A line added to a purchase-order-linked shipment with no default donor
+    /// takes the order's donor; the shipment's own default still wins.
+    #[actix_rt::test]
+    async fn insert_stock_in_line_inherits_po_donor() {
+        fn po() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "po_donor_fallback".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: mock_name_store_b().id,
+                donor_id: Some(mock_donor_a().id),
+                ..Default::default()
+            }
+        }
+
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "po_donor_fallback_line".to_string(),
+                purchase_order_id: po().id,
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
+
+        fn inbound(id: &str, default_donor_id: Option<String>) -> InvoiceRow {
+            InvoiceRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: Some(po().id),
+                default_donor_id,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_stock_in_line_inherits_po_donor",
+            MockDataInserts::all(),
+        )
+        .await;
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po())
+            .unwrap();
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&po_line())
+            .unwrap();
+        let invoice_repo = InvoiceRowRepository::new(&connection);
+        invoice_repo
+            .upsert_one(&inbound("po_donor_no_default", None))
+            .unwrap();
+        invoice_repo
+            .upsert_one(&inbound(
+                "po_donor_with_default",
+                Some("donor_b".to_string()),
+            ))
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let line_repo = InvoiceLineRowRepository::new(&connection);
+
+        let new_line = |id: &str, invoice_id: &str| InsertStockInLine {
+            id: id.to_string(),
+            invoice_id: invoice_id.to_string(),
+            item_id: mock_item_a().id,
+            pack_size: 1.0,
+            number_of_packs: 1.0,
+            r#type: StockInType::InboundShipment,
+            purchase_order_line_id: Some(po_line().id),
+            ..Default::default()
+        };
+
+        insert_stock_in_line(
+            &context,
+            new_line("po_donor_line_fallback", "po_donor_no_default"),
+            None,
+        )
+        .unwrap();
+        let line = line_repo
+            .find_one_by_id("po_donor_line_fallback")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.donor_id, Some(mock_donor_a().id));
+
+        insert_stock_in_line(
+            &context,
+            new_line("po_donor_line_default", "po_donor_with_default"),
+            None,
+        )
+        .unwrap();
+        let line = line_repo
+            .find_one_by_id("po_donor_line_default")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.donor_id, Some("donor_b".to_string()));
+    }
+
+    #[actix_rt::test]
+    async fn insert_stock_in_line_purchase_order_line_from_other_order() {
+        fn po_a_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "po_a_inbound".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_purchase_order_line_from_other_order",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![po_a_inbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        let new_line = |id: &str, purchase_order_line_id: String| InsertStockInLine {
+            id: id.to_string(),
+            invoice_id: po_a_inbound().id,
+            item_id: mock_item_a().id,
+            pack_size: 1.0,
+            number_of_packs: 1.0,
+            r#type: StockInType::InboundShipment,
+            purchase_order_line_id: Some(purchase_order_line_id),
+            ..Default::default()
+        };
+
+        // A line of a different purchase order is refused
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                new_line("other_order_line", mock_purchase_order_b_line_1().id),
+                None
+            ),
+            Err(ServiceError::PurchaseOrderLineNotFromLinkedOrder)
+        );
+
+        // A line of the linked purchase order is accepted
+        insert_stock_in_line(
+            &context,
+            new_line("linked_order_line", mock_purchase_order_a_line_1().id),
+            None,
+        )
+        .unwrap();
+    }
+
     #[actix_rt::test]
     async fn insert_stock_in_line_authorised_received_invoice() {
         fn authorised_received_inbound() -> InvoiceRow {
@@ -618,7 +809,8 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        let gtin = "new-gtin-123".to_string();
+        // Stored in standard form; no barcode or proposal is created
+        let scanned = " 9506682101352\n".to_string();
 
         insert_stock_in_line(
             &context,
@@ -628,7 +820,7 @@ mod test {
                 item_id: mock_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 1.0,
-                barcode: Some(gtin.clone()),
+                barcode: Some(scanned),
                 ..Default::default()
             },
             None,
@@ -656,15 +848,16 @@ mod test {
             expected.number_of_packs = 1.0;
             expected
         });
-
-        let barcode = BarcodeRepository::new(&connection)
-            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(gtin.to_owned())))
-            .unwrap()
-            .pop()
-            .unwrap();
+        assert_eq!(inbound_line.barcode.as_deref(), Some("gtin:09506682101352"));
 
         let stock_line = stock_line_option.unwrap();
-        assert_eq!(stock_line.barcode_id, Some(barcode.barcode_row.id));
+        assert_eq!(stock_line.barcode.as_deref(), Some("gtin:09506682101352"));
+        assert_eq!(
+            BarcodeProposalRepository::new(&connection)
+                .query_by_filter(BarcodeProposalFilter::new())
+                .unwrap(),
+            vec![]
+        );
 
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {
@@ -908,8 +1101,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_stock_in_line_persists_reason() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_stock_in_line_persists_reason", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_stock_in_line_persists_reason",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -941,5 +1137,146 @@ mod test {
             line.reason_option_id,
             Some(mock_shipment_variance_reason_option().id)
         );
+    }
+    #[actix_rt::test]
+    async fn insert_stock_in_line_shipped_inbound_shipment() {
+        /// A transfer from another store, its lines are the sending store's record
+        fn transferred_shipment() -> InvoiceRow {
+            InvoiceRow {
+                id: "shipped_transferred_shipment".to_string(),
+                status: InvoiceStatus::Shipped,
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..Default::default()
+            }
+        }
+
+        /// Raised against a purchase order, the user records what the supplier despatched
+        fn external_shipment() -> InvoiceRow {
+            InvoiceRow {
+                id: "shipped_external_shipment".to_string(),
+                status: InvoiceStatus::Shipped,
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_shipped_inbound_shipment",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![transferred_shipment(), external_shipment()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Lines of a transferred shipment are locked while it is in transit
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "line_on_transferred_shipment".to_string(),
+                    invoice_id: transferred_shipment().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 5.0,
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotEditFinalised)
+        );
+
+        // An external shipment stays editable while in transit
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "line_on_external_shipment".to_string(),
+                invoice_id: external_shipment().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                r#type: StockInType::InboundShipment,
+                purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        // ...but the goods are still in transit, so no stock is created for it yet
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("line_on_external_shipment")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.stock_line_id, None);
+    }
+
+    /// A line added by hand to a foreign-currency shipment carries its total in
+    /// the shipment's currency from the start — the local total at the
+    /// shipment's own rate — rather than a null the Financial tab reads as 0.
+    #[actix_rt::test]
+    async fn insert_stock_in_line_writes_foreign_currency_total() {
+        let invoice = InvoiceRow {
+            id: "foreign_currency_inbound".to_string(),
+            store_id: mock_store_b().id,
+            name_id: mock_name_store_b().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            currency_id: Some(currency_b().id),
+            currency_rate: 2.0,
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_writes_foreign_currency_total",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // 5 packs at 10.00 local = 50.00 local = 25.00 in the shipment's currency.
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "foreign_currency_line".to_string(),
+                invoice_id: invoice.id.clone(),
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 10.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("foreign_currency_line")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.total_before_tax, 50.0);
+        assert_eq!(line.foreign_currency_price_before_tax, Some(25.0));
     }
 }

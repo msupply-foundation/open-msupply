@@ -1,0 +1,91 @@
+# The line editor's context charts (spec/internal-orders S4 § charts,
+# contract › editing lines). Display-only, keyed by a SAVED line id — an
+# unsaved add-mode draft has no id to read by, so its consumption history comes
+# with its forecast preview instead (internalOrderLineEdit.graphql, issue 1189)
+# and its stock evolution from the preview below. The server reads only the
+# series a query selects, so the two are separate: the consumption history is
+# always shown, and the stock evolution is read only once the editor's
+# "Additional charts" section is opened (issue 2102). The consumption history
+# asks for 12 months (the server's default is 3); the stock evolution takes the
+# server's defaults (30 historic / 20 projected points). An order with no
+# expected-delivery-date (or a line with no snapshot moment) returns the series
+# null.
+#
+# The node shapes match the ConsumptionHistoryPoint / StockEvolutionPoint the
+# chart components take, so their nodes pass straight through.
+query requisitionLineConsumptionChart($storeId: String!, $lineId: String!) {
+  requisitionLineChart(
+    storeId: $storeId
+    requestRequisitionLineId: $lineId
+    consumptionOptionsInput: { numberOfDataPoints: 12 }
+  ) {
+    __typename
+    ... on ItemChartNode {
+      consumptionHistory {
+        nodes {
+          date
+          consumption
+          averageMonthlyConsumption
+          isHistoric
+          isCurrent
+        }
+      }
+    }
+    ... on RequisitionLineChartError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+query requisitionLineStockEvolution($storeId: String!, $lineId: String!) {
+  requisitionLineChart(storeId: $storeId, requestRequisitionLineId: $lineId) {
+    __typename
+    ... on ItemChartNode {
+      stockEvolution {
+        nodes {
+          date
+          stockOnHand
+          minimumStockOnHand
+          maximumStockOnHand
+          isHistoric
+          isProjected
+        }
+      }
+    }
+    ... on RequisitionLineChartError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# An unsaved add-mode draft's stock evolution: the line its insert would
+# create, previewed with the draft's method and activity, as
+# internalOrderLineEdit.graphql previews it.
+query internalOrderLinePreviewStockEvolution(
+  $storeId: String!
+  $input: RequisitionLineForecastPreviewInput!
+) {
+  requisitionLineForecastPreview(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineForecastPreviewNode {
+      chart {
+        stockEvolution {
+          nodes {
+            date
+            stockOnHand
+            minimumStockOnHand
+            maximumStockOnHand
+            isHistoric
+            isProjected
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
+use repository::EqualFilter;
 use repository::asset_category::{AssetCategoryFilter, AssetCategoryRepository};
 use repository::asset_category_row::AssetCategoryRow;
-use repository::EqualFilter;
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;

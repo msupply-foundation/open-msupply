@@ -16,7 +16,7 @@ use rsa::{RsaPrivateKey, RsaPublicKey};
 use walkdir::WalkDir;
 use x509_parser::prelude::{FromDer, X509Certificate};
 
-use super::manifest::{create_manifest, Manifest, ManifestSignatureInfo};
+use super::manifest::{Manifest, ManifestSignatureInfo, create_manifest};
 use super::{
     CERTIFICATE_TAG, MANIFEST_FILE, MANIFEST_SIGNATURE_FILE, PLUGIN_CERT_DIR, PLUGIN_FILE_DIR,
     PRIVATE_KEY_TAG, SHA256_NAME, SIGNATURE_TAG, VERIFICATION_ALGO_PSS,

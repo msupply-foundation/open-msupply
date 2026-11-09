@@ -1,14 +1,14 @@
 use repository::{
+    ActivityLogType, RepositoryError, TransactionError,
     item_variant::{
         bundled_item::{BundledItemFilter, BundledItemRepository},
         item_variant_row::ItemVariantRowRepository,
     },
-    ActivityLogType, RepositoryError, TransactionError,
 };
 
 use crate::{
     activity_log::activity_log_entry,
-    item::bundled_item::{delete_bundled_item, DeleteBundledItem, DeleteBundledItemError},
+    item::bundled_item::{DeleteBundledItem, DeleteBundledItemError, delete_bundled_item},
     service_provider::ServiceContext,
 };
 

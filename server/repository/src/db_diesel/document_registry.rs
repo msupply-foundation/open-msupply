@@ -1,14 +1,14 @@
 use super::{
-    document_registry_row::document_registry, form_schema_row::form_schema, StorageConnection,
+    StorageConnection, document_registry_row::document_registry, form_schema_row::form_schema,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
     DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow, FormSchemaRow,
     StringFilter,
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
+use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
@@ -184,6 +184,8 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
             name,
             form_schema_id: _,
             config,
+            plugin_code: _,
+            program_key: _,
         },
         form_schema,
     ) = data;

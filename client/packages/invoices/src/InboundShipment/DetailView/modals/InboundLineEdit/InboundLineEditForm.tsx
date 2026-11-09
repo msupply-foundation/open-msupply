@@ -81,8 +81,7 @@ export const InboundLineEditForm = ({
 
   const remainingUnits =
     hasPurchaseOrder && selectedPOLine
-      ? (selectedPOLine.adjustedNumberOfUnits ??
-          selectedPOLine.requestedNumberOfUnits) -
+      ? selectedPOLine.requestedNumberOfUnits -
         (selectedPOLine.shippedNumberOfUnits ?? 0)
       : null;
 
@@ -139,10 +138,7 @@ export const InboundLineEditForm = ({
   return (
     <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
       <Box display="flex" alignItems="center" flex={1} minWidth={300} gap={1}>
-        <ModalLabel
-          label={t('label.item', { count: 1 })}
-          justifyContent="flex-end"
-        />
+        <ModalLabel label={t('label.item')} justifyContent="flex-end" />
         <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!item}

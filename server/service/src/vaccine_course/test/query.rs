@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_immunisation_program_a, MockDataInserts};
     use repository::StringFilter;
+    use repository::mock::{MockDataInserts, mock_immunisation_program_a};
     use repository::{
         test_db::setup_all,
         vaccine_course::vaccine_course::{
@@ -10,7 +10,7 @@ mod query {
     };
 
     use crate::vaccine_course::insert::InsertVaccineCourse;
-    use crate::{service_provider::ServiceProvider, SingleRecordError};
+    use crate::{SingleRecordError, service_provider::ServiceProvider};
 
     #[actix_rt::test]
     async fn vaccine_course_service_single_record() {
@@ -33,6 +33,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -73,6 +74,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -91,6 +93,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 

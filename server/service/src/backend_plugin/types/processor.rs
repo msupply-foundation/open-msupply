@@ -1,5 +1,5 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
-use plugin_provider::{call_plugin, PluginResult};
+use plugin_provider::{PluginResult, call_plugin};
 use repository::{ChangelogRow, CompatibilityChangelogFilter, PluginType};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;

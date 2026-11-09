@@ -81,14 +81,14 @@ fn map_upsert_error(error: UpsertServiceError) -> Result<UpsertLineErrorInterfac
         E::ValidateMovement(V::NotEnoughStock(stock_line_id)) => {
             return Ok(UpsertLineErrorInterface::NotEnoughStock(NotEnoughStock {
                 stock_line_id,
-            }))
+            }));
         }
         E::ValidateMovement(
             V::SourceLocationOnHold(location_id) | V::DestinationLocationOnHold(location_id),
         ) => {
             return Ok(UpsertLineErrorInterface::LocationOnHold(LocationOnHold {
                 location_id,
-            }))
+            }));
         }
         E::StockRelocationDoesNotExist
         | E::NotThisStoreRelocation

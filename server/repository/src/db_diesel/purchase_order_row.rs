@@ -1,9 +1,11 @@
 use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
     db_diesel::{
-        changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
+        changelog::changelog::RowOrId, currency_row::currency, custom_fields_json::JsonValue,
+        item_link_row::item_link, item_row::item, name_row::name,
     },
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -15,6 +17,7 @@ table! {
         purchase_order_id -> Text,
         order_total_before_discount -> Double,
         order_total_after_discount -> Double,
+        supplier_discountable_total -> Double,
     }
 }
 
@@ -24,6 +27,8 @@ pub struct PurchaseOrderStatsRow {
     pub purchase_order_id: String,
     pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
+    /// The stock lines' total — service lines take no supplier discount
+    pub supplier_discountable_total: f64,
 }
 
 define_linked_tables! {
@@ -54,15 +59,12 @@ define_linked_tables! {
         authorising_officer_2 -> Nullable<Text>,
         additional_instructions -> Nullable<Text>,
         heading_message -> Nullable<Text>,
-        agent_commission -> Nullable<Double>,
-        document_charge -> Nullable<Double>,
-        communications_charge -> Nullable<Double>,
-        insurance_charge -> Nullable<Double>,
-        freight_charge -> Nullable<Double>,
         freight_conditions -> Nullable<Text>,
         supplier_discount_percentage -> Nullable<Double>,
         request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
+        cancelled_datetime -> Nullable<Timestamp>,
     },
     links: {
         supplier_name_link_id -> supplier_name_id,
@@ -73,10 +75,16 @@ define_linked_tables! {
 }
 
 joinable!(purchase_order -> purchase_order_stats (id));
+joinable!(purchase_order -> name (supplier_name_id));
+joinable!(purchase_order -> currency (currency_id));
 
 allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
+allow_tables_to_appear_in_same_query!(purchase_order, name);
+allow_tables_to_appear_in_same_query!(purchase_order, currency);
+allow_tables_to_appear_in_same_query!(purchase_order_stats, name);
+allow_tables_to_appear_in_same_query!(purchase_order_stats, currency);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order)]
@@ -104,18 +112,22 @@ pub struct PurchaseOrderRow {
     pub authorising_officer_2: Option<String>,
     pub additional_instructions: Option<String>,
     pub heading_message: Option<String>,
-    pub agent_commission: Option<f64>,
-    pub document_charge: Option<f64>,
-    pub communications_charge: Option<f64>,
-    pub insurance_charge: Option<f64>,
-    pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
     pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    pub custom_fields: Option<JsonValue>,
+    pub cancelled_datetime: Option<NaiveDateTime>,
     // Resolved from name_link - must be last to match view column order
     pub supplier_name_id: String,
     pub donor_id: Option<String>,
+}
+
+impl PurchaseOrderRow {
+    /// The share of a value that remains once the supplier discount is taken off.
+    pub fn supplier_discount_factor(&self) -> f64 {
+        1.0 - self.supplier_discount_percentage.unwrap_or(0.0) / 100.0
+    }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd)]
@@ -129,6 +141,7 @@ pub enum PurchaseOrderStatus {
     Confirmed,
     Sent,
     Finalised,
+    Cancelled,
 }
 pub struct PurchaseOrderRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -139,10 +152,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         PurchaseOrderRowRepository { connection }
     }
 
-    pub fn upsert_one(
-        &self,
-        purchase_order_row: &PurchaseOrderRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, purchase_order_row: &PurchaseOrderRow) -> Result<(), RepositoryError> {
         self._upsert(purchase_order_row)?;
         let changelog = PurchaseOrderRow::generate_changelog(
             RowOrId::Row(purchase_order_row),
@@ -203,7 +213,10 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
         Ok(purchase_order::table
             .filter(purchase_order::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -240,6 +253,10 @@ impl Upsert for PurchaseOrderRow {
             PurchaseOrderRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn std::any::Any> {
+        Some(self)
     }
 }
 
@@ -280,9 +297,9 @@ impl Delete for PurchaseOrderDelete {
 
 #[cfg(test)]
 mod test {
-    use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
+    use crate::mock::{MockDataInserts, mock_name_c, mock_store_a};
     use crate::{
-        test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, test_db::setup_all,
     };
     use strum::IntoEnumIterator;
     use util::uuid::uuid;

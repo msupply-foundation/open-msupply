@@ -5,16 +5,16 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        ancillary_item_row::AncillaryItemRow, mock::MockDataInserts, StorageConnectionManager,
+        StorageConnectionManager, ancillary_item_row::AncillaryItemRow, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         item::{
-            ancillary_item::{
-                DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem,
-                UpsertAncillaryItemError,
-            },
             ItemServiceTrait,
+            ancillary_item::{
+                DeleteAncillaryItem, DeleteAncillaryItemError, SetSupplyWastageRate,
+                SetSupplyWastageRateError, UpsertAncillaryItem, UpsertAncillaryItemError,
+            },
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -25,14 +25,30 @@ mod test {
     struct TestService {
         upsert: Option<
             Box<
-                dyn Fn(&ServiceContext, UpsertAncillaryItem) -> Result<AncillaryItemRow, UpsertAncillaryItemError>
+                dyn Fn(
+                        &ServiceContext,
+                        UpsertAncillaryItem,
+                    ) -> Result<AncillaryItemRow, UpsertAncillaryItemError>
                     + Sync
                     + Send,
             >,
         >,
         delete: Option<
             Box<
-                dyn Fn(&ServiceContext, DeleteAncillaryItem) -> Result<String, DeleteAncillaryItemError>
+                dyn Fn(
+                        &ServiceContext,
+                        DeleteAncillaryItem,
+                    ) -> Result<String, DeleteAncillaryItemError>
+                    + Sync
+                    + Send,
+            >,
+        >,
+        set_supply_wastage_rate: Option<
+            Box<
+                dyn Fn(
+                        &ServiceContext,
+                        SetSupplyWastageRate,
+                    ) -> Result<f64, SetSupplyWastageRateError>
                     + Sync
                     + Send,
             >,
@@ -54,6 +70,17 @@ mod test {
             input: DeleteAncillaryItem,
         ) -> Result<String, DeleteAncillaryItemError> {
             (self.delete.as_ref().expect("delete not stubbed"))(ctx, input)
+        }
+
+        fn set_supply_wastage_rate(
+            &self,
+            ctx: &ServiceContext,
+            input: SetSupplyWastageRate,
+        ) -> Result<f64, SetSupplyWastageRateError> {
+            (self
+                .set_supply_wastage_rate
+                .as_ref()
+                .expect("set_supply_wastage_rate not stubbed"))(ctx, input)
         }
     }
 
@@ -83,6 +110,7 @@ mod test {
                     id
                     itemQuantity
                     ancillaryQuantity
+                    excludePrincipalWastage
                     itemId
                     ancillaryItemId
                 }
@@ -106,12 +134,15 @@ mod test {
                 "ancillaryItemId": "item_b",
                 "itemQuantity": 2.0,
                 "ancillaryQuantity": 3.0,
+                "excludePrincipalWastage": true,
             }
         }));
 
         // Cycle error → typed AncillaryCycleDetected error variant
         let test_service = TestService {
-            upsert: Some(Box::new(|_, _| Err(UpsertAncillaryItemError::CycleDetected))),
+            upsert: Some(Box::new(|_, _| {
+                Err(UpsertAncillaryItemError::CycleDetected)
+            })),
             ..Default::default()
         };
         let expected_cycle = json!({
@@ -152,10 +183,7 @@ mod test {
         // MaxDepthExceeded → typed AncillaryMaxDepthExceeded error variant with max/actual
         let test_service = TestService {
             upsert: Some(Box::new(|_, _| {
-                Err(UpsertAncillaryItemError::MaxDepthExceeded {
-                    max: 5,
-                    actual: 6,
-                })
+                Err(UpsertAncillaryItemError::MaxDepthExceeded { max: 5, actual: 6 })
             })),
             ..Default::default()
         };
@@ -203,6 +231,8 @@ mod test {
                     item_quantity: input.item_quantity,
                     ancillary_quantity: input.ancillary_quantity,
                     deleted_datetime: None,
+                    exclude_principal_wastage: input.exclude_principal_wastage.unwrap_or(false),
+                    wastage_rate: 0.0,
                 })
             })),
             ..Default::default()
@@ -212,6 +242,7 @@ mod test {
                 "id": "ai1",
                 "itemQuantity": 2.0,
                 "ancillaryQuantity": 3.0,
+                "excludePrincipalWastage": true,
                 "itemId": "item_a",
                 "ancillaryItemId": "item_b",
             }
@@ -275,6 +306,94 @@ mod test {
             &variables,
             "Forbidden",
             None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_set_supply_wastage_rate() {
+        let (_, _, connection_manager, settings) = setup_graphql_test(
+            EmptyMutation,
+            AncillaryItemMutations,
+            "omsupply-database-gql-set-supply-wastage-rate",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let query = r#"mutation SetSupplyWastageRate($storeId: String!, $input: SetSupplyWastageRateInput!) {
+            setSupplyWastageRate(storeId: $storeId, input: $input) {
+                __typename
+                ... on SupplyWastageRateNode {
+                    itemId
+                    wastageRate
+                }
+                ... on SetSupplyWastageRateError {
+                    error {
+                        __typename
+                    }
+                }
+            }
+        }"#;
+
+        let variables = Some(json!({
+            "storeId": "store_a",
+            "input": { "itemId": "item_a", "wastageRate": 10.0 }
+        }));
+
+        // RateOutOfRange → typed SupplyWastageRateOutOfRange error variant
+        let test_service = TestService {
+            set_supply_wastage_rate: Some(Box::new(|_, _| {
+                Err(SetSupplyWastageRateError::RateOutOfRange)
+            })),
+            ..Default::default()
+        };
+        let expected_out_of_range = json!({
+            "setSupplyWastageRate": {
+                "__typename": "SetSupplyWastageRateError",
+                "error": { "__typename": "SupplyWastageRateOutOfRange" }
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected_out_of_range,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // NotCentralServer → "Forbidden"
+        let test_service = TestService {
+            set_supply_wastage_rate: Some(Box::new(|_, _| {
+                Err(SetSupplyWastageRateError::NotCentralServer)
+            })),
+            ..Default::default()
+        };
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            "Forbidden",
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Success
+        let test_service = TestService {
+            set_supply_wastage_rate: Some(Box::new(|_, input| Ok(input.wastage_rate))),
+            ..Default::default()
+        };
+        let expected = json!({
+            "setSupplyWastageRate": {
+                "__typename": "SupplyWastageRateNode",
+                "itemId": "item_a",
+                "wastageRate": 10.0
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
     }

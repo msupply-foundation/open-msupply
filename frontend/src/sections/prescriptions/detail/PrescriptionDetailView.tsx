@@ -1,0 +1,943 @@
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  Show,
+  type Component,
+} from 'solid-js';
+import { useNavigate, useParams } from '@solidjs/router';
+import { graphqlFetch } from '../../../api/graphql';
+import { gated, notFound } from '../../../api/gated';
+import { t, tPlural } from '../../../intl';
+import { Page } from '../../../ui/layout/Page/Page';
+import { Header } from '../../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
+import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import {
+  CommentHeader,
+  getCellDefinition,
+  getCurrencyCell,
+  getExpiryDateCell,
+  getNumberCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../../api/createTableConfig';
+import {
+  Tabs,
+  TabList,
+  TabPanel,
+  type TabDef,
+} from '../../../ui/elements/tabs/Tabs';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAction, createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_L, ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  CloseIcon,
+  InfoIcon,
+  PlusCircleIcon,
+  PrinterIcon,
+  SidebarIcon,
+  TrashIcon,
+} from '../../../ui/icons';
+import { createFlash } from '../../../ui/utils/createFlash';
+import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { ActivityLogPanel } from '../../../domain/activityLog';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
+import { SelectReportModal } from '../../../domain/reports';
+import {
+  hasPermission,
+  prescriptionPreferences,
+} from '../../../store/storeContext';
+import { storeNameOf } from '../../../auth/authContext';
+import {
+  asPrescriptionStatus,
+  isReadOnly,
+  isPlaceholderLine,
+  isRenderableLine,
+} from '../prescriptionStatus';
+import {
+  PrescriptionDetail,
+  type PrescriptionFieldsFragment,
+} from './prescriptionDetail.generated';
+import { InsuranceProviders, InsurancePolicies } from './insurance.generated';
+import {
+  deleteLines,
+  savePrescription,
+  type UpdateInput,
+} from './prescriptionUpdate';
+import { PRINT_LABEL_PRESCRIPTION_URL } from '../../../config';
+import { buildLabels } from './labels';
+import {
+  LabelPrintOutcomeDialog,
+  printLabels,
+  printOutcomeReport,
+  type LabelPrintOutcome,
+} from '../../../domain/labelPrinter';
+import { PrescriptionToolbar } from './PrescriptionToolbar';
+import {
+  PrescriptionSidePanel,
+  type PrescriptionEditFields,
+} from './PrescriptionSidePanel';
+import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
+import { HistoryModal } from './HistoryModal';
+import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
+import { PrescriptionLineViewModal } from './PrescriptionLineViewModal';
+// By its own path, not the patients section's index: App.tsx loads that
+// index for the routes, and the modal carries the document form host
+// (spec/patients S4 allow-edit), which must stay out of the startup bundle.
+import { EditPatientModal } from '../../patients/detail/EditPatientModal';
+import {
+  createIssueScanHost,
+  ScanButton,
+  ScanStatus,
+  type IssueScan,
+} from '@/domain/barcode';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
+
+// The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
+// (patient / clinician / date / program), Details + Log tabs over the flat
+// line table (a row per dispensed line, plus a prescribed-quantity
+// placeholder row where an item has nothing dispensed — OMS-REG-DIS-03.25/.55),
+// the side panel, and the status footer. Dispensing happens in the S4 modal
+// (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
+// selection opens S4's read-only face rather than its editor (.73).
+
+type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
+
+const PrescriptionDetailView: Component = () => {
+  const params = useParams<{ storeId: string; prescriptionId: string }>();
+  const navigate = useNavigate();
+
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  const [activeTab, setActiveTab] = createSignal('details');
+  // What the S4 line editor is open on: a row's item (edit), nothing (Add
+  // item), or a scan (add mode on the scanned item — spec/barcode-scanning
+  // rules § Issuing by scanning).
+  type EditState = {
+    itemId?: string;
+    item?: { id: string; code: string; name: string };
+    scan?: IssueScan;
+  };
+  const [editState, setEditState] = createSignal<EditState>();
+  const openEditor = (state: EditState) => setEditState(state);
+  // S4's read-only face (.73) — the item it's open for; undefined = closed.
+  const [viewItemId, setViewItemId] = createSignal<string>();
+  // The patient picker's edit-patient modal (#1038) — the id it's currently
+  // open for; undefined = closed. Mounted fresh per open (below), like
+  // editState's line editor.
+  const [editPatientId, setEditPatientId] = createSignal<string>();
+  const [historyOpen, setHistoryOpen] = createSignal(false);
+  const [reportOpen, setReportOpen] = createSignal(false);
+  const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
+  const [printingLabels, setPrintingLabels] = createSignal(false);
+  // The print outcome reported ON the control that started it (D73 — a label
+  // leaves the app, so nothing on screen would otherwise distinguish printed
+  // from not). Both print controls can be on screen at once, so the flash
+  // carries which one to label: the app bar's must not report an outcome the
+  // bulk bar's button earned. It reverts on its own timer; the failure detail
+  // is held separately so its dialog stays open until the user closes it.
+  type PrintSource = 'header' | 'bulk';
+  const printFlash = createFlash<{
+    source: PrintSource;
+    outcome: 'done' | 'failed';
+  }>();
+  const [printOutcome, setPrintOutcome] = createSignal<LabelPrintOutcome>();
+
+  // The prescription — header, side panel, AND lines in one read (a
+  // prescription's line set is small; no server paging needed). The read pins
+  // `type: PRESCRIPTION`, so another invoice kind's id, another store's
+  // prescription, and a bad id all come back as a NodeError (RecordNotFound)
+  // and resolve to null — the blocking not-found alert renders below
+  // (OMS-REG-DIS-03.53; #1746); a failed read resolves undefined and keeps the
+  // spinner, under the global error modal. That NodeError is deliberately NOT
+  // routed to the global unexpected-error modal (no mapSuccessToError): it
+  // would offer a useless reload of the same bad id and shadow the local
+  // notice — the same call the outbound and return details make. Saves merge
+  // via mutate, line saves refetch.
+  const [data, { mutate, refetch }] = createResource(
+    () => ({
+      storeId: params.storeId,
+      id: params.prescriptionId,
+    }),
+    async variables => {
+      const result = await graphqlFetch(PrescriptionDetail, variables);
+      if (result.kind !== 'success') return undefined;
+      return result.data.invoice.__typename === 'InvoiceNode'
+        ? result.data.invoice
+        : null;
+    }
+  );
+  // Non-suspending read: neither the first load (pending → undefined → the
+  // Show's spinner) nor a post-save refetch (refreshing → the previous node,
+  // subtree kept — the open line-edit dialog included) ever trips a Suspense
+  // boundary.
+  const info = (): PrescriptionFieldsFragment | undefined =>
+    gated(data) ?? undefined;
+
+  // Insurance providers — the payment-window and insurance-status gates
+  // (OMS-REG-DIS-04.27; provider presence, not a preference — captured as-is).
+  const [providersData] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(InsuranceProviders, { storeId });
+      return result.kind === 'success'
+        ? result.data.insuranceProviders.nodes.length > 0
+        : undefined;
+    }
+  );
+  const hasInsuranceProviders = () => gated(providersData) ?? false;
+
+  // The patient's policy count (the insured/not-insured row) — keyed on the
+  // patient so a patient change refetches.
+  const [policiesData] = createResource(
+    () => info()?.patient?.id,
+    async nameId => {
+      const result = await graphqlFetch(InsurancePolicies, {
+        storeId: params.storeId,
+        nameId,
+      });
+      return result.kind === 'success'
+        ? result.data.insurancePolicies.nodes.filter(p => p.isActive).length
+        : undefined;
+    }
+  );
+
+  const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
+  const disabled = () => isReadOnly(status());
+  // A placeholder on a record that can still change: a VERIFIED record keeps
+  // its placeholders (rules › prescribed quantity), and they need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !disabled() && isPlaceholderLine(line);
+
+  // Dispensing by scanning (spec/prescriptions ui-surface S3 page actions
+  // "Add from scanner"; the shared issuing host in domain/barcode): a scan
+  // opens S4 on the item its code means within the record's program, or
+  // empty with a warning when it means nothing yet; a scan while S4 waits
+  // for an item (after OK & next) picks it. With a hardware scanner the
+  // screen listens from arrival while the record is editable; a camera
+  // scans per press. `info()` is the `.state`-gated read, so a refetch never
+  // reads as "not editable" and stops the scanner mid-visit.
+  const issueScan = createIssueScanHost({
+    owner: 'prescription',
+    storeId: () => params.storeId,
+    disabled: () => !info() || disabled(),
+    editorOpen: () => editState() != null,
+    openEditor: scan => openEditor({ scan }),
+    masterListId: () => info()?.programId ?? undefined,
+  });
+
+  // The rendered rows — dispensed lines, a cancellation reversal's returned
+  // lines, and the prescribed-quantity placeholder (isRenderableLine);
+  // ordered by item then batch for a stable read.
+  const rows = createMemo((): Line[] =>
+    (info()?.lines.nodes ?? [])
+      .filter(isRenderableLine)
+      .slice()
+      .sort(
+        (a, b) =>
+          a.itemName.localeCompare(b.itemName) ||
+          (a.batch ?? '').localeCompare(b.batch ?? '')
+      )
+  );
+
+  const tableConfig = createTableConfig({
+    tableId: 'prescription-detail',
+    defaultConfig: {
+      base: {
+        // The long tail starts hidden (the user reveals via column settings);
+        // directions/code/name/quantities stay visible.
+        columnVisibility: {
+          batch: false,
+          expiryDate: false,
+          locationName: false,
+          unitName: false,
+          packSize: false,
+          costPrice: false,
+        },
+      },
+    },
+  });
+
+  const saveField = async (input: Omit<UpdateInput, 'id'>) => {
+    const node = info();
+    if (!node) return;
+    const outcome = await savePrescription(params.storeId, {
+      id: node.id,
+      ...input,
+    });
+    if (outcome.kind === 'saved')
+      mutate(prev => (prev ? { ...prev, ...outcome.node } : prev));
+  };
+
+  // The OMS-REG-DIS-04.26 flow: delete ALL lines, then apply the date/program
+  // change.
+  const clearLinesAndSave = async (input: Omit<UpdateInput, 'id'>) => {
+    const node = info();
+    if (!node) return;
+    const ok = await deleteLines(
+      params.storeId,
+      node.lines.nodes.map(line => line.id)
+    );
+    if (!ok) return;
+    await saveField(input);
+    void refetch();
+  };
+
+  // One debounced buffer across the entity's text fields (reference +
+  // comment), seeded per prescription identity.
+  const edit = createDebouncedEdit<PrescriptionEditFields>({
+    id: () => info()?.id ?? '',
+    initial: () => ({
+      theirReference: info()?.theirReference ?? '',
+      comment: info()?.comment ?? '',
+    }),
+    save: patch =>
+      void saveField({
+        ...(patch.theirReference !== undefined
+          ? { theirReference: { value: patch.theirReference || null } }
+          : {}),
+        ...(patch.comment !== undefined ? { comment: patch.comment } : {}),
+      }),
+  });
+
+  const runDeleteLines = async () => {
+    const ok = await deleteLines(params.storeId, selectedIds());
+    setDeleteLinesConfirm(false);
+    if (ok) {
+      setSelectedIds([]);
+      void refetch();
+    }
+  };
+
+  // Print labels (OMS-REG-DIS-03.47/.71): gated on a configured label printer;
+  // one label per dispensed item — the whole prescription from the app bar, the
+  // selection from the bulk bar. The endpoint's answer is reported either way
+  // (.64): the printer is off-screen hardware, so a rejected print reaches the
+  // user only through this control.
+  const runPrintLabels = async (source: PrintSource, lineIds?: string[]) => {
+    const node = info();
+    if (!node || printingLabels()) return;
+    setPrintingLabels(true);
+    try {
+      const lines = lineIds
+        ? rows().filter(line => lineIds.includes(line.id))
+        : rows();
+      const outcome = await printLabels(
+        PRINT_LABEL_PRESCRIPTION_URL,
+        buildLabels(node, storeNameOf(params.storeId), lines)
+      );
+      // WHERE the report lands is this screen's: in place on whichever control
+      // was pressed (OMS-REG-DIS-03.71), and the dialog below. What it says —
+      // including whether the control says anything at all — is the device's.
+      const { flash } = printOutcomeReport(outcome);
+      if (flash) printFlash.show({ source, outcome: flash });
+      setPrintOutcome(outcome);
+    } finally {
+      setPrintingLabels(false);
+    }
+  };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). One declaration for the header button and the ghost
+  // button in the table's empty slot; each carries `shortcut={ALT_N}` for its
+  // badge. `info()` is the `.state`-gated read above, so this predicate never
+  // suspends the palette (kdd/keyboard-layer § an action's `disabled` MUST NOT
+  // read a suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => openEditor({}),
+    disabled: () => !info() || disabled(),
+  });
+
+  // Alt+L — print prescription labels (KB-R1's binding table, ui-surface S2). A
+  // SPECIFIC action, gated on this screen because this is the only place it
+  // exists (KB-R2's contrast). Available at every status
+  // (OMS-REG-DIS-03.47/.71); inert while a print is already in flight,
+  // mirroring the footer control's `loading`. Runs the HEADER control's print,
+  // which is the control that advertises the badge.
+  createAction({
+    name: 'button.print-all-labels',
+    shortcut: ALT_L,
+    run: () => void runPrintLabels('header'),
+    disabled: () => !info() || printingLabels(),
+  });
+
+  // What a given print control is reporting — nothing unless it was the one
+  // pressed. Resting (undefined) leaves each control its own label and icon.
+  const printOutcomeOf = (source: PrintSource) => {
+    const flash = printFlash.value();
+    return flash?.source === source ? flash.outcome : undefined;
+  };
+  const printIcon = (outcome?: 'done' | 'failed') =>
+    outcome === 'done' ? (
+      <CheckIcon />
+    ) : outcome === 'failed' ? (
+      <AlertCircleIcon />
+    ) : (
+      <PrinterIcon />
+    );
+  const printText = (outcome?: 'done' | 'failed') =>
+    outcome === 'done'
+      ? t('message.print-success')
+      : outcome === 'failed'
+        ? t('message.print-failed')
+        : undefined;
+
+  // Row selection opens S4 for the row's item — the editor while editable
+  // (.55), its read-only face once it isn't (.73). Never a navigation away:
+  // what the reader wants is the directions the item was dispensed with, and
+  // they live on the line.
+  const openRow = (line: Line) => {
+    if (disabled()) setViewItemId(line.itemId);
+    else
+      openEditor({
+        itemId: line.itemId,
+        item: { id: line.itemId, code: line.itemCode, name: line.itemName },
+      });
+  };
+
+  // The read-only face reads off the lines already loaded, so it needs only
+  // the item — EVERY line of it, placeholders included (the prescribed quantity
+  // and the directions may sit on one; see ./lineView).
+  const viewLines = createMemo((): Line[] => {
+    const itemId = viewItemId();
+    if (itemId == null) return [];
+    return (info()?.lines.nodes ?? []).filter(line => line.itemId === itemId);
+  });
+
+  const tabs = (): TabDef[] => [
+    { value: 'details', label: t('label.details') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
+    { value: 'log', label: t('label.log') },
+  ];
+
+  // Custom-fields save (explicit-save tab) — patch-merged server-side; returns
+  // true so the tab clears its dirty state. The toolbar (prominent fields)
+  // saves through saveField directly (fire-and-forget, like other header
+  // fields).
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const current = info();
+    if (!current) return false;
+    const outcome = await savePrescription(params.storeId, {
+      id: current.id,
+      customFields: patch,
+    });
+    if (outcome.kind === 'saved') {
+      mutate(prev => (prev ? { ...prev, ...outcome.node } : prev));
+      return true;
+    }
+    return false;
+  };
+
+  const prefs = prescriptionPreferences;
+
+  const columns = (): Column<Line, never>[] => {
+    const cols: Column<Line, never>[] = [
+      {
+        c: { accessor: line => line.note ?? '', id: 'directions' },
+        header: () => <CommentHeader />,
+        ...getCellDefinition('comment'),
+      },
+      { c: { key: 'itemCode' }, header: () => t('label.code') },
+      {
+        c: { key: 'itemName' },
+        header: () => t('label.name'),
+        meta: { headerPosition: 'primary' },
+      },
+      { c: { key: 'batch' }, header: () => t('label.batch') },
+      {
+        c: { key: 'expiryDate' },
+        header: () => t('label.expiry-date'),
+        ...getExpiryDateCell(),
+      },
+      { c: { key: 'locationName' }, header: () => t('label.location') },
+      {
+        c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
+        header: () => t('label.unit-name'),
+      },
+      {
+        c: { key: 'packSize' },
+        header: () => t('label.pack-size'),
+        ...getNumberCell(),
+      },
+    ];
+    if (prefs().manageVaccinesInDoses)
+      cols.push({
+        c: {
+          accessor: line => (line.item.isVaccine ? line.item.doses : ''),
+          id: 'dosesPerUnit',
+        },
+        header: () => t('label.doses-per-unit'),
+        ...getNumberCell(),
+      });
+    cols.push({
+      c: {
+        accessor: line => line.numberOfPacks * line.packSize,
+        id: 'unitQuantity',
+      },
+      header: () => t('label.unit-quantity'),
+      ...getNumberCell(),
+    });
+    if (prefs().manageVaccinesInDoses)
+      cols.push({
+        c: {
+          accessor: line =>
+            line.item.isVaccine
+              ? line.numberOfPacks * line.packSize * line.item.doses
+              : '',
+          id: 'doses',
+        },
+        header: () => t('label.doses'),
+        ...getNumberCell(),
+      });
+    // The preference governs whether a DISPENSER may enter a prescribed
+    // quantity. On a dispensation generated by a hand-over the figure is the
+    // prescriber's and is the whole content of the hand-over: its lines are
+    // UNALLOCATED_STOCK with no packs yet, so gating the column on that
+    // preference left the dispenser looking at item names and nothing else
+    // (spec/prescription-requests § the hand-over — "the dispensing surfaces
+    // show it and do not offer it for entry"; showing it is not optional).
+    if (prefs().editPrescribedQuantity || info()?.prescriptionRequestId != null)
+      cols.push({
+        c: {
+          accessor: line => line.prescribedQuantity ?? '',
+          id: 'prescribedQuantity',
+        },
+        header: () => t('label.prescribed-quantity'),
+        ...getNumberCell(),
+      });
+    cols.push(
+      {
+        c: { key: 'numberOfPacks' },
+        header: () => t('label.pack-quantity'),
+        ...getNumberCell(),
+      },
+      // The money columns stay EMPTY on a placeholder row: it holds no
+      // stock and no packs, so a price would be a fabricated $0.00 (the
+      // current app blanks them the same way).
+      {
+        c: {
+          accessor: line =>
+            isPlaceholderLine(line)
+              ? null
+              : line.sellPricePerPack / (line.packSize || 1),
+          id: 'unitPrice',
+        },
+        header: () => t('label.unit-price'),
+        ...getCurrencyCell(),
+      },
+      {
+        c: {
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalAfterTax,
+          id: 'totalAfterTax',
+        },
+        header: () => t('label.line-total'),
+        ...getCurrencyCell(),
+      },
+      {
+        c: {
+          accessor: line =>
+            isPlaceholderLine(line)
+              ? null
+              : line.costPricePerPack * line.numberOfPacks,
+          id: 'costPrice',
+        },
+        header: () => t('label.purchase-cost-price'),
+        ...getCurrencyCell(),
+      }
+    );
+    return cols;
+  };
+
+  const crumbs = (node?: PrescriptionFieldsFragment) => [
+    {
+      label: t('dispensing'),
+      to: `/${params.storeId}/dispensary/dispensing`,
+    },
+    { label: node ? `${node.invoiceNumber}` : '…' },
+  ];
+
+  return (
+    <Show
+      when={info()}
+      fallback={
+        // Spinner while the first read is in flight, or under the global error
+        // modal when it failed; a read the server answers as not found is the
+        // not-found alert (OMS-REG-DIS-03.53).
+        <Show when={notFound(data)} fallback={<Spinner center />}>
+          <NotFoundNotice
+            testId="prescription-not-found-notice"
+            title={t('error.prescription-not-found')}
+            description={t('messages.click-to-return-to-prescriptions')}
+            onClose={() => navigate(`/${params.storeId}/dispensary/dispensing`)}
+          />
+        </Show>
+      }
+    >
+      {node => (
+        <Tabs value={activeTab()} onValueChange={setActiveTab}>
+          <Page
+            fillBody
+            header={
+              <Header>
+                <Breadcrumb crumbs={crumbs(node())} />
+                <HeaderButtons>
+                  {/* Add item — hidden once read-only (D39). */}
+                  <Show when={!disabled()}>
+                    <Button
+                      icon={<PlusCircleIcon />}
+                      shortcut={ALT_N}
+                      data-testid="add-item-button"
+                      onClick={() => openEditor({})}
+                    >
+                      {t('button.add-item')}
+                    </Button>
+                  </Show>
+                  {/* Add from scanner: a camera's Scan action, shown at every
+                      status and disabled once the record can't be edited, as
+                      on receiving. Nothing renders here for a hardware
+                      scanner, whose status is the field cluster's trailing
+                      note. */}
+                  <ScanButton control={issueScan.control} />
+                  {/* Print: labels primary, the report selector as the
+                      option — both at every status (OMS-REG-DIS-03.47/.48/.71). Labels report
+                      their outcome here (.64): busy, then printed / failed. */}
+                  <SplitButton
+                    icon={printIcon(printOutcomeOf('header'))}
+                    testId="print-button"
+                    options={[
+                      {
+                        value: 'labels',
+                        label: t('button.print-all-labels'),
+                      },
+                      {
+                        value: 'report',
+                        label: t('button.export-or-print'),
+                      },
+                    ]}
+                    defaultValue="labels"
+                    loading={printingLabels()}
+                    mainLabel={printText(printOutcomeOf('header'))}
+                    // Alt+L is registered above and runs the labels action; it
+                    // lands on this control's MAIN half, whose default option is
+                    // labels (ui-surface S2).
+                    shortcut={ALT_L}
+                    onAction={value => {
+                      if (value === 'labels')
+                        return void runPrintLabels('header');
+                      // Picking an option also re-targets the main button, so a
+                      // lingering "Printed" would now label Export or print —
+                      // drop it (createFlash § clear).
+                      printFlash.clear();
+                      setReportOpen(true);
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    icon={<InfoIcon />}
+                    data-testid="history-button"
+                    onClick={() => setHistoryOpen(true)}
+                  >
+                    {t('button.history')}
+                  </Button>
+                  <Show when={!sidePanelOpen()}>
+                    <Button
+                      variant="secondary"
+                      icon={<SidebarIcon />}
+                      data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it (ui-surface S2).
+                      shortcut={ALT_M}
+                      onClick={() => setSidePanelOpen(true)}
+                    >
+                      {t('button.more')}
+                    </Button>
+                  </Show>
+                </HeaderButtons>
+                {/* The header field cluster — never a hand-rolled <Toolbar>
+                    (ui/docs/PAGES.md § header field cluster). */}
+                {/* A scan's outcome, inline beside the action that took it —
+                    never a toast (controls › action feedback). */}
+                <Show when={issueScan.noticeShown()}>
+                  {notice => (
+                    <Toolbar>
+                      <Alert severity={notice().severity} testId="scan-notice">
+                        {notice().text}
+                      </Alert>
+                    </Toolbar>
+                  )}
+                </Show>
+                <HeaderToolbar
+                  alert={<ScanStatus control={issueScan.control} />}
+                >
+                  <PrescriptionToolbar
+                    storeId={params.storeId}
+                    node={node()}
+                    disabled={disabled()}
+                    onSave={input => void saveField(input)}
+                    onClearLinesAndSave={clearLinesAndSave}
+                    onEditPatient={setEditPatientId}
+                  />
+                </HeaderToolbar>
+                <TabList tabs={tabs()} />
+              </Header>
+            }
+            sidePanelOpen={sidePanelOpen()}
+            sidePanelTitle={t('heading.additional-info')}
+            onSidePanelClose={() => setSidePanelOpen(false)}
+            sidePanelContent={
+              <PrescriptionSidePanel
+                storeId={params.storeId}
+                node={node()}
+                disabled={disabled()}
+                edit={edit}
+                hasInsuranceProviders={hasInsuranceProviders()}
+                patientPolicyCount={gated(policiesData)}
+                canCancelPermission={hasPermission('CANCEL_FINALISED_INVOICES')}
+                onSave={input => void saveField(input)}
+                onCancel={() =>
+                  void savePrescription(params.storeId, {
+                    id: node().id,
+                    status: 'CANCELLED',
+                  }).then(outcome => {
+                    if (outcome.kind === 'saved')
+                      mutate(prev =>
+                        prev ? { ...prev, ...outcome.node } : prev
+                      );
+                  })
+                }
+                onDeleted={() =>
+                  navigate(`/${params.storeId}/dispensary/dispensing`, {
+                    replace: true,
+                  })
+                }
+              />
+            }
+            contentFooter={
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <PrescriptionStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    hasInsuranceProviders={hasInsuranceProviders()}
+                    onSaved={saved =>
+                      mutate(prev => (prev ? { ...prev, ...saved } : prev))
+                    }
+                  />
+                }
+              >
+                <ContentFooter testId="actions-footer">
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  <Show when={!disabled()}>
+                    <Button
+                      variant="secondary"
+                      icon={<TrashIcon />}
+                      data-testid="delete-lines-button"
+                      onClick={() => setDeleteLinesConfirm(true)}
+                    >
+                      {t('button.delete-lines')}
+                    </Button>
+                  </Show>
+                  <Button
+                    variant="secondary"
+                    icon={printIcon(printOutcomeOf('bulk'))}
+                    loading={printingLabels()}
+                    data-testid="print-labels-button"
+                    onClick={() => void runPrintLabels('bulk', selectedIds())}
+                  >
+                    {printText(printOutcomeOf('bulk')) ??
+                      t('button.print-selected-labels')}
+                  </Button>
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<CloseIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
+            }
+          >
+            <TabPanel value="details">
+              <DataTable
+                columns={columns()}
+                rows={rows()}
+                rowKey={line => line.id}
+                // Placeholder rows — nothing dispensed yet, as their cells say
+                // (no batch, zero packs): CARD_TABLE_MODEL.md § rowAccent.
+                rowTint={line =>
+                  isOpenPlaceholder(line) ? 'unfinished' : undefined
+                }
+                rowAccent={line =>
+                  isOpenPlaceholder(line) ? 'unfinished' : undefined
+                }
+                cardTone={line =>
+                  isOpenPlaceholder(line) ? 'info' : undefined
+                }
+                loading={data.loading && !info()}
+                onRowClick={openRow}
+                emptyMessage={t('error.no-items')}
+                empty={
+                  <Show when={!disabled()}>
+                    <Button
+                      variant="ghost"
+                      shortcut={ALT_N}
+                      data-testid="nothing-here-create-button"
+                      onClick={() => openEditor({})}
+                    >
+                      {t('button.add-item')}
+                    </Button>
+                  </Show>
+                }
+                enableSelection
+                selectedIds={selectedIds()}
+                onSelectionChange={setSelectedIds}
+                config={tableConfig.config()}
+                setConfig={tableConfig.setConfig}
+                // Central-server admins can promote this table's layout to the
+                // shared install-wide default, the same as the list (issue
+                // #1118 — detail tables offered no way to save table
+                // defaults). Gate + action both off the config controller;
+                // undefined for everyone else, so the action isn't offered.
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
+              />
+            </TabPanel>
+            <TabPanel value="custom-fields">
+              <CustomFieldsEditTab
+                scope="prescription"
+                promoteToToolbar
+                disabled={disabled()}
+                values={node().customFields}
+                onSave={saveCustomFields}
+              />
+            </TabPanel>
+            <TabPanel value="log">
+              <ActivityLogPanel recordId={node().id} storeId={params.storeId} />
+            </TabPanel>
+          </Page>
+
+          {/* The S4 line editor (D53) — mounted fresh per open. */}
+          <Show when={editState()} keyed>
+            {state => (
+              <PrescriptionLineEditModal
+                storeId={params.storeId}
+                invoiceId={node().id}
+                initialItemId={state.itemId}
+                initialItem={state.item}
+                programId={node().programId ?? undefined}
+                // Generated by a prescription-request hand-over: the prescribed
+                // quantity is the prescriber's figure, so this screen reads it
+                // and never writes it (spec/prescriptions § prescribed
+                // quantity).
+                lockPrescribedQuantity={node().prescriptionRequestId != null}
+                scan={state.scan}
+                onScanReceiver={issueScan.setReceiver}
+                onBatchLabelReceiver={issueScan.setBatchLabelReceiver}
+                scanDiscarded={issueScan.discarded()}
+                onClose={() => {
+                  issueScan.editorClosed();
+                  setEditState(undefined);
+                }}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          {/* "Which item is this barcode?" for a barcode mapped to several
+              items (barcode-scanning rules § Looking a barcode up). Mounted
+              outside the editor: a scan asks before the editor opens. */}
+          <issueScan.Chooser />
+
+          {/* S4's read-only face (.73) — the same surface the editor above
+              occupies while the prescription is editable, opened by a row
+              selection once it isn't. */}
+          <Show when={viewLines().length > 0}>
+            <PrescriptionLineViewModal
+              lines={viewLines()}
+              onClose={() => setViewItemId(undefined)}
+            />
+          </Show>
+
+          {/* The patient picker's edit-patient modal (spec/patients S4,
+              #1038) — in place over this screen, never a navigate-away;
+              mounted fresh per open like the line editor above. A save
+              refetches so the toolbar/side panel show the patient's current
+              name. */}
+          <Show when={editPatientId()} keyed>
+            {patientId => (
+              <EditPatientModal
+                storeId={params.storeId}
+                patientId={patientId}
+                onClose={() => setEditPatientId(undefined)}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          <Show when={historyOpen()}>
+            <HistoryModal
+              storeId={params.storeId}
+              patientId={node().patient?.id ?? ''}
+              excludeInvoiceId={node().id}
+              onClose={() => setHistoryOpen(false)}
+            />
+          </Show>
+
+          <Show when={reportOpen()}>
+            <SelectReportModal
+              context="PRESCRIPTION"
+              dataId={node().id}
+              onClose={() => setReportOpen(false)}
+            />
+          </Show>
+
+          {/* Bulk line delete (with count). */}
+          <ConfirmDialog
+            open={deleteLinesConfirm()}
+            onClose={() => setDeleteLinesConfirm(false)}
+            title={t('heading.are-you-sure')}
+            message={tPlural(
+              'messages.confirm-delete-dispensing-lines',
+              selectedIds().length
+            )}
+            confirmVariant="danger"
+            onConfirm={() => void runDeleteLines()}
+          />
+
+          {/* The other half of the print report — see runPrintLabels. */}
+          <LabelPrintOutcomeDialog
+            outcome={printOutcome()}
+            onClose={() => setPrintOutcome(undefined)}
+          />
+        </Tabs>
+      )}
+    </Show>
+  );
+};
+
+export default PrescriptionDetailView;

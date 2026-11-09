@@ -140,7 +140,7 @@ mod test {
 
     #[test]
     fn test_check_batch_on_hold() {
-        use super::{check_batch_on_hold, StockOutType};
+        use super::{StockOutType, check_batch_on_hold};
         use repository::{StockLine, StockLineRow};
 
         // Test batch not on hold - should always return true
@@ -179,7 +179,7 @@ mod test {
 
     #[test]
     fn test_check_location_on_hold() {
-        use super::{check_location_on_hold, LocationIsOnHoldError, StockOutType};
+        use super::{LocationIsOnHoldError, StockOutType, check_location_on_hold};
         use repository::LocationRow;
 
         // No location - should always pass

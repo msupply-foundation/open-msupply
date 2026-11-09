@@ -1,4 +1,4 @@
-use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeSort, PaginationOption,
     StorageConnectionManager,

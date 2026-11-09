@@ -1,8 +1,8 @@
-use super::{category_row::category, item_row::item, StorageConnection};
+use super::{StorageConnection, category_row::category, item_row::item};
 use crate::diesel_macros::define_linked_tables;
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 
 use chrono::NaiveDateTime;

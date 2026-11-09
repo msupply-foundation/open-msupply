@@ -48,12 +48,16 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               type: 'text',
               name: t('label.sensor-name'),
               urlParameter: 'sensor.name',
+              // e2e contract ids (frontend/e2e/TESTIDS.md § Cold chain ›
+              // Monitoring): the filter's own name, not its GraphQL path.
+              testId: 'sensorName',
             },
             {
               type: 'text',
               name: t('label.location'),
               urlParameter: 'location.code',
               placeholder: t('placeholder.search-by-location-code'),
+              testId: 'locationCode',
             },
             {
               type: 'group',
@@ -80,6 +84,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.breach-type'),
               urlParameter: 'type',
               options: breachTypeOptions(t),
+              testId: 'breachType',
             },
             {
               type: 'boolean',

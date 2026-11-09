@@ -299,19 +299,8 @@ mod repository_test {
     }
 
     use crate::{
-        mock::{
-            currency_a, mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
-            mock_inbound_shipment_number_store_a, mock_item_link_from_item,
-            mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
-            mock_request_draft_requisition, mock_request_draft_requisition2,
-            mock_test_master_list_name1, mock_test_master_list_name2,
-            mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
-            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
-        },
-        requisition_row::RequisitionStatus,
-        test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository,
-        InvoiceRow,
+        ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter, InvoiceLineFilter,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRow,
         ItemRowRepository, KeyType, KeyValueStoreRepository, MasterListFilter,
         MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
@@ -320,10 +309,21 @@ mod repository_test {
         RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
         RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
         StockLineRowRepository, StorageConnection, StoreRowRepository, UserAccountRowRepository,
+        mock::{
+            MockDataInserts, currency_a, mock_draft_request_requisition_line,
+            mock_draft_request_requisition_line2, mock_inbound_shipment_number_store_a,
+            mock_item_link_from_item, mock_master_list_master_list_line_filter_test,
+            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
+            mock_request_draft_requisition2, mock_test_master_list_name_filter1,
+            mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
+            mock_test_master_list_name1, mock_test_master_list_name2, mock_test_master_list_store1,
+        },
+        requisition_row::RequisitionStatus,
+        test_db,
     };
     use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
-    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Text};
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -886,8 +886,10 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             {
-                let mut ids: Vec<String> =
-                    by_code.iter().map(|l| l.invoice_line_row.id.clone()).collect();
+                let mut ids: Vec<String> = by_code
+                    .iter()
+                    .map(|l| l.invoice_line_row.id.clone())
+                    .collect();
                 ids.sort();
                 ids
             },
@@ -1367,7 +1369,8 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_activity_log_row_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-activity-log-row-repository");
         let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 

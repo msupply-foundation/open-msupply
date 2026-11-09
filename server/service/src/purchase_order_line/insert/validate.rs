@@ -3,7 +3,7 @@ use crate::{
     purchase_order_line::insert::{
         InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput, PackSizeCodeCombination,
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 use repository::{
     EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
@@ -51,10 +51,10 @@ pub fn validate(
     let item_store = ItemStoreJoinRowRepository::new(connection)
         .find_one_by_item_and_store_id(&item.id, store_id)?;
 
-    if let Some(item_store_join) = item_store {
-        if item_store_join.ignore_for_orders {
-            return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
-        }
+    if let Some(item_store_join) = item_store
+        && item_store_join.ignore_for_orders
+    {
+        return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
     }
 
     // check if pack size and item id combination already exists
@@ -64,7 +64,7 @@ pub fn validate(
             PurchaseOrderLineFilter::new()
                 .purchase_order_id(EqualFilter::equal_to(input.purchase_order_id.to_string()))
                 .requested_pack_size(EqualFilter::equal_to(
-                    input.requested_pack_size.unwrap_or_default(),
+                    input.requested_pack_size.unwrap_or(item.default_pack_size),
                 ))
                 .item_id(EqualFilter::equal_to(item.id.to_string())),
         ),
@@ -74,32 +74,36 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(
             PackSizeCodeCombination {
                 item_code: item.code.clone(),
-                requested_pack_size: input.requested_pack_size.unwrap_or_default(),
+                requested_pack_size: input.requested_pack_size.unwrap_or(item.default_pack_size),
             },
         ));
     }
 
     if let Some(manufacturer_id) = &input.manufacturer_id {
-        check_other_party(
+        match check_other_party(
             connection,
             store_id,
             manufacturer_id,
             CheckOtherPartyType::Manufacturer,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => {
-                InsertPurchaseOrderLineError::OtherPartyDoesNotExist {}
-            }
-            OtherPartyErrors::OtherPartyNotVisible => {
-                InsertPurchaseOrderLineError::OtherPartyNotVisible
-            }
-            OtherPartyErrors::TypeMismatched => {
-                InsertPurchaseOrderLineError::OtherPartyNotAManufacturer
-            }
-            OtherPartyErrors::DatabaseError(repository_error) => {
-                InsertPurchaseOrderLineError::DatabaseError(repository_error)
-            }
-        })?;
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => {
+                    return Err(InsertPurchaseOrderLineError::OtherPartyDoesNotExist {});
+                }
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => {
+                    return Err(InsertPurchaseOrderLineError::OtherPartyNotAManufacturer);
+                }
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(InsertPurchaseOrderLineError::DatabaseError(
+                        repository_error,
+                    ));
+                }
+            },
+        };
     };
 
     Ok(item)

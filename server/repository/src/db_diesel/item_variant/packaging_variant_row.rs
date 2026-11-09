@@ -1,6 +1,6 @@
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -15,6 +15,7 @@ table! {
         pack_size -> Nullable<Double>,
         volume_per_unit -> Nullable<Double>,
         deleted_datetime -> Nullable<Timestamp>,
+        barcode -> Nullable<Text>,
     }
 }
 
@@ -22,6 +23,7 @@ table! {
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(table_name = packaging_variant)]
+#[diesel(treat_none_as_null = true)]
 pub struct PackagingVariantRow {
     pub id: String,
     pub name: String,
@@ -30,6 +32,12 @@ pub struct PackagingVariantRow {
     pub pack_size: Option<f64>,
     pub volume_per_unit: Option<f64>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    /// A confirmed barcode for this packaging, in its standard form with its
+    /// scheme, e.g. `gtin:09506682101352` (`util::barcode`). Set on central only
+    /// (decisions/2026-09-30_barcodes.md). A deleted packaging variant keeps its
+    /// barcode, as the record that central removed the barcode for the item.
+    #[serde(default)]
+    pub barcode: Option<String>,
 }
 pub struct PackagingVariantRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -89,9 +97,22 @@ impl<'a> PackagingVariantRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
         Ok(packaging_variant::table
             .filter(packaging_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// Packaging variants with this barcode, deleted ones included
+    pub fn find_many_by_barcode(
+        &self,
+        barcode: &str,
+    ) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
+        Ok(packaging_variant::table
+            .filter(packaging_variant::barcode.eq(barcode))
             .load(self.connection.lock().connection())?)
     }
 }

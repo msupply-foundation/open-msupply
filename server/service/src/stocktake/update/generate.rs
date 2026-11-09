@@ -1,15 +1,17 @@
 use chrono::Utc;
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
-    vvm_status::vvm_status_log_row::VVMStatusLogRow,
     ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter, InvoiceRow,
     InvoiceStatus, InvoiceType, LocationMovementRow, NameRowRepository, NumberRowType,
     RepositoryError, StockLineRow, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
+    campaign::campaign_row::CampaignRowRepository,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     invoice::inventory_adjustment::UpdateInventoryAdjustmentReason,
     invoice_line::{
@@ -18,7 +20,6 @@ use crate::{
     },
     number::next_number,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 
 use super::{UpdateStocktake, UpdateStocktakeError};
@@ -211,7 +212,8 @@ fn generate_stock_in_out_or_update(
             stock_line_id: Some(stock_line_row.id),
             item_id: item.id.clone(),
             stock_on_hold: stock_line_row.on_hold,
-            barcode: stock_line_row.barcode_id,
+            // Not a scanned barcode: the stock line keeps the one it has
+            barcode: None,
             // Default
             total_before_tax: None,
             tax_percentage: None,
@@ -259,6 +261,7 @@ fn generate_stock_in_out_or_update(
             prescribed_quantity: None,
             received_number_of_packs: None,
             reason_option_id: None,
+            transfer_comment: None,
         })
     };
 
@@ -313,27 +316,27 @@ fn log_stock_changes(
             new.batch,
         )?;
     }
-    if let Some(cost_price_per_pack) = new.cost_price_per_pack {
-        if existing.cost_price_per_pack != cost_price_per_pack {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::StockCostPriceChange,
-                Some(existing.id.to_string()),
-                Some(existing.cost_price_per_pack.to_string()),
-                Some(cost_price_per_pack.to_string()),
-            )?;
-        }
+    if let Some(cost_price_per_pack) = new.cost_price_per_pack
+        && existing.cost_price_per_pack != cost_price_per_pack
+    {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockCostPriceChange,
+            Some(existing.id.to_string()),
+            Some(existing.cost_price_per_pack.to_string()),
+            Some(cost_price_per_pack.to_string()),
+        )?;
     }
-    if let Some(sell_price_per_pack) = new.sell_price_per_pack {
-        if existing.sell_price_per_pack != sell_price_per_pack {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::StockSellPriceChange,
-                Some(existing.id.to_string()),
-                Some(existing.sell_price_per_pack.to_string()),
-                Some(sell_price_per_pack.to_string()),
-            )?;
-        }
+    if let Some(sell_price_per_pack) = new.sell_price_per_pack
+        && existing.sell_price_per_pack != sell_price_per_pack
+    {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockSellPriceChange,
+            Some(existing.id.to_string()),
+            Some(existing.sell_price_per_pack.to_string()),
+            Some(sell_price_per_pack.to_string()),
+        )?;
     }
     if existing.expiry_date != new.expiry_date {
         let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {
@@ -350,8 +353,41 @@ fn log_stock_changes(
             new.expiry_date.map(|date| date.to_string()),
         )?;
     }
+    if existing.campaign_id != new.campaign_id {
+        let previous_campaign = campaign_log_name(&ctx.connection, existing.campaign_id)?;
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockCampaignChange,
+            Some(existing.id.to_string()),
+            Some(previous_campaign.unwrap_or_else(|| "-".to_string())),
+            campaign_log_name(&ctx.connection, new.campaign_id)?,
+        )?;
+    }
 
     Ok(())
+}
+
+/// An activity's NAME for the activity trail. A stock line stores its campaign by id, and
+/// the trail is read by PEOPLE — the batch, expiry and price entries beside this one all
+/// log the value a user would recognise, so an id here would be the odd one out and say
+/// nothing. Resolved INCLUDING soft-deleted, since a line can carry a campaign that has
+/// since been deleted; an id that resolves to no row at all — a campaign that never
+/// reached this store — falls back to the id, which is at least traceable.
+fn campaign_log_name(
+    connection: &StorageConnection,
+    campaign_id: Option<String>,
+) -> Result<Option<String>, RepositoryError> {
+    let Some(campaign_id) = campaign_id else {
+        return Ok(None);
+    };
+
+    Ok(Some(
+        CampaignRowRepository::new(connection)
+            .find_one_by_id(&campaign_id)?
+            .map(|campaign| campaign.name)
+            .unwrap_or(campaign_id),
+    ))
 }
 
 fn generate_new_stock_line(

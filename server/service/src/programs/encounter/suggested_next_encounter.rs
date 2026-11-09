@@ -4,8 +4,8 @@ use repository::{
 };
 
 use crate::{
-    service_provider::{ServiceContext, ServiceProvider},
     ListError,
+    service_provider::{ServiceContext, ServiceProvider},
 };
 
 pub struct SuggestedNextEncounter {

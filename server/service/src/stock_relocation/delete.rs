@@ -88,17 +88,17 @@ impl From<RepositoryError> for DeleteStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_location_1, MockDataInserts},
-        test_db::setup_all,
         StockLineRow, StockLineRowRepository, StockRelocationLineRowRepository,
         StockRelocationRowRepository, StockRelocationStatus,
+        mock::{MockDataInserts, mock_location_1},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
     use crate::stock_relocation::update::UpdateStockRelocation;
-    use crate::stock_relocation_line::{upsert_stock_relocation_line, UpsertStockRelocationLine};
+    use crate::stock_relocation_line::{UpsertStockRelocationLine, upsert_stock_relocation_line};
 
     use super::*;
 
@@ -204,9 +204,11 @@ mod test {
 
         // roll-back
         let id3 = new_movement(&service_provider, &ctx);
-        assert!(service
-            .delete_stock_relocations(&ctx, "store_a", vec![id3.clone(), uuid()])
-            .is_err());
+        assert!(
+            service
+                .delete_stock_relocations(&ctx, "store_a", vec![id3.clone(), uuid()])
+                .is_err()
+        );
         assert!(repo.find_one_by_id(&id3).unwrap().is_some());
     }
 

@@ -130,6 +130,8 @@ fn generate(
         donor_id: None,
         manufacturer_id: None,
         legacy_goods_received_line_id: None,
+        transfer_comment: None,
+        barcode: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -169,13 +171,13 @@ impl From<RepositoryError> for InsertOutboundShipmentUnallocatedLineError {
 #[cfg(test)]
 mod test_insert {
     use repository::{
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
         mock::{
-            mock_allocated_invoice, mock_inbound_shipment_a, mock_item_service_item,
-            mock_new_invoice_with_unallocated_line, mock_store_a, mock_store_c,
-            mock_unallocated_line, mock_unallocated_line2, MockDataInserts,
+            MockDataInserts, mock_allocated_invoice, mock_inbound_shipment_a,
+            mock_item_service_item, mock_new_invoice_with_unallocated_line, mock_store_a,
+            mock_store_c, mock_unallocated_line, mock_unallocated_line2,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
     };
 
     use crate::{

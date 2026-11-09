@@ -2,17 +2,17 @@ mod graphql {
 
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{
-        mock::MockDataInserts, MasterList, MasterListFilter, MasterListSort,
-        StorageConnectionManager,
-    };
     use repository::{EqualFilter, PaginationOption, StringFilter};
+    use repository::{
+        MasterList, MasterListFilter, MasterListSort, StorageConnectionManager,
+        mock::MockDataInserts,
+    };
     use serde_json::json;
 
     use service::{
+        ListError, ListResult,
         master_list::MasterListServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        ListError, ListResult,
     };
 
     use crate::GeneralQueries;

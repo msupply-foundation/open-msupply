@@ -3,3 +3,8 @@ single:pass
 nostore:pass
 limited:pass
 nosend:pass
+noreq:pass
+StockViewer:pass
+assetclerk:pass
+poclerk:pass
+poviewer:pass

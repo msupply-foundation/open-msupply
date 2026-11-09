@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{sql, MigrationFragment},
     StorageConnection,
+    migrations::{MigrationFragment, sql},
 };
 use util::constants::PLUGIN_USER_ID;
 pub(crate) struct Migrate;

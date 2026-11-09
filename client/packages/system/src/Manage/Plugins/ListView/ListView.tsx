@@ -26,7 +26,7 @@ export const PluginsList = () => {
 
   const {
     query: { data, isError, isFetching },
-    install: { installMutation, installLoading },
+    install: { installMutation, installLoading, previewUploadedPlugin },
     uninstall: { uninstallMutation, uninstallLoading },
   } = useInstalledPlugins();
 
@@ -83,6 +83,16 @@ export const PluginsList = () => {
           row.kind === InstalledPluginKindType.Backend
             ? t('label.backend')
             : t('label.frontend'),
+        enableSorting: true,
+      },
+      // A plugin ships one bundle per front end, and the two can share a code
+      // and a version — so without the runtime this list shows one row twice,
+      // and the delete button acts on a row id it never displays.
+      {
+        id: 'hostRuntime',
+        header: t('label.runtime'),
+        // Blank for backend plugins, which have no host.
+        accessorFn: row => row.hostRuntime ?? '',
         enableSorting: true,
       },
       {
@@ -162,6 +172,7 @@ export const PluginsList = () => {
           isOpen={isOpen}
           onClose={onClose}
           install={installMutation}
+          preview={previewUploadedPlugin}
           isInstalling={installLoading}
         />
       )}

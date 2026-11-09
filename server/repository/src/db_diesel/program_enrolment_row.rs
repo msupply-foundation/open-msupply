@@ -1,11 +1,11 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, program_row::program, store_row::store,
-    RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, name_row::name, name_store_join::name_store_join,
+    program_row::program, store_row::store,
 };
 
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    diesel_macros::define_linked_tables,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -118,9 +118,11 @@ impl Upsert for ProgramEnrolmentRow {
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
-        assert!(ProgramEnrolmentRowRepository::new(con)
-            .find_one_by_id(&self.id)
-            .unwrap()
-            .is_some())
+        assert!(
+            ProgramEnrolmentRowRepository::new(con)
+                .find_one_by_id(&self.id)
+                .unwrap()
+                .is_some()
+        )
     }
 }

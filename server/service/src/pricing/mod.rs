@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::service_provider::ServiceContext;
-use item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup};
+use item_price::{ItemPrice, ItemPriceLookup, get_pricing_for_items};
 use repository::RepositoryError;
 
 pub mod calculate_sell_price;

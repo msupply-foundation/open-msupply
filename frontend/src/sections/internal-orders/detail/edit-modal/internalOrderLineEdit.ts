@@ -1,0 +1,520 @@
+import { graphqlFetch } from '../../../../api/graphql';
+import { t } from '../../../../intl';
+import {
+  InternalOrderItemStats,
+  AddInternalOrderLine,
+  UpdateInternalOrderLine,
+  InternalOrderLineForecastPreview,
+  type InternalOrderLineForecastPreviewResult,
+} from './internalOrderLineEdit.generated';
+import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
+
+// Line-editor domain logic (spec/internal-orders S4): the entry-mode
+// re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90), the draft's
+// forecast preview (the add-mode line, and a method change), and the two save
+// paths (OMS-REG-REPL-04.65/.68).
+
+// The quantity entry mode (OMS-REG-REPL-04.22/.24/.69/.88/.90): stored values
+// are always UNITS; the mode only re-expresses the display.
+export type EntryMode = 'units' | 'packs' | 'doses';
+
+// The forecast (its type, the method options, and the block that shows them)
+// is the shared module at src/domain/forecast — both requisition verticals'
+// editors consume it.
+import {
+  unavailableReasonMessage,
+  type ForecastLineFragment,
+  type ForecastMethod,
+  type ForecastMethodOption,
+  type ForecastMethodUnavailableReason,
+} from '../../../../domain/forecast';
+
+// The editor's working line — the same shape whether it comes from an existing
+// line (edit mode: the stored figures) or an add-mode preview (the line the
+// insert would create, from the server's forecast preview). A draft method
+// change re-previews it. Statistics are all in UNITS; the entry mode
+// re-expresses them at display time.
+export type EditorLine = {
+  /**
+   * Existing line id (edit) or the client-generated id that will create it
+   * (add).
+   */
+  lineId: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  unitName: string | null;
+  defaultPackSize: number;
+  doses: number;
+  isVaccine: boolean;
+  // Statistics (units).
+  availableStockOnHand: number;
+  averageMonthlyConsumption: number;
+  /** Stock on hand ÷ the line's monthly demand. */
+  monthsOfStock: number;
+  suggestedQuantity: number;
+  /** The line's monthly demand — its forecast's. */
+  monthlyDemand: number;
+  /**
+   * The draft's forecast (rules › forecasting): the stored one, or the
+   * server's preview of the line under the draft's method. Its method is what
+   * the save sends.
+   */
+  forecast: ForecastLineFragment;
+  /**
+   * The line's own method, before any draft change: the stored line's, or the
+   * one a new item's insert would give it. It stays selectable even when no
+   * longer available (rules › choosing a method).
+   */
+  ownForecastMethod: ForecastMethod;
+  forecastMethodOptions: ForecastMethodOption[];
+  pricePerUnit: number | null;
+  // Extended movements (edit mode on a customer-statistics program order).
+  initialStockOnHandUnits: number;
+  incomingUnits: number;
+  outgoingUnits: number;
+  lossInUnits: number;
+  additionInUnits: number;
+  expiringUnits: number;
+  daysOutOfStock: number;
+  // The editable draft.
+  requestedQuantity: number;
+  comment: string;
+  reasonId: string | null;
+  /** The line's Activity: its campaign id and name, or null for routine. */
+  campaign: { id: string; name: string } | null;
+  /**
+   * The stored variance reason's TEXT (the id above is what the editor writes).
+   * Carried so the line's published plugin view can be built from the editor's
+   * own draft — see `toLineViewFromEditor` (detail/pluginViews.ts).
+   */
+  reason: string | null;
+  /** True in add mode — no line exists on the wire until the first save. */
+  isNew: boolean;
+  /**
+   * The chart series of the line's latest preview (issue 1189), null when it
+   * has none or the server couldn't read them. Drawn only while `isNew` — an
+   * unsaved add-mode draft has no line to read them by; a stored line's
+   * series are read by its id, whatever its previews carry.
+   */
+  previewChart: ForecastPreview['chart'] | null;
+};
+
+// --- Entry-mode re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90)
+// ---------------------------
+
+// A stored unit value → the display value in the active mode: ÷ pack size for
+// packs (two decimals, OMS-REG-REPL-04.25), × doses-per-unit for doses.
+export const unitsToMode = (
+  units: number,
+  mode: EntryMode,
+  packSize: number,
+  doses: number
+): number => {
+  if (mode === 'packs') return packSize > 0 ? units / packSize : units;
+  if (mode === 'doses') return units * doses;
+  return units;
+};
+
+// A display value in the active mode → the stored units
+// (OMS-REG-REPL-04.22/.24/.69/.88/.90): packs × pack size; doses ÷
+// doses-per-unit, rounded UP (a part-unit of doses still consumes a whole
+// unit).
+export const modeToUnits = (
+  value: number,
+  mode: EntryMode,
+  packSize: number,
+  doses: number
+): number => {
+  if (mode === 'packs') return value * packSize;
+  if (mode === 'doses') return doses > 0 ? Math.ceil(value / doses) : value;
+  return value;
+};
+
+// A statistic re-expressed in the active mode for display (OMS-REG-REPL-04.74):
+// rounded to a whole number, AMC and Suggested rounding UP, everything else to
+// nearest; an absent value shows 0. Time quantities never pass through here.
+export const statInMode = (
+  units: number,
+  mode: EntryMode,
+  packSize: number,
+  doses: number,
+  roundUp = false
+): number => {
+  const raw = unitsToMode(units, mode, packSize, doses);
+  return roundUp ? Math.ceil(raw) : Math.round(raw);
+};
+
+// The store's default entry mode (OMS-REG-REPL-04.73): packs where the store
+// orders in packs (unconditionally — it does not check the item's pack size),
+// else doses for a dose-managed vaccine with a positive doses-per-unit, else
+// units.
+export const defaultEntryMode = (
+  orderInPacks: boolean,
+  manageVaccinesInDoses: boolean,
+  isVaccine: boolean,
+  doses: number
+): EntryMode => {
+  if (orderInPacks) return 'packs';
+  if (manageVaccinesInDoses && isVaccine && doses > 0) return 'doses';
+  return 'units';
+};
+
+/**
+ * Months of stock once the requested quantity arrives, taking it to arrive
+ * today: (stock on hand + requested) ÷ the line's monthly demand — the same
+ * demand as its current months of stock, and like it 0 when there's no demand
+ * (OMS-REG-REPL-04.106).
+ */
+export const monthsOfStockAfterOrder = (
+  line: Pick<EditorLine, 'availableStockOnHand' | 'monthlyDemand'>,
+  requestedUnits: number
+): number =>
+  line.monthlyDemand > 0
+    ? (line.availableStockOnHand + requestedUnits) / line.monthlyDemand
+    : 0;
+
+// --- Forecast preview (rules › choosing a method) --------------------------
+
+export type ForecastPreviewResult =
+  | { kind: 'previewed'; line: EditorLine }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+type ForecastPreview = Extract<
+  InternalOrderLineForecastPreviewResult['requisitionLineForecastPreview'],
+  { __typename: 'RequisitionLineForecastPreviewNode' }
+>;
+
+// The line's figures from a preview: its statistics (a new line's as its insert
+// would snapshot them), forecast, and suggestion. Months of stock as the line
+// table derives it: stock on hand ÷ the line's monthly demand.
+const withPreview = (
+  line: Omit<
+    EditorLine,
+    | 'availableStockOnHand'
+    | 'averageMonthlyConsumption'
+    | 'monthsOfStock'
+    | 'suggestedQuantity'
+    | 'monthlyDemand'
+    | 'forecast'
+    | 'forecastMethodOptions'
+    | 'previewChart'
+  >,
+  preview: ForecastPreview
+): EditorLine => ({
+  ...line,
+  availableStockOnHand: preview.availableStockOnHand,
+  averageMonthlyConsumption: preview.averageMonthlyConsumption,
+  monthsOfStock:
+    preview.forecastMonthlyConsumption > 0
+      ? preview.availableStockOnHand / preview.forecastMonthlyConsumption
+      : 0,
+  suggestedQuantity: preview.suggestedQuantity,
+  monthlyDemand: preview.forecastMonthlyConsumption,
+  forecast: preview,
+  forecastMethodOptions: preview.forecastMethodOptions,
+  previewChart: preview.chart,
+});
+
+// The draft's line for an item under `method` (null → the line's own) and held
+// for `campaignId` (null → nothing in particular), saving nothing (rules ›
+// choosing a method, rules › choosing an activity).
+//
+// The activity is sent on EVERY preview, as the save sends it: a preview that
+// left it out would re-scope the line's stock back to the STORED activity, so
+// changing the method after picking one would quietly undo the pick's effect on
+// the figures.
+const fetchForecastPreview = async (
+  storeId: string,
+  requisitionId: string,
+  itemId: string,
+  method: ForecastMethod | null,
+  campaignId: string | null
+): Promise<
+  | { kind: 'previewed'; preview: ForecastPreview }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' }
+> => {
+  const result = await graphqlFetch(InternalOrderLineForecastPreview, {
+    storeId,
+    input: {
+      requisitionId,
+      itemId,
+      forecastMethod: method,
+      campaignId: { value: campaignId },
+    },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.requisitionLineForecastPreview;
+  if (response.__typename === 'RequisitionLineForecastPreviewNode')
+    return { kind: 'previewed', preview: response };
+  const { error } = response;
+  return {
+    kind: 'error',
+    message:
+      error.__typename === 'ForecastMethodNotAvailable'
+        ? unavailableReasonMessage(error.unavailableReason)
+        : error.description,
+  };
+};
+
+// A draft method change: the line re-previewed under `method` — its forecast
+// and suggestion recomputed as the save will recompute them — with the draft's
+// own fields (quantity, comment, reason) the caller's and untouched. Nothing is
+// saved; Cancel discards it with the rest of the draft.
+export const previewForecastMethod = async (
+  storeId: string,
+  requisitionId: string,
+  line: EditorLine,
+  method: ForecastMethod
+): Promise<ForecastPreviewResult> => {
+  const result = await fetchForecastPreview(
+    storeId,
+    requisitionId,
+    line.itemId,
+    method,
+    line.campaign?.id ?? null
+  );
+  if (result.kind !== 'previewed') return result;
+  return { kind: 'previewed', line: withPreview(line, result.preview) };
+};
+
+// A draft activity change (rules › choosing an activity): the line re-previewed
+// as held for `campaign` — its stock on hand narrowed to that campaign's stock,
+// and the suggestion recomputed against it, as the save will recompute them.
+// The draft's own method travels too, so picking an activity never reverts a
+// method the user has already changed. Nothing is saved.
+export const previewActivity = async (
+  storeId: string,
+  requisitionId: string,
+  line: EditorLine,
+  campaign: { id: string; name: string } | null
+): Promise<ForecastPreviewResult> => {
+  const result = await fetchForecastPreview(
+    storeId,
+    requisitionId,
+    line.itemId,
+    line.forecast.forecastMethod,
+    campaign?.id ?? null
+  );
+  if (result.kind !== 'previewed') return result;
+  return {
+    kind: 'previewed',
+    line: { ...withPreview(line, result.preview), campaign },
+  };
+};
+
+// --- Add-mode line preview read ---------------------------------------------
+
+// A new item's draft line (OMS-REG-REPL-04.65): its details from a live read and its
+// statistics, forecast and suggestion from the forecast preview — the line the
+// insert would create, so the first save reproduces it. Nothing is created.
+export const buildAddPreview = async (
+  storeId: string,
+  requisitionId: string,
+  itemId: string,
+  lineId: string
+): Promise<EditorLine | undefined> => {
+  const [result, forecast] = await Promise.all([
+    graphqlFetch(InternalOrderItemStats, { storeId, itemId }),
+    // A new line starts held for nothing in particular, as its insert would
+    fetchForecastPreview(storeId, requisitionId, itemId, null, null),
+  ]);
+  if (result.kind !== 'success' || forecast.kind !== 'previewed')
+    return undefined;
+  const node = result.data.items.nodes[0];
+  if (!node) return undefined;
+  return withPreview(
+    {
+      lineId,
+      itemId: node.id,
+      itemCode: node.code,
+      itemName: node.name,
+      unitName: node.unitName,
+      defaultPackSize: node.defaultPackSize,
+      doses: node.doses,
+      isVaccine: node.isVaccine,
+      pricePerUnit: null,
+      initialStockOnHandUnits: 0,
+      incomingUnits: 0,
+      outgoingUnits: 0,
+      lossInUnits: 0,
+      additionInUnits: 0,
+      expiringUnits: 0,
+      daysOutOfStock: 0,
+      requestedQuantity: 0,
+      comment: '',
+      reasonId: null,
+      reason: null,
+      // A new line starts routine; the editor's Activity picker sets it.
+      campaign: null,
+      isNew: true,
+      ownForecastMethod: forecast.preview.forecastMethod,
+    },
+    forecast.preview
+  );
+};
+
+// An existing line → the editor's working shape (edit mode). Months of stock is
+// derived from the stored figures the same way the line table derives it: stock
+// on hand ÷ the line's monthly demand.
+export const editorLineFromLine = (
+  line: InternalOrderLineFragment
+): EditorLine => ({
+  lineId: line.id,
+  itemId: line.itemId,
+  itemCode: line.item.code,
+  itemName: line.itemName,
+  unitName: line.item.unitName,
+  defaultPackSize: line.item.defaultPackSize,
+  doses: line.item.doses,
+  isVaccine: line.item.isVaccine,
+  availableStockOnHand: line.availableStockOnHand,
+  averageMonthlyConsumption: line.averageMonthlyConsumption,
+  monthsOfStock:
+    line.forecastMonthlyConsumption > 0
+      ? line.availableStockOnHand / line.forecastMonthlyConsumption
+      : 0,
+  suggestedQuantity: line.suggestedQuantity,
+  monthlyDemand: line.forecastMonthlyConsumption,
+  forecast: line,
+  ownForecastMethod: line.forecastMethod,
+  forecastMethodOptions: line.forecastMethodOptions,
+  pricePerUnit: line.pricePerUnit,
+  initialStockOnHandUnits: line.initialStockOnHandUnits,
+  incomingUnits: line.incomingUnits,
+  outgoingUnits: line.outgoingUnits,
+  lossInUnits: line.lossInUnits,
+  additionInUnits: line.additionInUnits,
+  expiringUnits: line.expiringUnits,
+  daysOutOfStock: line.daysOutOfStock,
+  requestedQuantity: line.requestedQuantity,
+  comment: line.comment ?? '',
+  reasonId: line.optionId,
+  reason: line.reason?.reason ?? null,
+  campaign: line.campaign ?? null,
+  isNew: false,
+  previewChart: null,
+});
+
+// --- Save (OMS-REG-REPL-04.65/.68)
+// -----------------------------------------------------
+
+export type SaveLineResult =
+  { kind: 'saved' } | { kind: 'error'; message: string } | { kind: 'failed' };
+
+// Map the update union's typed errors to copy (contract › editing lines). Only
+// the reasons refusal, cannot-edit and an unavailable method (the draft's,
+// gone unavailable since it was previewed) are reachable from the editor; the
+// rest fall back to their description.
+const mapUpdateError = (error: {
+  __typename: string;
+  description: string;
+  unavailableReason?: ForecastMethodUnavailableReason;
+}): string => {
+  if (error.unavailableReason)
+    return unavailableReasonMessage(error.unavailableReason);
+  switch (error.__typename) {
+    case 'RecordNotFound':
+      return t('messages.record-not-found');
+    case 'CannotEditRequisition':
+      return t('error.cannot-edit-requisition');
+    case 'RequisitionReasonNotProvided':
+      return t('error.reasons-not-provided-program-requisition');
+    default:
+      return error.description;
+  }
+};
+
+type Draft = {
+  requestedQuantity: number;
+  comment: string;
+  // Omitted (undefined) where the order has no reason surface; null/string
+  // where it does — null clears the stored reason (D30).
+  optionId?: string | null;
+  /**
+   * The line's Activity — its campaign id, or null for routine. Always sent,
+   * on a program order as on a standard one: the wire wraps it so null is a
+   * clear rather than "leave alone".
+   */
+  campaignId: string | null;
+};
+
+// ADD (OMS-REG-REPL-04.65): the draft's first save realises the create — insert
+// (server generates the snapshot + suggestion + gated captures) then update (the
+// drafted quantity / comment / reason, and the draft's method — a no-op unless
+// the user changed it from the default), in one batch. A typed insert error
+// gets the generic failure surface (contract parity); the update error is
+// surfaced inline.
+export const saveNewLine = async (
+  storeId: string,
+  requisitionId: string,
+  line: EditorLine,
+  draft: Draft
+): Promise<SaveLineResult> => {
+  const result = await graphqlFetch(AddInternalOrderLine, {
+    storeId,
+    input: {
+      insertRequestRequisitionLines: [
+        { id: line.lineId, itemId: line.itemId, requisitionId },
+      ],
+      updateRequestRequisitionLines: [
+        {
+          id: line.lineId,
+          requestedQuantity: draft.requestedQuantity,
+          comment: draft.comment,
+          optionId: draft.optionId,
+          campaignId: { value: draft.campaignId },
+          forecastMethod: line.forecast.forecastMethod,
+        },
+      ],
+    },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const batch = result.data.batchRequestRequisition;
+  const insert = batch.insertRequestRequisitionLines?.[0];
+  if (insert && insert.response.__typename !== 'RequisitionLineNode')
+    // A typed insert rejection (duplicate item, cannot-edit, …) — generic
+    // failure, matching the reference (no dedicated handling).
+    return { kind: 'failed' };
+  const update = batch.updateRequestRequisitionLines?.[0];
+  if (
+    update &&
+    update.response.__typename === 'UpdateRequestRequisitionLineError'
+  )
+    return {
+      kind: 'error',
+      message: mapUpdateError(update.response.error),
+    };
+  return { kind: 'saved' };
+};
+
+// EDIT (OMS-REG-REPL-04.68): a single line update; exactly the changed fields
+// persist.
+// The draft's method rides it — the server recomputes the forecast only when it
+// differs from the stored one.
+export const saveExistingLine = async (
+  storeId: string,
+  line: EditorLine,
+  draft: Draft
+): Promise<SaveLineResult> => {
+  const result = await graphqlFetch(UpdateInternalOrderLine, {
+    storeId,
+    input: {
+      id: line.lineId,
+      requestedQuantity: draft.requestedQuantity,
+      comment: draft.comment,
+      optionId: draft.optionId,
+      campaignId: { value: draft.campaignId },
+      forecastMethod: line.forecast.forecastMethod,
+    },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updateRequestRequisitionLine;
+  if (response.__typename === 'RequisitionLineNode') return { kind: 'saved' };
+  return {
+    kind: 'error',
+    message: mapUpdateError(response.error),
+  };
+};

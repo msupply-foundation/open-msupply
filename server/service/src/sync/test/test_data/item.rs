@@ -3,8 +3,8 @@ use crate::sync::{
     translations::item::ordered_simple_json,
 };
 use repository::{
-    category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData,
-    sync_buffer::SyncRecordData, ItemRow, ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
+    ItemRow, ItemRowDelete, ItemType, SyncAction, SyncBufferRow, category_row::CategoryRow,
+    item_category_row::ItemCategoryJoinRow, mock::MockData, sync_buffer::SyncRecordData,
 };
 
 const TABLE_NAME: &str = "item";

@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
@@ -70,16 +70,15 @@ pub async fn insert_program(
 
     // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
     // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
-    let result = tokio::task::spawn_blocking(
-        move || -> Result<Result<Requisition, ServiceError>> {
+    let result =
+        tokio::task::spawn_blocking(move || -> Result<Result<Requisition, ServiceError>> {
             let service_context = service_provider.context(store_id, user.user_id)?;
             Ok(service_provider
                 .requisition_service
                 .insert_program_request_requisition(&service_context, input))
-        },
-    )
-    .await
-    .map_err(StandardGraphqlError::from_join_error)??;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }
@@ -104,10 +103,10 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::MaxOrdersReachedForPeriod => {
             return Ok(InsertErrorInterface::MaxOrdersReachedForPeriod(
                 MaxOrdersReachedForPeriod,
-            ))
+            ));
         }
         ServiceError::SupplierNotValid => {
-            return Ok(InsertErrorInterface::SupplierNotValid(SupplierNotValid))
+            return Ok(InsertErrorInterface::SupplierNotValid(SupplierNotValid));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
@@ -155,17 +154,17 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::{mock_program_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
+        mock::{MockDataInserts, mock_program_request_draft_requisition},
     };
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             request_requisition::{
                 InsertProgramRequestRequisition,
                 InsertProgramRequestRequisitionError as ServiceError,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

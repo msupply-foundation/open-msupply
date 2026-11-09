@@ -14,6 +14,7 @@ import {
   LinkIcon,
   PaperPopover,
   Typography,
+  ForecastMethodNode,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
@@ -140,7 +141,9 @@ export const useRequestColumns = () => {
         Cell: UnitsAndDosesCell,
         columnType: ColumnType.Number,
         accessorFn: row =>
-          row.forecastTotalUnits ? Math.ceil(row.forecastTotalUnits) : 0,
+          row.forecastMethod === ForecastMethodNode.Population
+            ? Math.ceil(row.targetStock)
+            : 0,
         defaultHideOnMobile: true,
       },
       {
@@ -160,7 +163,7 @@ export const useRequestColumns = () => {
           const showAlert =
             warningForExcessRequest &&
             row.original.requestedQuantity - row.original.suggestedQuantity >=
-            1;
+              1;
           return (
             <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
           );
@@ -297,9 +300,7 @@ const ItemNameCell = ({
       gap={0.5}
       width="100%"
     >
-      <Box sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-        {name}
-      </Box>
+      <Box sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>{name}</Box>
       <Box onClick={e => e.stopPropagation()} display="inline-flex">
         <PaperPopover
           mode="hover"
@@ -313,7 +314,13 @@ const ItemNameCell = ({
               {parents.length > 1 ? (
                 <Box
                   component="ul"
-                  sx={{ m: 0, pl: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
+                  sx={{
+                    m: 0,
+                    pl: 2.5,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.5,
+                  }}
                 >
                   {parents.map(p => (
                     <Typography component="li" key={p.id} variant="body2">

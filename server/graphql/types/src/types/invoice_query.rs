@@ -1,5 +1,6 @@
 use crate::types::{PurchaseOrderNode, ShippingMethodNode, SyncFileReferenceConnector};
 
+use super::campaign::CampaignNode;
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
@@ -11,15 +12,15 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader,
-    UserLoader,
+    AllowedCustomFieldKeysByScopeLoader, CampaignByIdLoader, CurrencyByIdLoader, DiagnosisLoader,
+    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader,
+    PatientLoader, ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader,
+    SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
+    ContextExt,
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{
     ClinicianRow, InvoiceRow, InvoiceType, Name, NameRow, NameRowType, PricingRow, Store, StoreRow,
@@ -27,7 +28,7 @@ use repository::{
 
 use repository::Invoice;
 use serde::Serialize;
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -244,8 +245,7 @@ impl InvoiceNode {
             return Ok(None);
         };
 
-        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type)
-        else {
+        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type) else {
             return Ok(None);
         };
 
@@ -469,6 +469,22 @@ impl InvoiceNode {
         Ok(result)
     }
 
+    /// The shipment's campaign (null = none): the default for new inbound
+    /// lines, or the campaign an outbound shipment issues for.
+    pub async fn campaign_id(&self) -> &Option<String> {
+        &self.row().campaign_id
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let Some(campaign_id) = self.row().campaign_id.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+        let result = loader.load_one(campaign_id).await?;
+        Ok(result.map(CampaignNode::from_domain))
+    }
+
     pub async fn store(&self) -> StoreNode {
         StoreNode::from_domain(Store {
             store_row: self.store_row().clone(),
@@ -549,6 +565,12 @@ impl InvoiceNode {
 
     pub async fn purchase_order_id(&self) -> &Option<String> {
         &self.row().purchase_order_id
+    }
+
+    /// The prescriber's prescription request this dispensing invoice was
+    /// generated from (soft link — the order may not exist on this site)
+    pub async fn prescription_request_id(&self) -> &Option<String> {
+        &self.row().prescription_request_id
     }
 
     pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
@@ -692,11 +714,11 @@ mod test {
 
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
-            MockDataInserts,
-        },
         Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_item_b, mock_item_c,
+            mock_name_a, mock_store_a,
+        },
     };
     use serde_json::json;
 

@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::apply_sort, dynamic_query_filter::create_condition, syncv7::SyncError, DBType,
-    Pagination, RepositoryError, Sort, StorageConnection,
+    DBType, Pagination, RepositoryError, Sort, StorageConnection, diesel_macros::apply_sort,
+    dynamic_query_filter::create_condition, syncv7::SyncError,
 };
 
 use chrono::NaiveDateTime;
@@ -117,6 +117,14 @@ impl<'a> SyncLogV7Repository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    /// Whether any row matches; stops at the first match.
+    pub fn exists(&self, filter: SyncLogV7Condition::Inner) -> Result<bool, RepositoryError> {
+        let query = sync_log_v7::table.filter(filter.to_boxed());
+        Ok(diesel::select(diesel::dsl::exists(query))
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn query_one(
         &self,
         filter: SyncLogV7Condition::Inner,
@@ -161,9 +169,10 @@ impl<'a> SyncLogV7Repository<'a> {
 #[cfg(test)]
 mod test {
     use crate::{
+        SyncLogV7Repository, SyncLogV7Row,
         mock::{MockData, MockDataInserts},
         syncv7::SyncError,
-        test_db, SyncLogV7Repository, SyncLogV7Row,
+        test_db,
     };
 
     use chrono::{Duration, NaiveDateTime};

@@ -1,5 +1,5 @@
 use async_graphql::{dataloader::DataLoader, *};
-use graphql_core::{loader::ItemLoader, ContextExt};
+use graphql_core::{ContextExt, loader::ItemLoader};
 use repository::ancillary_item_row::AncillaryItemRow;
 
 use super::ItemNode;
@@ -22,6 +22,11 @@ impl AncillaryItemNode {
     /// Right-hand side of the stored `x:y` ratio (ancillary count).
     pub async fn ancillary_quantity(&self) -> f64 {
         self.ancillary_item.ancillary_quantity
+    }
+
+    /// Ordered against the principal's quantity net of its wastage rate
+    pub async fn exclude_principal_wastage(&self) -> bool {
+        self.ancillary_item.exclude_principal_wastage
     }
 
     pub async fn item_id(&self) -> &str {

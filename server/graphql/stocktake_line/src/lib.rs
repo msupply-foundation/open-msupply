@@ -4,7 +4,7 @@ use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::{delete::*, insert::*, update::*};
 use stocktake_line_queries::{
-    stocktake_lines, StocktakeLineFilterInput, StocktakeLineSortInput, StocktakesLinesResponse,
+    StocktakeLineFilterInput, StocktakeLineSortInput, StocktakesLinesResponse, stocktake_lines,
 };
 
 #[derive(Default, Clone)]

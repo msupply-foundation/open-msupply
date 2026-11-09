@@ -10,11 +10,12 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  IndicatorLineRowFragment,
-  IndicatorLineWithColumnsFragment,
-} from '../../RequestRequisition/api';
+import { IndicatorLineRowFragment } from '../../RequestRequisition/api';
 import { Footer } from './Footer';
+import {
+  MergedIndicatorColumn,
+  MergedIndicatorLine,
+} from './mergeIndicatorLines';
 import { UseUpdateIndicatorValue, useDraftIndicatorValue } from './hooks';
 import { indicatorColumnNameToLocal } from '../../utils';
 
@@ -23,15 +24,15 @@ interface IndicatorLineEditProps {
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
-  currentLine?: IndicatorLineWithColumnsFragment | null;
+  currentLine?: MergedIndicatorLine | null;
   disabled: boolean;
   onSelectLine: (id: string) => void;
   scrollIntoView: () => void;
   useUpdateIndicatorValue: UseUpdateIndicatorValue;
   // Request renders a customer-info panel below the inputs; Response doesn't.
   belowInputs?: (
-    columns: IndicatorColumnNode[],
-    currentLine: IndicatorLineWithColumnsFragment
+    columns: MergedIndicatorColumn[],
+    currentLine: MergedIndicatorLine
   ) => React.ReactNode;
 }
 
@@ -86,6 +87,15 @@ const InputWithLabel = ({
     autoFocus,
   };
 
+  // Mirror the rewrite's stem: indicator-input-<column-label>, lowercased with
+  // spaces collapsed to dashes (e.g. value / extra / comment).
+  const inputTestId = `indicator-input-${indicatorColumnNameToLocal(
+    data.name,
+    t
+  )
+    .toLowerCase()
+    .replace(/\s+/g, '-')}`;
+
   const inputComponent =
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
@@ -95,6 +105,7 @@ const InputWithLabel = ({
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
+        slotProps={{ htmlInput: { 'data-testid': inputTestId } }}
         {...sharedProps}
       />
     ) : (
@@ -104,6 +115,7 @@ const InputWithLabel = ({
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
+        slotProps={{ htmlInput: { 'data-testid': inputTestId } }}
         {...sharedProps}
       />
     );
@@ -138,24 +150,23 @@ export const IndicatorLineEdit = ({
   const columns = currentLine?.columns.filter(c => c.value) || [];
   const t = useTranslation();
 
-  const isIndicatorInactive = !currentLine?.line.isActive;
+  // A merged entry can combine an active and an inactive line with the same
+  // code; only the inactive line's own cells are frozen.
+  const hasInactiveColumns = columns.some(c => !c.isLineActive);
 
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns.map(
-          (column, i) =>
-            column.value != null && (
-              <InputWithLabel
-                key={column.value?.id}
-                data={column}
-                disabled={disabled || isIndicatorInactive}
-                autoFocus={i === 0}
-                useUpdateIndicatorValue={useUpdateIndicatorValue}
-              />
-            )
-        )}
-        {isIndicatorInactive && (
+        {columns.map((column, i) => (
+          <InputWithLabel
+            key={column.value?.id}
+            data={column}
+            disabled={disabled || !column.isLineActive}
+            autoFocus={i === 0}
+            useUpdateIndicatorValue={useUpdateIndicatorValue}
+          />
+        ))}
+        {hasInactiveColumns && (
           <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
             {t('label.indicator-no-longer-active')}
           </Typography>

@@ -8,8 +8,8 @@ use crate::central_server_only;
 mod name_store_join;
 use name_store_join::patient_name_store_join;
 pub(crate) mod sync;
-pub(crate) mod tus;
 mod sync_v7;
+pub(crate) mod tus;
 mod user_login;
 
 pub fn config_central(cfg: &mut web::ServiceConfig) {

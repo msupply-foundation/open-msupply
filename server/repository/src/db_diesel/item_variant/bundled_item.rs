@@ -1,7 +1,7 @@
-use super::bundled_item_row::{bundled_item, BundledItemRow};
+use super::bundled_item_row::{BundledItemRow, bundled_item};
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    Pagination, StorageConnection,
+    DBType, EqualFilter, Pagination, StorageConnection, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -133,13 +133,14 @@ fn create_filtered_query(filter: Option<BundledItemFilter>) -> BoxedBundledItemQ
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter,
         item_variant::{
             bundled_item::BundledItemRepository,
             bundled_item_row::{BundledItemRow, BundledItemRowRepository},
             item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
         },
-        mock::{mock_item_a, mock_item_b, MockDataInserts},
-        test_db, EqualFilter,
+        mock::{MockDataInserts, mock_item_a, mock_item_b},
+        test_db,
     };
 
     use super::BundledItemFilter;

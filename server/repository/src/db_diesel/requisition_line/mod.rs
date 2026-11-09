@@ -5,9 +5,11 @@ use crate::RequisitionType;
 use crate::Sort;
 use crate::StringFilter;
 
+pub mod forecast_data;
 pub mod requisition_line;
 pub mod requisition_line_row;
 
+pub use self::forecast_data::*;
 pub use self::requisition_line::*;
 pub use self::requisition_line_row::*;
 

@@ -1,0 +1,30 @@
+# Server-wide help-documents list (spec/help S1 documents block + S2 management).
+# No storeId — the read is server-wide; single-member response union
+# (HelpDocumentConnector); order is hardcoded newest-first. The client requests a
+# large page and never pages (spec/help contract › listing). files.nodes[0] is
+# the display file — its PRESENCE (not status) is the only availability signal
+# the client keys on (a file row can exist on a site without its bytes).
+query helpDocuments {
+  helpDocuments(page: { first: 1000, offset: 0 }) {
+    ... on HelpDocumentConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        title
+        createdDatetime
+        files {
+          ... on SyncFileReferenceConnector {
+            __typename
+            nodes {
+              id
+              fileName
+              mimeType
+              totalBytes
+            }
+          }
+        }
+      }
+    }
+  }
+}

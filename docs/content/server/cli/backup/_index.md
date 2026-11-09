@@ -34,7 +34,7 @@ cargo run --bin remote_server_cli --features postgres -- backup
 
 **In production**
 
-````
+```
 omSupply-cli backup
 ```
 
@@ -71,4 +71,13 @@ App data folder will be cleared and replaced by the content of backup app_data. 
 ### Extra
 
 Configurations in `.yaml` files will be used in backup and restore, the base app folder, database name.
-````
+
+Before wiping anything, restore prints the database and app data folder it is about to replace, so check them before typing the confirmation.
+
+Any configuration value can be overridden with an environment variable, which is the easiest way to restore into a database other than the one in your `.yaml` files, e.g. to restore a postgres backup into a `djibouti` database with its own app data folder:
+
+```
+APP__DATABASE__DATABASE_NAME=djibouti APP__SERVER__BASE_DIR=app_data_djibouti cargo run --bin remote_server_cli --features postgres -- restore -b D2024_08_22T05_05_16
+```
+
+Run the server with the same overrides to use the restored data.

@@ -1,0 +1,1135 @@
+import { generateUUID } from '../../../../uuid';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
+import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
+import { measureWord, t, tPlural } from '../../../../intl';
+import { roundedText } from '../../../../intl/numberDisplay';
+import { formatCurrency } from '../../../../intl/currency';
+import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { Spinner } from '../../../../ui/elements/feedback/Spinner';
+import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
+import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { TextArea } from '../../../../ui/elements/inputs/TextArea';
+import { Select } from '../../../../ui/elements/selectors/Select';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import {
+  TargetQuantityBreakdown,
+  ConsumptionHistoryChart,
+  StockEvolutionChart,
+} from '../../../../ui/elements/charts';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../../ui/elements/accordion/Accordion';
+import { BarIcon } from '../../../../ui/icons';
+import { ItemSearch } from '../../../../domain/item';
+import { ActivitySelect } from '@/domain/campaign';
+import {
+  PluginSlotOutlet,
+  type PluginSlotContribution,
+} from '../../../../ui/elements/plugins/PluginSlotOutlet';
+import type {
+  InternalOrderLineInfoPanelProps,
+  InternalOrderView,
+} from '../../../../plugin-sdk/types';
+import { toLineViewFromEditor } from '../pluginViews';
+import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
+import { ReasonSelect } from '../../../../domain/reasonOptions';
+import {
+  InternalOrderLinePreviewStockEvolution,
+  RequisitionLineConsumptionChart,
+  RequisitionLineStockEvolution,
+} from './lineChart.generated';
+import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
+import {
+  buildAddPreview,
+  editorLineFromLine,
+  defaultEntryMode,
+  modeToUnits,
+  unitsToMode,
+  statInMode,
+  monthsOfStockAfterOrder,
+  saveNewLine,
+  saveExistingLine,
+  previewActivity,
+  previewForecastMethod,
+  type ForecastPreviewResult,
+  type EditorLine,
+  type EntryMode,
+} from './internalOrderLineEdit';
+import {
+  ForecastBlock,
+  type ForecastMethod,
+  type SupplyIntervalAndBufferFragment,
+} from '../../../../domain/forecast';
+import styles from './InternalOrderLineEditModal.module.css';
+import { Num } from '../../../../ui/elements/typography/Num';
+
+// The internal-order line editor (spec/internal-orders S4): add an item (add
+// mode, general orders only — OMS-REG-REPL-04.63) or fill one line (edit mode,
+// any status; read-only opens with every control disabled). Panels: the item's
+// statistics, its stock movements (extended gate), the edits, and below them
+// the line's forecast (method + breakdown + the step into stock) and the
+// read-only context charts (the consumption history, then the target-quantity
+// breakdown and stock evolution under "Additional charts").
+
+export interface InternalOrderLineEditModalProps {
+  open: boolean;
+  onClose: () => void;
+  storeId: string;
+  requisitionId: string;
+  minMonths: number;
+  maxMonths: number;
+  /**
+   * The store's supply interval and safety buffer the order's target came
+   * from, if it did — the forecast's target months then show the supply
+   * interval and safety buffer that make them up (OMS-REG-REPL-17.17).
+   */
+  targetIntervalAndBuffer?: SupplyIntervalAndBufferFragment;
+  /** Read-only order → every control disabled (reads still shown). */
+  editable: boolean;
+  /** General order → add mode reachable; program orders can't add (OMS-REG-REPL-04.63). */
+  canAdd: boolean;
+  // Preference gates (spec S4 — the extra rows/columns).
+  showDoses: boolean;
+  showPricing: boolean;
+  showExcess: boolean;
+  /**
+   * Customer-statistics program order → the movements panel + reason
+   * (OMS-REG-REPL-04.79).
+   */
+  showExtended: boolean;
+  orderInPacks: boolean;
+  /** An existing line → edit mode; omitted → add mode. */
+  initialLine?: InternalOrderLineFragment;
+  /**
+   * Save & next (edit mode): the next line to step to in the table's current
+   * sort/filter order, skipping ones already visited this run; undefined when
+   * the list is exhausted (→ add mode on a general order, else close).
+   */
+  nextLine: (
+    currentLineId: string,
+    covered: Set<string>
+  ) => InternalOrderLineFragment | undefined;
+  /**
+   * The order's existing line for an item, if any — so add mode loads that
+   * line to edit rather than starting a duplicate (OMS-REG-REPL-04.64, the
+   * one-line-per-item rule).
+   */
+  findLineForItem: (itemId: string) => InternalOrderLineFragment | undefined;
+  /** A save committed — the parent refetches the line table (OMS-REG-REPL-04.76). */
+  onCommitted: () => void;
+  /**
+   * The order this line belongs to, as the SDK's published view — half of the
+   * info-panel slot's props (ui-surface § S8 › editor region).
+   */
+  order: InternalOrderView;
+  /**
+   * The info-panel contributions to render, already `when`-filtered and ordered
+   * by the caller (the detail view composes them exactly as it composes the
+   * line table's column contributions). An ACCESSOR, so the modal stays
+   * presentational: it never reads the plugin registry, and a test can inject
+   * fixtures.
+   */
+  infoPanelContributions: () => readonly PluginSlotContribution<InternalOrderLineInfoPanelProps>[];
+}
+
+// Mount the content only while open, keyed on the OPEN identity (the line id,
+// or 'add'), so each open starts fresh and advancing within one open is
+// imperative (seedLine), not a prop change — the outbound editor's pattern.
+export const InternalOrderLineEditModal = (
+  props: InternalOrderLineEditModalProps
+): JSX.Element => (
+  <Show when={props.open && (props.initialLine?.id ?? 'add')} keyed>
+    {_openKey => <LineEditContent {...props} />}
+  </Show>
+);
+
+const LineEditContent = (
+  props: InternalOrderLineEditModalProps
+): JSX.Element => {
+  const [line, setLine] = createSignal<EditorLine | undefined>(
+    props.initialLine ? editorLineFromLine(props.initialLine) : undefined
+  );
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialLine ? 'update' : 'add'
+  );
+  const [entryMode, setEntryMode] = createSignal<EntryMode>('units');
+  // The requested quantity always in UNITS; the entry mode only re-expresses
+  // its display (OMS-REG-REPL-04.22/.24/.69/.88/.90).
+  const [requestedUnits, setRequestedUnits] = createSignal(0);
+  const [comment, setComment] = createSignal('');
+  // The line's Activity (issue 595): the chosen campaign id, null for routine.
+  // Stored with its name so a campaign the register no longer offers still
+  // labels itself (spec/campaigns contract › wire trap).
+  const [campaign, setCampaign] = createSignal<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [reasonId, setReasonId] = createSignal<string | null>(null);
+  const [saving, setSaving] = createSignal(false);
+  // A draft method change's preview in flight (rules › choosing a method) —
+  // Save waits for it, so the method it sends is the one the editor shows.
+  const [previewing, setPreviewing] = createSignal(false);
+  const [advancing, setAdvancing] = createSignal(false);
+  const [loading, setLoading] = createSignal(false);
+  const [errorMessage, setErrorMessage] = createSignal<string>();
+  // Items stepped through this run, so the walk never offers one twice.
+  const covered = new Set<string>();
+
+  // The add-mode item search — where focus lands on an add-mode open and
+  // whenever the editor returns to the empty add state
+  // (ui/utils/createFocusTarget). Unmounted in update mode, which is why the
+  // request is made from the branches below rather than declared as the
+  // Dialog's initialFocus.
+  const itemSearch = createFocusTarget();
+  // Requested — focused on every landing on a line, however it was reached:
+  // an edit-mode open, a "Save & next" advance, or an add-mode item pick
+  // (spec S4, OMS-REG-REPL-04.22/.24/.69/.88/.90). Driven from seedLine, not
+  // the Dialog's initialFocus: that prop fires only as the dialog opens, and
+  // the other two landings happen in a dialog already open.
+  const requestedField = createFocusTarget();
+
+  let disposed = false;
+  onCleanup(() => (disposed = true));
+
+  // The context charts' server data (spec S4 § charts). The consumption
+  // history is keyed by a SAVED line's id — so it fetches only once a real
+  // line exists (edit mode, or an on-order item loaded in add mode). An unsaved
+  // add draft has no id to read by: its history comes with its forecast
+  // preview instead (issue 1189), see consumptionHistory. The target-quantity
+  // breakdown is derived client-side from the line's stats, so it needs no
+  // read. Read NON-suspending (the `.state` gate) — the resource first-fetches
+  // on the interaction of opening/advancing, so a direct read would remount
+  // the modal (kdd/solid-reactivity-pitfalls § no remounts).
+  // Keyed on the stable inputs only, compared by value: every setLine — a
+  // draft method preview included — hands the editor a new line object, and a
+  // key object rebuilt from it would otherwise refetch the chart each time.
+  type ChartKey = { storeId: string; lineId: string } | false;
+  const chartKey = createMemo<ChartKey>(
+    () => {
+      const editorLine = line();
+      return editorLine && !editorLine.isNew
+        ? { storeId: props.storeId, lineId: editorLine.lineId }
+        : false;
+    },
+    false,
+    {
+      equals: (prev, next) =>
+        prev === next ||
+        (prev !== false &&
+          next !== false &&
+          prev.storeId === next.storeId &&
+          prev.lineId === next.lineId),
+    }
+  );
+  const [chart] = createResource(chartKey, async variables => {
+    const result = await graphqlFetch(
+      RequisitionLineConsumptionChart,
+      variables
+    );
+    if (result.kind !== 'success') return undefined;
+    const response = result.data.requisitionLineChart;
+    return response.__typename === 'ItemChartNode' ? response : undefined;
+  });
+  // Null when there's no series — an order with no expected-delivery-date.
+  const consumptionHistory = () => {
+    const editorLine = line();
+    return editorLine?.isNew
+      ? editorLine.previewChart?.consumptionHistory
+      : gated(chart)?.consumptionHistory;
+  };
+
+  // "Additional charts" (OMS-REG-REPL-04.107): the target-quantity breakdown
+  // and stock evolution, closed to start. It stays as the user left it while
+  // the editor steps between lines.
+  const ADDITIONAL_CHARTS = 'additional-charts';
+  const [openCharts, setOpenCharts] = createSignal<string[]>([]);
+  const additionalChartsOpen = () => openCharts().includes(ADDITIONAL_CHARTS);
+
+  // The stock evolution, read only while "Additional charts" is open, so an
+  // editor that never opens it never asks the server to project it. A saved
+  // line's is read by its id; an unsaved draft's from a preview of the line
+  // its insert would create, under the draft's method and activity. Keyed and
+  // read like the consumption history above.
+  type EvolutionKey =
+    | { kind: 'saved'; storeId: string; lineId: string }
+    | {
+        kind: 'draft';
+        storeId: string;
+        requisitionId: string;
+        itemId: string;
+        method: ForecastMethod;
+        campaignId: string | null;
+      }
+    | false;
+  const evolutionKey = createMemo<EvolutionKey>(
+    () => {
+      const editorLine = line();
+      if (!editorLine || !additionalChartsOpen()) return false;
+      return editorLine.isNew
+        ? {
+            kind: 'draft',
+            storeId: props.storeId,
+            requisitionId: props.requisitionId,
+            itemId: editorLine.itemId,
+            method: editorLine.forecast.forecastMethod,
+            campaignId: campaign()?.id ?? null,
+          }
+        : { kind: 'saved', storeId: props.storeId, lineId: editorLine.lineId };
+    },
+    false,
+    {
+      equals: (prev, next) =>
+        prev === next ||
+        (prev !== false &&
+          next !== false &&
+          JSON.stringify(prev) === JSON.stringify(next)),
+    }
+  );
+  const fetchStockEvolution = async (key: Exclude<EvolutionKey, false>) => {
+    if (key.kind === 'saved') {
+      const result = await graphqlFetch(RequisitionLineStockEvolution, {
+        storeId: key.storeId,
+        lineId: key.lineId,
+      });
+      if (result.kind !== 'success') return undefined;
+      const response = result.data.requisitionLineChart;
+      return response.__typename === 'ItemChartNode'
+        ? response.stockEvolution
+        : undefined;
+    }
+    const result = await graphqlFetch(InternalOrderLinePreviewStockEvolution, {
+      storeId: key.storeId,
+      input: {
+        requisitionId: key.requisitionId,
+        itemId: key.itemId,
+        forecastMethod: key.method,
+        campaignId: { value: key.campaignId },
+      },
+    });
+    if (result.kind !== 'success') return undefined;
+    const response = result.data.requisitionLineForecastPreview;
+    return response.__typename === 'RequisitionLineForecastPreviewNode'
+      ? response.chart?.stockEvolution
+      : undefined;
+  };
+  // Each series carries the key it was read for, so a refetch for another line
+  // never shows the line before's chart while it loads.
+  const [evolution] = createResource(evolutionKey, async key => ({
+    key: JSON.stringify(key),
+    series: await fetchStockEvolution(key),
+  }));
+  const stockEvolution = () => {
+    const read = gated(evolution);
+    const key = evolutionKey();
+    return read && key && read.key === JSON.stringify(key)
+      ? read.series
+      : undefined;
+  };
+
+  // The draft previews a method other than the saved line's — the stock
+  // evolution series, projected server-side from the stored forecast, then
+  // lags the draft until it is saved.
+  const previewsOtherMethod = () => {
+    const editorLine = line();
+    return (
+      !!editorLine &&
+      !editorLine.isNew &&
+      editorLine.forecast.forecastMethod !== editorLine.ownForecastMethod
+    );
+  };
+
+  // Land the editor on a line — an existing line (edit) or an add-mode
+  // preview. Seeds the entry mode from the store preference
+  // (OMS-REG-REPL-04.73) and the draft from the line's current values, and
+  // lands the caret on Requested — a read-only order being the one exception,
+  // having nothing to type into.
+  const seedLine = (editorLine: EditorLine) => {
+    setLine(editorLine);
+    covered.add(editorLine.lineId);
+    setEntryMode(
+      defaultEntryMode(
+        props.orderInPacks,
+        props.showDoses,
+        editorLine.isVaccine,
+        editorLine.doses
+      )
+    );
+    setRequestedUnits(editorLine.requestedQuantity);
+    setComment(editorLine.comment);
+    setCampaign(editorLine.campaign);
+    setReasonId(editorLine.reasonId);
+    setErrorMessage(undefined);
+    if (props.editable) requestedField.focus();
+  };
+
+  const pickItem = async (itemId: string) => {
+    // An item already on the order loads its EXISTING line to edit — no
+    // duplicate (OMS-REG-REPL-04.64). The picker stays live (mode stays 'add'),
+    // but the loaded line's isNew=false makes the save an update, not an
+    // insert.
+    const existing = props.findLineForItem(itemId);
+    if (existing) {
+      seedLine(editorLineFromLine(existing));
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(undefined);
+    const preview = await buildAddPreview(
+      props.storeId,
+      props.requisitionId,
+      itemId,
+      generateUUID()
+    );
+    if (disposed) return;
+    setLoading(false);
+    if (preview) seedLine(preview);
+  };
+
+  // Back to the empty add state — add mode, no item (OMS-REG-REPL-04.66:
+  // switching items or returning discards any unsaved draft with nothing
+  // created). Focus returns to the item search, as on an add-mode open (spec
+  // S4) — the same landing the other three line editors give it.
+  const backToSearch = () => {
+    itemSearch.focus();
+    setMode('add');
+    setLine(undefined);
+    setRequestedUnits(0);
+    setComment('');
+    setReasonId(null);
+    setErrorMessage(undefined);
+  };
+
+  onMount(() => {
+    if (props.initialLine) seedLine(editorLineFromLine(props.initialLine));
+    // Add mode opens on the item search, focused (spec S4). The handle owns the
+    // timing — it defers a frame, so this lands after the dialog's showModal()
+    // has parked focus on the panel.
+    else itemSearch.focus();
+  });
+
+  const updateMode = () => mode() === 'update';
+  const disabled = () => !props.editable;
+
+  const current = () => line();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "Save & next" returning to the search keeps the working size, so
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || current() !== undefined,
+    false
+  );
+
+  const packSize = () => current()?.defaultPackSize ?? 1;
+  const doses = () => current()?.doses ?? 0;
+  const suggested = () => current()?.suggestedQuantity ?? 0;
+  // Doses surfaces demand a POSITIVE doses-per-unit (OMS-REG-REPL-04.75).
+  const dosesApply = () =>
+    props.showDoses && (current()?.isVaccine ?? false) && doses() > 0;
+
+  // The requested quantity in the active entry mode (display), and its commit
+  // back to stored units.
+  const requestedDisplay = () => {
+    const raw = unitsToMode(requestedUnits(), entryMode(), packSize(), doses());
+    return Math.round(raw * 100) / 100;
+  };
+  const onRequestedChange = (value: number | undefined) => {
+    setRequestedUnits(
+      value === undefined
+        ? 0
+        : modeToUnits(value, entryMode(), packSize(), doses())
+    );
+  };
+
+  // A variance from the suggestion demands a reason on a customer-statistics
+  // program order (OMS-REG-REPL-04.79); at equality the reason control is
+  // disabled and the stored reason is cleared (OMS-REG-REPL-04.80).
+  const variance = () => requestedUnits() !== suggested();
+  const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
+
+  // A statistic (units) rendered in the active mode with its measure word,
+  // inflected for the figure it suffixes ("1 pack" / "61 packs").
+  const stat = (units: number, roundUp = false): JSX.Element => {
+    const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
+    return (
+      <>
+        <Num value={figure} />{' '}
+        {measureWord(entryMode(), current()?.unitName ?? null, figure)}
+      </>
+    );
+  };
+
+  // A forecast figure (units) in the active mode, at the configured places —
+  // the forecast block keeps its arithmetic's fractions.
+  const forecastQuantity = (units: number): string => {
+    const figure = unitsToMode(units, entryMode(), packSize(), doses());
+    return `${roundedText(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
+
+  // A unit quantity re-expressed in the OTHER measure (OMS-REG-REPL-04.75):
+  // units when doses is the active mode, the dose equivalent otherwise —
+  // rounded whole.
+  const otherMeasure = (units: number): string => {
+    if (entryMode() === 'doses') {
+      const unitCount = Math.round(units);
+      return `${roundedText(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
+    }
+    const doseCount = Math.round(units * doses());
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+  };
+
+  // The dose caption beneath the requested number (OMS-REG-REPL-04.75).
+  const requestedCaption = () =>
+    dosesApply() ? otherMeasure(requestedUnits()) : undefined;
+
+  // The dose caption beneath a statistics/movements stock value
+  // (OMS-REG-REPL-04.75): each NON-ZERO stock value carries the other measure;
+  // zeros (and the fixed/time rows, which never call this) carry none.
+  const statCaption = (units: number): string | undefined =>
+    dosesApply() && units !== 0 ? otherMeasure(units) : undefined;
+
+  // The draft's reason, per the order's surface: omitted where there's no
+  // reason control; the chosen id where there's a variance; null (clear) at
+  // equality (D30).
+  const draftOptionId = (): string | null | undefined => {
+    if (!props.showExtended) return undefined;
+    return variance() ? reasonId() : null;
+  };
+
+  const save = async (): Promise<boolean> => {
+    const editorLine = current();
+    if (!editorLine) return false;
+    setSaving(true);
+    setErrorMessage(undefined);
+    const draft = {
+      requestedQuantity: requestedUnits(),
+      comment: comment(),
+      optionId: draftOptionId(),
+      campaignId: campaign()?.id ?? null,
+    };
+    const result = editorLine.isNew
+      ? await saveNewLine(props.storeId, props.requisitionId, editorLine, draft)
+      : await saveExistingLine(props.storeId, editorLine, draft);
+    setSaving(false);
+    if (result.kind === 'saved') {
+      props.onCommitted();
+      return true;
+    }
+    if (result.kind === 'error') setErrorMessage(result.message);
+    else setErrorMessage(t('error.cant-save'));
+    return false;
+  };
+
+  // The shared body of a draft preview: run it against the line on screen, and
+  // land it only if that is still the line on screen.
+  const runPreview = async (
+    preview: (line: EditorLine) => Promise<ForecastPreviewResult>
+  ) => {
+    const editorLine = current();
+    if (!editorLine) return;
+    setPreviewing(true);
+    setErrorMessage(undefined);
+    const result = await preview(editorLine);
+    if (disposed) return;
+    setPreviewing(false);
+    // The editor moved on (another item, or Save & next) while it was in
+    // flight: the preview is for a line no longer shown.
+    if (current()?.lineId !== editorLine.lineId) return;
+    if (result.kind === 'previewed') setLine(result.line);
+    else if (result.kind === 'error') setErrorMessage(result.message);
+    else setErrorMessage(t('error.unable-to-load-data'));
+  };
+
+  // Picking a method is a draft edit (rules › choosing a method): the line is
+  // re-previewed under it — forecast and suggestion recomputed as the save will
+  // recompute them — leaving the draft's quantity, comment and reason as typed.
+  // Nothing is saved until Save; Cancel discards it with the rest of the draft.
+  const onMethodChange = (method: ForecastMethod) =>
+    runPreview(editorLine =>
+      previewForecastMethod(
+        props.storeId,
+        props.requisitionId,
+        editorLine,
+        method
+      )
+    );
+
+  // Picking an Activity is a draft edit too (issue 595): the line is re-previewed
+  // as held for it — stock on hand narrowed to that campaign's stock, and the
+  // suggestion recomputed against it — so the editor SHOWS what the save will
+  // store rather than the whole-store figures it opened on. The picker's own
+  // value is the draft's; the preview follows it.
+  const onActivityChange = (chosen: { id: string; name: string } | null) => {
+    setCampaign(chosen);
+    void runPreview(editorLine =>
+      previewActivity(props.storeId, props.requisitionId, editorLine, chosen)
+    );
+  };
+
+  const onOk = () =>
+    void save().then(ok => {
+      if (ok) props.onClose();
+    });
+
+  // Save & next (OMS-REG-REPL-04.77/.78): save, then continue. Add mode reopens
+  // the empty picker; update mode advances the walk (skipping covered),
+  // dropping into add mode when exhausted on a general order, else closing.
+  const advance = (fromLineId: string) => {
+    const next = props.nextLine(fromLineId, covered);
+    if (next) seedLine(editorLineFromLine(next));
+    else if (props.canAdd) backToSearch();
+    else props.onClose();
+  };
+  const onOkNext = () => {
+    if (advancing()) return;
+    setAdvancing(true);
+    void (async () => {
+      const editorLine = current();
+      const ok = await save();
+      setAdvancing(false);
+      if (!ok || !editorLine) return;
+      if (mode() === 'add') backToSearch();
+      else advance(editorLine.lineId);
+    })();
+  };
+
+  // The plugin info-panel slot's props (ui-surface § S8 › editor region): the
+  // line being edited and its order, as the SDK's published DTOs. ONE memo, so
+  // the pair's identity changes only when the line or the order does — and
+  // never a remount: advancing with Save & next writes the `line` signal, so
+  // the mounted contributions read a new DTO in place (OMS-REG-PLG-02.14).
+  const infoPanelSlotProps = createMemo<
+    InternalOrderLineInfoPanelProps | undefined
+  >(() => {
+    const editorLine = current();
+    return editorLine
+      ? { line: toLineViewFromEditor(editorLine), order: props.order }
+      : undefined;
+  });
+
+  // Option labels inflect with the entered quantity (reference-app parity:
+  // singular at exactly 1, plural otherwise — spec S4's "tablets · packs").
+  const entryOptions = createMemo(() => {
+    const unitName = current()?.unitName ?? null;
+    const count = requestedDisplay() === 1 ? 1 : 2;
+    const options = [
+      { value: 'units', label: measureWord('units', unitName, count) },
+    ];
+    if (packSize() > 0)
+      options.push({
+        value: 'packs',
+        label: measureWord('packs', unitName, count),
+      });
+    if (dosesApply())
+      options.push({
+        value: 'doses',
+        label: measureWord('doses', unitName, count),
+      });
+    return options;
+  });
+
+  // A read-only statistics row: bold label, right-aligned value. `caption` is
+  // the muted other-measure line beneath the value (OMS-REG-REPL-04.75),
+  // right-aligned like it. `highlight` tints the row like the edits inset panel
+  // (the middle-panel Suggested — the requested block it is read against, spec
+  // S4), the tint bleeding slightly past both sides while the text stays
+  // aligned with the column.
+  const StatRow = (rowProps: {
+    label: string;
+    value: JSX.Element;
+    caption?: string;
+    highlight?: boolean;
+    /** `data-testid` on the VALUE, for a figure a test has to read. */
+    testId?: string;
+  }): JSX.Element => (
+    <FieldRow
+      label={rowProps.label}
+      class={rowProps.highlight ? styles.highlight : undefined}
+    >
+      <span class={styles.statValue} data-testid={rowProps.testId}>
+        {rowProps.value}
+        <Show when={rowProps.caption}>
+          {caption => <span class={styles.statCaption}>{caption()}</span>}
+        </Show>
+      </span>
+    </FieldRow>
+  );
+
+  return (
+    <Dialog
+      open
+      onClose={props.onClose}
+      dismissable={!saving()}
+      size={workingSize() ? 'large' : 'auto'}
+      // A CARD at the wide content measure, not the full-bleed sheet: the
+      // three panels (22 + 22 + 28rem and two `lg` gaps, 76rem) fit inside
+      // it, centred, and a general order's two panels sit in the same box. A
+      // card also caps its HEIGHT at 80vh; this editor's content is short, so
+      // that costs it nothing on a landscape tablet (the requisition editor's
+      // does, so it stays a sheet). With a deployment's plugin panel below
+      // the form, it scrolls sooner than a sheet would.
+      width={workingSize() ? 'wide' : undefined}
+      // widthRem sizes the PRE-PICK state only: a command-palette-shaped card
+      // at the standard create-modal width (the CreateStocktake/
+      // CreateInternalOrder family), with a body tall enough to OWN the open
+      // suggestions list — the search takes initial focus and the combobox
+      // opens on focus, so the list is this state's resting face, and without
+      // the reserved height it would dangle past the card onto the scrim. The
+      // popup matches its trigger's width. Both are dropped once the latch
+      // flips, so the measure above takes over.
+      widthRem={workingSize() ? undefined : 44}
+      minBodyHeightRem={28}
+      testId="internal-order-line-edit-modal"
+      // Untitled per spec S4 — the title stays as the accessible name only.
+      title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
+      actionsLead={
+        <Show when={errorMessage()}>
+          {message => (
+            <Alert severity="error" testId="line-edit-error">
+              {message()}
+            </Alert>
+          )}
+        </Show>
+      }
+      actions={
+        <>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
+          <DialogSaveButton
+            data-testid="dialog-button-ok"
+            disabled={!current() || saving() || previewing() || !props.editable}
+            loading={saving()}
+            onClick={onOk}
+          />
+          {/* Save & next — never a dead end (add mode reopens the picker,
+              update mode walks the list). Shown once an item is chosen. */}
+          <Show when={current() && props.editable}>
+            <SaveAndNextButton
+              data-testid="dialog-button-next-and-ok"
+              disabled={previewing()}
+              loading={saving() || advancing()}
+              onClick={onOkNext}
+            />
+          </Show>
+        </>
+      }
+    >
+      {/* Top — the item. Add mode: a live search picker (switching items
+          discards the unsaved draft, OMS-REG-REPL-04.66). Update mode: fixed, disabled. */}
+      <Show
+        when={updateMode()}
+        fallback={
+          <ItemSearch
+            label={t('label.item')}
+            storeId={props.storeId}
+            focusTarget={itemSearch}
+            placeholder={t('placeholder.enter-an-item-code-or-name')}
+            value={current()?.itemId}
+            selectedItem={
+              current()
+                ? {
+                    id: current()!.itemId,
+                    code: current()!.itemCode,
+                    name: current()!.itemName,
+                  }
+                : undefined
+            }
+            disabled={saving() || loading()}
+            onSelect={option => {
+              if (option) void pickItem(option.id);
+              else backToSearch();
+            }}
+          />
+        }
+      >
+        <TextField
+          label={t('label.item')}
+          disabled
+          value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
+        />
+      </Show>
+
+      <Show when={current()}>
+        {editorLine => (
+          <>
+            <HStack
+              wrap
+              justify="center"
+              align="start"
+              gap="lg"
+              class={styles.panels}
+            >
+              {/* Left — the line's statistics (OMS-REG-REPL-04.74: every stock quantity in
+                the active entry mode; time quantities exempt), on a recessed
+                inset panel like the edits (#617). */}
+              <InsetPanel gap="sm" class={styles.column}>
+                <Show when={editorLine().unitName}>
+                  <StatRow
+                    label={t('label.unit')}
+                    value={editorLine().unitName!}
+                  />
+                </Show>
+                <Show when={editorLine().defaultPackSize > 0}>
+                  <StatRow
+                    label={t('label.default-pack-size')}
+                    value={<Num value={editorLine().defaultPackSize} />}
+                  />
+                </Show>
+                <Show when={dosesApply()}>
+                  <StatRow
+                    label={t('label.doses-per-unit')}
+                    value={<Num value={editorLine().doses} />}
+                  />
+                </Show>
+                <StatRow
+                  // Read by the activity-scoping test: this is the figure the
+                  // draft preview narrows (issue 595).
+                  testId="line-soh-value"
+                  label={t('label.our-soh')}
+                  value={stat(editorLine().availableStockOnHand)}
+                  caption={statCaption(editorLine().availableStockOnHand)}
+                />
+                <StatRow
+                  label={
+                    props.showExtended
+                      ? t('label.area-amc')
+                      : t('label.amc/amd')
+                  }
+                  value={stat(editorLine().averageMonthlyConsumption, true)}
+                  caption={statCaption(editorLine().averageMonthlyConsumption)}
+                />
+                {/* Stock ÷ the line's forecast monthly demand — labelled so
+                  beside the measured AMC/AMD above (#12082). */}
+                <StatRow
+                  label={t('label.months-of-stock-forecast-demand')}
+                  value={
+                    <>
+                      <Num value={editorLine().monthsOfStock} />{' '}
+                      {t('label.months')}
+                    </>
+                  }
+                />
+                {/* What the months of stock will be once the requested
+                  quantity arrives, taking it to arrive today; follows the
+                  Requested field as it's typed (OMS-REG-REPL-04.106). */}
+                <StatRow
+                  testId="line-mos-after-order"
+                  label={t('label.months-of-stock-after-order')}
+                  value={
+                    <>
+                      <Num
+                        value={monthsOfStockAfterOrder(
+                          editorLine(),
+                          requestedUnits()
+                        )}
+                      />{' '}
+                      {t('label.months')}
+                    </>
+                  }
+                  highlight
+                />
+                <Show when={props.showExtended}>
+                  <StatRow
+                    label={t('label.short-expiry')}
+                    value={stat(editorLine().expiringUnits)}
+                    caption={statCaption(editorLine().expiringUnits)}
+                  />
+                </Show>
+              </InsetPanel>
+
+              {/* Middle — stock movements (extended gate only), on its own
+                inset panel. */}
+              <Show when={props.showExtended}>
+                <InsetPanel gap="sm" class={styles.column}>
+                  <StatRow
+                    label={t('label.suggested')}
+                    value={stat(editorLine().suggestedQuantity, true)}
+                    caption={statCaption(editorLine().suggestedQuantity)}
+                    highlight
+                  />
+                  <StatRow
+                    label={t('label.incoming-stock')}
+                    value={stat(editorLine().incomingUnits)}
+                    caption={statCaption(editorLine().incomingUnits)}
+                  />
+                  <StatRow
+                    label={t('label.outgoing')}
+                    value={stat(editorLine().outgoingUnits)}
+                    caption={statCaption(editorLine().outgoingUnits)}
+                  />
+                  <StatRow
+                    label={t('label.losses')}
+                    value={stat(editorLine().lossInUnits)}
+                    caption={statCaption(editorLine().lossInUnits)}
+                  />
+                  <StatRow
+                    label={t('label.additions')}
+                    value={stat(editorLine().additionInUnits)}
+                    caption={statCaption(editorLine().additionInUnits)}
+                  />
+                  <StatRow
+                    label={t('label.days-out-of-stock')}
+                    value={`${roundedText(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
+                  />
+                </InsetPanel>
+              </Show>
+
+              {/* Right — the edits, on a recessed inset panel. */}
+              <InsetPanel gap="sm" class={styles.edits}>
+                {/* Suggested here only when the movements panel is absent. */}
+                <Show when={!props.showExtended}>
+                  <StatRow
+                    label={t('label.suggested')}
+                    value={stat(editorLine().suggestedQuantity, true)}
+                  />
+                </Show>
+
+                <FieldRow label={t('label.requested')}>
+                  <div class={styles.requestedRow}>
+                    <NumberField
+                      label={t('label.requested')}
+                      hideLabel
+                      min={0}
+                      decimalLimit={2}
+                      // Doses step a whole unit at a time: a one-dose step
+                      // rounds straight back up to the unit it left, so
+                      // ArrowDown would never move.
+                      step={entryMode() === 'doses' ? doses() : 1}
+                      data-testid="requested-quantity-input"
+                      ref={requestedField.ref}
+                      disabled={disabled() || saving()}
+                      value={requestedDisplay()}
+                      emptyValue={0}
+                      onChange={onRequestedChange}
+                    />
+                    <Select
+                      label={t('label.units')}
+                      hideLabel
+                      testId="entry-mode-select"
+                      value={entryMode()}
+                      options={entryOptions()}
+                      disabled={disabled() || saving()}
+                      onValueChange={value => setEntryMode(value as EntryMode)}
+                    />
+                  </div>
+                </FieldRow>
+                <Show when={requestedCaption()}>
+                  {caption => <div class={styles.caption}>{caption()}</div>}
+                </Show>
+
+                {/* Excess-request warning (OMS-REG-REPL-04.70). */}
+                <Show when={excess()}>
+                  <Alert severity="warning" testId="excess-request-warning">
+                    {t('warning.requested-exceeds-suggested')}
+                  </Alert>
+                </Show>
+
+                {/* Indicative price rows (OMS-REG-REPL-10.6) — never re-expressed by the
+                  entry mode; the total tracks the requested units live. */}
+                <Show when={props.showPricing}>
+                  <StatRow
+                    label={t('label.indicative-price-per-unit')}
+                    value={
+                      editorLine().pricePerUnit == null
+                        ? '-'
+                        : formatCurrency(editorLine().pricePerUnit!)
+                    }
+                  />
+                  <StatRow
+                    label={t('label.indicative-price')}
+                    value={formatCurrency(
+                      (editorLine().pricePerUnit ?? 0) * requestedUnits()
+                    )}
+                  />
+                </Show>
+
+                {/* Reason (extended gate) — disabled/empty at equality (OMS-REG-REPL-04.80). */}
+                <Show when={props.showExtended}>
+                  <FieldRow label={t('label.reason')}>
+                    <ReasonSelect
+                      kind="requisition"
+                      label={t('label.reason')}
+                      hideLabel
+                      inputTestId="variance-reason-input"
+                      disabled={disabled() || saving() || !variance()}
+                      value={variance() ? (reasonId() ?? undefined) : undefined}
+                      onChange={reason => setReasonId(reason?.id ?? null)}
+                    />
+                  </FieldRow>
+                </Show>
+
+                {/* The line's Activity (issue 595) — offered on EVERY internal
+                  order, program-based or standard: what the stock is ordered
+                  for is a property of the line, not of the order's kind. */}
+                <FieldRow label={t('label.activity')}>
+                  <ActivitySelect
+                    hideLabel
+                    inputTestId="line-activity-field"
+                    disabled={disabled() || saving() || previewing()}
+                    campaignId={campaign()?.id}
+                    campaign={campaign()}
+                    onChange={chosen =>
+                      onActivityChange(
+                        chosen ? { id: chosen.id, name: chosen.name } : null
+                      )
+                    }
+                  />
+                </FieldRow>
+
+                <FieldRow label={t('label.comment')}>
+                  <TextArea
+                    label={t('label.comment')}
+                    hideLabel
+                    rows={3}
+                    data-testid="line-comment-field"
+                    disabled={disabled() || saving()}
+                    value={comment()}
+                    onInput={e => setComment(e.currentTarget.value)}
+                  />
+                </FieldRow>
+              </InsetPanel>
+            </HStack>
+
+            {/* The plugin info-panel region (internal-orders ui-surface § S8 ›
+              editor region): read-only decoration between the record panels
+              above and the charts below. No wrapper, no heading, no border — an
+              invisible seam, so with nothing contributing the editor is
+              byte-identical to one built without it (spec/plugins § S1,
+              OMS-REG-PLG-02.12). The non-keyed Show hands the outlet the props pair as
+              an ACCESSOR: a new line flows into the live contributions rather
+              than replacing them (OMS-REG-PLG-02.14). */}
+            <Show when={infoPanelSlotProps()}>
+              {slotProps => (
+                <PluginSlotOutlet
+                  contributions={props.infoPanelContributions()}
+                  slotProps={slotProps}
+                  errorFallback={t('error.plugin-unavailable')}
+                />
+              )}
+            </Show>
+
+            {/* Below — the draft's forecast (spec S4 › the forecast): its
+              method, the breakdown behind its monthly demand, and the step into
+              stock — the stored line's, or the server's preview of the line the
+              draft would save (an add-mode draft, or a method change). */}
+            <ForecastBlock
+              line={editorLine().forecast}
+              targetMonths={props.maxMonths}
+              targetIntervalAndBuffer={props.targetIntervalAndBuffer}
+              formatQuantity={forecastQuantity}
+              options={editorLine().forecastMethodOptions}
+              ownMethod={editorLine().ownForecastMethod}
+              disabled={disabled() || saving() || previewing()}
+              onMethodChange={method => void onMethodChange(method)}
+              testId="line-forecast"
+            />
+
+            {/* Then the read-only context charts, on every line whatever its
+              forecast method: the consumption history (12 months), then
+              "Additional charts" — the target-quantity breakdown (client-side
+              from the line's monthly demand and stock) and the stock
+              evolution, closed to start (OMS-REG-REPL-04.107). The two series need the server's data —
+              the saved line's, or an add-mode draft's preview; absent them —
+              an order with no expected-delivery-date — they don't show. */}
+            <div class={styles.charts}>
+              <Show when={consumptionHistory()?.nodes.length}>
+                <div class={styles.chartSection}>
+                  <h3 class={styles.chartHeading}>
+                    {t('heading.consumption-history')}
+                  </h3>
+                  <ConsumptionHistoryChart
+                    data={consumptionHistory()?.nodes ?? []}
+                  />
+                </div>
+              </Show>
+              <Accordion
+                variant="card"
+                collapsible
+                value={openCharts()}
+                onValueChange={setOpenCharts}
+                class={styles.additionalCharts}
+              >
+                <AccordionItem value={ADDITIONAL_CHARTS}>
+                  <AccordionTrigger>
+                    <span class={styles.additionalChartsTrigger}>
+                      <BarIcon
+                        class={styles.additionalChartsIcon}
+                        aria-hidden="true"
+                      />
+                      {t('heading.additional-charts')}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div class={styles.additionalChartsBody}>
+                      <div class={styles.breakdown}>
+                        <h4 class={styles.chartHeading}>
+                          {t('heading.target-quantity')}
+                        </h4>
+                        <TargetQuantityBreakdown
+                          averageMonthlyConsumption={editorLine().monthlyDemand}
+                          availableStockOnHand={
+                            editorLine().availableStockOnHand
+                          }
+                          suggestedQuantity={editorLine().suggestedQuantity}
+                          thresholdMonths={props.minMonths}
+                          targetMonths={props.maxMonths}
+                          zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
+                        />
+                      </div>
+                      <Show when={evolution.loading && !stockEvolution()}>
+                        <Spinner />
+                      </Show>
+                      <Show when={stockEvolution()?.nodes.length}>
+                        <div class={styles.chartSection}>
+                          <h4 class={styles.chartHeading}>
+                            {t('heading.stock-evolution')}
+                          </h4>
+                          {/* The server projects the SAVED line's forecast;
+                            while the draft previews another method the chart
+                            can't follow it, so it says whose demand it draws
+                            (spec S4 › context charts). */}
+                          <Show when={previewsOtherMethod()}>
+                            <p class={styles.chartNote}>
+                              {t('messages.stock-evolution-saved-method')}
+                            </p>
+                          </Show>
+                          <StockEvolutionChart
+                            data={stockEvolution()?.nodes ?? []}
+                          />
+                        </div>
+                      </Show>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </>
+        )}
+      </Show>
+    </Dialog>
+  );
+};

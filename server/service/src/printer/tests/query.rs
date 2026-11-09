@@ -2,7 +2,7 @@
 mod test {
     use crate::service_provider::ServiceProvider;
     use repository::{
-        mock::{mock_printer_a, mock_printer_b, MockData, MockDataInserts},
+        mock::{MockData, MockDataInserts, mock_printer_a, mock_printer_b},
         printer::PrinterFilter,
         test_db::setup_all_with_data,
     };

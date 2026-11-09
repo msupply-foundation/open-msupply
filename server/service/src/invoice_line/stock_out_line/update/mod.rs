@@ -1,17 +1,17 @@
 use super::StockOutType;
 use crate::{
-    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
     NullableUpdate,
+    invoice::update_picked_date::{UpdatePickedDateError, update_picked_date},
+    invoice_line::{ShipmentTaxUpdate, query::get_invoice_line},
+    service_provider::ServiceContext,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine, InvoiceLineRow,
-    InvoiceLineRowRepository, RepositoryError, StockLine, StockLineRowRepository,
+    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLine,
+    StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 
 mod validate;
 use validate::validate;
@@ -31,6 +31,9 @@ pub struct UpdateStockOutLine {
     pub vvm_status_id: Option<String>,
     pub received_number_of_packs: Option<NullableUpdate<f64>>,
     pub reason_option_id: Option<NullableUpdate<String>>,
+    /// `None` leaves the stored value alone; `Some(NullableUpdate { value:
+    /// None })` clears it.
+    pub transfer_comment: Option<NullableUpdate<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -60,6 +63,10 @@ pub enum UpdateStockOutLineError {
         line_id: String,
     },
     VVMStatusDoesNotExist,
+    /// The prescribed quantity is the prescriber's, on a dispensation generated
+    /// from a prescription request, and this input would change it. Only ever
+    /// reachable on a PRESCRIPTION line — nothing else carries the field.
+    CannotChangePrescribedQuantity,
     ReasonOptionDoesNotExist,
     ReasonOptionIsNotActive,
     ReasonOptionTypeInvalid,
@@ -151,17 +158,18 @@ impl From<RepositoryError> for UpdateStockOutLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b_lines, mock_name_store_a, mock_outbound_shipment_a,
-            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
-            mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
-            mock_outbound_shipment_no_stock_line, mock_patient, mock_prescription_a_invoice_lines,
-            mock_stock_line_b, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
-            mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume, MockDataInserts,
-        },
-        test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
+        mock::{
+            MockDataInserts, mock_item_a, mock_item_b_lines, mock_name_store_a,
+            mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
+            mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c,
+            mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_stock_line,
+            mock_patient, mock_prescription_a_invoice_lines, mock_stock_line_b,
+            mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
+            mock_store_b, mock_store_c, stock_line_with_volume,
+        },
+        test_db::setup_all,
     };
 
     use crate::{
@@ -169,10 +177,10 @@ mod test {
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         invoice_line::{
+            InsertStockOutLine,
             stock_out_line::{
                 StockOutType, UpdateStockOutLine, UpdateStockOutLineError as ServiceError,
             },
-            InsertStockOutLine,
         },
         service_provider::ServiceProvider,
     };
@@ -636,7 +644,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&connection).upsert_one(&earlier_stock_in_invoice).unwrap();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&earlier_stock_in_invoice)
+            .unwrap();
 
         // Current invoice (1 minute ago)
         let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::minutes(1);
@@ -654,7 +664,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&current_invoice).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&current_invoice)
+            .unwrap();
 
         // Create a stock line for the item
         let stock_line_id = "stock_line_id".to_string();
@@ -669,7 +681,9 @@ mod test {
             ..Default::default()
         };
 
-        StockLineRowRepository::new(&context.connection).upsert_one(&stock_line).unwrap();
+        StockLineRowRepository::new(&context.connection)
+            .upsert_one(&stock_line)
+            .unwrap();
 
         // Add the invoice lines (each invoice introduces 10 packs)
 
@@ -686,7 +700,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceLineRowRepository::new(&context.connection).upsert_one(&invoice_line).unwrap();
+        InvoiceLineRowRepository::new(&context.connection)
+            .upsert_one(&invoice_line)
+            .unwrap();
 
         // Current invoice
         let invoice_line = InvoiceLineRow {
@@ -701,7 +717,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceLineRowRepository::new(&context.connection).upsert_one(&invoice_line).unwrap();
+        InvoiceLineRowRepository::new(&context.connection)
+            .upsert_one(&invoice_line)
+            .unwrap();
 
         // Create a backdated prescription (2 days ago)
         let prescription_id = "prescription_id".to_string();
@@ -721,7 +739,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription_invoice).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription_invoice)
+            .unwrap();
 
         // Add a stock out line to the prescription (using half available stock)
         invoice_line_service
@@ -832,7 +852,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {
@@ -889,7 +911,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&outbound1).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&outbound1)
+            .unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "outbound_invoice-1-1".to_string(),
@@ -923,7 +947,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription1).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription1)
+            .unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "prescription_invoice-1-1".to_string(),
@@ -973,7 +999,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {

@@ -1,0 +1,213 @@
+/*
+ * The date-picker calendar grid. Sits inside the Popover panel (which supplies
+ * the surface, border, shadow and padding), so this owns only the internal
+ * layout. All colour from tokens; sizing in rem/em.
+ */
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 15rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.navBtn:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+  color: var(--secondary-main);
+}
+
+.navBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.monthYear {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Month / year heading buttons — open the month / year grid views. */
+.headingBtn {
+  padding: 0.15rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.headingBtn:hover {
+  border-color: var(--input-border);
+}
+
+.headingBtn:focus-visible {
+  outline: none;
+  border-color: var(--secondary-main);
+  box-shadow: var(--focus-ring);
+}
+
+/* The static decade-range label in the year view. */
+.headingLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-body);
+}
+
+/* Month / year selection grids (4 columns). */
+.pickGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1);
+  padding-block-start: var(--space-1);
+}
+
+.pickCell {
+  padding: var(--space-2) 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.pickCell:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
+.pickCell:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pickCell[data-selected] {
+  background: var(--secondary-main);
+  color: var(--primary-contrast);
+  font-weight: var(--weight-semibold);
+}
+
+.grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.weekday {
+  padding-block-end: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.cell {
+  padding: 0;
+  text-align: center;
+}
+
+.day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.day:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
+.day:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Today: ringed, not filled (fill is reserved for the selection). */
+.day[data-today] {
+  box-shadow: inset 0 0 0 1px var(--secondary-main);
+}
+
+/* Selected: brand fill, contrast text. */
+.day[data-selected] {
+  background: var(--secondary-main);
+  color: var(--primary-contrast);
+  font-weight: var(--weight-semibold);
+}
+
+/* Range: interior days get a light tint, the two ends the brand fill. */
+.day[data-in-range] {
+  background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
+  border-radius: 0;
+}
+
+.day[data-range-start],
+.day[data-range-end] {
+  background: var(--secondary-main);
+  color: var(--primary-contrast);
+  font-weight: var(--weight-semibold);
+}
+
+.day[data-range-start] {
+  border-start-start-radius: var(--radius-sm);
+  border-end-start-radius: var(--radius-sm);
+}
+
+.day[data-range-end] {
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
+}
+
+/* Days spilling in from the adjacent month — muted. */
+.day[data-outside] {
+  color: var(--gray-light);
+}
+
+.day[data-disabled] {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.day[data-disabled]:hover {
+  background: none;
+}
+
+@media (pointer: coarse) {
+  .day {
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+  }
+}

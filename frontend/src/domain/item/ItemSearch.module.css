@@ -1,0 +1,47 @@
+/* One item option row: "code - name" takes the free space at the inline-start,
+   the total (Σ packs * packSize + unit) pins to the inline-end. Mirrors the
+   real OMS item picker's three-part row, collapsed to label + total. */
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The already-on-document badge sits between the label and the total;
+   the label is the flexible, truncating part, so the badge never shrinks. */
+.present {
+  flex-shrink: 0;
+}
+
+.total {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Compact (<600px, breakpoints.compact): the panel is held to the trigger's
+   width there (Combobox.module.css), so a one-line label would be cut to a
+   few characters of the name — wrap it instead; the name is what's picked. */
+@media (max-width: 599px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  /* A floor, so a badge (the already-on-document one) drops the badge and
+     total to a second line rather than squeezing the name to a word wide. */
+  .label {
+    flex-basis: 10rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

@@ -1,4 +1,4 @@
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     RepositoryError, StockLine, StockLineFilter, StockLineRepository,
@@ -204,15 +204,15 @@ fn outbound_line_from_stock_line_and_invoice_line(
 }
 #[cfg(test)]
 mod test {
-    use crate::{service_provider::ServiceProvider, ListError};
+    use crate::{ListError, service_provider::ServiceProvider};
     use repository::{
+        InvoiceLineRow, ItemRow, ItemType, RepositoryError, StockLineRow,
         mock::{
-            mock_item_a, mock_stock_line_a, mock_stock_line_b, mock_stock_line_ci_c, mock_store_a,
-            mock_supplier_return_a, mock_supplier_return_a_invoice_line_a, mock_supplier_return_b,
-            MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_stock_line_a, mock_stock_line_b,
+            mock_stock_line_ci_c, mock_store_a, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a, mock_supplier_return_b,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, ItemRow, ItemType, RepositoryError, StockLineRow,
     };
 
     type ServiceInput = super::GenerateSupplierReturnLinesInput;
@@ -534,10 +534,12 @@ mod test {
 
         // all are item_a stock lines
         // the return has item_b lines, but these should not be included here
-        assert!(result
-            .rows
-            .iter()
-            .all(|line| line.stock_line.item_row.id == mock_item_a().id));
+        assert!(
+            result
+                .rows
+                .iter()
+                .all(|line| line.stock_line.item_row.id == mock_item_a().id)
+        );
 
         // the stock line that is already in the return should be included, even though it
         // has no available packs

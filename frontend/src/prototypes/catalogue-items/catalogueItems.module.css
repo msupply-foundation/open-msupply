@@ -1,0 +1,487 @@
+/*
+ * Catalogue items admin prototype — prototype-local styling.
+ *
+ * Only the shapes the library has no component for yet live here: the wizard
+ * STEPPER (ui/sync/ProgressList is a stepper, but a time-based one — started /
+ * finished / elapsed / progress ring — for a running operation, not a
+ * user-navigable wizard), plus the wizard's content bands and the review-step
+ * count tiles. Everything else on these screens is a library component.
+ *
+ * If this prototype is accepted, the stepper is the one piece that graduates
+ * into src/ui/ as a real element with its own PR (CLAUDE.md: new shared
+ * components land separately from the feature that first consumes them). Until
+ * then it stays here, scoped to this prototype.
+ */
+
+/* ── Wizard stepper ─────────────────────────────────────────────────── */
+
+.stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding-inline: var(--space-5);
+  border-block-end: 1px solid var(--surface-edge);
+  background: var(--surface-chrome);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  padding-inline: 0 var(--space-4);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: color var(--motion-fast) ease;
+}
+
+.step:disabled {
+  cursor: default;
+  opacity: var(--disabled-opacity);
+}
+
+.step:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 0.125rem;
+  border-radius: var(--radius-sm);
+}
+
+.stepMarker {
+  display: grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-pill);
+  background: var(--surface-chrome);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.stepLabel {
+  font-size: var(--text-sm);
+}
+
+/* Connector between steps — a hairline, filled once the step is behind us.
+   Drawn as a BORDER on a zero-height span rather than a 1px block-size, so the
+   only px in this file are border widths (CLAUDE.md #6). */
+.stepConnector {
+  align-self: center;
+  inline-size: 1.75rem;
+  block-size: 0;
+  flex-shrink: 0;
+  margin-inline-end: var(--space-4);
+  border-block-start: 1px solid var(--surface-edge);
+}
+
+.stepConnectorDone {
+  border-block-start-color: var(--success-main);
+}
+
+.stepDone {
+  color: var(--success-main);
+}
+
+.stepDone .stepMarker {
+  border-color: var(--success-main);
+  background: var(--success-main);
+  color: var(--primary-contrast);
+}
+
+.stepActive {
+  color: var(--primary-main);
+}
+
+.stepActive .stepLabel {
+  font-weight: var(--weight-semibold);
+}
+
+.stepActive .stepMarker {
+  border-color: var(--primary-main);
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+}
+
+/* Below the narrow line the labels go and the markers carry the sequence. */
+@media (max-width: 37.5rem) {
+  .stepLabel {
+    display: none;
+  }
+
+  .stepConnector {
+    inline-size: 0.875rem;
+    margin-inline-end: var(--space-2);
+  }
+
+  .step {
+    padding-inline-end: var(--space-2);
+  }
+}
+
+/* ── Wizard body ────────────────────────────────────────────────────── */
+
+.wizardBody {
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--surface-canvas);
+}
+
+/* The measure the wizard's reading-width steps sit at; the review step opts
+   out (its table wants the room) by using .wideInner instead. */
+.narrowInner {
+  max-inline-size: var(--measure-form);
+  margin-inline: auto;
+}
+
+.wideInner {
+  max-inline-size: var(--measure-wide);
+  margin-inline: auto;
+}
+
+/* A content band inside the wizard — the same raised surface a DetailCard
+   uses, without its title-bar contract. */
+.sheet {
+  padding: var(--space-5);
+  border: 1px solid var(--surface-edge);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-1);
+}
+
+.sheet + .sheet {
+  margin-block-start: var(--space-4);
+}
+
+.sheetTitle {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-body);
+}
+
+.sheetHint {
+  margin-block: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+  color: var(--text-secondary);
+}
+
+.sheetHint:last-child {
+  margin-block-end: 0;
+}
+
+/* ── Chosen-file row ───────────────────────────────────────────────── */
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--surface-edge);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.fileRowIcon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.125rem;
+  block-size: 2.125rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--success-main) 14%, transparent);
+  color: var(--success-main);
+}
+
+.fileRowBody {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.fileRowName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileRowMeta {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/* ── Review step: count tiles ──────────────────────────────────────── */
+
+.countTiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.countTile {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--surface-edge);
+  /* The leading edge carries the outcome — paired with the tile's own label,
+     never colour alone. */
+  border-inline-start: 0.1875rem solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-1);
+}
+
+.countTileLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+.countTileValue {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-body);
+}
+
+.countTileNew {
+  border-inline-start-color: var(--primary-main);
+}
+
+.countTileUpdate {
+  border-inline-start-color: var(--success-main);
+}
+
+.countTileWarning {
+  border-inline-start-color: var(--warning-main);
+}
+
+.countTileError {
+  border-inline-start-color: var(--error-main);
+}
+
+/* ── Review step: status filter chips ──────────────────────────────── */
+
+.chipBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
+.chipCount {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* ── Result step ───────────────────────────────────────────────────── */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.resultIcon {
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--success-main) 14%, transparent);
+  color: var(--success-main);
+}
+
+.resultTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text-body);
+}
+
+.resultDetail {
+  margin: 0;
+  max-inline-size: var(--measure-prose);
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+  color: var(--text-secondary);
+}
+
+.resultLines {
+  inline-size: 100%;
+  max-inline-size: 26rem;
+  margin-block-start: var(--space-3);
+  border: 1px solid var(--surface-edge);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  text-align: start;
+}
+
+.resultLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+.resultLine + .resultLine {
+  border-block-start: 1px solid var(--color-divider);
+}
+
+.resultLineValue {
+  margin-inline-start: auto;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.resultActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+/* ── Wizard footer ─────────────────────────────────────────────────── */
+
+.wizardFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-block-start: 1px solid var(--surface-edge);
+  background: var(--surface-chrome);
+  flex-shrink: 0;
+}
+
+.wizardFooterNote {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.wizardFooterSpacer {
+  flex: 1;
+}
+
+/* Phone: the note goes and the buttons share the row. */
+@media (max-width: 37.5rem) {
+  .wizardFooterNote {
+    display: none;
+  }
+
+  .wizardBody {
+    padding: var(--space-3);
+  }
+
+  .sheet {
+    padding: var(--space-4);
+  }
+}
+
+/* ── Add-item modal: conditional block ────────────────────────────── */
+
+/* Revealed by "This is a vaccine" — indented and tinted so it reads as
+   belonging to the checkbox that opened it, not as a new top-level group. */
+.conditional {
+  margin-block-start: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--surface-edge);
+  border-inline-start: 0.1875rem solid var(--primary-main);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+/* ── Wizard column-mapping grid ───────────────────────────────────── */
+
+/* Source column → target field, one row per column in the file. A grid rather
+   than a DataTable: no sorting, paging, selection or column config applies —
+   the same call the item-variant packaging grid makes. */
+.mapGrid {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(6rem, 1fr) auto minmax(
+      11rem,
+      1.2fr
+    ) auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.mapHeading {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--surface-edge);
+}
+
+.mapSource {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+.mapSourceRequired {
+  display: block;
+  margin-block-start: var(--space-1);
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+}
+
+.mapSample {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapArrow {
+  display: grid;
+  place-items: center;
+  color: var(--text-disabled);
+}
+
+/* Stacks below the narrow line — five tracks never fit a phone. */
+@media (max-width: 37.5rem) {
+  .mapGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .mapHeading,
+  .mapArrow {
+    display: none;
+  }
+
+  .mapGrid > * {
+    min-inline-size: 0;
+  }
+}

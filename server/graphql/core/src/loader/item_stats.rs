@@ -109,7 +109,7 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a, mock_store_b, test_item_stats},
         test_db,
     };
 

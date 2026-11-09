@@ -28,23 +28,18 @@ fragment PurchaseOrder on PurchaseOrderNode {
   id
   number
   additionalInstructions
-  agentCommission
   authorisingOfficer1
   authorisingOfficer2
   comment
-  communicationsCharge
   createdDatetime
   currencyId
-  documentCharge
   donor {
     id
     name
   }
   foreignExchangeRate
-  freightCharge
   freightConditions
   headingMessage
-  insuranceCharge
   reference
   lines {
     __typename
@@ -74,6 +69,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   requestedDeliveryDate
   requestApprovalDatetime
   finalisedDatetime
+  cancelledDatetime
   documents {
     __typename
     nodes {
@@ -119,7 +115,6 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedNumberOfUnits
   shippedNumberOfUnits
   receivedNumberOfUnits
-  adjustedNumberOfUnits
   pricePerPackAfterDiscount
   pricePerPackBeforeDiscount
   manufacturer(storeId: $storeId) {
@@ -422,10 +417,6 @@ mutation updatePurchaseOrderLine(
         }
         ... on ItemCannotBeOrdered {
           ...ItemCannotBeOrdered
-        }
-        ... on CannotEditQuantityBelowReceived {
-          __typename
-          description
         }
       }
     }

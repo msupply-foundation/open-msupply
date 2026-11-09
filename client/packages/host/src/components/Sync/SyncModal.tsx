@@ -210,6 +210,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
           onClick={onCancel}
           sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
           label={t('button.close')}
+          testId="sync-modal-close"
         />
 
         <Box
@@ -225,7 +226,11 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
           })}
           flexWrap="nowrap"
         >
-          <Typography textAlign="center" marginBottom="10">
+          <Typography
+            textAlign="center"
+            marginBottom="10"
+            data-testid="sync-status-line"
+          >
             {getSyncStatusMessage()}
           </Typography>
           {syncStatus && (
@@ -250,6 +255,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
             icon={
               <CheckCircleIcon fontSize="small" sx={{ color: 'gray.dark' }} />
             }
+            data-testid="sync-last-successful"
           >
             {lastSuccessfulSyncMessage(
               latestSuccessfulSyncDate,
@@ -268,6 +274,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
             disabled={false}
             onClick={sync}
             label={t('button.sync-now')}
+            data-testid="sync-now-button"
             sx={theme => ({
               marginRight: 1,
               color: theme.palette.common.white,

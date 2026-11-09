@@ -9,18 +9,18 @@ use super::{
     },
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use chrono::{NaiveDate, Utc};
 
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
     asset_log_row::{AssetLogStatus, AssetLogType},
     assets::{
         asset_log::AssetLogFilter,
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::AssetRowRepository,
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -128,10 +128,10 @@ pub fn validate(
         return Err(InsertAssetLogError::CommentRequiredForReason);
     }
 
-    if let Some(log_datetime) = &input.log_datetime {
-        if *log_datetime > Utc::now() {
-            return Err(InsertAssetLogError::LogDatetimeInFuture);
-        }
+    if let Some(log_datetime) = &input.log_datetime
+        && *log_datetime > Utc::now()
+    {
+        return Err(InsertAssetLogError::LogDatetimeInFuture);
     }
 
     Ok(())

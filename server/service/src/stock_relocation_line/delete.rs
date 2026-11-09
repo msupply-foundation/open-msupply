@@ -61,16 +61,16 @@ impl From<RepositoryError> for DeleteStockRelocationLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_location_1, MockDataInserts},
-        test_db::setup_all,
         StockLineRow, StockLineRowRepository, StockRelocationLineRowRepository,
+        mock::{MockDataInserts, mock_location_1},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
     use crate::stock_relocation_line::upsert::{
-        upsert_stock_relocation_line, UpsertStockRelocationLine,
+        UpsertStockRelocationLine, upsert_stock_relocation_line,
     };
 
     use super::*;
@@ -139,10 +139,12 @@ mod test {
 
         let deleted = delete_stock_relocation_line(&ctx, "store_a", line_id.clone()).unwrap();
         assert_eq!(deleted, line_id);
-        assert!(StockRelocationLineRowRepository::new(&ctx.connection)
-            .find_one_by_id(&line_id)
-            .unwrap()
-            .is_none());
+        assert!(
+            StockRelocationLineRowRepository::new(&ctx.connection)
+                .find_one_by_id(&line_id)
+                .unwrap()
+                .is_none()
+        );
     }
 
     #[actix_rt::test]

@@ -1,9 +1,9 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::{
     program_enrolment::ProgramEventFilterInput,

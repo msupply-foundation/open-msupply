@@ -1,12 +1,12 @@
 use diesel::prelude::*;
 
 use crate::{
+    MasterListFilter, MasterListRepository, MasterListRow, NameTagFilter, NameTagRepository,
+    NameTagRow, ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
     db_diesel::{master_list_row::master_list, name_tag_row::name_tag},
     program_requisition_settings_row::program_requisition_settings,
     program_row::program,
     repository_error::RepositoryError,
-    MasterListFilter, MasterListRepository, MasterListRow, NameTagFilter, NameTagRepository,
-    NameTagRow, ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
 };
 
 use super::{ProgramFilter, ProgramRepository};
@@ -132,14 +132,14 @@ impl ProgramRequisitionSettingsFilter {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::{
-            mock_name_store_a, mock_period_schedule_1, mock_store_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         ContextRow, EqualFilter, MasterListFilter, MasterListNameJoinRow, MasterListRow,
         NameTagFilter, NameTagJoinRow, NameTagRow, ProgramRequisitionSettings,
         ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository,
         ProgramRequisitionSettingsRow, ProgramRow,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_a, mock_period_schedule_1, mock_store_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]

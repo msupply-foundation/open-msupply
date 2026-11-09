@@ -7,11 +7,11 @@ use repository::{
 use util::EPSILON;
 
 use crate::{
-    repack::{insert_repack_from_stock_line, InsertRepack, InsertRepackError},
-    service_provider::ServiceContext,
-    stock_line::update::{update_stock_line, UpdateStockLine, UpdateStockLineError},
-    stock_relocation::validate::{validate_line_movement, LineMovement, ValidateMovementError},
     NullableUpdate,
+    repack::{InsertRepack, InsertRepackError, insert_repack_from_stock_line},
+    service_provider::ServiceContext,
+    stock_line::update::{UpdateStockLine, UpdateStockLineError, update_stock_line},
+    stock_relocation::validate::{LineMovement, ValidateMovementError, validate_line_movement},
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -177,14 +177,14 @@ impl From<RepositoryError> for UpdateStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
-        activity_log::{ActivityLogFilter, ActivityLogRepository},
-        location_movement::{LocationMovementFilter, LocationMovementRepository},
-        mock::{mock_location_1, MockDataInserts},
-        stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
-        test_db::setup_all,
         ActivityLogType, EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
         InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType, StockLineRow,
         StockLineRowRepository, StockRelocationStatus,
+        activity_log::{ActivityLogFilter, ActivityLogRepository},
+        location_movement::{LocationMovementFilter, LocationMovementRepository},
+        mock::{MockDataInserts, mock_location_1},
+        stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 
@@ -366,7 +366,10 @@ mod test {
             .iter()
             .find(|l| l.invoice_line_row.r#type == InvoiceLineType::StockIn)
             .unwrap();
-        assert_eq!(stock_in.invoice_line_row.stock_line_id, Some(new_id.clone()));
+        assert_eq!(
+            stock_in.invoice_line_row.stock_line_id,
+            Some(new_id.clone())
+        );
         assert_eq!(
             stock_in.invoice_line_row.location_id,
             Some(mock_location_1().id)
@@ -443,7 +446,10 @@ mod test {
                 set_status(&fraction_movement, StockRelocationStatus::Finalised),
             )
             .unwrap();
-        let fraction_line = line_repo.find_one_by_id(&fraction_line_id).unwrap().unwrap();
+        let fraction_line = line_repo
+            .find_one_by_id(&fraction_line_id)
+            .unwrap()
+            .unwrap();
         let fraction_new_id = fraction_line.destination_stock_line_id.clone().unwrap();
         let fraction_new_line = stock_line_repo
             .find_one_by_id(&fraction_new_id)

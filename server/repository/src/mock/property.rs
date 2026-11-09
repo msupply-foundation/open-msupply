@@ -1,4 +1,4 @@
-use crate::{types::PropertyValueType, PropertyRow};
+use crate::{PropertyRow, types::PropertyValueType};
 
 pub fn mock_property_a() -> PropertyRow {
     PropertyRow {

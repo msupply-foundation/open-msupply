@@ -1,6 +1,6 @@
 use repository::{
-    asset_property_row::AssetPropertyRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    asset_property_row::AssetPropertyRow,
 };
 
 use crate::sync::translations::asset_catalogue_type::AssetCatalogueTypeTranslation;

@@ -1,0 +1,11 @@
+.panelBody {
+  min-block-size: 5rem;
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-white);
+}
+
+.panelText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}

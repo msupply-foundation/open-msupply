@@ -1,11 +1,14 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
-use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use crate::{
+    NullableUpdate, WithDBError, custom_field::CustomFieldPatchProblem,
+    invoice::query::get_invoice, service_provider::ServiceContext,
+};
 use chrono::{DateTime, FixedOffset};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
-    RepositoryError, StockLineRowRepository,
+    ActivityLogType, CustomFieldValueType, InvoiceLineRowRepository, InvoiceRowRepository,
+    InvoiceStatus, RepositoryError, StockLineRowRepository,
 };
 use repository::{Invoice, LocationMovementRowRepository};
 
@@ -57,6 +60,11 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
+    /// The shipment's default campaign (null = none). Lines added from a
+    /// master list or internal order take it, and the line editor prefills
+    /// new batches with it;
+    /// existing lines are left as they are.
+    pub campaign_id: Option<NullableUpdate<String>>,
     /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "inbound_shipment" scope.
@@ -132,11 +140,11 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if update_invoice.status == InvoiceStatus::Verified {
-                if let Some(movements) = location_movements {
-                    for movement in movements {
-                        LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
-                    }
+            if update_invoice.status == InvoiceStatus::Verified
+                && let Some(movements) = location_movements
+            {
+                for movement in movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
             }
 
@@ -165,11 +173,7 @@ pub fn update_inbound_shipment(
 
             if let Some(update_cost_price) = update_cost_price_for_lines {
                 for line in update_cost_price {
-                    invoice_line_repository.update_cost_price(
-                        &line.id,
-                        line.cost_price_per_pack,
-                        line.sell_price_per_pack,
-                    )?;
+                    invoice_line_repository.update_cost_price(&line)?;
                 }
             }
 
@@ -230,10 +234,18 @@ pub enum UpdateInboundShipmentError {
     CannotMoveReceivedDateForward,
     ExceedsMaximumBackdatingDays,
     CannotReceiveWithPendingLines,
+    CannotReceiveWithNoLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
+    CampaignDoesNotExist,
     /// A customFields patch key is not a visible inbound shipment property.
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -242,6 +254,19 @@ pub enum UpdateInboundShipmentError {
     PreferenceError(String),
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
+}
+
+impl From<CustomFieldPatchProblem> for UpdateInboundShipmentError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateInboundShipmentError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateInboundShipmentError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {
@@ -289,32 +314,33 @@ impl UpdateInboundShipment {
 mod test {
     use chrono::{Duration, Utc};
     use repository::{
-        mock::{
-            mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
-            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b,
-            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
-            mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
-            mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
-            mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
-        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_campaign_a, mock_donor_a, mock_donor_b,
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e,
+            mock_inbound_shipment_f, mock_item_a, mock_name_a, mock_name_linked_to_store_join,
+            mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_stock_line_a,
+            mock_store_a, mock_store_b, mock_store_linked_to_name, mock_user_account_a,
+            mock_vaccine_item_a, mock_vvm_status_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
     };
 
     use crate::{
+        NullableUpdate,
         invoice::inbound_shipment::{
             InboundShipmentType, UpdateDefaultDonor, UpdateInboundShipment,
             UpdateInboundShipmentStatus,
         },
         invoice_line::{
-            query::get_invoice_lines,
-            stock_in_line::{insert_stock_in_line, InsertStockInLine, StockInType},
             ShipmentTaxUpdate,
+            query::get_invoice_lines,
+            stock_in_line::{InsertStockInLine, StockInType, insert_stock_in_line},
         },
         service_provider::ServiceProvider,
     };
@@ -1415,6 +1441,211 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn update_inbound_shipment_cannot_receive_with_no_lines() {
+        fn empty_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_no_lines".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                ..Default::default()
+            }
+        }
+
+        fn placeholder_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_placeholders".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        /// Nothing received and nothing shipped, this line receives no stock
+        fn placeholder_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "placeholder_line".to_string(),
+                invoice_id: placeholder_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: None,
+                ..Default::default()
+            }
+        }
+
+        fn nothing_received_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_nothing_received".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        /// The supplier said they sent 5 packs but none arrived, this is a real record of a
+        /// discrepancy and must still be receivable
+        fn nothing_received_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "nothing_received_line".to_string(),
+                invoice_id: nothing_received_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: Some(5.0),
+                ..Default::default()
+            }
+        }
+
+        fn service_line_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_service_line".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        fn transferred_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_transferred_invoice".to_string(),
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..empty_invoice()
+            }
+        }
+
+        /// A line that came over from the sending store's outbound shipment. Even with nothing
+        /// shipped and nothing received it exempts the invoice from the empty check, mirroring
+        /// `validateEmptyInvoice` on the client — the store still needs to close out the transfer.
+        fn transferred_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "transferred_line".to_string(),
+                invoice_id: transferred_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: None,
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..Default::default()
+            }
+        }
+
+        fn service_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "freight_charge_line".to_string(),
+                invoice_id: service_line_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::Service,
+                total_before_tax: 10.0,
+                total_after_tax: 10.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_inbound_cannot_receive_no_lines",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![
+                    empty_invoice(),
+                    placeholder_invoice(),
+                    nothing_received_invoice(),
+                    service_line_invoice(),
+                    transferred_invoice(),
+                ],
+                invoice_lines: vec![
+                    placeholder_line(),
+                    nothing_received_line(),
+                    service_line(),
+                    transferred_line(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        fn receive(id: String) -> UpdateInboundShipment {
+            UpdateInboundShipment {
+                id,
+                status: Some(UpdateInboundShipmentStatus::Received),
+                ..Default::default()
+            }
+        }
+
+        // An invoice with no lines at all can't be received
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                receive(empty_invoice().id),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // Nor can it be verified
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: empty_invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // An invoice whose only lines are placeholders receives no stock, so it's empty too
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                receive(placeholder_invoice().id),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // Recording that nothing arrived of what was shipped is a valid receipt
+        assert!(
+            service
+                .update_inbound_shipment(
+                    &context,
+                    receive(nothing_received_invoice().id),
+                    InboundShipmentType::InboundShipment,
+                )
+                .is_ok()
+        );
+
+        // A shipment of only service lines (freight and the like) is valid
+        assert!(
+            service
+                .update_inbound_shipment(
+                    &context,
+                    receive(service_line_invoice().id),
+                    InboundShipmentType::InboundShipment,
+                )
+                .is_ok()
+        );
+
+        // A transfer can be received even when every line is zero, receiving nothing is how the
+        // store closes out a transfer where nothing arrived
+        assert!(
+            service
+                .update_inbound_shipment(
+                    &context,
+                    receive(transferred_invoice().id),
+                    InboundShipmentType::InboundShipment,
+                )
+                .is_ok()
+        );
+    }
+
+    #[actix_rt::test]
     async fn update_inbound_shipment_rejected_lines_no_stock() {
         fn delivered_invoice() -> InvoiceRow {
             InvoiceRow {
@@ -1611,6 +1842,7 @@ mod test {
                 // Set to None for mock insert (invoices inserted before POs).
                 // Updated to Some after setup_all_with_data.
                 purchase_order_id: None,
+                currency_id: Some(repository::mock::currency_b().id),
                 currency_rate: 1.0,
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
@@ -1741,6 +1973,17 @@ mod test {
             "Line B sell price should remain 25.0 (was different from old cost), got {}",
             line_b.sell_price_per_pack
         );
+        assert!(
+            (line_a.total_before_tax - 55.0).abs() < 0.0001,
+            "Line A total should be 55.0 (11.0 x 5 packs), got {}",
+            line_a.total_before_tax
+        );
+        assert!(
+            (line_b.total_before_tax - 220.0).abs() < 0.0001,
+            "Line B total should be 220.0 (22.0 x 10 packs), got {}",
+            line_b.total_before_tax
+        );
+        assert_eq!(line_a.total_after_tax, line_a.total_before_tax);
 
         // ============================================================
         // Test 2: Idempotency - running again with same charges produces same result
@@ -1817,6 +2060,26 @@ mod test {
             (line_b.cost_price_per_pack - 40.0).abs() < 0.0001,
             "Line B cost should be 40.0 with rate 2.0, got {}",
             line_b.cost_price_per_pack
+        );
+        assert!(
+            (line_a.total_before_tax - 100.0).abs() < 0.0001,
+            "Line A total should be 100.0 (20.0 x 5 packs), got {}",
+            line_a.total_before_tax
+        );
+        assert!(
+            (line_a.total_after_tax - 100.0).abs() < 0.0001,
+            "Line A total after tax should be 100.0 (no tax), got {}",
+            line_a.total_after_tax
+        );
+        assert!(
+            (line_a.foreign_currency_price_before_tax.unwrap() - 50.0).abs() < 0.0001,
+            "Line A foreign price should be 50.0 (100.0 / rate 2.0), got {:?}",
+            line_a.foreign_currency_price_before_tax
+        );
+        assert!(
+            (line_b.total_before_tax - 400.0).abs() < 0.0001,
+            "Line B total should be 400.0 (40.0 x 10 packs), got {}",
+            line_b.total_before_tax
         );
 
         // ============================================================
@@ -2027,9 +2290,9 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_errors() {
-        use chrono::{DateTime, FixedOffset};
+        use chrono::{DateTime, FixedOffset, SubsecRound};
 
-        let now = Utc::now().fixed_offset();
+        let now = Utc::now().trunc_subsecs(6).fixed_offset();
         let two_days_ago = now - Duration::days(2);
         fn new_inbound() -> InvoiceRow {
             InvoiceRow {
@@ -2192,13 +2455,13 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_success() {
-        use chrono::{DateTime, FixedOffset};
+        use chrono::{DateTime, FixedOffset, SubsecRound};
         use repository::{
-            location_movement::{LocationMovementFilter, LocationMovementRepository},
             LocationMovementRow, LocationMovementRowRepository,
+            location_movement::{LocationMovementFilter, LocationMovementRepository},
         };
 
-        let now = Utc::now().fixed_offset();
+        let now = Utc::now().trunc_subsecs(6).fixed_offset();
         let three_days_ago = now - Duration::days(3);
 
         fn received_inbound(received_datetime: DateTime<FixedOffset>) -> InvoiceRow {
@@ -2392,13 +2655,16 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_custom_fields() {
         use repository::{
-            CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-            CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
         };
         use serde_json::json;
 
-        let (_, connection, connection_manager, _) =
-            setup_all("update_inbound_shipment_custom_fields", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_inbound_shipment_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
 
         // Seed one visible inbound shipment property so key validation passes.
         CustomFieldRowRepository::new(&connection)
@@ -2446,7 +2712,9 @@ mod test {
                 patch(&[("not_a_property", json!("x"))]),
                 InboundShipmentType::InboundShipment,
             ),
-            Err(ServiceError::UnknownPropertyKey("not_a_property".to_string()))
+            Err(ServiceError::UnknownPropertyKey(
+                "not_a_property".to_string()
+            ))
         );
 
         // Pre-seed a key the client doesn't own (as if hidden/legacy) directly
@@ -2565,5 +2833,215 @@ mod test {
             logs[0].activity_log_row.changed_to,
             Some("2024-12-10".to_string())
         );
+    }
+
+    /// The rate/charges cascade re-prices each line from the order line's pack
+    /// price NET of the supplier discount, so the discount survives a later
+    /// charges or rate edit rather than being silently restored.
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cost_price_keeps_supplier_discount() {
+        use repository::{PurchaseOrderLineRow, PurchaseOrderRow, PurchaseOrderStatus};
+
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "discount_cascade_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "discount_cascade_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn purchase_order() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "discount_cascade_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: mock_name_a().id,
+                purchase_order_number: 1,
+                status: PurchaseOrderStatus::Sent,
+                created_datetime: chrono::NaiveDateTime::default(),
+                foreign_exchange_rate: 1.0,
+                supplier_discount_percentage: Some(10.0),
+                ..Default::default()
+            }
+        }
+
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "discount_cascade_po_line".to_string(),
+                store_id: mock_store_a().id,
+                purchase_order_id: purchase_order().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                item_name: "Item A".to_string(),
+                price_per_pack_after_discount: 10.0,
+                requested_pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "discount_cascade_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: None,
+                currency_id: Some(repository::mock::currency_b().id),
+                currency_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        // Seeded at the discounted price of 9.00, sell matching cost.
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "discount_cascade_line".to_string(),
+                invoice_id: invoice().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 9.0,
+                sell_price_per_pack: 9.0,
+                r#type: InvoiceLineType::StockIn,
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_cost_price_keeps_supplier_discount",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                purchase_order: vec![purchase_order()],
+                purchase_order_line: vec![po_line()],
+                invoices: vec![invoice()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Link the invoice and its line to the order once both exist
+        let mut invoice_row = invoice();
+        invoice_row.purchase_order_id = Some(purchase_order().id);
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&invoice_row)
+            .unwrap();
+        let mut line_row = invoice_line();
+        line_row.purchase_order_line_id = Some(po_line().id);
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&line_row)
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Goods at the discounted price: 9 x 5 packs = 45 local; charges of
+        // 4.50 are a 10% uplift, so the cost becomes 9.90 - not 11.00, which
+        // the undiscounted 10.00 would give.
+        service_provider
+            .invoice_service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice().id,
+                    charges_local_currency: Some(4.5),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line().id)
+            .unwrap()
+            .unwrap();
+        assert!(
+            (line.cost_price_per_pack - 9.9).abs() < 0.0001,
+            "cost should be the discounted price plus charges, got {}",
+            line.cost_price_per_pack
+        );
+        assert!((line.sell_price_per_pack - 9.9).abs() < 0.0001);
+        assert!((line.total_before_tax - 49.5).abs() < 0.0001);
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_campaign() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "inbound_campaign".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_campaign",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                ..Default::default()
+            },
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+        let campaign = |value: Option<String>| UpdateInboundShipment {
+            id: invoice().id,
+            campaign_id: Some(NullableUpdate { value }),
+            ..Default::default()
+        };
+        let saved_campaign = || {
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id(&invoice().id)
+                .unwrap()
+                .unwrap()
+                .campaign_id
+        };
+
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                campaign(Some("not_a_campaign".to_string())),
+                InboundShipmentType::InboundShipment
+            ),
+            Err(ServiceError::CampaignDoesNotExist)
+        );
+
+        service
+            .update_inbound_shipment(
+                &context,
+                campaign(Some(mock_campaign_a().id)),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        assert_eq!(saved_campaign(), Some(mock_campaign_a().id));
+
+        service
+            .update_inbound_shipment(
+                &context,
+                campaign(None),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        assert_eq!(saved_campaign(), None);
     }
 }

@@ -6,7 +6,7 @@ use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, Sourc
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
-use util::uuid::{deterministic_uuid, Uuid};
+use util::uuid::{Uuid, deterministic_uuid};
 
 table! {
   user_permission (id) {
@@ -66,10 +66,18 @@ diesel_string_enum! {
         // customer return
         CustomerReturnQuery,
         CustomerReturnMutate,
-        // prescription
+        // prescription (the DISPENSING vertical)
         PrescriptionQuery,
         PrescriptionMutate,
         CancelFinalisedInvoices,
+        // prescription request (the PRESCRIBER's vertical, upstream of
+        // dispensing — spec/prescription-requests). Its own pair rather than
+        // dispensing's: the two verticals are separate screens for separate
+        // jobs, and a clinician who prescribes need not be able to dispense.
+        // Reaches a site from mSupply slot 205, "Restrict to prescriptions"
+        // (`apis::permissions`).
+        PrescriptionRequestQuery,
+        PrescriptionRequestMutate,
         // purchase orders
         PurchaseOrderQuery,
         PurchaseOrderMutate,
@@ -305,8 +313,8 @@ impl Upsert for UserPermissionRow {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, PermissionType, UserPermissionRow,
-        UserPermissionRowRepository,
+        PermissionType, UserPermissionRow, UserPermissionRowRepository, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

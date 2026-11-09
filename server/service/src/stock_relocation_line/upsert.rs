@@ -5,7 +5,7 @@ use repository::{
 
 use crate::service_provider::ServiceContext;
 use crate::stock_relocation::validate::{
-    validate_line_movement, LineMovement, ValidateMovementError,
+    LineMovement, ValidateMovementError, validate_line_movement,
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -97,9 +97,9 @@ impl From<RepositoryError> for UpsertStockRelocationLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_location_1, mock_location_on_hold, MockDataInserts},
-        test_db::setup_all,
         StockLineRow, StockLineRowRepository,
+        mock::{MockDataInserts, mock_location_1, mock_location_on_hold},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 

@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
@@ -117,17 +117,17 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::ItemAlreadyExistInRequisition => {
             return Ok(InsertErrorInterface::RequisitionLineWithItemIdExists(
                 RequisitionLineWithItemIdExists {},
-            ))
+            ));
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(InsertErrorInterface::RequisitionDoesNotExist(
                 ForeignKeyError(ForeignKey::RequisitionId),
-            ))
+            ));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(InsertErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionLineAlreadyExists => BadUserInput(formatted_error),
@@ -151,20 +151,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
-            MockDataInserts,
-        },
         RequisitionLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_request_draft_requisition,
+            mock_sent_request_requisition_line,
+        },
     };
     use serde_json::json;
     use service::{
         requisition_line::{
+            RequisitionLineServiceTrait,
             request_requisition_line::{
                 InsertRequestRequisitionLine as ServiceInput,
                 InsertRequestRequisitionLineError as ServiceError,
             },
-            RequisitionLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

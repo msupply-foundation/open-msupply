@@ -10,7 +10,7 @@ use graphql_core::loader::AssetLogReasonLoader;
 use graphql_core::loader::SyncFileReferenceLoader;
 use graphql_core::loader::UserLoader;
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::{map_filter, ContextExt};
+use graphql_core::{ContextExt, map_filter};
 use graphql_types::types::{SyncFileReferenceConnector, UserNode};
 
 use repository::asset_log_reason::{
@@ -36,6 +36,7 @@ pub enum AssetLogStatusNodeType {
     NotFunctioning,
     Decommissioned,
     Unserviceable,
+    NotInstalled,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -165,8 +166,8 @@ impl AssetLogNode {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().log_datetime, Utc)
     }
 
-    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {

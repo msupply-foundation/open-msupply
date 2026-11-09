@@ -1,0 +1,15 @@
+{
+  "createdDatetime": "2026-07-30T01:30:00.000Z",
+  "startDatetime": "2026-07-30T01:30:00.000Z",
+  "status": "VISITED",
+  "extension": {
+    "demo": {
+      "weightKg": 68,
+      "heightCm": 172,
+      "regimen": "LEGACY_TRIAL",
+      "nextVisit": "2026-08-29T12:00:00.000Z",
+      "notes": "Reports feeling well; some tiredness in the afternoons.",
+      "adherence": "Missed two doses last month while travelling."
+    }
+  }
+}

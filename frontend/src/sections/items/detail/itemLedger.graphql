@@ -1,0 +1,42 @@
+# The item's per-store movement history (spec/items S2 › Ledger tab). Its own
+# query (kdd/state-management), independent of the itemDetail read — mirrors
+# stock's stockLedger (stock/detail/stockLine.graphql). Server-paginated, fixed
+# most-recent-first order (no sort input exists on this endpoint).
+# isExternal marks a purchase-order-born inbound shipment; this app renders it
+# on the SAME inbound-shipment detail route as a regular one (isExternal only
+# branches internal rendering there), so no separate route is needed.
+query itemLedger(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: ItemLedgerFilterInput
+) {
+  itemLedger(storeId: $storeId, page: $page, filter: $filter) {
+    ... on ItemLedgerConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        datetime
+        name
+        invoiceType
+        invoiceNumber
+        invoiceId
+        invoiceStatus
+        expiryDate
+        batch
+        packSize
+        numberOfPacks
+        movementInUnits
+        balance
+        costPricePerPack
+        sellPricePerPack
+        totalBeforeTax
+        reason
+        isExternal
+        user {
+          username
+        }
+      }
+    }
+  }
+}

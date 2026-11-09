@@ -1,5 +1,9 @@
 import { InvoiceConnector, Lines, Output } from "./types";
 
+// Invoices not yet received (null date) sort after received ones
+const compareDates = (a: string | null, b: string | null) =>
+  a === b ? 0 : a === null ? 1 : b === null ? -1 : a.localeCompare(b);
+
 export const processInvoiceLines = (
   invoices: InvoiceConnector | undefined
 ): Output => {
@@ -7,56 +11,56 @@ export const processInvoiceLines = (
     return { data: undefined };
   }
 
-  const itemTotals = new Map<string, number>();
-  const itemCount = new Map<string, number>();
-
-  invoices.nodes.forEach((invoice) => {
-    invoice.lines.nodes.forEach((line) => {
-      const groupKey = `${line.item.code}-${invoice.otherPartyName}`;
-      itemTotals.set(
-        groupKey,
-        (itemTotals.get(groupKey) || 0) +
-          line.costPricePerPack * line.numberOfPacks
-      );
-      itemCount.set(groupKey, (itemCount.get(groupKey) || 0) + 1);
-    });
-  });
-
-  const result: Lines = [];
-  const itemOccurrences = new Map<string, number>();
-
-  invoices.nodes.forEach((invoice) => {
-    invoice.lines.nodes.forEach((line) => {
-      const groupKey = `${line.item.code}-${invoice.otherPartyName}`;
-      const current = (itemOccurrences.get(groupKey) || 0) + 1;
-      itemOccurrences.set(groupKey, current);
-      const isLast = current === itemCount.get(groupKey);
-
-      result.push({
-        id: line.id,
-        itemCode: line.item.code,
-        itemName: line.item.name,
-        batch: line.batch,
-        expiryDate: line.expiryDate,
-        packSize: line.packSize,
-        numberOfPacks: line.numberOfPacks,
-        numberOfUnits: line.numberOfPacks * line.packSize,
-        costPricePerPack: (line.costPricePerPack).toFixed(2),
-        totalCost: isLast ? (itemTotals.get(groupKey)!).toFixed(2) : "-",
-        otherPartyName: invoice.otherPartyName,
-      });
-    });
-  });
-
-  const sortedResult = result.sort(
-    (a, b) =>
-      a.itemName.localeCompare(b.itemName) ||
-      a.otherPartyName.localeCompare(b.otherPartyName)
+  const rows = invoices.nodes.flatMap((invoice) =>
+    invoice.lines.nodes.map((line) => ({
+      line,
+      otherPartyName: invoice.otherPartyName,
+      invoiceNumber: invoice.invoiceNumber,
+      receivedDatetime: invoice.receivedDatetime,
+    }))
   );
+
+  rows.sort(
+    (a, b) =>
+      a.line.item.name.localeCompare(b.line.item.name) ||
+      a.line.item.code.localeCompare(b.line.item.code) ||
+      a.otherPartyName.localeCompare(b.otherPartyName) ||
+      compareDates(a.receivedDatetime, b.receivedDatetime) ||
+      a.invoiceNumber - b.invoiceNumber
+  );
+
+  // Rows of an item/supplier group are now adjacent: the group total goes on its last row
+  const groupKey = (row: (typeof rows)[number]) =>
+    `${row.line.item.code}-${row.otherPartyName}`;
+  let groupTotal = 0;
+  const result: Lines = rows.map((row, index) => {
+    const { line } = row;
+    groupTotal += line.costPricePerPack * line.numberOfPacks;
+    const next = rows[index + 1];
+    const isLast = !next || groupKey(next) !== groupKey(row);
+    const totalCost = isLast ? groupTotal.toFixed(2) : "-";
+    if (isLast) groupTotal = 0;
+
+    return {
+      id: line.id,
+      itemCode: line.item.code,
+      itemName: line.item.name,
+      batch: line.batch,
+      expiryDate: line.expiryDate,
+      packSize: line.packSize,
+      numberOfPacks: line.numberOfPacks,
+      numberOfUnits: line.numberOfPacks * line.packSize,
+      costPricePerPack: line.costPricePerPack.toFixed(2),
+      totalCost,
+      otherPartyName: row.otherPartyName,
+      invoiceNumber: row.invoiceNumber,
+      receivedDatetime: row.receivedDatetime,
+    };
+  });
 
   return {
     data: {
-      lines: sortedResult,
+      lines: result,
     },
   };
 };

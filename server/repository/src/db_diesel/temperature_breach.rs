@@ -1,14 +1,14 @@
 use super::{
-    location_row::location, sensor_row::sensor, temperature_breach_row::temperature_breach, DBType,
-    StorageConnection, TemperatureBreachRow, TemperatureBreachType,
+    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachType, location_row::location,
+    sensor_row::sensor, temperature_breach_row::temperature_breach,
 };
 use diesel::prelude::*;
 
 use crate::{
+    SensorFilter, SensorRepository,
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    SensorFilter, SensorRepository,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -82,6 +82,9 @@ impl<'a> TemperatureBreachRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(temperature_breach::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<TemperatureBreachRow>(self.connection.lock().connection())?;

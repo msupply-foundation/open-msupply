@@ -1,6 +1,6 @@
 use crate::{
-    mock::{mock_item_a, mock_store_a, mock_store_b},
     ItemStoreJoinRow,
+    mock::{mock_item_a, mock_store_a, mock_store_b},
 };
 
 pub fn mock_item_a_join_store_a() -> ItemStoreJoinRow {

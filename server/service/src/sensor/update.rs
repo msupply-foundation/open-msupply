@@ -3,8 +3,8 @@ use super::{
     validate::check_sensor_exists,
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
-    SingleRecordError,
+    NullableUpdate, SingleRecordError, activity_log::activity_log_entry,
+    service_provider::ServiceContext,
 };
 
 use repository::{
@@ -43,23 +43,23 @@ pub fn update_sensor(
             let updated_sensor_row = generate(input.clone(), sensor_row.clone());
             SensorRowRepository::new(connection).upsert_one(&updated_sensor_row)?;
 
-            if let Some(location_update) = input.location_id {
-                if sensor_row.location_id != location_update.value {
-                    if let Some(new_location_id) = &location_update.value {
-                        TemperatureLogRowRepository::new(connection)
-                            .update_location_id_by_sensor_id(&sensor_row.id, new_location_id)?;
-                        TemperatureBreachRowRepository::new(connection)
-                            .update_location_id_by_sensor_id(&sensor_row.id, new_location_id)?;
-                    }
-
-                    activity_log_entry(
-                        ctx,
-                        ActivityLogType::SensorLocationChanged,
-                        Some(sensor_row.id),
-                        sensor_row.location_id,
-                        location_update.value,
-                    )?;
+            if let Some(location_update) = input.location_id
+                && sensor_row.location_id != location_update.value
+            {
+                if let Some(new_location_id) = &location_update.value {
+                    TemperatureLogRowRepository::new(connection)
+                        .update_location_id_by_sensor_id(&sensor_row.id, new_location_id)?;
+                    TemperatureBreachRowRepository::new(connection)
+                        .update_location_id_by_sensor_id(&sensor_row.id, new_location_id)?;
                 }
+
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::SensorLocationChanged,
+                    Some(sensor_row.id),
+                    sensor_row.location_id,
+                    location_update.value,
+                )?;
             }
             get_sensor(ctx, updated_sensor_row.id).map_err(UpdateSensorError::from)
         })

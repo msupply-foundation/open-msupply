@@ -1,4 +1,5 @@
 use crate::{
+    DBType, ItemRow, Pagination, RequisitionRow, StorageConnection,
     db_diesel::item_row::item,
     diesel_macros::{
         apply_equal_filter, apply_float_filter, apply_sort, apply_sort_asc_nulls_last,
@@ -6,15 +7,14 @@ use crate::{
     },
     repository_error::RepositoryError,
     requisition_row::requisition,
-    DBType, ItemRow, Pagination, RequisitionRow, StorageConnection,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use super::{
-    requisition_line_row::{requisition_line, requisition_line_months_of_stock},
     RequisitionLineFilter, RequisitionLineMonthsOfStockRow, RequisitionLineRow,
     RequisitionLineSort, RequisitionLineSortField,
+    requisition_line_row::{requisition_line, requisition_line_months_of_stock},
 };
 
 type RequisitionLineJoin = (

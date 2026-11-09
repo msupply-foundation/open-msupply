@@ -4,8 +4,8 @@ mod prepare;
 use map::map_supplier_program_settings;
 use prepare::prepare_supplier_program_settings;
 pub use prepare::{
-    get_program_settings_and_order_types_for_store, ProgramAndOrderType,
-    ProgramSettingsAndOrderTypes,
+    ProgramAndOrderType, ProgramSettingsAndOrderTypes,
+    get_program_settings_and_order_types_for_store,
 };
 
 use crate::service_provider::ServiceContext;
@@ -47,21 +47,21 @@ pub fn get_supplier_program_requisition_settings(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
-            mock_store_c, MockData, MockDataInserts,
-        },
         ContextRow, MasterListNameJoinRow, MasterListRow, Name, NameStoreJoinRow, NameTagJoinRow,
         NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
         ProgramRequisitionSettings, ProgramRequisitionSettingsRow, ProgramRow, ProgramSupplier,
         RequisitionRow,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_a, mock_name_store_b, mock_name_store_c,
+            mock_store_a, mock_store_b, mock_store_c,
+        },
     };
 
     use crate::{
         requisition::program_settings::supplier_program_settings::{
             OrderType, SupplierProgramSettings,
         },
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
     };
 
     #[actix_rt::test]

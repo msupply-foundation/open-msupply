@@ -1,5 +1,5 @@
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use repository::{
     ActivityLogType, DemographicProjectionRow, DemographicProjectionRowRepository, RepositoryError,
@@ -70,16 +70,14 @@ pub fn validate(
         match check_demographic_projection_exists(&input.id, connection)? {
             Some(demographic_projection_row) => demographic_projection_row,
             None => {
-                return Err(UpdateDemographicProjectionError::DemographicProjectionDoesNotExist)
+                return Err(UpdateDemographicProjectionError::DemographicProjectionDoesNotExist);
             }
         };
 
-    if let Some(base_year) = input.base_year {
-        if !check_base_year_unique(base_year, &input.id, connection)? {
-            return Err(
-                UpdateDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists,
-            );
-        }
+    if let Some(base_year) = input.base_year
+        && !check_base_year_unique(base_year, &input.id, connection)?
+    {
+        return Err(UpdateDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists);
     }
 
     Ok(demographic_projection_row)

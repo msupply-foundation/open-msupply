@@ -4,20 +4,20 @@ mod query {
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
     use repository::mock::{
-        mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
-        mock_user_account_a, MockDataInserts,
+        MockDataInserts, mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
+        mock_user_account_a,
     };
     use repository::test_db::setup_all;
     use repository::{ActivityLogType, EqualFilter, StringFilter};
     use util::uuid::uuid;
 
+    use crate::NullableUpdate;
     use crate::activity_log::get_activity_logs;
     use crate::item::bundled_item::UpsertBundledItem;
     use crate::item::item_variant::{
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
     };
     use crate::service_provider::ServiceProvider;
-    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn create_edit_delete_item_variant() {
@@ -330,13 +330,14 @@ mod query {
         );
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::DuplicateName);
 
-        // Test manufacturer not visible
+        // Test manufacturer type check: name_c is not visible in this store, but visibility
+        // no longer blocks manufacturers - the is-a-manufacturer check must still apply
         let result = service.upsert_item_variant(
             &context,
             UpsertItemVariantWithPackaging {
                 id: uuid(),
                 item_id: mock_item_a().id,
-                name: "OtherPartyNotVisible".to_string(),
+                name: "OtherPartyNotAManufacturer".to_string(),
                 manufacturer_id: Some(NullableUpdate {
                     value: Some(mock_name_c().id),
                 }),
@@ -345,7 +346,82 @@ mod query {
         );
         assert_eq!(
             result.unwrap_err(),
-            UpsertItemVariantError::OtherPartyNotVisible
+            UpsertItemVariantError::OtherPartyNotAManufacturer
+        );
+    }
+
+    /// Editing an auto-created variant keeps it auto-created; promoting it makes
+    /// it a real one, keeping its id
+    #[actix_rt::test]
+    async fn promote_auto_created_item_variant() {
+        use repository::item_variant::item_variant_row::{
+            ItemVariantRow, ItemVariantRowRepository,
+        };
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "promote_auto_created_item_variant",
+            MockDataInserts::none()
+                .items()
+                .user_accounts()
+                .names()
+                .stores()
+                .name_store_joins(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.item_service;
+
+        let repo = ItemVariantRowRepository::new(&connection);
+        repo.upsert_one(&ItemVariantRow {
+            id: "auto".to_string(),
+            name: "Barcode variant".to_string(),
+            item_id: mock_item_a().id,
+            is_auto_created: true,
+            ..Default::default()
+        })
+        .unwrap();
+
+        // Not listed
+        let listed = service
+            .get_item_variants(&context, None, None, None)
+            .unwrap()
+            .rows;
+        assert!(listed.iter().all(|v| v.item_variant_row.id != "auto"));
+
+        // Renaming keeps it auto-created
+        let renamed = service
+            .upsert_item_variant(
+                &context,
+                UpsertItemVariantWithPackaging {
+                    id: "auto".to_string(),
+                    item_id: mock_item_a().id,
+                    name: "Renamed".to_string(),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(renamed.item_variant_row.name, "Renamed");
+        assert!(renamed.item_variant_row.is_auto_created);
+
+        let promoted = service.promote_item_variant(&context, "auto").unwrap();
+        assert_eq!(promoted.item_variant_row.id, "auto");
+        assert!(!promoted.item_variant_row.is_auto_created);
+        assert!(
+            service
+                .get_item_variants(&context, None, None, None)
+                .unwrap()
+                .rows
+                .iter()
+                .any(|v| v.item_variant_row.id == "auto")
+        );
+
+        assert_eq!(
+            service.promote_item_variant(&context, "missing"),
+            Err(crate::item::item_variant::PromoteItemVariantError::ItemVariantDoesNotExist)
         );
     }
 }

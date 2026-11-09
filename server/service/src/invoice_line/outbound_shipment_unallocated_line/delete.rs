@@ -71,12 +71,12 @@ impl From<RepositoryError> for DeleteOutboundShipmentUnallocatedLineError {
 #[cfg(test)]
 mod test_delete {
     use repository::{
+        InvoiceLineRowRepository,
         mock::{
-            mock_outbound_shipment_a_invoice_lines, mock_store_a, mock_store_c,
-            mock_unallocated_line, MockDataInserts,
+            MockDataInserts, mock_outbound_shipment_a_invoice_lines, mock_store_a, mock_store_c,
+            mock_unallocated_line,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository,
     };
 
     use crate::{

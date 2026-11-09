@@ -2,16 +2,16 @@ use async_graphql::*;
 
 use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice::customer_return::CustomerReturnLineInput as CustomerReturnLineServiceInput;
 use service::invoice::customer_return::insert::{
     InsertCustomerReturn as ServiceInput, InsertCustomerReturnError as ServiceError,
 };
-use service::invoice::customer_return::CustomerReturnLineInput as CustomerReturnLineServiceInput;
 
 #[derive(InputObject)]
 #[graphql(name = "CustomerReturnInput")]
@@ -94,12 +94,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyNotVisible => {
             return Ok(InsertErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotACustomer => {
             return Ok(InsertErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
-            ))
+            ));
         }
 
         // Standard Graphql Errors

@@ -1,0 +1,91 @@
+import { type Component, type JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  CheckIcon,
+  InfoIcon,
+  type IconProps,
+} from '../../icons';
+import styles from './Alert.module.css';
+
+export type AlertSeverity =
+  'error' | 'warning' | 'info' | 'success' | 'neutral';
+
+/* Same icon choices as the current app's Alert wrapper: its own triangle /
+   circle-i / check per severity, and error falling through to the MUI default
+   exclamation-in-circle (our AlertCircleIcon). Neutral is the untinted notice
+   (the current app's drawer-grey Alert, e.g. the sync modal's last-successful
+   banner); it defaults to the info glyph — consumers usually override. */
+const ICONS: Record<AlertSeverity, Component<IconProps>> = {
+  error: AlertCircleIcon,
+  warning: AlertTriangleIcon,
+  info: InfoIcon,
+  success: CheckIcon,
+  neutral: InfoIcon,
+};
+
+export interface AlertProps {
+  severity: AlertSeverity;
+  /**
+   * Replaces the severity's default glyph (by intent — e.g. a completed
+   * check).
+   */
+  icon?: Component<IconProps>;
+  children: JSX.Element;
+  /**
+   * Compact footprint — the ui-standards `fb-banner--compact`: the same alert
+   * (severity, tint, icon), shrunk to an inline chip (single line while it
+   * fits, wrapping once it hits the container) for a page-header meta strip
+   * carrying persistent, low-urgency context (read-only
+   * / auto-created record, locked document) that shouldn't cost a content row.
+   * Not for errors or anything the user must act on — those keep full width.
+   */
+  compact?: boolean;
+  /**
+   * Hold a compact chip to ONE line, cutting an over-long message off with an
+   * ellipsis instead of wrapping — for a host whose height must not move when
+   * the chip appears (the content footer's message slot). With `compact` only.
+   */
+  truncate?: boolean;
+  /**
+   * `false` when the host is already a live region that announces what lands
+   * in it (ContentFooterMessage): the alert then drops its own `role="alert"`,
+   * which would otherwise announce it a second time, and assertively. Default
+   * true.
+   */
+  announce?: boolean;
+  class?: string;
+  /** `data-testid` for the alert panel (locale-stable test hook,
+   * e2e/TESTIDS.md). */
+  testId?: string;
+}
+
+/*
+ * Alert panel — hand-rolled, one <div> + CSS, no library (the current app
+ * wraps MUI's Alert; a static message panel has no interaction contract to
+ * buy). Matches its rendered look: pale severity-tinted panel, 10px radius,
+ * severity-coloured icon, tinted text. Severity is never colour-alone — each
+ * severity has a distinct icon shape, and the message carries the meaning.
+ * role="alert" (as MUI) so an alert appearing dynamically is announced;
+ * alerts rendered with the page just sit quiet.
+ */
+export const Alert = (props: AlertProps) => (
+  <div
+    class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
+    classList={{
+      [styles.compact ?? '']: props.compact === true,
+      [styles.truncate ?? '']:
+        props.compact === true && props.truncate === true,
+    }}
+    data-severity={props.severity}
+    data-compact={props.compact ? '' : undefined}
+    data-testid={props.testId}
+    role={props.announce === false ? undefined : 'alert'}
+  >
+    <span class={styles.icon} aria-hidden="true">
+      <Dynamic component={props.icon ?? ICONS[props.severity]} />
+    </span>
+    <div class={styles.message}>{props.children}</div>
+  </div>
+);

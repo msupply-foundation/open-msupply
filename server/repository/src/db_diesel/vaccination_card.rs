@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
+use crate::{EqualFilter, RepositoryError, diesel_macros::apply_equal_filter};
 use diesel::prelude::*;
 
 // This is a view

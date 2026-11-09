@@ -63,6 +63,8 @@ export const Tooltip = ({
 
   return (
     <Box
+      // e2e contract (frontend/e2e/TESTIDS.md § Cold chain › Monitoring).
+      data-testid="chart-tooltip"
       sx={{
         margin: 0,
         padding: 2,

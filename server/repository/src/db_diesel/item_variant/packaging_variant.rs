@@ -1,8 +1,8 @@
-use super::packaging_variant_row::{packaging_variant, PackagingVariantRow};
+use super::packaging_variant_row::{PackagingVariantRow, packaging_variant};
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -16,6 +16,7 @@ pub type PackagingVariantSort = Sort<PackagingVariantSortField>;
 pub struct PackagingVariantFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_variant_id: Option<EqualFilter<String>>,
+    pub barcode: Option<EqualFilter<String>>,
 }
 
 impl PackagingVariantFilter {
@@ -30,6 +31,11 @@ impl PackagingVariantFilter {
 
     pub fn item_variant_id(mut self, filter: EqualFilter<String>) -> Self {
         self.item_variant_id = Some(filter);
+        self
+    }
+
+    pub fn barcode(mut self, filter: EqualFilter<String>) -> Self {
+        self.barcode = Some(filter);
         self
     }
 }
@@ -115,10 +121,12 @@ fn create_filtered_query(filter: Option<PackagingVariantFilter>) -> BoxedPackagi
         let PackagingVariantFilter {
             id,
             item_variant_id,
+            barcode,
         } = f;
 
         apply_equal_filter!(query, id, packaging_variant::id);
         apply_equal_filter!(query, item_variant_id, packaging_variant::item_variant_id);
+        apply_equal_filter!(query, barcode, packaging_variant::barcode);
     }
     query
 }
@@ -128,13 +136,14 @@ mod tests {
     use chrono::NaiveDate;
 
     use crate::{
+        EqualFilter,
         item_variant::{
             item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
             packaging_variant::PackagingVariantRepository,
             packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
         },
-        mock::{mock_item_a, MockDataInserts},
-        test_db, EqualFilter,
+        mock::{MockDataInserts, mock_item_a},
+        test_db,
     };
 
     use super::PackagingVariantFilter;
@@ -167,6 +176,7 @@ mod tests {
                     .unwrap(),
                 created_by: None,
                 manufacturer_id: None,
+                is_auto_created: false,
             })
             .unwrap();
 
@@ -179,6 +189,7 @@ mod tests {
                 pack_size: Some(1.0),
                 volume_per_unit: Some(0.015),
                 deleted_datetime: None,
+                barcode: None,
             })
             .unwrap();
 

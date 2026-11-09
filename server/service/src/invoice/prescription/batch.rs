@@ -1,19 +1,19 @@
 use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
+    BatchMutationsProcessor, InputWithResult, WithDBError,
     invoice_line::stock_out_line::{
-        delete_stock_out_line, insert_stock_out_line, set_prescribed_quantity,
-        update_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
-        InsertStockOutLineError, SetPrescribedQuantity, SetPrescribedQuantityError,
-        UpdateStockOutLine, UpdateStockOutLineError,
+        DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine, InsertStockOutLineError,
+        SetPrescribedQuantity, SetPrescribedQuantityError, UpdateStockOutLine,
+        UpdateStockOutLineError, delete_stock_out_line, insert_stock_out_line,
+        set_prescribed_quantity, update_stock_out_line,
     },
     service_provider::ServiceContext,
-    BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
 use super::{
-    delete_prescription, insert_prescription, update_prescription, DeletePrescriptionError,
-    InsertPrescription, InsertPrescriptionError, UpdatePrescription, UpdatePrescriptionError,
+    DeletePrescriptionError, InsertPrescription, InsertPrescriptionError, UpdatePrescription,
+    UpdatePrescriptionError, delete_prescription, insert_prescription, update_prescription,
 };
 
 #[derive(Debug, Clone)]
@@ -132,18 +132,18 @@ pub fn batch_prescription(
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceLineRowRepository, InvoiceRowRepository,
         mock::{
-            mock_inbound_shipment_a, mock_patient, mock_stock_line_a, mock_store_a, MockDataInserts,
+            MockDataInserts, mock_inbound_shipment_a, mock_patient, mock_stock_line_a, mock_store_a,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, InvoiceRowRepository,
     };
 
     use crate::{
+        InputWithResult,
         invoice::{BatchPrescription, DeletePrescriptionError, InsertPrescription},
         invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
         service_provider::ServiceProvider,
-        InputWithResult,
     };
 
     #[actix_rt::test]

@@ -22,6 +22,12 @@ pub use self::requisition::*;
 pub mod requisition_line;
 pub use self::requisition_line::*;
 
+pub mod forecast;
+pub use self::forecast::*;
+
+pub mod item_chart;
+pub use self::item_chart::*;
+
 pub mod stock_line;
 pub use self::stock_line::*;
 
@@ -57,6 +63,9 @@ pub use self::activity_log::*;
 
 pub mod period;
 pub use self::period::*;
+
+pub mod period_schedule;
+pub use self::period_schedule::*;
 
 pub mod permissions;
 pub use self::permissions::*;

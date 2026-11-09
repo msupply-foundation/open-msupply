@@ -1,6 +1,6 @@
 use repository::{
-    insurance_provider_row::{InsuranceProviderRow, InsuranceProviderRowRepository},
     RepositoryError, StorageConnection,
+    insurance_provider_row::{InsuranceProviderRow, InsuranceProviderRowRepository},
 };
 
 pub fn insurance_providers(

@@ -1,6 +1,6 @@
 use crate::sync::{
     test::integration::{
-        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+        SyncRecordTester, TestStepData, central_server_configurations::NewSiteProperties,
     },
     translations::IntegrationOperation,
 };
@@ -11,7 +11,9 @@ use serde_json::json;
 use util::uuid::uuid;
 
 fn gen_f64() -> f64 {
-    format!("{:.6}", rand::rng().random::<f64>()).parse().unwrap()
+    format!("{:.6}", rand::rng().random::<f64>())
+        .parse()
+        .unwrap()
 }
 pub(crate) struct StocktakeRecordTester;
 impl SyncRecordTester for StocktakeRecordTester {

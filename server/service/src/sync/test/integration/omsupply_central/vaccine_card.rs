@@ -2,15 +2,15 @@ use super::sync_omsupply_central;
 use crate::{
     programs::patient::{link_patient_to_store, patient_updated::create_patient_name_store_join},
     sync::{
+        CentralServerConfig,
         test::{
             check_integrated,
             integration::{
-                central_server_configurations::ConfigureCentralServer, create_site,
-                init_test_context, integrate_with_is_sync_reset, GraphqlRequest,
+                GraphqlRequest, central_server_configurations::ConfigureCentralServer, create_site,
+                init_test_context, integrate_with_is_sync_reset,
             },
         },
         translations::IntegrationOperation,
-        CentralServerConfig,
     },
 };
 use repository::{GenderType, NameRow, NameRowType, VaccinationRow};

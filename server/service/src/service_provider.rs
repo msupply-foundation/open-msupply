@@ -1,4 +1,5 @@
 use crate::{
+    ListError, ListResult,
     app_data::{AppDataService, AppDataServiceTrait},
     asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
@@ -10,6 +11,7 @@ use crate::{
     contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
+    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -41,10 +43,13 @@ use crate::{
     plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     preference::{PreferenceService, PreferenceServiceTrait},
+    prescription_request::{PrescriptionRequestService, PrescriptionRequestServiceTrait},
+    prescription_request_line::{
+        PrescriptionRequestLineService, PrescriptionRequestLineServiceTrait,
+    },
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
-    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
@@ -58,9 +63,9 @@ use crate::{
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{
+        RequisitionService, RequisitionServiceTrait,
         indicator_value::{IndicatorValueService, IndicatorValueServiceTrait},
         program_indicator::{ProgramIndicatorService, ProgramIndicatorServiceTrait},
-        RequisitionService, RequisitionServiceTrait,
     },
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
@@ -71,8 +76,8 @@ use crate::{
     site::{SiteService, SiteServiceTrait},
     standalone_central::{StandaloneCentralService, StandaloneCentralServiceTrait},
     standard_reports::StandardReports,
-    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
+    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -87,7 +92,6 @@ use crate::{
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     vvm::{VVMService, VVMServiceTrait},
-    ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
@@ -207,6 +211,9 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
+    // Prescription Requests (prescriber-authored prescriptions)
+    pub prescription_request_service: Box<dyn PrescriptionRequestServiceTrait>,
+    pub prescription_request_line_service: Box<dyn PrescriptionRequestLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Properties v2
@@ -350,6 +357,8 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
+            prescription_request_service: Box::new(PrescriptionRequestService),
+            prescription_request_line_service: Box::new(PrescriptionRequestLineService),
             contact_service: Box::new(ContactService {}),
             custom_field_service: Box::new(CustomFieldService {}),
             sync_message_service: Box::new(SyncMessageService),

@@ -1,14 +1,15 @@
 use crate::backend_plugin::types::get_consumption;
+use crate::boajs::context::with_shared_connection;
 use crate::common::days_in_a_month;
 use crate::preference::{AdjustForNumberOfDaysOutOfStock, Preference};
 use crate::{
+    PluginOrRepositoryError,
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
         types::amc,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
-    PluginOrRepositoryError,
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
@@ -51,6 +52,28 @@ pub struct ItemStatsService {}
 impl ItemStatsServiceTrait for ItemStatsService {}
 
 pub fn get_item_stats(
+    connection: &StorageConnection,
+    store_id: &str,
+    amc_lookback_months: Option<f64>,
+    item_ids: Vec<String>,
+    period_end: Option<NaiveDate>,
+) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
+    // Lend `connection` to the plugin's sql()/use_repository() bindings so a plugin run reuses
+    // it instead of checking out a second pool connection while this one is pinned (#12689).
+    // No-op when already in a transaction (the requisition create/update callers) — see
+    // `with_shared_connection` for why plugin statements are kept out of a caller's transaction.
+    with_shared_connection(connection, || {
+        get_item_stats_inner(
+            connection,
+            store_id,
+            amc_lookback_months,
+            item_ids,
+            period_end,
+        )
+    })
+}
+
+fn get_item_stats_inner(
     connection: &StorageConnection,
     store_id: &str,
     amc_lookback_months: Option<f64>,
@@ -288,11 +311,12 @@ impl ItemStats {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_item_a, mock_store_a, mock_store_b, test_item_stats, MockData, MockDataInserts,
-        },
-        test_db, PreferenceRow, PreferenceRowRepository, StockLineRow, StorePreferenceRow,
+        PreferenceRow, PreferenceRowRepository, StockLineRow, StorePreferenceRow,
         StorePreferenceRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_store_a, mock_store_b, test_item_stats,
+        },
+        test_db,
     };
 
     use crate::{
@@ -300,7 +324,14 @@ mod test {
         service_provider::ServiceProvider,
     };
 
-    use repository::mock::test_helpers::make_movements;
+    use chrono::NaiveDate;
+    use repository::mock::test_helpers::{MakeMovements, make_movements_extended};
+
+    // A fixed period, so DOS doesn't depend on when the test runs: no daylight saving
+    // change falls in the 30 days before mid-January in any common timezone
+    fn period_end() -> NaiveDate {
+        NaiveDate::from_ymd_opt(2026, 1, 15).unwrap()
+    }
 
     pub(crate) fn mock_data() -> MockData {
         let test_stock_line = StockLineRow {
@@ -317,9 +348,11 @@ mod test {
             stock_lines: vec![test_stock_line.clone()],
             ..Default::default()
         }
-        .join(make_movements(
-            test_stock_line.clone(),
-            vec![
+        .join(make_movements_extended(MakeMovements {
+            stock_line: test_stock_line.clone(),
+            reference_datetime: period_end().and_hms_opt(12, 0, 0).unwrap(),
+            offset_days: 30,
+            date_quantity: vec![
                 (1, 3),
                 (5, -3),
                 (16, 3),
@@ -338,7 +371,7 @@ mod test {
                 https://www.tablesgenerator.com/text_tables (file -> paste table data)
                 */
             ],
-        ))
+        }))
     }
 
     #[actix_rt::test]
@@ -543,7 +576,7 @@ mod test {
                 &mock_store_a().id,
                 Some(1.0),
                 item_ids.clone(),
-                None,
+                Some(period_end()),
             )
             .unwrap();
 
@@ -571,7 +604,13 @@ mod test {
             .unwrap();
 
         let item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, Some(1.0), item_ids, None)
+            .get_item_stats(
+                &context,
+                &mock_store_a().id,
+                Some(1.0),
+                item_ids,
+                Some(period_end()),
+            )
             .unwrap();
 
         // With DOS adjustment: 30 days / (30 - 15 dos) = 30/15 = 2

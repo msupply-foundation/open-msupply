@@ -53,7 +53,7 @@ status: { equalAny: [RECEIVED, VERIFIED]}
 ### Test Your New Report
 
 - Create some inbound shipments in your OMS data file if there aren't any already, and preview with `show-report`
-- There is currently no way to view this report in the OMS UI (there's no "Inbound Shipments" tab in "Reports" yet) although you can still generate it with `build-reports` and upload it with `upsert-reports`
+- There is currently no way to view this report in the OMS UI (there's no "Inbound Shipments" tab in "Reports" yet) although you can still generate it with `scripts/reports/build-reports.mjs` and upload it with `upsert-reports`
 
 ### Add Inbound Shipments Report Tab
 

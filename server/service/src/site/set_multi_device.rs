@@ -51,8 +51,8 @@ mod tests {
     use super::*;
     use crate::service_provider::ServiceProvider;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository, SiteRow,
-        SiteRowRepository, StorageConnection, SyncVersion,
+        KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, StorageConnection,
+        SyncVersion, mock::MockDataInserts, test_db::setup_all,
     };
 
     fn site(connection: &StorageConnection) -> SiteRow {

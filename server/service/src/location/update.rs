@@ -2,9 +2,9 @@ use super::{
     query::get_location,
     validate::{check_location_code_is_unique, check_location_exists},
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use repository::{
-    location::Location, LocationRow, LocationRowRepository, RepositoryError, StorageConnection,
+    LocationRow, LocationRowRepository, RepositoryError, StorageConnection, location::Location,
 };
 
 #[derive(PartialEq, Debug)]

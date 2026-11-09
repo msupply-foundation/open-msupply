@@ -1,6 +1,6 @@
 use repository::StocktakeLine;
 
-use crate::{stocktake_line::*, BatchMutationsProcessor, InputWithResult, WithDBError};
+use crate::{BatchMutationsProcessor, InputWithResult, WithDBError, stocktake_line::*};
 
 use super::*;
 
@@ -111,14 +111,14 @@ pub fn batch_stocktake(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_stocktake_finalised, mock_store_a, MockDataInserts},
-        test_db::setup_all,
         StocktakeLineRowRepository, StocktakeRowRepository,
+        mock::{MockDataInserts, mock_item_a, mock_stocktake_finalised, mock_store_a},
+        test_db::setup_all,
     };
 
     use crate::{
-        service_provider::ServiceProvider, stocktake::*, stocktake_line::InsertStocktakeLine,
-        InputWithResult,
+        InputWithResult, service_provider::ServiceProvider, stocktake::*,
+        stocktake_line::InsertStocktakeLine,
     };
 
     #[actix_rt::test]

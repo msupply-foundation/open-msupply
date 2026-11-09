@@ -1,0 +1,12 @@
+/* IdentityHeader — record name + muted subtitle atop a sectioned edit form
+ * (see IdentityHeader.tsx). */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+}

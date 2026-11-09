@@ -1,0 +1,40 @@
+/* WidgetCard content-slot demo: a dashboard-statistic figure. The type triple
+   is Statistic's .value (the canonical dashboard-figure treatment —
+   `--text-xl` is documented in tokens.css as "dashboard statistic values");
+   Statistic itself renders <div>s, which may not nest inside the card's
+   <button>, so the demo re-states the tokens. A consumer needing a figure
+   does the same until the figure treatment is owned (a registry decision). */
+.figure {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--line-tight);
+}
+
+/* A bounded viewport so the DocumentFrame (which fills its container) has a
+   height to fill in the demo. */
+.frameHolder {
+  block-size: 20rem;
+}
+
+/* QR demo: the captioned symbol stacks above the click-to-expand QR. */
+.qrItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.qrCaption {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* The contentPlacement demo needs its cards STRETCHED to the tallest, which is
+   the only condition under which the prop does anything. CardGrid aligns to
+   `start` by design, so this demo brings its own row rather than bending it. */
+.stretchedRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--space-5);
+  align-items: stretch;
+}

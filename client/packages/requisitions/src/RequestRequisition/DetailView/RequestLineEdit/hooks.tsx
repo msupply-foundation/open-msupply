@@ -3,6 +3,7 @@ import {
   FnUtils,
   QuantityUtils,
   useTranslation,
+  ForecastMethodNode,
 } from '@openmsupply-client/common';
 import {
   useRequest,
@@ -50,6 +51,11 @@ const createDraftFromItem = (
     daysOutOfStock: 0,
     expiringUnits: 0,
     ancillaryParents: [],
+    // The server captures the line's forecast at its first save; until then
+    // the draft previews an AMC forecast.
+    forecastMethod: ForecastMethodNode.Amc,
+    forecastMonthlyConsumption: averageMonthlyConsumption,
+    targetStock: averageMonthlyConsumption * request.maxMonthsOfStock,
   };
 };
 
@@ -73,7 +79,8 @@ export const useDraftRequisitionLine = (
   const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list(item?.id);
   const { data } = useRequest.document.get();
-  const { mutateAsync: saveMutation, isPending: isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } =
+    useRequest.line.save();
   const isSavingRef = useRef(false);
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
@@ -112,7 +119,9 @@ export const useDraftRequisitionLine = (
       const result = await saveMutation(draft);
 
       if (draft.isCreated) {
-        setDraft(current => (current ? { ...current, isCreated: false } : null));
+        setDraft(current =>
+          current ? { ...current, isCreated: false } : null
+        );
       }
 
       setIsReasonsError(false);

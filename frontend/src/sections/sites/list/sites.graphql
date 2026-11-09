@@ -1,0 +1,222 @@
+# The central server's sync-site register (spec/sites/contract.md).
+#
+# Every read and write here sits under the `centralServer` namespace, and its
+# gate is on the namespace FIELD: a non-central server answers the whole
+# document with `data: null` plus one top-level `Internal error` whose
+# `extensions.details` is "Not a central server" (contract.md ⚠️ wire trap). A
+# sibling field selected in the same document would be lost with it, so nothing
+# is ever selected beside `centralServer` — the deployment reads below are their
+# own document.
+
+# The register row. `id` is an Int (not an ID) and is DISPLAYED NOWHERE
+# (rules.md § site identity) — it is read because it is what every mutation
+# here addresses a site by. `appName` and `firstSyncDatetime` are deliberately
+# NOT selected: the register shows neither (contract.md § contract surface).
+fragment SiteRow on SiteNode {
+  __typename
+  id
+  code
+  name
+  hardwareId
+  syncVersion
+  appVersion
+  lastConnectionDatetime
+  lastSyncDatetime
+  isMultiDevice
+}
+
+# A store as the site editor sees it. The site relationship lives on the STORE
+# (`siteId`), not on SiteNode, which carries no store connection at all
+# (contract.md § store assignment).
+fragment SiteStoreRow on StoreNode {
+  __typename
+  id
+  code
+  storeName
+  siteId
+}
+
+# The register read: server-paginated, server-filtered, server-sorted.
+# `SitesResponse` is a union with exactly one member and no error member, so
+# there is nothing to branch on. Send exactly ONE sort input — the resolver pops
+# the TAIL of the vector despite the field's own "only first sort input is
+# evaluated" documentation (contract.md ⚠️ wire trap) — and never `key: id`,
+# which errors outright ("collations are not supported by type integer").
+query sites(
+  $page: PaginationInput
+  $filter: SiteFilterInput
+  $sort: [SiteSortInput!]
+) {
+  centralServer {
+    site {
+      sites(page: $page, filter: $filter, sort: $sort) {
+        ... on SiteConnector {
+          __typename
+          totalCount
+          nodes {
+            ...SiteRow
+          }
+        }
+      }
+    }
+  }
+}
+
+# The deployment gates and the two site ids the editor needs, in one round trip
+# and OUTSIDE the centralServer namespace (see the header note):
+#  - isCentralStandalone — whether sites may be created, edited or deleted here
+#    at all (rules.md § where sites are managed). `isCentralServer` is already a
+#    startup-wide signal (src/api/serverInfo.ts) and is not re-read.
+#  - featureFlags — the CLIENT-side `enable_multi_device_site` gate; the server
+#    accepts setSiteMultiDevice regardless of it (contract.md § sync pairing).
+#  - syncSettings.syncSiteId — the server's OWN site, which no pairing action
+#    may target; centralServerSiteId — where a removed store is handed back to.
+#    `syncSettings` is nullable (a server that has never been configured).
+query siteDeployment {
+  isCentralStandalone
+  featureFlags
+  syncSettings {
+    centralServerSiteId
+    syncSiteId
+  }
+}
+
+# A site's assigned stores — the editor's Stores sub-table. Unpaginated in
+# effect (the sub-table is not paginated; ui-surface S2 § stores).
+query storesBySite($siteId: Int!) {
+  stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
+    ... on StoreConnector {
+      __typename
+      totalCount
+      nodes {
+        ...SiteStoreRow
+      }
+    }
+  }
+}
+
+
+# Create AND update in one operation: `input.id` is required on both, there is
+# no insert operation and no server-side id allocation, and the write is an
+# UPSERT keyed on that id (contract.md § site identity — a proposed id that
+# already exists silently rewrites that site, with no error of any kind).
+# Omitting `code` / `password` merges the stored value, which is what makes
+# "leave blank to keep" work.
+mutation upsertSite($input: UpsertSiteInput!) {
+  centralServer {
+    site {
+      upsertSite(input: $input) {
+        __typename
+        ... on SiteNode {
+          ...SiteRow
+        }
+        ... on UpsertSiteError {
+          __typename
+          error {
+            __typename
+            description
+            # The four members of UpsertSiteErrorInterface, spelled out so the
+            # generated type discriminates: the three "required" rejections name
+            # their field in the message, the duplicate name falls through to
+            # the generic one (ui-surface S3).
+            ... on CodeRequired {
+              __typename
+            }
+            ... on NameRequired {
+              __typename
+            }
+            ... on PasswordRequired {
+              __typename
+            }
+            ... on UniqueValueViolation {
+              __typename
+              field
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The site's own fields are written first, its store assignments second — two
+# calls, no shared transaction (rules.md § saving a site). Removal is expressed
+# as an assignment to the central server's site: there is no unassign operation.
+# ⚠️ No error type at all: SiteDoesNotExist / StoreDoesNotExist arrive as
+# top-level "Bad user input" with the variant in extensions.details.
+mutation assignStoresToSite($input: AssignStoresToSiteInput!) {
+  centralServer {
+    site {
+      assignStoresToSite(input: $input) {
+        siteId
+        storeIds
+      }
+    }
+  }
+}
+
+# Two of the four delete rejections are typed; SiteDoesNotExist and
+# NotStandaloneCentral are not (contract.md ⚠️ wire trap). Bulk delete is N
+# independent calls — there is no batch operation for sites.
+mutation deleteSite($siteId: Int!) {
+  centralServer {
+    site {
+      deleteSite(siteId: $siteId) {
+        __typename
+        ... on DeleteSiteNode {
+          id
+        }
+        ... on DeleteSiteError {
+          __typename
+          error {
+            __typename
+            description
+            # Both members of DeleteSiteErrorInterface, each carrying its own
+            # message (ui-surface S3).
+            ... on SiteHasStores {
+              __typename
+            }
+            ... on CannotDeleteCentralSite {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The three pairing mutations. Each returns a plain node — NOT a union — and
+# carries no error type whatsoever, so every rejection (SameSite,
+# SiteDoesNotExist, SiteIsNotV7) is a top-level "Bad user input" error and the
+# field resolves to null (contract.md ⚠️ wire trap). The UI mirrors the two
+# reachable conditions instead of relying on the refusals.
+mutation clearSiteHardwareId($siteId: Int!) {
+  centralServer {
+    site {
+      clearSiteHardwareId(siteId: $siteId) {
+        id
+      }
+    }
+  }
+}
+
+mutation clearSiteToken($siteId: Int!) {
+  centralServer {
+    site {
+      clearSiteToken(siteId: $siteId) {
+        id
+      }
+    }
+  }
+}
+
+mutation setSiteMultiDevice($siteId: Int!, $isMultiDevice: Boolean!) {
+  centralServer {
+    site {
+      setSiteMultiDevice(siteId: $siteId, isMultiDevice: $isMultiDevice) {
+        id
+      }
+    }
+  }
+}

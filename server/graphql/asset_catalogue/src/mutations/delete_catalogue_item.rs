@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::DeleteResponse;
 use service::{

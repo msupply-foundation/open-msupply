@@ -6,7 +6,7 @@ use std::env;
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     sync::{
-        api::{to_json, SyncApiError, SyncApiSettings, SyncApiV5},
+        api::{SyncApiError, SyncApiSettings, SyncApiV5, to_json},
         settings::SyncSettings,
     },
 };

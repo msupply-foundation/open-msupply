@@ -1,15 +1,15 @@
 use repository::{
+    EqualFilter, PaginationOption, StorageConnection,
     demographic::{Demographic, DemographicFilter, DemographicRepository, DemographicSort},
     demographic_indicator::{
         DemographicIndicator, DemographicIndicatorFilter, DemographicIndicatorRepository,
         DemographicIndicatorSort,
     },
-    EqualFilter, PaginationOption, StorageConnection,
 };
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
-    SingleRecordError,
+    ListError, ListResult, SingleRecordError, get_pagination_or_default, i64_to_u32,
+    service_provider::ServiceContext,
 };
 
 pub fn get_demographics(

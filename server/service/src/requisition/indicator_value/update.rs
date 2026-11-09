@@ -1,8 +1,8 @@
 use repository::{
-    indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
-    indicator_value::{IndicatorValue, IndicatorValueFilter, IndicatorValueRepository},
     EqualFilter, IndicatorColumnRowRepository, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, RepositoryError, StorageConnection,
+    indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
+    indicator_value::{IndicatorValue, IndicatorValueFilter, IndicatorValueRepository},
 };
 
 use crate::{requisition::common::indicator_value_type, service_provider::ServiceContext};
@@ -79,11 +79,10 @@ fn validate(
 
     if let Some(IndicatorValueType::Number) =
         indicator_value_type(&indicator_line, &indicator_column)
+        && input.value.parse::<f64>().is_err()
     {
-        if input.value.parse::<f64>().is_err() {
-            return Err(OutError::ValueTypeNotCorrect);
-        };
-    }
+        return Err(OutError::ValueTypeNotCorrect);
+    };
 
     Ok(indicator_value_row)
 }
@@ -125,12 +124,12 @@ mod test {
     };
     use chrono::NaiveDate;
     use repository::{
+        IndicatorValueRow, RequisitionRow, RequisitionStatus, RequisitionType,
         mock::{
-            mock_indicator_column_a, mock_indicator_line_c, mock_indicator_value_a,
-            mock_name_store_b, mock_period, mock_store_a, mock_store_b, MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_indicator_column_a, mock_indicator_line_c,
+            mock_indicator_value_a, mock_name_store_b, mock_period, mock_store_a, mock_store_b,
         },
         test_db::setup_all_with_data,
-        IndicatorValueRow, RequisitionRow, RequisitionStatus, RequisitionType,
     };
 
     fn response_program_req() -> RequisitionRow {

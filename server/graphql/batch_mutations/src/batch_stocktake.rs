@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_stocktake::mutations as stocktake;
 use graphql_stocktake_line::mutations as stocktake_line;
 use service::{
@@ -7,7 +7,7 @@ use service::{
     stocktake::*,
 };
 
-use crate::{to_standard_error, VecOrNone};
+use crate::{VecOrNone, to_standard_error};
 
 type ServiceResult = BatchStocktakeResult;
 type ServiceInput = BatchStocktake;
@@ -258,11 +258,12 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, RepositoryError, StocktakeLine, StocktakeLineRow,
-        StorageConnectionManager,
+        RepositoryError, StocktakeLine, StocktakeLineRow, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
+        InputWithResult,
         service_provider::{ServiceContext, ServiceProvider},
         stocktake::{
             BatchStocktake, BatchStocktakeResult, DeleteStocktakeError, StocktakeServiceTrait,
@@ -272,7 +273,6 @@ mod test {
             DeleteStocktakeLineError, InsertStocktakeLine, InsertStocktakeLineError,
             UpdateStocktakeLine, UpdateStocktakeLineError,
         },
-        InputWithResult,
     };
 
     use crate::BatchMutations;

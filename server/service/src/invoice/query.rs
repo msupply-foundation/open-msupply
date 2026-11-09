@@ -1,5 +1,5 @@
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 use repository::EqualFilter;
 use repository::PaginationOption;
@@ -64,13 +64,13 @@ pub fn get_invoice_by_number(
 #[cfg(test)]
 mod test_query {
     use repository::{
+        InvoiceFilter, InvoiceRow, StringFilter,
         db_diesel::InvoiceType,
         mock::{
-            mock_name_a, mock_store_a, mock_unique_number_inbound_shipment, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_name_a, mock_store_a,
+            mock_unique_number_inbound_shipment,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceFilter, InvoiceRow, StringFilter,
     };
 
     use crate::service_provider::ServiceProvider;

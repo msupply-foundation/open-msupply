@@ -1,0 +1,624 @@
+import {
+  createResource,
+  createSignal,
+  Show,
+  createMemo,
+  type JSX,
+} from 'solid-js';
+import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
+import { t } from '../../../intl';
+import { localisedDateTime } from '../../../intl/formatDateTime';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { NumberField } from '../../../ui/elements/inputs/NumberField';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
+import { ALT_N } from '../../../ui/utils/shortcuts';
+import { LocationVolumeSelect } from '../../../domain/location';
+import { SelectReportModal } from '../../../domain/reports';
+import {
+  PlusCircleIcon,
+  XCircleIcon,
+  SaveIcon,
+  PrinterIcon,
+  ArrowRightIcon,
+} from '../../../ui/icons';
+import { hasPermission } from '../../../store/storeContext';
+import { runInsertRepack } from '../stockApi';
+import { repackNewPacks, isWholePacks } from '../stockCalc';
+import { fetchStockLocations, locationsForItem } from '../stockLocations';
+import { newRepackDraft, repackPanelState } from './repackSelection';
+import {
+  RepacksByStockLine,
+  type StockLineDetailFragment,
+  type RepacksByStockLineResult,
+} from './stockLine.generated';
+import { Num } from '../../../ui/elements/typography/Num';
+
+// The repack modal (spec/stock S5). Review this line's repack history and
+// create a repack (split N packs into a new line at a new pack size, optionally
+// a new location). Save is disabled until packs + new pack size are set;
+// fractional-pack / below-zero rejections surface as messages. A successful
+// save closes the modal; the caller offers the new line after a full repack.
+// Export/Print generates the repack report for the selected repack (owned by
+// reporting).
+//
+// The "created by a repack" source-batch note (spec/stock S5 header) is
+// omitted: finding the repack that CREATED this line is not directly queryable
+// (the history lists repacks FROM a line, not the one that produced it).
+
+type RepackNode =
+  RepacksByStockLineResult['repacksByStockLine']['nodes'][number];
+
+export interface RepackModalProps {
+  open: boolean;
+  storeId: string;
+  line: StockLineDetailFragment;
+  onClose: () => void;
+  /**
+   * A repack saved; the modal closes right after (spec OMS-REG-SMV-08.28).
+   * Given the new line's id when every available pack was repacked, so the
+   * caller can offer it (`.21`) over the screen the modal returns to.
+   */
+  onRepacked: (fullRepackNewLineId: string | undefined) => void;
+}
+
+export const RepackModal = (props: RepackModalProps): JSX.Element => (
+  <Show when={props.open} keyed>
+    <RepackContent
+      storeId={props.storeId}
+      line={props.line}
+      onClose={props.onClose}
+      onRepacked={props.onRepacked}
+    />
+  </Show>
+);
+
+const RepackContent = (props: {
+  storeId: string;
+  line: StockLineDetailFragment;
+  onClose: () => void;
+  onRepacked: (fullRepackNewLineId: string | undefined) => void;
+}): JSX.Element => {
+  const canRepack = () => hasPermission('CREATE_REPACK');
+
+  const [creating, setCreating] = createSignal(false);
+  const [numberToRepack, setNumberToRepack] = createSignal<
+    number | undefined
+  >();
+  const [newPackSize, setNewPackSize] = createSignal<number | undefined>();
+  const [newLocation, setNewLocation] = createSignal<{
+    id: string;
+    code: string;
+    name: string;
+  } | null>(null);
+  const [saving, setSaving] = createSignal(false);
+  const [error, setError] = createSignal<string | undefined>();
+  // The repack invoice currently shown — enables Export/Print.
+  const [selectedInvoiceId, setSelectedInvoiceId] = createSignal<string>();
+  const [printOpen, setPrintOpen] = createSignal(false);
+  const packsField = createFocusTarget();
+
+  const [repacksData] = createResource(
+    () => props.line.id,
+    async stockLineId => {
+      const result = await graphqlFetch(RepacksByStockLine, {
+        storeId: props.storeId,
+        stockLineId,
+      });
+      if (result.kind !== 'success') return undefined;
+      return result.data.repacksByStockLine;
+    }
+  );
+
+  const [allLocations] = createResource(
+    () => props.storeId,
+    fetchStockLocations
+  );
+  // Both resources first fetch when this modal OPENS, so neither may suspend:
+  // `.latest` alone still suspends on a first pending read, which collapses the
+  // detail view's <Suspense> and detaches the just-opened <dialog> — it loses
+  // the top layer, so the backdrop vanishes and the modal lands in normal flow
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `.loading`
+  // still drives the spinners.
+  const locations = () =>
+    locationsForItem(
+      gated(allLocations) ?? [],
+      props.line.item.restrictedLocationTypeId
+    );
+
+  // Newest-first by the repack's verified time (spec/stock rules › repack
+  // history).
+  const repacks = (): RepackNode[] =>
+    [...(gated(repacksData)?.nodes ?? [])].sort((a, b) =>
+      a.datetime < b.datetime ? 1 : -1
+    );
+
+  // Which repack is current, and what that means for the row mark, the panel
+  // below the table, and the print gate (OMS-REG-SMV-08 `.24`–`.26`, issue
+  // #794 — the selection used to leave no trace at all). The decision is pure
+  // and unit-tested in repackSelection.ts; here it just drives the render.
+  const panel = createMemo(() =>
+    repackPanelState({
+      repacks: repacks(),
+      selectedInvoiceId: selectedInvoiceId(),
+      creating: creating(),
+    })
+  );
+
+  const available = () => props.line.availableNumberOfPacks;
+
+  // The resulting new-pack count: packs × old size ÷ new size. Whole packs only
+  // (spec/stock rules › repack — fractional is rejected).
+  const newPacks = createMemo(() => {
+    const n = numberToRepack();
+    const size = newPackSize();
+    if (n == null || size == null) return undefined;
+    return repackNewPacks(n, props.line.packSize, size);
+  });
+  const isFractional = () => {
+    const p = newPacks();
+    return p !== undefined && !isWholePacks(p);
+  };
+  const exceedsAvailable = () => (numberToRepack() ?? 0) > available();
+
+  const canSave = () =>
+    creating() &&
+    (numberToRepack() ?? 0) > 0 &&
+    (newPackSize() ?? 0) > 0 &&
+    !isFractional() &&
+    !exceedsAvailable() &&
+    !saving();
+
+  // Starts filled in for the common case (spec `.27`), with focus on the pack
+  // count — the field most often changed, whose content focus selects so one
+  // keystroke replaces it (spec/keyboard KB-F3, KB-S1).
+  const startNew = () => {
+    const draft = newRepackDraft(props.line);
+    setCreating(true);
+    setSelectedInvoiceId(undefined);
+    setNumberToRepack(draft.numberOfPacks);
+    setNewPackSize(draft.newPackSize);
+    setNewLocation(draft.newLocation);
+    setError(undefined);
+    packsField.focus();
+  };
+
+  /*
+   * Alt+N — New (spec/keyboard KB-R2, OMS-REG-KBD-01.14/.15). Registered after
+   * the screen beneath, so it shadows the stock line's own Alt+N while this
+   * modal is open. Inert where the New button is absent, mid-save, and under
+   * the print dialog, which would otherwise hide the new repack it starts.
+   */
+  createAddAction({
+    name: 'button.new',
+    run: startNew,
+    disabled: () => !canRepack() || saving() || printOpen(),
+  });
+
+  const selectRepack = (row: RepackNode) => {
+    setCreating(false);
+    setSelectedInvoiceId(row.invoice.id);
+    setError(undefined);
+  };
+
+  const onSave = async () => {
+    if (!canSave()) return;
+    setSaving(true);
+    setError(undefined);
+    const isFull = (numberToRepack() ?? 0) === available();
+    const outcome = await runInsertRepack(props.storeId, {
+      stockLineId: props.line.id,
+      numberOfPacks: numberToRepack() ?? 0,
+      newPackSize: newPackSize() ?? 0,
+      newLocationId: newLocation()?.id ?? null,
+    });
+    setSaving(false);
+    if (!outcome) return;
+    if (outcome.kind === 'error') {
+      setError(outcome.message);
+      return;
+    }
+    // Success closes the modal back to the stock line (spec `.28`).
+    props.onRepacked(isFull ? outcome.data.newStockLineId : undefined);
+    props.onClose();
+  };
+
+  // Cell rendering + widths from the shared presets (docs/CELL_TYPES.md): each
+  // row is the `to` side of one repack, so every column is a standard type and
+  // none needs a hand-written `cell`. An unlocated repack renders BLANK, not a
+  // dash — a dash reads as data (tableHelpers, Carl 2026-07-23).
+  const columns = (): Column<RepackNode, never>[] => [
+    {
+      c: { accessor: r => r.datetime, id: 'date' },
+      header: () => t('label.date'),
+      ...getCellDefinition('date'),
+    },
+    {
+      c: { accessor: r => r.datetime, id: 'time' },
+      header: () => t('label.time'),
+      ...getCellDefinition('time'),
+    },
+    {
+      c: { accessor: r => r.to.packSize, id: 'packSize' },
+      header: () => t('label.pack-size'),
+      ...getCellDefinition('packSize'),
+    },
+    {
+      c: { accessor: r => r.to.numberOfPacks, id: 'numberOfPacks' },
+      header: () => t('label.number-of-packs'),
+      // "Number of packs" is a wider header than the shared numberOfPacks key
+      // (which is sized for "Pack quantity").
+      ...getCellDefinition('numberOfPacks'),
+      size: remToPx(8),
+    },
+    {
+      c: { accessor: r => r.to.location?.code ?? '', id: 'location' },
+      header: () => t('label.location'),
+      ...getCellDefinition('location'),
+    },
+  ];
+
+  return (
+    <>
+      <Dialog
+        open
+        onClose={props.onClose}
+        dismissable={!saving()}
+        size="large"
+        testId="repack-modal"
+        title={t('heading.repack-details')}
+        headerActions={
+          <Show when={canRepack()}>
+            <Button
+              variant="secondary"
+              icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
+              data-testid="repack-new-button"
+              onClick={startNew}
+            >
+              {t('button.new')}
+            </Button>
+          </Show>
+        }
+        actionsLead={
+          <Show when={error()}>
+            {message => (
+              <Alert severity="error" testId="repack-error">
+                {message()}
+              </Alert>
+            )}
+          </Show>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              icon={<XCircleIcon />}
+              confirms="cancel"
+              disabled={saving()}
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            >
+              {t('button.cancel')}
+            </Button>
+            <Button
+              icon={<SaveIcon />}
+              loading={saving()}
+              confirms="plain"
+              disabled={!canSave()}
+              data-testid="dialog-button-save"
+              onClick={() => void onSave()}
+            >
+              {t('button.save')}
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<PrinterIcon />}
+              disabled={!panel().canPrint}
+              data-testid="repack-print-button"
+              onClick={() => setPrintOpen(true)}
+            >
+              {t('button.export-or-print')}
+            </Button>
+          </>
+        }
+      >
+        <div
+          style={{
+            display: 'flex',
+            'flex-direction': 'column',
+            gap: 'var(--space-4)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              'flex-direction': 'column',
+              gap: 'var(--space-1)',
+            }}
+          >
+            <strong>{props.line.itemName}</strong>
+            <span
+              style={{
+                color: 'var(--text-secondary)',
+                'font-size': 'var(--text-sm)',
+              }}
+            >
+              {props.line.item.code}
+            </span>
+          </div>
+
+          {/* History (spec/stock S5). Empty state offers a create affordance. */}
+          <Show
+            when={repacks().length > 0}
+            fallback={
+              <div style={{ color: 'var(--text-secondary)' }}>
+                {t('messages.no-repacks')}
+              </div>
+            }
+          >
+            <DataTable
+              columns={columns()}
+              rows={repacks()}
+              rowKey={r => r.id}
+              onRowClick={selectRepack}
+              // Highlight-only selection (no checkbox column): the clicked row
+              // stays tinted while its detail shows below, so it is never a
+              // guess which repack Export/Print will print (issue #794).
+              selectedIds={panel().selectedRowIds}
+              showFullScreen={false}
+              emptyMessage={t('messages.no-repacks')}
+            />
+          </Show>
+
+          {/* The panel below the history table (spec/stock S5) wears one of the
+              faces repackPanelState decides: the new-repack editor, the
+              SELECTED repack read-only, or the prompt to pick one. Its caption
+              names which repack is on screen, so "what will Export/Print print"
+              is answered in words as well as by the tinted row (issue #794). */}
+          <Show when={panel().face === 'editor'}>
+            <RepackPanel
+              caption={t('heading.new-repack')}
+              testId="repack-new-panel"
+              from={
+                <>
+                  <FieldRow label={t('label.packs-available')}>
+                    <span>
+                      <Num value={available()} />
+                    </span>
+                  </FieldRow>
+                  <FieldRow label={t('label.packs-to-repack')}>
+                    <NumberField
+                      ref={packsField.ref}
+                      label={t('label.packs-to-repack')}
+                      hideLabel
+                      data-testid="repack-number-of-packs"
+                      min={0}
+                      max={available()}
+                      decimalLimit={2}
+                      value={numberToRepack()}
+                      error={
+                        exceedsAvailable()
+                          ? t('error.stock-reduced-below-zero')
+                          : undefined
+                      }
+                      onChange={setNumberToRepack}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t('label.pack-size')}>
+                    <span>
+                      <Num value={props.line.packSize} />
+                    </span>
+                  </FieldRow>
+                  <FieldRow label={t('label.location')}>
+                    <span>{props.line.location?.code ?? '—'}</span>
+                  </FieldRow>
+                </>
+              }
+              to={
+                <>
+                  <FieldRow label={t('label.new-number-of-packs')}>
+                    <span data-testid="repack-new-number-of-packs">
+                      {newPacks() === undefined ? (
+                        '—'
+                      ) : (
+                        <Num value={newPacks() as number} />
+                      )}
+                    </span>
+                  </FieldRow>
+                  <FieldRow label={t('label.new-pack-size')}>
+                    <NumberField
+                      label={t('label.new-pack-size')}
+                      hideLabel
+                      data-testid="repack-new-pack-size"
+                      min={1}
+                      decimalLimit={2}
+                      value={newPackSize()}
+                      error={
+                        isFractional()
+                          ? t('error.repack-cannot-be-fractional')
+                          : undefined
+                      }
+                      onChange={setNewPackSize}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t('label.new-location')}>
+                    <LocationVolumeSelect
+                      label={t('label.new-location')}
+                      hideLabel
+                      inputTestId="repack-new-location"
+                      locations={locations()}
+                      loading={allLocations.loading}
+                      value={newLocation()?.id}
+                      placeholder={t('label.none')}
+                      // A repack conserves volume across the split, so what the
+                      // new location must hold is the volume LEAVING the
+                      // original line: its volume per pack × the packs being
+                      // repacked (spec/stock/rules.md › location fields).
+                      requiredVolume={
+                        (props.line.volumePerPack ?? 0) *
+                        (numberToRepack() ?? 0)
+                      }
+                      // This field is a DESTINATION, distinct from where the
+                      // stock sits now, so the origin needs naming explicitly —
+                      // repacking back into it is valid (a same-location repack
+                      // is a pure relocation, `.22`) and its headroom already
+                      // accounts for this volume.
+                      originalLocationId={props.line.location?.id}
+                      onChange={l =>
+                        setNewLocation(
+                          l ? { id: l.id, code: l.code, name: l.name } : null
+                        )
+                      }
+                    />
+                  </FieldRow>
+                </>
+              }
+            />
+          </Show>
+
+          {/* A selected repack, read-only: the same from → to shape as the
+              editor, filled with what that repack actually moved. */}
+          <Show
+            when={panel().face === 'selected' ? panel().selected : undefined}
+          >
+            {repack => (
+              <RepackPanel
+                caption={t('heading.selected-repack', {
+                  datetime: localisedDateTime(repack().datetime),
+                })}
+                testId="repack-selected-panel"
+                from={
+                  <>
+                    <FieldRow label={t('label.number-of-packs')}>
+                      <span>
+                        <Num value={repack().from.numberOfPacks} />
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t('label.pack-size')}>
+                      <span>
+                        <Num value={repack().from.packSize} />
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t('label.location')}>
+                      <span>{repack().from.location?.code ?? '—'}</span>
+                    </FieldRow>
+                  </>
+                }
+                to={
+                  <>
+                    <FieldRow label={t('label.new-number-of-packs')}>
+                      <span data-testid="repack-selected-number-of-packs">
+                        <Num value={repack().to.numberOfPacks} />
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t('label.new-pack-size')}>
+                      <span data-testid="repack-selected-pack-size">
+                        <Num value={repack().to.packSize} />
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t('label.new-location')}>
+                      <span>{repack().to.location?.code ?? '—'}</span>
+                    </FieldRow>
+                  </>
+                }
+              />
+            )}
+          </Show>
+
+          {/* Nothing picked yet, with a history to pick from: name the
+              affordance rather than leaving a dead table and a disabled
+              Export/Print. */}
+          <Show when={panel().face === 'prompt'}>
+            <div
+              data-testid="repack-no-selection"
+              style={{
+                color: 'var(--text-secondary)',
+                'border-top': '1px solid var(--gray-light)',
+                'padding-top': 'var(--space-4)',
+              }}
+            >
+              {t('messages.no-repack-detail')}
+            </div>
+          </Show>
+        </div>
+      </Dialog>
+
+      {/* Export/Print the selected repack (report owned by reporting). */}
+      <Show when={printOpen() && selectedInvoiceId()}>
+        {invoiceId => (
+          <SelectReportModal
+            context="REPACK"
+            dataId={invoiceId()}
+            onClose={() => setPrintOpen(false)}
+          />
+        )}
+      </Show>
+    </>
+  );
+};
+
+// The panel under the history table: a captioned from → to pair with the
+// direction arrow between (spec/stock S5 › edit panel). One shape, two fillings
+// — the editable new repack and a selected repack read-only — so the two read
+// as the same thing in two states rather than two different screens. The
+// caption is what names WHICH repack is on screen.
+const RepackPanel = (props: {
+  caption: string;
+  testId: string;
+  /** The originating line's side of the split. */
+  from: JSX.Element;
+  /** The new line's side. */
+  to: JSX.Element;
+}): JSX.Element => (
+  <div
+    data-testid={props.testId}
+    style={{
+      display: 'flex',
+      'flex-direction': 'column',
+      gap: 'var(--space-3)',
+      'border-top': '1px solid var(--gray-light)',
+      'padding-top': 'var(--space-4)',
+    }}
+  >
+    <strong>{props.caption}</strong>
+    <div
+      style={{
+        display: 'grid',
+        'grid-template-columns': '1fr auto 1fr',
+        gap: 'var(--space-4)',
+        'align-items': 'center',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          gap: 'var(--space-2)',
+        }}
+      >
+        {props.from}
+      </div>
+      <ArrowRightIcon
+        aria-hidden="true"
+        style={{ color: 'var(--text-secondary)' }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          gap: 'var(--space-2)',
+        }}
+      >
+        {props.to}
+      </div>
+    </div>
+  </div>
+);

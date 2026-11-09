@@ -1,9 +1,9 @@
 use repository::{
-    reason_option::{ReasonOption, ReasonOptionFilter, ReasonOptionRepository, ReasonOptionSort},
     PaginationOption, StorageConnectionManager,
+    reason_option::{ReasonOption, ReasonOptionFilter, ReasonOptionRepository, ReasonOptionSort},
 };
 
-use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 
 pub fn get_reason_options(
     connection_manager: &StorageConnectionManager,

@@ -1,4 +1,5 @@
 use crate::types::{program_node::ProgramNode, program_order_type::ProgramOrderTypeNode};
+use util::barcode::display_barcode;
 
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
@@ -8,6 +9,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{
         CampaignByIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
         OrderTypesByProgramIdInput, OrderTypesByProgramIdLoader, ProgramByIdLoader,
@@ -15,14 +17,13 @@ use graphql_core::{
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 
 use repository::{
-    item_variant::item_variant::ItemVariant, location::Location, ItemRow, StockLine, StockLineRow,
+    ItemRow, StockLine, StockLineRow, item_variant::item_variant::ItemVariant, location::Location,
 };
 use service::{
-    service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
+    ListResult, service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32,
 };
 
 pub struct StockLineNode {
@@ -118,14 +119,18 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
+    /// The barcode the stock carries, as people read it, e.g. `9506682101352`
     pub async fn barcode(&self) -> Option<&str> {
-        self.stock_line.barcode()
+        self.stock_line.barcode().map(display_barcode)
     }
 
+    /// None for an auto-created variant, which only holds a barcode: it's kept out
+    /// of sight like it is in variant lists. `itemVariantId` still gives it.
     pub async fn item_variant(&self) -> Option<ItemVariantNode> {
         self.stock_line
             .item_variant_row
             .as_ref()
+            .filter(|item_variant_row| !item_variant_row.is_auto_created)
             .map(|item_variant_row| {
                 ItemVariantNode::from_domain(ItemVariant {
                     item_variant_row: item_variant_row.clone(),

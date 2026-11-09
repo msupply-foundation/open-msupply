@@ -7,17 +7,17 @@ use std::str::FromStr;
 use util::uuid::uuid;
 
 use super::{
-    patient_schema::{ContactDetails, SchemaGender, SchemaPatient},
     UpdateProgramPatientError,
+    patient_schema::{ContactDetails, SchemaGender, SchemaPatient},
 };
 
-// create name_store_join if not existing
+// create name_store_join if not existing. An existing join, active or not, is left as it is
 pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
     name_id: &str,
     name_store_join_id: Option<String>,
-) -> Result<String, RepositoryError> {
+) -> Result<NameStoreJoinRow, RepositoryError> {
     let existing = NameStoreJoinRepository::new(con)
         .query_by_filter(
             NameStoreJoinFilter::new()
@@ -26,17 +26,39 @@ pub fn create_patient_name_store_join(
         )?
         .pop();
     if let Some(existing) = existing {
-        return Ok(existing.name_store_join.id);
+        return Ok(existing.name_store_join);
     }
 
-    let id = name_store_join_id.unwrap_or_else(uuid);
-    NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
-        id: id.clone(),
+    let row = NameStoreJoinRow {
+        id: name_store_join_id.unwrap_or_else(uuid),
         name_id: name_id.to_string(),
         store_id: store_id.to_string(),
         name_is_customer: true,
         name_is_supplier: false,
-    })?;
+        visible: true,
+    };
+    NameStoreJoinRepository::new(con).upsert_one(&row)?;
+    Ok(row)
+}
+
+/// Adds the patient to the store (fetching them from central): creates the
+/// name_store_join, or makes an existing one visible
+pub fn activate_patient_name_store_join(
+    con: &StorageConnection,
+    store_id: &str,
+    name_id: &str,
+    name_store_join_id: Option<String>,
+) -> Result<String, RepositoryError> {
+    let join = create_patient_name_store_join(con, store_id, name_id, name_store_join_id)?;
+    let id = join.id.clone();
+
+    if !join.visible {
+        NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
+            visible: true,
+            ..join
+        })?;
+    }
+
     Ok(id)
 }
 
@@ -255,6 +277,60 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
     }
 }
 
+/// The draft document as JSON, from the stored patient document's data.
+///
+/// `patient_draft_document` works on `SchemaPatient`, which only has the base patient schema's
+/// fields, while a deployment's patient schema can add its own (a top-level `nationality`, a
+/// `landmark` in a contact details entry). Every value in the stored data that the base schema
+/// has no field for is carried over into the draft, at any depth, so saving the draft does not
+/// drop it. A base schema field is always taken from the draft, so a value the patient row has
+/// cleared stays cleared.
+pub fn patient_draft_document_json(
+    patient: &Patient,
+    stored: serde_json::Value,
+) -> Result<serde_json::Value, serde_json::Error> {
+    let document_data: SchemaPatient = serde_json::from_value(stored.clone())?;
+    // What the base schema reads from the stored data: a key missing here has no field in it
+    let known = serde_json::to_value(&document_data)?;
+    let mut draft = serde_json::to_value(patient_draft_document(patient, document_data))?;
+    carry_over_unknown(&mut draft, &stored, &known);
+    Ok(draft)
+}
+
+fn carry_over_unknown(
+    draft: &mut serde_json::Value,
+    stored: &serde_json::Value,
+    known: &serde_json::Value,
+) {
+    use serde_json::Value;
+    match (draft, stored, known) {
+        (Value::Object(draft), Value::Object(stored), Value::Object(known)) => {
+            for (key, stored_value) in stored {
+                match known.get(key) {
+                    Some(known_value) => {
+                        if let Some(draft_value) = draft.get_mut(key) {
+                            carry_over_unknown(draft_value, stored_value, known_value);
+                        }
+                    }
+                    None => {
+                        draft
+                            .entry(key.clone())
+                            .or_insert_with(|| stored_value.clone());
+                    }
+                }
+            }
+        }
+        // Entries line up by position: the draft rebuilds the first contact details entry
+        // from the stored one and keeps the rest in order
+        (Value::Array(draft), Value::Array(stored), Value::Array(known)) => {
+            for ((draft_item, stored_item), known_item) in draft.iter_mut().zip(stored).zip(known) {
+                carry_over_unknown(draft_item, stored_item, known_item);
+            }
+        }
+        _ => {}
+    }
+}
+
 pub fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
     let mut out = vec![];
     if let Some(last) = last {
@@ -270,22 +346,24 @@ pub fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
 mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
-        mock::{mock_form_schema_empty, MockDataInserts},
-        test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
         FormSchemaRowRepository, GenderType as GenderRepo, NameRow,
+        mock::{MockDataInserts, mock_form_schema_empty},
+        test_db::setup_all,
     };
     use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::patient::{
-            patient_schema::{ContactDetails, Gender, SchemaPatient},
             PatientFilter, UpdateProgramPatient,
+            patient_schema::{ContactDetails, Gender, SchemaPatient},
         },
         service_provider::ServiceProvider,
     };
 
-    use super::{patient_draft_document, patient_to_name_row};
+    use serde_json::json;
+
+    use super::{patient_draft_document, patient_draft_document_json, patient_to_name_row};
 
     #[actix_rt::test]
     async fn test_patient_table_update() {
@@ -316,6 +394,8 @@ mod test {
                 name: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
+                plugin_code: None,
+                program_key: None,
             })
             .unwrap();
 
@@ -510,5 +590,109 @@ mod test {
         assert_eq!(name_row_update, name_row_update_2);
         let updated_patient_2 = patient_draft_document(&name_row_update, updated_patient.clone());
         assert_eq!(updated_patient_2, updated_patient);
+    }
+
+    /// Fetching a patient into a store makes its join visible; a save doesn't
+    #[actix_rt::test]
+    async fn test_activate_patient_name_store_join() {
+        use super::{activate_patient_name_store_join, create_patient_name_store_join};
+        use repository::{NameStoreJoinRepository, NameStoreJoinRow};
+
+        let (_, connection, _, _) = setup_all(
+            "test_activate_patient_name_store_join",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let repo = NameStoreJoinRepository::new(&connection);
+        repo.upsert_one_without_changelog(&NameStoreJoinRow {
+            id: "join_not_visible".to_string(),
+            store_id: "store_a".to_string(),
+            name_id: "testId".to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+            visible: false,
+        })
+        .unwrap();
+        let is_visible = || {
+            repo.find_one_by_id("join_not_visible")
+                .unwrap()
+                .unwrap()
+                .visible
+        };
+
+        // A save keeps the existing join, still not visible
+        let join = create_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
+        assert_eq!(join.id, "join_not_visible");
+        assert!(!join.visible);
+        assert!(!is_visible());
+
+        // Fetching the patient into the store makes it visible
+        let id = activate_patient_name_store_join(&connection, "store_a", "testId", None).unwrap();
+        assert_eq!(id, "join_not_visible");
+        assert!(is_visible());
+
+        // With no join, one is created visible
+        let id = activate_patient_name_store_join(
+            &connection,
+            "store_b",
+            "testId",
+            Some("new_join".to_string()),
+        )
+        .unwrap();
+        assert_eq!(id, "new_join");
+        assert!(repo.find_one_by_id("new_join").unwrap().unwrap().visible);
+    }
+
+    #[test]
+    fn test_patient_draft_keeps_fields_outside_the_base_schema() {
+        let patient = SchemaPatient {
+            id: "testId".to_string(),
+            code: Some("code".to_string()),
+            first_name: Some("first".to_string()),
+            last_name: Some("last".to_string()),
+            date_of_death: Some("2023-03-04".to_string()),
+            is_deceased: Some(true),
+            contact_details: Some(vec![
+                ContactDetails {
+                    phone: Some("111".to_string()),
+                    ..Default::default()
+                },
+                ContactDetails {
+                    phone: Some("222".to_string()),
+                    ..Default::default()
+                },
+            ]),
+            ..Default::default()
+        };
+        // A deployment's patient schema adds fields of its own, at the top level and inside
+        // a contact details entry
+        let mut stored = serde_json::to_value(&patient).unwrap();
+        stored["nationality"] = json!("Djiboutian");
+        stored["region"] = json!({ "name": "Arta", "code": 3 });
+        stored["contactDetails"][0]["landmark"] = json!("By the mosque");
+        stored["contactDetails"][1]["landmark"] = json!("Opposite the market");
+
+        // The patient row has since changed the phone and cleared the date of death
+        let now = Utc::now();
+        let mut row = patient_to_name_row(None, &now, patient, None).unwrap();
+        row.phone = Some("333".to_string());
+        row.date_of_death = None;
+
+        let draft = patient_draft_document_json(&row, stored).unwrap();
+
+        assert_eq!(draft["nationality"], json!("Djiboutian"));
+        assert_eq!(draft["region"], json!({ "name": "Arta", "code": 3 }));
+        assert_eq!(
+            draft["contactDetails"][0]["landmark"],
+            json!("By the mosque")
+        );
+        assert_eq!(
+            draft["contactDetails"][1]["landmark"],
+            json!("Opposite the market")
+        );
+        // The base schema's fields still come from the patient row
+        assert_eq!(draft["contactDetails"][0]["phone"], json!("333"));
+        assert_eq!(draft["contactDetails"][1]["phone"], json!("222"));
+        assert!(draft.get("dateOfDeath").map_or(true, |v| v.is_null()));
     }
 }

@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{
-        mock_name_tag_1, mock_name_tag_2, mock_period_2_d, mock_period_schedule_2, MockData,
-    };
-    use repository::mock::{mock_program_b, MockDataInserts};
-    use repository::test_db::setup_all_with_data;
     use repository::ProgramRequisitionSettingsRow;
+    use repository::mock::{
+        MockData, mock_name_tag_1, mock_name_tag_2, mock_period_2_d, mock_period_schedule_2,
+    };
+    use repository::mock::{MockDataInserts, mock_program_b};
+    use repository::test_db::setup_all_with_data;
 
     use crate::service_provider::ServiceProvider;
 

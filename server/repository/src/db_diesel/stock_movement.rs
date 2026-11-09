@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter},
     DatetimeFilter, EqualFilter, RepositoryError,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter},
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -127,10 +127,10 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::{mock_item_a, mock_item_b, mock_name_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, ItemLinkRowRepository, NameRow,
         StoreRow,
+        mock::{MockData, MockDataInserts, mock_item_a, mock_item_b, mock_name_a},
+        test_db::setup_all_with_data,
     };
 
     use super::*;

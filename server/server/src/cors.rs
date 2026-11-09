@@ -1,6 +1,6 @@
 use actix_cors::Cors;
 use actix_web::http::header;
-use service::settings::{is_develop, Settings};
+use service::settings::{Settings, is_develop};
 
 pub fn cors_policy(config_settings: &Settings) -> Cors {
     let cors = if is_develop() {

@@ -66,9 +66,9 @@ impl From<TransactionError<UpdateLineReturnReasonError>> for UpdateLineReturnRea
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_b, mock_supplier_return_a_invoice_line_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         ReasonOptionRow, ReasonOptionType,
+        mock::{MockData, MockDataInserts, mock_store_b, mock_supplier_return_a_invoice_line_a},
+        test_db::setup_all_with_data,
     };
 
     use crate::{

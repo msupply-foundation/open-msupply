@@ -130,12 +130,17 @@ export const ReturnSteps = ({
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             {packSizeAlert && (
-              <Alert severity="error">
+              <Alert data-testid="pack-size-alert" severity="error">
                 {t('messages.alert-invalid-pack-size')}
               </Alert>
             )}
             {zeroQuantityAlert && (
-              <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+              <Alert
+                data-testid="zero-quantity-alert"
+                severity={zeroQuantityAlert}
+              >
+                {alertMessage}
+              </Alert>
             )}
           </Box>
           <Box

@@ -7,11 +7,20 @@ import {
   InitialisationStatusType,
   useInitialisationStatus,
   useNativeClient,
+  SyncErrorVariantV7,
 } from '@openmsupply-client/common';
 import { useSync, mapSyncError } from '@openmsupply-client/system';
 
 const STATUS_POLLING_INTERVAL = 500;
 const DEFAULT_SYNC_INTERVAL_IN_SECONDS = 300;
+// A fresh site can land on WaitingForCentralV7Upgrade: the central server has
+// asked the legacy central to move this site onto the current sync protocol and
+// is waiting for its own sync to deliver the result. The server now triggers
+// that sync immediately (open-msupply#12650), so a short poll of quiet retries
+// turns a scary red error + manual retry into a few seconds' wait — matching
+// the new frontend (open-msupply-frontend#972).
+const CENTRAL_WAIT_RETRY_INTERVAL_MS = 5000;
+const CENTRAL_WAIT_RETRY_ATTEMPTS = 12;
 
 interface InitialiseForm {
   // Error on validation of sync credentials, there is another error for sync progress
@@ -40,6 +49,10 @@ interface InitialiseForm {
   // Used to enable polling of syncStatus and initialisationStatus
   // false by default and toggled to STATUS_POLLING_INTERVAL when isInitialising
   refetchInterval: number | false;
+  // true while quietly retrying because the central server has not yet prepared
+  // this site (WaitingForCentralV7Upgrade); shows a friendly notice in place of
+  // the red error, no user action needed.
+  waitingForCentral: boolean;
 }
 
 const useInitialiseFormState = () => {
@@ -52,6 +65,7 @@ const useInitialiseFormState = () => {
     url: 'https://',
     batchSize: null,
     refetchInterval: false,
+    waitingForCentral: false,
   });
 
   return {
@@ -66,6 +80,8 @@ const useInitialiseFormState = () => {
     setUrl: (url: string) => set(state => ({ ...state, url })),
     setBatchSize: (batchSize: number | null) =>
       set(state => ({ ...state, batchSize })),
+    setWaitingForCentral: (waitingForCentral: boolean) =>
+      set(state => ({ ...state, waitingForCentral })),
     // When sync is already ongoing either after initialise button is pressed
     // or when initialisation page is loaded while sync is ongoing
     // inputs should be disabled and polling for syncStatus should start
@@ -95,6 +111,7 @@ export const useInitialiseForm = () => {
     setUrl,
     setUsername,
     setBatchSize,
+    setWaitingForCentral,
   } = state;
   const t = useTranslation();
   const { mutateAsync: initialise } = useSync.sync.initialise();
@@ -110,34 +127,63 @@ export const useInitialiseForm = () => {
 
   const onInitialise = async () => {
     setSiteCredentialsError(null);
+    setWaitingForCentral(false);
     setIsLoading(true);
-    try {
-      const response = await initialise({
-        intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
-        password,
-        url,
-        username,
-        batchSize: batchSize ?? undefined,
-      });
-      // Map structured error
+
+    // Snapshot once: the fields are locked for the whole loop, and
+    // setIsInitialising() would blank the password before a later retry.
+    const settings = {
+      intervalSeconds: DEFAULT_SYNC_INTERVAL_IN_SECONDS,
+      password,
+      url,
+      username,
+      batchSize: batchSize ?? undefined,
+    };
+
+    for (let attempt = 0; ; attempt++) {
+      let response: Awaited<ReturnType<typeof initialise>>;
+      try {
+        response = await initialise(settings);
+      } catch (e) {
+        // Set standard error
+        setWaitingForCentral(false);
+        setSiteCredentialsError({
+          error: t('error.unable-to-initialise'),
+          details: (e as Error)?.message || '',
+        });
+        return setIsLoading(false);
+      }
+
+      // The one transient variant: hold the form locked, show the waiting
+      // notice, and try again after the interval until the budget is spent.
+      const isWaitingForCentral =
+        response.__typename === 'SyncErrorV7Node' &&
+        response.variantV7 === SyncErrorVariantV7.WaitingForCentralV7Upgrade;
+      if (isWaitingForCentral && attempt < CENTRAL_WAIT_RETRY_ATTEMPTS) {
+        setWaitingForCentral(true);
+        await new Promise(resolve =>
+          setTimeout(resolve, CENTRAL_WAIT_RETRY_INTERVAL_MS)
+        );
+        continue;
+      }
+
+      // Any other structured error (or the wait budget exhausted) is real —
+      // map it and unlock the form.
       if (
         response.__typename === 'SyncErrorNode' ||
         response.__typename === 'SyncErrorV7Node'
       ) {
+        setWaitingForCentral(false);
         setSiteCredentialsError(
           mapSyncError(t, response, 'error.unable-to-initialise')
         );
         return setIsLoading(false);
       }
-    } catch (e) {
-      // Set standard error
-      setSiteCredentialsError({
-        error: t('error.unable-to-initialise'),
-        details: (e as Error)?.message || '',
-      });
-      return setIsLoading(false);
+
+      break; // SyncSettingsNode — initialisation accepted
     }
 
+    setWaitingForCentral(false);
     setIsInitialising(true);
   };
 

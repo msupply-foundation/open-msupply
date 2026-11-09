@@ -354,10 +354,14 @@ export const EquipmentUploadTab = ({
         </Grid>
       ) : null}
       <Stack spacing={2} alignItems={'center'}>
-        <UploadFile onUpload={csvImport} />
+        <UploadFile onUpload={csvImport} testId="import-file-input" />
         <Typography>
           {t('messages.template-download-text')}
-          <Link onClick={csvExample} to={''}>
+          <Link
+            onClick={csvExample}
+            to={''}
+            data-testid="download-template-button"
+          >
             {t('heading.download-example')}
           </Link>
         </Typography>

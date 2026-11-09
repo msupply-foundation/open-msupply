@@ -38,7 +38,6 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   requestedNumberOfUnits: 0,
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
-  adjustedNumberOfUnits: null,
   pricePerPackBeforeDiscount: 0,
   pricePerPackAfterDiscount: 0,
   lineNumber: 0,
@@ -91,11 +90,8 @@ export function usePurchaseOrderLine(id?: string | null) {
 
   const getNumberOfPacks = (): number => {
     if (!data?.nodes[0]) return 0;
-    const { adjustedNumberOfUnits, requestedNumberOfUnits, requestedPackSize } =
-      data.nodes[0];
-
-    const numberOfUnits = adjustedNumberOfUnits ?? requestedNumberOfUnits ?? 0;
-    return numberOfUnits / (requestedPackSize ?? 1);
+    const { requestedNumberOfUnits, requestedPackSize } = data.nodes[0];
+    return (requestedNumberOfUnits ?? 0) / (requestedPackSize ?? 1);
   };
   const initialNumberOfPacks = getNumberOfPacks();
 
@@ -158,7 +154,6 @@ export function usePurchaseOrderLine(id?: string | null) {
       requestedPackSize: draft.requestedPackSize,
       requestedDeliveryDate: { value: draft.requestedDeliveryDate },
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
-      adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
       pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
       pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
       manufacturerId: setNullableInput('id', draft.manufacturer),
@@ -325,9 +320,6 @@ const useUpdate = () => {
             break;
           case 'ItemCannotBeOrdered':
             errorMessage = t('error.item-cannot-be-ordered-on-line');
-            break;
-          case 'CannotEditQuantityBelowReceived':
-            errorMessage = t('error.cannot-reduce-adjusted-quantity');
             break;
           default:
             errorMessage = t('label.cannot-update-purchase-order-line');

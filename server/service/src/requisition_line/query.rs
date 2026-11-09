@@ -6,7 +6,7 @@ use repository::{
 };
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 
 pub fn get_requisition_lines(
@@ -37,9 +37,9 @@ pub fn get_requisition_line(
 mod test {
     use repository::EqualFilter;
     use repository::{
-        mock::{mock_draft_request_requisition_line, MockDataInserts},
-        test_db::setup_all,
         RequisitionLineFilter,
+        mock::{MockDataInserts, mock_draft_request_requisition_line},
+        test_db::setup_all,
     };
 
     use crate::service_provider::ServiceProvider;

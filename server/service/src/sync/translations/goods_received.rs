@@ -1,7 +1,7 @@
 use super::{
-    currency::CurrencyTranslation, invoice::InvoiceTranslation, name::NameTranslation,
-    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, FkField,
-    PullTranslateResult, SyncTranslation,
+    FkField, PullTranslateResult, SyncTranslation, currency::CurrencyTranslation,
+    invoice::InvoiceTranslation, name::NameTranslation, purchase_order::PurchaseOrderTranslation,
+    store::StoreTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -87,7 +87,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             None => {
                 return Ok(PullTranslateResult::Ignored(
                     "goods_received has no purchase_order_ID".to_string(),
-                ))
+                ));
             }
         };
 
@@ -97,7 +97,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "purchase_order {po_id} not found for goods_received {}",
                     data.id
-                )))
+                )));
             }
         };
 
@@ -185,6 +185,8 @@ impl SyncTranslation for GoodsReceivedTranslation {
             charges_foreign_currency: 0.0,
             default_donor_id,
             legacy_goods_received_id: None,
+            prescription_request_id: None,
+            campaign_id: None,
         };
 
         Ok(PullTranslateResult::upsert(invoice))

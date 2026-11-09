@@ -3,7 +3,7 @@ use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::stocktake_line::{LegacyStocktakeLineRow, LegacyStocktakeLineRowOmsFields},
 };
-use repository::{mock::mock_item_a, StocktakeLineRow};
+use repository::{StocktakeLineRow, mock::mock_item_a};
 use serde_json::json;
 
 const TABLE_NAME: &str = "Stock_take_lines";

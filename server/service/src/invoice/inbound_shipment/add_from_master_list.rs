@@ -1,5 +1,5 @@
 use crate::invoice::common::{
-    get_lines_for_invoice, AddToShipmentFromMasterListInput as ServiceInput,
+    AddToShipmentFromMasterListInput as ServiceInput, get_lines_for_invoice,
 };
 use crate::invoice::{check_invoice_exists, common::check_master_list_for_store};
 use crate::service_provider::ServiceContext;
@@ -124,14 +124,15 @@ mod test {
     use crate::invoice::inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError;
     use crate::service_provider::ServiceProvider;
     use repository::{
+        InvoiceRow, InvoiceRowRepository, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         mock::{
-            common::FullMockMasterList, mock_empty_draft_inbound_shipment, mock_inbound_shipment_a,
-            mock_inbound_shipment_c, mock_item_a, mock_item_b, mock_item_c, mock_item_d,
-            mock_name_store_a, mock_outbound_shipment_c, mock_store_a, mock_store_c,
-            mock_test_not_store_a_master_list, MockData, MockDataInserts,
+            MockData, MockDataInserts, common::FullMockMasterList, mock_campaign_a,
+            mock_empty_draft_inbound_shipment, mock_inbound_shipment_a, mock_inbound_shipment_c,
+            mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_store_a,
+            mock_outbound_shipment_c, mock_store_a, mock_store_c,
+            mock_test_not_store_a_master_list,
         },
         test_db::{setup_all, setup_all_with_data},
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
 
     #[actix_rt::test]
@@ -260,7 +261,7 @@ mod test {
             }
         }
 
-        let (_, _, connection_manager, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "is_add_from_master_list_success",
             MockDataInserts::all(),
             MockData {
@@ -275,6 +276,14 @@ mod test {
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
+
+        // New lines take the shipment's default campaign
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                campaign_id: Some(mock_campaign_a().id),
+                ..mock_empty_draft_inbound_shipment()
+            })
+            .unwrap();
 
         let result: Vec<repository::InvoiceLineRow> = service
             .add_to_inbound_shipment_from_master_list(
@@ -305,6 +314,11 @@ mod test {
         test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
+        assert!(
+            result
+                .iter()
+                .all(|line| line.campaign_id == Some(mock_campaign_a().id))
+        );
         let line = result
             .iter()
             .find(|line| line.item_id == mock_item_a().id)

@@ -1,0 +1,26 @@
+# Master lists — the S1 list population (spec/master-lists). storeId is
+# auth/context only; store scoping is the client sending existsForStoreId.
+# Inactive lists never return (the repository forces isActive). `sort` honours
+# only the LAST entry — send a single-element list (contract wire trap).
+# `linesCount` is the item-membership count shown in the Items column; it is
+# nullable on the wire, so the column renders blank when the server omits it.
+query masterLists(
+  $storeId: String!
+  $filter: MasterListFilterInput
+  $sort: [MasterListSortInput!]
+  $page: PaginationInput
+) {
+  masterLists(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        code
+        description
+        linesCount
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 use repository::{
-    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
     ActivityLogType, RepositoryError, TransactionError,
+    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
 };
 
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};

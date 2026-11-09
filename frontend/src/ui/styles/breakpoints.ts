@@ -1,0 +1,84 @@
+/*
+ * Breakpoints — the single source of truth. Ported from the RnD prototype.
+ *
+ * Design principle (CLAUDE.md #7): layout is INTRINSIC by default — elements
+ * flow and wrap with flex/grid, min()/clamp(), auto-fit. We do NOT sprinkle
+ * breakpoints to nudge spacing or font sizes. Breakpoints exist ONLY to answer
+ * "which element do I render?" (e.g. docked menu bar vs. hamburger overlay),
+ * and are consumed by createMediaQuery to drive conditional rendering — rarely
+ * by CSS media queries. This list stays short on purpose.
+ */
+export const breakpoints = {
+  /**
+   * Below this, the menu bar becomes a hamburger overlay instead of docked (and
+   * the side panel an off-canvas drawer). Also the "narrow viewport" line —
+   * tablet portrait and below — at which modal dialogs expand to full screen
+   * (ui-standards responsive: tablet portrait / small screen is 600–1023px),
+   * and the page header becomes one row beside a truncating breadcrumb (its
+   * actions shed their labels to icons when they don't fit — measured by
+   * Header, not tied to this line). A landscape tablet is wider than this, so
+   * for it the dialog's full-screen rule turns on shortViewport below instead
+   * (#246).
+   */
+  navOverlay: 1024,
+  /**
+   * Below this = phone-ish — handheld scanners included (a Honeywell CK65 is
+   * ~320×533 CSS px; no line of its own). index.css drops the root font-size
+   * here, and the chrome renders its single-row forms so content gets the
+   * screen: the app bar's cells shed their labels to icons, the list toolbar
+   * is one row, card lists drop empty fields, header fields fold behind a
+   * disclosure, every dialog is a sheet, and the whole page scrolls as one
+   * rather than pinning its bands. Also the `collapsible` Button tier.
+   */
+  compact: 600,
+  /**
+   * At/above this, a page's side panel defaults open (a default-state
+   * decision, not a styling nudge). The captured app's widest breakpoint —
+   * spec ui-standards/layout.md → page regions.
+   */
+  sidePanelDefaultOpen: 1536,
+  /**
+   * At/above this the sidebar rail defaults to EXPANDED; between navOverlay and
+   * here it defaults to the mini rail. Like sidePanelDefaultOpen this is a
+   * default-state decision, not a styling nudge and not a mode switch — the rail
+   * stays docked across the whole range, and the user's own toggle outranks the
+   * default and persists. The line sits at 1440 because the fleet's landscape
+   * tablets (~1280/1333px) fall below it and desktops above: those tablets get
+   * ~180px of width back without losing persistent wayfinding, which hiding the
+   * nav behind a hamburger there would have cost.
+   */
+  railDefaultExpanded: 1440,
+  /**
+   * Below this HEIGHT the viewport is "short": a landscape tablet, or a
+   * windowed laptop. The only breakpoint keyed to height, and the same kind of
+   * decision as the rest — which element renders — not a styling nudge.
+   *
+   * Every other line here asks how much WIDTH there is, which on a landscape
+   * screen answers the wrong question: a detail view is wide and short, so a
+   * rule written for "narrow" never fires while vertical room is the thing
+   * actually running out. Measured on the outbound detail view at 1434×742,
+   * 383px of the 742 went to stacked chrome — 52% of the screen — leaving under
+   * seven rows.
+   *
+   * 800 sits above the fleet's landscape tablets (~715px of viewport once
+   * browser chrome is off a 768px screen) and this class of laptop window,
+   * and below a normal desktop (~950px), which keeps its roomier layout.
+   *
+   * Also the line below which a WORKBENCH dialog (`size="large" | "full"`,
+   * the line editors) goes full screen — the landscape-tablet counterpart of
+   * navOverlay's rule, since a landscape tablet is wide and never crosses
+   * that one (#246, Dialog.tsx). Note it is a line on the VIEWPORT: a
+   * 1280×800 tablet presents ~728px once its system bars are on screen, so
+   * it falls below; an emulator set to a bare 800 sits on the line.
+   */
+  shortViewport: 800,
+} as const;
+
+/** matchMedia query strings built from the values above. */
+export const mediaQuery = {
+  navOverlay: `(max-width: ${breakpoints.navOverlay - 1}px)`,
+  compact: `(max-width: ${breakpoints.compact - 1}px)`,
+  sidePanelWide: `(min-width: ${breakpoints.sidePanelDefaultOpen}px)`,
+  railWide: `(min-width: ${breakpoints.railDefaultExpanded}px)`,
+  shortViewport: `(max-height: ${breakpoints.shortViewport - 1}px)`,
+} as const;

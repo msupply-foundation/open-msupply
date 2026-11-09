@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -16,6 +16,13 @@ pub struct InstalledPluginNode {
     pub version: String,
     pub kind: InstalledPluginKindType,
     pub types: Vec<String>,
+    /// Which front end a frontend bundle is for (`react`, `solid`, ...). Null
+    /// on backend plugins, which have no host.
+    ///
+    /// One plugin ships a bundle per front end and the two can share a code and
+    /// a version, so without this the list shows one line twice and there is
+    /// nothing to tell an admin which of the pair they are about to uninstall.
+    pub host_runtime: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -35,6 +42,7 @@ impl InstalledPluginNode {
                 InstalledPluginKind::Frontend => InstalledPluginKindType::Frontend,
             },
             types: plugin.types,
+            host_runtime: plugin.host_runtime,
         }
     }
 }

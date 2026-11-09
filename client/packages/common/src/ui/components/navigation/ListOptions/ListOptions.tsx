@@ -15,6 +15,8 @@ import React from 'react';
 export type ListOptionValues = {
   id: string;
   value: string;
+  /** Optional `data-testid` stamped on the rendered list item (e2e locators). */
+  testId?: string;
 };
 
 interface ListProps {
@@ -76,6 +78,7 @@ export const ListOptions = ({
               onClick={() => onClick(option.id)}
               ref={option.id === currentId ? scrollRef : null}
               aria-keyshortcuts={shortcut}
+              data-testid={option.testId}
             >
               <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
                 <Box

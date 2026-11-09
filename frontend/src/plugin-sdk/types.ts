@@ -1,0 +1,1081 @@
+/*
+ * The plugin module contract, as types (spec/plugins/sdk-contract.md).
+ *
+ * Everything here is public API for out-of-tree plugins: additive-only within
+ * a PLUGIN_API_VERSION major, and a rename is a version bump. Types first:
+ * the only runtime values are the published id catalogues
+ * (HOST_NAV_SECTION_IDS, HOST_WARNING_IDS) — string literals, so importing
+ * this module still costs next to nothing; keep any other runtime code out.
+ */
+import type { Component } from 'solid-js';
+import type { SupportedLocale } from '../intl';
+import type { Draft } from '../domain/documentForm/draft';
+import type { MigrationStep } from '../domain/documentForm/migration';
+import type { Encounter, Patient, ProgramEnrolment } from './documents';
+
+// ── Manifest ────────────────────────────────────────────────────────────────
+
+export interface PluginManifest {
+  /** == the plugin's package name; lower_snake_case; stable forever. */
+  code: string;
+  /** semver; the server's install-time gate reads this. */
+  version: string;
+  /** The SDK API this plugin was built against (PLUGIN_API_VERSION). */
+  pluginApiVersion: number;
+}
+
+// ── Slot context ────────────────────────────────────────────────────────────
+
+/*
+ * The store preferences a contribution may gate on. SDK-owned (never the
+ * host's generated preference node), so the plugin surface does not move when
+ * the host's query does; the host maps it at the slot boundary. The set grows
+ * as gating surfaces land — additive-only within an API major.
+ */
+export interface SlotStorePreferences {
+  /** Gates the CIV aggregate-AMC surfaces on internal-order lines. */
+  useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+  /**
+   * The store's understock threshold, in months — the low-stock boundary.
+   *
+   * `undefined` until the store context resolves. There is no safe default
+   * here: unlike the booleans above, whose safe default is OFF, a threshold
+   * guessed wrong yields a figure that is confidently wrong, and a consumer
+   * states the store's own value in its label. So a consumer waits for it
+   * rather than substituting one — the same rule the dashboard holds itself
+   * to, where an unresolved threshold pauses the fetch instead of sending
+   * threshold-less variables (OMS-REG-DB-01.54).
+   */
+  monthsUnderstock: number | undefined;
+}
+
+/**
+ * How the entered store is operated, as a domain word — SDK-owned (never the
+ * host's generated `storeMode` enum), so the plugin surface does not move when
+ * the host's query does; the host maps it at the slot boundary.
+ */
+export type SlotStoreMode = 'store' | 'dispensary';
+
+/**
+ * The session facts a contribution's `when` gate reads. Session-scoped only —
+ * per-record gating belongs in the contribution's own render (sdk-contract §
+ * contributions), so a store switch re-evaluates `when` but a row change does
+ * not.
+ */
+export interface SlotContext {
+  /**
+   * The store the user has entered; undefined before the store guard resolves.
+   */
+  storeId: string | undefined;
+  /**
+   * The entered store's code (e.g. 'GRY'), the part of a generated identifier
+   * or record key that names the store it was issued at (a form's patient
+   * code, the Afghanistan Daily Tally's cohort patient code); undefined until
+   * the store resolves. Rides the login response's store list, so it costs no
+   * query.
+   */
+  storeCode: string | undefined;
+  /**
+   * The user's permissions in the entered store, as the wire's SCREAMING_SNAKE
+   * `UserPermission` enum values (e.g. 'REQUISITION_MUTATE') — NOT the
+   * PascalCase resource names the server's auth ERRORS carry
+   * ('RequisitionMutate').
+   */
+  permissions: readonly string[];
+  /**
+   * How the entered store is operated; undefined until the store context
+   * resolves — the mode is NOT yet known, and is never guessed.
+   *
+   * Gate POSITIVELY (`ctx.storeMode === 'dispensary'`): a positive gate is off
+   * while the mode is unresolved, so a gated surface never flashes in before
+   * its store's mode is known. A negated gate (`!== 'dispensary'`) is true in
+   * that window and does flash.
+   */
+  storeMode: SlotStoreMode | undefined;
+  storePreferences: SlotStorePreferences;
+  /**
+   * The logged-in user's id, for a row a plugin attributes to its author;
+   * undefined before the session resolves.
+   */
+  userId: string | undefined;
+}
+
+// ── Contributions ───────────────────────────────────────────────────────────
+
+/**
+ * What every contribution carries, whatever its slot — identity, tie-break, and
+ * the visibility gate. A contribution hidden by `when` renders nothing and runs
+ * no data fetch.
+ */
+export interface ContributionCore {
+  /** Unique within (plugin code, slot). */
+  id: string;
+  /** Tie-break among contributions sharing a placement. */
+  order?: number;
+  /** Visibility gate over the session context. */
+  when?: (ctx: SlotContext) => boolean;
+}
+
+/**
+ * The uniform shape every slot takes. `P` is the slot's prop DTO
+ * (`SlotPropsMap`).
+ *
+ * A few slots accept a declarative alternative to `Component` (the
+ * column slot's `value`), so the per-slot render fields live in
+ * `SlotRender` and this type is the common case — the one an author reads
+ * to learn the shape.
+ */
+export interface Contribution<
+  P extends Record<string, unknown>,
+> extends ContributionCore {
+  /** An ordinary Solid component receiving the slot's props. */
+  Component: Component<P>;
+}
+
+/**
+ * A key in the PLUGIN's own message catalogue — never a host key. The host
+ * resolves it under the plugin's namespace at render, so the same key can exist
+ * in two plugins and in the host without colliding
+ * (sdk-contract § internationalisation).
+ */
+export type PluginLocaleKey = string;
+
+// ── The dashboard slots ─────────────────────────────────────────────────────
+// The proof surface for v1 (spec/dashboard/ui-surface.md § S3): three sibling
+// PIECE slots, one per nesting level, plus the screen-level `dashboard.body`,
+// whose contribution IS the dashboard body rather than a piece within one.
+// `internalOrderLine.column` and `internalOrderLine.infoPanel` join the maps
+// below as their host surfaces land — a new slot is an additive change, a
+// rename is an API-version bump.
+
+/**
+ * A published host id — `<widget>` / `<widget>.<panel>` /
+ * `<widget>.<panel>.<stat>`.
+ */
+export type DashboardWidgetId = string;
+export type DashboardPanelId = string;
+export type DashboardStatId = string;
+export type DashboardPieceId =
+  DashboardWidgetId | DashboardPanelId | DashboardStatId;
+
+/**
+ * Where a contribution sits among the host's published ids; defaults to the
+ * container end. ONE shape for every anchored surface — dashboard
+ * regions, table columns — so an author learns placement once.
+ */
+export type Anchor<Id extends string> =
+  { after: Id } | { before: Id } | { end: true };
+
+/** The dashboard's anchor (a published widget / panel / stat id). */
+export type DashboardAnchor<Id extends string> = Anchor<Id>;
+
+/**
+ * The placement of a slot the HOST positions: nothing to declare. Used where a
+ * region holds one fixed place in a screen rather than a row of siblings to
+ * anchor against.
+ */
+export type NoPlacement = Record<never, never>;
+
+/*
+ * Dashboard slot props are deliberately empty (sdk-contract § slot props —
+ * deferred): a dashboard contribution is self-sufficient through the SDK's
+ * data-access and context surfaces, so it fetches its own data rather than
+ * receiving it. `Record<string, never>` (not `{}`) keeps the props type
+ * assignable to Solid's bare `Component` at the host's outlet.
+ *
+ * ONE type for all four dashboard slots, the body included: which stores get a
+ * contributed body is `when(ctx)`'s answer, and the store mode and preferences
+ * it turns on reach the contribution as session context, so there is nothing
+ * for props to carry there either.
+ */
+export type DashboardSlotProps = Record<string, never>;
+
+// ── The internal-order line slots ───────────────────────────────────────────
+// The line table of an internal order (a request requisition) publishes a
+// stable id per column, and a plugin adds columns anchored to them; the line
+// editor takes a read-only info panel over the same line.
+// NOT `requisitionLine.*`: a customer requisition is a different screen with a
+// different DTO, and gets its own slot ids.
+
+/**
+ * One internal-order line, as the SDK publishes it — an SDK-OWNED view DTO,
+ * mapped from host data at the slot boundary (sdk-contract § SDK surface), so
+ * the plugin surface does not move when the host's query does. Read-only:
+ * quantities are in the line's own UNITS, exactly as stored, and formatting is
+ * the plugin's (through the SDK's `formatNumber`).
+ *
+ * Additive-only within a `PLUGIN_API_VERSION` major.
+ */
+export interface InternalOrderLineView {
+  /** The line's id — the key `loadData` returns its entries under. */
+  readonly id: string;
+  readonly itemId: string;
+  readonly itemCode: string;
+  readonly itemName: string;
+  /** The item's unit name; absent when the item names none. */
+  readonly unitName: string | undefined;
+  readonly defaultPackSize: number;
+  readonly isVaccine: boolean;
+  /** Doses per unit; 0 on an item that declares none. */
+  readonly dosesPerUnit: number;
+  readonly comment: string | undefined;
+  readonly requestedQuantity: number;
+  readonly suggestedQuantity: number;
+  readonly availableStockOnHand: number;
+  readonly averageMonthlyConsumption: number;
+  /**
+   * Available stock ÷ the line's monthly demand, whatever its forecast method;
+   * 0 when the line has none.
+   */
+  readonly monthsOfStock: number;
+  readonly initialStockOnHandUnits: number;
+  readonly incomingUnits: number;
+  readonly outgoingUnits: number;
+  readonly lossInUnits: number;
+  readonly additionInUnits: number;
+  readonly expiringUnits: number;
+  readonly daysOutOfStock: number;
+  /** The variance reason recorded on the line, where it carries one. */
+  readonly reason: string | undefined;
+}
+
+/** A published host column id — the anchor target (`HostColumnId`). */
+export type ColumnId = string;
+
+/** Where a contributed column sits; absent means the table's end. */
+export type ColumnAnchor = Anchor<ColumnId>;
+
+/** What a `value` column may return; `undefined`/`null` render blank. */
+export type ColumnValue = string | number | null | undefined;
+
+/**
+ * The props a column contribution's `Component` receives — one cell.
+ *
+ * `Row` is the table's view DTO; `Data` is this row's entry from `loadData`,
+ * `undefined` while the batch is in flight or when the loader returned no entry
+ * for the row.
+ */
+export type ColumnCellProps<Row, Data = unknown> = {
+  readonly row: Row;
+  readonly data: Data | undefined;
+  /** True while the page's `loadData` batch is in flight. */
+  readonly isLoading: boolean;
+};
+
+/**
+ * The column fields beyond the uniform core: where the column goes, how it
+ * presents, and how it gets its data.
+ */
+export interface ColumnDeclaration<Row, Data = unknown> {
+  /** Header text, as a key in the plugin's catalogue — never a literal. */
+  header: PluginLocaleKey;
+  /** Optional header explanation, as a key in the plugin's catalogue. */
+  description?: PluginLocaleKey;
+  anchor?: ColumnAnchor;
+  /** Logical, so RTL-safe; `'end'` for numeric columns. */
+  align?: 'start' | 'end';
+  /**
+   * A resting width in `rem` or `px` (e.g. `'8rem'`); else the host default.
+   */
+  width?: string;
+  /**
+   * A batched side-fetch, run ONCE per rendered page of rows (and on refetch),
+   * outside component render, keyed by `InternalOrderLineView.id`. It MUST
+   * tolerate any subset and order of rows. Cells read their value
+   * synchronously from `data`; a contribution hidden by `when` never runs it.
+   */
+  loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
+  /**
+   * Declares the column sortable (sdk-contract § the column slot,
+   * OMS-REG-PLG-02.10): the value the host orders rows by when the user sorts on
+   * it, evaluated over the table's FULL row set — `data` is that row's
+   * `loadData` entry, loaded for the whole set. Numbers compare numerically,
+   * strings by locale; a `null`/`undefined` value sorts last in either
+   * direction, so a contribution that wants a placement for "no value"
+   * returns a sentinel (e.g. `Infinity`) instead. Omitted, no sort is
+   * offered on the column.
+   */
+  sortValue?: (row: Row, data?: Data) => ColumnValue;
+}
+
+/**
+ * How a column produces its cells — one of two, never both:
+ *
+ * - `value` — the declarative form: return the cell's value and the host
+ *   renders it as one of its own number/text cells (locale-formatted,
+ *   aligned per `align`). What a computed numeric column needs.
+ * - `Component` — an ordinary Solid component per cell, for a column that needs
+ *   markup (a link, a badge, a loading treatment of its own).
+ */
+export type ColumnRender<Row, Data = unknown> =
+  | { value: (row: Row, data?: Data) => ColumnValue; Component?: never }
+  | { Component: Component<ColumnCellProps<Row, Data>>; value?: never };
+
+/**
+ * A contribution to a line-table column slot — the uniform core plus the column
+ * declaration plus one of the two render forms.
+ */
+export type ColumnContribution<Row, Data = unknown> = ContributionCore &
+  ColumnDeclaration<Row, Data> &
+  ColumnRender<Row, Data>;
+
+// ── The internal-order line info panel ──────────────────────────────────────
+
+/**
+ * The internal order a line belongs to, as the SDK publishes it — the second
+ * SDK-OWNED view DTO of this surface (sdk-contract § the info-panel slot),
+ * mapped from host data at the slot boundary.
+ *
+ * Flattened and in domain words, so a plugin never meets a host enum or a
+ * nested host node: an absent program / period / order type arrives as
+ * `undefined` (a general order), never `null` or `''`. Read-only, like every
+ * slot DTO; additive-only within a `PLUGIN_API_VERSION` major.
+ */
+export interface InternalOrderView {
+  readonly id: string;
+  /** The order's human-facing number — what the breadcrumb shows. */
+  readonly requisitionNumber: number;
+  /** The order's lifecycle stage, as a domain word. */
+  readonly status: 'draft' | 'sent' | 'finalised';
+  /**
+   * True while the order accepts edits (a draft whose supplier is enabled).
+   * A contribution is read-only decoration either way — this is context to
+   * render WITH, never a licence to write.
+   */
+  readonly editable: boolean;
+  /** The program behind the order; absent on a general order. */
+  readonly programId: string | undefined;
+  readonly programName: string | undefined;
+  /** The program order type (e.g. 'Monthly'); absent on a general order. */
+  readonly orderType: string | undefined;
+  /** The program period; absent on a general order. */
+  readonly periodId: string | undefined;
+  readonly periodName: string | undefined;
+  /** The order's months-of-stock thresholds, as stored. */
+  readonly minMonthsOfStock: number;
+  readonly maxMonthsOfStock: number;
+  /** The supplier the order is placed with. */
+  readonly supplierId: string;
+  readonly supplierName: string;
+}
+
+/**
+ * The props an `internalOrderLine.infoPanel` contribution receives: the line
+ * being edited and the order it belongs to, both as published view DTOs.
+ *
+ * Both update IN PLACE as the user steps through lines (Save & next), so a
+ * contribution MUST read them through `props` on every render rather than
+ * destructuring them once — the host never remounts the panel for a prop
+ * change (sdk-contract § the info-panel slot).
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>` (as `ColumnCellProps` is).
+ */
+export type InternalOrderLineInfoPanelProps = {
+  readonly line: InternalOrderLineView;
+  readonly order: InternalOrderView;
+};
+
+// ── The internal-order side-panel section ───────────────────────────────────
+// The order DETAIL screen's side panel (internal-orders ui-surface § S8 ›
+// side-panel section region) — the record-level surface of the info-panel
+// kind: read-only decoration between the panel's own sections and its actions.
+
+/**
+ * The props an `internalOrder.sidePanelSection` contribution receives: the
+ * order the side panel describes and its full line set, as published view
+ * DTOs — the same views the line slots receive, so every internal-order
+ * surface shows one order one way.
+ *
+ * Both update IN PLACE as the order changes under an open panel (a saved
+ * line, a header save, a status change), so a contribution MUST read them
+ * through `props` on every render rather than destructuring them once — the
+ * host never remounts the section for a prop change (the info-panel props
+ * carry the same rule).
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type InternalOrderSidePanelSectionProps = {
+  readonly order: InternalOrderView;
+  /** Every line of the order — the detail screen's unpaginated set. */
+  readonly lines: readonly InternalOrderLineView[];
+};
+
+// ── Warning suppression ─────────────────────────────────────────────────────
+// The one CONSULTED slot: it renders nothing, ever. The host asks it a
+// question at a defined moment instead of giving it a region to draw in
+// (sdk-contract § the warning-suppression slot). Generic over host warnings:
+// the contribution names its target as data (a published warning id), so a
+// new suppressible warning is a new id here, never a new slot or SDK shape.
+
+/**
+ * The host warnings a plugin may suppress, as published ids — additive-only
+ * within a `PLUGIN_API_VERSION` major, like the slot catalogue itself. A
+ * contribution naming any other id is refused whole, by name (the same
+ * judgement as an unknown slot id): it was built against a host that
+ * publishes the warning, and this one does not.
+ *
+ * - `internalOrders.recentStocktake` — the store-wide recent-stocktake
+ *   warning at the internal-orders New-order action (internal-orders rules §
+ *   creation). NOT consulted: no host surface asks a suppression, so a
+ *   contribution naming this id loads and has no effect. The id stays
+ *   published and validated, and the slot keeps its contract, so a surface
+ *   that wants to be suppressible only has to start asking.
+ */
+export const HOST_WARNING_IDS = ['internalOrders.recentStocktake'] as const;
+
+/** A published suppressible host warning id — a suppression target. */
+export type HostWarningId = (typeof HOST_WARNING_IDS)[number];
+
+/**
+ * How a plugin answers whether the host warning its contribution names is
+ * suppressed — replaced by a measure of the plugin's own (the Cook Islands
+ * item-level count freshness replacing the store-wide recent-stocktake
+ * warning). The host consults every visible contribution naming the warning
+ * at the moment the warning would otherwise show; any `true` suppresses it
+ * for that invocation, and the host's flow proceeds directly.
+ *
+ * `false` — and equally a thrown error or a rejected promise — leaves the
+ * warning to the host's own behaviour: a failing plugin can never strip a
+ * store of the one measure it has (rules § error isolation). The answer is
+ * per-store and MAY be asynchronous, because whether the replacement applies
+ * is typically the plugin's own data (the Cook Islands counting schedule);
+ * the host awaits it inside the in-flight state of the action that would
+ * show the warning.
+ */
+export type WarningSuppressionResolver = (
+  ctx: SlotContext
+) => boolean | Promise<boolean>;
+
+// ── Form participation ──────────────────────────────────────────────────────
+// The dirty/validity/veto/after-save handshake between a contribution and the
+// editable host form it sits in (sdk-contract § form participation). Save
+// order: every `onBeforeSave` (a throw ABORTS the save and surfaces its
+// message) → the host persists → every `onAfterSave` is awaited before the
+// save is reported complete.
+
+/** A contribution's verdict on one of its own fields. */
+export interface FieldValidity {
+  valid: boolean;
+  /** Shown by the host when invalid; a translated string, never a key. */
+  message?: string;
+}
+
+/** What an after-save handler learns about the save that just happened. */
+export interface SaveContext {
+  /** The host record the form saved, by id — the natural `relatedRecordId`. */
+  recordId: string;
+}
+
+/**
+ * A contribution's own view of its host form's save cycle. Handlers registered
+ * here bind to the calling component's Solid owner and are released with it, so
+ * a contribution that leaves the screen can no longer affect a save
+ * (rules § form participation).
+ */
+export interface FormParticipation {
+  /** Mark the host form dirty (enables its save affordance). */
+  setDirty: (dirty: boolean) => void;
+  /** Gate the host's save on one of the contribution's own fields. */
+  setValidity: (key: string, validity: FieldValidity) => void;
+  /** Veto hook: throw to abort the save; the Error's message is surfaced. */
+  onBeforeSave: (handler: () => void | Promise<void>) => void;
+  /** Post-persist hook (e.g. write the contribution's own plugin data). */
+  onAfterSave: (
+    handler: (context: SaveContext) => void | Promise<void>
+  ) => void;
+}
+
+// ── The prescription payment-form slot ──────────────────────────────────────
+// The prescription payment window's form region (prescriptions ui-surface §
+// S5: "A plugin slot may extend this form") — the first EDITABLE slot, so the
+// first whose props carry `FormParticipation`.
+
+/**
+ * The prescription the payment window is settling, as the SDK publishes it —
+ * an SDK-OWNED view DTO mapped from host data at the slot boundary
+ * (sdk-contract § SDK surface). The money figures are the host's own rounded
+ * derivation from invoice pricing and the selected insurance policy, so every
+ * contribution sees the same numbers the host shows. Read-only; additive-only
+ * within a `PLUGIN_API_VERSION` major.
+ */
+export interface PrescriptionPaymentView {
+  /**
+   * The prescription (invoice) id — the natural `relatedRecordId` for a row.
+   */
+  readonly id: string;
+  /** The prescription's human-facing number. */
+  readonly invoiceNumber: number;
+  /** Total after tax — the whole charge, before any insurance split. */
+  readonly total: number;
+  /** What the selected insurance policy covers; 0 when none is selected. */
+  readonly totalToBePaidByInsurance: number;
+  /** What the patient owes: `total` − `totalToBePaidByInsurance`. */
+  readonly totalToBePaidByPatient: number;
+}
+
+/**
+ * The props a `prescription.paymentForm` contribution receives: the
+ * prescription being settled, and the contribution's own participation in the
+ * window's save. `prescription` updates IN PLACE as the host recomputes the
+ * split, so a contribution MUST read it through `props` on every render (the
+ * info-panel props carry the same rule); `form` is one stable object per
+ * contribution.
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type PrescriptionPaymentFormProps = {
+  readonly prescription: PrescriptionPaymentView;
+  readonly form: FormParticipation;
+};
+
+// ── The document form slots ─────────────────────────────────────────────────
+// The body of a record: the fields of a patient on the patient screen's
+// Details tab, of an enrolment in its modal, of an encounter on its record
+// screen and in the patient screen's modal (kdd/custom-forms/specs.md § Forms
+// in the UI). One slot per document category. Within it a contribution names
+// the one document type it renders, and the host gives every document of that
+// type the contribution's form, in whichever mount the document opens: the host
+// keeps the frame, the toolbar and the save, and the form is the fields. A
+// document type with no form contributed, or whose form throws, renders in the
+// host's default form for its category.
+
+/**
+ * The record a form edits, as the SDK publishes it: what a form reads beyond
+ * its draft. SDK-owned and read-only, and additive-only within a
+ * `PLUGIN_API_VERSION` major.
+ *
+ * It holds only what forms have needed, and grows as forms need more: the
+ * patient's details, an encounter's enrolment, previous encounters, and
+ * `FormParticipation` for cross-field rules and a save veto are the expected
+ * additions. Each joins when a form uses it, since a field is public API
+ * from the day it ships.
+ */
+export interface FormRecordView {
+  /** The patient the document belongs to. */
+  readonly patientId: string;
+  /** The document's name; undefined until its first save. */
+  readonly documentName: string | undefined;
+}
+
+/**
+ * The props a `programEnrolment.form` contribution receives. `T` is the
+ * plugin's own document type, so the draft's paths are checked against it:
+ * `(props: ProgramEnrolmentFormProps<HivCareEnrolment>) => …`.
+ *
+ * `record` updates IN PLACE (its `documentName` arrives with the first save),
+ * so a form reads it through `props` rather than destructuring it once. The
+ * draft is one stable object for the form's life. `form` is the form's own
+ * part in the enrolment's save, as an encounter form has it (a check that
+ * may stop the save, such as an enrolment number another enrolment holds).
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and
+ * is usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type ProgramEnrolmentFormProps<
+  T extends ProgramEnrolment = ProgramEnrolment,
+> = {
+  readonly draft: Draft<T>;
+  readonly record: FormRecordView;
+  readonly form: FormParticipation;
+};
+
+/**
+ * The props an `encounter.form` contribution receives: the encounter
+ * record screen's body. The screen's toolbar edits the visit date, the
+ * clinician and the status on the same draft. `form` is the form's own part
+ * in the record's save, as an editable slot's contribution has it: a step to
+ * run before the encounter is saved (writing a record the encounter refers
+ * to, such as a prescription), which may stop the save, one after, and dirty
+ * state and validity that count with the draft's. One stable object for the
+ * form's life. Otherwise as {@link ProgramEnrolmentFormProps}.
+ */
+export type EncounterFormProps<T extends Encounter = Encounter> = {
+  readonly draft: Draft<T>;
+  readonly record: FormRecordView;
+  readonly form: FormParticipation;
+};
+
+/**
+ * The props a `patient.form` contribution receives: the body of the patient
+ * screen's Details tab on the document path. `T` is the plugin's own Patient
+ * type, which extends the base `Patient`, so every base field the server
+ * projects to the patient record is in its shape; the host checks the values
+ * against the base schema before any save. The form composes the host's
+ * patient fields (`PatientFirstNameField`, `PatientDateOfBirthField`, …) with
+ * its own, and the header, tabs and Save stay the host's. Otherwise as
+ * {@link ProgramEnrolmentFormProps}.
+ */
+export type PatientFormProps<T extends Patient = Patient> = {
+  readonly draft: Draft<T>;
+  readonly record: FormRecordView;
+};
+
+/*
+ * A form slot's component, as the slot takes it: made by that slot's helper
+ * (`patientForm`, `encounterForm`, `enrolmentForm`), never a bare component.
+ * A plugin's form is typed by its own document type, which extends the
+ * slot's base type and may narrow it (`code: string` where the base `Patient`
+ * has `code?: string`). `Draft` is invariant in its type, since its paths and
+ * the values at them are computed from it, so no one component type takes
+ * every narrower form and refuses the rest. The helper does the checking
+ * instead: its type parameter is bounded by the slot's base type, so a
+ * narrower form passes and another category's form does not, and an inline
+ * component's paths are checked against the base type. The brand then keeps
+ * a form out of any slot but its own.
+ */
+declare const formSlotBrand: unique symbol;
+interface FormSlotBrand<S extends DocumentFormSlotId> {
+  readonly [formSlotBrand]: S;
+}
+
+/** A `programEnrolment.form` component, made by `enrolmentForm`. */
+export type EnrolmentFormComponent = Component<ProgramEnrolmentFormProps> &
+  FormSlotBrand<'programEnrolment.form'>;
+/** An `encounter.form` component, made by `encounterForm`. */
+export type EncounterFormComponent = Component<EncounterFormProps> &
+  FormSlotBrand<'encounter.form'>;
+/** A `patient.form` component, made by `patientForm`. */
+export type PatientFormComponent = Component<PatientFormProps> &
+  FormSlotBrand<'patient.form'>;
+
+/**
+ * Where a form contribution goes: the document type it renders, as its
+ * registry entry names it (`'HIVCareEncounter'`). One plugin contributes at
+ * most one form per document type; where two plugins both do, the first in
+ * registry order renders and the other is named in diagnostics.
+ *
+ * The type's versioning rides on the same contribution
+ * (kdd/custom-forms/specs.md § Opening an older document), so a type's
+ * versions cannot drift between contributions. `versions` is every schema id
+ * of the type, oldest first, as the plugin build generates it into
+ * `forms/<type>/versions.ts`, and is required, a type of one version
+ * included: it is how the host tells the plugin in the browser from the one
+ * installed (sdk-contract § versions). A document's pinned id found there
+ * gives its version number, which `migrations` and the slot's `archived` forms
+ * are keyed by. A document pinned to an earlier version opens in its archived
+ * form, read-only, where one is registered, and otherwise in `Component` after
+ * the migrations have run.
+ */
+export interface DocumentFormPlacement {
+  documentType: string;
+  /** Every schema id of the type, oldest first (generated by the build). */
+  versions: readonly string[];
+  /** The type's migration steps, each written with `defineMigration`. */
+  migrations?: readonly MigrationStep[];
+}
+
+// ── The patient toolbar trigger slot ────────────────────────────────────────
+// A button a plugin places on the patient screen's header (kdd/custom-forms/
+// specs.md § Forms in the UI, trigger slots). The host owns the place and
+// draws the button in its own style; the plugin supplies the entry: a label,
+// an icon, when it shows and what a click does. The first trigger slot; the
+// encounter and enrolment toolbars and the list row menus take the same
+// trigger shape with their own props.
+
+/** The patient a trigger sits on, as the SDK publishes it. Read-only. */
+export interface TriggerPatientView {
+  readonly id: string;
+  /** The document types of the patient's program enrolments. */
+  readonly enrolmentTypes: readonly string[];
+}
+
+/**
+ * What a `patient.toolbarTrigger` contribution's `visible` and `onClick`
+ * receive. A `type`, like every slot's props.
+ */
+export type PatientTriggerProps = {
+  readonly patient: TriggerPatientView;
+};
+
+/**
+ * The host actions a patient trigger may take, bound to the screen's patient.
+ */
+export interface PatientTriggerActions {
+  /**
+   * Opens a new document of `documentType` for this patient in the host's
+   * modal: its form, wherever it is contributed, over a draft the host seeds
+   * and saves. An encounter type, of a program the patient is enrolled in.
+   */
+  openDocumentForm(input: { documentType: string }): void;
+}
+
+/**
+ * A trigger: the host renders it, so it declares a label and a handler in
+ * place of a `Component`.
+ */
+export interface TriggerRender<P, A> {
+  /** The button's text, as a key in the plugin's catalogue. */
+  label: string;
+  /** A host icon the SDK exports (`PlusCircleIcon`), drawn before the label. */
+  icon?: Component;
+  /**
+   * Whether the trigger shows for this record. `when(ctx)` gates on the
+   * session, as on every slot; this gates on the record it sits on.
+   */
+  visible?: (props: P) => boolean;
+  /**
+   * What a click runs. May be async: a rejection is reported like a throw,
+   * as the trigger having done nothing.
+   */
+  onClick: (props: P, actions: A) => void | Promise<void>;
+}
+
+// ── The slot catalogue ──────────────────────────────────────────────────────
+
+/** Every slot id, and the props its contributions receive. */
+export interface SlotPropsMap {
+  'dashboard.widget': DashboardSlotProps;
+  'dashboard.panel': DashboardSlotProps;
+  'dashboard.stat': DashboardSlotProps;
+  'dashboard.body': DashboardSlotProps;
+  'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
+  'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
+  'internalOrder.sidePanelSection': InternalOrderSidePanelSectionProps;
+  // The consulted slot has no props: nothing renders, so there is nothing to
+  // receive. The empty entry only keeps the slot in the catalogue's uniform
+  // shape (`SlotId = keyof SlotPropsMap`) — deliberately not a named, exported
+  // type, which would publish a props DTO no plugin can ever be handed.
+  'host.warningSuppression': Record<string, never>;
+  'prescription.paymentForm': PrescriptionPaymentFormProps;
+  'programEnrolment.form': ProgramEnrolmentFormProps;
+  'encounter.form': EncounterFormProps;
+  'patient.form': PatientFormProps;
+  'patient.toolbarTrigger': PatientTriggerProps;
+}
+
+export type SlotId = keyof SlotPropsMap;
+
+/** The slots whose contributions are a document type's form. */
+export type DocumentFormSlotId =
+  'programEnrolment.form' | 'encounter.form' | 'patient.form';
+
+/**
+ * The dashboard's PIECE slot ids — the three that contribute into a container
+ * of host siblings, and so are exactly what the shared props-less outlet
+ * renders at a region's tail. A slot carrying props (the column slot) has its
+ * own host surface, and so does `dashboard.body`: its occupant replaces the
+ * body rather than joining a region, so it is not one of these
+ * (spec/dashboard/ui-surface.md § body-region semantics).
+ */
+export type DashboardSlotId =
+  'dashboard.widget' | 'dashboard.panel' | 'dashboard.stat';
+
+/**
+ * The per-slot DECLARATION fields — everything a contribution says beyond the
+ * uniform core and its rendering: above all WHERE it goes. A panel names the
+ * widget it joins and a stat names the panel; both accept a built-in id or
+ * another plugin piece's id, so nesting is uniform. A column names the header
+ * and data facts its slot needs alongside its anchor.
+ *
+ * A slot whose position the HOST fixes declares nothing — the info panel's
+ * region is one place in the line editor, so there is no anchor to name
+ * (`NoPlacement`).
+ */
+export interface SlotPlacement {
+  'dashboard.widget': { anchor?: DashboardAnchor<DashboardWidgetId> };
+  'dashboard.panel': {
+    widget: DashboardWidgetId;
+    anchor?: DashboardAnchor<DashboardPanelId>;
+  };
+  'dashboard.stat': {
+    panel: DashboardPanelId;
+    anchor?: DashboardAnchor<DashboardStatId>;
+  };
+  // The body has no siblings to place itself among and no published ids inside
+  // it: `when(ctx)` is the whole of its placement question.
+  'dashboard.body': NoPlacement;
+  'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
+  'internalOrderLine.infoPanel': NoPlacement;
+  // The side panel's region is one fixed place too — after the panel's own
+  // sections, before its actions — so there is no anchor to name.
+  'internalOrder.sidePanelSection': NoPlacement;
+  // Consulted, not placed: nothing renders, so there is nowhere to anchor.
+  // The one declaration is the TARGET — which published host warning the
+  // contribution suppresses; `when(ctx)` and the resolver's own answer do the
+  // rest.
+  'host.warningSuppression': { warning: HostWarningId };
+  'prescription.paymentForm': NoPlacement;
+  // A form's place is the body of its document type's record, wherever that
+  // record opens: naming the type is the whole of its placement.
+  'programEnrolment.form': DocumentFormPlacement;
+  'encounter.form': DocumentFormPlacement;
+  'patient.form': DocumentFormPlacement;
+  // One place, the patient header's actions; contribution order within it.
+  'patient.toolbarTrigger': NoPlacement;
+}
+
+/**
+ * The per-slot RENDER fields — how a contribution produces its output. Every
+ * slot takes a `Component` over its props; the column slot additionally accepts
+ * the declarative `value` form, and then `Component` is not given at all
+ * (sdk-contract § the column slot).
+ */
+export interface SlotRender {
+  'dashboard.widget': { Component: Component<DashboardSlotProps> };
+  'dashboard.panel': { Component: Component<DashboardSlotProps> };
+  'dashboard.stat': { Component: Component<DashboardSlotProps> };
+  'dashboard.body': { Component: Component<DashboardSlotProps> };
+  'internalOrderLine.column': ColumnRender<InternalOrderLineView>;
+  'internalOrderLine.infoPanel': {
+    Component: Component<InternalOrderLineInfoPanelProps>;
+  };
+  'internalOrder.sidePanelSection': {
+    Component: Component<InternalOrderSidePanelSectionProps>;
+  };
+  // The second departure from the uniform `Component` shape (the column
+  // slot's `value` is the first): the consulted slot renders nothing, so its
+  // whole "render" is the answer it gives when consulted.
+  'host.warningSuppression': { suppresses: WarningSuppressionResolver };
+  'prescription.paymentForm': {
+    Component: Component<PrescriptionPaymentFormProps>;
+  };
+  // A form slot takes its component through the slot's helper, and also
+  // takes `archived`: an earlier version's form, by version number, rendered
+  // read-only for documents pinned to that version and written against that
+  // version's own type.
+  'programEnrolment.form': {
+    Component: EnrolmentFormComponent;
+    archived?: Readonly<Record<number, EnrolmentFormComponent>>;
+  };
+  'encounter.form': {
+    Component: EncounterFormComponent;
+    archived?: Readonly<Record<number, EncounterFormComponent>>;
+  };
+  'patient.form': {
+    Component: PatientFormComponent;
+    archived?: Readonly<Record<number, PatientFormComponent>>;
+  };
+  // The third departure from the uniform `Component` shape: the host draws
+  // the button, so a trigger declares its label and handler instead.
+  'patient.toolbarTrigger': TriggerRender<
+    PatientTriggerProps,
+    PatientTriggerActions
+  >;
+}
+
+/**
+ * One flat discriminated array element: `slot` is the discriminant, so
+ * narrowing on it gives the right props, the right declaration fields, and the
+ * right render form, and a plugin declares all its contributions in ONE array
+ * (sdk-contract § contributions).
+ */
+export type AnyContribution = {
+  [S in SlotId]: { slot: S } & ContributionCore &
+    SlotPlacement[S] &
+    SlotRender[S];
+}[SlotId];
+
+// ── Pages & navigation ──────────────────────────────────────────────────────
+// The page contribution — NOT a slot (sdk-contract § the page contribution):
+// whole routed screens, each carrying its own routing, gating and (optional)
+// menu placement, joined to the host's one navigation registry so the menu,
+// the command palette, and the router can never disagree about them
+// (rules § pages & navigation). A menu group is a menu object, not a page —
+// it declares itself (`navSections`) and pages place themselves into it.
+
+/**
+ * The host's upper menu sections, as published placement targets — a plugin
+ * page or nav section MAY place itself against (or, for a page, inside) one of
+ * these ids (a section's id is its root path; Home's, whose path is empty, is
+ * `'home'`). The pinned lower cluster (Catalogue, Manage, Settings, Help) is
+ * not a target: plugin entries live in the upper list. A host-side test keeps
+ * this list identical to the real menu, so it can never drift.
+ */
+export const HOST_NAV_SECTION_IDS = [
+  'home',
+  'replenishment',
+  'inventory',
+  'distribution',
+  'dispensary',
+  'cold-chain',
+  'programs',
+  'reports',
+] as const;
+
+/** A published host upper-section id — a nav placement target. */
+export type HostNavSectionId = (typeof HOST_NAV_SECTION_IDS)[number];
+
+/**
+ * Where a page's navigation entry goes — one shape that covers every
+ * placement, so a new placement is never a new registration key:
+ *
+ * - `{ in }` — inside a menu section: one of the plugin's own
+ *   ({@link PluginNavSection} ids) or a published host section
+ *   ({@link HOST_NAV_SECTION_IDS}). An id that is neither refuses the plugin
+ *   at validation, by name. Inside a HOST section, `anchor` places the entry
+ *   against the section's own entry ids (an entry's id is its store-relative
+ *   path, e.g. `'inventory/stock'`); inside the plugin's own section, entries
+ *   keep `pages` declaration order and `anchor` is not read.
+ * - `{ root: true }` — a top-level entry in the menu's upper list, anchored
+ *   against the published host section ids.
+ *
+ * Absent `nav` means routed with no menu entry (and no palette row) — a
+ * detail-ish screen reached from the plugin's own UI, exactly like a host
+ * record screen.
+ *
+ * An anchor naming an entry the store's gates currently hide degrades to the
+ * container's end, named in plugin diagnostics — placement is a preference,
+ * never a gate.
+ */
+export type PluginNavPlacement =
+  | { in: HostNavSectionId | string; anchor?: Anchor<string>; root?: never }
+  | { root: true; anchor?: Anchor<HostNavSectionId>; in?: never };
+
+/** One routed screen a plugin contributes — a body, gates, and its address. */
+export interface PluginPage {
+  /** Unique within the plugin. */
+  id: string;
+  /**
+   * The page's full store-relative path — URL segments (letters, digits, `-`,
+   * `_`; each segment starts with a letter or digit). The SDK's own navigation
+   * primitives take exactly this path; the page owns everything below it
+   * (`stock-count/count/{something}` is the page's own to interpret). A path a
+   * host destination already holds refuses the whole plugin at validation; one
+   * an earlier plugin's page holds skips this page, visibly in diagnostics.
+   */
+  path: string;
+  /**
+   * The page's name — its breadcrumb, its browser-tab title, and its menu and
+   * palette label when placed — as a key in the plugin's catalogue, never a
+   * literal.
+   */
+  labelKey: PluginLocaleKey;
+  /**
+   * Loads the page's BODY component: called on first navigation to the page,
+   * never at startup (OMS-REG-PLG-04.4/.5), behind the host's route-level pending
+   * boundary — `load: () => import('./CountPage')`. The host supplies the app
+   * frame and page frame (header, breadcrumb, the menu); the component owns
+   * only the body, receives no props, and fetches its own data through the
+   * SDK, like a dashboard body contribution does.
+   */
+  load: () => Promise<{ default: Component }>;
+  /**
+   * Store-context withhold — the capability-class gate: while it fails, the
+   * page is absent from the menu and the palette, and its URLs redirect to
+   * the landing screen, exactly as a function the store does not have. Gate
+   * POSITIVELY (`ctx.storeMode === 'dispensary'`) — see
+   * {@link SlotContext.storeMode}. Composed with the gate of the plugin nav
+   * section the page is placed in, where it is placed in one.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The permissions this page requires — ALL of them, as
+   * {@link SlotContext.permissions}' own server names. The permission-class
+   * gate, and the one condition behind both doors (OMS-REG-PLG-04.1): without them
+   * the entries are absent, and the page's URL shows the host's no-permission
+   * notice in place of the screen. Composed with its plugin nav section's,
+   * where the page is placed in one.
+   */
+  permissions?: readonly string[];
+  /** The menu placement; absent = routed, no menu entry. */
+  nav?: PluginNavPlacement;
+}
+
+/**
+ * A labelled menu group of the plugin's own — what the `navSections` key of a
+ * plugin definition declares. Purely a menu object: it has no path and no
+ * route of its own; pages join it by naming its id in their `nav.in`, and a
+ * section no offered page is placed in simply does not render.
+ */
+export interface PluginNavSection {
+  /** Unique within the plugin — the id pages name in `nav.in`. */
+  id: string;
+  /** The section's menu label — a key in the plugin's catalogue. */
+  labelKey: PluginLocaleKey;
+  /**
+   * Where the section sits in the menu's upper list, against the published
+   * host section ids ({@link HOST_NAV_SECTION_IDS}) — the one placement shape
+   * every anchored surface uses. Absent (or `{ end: true }`) means the end of
+   * the upper list, above the pinned lower cluster. An anchor naming a section
+   * the store's gates currently hide degrades to the end, named in plugin
+   * diagnostics — placement is a preference, never a gate.
+   */
+  anchor?: Anchor<HostNavSectionId>;
+  /**
+   * The group's capability-class gate, composed with each placed page's own:
+   * while it fails, every page placed in the section is withheld everywhere —
+   * menu, palette, and URL (redirect) — exactly as if each page's own `when`
+   * failed.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The group's permission-class gate, composed with each placed page's own:
+   * every named permission is required for every page placed in the section.
+   */
+  permissions?: readonly string[];
+}
+
+// ── The configuration contribution ──────────────────────────────────────────
+// NOT a slot (sdk-contract § the configuration contribution): one optional
+// settings editor per plugin, hosted by Manage › Plugins on the central server.
+// The host owns the stored record — it reads it, seeds the editor, holds the
+// draft and writes the whole value on Save; the editor only edits.
+
+/**
+ * What the host hands a configuration editor. `value` is the host's draft and
+ * updates in place as the editor reports changes; the editor is never
+ * remounted to receive one. A `type`, as every slot-props DTO here is, so it
+ * meets the host outlet's `Record<string, unknown>` bound.
+ */
+export type ConfigurationEditorProps<Config = unknown> = {
+  readonly value: Config;
+  /** Report the WHOLE new value — the host stores exactly what it is given. */
+  readonly onChange: (next: Config) => void;
+};
+
+/**
+ * A plugin's settings editor. `Config` defaults to `unknown` for the same
+ * reason a column's `Data` does: the stored record is installation data that
+ * may predate this build, so an editor narrows what it is handed rather than
+ * trusting a shape. Whatever it reports is stored as JSON.
+ */
+export interface PluginConfiguration<Config = unknown> {
+  /** What the editor starts from when nothing (readable) is stored. */
+  defaultConfig: Config;
+  Editor: Component<ConfigurationEditorProps<Config>>;
+}
+
+// ── The plugin module ───────────────────────────────────────────────────────
+
+/** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
+export type PluginMessages = Readonly<Record<string, string>>;
+
+/**
+ * What the author passes to `definePlugin`. `register` (the imperative escape
+ * hatch) is not in v1 — it joins here when a host surface needs it.
+ */
+export interface PluginDefinition {
+  manifest: PluginManifest;
+  contributions?: readonly AnyContribution[];
+  /**
+   * Whole routed screens — a flat list of {@link PluginPage}s, each carrying
+   * its own path, gates, and (optional) menu placement.
+   */
+  pages?: readonly PluginPage[];
+  /**
+   * The plugin's own labelled menu groups — the sections a page's
+   * `nav: { in }` places it into.
+   */
+  navSections?: readonly PluginNavSection[];
+  /**
+   * Registered under namespace = the plugin's code, layered under server
+   * overrides.
+   */
+  translations?: Partial<Record<SupportedLocale, PluginMessages>>;
+  /** Built-in dashboard pieces to hide by published id (built-ins only). */
+  suppress?: readonly DashboardPieceId[];
+  /** The plugin's settings editor, shown in Manage › Plugins. */
+  configuration?: PluginConfiguration;
+}
+
+/**
+ * The bundle's default export: a frozen, branded `PluginDefinition`. The brand
+ * is what the loader validates before trusting the module (a bundle that
+ * default-exports anything else is refused, named, and skipped).
+ */
+export interface PluginModule extends PluginDefinition {
+  readonly kind: 'oms.plugin';
+}

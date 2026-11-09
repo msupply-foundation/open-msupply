@@ -1,8 +1,8 @@
-use super::{plugin_data_row::plugin_data, StorageConnection};
+use super::{StorageConnection, plugin_data_row::plugin_data};
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     DBType, DatetimeFilter, EqualFilter, Pagination, PluginDataRow, RepositoryError, Sort,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

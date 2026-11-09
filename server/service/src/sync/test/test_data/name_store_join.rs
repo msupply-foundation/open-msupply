@@ -2,7 +2,7 @@ use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::name_store_join::LegacyNameStoreJoinRow,
 };
-use repository::{sync_buffer::SyncRecordData, NameStoreJoinRow, NameStoreJoinRowDelete};
+use repository::{NameStoreJoinRow, NameStoreJoinRowDelete, sync_buffer::SyncRecordData};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name_store_join";
@@ -30,6 +30,7 @@ fn name_store_join_1_pull_record() -> TestSyncIncomingRecord {
             name_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            visible: true,
         },
     )
 }
@@ -68,6 +69,7 @@ fn name_store_join_2_pull_record() -> TestSyncIncomingRecord {
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            visible: true,
         },
     )
 }
@@ -81,7 +83,8 @@ fn name_store_join_2_delete_record() -> TestSyncIncomingRecord {
 
 fn name_store_join_2_inactive_pull_record() -> TestSyncIncomingRecord {
     let mut record = name_store_join_2_delete_record();
-    record.sync_buffer_row.data = SyncRecordData(serde_json::from_str(NAME_STORE_JOIN_INACTIVE_2.1).unwrap());
+    record.sync_buffer_row.data =
+        SyncRecordData(serde_json::from_str(NAME_STORE_JOIN_INACTIVE_2.1).unwrap());
     record
 }
 

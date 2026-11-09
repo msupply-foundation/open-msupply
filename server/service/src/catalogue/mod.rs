@@ -1,8 +1,8 @@
 use crate::service_provider::ServiceContext;
 
-use self::delete::{delete_asset_catalogue_item, DeleteAssetCatalogueItemError};
+use self::delete::{DeleteAssetCatalogueItemError, delete_asset_catalogue_item};
 use self::insert::{
-    insert_asset_catalogue_item, InsertAssetCatalogueItem, InsertAssetCatalogueItemError,
+    InsertAssetCatalogueItem, InsertAssetCatalogueItemError, insert_asset_catalogue_item,
 };
 
 use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
@@ -13,6 +13,7 @@ use self::query_type::{get_asset_type, get_asset_types};
 use super::{ListError, ListResult};
 use repository::RepositoryError;
 use repository::{
+    PaginationOption, StorageConnection,
     assets::{
         asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemSort},
         asset_catalogue_item_row::AssetCatalogueItemRow,
@@ -23,7 +24,6 @@ use repository::{
         asset_type::{AssetTypeFilter, AssetTypeSort},
         asset_type_row::AssetTypeRow,
     },
-    PaginationOption, StorageConnection,
 };
 
 pub mod delete;

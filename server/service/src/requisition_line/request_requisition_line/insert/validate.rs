@@ -3,7 +3,7 @@ use crate::{
     requisition::common::check_requisition_row_exists,
     requisition_line::{
         common::{check_item_exists_in_requisition, check_requisition_line_exists},
-        request_requisition_line::{insert::OutError, InsertRequestRequisitionLine},
+        request_requisition_line::{InsertRequestRequisitionLine, insert::OutError},
     },
     validate::check_other_party_store_is_disabled,
 };

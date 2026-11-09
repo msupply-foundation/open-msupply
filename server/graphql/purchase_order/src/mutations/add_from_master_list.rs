@@ -1,12 +1,12 @@
 use crate::mutations::AddToPurchaseOrderFromMasterListInput;
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         CannotEditPurchaseOrder, MasterListNotFoundForThisStore, RecordNotFound,
     },
-    standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
+    standard_graphql_error::validate_auth,
 };
 
 use graphql_types::types::PurchaseOrderLineConnector;
@@ -76,17 +76,17 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::PurchaseOrderDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditPurchaseOrder => {
             return Ok(DeleteErrorInterface::CannotEditPurchaseOrder(
                 CannotEditPurchaseOrder {},
-            ))
+            ));
         }
         ServiceError::MasterListNotFoundForThisStore => {
             return Ok(DeleteErrorInterface::MasterListNotFoundForThisStore(
                 MasterListNotFoundForThisStore {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStorePurchaseOrder => BadUserInput(formatted_error),

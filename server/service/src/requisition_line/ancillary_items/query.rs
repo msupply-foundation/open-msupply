@@ -1,13 +1,19 @@
 use repository::{
-    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
     EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
-    StorageConnection,
+    RequisitionRowRepository, StorageConnection,
+    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
 };
+use std::collections::HashSet;
 
-use super::compute::{compute_ancillary_plan, AncillaryPlan};
+use super::compute::{AncillaryPlan, compute_ancillary_plan};
+use crate::{
+    item::ancillary_item::supply_wastage_rates_of,
+    requisition::request_requisition::principal_wastage_rates,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum GetAncillaryPlanError {
+    RequisitionDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -24,18 +30,48 @@ pub fn get_ancillary_plan(
     connection: &StorageConnection,
     requisition_id: &str,
 ) -> Result<AncillaryPlan, GetAncillaryPlanError> {
-    let lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
-    )?;
-    let line_rows: Vec<_> = lines.into_iter().map(|l| l.requisition_line_row).collect();
+    let requisition = RequisitionRowRepository::new(connection)
+        .find_one_by_id(requisition_id)?
+        .ok_or(GetAncillaryPlanError::RequisitionDoesNotExist)?;
+    let line_rows: Vec<_> = RequisitionLineRepository::new(connection)
+        .query_by_filter(
+            RequisitionLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
+        )?
+        .into_iter()
+        .map(|l| l.requisition_line_row)
+        .collect();
 
     // Relevant ancillary rows: any row whose principal matches an item on the
     // requisition, plus any row further down a chain the compute logic might
     // walk into. Simplest correct approach is to pull every row and let the
     // compute step filter — there aren't many and the repository already
     // excludes deleted rows.
-    let ancillary_rows = AncillaryItemRepository::new(connection)
-        .query_by_filter(AncillaryItemFilter::new())?;
+    let ancillary_rows =
+        AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
-    Ok(compute_ancillary_plan(&line_rows, &ancillary_rows))
+    // Every ancillary's own wastage rate as a supply, carried on the links to it
+    let supply_wastage_rates = supply_wastage_rates_of(&ancillary_rows);
+
+    // The wastage rates, in the order's store, of the principals whose links exclude them
+    let principal_ids: Vec<String> = ancillary_rows
+        .iter()
+        .filter(|row| row.exclude_principal_wastage)
+        .map(|row| row.item_id.clone())
+        .collect::<HashSet<String>>()
+        .into_iter()
+        .collect();
+    let wastage_rates = principal_wastage_rates(
+        connection,
+        &requisition.store_id,
+        &principal_ids,
+        &supply_wastage_rates,
+    )?;
+
+    Ok(compute_ancillary_plan(
+        &line_rows,
+        &ancillary_rows,
+        &wastage_rates,
+        &supply_wastage_rates,
+    ))
 }

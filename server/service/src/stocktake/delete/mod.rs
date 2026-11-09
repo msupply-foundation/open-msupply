@@ -67,8 +67,8 @@ pub fn delete_stocktake(
 mod stocktake_test {
     use repository::{
         mock::{
-            mock_locked_stocktake, mock_stocktake_finalised_without_lines,
-            mock_stocktake_without_lines, mock_store_a, MockDataInserts,
+            MockDataInserts, mock_locked_stocktake, mock_stocktake_finalised_without_lines,
+            mock_stocktake_without_lines, mock_store_a,
         },
         test_db::setup_all,
     };

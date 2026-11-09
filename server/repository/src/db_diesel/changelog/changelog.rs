@@ -1,11 +1,11 @@
 use crate::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, TransactionNotification,
     db_diesel::{changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store},
     diesel_macros::diesel_string_enum,
     dynamic_query_filter::create_condition,
     name_link,
     name_store_join::name_store_join,
     vaccination_row::vaccination,
-    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -72,7 +72,7 @@ diesel_string_enum! {
         AssetLogReason,
         AssetProperty,
         BackendPlugin,
-        Barcode,
+        BarcodeProposal,
         BundledItem,
         Campaign,
         Category,
@@ -133,6 +133,8 @@ diesel_string_enum! {
         CustomField,
         CustomFieldOption,
         CustomFieldScope,
+        PrescriptionRequest,
+        PrescriptionRequestLine,
         PurchaseOrder,
         PurchaseOrderLine,
         ReasonOption,
@@ -157,6 +159,7 @@ diesel_string_enum! {
         SystemLog,
         TemperatureBreach,
         TemperatureLog,
+        TemperatureSummary,
         Unit,
         UserAccount,
         UserPermission,
@@ -231,6 +234,9 @@ pub struct ChangelogRow {
 pub struct ChangelogRepository<'a> {
     pub(super) connection: &'a StorageConnection,
 }
+
+/// Cursor window per statement in `update_source_site_id`.
+const UPDATE_BATCH_SIZE: i64 = 10_000;
 
 pub struct ChangelogQuery {
     pub rows: Vec<ChangelogRow>,
@@ -369,6 +375,58 @@ impl<'a> ChangelogRepository<'a> {
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
         Ok(())
+    }
+
+    /// Whether any row has this `source_site_id`. Backed by `index_changelog_source_site_id`,
+    /// so it stays a single lookup on a large changelog - `repair_source_site_id` runs it on
+    /// every sync cycle.
+    pub fn any_with_source_site_id(&self, source_site_id: i32) -> Result<bool, RepositoryError> {
+        let found = changelog_with_links::table
+            .filter(changelog_with_links::source_site_id.eq(source_site_id))
+            .select(changelog_with_links::cursor)
+            .first::<i64>(self.connection.lock().connection())
+            .optional()?;
+
+        Ok(found.is_some())
+    }
+
+    /// Rewrite one `source_site_id` to another, returning the number of rows changed.
+    /// Not a general purpose update: it exists for `repair_source_site_id`, which corrects the
+    /// `0` stamped by the backfills in `repository/src/migrations/v3_00_00/` (notably
+    /// `populate_changelog_with_rows_for_sync_v7_tables.rs`) when the central site id was
+    /// unknown.
+    ///
+    /// Walks the table in cursor windows, one statement (and so one implicit transaction) per
+    /// window. A single `UPDATE` would be simpler, but on a central this can touch a row per
+    /// record across ~40 tables, and one statement of that size holds locks and builds WAL for
+    /// its whole duration. Windowing on the primary key keeps each statement bounded and lets
+    /// Postgres prune changelog partitions, which are ranged on `cursor`.
+    ///
+    /// `repair_source_site_id` gates this on `any_with_source_site_id`, so the walk only runs
+    /// when there is something to restamp.
+    pub fn update_source_site_id(&self, from: i32, to: i32) -> Result<usize, RepositoryError> {
+        let max_cursor = self.max_cursor()? as i64;
+        let mut changed = 0;
+        let mut start = 0;
+
+        while start <= max_cursor {
+            let end = start.saturating_add(UPDATE_BATCH_SIZE - 1);
+            changed += diesel::update(
+                changelog_with_links::table
+                    .filter(changelog_with_links::cursor.between(start, end))
+                    .filter(changelog_with_links::source_site_id.eq(from)),
+            )
+            .set(changelog_with_links::source_site_id.eq(to))
+            .execute(self.connection.lock().connection())?;
+
+            // `end` saturates at the maximum cursor, so stop rather than wrapping past it
+            let Some(next) = end.checked_add(1) else {
+                break;
+            };
+            start = next;
+        }
+
+        Ok(changed)
     }
 }
 
@@ -631,6 +689,28 @@ impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
         ChangelogCondition::source_site_id::equal(site_id)
+    }
+}
+
+impl ChangelogFilter {
+    /// Push from OMS remote over v6: records edited on this site, in tables tagged for
+    /// v6, for one of this site's stores or with no store.
+    pub fn all_data_edited_on_site_for_v6(site_id: i32) -> ChangelogCondition::Inner {
+        use ChangelogCondition as C;
+
+        let table_names: Vec<_> = ChangelogTableName::iter()
+            // OMS central takes all records that have a V6 transport tag
+            .filter(|table| table.sync_style().transport.is_v6)
+            .collect();
+
+        C::And(vec![
+            Self::all_data_edited_on_site(site_id),
+            C::table_name::any(table_names),
+            C::Or(vec![
+                C::store_id::is_null(),
+                C::store_site_id::matching(site_id),
+            ]),
+        ])
     }
 }
 

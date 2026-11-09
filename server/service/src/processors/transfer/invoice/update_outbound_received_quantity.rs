@@ -53,7 +53,7 @@ impl InvoiceTransferProcessor for UpdateOutboundReceivedQuantityProcessor {
             _ => {
                 return Ok(InvoiceTransferOutput::WrongInboundStatus(
                     inbound_invoice.invoice_row.status.to_owned(),
-                ))
+                ));
             }
         }
 

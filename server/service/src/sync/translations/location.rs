@@ -75,7 +75,11 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id: check_fk(store_id, "store_id", FkField::Store)?,
-            location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
+            location_type_id: fk_check(
+                location_type_id,
+                "location_type_id",
+                FkField::LocationType,
+            )?,
             volume,
         };
 
@@ -132,9 +136,9 @@ impl SyncTranslation for LocationTranslation {
 mod tests {
     use super::*;
     use repository::{
+        LocationTypeRow,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        LocationTypeRow,
     };
 
     #[actix_rt::test]

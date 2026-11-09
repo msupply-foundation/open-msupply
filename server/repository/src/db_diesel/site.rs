@@ -1,8 +1,8 @@
-use super::{site_row::site, DBType, SiteRow, StorageConnection};
+use super::{DBType, SiteRow, StorageConnection, site_row::site};
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
-    repository_error::RepositoryError,
     EqualFilter, Pagination, Sort, StringFilter,
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
+    repository_error::RepositoryError,
 };
 use diesel::prelude::*;
 
@@ -49,7 +49,7 @@ impl<'a> SiteRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                SiteSortField::Id => apply_sort_no_case!(query, sort, site::id),
+                SiteSortField::Id => apply_sort!(query, sort, site::id),
                 SiteSortField::Code => apply_sort_no_case!(query, sort, site::code),
                 SiteSortField::Name => apply_sort_no_case!(query, sort, site::name),
             }
@@ -58,6 +58,9 @@ impl<'a> SiteRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(site::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<SiteRow>(self.connection.lock().connection())?;
@@ -105,4 +108,29 @@ fn create_filtered_query(filter: Option<SiteFilter>) -> BoxedSiteQuery {
     }
 
     query
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, date, integer) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_site_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_site_sort", MockDataInserts::none()).await;
+        let repo = SiteRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [SiteSortField::Id, SiteSortField::Code, SiteSortField::Name] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
+        }
+    }
 }

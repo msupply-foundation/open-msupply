@@ -1,11 +1,12 @@
 use crate::{
+    PluginOrRepositoryError,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
     },
+    requisition::request_requisition::recompute_ancillary_dependants,
     requisition_line::query::get_requisition_line,
     service_provider::ServiceContext,
-    PluginOrRepositoryError,
 };
 use repository::{
     PluginDataRowRepository, RepositoryError, RequisitionLine, RequisitionLineRowRepository,
@@ -71,6 +72,13 @@ pub fn insert_request_requisition_line(
                 .pop()
                 .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
+            // The new line can be a principal of existing Ancillary-ratio lines
+            recompute_ancillary_dependants(
+                connection,
+                &ctx.store_id,
+                &requisition_row,
+                vec![new_requisition_line_row.item_id.clone()],
+            )?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?
@@ -100,15 +108,15 @@ impl From<PluginOrRepositoryError> for InsertRequestRequisitionLineError {
 #[cfg(test)]
 mod test {
     use repository::{
+        RequisitionLineRow, RequisitionLineRowRepository,
         mock::{
-            mock_draft_request_requisition_for_update_test,
+            MockDataInserts, mock_draft_request_requisition_for_update_test,
             mock_full_new_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
             mock_request_program_requisition, mock_sent_request_requisition, mock_store_a,
-            mock_store_b, test_item_stats, MockDataInserts,
+            mock_store_b, test_item_stats,
         },
         test_db::{setup_all, setup_all_with_data},
-        RequisitionLineRow, RequisitionLineRowRepository,
     };
 
     use crate::{

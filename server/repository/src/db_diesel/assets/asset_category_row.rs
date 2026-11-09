@@ -51,10 +51,7 @@ impl<'a> AssetCategoryRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(
-        &self,
-        asset_category_row: &AssetCategoryRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, asset_category_row: &AssetCategoryRow) -> Result<(), RepositoryError> {
         self._upsert_one(asset_category_row)?;
         let changelog = AssetCategoryRow::generate_changelog(
             asset_category_row.id.clone(),
@@ -88,7 +85,10 @@ impl<'a> AssetCategoryRowRepository<'a> {
     //     Ok(())
     // }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
         Ok(asset_category::table
             .filter(asset_category::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

@@ -1,6 +1,6 @@
 use repository::{
-    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete},
     StorageConnection, SyncBufferRow,
+    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete},
 };
 use serde::Deserialize;
 use util::sync_serde::empty_str_as_option_string;

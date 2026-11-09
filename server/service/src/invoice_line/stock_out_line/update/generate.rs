@@ -1,14 +1,14 @@
 use super::{BatchPair, UpdateStockOutLine, UpdateStockOutLineError};
 use crate::{
     invoice::common::{
-        calculate_total_after_tax, generate_vvm_status_log, GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_total_after_tax, generate_vvm_status_log,
     },
     invoice_line::{stock_in_line::get_existing_vvm_status_log_id, stock_out_line::StockOutType},
     service_provider::ServiceContext,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceRow, InvoiceStatus,
-    ItemRow, StockLine, StockLineRow,
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StockLine, StockLineRow,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 
 pub struct GenerateResult {
@@ -142,6 +142,7 @@ fn generate_line(
         manufacturer_id,
         reason_option_id: existing_reason_option_id,
         received_number_of_packs: existing_received_number_of_packs,
+        transfer_comment: existing_transfer_comment,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -161,6 +162,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         volume_per_pack,
+        barcode,
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
@@ -214,6 +216,13 @@ fn generate_line(
             .unwrap_or(existing_received_number_of_packs),
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
+        transfer_comment: input
+            .transfer_comment
+            .as_ref()
+            .map(|u| u.value.clone())
+            .unwrap_or(existing_transfer_comment),
+        // Follows the stock line it issues. Copying a barcode never proposes one.
+        barcode,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

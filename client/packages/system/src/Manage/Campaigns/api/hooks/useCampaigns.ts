@@ -11,7 +11,6 @@ import {
   CampaignFilterInput,
   CampaignSortFieldInput,
   FnUtils,
-  Formatter,
   useIntlUtils,
 } from '@openmsupply-client/common';
 
@@ -25,15 +24,13 @@ type ListParams = {
 export type DraftCampaign = {
   id: string;
   name: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  code: string;
 };
 
 export const defaultDraftCampaign: DraftCampaign = {
   id: '',
   name: '',
-  startDate: null,
-  endDate: null,
+  code: '',
 };
 
 export const useCampaigns = (queryParams?: ListParams) => {
@@ -113,29 +110,17 @@ const useUpsertCampaign = () => {
   const { translateServerError } = useIntlUtils();
 
   const mutationFn = async (draft: DraftCampaign) => {
-    // If the dates have been modified, they will be Date objects, but initial
-    // value from database is string/null
-    const startDate =
-      draft.startDate instanceof Date
-        ? Formatter.naiveDate(draft.startDate)
-        : draft.startDate;
-
-    const endDate =
-      draft.endDate instanceof Date
-        ? Formatter.naiveDate(draft.endDate)
-        : draft.endDate;
-
     const input = {
       id: draft.id || FnUtils.generateUUID(),
       name: draft.name,
-      startDate,
-      endDate,
+      // Always sent, so clearing the field clears the code
+      code: draft.code?.trim() ?? '',
     };
     try {
       const result = await campaignApi.upsertCampaign({ input });
       return result?.centralServer?.campaign?.upsertCampaign;
     } catch (error) {
-      // For invalid dates, server returns a GraphQL standard error
+      // For a bad request, server returns a GraphQL standard error
       return {
         __typename: 'UpsertCampaignError',
         error: { description: translateServerError((error as Error)?.message) },

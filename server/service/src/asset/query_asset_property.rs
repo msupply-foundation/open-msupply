@@ -1,11 +1,11 @@
 use repository::{
+    EqualFilter, StorageConnection,
     asset_property::{AssetPropertyFilter, AssetPropertyRepository},
     asset_property_row::AssetPropertyRow,
-    EqualFilter, StorageConnection,
 };
 
 use crate::{
-    service_provider::ServiceContext, usize_to_u32, ListError, ListResult, SingleRecordError,
+    ListError, ListResult, SingleRecordError, service_provider::ServiceContext, usize_to_u32,
 };
 
 pub fn get_asset_properties(

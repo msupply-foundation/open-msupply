@@ -1,8 +1,8 @@
 use repository::{
+    EqualFilter, PatientFilter, PatientRepository, RepositoryError, StorageConnection,
     name_insurance_join_row::{
         NameInsuranceJoinRow, NameInsuranceJoinRowRepository, NameInsuranceJoinSort,
     },
-    EqualFilter, PatientFilter, PatientRepository, RepositoryError, StorageConnection,
 };
 
 pub fn insurances(
@@ -41,12 +41,12 @@ mod query {
     use crate::service_provider::ServiceProvider;
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_patient, MockDataInserts},
+        InsuranceProviderRow, InsuranceProviderRowRepository, RepositoryError,
+        mock::{MockDataInserts, mock_patient},
         name_insurance_join_row::{
             InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
         },
         test_db::setup_all,
-        InsuranceProviderRow, InsuranceProviderRowRepository, RepositoryError,
     };
 
     #[actix_rt::test]

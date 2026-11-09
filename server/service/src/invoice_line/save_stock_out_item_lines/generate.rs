@@ -5,6 +5,7 @@ use repository::{
 use util::uuid;
 
 use crate::{
+    NullableUpdate,
     invoice_line::{
         outbound_shipment_unallocated_line::{
             DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
@@ -14,7 +15,6 @@ use crate::{
             DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine,
         },
     },
-    NullableUpdate,
 };
 
 use super::{SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError};
@@ -42,6 +42,7 @@ pub fn generate(
         placeholder_quantity,
         prescribed_quantity: _,
         note: _,
+        barcode: _,
     }: SaveStockOutItemLines,
 ) -> Result<GenerateResult, SaveStockOutItemLinesError> {
     let stock_out_type = match invoice.r#type {
@@ -51,7 +52,7 @@ pub fn generate(
         InvoiceType::InventoryReduction => StockOutType::InventoryReduction,
         InvoiceType::InboundShipment => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
         InvoiceType::InventoryAddition => {
-            return Err(SaveStockOutItemLinesError::InvalidInvoiceType)
+            return Err(SaveStockOutItemLinesError::InvalidInvoiceType);
         }
         InvoiceType::Repack => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
         InvoiceType::SupplierReturn => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
@@ -87,6 +88,7 @@ pub fn generate(
                  vvm_status_id,
                  received_number_of_packs,
                  reason_option_id,
+                 transfer_comment,
              }| InsertStockOutLine {
                 id,
                 invoice_id: invoice_id.clone(),
@@ -98,6 +100,7 @@ pub fn generate(
                 program_id: Some(NullableUpdate { value: program_id }),
                 received_number_of_packs,
                 reason_option_id,
+                transfer_comment,
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -131,6 +134,7 @@ pub fn generate(
                  vvm_status_id,
                  received_number_of_packs,
                  reason_option_id,
+                 transfer_comment,
              }| UpdateStockOutLine {
                 id,
                 stock_line_id: Some(stock_line_id),
@@ -144,6 +148,9 @@ pub fn generate(
                 }),
                 reason_option_id: Some(crate::NullableUpdate {
                     value: reason_option_id,
+                }),
+                transfer_comment: Some(crate::NullableUpdate {
+                    value: transfer_comment,
                 }),
                 // Default
                 prescribed_quantity: None,
@@ -231,7 +238,7 @@ mod tests {
     use repository::{InvoiceLine, InvoiceLineRow};
 
     use crate::invoice_line::save_stock_out_item_lines::{
-        generate::remap_ids, SaveStockOutInvoiceLine,
+        SaveStockOutInvoiceLine, generate::remap_ids,
     };
 
     #[test]

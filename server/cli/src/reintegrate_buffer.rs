@@ -1,13 +1,17 @@
 use anyhow::anyhow;
 use log::info;
 use repository::{
-    get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig},
-    StorageConnectionManager, SyncBufferRepository, SyncVersion,
+    KeyType, KeyValueStoreRepository, StorageConnection, StorageConnectionManager,
+    SyncBufferRepository, SyncVersion, get_storage_connection_manager,
+    migrations::{MigrationConfig, migrate},
 };
 use service::{
     settings::Settings,
-    sync::{sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer},
+    sync::{
+        CentralServerConfig, maintenance_mode::is_maintenance_mode,
+        seed_central_mapping_custom_fields, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer,
+    },
 };
 
 /// Re-runs sync buffer translation + integration against the `sync_buffer` already in the database.
@@ -17,6 +21,14 @@ use service::{
 /// `errors_only` narrow which rows are reset to pending, and integration only ever processes
 /// pending (`is_integrated = false`) rows — so the production integration path is untouched. The
 /// integrator logs per-batch progress at `info` level.
+///
+/// Central-server mode is enabled by `as_central` (the `--as-central` flag) or by
+/// `server.override_is_central_server` in the config file — the same setting the server honours
+/// at startup. Either flips the process-global [`CentralServerConfig`] to central before anything
+/// is translated. Translators consult it directly, and nothing in this process ever syncs (which
+/// is what would otherwise overwrite it from site info), so the setting holds for the whole run.
+/// Without either the CLI translates as a remote site — the historical behaviour.
+#[allow(clippy::too_many_arguments)]
 pub fn reintegrate_buffer(
     settings: &Settings,
     source_site_id: i32,
@@ -25,7 +37,24 @@ pub fn reintegrate_buffer(
     skip_buffer_reset: bool,
     errors_only: bool,
     tables: Option<Vec<String>>,
+    as_central: bool,
 ) -> anyhow::Result<()> {
+    if as_central {
+        info!("Central server mode requested via --as-central");
+        CentralServerConfig::set_is_central_server_on_startup();
+    } else if settings.server.override_is_central_server {
+        info!("Central server mode requested via server.override_is_central_server in config");
+        CentralServerConfig::set_is_central_server_on_startup();
+    }
+    info!(
+        "Reintegrating as {}",
+        if CentralServerConfig::is_central_server() {
+            "central server"
+        } else {
+            "remote site"
+        }
+    );
+
     let connection_manager = get_storage_connection_manager(&settings.database);
 
     if should_migrate {
@@ -39,6 +68,7 @@ pub fn reintegrate_buffer(
                 .clone()
                 .unwrap_or_default()
                 .to_migration_config(),
+            starting_database_version: None,
         };
         migrate(
             &connection_manager.connection().unwrap(),
@@ -49,13 +79,29 @@ pub fn reintegrate_buffer(
         info!("Finished applying database migrations");
     }
 
+    let connection = connection_manager.connection()?;
+
+    if !use_transaction {
+        check_no_transaction_allowed(&connection)?;
+    }
+
+    // The server seeds these right after it learns it is central and before it integrates
+    // anything (see `SynchroniserV5V6::sync`). The category translators emit
+    // `custom_field_option` rows whose `custom_field_id` is one of the mapping keys, so on a
+    // fresh replay database (initialise-database + pg_restore of the buffer) every category row
+    // would fail the foreign key without this. The seeder is idempotent and change-aware, so
+    // on a real central that has already synced this is a no-op.
+    if CentralServerConfig::is_central_server() {
+        info!("Seeding central mapping custom fields");
+        seed_central_mapping_custom_fields(&connection)?;
+    }
+
     if !skip_buffer_reset {
         reset_sync_buffer(&connection_manager, errors_only, tables.as_deref())?;
     } else {
         info!("Skipping sync buffer reset")
     }
 
-    let connection = connection_manager.connection()?;
     let total_pending = SyncBufferRepository::new(&connection).count_pending(
         source_site_id,
         SyncVersion::V5V6,
@@ -81,6 +127,33 @@ pub fn reintegrate_buffer(
     info!("Merge results: {merges:#?}");
 
     Ok(())
+}
+
+/// Integrating without the outer transaction lets changelog readers (processors, push, remote
+/// pulls) advance through a half-integrated batch, so on a live database it is only allowed in
+/// maintenance mode, which pauses all of them (#840). A database that has never synced (a replay
+/// database built with `initialise-database` plus a restored buffer) has no readers, so it is
+/// allowed there too.
+fn check_no_transaction_allowed(connection: &StorageConnection) -> anyhow::Result<()> {
+    if is_maintenance_mode(connection)? {
+        info!("Maintenance mode is on, integrating without the outer transaction");
+        return Ok(());
+    }
+
+    let has_synced = KeyValueStoreRepository::new(connection)
+        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+        .is_some();
+    if !has_synced {
+        info!("Database has never synced, integrating without the outer transaction");
+        return Ok(());
+    }
+
+    Err(anyhow!(
+        "Refusing to integrate without the outer transaction: this database has synced and \
+         maintenance mode is off, so processors, push and remote pulls could read a \
+         half-integrated batch. Turn on maintenance mode in Admin > Sync settings, or pass \
+         --use-transaction"
+    ))
 }
 
 /// Resets the sync buffer ahead of integration, optionally scoped by `tables` and/or `errors_only`.

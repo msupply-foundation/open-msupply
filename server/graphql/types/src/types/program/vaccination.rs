@@ -3,8 +3,8 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{InvoiceByIdLoader, ItemLoader, StockLineByIdLoader},
     ContextExt,
+    loader::{InvoiceByIdLoader, ItemLoader, StockLineByIdLoader},
 };
 use repository::{Vaccination, VaccinationRow};
 

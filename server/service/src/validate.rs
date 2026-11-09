@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    property::{PropertyFilter, PropertyRepository},
     EqualFilter, Name, NameFilter, NameRepository, Patient, PatientFilter, PatientRepository,
     RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
+    property::{PropertyFilter, PropertyRepository},
 };
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
@@ -96,22 +96,10 @@ pub fn check_other_party(
     let other_party = get_other_party(connection, store_id, other_party_id)?
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 
-    if !other_party.is_visible() {
-        return Err(OtherPartyErrors::OtherPartyNotVisible);
-    }
-
+    // is_manufacturer/is_donor are flags on name_row itself, so they are well-defined even for
+    // names with no name_store_join - check them before visibility, so that callers which allow
+    // invisible names (by ignoring OtherPartyNotVisible) still get the type check
     match other_party_type {
-        CheckOtherPartyType::Customer => {
-            if !other_party.is_customer() {
-                return Err(OtherPartyErrors::TypeMismatched);
-            }
-        }
-
-        CheckOtherPartyType::Supplier => {
-            if !other_party.is_supplier() {
-                return Err(OtherPartyErrors::TypeMismatched);
-            }
-        }
         CheckOtherPartyType::Manufacturer => {
             if !other_party.is_manufacturer() {
                 return Err(OtherPartyErrors::TypeMismatched);
@@ -122,32 +110,48 @@ pub fn check_other_party(
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }
+        _ => {}
+    };
+
+    if !other_party.is_visible() {
+        return Err(OtherPartyErrors::OtherPartyNotVisible);
+    }
+
+    // is_customer/is_supplier come from name_store_join, so they can only be checked for
+    // visible names
+    match other_party_type {
+        CheckOtherPartyType::Customer => {
+            if !other_party.is_customer() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+        CheckOtherPartyType::Supplier => {
+            if !other_party.is_supplier() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
         // Already handled above
-        CheckOtherPartyType::Patient => {}
+        CheckOtherPartyType::Manufacturer
+        | CheckOtherPartyType::Donor
+        | CheckOtherPartyType::Patient => {}
     };
 
     Ok(other_party)
 }
 
+/// Whether the other party is a store that has been disabled. Reads the store
+/// directly rather than through the name query: that also joins each name to its
+/// name_store_join, which on SQLite builds every name visible in the store first,
+/// and this check runs for every line of a batch (#1355). A store's disabled state
+/// doesn't depend on who asks, so the asking store isn't needed.
 pub fn check_other_party_store_is_disabled(
     connection: &StorageConnection,
-    store_id: &str,
+    _store_id: &str,
     other_party_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let mut results = NameRepository::new(connection).query_by_filter(
-        store_id,
-        NameFilter::new()
-            .id(EqualFilter::equal_to(other_party_id.to_string()))
-            .include_disabled(true),
-    )?;
-
-    let name = results
-        .iter()
-        .find(|name| name.name_store_join_row.is_some())
-        .cloned()
-        .or_else(|| results.pop());
-
-    Ok(name.map(|name| name.is_disabled()).unwrap_or(false))
+    Ok(StoreRowRepository::new(connection)
+        .find_one_by_name_id(other_party_id)?
+        .is_some_and(|store| store.is_disabled))
 }
 
 pub fn check_property_key_does_not_exist(
@@ -167,5 +171,39 @@ pub fn check_property_key_does_not_exist(
 impl From<RepositoryError> for OtherPartyErrors {
     fn from(error: RepositoryError) -> Self {
         Self::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        StoreRow, StoreRowRepository,
+        mock::{MockDataInserts, mock_name_a, mock_name_store_b, mock_store_a, mock_store_b},
+        test_db::setup_all,
+    };
+
+    use super::check_other_party_store_is_disabled;
+
+    #[actix_rt::test]
+    async fn other_party_store_is_disabled() {
+        let (_, connection, _, _) =
+            setup_all("other_party_store_is_disabled", MockDataInserts::all()).await;
+        let is_disabled = |other_party_id: &str| {
+            check_other_party_store_is_disabled(&connection, &mock_store_a().id, other_party_id)
+                .unwrap()
+        };
+
+        assert!(!is_disabled(&mock_name_store_b().id));
+        // A name that isn't a store, and one that doesn't exist
+        assert!(!is_disabled(&mock_name_a().id));
+        assert!(!is_disabled("unknown_name"));
+
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                is_disabled: true,
+                ..mock_store_b()
+            })
+            .unwrap();
+        assert!(is_disabled(&mock_name_store_b().id));
     }
 }

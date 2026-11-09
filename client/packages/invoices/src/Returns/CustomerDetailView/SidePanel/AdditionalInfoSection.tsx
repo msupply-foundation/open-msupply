@@ -52,6 +52,7 @@ export const AdditionalInfoSectionComponent = () => {
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
           disabled={isDisabled}
+          inputProps={{ 'data-testid': 'comment-field' }}
           onChange={e => update({ comment: e.target.value })}
           value={comment || ''}
         />

@@ -5,13 +5,13 @@ use repository::{
     InvoiceStatus, StockLine,
 };
 
-use super::generate::{generate, GenerateResult, InsertStockInOrOutLine};
+use super::generate::{GenerateResult, InsertStockInOrOutLine, generate};
 use super::validate::validate;
 
 use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
-use crate::invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLineError};
-use crate::invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError};
+use crate::invoice_line::stock_in_line::{InsertStockInLineError, insert_stock_in_line};
+use crate::invoice_line::stock_out_line::{InsertStockOutLineError, insert_stock_out_line};
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -144,18 +144,18 @@ impl From<crate::preference::PreferenceError> for InsertInventoryAdjustmentError
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_stock_line_a, mock_stock_line_b, mock_store_a, mock_store_b, mock_user_account_a,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceRowRepository, InvoiceStatus, ReasonOptionRow, ReasonOptionType,
         StockLineFilter, StockLineRepository, StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_stock_line_a, mock_stock_line_b, mock_store_a,
+            mock_store_b, mock_user_account_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     use crate::{
         invoice::inventory_adjustment::{
-            adjust_existing_stock::InsertInventoryAdjustment, AdjustmentType,
+            AdjustmentType, adjust_existing_stock::InsertInventoryAdjustment,
         },
         service_provider::ServiceProvider,
     };
@@ -491,8 +491,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -585,8 +586,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -609,8 +611,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":1}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":1}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -651,7 +654,7 @@ mod test {
     // backdated_datetime + verified_datetime on the resulting invoice.
     #[actix_rt::test]
     async fn insert_inventory_adjustment_backdated_addition_success() {
-        use chrono::{Duration, Utc};
+        use chrono::{Duration, SubsecRound, Utc};
         use repository::{PreferenceRow, PreferenceRowRepository};
 
         let (_, connection, connection_manager, _) = setup_all(
@@ -665,8 +668,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -677,7 +681,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let three_days_ago = Utc::now() - Duration::days(3);
+        let three_days_ago = Utc::now().trunc_subsecs(6) - Duration::days(3);
 
         let starting_available = mock_stock_line_a().available_number_of_packs;
         let starting_total = mock_stock_line_a().total_number_of_packs;

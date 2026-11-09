@@ -1,21 +1,24 @@
 use super::{OutError, UpdateRequestRequisition};
 use crate::{
-    requisition::common::{
-        check_emergency_order_within_max_items_limit, check_requisition_row_exists,
-        OrderTypeNotFoundError,
+    NullableUpdate,
+    requisition::{
+        common::{
+            OrderTypeNotFoundError, check_emergency_order_within_max_items_limit,
+            check_requisition_row_exists,
+        },
+        request_requisition::fixed_target_months_of_stock,
     },
     store_preference::get_store_preferences,
     validate::{
-        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
-        OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_other_party,
+        check_other_party_store_is_disabled,
     },
-    NullableUpdate,
 };
 use repository::{
-    reason_option_row::ReasonOptionType,
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RequisitionLineFilter,
     RequisitionLineRepository, StorageConnection,
+    reason_option_row::ReasonOptionType,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 
 pub fn validate(
@@ -53,6 +56,17 @@ pub fn validate(
 
     if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    // Program orders, rejected above, take their target from the order type. Where the store
+    // fixes the target, the only change allowed is onto it: an order whose target differs (set
+    // before the store fixed it, or since the store's interval changed) can be brought back.
+    if let Some(months) = input.max_months_of_stock
+        && months != requisition_row.max_months_of_stock
+        && let Some(fixed) = fixed_target_months_of_stock(connection, store_id)?
+        && months != fixed.total_months()
+    {
+        return Err(OutError::CannotChangeTargetMonthsOfStock);
     }
 
     if let (Some(program_id), Some(order_type)) =

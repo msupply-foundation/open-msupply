@@ -1,0 +1,963 @@
+import { generateUUID } from '@/uuid';
+import { gated } from '@/api/gated';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
+import { measureWord, t, tPlural } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { NumberField } from '@/ui/elements/inputs/NumberField';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { TextArea } from '@/ui/elements/inputs/TextArea';
+import { Select } from '@/ui/elements/selectors/Select';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '@/ui/elements/buttons/StandardButtons';
+import { ItemSearch } from '@/domain/item';
+import { createFocusTarget } from '@/ui/utils/createFocusTarget';
+import { ReasonSelect } from '@/domain/reasonOptions';
+import type { RequisitionDetailLineFragment } from '../requisitionDetail.generated';
+import {
+  buildAddPreview,
+  editorLineFromLine,
+  fetchLineStats,
+  figureInMode,
+  modeToUnits,
+  saveExistingLine,
+  saveNewLine,
+  unitsToMode,
+  type EditorLine,
+  type EntryMode,
+  type LineDraft,
+} from './requisitionLineEdit';
+import { RequisitionLineStats } from './RequisitionLineStats';
+import styles from './RequisitionLineEditModal.module.css';
+import { roundedText } from '@/intl/numberDisplay';
+import { Num } from '@/ui/elements/typography/Num';
+
+// The requisition line editor (spec/requisitions S4): add an item (add mode —
+// manual non-program requisitions only) or fill one line (edit mode, any
+// status; read-only opens with every control disabled). Beneath the figure
+// grid sit the two read-only stats tabs (My store · Customer, with the volume
+// block and the forecast calculation display — RequisitionLineStats).
+
+export interface RequisitionLineEditModalProps {
+  open: boolean;
+  onClose: () => void;
+  storeId: string;
+  requisitionId: string;
+  /** Read-only requisition → every control disabled (reads still shown). */
+  editable: boolean;
+  /** Manual non-program requisition → add mode reachable (rules › line editing). */
+  canAdd: boolean;
+  /**
+   * Transfer-linked → only Supply and the comment editable; the customer's
+   * demand figures are their record (OMS-REG-DIST-05.32).
+   */
+  transferred: boolean;
+  /** Extra-fields program requisition → the three-column layout + Reason. */
+  showExtended: boolean;
+  /** Approved figure: the authorisation preference with an Approved status. */
+  showApproved: boolean;
+  /**
+   * Finalised requisition — withholds the My store tab's other-stores legend
+   * row (spec S4 § stats tabs); distinct from `editable`, which other
+   * standing states also clear.
+   */
+  finalised: boolean;
+  // Preference gates (spec S4).
+  showDoses: boolean;
+  showExcess: boolean;
+  /** An existing line → edit mode; omitted → add mode. */
+  initialLine?: RequisitionDetailLineFragment;
+  /**
+   * Save & next (edit mode): the next line to step to in the table's current
+   * sort/filter order, skipping ones already visited this run; undefined when
+   * the set is exhausted (→ add mode where adding is offered, else close).
+   */
+  nextLine: (
+    currentLineId: string,
+    covered: Set<string>
+  ) => RequisitionDetailLineFragment | undefined;
+  /**
+   * The requisition's existing line for an item, if any — add mode loads it
+   * for editing rather than starting a duplicate (D60, OMS-REG-DIST-06.27).
+   */
+  findLineForItem: (
+    itemId: string
+  ) => RequisitionDetailLineFragment | undefined;
+  /** A save committed — the parent re-reads the line list (rules › drafts). */
+  onCommitted: () => void;
+}
+
+// Mount the content only while open, keyed on the OPEN identity (the line id,
+// or 'add'), so each open starts fresh and advancing within one open is
+// imperative (seedLine), not a prop change — the internal-order editor's
+// pattern.
+export const RequisitionLineEditModal = (
+  props: RequisitionLineEditModalProps
+): JSX.Element => (
+  <Show when={props.open && (props.initialLine?.id ?? 'add')} keyed>
+    {_openKey => <LineEditContent {...props} />}
+  </Show>
+);
+
+// The editable draft: every figure the save sends, all in stored UNITS. One
+// signal object — field writes go through patchDraft.
+type Draft = {
+  supplyQuantity: number;
+  requestedQuantity: number;
+  availableStockOnHand: number;
+  averageMonthlyConsumption: number;
+  initialStockOnHandUnits: number;
+  incomingUnits: number;
+  outgoingUnits: number;
+  lossInUnits: number;
+  additionInUnits: number;
+  expiringUnits: number;
+  daysOutOfStock: number;
+  comment: string;
+  reasonId: string | null;
+};
+
+const draftFromLine = (line: EditorLine): Draft => ({
+  supplyQuantity: line.supplyQuantity,
+  requestedQuantity: line.requestedQuantity,
+  availableStockOnHand: line.availableStockOnHand,
+  averageMonthlyConsumption: line.averageMonthlyConsumption,
+  initialStockOnHandUnits: line.initialStockOnHandUnits,
+  incomingUnits: line.incomingUnits,
+  outgoingUnits: line.outgoingUnits,
+  lossInUnits: line.lossInUnits,
+  additionInUnits: line.additionInUnits,
+  expiringUnits: line.expiringUnits,
+  daysOutOfStock: line.daysOutOfStock,
+  comment: line.comment,
+  reasonId: line.reasonId,
+});
+
+const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
+  const [line, setLine] = createSignal<EditorLine | undefined>(
+    props.initialLine ? editorLineFromLine(props.initialLine) : undefined
+  );
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialLine ? 'update' : 'add'
+  );
+  const [entryMode, setEntryMode] = createSignal<EntryMode>('units');
+  const [draft, setDraft] = createSignal<Draft | undefined>(
+    props.initialLine
+      ? draftFromLine(editorLineFromLine(props.initialLine))
+      : undefined
+  );
+  const [saving, setSaving] = createSignal(false);
+  const [advancing, setAdvancing] = createSignal(false);
+  const [loading, setLoading] = createSignal(false);
+  const [errorMessage, setErrorMessage] = createSignal<string>();
+  // A reasons rejection flags the Reason field (OMS-REG-DIST-06.34) until the
+  // next save.
+  const [reasonFlagged, setReasonFlagged] = createSignal(false);
+  // Items stepped through this run, so the walk never offers one twice.
+  const covered = new Set<string>();
+
+  // The add-mode item search — where focus lands on an add-mode open and
+  // whenever the editor returns to the empty add state.
+  const itemSearch = createFocusTarget();
+  // The Supply field — where focus lands on an edit-mode open
+  // (OMS-REG-DIST-06.24).
+  let supplyInput: HTMLInputElement | undefined;
+
+  let disposed = false;
+  onCleanup(() => (disposed = true));
+
+  const patchDraft = (patch: Partial<Draft>) => {
+    const current = draft();
+    if (!current) return;
+    setDraft({ ...current, ...patch });
+  };
+
+  const focusSupply = () => {
+    // A read-only requisition has nothing to type into, so it keeps the panel
+    // default (ui-standards › accessibility › keyboard).
+    if (!props.editable) return;
+    // After the dialog's showModal() has parked focus on the panel — the same
+    // one-frame deferral createFocusTarget applies (OMS-REG-DIST-06.24: focus
+    // Supply and scroll it into view).
+    requestAnimationFrame(() => {
+      supplyInput?.focus();
+      supplyInput?.scrollIntoView({ block: 'center' });
+    });
+  };
+
+  // Land the editor on a line — an existing line (edit) or an add-mode
+  // preview — seeding the draft from its stored values, and landing the caret
+  // on Supply however the line was reached (OMS-REG-DIST-06.24, .47).
+  const seedLine = (editorLine: EditorLine) => {
+    setLine(editorLine);
+    covered.add(editorLine.lineId);
+    setDraft(draftFromLine(editorLine));
+    setErrorMessage(undefined);
+    setReasonFlagged(false);
+    focusSupply();
+  };
+
+  const pickItem = async (itemId: string) => {
+    // An item already on the requisition loads its EXISTING line to edit — no
+    // duplicate (D60, OMS-REG-DIST-06.27). The picker stays live (mode stays
+    // 'add'), but the loaded line's isNew=false makes the save an update, not
+    // an insert.
+    const existing = props.findLineForItem(itemId);
+    if (existing) {
+      seedLine(editorLineFromLine(existing));
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(undefined);
+    const preview = await buildAddPreview(
+      props.storeId,
+      itemId,
+      generateUUID()
+    );
+    if (disposed) return;
+    setLoading(false);
+    if (preview) seedLine(preview);
+  };
+
+  // Back to the empty add state (OMS-REG-DIST-06.33: switching items or
+  // returning discards any unsaved draft with nothing created). Focus returns
+  // to the item search, as on an add-mode open.
+  const backToSearch = () => {
+    itemSearch.focus();
+    setMode('add');
+    setLine(undefined);
+    setDraft(undefined);
+    setErrorMessage(undefined);
+    setReasonFlagged(false);
+  };
+
+  onMount(() => {
+    if (props.initialLine) {
+      // The signal initializers seeded the line/draft; the walk still needs
+      // the opened line marked visited (OMS-REG-DIST-06.30 — never offered
+      // twice), and focus lands on Supply (OMS-REG-DIST-06.24).
+      covered.add(props.initialLine.id);
+      focusSupply();
+    } else itemSearch.focus();
+  });
+
+  const updateMode = () => mode() === 'update';
+  const disabled = () => !props.editable || saving();
+  // The transferred lock (OMS-REG-DIST-05.32): the demand side is the
+  // customer's record.
+  const demandDisabled = () => disabled() || props.transferred;
+
+  const current = () => line();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "Save & next" returning to the search keeps the working size, so
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || current() !== undefined,
+    false
+  );
+
+  const packSize = () => current()?.defaultPackSize ?? 1;
+  const doses = () => current()?.doses ?? 0;
+  const suggested = () => current()?.suggestedQuantity ?? 0;
+  const dosesApply = () =>
+    props.showDoses && (current()?.isVaccine ?? false) && doses() > 0;
+
+  // The stats tabs' server read (spec S4 § stats tabs), keyed on the SAVED
+  // line — a not-yet-saved add-mode item has none (D75) — and re-read after
+  // each save (savedTick). Read non-suspending: the resource lives under the
+  // open modal, so a direct read would remount it (kdd/solid-reactivity-
+  // pitfalls › no remounts on interaction).
+  const [savedTick, setSavedTick] = createSignal(0);
+  const statsKey = () => {
+    const editorLine = line();
+    if (!editorLine || editorLine.isNew) return false;
+    return JSON.stringify({ id: editorLine.lineId, tick: savedTick() });
+  };
+  const [stats] = createResource(statsKey, async serialised => {
+    const { id } = JSON.parse(serialised) as { id: string };
+    return fetchLineStats(props.storeId, id);
+  });
+  const statsNode = () => gated(stats);
+
+  // The customer's volume snapshot (OMS-REG-DIST-05.34): the live item volume
+  // at the supply as typed, and whether the capacity is spent — driving the
+  // Customer tab's volume block and the warning banner beneath the item header.
+  const volumeSnapshot = () => current()?.availableVolumeAtLocationType ?? null;
+  const itemVolume = () =>
+    (volumeSnapshot()?.itemVolumePerUnit ?? 0) * (draft()?.supplyQuantity ?? 0);
+  const volumeSpent = () => {
+    const snapshot = volumeSnapshot();
+    return !!snapshot && snapshot.availableVolume - itemVolume() <= 0;
+  };
+
+  const requestedUnits = () => draft()?.requestedQuantity ?? 0;
+  const supplyUnits = () => draft()?.supplyQuantity ?? 0;
+
+  // Derived read-only figures over the LIVE draft: available (the same
+  // arithmetic as the line table's column) and the customer's months of
+  // stock — a time quantity, exempt from re-expression.
+  const available = () => {
+    const d = draft();
+    if (!d) return 0;
+    return (
+      d.initialStockOnHandUnits +
+      d.incomingUnits +
+      d.additionInUnits -
+      d.lossInUnits -
+      d.outgoingUnits
+    );
+  };
+  const customerMos = () => {
+    const amc = draft()?.averageMonthlyConsumption ?? 0;
+    return amc > 0 ? available() / amc : 0;
+  };
+
+  // The reason is offered only at a variance (rules › line editing): at
+  // equality the control disables and the stored reason clears on save.
+  // Unlike the rest of the demand side it stays editable on a TRANSFERRED
+  // line (D86) — the reason guard rejects every save of an unreasoned
+  // variance line, so the supplying store must be able to satisfy it.
+  const variance = () => requestedUnits() !== suggested();
+  const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
+
+  // The customer AMC/AMD + MOS rows show only on a transfer-linked or
+  // extra-fields requisition; AMC is editable only under extra-fields.
+  const showCustomerConsumption = () => props.transferred || props.showExtended;
+
+  // The customer's forecast — its target stock among the supply-side rows and
+  // its method and breakdown on the Customer tab — shows on a transfer-linked
+  // line, whatever the forecasting preference (OMS-REG-DIST-05.37/.38). The
+  // target stock rounds to the NEAREST whole unit — not up (spec S4 §
+  // read-only figures), so it bypasses FigureRow's ceil.
+  const customerForecast = () =>
+    props.transferred ? (current()?.forecast ?? null) : null;
+  const customerTargetFigure = () =>
+    Math.round(
+      unitsToMode(customerForecast()?.targetStock ?? 0, entryMode(), packSize())
+    );
+
+  // The dose-equivalent caption under the Supply entry (spec S4 § supply
+  // entry): the supply as typed, re-expressed in doses.
+  const supplyDoseCaption = (): string | undefined => {
+    if (!dosesApply()) return undefined;
+    const doseCount = Math.round(supplyUnits() * doses());
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+  };
+
+  // The draft's reason on the wire: where the editor offers the reason
+  // control, the chosen id at a variance and null (clear) at equality; where
+  // it does not (non-extended), the STORED id is resent verbatim — an
+  // omitted or null optionId clears the stored reason (contract › line
+  // editing).
+  const draftOptionId = (): string | null => {
+    const reasonEditable = props.showExtended && props.editable;
+    if (reasonEditable) return variance() ? (draft()?.reasonId ?? null) : null;
+    return line()?.reasonId ?? null;
+  };
+
+  const save = async (): Promise<boolean> => {
+    const editorLine = current();
+    const d = draft();
+    if (!editorLine || !d) return false;
+    setSaving(true);
+    setErrorMessage(undefined);
+    setReasonFlagged(false);
+    // The WHOLE draft, every save (contract › line editing).
+    const wireDraft: LineDraft = {
+      supplyQuantity: d.supplyQuantity,
+      requestedQuantity: d.requestedQuantity,
+      stockOnHand: d.availableStockOnHand,
+      initialStockOnHand: d.initialStockOnHandUnits,
+      averageMonthlyConsumption: d.averageMonthlyConsumption,
+      incomingUnits: d.incomingUnits,
+      outgoingUnits: d.outgoingUnits,
+      lossInUnits: d.lossInUnits,
+      additionInUnits: d.additionInUnits,
+      expiringUnits: d.expiringUnits,
+      daysOutOfStock: d.daysOutOfStock,
+      comment: d.comment,
+      optionId: draftOptionId(),
+    };
+    const result = editorLine.isNew
+      ? await saveNewLine(
+          props.storeId,
+          props.requisitionId,
+          editorLine,
+          wireDraft
+        )
+      : await saveExistingLine(props.storeId, editorLine, wireDraft);
+    setSaving(false);
+    if (result.kind === 'saved') {
+      // The stats tabs summarise the SAVED line — re-read them so the bars
+      // reflect what was just committed.
+      setSavedTick(tick => tick + 1);
+      props.onCommitted();
+      return true;
+    }
+    if (result.kind === 'error') {
+      setErrorMessage(result.message);
+      if (result.reasonRejected) setReasonFlagged(true);
+    } else setErrorMessage(t('error.cant-save'));
+    return false;
+  };
+
+  const onOk = () =>
+    void save().then(ok => {
+      if (ok) props.onClose();
+    });
+
+  // Save & next (OMS-REG-DIST-06.30/.32): save, then continue. Add mode
+  // reopens the empty picker; edit mode advances the walk (skipping covered),
+  // dropping into add mode when exhausted where adding is offered, else
+  // closing.
+  const advance = (fromLineId: string) => {
+    const next = props.nextLine(fromLineId, covered);
+    if (next) seedLine(editorLineFromLine(next));
+    else if (props.canAdd) backToSearch();
+    else props.onClose();
+  };
+  const onOkNext = () => {
+    if (advancing()) return;
+    setAdvancing(true);
+    void (async () => {
+      const editorLine = current();
+      // Save the current line, then walk — the internal-order editor's shape.
+      // A read-only requisition has nothing to write, so Save & next is purely
+      // the walk there (advances without saving); an editable line always
+      // persists, including a fresh zero-quantity placeholder
+      // (OMS-REG-DIST-06.26).
+      const ok = props.editable ? await save() : true;
+      setAdvancing(false);
+      if (!ok || !editorLine) return;
+      if (mode() === 'add') backToSearch();
+      else advance(editorLine.lineId);
+    })();
+  };
+
+  // The representation select's options (spec S4 § supply entry): the item's
+  // unit name (falling back to "unit") and pack — the pack option offered
+  // where the item has a default pack size. Always rendered, disabling with
+  // the field. Labels inflect with the entered supply (reference-app parity:
+  // singular at exactly 1, plural otherwise).
+  const entryOptions = createMemo(() => {
+    const unitName = current()?.unitName ?? null;
+    const count =
+      unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
+    const options = [
+      { value: 'units', label: measureWord('units', unitName, count) },
+    ];
+    if (packSize() > 0)
+      options.push({
+        value: 'packs',
+        label: measureWord('packs', unitName, count),
+      });
+    return options;
+  });
+
+  // A labelled figure row (spec S4 § layout): bold inline-start label, the
+  // figure at the inline-end carrying the active representation's measure
+  // word. A row WITH an onChange is an input — same-width right-aligned
+  // figure box, two decimals, committing back stored units; disabled marks it
+  // state-locked (read-only requisition / transferred demand). A row WITHOUT
+  // one is never editable on this screen, so it renders as plain right-
+  // aligned text, rounded UP — never a disabled input (ui-standards ›
+  // detail-views § never-editable fields; the internal-order editor's
+  // StatRow). `fixed` marks a time quantity — no re-expression, its own
+  // suffix.
+  const FigureRow = (rowProps: {
+    label: string;
+    units: number;
+    onChange?: (units: number) => void;
+    disabled?: boolean;
+    fixed?: 'days' | 'months';
+    decimals?: number;
+    testId?: string;
+    ref?: (el: HTMLInputElement) => void;
+  }): JSX.Element => {
+    const editable = () => !!rowProps.onChange && !rowProps.disabled;
+    const suffix = () =>
+      rowProps.fixed === 'days'
+        ? t('label.days')
+        : rowProps.fixed === 'months'
+          ? t('label.months')
+          : measureWord(entryMode(), current()?.unitName ?? null, shown());
+    const shown = () => {
+      // Months (customer MOS, never editable) go to Num raw so they follow
+      // display rounding; days stay at one decimal.
+      if (rowProps.fixed === 'months') return rowProps.units;
+      if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
+      if (rowProps.onChange) {
+        const raw = unitsToMode(rowProps.units, entryMode(), packSize());
+        return Math.round(raw * 100) / 100;
+      }
+      return figureInMode(rowProps.units, entryMode(), packSize());
+    };
+    return (
+      <FieldRow label={rowProps.label}>
+        <Show
+          when={rowProps.onChange}
+          fallback={
+            <span class={styles.statValue} data-testid={rowProps.testId}>
+              <Num value={shown()} /> {suffix()}
+            </span>
+          }
+        >
+          <div class={styles.figure}>
+            <NumberField
+              label={rowProps.label}
+              hideLabel
+              min={0}
+              decimalLimit={rowProps.fixed ? 1 : (rowProps.decimals ?? 2)}
+              endAdornment={suffix()}
+              data-testid={rowProps.testId}
+              ref={rowProps.ref}
+              disabled={!editable()}
+              value={shown()}
+              emptyValue={0}
+              onChange={value => {
+                if (!rowProps.onChange) return;
+                const entered = value ?? 0;
+                rowProps.onChange(
+                  rowProps.fixed
+                    ? entered
+                    : modeToUnits(entered, entryMode(), packSize())
+                );
+              }}
+            />
+          </div>
+        </Show>
+      </FieldRow>
+    );
+  };
+
+  // The first column's heading figures (spec S4 § layout): default pack size,
+  // and doses per unit under the doses gate — plain captions, not boxed rows.
+  // Passed as that panel's `head`, which draws the divider under them. When
+  // neither applies nothing renders, so the panel has no head.
+  const Captions = (): JSX.Element => (
+    <Show when={packSize() > 0 || dosesApply()}>
+      <Stack gap="sm">
+        <Show when={packSize() > 0}>
+          <HStack justify="between" gap="sm" class={styles.caption}>
+            <span>{t('label.default-pack-size')}</span>
+            <span class={styles.captionValue}>
+              <Num value={packSize()} />
+            </span>
+          </HStack>
+        </Show>
+        <Show when={dosesApply()}>
+          <HStack justify="between" gap="sm" class={styles.caption}>
+            <span>{t('label.doses-per-unit')}</span>
+            <span class={styles.captionValue}>
+              <Num value={doses()} />
+            </span>
+          </HStack>
+        </Show>
+      </Stack>
+    </Show>
+  );
+
+  // The customer-demand panel (spec S4 § layout, columns one/two): requested,
+  // their available stock, our stock on hand, suggested — and the variance
+  // reason on the extra-fields layout.
+  const DemandPanel = (panelProps: {
+    /** The panel's heading figures — the pack-size captions where this is
+        the first column's panel (the general layout). */
+    head?: JSX.Element;
+  }): JSX.Element => (
+    <InsetPanel gap="sm" head={panelProps.head}>
+      <FigureRow
+        label={t('label.customer-requested')}
+        units={requestedUnits()}
+        disabled={demandDisabled()}
+        onChange={units => patchDraft({ requestedQuantity: units })}
+        testId="requested-quantity-input"
+      />
+      <FigureRow
+        label={t('label.customer-soh')}
+        units={draft()?.availableStockOnHand ?? 0}
+        disabled={demandDisabled()}
+        onChange={units => patchDraft({ availableStockOnHand: units })}
+      />
+      <FigureRow
+        label={t('label.our-soh')}
+        units={current()?.ourStockOnHand ?? 0}
+      />
+      <FigureRow label={t('label.suggested')} units={suggested()} />
+      <Show when={props.showExtended}>
+        <FieldRow label={t('label.reason')}>
+          <ReasonSelect
+            kind="requisition"
+            label={t('label.reason')}
+            hideLabel
+            inputTestId="variance-reason-input"
+            disabled={disabled() || !variance()}
+            error={
+              reasonFlagged()
+                ? t('error.provide-reason-requisition')
+                : undefined
+            }
+            errorTestId="reason-field-error"
+            value={variance() ? (draft()?.reasonId ?? undefined) : undefined}
+            onChange={reason => patchDraft({ reasonId: reason?.id ?? null })}
+          />
+        </FieldRow>
+      </Show>
+    </InsetPanel>
+  );
+
+  // The supply panel (spec S4 § layout, the last column): approved (gated),
+  // the Supply entry beside the representation select, remaining, issued.
+  const SupplyPanel = (): JSX.Element => (
+    <InsetPanel gap="sm">
+      <Show when={props.showApproved}>
+        <FigureRow
+          label={t('label.approved')}
+          units={current()?.approvedQuantity ?? 0}
+        />
+      </Show>
+      <FieldRow label={t('label.supply')}>
+        <div class={styles.supplyRow}>
+          <NumberField
+            label={t('label.supply')}
+            hideLabel
+            min={0}
+            decimalLimit={2}
+            data-testid="supply-quantity-input"
+            ref={el => (supplyInput = el)}
+            disabled={disabled()}
+            value={
+              Math.round(
+                unitsToMode(supplyUnits(), entryMode(), packSize()) * 100
+              ) / 100
+            }
+            emptyValue={0}
+            onChange={value =>
+              patchDraft({
+                supplyQuantity: modeToUnits(
+                  value ?? 0,
+                  entryMode(),
+                  packSize()
+                ),
+              })
+            }
+          />
+          <Select
+            label={t('label.units')}
+            hideLabel
+            value={entryMode()}
+            options={entryOptions()}
+            disabled={disabled()}
+            onValueChange={value => setEntryMode(value as EntryMode)}
+          />
+        </div>
+      </FieldRow>
+      <Show when={supplyDoseCaption()}>
+        {caption => <div class={styles.doseCaption}>{caption()}</div>}
+      </Show>
+      <FigureRow
+        label={t('label.remaining-to-supply')}
+        units={current()?.remainingQuantityToSupply ?? 0}
+      />
+      <FigureRow
+        label={t('label.already-issued')}
+        units={current()?.alreadyIssued ?? 0}
+      />
+    </InsetPanel>
+  );
+
+  // Beneath the supply panel: the customer's consumption context (gated), the
+  // customer's target stock (transfer-linked), then the comment.
+  const SupplyContext = (): JSX.Element => (
+    <>
+      <Show when={showCustomerConsumption()}>
+        <FigureRow
+          label={t('label.customer-amc/amd')}
+          units={draft()?.averageMonthlyConsumption ?? 0}
+          disabled={demandDisabled() || !props.showExtended}
+          onChange={
+            props.showExtended
+              ? units => patchDraft({ averageMonthlyConsumption: units })
+              : undefined
+          }
+        />
+        <FigureRow
+          label={t('label.customer-months-of-stock')}
+          units={customerMos()}
+          fixed="months"
+        />
+      </Show>
+      <Show when={customerForecast()}>
+        {/* Never editable — plain text, not a disabled input (ui-standards ›
+            detail-views § never-editable fields). Rounds to NEAREST (spec S4
+            § read-only figures), so it bypasses FigureRow's ceil. */}
+        <FieldRow label={t('label.customer-target-stock')}>
+          <span class={styles.statValue} data-testid="customer-target-stock">
+            <Num value={customerTargetFigure()} />{' '}
+            {measureWord(
+              entryMode(),
+              current()?.unitName ?? null,
+              customerTargetFigure()
+            )}
+          </span>
+        </FieldRow>
+      </Show>
+      <FieldRow label={t('label.comment')}>
+        <TextArea
+          label={t('label.comment')}
+          hideLabel
+          rows={3}
+          data-testid="line-comment-field"
+          disabled={disabled()}
+          value={draft()?.comment ?? ''}
+          onInput={e => patchDraft({ comment: e.currentTarget.value })}
+        />
+      </FieldRow>
+    </>
+  );
+
+  return (
+    <Dialog
+      open
+      onClose={props.onClose}
+      dismissable={!saving()}
+      size={workingSize() ? 'full' : 'auto'}
+      // The full-bleed SHEET, like the other line editors — its three-column
+      // figure grid wants ~50rem of basis before gaps, more than a 56rem card's
+      // body. `full` is bounded by `--measure-sheet`, and the columns inside
+      // are capped and centred, so labels stay next to their values (#617).
+      //
+      // Not a card: its content is tall, and a card's height stops at 80vh,
+      // which on a LANDSCAPE TABLET (1280x800, iPad Pro 11) puts the stats
+      // tabs below the fold; the sheet (100vh less a 2rem gutter) shows them.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips.
+      widthRem={44}
+      minBodyHeightRem={28}
+      testId="requisition-line-edit-modal"
+      // Untitled per the reference — the title stays as the accessible name.
+      title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
+      titleHidden
+      actionsLead={
+        <Show when={errorMessage()}>
+          {message => <Alert severity="error">{message()}</Alert>}
+        </Show>
+      }
+      actions={
+        <>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
+          {/* Save — enabled whenever a line is loaded and the requisition is
+              editable (the internal-order editor's rule), so a freshly picked
+              item saves as a zero-quantity placeholder without a prior edit
+              (OMS-REG-DIST-06.26). Disabled only with no line, mid-save, or
+              read-only. Save & next stays available on a read-only requisition
+              as the walk affordance (spec S4 § layout › footer). */}
+          <DialogSaveButton
+            data-testid="dialog-button-ok"
+            disabled={!current() || saving() || !props.editable}
+            loading={saving()}
+            onClick={onOk}
+          />
+          <SaveAndNextButton
+            data-testid="dialog-button-next-and-ok"
+            disabled={!current() || saving()}
+            loading={saving() || advancing()}
+            onClick={onOkNext}
+          />
+        </>
+      }
+    >
+      {/* Item header (spec S4 § layout): the catalogue lookup in add mode —
+          offering EVERY visible item, an already-present pick loading its
+          line (D60) — or the item read-only in edit mode. */}
+      <Show
+        when={updateMode()}
+        fallback={
+          <ItemSearch
+            label={t('label.item')}
+            storeId={props.storeId}
+            includeHiddenWithStock
+            focusTarget={itemSearch}
+            placeholder={t('placeholder.enter-an-item-code-or-name')}
+            value={current()?.itemId}
+            selectedItem={
+              current()
+                ? {
+                    id: current()!.itemId,
+                    code: current()!.itemCode,
+                    name: current()!.itemName,
+                  }
+                : undefined
+            }
+            disabled={saving() || loading()}
+            onSelect={option => {
+              if (option) void pickItem(option.id);
+              else backToSearch();
+            }}
+          />
+        }
+      >
+        <TextField
+          label={t('label.item')}
+          disabled
+          value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
+        />
+      </Show>
+
+      {/* The no-capacity warning beneath the item header (OMS-REG-DIST-05.34):
+          shown while the typed supply spends the customer's storage capacity —
+          guidance only, the save is never blocked. */}
+      <Show when={volumeSpent()}>
+        <Alert severity="warning" testId="volume-full-warning">
+          {t('label.location-type-full-warning', {
+            locationType: volumeSnapshot()!.locationType.name,
+          })}
+        </Alert>
+      </Show>
+
+      <Show when={current()}>
+        <HStack
+          wrap
+          justify="center"
+          align="start"
+          gap="lg"
+          class={styles.grid}
+        >
+          <Show
+            when={props.showExtended}
+            fallback={
+              <>
+                {/* General requisition — two columns (spec S4 § layout). */}
+                <Stack gap="sm" class={styles.column}>
+                  <DemandPanel head={<Captions />} />
+                  <Show when={excess()}>
+                    <Alert severity="warning" testId="excess-request-warning">
+                      {t('messages.requested-exceeds-suggested')}
+                    </Alert>
+                  </Show>
+                </Stack>
+                <Stack gap="sm" class={styles.column}>
+                  <SupplyPanel />
+                  <SupplyContext />
+                </Stack>
+              </>
+            }
+          >
+            {/* Extra-fields program requisition — three columns. The
+                consumption figures group on their own recessed panel, like the
+                demand and supply columns beside them (#617). */}
+            <Stack gap="sm" class={styles.column}>
+              <InsetPanel gap="sm" head={<Captions />}>
+                <FigureRow
+                  label={t('label.initial-stock-on-hand')}
+                  units={draft()?.initialStockOnHandUnits ?? 0}
+                  disabled={demandDisabled()}
+                  onChange={units =>
+                    patchDraft({ initialStockOnHandUnits: units })
+                  }
+                />
+                <FigureRow
+                  label={t('label.incoming')}
+                  units={draft()?.incomingUnits ?? 0}
+                  disabled={demandDisabled()}
+                  onChange={units => patchDraft({ incomingUnits: units })}
+                />
+                <FigureRow
+                  label={t('label.outgoing')}
+                  units={draft()?.outgoingUnits ?? 0}
+                  disabled={demandDisabled()}
+                  onChange={units => patchDraft({ outgoingUnits: units })}
+                />
+                <FigureRow
+                  label={t('label.losses')}
+                  units={draft()?.lossInUnits ?? 0}
+                  disabled={demandDisabled()}
+                  onChange={units => patchDraft({ lossInUnits: units })}
+                />
+                <FigureRow
+                  label={t('label.additions')}
+                  units={draft()?.additionInUnits ?? 0}
+                  disabled={demandDisabled()}
+                  onChange={units => patchDraft({ additionInUnits: units })}
+                />
+                <FigureRow
+                  label={t('label.days-out-of-stock')}
+                  units={draft()?.daysOutOfStock ?? 0}
+                  fixed="days"
+                  disabled={demandDisabled()}
+                  onChange={units => patchDraft({ daysOutOfStock: units })}
+                />
+              </InsetPanel>
+            </Stack>
+            <Stack gap="sm" class={styles.column}>
+              <DemandPanel />
+              <Show when={excess()}>
+                <Alert severity="warning" testId="excess-request-warning">
+                  {t('messages.requested-exceeds-suggested')}
+                </Alert>
+              </Show>
+              <FigureRow label={t('label.available')} units={available()} />
+              <FigureRow
+                label={t('label.short-expiry')}
+                units={draft()?.expiringUnits ?? 0}
+                disabled={demandDisabled()}
+                onChange={units => patchDraft({ expiringUnits: units })}
+              />
+            </Stack>
+            <Stack gap="sm" class={styles.column}>
+              <SupplyPanel />
+              <SupplyContext />
+            </Stack>
+          </Show>
+        </HStack>
+
+        {/* The two read-only stats tabs (spec S4 § stats tabs): My store ·
+            Customer, with the customer's forecast and the volume block. */}
+        <RequisitionLineStats
+          stats={statsNode()}
+          entryMode={entryMode()}
+          packSize={packSize()}
+          unitName={current()?.unitName ?? null}
+          finalised={props.finalised}
+          forecast={customerForecast()}
+          volume={
+            volumeSnapshot()
+              ? {
+                  locationTypeName: volumeSnapshot()!.locationType.name,
+                  availableVolume: volumeSnapshot()!.availableVolume,
+                  itemVolume: itemVolume(),
+                }
+              : null
+          }
+        />
+      </Show>
+    </Dialog>
+  );
+};

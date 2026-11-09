@@ -1,21 +1,22 @@
 use super::query::get_stock_line;
 use crate::{
-    activity_log::activity_log_entry_with_diff,
-    barcode::{self, BarcodeInput},
-    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
-    common::{check_stock_line_exists, CommonStockLineError},
-    service_provider::ServiceContext,
-    validate::{check_date_is_not_in_future, check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate, SingleRecordError,
+    activity_log::activity_log_entry_with_diff,
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    common::{CommonStockLineError, check_stock_line_exists},
+    service_provider::ServiceContext,
+    validate::{
+        CheckOtherPartyType, OtherPartyErrors, check_date_is_not_in_future, check_other_party,
+    },
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
-    ActivityLogType, BarcodeRow, BarcodeRowRepository, DatetimeFilter, EqualFilter,
-    LocationMovementRow, LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    ActivityLogType, DatetimeFilter, EqualFilter, LocationMovementRow,
+    LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
     StockLineRowRepository, StorageConnection,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
-use util::uuid::uuid;
+use util::{barcode::standard_barcode, uuid::uuid};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct UpdateStockLine {
@@ -48,7 +49,6 @@ pub enum UpdateStockLineError {
     DonorNotVisible,
     DonorIsNotADonor,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     UpdatedStockNotFound,
     StockMovementNotFound,
@@ -70,12 +70,7 @@ pub fn update_stock_line(
             let GenerateResult {
                 new_stock_line,
                 location_movements,
-                barcode_row,
             } = generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
-
-            if let Some(barcode_row) = barcode_row {
-                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
-            }
 
             StockLineRowRepository::new(connection).upsert_one(&new_stock_line)?;
 
@@ -113,35 +108,32 @@ fn validate(
     if let Some(NullableUpdate {
         value: Some(manufacture_date),
     }) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
     {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     if let Some(NullableUpdate {
-        value: Some(ref location),
+        value: Some(location),
     }) = &input.location
     {
         if !check_location_exists(connection, store_id, &location.clone())? {
             return Err(LocationDoesNotExist);
         }
 
-        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
-            {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id
+            && !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+        {
+            return Err(IncorrectLocationType);
         }
     }
 
     if let Some(NullableUpdate {
         value: Some(item_variant_id),
     }) = &input.item_variant_id
+        && check_item_variant_exists(connection, item_variant_id)?.is_none()
     {
-        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-            return Err(ItemVariantDoesNotExist);
-        }
+        return Err(ItemVariantDoesNotExist);
     }
 
     if let Some(NullableUpdate {
@@ -164,18 +156,24 @@ fn validate(
         value: Some(manufacturer_id),
     }) = &input.manufacturer_id
     {
-        check_other_party(
+        match check_other_party(
             connection,
             store_id,
             manufacturer_id,
             CheckOtherPartyType::Manufacturer,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => ManufacturerDoesNotExist,
-            OtherPartyErrors::OtherPartyNotVisible => ManufacturerNotVisible,
-            OtherPartyErrors::TypeMismatched => ManufacturerIsNotAManufacturer,
-            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-        })?;
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error));
+                }
+            },
+        };
     };
 
     Ok(stock_line)
@@ -184,7 +182,6 @@ fn validate(
 pub struct GenerateResult {
     pub new_stock_line: StockLineRow,
     pub location_movements: Option<Vec<LocationMovementRow>>,
-    pub barcode_row: Option<BarcodeRow>,
 }
 
 fn generate(
@@ -227,26 +224,10 @@ fn generate(
         _ => None,
     };
 
-    let barcode_row = match &barcode {
-        // Don't generate row for empty gtin
-        Some(gtin) if gtin.is_empty() => None,
-        Some(gtin) => Some(barcode::generate(
-            connection,
-            BarcodeInput {
-                gtin: gtin.clone(),
-                item_id: existing_line.item_row.id,
-                pack_size: Some(existing.pack_size),
-            },
-        )?),
-        None => None,
-    };
-
-    let barcode_id = match &barcode {
-        // If it'e empty gtin unlink
-        Some(gtin) if gtin.is_empty() => None,
-        // If gtin not specified keep existing
-        None => existing.barcode_id,
-        Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
+    let barcode = match &barcode {
+        // Not specified: keep the existing barcode. An empty one clears it.
+        None => existing.barcode.clone(),
+        Some(barcode) => standard_barcode(barcode),
     };
     existing.location_id = location.map(|l| l.value).unwrap_or(existing.location_id);
     existing.batch = batch.or(existing.batch);
@@ -259,7 +240,7 @@ fn generate(
         .unwrap_or(existing.manufacture_date);
 
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
-    existing.barcode_id = barcode_id;
+    existing.barcode = barcode;
     existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
 
     existing.item_variant_id = item_variant_id
@@ -280,7 +261,6 @@ fn generate(
     Ok(GenerateResult {
         new_stock_line: existing,
         location_movements,
-        barcode_row,
     })
 }
 

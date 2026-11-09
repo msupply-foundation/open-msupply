@@ -14,6 +14,8 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS name_tag_join_view;
                 DROP VIEW IF EXISTS master_list_name_join_view;
                 DROP VIEW IF EXISTS invoice_view;
+                DROP VIEW IF EXISTS prescription_request_view;
+                DROP VIEW IF EXISTS prescription_request_line_view;
                 DROP VIEW IF EXISTS requisition_view;
                 DROP VIEW IF EXISTS rnr_form_view;
                 DROP VIEW IF EXISTS name_insurance_join_view;
@@ -27,7 +29,8 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS encounter_view;
                 DROP VIEW IF EXISTS program_enrolment_view;
                 DROP VIEW IF EXISTS vaccination_view;
-                DROP VIEW IF EXISTS barcode_view;
+                DROP VIEW IF EXISTS barcode_view;  -- removed but keep drop for cleanup
+                DROP VIEW IF EXISTS barcode_proposal_view;
                 DROP VIEW IF EXISTS goods_received_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS goods_received_line_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS item_variant_view;
@@ -105,6 +108,24 @@ impl ViewMigrationFragment for ViewMigration {
                     name_link ON invoice.name_link_id = name_link.id
                 LEFT JOIN
                     name_link AS default_donor_link ON invoice.default_donor_link_id = default_donor_link.id;
+
+                CREATE VIEW prescription_request_view AS
+                SELECT
+                    prescription_request.*,
+                    patient_link.name_id as patient_id
+                FROM
+                    prescription_request
+                JOIN
+                    name_link AS patient_link ON prescription_request.patient_link_id = patient_link.id;
+
+                CREATE VIEW prescription_request_line_view AS
+                SELECT
+                    prescription_request_line.*,
+                    line_item_link.item_id as item_id
+                FROM
+                    prescription_request_line
+                JOIN
+                    item_link AS line_item_link ON prescription_request_line.item_link_id = line_item_link.id;
 
                 CREATE VIEW requisition_view AS
                 SELECT
@@ -259,14 +280,17 @@ impl ViewMigrationFragment for ViewMigration {
                 LEFT JOIN
                     name_link AS facility_link ON vaccination.facility_name_link_id = facility_link.id;
 
-                CREATE VIEW barcode_view AS
+                CREATE VIEW barcode_proposal_view AS
                 SELECT
-                    barcode.*,
+                    barcode_proposal.*,
+                    item_link.item_id as item_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
-                    barcode
+                    barcode_proposal
+                JOIN
+                    item_link ON barcode_proposal.item_link_id = item_link.id
                 LEFT JOIN
-                    name_link AS manufacturer_link ON barcode.manufacturer_link_id = manufacturer_link.id;
+                    name_link AS manufacturer_link ON barcode_proposal.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW item_variant_view AS
                 SELECT

@@ -244,12 +244,14 @@ mod test {
         migrate(&connection, Some(version), MigrationConfig::default()).unwrap();
 
         let value = |id: &str| {
-            sql_query("SELECT CAST(custom_fields AS TEXT) AS custom_fields FROM invoice WHERE id = $1")
-                .bind::<Text, _>(id)
-                .get_result::<CustomFieldsRow>(connection.lock().connection())
-                .unwrap()
-                .custom_fields
-                .map(|raw| serde_json::from_str::<serde_json::Value>(&raw).unwrap())
+            sql_query(
+                "SELECT CAST(custom_fields AS TEXT) AS custom_fields FROM invoice WHERE id = $1",
+            )
+            .bind::<Text, _>(id)
+            .get_result::<CustomFieldsRow>(connection.lock().connection())
+            .unwrap()
+            .custom_fields
+            .map(|raw| serde_json::from_str::<serde_json::Value>(&raw).unwrap())
         };
         assert_eq!(
             value("invoice_si"),

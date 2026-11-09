@@ -1,8 +1,8 @@
 use async_graphql::*;
 
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceNode;
 use service::invoice::supplier_return::update::{
@@ -79,7 +79,8 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
         | ServiceError::CannotIssueSupplierReturnWithNoLines
         | ServiceError::ReturnDoesNotExist
-        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
+        | ServiceError::UnknownPropertyKey(_)
+        | ServiceError::InvalidPropertyValue { .. } => BadUserInput(formatted_error),
 
         ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedReturnDoesNotExist

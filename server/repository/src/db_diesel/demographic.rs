@@ -1,11 +1,11 @@
-use super::{demographic_row::demographic, DBType, StorageConnection};
+use super::{DBType, StorageConnection, demographic_row::demographic};
 use diesel::prelude::*;
 
 use crate::{
+    Pagination, StringFilter,
     demographic_row::DemographicRow,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    Pagination, StringFilter,
 };
 
 pub type Demographic = DemographicRow;

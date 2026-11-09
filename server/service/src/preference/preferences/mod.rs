@@ -26,8 +26,6 @@ pub mod show_indicative_price_in_requisitions;
 pub use show_indicative_price_in_requisitions::*;
 pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
-pub mod use_procurement_functionality;
-pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
 pub mod requisition_auto_finalise;
@@ -42,6 +40,8 @@ pub mod can_create_internal_order_from_a_requisition;
 pub use can_create_internal_order_from_a_requisition::*;
 pub mod select_destination_store_for_an_internal_order;
 pub use select_destination_store_for_an_internal_order::*;
+pub mod can_change_target_months_of_stock;
+pub use can_change_target_months_of_stock::*;
 pub mod number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products;
 pub use number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products::*;
 pub mod number_of_months_threshold_to_show_low_stock_alerts_for_products;
@@ -66,6 +66,8 @@ pub mod invoice_status_options;
 pub use invoice_status_options::*;
 pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
+pub mod transfer_stock_to_internal_customers_at_cost_price;
+pub use transfer_stock_to_internal_customers_at_cost_price::*;
 pub mod is_gaps;
 pub use is_gaps::*;
 pub mod display_population_based_forecasting;
@@ -78,8 +80,14 @@ pub mod receive_payments_from_prescriptions;
 pub use receive_payments_from_prescriptions::*;
 pub mod do_not_print_placeholder_line_labels;
 pub use do_not_print_placeholder_line_labels::*;
+pub mod prompt_for_batch_and_expiry_on_inbound_shipments;
+pub use prompt_for_batch_and_expiry_on_inbound_shipments::*;
 pub mod blind_stocktake;
 pub use blind_stocktake::*;
+pub mod global_logo;
+pub use global_logo::*;
+pub mod decimal_places_for_numbers;
+pub use decimal_places_for_numbers::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -97,18 +105,21 @@ pub struct PreferenceProvider {
     pub expired_stock_prevent_issue: ExpiredStockPreventIssue,
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
+    pub transfer_stock_to_internal_customers_at_cost_price:
+        TransferStockToInternalCustomersAtCostPrice,
     pub is_gaps: IsGaps,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
     pub backdating: Backdating,
     pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
+    pub global_logo: GlobalLogo,
+    pub decimal_places_for_numbers: DecimalPlacesForNumbers,
 
     // Store preferences
     pub blind_stocktake: BlindStocktake,
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
-    pub use_procurement_functionality: UseProcurementFunctionality,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
     pub requisition_auto_finalise: RequisitionAutoFinalise,
@@ -116,6 +127,7 @@ pub struct PreferenceProvider {
     pub disable_manual_returns: DisableManualReturns,
     pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
     pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+    pub can_change_target_months_of_stock: CanChangeTargetMonthsOfStock,
     pub external_inbound_shipment_lines_must_be_authorised:
         ExternalInboundShipmentLinesMustBeAuthorised,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -131,6 +143,7 @@ pub struct PreferenceProvider {
     pub invoice_status_options: InvoiceStatusOptions,
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
+    pub prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -150,18 +163,21 @@ pub fn get_preference_provider() -> PreferenceProvider {
         expired_stock_prevent_issue: ExpiredStockPreventIssue,
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
+        transfer_stock_to_internal_customers_at_cost_price:
+            TransferStockToInternalCustomersAtCostPrice,
         is_gaps: IsGaps,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
         backdating: Backdating,
         receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
+        global_logo: GlobalLogo,
+        decimal_places_for_numbers: DecimalPlacesForNumbers,
 
         // Store preferences
         blind_stocktake: BlindStocktake,
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,
-        use_procurement_functionality: UseProcurementFunctionality,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
         disable_manual_returns: DisableManualReturns,
@@ -169,6 +185,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         inbound_shipment_auto_verify: InboundShipmentAutoVerify,
         can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
         select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+        can_change_target_months_of_stock: CanChangeTargetMonthsOfStock,
         external_inbound_shipment_lines_must_be_authorised:
             ExternalInboundShipmentLinesMustBeAuthorised,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -184,5 +201,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         invoice_status_options: InvoiceStatusOptions,
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
+        prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
     }
 }

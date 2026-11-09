@@ -3,25 +3,49 @@ use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::loader::ItemLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
         RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
         RequisitionsByIdLoader, SyncFileReferenceLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
+use repository::{ApprovalStatusType, NameRow, Requisition, requisition_row::RequisitionRow};
 use service::{
-    requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
     ListResult,
+    requisition::request_requisition::{
+        SupplyIntervalAndBuffer, name_supply_interval_and_buffer, store_supply_interval_and_buffer,
+    },
+    requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
 };
 
 use super::{
-    program_node::ProgramNode, InvoiceConnector, ItemNode, NameNode, PeriodNode,
-    RequisitionLineConnector, UserNode,
+    InvoiceConnector, ItemNode, NameNode, PeriodNode, RequisitionLineConnector, UserNode,
+    program_node::ProgramNode,
 };
 use crate::types::SyncFileReferenceConnector;
+
+/// A store's supply interval, safety buffer and delivery lead time: their sum is its general
+/// orders' default target months of stock
+pub struct SupplyIntervalAndBufferNode {
+    interval: SupplyIntervalAndBuffer,
+}
+
+#[Object]
+impl SupplyIntervalAndBufferNode {
+    pub async fn supply_interval_months(&self) -> f64 {
+        self.interval.supply_interval_months
+    }
+    /// Zero when the facility record carries none
+    pub async fn safety_buffer_months(&self) -> f64 {
+        self.interval.safety_buffer_months
+    }
+    /// How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset
+    pub async fn delivery_lead_time_months(&self) -> f64 {
+        self.interval.delivery_lead_time_months
+    }
+}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
@@ -329,6 +353,32 @@ impl RequisitionNode {
         &self.row().min_months_of_stock
     }
 
+    /// The ordering store's supply interval and safety buffer (from its facility record) and
+    /// delivery lead time (from its store preferences) as they stand now, null when its
+    /// facility record carries no supply interval. Their sum is a general order's default
+    /// target months of stock.
+    pub async fn supply_interval_and_buffer(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<SupplyIntervalAndBufferNode>> {
+        use repository::RequisitionType;
+        let connection = ctx.service_provider().basic_context()?.connection;
+        let row = self.row();
+        let interval = match row.r#type {
+            RequisitionType::Request => {
+                store_supply_interval_and_buffer(&connection, &row.store_id)
+            }
+            // The customer orders
+            RequisitionType::Response => {
+                name_supply_interval_and_buffer(&connection, &row.store_id, &row.name_id)
+            }
+            // Legacy types, not internal orders
+            RequisitionType::Imprest | RequisitionType::StockHistory => Ok(None),
+        }
+        .map_err(|e| StandardGraphqlError::from_debug(&e))?;
+        Ok(interval.map(|interval| SupplyIntervalAndBufferNode { interval }))
+    }
+
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
         let requisition_id = &self.row().id;
         let linked_requisition_id = &self.row().linked_requisition_id;
@@ -488,8 +538,8 @@ mod test {
         test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
-        mock::{mock_user_account_a, MockDataInserts},
         Requisition, RequisitionRow,
+        mock::{MockDataInserts, mock_user_account_a},
     };
     use serde_json::json;
 

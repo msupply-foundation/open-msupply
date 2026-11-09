@@ -44,4 +44,12 @@ impl CampaignMutations {
     ) -> Result<DeleteCampaignResponse> {
         delete_campaign(ctx, input)
     }
+
+    async fn delete_campaigns(
+        &self,
+        ctx: &Context<'_>,
+        ids: Vec<String>,
+    ) -> Result<DeleteCampaignsResponse> {
+        delete_campaigns(ctx, ids)
+    }
 }

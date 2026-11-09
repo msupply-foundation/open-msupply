@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, InternalError, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::DeleteResponse;
 use service::{
@@ -76,7 +76,7 @@ fn map_error(error: ServiceError) -> Result<DeleteHelpDocumentErrorInterface> {
         ServiceError::HelpDocumentDoesNotExist => {
             return Ok(DeleteHelpDocumentErrorInterface::RecordNotFound(
                 RecordNotFound,
-            ))
+            ));
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

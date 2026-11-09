@@ -2,8 +2,8 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockDataInserts},
         KeyType, KeyValueStoreRepository, SyncVersion, UserAccountRowRepository,
+        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
     };
     use serde_json::json;
     use service::user_account::UserAccountService;

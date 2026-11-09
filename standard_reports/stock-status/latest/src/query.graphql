@@ -12,6 +12,8 @@ query StockStatus($storeId: String, $itemCode: String, $itemName: String) {
       nodes {
         code
         name
+        isVaccine
+        doses
         stats(storeId: $storeId) {
           totalConsumption
           availableMonthsOfStockOnHand

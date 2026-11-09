@@ -1,14 +1,14 @@
 use repository::{
+    PaginationOption, StorageConnection,
     item_variant::{
         packaging_variant::{
             PackagingVariantFilter, PackagingVariantRepository, PackagingVariantSort,
         },
         packaging_variant_row::PackagingVariantRow,
     },
-    PaginationOption, StorageConnection,
 };
 
-use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 
 pub fn get_packaging_variants(
     connection: &StorageConnection,

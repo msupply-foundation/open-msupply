@@ -7,6 +7,7 @@ export * from './AutocompleteMulti';
 export * from './AutocompleteMultiList';
 export * from './AutocompleteWithPagination';
 export * from './HierarchicalOptionAutocomplete';
+export * from './HierarchicalOptionAutocompleteMulti';
 export * from './InfiniteSearchPicker';
 export * from './types';
 export * from './utils';

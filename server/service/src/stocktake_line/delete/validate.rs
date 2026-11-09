@@ -23,7 +23,7 @@ pub fn validate(
             return Err(DeleteStocktakeLineError::InternalError(format!(
                 "Stocktake is missing: {}",
                 line.stocktake_id
-            )))
+            )));
         }
     };
 

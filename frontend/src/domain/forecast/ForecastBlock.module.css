@@ -1,0 +1,62 @@
+/* The forecast block (spec/internal-orders S4 › the forecast): a FormSection —
+   the ruled group heading over the method, the method's breakdown, and the step
+   into stock; FormSection owns the stacking. Full-width between the editor's
+   panels and its context charts, capped and centred like the charts region. */
+.block {
+  inline-size: 100%;
+  max-inline-size: 56rem;
+  margin-block-start: var(--space-4);
+  margin-inline: auto;
+  padding: var(--space-2) var(--space-4);
+}
+
+/* A figure and its muted caption, right-aligned at the row's end. */
+.figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  inline-size: 100%;
+  text-align: end;
+}
+
+.caption {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Each course's two steps, stacked with a comfortable gap. */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.stepTitle {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+/* The formula, on a tinted line. */
+.formula {
+  background: var(--bg-group-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  color: var(--text-body);
+}
+
+/* The line's figures substituted in — muted. */
+.substitution {
+  color: var(--text-secondary);
+}
+
+/* The emphasised result. */
+.result {
+  font-weight: var(--weight-bold);
+  color: var(--success-main);
+}

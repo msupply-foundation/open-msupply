@@ -161,9 +161,9 @@ mod test {
     use chrono::{Duration, NaiveDate};
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
+        SyncLogV7Row,
         mock::{MockData, MockDataInserts},
         syncv7::SyncError,
-        SyncLogV7Row,
     };
     use serde_json::json;
 

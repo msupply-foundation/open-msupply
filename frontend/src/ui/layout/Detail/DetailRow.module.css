@@ -1,0 +1,71 @@
+/* One read-only detail field row. `display: contents` so the label + value drop
+   straight into the parent DetailSection grid (label column auto-sized to the
+   labels, value column takes the rest). */
+.row {
+  display: contents;
+}
+
+.label {
+  text-align: end;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-sm);
+  color: var(--text-label);
+  min-inline-size: 0;
+}
+
+/* Column placement inside a DetailGrid (5 tracks: label value spacer label value).
+   Left pair → cols 1/2, right pair → cols 4/5, full-width → col 1 + value spans. */
+.label[data-side='left'] {
+  grid-column: 1;
+}
+
+.label[data-side='right'] {
+  grid-column: 4;
+}
+
+.label[data-full] {
+  grid-column: 1;
+}
+
+.value {
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+}
+
+.value[data-side='left'] {
+  grid-column: 2;
+}
+
+.value[data-side='right'] {
+  grid-column: 5;
+}
+
+/* Full-width rows span the value from the first value column to the grid end,
+   so they line up with the left column's fields (shared first label column). */
+.value[data-full] {
+  grid-column: 2 / -1;
+}
+
+/* Text / link / composite value cells FILL the value column, so fields align to
+   a common right edge across rows (and full-width rows span the whole value
+   column, e.g. up to the second address box). */
+.value[data-kind='field'] > * {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* Checkbox cells stay intrinsic-sized and sit at the value column's edge — the
+   right edge by default (matching the current app), start only when asked. */
+.value[data-kind='checkbox'] {
+  justify-content: flex-end;
+}
+
+.value[data-kind='checkbox'][data-align='start'] {
+  justify-content: flex-start;
+}
+
+.checkbox {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

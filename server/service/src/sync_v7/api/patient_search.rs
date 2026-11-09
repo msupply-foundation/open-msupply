@@ -11,6 +11,6 @@ static ROUTE: &str = "patient_search";
 
 impl SyncApiV7 {
     pub async fn patient_search(&self, input: Input) -> Response {
-        self.op(ROUTE, input).await
+        self.request_with_body_retry(ROUTE, input).await
     }
 }

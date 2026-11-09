@@ -1,7 +1,7 @@
 use async_graphql::*;
-use graphql_core::simple_generic_errors::ConnectionError;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::simple_generic_errors::ConnectionError;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use service::programs::patient::link_patient_to_store as link_patient_to_store_service;
 use service::{
     auth::{Resource, ResourceAccessRequest},

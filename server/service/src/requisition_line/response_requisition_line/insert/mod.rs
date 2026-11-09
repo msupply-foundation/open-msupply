@@ -1,6 +1,6 @@
 mod validate;
 use crate::{
-    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    pricing::item_price::{ItemPriceLookup, get_pricing_for_items},
     requisition::common::get_indicative_price_pref,
     requisition_line::query::get_requisition_line,
     service_provider::ServiceContext,
@@ -9,7 +9,8 @@ use chrono::Utc;
 use validate::validate;
 
 use repository::{
-    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
+    ForecastMethod, RepositoryError, RequisitionLine, RequisitionLineRow,
+    RequisitionLineRowRepository,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -63,6 +64,7 @@ pub fn insert_response_requisition_line(
             };
             let new_requisition_line_row = RequisitionLineRow {
                 id: input.id.clone(),
+                campaign_id: None,
                 item_id: item_row.id.clone(),
                 item_name: item_row.name.clone(),
                 requisition_id: requisition_row.id,
@@ -88,9 +90,9 @@ pub fn insert_response_requisition_line(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
-                forecast_total_units: None,
-                forecast_total_doses: None,
-                vaccine_courses: None,
+                forecast_method: ForecastMethod::Amc,
+                forecast_monthly_consumption: 0.0,
+                forecast_data: None,
             };
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
@@ -118,14 +120,14 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_finalised_response_requisition, mock_item_a, mock_name_b, mock_program_a,
-            mock_store_a, mock_store_b, new_response_requisition, test_item_stats, MockData,
-            MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionStatus,
         RequisitionType,
+        mock::{
+            MockData, MockDataInserts, mock_finalised_response_requisition, mock_item_a,
+            mock_name_b, mock_program_a, mock_store_a, mock_store_b, new_response_requisition,
+            test_item_stats,
+        },
+        test_db::setup_all_with_data,
     };
 
     fn new_response_requisition_line() -> RequisitionLineRow {

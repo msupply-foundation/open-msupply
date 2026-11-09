@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use repository::{
     ChangelogCondition, ChangelogRow, ChangelogTableName, FilterBuilder, KeyType, NumberRowType,
-    RequisitionRow, RequisitionRowRepository, RequisitionType,
+    RequisitionRow, RequisitionRowRepository, RequisitionType, RowActionType,
 };
 
 use crate::{
@@ -30,12 +30,11 @@ impl Processor for AssignRequisitionNumber {
     ) -> Result<Option<String>, ProcessorError> {
         let repo = RequisitionRowRepository::new(&ctx.connection);
 
-        let requisition =
-            repo.find_one_by_id(&changelog.record_id)?
-                .ok_or(ProcessorError::RecordNotFound(
-                    "Requisition".to_string(),
-                    changelog.record_id.clone(),
-                ))?;
+        // Rows are processed after the fact, so a requisition's earlier upsert rows can
+        // point at a requisition that has since been deleted. Nothing to number then.
+        let Some(requisition) = repo.find_one_by_id(&changelog.record_id)? else {
+            return Ok(None);
+        };
 
         // Only assign requisition number to response requisitions
         if requisition.r#type != RequisitionType::Response {
@@ -77,6 +76,8 @@ impl Processor for AssignRequisitionNumber {
         Ok(ChangelogCondition::And(vec![
             ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
             ChangelogCondition::store_id::any(active_stores.store_ids()),
+            // Only upserts: a deleted record has nothing left to process
+            ChangelogCondition::action::equal(RowActionType::Upsert),
         ]))
     }
 

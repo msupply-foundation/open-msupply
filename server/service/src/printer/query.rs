@@ -1,6 +1,6 @@
 use repository::{
-    printer::{Printer, PrinterFilter, PrinterRepository},
     RepositoryError, StorageConnection,
+    printer::{Printer, PrinterFilter, PrinterRepository},
 };
 
 pub fn get_printers(

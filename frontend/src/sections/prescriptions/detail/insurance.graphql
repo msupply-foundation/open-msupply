@@ -1,0 +1,30 @@
+# Insurance reads consumed at confirmation (spec/prescriptions/contract.md §
+# insurance and payments; wire detail owned by spec/patients — its traps
+# apply: providers returns ACTIVE rows only, policies applies only the last
+# sort key). Provider presence is the payment-window gate.
+query insuranceProviders($storeId: String!) {
+  insuranceProviders(storeId: $storeId) {
+    ... on InsuranceProvidersConnector {
+      nodes {
+        id
+      }
+    }
+  }
+}
+
+query insurancePolicies($storeId: String!, $nameId: String!) {
+  insurancePolicies(storeId: $storeId, nameId: $nameId) {
+    ... on InsuranceConnector {
+      nodes {
+        id
+        policyNumber
+        discountPercentage
+        isActive
+        expiryDate
+        insuranceProviders {
+          providerName
+        }
+      }
+    }
+  }
+}

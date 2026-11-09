@@ -82,7 +82,7 @@ impl MigrationFragment for Migrate {
 async fn migration_location_volume() {
     use crate::migrations::*;
     use crate::test_db::*;
-    use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Timestamp};
 
     let previous_version = v2_09_01::V2_09_01.version();
     let version = v2_10_00::V2_10_00.version();
@@ -131,7 +131,12 @@ async fn migration_location_volume() {
     )
     .unwrap();
 
-    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+    migrate(
+        &connection,
+        Some(version.clone()),
+        MigrationConfig::default(),
+    )
+    .unwrap();
 
     let locations = location::table
         .select((location::id, location::volume, location::name))

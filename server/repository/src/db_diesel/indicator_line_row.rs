@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -33,7 +33,18 @@ table! {
     }
 }
 
-#[derive(Clone, Eq, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Eq,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = indicator_line)]
 pub struct IndicatorLineRow {
     pub id: String,

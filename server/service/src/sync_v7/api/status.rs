@@ -8,6 +8,9 @@ pub struct Output {
     pub site_id: i32,
     pub central_site_id: i32,
     pub is_multi_device_site: bool,
+    /// Central has paused its sync API. Defaults to false when talking to an older central.
+    #[serde(default)]
+    pub is_sync_api_paused: bool,
 }
 
 pub type Response = ApiResponse<Output>;
@@ -16,6 +19,6 @@ static ROUTE: &str = "site_status";
 
 impl SyncApiV7 {
     pub async fn site_status(&self, input: Input) -> Response {
-        self.op(ROUTE, input).await
+        self.request_with_body_retry(ROUTE, input).await
     }
 }

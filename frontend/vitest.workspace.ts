@@ -1,0 +1,94 @@
+import { configDefaults, defineWorkspace } from 'vitest/config';
+import solid from 'vite-plugin-solid';
+import { BACKEND_COMMON } from './vite/backendPluginBuild';
+import { PLUGIN_SHARED_DEPS } from './vitest.config';
+
+/*
+ * Three vitest projects, because the kinds of unit test need different module
+ * resolution — `pnpm test` runs them all.
+ *
+ * - `node`: the plain logic tests (`*.test.ts`). Unchanged from vitest.config.ts.
+ * - `solid`: the component tests (`*.test.tsx`). JSX needs the Solid transform,
+ *   and `resolve.conditions` is the load-bearing part: without `browser` +
+ *   `development`, `solid-js` resolves to its SERVER build, where signals do not
+ *   track and `onMount` never runs — a no-remount test would pass vacuously.
+ *   The environment stays `node`: components under test render no DOM (they
+ *   return values and run effects), so nothing needs a document, and the suite
+ *   costs no jsdom dependency.
+ * - `backend-plugins`: the BoaJS halves that import `@common` (each plugin's
+ *   `backend/src`, CIV's first — `private/plugins/civ/backend/src`). Two
+ *   differences, both about running code written for another host: the
+ *   `@common` specifier resolves to the server-generated `backendCommon`, and
+ *   `globals: true` lets the suites keep the bare `describe`/`it`/`expect`
+ *   they arrived with from msupply-foundation/civ-plugins.
+ *
+ *   Globbed, so a new country plugin's backend tests run without naming the
+ *   country in this published file, and with the same exclude
+ *   tsconfig.backend-plugins.json carries: cook_islands' half needs neither —
+ *   it imports no `@common` module, and imports its test functions from
+ *   `vitest` explicitly — so it runs in the `node` project with everything
+ *   else, and the glob alone would run it a second time.
+ *
+ *   `@common` comes from vite/backendPluginBuild.ts's own constant rather than
+ *   a second copy of the path: what the suites import has to be what the build
+ *   bundles, and two hand-written paths only agree until one of them moves.
+ */
+
+const define = { APP_VERSION: JSON.stringify('0.0.0-test') };
+// "@/x" → src/x — mirrors vite.config.ts / tsconfig.app.json "paths".
+// "@/x" → src/x, and the SDK specifier an in-repo plugin imports by name —
+// both mirroring vitest.config.ts, so a plugin's component test resolves what
+// its build does. The SDK entry is what lets a plugin test that reaches the
+// SDK (directly, or through a module it mocks) run in THIS project rather than
+// only in the node one.
+const alias = {
+  '@': new URL('./src', import.meta.url).pathname,
+  '@openmsupply/plugin-sdk': new URL(
+    './src/plugin-sdk/index.ts',
+    import.meta.url
+  ).pathname,
+};
+
+export default defineWorkspace([
+  // The node project IS the root config, referenced rather than restated.
+  './vitest.config.ts',
+  {
+    plugins: [solid()],
+    define,
+    resolve: {
+      alias,
+      conditions: ['browser', 'development'],
+      dedupe: PLUGIN_SHARED_DEPS,
+    },
+    test: {
+      name: 'solid',
+      // Plugins' component-shaped tests run here too: same reason as the
+      // host's — reactivity only tracks under the browser conditions.
+      include: [
+        'src/**/*.test.tsx',
+        '../plugins/*/src/**/*.test.tsx',
+        '../private/plugins/*/src/**/*.test.tsx',
+      ],
+      environment: 'node',
+    },
+  },
+  {
+    resolve: {
+      alias: { '@common': BACKEND_COMMON },
+      dedupe: PLUGIN_SHARED_DEPS,
+    },
+    test: {
+      name: 'backend-plugins',
+      include: [
+        '../plugins/*/backend/src/**/*.test.ts',
+        '../private/plugins/*/backend/src/**/*.test.ts',
+      ],
+      exclude: [
+        ...configDefaults.exclude,
+        '../private/plugins/cook_islands/**',
+      ],
+      globals: true,
+      environment: 'node',
+    },
+  },
+]);

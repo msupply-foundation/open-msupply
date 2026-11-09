@@ -1,0 +1,53 @@
+/* The order's totals band, on top of the status footer. Same surface as the
+   outbound shipment's (OutboundTotalsStrip.module.css). */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--space-1) var(--space-5);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-5);
+  border-block-start: 1px solid var(--color-divider);
+  background: var(--bg-toolbar);
+  font-size: var(--text-sm);
+}
+
+/* The folded form — the order total alone, contributed into the footer bar,
+   which already provides the tint, rule and padding. Stands in for .term
+   rather than wrapping one, since both are the same flex row. */
+.inline {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+/* A label and its figure, kept together so a squeezed band wraps between
+   terms. */
+.term {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.label {
+  color: var(--text-secondary);
+}
+
+.figure {
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The order total — the figure the band exists for. */
+.total {
+  color: var(--text-body);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}

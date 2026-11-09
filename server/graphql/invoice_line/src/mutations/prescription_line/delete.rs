@@ -1,9 +1,9 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::simple_generic_errors::{
     self, CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
@@ -90,12 +90,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         CannotEditInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 simple_generic_errors::CannotEditInvoice {},
-            ))
+            ));
         }
         InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         // Standard Graphql Errors
         NotThisInvoiceLine(_)
@@ -115,16 +115,16 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
-    use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
+    use repository::{RepositoryError, StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
 
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             stock_out_line::{
                 DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError,
                 StockOutType,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

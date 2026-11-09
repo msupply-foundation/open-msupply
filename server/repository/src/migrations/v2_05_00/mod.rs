@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 
 mod abbreviation_create_table;
 mod add_contact_form_processor_pg_enum_type;
@@ -71,6 +71,11 @@ async fn migration_2_05_00() {
     .await;
 
     // Run this migration
-    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+    migrate(
+        &connection,
+        Some(version.clone()),
+        MigrationConfig::default(),
+    )
+    .unwrap();
     assert_eq!(get_database_version(&connection), version);
 }

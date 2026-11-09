@@ -9,10 +9,7 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::SourceSiteId;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, Upsert};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -50,6 +47,7 @@ table! {
         error -> Nullable<Text>,
         created_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
+        user_id -> Nullable<Text>,
     }
 }
 
@@ -91,6 +89,8 @@ pub struct SyncFileReferenceRow {
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub user_id: Option<String>,
 }
 
 /// Subset of `SyncFileReferenceRow` that crosses sync. Anything not listed here
@@ -114,6 +114,8 @@ pub struct SyncFileReferenceWire {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub deleted_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub user_id: Option<String>,
 }
 
 impl SyncFileReferenceWire {
@@ -129,6 +131,7 @@ impl SyncFileReferenceWire {
             error: row.error.clone(),
             created_datetime: row.created_datetime,
             deleted_datetime: row.deleted_datetime,
+            user_id: row.user_id.clone(),
         }
     }
 
@@ -145,6 +148,7 @@ impl SyncFileReferenceWire {
             error: self.error,
             created_datetime: self.created_datetime,
             deleted_datetime: self.deleted_datetime,
+            user_id: self.user_id,
             // Local-only fields preserved from the existing row.
             uploaded_bytes: local.uploaded_bytes,
             downloaded_bytes: local.downloaded_bytes,
@@ -252,7 +256,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
         Ok(sync_file_reference::table
             .filter(sync_file_reference::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

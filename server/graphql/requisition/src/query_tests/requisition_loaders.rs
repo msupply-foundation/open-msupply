@@ -2,10 +2,10 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::{
-        mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
+        MockDataInserts, mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
         mock_invoice3_linked_to_requisition, mock_item_a, mock_name_a, mock_name_b,
         mock_new_response_requisition_test, mock_request_draft_requisition_all_fields,
-        mock_response_draft_requisition_all_fields, MockDataInserts,
+        mock_response_draft_requisition_all_fields,
     };
     use serde_json::json;
 

@@ -1,0 +1,95 @@
+# The sync-message register's whole wire surface (spec/sync-message/contract.md).
+# One file so the row fragment is shared by the list and the by-id read —
+# codegen scopes fragments per file.
+#
+# The reads live under the CENTRAL namespace (centralServer › syncMessage); the
+# insert is a plain TOP-LEVEL mutation with no central gate at all
+# (contract.md ⚠️ wire trap — reach and visibility). `storeId` on the reads is
+# authorisation only: it never scopes the result, so the register is
+# server-wide (OMS-REG-MNG-05.2).
+
+fragment SyncMessageRow on SyncMessageNode {
+  id
+  fromStore {
+    id
+    storeName
+  }
+  toStore {
+    id
+    storeName
+  }
+  body
+  createdDatetime
+  status
+  type
+  errorMessage
+}
+
+fragment SyncMessageFile on SyncFileReferenceNode {
+  id
+  fileName
+  status
+  error
+}
+
+query SyncMessages(
+  $storeId: String!
+  $filter: SyncMessageFilterInput
+  $sort: [SyncMessageSortInput!]
+  $page: PaginationInput
+) {
+  centralServer {
+    syncMessage {
+      syncMessages(
+        storeId: $storeId
+        filter: $filter
+        sort: $sort
+        page: $page
+      ) {
+        ... on SyncMessageConnector {
+          totalCount
+          nodes {
+            ...SyncMessageRow
+          }
+        }
+      }
+    }
+  }
+}
+
+# The artefacts of the one message a row opens (S3). Read by id on its own
+# rather than fetched with every list row, so the register's page stays light —
+# `files` is only ever needed for the message actually being inspected; every
+# other field the modal shows is already on the clicked row.
+#
+# `SyncMessageResponse` is `SyncMessageNode | RecordNotFound`, so a vanished id
+# resolves to a branch carrying no `files` at all (not a top-level error). The
+# selection is read defensively for exactly that reason.
+query SyncMessageFiles($storeId: String!, $id: String!) {
+  centralServer {
+    syncMessage {
+      syncMessage(storeId: $storeId, id: $id) {
+        ... on SyncMessageNode {
+          files {
+            totalCount
+            nodes {
+              ...SyncMessageFile
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The only sync-message mutation on the schema (contract.md § immutability):
+# no update, no delete, no retry, no re-send. Its response union has a single
+# member, so every rejection arrives as a top-level GraphQL error.
+mutation InsertSyncMessage($storeId: String!, $input: InsertSyncMessageInput!) {
+  insertSyncMessage(storeId: $storeId, input: $input) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+

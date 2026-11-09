@@ -1,24 +1,26 @@
 use anyhow::Context;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, Utc};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
-    NameRowType, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, GenderType, KeyType, KeyValueStoreRepository, NameRow,
+    NameRowDelete, NameRowRepository, NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
 };
 
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
 use crate::sync::{
-    central_mapping_custom_fields::keys, translations::currency::CurrencyTranslation,
     CentralServerConfig,
+    central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes},
+    translations::currency::CurrencyTranslation,
 };
 
 use super::{
-    utils::{merge_legacy_custom_fields, skip_name_relay_to_legacy, LegacyCustomFieldsBuilder},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
+    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields, skip_name_relay_to_legacy},
 };
 
 /// `custom_fields` keys the legacy OG→OMS name import owns (derived from
@@ -31,19 +33,18 @@ use super::{
 /// refreshes them — last-writer-wins, identical to the custom fields. Push-back
 /// to OG is live for rows central relays (rows authored on this server or on a
 /// V7 site, see `skip_name_relay_to_legacy`).
-const LEGACY_NAME_OWNED_KEYS: &[&str] = &[
-    keys::NAME_CUSTOM_1,
-    keys::NAME_CUSTOM_2,
-    keys::NAME_CUSTOM_3,
-    // `custom_field.key` is globally unique, so the name category dimensions are
-    // prefixed `name_category*` (item already owns `category2`/`category3`).
-    keys::NAME_CATEGORY_1,
-    keys::NAME_CATEGORY_2,
-    keys::NAME_CATEGORY_3,
-    keys::NAME_CATEGORY_4,
-    keys::NAME_CATEGORY_5,
-    keys::NAME_CATEGORY_6,
-];
+/// Derived from the mapping registry rather than retyped, so there is one list of
+/// OG-owned keys (`central_mapping_custom_fields`) instead of a copy here to drift
+/// out of step with it. Every name mapping definition is seeded onto all three name
+/// scopes, so their union *is* the name importer's owned set.
+///
+/// (`custom_field.key` is globally unique, so the name category dimensions are
+/// prefixed `name_category*` — item already owns `category2`/`category3`.)
+///
+/// Computed once: the registry is rebuilt on each call and the import reads this
+/// per name row.
+static LEGACY_NAME_OWNED_KEYS: LazyLock<Vec<&'static str>> =
+    LazyLock::new(|| legacy_owned_keys_for_scopes(&["customer", "supplier", "patient"]));
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -229,27 +230,63 @@ pub struct LegacyNameRow {
     // convention) and serde rename pins the wire name to the 4D column name.
     // TODO: when we widen this beyond custom1/2/3, consider #[serde(flatten)]
     // into a HashMap and filter by custom field scope at translate time.
-    #[serde(default, rename = "custom1", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom1",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_1: Option<String>,
-    #[serde(default, rename = "custom2", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom2",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_2: Option<String>,
-    #[serde(default, rename = "custom3", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom3",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_3: Option<String>,
 
     // Legacy 4D `[name]category1_ID..category6_ID` columns — six independent
     // category dimensions, each storing a leaf id. Imported as OPTION props
     // (`build_legacy_custom_fields`); category1 is hierarchical, 2–6 flat.
-    #[serde(default, rename = "category1_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category1_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category1_id: Option<String>,
-    #[serde(default, rename = "category2_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category2_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category2_id: Option<String>,
-    #[serde(default, rename = "category3_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category3_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category3_id: Option<String>,
-    #[serde(default, rename = "category4_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category4_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category4_id: Option<String>,
-    #[serde(default, rename = "category5_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category5_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category5_id: Option<String>,
-    #[serde(default, rename = "category6_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category6_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category6_id: Option<String>,
 
     #[serde(default)]
@@ -273,6 +310,10 @@ pub struct LegacyNameRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
+
+    // OG's soft delete
+    #[serde(default)]
+    pub is_deleted: bool,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -324,13 +365,13 @@ impl SyncTranslation for NameTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let legacy: LegacyNameRow = sync_record.deserialize()?;
 
+        let existing = NameRowRepository::new(connection).find_one_by_id(&legacy.id)?;
+        let existing_deleted_datetime = existing.as_ref().and_then(|row| row.deleted_datetime);
         // Preserve any existing `custom_fields` rather than overwriting the whole
         // blob: an OMS write path (patient custom-field edits) can author keys the
         // legacy importer doesn't own, and a v5 re-pull of an unchanged OG record
         // must not wipe them.
-        let existing_custom_fields = NameRowRepository::new(connection)
-            .find_one_by_id(&legacy.id)?
-            .and_then(|row| row.custom_fields);
+        let existing_custom_fields = existing.and_then(|row| row.custom_fields);
 
         // The OG→OMS legacy import runs on the central server only. On central we
         // refresh the owned keys (custom_1/2/3) from OG and keep the rest; off
@@ -339,7 +380,7 @@ impl SyncTranslation for NameTranslation {
             merge_legacy_custom_fields(
                 existing_custom_fields,
                 build_legacy_custom_fields(&legacy),
-                LEGACY_NAME_OWNED_KEYS,
+                &LEGACY_NAME_OWNED_KEYS,
             )
         } else {
             existing_custom_fields
@@ -391,7 +432,21 @@ impl SyncTranslation for NameTranslation {
             margin,
             freight_factor,
             currency_id,
+            is_deleted,
         } = legacy;
+
+        // Patients only; other names ignore `is_deleted`. A deletion stays unless
+        // A remote may push a patient edit via v6 before it pulls the deletion, so the
+        // remote's `is_deleted: false` doesn't override central's `deleted_datetime`
+        let deleted_datetime = if legacy_type != LegacyNameRowType::Patient {
+            None
+        } else if is_deleted {
+            existing_deleted_datetime.or_else(|| Some(Utc::now().naive_utc()))
+        } else if is_from_legacy_central(connection, sync_record)? {
+            None
+        } else {
+            existing_deleted_datetime
+        };
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
         let r#type = legacy_type.to_name_type();
@@ -453,7 +508,7 @@ impl SyncTranslation for NameTranslation {
             margin,
             freight_factor,
             currency_id,
-            deleted_datetime: None,
+            deleted_datetime,
             custom_fields,
         };
 
@@ -524,18 +579,13 @@ impl SyncTranslation for NameTranslation {
             custom_data_string: _,
             custom_fields,
         } = name_row;
-        if deleted_datetime.is_some() {
-            return Ok(PushTranslateResult::Ignored(
-                "Ignore pushing soft deleted name".to_string(),
-            ));
-        }
 
         let patient_type = match r#type {
             NameRowType::Patient => LegacyNameRowType::Patient,
             _ => {
                 return Ok(PushTranslateResult::Ignored(
                     "Only push name records that belong to patients".to_string(),
-                ))
+                ));
             }
         };
 
@@ -596,6 +646,7 @@ impl SyncTranslation for NameTranslation {
             category4_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_4),
             category5_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_5),
             category6_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_6),
+            is_deleted: deleted_datetime.is_some(),
         };
 
         Ok(PushTranslateResult::upsert(
@@ -621,14 +672,25 @@ impl SyncTranslation for NameTranslation {
     }
 }
 
+/// Whether the record was pulled from OG (legacy central), the only sender whose
+/// `is_deleted: false` clears a deletion
+fn is_from_legacy_central(
+    connection: &StorageConnection,
+    sync_record: &SyncBufferRow,
+) -> Result<bool, anyhow::Error> {
+    let legacy_central_site_id = KeyValueStoreRepository::new(connection)
+        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+    Ok(legacy_central_site_id == Some(sync_record.source_site_id))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use repository::{
+        CurrencyRow, SyncAction, SyncRecordData,
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        CurrencyRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -683,7 +745,27 @@ mod tests {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            is_deleted: false,
         }
+    }
+
+    /// The v6 pull selects name rows, but names reach v5/v6 remotes only from legacy central.
+    #[test]
+    fn name_is_not_sent_over_v6_pull() {
+        let changelog = ChangelogRow {
+            table_name: ChangelogTableName::Name,
+            ..Default::default()
+        };
+        let sent_by = crate::sync::translations::all_translators()
+            .iter()
+            .filter(|translator| {
+                translator.should_translate_to_sync_record(
+                    &changelog,
+                    &ToSyncRecordTranslationType::PullFromOmSupplyCentral,
+                )
+            })
+            .count();
+        assert_eq!(sent_by, 0);
     }
 
     #[test]
@@ -732,7 +814,11 @@ mod tests {
         row.category2_id = Some("OG_VALUE".to_string());
         let existing = Some(json!({ "name_category_2": "OMS_EDIT", "patient_note": "keep" }));
         assert_eq!(
-            merge_legacy_custom_fields(existing, build_legacy_custom_fields(&row), LEGACY_NAME_OWNED_KEYS),
+            merge_legacy_custom_fields(
+                existing,
+                build_legacy_custom_fields(&row),
+                &LEGACY_NAME_OWNED_KEYS
+            ),
             Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
@@ -747,16 +833,22 @@ mod tests {
             Some("A".to_string())
         );
         // absent key
-        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_2"), None);
+        assert_eq!(
+            legacy_value_from_custom_fields(&custom_fields, "custom_2"),
+            None
+        );
         // non-string value is not pushed to a TEXT column
-        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_3"), None);
+        assert_eq!(
+            legacy_value_from_custom_fields(&custom_fields, "custom_3"),
+            None
+        );
         // NULL blob
         assert_eq!(legacy_value_from_custom_fields(&None, "custom_1"), None);
     }
 
     #[test]
     fn legacy_custom_fields_only_derived_on_central() {
-        use crate::sync::{test_util_set_is_central_server, CentralServerConfig};
+        use crate::sync::{CentralServerConfig, test_util_set_is_central_server};
         let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
 
         // Replicates the pull translator's branch: off central the existing blob is
@@ -767,7 +859,7 @@ mod tests {
                 merge_legacy_custom_fields(
                     existing,
                     build_legacy_custom_fields(&row),
-                    LEGACY_NAME_OWNED_KEYS,
+                    &LEGACY_NAME_OWNED_KEYS,
                 )
             } else {
                 existing
@@ -786,7 +878,10 @@ mod tests {
         // The central server derives the owned keys and merges them with the
         // existing OMS-authored keys (and fans the result out over v7).
         test_util_set_is_central_server(true);
-        assert_eq!(derive(None), Some(json!({"custom_1": "Red", "custom_3": "Blue"})));
+        assert_eq!(
+            derive(None),
+            Some(json!({"custom_1": "Red", "custom_3": "Blue"}))
+        );
         assert_eq!(
             derive(Some(json!({"patient_note": "keep"}))),
             Some(json!({"custom_1": "Red", "custom_3": "Blue", "patient_note": "keep"}))
@@ -802,7 +897,9 @@ mod tests {
     #[actix_rt::test]
     async fn name_relay_to_legacy_routed_by_source_site() {
         use crate::sync::test_util_set_is_central_server;
-        use repository::{KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion};
+        use repository::{
+            KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
+        };
 
         let (_, connection, _, _) = setup_all(
             "name_relay_to_legacy_routed_by_source_site",
@@ -967,6 +1064,138 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    /// OG's `is_deleted` sets a patient's `deleted_datetime`. A deletion stays
+    /// unless OG says the patient isn't deleted: `false` from another site keeps
+    /// it. Other names don't read the flag
+    #[actix_rt::test]
+    async fn name_pull_is_deleted() {
+        use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
+        use chrono::NaiveDate;
+        use repository::{
+            KeyType, KeyValueStoreRepository, SyncBufferRepository, SyncBufferRowInsert,
+        };
+
+        const OG_SITE_ID: i32 = 1;
+        const OTHER_SITE_ID: i32 = 2;
+
+        let (_, connection, _, _) =
+            setup_all("name_pull_is_deleted", MockDataInserts::none().names()).await;
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncCentralServerSiteId, Some(OG_SITE_ID))
+            .unwrap();
+        let name_repo = NameRowRepository::new(&connection);
+
+        // Integrates a name record from `source_site_id`, returning the stored
+        // deleted_datetime
+        let integrate = |id: &str, r#type: &str, source_site_id: i32, is_deleted: bool| {
+            let data = json!({
+                "ID": id,
+                "name": id,
+                "code": id,
+                "type": r#type,
+                "customer": true,
+                "supplier": false,
+                "supplying_store_id": "",
+                "first": "",
+                "last": "",
+                "female": false,
+                "date_of_birth": "0000-00-00",
+                "phone": "",
+                "charge code": "",
+                "comment": "",
+                "country": "",
+                "bill_address1": "",
+                "bill_address2": "",
+                "email": "",
+                "url": "",
+                "manufacturer": false,
+                "donor": false,
+                "hold": false,
+                "NEXT_OF_KIN_ID": "",
+                "next_of_kin_relative": "",
+                "created_date": "0000-00-00",
+                "national_health_number": "",
+                "isDeceased": false,
+                "om_created_datetime": "",
+                "om_gender": "",
+                "is_deleted": is_deleted
+            });
+            SyncBufferRepository::new(&connection)
+                .insert_many(&[SyncBufferRowInsert {
+                    record_id: id.to_string(),
+                    table_name: "name".to_string(),
+                    action: SyncAction::Upsert,
+                    data: SyncRecordData(data),
+                    source_site_id,
+                    ..Default::default()
+                }])
+                .unwrap();
+            integrate_and_translate_sync_buffer(&connection, None, source_site_id, true).unwrap();
+            name_repo
+                .find_one_by_id(id)
+                .unwrap()
+                .unwrap()
+                .deleted_datetime
+        };
+
+        // Not deleted here: OG's deletion sets it
+        assert!(integrate("testId", "patient", OG_SITE_ID, true).is_some());
+
+        // Deleted here
+        let deleted_at = NaiveDate::from_ymd_opt(2026, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let mut patient = name_repo.find_one_by_id("testId").unwrap().unwrap();
+        patient.deleted_datetime = Some(deleted_at);
+        name_repo.upsert_one(&patient).unwrap();
+
+        // Re-receiving the deletion keeps the original time
+        assert_eq!(
+            integrate("testId", "patient", OG_SITE_ID, true),
+            Some(deleted_at)
+        );
+        // `false` from another site keeps it
+        assert_eq!(
+            integrate("testId", "patient", OTHER_SITE_ID, false),
+            Some(deleted_at)
+        );
+        // `false` from OG clears it
+        assert_eq!(integrate("testId", "patient", OG_SITE_ID, false), None);
+
+        // Other names don't read the flag
+        assert_eq!(integrate("name_a", "facility", OG_SITE_ID, true), None);
+    }
+
+    /// A deleted patient's record is pushed with `is_deleted: true`
+    #[actix_rt::test]
+    async fn name_push_deleted_patient() {
+        let (_, connection, _, _) =
+            setup_all("name_push_deleted_patient", MockDataInserts::none()).await;
+
+        let patient = NameRow {
+            id: "patient".to_string(),
+            r#type: NameRowType::Patient,
+            deleted_datetime: Some(chrono::Utc::now().naive_utc()),
+            ..Default::default()
+        };
+        let PushTranslateResult::PushRecord(pushed) = NameTranslation {}
+            .try_translate_to_upsert_sync_record(
+                &connection,
+                &ChangelogRow {
+                    table_name: ChangelogTableName::Name,
+                    record_id: patient.id.clone(),
+                    ..Default::default()
+                },
+                Row::Name(patient),
+            )
+            .unwrap()
+        else {
+            panic!("expected a push record")
+        };
+        assert_eq!(pushed[0].record.record_data["is_deleted"], json!(true));
     }
 
     #[actix_rt::test]

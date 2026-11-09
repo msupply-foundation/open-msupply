@@ -2,7 +2,7 @@
 mod tests {
     use crate::{
         sync::test::integration::{
-            central_server_configurations::SiteConfiguration, create_site, FullSiteConfig,
+            FullSiteConfig, central_server_configurations::SiteConfiguration, create_site,
         },
         test_helpers::ServiceTestContext,
     };

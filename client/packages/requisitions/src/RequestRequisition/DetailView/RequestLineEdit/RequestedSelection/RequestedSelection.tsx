@@ -141,6 +141,7 @@ export const RequestedSelection = ({
                       : theme.palette.background.white,
                 },
               },
+              htmlInput: { 'data-testid': 'requested-quantity-input' },
             }}
             sx={{
               '& .MuiInputBase-input': {
@@ -168,6 +169,7 @@ export const RequestedSelection = ({
         </Box>
         <Box flex={1}>
           <Select
+            data-testid="entry-mode-select"
             fullWidth
             clearable={false}
             options={options}

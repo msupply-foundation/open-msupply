@@ -55,9 +55,9 @@ export type RequestLineFragment = {
   expiringUnits: number;
   daysOutOfStock: number;
   pricePerUnit?: number | null;
-  forecastTotalUnits?: number | null;
-  forecastTotalDoses?: number | null;
-  vaccineCourses?: string | null;
+  forecastMethod: Types.ForecastMethodNode;
+  forecastMonthlyConsumption: number;
+  targetStock: number;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -184,9 +184,9 @@ export type RequestFragment = {
       expiringUnits: number;
       daysOutOfStock: number;
       pricePerUnit?: number | null;
-      forecastTotalUnits?: number | null;
-      forecastTotalDoses?: number | null;
-      vaccineCourses?: string | null;
+      forecastMethod: Types.ForecastMethodNode;
+      forecastMonthlyConsumption: number;
+      targetStock: number;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -360,9 +360,9 @@ export const RequestLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
-    forecastTotalUnits
-    forecastTotalDoses
-    vaccineCourses
+    forecastMethod
+    forecastMonthlyConsumption
+    targetStock
   }
   ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}

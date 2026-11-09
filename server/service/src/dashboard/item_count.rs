@@ -1,12 +1,12 @@
 use crate::{
+    PluginOrRepositoryError,
     item::get_items_with_consumption,
-    item_stats::{get_item_stats, ItemStats},
+    item_stats::{ItemStats, get_item_stats},
     preference::{
         NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         NumberOfMonthsThresholdToShowOverStockAlertsForProducts, Preference,
     },
     service_provider::ServiceContext,
-    PluginOrRepositoryError,
 };
 
 use repository::{ItemFilter, ItemRepository, ItemType, RepositoryError};
@@ -192,17 +192,17 @@ impl ItemCountServiceTrait for ItemServiceCount {
 mod item_count_service_test {
 
     use repository::{
-        mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
         EqualFilter, ItemFilter, ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow,
         MasterListRow, StockLineRow,
+        mock::{MockData, MockDataInserts, common::FullMockMasterList, mock_store_b},
     };
 
     use crate::{
         dashboard::item_count::{ItemCountServiceTrait, ItemServiceCount},
         item_stats::ItemStats,
         test_helpers::{
-            setup_all_and_service_provider, setup_all_with_data_and_service_provider,
-            ServiceTestContext,
+            ServiceTestContext, setup_all_and_service_provider,
+            setup_all_with_data_and_service_provider,
         },
     };
 

@@ -1,13 +1,14 @@
 use crate::sync::{
     test::integration::{
-        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+        SyncRecordTester, TestStepData, central_server_configurations::NewSiteProperties,
     },
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use repository::{
+    ForecastMethod, RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow,
+    RequisitionRowDelete,
     requisition_row::{RequisitionStatus, RequisitionType},
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
 };
 use serde_json::json;
 use util::uuid::uuid;
@@ -76,9 +77,10 @@ impl SyncRecordTester for RequisitionRecordTester {
             price_per_unit: None,
             available_volume: None,
             location_type_id: None,
-            forecast_total_units: None,
-            forecast_total_doses: None,
-            vaccine_courses: None,
+            campaign_id: None,
+            forecast_method: ForecastMethod::Amc,
+            forecast_monthly_consumption: 15.0,
+            forecast_data: None,
         };
 
         let mut requisition_row_2 = base_requisition_row.clone();

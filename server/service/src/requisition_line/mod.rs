@@ -1,24 +1,26 @@
 use self::{
     chart::{
-        get_requisition_line_chart, ConsumptionHistoryOptions, ItemChart,
-        RequisitionLineChartError, StockEvolutionOptions,
+        ConsumptionHistoryOptions, ItemChart, RequisitionLineChartError, StockEvolutionOptions,
+        get_requisition_line_chart,
     },
     query::get_requisition_lines,
     request_requisition_line::{
-        delete_request_requisition_line, insert_request_requisition_line,
-        update_request_requisition_line, DeleteRequestRequisitionLine,
-        DeleteRequestRequisitionLineError, InsertRequestRequisitionLine,
-        InsertRequestRequisitionLineError, UpdateRequestRequisitionLine,
-        UpdateRequestRequisitionLineError,
+        DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError,
+        InsertRequestRequisitionLine, InsertRequestRequisitionLineError,
+        RequisitionLineForecastPreview, RequisitionLineForecastPreviewError,
+        RequisitionLineForecastPreviewInput, UpdateRequestRequisitionLine,
+        UpdateRequestRequisitionLineError, delete_request_requisition_line,
+        get_requisition_line_forecast_preview, insert_request_requisition_line,
+        update_request_requisition_line,
     },
     response_line_stats::{
-        get_response_requisition_line_stats, ResponseRequisitionStats,
-        ResponseRequisitionStatsError,
+        ResponseRequisitionStats, ResponseRequisitionStatsError,
+        get_response_requisition_line_stats,
     },
     response_requisition_line::{
-        insert_response_requisition_line, update_response_requisition_line,
         InsertResponseRequisitionLine, InsertResponseRequisitionLineError,
         UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError,
+        insert_response_requisition_line, update_response_requisition_line,
     },
 };
 
@@ -26,16 +28,16 @@ use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 
 use ancillary_items::{
-    get_ancillary_plan, refresh_ancillary_items, AncillaryPlan, GetAncillaryPlanError,
-    RefreshAncillaryItems, RefreshAncillaryItemsError,
+    AncillaryPlan, GetAncillaryPlanError, RefreshAncillaryItems, RefreshAncillaryItemsError,
+    get_ancillary_plan, refresh_ancillary_items,
 };
 use repository::{
     PaginationOption, RequisitionLine, RequisitionLineFilter, RequisitionLineRow,
     RequisitionLineSort,
 };
 use response_requisition_line::{
-    delete_response_requisition_line, DeleteResponseRequisitionLine,
-    DeleteResponseRequisitionLineError,
+    DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError,
+    delete_response_requisition_line,
 };
 
 pub mod ancillary_items;
@@ -73,6 +75,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         update_request_requisition_line(ctx, input)
     }
 
+    fn get_requisition_line_forecast_preview(
+        &self,
+        ctx: &ServiceContext,
+        input: RequisitionLineForecastPreviewInput,
+    ) -> Result<RequisitionLineForecastPreview, RequisitionLineForecastPreviewError> {
+        get_requisition_line_forecast_preview(ctx, input)
+    }
+
     fn delete_request_requisition_line(
         &self,
         ctx: &ServiceContext,
@@ -101,8 +111,8 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         requisition_line_id: &str,
-        consumption_history_options: ConsumptionHistoryOptions,
-        stock_evolution_options: StockEvolutionOptions,
+        consumption_history_options: Option<ConsumptionHistoryOptions>,
+        stock_evolution_options: Option<StockEvolutionOptions>,
     ) -> Result<ItemChart, RequisitionLineChartError> {
         get_requisition_line_chart(
             ctx,

@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::MasterListNotFoundForThisStore,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::MasterListNotFoundForThisStore,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::RequisitionLineConnector;
 use repository::RequisitionLine;
@@ -102,7 +102,7 @@ pub fn map_error(error: ServiceError) -> Result<ResponseAddFromMasterListErrorIn
                 ResponseAddFromMasterListErrorInterface::MasterListNotFoundForThisStore(
                     MasterListNotFoundForThisStore,
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition
@@ -123,20 +123,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_new_response_requisition_for_update_test,
-            mock_new_response_requisition_for_update_test_line, MockDataInserts,
-        },
         RequisitionLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_new_response_requisition_for_update_test,
+            mock_new_response_requisition_for_update_test_line,
+        },
     };
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             response_requisition::{
                 ResponseAddFromMasterList as ServiceInput,
                 ResponseAddFromMasterListError as ServiceError,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

@@ -75,8 +75,8 @@ pub fn generate(
 mod inbound_shipment_service_line_update_test {
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_invoice_lines, mock_items,
-            MockDataInserts,
+            MockDataInserts, mock_inbound_shipment_a, mock_inbound_shipment_invoice_lines,
+            mock_items,
         },
         test_db::setup_all,
     };

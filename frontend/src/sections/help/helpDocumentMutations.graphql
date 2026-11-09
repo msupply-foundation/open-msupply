@@ -1,0 +1,47 @@
+# Central-only help-document management (spec/help S2/S3). Both reach through the
+# `centralServer` namespace, whose field-level gate rejects a non-central server
+# with a top-level "Not a central server" error BEFORE the child mutation
+# (contract wire trap). insertHelpDocument creates the title-only record (the file
+# travels over the HTTP sync-files route, not GraphQL). The whitespace-only-title
+# rejection is ALSO top-level non-typed ("EmptyTitle") — not a union branch — so
+# both are surfaced via returnGraphqlErrors, while RecordAlreadyExist /
+# RecordNotFound are the typed union members below.
+mutation insertHelpDocument($input: InsertHelpDocumentInput!) {
+  centralServer {
+    helpDocument {
+      insertHelpDocument(input: $input) {
+        __typename
+        ... on HelpDocumentNode {
+          id
+          title
+          createdDatetime
+        }
+        ... on InsertHelpDocumentError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteHelpDocument($input: DeleteHelpDocumentInput!) {
+  centralServer {
+    helpDocument {
+      deleteHelpDocument(input: $input) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteHelpDocumentError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}

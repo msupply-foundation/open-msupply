@@ -1,11 +1,11 @@
 use repository::{
-    clinician_row::{ClinicianRow, ClinicianRowRepository},
     ClinicianRowRepositoryTrait, ClinicianStoreJoinRowRepository, GenderType, RepositoryError,
     StoreRowRepository, TransactionError,
+    clinician_row::{ClinicianRow, ClinicianRowRepository},
 };
 mod generate;
 mod validate;
-use generate::{generate, GenerateInput};
+use generate::{GenerateInput, generate};
 use validate::validate;
 
 use crate::{
@@ -82,13 +82,13 @@ impl From<RepositoryError> for InsertClinicianError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
         ClinicianFilter, ClinicianRepository, EqualFilter,
+        mock::{MockDataInserts, mock_store_a},
     };
 
     use crate::{
         clinician::insert::InsertClinician,
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
 
     #[actix_rt::test]

@@ -1,5 +1,5 @@
-use query::program_indicators;
 use query::ProgramIndicator;
+use query::program_indicators;
 use repository::Pagination;
 use repository::ProgramIndicatorFilter;
 use repository::ProgramIndicatorSort;

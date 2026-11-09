@@ -1,25 +1,26 @@
 use crate::{
     invoice::common::{
-        calculate_foreign_currency_total, calculate_total_after_tax,
-        generate_invoice_user_id_update, generate_vvm_status_log, GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_invoice_user_id_update, generate_vvm_status_log,
     },
     invoice_line::{
-        stock_in_line::{
-            convert_invoice_line_to_single_pack, generate_batch, get_existing_vvm_status_log_id,
-            should_update_stock, StockLineInput,
-        },
         StockInType,
+        stock_in_line::{
+            StockLineInput, convert_invoice_line_to_single_pack, generate_batch,
+            get_existing_vvm_status_log_id, should_update_stock,
+        },
     },
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow,
-    InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow,
-    StorageConnection,
+    InvoiceLine, InvoiceLineRow, InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow,
+    RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 
 use super::UpdateStockInLine;
 use crate::NullableUpdate;
+use util::barcode::standard_barcode;
 
 pub struct GenerateResult {
     pub invoice_row_option: Option<InvoiceRow>,
@@ -75,7 +76,6 @@ pub fn generate(
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
-                barcode_id: None,
                 overwrite_stock_levels: true,
             },
         )?;
@@ -122,10 +122,9 @@ fn get_batch_to_delete_id(
     if let (Some(new_item), Some(stock_line_id)) = (
         new_item_option,
         &current_line.invoice_line_row.stock_line_id,
-    ) {
-        if new_item.id != current_line.item_row.id {
-            return Some(stock_line_id.clone());
-        }
+    ) && new_item.id != current_line.item_row.id
+    {
+        return Some(stock_line_id.clone());
     }
     None
 }
@@ -158,6 +157,7 @@ fn generate_line(
         r#type: _,
         status,
         reason_option_id,
+        barcode,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -167,6 +167,9 @@ fn generate_line(
     let mut update_line = current_line;
 
     update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
+    if let Some(barcode) = barcode {
+        update_line.barcode = standard_barcode(&barcode);
+    }
     update_line.batch = batch.or(update_line.batch);
     update_line.note = note.map(|n| n.value).unwrap_or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
@@ -184,12 +187,6 @@ fn generate_line(
     update_line.tax_percentage = tax_percentage
         .map(|tax| tax.percentage)
         .unwrap_or(update_line.tax_percentage);
-    update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
-        connection,
-        update_line.total_before_tax,
-        currency_id,
-        currency_rate,
-    )?;
     update_line.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
@@ -236,6 +233,15 @@ fn generate_line(
 
     update_line.total_after_tax =
         calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
+
+    // From the UPDATED local total (above), so the figure in the shipment's
+    // currency never lags one edit behind the packs or cost price it reflects.
+    update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        update_line.total_before_tax,
+        currency_id,
+        currency_rate,
+    )?;
 
     update_line.campaign_id = campaign_id
         .map(|c| c.value)

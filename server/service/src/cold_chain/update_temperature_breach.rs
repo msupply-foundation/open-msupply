@@ -1,11 +1,11 @@
 use super::{
     query_temperature_breach::get_temperature_breach, validate::check_temperature_breach_exists,
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use chrono::NaiveDateTime;
 use repository::{
-    temperature_breach::TemperatureBreach, RepositoryError, StorageConnection,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType,
+    RepositoryError, StorageConnection, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureBreachType, temperature_breach::TemperatureBreach,
 };
 
 #[derive(PartialEq, Debug)]

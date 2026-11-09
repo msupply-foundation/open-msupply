@@ -74,9 +74,9 @@ pub(crate) fn get_sync_buffer_for_table(
 #[cfg(test)]
 mod test {
     use repository::{
+        IntegrationResult, SyncAction, SyncBufferRepository, SyncBufferRow,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        IntegrationResult, SyncAction, SyncBufferRepository, SyncBufferRow,
     };
 
     use util::datetime_now;

@@ -1,13 +1,14 @@
 use repository::{
-    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow, ChangelogRow,
-    ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow,
 };
 
 use crate::sync::translations::{item::ItemTranslation, vaccine_course::VaccineCourseTranslation};
 
 use super::{
-    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
+    utils::{RenamedKeys, from_renamed_keys_str, to_renamed_keys_value},
 };
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
@@ -48,8 +49,11 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 
         let check_fk = fk_checker.with_table_required(connection, "vaccine_course_item", &row.id);
 
-        row.vaccine_course_id =
-            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.vaccine_course_id = check_fk(
+            row.vaccine_course_id,
+            "vaccine_course_id",
+            FkField::VaccineCourse,
+        )?;
         row.item_id = check_fk(row.item_id, "item_link_id", FkField::ItemLink)?;
 
         Ok(PullTranslateResult::upsert(row))
@@ -100,9 +104,9 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_vaccine_course_a, MockDataInserts},
-        test_db::setup_all,
         VaccineCourseRow, VaccineCourseRowRepository,
+        mock::{MockDataInserts, mock_vaccine_course_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

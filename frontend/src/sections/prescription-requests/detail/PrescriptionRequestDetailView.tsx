@@ -1,0 +1,450 @@
+import { createResource, createSignal, Show, type Component } from 'solid-js';
+import { useNavigate, useParams } from '@solidjs/router';
+import { graphqlFetch } from '../../../api/graphql';
+import { gated, notFound } from '../../../api/gated';
+import { t, tPlural } from '../../../intl';
+import { Page } from '../../../ui/layout/Page/Page';
+import { Header } from '../../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
+import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { getNumberCell } from '../../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../../api/createTableConfig';
+import {
+  Tabs,
+  TabList,
+  TabPanel,
+  type TabDef,
+} from '../../../ui/elements/tabs/Tabs';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
+import {
+  CloseIcon,
+  PlusCircleIcon,
+  SidebarIcon,
+  TrashIcon,
+} from '../../../ui/icons';
+import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { ActivityLogPanel } from '../../../domain/activityLog';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
+import { asRequestStatus, isEditable } from '../prescriptionRequestStatus';
+import {
+  PrescriptionRequestDetail,
+  type PrescriptionRequestFieldsFragment,
+} from './prescriptionRequestDetail.generated';
+import { DeletePrescriptionRequestLines } from './prescriptionRequestDetail.generated';
+import {
+  savePrescriptionRequest,
+  type UpdateInput,
+} from './prescriptionRequestUpdate';
+import { PrescriptionRequestToolbar } from './PrescriptionRequestToolbar';
+import {
+  PrescriptionRequestSidePanel,
+  type PrescriptionRequestEditFields,
+} from './PrescriptionRequestSidePanel';
+import { PrescriptionRequestStatusFooter } from './PrescriptionRequestStatusFooter';
+import { ExportPrintAction } from './actions/ExportPrintAction';
+import { RequestLineEditModal } from './edit-modal/RequestLineEditModal';
+// By its own path, not the patients section's index: App.tsx loads that
+// index for the routes, and the modal carries the document form host
+// (spec/patients S4 allow-edit), which must stay out of the startup bundle.
+import { EditPatientModal } from '../../patients/detail/EditPatientModal';
+
+// The prescription-request detail (spec/prescription-requests/ui-surface.md
+// S3): toolbar (patient / date of birth / clinician / date / diagnosis /
+// prominent custom fields), Details + Custom fields + Log tabs over the line
+// table, the side panel, and the status footer with the Ready-to-dispense
+// hand-over. Read-only past New: dead affordances are hidden and a row click
+// opens the line editor's read-only face (OMS-REG-DIS-08.41/.42,
+// OMS-REG-DIS-09.10/.11).
+
+type Line = PrescriptionRequestFieldsFragment['lines']['nodes'][number];
+
+const PrescriptionRequestDetailView: Component = () => {
+  const params = useParams<{ storeId: string; requestId: string }>();
+  const navigate = useNavigate();
+
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  const [activeTab, setActiveTab] = createSignal('details');
+  // The line editor — the line it's open for ('new' = a fresh line);
+  // undefined = closed. Mounted fresh per open.
+  const [editState, setEditState] = createSignal<{ line?: Line }>();
+  // The patient picker's edit-patient modal — the id it's open for.
+  const [editPatientId, setEditPatientId] = createSignal<string>();
+  const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
+
+  // The request — header, side panel, AND lines in one read (a small line set;
+  // no server paging). A bad id — another record's, another store's request,
+  // a made-up one — answers RecordNotFound and resolves to null: the
+  // not-found deep-link alert renders below (#1746); a failed read resolves
+  // undefined and keeps the spinner, under the global error modal. The miss is
+  // deliberately NOT routed to the global unexpected-error modal (no
+  // mapSuccessToError): that would offer a useless reload of the same bad id
+  // and shadow the local notice. The first read shows the local spinner; saves
+  // merge via mutate, line saves refetch.
+  const [data, { mutate, refetch }] = createResource(
+    () => ({
+      storeId: params.storeId,
+      id: params.requestId,
+    }),
+    async variables => {
+      const result = await graphqlFetch(PrescriptionRequestDetail, variables);
+      if (result.kind !== 'success') return undefined;
+      return result.data.prescriptionRequest.__typename ===
+        'PrescriptionRequestNode'
+        ? result.data.prescriptionRequest
+        : null;
+    }
+  );
+  // Non-suspending read: neither the first load nor a post-save refetch ever
+  // trips a Suspense boundary (kdd/solid-reactivity-pitfalls § no remounts).
+  const info = (): PrescriptionRequestFieldsFragment | undefined =>
+    gated(data) ?? undefined;
+
+  const status = () => asRequestStatus(info()?.status ?? 'DISPENSED');
+  const disabled = () => !isEditable(status());
+
+  const rows = (): Line[] =>
+    (info()?.lines.nodes ?? [])
+      .slice()
+      .sort((a, b) => (a.item?.name ?? '').localeCompare(b.item?.name ?? ''));
+
+  const tableConfig = createTableConfig({
+    tableId: 'prescription-request-detail',
+  });
+
+  const saveField = async (input: Omit<UpdateInput, 'id'>) => {
+    const node = info();
+    if (!node) return;
+    const outcome = await savePrescriptionRequest(params.storeId, {
+      id: node.id,
+      ...input,
+    });
+    if (outcome.kind === 'saved')
+      mutate(prev => (prev ? { ...prev, ...outcome.node } : prev));
+  };
+
+  // One debounced buffer for the entity's text field (comment), seeded per
+  // request identity.
+  const edit = createDebouncedEdit<PrescriptionRequestEditFields>({
+    id: () => info()?.id ?? '',
+    initial: () => ({
+      comment: info()?.comment ?? '',
+    }),
+    save: patch =>
+      void saveField(
+        patch.comment !== undefined
+          ? { comment: { value: patch.comment || null } }
+          : {}
+      ),
+  });
+
+  // ONE atomic batch, not a line at a time: a refusal used to stop the loop
+  // partway, leaving some lines gone and the rest still selected, with nothing
+  // said about it. Now either every selected line goes or none does — and a
+  // refusal leaves the selection alone, so the user can see what they asked for
+  // and try again.
+  const runDeleteLines = async () => {
+    const result = await graphqlFetch(DeletePrescriptionRequestLines, {
+      storeId: params.storeId,
+      ids: selectedIds(),
+    });
+    setDeleteLinesConfirm(false);
+    if (result.kind !== 'success') return;
+    setSelectedIds([]);
+    void refetch();
+  };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2). `info()` is the
+  // `.state`-gated read above, so this predicate never suspends the palette.
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditState({}),
+    disabled: () => !info() || disabled(),
+  });
+
+  // Custom-fields save (explicit-save tab) — patch-merged server-side;
+  // returns true so the tab clears its dirty state.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const node = info();
+    if (!node) return false;
+    const outcome = await savePrescriptionRequest(params.storeId, {
+      id: node.id,
+      customFields: patch,
+    });
+    if (outcome.kind !== 'saved') return false;
+    mutate(prev => (prev ? { ...prev, ...outcome.node } : prev));
+    return true;
+  };
+
+  const openRow = (line: Line) => setEditState({ line });
+
+  const columns = (): Column<Line, never>[] => [
+    {
+      c: { accessor: line => line.item?.code ?? '', id: 'itemCode' },
+      header: () => t('label.code'),
+    },
+    {
+      c: { accessor: line => line.item?.name ?? '', id: 'itemName' },
+      header: () => t('label.name'),
+      meta: { headerPosition: 'primary' },
+    },
+    {
+      c: { key: 'numberOfUnits' },
+      header: () => t('label.quantity'),
+      ...getNumberCell(),
+    },
+    {
+      c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
+      header: () => t('label.unit-name'),
+    },
+    {
+      c: { accessor: line => line.note ?? '', id: 'note' },
+      header: () => t('label.directions'),
+    },
+  ];
+
+  const tabs = (): TabDef[] => [
+    { value: 'details', label: t('label.details') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
+    { value: 'log', label: t('label.log') },
+  ];
+
+  const crumbs = (node?: PrescriptionRequestFieldsFragment) => [
+    {
+      label: t('prescriptions'),
+      to: `/${params.storeId}/dispensary/prescription-request`,
+    },
+    { label: node ? `${node.prescriptionRequestNumber}` : '…' },
+  ];
+
+  return (
+    <Show
+      when={info()}
+      fallback={
+        // Spinner while the first read is in flight, or under the global error
+        // modal when it failed; a read the server answers as not found is the
+        // not-found alert.
+        <Show when={notFound(data)} fallback={<Spinner center />}>
+          <NotFoundNotice
+            testId="prescription-request-not-found-notice"
+            title={t('error.prescription-request-not-found')}
+            description={t('messages.click-to-return-to-prescription-requests')}
+            onClose={() =>
+              navigate(`/${params.storeId}/dispensary/prescription-request`)
+            }
+          />
+        </Show>
+      }
+    >
+      {node => (
+        <Tabs value={activeTab()} onValueChange={setActiveTab}>
+          <Page
+            fillBody
+            header={
+              <Header>
+                <Breadcrumb crumbs={crumbs(node())} />
+                <HeaderButtons>
+                  {/* Add item — hidden once read-only. */}
+                  <Show when={!disabled()}>
+                    <Button
+                      icon={<PlusCircleIcon />}
+                      shortcut={ALT_N}
+                      data-testid="add-item-button"
+                      onClick={() => setEditState({})}
+                    >
+                      {t('button.add-item')}
+                    </Button>
+                  </Show>
+                  {/* Export/Print — a read, so offered at every status
+                      (OMS-REG-DIS-10.5–.7). */}
+                  <ExportPrintAction
+                    requestId={node().id}
+                    leadingAction={disabled()}
+                  />
+                  <Show when={!sidePanelOpen()}>
+                    <Button
+                      variant="secondary"
+                      icon={<SidebarIcon />}
+                      data-testid="open-detail-panel-button"
+                      shortcut={ALT_M}
+                      onClick={() => setSidePanelOpen(true)}
+                    >
+                      {t('button.more')}
+                    </Button>
+                  </Show>
+                </HeaderButtons>
+                <HeaderToolbar>
+                  <PrescriptionRequestToolbar
+                    storeId={params.storeId}
+                    node={node()}
+                    disabled={disabled()}
+                    onSave={input => void saveField(input)}
+                    onEditPatient={setEditPatientId}
+                  />
+                </HeaderToolbar>
+                <TabList tabs={tabs()} />
+              </Header>
+            }
+            sidePanelOpen={sidePanelOpen()}
+            sidePanelTitle={t('heading.additional-info')}
+            onSidePanelClose={() => setSidePanelOpen(false)}
+            sidePanelContent={
+              <PrescriptionRequestSidePanel
+                storeId={params.storeId}
+                node={node()}
+                disabled={disabled()}
+                edit={edit}
+                onDeleted={() =>
+                  navigate(
+                    `/${params.storeId}/dispensary/prescription-request`,
+                    { replace: true }
+                  )
+                }
+              />
+            }
+            contentFooter={
+              <Show
+                when={selectedIds().length > 0}
+                fallback={
+                  <PrescriptionRequestStatusFooter
+                    storeId={params.storeId}
+                    node={node()}
+                    onSaved={saved =>
+                      mutate(prev => (prev ? { ...prev, ...saved } : prev))
+                    }
+                  />
+                }
+              >
+                <ContentFooter testId="actions-footer">
+                  <strong data-testid="selected-rows-count">
+                    {selectedIds().length} {t('label.selected')}
+                  </strong>
+                  <Show when={!disabled()}>
+                    <Button
+                      variant="secondary"
+                      icon={<TrashIcon />}
+                      data-testid="delete-lines-button"
+                      onClick={() => setDeleteLinesConfirm(true)}
+                    >
+                      {t('button.delete-lines')}
+                    </Button>
+                  </Show>
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<CloseIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('label.clear-selection')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
+            }
+          >
+            <TabPanel value="details">
+              <DataTable
+                columns={columns()}
+                rows={rows()}
+                rowKey={line => line.id}
+                loading={data.loading && !info()}
+                onRowClick={openRow}
+                emptyMessage={t('error.no-items')}
+                empty={
+                  <Show when={!disabled()}>
+                    <Button
+                      variant="ghost"
+                      shortcut={ALT_N}
+                      data-testid="nothing-here-create-button"
+                      onClick={() => setEditState({})}
+                    >
+                      {t('button.add-item')}
+                    </Button>
+                  </Show>
+                }
+                enableSelection={!disabled()}
+                selectedIds={selectedIds()}
+                onSelectionChange={setSelectedIds}
+                config={tableConfig.config()}
+                setConfig={tableConfig.setConfig}
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
+              />
+            </TabPanel>
+            <TabPanel value="custom-fields">
+              <CustomFieldsEditTab
+                scope="prescription_request"
+                promoteToToolbar
+                disabled={disabled()}
+                values={node().customFields}
+                onSave={saveCustomFields}
+              />
+            </TabPanel>
+            <TabPanel value="log">
+              <ActivityLogPanel recordId={node().id} storeId={params.storeId} />
+            </TabPanel>
+          </Page>
+
+          {/* The S4 line editor — mounted fresh per open; the read-only face
+              past New (OMS-REG-DIS-08.41/.42). */}
+          <Show when={editState()} keyed>
+            {state => (
+              <RequestLineEditModal
+                storeId={params.storeId}
+                requestId={node().id}
+                line={state.line}
+                readOnly={disabled()}
+                onClose={() => setEditState(undefined)}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          {/* The patient picker's edit-patient modal — in place over this
+              screen; a save refetches so the toolbar/side panel show the
+              patient's current name. */}
+          <Show when={editPatientId()} keyed>
+            {patientId => (
+              <EditPatientModal
+                storeId={params.storeId}
+                patientId={patientId}
+                onClose={() => setEditPatientId(undefined)}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          {/* Bulk line delete (with count). */}
+          <ConfirmDialog
+            open={deleteLinesConfirm()}
+            onClose={() => setDeleteLinesConfirm(false)}
+            title={t('heading.are-you-sure')}
+            message={tPlural(
+              'messages.confirm-delete-lines',
+              selectedIds().length
+            )}
+            confirmVariant="danger"
+            onConfirm={() => void runDeleteLines()}
+          />
+        </Tabs>
+      )}
+    </Show>
+  );
+};
+
+export default PrescriptionRequestDetailView;

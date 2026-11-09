@@ -1,14 +1,13 @@
+use crate::{ChangelogRepository, RepositoryError, RowActionType, StorageConnection};
 use crate::{
+    ChangelogSyncType, Delete, SourceSiteId, Upsert,
     db_diesel::{
-        changelog::{changelog::RowOrId, Changelogs},
+        changelog::{Changelogs, changelog::RowOrId},
         item_row::item,
+        name_row::name,
         purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
-    ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
-use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, StorageConnection,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -52,6 +51,7 @@ define_linked_tables! {
         supplier_item_code -> Nullable<Text>,
         price_per_pack_before_discount -> Double,
         price_per_pack_after_discount -> Double,
+        line_total -> Double,
         comment -> Nullable<Text>,
         note -> Nullable<Text>,
         unit -> Nullable<Text>,
@@ -73,6 +73,8 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
+allow_tables_to_appear_in_same_query!(purchase_order_line, name);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, name);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
@@ -84,6 +86,7 @@ pub struct PurchaseOrderLineRow {
     pub item_name: String,
     pub requested_pack_size: f64,
     pub requested_number_of_units: f64,
+    // Carried for legacy sync only; quantities always use requested_number_of_units
     pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
@@ -91,6 +94,7 @@ pub struct PurchaseOrderLineRow {
     pub supplier_item_code: Option<String>,
     pub price_per_pack_before_discount: f64,
     pub price_per_pack_after_discount: f64,
+    pub line_total: f64,
     pub comment: Option<String>,
     pub note: Option<String>,
     pub unit: Option<String>,
@@ -211,7 +215,10 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
         Ok(purchase_order_line::table
             .filter(purchase_order_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -305,10 +312,10 @@ impl Delete for PurchaseOrderLineDelete {
 // purchase order line basic upsert and query operation test:
 #[cfg(test)]
 mod tests {
-    use crate::mock::{mock_item_a, mock_name_c, mock_store_a, MockDataInserts};
+    use crate::mock::{MockDataInserts, mock_item_a, mock_name_c, mock_store_a};
     use crate::{
-        db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository, test_db::setup_all,
-        PurchaseOrderLineRow,
+        PurchaseOrderLineRow, db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository,
+        test_db::setup_all,
     };
     use crate::{PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus};
 

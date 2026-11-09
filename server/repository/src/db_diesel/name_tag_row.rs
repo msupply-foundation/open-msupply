@@ -1,8 +1,8 @@
-use super::{name_oms_fields, StorageConnection};
+use super::{StorageConnection, name_oms_fields};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;
@@ -16,7 +16,18 @@ table! {
 
 allow_tables_to_appear_in_same_query!(name_tag, name_oms_fields);
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = name_tag)]
 pub struct NameTagRow {
     pub id: String,
@@ -169,9 +180,9 @@ impl Delete for NameTagRowDelete {
 #[cfg(test)]
 mod test_name_tag_row {
     use crate::{
+        NameRow, NameTagRow, NameTagRowRepository,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        NameRow, NameTagRow, NameTagRowRepository,
     };
 
     #[actix_rt::test]

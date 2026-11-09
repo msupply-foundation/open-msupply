@@ -1,0 +1,14 @@
+/* Only what Text deliberately doesn't own: the muted colour (the container
+   owning the meaning owns the colour), the reading measure, and the
+   inline-code chips. Type style comes from the Text primitive. */
+.lead {
+  max-inline-size: 44rem;
+  color: var(--text-secondary);
+}
+
+.lead code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}

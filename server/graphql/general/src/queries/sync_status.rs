@@ -1,8 +1,8 @@
 pub use async_graphql::*;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -169,6 +169,19 @@ pub fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {
         })?;
 
     Ok(push_queue_count)
+}
+
+/// Admin pause flag (Admin > Sync settings). Readable by any signed-in user, like the rest of
+/// the sync status, so the header can show the paused state.
+pub fn is_sync_paused(ctx: &Context<'_>) -> Result<bool> {
+    validate_sync_info_auth(ctx)?;
+
+    let service_provider = ctx.service_provider();
+    let ctx = service_provider.basic_context()?;
+    service_provider
+        .settings
+        .is_sync_paused(&ctx)
+        .map_err(|error| StandardGraphqlError::InternalError(format!("{error:#?}")).extend())
 }
 
 fn validate_sync_info_auth(ctx: &Context<'_>) -> Result<()> {

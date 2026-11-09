@@ -5,7 +5,7 @@ use repository::{
 
 use serde::Deserialize;
 
-use crate::sync::translations::{name::NameTranslation, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{PullTranslateResult, SyncTranslation, name::NameTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]

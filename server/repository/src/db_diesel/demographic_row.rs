@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;

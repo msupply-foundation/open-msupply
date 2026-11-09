@@ -59,7 +59,7 @@ async fn migration_2_15_01() {
     use crate::migrations::{v2_15_00::V2_15_00, *};
     use crate::test_db::*;
     use chrono::{NaiveDate, NaiveDateTime};
-    use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Timestamp};
     // For data migrations we want to insert data then do the migration, thus setup with version - 1
     // Then insert data and upgrade to this version
 

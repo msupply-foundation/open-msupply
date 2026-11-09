@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    email_queue_row::{EmailQueueRow, EmailQueueRowRepository, EmailQueueStatus},
     StorageConnection,
+    email_queue_row::{EmailQueueRow, EmailQueueRowRepository, EmailQueueStatus},
 };
 use util::uuid::uuid;
 

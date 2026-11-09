@@ -6,17 +6,17 @@ use generate::*;
 
 use chrono::{NaiveDate, Utc};
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLine, StockLineRowRepository, Stocktake,
     StocktakeLine, StocktakeLineRowRepository, StocktakeRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 use crate::{
     activity_log::activity_log_entry_with_diff,
     invoice_line::{
-        stock_in_line::{insert_stock_in_line, InsertStockInLineError},
-        stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+        stock_in_line::{InsertStockInLineError, insert_stock_in_line},
+        stock_out_line::{InsertStockOutLineError, insert_stock_out_line},
     },
     service_provider::ServiceContext,
     stocktake::query::get_stocktake,
@@ -183,32 +183,33 @@ pub fn update_stocktake(
 mod test {
     use chrono::NaiveDate;
     use repository::{
+        ActivityLogType, EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository,
+        InvoiceLineType, NameRow, PreferenceRow, StockLineRow, StockLineRowRepository,
+        StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow, StocktakeStatus,
+        activity_log::{ActivityLogFilter, ActivityLogRepository},
         mock::{
-            mock_donor_b, mock_item_a, mock_item_a_variant_1, mock_locked_stocktake,
-            mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
-            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            MockData, MockDataInserts, mock_campaign_a, mock_donor_b, mock_item_a,
+            mock_item_a_variant_1, mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b,
+            mock_stocktake_a, mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
             mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
-            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a, MockData,
-            MockDataInserts,
+            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
+            mock_user_account_a,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType,
-        PreferenceRow, StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
-        StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
-        StocktakeRow, StocktakeStatus,
     };
     use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
     use crate::{
+        NullableUpdate,
         service_provider::ServiceProvider,
         stocktake::{
-            update::{UpdateStocktake, UpdateStocktakeError},
             UpdateStocktakeStatus,
+            update::{UpdateStocktake, UpdateStocktakeError},
         },
         stocktake_line::UpdateStocktakeLine,
-        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -760,6 +761,81 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn finalise_stocktake_logs_a_campaign_change() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "finalise_stocktake_logs_a_campaign_change",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id.to_string())
+            .unwrap();
+
+        service_provider
+            .stocktake_line_service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: mock_stocktake_line_stock_surplus().id.clone(),
+                    campaign_id: Some(NullableUpdate {
+                        value: Some(mock_campaign_a().id.clone()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        service_provider
+            .stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: mock_stocktake_stock_surplus().id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line_id = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().id(EqualFilter::equal_to(
+                    mock_stocktake_line_stock_surplus().id,
+                )),
+                None,
+            )
+            .unwrap()
+            .pop()
+            .unwrap()
+            .line
+            .stock_line_id
+            .expect("the surplus line counts existing stock");
+
+        let logs = ActivityLogRepository::new(&connection)
+            .query_by_filter(
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(stock_line_id)),
+            )
+            .unwrap();
+
+        let campaign_log = logs
+            .iter()
+            .find(|l| l.activity_log_row.r#type == ActivityLogType::StockCampaignChange)
+            .expect("the campaign change is logged");
+        // The trail names the activity, not its id — the entry is read by people
+        assert_eq!(
+            campaign_log.activity_log_row.changed_to,
+            Some(mock_campaign_a().name)
+        );
+        // The line held no activity before, as the other stock logs write an absent value
+        assert_eq!(
+            campaign_log.activity_log_row.changed_from,
+            Some("-".to_string())
+        );
+    }
+
+    #[actix_rt::test]
     async fn stocktake_new_line_with_external_authorisation_preference() {
         // Regression test: when the ExternalInboundShipmentLinesMustBeAuthorised preference
         // is enabled, finalising a stocktake with a new stock line should still succeed.
@@ -931,6 +1007,101 @@ mod test {
         assert_eq!(
             updated_stock_line.program_id,
             Some(mock_immunisation_program_a().id)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn finalise_stocktake_with_manufacturer_not_visible_to_store() {
+        // Regression test for #12672: finalising a stocktake must succeed even when the
+        // adjusted stock line carries a manufacturer that is not visible to this store.
+        // This happens in practice when the manufacturer is configured centrally (e.g. on
+        // an item variant) or inherited from stock — the stocktake should not be blocked
+        // by that.
+        let invisible_manufacturer = NameRow {
+            id: "invisible_manufacturer".to_string(),
+            name: "Invisible manufacturer".to_string(),
+            code: "invisible_manufacturer".to_string(),
+            is_manufacturer: true,
+            ..Default::default()
+        };
+
+        let stock_line_with_invisible_manufacturer = StockLineRow {
+            id: "stock_line_invisible_manufacturer".to_string(),
+            item_id: mock_item_a().id,
+            store_id: mock_store_a().id,
+            pack_size: 1.0,
+            available_number_of_packs: 5.0,
+            total_number_of_packs: 5.0,
+            manufacturer_id: Some(invisible_manufacturer.id.clone()),
+            ..Default::default()
+        };
+
+        let stocktake = StocktakeRow {
+            id: "stocktake_manufacturer_not_visible".to_string(),
+            store_id: mock_store_a().id,
+            stocktake_number: 101,
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            status: StocktakeStatus::New,
+            ..Default::default()
+        };
+
+        let stocktake_line = StocktakeLineRow {
+            id: "stocktake_line_manufacturer_not_visible".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            stock_line_id: Some(stock_line_with_invisible_manufacturer.id.clone()),
+            item_id: mock_item_a().id,
+            // Force inventory addition path (counted > snapshot)
+            snapshot_number_of_packs: 5.0,
+            counted_number_of_packs: Some(10.0),
+            manufacturer_id: Some(invisible_manufacturer.id.clone()),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "finalise_stocktake_with_manufacturer_not_visible_to_store",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![invisible_manufacturer.clone()],
+                stock_lines: vec![stock_line_with_invisible_manufacturer.clone()],
+                stocktakes: vec![stocktake.clone()],
+                stocktake_lines: vec![stocktake_line],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        let result = service_provider
+            .stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: stocktake.id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // The inventory adjustment line should have been created and the resulting stock
+        // line should still carry the manufacturer (we don't strip it, just don't require
+        // visibility).
+        assert!(result.inventory_addition_id.is_some());
+        let updated_stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line_with_invisible_manufacturer.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated_stock_line.total_number_of_packs, 10.0);
+        assert_eq!(
+            updated_stock_line.manufacturer_id,
+            Some(invisible_manufacturer.id)
         );
     }
 

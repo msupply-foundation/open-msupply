@@ -1,10 +1,9 @@
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use repository::{
-    asset_log_reason_row::AssetLogReasonRow, asset_log_row::AssetLogStatus,
-    assets::asset_log_reason_row::AssetLogReasonRowRepository, ActivityLogType, RepositoryError,
-    StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection, asset_log_reason_row::AssetLogReasonRow,
+    asset_log_row::AssetLogStatus, assets::asset_log_reason_row::AssetLogReasonRowRepository,
 };
 
 use super::{query_log_reason::get_asset_log_reason, validate::check_asset_log_reason_exists};

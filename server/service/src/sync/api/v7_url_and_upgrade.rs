@@ -12,9 +12,7 @@ impl SyncApiV5 {
     /// Asks the v5 (4D) server to mark this site as v7 and return the OMS-central
     /// URL to switch to. 503 with `stores_not_migrated` or `site_save_error` is
     /// returned when the site isn't ready yet.
-    pub(crate) async fn v7_url_and_upgrade(
-        &self,
-    ) -> Result<V7UrlAndUpgradeResponse, SyncApiError> {
+    pub(crate) async fn v7_url_and_upgrade(&self) -> Result<V7UrlAndUpgradeResponse, SyncApiError> {
         let route = "/sync/v5/v7_url_and_upgrade";
         let response = self.do_get(route, &()).await?;
 

@@ -9,9 +9,8 @@ use graphql_requisition::RequisitionQueries;
 use graphql_stocktake::StocktakeQueries;
 use graphql_stocktake_line::StocktakeLineQueries;
 use repository::mock::{
-    mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
+    MockDataInserts, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
     mock_request_draft_requisition_all_fields, mock_stocktake_a, mock_stocktake_line_a,
-    MockDataInserts,
 };
 use serde_json::json;
 use service::report::{default_queries::get_default_gql_query, definition::DefaultQuery};

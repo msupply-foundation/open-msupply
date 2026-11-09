@@ -3,12 +3,12 @@ use repository::{
 };
 
 use crate::{
+    NullableUpdate,
     invoice::CustomerReturnLineInput,
     invoice_line::{
         stock_in_line::{DeleteStockInLine, InsertStockInLine, StockInType, UpdateStockInLine},
         update_return_reason_id::UpdateLineReturnReason,
     },
-    NullableUpdate,
 };
 
 use super::UpdateCustomerReturnLines;
@@ -136,6 +136,7 @@ pub fn generate(
                 shipped_pack_size: None,
                 status: None,
                 reason_option_id: None,
+                barcode: None,
             },
         )
         .collect();

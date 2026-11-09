@@ -1,18 +1,18 @@
 #[cfg(test)]
 mod generate_rnr_form_lines {
     use crate::rnr_form::generate_rnr_form_lines::{
-        generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc,
+        UsageStats, generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc,
         get_bulk_earliest_expiries, get_bulk_opening_balances, get_previous_monthly_consumption,
-        get_stock_out_durations_batch, get_usage_map, UsageStats,
+        get_stock_out_durations_batch, get_usage_map,
     };
     use crate::service_provider::ServiceProvider;
     use chrono::NaiveDate;
     use repository::mock::{
-        item_query_test1, item_query_test2, mock_item_a, mock_master_list_program_b,
+        MockData, item_query_test1, item_query_test2, mock_item_a, mock_master_list_program_b,
         mock_name_invad, mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d,
-        mock_program_b, mock_rnr_form_a, MockData,
+        mock_program_b, mock_rnr_form_a,
     };
-    use repository::mock::{mock_store_a, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_store_a};
     use repository::test_db::setup_all_with_data;
     use repository::{
         EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,

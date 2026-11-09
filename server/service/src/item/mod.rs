@@ -4,24 +4,27 @@ pub mod item;
 pub mod item_variant;
 pub mod packaging_variant;
 use ancillary_item::{
-    delete_ancillary_item, get_ancillary_items, upsert_ancillary_item, DeleteAncillaryItem,
-    DeleteAncillaryItemError, UpsertAncillaryItem, UpsertAncillaryItemError,
+    DeleteAncillaryItem, DeleteAncillaryItemError, SetSupplyWastageRate, SetSupplyWastageRateError,
+    UpsertAncillaryItem, UpsertAncillaryItemError, delete_ancillary_item, get_ancillary_items,
+    set_supply_wastage_rate, upsert_ancillary_item,
 };
 use bundled_item::{
-    delete_bundled_item, get_bundled_items, upsert_bundled_item, DeleteBundledItem,
-    DeleteBundledItemError, UpsertBundledItem, UpsertBundledItemError,
+    DeleteBundledItem, DeleteBundledItemError, UpsertBundledItem, UpsertBundledItemError,
+    delete_bundled_item, get_bundled_items, upsert_bundled_item,
 };
 pub use item::*;
 use item_variant::{
-    delete_item_variant, get_item_variants, upsert_item_variant, DeleteItemVariant,
-    DeleteItemVariantError, UpsertItemVariantError, UpsertItemVariantWithPackaging,
+    DeleteItemVariant, DeleteItemVariantError, PromoteItemVariantError, UpsertItemVariantError,
+    UpsertItemVariantWithPackaging, delete_item_variant, get_item_variants, promote_item_variant,
+    upsert_item_variant,
 };
 use packaging_variant::{
-    delete_packaging_variant, get_packaging_variants, upsert_packaging_variant,
     DeletePackagingVariant, DeletePackagingVariantError, UpsertPackagingVariant,
-    UpsertPackagingVariantError,
+    UpsertPackagingVariantError, delete_packaging_variant, get_packaging_variants,
+    upsert_packaging_variant,
 };
 use repository::{
+    PaginationOption,
     ancillary_item::AncillaryItemFilter,
     ancillary_item_row::AncillaryItemRow,
     item_variant::{
@@ -31,10 +34,9 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantSort},
         packaging_variant_row::PackagingVariantRow,
     },
-    PaginationOption,
 };
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 
 pub trait ItemServiceTrait: Sync + Send {
     fn get_item_variants(
@@ -61,6 +63,14 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteItemVariant,
     ) -> Result<String, DeleteItemVariantError> {
         delete_item_variant(ctx, input)
+    }
+
+    fn promote_item_variant(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<ItemVariant, PromoteItemVariantError> {
+        promote_item_variant(ctx, id)
     }
 
     fn get_packaging_variants(
@@ -137,6 +147,14 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteAncillaryItem,
     ) -> Result<String, DeleteAncillaryItemError> {
         delete_ancillary_item(ctx, input)
+    }
+
+    fn set_supply_wastage_rate(
+        &self,
+        ctx: &ServiceContext,
+        input: SetSupplyWastageRate,
+    ) -> Result<f64, SetSupplyWastageRateError> {
+        set_supply_wastage_rate(ctx, input)
     }
 }
 

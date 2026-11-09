@@ -1,14 +1,15 @@
 use chrono::NaiveDate;
 
 use crate::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, RequisitionLineRow,
     RequisitionRow, StockLineRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 use super::{
+    MockData,
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
+    mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a,
 };
 
 pub fn mock_test_requisition_queries() -> MockData {
@@ -96,6 +97,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 suggested_quantity: 3.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 10.0,
+                forecast_monthly_consumption: 10.0,
                 item_name: mock_item_a().name,
                 ..Default::default()
             },
@@ -107,6 +109,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 suggested_quantity: 3.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 10.0,
+                forecast_monthly_consumption: 10.0,
                 item_name: mock_item_b().name,
                 ..Default::default()
             },
@@ -157,6 +160,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             suggested_quantity: 15.0,
             available_stock_on_hand: 1.0,
             average_monthly_consumption: 10.0,
+            forecast_monthly_consumption: 10.0,
             ..Default::default()
         }],
     }

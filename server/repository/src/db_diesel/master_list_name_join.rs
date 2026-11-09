@@ -1,14 +1,12 @@
 use super::{
-    item_link_row::item_link, master_list_name_join::master_list_name_join::dsl::*,
-    master_list_row::master_list, StorageConnection,
+    StorageConnection, item_link_row::item_link,
+    master_list_name_join::master_list_name_join::dsl::*, master_list_row::master_list,
 };
 
 use crate::diesel_macros::define_linked_tables;
 use crate::name_row::name;
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 use diesel::prelude::*;
 
 define_linked_tables! {

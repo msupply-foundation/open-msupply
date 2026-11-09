@@ -1,0 +1,35 @@
+/* Meaning is the label text; tone escalates it. Tabular digits so a ticking
+   count doesn't wobble. */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.4em;
+  block-size: 1.4em;
+  padding-inline: 0.4em;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+
+  /* An inherited body line-height (e.g. 1.71) is taller than the 1.4em pill,
+     so the centred line box would ride high; hug the glyphs and let the grid
+     centre them. */
+  line-height: 1;
+  background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
+  color: var(--text-body);
+}
+
+/* Toned pills reuse Alert's colour recipe (severity tint over the surface,
+   severity mixed into the body text) rather than the current app's solid MUI
+   fills: at --text-xs no text colour holds AA on the solid severities (white
+   on the light-theme error red is ≈4.3:1, near-black ≈3.9:1) — the recorded
+   AA-over-fidelity trade. The tint is stronger than Alert's 10% panel so the
+   small pill still reads against its host. */
+.badge[data-tone='warning'] {
+  background: color-mix(in srgb, var(--warning-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+}
+
+.badge[data-tone='error'] {
+  background: color-mix(in srgb, var(--error-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--error-main) 40%, var(--text-body));
+}

@@ -2,8 +2,8 @@ pub mod mutations;
 pub mod query;
 use async_graphql::*;
 use graphql_types::types::RepackConnector;
-use mutations::{insert_repack, InsertRepackInput, InsertResponse};
-use query::{get_repack, get_repacks_by_stock_line, RepackResponse};
+use mutations::{InsertRepackInput, InsertResponse, insert_repack};
+use query::{RepackResponse, get_repack, get_repacks_by_stock_line};
 
 #[derive(Default, Clone)]
 pub struct RepackQueries;

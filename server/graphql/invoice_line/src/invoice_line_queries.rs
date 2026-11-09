@@ -1,14 +1,14 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::{
         DateFilterInput, DatetimeFilterInput, EqualFilterBigFloatingNumberInput,
         EqualFilterStringInput, StringFilterInput,
     },
-    generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput},
+    generic_inputs::{PrintReportSortInput, report_sort_to_typed_sort},
     map_filter,
     pagination::PaginationInput,
-    standard_graphql_error::{list_error_to_gql_err, validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, list_error_to_gql_err, validate_auth},
 };
 use graphql_types::types::{
     DraftStockOutItemData, EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
@@ -83,6 +83,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             program_id: f.program_id.map(EqualFilter::from),
             is_program_invoice: f.is_program_invoice,
+            purchase_order_line_id: None,
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,
@@ -112,6 +113,8 @@ pub enum InvoiceLineSortFieldInput {
     LocationName,
     /// Invoice line manufacture date
     ManufactureDate,
+    /// Units requested for the line's item on the invoice's linked requisition
+    RequestedQuantity,
 }
 
 #[derive(InputObject)]

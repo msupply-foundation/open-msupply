@@ -1,0 +1,33 @@
+mutation BatchStockMovementLine($storeId: String!, $input: BatchStockRelocationLineInput!) {
+  batchStockRelocationLine(storeId: $storeId, input: $input) {
+    upsert {
+      id
+      response {
+        __typename
+        ... on StockRelocationLineNode {
+          id
+        }
+        ... on UpsertStockRelocationLineError {
+          error {
+            __typename
+            description
+            ... on NotEnoughStock {
+              stockLineId
+            }
+            ... on LocationOnHold {
+              locationId
+            }
+          }
+        }
+      }
+    }
+    delete {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

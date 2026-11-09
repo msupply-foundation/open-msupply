@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_requisition::mutations::request_requisition;
 use graphql_requisition_line::mutations::request_requisition_line;
 use service::{
@@ -7,7 +7,7 @@ use service::{
     requisition::request_requisition::*,
 };
 
-use crate::{to_standard_error, VecOrNone};
+use crate::{VecOrNone, to_standard_error};
 
 type ServiceResult = BatchRequestRequisitionResult;
 type ServiceInput = BatchRequestRequisition;
@@ -279,19 +279,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, RepositoryError, RequisitionLine, RequisitionLineRow,
-        StorageConnectionManager,
+        RepositoryError, RequisitionLine, RequisitionLineRow, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
+        InputWithResult,
         requisition::{
+            RequisitionServiceTrait,
             request_requisition::{
                 BatchRequestRequisition, BatchRequestRequisitionResult, DeleteRequestRequisition,
                 DeleteRequestRequisitionError, InsertRequestRequisition,
                 InsertRequestRequisitionError, UpdateRequestRequisition,
                 UpdateRequestRequisitionError,
             },
-            RequisitionServiceTrait,
         },
         requisition_line::request_requisition_line::{
             DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError,
@@ -299,7 +300,6 @@ mod test {
             UpdateRequestRequisitionLine, UpdateRequestRequisitionLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        InputWithResult,
     };
 
     use crate::BatchMutations;

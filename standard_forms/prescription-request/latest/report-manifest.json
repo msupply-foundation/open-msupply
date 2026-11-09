@@ -1,0 +1,10 @@
+{
+  "is_custom": false,
+  "version": "3.2.0",
+  "code": "prescription-request",
+  "context": "PRESCRIPTION_REQUEST",
+  "name": "Prescription Request",
+  "queries": {
+    "gql": "query.graphql"
+  }
+}

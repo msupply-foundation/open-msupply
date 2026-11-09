@@ -1,7 +1,6 @@
 use actix_web::{
-    post,
+    HttpResponse, post,
     web::{Data, Json},
-    HttpResponse,
 };
 
 use service::{

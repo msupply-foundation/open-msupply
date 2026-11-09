@@ -2,15 +2,15 @@ use async_graphql::*;
 
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_inputs::NullableUpdateInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    generic_inputs::NullableUpdateInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::vaccination::VaccinationNode;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     vaccination::update::{UpdateVaccination, UpdateVaccinationError as ServiceError},
-    NullableUpdate,
 };
 
 use super::NotMostRecentGivenDose;
@@ -132,7 +132,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotMostRecentGivenDose => {
             return Ok(UpdateErrorInterface::NotMostRecentGivenDose(
                 NotMostRecentGivenDose,
-            ))
+            ));
         }
         ServiceError::VaccinationDoesNotExist
         | ServiceError::ClinicianDoesNotExist

@@ -1,6 +1,6 @@
-use repository::vvm_status::vvm_status_row::VVMStatusRow;
 use repository::StorageConnectionManager;
-use repository::{vvm_status::vvm_status_row::VVMStatusRowRepository, RepositoryError};
+use repository::vvm_status::vvm_status_row::VVMStatusRow;
+use repository::{RepositoryError, vvm_status::vvm_status_row::VVMStatusRowRepository};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod query {
-    use repository::{mock::MockDataInserts, test_db::setup_all, SensorFilter, SensorSortField};
     use repository::{EqualFilter, PaginationOption, Sort};
+    use repository::{SensorFilter, SensorSortField, mock::MockDataInserts, test_db::setup_all};
 
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::{ListError, SingleRecordError, service_provider::ServiceProvider};
 
     #[actix_rt::test]
     async fn sensor_service_pagination() {

@@ -1,12 +1,12 @@
 use super::{query_asset_property::get_asset_property, validate::check_asset_property_exists};
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 
 use repository::{
+    ActivityLogType, RepositoryError, StorageConnection,
     assets::asset_property_row::{AssetPropertyRow, AssetPropertyRowRepository},
     types::PropertyValueType,
-    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]

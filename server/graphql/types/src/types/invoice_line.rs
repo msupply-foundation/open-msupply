@@ -1,25 +1,27 @@
-use crate::types::{program_node::ProgramNode, PurchaseOrderLineNode, VVMStatusNode};
+use crate::types::{PurchaseOrderLineNode, VVMStatusNode, program_node::ProgramNode};
+use util::barcode::display_barcode;
 
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
-    PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
+    PricingNode, ReasonOptionNode, RequisitionLineNode, ReturnReasonNode, StockLineNode,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
-        NameByIdLoaderInput, ProgramByIdLoader, PurchaseOrderLineByIdLoader, ReasonOptionLoader,
-        StockLineByIdLoader, VVMStatusByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
+        LinkedRequisitionLineLoader, NameByIdLoader, NameByIdLoaderInput, ProgramByIdLoader,
+        PurchaseOrderLineByIdLoader, ReasonOptionLoader, RequisitionAndItemId, StockLineByIdLoader,
+        VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, ItemRow};
+use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, ItemRow, location::Location};
 use serde::Serialize;
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -329,6 +331,45 @@ impl InvoiceLineNode {
             .map(|status| InvoiceLineStatusType::from(status.clone()))
     }
 
+    /// The supplying store's explanation of why the quantity sent differs from
+    /// the quantity requested (spec/inbound-shipments rules.md § requested
+    /// quantity and supplier comment). Authored on the outbound side and
+    /// carried across by the shipment transfer — read-only on an inbound
+    /// shipment: no inbound mutation input accepts it.
+    pub async fn transfer_comment(&self) -> &Option<String> {
+        &self.row().transfer_comment
+    }
+
+    /// The barcode scanned or entered for the line, or carried by the stock it
+    /// issues, as people read it. Not necessarily a confirmed barcode.
+    pub async fn barcode(&self) -> Option<&str> {
+        self.row().barcode.as_deref().map(display_barcode)
+    }
+
+    /// The line of the shipment's linked requisition carrying the same item.
+    /// Null when the shipment has no requisition link, or the order has no line
+    /// for the item. Matched on item alone — there is no per-line link — so
+    /// every batch of one item resolves the same order line.
+    ///
+    /// ⚠️ `InvoiceRow.requisition_id` is not store-scoped: a link that arrived
+    /// by sync can resolve another store's requisition. `requestedQuantity`
+    /// means the same on both sides of a pair, so the figure stays right.
+    pub async fn requisition_line(&self, ctx: &Context<'_>) -> Result<Option<RequisitionLineNode>> {
+        let Some(requisition_id) = &self.invoice_line.invoice_row.requisition_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LinkedRequisitionLineLoader>>();
+        let result = loader
+            .load_one(RequisitionAndItemId::new(
+                requisition_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(result.map(RequisitionLineNode::from_domain))
+    }
+
     pub async fn purchase_order_line(
         &self,
         ctx: &Context<'_>,
@@ -413,8 +454,8 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType,
-        InvoiceRow, ItemRow, LocationRow,
+        InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, ItemRow,
+        LocationRow, mock::MockDataInserts,
     };
     use serde_json::json;
 

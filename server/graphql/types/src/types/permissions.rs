@@ -1,6 +1,6 @@
 use async_graphql::{Enum, Object, SimpleObject};
 use repository::PermissionType;
-use service::{permission::UserStorePermissions, usize_to_u32, ListResult};
+use service::{ListResult, permission::UserStorePermissions, usize_to_u32};
 
 #[derive(PartialEq, Debug)]
 pub struct UserStorePermissionNode {
@@ -44,6 +44,8 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PrescriptionRequestQuery,
+    PrescriptionRequestMutate,
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
@@ -109,6 +111,8 @@ impl UserPermission {
             PermissionType::CustomerReturnMutate => UserPermission::CustomerReturnMutate,
             PermissionType::PrescriptionQuery => UserPermission::PrescriptionQuery,
             PermissionType::PrescriptionMutate => UserPermission::PrescriptionMutate,
+            PermissionType::PrescriptionRequestQuery => UserPermission::PrescriptionRequestQuery,
+            PermissionType::PrescriptionRequestMutate => UserPermission::PrescriptionRequestMutate,
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
             PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
             PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,

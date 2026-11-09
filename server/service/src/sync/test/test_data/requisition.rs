@@ -5,8 +5,8 @@ use crate::sync::translations::requisition::{
 };
 use chrono::NaiveDate;
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, RequisitionRow, RequisitionRowDelete,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 use serde_json::json;
 

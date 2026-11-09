@@ -42,6 +42,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             expired_stock_issue_threshold,
             show_indicative_price_in_requisitions,
             item_margin_overrides_supplier_margin,
+            transfer_stock_to_internal_customers_at_cost_price,
             is_gaps,
             display_population_based_forecasting,
             global_table_configs: _, // Not included in preference descriptions UI
@@ -49,13 +50,14 @@ pub trait PreferenceServiceTrait: Sync + Send {
             // Hidden from the preferences edit UI until prescription payment
             // functionality is implemented (#6179)
             receive_payments_from_prescriptions: _,
+            global_logo,
+            decimal_places_for_numbers,
 
             // Store preferences
             blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
@@ -63,6 +65,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            can_change_target_months_of_stock,
             external_inbound_shipment_lines_must_be_authorised,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
@@ -73,6 +76,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             store_custom_colour,
             invoice_status_options,
             do_not_print_placeholder_line_labels,
+            prompt_for_batch_and_expiry_on_inbound_shipments,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -102,16 +106,22 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
         append_if_type(show_indicative_price_in_requisitions, &mut prefs, &input)?;
         append_if_type(item_margin_overrides_supplier_margin, &mut prefs, &input)?;
+        append_if_type(
+            transfer_stock_to_internal_customers_at_cost_price,
+            &mut prefs,
+            &input,
+        )?;
         append_if_type(is_gaps, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;
+        append_if_type(global_logo, &mut prefs, &input)?;
+        append_if_type(decimal_places_for_numbers, &mut prefs, &input)?;
         // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
         // the edit UI until prescription payment functionality exists
 
         // Store preferences
         append_if_type(blind_stocktake, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
-        append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
         append_if_type(disable_manual_returns, &mut prefs, &input)?;
@@ -129,6 +139,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             &mut prefs,
             &input,
         )?;
+        append_if_type(can_change_target_months_of_stock, &mut prefs, &input)?;
         append_if_type(
             external_inbound_shipment_lines_must_be_authorised,
             &mut prefs,
@@ -155,6 +166,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
         append_if_type(invoice_status_options, &mut prefs, &input)?;
         append_if_type(do_not_print_placeholder_line_labels, &mut prefs, &input)?;
+        append_if_type(
+            prompt_for_batch_and_expiry_on_inbound_shipments,
+            &mut prefs,
+            &input,
+        )?;
 
         Ok(prefs)
     }
@@ -186,8 +202,18 @@ fn append_if_type(
         store_id,
     }: &AppendIfTypeInputs,
 ) -> Result<(), PreferenceError> {
-    if &pref.preference_type() == pref_type {
-        pref_descriptions.push(pref.as_description(connection, store_id.clone())?);
+    // A preference is listed under its own type. A global preference that allows a
+    // store override is also listed under Store, carrying the store's effective
+    // value; under Global it always describes the global row, whatever store the
+    // caller's context names.
+    let listed = pref.preference_type() == *pref_type
+        || (*pref_type == PreferenceType::Store && pref.allows_store_override());
+    if listed {
+        let store_id = match pref_type {
+            PreferenceType::Global => None,
+            PreferenceType::Store => store_id.clone(),
+        };
+        pref_descriptions.push(pref.as_description(connection, store_id)?);
     }
     Ok(())
 }

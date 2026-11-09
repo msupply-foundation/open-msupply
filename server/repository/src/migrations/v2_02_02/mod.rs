@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 
 use crate::StorageConnection;
 
@@ -43,6 +43,11 @@ async fn migration_2_02_02() {
     .await;
 
     // Run this migration
-    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+    migrate(
+        &connection,
+        Some(version.clone()),
+        MigrationConfig::default(),
+    )
+    .unwrap();
     assert_eq!(get_database_version(&connection), version);
 }

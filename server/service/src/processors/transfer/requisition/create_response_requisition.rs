@@ -3,7 +3,7 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
-    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    pricing::item_price::{ItemPriceLookup, get_pricing_for_items},
     processors::transfer::requisition::RequisitionTransferOutput,
     requisition::common::{get_indicative_price_pref, get_lines_for_requisition},
     store_preference::get_store_preferences,
@@ -11,13 +11,13 @@ use crate::{
 };
 use chrono::{Months, Utc};
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
     IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
     MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError, Requisition,
     RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
     StoreRepository,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
 };
 use util::uuid::uuid;
 
@@ -230,17 +230,6 @@ fn generate_response_requisition(
     let requisition_number =
         next_number(connection, &NumberRowType::ResponseRequisition, &store_id)?;
 
-    let their_ref = match &request_requisition_row.their_reference {
-        Some(reference) => format!(
-            "From internal order {} ({})",
-            request_requisition_row.requisition_number, reference
-        ),
-        None => format!(
-            "From internal order {}",
-            request_requisition_row.requisition_number,
-        ),
-    };
-
     let comment = match &request_requisition_row.comment {
         Some(comment) => format!(
             "From internal order {} ({})",
@@ -261,7 +250,7 @@ fn generate_response_requisition(
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
         created_datetime: Utc::now().naive_utc(),
-        their_reference: Some(their_ref),
+        their_reference: request_requisition_row.their_reference.clone(),
         max_months_of_stock: request_requisition_row.max_months_of_stock,
         min_months_of_stock: request_requisition_row.min_months_of_stock,
         comment: Some(comment),
@@ -337,9 +326,10 @@ fn generate_response_requisition_lines(
                 price_per_unit,
                 available_volume,
                 location_type_id,
-                forecast_total_doses,
-                forecast_total_units,
-                vaccine_courses,
+                forecast_method,
+                forecast_monthly_consumption,
+                forecast_data,
+                campaign_id,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -365,6 +355,7 @@ fn generate_response_requisition_lines(
             id: uuid(),
             requisition_id: response_requisition.id.to_string(),
             item_id: item_id,
+            campaign_id,
             requested_quantity,
             suggested_quantity,
             available_stock_on_hand,
@@ -383,9 +374,9 @@ fn generate_response_requisition_lines(
             available_volume,
             location_type_id,
             price_per_unit,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_monthly_consumption,
+            forecast_data,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,
@@ -438,13 +429,13 @@ mod test {
     use super::*;
     use chrono::{NaiveDate, NaiveDateTime};
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_name_b, mock_request_draft_requisition, mock_store_b,
-            MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         PreferenceRow, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
         RequisitionRepository, SyncLogV5V6Row,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_name_b,
+            mock_request_draft_requisition, mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]
@@ -542,14 +533,18 @@ mod test {
                 result,
                 RequisitionTransferOutput::BeforeInitialisationMonths
             ),
-            "The old requisition should have been skipped due to initialisation months check, got: {:?}", result
+            "The old requisition should have been skipped due to initialisation months check, got: {:?}",
+            result
         );
 
         let result = processor
             .try_process_record(&connection, &requisition_transfer_new)
             .unwrap();
-        assert!(matches!(result, RequisitionTransferOutput::Processed(_)),
-        "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date. Got: {:?}", result);
+        assert!(
+            matches!(result, RequisitionTransferOutput::Processed(_)),
+            "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date. Got: {:?}",
+            result
+        );
     }
 
     #[actix_rt::test]
@@ -646,11 +641,7 @@ mod test {
         assert_eq!(
             response_lines
                 .iter()
-                .filter(|l| {
-                    l.requisition_line_row
-                        .price_per_unit
-                        .is_none()
-                })
+                .filter(|l| { l.requisition_line_row.price_per_unit.is_none() })
                 .count(),
             1,
             "The other line should have None as its value, copied from the original line that also has None"

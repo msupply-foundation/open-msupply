@@ -1,7 +1,7 @@
 use repository::{
-    printer::{PrinterFilter, PrinterRepository},
     EqualFilter, PrinterRow, PrinterRowRepository, RepositoryError, StorageConnection,
     StringFilter,
+    printer::{PrinterFilter, PrinterRepository},
 };
 
 use super::UpdatePrinter;

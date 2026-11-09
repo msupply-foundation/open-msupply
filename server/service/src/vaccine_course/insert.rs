@@ -1,15 +1,18 @@
 use super::{
     query::get_vaccine_course,
     update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
-    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+    validate::{
+        check_annual_doses_per_person_is_valid, check_dose_min_ages_are_in_order,
+        check_vaccine_course_name_exists_for_program,
+    },
 };
 use crate::{
-    activity_log::activity_log_entry, common::check_program_exists,
+    SingleRecordError, activity_log::activity_log_entry, common::check_program_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
-    SingleRecordError,
 };
 
 use repository::{
+    ActivityLogType, RepositoryError, StorageConnection,
     vaccine_course::{
         vaccine_course_dose_row::VaccineCourseDoseRowRepository,
         vaccine_course_item_row::VaccineCourseItemRowRepository,
@@ -18,7 +21,6 @@ use repository::{
             VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
     },
-    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -29,6 +31,7 @@ pub enum InsertVaccineCourseError {
     ProgramDoesNotExist,
     DoseMinAgesAreNotInOrder,
     DemographicIndicatorDoesNotExist,
+    AnnualDosesPerPersonNotPositive,
     DatabaseError(RepositoryError),
 }
 
@@ -45,6 +48,8 @@ pub struct InsertVaccineCourse {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: bool,
+    /// None counts every dose in the course, every year
+    pub annual_doses_per_person: Option<f64>,
 }
 
 pub fn insert_vaccine_course(
@@ -115,6 +120,12 @@ pub fn validate(
         return Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder);
     }
 
+    if let Some(annual_doses_per_person) = input.annual_doses_per_person {
+        if !check_annual_doses_per_person_is_valid(annual_doses_per_person) {
+            return Err(InsertVaccineCourseError::AnnualDosesPerPersonNotPositive);
+        }
+    }
+
     Ok(())
 }
 
@@ -131,6 +142,7 @@ pub fn generate(
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
+        annual_doses_per_person,
     }: InsertVaccineCourse,
 ) -> (VaccineCourseRow, Vec<VaccineCourseStoreConfigRow>) {
     let row = VaccineCourseRow {
@@ -143,6 +155,7 @@ pub fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose,
+        annual_doses_per_person,
     };
 
     let store_config_rows = store_configs

@@ -1,6 +1,6 @@
 use repository::{
-    asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
     RepositoryError, StorageConnection,
+    asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
 };
 use util::uuid::uuid;
 

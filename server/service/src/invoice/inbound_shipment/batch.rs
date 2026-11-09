@@ -3,31 +3,31 @@ use repository::{
 };
 
 use crate::{
+    BatchMutationsProcessor, InputWithResult, WithDBError,
     invoice_line::{
         inbound_shipment_from_internal_order_lines::{
-            insert_from_internal_order_line, InsertFromInternalOrderLine,
-            InsertFromInternalOrderLineError,
+            InsertFromInternalOrderLine, InsertFromInternalOrderLineError,
+            insert_from_internal_order_line,
         },
         inbound_shipment_service_line::{
-            delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
-            update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
-            InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
-            UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError,
+            DeleteInboundShipmentServiceLineError, InsertInboundShipmentServiceLine,
+            InsertInboundShipmentServiceLineError, UpdateInboundShipmentServiceLine,
+            UpdateInboundShipmentServiceLineError, delete_inbound_shipment_service_line,
+            insert_inbound_shipment_service_line, update_inbound_shipment_service_line,
         },
         stock_in_line::{
-            delete_stock_in_line, insert_stock_in_line, update_stock_in_line, DeleteStockInLine,
-            DeleteStockInLineError, InsertStockInLine, InsertStockInLineError, UpdateStockInLine,
-            UpdateStockInLineError,
+            DeleteStockInLine, DeleteStockInLineError, InsertStockInLine, InsertStockInLineError,
+            UpdateStockInLine, UpdateStockInLineError, delete_stock_in_line, insert_stock_in_line,
+            update_stock_in_line,
         },
     },
     service_provider::ServiceContext,
-    BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
 use super::{
-    delete_inbound_shipment, insert_inbound_shipment, update_inbound_shipment,
     DeleteInboundShipment, DeleteInboundShipmentError, InboundShipmentType, InsertInboundShipment,
     InsertInboundShipmentError, UpdateInboundShipment, UpdateInboundShipmentError,
+    delete_inbound_shipment, insert_inbound_shipment, update_inbound_shipment,
 };
 
 #[derive(Clone)]
@@ -282,19 +282,19 @@ pub fn batch_inbound_shipment(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_name_a, mock_outbound_shipment_b, mock_store_c, MockDataInserts},
-        test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRowRepository,
+        mock::{MockDataInserts, mock_item_a, mock_name_a, mock_outbound_shipment_b, mock_store_c},
+        test_db::setup_all,
     };
 
     use crate::{
+        InputWithResult,
         invoice::inbound_shipment::{
             BatchInboundShipment, DeleteInboundShipment, DeleteInboundShipmentError,
             InboundShipmentType, InsertInboundShipment,
         },
         invoice_line::stock_in_line::{InsertStockInLine, StockInType},
         service_provider::ServiceProvider,
-        InputWithResult,
     };
 
     #[actix_rt::test]

@@ -3,15 +3,15 @@ use crate::{
     nullable_update,
     requisition::{
         common::get_lines_for_requisition,
-        request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
+        request_requisition::{GenerateSuggestedQuantity, generate_suggested_quantity},
     },
     store_preference::get_store_preferences,
 };
 use chrono::Utc;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, StorageConnection, StoreFilter, StoreRepository,
+    requisition_row::{RequisitionRow, RequisitionStatus},
 };
 
 pub struct GenerateResult {
@@ -118,8 +118,8 @@ pub fn generate_updated_lines(
              }| {
                 requisition_line_row.suggested_quantity =
                     generate_suggested_quantity(GenerateSuggestedQuantity {
-                        average_monthly_consumption: requisition_line_row
-                            .average_monthly_consumption,
+                        forecast_monthly_consumption: requisition_line_row
+                            .forecast_monthly_consumption,
                         available_stock_on_hand: requisition_line_row.available_stock_on_hand,
                         min_months_of_stock: requisition.min_months_of_stock,
                         max_months_of_stock: requisition.max_months_of_stock,

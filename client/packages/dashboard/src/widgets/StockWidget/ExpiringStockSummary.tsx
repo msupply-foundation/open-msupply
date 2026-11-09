@@ -35,10 +35,13 @@ export const ExpiringStockSummary = ({
 
   const { customDate, urlQueryDate, formatDaysFromToday } = useFormatDateTime();
   const today = new Date();
-  const inAMonth = DateUtils.addMonths(today, 1);
+  // A batch is usable to the end of its expiry day, so expired stops at
+  // yesterday and expiring soon starts today — the same windows as the counts.
+  const yesterday = DateUtils.addDays(today, -1);
+  const inAMonth = DateUtils.addDays(today, DAYS_TILL_EXPIRY);
 
   const getExpiredUrlQuery = `${RANGE_SPLIT_CHAR}${customDate(
-    today,
+    yesterday,
     urlQueryDate
   )}`;
   const getExpiredInAMonthUrlQuery = `${customDate(
@@ -63,7 +66,7 @@ export const ExpiringStockSummary = ({
       testId="dashboard-panel-inventory.expiring-stock"
       stats={[
         {
-          label: t('label.expired', {
+          label: t('label.expired-batches', {
             count: Math.round(stats?.expired || 0),
           }),
           value: formatNumber.round(stats?.expired),
@@ -77,7 +80,7 @@ export const ExpiringStockSummary = ({
           testId: 'dashboard-stat-inventory.expiring-stock.expired',
         },
         {
-          label: t('label.expiring-soon', {
+          label: t('label.batches-expiring-soon', {
             count: Math.round(stats?.expiringSoon || 0),
           }),
           value: formatNumber.round(stats?.expiringSoon),

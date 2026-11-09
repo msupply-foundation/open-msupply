@@ -1,8 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, LocationMovementRowRepository, RepositoryError, StockLineRowRepository,
-    TransactionError,
+    CustomFieldValueType, Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, LocationMovementRowRepository, RepositoryError,
+    StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -11,17 +11,18 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::NullableUpdate;
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
-use crate::invoice_line::stock_out_line::{
-    delete::{delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError},
-    StockOutType,
-};
 use crate::invoice_line::ShipmentTaxUpdate;
+use crate::invoice_line::stock_out_line::{
+    StockOutType,
+    delete::{DeleteStockOutLine, DeleteStockOutLineError, delete_stock_out_line},
+};
 use crate::processors::ProcessorType::RequisitionAutoFinalise;
 use crate::service_provider::ServiceContext;
-use crate::NullableUpdate;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentStatus {
@@ -43,6 +44,9 @@ pub struct UpdateOutboundShipment {
     pub currency_rate: Option<f64>,
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub shipping_method_id: Option<NullableUpdate<String>>,
+    /// The campaign this shipment issues for (null = routine). Existing lines
+    /// are left as they are.
+    pub campaign_id: Option<NullableUpdate<String>>,
     pub backdated_datetime: Option<DateTime<Utc>>,
     /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
@@ -61,8 +65,15 @@ pub enum UpdateOutboundShipmentError {
     CannotIssueInForeignCurrency,
     OtherPartyDoesNotExist,
     ShippingMethodDoesNotExist,
+    CampaignDoesNotExist,
     /// A customFields patch key is not a visible outbound shipment property.
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     CannotHaveEstimatedDeliveryDateBeforeShippedDate,
@@ -79,6 +90,19 @@ pub enum UpdateOutboundShipmentError {
         line_id: String,
         error: DeleteStockOutLineError,
     },
+}
+
+impl From<CustomFieldPatchProblem> for UpdateOutboundShipmentError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateOutboundShipmentError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateOutboundShipmentError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 type OutError = UpdateOutboundShipmentError;
@@ -236,28 +260,29 @@ impl UpdateOutboundShipment {
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
-            mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
         InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
         NameStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow,
         StockLineRowRepository, StorageConnection,
+        mock::{
+            MockData, MockDataInserts, mock_campaign_a, mock_inbound_shipment_a, mock_item_a,
+            mock_name_a, mock_outbound_shipment_b, mock_outbound_shipment_c,
+            mock_outbound_shipment_on_hold, mock_outbound_shipment_picked, mock_store_a,
+            mock_store_c,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{
+        NullableUpdate,
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
-    use super::{backdated_datetime_change, UpdateOutboundShipmentError};
+    use super::{UpdateOutboundShipmentError, backdated_datetime_change};
 
     type ServiceError = UpdateOutboundShipmentError;
 
@@ -687,6 +712,7 @@ mod test {
                 currency_rate: _,
                 expected_delivery_date,
                 shipping_method_id: _,
+                campaign_id: _,
                 backdated_datetime: _,
                 custom_fields: _,
             } = get_update();
@@ -1080,7 +1106,7 @@ mod test {
 
     #[actix_rt::test]
     async fn update_outbound_shipment_backdate_success() {
-        use chrono::{Duration, Utc};
+        use chrono::{Duration, SubsecRound, Utc};
 
         fn new_outbound() -> InvoiceRow {
             InvoiceRow {
@@ -1111,7 +1137,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = Utc::now() - Duration::days(2);
+        let two_days_ago = Utc::now().trunc_subsecs(6) - Duration::days(2);
 
         let result = service.update_outbound_shipment(
             &context,
@@ -1652,7 +1678,7 @@ mod test {
     // shipped_datetime so the item ledger reflects the backdated date.
     #[actix_rt::test]
     async fn update_outbound_shipment_backdate_status_transition_uses_backdated_datetime() {
-        use chrono::{Duration, Utc};
+        use chrono::{Duration, SubsecRound, Utc};
 
         fn new_outbound() -> InvoiceRow {
             InvoiceRow {
@@ -1683,7 +1709,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = Utc::now() - Duration::days(2);
+        let two_days_ago = Utc::now().trunc_subsecs(6) - Duration::days(2);
 
         // Step 1: Backdate the New invoice
         service
@@ -1864,5 +1890,74 @@ mod test {
             .unwrap();
         assert_eq!(after.status, InvoiceStatus::Picked);
         assert!(!after.on_hold);
+    }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_campaign() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "outbound_campaign".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_campaign",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                ..Default::default()
+            },
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+        let campaign = |value: Option<String>| UpdateOutboundShipment {
+            id: invoice().id,
+            campaign_id: Some(NullableUpdate { value }),
+            ..Default::default()
+        };
+        let saved_campaign = || {
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id(&invoice().id)
+                .unwrap()
+                .unwrap()
+                .campaign_id
+        };
+
+        assert_eq!(
+            service
+                .update_outbound_shipment(&context, campaign(Some("not_a_campaign".to_string()))),
+            Err(ServiceError::CampaignDoesNotExist)
+        );
+
+        service
+            .update_outbound_shipment(&context, campaign(Some(mock_campaign_a().id)))
+            .unwrap();
+        assert_eq!(saved_campaign(), Some(mock_campaign_a().id));
+
+        // A patch without the field leaves it alone
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice().id,
+                    comment: Some("comment".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(saved_campaign(), Some(mock_campaign_a().id));
+
+        service
+            .update_outbound_shipment(&context, campaign(None))
+            .unwrap();
+        assert_eq!(saved_campaign(), None);
     }
 }

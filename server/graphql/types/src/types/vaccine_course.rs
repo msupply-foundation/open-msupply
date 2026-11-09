@@ -2,19 +2,17 @@ use async_graphql::*;
 
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
-        VaccineCourseStoreConfigByVaccineCourseIdLoader,
-        VaccineCourseItemByVaccineCourseIdLoader,
+        VaccineCourseItemByVaccineCourseIdLoader, VaccineCourseStoreConfigByVaccineCourseIdLoader,
     },
-    ContextExt,
 };
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
 use super::{
-    DemographicNode, VaccineCourseDoseNode, VaccineCourseStoreConfigNode,
-    VaccineCourseItemNode,
+    DemographicNode, VaccineCourseDoseNode, VaccineCourseItemNode, VaccineCourseStoreConfigNode,
 };
 
 #[derive(PartialEq, Debug)]
@@ -54,6 +52,12 @@ impl VaccineCourseNode {
 
     pub async fn can_skip_dose(&self) -> bool {
         self.row().can_skip_dose
+    }
+
+    /// The average number of doses a person reached gets in a year, for population
+    /// forecasting. Null counts every dose in the course
+    pub async fn annual_doses_per_person(&self) -> Option<f64> {
+        self.row().annual_doses_per_person
     }
 
     pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {

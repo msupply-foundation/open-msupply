@@ -1,12 +1,12 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository,
 };
 
 use super::{
-    clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, custom_fields_json::JsonValue, unit_row::unit, ItemLinkRow,
-    ItemLinkRowRepository, RepositoryError, StorageConnection,
+    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
+    clinician_link_row::clinician_link, custom_fields_json::JsonValue, item_link_row::item_link,
+    item_row::item::dsl::*, location_type_row::location_type, unit_row::unit,
 };
 
 use diesel::prelude::*;
@@ -208,10 +208,8 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, item_id: &str) -> Result<bool, RepositoryError> {
-        let exists: bool = diesel::select(diesel::dsl::exists(
-            item.filter(id.eq(item_id)),
-        ))
-        .get_result(self.connection.lock().connection())?;
+        let exists: bool = diesel::select(diesel::dsl::exists(item.filter(id.eq(item_id))))
+            .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
 
@@ -331,7 +329,7 @@ impl Upsert for ItemRow {
 #[cfg(test)]
 mod test {
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, ItemRow, ItemRowRepository, ItemType};
+    use crate::{ItemRow, ItemRowRepository, ItemType, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn nullable_restricted_item_type() {

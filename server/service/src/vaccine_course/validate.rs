@@ -1,9 +1,9 @@
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
     vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use super::update::VaccineCourseDoseInput;
@@ -30,6 +30,12 @@ pub fn check_vaccine_course_name_exists_for_program(
     }
     let result = VaccineCourseRepository::new(connection).query_by_filter(filter)?;
     Ok(result.is_empty())
+}
+
+/// Above 0: a course nobody gets a dose of forecasts nothing, which is no use (clear it
+/// instead to count every dose in the course)
+pub fn check_annual_doses_per_person_is_valid(annual_doses_per_person: f64) -> bool {
+    annual_doses_per_person > 0.0
 }
 
 pub fn check_dose_min_ages_are_in_order(doses: &Vec<VaccineCourseDoseInput>) -> bool {

@@ -127,12 +127,12 @@ pub fn get_requisition_available_volume_for_items(
 mod test {
     use super::*;
     use repository::{
+        ItemRow, LocationRow, RequisitionLineRow,
         mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_location_1, mock_location_type_a,
-            mock_location_type_b, mock_new_response_requisition, MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_location_1,
+            mock_location_type_a, mock_location_type_b, mock_new_response_requisition,
         },
         test_db::setup_all_with_data,
-        ItemRow, LocationRow, RequisitionLineRow,
     };
 
     fn location_a() -> LocationRow {

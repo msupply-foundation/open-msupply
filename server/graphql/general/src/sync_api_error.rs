@@ -35,6 +35,7 @@ pub enum Variant {
     V6ApiVersionIncompatible,
     IntegrationError,
     V7UpgradeFailed,
+    SyncApiPaused,
 }
 
 impl SyncErrorNode {
@@ -70,7 +71,7 @@ impl SyncErrorNode {
         let sync_v5_error_code = match &error.source {
             SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
             SyncApiErrorVariantV5::ConnectionError { .. } => {
-                return Self::from_error_variant(Variant::ConnectionError, error)
+                return Self::from_error_variant(Variant::ConnectionError, error);
             }
             _ => return Self::unknown_error(error),
         };
@@ -111,6 +112,7 @@ impl SyncErrorNode {
             from::V6ApiVersionIncompatible => to::V6ApiVersionIncompatible,
             from::IntegrationError => to::IntegrationError,
             from::V7UpgradeFailed => to::V7UpgradeFailed,
+            from::SyncApiPaused => to::SyncApiPaused,
         };
 
         Self::from_variant(variant, message)
@@ -133,7 +135,10 @@ pub fn map_request_auth_error(error: RequestAndSetSiteAuthError) -> Result<SyncE
             SyncErrorNode::from_error_variant(Variant::SiteUUIDIsBeingChanged, &error),
         ),
         from::SyncApiV5CreatingError(SyncApiV5CreatingError::CannotParseSyncUrl(_, _)) => {
-            SyncErrorEither::V5V6(SyncErrorNode::from_error_variant(Variant::InvalidUrl, &error))
+            SyncErrorEither::V5V6(SyncErrorNode::from_error_variant(
+                Variant::InvalidUrl,
+                &error,
+            ))
         }
         from::SyncV7Error(sync_error) => {
             SyncErrorEither::V7(SyncErrorV7Node::from_sync_error(sync_error.clone()))

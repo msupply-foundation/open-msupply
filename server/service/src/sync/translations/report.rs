@@ -1,8 +1,7 @@
 use crate::sync::translations::om_form_schema::OmFormSchemaTranslation;
 
 use super::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 use repository::{
     ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete, Row, StorageConnection,

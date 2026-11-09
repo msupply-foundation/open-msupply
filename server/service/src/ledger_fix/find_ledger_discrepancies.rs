@@ -1,8 +1,8 @@
 use repository::{
+    EqualFilter, RepositoryError, StockLineFilter, StorageConnection,
     stock_line_ledger_discrepancy::{
         StockLineLedgerDiscrepancyFilter, StockLineLedgerDiscrepancyRepository,
     },
-    EqualFilter, RepositoryError, StockLineFilter, StorageConnection,
 };
 use thiserror::Error;
 
@@ -49,13 +49,13 @@ pub(super) fn find_stock_line_ledger_discrepancies(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider};
     use repository::{
-        mock::{
-            mock_item_a, mock_store_a, mock_store_b, test_helpers::make_movements, MockData,
-            MockDataInserts,
-        },
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_store_a, mock_store_b,
+            test_helpers::make_movements,
+        },
     };
 
     fn mock_data() -> MockData {

@@ -1,0 +1,1523 @@
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  Show,
+  Suspense,
+  untrack,
+  type Component,
+  type JSX,
+} from 'solid-js';
+import type { CellContext } from '@tanstack/solid-table';
+import { useNavigate, useParams } from '@solidjs/router';
+import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
+import { t } from '../../../intl';
+import { Num } from '../../../ui/elements/typography/Num';
+import { Page } from '../../../ui/layout/Page/Page';
+import { Header } from '../../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { SidebarIcon } from '../../../ui/icons';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+} from '../../../ui/elements/table/DataTable';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
+import {
+  FilterBar,
+  FilterCheckbox,
+  FilterTextInput,
+  constructFilters,
+  type Filter,
+} from '../../../ui/elements/selectors/FilterBar';
+import { AlertTriangleIcon } from '../../../ui/icons';
+import { createTableConfig } from '../../../api/createTableConfig';
+import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import {
+  createRegionDiagnostics,
+  recordPluginDiagnostic,
+} from '../../../plugins/diagnostics';
+import {
+  contributionId,
+  visibleContributions,
+} from '../../../plugins/PluginSlot';
+import {
+  INTERNAL_ORDER_LINE_COLUMNS as COL,
+  mergeLineColumns,
+  sortLinesByContribution,
+  type LineColumnBatch,
+} from './lineColumns';
+import {
+  toLineView,
+  toInternalOrderView,
+  lineMonthsOfStock,
+} from './pluginViews';
+import {
+  InternalOrderDetail,
+  type InternalOrderInfoFragment,
+  type InternalOrderLineFragment,
+} from './internalOrderDetail.generated';
+import { InternalOrderDetailContext } from './detailContext.generated';
+import { StoreOwnName } from './indicators.generated';
+import {
+  applySavedIndicatorValue,
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
+import {
+  saveInternalOrderFields,
+  addInternalOrderFromMasterList,
+} from './internalOrderUpdate';
+import { isOrderEditable } from './internalOrderDetailStatus';
+import { reportSeedArgs } from './reportSeedArgs';
+import {
+  InternalOrderToolbar,
+  type HeaderEditFields,
+} from './InternalOrderToolbar';
+import { intervalAndBufferBehindTarget } from './targetMonths';
+import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
+import { ActivityLogPanel } from '../../../domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
+import { InternalOrderSidePanel } from './InternalOrderSidePanel';
+import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
+import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
+import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
+import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
+import { MasterListPickerModal } from '../../../domain/masterList';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
+import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
+
+// The internal-order detail view (spec/internal-orders S3): view, header edits,
+// send, the side panel (S5), the Documents / Indicators / Log tabs,
+// Export/Print (reports S4), the ancillary Add/Update actions, the line editor
+// (S4 — Add item + row-click edit), the master-list picker (S7),
+// use-suggested, and bulk line delete.
+//
+// ⚠️ Interim: the line table reads the NESTED `lines` connection with
+// CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
+// query does not exist yet (a backend gap, PR #12526; see contract.md
+// § "Backend gaps"). It moves server-side once the PR lands.
+
+type Line = InternalOrderLineFragment;
+
+// One shared empty map, so the non-suspending batch read returns a STABLE value
+// while nothing is loaded — a fresh `new Map()` per read would make the columns
+// memo recompute on every unrelated update.
+const EMPTY_BATCH_DATA: ReadonlyMap<
+  string,
+  ReadonlyMap<string, unknown>
+> = new Map();
+
+// The client-side sort keys the read-only line table supports.
+type SortKey =
+  | 'code'
+  | 'name'
+  | 'dps'
+  | 'available'
+  | 'amc'
+  | 'mos'
+  | 'target'
+  | 'suggested'
+  | 'requested';
+
+// The line filter, shaped like the wire filter the server-paginated lines
+// read will take (itemCodeOrName.like, hideOverMinimum, hideZeroRequested —
+// see the interim note above), so the client-side match swaps to the server
+// filter without a state change.
+type LineFilter = {
+  itemCodeOrName?: { like: string } | null;
+  hideOverMinimum?: boolean | null;
+  hideZeroRequested?: boolean | null;
+};
+
+// The line table's filters (ui-standards § tables → filtering): the item
+// code/name search — the same chip the stocktake detail table keeps to hand —
+// the hide-stock-over-minimum narrowing, and the optional hide-zero-quantity
+// narrowing (OMS-REG-REPL-04.105). Client-side for now, so no debounce.
+const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
+  itemCodeOrName: {
+    label: () => t('label.code-or-name'),
+    render: props => (
+      <FilterTextInput
+        label={t('label.code-or-name')}
+        placeholder={t('placeholder.search')}
+        testId={props.testId}
+        debounceMs={0}
+        value={props.filter().itemCodeOrName?.like ?? ''}
+        onInput={value =>
+          props.setPartialFilter({
+            itemCodeOrName: value ? { like: value } : null,
+          })
+        }
+      />
+    ),
+  },
+  hideOverMinimum: {
+    label: () => t('label.hide-stock-over-minimum'),
+    render: props => (
+      <FilterCheckbox
+        // The chip's own label names the fact, so the bare pill checkbox —
+        // ticking narrows to the lines still under their reorder threshold;
+        // unticked writes null (the chip stays, added-but-empty), since
+        // there is no "show only over minimum" filter.
+        label={t('label.hide-stock-over-minimum')}
+        testId={props.testId}
+        checked={props.filter().hideOverMinimum === true}
+        onChange={checked =>
+          props.setPartialFilter({ hideOverMinimum: checked ? true : null })
+        }
+      />
+    ),
+  },
+  hideZeroRequested: {
+    label: () => t('label.hide-zero-quantity'),
+    render: props => (
+      <FilterCheckbox
+        // Ticking hides the lines requesting nothing — a long order started
+        // from a master list is easier to work through. Unticked writes null.
+        label={t('label.hide-zero-quantity')}
+        testId={props.testId}
+        checked={props.filter().hideZeroRequested === true}
+        onChange={checked =>
+          props.setPartialFilter({ hideZeroRequested: checked ? true : null })
+        }
+      />
+    ),
+  },
+});
+
+const InternalOrderDetailView: Component = () => {
+  const params = useParams<{ storeId: string; orderId: string }>();
+  const navigate = useNavigate();
+  // The item search and hide-over-minimum are the screen's default filters
+  // (ui-standards § tables → filtering): seeded present-as-null so their chips
+  // are on the bar from the start; the client-side match ignores each until
+  // typed / ticked.
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({
+    itemCodeOrName: null,
+    hideOverMinimum: null,
+  });
+  // Line-table row selection (OMS-REG-REPL-04.71). Owned by the page (like
+  // sort/filter); a non-empty selection swaps the status footer for the
+  // bulk-action bar.
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Lines a send's reasons-backstop refusal named (OMS-REG-REPL-04.81): their
+  // Reason cells flag until the next send, or until a line edit refetches the
+  // table.
+  const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
+    new Set()
+  );
+  // Keyed as `string`, not the host `SortKey` union: a contributed sortable
+  // column's key is its namespaced id (lineColumns § the contributed sort).
+  const [sort, setSort] = createSignal<SortState<string>>({
+    key: 'name',
+    desc: false,
+  });
+  const [supplierError, setSupplierError] = createSignal<string>();
+  // A refused target change (the store fixes it to its supply interval +
+  // safety buffer, OMS-REG-REPL-17.18) — shown as an error notice beneath the
+  // header cluster until the next target change.
+  const [targetError, setTargetError] = createSignal<string>();
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  // The line editor (S4): closed, open in add mode (undefined line), or open on
+  // an existing line (edit mode). One signal drives both.
+  const [editorLine, setEditorLine] = createSignal<
+    { mode: 'add' } | { mode: 'edit'; line: Line }
+  >();
+  // Narrowed once, so the editor's initialLine needs no cast (kdd/type-safety).
+  const editorInitialLine = () => {
+    const entry = editorLine();
+    return entry?.mode === 'edit' ? entry.line : undefined;
+  };
+  // The Add split button's remembered choice (its primary half reflects the
+  // last-picked option, spec S3 § page actions).
+  const [addChoice, setAddChoice] = createSignal('item');
+  // The master-list picker (S7) and the chosen list awaiting its add
+  // confirmation; a rejection surfaces as a blocking notice.
+  const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
+  const [pendingMasterList, setPendingMasterList] = createSignal<{
+    id: string;
+    name: string;
+  }>();
+  const [masterListError, setMasterListError] = createSignal<string>();
+
+  const tableConfig = createTableConfig({
+    tableId: 'internal-order-detail',
+    defaultConfig: {
+      // Comment + code are pinned inline-start so the row stays identifiable
+      // (and its comment reachable) as the wide column set scrolls.
+      base: {
+        columnPinning: { left: [COL.comment, COL.code] },
+      },
+      compact: {
+        viewMode: 'card',
+        columnPinning: { left: [COL.comment, COL.code] },
+        columnVisibility: {
+          [COL.unit]: false,
+          [COL.dps]: false,
+          [COL.targetStock]: false,
+        },
+      },
+    },
+  });
+
+  // The header read. The resource IS the local state: header saves write back
+  // with `mutate` (no refetch → no remount), but the ancillary Add/Update, the
+  // Documents tab, the line editor, and the master-list add all `refetch()`
+  // while the screen — and often an OPEN dialog (the line editor) — stays up.
+  // So `info()` must read `.latest` NON-suspending: a `data()` read would
+  // re-suspend the <Suspense> on every refetch, remounting the subtree and
+  // detaching the open <dialog> from the top layer (its backdrop vanishes and
+  // the page shows through — kdd/solid-reactivity-pitfalls § no remounts).
+  // `.latest` suspends only until the FIRST load resolves, so the initial
+  // spinner (the fallback below, gated on `data.loading`) is unchanged.
+  const [data, { mutate, refetch }] = createResource(
+    () => ({ storeId: params.storeId, id: params.orderId }),
+    async (variables): Promise<InternalOrderInfoFragment | undefined> => {
+      const result = await graphqlFetch(InternalOrderDetail, variables);
+      if (result.kind !== 'success') return undefined;
+      return result.data.requisition.__typename === 'RequisitionNode'
+        ? result.data.requisition
+        : undefined;
+    }
+  );
+  const info = (): InternalOrderInfoFragment | undefined => data.latest;
+
+  // Store-context gates, fetched once per store, read non-suspending (safe
+  // default OFF while unresolved).
+  const [context] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(InternalOrderDetailContext, {
+        storeId,
+      });
+      if (result.kind !== 'success') return undefined;
+      return result.data;
+    }
+  );
+  const prefs = () => context.latest?.preferences;
+  const storePrefs = () => context.latest?.storePreferences;
+
+  // The active store's own name id — the customer identity the indicator values
+  // are keyed to. Fetched once per store, read non-suspending.
+  const [ownName] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(StoreOwnName, { storeId });
+      if (result.kind !== 'success') return undefined;
+      return result.data.stores.nodes[0]?.name.id;
+    }
+  );
+
+  // The Indicators tab's data (definitions + this period's values). Fetched
+  // only for a program order once its period and the store name id resolve; the
+  // serialised variables are the resource key so identical content never
+  // refetches. Read non-suspending so it never remounts the open screen.
+  const indicatorVariables = () => {
+    const node = info();
+    const nameId = ownName.latest;
+    if (!node?.program || !node.period || !nameId) return false;
+    return JSON.stringify({
+      storeId: params.storeId,
+      programId: node.program.id,
+      periodId: node.period.id,
+      customerNameId: nameId,
+    });
+  };
+  // The Export/Print seeds (rules § printing) — see reportSeedArgs.ts for why
+  // they are not gated on showIndicators().
+  const seedArgs = () => reportSeedArgs(info(), ownName.latest);
+
+  const [indicators, { mutate: mutateIndicators }] = createResource(
+    indicatorVariables,
+    async serialised => {
+      const result = await graphqlFetch(
+        ProgramIndicatorValues,
+        JSON.parse(serialised)
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.programIndicators.nodes;
+    }
+  );
+  // A saved indicator cell goes straight back into the fetched nodes (no
+  // refetch → no remount, as the header edits do): the tab's inputs start from
+  // what they are handed, so without this the next mount of a cell — stepping
+  // to another line, re-entering the tab — would show the pre-edit figure
+  // (#957).
+  const onIndicatorSaved = (valueId: string, value: string) =>
+    mutateIndicators(prev =>
+      prev ? applySavedIndicatorValue(prev, valueId, value) : prev
+    );
+  const indicatorNodes = () => gated(indicators) ?? [];
+  const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
+  const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
+  const showExcess = () => prefs()?.warningForExcessRequest ?? false;
+  const showDestination = () =>
+    prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
+  const requiresAuth = () =>
+    storePrefs()?.requestRequisitionRequiresAuthorisation ?? false;
+  // The empty-send guard's keep-zero-lines arm (OMS-REG-REPL-05.17, D20).
+  const keepZeroLines = () =>
+    storePrefs()?.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised ??
+    false;
+  // The extended consumption columns / Area-AMC header: a program order on a
+  // customer-statistics store.
+  const showExtended = () =>
+    !!info()?.program &&
+    (storePrefs()?.useConsumptionAndStockFromCustomersForInternalOrders ??
+      false);
+  const showApproval = () =>
+    requiresAuth() && (info()?.approvalStatus ?? 'NONE') !== 'NONE';
+  // The side panel's "Created from requisition" row (display-only,
+  // OMS-REG-REPL-04.85).
+  const showSourceLink = () =>
+    prefs()?.canCreateInternalOrderFromARequisition ?? false;
+  // Documents upload/remove are offered on any status, but withheld when the
+  // supplier's store is disabled (OMS-REG-REPL-14.2/.5).
+  const supplierEnabled = () => !info()?.otherParty.store?.isDisabled;
+
+  // Indicators tab gate (OMS-REG-REPL-12.1): a non-emergency program order, a
+  // store-backed supplier, and the program defines ≥1 indicator. Independent of
+  // the customer-statistics prefs (those only gate the breakdown panel,
+  // OMS-REG-REPL-12.9).
+  const showIndicators = () =>
+    isProgram() &&
+    info()?.isEmergency === false &&
+    !!info()?.otherParty.store &&
+    indicatorNodes().length > 0;
+  const showCustomerBreakdown = () =>
+    (storePrefs()?.useConsumptionAndStockFromCustomersForInternalOrders ??
+      false) &&
+    (storePrefs()?.extraFieldsInRequisition ?? false);
+
+  const editable = () => {
+    const node = info();
+    return node ? isOrderEditable(node) : false;
+  };
+  // A placeholder (requested 0) on an order that can still change: a Sent
+  // order may keep its zero lines, and those need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    editable() && line.requestedQuantity === 0;
+  const isProgram = () => !!info()?.program;
+  const orderInPacks = () => prefs()?.orderInPacks ?? false;
+  // The Add-item affordance / add mode (OMS-REG-REPL-04.63): a Draft general
+  // order whose supplier's store is enabled — program orders' item sets are
+  // fixed.
+  const canAddLines = () => editable() && !isProgram();
+
+  // Save & next's walk (OMS-REG-REPL-04.77): the next line after the current in
+  // the table's current sort/filter order, skipping ones already visited this
+  // run. The client-side table holds every line (the server-paginated walk
+  // collapses to a plain scan here), so no page advance is needed.
+  const resolveNextLine = (
+    currentLineId: string,
+    covered: Set<string>
+  ): Line | undefined => {
+    const ordered = rows();
+    const start = ordered.findIndex(line => line.id === currentLineId);
+    for (let index = start + 1; index < ordered.length; index++)
+      if (!covered.has(ordered[index]!.id)) return ordered[index];
+    return ordered.find(line => !covered.has(line.id));
+  };
+
+  // The order's existing line for an item (add mode loads it rather than
+  // duplicating, OMS-REG-REPL-04.64).
+  const findLineForItem = (itemId: string): Line | undefined =>
+    info()?.lines.nodes.find(line => line.itemId === itemId);
+
+  // The Add split button's action (OMS-REG-REPL-04.63): Add item opens the line
+  // editor, Add from master list opens the S7 picker.
+  const onAddAction = (choice: string) => {
+    if (choice === 'master-list') setMasterListPickerOpen(true);
+    else setEditorLine({ mode: 'add' });
+  };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, because two controls
+  // trigger it: the header SplitButton and the ghost button in the table's
+  // empty slot. Each carries `shortcut={ALT_N}` for its badge; neither owns the
+  // action.
+  //
+  // `run` is the single-item add, the split button's default option — not its
+  // current menu selection, which may be the master-list picker. Same gate as
+  // both controls (canAddLines), but reached through `.state` rather than
+  // `info()`: that one reads `data.latest`, which suspends on the first pending
+  // read, and the palette evaluates every action's `disabled()` in its own
+  // render (kdd/keyboard-layer § an action's `disabled` MUST NOT read a
+  // suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditorLine({ mode: 'add' }),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || !isOrderEditable(node) || !!node.program;
+    },
+  });
+
+  // The confirmed master-list bulk add (OMS-REG-REPL-04.26/.27/.67): add, then
+  // refetch the page; a rejection replaces the confirmation with a notice.
+  const confirmAddFromMasterList = async () => {
+    const list = pendingMasterList();
+    const node = info();
+    if (!list || !node) return;
+    setPendingMasterList(undefined);
+    const result = await addInternalOrderFromMasterList(
+      params.storeId,
+      node.id,
+      list.id
+    );
+    if (result.kind === 'done') void refetch();
+    else if (result.kind === 'error') setMasterListError(result.message);
+  };
+
+  // ONE debounced buffer for the as-you-type reference (comment rides the same
+  // buffer for the side panel).
+  const edit = createDebouncedEdit<HeaderEditFields>({
+    id: () => info()?.id ?? '',
+    initial: () => ({
+      theirReference: info()?.theirReference ?? '',
+      comment: info()?.comment ?? '',
+    }),
+    save: patch => void saveField(patch),
+  });
+
+  // Header-level save (updateRequestRequisition), spliced back wholesale — the
+  // response carries the refreshed node (with recalculated suggestions after a
+  // threshold change), so no refetch is needed.
+  const saveField = async (patch: Record<string, unknown>): Promise<void> => {
+    const node = info();
+    if (!node) return;
+    const result = await saveInternalOrderFields(params.storeId, {
+      id: node.id,
+      ...patch,
+    });
+    if (result.kind === 'saved') mutate(() => result.node);
+    if (result.kind === 'error') {
+      if (result.field === 'target') setTargetError(result.message);
+      else setSupplierError(result.message);
+    }
+  };
+
+  const changeSupplier = (supplierId: string) => {
+    setSupplierError(undefined);
+    void saveField({ otherPartyId: supplierId });
+  };
+  const changeDestination = (customerId: string | null) =>
+    void saveField({ destinationCustomerId: { value: customerId } });
+  const changeThreshold = (months: number) =>
+    saveField({ minMonthsOfStock: months });
+  const changeTarget = (months: number) => {
+    setTargetError(undefined);
+    return saveField({ maxMonthsOfStock: months });
+  };
+
+  const onSent = (node: InternalOrderInfoFragment) => mutate(() => node);
+
+  // --- Read-only line table: client-side filter + sort over nested lines. ---
+
+  const monthsThreshold = (node: InternalOrderInfoFragment) =>
+    node.minMonthsOfStock > 0 ? node.minMonthsOfStock : node.maxMonthsOfStock;
+
+  // The one MOS formula, shared with the SDK line view (pluginViews) so the
+  // figure a plugin reads is the figure this column shows.
+  const mos = (line: Line) => lineMonthsOfStock(line);
+  // Target months × the line's monthly demand, whatever its forecast method
+  // (resolved server-side).
+  const targetStock = (line: Line) => line.targetStock;
+  const isExcess = (line: Line) =>
+    showExcess() && line.requestedQuantity - line.suggestedQuantity >= 1;
+
+  const sortValue = (line: Line, key: string): number | string => {
+    switch (key) {
+      case 'code':
+        return line.item.code.toLowerCase();
+      case 'name':
+        return line.itemName.toLowerCase();
+      case 'dps':
+        return line.item.defaultPackSize;
+      case 'available':
+        return line.availableStockOnHand;
+      case 'amc':
+        return line.averageMonthlyConsumption;
+      case 'mos':
+        return mos(line);
+      case 'target':
+        return targetStock(line);
+      case 'suggested':
+        return line.suggestedQuantity;
+      case 'requested':
+        return line.requestedQuantity;
+      // A key that is neither a host key nor a resolvable contributed sort —
+      // a plugin uninstalled under a remembered sort — leaves the set as it
+      // arrived rather than guessing an order.
+      default:
+        return 0;
+    }
+  };
+
+  // Membership only — `rows()` below is the sorted view. Split because the
+  // loaders' batch is keyed on membership: a sort must never refetch it, and
+  // the CONTRIBUTED sort reads the batch, so keying the resource on sorted
+  // order would cycle (sort → key → refetch → data → resort).
+  const filteredLines = (): Line[] => {
+    const node = info();
+    if (!node) return [];
+    let lines = node.lines.nodes;
+    const f = (lineFilter().itemCodeOrName?.like ?? '').trim().toLowerCase();
+    if (f)
+      lines = lines.filter(
+        l =>
+          l.item.code.toLowerCase().includes(f) ||
+          l.itemName.toLowerCase().includes(f)
+      );
+    if (lineFilter().hideZeroRequested === true)
+      lines = lines.filter(l => l.requestedQuantity !== 0);
+    if (lineFilter().hideOverMinimum === true) {
+      const months = monthsThreshold(node);
+      // Stock against the threshold months of the line's monthly demand.
+      lines = lines.filter(
+        l =>
+          l.availableStockOnHand < l.forecastMonthlyConsumption * months ||
+          (l.availableStockOnHand === 0 && l.forecastMonthlyConsumption === 0)
+      );
+    }
+    return lines;
+  };
+
+  // The active sort's contribution, where the key names a contributed column
+  // that declares one (OMS-REG-PLG-02.10) — the merge put its namespaced id in
+  // `sortKey`, so the table hands the same id back through `onSort`.
+  const sortContribution = () =>
+    lineColumnContributions().find(
+      contribution =>
+        contributionId(contribution) === sort().key &&
+        contribution.sortValue !== undefined
+    );
+
+  const rows = (): Line[] => {
+    const lines = filteredLines();
+    const contribution = sortContribution();
+    if (contribution !== undefined) {
+      // Non-suspending read, like the cells' own (the editor may be open
+      // above this table); until the batch resolves every value reads
+      // undefined and the set keeps its arrival order.
+      const entries = (gated(lineColumnData) ?? EMPTY_BATCH_DATA).get(
+        contributionId(contribution)
+      );
+      return sortLinesByContribution(
+        lines,
+        toLineView,
+        contribution,
+        entries,
+        sort().desc
+      );
+    }
+    return sortRows(lines, sort(), sortValue);
+  };
+
+  // Dose annotation for a unit quantity on a vaccine item under the doses
+  // preference — " (N ds)" (label.doses-short), value × doses-per-unit (treated
+  // as 1 when the item has none, so the annotation shows for any vaccine).
+  const numWithDoses = (line: Line, value: number): JSX.Element => (
+    <>
+      <Num value={value} />
+      <Show when={showDoses() && line.item.isVaccine}>
+        {' '}
+        (<Num value={value * (line.item.doses || 1)} /> {t('label.doses-short')}
+        )
+      </Show>
+    </>
+  );
+
+  // Spread AFTER getCellDefinition, whose number cell it replaces.
+  const dosesCell = (info: CellContext<Line, unknown>): JSX.Element =>
+    numWithDoses(info.row.original, info.getValue<number>());
+
+  const crumbs = (node: InternalOrderInfoFragment) => [
+    {
+      label: t('internal-order'),
+      to: `/${params.storeId}/replenishment/internal-order`,
+    },
+    { label: String(node.requisitionNumber) },
+  ];
+
+  // Details | Documents | Log | (gated) Indicators (spec S3 § tabs). An
+  // accessor, so the labels re-translate on a language switch and the gated
+  // Indicators tab appears as its gate resolves.
+  const tabs = () => [
+    { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
+    { value: 'log', label: t('label.log') },
+    ...(showIndicators()
+      ? [{ value: 'indicators', label: t('label.indicators') }]
+      : []),
+  ];
+
+  const hostColumns = (): Column<Line, SortKey>[] => [
+    {
+      c: { key: COL.comment },
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
+    },
+    {
+      c: { accessor: line => line.item.code, id: COL.code },
+      sortKey: 'code',
+      header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
+    },
+    {
+      c: { key: COL.name },
+      sortKey: 'name',
+      header: () => t('label.name'),
+      // The text "sink" column: its width floor plus no growth cap lets it
+      // absorb the slack the narrow numeric columns leave behind.
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
+      // An ancillary line carries an "Ancillary of …" flag naming its
+      // principal item(s) (OMS-REG-REPL-13.7); a non-ancillary line shows a
+      // plain name.
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <HStack gap="sm">
+            {line.itemName}
+            <Show when={line.ancillaryParents.length > 0}>
+              <InfoTooltip
+                label={t('label.ancillary-of')}
+                text={`${t('label.ancillary-of')}: ${line.ancillaryParents
+                  .map(parent => parent.name)
+                  .join(', ')}`}
+              />
+            </Show>
+          </HStack>
+        );
+      },
+    },
+    {
+      c: { accessor: line => line.item.unitName ?? '', id: COL.unit },
+      header: () => t('label.unit'),
+      ...getCellDefinition('unitName'),
+    },
+    // Doses per unit — gated on the vaccine-doses preference; a dash for
+    // non-vaccine items.
+    ...(showDoses()
+      ? ([
+          {
+            c: {
+              accessor: line => (line.item.isVaccine ? line.item.doses : '-'),
+              id: COL.dosesPerUnit,
+            },
+            header: () => t('label.doses-per-unit'),
+            ...getCellDefinition('dosesPerUnit'),
+          },
+        ] satisfies Column<Line, SortKey>[])
+      : []),
+    {
+      c: { accessor: line => line.item.defaultPackSize, id: COL.dps },
+      sortKey: 'dps',
+      header: () => t('label.dps'),
+      ...getCellDefinition('dps'),
+    },
+    {
+      c: {
+        accessor: line => line.availableStockOnHand,
+        id: COL.available,
+      },
+      sortKey: 'available',
+      header: () => t('label.available-soh'),
+      ...getCellDefinition('available'),
+      cell: dosesCell,
+    },
+    {
+      // AMC displayed rounded UP; header reads "Area AMC" under the gate.
+      c: {
+        accessor: line => Math.ceil(line.averageMonthlyConsumption),
+        id: COL.amc,
+      },
+      sortKey: 'amc',
+      header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
+      ...getCellDefinition('amc'),
+      cell: dosesCell,
+    },
+    {
+      // MOS: the raw figure, so the number cell applies display rounding.
+      c: { accessor: line => mos(line), id: COL.mos },
+      sortKey: 'mos',
+      // Stock ÷ the line's FORECAST monthly demand, so headed as such beside
+      // the measured AMC column (#12082); the published column id stays `mos`.
+      header: () => t('label.months-of-stock-forecast-demand'),
+      ...getCellDefinition('mos'),
+    },
+    {
+      c: {
+        accessor: line => targetStock(line),
+        id: COL.targetStock,
+      },
+      sortKey: 'target',
+      header: () => t('label.target-stock'),
+      ...getCellDefinition('targetStock'),
+      cell: dosesCell,
+    },
+    {
+      c: {
+        accessor: line => line.suggestedQuantity,
+        id: COL.suggested,
+      },
+      sortKey: 'suggested',
+      // The reference keys this column "forecast quantity" (cite it).
+      header: () => t('label.forecast-quantity'),
+      ...getCellDefinition('suggested'),
+      cell: dosesCell,
+    },
+    {
+      // Requested — under the excess-request preference a request ≥ 1 unit
+      // above the suggestion carries a red alert icon (the line-table
+      // counterpart of the editor banner).
+      c: {
+        accessor: line => line.requestedQuantity,
+        id: COL.requested,
+      },
+      sortKey: 'requested',
+      header: () => t('label.requested'),
+      // The preset's width + right alignment; the custom cell below overrides
+      // its number formatting (the value is pre-formatted with a dose suffix).
+      ...getCellDefinition('requested'),
+      cell: info => {
+        const line = info.row.original;
+        return (
+          // justify="end" keeps the number at the cell's inline-end, where the
+          // preset's right alignment put it before the marker joined it.
+          <HStack gap="sm" justify="end">
+            <Show when={isExcess(line)}>
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label={t('messages.requested-exceeds-suggested')}
+              />
+            </Show>
+            {numWithDoses(line, line.requestedQuantity)}
+          </HStack>
+        );
+      },
+    },
+    // Indicative pricing — gated on the preference.
+    ...(showPricing()
+      ? ([
+          {
+            c: {
+              accessor: line => line.pricePerUnit ?? '',
+              id: COL.pricePerUnit,
+            },
+            header: () => t('label.indicative-price-per-unit'),
+            ...getCellDefinition('pricePerUnit'),
+          },
+          {
+            c: {
+              accessor: line =>
+                (line.pricePerUnit ?? 0) * line.requestedQuantity,
+              id: COL.indicativePrice,
+            },
+            header: () => t('label.indicative-price'),
+            ...getCellDefinition('indicativePrice'),
+          },
+        ] satisfies Column<Line, SortKey>[])
+      : []),
+    // Extended consumption columns — program order on a customer-statistics
+    // store.
+    ...(showExtended()
+      ? ([
+          {
+            c: {
+              accessor: l => l.initialStockOnHandUnits,
+              id: COL.initialSoh,
+            },
+            header: () => t('label.initial-stock-on-hand'),
+            ...getCellDefinition('initialSoh'),
+            cell: dosesCell,
+          },
+          {
+            c: {
+              accessor: l => l.incomingUnits,
+              id: COL.incoming,
+            },
+            header: () => t('label.incoming'),
+            ...getCellDefinition('incoming'),
+            cell: dosesCell,
+          },
+          {
+            c: {
+              accessor: l => l.outgoingUnits,
+              id: COL.outgoing,
+            },
+            header: () => t('label.outgoing'),
+            ...getCellDefinition('outgoing'),
+            cell: dosesCell,
+          },
+          {
+            c: {
+              accessor: l => l.lossInUnits,
+              id: COL.losses,
+            },
+            header: () => t('label.losses'),
+            ...getCellDefinition('losses'),
+            cell: dosesCell,
+          },
+          {
+            c: {
+              accessor: l => l.additionInUnits,
+              id: COL.additions,
+            },
+            header: () => t('label.additions'),
+            ...getCellDefinition('additions'),
+            cell: dosesCell,
+          },
+          {
+            c: {
+              accessor: l => l.expiringUnits,
+              id: COL.shortExpiry,
+            },
+            header: () => t('label.short-expiry'),
+            ...getCellDefinition('shortExpiry'),
+            cell: dosesCell,
+          },
+          {
+            c: {
+              accessor: l => Math.round(l.daysOutOfStock),
+              id: COL.daysOutOfStock,
+            },
+            header: () => t('label.days-out-of-stock'),
+            ...getCellDefinition('daysOutOfStock'),
+          },
+          {
+            c: { accessor: l => l.reason?.reason ?? '', id: COL.reason },
+            header: () => t('label.reason'),
+            ...getCellDefinition('reason', {
+              cellTone: (line: Line) =>
+                reasonFlaggedIds().has(line.id) ? 'error' : undefined,
+            }),
+            // A send's reasons backstop flags every offending line's Reason
+            // cell (OMS-REG-REPL-04.81): a red alert beside the (usually empty)
+            // reason text, and the cell ringed (cellTone above).
+            // TO-DO(#1782): state the missing reason in words on screen
+            // beneath the reason; the marker's label reaches screen readers
+            // only.
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <HStack gap="sm">
+                  <Show when={reasonFlaggedIds().has(line.id)}>
+                    <StatusMarker
+                      severity="error"
+                      icon={AlertTriangleIcon}
+                      label={t(
+                        'error.reasons-not-provided-program-requisition'
+                      )}
+                    />
+                  </Show>
+                  {line.reason?.reason ?? ''}
+                </HStack>
+              );
+            },
+          },
+        ] satisfies Column<Line, SortKey>[])
+      : []),
+    {
+      // The line's Activity — what its stock is ordered for (issue 595).
+      // UNGATED, like the line editor's own picker: the activity is a property
+      // of the line, not of the order's kind. Blank when the line is held for
+      // nothing in particular.
+      c: { accessor: line => line.campaign?.name ?? '', id: COL.activity },
+      header: () => t('label.activity'),
+      ...getCellDefinition('activity'),
+    },
+    // Approval columns — only when the linked copy carries an approval status.
+    ...(showApproval()
+      ? ([
+          {
+            c: {
+              accessor: l => Math.round(l.approvedQuantity),
+              id: COL.approvedPacks,
+            },
+            header: () => t('label.approved-packs'),
+            ...getCellDefinition('approvedPacks'),
+          },
+          {
+            c: {
+              accessor: l => l.approvalComment ?? '',
+              id: COL.approvalComment,
+            },
+            header: () => t('label.approval-comment'),
+            ...getCellDefinition('approvalComment'),
+          },
+        ] satisfies Column<Line, SortKey>[])
+      : []),
+  ];
+
+  // --- The plugin column region (ui-surface § S8) ---
+  //
+  // ONE memo per reactive step, and the contributions read inside it: the
+  // registry hands back a fresh array on every read, so reading it anywhere a
+  // `<For>` or the table could see it directly would churn the table on every
+  // unrelated update (kdd/solid-reactivity-pitfalls). `visibleContributions`
+  // also applies each contribution's `when` gate, so a contribution hidden by
+  // the session context never reaches the merge — and therefore never gets a
+  // loader run (OMS-REG-PLG-02.4).
+  const lineColumnContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.column')
+  );
+
+  // The line editor's info-panel contributions (§ S8 › editor region), composed
+  // the same way and for the same reason: ONE memo, so the array the outlet
+  // `<For>`s over keeps its identity and the mounted panels are never torn down
+  // by an unrelated update. Mapped to the outlet's shape here, so the modal
+  // stays free of the registry.
+  const infoPanelContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.infoPanel').map(contribution => ({
+      id: contributionId(contribution),
+      Component: contribution.Component,
+    }))
+  );
+
+  // The lines a contributed column sees, as the SDK's published DTO — in
+  // arrival order, not display order: loaders MUST tolerate any order, and
+  // the contributed sort reads what they load, so the batch cannot follow it.
+  const lineViews = createMemo(() => filteredLines().map(toLineView));
+
+  // The batched per-page column data (OMS-REG-PLG-02.5): one loader call per
+  // contribution per rendered set of rows, never per cell. The resource key
+  // is the MEMBERSHIP — the unsorted row-id list plus the contributing ids —
+  // so re-reading the same lines (a header save splicing the node back, a
+  // locale switch) or re-ordering them (a sort, contributed ones included)
+  // does not refetch, while a filter/refetch that changes the set does.
+  const batchKey = () => {
+    const loaders = lineColumnContributions().filter(
+      contribution => contribution.loadData !== undefined
+    );
+    if (loaders.length === 0) return false;
+    return JSON.stringify({
+      rows: filteredLines().map(line => line.id),
+      contributions: loaders.map(contributionId),
+    });
+  };
+
+  const [lineColumnData] = createResource(batchKey, async () => {
+    // The key drives the fetch; the inputs are read UNTRACKED so the fetcher
+    // never becomes a second, hidden dependency edge.
+    const { views, loaders } = untrack(() => ({
+      views: lineViews(),
+      loaders: lineColumnContributions().filter(
+        contribution => contribution.loadData !== undefined
+      ),
+    }));
+    const loaded = new Map<string, ReadonlyMap<string, unknown>>();
+    await Promise.all(
+      loaders.map(async contribution => {
+        try {
+          const entries = await contribution.loadData?.(views);
+          if (entries) loaded.set(contributionId(contribution), entries);
+        } catch (error) {
+          // One plugin's failed loader is that column's failure: it renders its
+          // empty state and every other column keeps working.
+          recordPluginDiagnostic({
+            level: 'error',
+            pluginCode: contribution.pluginCode,
+            message: `column "${contribution.id}" data loader failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+        }
+      })
+    );
+    return loaded;
+  });
+
+  // NON-suspending: the line editor is often open ABOVE this
+  // table, and a suspending read would remount the subtree and detach the open
+  // <dialog> from the top layer (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction).
+  const lineColumnBatch = (): LineColumnBatch => ({
+    data: gated(lineColumnData) ?? EMPTY_BATCH_DATA,
+    loading: lineColumnData.loading,
+  });
+
+  const mergedColumns = createMemo(() =>
+    mergeLineColumns(
+      hostColumns(),
+      lineColumnContributions(),
+      toLineView,
+      lineColumnBatch()
+    )
+  );
+  const columns = () => mergedColumns().columns;
+
+  // Degradations are RECORDED here, not inside the merge: the merge runs in a
+  // memo, and recording is a write. Deduping is the shared helper's
+  // (src/plugins/diagnostics).
+  createRegionDiagnostics(
+    () => mergedColumns().diagnostics,
+    () => 'internalOrderLine.column'
+  );
+
+  return (
+    <Suspense fallback={<Spinner center />}>
+      {/* NON-keyed Show: every save sets a fresh node object; a keyed Show would
+          remount the page and drop focus. */}
+      <Show
+        when={info()}
+        fallback={
+          <Show when={!data.loading} fallback={<Spinner center />}>
+            {/* Not found (or another store's) — a blocking notice returning to
+                the list (OMS-REG-REPL-04.41). */}
+            <ConfirmDialog
+              open
+              title={t('error.order-not-found')}
+              message={t('messages.click-to-return-to-internal-orders')}
+              onConfirm={() =>
+                navigate(`/${params.storeId}/replenishment/internal-order`, {
+                  replace: true,
+                })
+              }
+              onClose={() =>
+                navigate(`/${params.storeId}/replenishment/internal-order`, {
+                  replace: true,
+                })
+              }
+            />
+          </Show>
+        }
+      >
+        {node => (
+          // The <Tabs> root wraps the Page from outside (its display: contents
+          // keeps the flex chain intact): the strip renders in the Header, the
+          // panels in the body.
+          <Tabs defaultValue="details">
+            <Page
+              fillBody
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.details')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <InternalOrderSidePanel
+                  storeId={params.storeId}
+                  node={node()}
+                  editable={editable()}
+                  isProgram={isProgram()}
+                  showApproval={showApproval()}
+                  showPricing={showPricing()}
+                  showSourceLink={showSourceLink()}
+                  edit={edit}
+                  onSaveField={patch => void saveField(patch)}
+                  onDeleted={() =>
+                    navigate(
+                      `/${params.storeId}/replenishment/internal-order`,
+                      {
+                        replace: true,
+                      }
+                    )
+                  }
+                />
+              }
+              header={
+                <Header>
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                    viewport (`collapsible="narrow"`, label kept as the
+                    accessible name and repeated as a tooltip — the outbound
+                    header's tier). Labelled, this cluster needs ~44rem, more
+                    than a tablet's header has left beside the breadcrumb, so
+                    it wrapped onto a row of its own — and on a short screen
+                    that row costs table rows, which are worth more. */}
+                  <HeaderButtons>
+                    {/* Add — a split of Add item (line editor) and Add from
+                      master list (S7 picker). Shown always but DISABLED on
+                      program orders (their item set is fixed at creation) and
+                      on read-only orders, with a reason tooltip (OMS-REG-REPL-04.63 —
+                      "disable with an explanation", not hide). */}
+                    <SplitButton
+                      icon={<PlusCircleIcon />}
+                      collapsible="narrow"
+                      testId="add-item-button"
+                      disabled={!canAddLines()}
+                      disabledTitle={t('error.cannot-add-items-to-requisition')}
+                      value={addChoice()}
+                      onValueChange={setAddChoice}
+                      shortcut={ALT_N}
+                      onAction={onAddAction}
+                      options={[
+                        { value: 'item', label: t('button.add-item') },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                      ]}
+                    />
+                    {/* Use suggested quantities — fills every zero-requested line
+                      with its suggestion (OMS-REG-REPL-04.28). Available on program orders,
+                      so gated on editability alone (not canAddLines); disabled
+                      on read-only orders (OMS-REG-REPL-04.54). */}
+                    <UseSuggestedQuantitiesAction
+                      storeId={params.storeId}
+                      orderId={node().id}
+                      disabled={!editable()}
+                      onApplied={() => void refetch()}
+                    />
+                    {/* Export/Print — a read, offered on every status (OMS-REG-REPL-04.82). */}
+                    {/* Sub-context-less forms only: a program R&R form has
+                        its own surface (OMS-REG-REPL-04.30). No sort — the table's display
+                        sort never reaches generation. */}
+                    <ExportPrintButton
+                      context="INTERNAL_ORDER"
+                      extraFilter={{ subContext: { equalAnyOrNull: [] } }}
+                      dataId={node().id}
+                      seedArgs={seedArgs()}
+                    />
+                    {/* More — reopens the side panel; shown only while closed. */}
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
+                        data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  {/* The header field cluster (ui-standards → HeaderToolbar):
+                    each field labelled above its small control, sharing the
+                    row per its FormRowItem weight and wrapping as a unit. The
+                    read-only notices ride the cluster's end as compact chips —
+                    persistent low-urgency context that shouldn't cost a
+                    content row (Alert `compact`; the customer-returns kind
+                    banner's pattern). Both can show; each wraps to its own
+                    line when the row can't hold it. */}
+                  <HeaderToolbar
+                    alert={
+                      <>
+                        <Show when={node().otherParty.store?.isDisabled}>
+                          <Alert severity="info" compact>
+                            {t('info.cannot-edit-disabled-store')}
+                          </Alert>
+                        </Show>
+                        <Show when={isProgram()}>
+                          <Alert severity="info" compact>
+                            {t('info.cannot-edit-program-requisition')}
+                          </Alert>
+                        </Show>
+                        <Show when={targetError()}>
+                          {message => (
+                            <Alert severity="error" compact>
+                              {message()}
+                            </Alert>
+                          )}
+                        </Show>
+                      </>
+                    }
+                  >
+                    <InternalOrderToolbar
+                      storeId={params.storeId}
+                      node={node()}
+                      editable={editable()}
+                      isProgram={isProgram()}
+                      showDestination={showDestination()}
+                      canChangeTargetMonths={
+                        prefs()?.canChangeTargetMonthsOfStock
+                      }
+                      edit={edit}
+                      onChangeSupplier={changeSupplier}
+                      supplierError={supplierError()}
+                      onChangeDestination={changeDestination}
+                      onChangeThreshold={changeThreshold}
+                      onChangeTarget={changeTarget}
+                    />
+                  </HeaderToolbar>
+                  {/* The ancillary banner keeps its own full-width row beneath
+                    the cluster (spec S3 § toolbar): it carries CONTROLS
+                    (Details popover + Add/Update + inline error), which the
+                    alert chip slot is not documented for — its final home is
+                    the one open operator decision (ui-migration-report.md). */}
+                  <Show
+                    when={editable() && node().ancillaryState.state !== 'NONE'}
+                  >
+                    <Toolbar>
+                      <InternalOrderAncillaryBanner
+                        storeId={params.storeId}
+                        requisitionId={node().id}
+                        ancillary={node().ancillaryState}
+                        editable={editable()}
+                        onRefreshed={() => void refetch()}
+                      />
+                    </Toolbar>
+                  </Show>
+                  {/* The tab strip is the Header's LAST child, so it claims the
+                    header's bottom edge (ui/docs/PAGES.md § tabs — the <Tabs>
+                    root wraps the Page frame from outside). */}
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                // Selection action bar while lines are selected
+                // (OMS-REG-REPL-04.71); otherwise the order's status footer.
+                // Matches OMS, which swaps the whole footer on selection. A
+                // program order's checkboxes are disabled (no delete offered —
+                // D32), so nothing selects there and this bar only ever appears
+                // on a general order.
+                <Show
+                  when={selectedIds().length > 0}
+                  fallback={
+                    <InternalOrderStatusFooter
+                      storeId={params.storeId}
+                      node={node()}
+                      editable={editable()}
+                      requiresAuthorisation={requiresAuth()}
+                      keepZeroLines={keepZeroLines()}
+                      onSent={onSent}
+                      onReasonsNotProvided={ids =>
+                        setReasonFlaggedIds(new Set(ids))
+                      }
+                    />
+                  }
+                >
+                  <ContentFooter>
+                    <strong data-testid="selected-rows-count">
+                      {selectedIds().length} {t('label.selected')}
+                    </strong>
+                    {/* On a read-only order the click explains why it can't
+                      proceed rather than confirming (OMS-REG-REPL-04.72); the whole-order
+                      delete is refused server-side regardless. onDeleted clears
+                      the selection (unmounting this bar) and refetches. */}
+                    <DeleteLinesAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      canDelete={editable}
+                      onDeleted={() => {
+                        setSelectedIds([]);
+                        void refetch();
+                      }}
+                    />
+                    <ContentFooterActions>
+                      <Button
+                        variant="secondary"
+                        icon={<MinusCircleIcon />}
+                        onClick={() => setSelectedIds([])}
+                      >
+                        {t('label.clear-selection')}
+                      </Button>
+                    </ContentFooterActions>
+                  </ContentFooter>
+                </Show>
+              }
+            >
+              <TabPanel value="details">
+                <DataTable
+                  columns={columns()}
+                  rows={rows()}
+                  rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={lineFilters}
+                      filter={lineFilter()}
+                      onChange={setLineFilter}
+                    />
+                  }
+                  loading={data.loading}
+                  sort={sort()}
+                  onSort={(key, desc) => setSort({ key, desc })}
+                  // A row click opens the line editor on that line
+                  // (OMS-REG-REPL-04.68); on a read-only order it opens with
+                  // every control disabled.
+                  onRowClick={line => setEditorLine({ mode: 'edit', line })}
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  cardTone={line =>
+                    isOpenPlaceholder(line) ? 'info' : undefined
+                  }
+                  emptyMessage={
+                    (lineFilter().itemCodeOrName?.like ?? '').trim() ||
+                    lineFilter().hideOverMinimum === true ||
+                    lineFilter().hideZeroRequested === true
+                      ? t('error.no-items-filter-on')
+                      : t('error.no-internal-order-items')
+                  }
+                  // The empty line table offers the single-item add inline
+                  // (OMS-REG-REPL-04.63), the same add mode as the header split
+                  // button — withheld when a single item can't be added
+                  // (read-only or a program order, whose item set is fixed).
+                  empty={
+                    canAddLines() ? (
+                      <Button
+                        variant="ghost"
+                        shortcut={ALT_N}
+                        data-testid="add-item-button"
+                        onClick={() => setEditorLine({ mode: 'add' })}
+                      >
+                        {t('button.add-item')}
+                      </Button>
+                    ) : undefined
+                  }
+                  config={tableConfig.config()}
+                  setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — the detail table offered no way to save
+                  // table defaults). Gate + action both off the config
+                  // controller; undefined for everyone else, so the action
+                  // isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
+                  // Row selection for the bulk line delete
+                  // (OMS-REG-REPL-04.71). The column always shows; on a
+                  // read-only order the delete is refused with an explanation
+                  // (OMS-REG-REPL-04.72), and on a program order — whose line
+                  // set is fixed — the checkboxes render disabled so the
+                  // affordance reads as blocked, not missing (no delete
+                  // offered, D32).
+                  enableSelection
+                  selectionDisabled={isProgram()}
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
+                />
+              </TabPanel>
+              <TabPanel value="documents">
+                <InternalOrderDocumentsTab
+                  storeId={params.storeId}
+                  node={node()}
+                  supplierEnabled={supplierEnabled()}
+                  onChanged={() => void refetch()}
+                />
+              </TabPanel>
+              <TabPanel value="log">
+                {/* The shared activity-log surface; oldest first per OMS-REG-REPL-15.1
+                    (spec S3 § Log tab). */}
+                <ActivityLogPanel
+                  storeId={params.storeId}
+                  recordId={node().id}
+                  order="oldest-first"
+                />
+              </TabPanel>
+              <Show when={showIndicators()}>
+                <TabPanel value="indicators">
+                  <ProgramIndicatorsTab
+                    storeId={params.storeId}
+                    nodes={indicatorNodes()}
+                    editable={editable()}
+                    showCustomerBreakdown={showCustomerBreakdown()}
+                    onSaved={onIndicatorSaved}
+                  />
+                </TabPanel>
+              </Show>
+
+              {/* The line editor (S4) — add mode (general orders) or edit mode
+                (a clicked line). A committed save refetches the line table. */}
+              <InternalOrderLineEditModal
+                open={!!editorLine()}
+                onClose={() => setEditorLine(undefined)}
+                storeId={params.storeId}
+                requisitionId={node().id}
+                minMonths={node().minMonthsOfStock}
+                maxMonths={node().maxMonthsOfStock}
+                targetIntervalAndBuffer={intervalAndBufferBehindTarget(node())}
+                editable={editable()}
+                canAdd={canAddLines()}
+                showDoses={showDoses()}
+                showPricing={showPricing()}
+                showExcess={showExcess()}
+                showExtended={showExtended()}
+                orderInPacks={orderInPacks()}
+                initialLine={editorInitialLine()}
+                nextLine={resolveNextLine}
+                findLineForItem={findLineForItem}
+                // The info-panel slot's other half (§ S8 › editor region): the
+                // order as the SDK's published view. A prop getter, so a header
+                // save or a status change reaches an open panel in place.
+                order={toInternalOrderView(node(), editable())}
+                infoPanelContributions={infoPanelContributions}
+                onCommitted={() => {
+                  // A line edit may have supplied a missing reason — drop the
+                  // send-backstop flags so they don't linger stale
+                  // (OMS-REG-REPL-04.81).
+                  setReasonFlaggedIds(new Set<string>());
+                  void refetch();
+                }}
+              />
+
+              {/* Add from master list (S7): the picker, then an are-you-sure
+                confirmation, then the bulk add. */}
+              <MasterListPickerModal
+                open={masterListPickerOpen()}
+                onClose={() => setMasterListPickerOpen(false)}
+                storeId={params.storeId}
+                onSelect={list => {
+                  setMasterListPickerOpen(false);
+                  setPendingMasterList(list);
+                }}
+              />
+              <Show when={pendingMasterList()}>
+                <ConfirmDialog
+                  open
+                  title={t('heading.are-you-sure')}
+                  message={t('messages.confirm-add-from-master-list')}
+                  onConfirm={() => void confirmAddFromMasterList()}
+                  onClose={() => setPendingMasterList(undefined)}
+                />
+              </Show>
+              <Show when={masterListError()}>
+                {message => (
+                  <ConfirmDialog
+                    open
+                    title={t('error.something-wrong')}
+                    message={message()}
+                    onConfirm={() => setMasterListError(undefined)}
+                    onClose={() => setMasterListError(undefined)}
+                  />
+                )}
+              </Show>
+            </Page>
+          </Tabs>
+        )}
+      </Show>
+    </Suspense>
+  );
+};
+
+export default InternalOrderDetailView;

@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod query {
-    use repository::item_variant::packaging_variant::PackagingVariantFilter;
-    use repository::mock::{mock_item_a, mock_user_account_a, MockDataInserts};
-    use repository::test_db::setup_all;
     use repository::EqualFilter;
+    use repository::item_variant::packaging_variant::PackagingVariantFilter;
+    use repository::mock::{MockDataInserts, mock_item_a, mock_user_account_a};
+    use repository::test_db::setup_all;
     use util::uuid::uuid;
 
     use crate::item::item_variant::UpsertItemVariantWithPackaging;

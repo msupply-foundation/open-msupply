@@ -8,10 +8,10 @@ use crate::{
 };
 
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq)]
@@ -144,15 +144,14 @@ impl From<RepositoryError> for SupplyRequestedQuantityError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_finalised_response_requisition,
-            mock_full_new_response_requisition_for_update_test, mock_new_response_requisition_test,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
-        },
-        test_db::setup_all,
         ApprovalStatusType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
         RequisitionRowRepository,
+        mock::{
+            MockDataInserts, mock_finalised_response_requisition,
+            mock_full_new_response_requisition_for_update_test, mock_new_response_requisition_test,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
+        },
+        test_db::setup_all,
     };
 
     use crate::{

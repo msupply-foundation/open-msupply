@@ -1,0 +1,120 @@
+import { createSignal } from 'solid-js';
+import { formatNumber, intlNumberFormat } from './formatNumber';
+import { locale } from './intl';
+import type { SupportedLocale } from './locales';
+import { LOCALE_META } from './locales';
+
+/**
+ * Currency display metadata, derived from Intl rather than a hand-maintained
+ * table (old OMS kept one per currency and it drifted — its KMF entry said
+ * 2 decimals; ISO 4217 says 0). `decimals` is the currency's minor units
+ * (USD 2, JPY/XOF/KMF 0); `side` is where the symbol sits relative to the
+ * digits in the given locale ("$1,234.56" en-prefix vs "1 234,56 €" fr-suffix).
+ */
+export type CurrencyInfo = {
+  symbol: string;
+  side: 'start' | 'end';
+  decimals: number;
+};
+
+/** How the symbol renders: "$" / "US$" / "USD". */
+export type CurrencyDisplay = 'narrowSymbol' | 'symbol' | 'code';
+
+/**
+ * Currencies always labelled by their ISO code, whatever display is asked
+ * for. CLDR's symbols for these are unfamiliar or wrong where they're used
+ * ("F CFA" for XOF and "FCFA" for XAF, where deployments write the code; "£"
+ * for SSP reads as sterling). Old OMS showed the code for the same set, and
+ * users compare the two UIs side by side.
+ */
+const CODE_LABELLED = new Set(['XOF', 'XAF', 'DJF', 'CDF', 'SSP', 'HTG']);
+
+const resolveDisplay = (
+  code: string,
+  display: CurrencyDisplay
+): CurrencyDisplay => (CODE_LABELLED.has(code) ? 'code' : display);
+
+const infoCache = new Map<string, CurrencyInfo>();
+
+export const getCurrencyInfo = (
+  code: string,
+  locale: SupportedLocale,
+  requestedDisplay: CurrencyDisplay = 'narrowSymbol'
+): CurrencyInfo => {
+  const display = resolveDisplay(code, requestedDisplay);
+  const key = `${LOCALE_META[locale].numberLocale}|${code}|${display}`;
+  const cached = infoCache.get(key);
+  if (cached) return cached;
+
+  let info: CurrencyInfo;
+  try {
+    const format = intlNumberFormat(locale, {
+      style: 'currency',
+      currency: code,
+      currencyDisplay: display,
+    });
+    const decimals = format.resolvedOptions().maximumFractionDigits ?? 2;
+    const parts = format.formatToParts(1);
+    const symbolIndex = parts.findIndex(p => p.type === 'currency');
+    const digitIndex = parts.findIndex(p => p.type === 'integer');
+    info = {
+      symbol: parts[symbolIndex]?.value ?? code,
+      side:
+        symbolIndex !== -1 && digitIndex !== -1 && symbolIndex < digitIndex
+          ? 'start'
+          : 'end',
+      decimals,
+    };
+  } catch {
+    // Unknown/invalid ISO code (Intl throws RangeError): self-label with the
+    // code and assume 2 minor units.
+    info = { symbol: code, side: 'start', decimals: 2 };
+  }
+  infoCache.set(key, info);
+  return info;
+};
+
+/**
+ * The active store's home currency (ISO 4217) — what CurrencyField defaults
+ * to. Currency is a STORE property, not a language property (a Lao deployment
+ * runs an English UI with Kip): the locale drives only separators, digits and
+ * symbol placement.
+ *
+ * Wired from the entered store: StoreGuardLayout's entry effect calls
+ * `setHomeCurrency(store.homeCurrencyCode)` (`UserStoreNode.homeCurrencyCode`,
+ * carried on the auth UserInfo fragment's stores nodes) on every store switch.
+ * The `'USD'` seed here is only the pre-entry default (and what the showcase
+ * drives from its mock selector); a store without a configured code also
+ * falls back to it via setHomeCurrency below.
+ */
+const [homeCurrency, setHomeCurrencySignal] = createSignal('USD');
+export { homeCurrency };
+
+export const setHomeCurrency = (code: string | null | undefined): void => {
+  setHomeCurrencySignal(code || 'USD');
+};
+
+/**
+ * A money figure in the given currency (ISO 4217) at that currency's minor
+ * units, with its narrow symbol in the active locale (or its code, for the
+ * CODE_LABELLED currencies). No code: the store's home currency.
+ *
+ * `maxDecimals` widens the precision for a figure stored finer than the
+ * currency's minor units (a unit price): it keeps the minor units and shows
+ * further decimals only as far as the figure needs — "$3.40", "$0.034".
+ */
+export const formatCurrency = (
+  value: number,
+  code?: string | null,
+  maxDecimals?: number
+): string => {
+  const currency = code ?? homeCurrency();
+  const { decimals } = getCurrencyInfo(currency, locale());
+  return formatNumber(value, {
+    style: 'currency',
+    currency,
+    currencyDisplay: resolveDisplay(currency, 'narrowSymbol'),
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: Math.max(decimals, maxDecimals ?? decimals),
+  });
+};

@@ -2,7 +2,7 @@ pub mod generate;
 pub mod validate;
 
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext};
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 use repository::{
     ActivityLogRowRepository, Invoice, InvoiceLineRowRepository, InvoiceRowRepository,
     RepositoryError,
@@ -86,14 +86,14 @@ impl From<RepositoryError> for UpdateOutboundShipmentNameError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_name_a, mock_outbound_shipment_a,
-            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_store_a, mock_store_b,
-            mock_store_c, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_a, mock_name_a,
+            mock_outbound_shipment_a, mock_outbound_shipment_b, mock_outbound_shipment_c,
+            mock_store_a, mock_store_b, mock_store_c,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{
@@ -337,10 +337,7 @@ mod test {
                 .unwrap(),
             updated_invoice.invoice_row
         );
-        assert_ne!(
-            updated_invoice.invoice_row.name_id,
-            invoice().name_id
-        );
+        assert_ne!(updated_invoice.invoice_row.name_id, invoice().name_id);
         assert_eq!(
             updated_lines,
             vec![

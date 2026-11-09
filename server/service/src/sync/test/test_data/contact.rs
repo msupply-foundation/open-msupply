@@ -1,4 +1,4 @@
-use repository::{contact_row::ContactRow, ContactRowDelete};
+use repository::{ContactRowDelete, contact_row::ContactRow};
 
 use crate::sync::test::TestSyncIncomingRecord;
 

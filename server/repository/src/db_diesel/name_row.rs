@@ -1,12 +1,12 @@
 use super::{
-    currency_row::currency, location_type_row::location_type,
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, custom_fields_json::JsonValue,
-    store_row::store, NameType, StorageConnection,
+    NameType, StorageConnection, currency_row::currency, custom_fields_json::JsonValue,
+    location_type_row::location_type, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, name_store_join::name_store_join, program_row::program,
+    store_row::store,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, Delete,
-    EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
+    ChangelogRepository, Delete, EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
+    item_link, name_link, repository_error::RepositoryError,
 };
 use crate::{ChangelogSyncType, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -258,10 +258,15 @@ impl<'a> NameRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
+    // An already deleted name keeps its original deletion time
     fn _mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
-        diesel::update(name::table.filter(name::id.eq(name_id)))
-            .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
+        diesel::update(
+            name::table
+                .filter(name::id.eq(name_id))
+                .filter(name::deleted_datetime.is_null()),
+        )
+        .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -505,10 +510,9 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        ChangelogTableName, CursorAndLimit, EqualFilter, FilterBuilder, KeyType,
-        KeyValueStoreRepository, NameFilter, NameRepository, NameRow, NameRowRepository,
-        NameRowType,
+        ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, EqualFilter,
+        FilterBuilder, KeyType, KeyValueStoreRepository, NameFilter, NameRepository, NameRow,
+        NameRowRepository, NameRowType, mock::MockDataInserts, test_db::setup_all,
     };
 
     // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
@@ -536,9 +540,7 @@ mod test {
         let properties = Some("{\"key\": \"test\"}".to_string());
 
         // Add properties to name
-        row_repo
-            .update_properties(&row.id, &properties)
-            .unwrap();
+        row_repo.update_properties(&row.id, &properties).unwrap();
 
         let name_filter = NameFilter::new().id(EqualFilter::equal_to(row.id.to_string()));
         let name = name_repo

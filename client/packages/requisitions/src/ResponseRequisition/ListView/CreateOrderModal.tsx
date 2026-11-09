@@ -112,6 +112,7 @@ export const CreateOrderModal = ({
       ) : null}
       {isOpen && !!selectedSupplier && (
         <Modal
+          testId="create-order-modal"
           title={t('button.create-order')}
           width={width * 0.8}
           height={height * 0.8}

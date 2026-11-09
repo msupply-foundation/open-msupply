@@ -1,6 +1,7 @@
 use super::{
+    RepositoryError, StorageConnection,
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
-    store_row::store, RepositoryError, StorageConnection,
+    store_row::store,
 };
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
@@ -23,7 +24,17 @@ joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);
 allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = location)]
 #[diesel(treat_none_as_null = true)]
 pub struct LocationRow {

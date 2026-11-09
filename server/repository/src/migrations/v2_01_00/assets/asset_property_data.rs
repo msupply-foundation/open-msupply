@@ -2,7 +2,7 @@ use crate::migrations::constants::{
     COLD_CHAIN_EQUIPMENT_UUID, COLD_ROOMS_AND_FREEZER_ROOMS_UUID, INSULATED_CONTAINERS_UUID,
     REFRIGERATORS_AND_FREEZERS_UUID,
 };
-use crate::{migrations::sql, StorageConnection};
+use crate::{StorageConnection, migrations::sql};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Create the external_dimensions property as an example (available for all cold chain equipment assets)

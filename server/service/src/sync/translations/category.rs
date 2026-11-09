@@ -1,15 +1,17 @@
-use chrono::Utc;
 use repository::{
+    CustomFieldOptionRow, StorageConnection, SyncBufferRow,
     category_row::{CategoryRow, CategoryRowDelete},
-    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::keys;
 
-use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
+use super::{
+    IntegrationOperation, PullTranslateResult, SyncTranslation,
+    utils::soft_deleted_custom_field_option,
+};
 
 /// Map an `item_category*` sync table to `(custom_field.id, is_relational)`.
 ///
@@ -128,15 +130,10 @@ impl SyncTranslation for CategoryTranslation {
         // Parallel customFields path — central-only. Soft-delete the matching
         // option (by re-upserting it with `deleted_datetime` set) so the option
         // set tracks 4D category removals and the read dataloader filters it out.
-        if CentralServerConfig::is_central_server() {
-            if let Some(option) =
-                CustomFieldOptionRowRepository::new(connection).find_one_by_id(&record_id)?
-            {
-                operations.push(IntegrationOperation::upsert(CustomFieldOptionRow {
-                    deleted_datetime: Some(Utc::now().naive_utc()),
-                    ..option
-                }));
-            }
+        if CentralServerConfig::is_central_server()
+            && let Some(option) = soft_deleted_custom_field_option(connection, &record_id)?
+        {
+            operations.push(IntegrationOperation::upsert(option));
         }
 
         Ok(PullTranslateResult::IntegrationOperations(operations))
@@ -146,7 +143,7 @@ impl SyncTranslation for CategoryTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncAction, SyncRecordData};
+    use repository::{SyncAction, SyncRecordData, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_item_category_translation() {

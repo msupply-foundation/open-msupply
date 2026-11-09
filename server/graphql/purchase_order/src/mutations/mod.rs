@@ -4,7 +4,7 @@ pub mod insert;
 pub mod update;
 
 use async_graphql::*;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::PurchaseOrderNodeStatus;
 use repository::{PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection};
 use service::auth::{Resource, ResourceAccessRequest};

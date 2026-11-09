@@ -1,0 +1,19 @@
+# The Indicators tab's request-side identity read (spec/internal-orders S3 §
+# Indicators tab). The tab itself — the definitions/values query and the cell
+# edit — is the shared machinery at src/domain/indicators.
+
+# The active store's own name id — the "customer identity" own-store indicator
+# values are keyed to (the seeding uses the store's own name). Fed as
+# customerNameId into the shared programIndicatorValues read.
+query storeOwnName($storeId: String!) {
+  stores(filter: { id: { equalTo: $storeId } }) {
+    ... on StoreConnector {
+      nodes {
+        id
+        name(storeId: $storeId) {
+          id
+        }
+      }
+    }
+  }
+}

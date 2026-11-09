@@ -7,7 +7,7 @@ use crate::service_provider::ServiceProvider;
 
 mod patient_name_store_join;
 
-pub use patient_name_store_join::{add_patient_name_store_join, NameStoreJoinParams};
+pub use patient_name_store_join::{NameStoreJoinParams, add_patient_name_store_join};
 
 #[derive(Deserialize, Debug, Error, Serialize)]
 pub enum CentralApiError {

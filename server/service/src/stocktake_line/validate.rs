@@ -106,9 +106,9 @@ pub fn check_snapshot_matches_current_count(
 #[cfg(test)]
 mod test {
     use repository::{
+        ReasonOptionRow, ReasonOptionType,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        ReasonOptionRow, ReasonOptionType,
     };
 
     use crate::stocktake_line::validate::check_reason_is_valid;

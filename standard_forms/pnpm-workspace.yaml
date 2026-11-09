@@ -1,0 +1,10 @@
+# Each report's convert_data package, at <report>/<version>/convert_data_js, is
+# a package of this workspace, so one install with one lockfile covers them all.
+# scripts/reports/build-reports.mjs installs it (frozen) before building them.
+packages:
+  - '*/*/convert_data_js'
+
+# Like npmMinimalAgeGate in the root .yarnrc.yml: don't resolve npm packages
+# published less than 7 days ago, so a compromised release has time to be
+# caught and pulled before it gets here.
+minimumReleaseAge: 10080

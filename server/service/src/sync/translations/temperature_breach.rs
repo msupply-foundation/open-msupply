@@ -13,7 +13,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, to_legacy_time};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -229,9 +229,9 @@ pub fn to_legacy_breach_type(t: &TemperatureBreachType) -> LegacyTemperatureBrea
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_sensor_1, MockDataInserts},
-        test_db::setup_all,
         SensorRow, SensorRowRepository,
+        mock::{MockDataInserts, mock_sensor_1},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

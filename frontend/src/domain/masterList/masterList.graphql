@@ -1,0 +1,36 @@
+# Master lists for the current store — a store-scoped cache (masterListsResource):
+# fetched once per store, shared by every consumer (the stocktake create form's
+# master-list picker, and future verticals). id + name is all a picker needs.
+# storeId is auth/context only (spec/master-lists/contract.md) — the resource
+# supplies existsForStoreId as $filter, without which the query returns every
+# master list system-wide, including ones this store can't create a stocktake from.
+query masterLists($storeId: String!, $filter: MasterListFilterInput) {
+  masterLists(storeId: $storeId, filter: $filter) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# The store's own NON-program master lists — the bulk-add picker's read
+# (MasterListPickerModal; internal-orders S7, reused by requisitions S2).
+# isProgram:false excludes program lists: a program order's item set is fixed,
+# so only ordinary lists are offered for a bulk add.
+query nonProgramMasterLists($storeId: String!) {
+  masterLists(
+    storeId: $storeId
+    filter: { existsForStoreId: { equalTo: $storeId }, isProgram: false }
+  ) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}

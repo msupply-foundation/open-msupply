@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    diesel_macros::{apply_date_filter, apply_equal_filter},
     DateFilter, EqualFilter, RepositoryError,
+    diesel_macros::{apply_date_filter, apply_equal_filter},
 };
 use diesel::prelude::*;
 

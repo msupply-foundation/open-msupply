@@ -2,11 +2,11 @@ use std::time::Duration;
 
 use chrono::NaiveDate;
 use repository::{
-    mock::{insert_extra_mock_data, MockData, MockDataInserts},
     ApprovalStatusType, EqualFilter, ItemRow, KeyType, KeyValueStoreRow, NameRow,
     RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRepository, RequisitionRow, RequisitionRowRepository,
     RequisitionStatus, RequisitionType, StorageConnection, StoreRow,
+    mock::{MockData, MockDataInserts, insert_extra_mock_data},
 };
 use util::uuid::uuid;
 
@@ -17,7 +17,7 @@ use crate::{
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequisitionStatus},
     },
     service_provider::ServiceProvider,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// This test is for requesting and responding store on the same site
@@ -276,6 +276,7 @@ impl RequisitionTransferTester {
             comment: Some("line comment".to_string()),
             available_stock_on_hand: 1.0,
             average_monthly_consumption: 10.0,
+            forecast_monthly_consumption: 10.0,
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -293,6 +294,7 @@ impl RequisitionTransferTester {
             suggested_quantity: 20.0,
             available_stock_on_hand: 30.0,
             average_monthly_consumption: 10.0,
+            forecast_monthly_consumption: 10.0,
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -371,13 +373,10 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.r#type, RequisitionType::Response);
         assert_eq!(response_requisition.status, RequisitionStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
-        assert_eq!(
-            response_requisition.name_id,
-            self.request_store.name_id
-        );
+        assert_eq!(response_requisition.name_id, self.request_store.name_id);
         assert_eq!(
             response_requisition.their_reference,
-            Some("From internal order 3 (some reference)".to_string())
+            Some("some reference".to_string())
         );
         assert_eq!(
             response_requisition.comment,

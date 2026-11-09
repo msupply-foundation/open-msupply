@@ -1,13 +1,13 @@
 use super::{
-    campaign_row::campaign, item_row::item, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
-    StorageConnection,
+    StorageConnection, campaign_row::campaign, item_row::item, location_row::location,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_row::stocktake,
 };
 
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 

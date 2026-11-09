@@ -1,0 +1,35 @@
+/* Fake selectable rows for the contextual demo. */
+.demoRows {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  list-style: none;
+  background: var(--bg-white);
+}
+
+.demoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.demoRow:hover {
+  background: var(--bg-group-light);
+}
+
+.demoCheckbox {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  accent-color: var(--primary-main);
+  cursor: pointer;
+}
+
+.count {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}

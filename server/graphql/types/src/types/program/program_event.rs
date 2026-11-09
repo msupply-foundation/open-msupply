@@ -2,8 +2,8 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 
 use graphql_core::{
-    loader::{DocumentLoader, PatientLoader},
     ContextExt,
+    loader::{DocumentLoader, PatientLoader},
 };
 use repository::{NameRow, ProgramEvent, ProgramEventRow, ProgramEventSort, ProgramEventSortField};
 

@@ -879,6 +879,10 @@ export type UpsertPrescriptionMutation = {
             __typename: 'DeletePrescriptionError';
             error:
               | {
+                  __typename: 'CannotDeleteGeneratedDispensation';
+                  description: string;
+                }
+              | {
                   __typename: 'CannotDeleteInvoiceWithLines';
                   description: string;
                 }
@@ -1019,6 +1023,10 @@ export type DeletePrescriptionsMutation = {
         | {
             __typename: 'DeletePrescriptionError';
             error:
+              | {
+                  __typename: 'CannotDeleteGeneratedDispensation';
+                  description: string;
+                }
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
                   description: string;

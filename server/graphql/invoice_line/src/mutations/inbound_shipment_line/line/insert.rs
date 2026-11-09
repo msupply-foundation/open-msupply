@@ -1,19 +1,19 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceLineNode;
 
 use graphql_core::generic_inputs::InboundShipmentType;
 use repository::InvoiceLine;
+use service::NullableUpdate;
 use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{
     InsertStockInLine as ServiceInput, InsertStockInLineError as ServiceError, StockInType,
 };
-use service::NullableUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentLineInput")]
@@ -43,6 +43,9 @@ pub struct InsertInput {
     pub shipped_pack_size: Option<f64>,
     pub purchase_order_line_id: Option<String>,
     pub reason_option_id: Option<String>,
+    /// The barcode scanned or typed for the line, as read; recorded on the line
+    /// and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+    pub barcode: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -119,6 +122,7 @@ impl InsertInput {
             shipped_pack_size,
             purchase_order_line_id,
             reason_option_id,
+            barcode,
         } = self;
 
         ServiceInput {
@@ -152,7 +156,7 @@ impl InsertInput {
             reason_option_id,
             // Default
             stock_line_id: None,
-            barcode: None,
+            barcode,
             stock_on_hold: false,
         }
     }
@@ -178,7 +182,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
 
         ServiceError::CannotEditFinalised
@@ -186,7 +190,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::CannotAddLinesToAuthorisedReceivedInvoice => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
 
         // Standard Graphql Errors
@@ -194,6 +198,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::LineAlreadyExists
         | ServiceError::NotAStockIn
         | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::SellPricePerPackBelowZero
+        | ServiceError::CostPricePerPackBelowZero
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
@@ -202,11 +208,11 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::DonorNotVisible
         | ServiceError::SelectedDonorPartyIsNotADonor
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
         | ServiceError::PurchaseOrderLineDoesNotExist
+        | ServiceError::PurchaseOrderLineNotFromLinkedOrder
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)
@@ -227,23 +233,23 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
-            mock_location_1, MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines,
+            mock_item_a, mock_location_1,
+        },
     };
     use serde_json::json;
     use service::{
+        NullableUpdate,
         invoice_line::{
+            InvoiceLineServiceTrait,
             stock_in_line::{
                 InsertStockInLine as ServiceInput, InsertStockInLineError as ServiceError,
                 StockInType,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        NullableUpdate,
     };
 
     use crate::InvoiceLineMutations;

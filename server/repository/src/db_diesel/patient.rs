@@ -1,14 +1,14 @@
-use super::{name_row::name, DBType, NameRow, StorageConnection};
+use super::{DBType, NameRow, StorageConnection, name_row::name};
 
 use crate::{
+    DateFilter, EqualFilter, GenderType, NameCondition, NameRowType, Pagination,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, Sort, StringFilter,
     diesel_extensions::date_coalesce,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, GenderType, NameCondition, NameRowType, Pagination,
-    ProgramEnrolmentFilter, ProgramEnrolmentRepository, Sort, StringFilter,
 };
 
 use chrono::NaiveDate;
@@ -389,9 +389,10 @@ mod tests {
     use chrono::{NaiveDate, Utc};
 
     use crate::{
-        mock::{mock_program_a, MockDataInserts},
-        test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameRowType, PatientFilter,
+        DateFilter, EqualFilter, NameRow, NameRowRepository, NameRowType, PatientFilter,
         PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
+        mock::{MockDataInserts, mock_program_a},
+        test_db,
     };
 
     #[actix_rt::test]

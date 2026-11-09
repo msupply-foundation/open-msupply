@@ -4,61 +4,54 @@
 extern crate machine_uid;
 
 use crate::{
-    central::config_central,
-    certs::Certificates,
-    cold_chain::config_cold_chain,
-    cors::cors_policy,
-    custom_translations::config_custom_translations,
-    middleware::central_server_only,
-    print::config_print,
-    serve_frontend::config_serve_frontend,
-    static_files::config_static_files,
-    support::config_support,
-    upload_fridge_tag::config_upload_fridge_tag,
+    central::config_central, certs::Certificates, cold_chain::config_cold_chain, cors::cors_policy,
+    custom_translations::config_custom_translations, middleware::central_server_only,
+    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
 use chrono::{NaiveDateTime, Utc};
-use graphql_core::loader::{get_loaders, LoaderRegistry};
+use graphql_core::loader::{LoaderRegistry, get_loaders};
 
 use graphql::{
-    attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
-    OperationalStatus, PluginExecuteGraphql,
+    GraphSchemaData, GraphqlSchema, OperationalStatus, PluginExecuteGraphql,
+    attach_discovery_graphql_schema, attach_graphql_schema,
 };
 use log::info;
 use repository::{
-    get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig},
+    StorageConnection, SyncLogV5V6RowRepository, get_storage_connection_manager,
+    migrations::{MigrationConfig, migrate},
     system_log_row::SystemLogType,
-    StorageConnection,
 };
 
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     activity_log::{
-        add_migration_results_to_system_log, system_log, system_log_entry, SystemLogMessage,
+        SystemLogMessage, add_migration_results_to_system_log, system_log, system_log_entry,
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    custom_field::builtin::seed_builtin_custom_fields,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
+    session_store::SessionStore,
+    settings::{ServerSettings, Settings, is_develop},
     standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
-    session_store::SessionStore,
     sync::{
+        CentralServerConfig,
         file_sync_driver::FileSyncDriver,
         sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
-        CentralServerConfig,
     },
 };
 
-use actix_web::{web, web::Data, App, HttpServer};
+use actix_web::{App, HttpServer, web, web::Data};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use util::format_error;
@@ -118,6 +111,11 @@ pub async fn start_server(
     // migrations the system log won't run.
     info!("{server_start_message}");
 
+    // RAISE OPEN FILE LIMIT
+    // Before the database pool and HTTP listeners exist, so every socket and handle the
+    // server opens runs under the raised limit. See util::open_file_limit.
+    util::raise_open_file_limit();
+
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {
         CentralServerConfig::set_is_central_server_on_startup();
@@ -171,7 +169,9 @@ pub async fn start_server(
         .map(|s| s.relax_hardware_id_token_checks)
         .unwrap_or(false);
     if relax_hardware_id_token_checks {
-        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+        log::warn!(
+            "relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED"
+        );
     }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
@@ -283,7 +283,9 @@ pub async fn start_server(
             DiscoveryMode::Enabled => true,
             DiscoveryMode::Auto => {
                 if is_develop() {
-                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    log::warn!(
+                        "DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on"
+                    );
                     false
                 } else {
                     true
@@ -380,6 +382,7 @@ pub async fn start_server(
     let changelog_dedup_settings = settings.changelog_dedup.clone().unwrap_or_default();
     let migration_config = MigrationConfig {
         changelog_partition: changelog_partition_settings.to_migration_config(),
+        starting_database_version: None,
     };
     let (version, messages) = match migrate(&connection, None, migration_config) {
         Ok(result) => result,
@@ -391,6 +394,33 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    // No sync is running yet, so a sync log that never finished or failed was cut off by the
+    // previous shutdown. Close it, or it reads as in flight until a new run replaces it, and a
+    // paused site (maintenance mode included) starts none.
+    match SyncLogV5V6RowRepository::new(&connection)
+        .close_interrupted("Sync was interrupted: the server stopped before it finished")
+    {
+        Ok(0) => {}
+        Ok(closed) => info!("Closed {closed} sync log(s) interrupted by the previous shutdown"),
+        Err(error) => log::error!("Failed to close interrupted sync logs: {error:?}"),
+    }
+
+    // A restart in maintenance mode keeps everything paused (the flags are persisted and read at
+    // use), but must not look like it finished OMS central's own integration (#840). After the
+    // migrations, which add the key the check reads.
+    match service_provider.basic_context() {
+        Ok(ctx) => {
+            if let Err(error) =
+                service::sync::maintenance_mode::log_incomplete_integration_on_startup(
+                    &ctx.connection,
+                )
+            {
+                log::error!("Failed to check maintenance mode on startup: {error:?}");
+            }
+        }
+        Err(error) => log::error!("Failed to check maintenance mode on startup: {error:?}"),
+    }
 
     if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
         log::error!(
@@ -439,6 +469,20 @@ pub async fn start_server(
         }
     }
 
+    // Builtin custom fields (`service/src/custom_field/builtin.rs`) are central
+    // data, so only a central server seeds them. This is the **standalone**
+    // central's only chance: it never runs the sync loop
+    // (`SynchroniserDriver::run` parks it forever), so the seed call in the sync
+    // cycle — which covers a synced central, the one that only learns it is
+    // central after its first sync — never fires here. Runs after the YAML
+    // bootstrap above so a just-initialised standalone central is seeded on the
+    // same boot. Idempotent and change-aware, so repeating it costs nothing.
+    if CentralServerConfig::is_standalone_central()
+        && let Err(e) = seed_builtin_custom_fields(&connection)
+    {
+        log::error!("Failed to seed builtin custom fields: {}", format_error(&e));
+    }
+
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // Log the server starting message with the startup timestamp
@@ -467,10 +511,7 @@ pub async fn start_server(
     // CHECK SYNC STATUS
     info!("Checking sync status..");
     // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
-    let yaml_sync_settings = settings
-        .sync
-        .clone()
-        .filter(|s| s.has_core_sync_settings());
+    let yaml_sync_settings = settings.sync.clone().filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)

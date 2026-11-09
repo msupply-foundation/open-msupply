@@ -1,0 +1,105 @@
+# Auxiliary lookups for the inbound-shipment detail surfaces that need option
+# sets the header/line queries don't carry: the foreign-currency picker and the
+# add-from-internal-order line picker. Kept out of inboundShipmentDetail.graphql
+# (no shared fragments). The bulk program/activity pickers need nothing here —
+# they are the shared domain pickers, which own their own reads.
+
+# The lines of a linked internal order — the add-from-internal-order picker
+# (spec S7 / OMS-REG-ISH-01.8/.9). Each pulled line pre-fills the item +
+# requested quantity; the picker multi-selects, adding every chosen line in one
+# batch.
+fragment InternalOrderLineRow on RequisitionLineNode {
+  id
+  itemName
+  requestedQuantity
+  item {
+    id
+    code
+  }
+}
+
+query internalOrderLines($storeId: String!, $requisitionId: String!) {
+  requisition(storeId: $storeId, id: $requisitionId) {
+    __typename
+    ... on RequisitionNode {
+      id
+      requisitionNumber
+      lines {
+        nodes {
+          ...InternalOrderLineRow
+        }
+      }
+    }
+  }
+}
+
+# The lines of the linked purchase order — the line editor's PO-line picker on
+# a PO-linked shipment (spec S4 / OMS-REG-REPL-09.6: a PO-linked line must cite
+# an order line). Excludes lines already assigned, and service lines (they
+# reach the shipment as service charges), client-side.
+query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
+  purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {
+    __typename
+    ... on PurchaseOrderNode {
+      id
+      lines {
+        nodes {
+          id
+          lineNumber
+          requestedPackSize
+          # A new batch's cost and sell price, before the shipment's rate
+          # (spec rules › new-batch defaults).
+          pricePerPackAfterSupplierDiscount
+          item {
+            id
+            code
+            name
+            type
+            defaultPackSize
+            volumePerPack
+          }
+        }
+      }
+    }
+  }
+}
+
+# A supplier's linkable internal orders (request requisitions) — offered as an
+# optional link step during manual creation (spec S2 → Link internal order
+# modal), when the store allows manually linking internal orders to inbound
+# shipments. Only SENT request requisitions for the chosen supplier are
+# linkable (a draft hasn't been sent to the supplier yet); newest-created first.
+fragment LinkInternalOrderRow on RequisitionNode {
+  id
+  requisitionNumber
+  createdDatetime
+  theirReference
+  comment
+  user {
+    username
+  }
+  program {
+    id
+    name
+  }
+}
+
+query supplierInternalOrders($storeId: String!, $otherPartyId: String!) {
+  requisitions(
+    storeId: $storeId
+    filter: {
+      type: { equalTo: REQUEST }
+      status: { equalTo: SENT }
+      otherPartyId: { equalTo: $otherPartyId }
+    }
+    sort: [{ key: createdDatetime, desc: true }]
+  ) {
+    ... on RequisitionConnector {
+      __typename
+      totalCount
+      nodes {
+        ...LinkInternalOrderRow
+      }
+    }
+  }
+}

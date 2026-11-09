@@ -3,7 +3,9 @@ package org.openmsupply.client;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.webkit.CookieManager;
 import android.webkit.WebView;
 
 import androidx.core.graphics.Insets;
@@ -16,8 +18,19 @@ import java.io.File;
 
 
 
-public class MainActivity extends BridgeActivity {
+public class MainActivity extends BridgeActivity implements DiscoveryHostActivity {
     RemoteServer server = new RemoteServer();
+
+    // Set by DiscoveryHostPlugin.navigate (host duty OMS-REG-DESK-01.21): once
+    // the page whose URL starts with this has loaded, drop the WebView history
+    // beneath it, so hardware back cannot re-enter discovery without its flags
+    // and bounce straight back to the server just left. Read in the page-loaded
+    // listener installed in onCreate; UI thread only.
+    private String pendingHistoryClearPrefix;
+
+    // Whether the page has connected this WebView to a server. Only then does
+    // the failed-load duty apply, and only then is there a session to end.
+    private boolean connectedToChosenServer;
     DiscoveryConstants discoveryConstants;
     private FileManager fileManager;
     private String js = "";
@@ -31,9 +44,15 @@ public class MainActivity extends BridgeActivity {
         // embedded server, so each plugin's name must ALSO be listed in
         // ExtendedWebViewClient.generatePluginScript() or the JS proxy has no
         // header to dispatch through.
-        registerPlugin(SaveFilePlugin.class);
+        registerPlugin(FileTransferPlugin.class);
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
+        // The discovery page's host, compiled straight out of the new shell
+        // (frontend/android/app/src/shared) rather than copied here, so the
+        // two shells cannot drift. Registering is only half the job here — the
+        // UI is served by the embedded server, so the name must ALSO be in
+        // ExtendedWebViewClient.generatePluginScript().
+        registerPlugin(DiscoveryHostPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Replace Capacitor's auto-loaded https://localhost:<PORT>/ with an inline
@@ -48,13 +67,29 @@ public class MainActivity extends BridgeActivity {
         ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
             Insets bars = insets.getInsets(
                     WindowInsetsCompat.Type.systemBars()
-                            | WindowInsetsCompat.Type.displayCutout()
-                            | WindowInsetsCompat.Type.ime());
+                            | WindowInsetsCompat.Type.displayCutout());
+
+            // Edge-to-edge (enforced from Android 15) stops the window shrinking
+            // for the keyboard, so it draws over the page. Lift the WebView's
+            // bottom edge to the keyboard's top instead: the page's viewport
+            // shrinks and it can scroll the focused field into view, whichever
+            // front end is loaded — including an older server's (issue #2115).
+            int keyboard = insets.isVisible(WindowInsetsCompat.Type.ime())
+                    ? insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+                    : 0;
+            ViewGroup.MarginLayoutParams layout = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            if (layout.bottomMargin != keyboard) {
+                layout.bottomMargin = keyboard;
+                v.setLayoutParams(layout);
+            }
+            // The keyboard covers the navigation bar, so while it is up there is
+            // nothing below the WebView for the page to avoid
+            int bottom = keyboard > 0 ? 0 : bars.bottom;
 
             float d = v.getResources().getDisplayMetrics().density;
-            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars, cutouts, or the keyboard
+            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars or cutouts
             js = "document.documentElement.style.setProperty('--inset-top',    '" + (bars.top / d)    + "px');" +
-                    "document.documentElement.style.setProperty('--inset-bottom', '" + (bars.bottom / d) + "px');" +
+                    "document.documentElement.style.setProperty('--inset-bottom', '" + (bottom / d) + "px');" +
                     "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
                     "document.documentElement.style.setProperty('--inset-right',  '" + (bars.right / d)  + "px');";
 
@@ -72,6 +107,16 @@ public class MainActivity extends BridgeActivity {
             public void onPageLoaded(WebView view) {
                 if (!js.isEmpty()) {
                     view.evaluateJavascript(js, null);
+                }
+                // Host duty (OMS-REG-DESK-01.21): clearHistory only drops
+                // entries that have committed, so it has to run once the target
+                // page has loaded. Prefix-matched because the final URL can
+                // carry a query or a same-origin redirect.
+                String prefix = MainActivity.this.pendingHistoryClearPrefix;
+                if (prefix != null && view.getUrl() != null
+                        && view.getUrl().startsWith(prefix)) {
+                    view.clearHistory();
+                    MainActivity.this.pendingHistoryClearPrefix = null;
                 }
             }
         });
@@ -116,8 +161,38 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
+        // Host duty (frontend/src/discovery/hostContract.ts,
+        // OMS-REG-DESK-01.30): the session ends with the app. Once the page has
+        // connected this WebView to a chosen server the session belongs to that
+        // server and lives in the cookie jar, which otherwise survives to the
+        // next launch — so signing in would not be required after the
+        // auto-reconnect OMS-REG-DESK-01.1 performs. Only when a server was
+        // chosen: an install that never left its own server keeps the device's
+        // own session, as it always has.
+        //
+        // Not guaranteed on a process kill; the server's token expiry is the
+        // backstop, as it is on desktop.
+        if (this.connectedToChosenServer) {
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        }
         super.onDestroy();
         server.stop();
+    }
+
+    @Override
+    public void clearHistoryWhenLoaded(String urlPrefix) {
+        this.pendingHistoryClearPrefix = urlPrefix;
+    }
+
+    @Override
+    public void onServerChosen(String url, String origin, String hardwareId, int port, boolean isLocal) {
+        // Certificate trust is the shell's job and cannot be done blind, so
+        // the page says whose server this is (hostContract.ts §
+        // ConnectedServer). NativeApi keeps it because that is where
+        // CertWebViewClient already looks.
+        this.connectedToChosenServer = true;
+        NativeApi.chosenServer(url, origin, hardwareId, port, isLocal);
     }
 
     // ActivityResult needs to be overridden in the main, not UI thread

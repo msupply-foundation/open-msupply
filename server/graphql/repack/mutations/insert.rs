@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::CannotHaveFractionalPack,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::CannotHaveFractionalPack,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::{generic_errors::StockLineReducedBelowZero, types::InvoiceNode};
 use repository::Invoice;
@@ -104,12 +104,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(InsertErrorInterface::StockLineReducedBelowZero(
                 StockLineReducedBelowZero::from_domain(line),
-            ))
+            ));
         }
         ServiceError::CannotHaveFractionalPack => {
             return Ok(InsertErrorInterface::CannotHaveFractionalPack(
                 CannotHaveFractionalPack {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),

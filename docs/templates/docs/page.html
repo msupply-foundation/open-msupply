@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block body %}
+  {% set page_class = "docs single" %}
+{% endblock body %}
+
+{% block header %}
+  {% set current_section = "" %}
+  {{ macros_header::header(current_section=current_section) }}
+{% endblock header %}
+
+{% block content %}
+<div class="wrap container" role="document">
+  <div class="content">
+    <div class="row flex-xl-nowrap">
+
+      {{ macros_sidebar::docs_sidebar(current_section=current_section, current_url=current_url) }}
+
+      <div class="docs-content flex-grow-1">
+        {{ macros_breadcrumbs::docs_breadcrumbs(section=page) }}
+        <article>
+          {{ page.content | safe }}
+        </article>
+        {{ macros_navigation::docs_navigation(section=page) }}
+      </div>
+
+      {{ macros_toc::docs_toc(page=page, edit_path=page.relative_path) }}
+
+    </div>
+  </div>
+</div>
+{% endblock content %}

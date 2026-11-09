@@ -5,15 +5,16 @@ use crate::mutations::{
 use async_graphql::*;
 
 use chrono::{DateTime, FixedOffset};
-use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
+use graphql_core::ContextExt;
+use graphql_core::generic_inputs::{InboundShipmentType, NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, RecordNotFound};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
+use service::NullableUpdate;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     ApplyDonorToInvoiceLines, UpdateDefaultDonor, UpdateInboundShipment as ServiceInput,
@@ -52,6 +53,10 @@ pub struct UpdateInput {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
+    /// The shipment's default campaign (null = none): lines added from a
+    /// master list or internal order take it, and the line editor prefills
+    /// new batches with it.
+    pub campaign_id: Option<NullableUpdateInput<String>>,
     /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent
     /// from the patch are left unchanged.
@@ -137,6 +142,7 @@ impl UpdateInput {
             charges_foreign_currency,
             default_donor,
             received_datetime,
+            campaign_id,
             custom_fields,
         } = self;
 
@@ -160,6 +166,7 @@ impl UpdateInput {
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
             received_datetime,
+            campaign_id: campaign_id.map(|c| NullableUpdate { value: c.value }),
             custom_fields: custom_fields.map(|json| json.0),
         }
     }
@@ -184,43 +191,43 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound));
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
                 CannotReverseInvoiceStatus,
-            ))
+            ));
         }
         ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
-            return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
+            return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice));
         }
         ServiceError::CannotReceiveWithPendingLines => {
             return Ok(UpdateErrorInterface::CannotReceiveWithPendingLines(
                 CannotReceiveWithPendingLines,
-            ))
+            ));
         }
 
         ServiceError::CannotChangeStatusOfInvoiceOnHold => {
             return Ok(UpdateErrorInterface::CannotChangeStatusOfInvoiceOnHold(
                 CannotChangeStatusOfInvoiceOnHold,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotASupplier => {
             return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
                 OtherPartyNotASupplier,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::CannotIssueForeignCurrencyForInternalSuppliers => {
             return Ok(
                 UpdateErrorInterface::CannotIssueForeignCurrencyForInternalSuppliers(
                     CannotIssueInForeignCurrency,
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::CannotUpdateStatusAndDonorAtTheSameTime
@@ -233,8 +240,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
+        | ServiceError::CannotReceiveWithNoLines
         | ServiceError::CurrencyRateMustBePositive
-        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
+        | ServiceError::CampaignDoesNotExist
+        | ServiceError::UnknownPropertyKey(_)
+        | ServiceError::InvalidPropertyValue { .. } => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
@@ -274,21 +284,22 @@ mod test {
         test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
-        mock::{
-            mock_inbound_shipment_c, mock_name_linked_to_store, mock_name_not_linked_to_store,
-            mock_name_store_a, mock_store_a, mock_store_linked_to_name, MockData, MockDataInserts,
-        },
         Invoice, InvoiceRowRepository, PermissionType, RepositoryError, StorageConnectionManager,
         UserPermissionRow,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_c, mock_name_linked_to_store,
+            mock_name_not_linked_to_store, mock_name_store_a, mock_store_a,
+            mock_store_linked_to_name,
+        },
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             inbound_shipment::{
                 UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
                 UpdateInboundShipmentStatus,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -507,6 +518,18 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
+        //CannotReceiveWithNoLines
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotReceiveWithNoLines)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
         //DatabaseError
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::DatabaseError(
@@ -604,6 +627,7 @@ mod test {
                     charges_foreign_currency: None,
                     default_donor: None,
                     received_datetime: None,
+                    campaign_id: None,
                     custom_fields: None,
                 }
             );

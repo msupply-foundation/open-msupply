@@ -4,11 +4,11 @@ use repository::{
 };
 use repository::{RepositoryError, StockLine};
 
-use super::generate::{generate, GenerateResult};
+use super::generate::{GenerateResult, generate};
 use super::validate::validate;
 
 use crate::activity_log::activity_log_entry;
-use crate::invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLineError};
+use crate::invoice_line::stock_in_line::{InsertStockInLineError, insert_stock_in_line};
 use crate::service_provider::ServiceContext;
 use crate::stock_line::query::get_stock_line;
 use crate::{NullableUpdate, SingleRecordError};
@@ -132,20 +132,19 @@ impl From<RepositoryError> for AddNewStockLineError {
 #[cfg(test)]
 mod test {
     use repository::{
+        EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+        InvoiceStatus, ReasonOptionRow, ReasonOptionType,
         mock::{
-            mock_item_a, mock_location_1, mock_stock_line_a, mock_store_a, mock_user_account_a,
-            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_location_1, mock_stock_line_a,
+            mock_store_a, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
-        InvoiceStatus, ReasonOptionRow, ReasonOptionType,
     };
 
     use crate::{
-        invoice::inventory_adjustment::add_new_stock_line::AddNewStockLine,
+        NullableUpdate, invoice::inventory_adjustment::add_new_stock_line::AddNewStockLine,
         invoice_line::stock_in_line::InsertStockInLineError, service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     use super::AddNewStockLineError;

@@ -1,6 +1,6 @@
-use super::{warning_row::warning, StorageConnection, WarningRow};
+use super::{StorageConnection, WarningRow, warning_row::warning};
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
+    DBType, EqualFilter, diesel_macros::apply_equal_filter, repository_error::RepositoryError,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 

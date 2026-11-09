@@ -1,13 +1,13 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::validate_auth;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation_line::{
     BatchStockRelocationLine as ServiceInput, BatchStockRelocationLineResult as ServiceResult,
 };
 
-use super::delete::{map_delete_response, DeleteLineResponse};
-use super::upsert::{map_upsert_response, UpsertLineInput, UpsertLineResponse};
+use super::delete::{DeleteLineResponse, map_delete_response};
+use super::upsert::{UpsertLineInput, UpsertLineResponse, map_upsert_response};
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
@@ -101,9 +101,5 @@ fn map_response(ServiceResult { upsert, delete }: ServiceResult) -> Result<Batch
 }
 
 fn vec_or_none<T>(vec: Vec<T>) -> Option<Vec<T>> {
-    if vec.is_empty() {
-        None
-    } else {
-        Some(vec)
-    }
+    if vec.is_empty() { None } else { Some(vec) }
 }

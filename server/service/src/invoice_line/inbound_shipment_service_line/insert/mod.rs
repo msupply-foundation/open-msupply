@@ -2,14 +2,13 @@ mod generate;
 mod validate;
 
 use generate::generate;
+pub(crate) use generate::generate as generate_inbound_shipment_service_line;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
 use crate::{
-    invoice::inbound_shipment::InboundShipmentType,
-    invoice_line::query::get_invoice_line,
-    service_provider::ServiceContext,
-    WithDBError,
+    WithDBError, invoice::inbound_shipment::InboundShipmentType,
+    invoice_line::query::get_invoice_line, service_provider::ServiceContext,
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -89,13 +88,14 @@ where
 mod test {
 
     use repository::{
+        InvoiceLineRowRepository, ItemFilter, ItemRepository, StringFilter,
         mock::{
-            mock_draft_inbound_service_line, mock_draft_inbound_shipment_with_service_lines,
+            MockDataInserts, mock_draft_inbound_service_line,
+            mock_draft_inbound_shipment_with_service_lines,
             mock_draft_inbound_verified_with_service_lines, mock_item_a, mock_item_service_item,
-            mock_outbound_shipment_c, mock_store_a, mock_store_c, MockDataInserts,
+            mock_outbound_shipment_c, mock_store_a, mock_store_c,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, ItemFilter, ItemRepository, StringFilter,
     };
     use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
@@ -129,7 +129,8 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     id: mock_draft_inbound_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::LineAlreadyExists)
         );
@@ -141,7 +142,8 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     invoice_id: "invalid".to_string(),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -153,7 +155,8 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     invoice_id: mock_draft_inbound_verified_with_service_lines().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -166,7 +169,8 @@ mod test {
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     item_id: Some("invalid".to_string()),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -179,7 +183,8 @@ mod test {
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     item_id: Some(mock_item_a().id),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -192,7 +197,8 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     invoice_id: mock_outbound_shipment_c().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -206,7 +212,8 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     note: Some("abc".to_string()),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -234,7 +241,8 @@ mod test {
                     id: "new_line_id".to_string(),
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     ..Default::default()
-                }, None
+                },
+                None,
             )
             .unwrap();
 
@@ -271,7 +279,8 @@ mod test {
                     total_before_tax: 0.3,
                     tax_percentage: Some(10.0),
                     note: Some("note".to_string()),
-                }, None
+                },
+                None,
             )
             .unwrap();
 

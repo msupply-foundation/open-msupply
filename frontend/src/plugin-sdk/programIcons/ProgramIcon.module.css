@@ -1,0 +1,8 @@
+/* The two stops every program icon's gradients run between. */
+.start {
+  stop-color: var(--error-main);
+}
+
+.end {
+  stop-color: var(--primary-main);
+}

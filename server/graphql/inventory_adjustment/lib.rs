@@ -1,6 +1,6 @@
 pub mod mutations;
 use async_graphql::*;
-use mutations::{create_inventory_adjustment, CreateInventoryAdjustmentInput, InsertResponse};
+use mutations::{CreateInventoryAdjustmentInput, InsertResponse, create_inventory_adjustment};
 
 #[derive(Default, Clone)]
 pub struct InventoryAdjustmentMutations;

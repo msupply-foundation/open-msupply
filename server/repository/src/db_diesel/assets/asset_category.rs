@@ -1,11 +1,11 @@
-use super::asset_category_row::{asset_category, AssetCategoryRow};
+use super::asset_category_row::{AssetCategoryRow, asset_category};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub enum AssetCategorySortField {
@@ -129,6 +129,7 @@ fn create_filtered_query(filter: Option<AssetCategoryFilter>) -> BoxedAssetCateg
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter, StringFilter,
         assets::{
             asset_category::AssetCategoryRepository,
             asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
@@ -136,7 +137,7 @@ mod tests {
             asset_class_row::AssetClassRowRepository,
         },
         mock::MockDataInserts,
-        test_db, EqualFilter, StringFilter,
+        test_db,
     };
 
     use super::AssetCategoryFilter;

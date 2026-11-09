@@ -21,6 +21,8 @@ interface UploadDragAndDropProps {
   onUpload: <T extends File>(files: T[]) => void;
   /** Called with files rejected by `accept`/`maxSize` so they can be surfaced to the user. */
   onRejected?: (rejections: FileRejection[]) => void;
+  /** Stamped on the hidden file input for e2e locators. */
+  testId?: string;
 }
 
 export const UploadDragAndDrop = ({
@@ -30,6 +32,7 @@ export const UploadDragAndDrop = ({
   multiple,
   onUpload,
   onRejected,
+  testId,
 }: UploadDragAndDropProps) => {
   const t = useTranslation();
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -73,7 +76,7 @@ export const UploadDragAndDrop = ({
       >
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
-            <input {...getInputProps()} />
+            <input {...getInputProps()} data-testid={testId} />
             {!isExtraSmallScreen && (
               <>
                 <FileUploadIcon

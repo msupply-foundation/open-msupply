@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::settings::is_develop;
 
-use super::{validation::ValidatedPluginBucket, PLUGIN_FILE, PLUGIN_FILE_DIR};
+use super::{PLUGIN_FILE, PLUGIN_FILE_DIR, validation::ValidatedPluginBucket};
 
 #[derive(Debug, PartialEq)]
 pub struct PluginFile {

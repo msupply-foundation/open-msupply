@@ -93,9 +93,25 @@ export const AppBarButtonsComponent = ({
 
         <SupplyRequestedQuantityButton />
         <ReportSelector
+          testId="export-or-print-button"
           context={ReportContext.Requisition}
           dataId={data?.id ?? ''}
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
+          // Sent for every program requisition, not just one showing the
+          // indicators tab: a report declaring $programId / $periodId /
+          // $customerNameId fails outright when they are absent from the
+          // arguments, so tying them to a display gate could only break such a
+          // report (#12713). Sending null instead is not an option — the
+          // indicator value fields take String! arguments and reject it.
+          extraArguments={
+            data?.program?.id && data?.period?.id && data?.otherPartyId
+              ? {
+                  periodId: data.period.id,
+                  programId: data.program.id,
+                  customerNameId: data.otherPartyId,
+                }
+              : undefined
+          }
         />
         {OpenButton}
       </Grid>

@@ -17,6 +17,7 @@ export type InvoiceCustomFieldFragment = {
     key: string;
     name: string;
     parentOptionId?: string | null;
+    deletedDatetime?: string | null;
   }>;
 };
 
@@ -43,6 +44,7 @@ export type InvoiceCustomFieldsQuery = {
         key: string;
         name: string;
         parentOptionId?: string | null;
+        deletedDatetime?: string | null;
       }>;
     }>;
   };
@@ -61,6 +63,7 @@ export const InvoiceCustomFieldFragmentDoc = gql`
       key
       name
       parentOptionId
+      deletedDatetime
     }
   }
 `;

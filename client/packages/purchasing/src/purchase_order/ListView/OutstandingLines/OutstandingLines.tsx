@@ -40,7 +40,7 @@ export const OutstandingLinesListView = () => {
     filterBy: {
       ...filterBy,
       status: { equalTo: PurchaseOrderLineStatusNode.Sent },
-      receivedLessThanAdjusted: true,
+      receivedLessThanRequested: true,
     },
   };
   const {
@@ -97,8 +97,8 @@ export const OutstandingLinesListView = () => {
         dateFilterFormat: 'date',
       },
       {
-        header: t('label.adjusted-units-expected'),
-        accessorKey: 'adjustedNumberOfUnits',
+        header: t('label.requested-units'),
+        accessorKey: 'requestedNumberOfUnits',
         columnType: ColumnType.Number,
       },
       {
@@ -111,9 +111,9 @@ export const OutstandingLinesListView = () => {
         accessorKey: 'outstandingQuantity',
         columnType: ColumnType.Number,
         accessorFn: row => {
-          const adjusted = row?.adjustedNumberOfUnits ?? 0;
+          const requested = row?.requestedNumberOfUnits ?? 0;
           const shipped = row?.shippedNumberOfUnits ?? 0;
-          return adjusted - shipped;
+          return requested - shipped;
         },
       },
     ],

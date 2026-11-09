@@ -1,8 +1,8 @@
 use super::InsertPurchaseOrderLineInput;
 use crate::number::next_number;
 use repository::{
-    ItemRow, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus, RepositoryError,
-    StorageConnection, UnitRowRepository,
+    ItemRow, ItemType, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    RepositoryError, StorageConnection, UnitRowRepository,
 };
 
 pub fn generate(
@@ -40,7 +40,7 @@ pub fn generate(
         None => unit,
     };
 
-    Ok(PurchaseOrderLineRow {
+    let mut row = PurchaseOrderLineRow {
         id,
         store_id: store_id.to_string(),
         purchase_order_id,
@@ -48,11 +48,13 @@ pub fn generate(
         item_id: item.id,
         item_name: item.name.clone(),
         requested_number_of_units: requested_number_of_units.unwrap_or_default(),
-        requested_pack_size: requested_pack_size.unwrap_or_default(),
+        // A line is born at the item's default pack size unless one is given
+        requested_pack_size: requested_pack_size.unwrap_or(item.default_pack_size),
         requested_delivery_date,
         expected_delivery_date,
         price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),
         price_per_pack_after_discount: price_per_pack_after_discount.unwrap_or(0.0),
+        line_total: 0.0,
         manufacturer_id,
         note,
         unit,
@@ -61,5 +63,12 @@ pub fn generate(
         status: PurchaseOrderLineStatus::New,
         adjusted_number_of_units: None,
         stock_on_hand_in_units: 0.0,
-    })
+    };
+    // A service line carries no line discount
+    if item.r#type == ItemType::Service {
+        row.price_per_pack_after_discount = row.price_per_pack_before_discount;
+    }
+    row.line_total = row.calculate_line_total();
+
+    Ok(row)
 }

@@ -13,7 +13,7 @@ use crate::{
 use super::{
     encounter_updated,
     validate_misc::{
-        validate_clinician_exists, validate_encounter_schema, ValidatedSchemaEncounter,
+        ValidatedSchemaEncounter, validate_clinician_exists, validate_encounter_schema,
     },
 };
 
@@ -194,10 +194,10 @@ fn validate(
 mod test {
     use chrono::Utc;
     use repository::{
-        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
-        test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
         EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
+        mock::{MockDataInserts, context_program_a, mock_form_schema_empty},
+        test_db::setup_all,
     };
     use serde_json::json;
     use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
@@ -205,11 +205,11 @@ mod test {
     use crate::{
         programs::{
             encounter::{
-                encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter, UpdateEncounter,
+                encounter_schema::{EncounterStatus, SchemaEncounter},
             },
-            patient::{test::mock_patient_1, UpdateProgramPatient},
-            program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
+            patient::{UpdateProgramPatient, test::mock_patient_1},
+            program_enrolment::{UpsertProgramEnrolment, program_schema::SchemaProgramEnrolment},
         },
         service_provider::ServiceProvider,
     };
@@ -254,6 +254,8 @@ mod test {
                 name: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
+                plugin_code: None,
+                program_key: None,
             })
             .unwrap();
         registry_repo
@@ -265,6 +267,8 @@ mod test {
                 name: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
+                plugin_code: None,
+                program_key: None,
             })
             .unwrap();
         registry_repo
@@ -276,6 +280,8 @@ mod test {
                 name: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
+                plugin_code: None,
+                program_key: None,
             })
             .unwrap();
 

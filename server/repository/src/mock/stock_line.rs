@@ -2,8 +2,8 @@ use chrono::NaiveDate;
 
 use super::mock_vaccine_item_a;
 use crate::{
-    mock::{mock_item_a, mock_item_restricted_location_type_b, mock_store_c},
     StockLineRow,
+    mock::{mock_item_a, mock_item_restricted_location_type_b, mock_store_c},
 };
 
 pub fn mock_stock_line_a() -> StockLineRow {

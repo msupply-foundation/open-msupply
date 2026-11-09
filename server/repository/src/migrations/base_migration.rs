@@ -1,5 +1,5 @@
-use crate::diesel::connection::SimpleConnection;
 use crate::diesel::RunQueryDsl;
+use crate::diesel::connection::SimpleConnection;
 use crate::diesel_helper_types::Count;
 use crate::{RepositoryError, StorageConnection};
 

@@ -1,18 +1,18 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use graphql_core::{
+    ContextExt,
     generic_filters::{EqualFilterNumberInput, StringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use repository::{
     EqualFilter, PaginationOption, SiteFilter, SiteRow, SiteSort, SiteSortField, StringFilter,
     SyncVersion,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
     ListResult,
+    auth::{Resource, ResourceAccessRequest},
 };
 
 pub fn sites(
@@ -86,18 +86,24 @@ impl SiteNode {
     }
 
     /// Last time the remote made any authenticated v7 request.
-    pub async fn last_connection_datetime(&self) -> Option<NaiveDateTime> {
-        self.site.last_connection_datetime
+    pub async fn last_connection_datetime(&self) -> Option<DateTime<Utc>> {
+        self.site
+            .last_connection_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     /// Last time the remote fully pulled from this central server.
-    pub async fn last_sync_datetime(&self) -> Option<NaiveDateTime> {
-        self.site.last_sync_datetime
+    pub async fn last_sync_datetime(&self) -> Option<DateTime<Utc>> {
+        self.site
+            .last_sync_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     /// First time the remote completed an initialising pull.
-    pub async fn first_sync_datetime(&self) -> Option<NaiveDateTime> {
-        self.site.first_sync_datetime
+    pub async fn first_sync_datetime(&self) -> Option<DateTime<Utc>> {
+        self.site
+            .first_sync_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn is_multi_device(&self) -> bool {

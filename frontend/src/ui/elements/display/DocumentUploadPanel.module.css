@@ -1,0 +1,313 @@
+/*
+ * DocumentUploadPanel — upload zone above a plain file list. Header and rows
+ * share one grid template (--doc-grid) so their columns line up without a
+ * table. Hairlines use --input-border; the name link uses the action tone.
+ * Sizing rem/em; the only px are the 1px row hairlines.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* Cap the width so the zone + list don't stretch across a wide desktop tab,
+     and centre it in the tab; the list stays readable and the drop target
+     stays a sensible size.
+     `width: 100%` is load-bearing, not decoration: the auto inline margins
+     defeat the flex stretch, which would leave the panel sized by its content —
+     and the list below is a size CONTAINER, so it contributes no intrinsic
+     width at all. A panel whose only content is that list (the catalogue half
+     of the equipment Documents tab) would collapse to its padding. */
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 1rem;
+}
+
+/* Section heading above the upload zone / file list ("Upload documents",
+   "Uploaded documents"). Type style comes from <Text variant="heading">; the
+   panel owns only the spacing below it and its colour. */
+.heading {
+  margin-block-end: 0.75rem;
+  color: var(--text-body);
+}
+
+.list {
+  --doc-grid: 1.75rem minmax(0, 1fr) 9rem 6rem 2rem;
+
+  /* The rows reflow on the LIST's own width, not the viewport's: this panel
+     sits in a column (the equipment Documents tab puts two side by side), so
+     the viewport says nothing about how much room a row actually has. */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Versioned list: file name, then who uploaded the row's version and when,
+   its version (with the unfold beside it), its size. The fixed tracks claim
+   more of the width, so the name is the only flexible one — as in the plain
+   list, and its own narrow fallback below stacks the metadata under it once
+   the room runs out. */
+.list[data-versioned] {
+  --doc-grid: 1.75rem minmax(0, 1fr) 6.5rem 5.5rem 4.5rem 4.5rem 2rem;
+}
+
+.headerRow,
+.row,
+.versionRow {
+  display: grid;
+  grid-template-columns: var(--doc-grid);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* The versioned metadata cells are grouped in the markup (so the narrow
+   layout can flow them as one line) but lay out as the row's own grid cells
+   at full width. */
+.meta {
+  display: contents;
+}
+
+/* The open-failure alert sits between the heading and the header row; it
+   carries its own gap so it doesn't sit flush against the row below. */
+.openError {
+  margin-block-end: 0.75rem;
+}
+
+.headerRow {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-value);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.rows,
+.versionRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  padding: 0.75rem 0;
+}
+
+/* An unfolded document's earlier versions, beneath its row: a hairline sets
+   them off from the row above, and a quieter tone from the current version. */
+.versionRows {
+  border-top: 1px solid var(--color-border-value);
+}
+
+.versionRow {
+  padding: 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+.versionRow + .versionRow {
+  border-top: 1px solid var(--color-border-value);
+}
+
+/* Versioned lists only: a document may carry an unfolded block of versions
+   beneath it, so each document needs its own edge. The plain list keeps its
+   uninterrupted rows. */
+.list[data-versioned] .item + .item {
+  border-top: 1px solid var(--color-border-value);
+}
+
+/* The version number with its unfold: the figure first, the chevron beside
+   it, pointing at the state the unfold will move to (the accordion and
+   DisclosureToggle convention — rotation, no RTL mirroring). */
+.version {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+}
+
+.chevron {
+  transition: transform var(--motion-base) ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+/*
+ * Narrow column: stack the metadata under the filename.
+ *
+ * The wide row's fixed tracks — icon, date, size, action, and the four gaps —
+ * claim 21.75rem before the name gets anything, and the name is the only
+ * flexible one. Below that the name resolves to ZERO: the link is still in the
+ * DOM with the right href, but it has no area, so there is nothing to tap and
+ * the document cannot be opened at all (#692, found on a tablet in portrait
+ * where this panel gets ~22rem). The header row goes with it — column headings
+ * describe a layout that is no longer there, and at zero width they spill over
+ * each other. The versioned list, with more fixed tracks, stacks at its own
+ * wider threshold below.
+ */
+@container (max-width: 30rem) {
+  .headerRow {
+    display: none;
+  }
+
+  /* The DATE takes its natural width and the size the remainder: sized the
+     other way round the date overflows its track and its text runs into the
+     size beside it. */
+  .row {
+    grid-template-columns: 1.75rem auto minmax(0, 1fr) 2rem;
+    align-items: start;
+    row-gap: 0.25rem;
+  }
+
+  .fileType {
+    grid-row: 1 / span 2;
+  }
+
+  .name,
+  .nameLink {
+    grid-row: 1;
+    grid-column: 2 / span 2;
+  }
+
+  .date {
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  .size {
+    grid-row: 2;
+    grid-column: 3;
+  }
+
+  .rowAction {
+    grid-row: 1 / span 2;
+    grid-column: 4;
+  }
+}
+
+/*
+ * The versioned list stacks sooner. Its fixed tracks — icon, user, date,
+ * version, size, action, and the six gaps — claim 29.25rem before the name
+ * gets anything, so the plain list's 30rem threshold would leave the name at
+ * zero width across a 30rem column (the #692 failure again). 38rem keeps the
+ * name at least ~8.75rem wide before the grouped metadata drops under it as
+ * one wrapping line.
+ */
+@container (max-width: 38rem) {
+  .list[data-versioned] .headerRow {
+    display: none;
+  }
+
+  .list[data-versioned] .row,
+  .list[data-versioned] .versionRow {
+    grid-template-columns: 1.75rem minmax(0, 1fr) 2rem;
+    align-items: start;
+    row-gap: 0.25rem;
+  }
+
+  .list[data-versioned] .fileType {
+    grid-row: 1 / span 2;
+  }
+
+  .list[data-versioned] .name,
+  .list[data-versioned] .nameLink {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .list[data-versioned] .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  /* No column headings here, so each cell names itself: a user, a date and
+     a bare version number read as nothing without one. From the
+     attribute, so the copy stays translated (set only where the cell has a
+     value, so an unrecorded uploader shows neither label nor value). */
+  .list[data-versioned] .meta > [data-label]::before {
+    content: attr(data-label) ': ';
+  }
+
+  .list[data-versioned] .rowAction {
+    grid-row: 1 / span 2;
+    grid-column: 3;
+  }
+}
+
+/* File-type marker: the file glyph with its extension as a small caption. */
+.fileType {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: var(--text-secondary);
+}
+
+.ext {
+  position: absolute;
+  bottom: 0.05em;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 0.1em;
+  background: var(--bg-white);
+  font-size: 0.28em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.name,
+.nameLink {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.name {
+  color: var(--text-body);
+}
+
+.nameLink {
+  color: var(--secondary-main);
+  text-decoration: none;
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}
+
+.nameLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.date,
+.size,
+.user {
+  color: var(--text-secondary);
+}
+
+/* A user name: truncated like the file name, so a long account name cannot
+   push the dates beside it out of their tracks. */
+.user {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rowAction {
+  display: flex;
+  justify-content: center;
+}
+
+.empty {
+  padding: 1rem 0;
+  margin: 0;
+  color: var(--text-secondary);
+}

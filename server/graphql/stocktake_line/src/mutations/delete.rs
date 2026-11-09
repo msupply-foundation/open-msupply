@@ -1,8 +1,8 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::CannotEditStocktake;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::simple_generic_errors::CannotEditStocktake;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::{
@@ -75,7 +75,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::CannotEditFinalised => {
             return Ok(DeleteErrorInterface::CannotEditStocktake(
                 CannotEditStocktake {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
@@ -101,7 +101,7 @@ mod graphql {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
 
     use service::{

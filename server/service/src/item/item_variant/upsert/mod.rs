@@ -1,20 +1,20 @@
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, TransactionError,
     item_variant::{
         item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
         item_variant_row::ItemVariantRowRepository,
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    ActivityLogType, EqualFilter, RepositoryError, TransactionError,
 };
 
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     item::packaging_variant::{
-        upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
+        UpsertPackagingVariant, UpsertPackagingVariantError, upsert_packaging_variant,
     },
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 mod generate;
 mod validate;
@@ -29,7 +29,6 @@ pub enum UpsertItemVariantError {
     DuplicateName,
     LocationTypeDoesNotExist,
     OtherPartyDoesNotExist,
-    OtherPartyNotVisible,
     OtherPartyNotAManufacturer,
     PackagingVariantError(UpsertPackagingVariantError),
     DatabaseError(RepositoryError),
@@ -101,7 +100,8 @@ pub fn upsert_item_variant(
             let updated_variant = ItemVariantRepository::new(connection)
                 .query_one(
                     ItemVariantFilter::new()
-                        .id(EqualFilter::equal_to(new_item_variant.id.to_string())),
+                        .id(EqualFilter::equal_to(new_item_variant.id.to_string()))
+                        .include_auto_created(),
                 )?
                 .ok_or(UpsertItemVariantError::CreatedRecordNotFound)?;
 

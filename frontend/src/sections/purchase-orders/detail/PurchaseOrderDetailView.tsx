@@ -1,0 +1,1096 @@
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  Show,
+  Suspense,
+  type Accessor,
+  type Component,
+} from 'solid-js';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { MAX_FRACTION_DIGITS, t } from '@/intl';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
+import { gated } from '@/api/gated';
+import { createTableConfig } from '@/api/createTableConfig';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
+import { Button } from '@/ui/elements/buttons/Button';
+import { SplitButton } from '@/ui/elements/buttons/SplitButton';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { CloseIcon, PlusCircleIcon, SidebarIcon } from '@/ui/icons';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+} from '@/ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getCurrencyCell,
+  getDateCell,
+  getNumberCell,
+  sumBy,
+  type CellFragment,
+} from '@/ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '@/ui/elements/table/Pagination';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
+import { remToPx } from '@/ui/utils/rem';
+import { useFoldTotalsIntoBar } from '@/ui/utils/createMediaQuery';
+import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
+import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { hasFurtherPage, pagedNext, rowAfter } from '@/list/pagedNext';
+import { stripEmpty } from '@/typeHelpers';
+import { createDebouncedEdit } from '@/domain/debouncedEdit';
+import { ActivityLogPanel } from '@/domain/activityLog';
+import { CustomFieldsEditTab } from '@/domain/customFields';
+import { ExportPrintButton } from '@/domain/reports';
+import { MasterListPickerModal } from '@/domain/masterList';
+import { hasPermission, purchaseOrderPreferences } from '@/store/storeContext';
+import {
+  poLineStatusLabel,
+  type PurchaseOrderStatus,
+} from '../purchaseOrderStatus';
+import {
+  PurchaseOrder,
+  PurchaseOrderDetailLines,
+  PurchaseOrderLineSet,
+  type PurchaseOrderInfoFragment,
+  type PurchaseOrderDetailLineFragment,
+  type PurchaseOrderDetailLinesVariables,
+} from './purchaseOrderDetail.generated';
+import {
+  addPurchaseOrderFromMasterList,
+  cascadedDateFields,
+  cascadeDeliveryDates,
+  deliveryDatesVary,
+  updatePurchaseOrder,
+  type DeliveryDateField,
+} from './purchaseOrderUpdate';
+import type {
+  PurchaseOrderEditFields,
+  PurchaseOrderPatch,
+  SaveFieldResult,
+} from './purchaseOrderEdit';
+import {
+  filterFields,
+  type PurchaseOrderLineFilter,
+} from './purchaseOrderDetailFilters';
+import { PurchaseOrderDetailToolbar } from './PurchaseOrderDetailToolbar';
+import { PurchaseOrderSidePanel } from './PurchaseOrderSidePanel';
+import { PurchaseOrderStatusFooter } from './PurchaseOrderStatusFooter';
+import { PurchaseOrderTotalsStrip } from './PurchaseOrderTotalsStrip';
+import { PurchaseOrderDetailsTab } from './tabs/PurchaseOrderDetailsTab';
+import { PurchaseOrderShipmentsTab } from './tabs/PurchaseOrderShipmentsTab';
+import { PurchaseOrderDocumentsTab } from './tabs/PurchaseOrderDocumentsTab';
+import {
+  canAttachDocuments,
+  canAuthorLines,
+  canCloseLines,
+  canSetExpectedDate,
+  isOpenToChange,
+} from './purchaseOrderLadder';
+import { formatCurrency } from '@/intl/currency';
+import { linePacks } from './purchaseOrderPricing';
+import { CloseLinesAction, DeleteLinesAction } from './actions';
+import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
+import { Num } from '@/ui/elements/typography/Num';
+
+// An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
+// Details tab, S9's side panel, S10's line editor, S11-S13's remaining tabs,
+// S14's master-list add, S16's line import and S18's status confirmations).
+//
+// THREE resources, each answering a different question (kdd/state-management):
+//
+//  - `info` — the order node: the toolbar, the Details tab, the side panel and
+//    the ladder. Spliced in place on a field save.
+//  - `lines` — ONE server-paginated, server-sorted, server-searched page of the
+//    order's lines for the General tab. The node's own unpaginated `lines` is
+//    deliberately unused (see purchaseOrderDetail.graphql).
+//  - `lineSet` — the order's whole line set at its thinnest, for the three
+//    questions a page cannot answer: the lifecycle gate, the two toolbar dates'
+//    cascade, and the finalise warning.
+//
+// Every one is read NON-SUSPENDING (kdd/solid-reactivity-pitfalls › No remounts
+// on interaction): a field save refetches the node while the screen is open,
+// and a suspend there would detach an open dialog and drop input focus. The
+// initial-load spinner is the <Show> fallback's, not the <Suspense>'s.
+//
+// NOT built in this pass, and so not reachable from here: the bulk
+// delivery-date modal (S15).
+
+type Line = PurchaseOrderDetailLineFragment;
+type SortKey = NonNullable<
+  PurchaseOrderDetailLinesVariables['sort']
+>[number]['key'];
+
+type DetailUrlState = {
+  sort: NonNullable<PurchaseOrderDetailLinesVariables['sort']>;
+  filter: PurchaseOrderLineFilter;
+  offset: number;
+  first: number;
+};
+
+// Default sort: Line, ascending (spec S7). The code-or-name search is the
+// table's one DEFAULT filter, so its key is seeded present-but-empty (null,
+// FilterBar's "added but empty" marker) and stripEmpty drops it from the query.
+const DEFAULT_URL_STATE: DetailUrlState = {
+  sort: [{ key: 'lineNumber', desc: false }],
+  filter: { itemCodeOrName: null },
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
+};
+
+// Hidden by default, keyed by column id: pack size, and the two planning
+// inputs spec S7 keeps off the default layout (SOH and On order), plus on a
+// narrow viewport three more that a card cannot carry.
+const DEFAULT_HIDDEN: Record<string, boolean> = {
+  packSize: false,
+  stockOnHand: false,
+  onOrder: false,
+};
+const NARROW_HIDDEN: Record<string, boolean> = {
+  ...DEFAULT_HIDDEN,
+  unitName: false,
+  requestedDeliveryDate: false,
+  expectedDeliveryDate: false,
+};
+
+const exactQuantity: CellFragment<Line>['cell'] = info => {
+  const value = info.getValue<number | null | undefined>();
+  if (value == null) return '';
+  return <Num value={value} places={MAX_FRACTION_DIGITS} />;
+};
+
+const PurchaseOrderDetailView: Component = () => {
+  const params = useParams<{ storeId: string; id: string }>();
+  const navigate = useNavigate();
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
+
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
+  // The tab in view rides the address (spec S6 § tabs).
+  const [search, setSearch] = useSearchParams<{ tab?: string }>();
+  const activeTab = () => search.tab ?? 'general';
+  // Lines the last blocked state move named as unorderable — marked in the
+  // table so they can be found and removed (spec S18).
+  const [blockedLines, setBlockedLines] = createSignal<string[]>([]);
+  // The line editor (spec S10): a row click opens it on that line, Add item
+  // and the empty state's affordance open it on a new one.
+  const [editor, setEditor] = createSignal<{ line?: Line }>();
+  // The Add split's other two options: the master-list picker with its
+  // pending choice awaiting confirmation (spec S14), and the import (S16). A
+  // rejection from either reads as a fixed-copy notice.
+  const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
+  const [pendingMasterList, setPendingMasterList] = createSignal<{
+    id: string;
+    name: string;
+  }>();
+  const [importOpen, setImportOpen] = createSignal(false);
+  const [notice, setNotice] = createSignal<string>();
+
+  const prefs = () => purchaseOrderPreferences();
+
+  const tableConfig = createTableConfig({
+    tableId: 'purchase-order-detail-lines',
+    defaultConfig: {
+      compact: {
+        viewMode: 'card',
+        columnPinning: { left: ['itemCode'] },
+        columnVisibility: NARROW_HIDDEN,
+      },
+      base: {
+        columnPinning: { left: ['itemCode'] },
+        columnVisibility: DEFAULT_HIDDEN,
+      },
+    },
+  });
+
+  // ── The order node ────────────────────────────────────────────────────────
+  const [data, { refetch: refetchInfo }] = createResource(
+    () => ({ storeId: params.storeId, id: params.id }),
+    async variables => {
+      const result = await graphqlFetch(PurchaseOrder, variables);
+      return result.kind === 'success' &&
+        result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
+        ? result.data.purchaseOrder
+        : undefined;
+    }
+  );
+  const info = (): PurchaseOrderInfoFragment | undefined => gated(data);
+
+  // ── One page of lines ─────────────────────────────────────────────────────
+  const linesVariables = createMemo<PurchaseOrderDetailLinesVariables>(() => ({
+    storeId: params.storeId,
+    // stripEmpty drops the added-but-empty chip (held as a null key) so the
+    // query carries only a live filter. The order scope goes on LAST — it is
+    // not the user's to drop.
+    filter: {
+      ...stripEmpty(query().filter),
+      purchaseOrderId: { equalTo: params.id },
+    },
+    sort: query().sort,
+    page: { first: query().first, offset: query().offset },
+  }));
+  const [linesData, { refetch: refetchLines }] = createResource(
+    () => JSON.stringify(linesVariables()),
+    async serialised => {
+      const result = await graphqlFetch(
+        PurchaseOrderDetailLines,
+        JSON.parse(serialised) as PurchaseOrderDetailLinesVariables
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.purchaseOrderLines.__typename ===
+        'PurchaseOrderLineConnector'
+        ? result.data.purchaseOrderLines
+        : undefined;
+    }
+  );
+  const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const lineCost = (line: Line) => line.lineTotalAfterSupplierDiscount;
+  const totalCount = () => gated(linesData)?.totalCount ?? 0;
+
+  // ── The whole line set (gates, cascades, the finalise warning) ────────────
+  const [lineSetData, { refetch: refetchLineSet }] = createResource(
+    () => ({ storeId: params.storeId, orderId: params.id }),
+    async variables => {
+      const result = await graphqlFetch(PurchaseOrderLineSet, variables);
+      return result.kind === 'success' &&
+        result.data.purchaseOrderLines.__typename ===
+          'PurchaseOrderLineConnector'
+        ? result.data.purchaseOrderLines.nodes
+        : [];
+    }
+  );
+  const lineSet = () => gated(lineSetData) ?? [];
+  const lineCount = () => lineSet().length;
+  // A line carrying no quantity — the order cannot change state at all while
+  // one exists (rules § the status lifecycle).
+  const emptyLineCount = () =>
+    lineSet().filter(line => line.requestedNumberOfUnits === 0).length;
+  // Any line still owed stock, on the server's own shortfall expression.
+  const stockStillOwed = () =>
+    lineSet().some(line => line.outstandingNumberOfUnits > 0);
+  // The toolbar's Expected delivery date: the LATEST among the lines. No
+  // order-level field carries it (rules § the two delivery dates).
+  const latestExpectedDate = () =>
+    lineSet()
+      .map(line => line.expectedDeliveryDate)
+      .filter((date): date is string => !!date)
+      .sort()
+      .at(-1);
+
+  // A bulk delete of the last page's rows leaves the offset past the new end.
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
+  const status = () => (info()?.status ?? 'NEW') as PurchaseOrderStatus;
+  // Lines may be added by hand while drafting only (rules § choosing the
+  // item); the insert's state gate is typed, but the button says so first.
+  const canAdd = () => !!info() && canAuthorLines(status());
+
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditor({}),
+    disabled: () => !canAdd(),
+  });
+
+  const onAddAction = (choice: string) => {
+    if (choice === 'master-list') setMasterListPickerOpen(true);
+    else if (choice === 'import') {
+      if (hasPermission('PURCHASE_ORDER_MUTATE')) setImportOpen(true);
+      else setNotice(t('error.no-purchase-order-import-permission'));
+    } else setEditor({});
+  };
+
+  // Applying a list whose items are all present adds nothing and says
+  // nothing: the unchanged table is the whole outcome (spec S14).
+  const confirmAddFromMasterList = async () => {
+    const list = pendingMasterList();
+    if (!list) return;
+    setPendingMasterList(undefined);
+    const result = await addPurchaseOrderFromMasterList(
+      params.storeId,
+      params.id,
+      list.id
+    );
+    if (result.kind === 'done') void refetchAll();
+    else if (result.kind === 'error') setNotice(result.message);
+    else if (result.kind === 'forbidden')
+      reportPermissionDenied(result.permissions);
+  };
+
+  // The editor's walk follows the table's current sort and filter (rules §
+  // saving), paging the server where the next line is on the next page and
+  // the table moving with it (src/list/pagedNext).
+  // The page the walk last fetched stands in for the table's rows until the
+  // resource catches up with the page turn.
+  const [walkedPage, setWalkedPage] = createSignal<readonly Line[]>([]);
+  const hasNextLine = (lineId: string) => {
+    const onPage = (page: readonly Line[]) =>
+      page.findIndex(line => line.id === lineId);
+    let page: readonly Line[] = rows();
+    let index = onPage(page);
+    if (index < 0) {
+      page = walkedPage();
+      index = onPage(page);
+    }
+    return (
+      index >= 0 &&
+      (index < page.length - 1 || hasFurtherPage(query(), totalCount()))
+    );
+  };
+  const nextLine = (lineId: string): Promise<Line | undefined> =>
+    pagedNext<Line, Line>({
+      rows,
+      page: () => query(),
+      totalCount,
+      setOffset: offset => setQuery({ ...query(), offset }),
+      fetchPage: async (offset, first) => {
+        const result = await graphqlFetch(PurchaseOrderDetailLines, {
+          ...linesVariables(),
+          page: { first, offset },
+        });
+        const nodes =
+          result.kind === 'success' &&
+          result.data.purchaseOrderLines.__typename ===
+            'PurchaseOrderLineConnector'
+            ? result.data.purchaseOrderLines.nodes
+            : undefined;
+        if (nodes) setWalkedPage(nodes);
+        return nodes;
+      },
+      pick: (pageRows, fromStart) =>
+        rowAfter(pageRows, fromStart, line => line.id, lineId),
+    });
+  // Sent, Finalised or Cancelled: every field on the screen is refused —
+  // except the comment, open in every state, and the panel's two post-sending
+  // dates, open until Finalised (rules § what may be changed, and when). Mirrored
+  // here because the refusal names no cause (contract ⚠️), so a control left
+  // enabled would fail into a bare toast.
+  const isDisabled = () => !isOpenToChange(status());
+  // The order's own fields save as they are edited, so without the change
+  // permission they close in every state: an open one would keep showing a
+  // value the server refused (rules § availability). An existing line closes
+  // in the editor too; adding and the actions stay as they are — their
+  // refusal is the permission-denied notice.
+  const canMutate = () => hasPermission('PURCHASE_ORDER_MUTATE');
+  const fieldsDisabled = () => isDisabled() || !canMutate();
+  // A line with no quantity — not yet ordered (spec S7) — on an order and a
+  // line that can still change. Sent orders and closed lines need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !isDisabled() &&
+    line.status !== 'CLOSED' &&
+    line.requestedNumberOfUnits === 0;
+
+  // Resolves once all three re-reads have landed, for a caller that has to
+  // hold something on screen until then.
+  const refetchAll = () =>
+    Promise.all([refetchInfo(), refetchLines(), refetchLineSet()]);
+
+  // Nothing on this screen is saved by hand — there is no save action anywhere
+  // on it (rules § an order's own screen). A save the domain refuses leaves the
+  // field showing what was typed until the screen is read again — except the
+  // discounts, which show the order's figure again once left
+  // (createDebouncedField).
+  const saveField = async (
+    patch: PurchaseOrderPatch
+  ): Promise<SaveFieldResult> => {
+    const node = info();
+    if (!node) return { ok: false };
+    const result = await updatePurchaseOrder(params.storeId, {
+      id: node.id,
+      ...patch,
+    });
+    if (result.kind === 'saved') {
+      // The node carries derived money (both totals, the discount amount), so
+      // re-read rather than splicing the patch in — awaited, so a buffered
+      // field (the discounts) shows the server's figure only once it is in.
+      await refetchInfo();
+      return { ok: true };
+    }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
+    return result.kind === 'error'
+      ? { ok: false, message: result.message }
+      : { ok: false };
+  };
+
+  // Open in every state, like the comment.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => (await saveField({ customFields: patch })).ok;
+
+  const edit = createDebouncedEdit<PurchaseOrderEditFields>({
+    id: () => info()?.id ?? '',
+    initial: () => {
+      const node = info();
+      return {
+        reference: node?.reference ?? '',
+        authorisingOfficer1: node?.authorisingOfficer1 ?? '',
+        authorisingOfficer2: node?.authorisingOfficer2 ?? '',
+        additionalInstructions: node?.additionalInstructions ?? '',
+        supplierAgent: node?.supplierAgent ?? '',
+        headingMessage: node?.headingMessage ?? '',
+        freightConditions: node?.freightConditions ?? '',
+        comment: node?.comment ?? '',
+      };
+    },
+    save: patch => void saveField(patch),
+  });
+
+  // The requested date is the ORDER's own field as well as every line's; the
+  // expected date has no order-level field at all. The other date follows only
+  // where the lines still agree on it (rules § the two delivery dates), and
+  // the order's requested date moves whenever it does; one re-read covers all.
+  // Past the authoring window only the expected date is still open, and it
+  // then travels alone — the agreed requested date is not dragged with it.
+  const cascadeDate = async (
+    field: DeliveryDateField,
+    date: string
+  ): Promise<SaveFieldResult> => {
+    const fields = cascadedDateFields(lineSet(), field, !isDisabled());
+    const orderWrite = fields.includes('requestedDeliveryDate')
+      ? await updatePurchaseOrder(params.storeId, {
+          id: params.id,
+          requestedDeliveryDate: { value: date },
+        })
+      : undefined;
+    // The lines need the same permission as the order, so a Forbidden here
+    // ends the cascade before it starts.
+    if (orderWrite?.kind === 'forbidden') {
+      reportPermissionDenied(orderWrite.permissions);
+      return { ok: false };
+    }
+    const outcome = await cascadeDeliveryDates(
+      params.storeId,
+      lineSet(),
+      date,
+      fields
+    );
+    // Wait for the re-read: the toolbar shows the picked day until this
+    // resolves, so dropping it any earlier flashes the old date back for a
+    // moment before the new one lands.
+    await refetchAll();
+    if (outcome.forbidden) {
+      reportPermissionDenied(outcome.forbidden);
+      return { ok: false };
+    }
+    const message =
+      (orderWrite?.kind === 'error' ? orderWrite.message : undefined) ??
+      outcome.message;
+    return message ? { ok: false, message } : { ok: true };
+  };
+
+  const onMove = async (target: PurchaseOrderStatus) => {
+    setBlockedLines([]);
+    const result = await updatePurchaseOrder(params.storeId, {
+      id: params.id,
+      status: target,
+    });
+    if (result.kind === 'saved') {
+      // A move cascades onto the lines (their requested dates, their statuses),
+      // so the page and the set are both re-read.
+      void refetchAll();
+      return { ok: true };
+    }
+    if (result.kind === 'error') {
+      if (result.blockedLines) setBlockedLines(result.blockedLines);
+      return { ok: false, message: result.message };
+    }
+    if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
+    return { ok: false };
+  };
+
+  const onLinesChanged = () => {
+    setSelectedIds([]);
+    setBlockedLines([]);
+    void refetchAll();
+  };
+
+  // Where height is scarce the band gives way to the order total alone, on
+  // the bar the screen already has (spec S7 § totals band).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Takes the node accessor as an argument because `node` is the <Show>'s own
+  // binding below, not in scope here.
+  const inlineTotals = (node: Accessor<PurchaseOrderInfoFragment>) => (
+    <Show when={foldTotalsIntoBar()}>
+      <PurchaseOrderTotalsStrip inline node={node()} lineCount={lineCount()} />
+    </Show>
+  );
+
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => {
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
+  });
+
+  const currentSort = (): SortState<SortKey> | undefined => {
+    const sort = query().sort[0];
+    return sort ? { key: sort.key, desc: sort.desc ?? false } : undefined;
+  };
+  const onSort = (key: SortKey, desc: boolean) =>
+    setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
+
+  const tabs = (): TabDef[] => [
+    { value: 'general', label: t('label.general') },
+    { value: 'shipments', label: t('label.inbound-shipment') },
+    { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
+    { value: 'custom-fields', label: t('label.custom-fields') },
+    { value: 'log', label: t('label.log') },
+  ];
+
+  // Breadcrumbs: Purchase Orders / <number> — the order's NUMBER, not its
+  // identity (spec S6).
+  const crumbs = (node: PurchaseOrderInfoFragment) => [
+    {
+      label: t('purchase-order'),
+      to: `/${params.storeId}/replenishment/purchase-order`,
+    },
+    { label: String(node.number) },
+  ];
+
+  const toList = () =>
+    navigate(`/${params.storeId}/replenishment/purchase-order`, {
+      replace: true,
+    });
+
+  const columns = (): Column<Line, SortKey>[] => [
+    {
+      c: { key: 'lineNumber' },
+      sortKey: 'lineNumber',
+      // The key reads as "Line", not "Line number" (spec S7 column 1).
+      header: () => t('label.line-number'),
+      ...getNumberCell(),
+      size: remToPx(5),
+    },
+    {
+      // The LINE's own state, not the order's — and never the wire value,
+      // which is SCREAMING_CASE (rules § line status).
+      c: { accessor: line => poLineStatusLabel(line.status), id: 'status' },
+      sortKey: 'status',
+      header: () => t('label.status'),
+      ...getCellDefinition('unit'),
+    },
+    {
+      c: { accessor: line => line.item.code, id: 'itemCode' },
+      sortKey: 'itemCode',
+      header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
+      // The footer's first cell reads "Total" (spec S7 column 3).
+      footer: () => t('label.total'),
+    },
+    {
+      c: { accessor: line => line.item.name, id: 'itemName' },
+      sortKey: 'itemName',
+      header: () => t('label.item-name'),
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
+      size: remToPx(14),
+    },
+    {
+      // Derived from the quantity and the pack size, on the same rule the
+      // order's totals use — a zero pack size contributes nothing
+      // (purchaseOrderPricing.ts). No sort key exists for a derived column.
+      c: { accessor: line => linePacks(line), id: 'numPacks' },
+      header: () => t('label.order-quantity-in-packs'),
+      ...getCellDefinition('numberOfPacks'),
+      cell: exactQuantity,
+    },
+    {
+      c: { key: 'requestedPackSize' },
+      sortKey: 'requestedPackSize',
+      header: () => t('label.pack-size'),
+      ...getCellDefinition('packSize'),
+    },
+    {
+      c: { accessor: line => line.unit ?? '', id: 'unitName' },
+      sortKey: 'unit',
+      header: () => t('label.unit-name'),
+      ...getCellDefinition('unitName'),
+    },
+    {
+      c: { key: 'requestedNumberOfUnits' },
+      sortKey: 'requestedNumberOfUnits',
+      header: () =>
+        t('label.order-quantity-in-unit', { unit: t('label.units') }),
+      ...getNumberCell(),
+      cell: exactQuantity,
+      size: remToPx(8),
+    },
+    {
+      // Written by the shipment, never here.
+      c: { key: 'shippedNumberOfUnits' },
+      sortKey: 'shippedNumberOfUnits',
+      header: () => t('label.shipped-units'),
+      ...getNumberCell(),
+      cell: exactQuantity,
+      size: remToPx(8),
+    },
+    {
+      c: { key: 'receivedNumberOfUnits' },
+      sortKey: 'receivedNumberOfUnits',
+      header: () => t('label.received-units'),
+      ...getNumberCell(),
+      cell: exactQuantity,
+      size: remToPx(8),
+    },
+    {
+      // The ITEM's stock on hand now — not the line's stored figure, which is
+      // written as 0.0 at insert and read by nothing.
+      c: {
+        accessor: line => line.item.stats.stockOnHand,
+        id: 'stockOnHand',
+      },
+      header: () => t('label.soh'),
+      ...getNumberCell(),
+      size: remToPx(6),
+    },
+    {
+      // The item's units on order across the store's OTHER purchase orders.
+      c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
+      header: () => t('label.on-order'),
+      ...getNumberCell(),
+      size: remToPx(7),
+    },
+    {
+      // The line's STORED total with the order's supplier discount apportioned
+      // to it, as the server computes it — never re-multiplied here (rules §
+      // pricing and totals). Its footer sums the rows ON SCREEN — the page,
+      // which is what a paginated table can total; the order's whole figures
+      // are the side panel's Subtotal and Final cost rows.
+      c: { accessor: lineCost, id: 'lineCost' },
+      header: () => t('label.line-cost'),
+      ...getCurrencyCell(undefined, () => info()?.currency?.code),
+      footer: () => money(sumBy(rows(), lineCost)),
+    },
+    {
+      c: { key: 'requestedDeliveryDate' },
+      sortKey: 'requestedDeliveryDate',
+      header: () => t('label.requested-delivery-date'),
+      ...getDateCell(),
+      size: remToPx(11),
+    },
+    {
+      c: { key: 'expectedDeliveryDate' },
+      sortKey: 'expectedDeliveryDate',
+      header: () => t('label.expected-delivery-date'),
+      ...getDateCell(),
+      size: remToPx(11),
+    },
+  ];
+
+  const money = (value: number) =>
+    formatCurrency(value, info()?.currency?.code);
+
+  return (
+    // info()/rows() are read non-suspending, so the initial-load spinner is
+    // this <Show>'s fallback; the <Suspense> stays only as the lazy-route
+    // boundary. Non-keyed, so a refetch never remounts the screen.
+    <Suspense fallback={<Spinner center />}>
+      <Show
+        when={info()}
+        fallback={
+          <Show when={!data.loading} fallback={<Spinner center />}>
+            {/* No such order (or another store's): the screen is REPLACED by a
+                blocking modal whose only way on is back to the list (spec S6 §
+                states). */}
+            <ConfirmDialog
+              open
+              title={t('error.purchase-order-not-found')}
+              message={t('messages.click-to-return-to-purchase-orders')}
+              onConfirm={toList}
+              onClose={toList}
+            />
+          </Show>
+        }
+      >
+        {node => (
+          <Tabs value={activeTab()} onValueChange={tab => setSearch({ tab })}>
+            <Page
+              fillBody
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.details')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <PurchaseOrderSidePanel
+                  storeId={params.storeId}
+                  node={node()}
+                  lineCount={lineCount()}
+                  disabled={fieldsDisabled()}
+                  readOnly={!canMutate()}
+                  edit={edit}
+                  onSaveField={saveField}
+                  onDeleted={toList}
+                  onCancelled={refetchAll}
+                />
+              }
+              header={
+                <Header>
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  <HeaderButtons>
+                    {/* The Add split (spec S6 § page actions): all three
+                        options while drafting, so the whole control stands
+                        down from Approved. */}
+                    <SplitButton
+                      icon={<PlusCircleIcon />}
+                      collapsible="narrow"
+                      testId="add-item-button"
+                      menuLabel={t('button.add-item')}
+                      value="item"
+                      shortcut={ALT_N}
+                      disabled={!canAdd()}
+                      onAction={onAddAction}
+                      options={[
+                        { value: 'item', label: t('button.add-item') },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                        {
+                          value: 'import',
+                          label: t('button.upload-purchase-order-lines'),
+                        },
+                      ]}
+                    />
+                    <ExportPrintButton
+                      context="PURCHASE_ORDER"
+                      dataId={node().id}
+                      sort={currentSort()}
+                    />
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
+                        data-testid="open-detail-panel-button"
+                        shortcut={ALT_M}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  {/* Says why every field is closed — a compact chip at the
+                      cluster's end, the internal-order read-only notices'
+                      pattern. */}
+                  <HeaderToolbar
+                    alert={
+                      <Show when={!canMutate()}>
+                        <Alert
+                          severity="info"
+                          compact
+                          testId="no-edit-permission-notice"
+                        >
+                          {t('info.cannot-edit-purchase-order-no-permission')}
+                        </Alert>
+                      </Show>
+                    }
+                  >
+                    <PurchaseOrderDetailToolbar
+                      storeId={params.storeId}
+                      node={node()}
+                      disabled={fieldsDisabled()}
+                      readOnly={!canMutate()}
+                      expectedDateDisabled={
+                        !canMutate() || !canSetExpectedDate(status())
+                      }
+                      edit={edit}
+                      latestExpectedDate={latestExpectedDate()}
+                      datesVary={field => deliveryDatesVary(lineSet(), field)}
+                      lineCount={lineCount()}
+                      onSaveField={saveField}
+                      onCascadeDate={cascadeDate}
+                    />
+                  </HeaderToolbar>
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                <>
+                  {/* Above BOTH footer faces — an order-level fact, so a
+                      row selection doesn't take it away. */}
+                  <Show when={!foldTotalsIntoBar()}>
+                    <PurchaseOrderTotalsStrip
+                      node={node()}
+                      lineCount={lineCount()}
+                    />
+                  </Show>
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <PurchaseOrderStatusFooter
+                        node={node()}
+                        authorisationRequired={prefs().authorisePurchaseOrder}
+                        lineCount={lineCount()}
+                        emptyLineCount={emptyLineCount()}
+                        stockStillOwed={stockStillOwed()}
+                        pagination={linePagination()}
+                        totals={inlineTotals(node)}
+                        onMove={onMove}
+                      />
+                    }
+                  >
+                    {/* Selecting lines swaps the ladder for the bulk-action bar
+                        (spec S7 § line-selection actions). Each action carries
+                        its own window: removal while drafting, closing for
+                        receipt on a Sent order only. The two bulk delivery-date
+                        actions belong to S15, which this pass does not build. */}
+                    <ContentFooter testId="actions-footer">
+                      {inlineTotals(node)}
+                      <strong data-testid="selected-rows-count">
+                        {selectedIds().length} {t('label.selected')}
+                      </strong>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canAuthorLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      <CloseLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canCloseLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      {/* The pager rides the selection face too: ticking a row
+                          must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<CloseIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
+                </>
+              }
+            >
+              <TabPanel value="general">
+                <DataTable
+                  columns={columns()}
+                  rows={rows()}
+                  rowKey={line => line.id}
+                  // The code-or-name filter lives in the table's own toolbar
+                  // (ui-standards › tables › toolbar), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={filterFields()}
+                      filter={query().filter}
+                      onChange={filter =>
+                        setQuery({ ...query(), filter, offset: 0 })
+                      }
+                    />
+                  }
+                  loading={linesData.loading}
+                  sort={currentSort()}
+                  onSort={onSort}
+                  // A row click opens the line editor on that line, in every
+                  // state — a closed line or a Finalised order opens it with
+                  // every field closed (spec S10).
+                  onRowClick={line => setEditor({ line })}
+                  // A CLOSED line is marked as RESTRICTED — the same disabled
+                  // row treatment the orders list gives an order closed to
+                  // change, since closure is a standing property of the line
+                  // (spec S7).
+                  rowState={line =>
+                    line.status === 'CLOSED' ? 'disabled' : undefined
+                  }
+                  // A line named by a blocked state move reads in the error
+                  // tone so it can be found and removed (spec S18).
+                  rowTone={line =>
+                    blockedLines().includes(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
+                    blockedLines().includes(line.id)
+                      ? 'error'
+                      : isOpenPlaceholder(line)
+                        ? 'info'
+                        : undefined
+                  }
+                  emptyMessage={t('error.no-purchase-order-items')}
+                  // The create affordance is offered only while lines may
+                  // still be added by hand (spec S7 § empty).
+                  empty={
+                    canAdd() ? (
+                      <Button
+                        variant="ghost"
+                        shortcut={ALT_N}
+                        data-testid="nothing-here-create-button"
+                        onClick={() => setEditor({})}
+                      >
+                        {t('button.create-a-new-one')}
+                      </Button>
+                    ) : undefined
+                  }
+                  enableSelection
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
+                  config={tableConfig.config()}
+                  setConfig={tableConfig.setConfig}
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
+                />
+              </TabPanel>
+              <TabPanel value="shipments">
+                <PurchaseOrderShipmentsTab
+                  storeId={params.storeId}
+                  orderId={node().id}
+                />
+              </TabPanel>
+              <TabPanel value="details">
+                <PurchaseOrderDetailsTab
+                  disabled={fieldsDisabled()}
+                  edit={edit}
+                />
+              </TabPanel>
+              <TabPanel value="documents">
+                <PurchaseOrderDocumentsTab
+                  node={node()}
+                  canChange={canAttachDocuments(status())}
+                  onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
+              <TabPanel value="custom-fields">
+                <CustomFieldsEditTab
+                  scope="purchase_order"
+                  values={node().customFields}
+                  disabled={!canMutate()}
+                  onSave={saveCustomFields}
+                />
+              </TabPanel>
+              <TabPanel value="log">
+                <ActivityLogPanel
+                  storeId={params.storeId}
+                  recordId={node().id}
+                />
+              </TabPanel>
+
+              {/* The line editor is an overlay, not tab content, so a row
+                  click opens it whichever tab last had focus. */}
+              <PurchaseOrderLineEditModal
+                open={!!editor()}
+                onClose={() => setEditor(undefined)}
+                storeId={params.storeId}
+                order={{
+                  id: node().id,
+                  status: status(),
+                  currencyCode: node().currency?.code,
+                  requestedDeliveryDate: node().requestedDeliveryDate,
+                  supplierDiscountPercentage: node().supplierDiscountPercentage,
+                }}
+                canMutate={canMutate()}
+                latestExpectedDate={latestExpectedDate()}
+                lineCount={lineCount()}
+                initialLine={editor()?.line}
+                hasNext={hasNextLine}
+                nextLine={nextLine}
+                onSaved={refetchAll}
+              />
+
+              {/* Add from master list (spec S14): the shared picker, then the
+                  are-you-sure confirmation, then the add and a re-read. */}
+              <MasterListPickerModal
+                open={masterListPickerOpen()}
+                onClose={() => setMasterListPickerOpen(false)}
+                storeId={params.storeId}
+                onSelect={list => {
+                  setMasterListPickerOpen(false);
+                  setPendingMasterList(list);
+                }}
+              />
+              <Show when={pendingMasterList()}>
+                <ConfirmDialog
+                  open
+                  title={t('heading.are-you-sure')}
+                  message={t('messages.confirm-add-from-master-list')}
+                  onConfirm={() => void confirmAddFromMasterList()}
+                  onClose={() => setPendingMasterList(undefined)}
+                />
+              </Show>
+
+              {/* Import lines (spec S16). A finished import lands the user
+                  back on the General tab. */}
+              <Show when={importOpen()}>
+                <PurchaseOrderLineImportModal
+                  storeId={params.storeId}
+                  orderId={node().id}
+                  currencyCode={node().currency?.code}
+                  onClose={() => {
+                    setImportOpen(false);
+                    setSearch({ tab: 'general' });
+                  }}
+                  onImported={refetchAll}
+                />
+              </Show>
+
+              {/* A rejection's fixed copy, or the missing import permission,
+                  as an acknowledgement (ui-standards › action feedback). */}
+              <Show when={notice()}>
+                {message => (
+                  <ConfirmDialog
+                    open
+                    title={t('error.something-wrong')}
+                    message={message()}
+                    onConfirm={() => setNotice(undefined)}
+                    onClose={() => setNotice(undefined)}
+                  />
+                )}
+              </Show>
+            </Page>
+          </Tabs>
+        )}
+      </Show>
+    </Suspense>
+  );
+};
+
+export default PurchaseOrderDetailView;

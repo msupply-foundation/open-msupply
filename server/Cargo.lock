@@ -4307,6 +4307,7 @@ dependencies = [
  "graphql_location",
  "graphql_plugin",
  "graphql_preference",
+ "graphql_prescription_request",
  "graphql_printer",
  "graphql_programs",
  "graphql_purchase_order",
@@ -4745,6 +4746,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql_prescription_request"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
 name = "graphql_printer"
 version = "0.1.0"
 dependencies = [
@@ -4866,6 +4887,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 
@@ -5043,6 +5065,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "log",
  "repository",
  "serde",
  "serde_json",
@@ -8809,6 +8832,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlimit"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f35ee2729c56bb610f6dba436bf78135f728b7373bdffae2ec815b2d3eb98cc3"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "ron"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10338,8 +10370,8 @@ checksum = "fe470bf03e694eccaac03d81297cbc22e681f60d3af29d4b69369f014895bf06"
 
 [[package]]
 name = "temperature-sensor"
-version = "0.2.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.2.0-beta.1#6a7f521a86814cedfff11385ca6e21a252ed732a"
+version = "0.3.0"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.3.0#24f05fa5bbfc0e264100a3c89971ba5c08020e61"
 dependencies = [
  "chrono",
  "json",
@@ -11306,6 +11338,7 @@ dependencies = [
  "fs-lock",
  "log",
  "reqwest",
+ "rlimit",
  "rustls 0.23.37",
  "sanitize-filename",
  "serde",

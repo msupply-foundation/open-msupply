@@ -1,8 +1,8 @@
 use super::StorageConnection;
 use crate::{
+    DBType, DateFilter, EqualFilter, InvoiceType, ItemFilter, ItemRepository, RepositoryError,
     diesel_macros::{apply_date_filter, apply_equal_filter},
     item_row::item,
-    DBType, DateFilter, EqualFilter, InvoiceType, ItemFilter, ItemRepository, RepositoryError,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;

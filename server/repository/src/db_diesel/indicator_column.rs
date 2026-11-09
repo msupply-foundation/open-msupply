@@ -1,6 +1,6 @@
 use super::{
-    indicator_column_row::{indicator_column, IndicatorColumnRow},
     DBType, StorageConnection,
+    indicator_column_row::{IndicatorColumnRow, indicator_column},
 };
 
 use crate::{diesel_macros::apply_equal_filter, repository_error::RepositoryError};

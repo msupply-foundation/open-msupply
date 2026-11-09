@@ -1,0 +1,59 @@
+# The Create-order flow (spec/requisitions S3b / rules › creating an internal
+# order from a requisition): pick a supplier, then one of the store's
+# still-short requisitions to draw a restock order from.
+
+# The requisition picker read (contract › creating an internal order): the
+# store's non-finalised RESPONSE requisitions with lines still short of supply,
+# excluding any already addressed to the chosen supplier. Rows newest first
+# (captured as-is from the live render — the reference declares an ascending
+# sort that never takes effect).
+query createOrderRequisitions($storeId: String!, $supplierId: String!) {
+  requisitions(
+    storeId: $storeId
+    filter: {
+      type: { equalTo: RESPONSE }
+      status: { notEqualTo: FINALISED }
+      hasOutstandingLines: true
+      otherPartyId: { notEqualTo: $supplierId }
+    }
+    sort: [{ key: createdDatetime, desc: true }]
+  ) {
+    ... on RequisitionConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        requisitionNumber
+        otherPartyName
+        createdDatetime
+        programName
+        theirReference
+        status
+        comment
+      }
+    }
+  }
+}
+
+# Raise the internal order (OMS-FUN-DIS-03.17): a REQUEST requisition created
+# Draft, addressed to the supplier, linked back to the source requisition,
+# copying its program identity and months-of-stock bounds and carrying one
+# line per source line still short of supply. On success the client navigates
+# to the new internal order's detail (Replenishment).
+mutation insertOrderFromRequisition(
+  $storeId: String!
+  $input: InsertFromResponseRequisitionInput!
+) {
+  insertRequestFromResponseRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertFromResponseRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

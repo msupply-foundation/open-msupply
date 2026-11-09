@@ -1,9 +1,9 @@
-use super::{printer_row::printer, EqualFilter, PrinterRow, StorageConnection, StringFilter};
+use super::{EqualFilter, PrinterRow, StorageConnection, StringFilter, printer_row::printer};
 
 use crate::{
+    DBType,
     diesel_macros::{apply_equal_filter, apply_string_filter},
     repository_error::RepositoryError,
-    DBType,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 

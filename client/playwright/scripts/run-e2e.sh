@@ -13,14 +13,14 @@
 # the suites' data.setup.ts through the API — the datafile deliberately
 # contains none (see server/data/e2e/README.md).
 #
-# The suites themselves are DEFINED IN open-msupply-frontend (e2e/ there —
-# the cross-FE test-id contract, e2e/TESTIDS.md, lets one suite definition
-# verify both front ends), so this script needs a checkout of that repo
-# alongside the server + front end it builds here.
+# The suites themselves live in this repo's frontend/e2e/ and target the
+# Solid front end. This script drives them against the React front end
+# (client/) instead — kept for an occasional check, not run routinely, so
+# expect suites that assert Solid-only behaviour to fail here.
 #
 # Knobs (all optional):
-#   FE_SUITES_DIR     open-msupply-frontend checkout (default:
-#                     ../open-msupply-frontend next to this repo)
+#   FE_SUITES_DIR     directory holding e2e/specs (default: this repo's
+#                     frontend/)
 #   E2E_SERVER_PORT   backend port  (default 9920; discovery uses port+1)
 #   E2E_FE_PORT       front-end port (default 3113)
 #   KEEP_SERVER=1     leave the server + FE running after the tests
@@ -35,11 +35,29 @@ DB_NAME=e2e_playwright # -> server/e2e_playwright.sqlite (gitignored)
 # server can't try to re-authenticate this throwaway site against a real
 # central on startup (which would panic or overwrite the restored settings).
 # All four must be set together or settings validation rejects the block.
+#
+# The server-role override is pinned for the same reason: it must NOT be
+# inherited from local.yaml. Left unpinned, the stack's sync topology depends
+# on whether the developer happens to set `server.override_is_central_server`
+# — and the two settings behave very differently:
+#
+#   pinned true (here)  the site is its own central, so a sync run is a local
+#                       no-op that SUCCEEDS instantly. Status, phase list,
+#                       last-successful notice and Sync-now are all exercised.
+#   unpinned in CI      settings are "not configured", so the synchroniser
+#                       logs "Sync is disabled, skipping" and NO run is ever
+#                       recorded — every trigger silently does nothing, and
+#                       isCentralServer flips to false (which changes the
+#                       phase-visibility row the modal displays).
+#
+# The sync-modal suite asserts triggering, so it needs runs to happen; every
+# other suite is indifferent. Pin it so local and CI agree.
 SYNC_OFF=(
   APP__SYNC__URL=
   APP__SYNC__USERNAME=
   APP__SYNC__PASSWORD_SHA256=
   APP__SYNC__INTERVAL_SECONDS=0
+  APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true
 )
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -47,11 +65,10 @@ PW_DIR=$(cd "$SCRIPT_DIR/.." && pwd)          # client/playwright
 CLIENT_DIR=$(cd "$PW_DIR/.." && pwd)          # client
 SERVER_DIR=$(cd "$CLIENT_DIR/../server" && pwd)
 
-FE_SUITES_DIR=${FE_SUITES_DIR:-$CLIENT_DIR/../../open-msupply-frontend}
+FE_SUITES_DIR=${FE_SUITES_DIR:-$CLIENT_DIR/../frontend}
 if [[ ! -d "$FE_SUITES_DIR/e2e/specs" ]]; then
-  echo "FE_SUITES_DIR ($FE_SUITES_DIR) is not an open-msupply-frontend checkout" >&2
-  echo "  git clone https://github.com/msupply-foundation/open-msupply-frontend" >&2
-  echo "  then set FE_SUITES_DIR if it isn't ../open-msupply-frontend" >&2
+  echo "FE_SUITES_DIR ($FE_SUITES_DIR) has no e2e/specs" >&2
+  echo "  point it at a checkout's frontend/ directory" >&2
   exit 1
 fi
 FE_SUITES_DIR=$(cd "$FE_SUITES_DIR" && pwd)

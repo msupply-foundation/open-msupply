@@ -1,0 +1,63 @@
+# The import's reads (spec/asset-catalogue § bulk import): the classes, to
+# resolve a row's class name (categories and types come from the list's own
+# queries), and the property definitions, to build the template and type each
+# property cell.
+query assetClasses {
+  assetClasses(sort: [{ key: name }]) {
+    ... on AssetClassConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+query assetProperties {
+  assetProperties {
+    ... on AssetPropertyConnector {
+      __typename
+      nodes {
+        id
+        key
+        name
+        valueType
+        allowedValues
+      }
+    }
+  }
+}
+
+# One row → one item. The typed rejections (id / code / manufacturer-model-
+# type taken) come back in the union; storage failures are top-level errors.
+mutation insertAssetCatalogueItem(
+  $storeId: String!
+  $input: InsertAssetCatalogueItemInput!
+) {
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on AssetCatalogueItemNode {
+          id
+        }
+        ... on InsertAssetCatalogueItemError {
+          error {
+            __typename
+            description
+            ... on RecordAlreadyExist {
+              description
+            }
+            ... on UniqueValueViolation {
+              field
+            }
+            ... on UniqueCombinationViolation {
+              fields
+            }
+          }
+        }
+      }
+    }
+  }
+}

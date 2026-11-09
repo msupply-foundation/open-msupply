@@ -1,7 +1,7 @@
 use crate::requisition::program_settings::common::{period_is_available, reduce_and_sort_periods};
 use repository::ProgramSupplier;
 
-use super::{prepare::PrepareProgramSettings, OrderType, SupplierProgramSettings};
+use super::{OrderType, SupplierProgramSettings, prepare::PrepareProgramSettings};
 
 /// Map prepared program_settings, order_types, periods and requisitions_in_periods to ProgramSettings
 /// order types are mapped to program settings by program setting id

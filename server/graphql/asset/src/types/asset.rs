@@ -22,14 +22,14 @@ use graphql_core::simple_generic_errors::{
     DatabaseError, InternalError, NodeError, RecordNotFound,
 };
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{map_filter, ContextExt};
+use graphql_core::{ContextExt, map_filter};
 use graphql_types::types::{LocationConnector, NameNode, StoreNode, SyncFileReferenceConnector};
 use repository::{
-    assets::asset::{Asset, AssetFilter, AssetSort, AssetSortField},
     DateFilter, EqualFilter, StringFilter,
+    assets::asset::{Asset, AssetFilter, AssetSort, AssetSortField},
 };
 use service::asset::parse::{AssetFromGs1Error as ServiceScannedDataParseError, LockedAssetFields};
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -405,7 +405,7 @@ pub(crate) fn map_parse_error(
     let graphql_error = match error {
         // Structured Errors
         ServiceScannedDataParseError::NotFound => {
-            return Ok(ScannedDataParseErrorInterface::NotFound(RecordNotFound))
+            return Ok(ScannedDataParseErrorInterface::NotFound(RecordNotFound));
         }
 
         // Standard Graphql Errors

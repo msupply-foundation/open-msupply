@@ -38,7 +38,7 @@ mod tests {
         migrations::{v2_18_00::V2_18_00, v3_00_00::V3_00_00, *},
         test_db::*,
     };
-    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Text};
 
     #[derive(diesel::QueryableByName, Debug)]
     struct StringResult {
@@ -71,7 +71,12 @@ mod tests {
             .unwrap();
         }
 
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
 
         let result: Vec<StringResult> = sql_query(
             "SELECT value_string FROM key_value_store WHERE id = 'SETTINGS_SYNC_VERSION';",

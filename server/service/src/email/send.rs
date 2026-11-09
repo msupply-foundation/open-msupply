@@ -1,7 +1,7 @@
 use lettre::{
+    Message, SmtpTransport, Transport,
     address::AddressError,
     message::{Mailbox, MultiPart},
-    Message, SmtpTransport, Transport,
 };
 
 // This enum defines the errors that can occur when sending an email.

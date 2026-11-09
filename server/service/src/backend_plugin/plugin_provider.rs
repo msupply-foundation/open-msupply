@@ -1,15 +1,16 @@
 use std::sync::{Arc, RwLock};
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 
 use repository::{
-    migrations::Version, BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes,
-    PluginVariantType,
+    BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType,
+    migrations::Version,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use crate::boajs::{self, BoaJsError};
+use crate::plugin::form_plugin::FormPluginSidecar;
 
 #[derive(Debug, Error, PartialEq)]
 #[error("Error in plugin {code}")]
@@ -108,6 +109,11 @@ where
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
     pub frontend_plugins: Vec<FrontendPluginRow>,
+    /// The declarative half of each form plugin in the bundle: its schema
+    /// versions and registry declarations, written to `form_schema` and
+    /// `document_registry` at install. Absent from a bundle with no form plugin.
+    #[serde(default)]
+    pub form_plugins: Vec<FormPluginSidecar>,
 }
 
 impl PluginInstance {
@@ -169,11 +175,11 @@ impl PluginInstance {
         // Get existing plugin with same code in the plugin provider
         {
             let plugins = PLUGINS.read().unwrap();
-            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
-                if existing_plugin.instance.version > version {
-                    // Existing plugin is higher version, skip (still install if same version)
-                    return;
-                }
+            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code)
+                && existing_plugin.instance.version > version
+            {
+                // Existing plugin is higher version, skip (still install if same version)
+                return;
             }
         } // Drop read lock
 

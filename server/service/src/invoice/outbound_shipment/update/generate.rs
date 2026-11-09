@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
     RepositoryError,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
 use repository::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
@@ -11,22 +11,22 @@ use repository::{
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::{
+    NullableUpdate,
     invoice::{
         common::{
-            calculate_foreign_currency_total, calculate_total_after_tax,
+            InvoiceLineHasNoStockLine, calculate_foreign_currency_total, calculate_total_after_tax,
             generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
-            get_lines_for_invoice, InvoiceLineHasNoStockLine,
+            get_lines_for_invoice,
         },
         invoice_date_utils::handle_new_backdated_datetime,
-        stock_effect::{stock_effects, StockEffect},
+        stock_effect::{StockEffect, stock_effects},
     },
     store_preference::get_store_preferences,
-    NullableUpdate,
 };
 
 use super::{
-    backdated_datetime_change, UpdateOutboundShipment, UpdateOutboundShipmentError,
-    UpdateOutboundShipmentStatus,
+    UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus,
+    backdated_datetime_change,
 };
 
 pub(crate) struct GenerateResult {
@@ -57,6 +57,7 @@ pub(crate) fn generate(
         currency_rate: input_currency_rate,
         expected_delivery_date: input_expected_delivery_date,
         shipping_method_id,
+        campaign_id: input_campaign_id,
         backdated_datetime: input_backdated_datetime,
         custom_fields: input_custom_fields,
     }: UpdateOutboundShipment,
@@ -93,6 +94,9 @@ pub(crate) fn generate(
     update_invoice.shipping_method_id = shipping_method_id
         .map(|s| s.value)
         .unwrap_or(update_invoice.shipping_method_id);
+    update_invoice.campaign_id = input_campaign_id
+        .map(|c| c.value)
+        .unwrap_or(update_invoice.campaign_id);
     update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
         update_invoice.custom_fields,
         input_custom_fields,
@@ -142,17 +146,18 @@ pub(crate) fn generate(
         None
     };
 
-    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
-        Some(generate_update_for_lines(
-            connection,
-            &update_invoice.id,
-            update_invoice.tax_percentage,
-            update_invoice.currency_id.clone(),
-            &update_invoice.currency_rate,
-        )?)
-    } else {
-        None
-    };
+    let mut update_lines =
+        if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+            Some(generate_update_for_lines(
+                connection,
+                &update_invoice.id,
+                update_invoice.tax_percentage,
+                update_invoice.currency_id.clone(),
+                &update_invoice.currency_rate,
+            )?)
+        } else {
+            None
+        };
 
     let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
 

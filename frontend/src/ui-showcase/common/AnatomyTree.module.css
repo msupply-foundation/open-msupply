@@ -1,0 +1,53 @@
+/* A nesting diagram rendered as nested lists with CSS guide lines (no ASCII
+   art) — theme-aware via tokens, RTL-correct via logical properties. */
+.tree {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  font-size: var(--text-sm);
+}
+
+.level {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Nested levels indent and draw a vertical guide down the parent's children,
+   starting just inside the parent name's leading edge. */
+.node > .level {
+  margin-inline-start: 0.4em;
+  padding-inline-start: var(--space-5);
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
+.node {
+  padding-block: 0.15rem;
+}
+
+/* The horizontal tick joining a nested row to its level's guide line. */
+.level .level > .node {
+  position: relative;
+}
+
+.level .level > .node::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--space-5));
+  inset-block-start: 0.8em;
+  inline-size: calc(var(--space-5) - 0.4em);
+  border-block-start: 1px solid var(--color-border-value);
+}
+
+.name {
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--bg-group-main);
+  font-weight: var(--weight-bold);
+}
+
+.note {
+  color: var(--text-secondary);
+}

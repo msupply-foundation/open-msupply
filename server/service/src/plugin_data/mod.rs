@@ -5,7 +5,7 @@ use repository::{
 
 use crate::i64_to_u32;
 use crate::service_provider::ServiceContext;
-use crate::{get_default_pagination_unlimited, ListResult};
+use crate::{ListResult, get_default_pagination_unlimited};
 mod insert;
 pub use self::insert::*;
 mod update;
@@ -57,9 +57,9 @@ impl PluginDataServiceTrait for PluginDataService {}
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         EqualFilter, PluginDataFilter, PluginDataRow,
+        mock::{MockData, MockDataInserts, mock_store_a, mock_store_b, mock_user_account_a},
+        test_db::setup_all_with_data,
     };
 
     use crate::service_provider::ServiceProvider;

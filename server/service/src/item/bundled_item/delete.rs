@@ -1,6 +1,6 @@
 use repository::{
-    item_variant::bundled_item_row::BundledItemRowRepository, ActivityLogType, RepositoryError,
-    TransactionError,
+    ActivityLogType, RepositoryError, TransactionError,
+    item_variant::bundled_item_row::BundledItemRowRepository,
 };
 
 use crate::{

@@ -1,12 +1,12 @@
-use super::{name_link_row::name_link, name_row::name, store_row::store, StorageConnection};
+use super::{StorageConnection, name_link_row::name_link, name_row::name, store_row::store};
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    NameRow,
-};
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{
+    DBType, EqualFilter, NameRow, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
+};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -19,6 +19,7 @@ define_linked_tables!(
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
+        visible -> Bool,
     },
     links: {
         name_link_id -> name_id,
@@ -27,14 +28,34 @@ define_linked_tables!(
     }
 );
 
-#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Queryable, Debug, PartialEq, Eq, Clone, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
+    // Absent in rows from older sites, where every join is visible
+    #[serde(default = "default_true")]
+    pub visible: bool,
     pub name_id: String,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for NameStoreJoinRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            store_id: Default::default(),
+            name_is_customer: Default::default(),
+            name_is_supplier: Default::default(),
+            visible: true,
+            name_id: Default::default(),
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]

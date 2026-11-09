@@ -1,8 +1,8 @@
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use log::{info, warn};
 use repository::{
     BackendPluginRow, FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow,
-    FrontendPluginTypes, PluginTypes, PluginVariantType,
+    FrontendPluginTypes, HostRuntime, PluginTypes, PluginVariantType,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -19,8 +19,9 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::{INSTALLED_PLUGINS, INSTALL_PLUGINS, UNINSTALL_PLUGIN},
-    run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
+    Api, ApiError, CommandError, YARN_COMMAND,
+    queries_mutations::{INSTALL_PLUGINS, INSTALLED_PLUGINS, UNINSTALL_PLUGIN},
+    run_command_with_error,
 };
 
 #[derive(ThisError, Debug)]
@@ -75,6 +76,24 @@ pub struct InstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
+    /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
+    /// Repeat for each key. Needed for every key on first install; a key left
+    /// out of a re-install keeps the program it is already bound to. Moving a
+    /// key to another program is refused while documents are saved under the
+    /// current one, counting only the documents this server holds.
+    #[clap(long = "program", value_parser = parse_program_choice)]
+    programs: Vec<(String, String)>,
+    /// Document type whose existing registry entry, installed by no plugin, the
+    /// plugin may take over (for example the deployment's `Patient` entry).
+    /// Repeatable.
+    #[clap(long = "take-over")]
+    take_over: Vec<String>,
+    /// Document type whose form may go blank on sites still running the old
+    /// client, because the plugin's type carries no legacy UI schema. Install
+    /// refuses to move its entry to a version with none, over one with a UI
+    /// schema, unless the type is named here. Repeatable.
+    #[clap(long = "blank-old-ui")]
+    blank_old_ui: Vec<String>,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -91,6 +110,17 @@ pub struct GenerateAndInstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
+}
+
+fn parse_program_choice(value: &str) -> Result<(String, String), String> {
+    match value.split_once('=') {
+        Some((key, id)) if !key.is_empty() && !id.is_empty() => {
+            Ok((key.to_string(), id.to_string()))
+        }
+        _ => Err(format!(
+            "expected <programKey>=<programId>, for example demo=DemoProgram, got \"{value}\""
+        )),
+    }
 }
 
 #[derive(clap::Parser, Debug)]
@@ -133,7 +163,14 @@ enum PluginDescription {
         variant_type: PluginVariantType,
     },
     #[serde(rename = "frontend")]
-    FrontEnd { types: FrontendPluginTypes },
+    FrontEnd {
+        types: FrontendPluginTypes,
+        /// The front end this bundle is built for (`react`, `solid`, ...).
+        /// Defaults to React, so every plugin manifest written before this
+        /// existed still describes itself correctly.
+        #[serde(default)]
+        host_runtime: HostRuntime,
+    },
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -154,10 +191,7 @@ pub fn generate_plugin_bundle(
     ];
     let manifest_name = OsStr::new("package.json");
 
-    let mut bundle = PluginBundle {
-        backend_plugins: Vec::new(),
-        frontend_plugins: Vec::new(),
-    };
+    let mut bundle = PluginBundle::default();
 
     generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &in_dir)?;
     fs::write(
@@ -249,9 +283,10 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
             types,
             variant_type,
         } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root, version)?,
-        PluginDescription::FrontEnd { types } => {
-            bundle_frontend_plugin(bundle, code, types, plugin_root, version)?
-        }
+        PluginDescription::FrontEnd {
+            types,
+            host_runtime,
+        } => bundle_frontend_plugin(bundle, code, types, plugin_root, version, host_runtime)?,
     }
 
     Ok(())
@@ -291,6 +326,7 @@ fn bundle_frontend_plugin(
     types: FrontendPluginTypes,
     plugin_root: &Path,
     version: String,
+    host_runtime: HostRuntime,
 ) -> Result<(), Error> {
     // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
     // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
@@ -348,13 +384,25 @@ fn bundle_frontend_plugin(
 
     let version_id = str::replace(&version, ".", "_");
 
+    // The id carries the runtime as well as the code and version, because one
+    // plugin ships a bundle per host and they can share a version number: a
+    // React and a SolidJS civ_plugins 3.0.0 are two rows, and an id of
+    // code+version alone would make the second install silently upsert over the
+    // first. It stays derived rather than random so that re-packing and
+    // re-installing an unchanged code/runtime/version replaces its row instead
+    // of adding a second one — install is a blind upsert, so the primary key is
+    // the only thing standing in for a uniqueness check, and two rows tied on
+    // version leave discovery breaking the tie on the id itself.
+    let runtime_id = str::replace(&host_runtime.0, ".", "_");
+
     bundle.frontend_plugins.push(FrontendPluginRow {
-        id: format!("frontend_{code}_{version_id}"),
+        id: format!("frontend_{code}_{runtime_id}_{version_id}"),
         code,
         entry_point,
         files: FrontendPluginFiles(files),
         types,
         version,
+        host_runtime,
     });
 
     Ok(())
@@ -367,16 +415,29 @@ pub async fn install_plugin_bundle(
         url,
         username,
         password,
+        programs,
+        take_over,
+        blank_old_ui,
     }: InstallPluginBundle,
 ) -> Result<(), Error> {
     let api = Api::new_with_token(url.clone(), username, password).await?;
 
     let uploaded_file = api.upload_file(path).await?;
 
+    let programs: Vec<_> = programs
+        .into_iter()
+        .map(|(key, id)| json!({ "programKey": key, "programId": id }))
+        .collect();
+
     let upload_result = api
         .gql(
             INSTALL_PLUGINS,
-            json!( { "fileId": uploaded_file.file_id} ),
+            json!({
+                "fileId": uploaded_file.file_id,
+                "programs": programs,
+                "takeOver": take_over,
+                "blankOldUi": blank_old_ui,
+            }),
             Some("CentralServerMutationNode"),
         )
         .await?;
@@ -405,11 +466,17 @@ pub async fn generate_and_install_plugin_bundle(
         out_file: out_file.clone(),
     })?;
 
+    // The bundle this packs carries no form plugins (`pnpm build:plugins`
+    // packs those), so there are no program keys to choose or types to take
+    // over.
     install_plugin_bundle(InstallPluginBundle {
         path: out_file.clone(),
         url,
         username,
         password,
+        programs: Vec::new(),
+        take_over: Vec::new(),
+        blank_old_ui: Vec::new(),
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;

@@ -2,8 +2,8 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
-    migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
-    ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
+    EqualFilter, Pagination, PaginationOption, Report, ReportFilter, ReportMetaData,
+    ReportRepository, ReportRowRepository, ReportSort, RepositoryError, migrations::Version,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -14,14 +14,14 @@ use thiserror::Error;
 use util::{format_error, sanitize_filename, uuid::uuid};
 
 use crate::{
-    boajs::{call_method, BoaJsError},
+    ListError, ListResult, UploadedFile,
+    boajs::{BoaJsError, call_method},
     get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     settings::Settings,
     standard_reports::{ReportsData, StandardReports},
     static_files::{StaticFileCategory, StaticFileService},
-    ListError, ListResult, UploadedFile,
 };
 
 use super::{
@@ -400,6 +400,9 @@ impl ReportServiceTrait for ReportService {}
 
 #[derive(Debug)]
 pub enum GetReportError {
+    /// No report has this id — an ordinary outcome for a stale or mistyped
+    /// link, not a repository failure.
+    ReportNotFound,
     TranslationError(TranslationError),
     RepositoryError(RepositoryError),
 }
@@ -414,7 +417,7 @@ fn get_report(
         .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id.to_string())))
         .map_err(GetReportError::RepositoryError)?
         .pop()
-        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+        .ok_or(GetReportError::ReportNotFound)?;
 
     let report = translate_report_arugment_schema(report, localisations, &user_language)
         .map_err(GetReportError::TranslationError)?;
@@ -588,19 +591,19 @@ fn resolve_report_definition(
             "Invalid template reference: {template}"
         )));
     }
-    if let Some(header) = fully_loaded_report.index.header.clone() {
-        if !templates.contains_key(&header) {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template header reference: {header}"
-            )));
-        }
+    if let Some(header) = fully_loaded_report.index.header.clone()
+        && !templates.contains_key(&header)
+    {
+        return Err(ReportError::InvalidReportDefinition(format!(
+            "Invalid template header reference: {header}"
+        )));
     }
-    if let Some(footer) = fully_loaded_report.index.footer.clone() {
-        if !templates.contains_key(&footer) {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template footer reference: {footer}"
-            )));
-        }
+    if let Some(footer) = fully_loaded_report.index.footer.clone()
+        && !templates.contains_key(&footer)
+    {
+        return Err(ReportError::InvalidReportDefinition(format!(
+            "Invalid template footer reference: {footer}"
+        )));
     }
     let query_entry = fully_loaded_report
         .index
@@ -821,8 +824,8 @@ fn resources_from_resolved_template(
         .entries
         .iter()
         .filter_map(|(name, entry)| match entry {
-            ReportDefinitionEntry::Resource(ref resource) => Some((name.clone(), resource.clone())),
-            ReportDefinitionEntry::Manifest(ref manifest) => {
+            ReportDefinitionEntry::Resource(resource) => Some((name.clone(), resource.clone())),
+            ReportDefinitionEntry::Manifest(manifest) => {
                 let Ok(value) = serde_json::to_value(manifest) else {
                     // should not happen
                     return None;
@@ -855,7 +858,7 @@ fn load_report_definition(
             return Err(ReportError::ReportDefinitionNotFound {
                 report_id: report_id.to_string(),
                 msg: "Can't find root report".to_string(),
-            })
+            });
         }
     };
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
@@ -925,7 +928,7 @@ mod report_service_test {
     use std::collections::BTreeMap;
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
+        ContextType, ReportRow, ReportRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     use crate::{
@@ -1058,7 +1061,7 @@ mod report_generation_test {
     use crate::{
         report::{
             definition::{ReportOutputType, TeraTemplate},
-            report_service::{generate_report, ResolvedReportDefinition},
+            report_service::{ResolvedReportDefinition, generate_report},
         },
         service_provider::ServiceProvider,
     };
@@ -1130,8 +1133,8 @@ mod report_generation_test {
 mod report_filter_test {
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
-        ReportRepository, StringFilter,
+        ReportFilter, ReportRepository, StringFilter, migrations::Version, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     // adding tests to generate reports
@@ -1270,5 +1273,37 @@ mod report_filter_test {
             .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
+    }
+}
+
+#[cfg(test)]
+mod get_report_test {
+    use crate::{report::report_service::GetReportError, service_provider::ServiceProvider};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    // An unknown id is its own typed outcome, not a repository failure, so a
+    // detail screen can say "not found" instead of raising an error (#1746).
+    #[actix_rt::test]
+    async fn get_report_unknown_id_is_report_not_found() {
+        let (_, _, connection_manager, _) = setup_all(
+            "get_report_unknown_id_is_report_not_found",
+            MockDataInserts::none().reports(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let localisations = service_provider
+            .localisations_service
+            .get_localisations(&ctx.connection)
+            .unwrap();
+
+        let result = service_provider.report_service.get_report(
+            &ctx,
+            &localisations,
+            "en".to_string(),
+            "not_a_report_id",
+        );
+        assert!(matches!(result, Err(GetReportError::ReportNotFound)));
     }
 }

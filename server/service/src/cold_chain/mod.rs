@@ -1,21 +1,21 @@
 use self::insert_temperature_log::{
-    insert_temperature_log, InsertTemperatureLog, InsertTemperatureLogError,
+    InsertTemperatureLog, InsertTemperatureLogError, insert_temperature_log,
 };
 use self::query_temperature_log::{get_temperature_log, get_temperature_logs};
 use self::update_temperature_log::{
-    update_temperature_log, UpdateTemperatureLog, UpdateTemperatureLogError,
+    UpdateTemperatureLog, UpdateTemperatureLogError, update_temperature_log,
 };
 
 use self::insert_temperature_breach::{
-    insert_temperature_breach, InsertTemperatureBreach, InsertTemperatureBreachError,
+    InsertTemperatureBreach, InsertTemperatureBreachError, insert_temperature_breach,
 };
 use self::query_temperature_breach::{get_temperature_breach, temperature_breaches};
 use self::update_temperature_breach::{
-    update_temperature_breach, update_temperature_breach_acknowledgement, UpdateTemperatureBreach,
-    UpdateTemperatureBreachAcknowledgement, UpdateTemperatureBreachError,
+    UpdateTemperatureBreach, UpdateTemperatureBreachAcknowledgement, UpdateTemperatureBreachError,
+    update_temperature_breach, update_temperature_breach_acknowledgement,
 };
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use repository::temperature_breach::{
     TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
 };

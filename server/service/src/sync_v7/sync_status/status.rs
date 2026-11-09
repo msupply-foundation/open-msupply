@@ -1,6 +1,6 @@
 use repository::{
-    syncv7::SyncError, Description, FilterBuilder, RepositoryError, StorageConnection,
-    SyncLogV7Row, SyncRequestCondition, SyncRequestRepository,
+    Description, FilterBuilder, RepositoryError, StorageConnection, SyncLogV7Row,
+    SyncRequestCondition, SyncRequestRepository, syncv7::SyncError,
 };
 
 use crate::{

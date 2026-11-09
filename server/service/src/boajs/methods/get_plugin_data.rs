@@ -1,7 +1,7 @@
 use boa_engine::*;
 use repository::{PluginDataFilter, PluginDataRepository, PluginDataRow};
 
-use crate::{boajs::context::BoaJsContext, boajs::utils::*};
+use crate::{boajs::context::use_boajs_connection, boajs::utils::*};
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
     context.register_global_callable(
@@ -11,16 +11,13 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let filter: PluginDataFilter = get_serde_argument(ctx, args, 0)?;
 
             // When using BoaJsContext, it's best to use 'scope' see PluginContext for a link to testing repo
-            let plugin_data: Vec<PluginDataRow> = {
-                let service_provider = BoaJsContext::service_provider();
-                let connection = service_provider
-                    .connection()
-                    .map_err(std_error_to_js_error)?;
+            let plugin_data: Vec<PluginDataRow> = use_boajs_connection(|connection| {
                 // TODO pagination or restrictions ?
-                PluginDataRepository::new(&connection)
+                PluginDataRepository::new(connection)
                     .query_by_filter(filter)
                     .map_err(std_error_to_js_error)
-            }?
+            })
+            .map_err(std_error_to_js_error)??
             .into_iter()
             .map(|r| r.plugin_data)
             .collect();

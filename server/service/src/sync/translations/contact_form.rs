@@ -1,6 +1,6 @@
 use repository::{
-    contact_form_row::ContactFormRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    contact_form_row::ContactFormRow,
 };
 
 use crate::sync::translations::{store::StoreTranslation, user::UserTranslation};
@@ -84,10 +84,10 @@ mod tests {
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
     };
     use repository::{
-        contact_form_row::ContactFormRow,
-        mock::{mock_contact_form_a, MockData, MockDataInserts},
-        test_db::{setup_all, setup_all_with_data},
         ChangelogRepository, FilterBuilder,
+        contact_form_row::ContactFormRow,
+        mock::{MockData, MockDataInserts, mock_contact_form_a},
+        test_db::{setup_all, setup_all_with_data},
     };
     use serde_json::json;
 

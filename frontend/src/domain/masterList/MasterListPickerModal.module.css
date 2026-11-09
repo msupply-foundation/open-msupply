@@ -1,0 +1,29 @@
+/* The master-list picker (shared search-and-pick modal, spec/internal-orders S7): a scrollable one-column
+   list of selectable rows beneath the search field. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-start: var(--space-3);
+  max-block-size: 24rem;
+  overflow-y: auto;
+}
+
+.row {
+  text-align: start;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: var(--text-body);
+  font: inherit;
+}
+
+.row:hover {
+  background: var(--gray-pale);
+}
+
+.loading {
+  padding: var(--space-6) 0;
+}

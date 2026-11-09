@@ -1,6 +1,6 @@
 use repository::{
-    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
     RepositoryError, StockLineRowRepository, TransactionError,
+    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
 };
 
 use crate::service_provider::ServiceContext;

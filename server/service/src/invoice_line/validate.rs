@@ -14,6 +14,11 @@ pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     true
 }
 
+pub fn check_price_is_not_negative(price_option: Option<f64>) -> bool {
+    // Zero is valid, donated and free of charge stock has no price
+    !matches!(price_option, Some(price) if price < 0.0)
+}
+
 pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,

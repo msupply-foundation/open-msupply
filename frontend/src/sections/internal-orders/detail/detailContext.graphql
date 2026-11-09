@@ -1,0 +1,48 @@
+# Store-context reads gating the detail screen's conditional surfaces
+# (spec/internal-orders › store-context gates). Fetched once per store, read
+# non-suspending; each defaults OFF while unresolved so a gated column/field
+# never flashes in before its gate is known.
+#
+# - preferences.selectDestinationStoreForAnInternalOrder → the Destination
+#   customer toolbar field (OMS-REG-REPL-04.55).
+# - preferences.manageVaccinesInDoses → the Doses-per-unit column + the dose
+#   annotations on unit-quantity columns.
+# - preferences.showIndicativePriceInRequisitions → the two indicative-price
+#   columns.
+# - preferences.warningForExcessRequest → the excess-request cue on Requested.
+# - storePreferences.requestRequisitionRequiresAuthorisation → the approval
+#   columns (OMS-REG-REPL-05.7/.8/.20).
+# - storePreferences.useConsumptionAndStockFromCustomersForInternalOrders (with
+#   a program order) → the extended consumption columns + the Area-AMC header.
+# - preferences.canCreateInternalOrderFromARequisition → the side panel's
+#   "Created from requisition" related-document row (OMS-REG-REPL-04.85,
+#   display-only).
+# - preferences.canChangeTargetMonthsOfStock (off, with the order's supply
+#   interval and safety buffer, on a general order) → the target select locked
+#   to the store's supply interval + safety buffer (rules › target months of
+#   stock). Read `?? true`: it is on unless
+#   set.
+# - storePreferences.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised →
+#   the empty-send guard: where the store keeps zero-requested lines, an
+#   all-zero order (with ≥1 line) is sendable (rules › Lifecycle, D20).
+query internalOrderDetailContext($storeId: String!) {
+  preferences(storeId: $storeId) {
+    selectDestinationStoreForAnInternalOrder
+    manageVaccinesInDoses
+    showIndicativePriceInRequisitions
+    warningForExcessRequest
+    canCreateInternalOrderFromARequisition
+    # The line editor's default entry mode (OMS-REG-REPL-04.73): packs where the
+    # store orders in packs, else doses for a dose-managed vaccine, else units.
+    orderInPacks
+    canChangeTargetMonthsOfStock
+  }
+  storePreferences(storeId: $storeId) {
+    requestRequisitionRequiresAuthorisation
+    useConsumptionAndStockFromCustomersForInternalOrders
+    # Paired with the above, gates the Indicators tab's customer-breakdown panel
+    # (OMS-REG-REPL-12.9).
+    extraFieldsInRequisition
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
+  }
+}

@@ -1,6 +1,6 @@
 use repository::{
-    system_log_row::SystemLogRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    system_log_row::SystemLogRow,
 };
 
 use super::{

@@ -2,15 +2,15 @@ use crate::types::{ItemNode, NameNode, PurchaseOrderNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{
         ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader,
         UnitsInOtherPurchaseOrdersLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{PurchaseOrderLine, PurchaseOrderLineRow, PurchaseOrderLineStatsRow};
-use service::{usize_to_u32, ListResult};
+use repository::{ItemType, PurchaseOrderLine, PurchaseOrderLineRow, PurchaseOrderLineStatsRow};
+use service::{ListResult, usize_to_u32};
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderLineNode {
@@ -48,6 +48,17 @@ impl PurchaseOrderLineNode {
     pub async fn price_per_pack_after_discount(&self) -> f64 {
         self.row().price_per_pack_after_discount
     }
+    pub async fn line_total(&self) -> f64 {
+        self.row().line_total
+    }
+    /// The pack price with the order's supplier discount apportioned to the line (none on a service line)
+    pub async fn price_per_pack_after_supplier_discount(&self) -> f64 {
+        self.row().price_per_pack_after_discount * self.supplier_discount_factor()
+    }
+    /// The line's stored total with the order's supplier discount apportioned to it (none on a service line)
+    pub async fn line_total_after_supplier_discount(&self) -> f64 {
+        self.row().line_total * self.supplier_discount_factor()
+    }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
@@ -80,9 +91,6 @@ impl PurchaseOrderLineNode {
     pub async fn requested_number_of_units(&self) -> f64 {
         self.row().requested_number_of_units
     }
-    pub async fn adjusted_number_of_units(&self) -> &Option<f64> {
-        &self.row().adjusted_number_of_units
-    }
     pub async fn shipped_number_of_units(&self) -> f64 {
         self.stats().shipped_number_of_units
     }
@@ -91,6 +99,9 @@ impl PurchaseOrderLineNode {
     }
     pub async fn received_number_of_units(&self) -> f64 {
         self.stats().received_number_of_units
+    }
+    pub async fn outstanding_number_of_units(&self) -> f64 {
+        self.purchase_order_line.outstanding_number_of_units()
     }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date
@@ -181,6 +192,16 @@ impl PurchaseOrderLineNode {
 
     pub fn stats(&self) -> &PurchaseOrderLineStatsRow {
         &self.purchase_order_line.purchase_order_line_stats_row
+    }
+
+    // A service line takes no supplier discount
+    fn supplier_discount_factor(&self) -> f64 {
+        if self.purchase_order_line.item_row.r#type == ItemType::Service {
+            return 1.0;
+        }
+        self.purchase_order_line
+            .purchase_order_row
+            .supplier_discount_factor()
     }
 }
 

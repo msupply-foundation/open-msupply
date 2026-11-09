@@ -1,8 +1,8 @@
 use crate::format_error;
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{
-    de::{value::StrDeserializer, Error, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error, IntoDeserializer, value::StrDeserializer},
 };
 use serde_yaml::Value;
 
@@ -136,11 +136,7 @@ pub fn zero_f64_as_none<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, 
     match value {
         Value::Number(n) => {
             let f = n.as_f64().unwrap_or(0.0);
-            if f == 0.0 {
-                Ok(None)
-            } else {
-                Ok(Some(f))
-            }
+            if f == 0.0 { Ok(None) } else { Ok(Some(f)) }
         }
         _ => Err(Error::custom(
             "zero_f64_as_none Expected a string or number",

@@ -1,0 +1,15 @@
+# Contact-form submission (spec/help S1 contact block). Store-scoped (requires
+# store access). Single-member response union (InsertResponse) — every validation
+# rejection (EmailIsInvalid / EmailNotProvided / MessageNotProvided /
+# ContactFormAlreadyExists) is a top-level NON-typed error keyed on
+# extensions.details, so callers use returnGraphqlErrors (contract wire trap).
+# Save-then-sync: the record is stored locally and forwarded by the next sync;
+# there is no read-back.
+mutation insertContactForm($storeId: String!, $input: InsertContactFormInput!) {
+  insertContactForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on InsertResponse {
+      id
+    }
+  }
+}

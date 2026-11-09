@@ -5,11 +5,11 @@ pub mod validate;
 use validate::validate;
 
 use crate::{
+    WithDBError,
     activity_log::activity_log_entry,
     purchase_order::common::get_lines_for_purchase_order,
-    purchase_order_line::delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
+    purchase_order_line::delete::{DeletePurchaseOrderLineError, delete_purchase_order_lines},
     service_provider::ServiceContext,
-    WithDBError,
 };
 
 type OutError = DeletePurchaseOrderError;
@@ -19,34 +19,33 @@ pub fn delete_purchase_order(
     store_id: &str,
     id: String,
 ) -> Result<String, DeletePurchaseOrderError> {
-    let purchase_order_id =
-        ctx.connection
-            .transaction_sync(|connection| {
-                validate(&id, store_id, connection)?;
+    let purchase_order_id = ctx
+        .connection
+        .transaction_sync(|connection| {
+            validate(&id, store_id, connection)?;
 
-                let lines = get_lines_for_purchase_order(connection, &id)?;
-                for line in lines {
-                    delete_purchase_order_line(ctx, line.purchase_order_line_row.id.clone())
-                        .map_err(|error| OutError::LineDeleteError {
-                            line_id: line.purchase_order_line_row.id,
-                            error,
-                        })?;
-                }
+            let line_ids = get_lines_for_purchase_order(connection, &id)?
+                .into_iter()
+                .map(|line| line.purchase_order_line_row.id)
+                .collect();
+            for (line_id, outcome) in delete_purchase_order_lines(ctx, line_ids)? {
+                outcome.map_err(|error| OutError::LineDeleteError { line_id, error })?;
+            }
 
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::PurchaseOrderDeleted,
-                    Some(id.to_string()),
-                    None,
-                    None,
-                )?;
+            activity_log_entry(
+                ctx,
+                ActivityLogType::PurchaseOrderDeleted,
+                Some(id.to_string()),
+                None,
+                None,
+            )?;
 
-                match PurchaseOrderRowRepository::new(connection).delete(&id) {
-                    Ok(_) => Ok(id.clone()),
-                    Err(error) => Err(OutError::DatabaseError(error)),
-                }
-            })
-            .map_err(|error| error.to_inner_error())?;
+            match PurchaseOrderRowRepository::new(connection).delete(&id) {
+                Ok(_) => Ok(id.clone()),
+                Err(error) => Err(OutError::DatabaseError(error)),
+            }
+        })
+        .map_err(|error| error.to_inner_error())?;
 
     Ok(purchase_order_id)
 }
@@ -98,12 +97,12 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
         mock::{
-            mock_purchase_order_a, mock_purchase_order_c, mock_purchase_order_d, mock_store_a,
-            MockDataInserts,
+            MockDataInserts, mock_purchase_order_a, mock_purchase_order_c, mock_purchase_order_d,
+            mock_store_a,
         },
         test_db::setup_all,
-        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
     use crate::{

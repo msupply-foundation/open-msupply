@@ -31,6 +31,7 @@ pub struct GenerateOutput {
     pub skipped_expired_stock_lines: Vec<StockLine>,
     pub skipped_on_hold_stock_lines: Vec<StockLine>,
     pub skipped_unusable_vvm_status_lines: Vec<StockLine>,
+    pub skipped_other_campaign_stock_lines: Vec<StockLine>,
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
@@ -48,6 +49,11 @@ pub fn generate(
         })?;
 
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
+    // The comment is held on every line of the item, so a batch allocated here
+    // inherits it rather than landing without the reason its siblings carry.
+    let item_transfer_comment = allocated_lines
+        .iter()
+        .find_map(|line| line.invoice_line_row.transfer_comment.clone());
     // Assume pack_size 1 for unallocated line
     let mut remaining_to_allocate = unallocated_line.invoice_line_row.number_of_packs;
     // If nothing remaining to allocate, just remove the line
@@ -64,6 +70,14 @@ pub fn generate(
 
     // Use FEFO to allocate
     for stock_line in sorted_available_stock_lines {
+        // Only stock of the shipment's campaign is auto-allocated; a shipment
+        // with no campaign (routine) never takes campaign stock. Programmes
+        // don't count.
+        if stock_line.stock_line_row.campaign_id != unallocated_line.invoice_row.campaign_id {
+            result.skipped_other_campaign_stock_lines.push(stock_line);
+            continue;
+        }
+
         let can_use = get_stock_line_eligibility(&stock_line)
             .map(|eligibility| match eligibility {
                 StockLineAlert::OnHold => {
@@ -107,6 +121,7 @@ pub fn generate(
                 &unallocated_line.invoice_line_row.invoice_id,
                 packs_to_allocate,
                 &stock_line,
+                item_transfer_comment.clone(),
             )),
         }
 
@@ -160,10 +175,10 @@ fn get_stock_line_eligibility(stock_line: &StockLine) -> Option<StockLineAlert> 
     };
 
     // VVM Unusable
-    if let Some(vvm_status) = &stock_line.vvm_status_row {
-        if vvm_status.unusable {
-            return Some(VVMStatusUnusable);
-        }
+    if let Some(vvm_status) = &stock_line.vvm_status_row
+        && vvm_status.unusable
+    {
+        return Some(VVMStatusUnusable);
     };
 
     None
@@ -173,6 +188,7 @@ fn generate_new_line(
     invoice_id: &str,
     packs_to_allocate: f64,
     stock_line: &StockLine,
+    transfer_comment: Option<String>,
 ) -> InsertStockOutLine {
     let stock_line_row = &stock_line.stock_line_row;
     InsertStockOutLine {
@@ -201,6 +217,7 @@ fn generate_new_line(
         manufacturer_id: None,
         received_number_of_packs: None,
         reason_option_id: None,
+        transfer_comment,
     }
 }
 
@@ -228,6 +245,8 @@ fn try_allocate_existing_line(
                 note: None,
                 received_number_of_packs: None,
                 reason_option_id: None,
+                // None preserves: adding packs must not clear the reason.
+                transfer_comment: None,
             }
         })
 }

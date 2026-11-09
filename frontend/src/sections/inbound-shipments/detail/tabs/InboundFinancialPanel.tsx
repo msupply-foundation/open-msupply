@@ -1,0 +1,250 @@
+import { createMemo, type Component } from 'solid-js';
+import { t } from '../../../../intl';
+import { formatNumber } from '../../../../intl/formatNumber';
+import { homeCurrency } from '../../../../intl/currency';
+import {
+  DataTable,
+  type Column,
+} from '../../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getNumberCell,
+  sumBy,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
+import { createTableConfig } from '../../../../api/createTableConfig';
+import type {
+  InboundInfoFragment,
+  InboundLineFragment,
+} from '../inboundShipmentDetail.generated';
+
+type Line = InboundLineFragment;
+
+// Money → always 2dp (spec: "all money rounded to 2dp"), locale-formatted, no
+// symbol — each money column names its currency in its header instead (a
+// single table mixes PO-currency and local columns, so a per-cell symbol would
+// be ambiguous, and the shared currency-cell helper is pinned to one code).
+const money = (value: number): string =>
+  formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const percent = (value: number): string =>
+  `${formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+
+// Header label with its currency code appended, e.g. "Line total (EUR)".
+const withCode = (label: string, code: string): string =>
+  code ? `${label} (${code})` : label;
+
+// The detail "Financial" tab (spec S3 tabs → Financial; contract → Financial &
+// Delivery tab derivation). A read-only table over the shipment's lines,
+// keeping per-pack prices and line totals as SEPARATE columns: a per-pack
+// column is the price for ONE pack, never quantity × price. The two Line total
+// columns are the line's STORED totals (contract → Financial & Delivery tab
+// derivation). Every money column names its currency in the header; the PO
+// currency and the store's home (local) currency are distinct columns. The PO
+// price columns (before discount, discount %, after discount) show on every
+// shipment so a PO line discount is visible on the receipt; the local-cost and
+// PO-currency line total columns appear only when the shipment is in a foreign
+// currency.
+//
+// The line-total columns carry summed footers; the Name column's footer
+// holds the "Total" label. Rows are sorted by PO line number so a PO line's
+// batches sit together (the spec calls for grouping by PO line; the shared
+// DataTable renders no group-header rows yet, so adjacency is the current
+// approximation).
+export const InboundFinancialPanel: Component<{
+  node: InboundInfoFragment;
+  rows: Line[];
+}> = props => {
+  // Page-owned column config (order/sizing/visibility/view-mode), like the
+  // Details line table — this is what surfaces the column-settings and
+  // card-view controls in the table toolbar.
+  const tableConfig = createTableConfig({
+    tableId: 'inbound-shipment-financial',
+  });
+
+  const rate = () => props.node.currencyRate;
+  // Foreign currency ⇔ the PO's currency differs from the store's home
+  // currency (contract). The PO-currency + local-cost columns gate on it.
+  const foreign = () => {
+    const currency = props.node.purchaseOrder?.currency;
+    return !!currency && !currency.isHomeCurrency;
+  };
+  const poCode = () => props.node.purchaseOrder?.currency?.code ?? '';
+  const localCode = () => homeCurrency();
+
+  // Per-line derivations (contract → Financial), pure over the line only —
+  // the PO price per pack comes straight off the PO line, net of the order's
+  // supplier discount; the rate-dependent per-pack conversion is built inside
+  // columns() from a captured rate (below).
+  const poPricePerPack = (line: Line) =>
+    line.purchaseOrderLine?.pricePerPackAfterSupplierDiscount ?? 0;
+  // Not stored on the PO line: the relation between its two prices.
+  const discountPercentage = (line: Line) => {
+    const before = line.purchaseOrderLine?.pricePerPackBeforeDiscount ?? 0;
+    const after = line.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0;
+    return before > 0 ? ((before - after) / before) * 100 : 0;
+  };
+  // The two line totals read the line's stored figures (see the header note).
+  const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
+  const lineTotalLocal = (line: Line) => line.totalBeforeTax;
+
+  // The footer totals are pure over the rows — none depends on the rate
+  // — so they are memoised here rather than re-summed on every columns()
+  // rebuild (which also fires on rate / currency-code changes).
+  const totalPo = createMemo(() => sumBy(props.rows, lineTotalPo));
+  const totalLocal = createMemo(() => sumBy(props.rows, lineTotalLocal));
+
+  const sortedRows = () =>
+    [...props.rows].sort(
+      (a, b) =>
+        (a.purchaseOrderLine?.lineNumber ?? 0) -
+        (b.purchaseOrderLine?.lineNumber ?? 0)
+    );
+
+  // A right-aligned money column: `id`/`header`, the per-row value, and an
+  // optional summed-total footer (the line-total columns carry one). The
+  // `value`/`footerTotal` are plain over their inputs — columns() takes the
+  // reactive dependency (rate, rows) and rebuilds, so the stored closures never
+  // read a signal themselves (avoids the stale-closure reactivity trap).
+  const moneyColumn = (
+    id: string,
+    header: string,
+    value: (line: Line) => number,
+    footerTotal?: number
+  ): Column<Line, never> => ({
+    c: { accessor: value, id },
+    header: () => header,
+    // Spread FIRST: the money cell must override getNumberCell's own
+    // 2-dp number cell, keeping the currency formatting. The currency PRESET
+    // isn't usable here — it pins one currency code, and this table mixes PO
+    // and local columns — so the width is set at the call site instead, wide
+    // enough for the "Label (CODE)" headers these columns carry.
+    ...getNumberCell(),
+    size: remToPx(9),
+    // The cell recomputes from the row rather than reading info.getValue():
+    // TanStack caches each row's accessor value until the row model is
+    // rebuilt, and a currency change rebuilds the columns (new rate) but not
+    // the rows — a cached value would keep the old rate's figure.
+    cell: info => money(value(info.row.original)),
+    ...(footerTotal !== undefined ? { footer: () => money(footerTotal) } : {}),
+  });
+
+  // A PO price column: blank on a line with no PO line, rather than 0.
+  const poColumn = (
+    id: string,
+    header: string,
+    value: (line: Line) => number,
+    format: (value: number) => string = money
+  ): Column<Line, never> => ({
+    ...moneyColumn(id, header, value),
+    cell: info =>
+      info.row.original.purchaseOrderLine
+        ? format(value(info.row.original))
+        : '',
+  });
+
+  // The local-cost and PO-currency line total columns (packCostPrice,
+  // lineTotalPo) show only in a foreign currency — spread in conditionally.
+  // Reading rate()/foreign()/rows here means columns() rebuilds when any of
+  // them change; the per-column closures then close over plain values.
+  const columns = (): Column<Line, never>[] => {
+    const r = rate();
+    return [
+      {
+        c: { accessor: line => line.itemName, id: 'itemName' },
+        header: () => t('label.name'),
+        ...getCellDefinition('itemName'),
+        footer: () => t('label.total'),
+      },
+      {
+        c: {
+          accessor: line => line.purchaseOrderLine?.lineNumber ?? '',
+          id: 'poLine',
+        },
+        header: () => t('label.po-line-number'),
+        // No CELL_DEF key; "PO line number" is the binding constraint.
+        ...getNumberCell(),
+        size: remToPx(8),
+      },
+      {
+        c: { key: 'numberOfPacks' },
+        header: () => t('label.packs-received'),
+        ...getCellDefinition('numberOfPacks'),
+      },
+      {
+        c: { key: 'packSize' },
+        header: () => t('label.received-pack-size'),
+        // Same header as the line table, so the same preset — see
+        // `receivedPackSize` in _globalColumnConfig.
+        ...getCellDefinition('receivedPackSize'),
+      },
+      {
+        c: { accessor: line => line.item.unitName ?? '', id: 'unit' },
+        header: () => t('label.unit'),
+        ...getCellDefinition('unit'),
+      },
+      poColumn(
+        'poPriceBeforeDiscount',
+        withCode(t('label.po-price-before-discount'), poCode()),
+        line => line.purchaseOrderLine?.pricePerPackBeforeDiscount ?? 0
+      ),
+      poColumn(
+        'discountPercentage',
+        t('label.discount'),
+        discountPercentage,
+        percent
+      ),
+      poColumn(
+        'poPrice',
+        withCode(t('label.po-price-per-pack'), poCode()),
+        poPricePerPack
+      ),
+      ...(foreign()
+        ? [
+            moneyColumn(
+              'packCostPrice',
+              withCode(t('label.pack-cost-price'), localCode()),
+              line => poPricePerPack(line) * r
+            ),
+          ]
+        : []),
+      moneyColumn(
+        'sellPrice',
+        withCode(t('label.pack-sell-price'), localCode()),
+        line => line.sellPricePerPack
+      ),
+      ...(foreign()
+        ? [
+            moneyColumn(
+              'lineTotalPo',
+              withCode(t('label.line-total'), poCode()),
+              lineTotalPo,
+              totalPo()
+            ),
+          ]
+        : []),
+      moneyColumn(
+        'lineTotalLocal',
+        withCode(t('label.line-total'), localCode()),
+        lineTotalLocal,
+        totalLocal()
+      ),
+    ];
+  };
+
+  return (
+    <DataTable
+      columns={columns()}
+      rows={sortedRows()}
+      rowKey={line => line.id}
+      config={tableConfig.config()}
+      setConfig={tableConfig.setConfig}
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
+      emptyMessage={t('error.no-inbound-items')}
+    />
+  );
+};

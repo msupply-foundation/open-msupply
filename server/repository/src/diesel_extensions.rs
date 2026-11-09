@@ -121,7 +121,7 @@ mod tests {
     use chrono::NaiveDate;
     use diesel::{debug_query, prelude::*, sqlite::Sqlite};
 
-    use crate::diesel_extensions::{date_coalesce, datetime_coalesce, OrderByExtensions};
+    use crate::diesel_extensions::{OrderByExtensions, date_coalesce, datetime_coalesce};
 
     table! {
         item (id) {

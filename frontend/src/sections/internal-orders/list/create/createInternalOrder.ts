@@ -1,0 +1,148 @@
+import { generateUUID } from '../../../../uuid';
+import { graphqlFetch } from '../../../../api/graphql';
+import { t, type LocaleKey } from '../../../../intl';
+import { calendarDateDaysAgo } from '../../../../intl/calendarDate';
+import {
+  InsertInternalOrder,
+  InsertProgramInternalOrder,
+  RecentStocktakeItems,
+} from './createInternalOrder.generated';
+
+// The create-modal mutations and the recent-stocktake warning read
+// (spec/internal-orders S2 / § Creation). Both creates return the new order's
+// id (to navigate to it) or a user-facing error; the id is client-generated.
+
+// The general create's reorder threshold is hard-coded to 0 (contract ›
+// creation). The target is deliberately NOT sent: omitted, the server defaults
+// it to the store's supply interval + safety buffer, else 1 month (rules ›
+// target months of stock, OMS-REG-REPL-17.15).
+const GENERAL_MIN_MONTHS_OF_STOCK = 0;
+
+export type CreateResult =
+  | { kind: 'created'; id: string }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+// General create (OMS-REG-REPL-04.6/.101/.104): sends id + otherPartyId with
+// the default reorder threshold, leaving the target to the server's default
+// (the store's supply interval + safety buffer), and the chosen master list,
+// if any — the server then adds its items requesting their suggestions, all or
+// nothing. The picker offers only visible, store-backed suppliers, so the typed
+// supplier rejections are unreachable (contract wire trap). A rejection must
+// keep the dialog open (OMS-REG-REPL-04.50), so returnGraphqlErrors surfaces
+// the untyped ones (a master list no longer the store's) inline.
+export const createGeneralOrder = async (
+  storeId: string,
+  supplierId: string,
+  masterListId?: string
+): Promise<CreateResult> => {
+  const result = await graphqlFetch(
+    InsertInternalOrder,
+    {
+      storeId,
+      input: {
+        id: generateUUID(),
+        otherPartyId: supplierId,
+        minMonthsOfStock: GENERAL_MIN_MONTHS_OF_STOCK,
+        masterListId,
+      },
+    },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'success') {
+    const response = result.data.insertRequestRequisition;
+    if (response.__typename === 'RequisitionNode')
+      return { kind: 'created', id: response.id };
+    return { kind: 'error', message: t('error.unable-to-create-requisition') };
+  }
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: t('error.unable-to-create-requisition') };
+  // Forbidden / transport / unexpected already surfaced globally.
+  return { kind: 'failed' };
+};
+
+// The typed program-create rejections the client maps to copy (contract ›
+// creation); every other failure is the generic "unable to create".
+const PROGRAM_ERROR_KEYS: Record<string, LocaleKey> = {
+  MaxOrdersReachedForPeriod: 'error.max-orders-reached-for-period',
+  SupplierNotValid: 'error.program-not-valid-for-supplier',
+};
+
+// Program create (OMS-REG-REPL-04.48, OMS-REG-REPL-12.2): sends the order type
+// + period; the resolver fills the rest. Any rejection must keep the dialog
+// open showing the error (OMS-REG-REPL-04.50), so returnGraphqlErrors surfaces
+// the untyped rejections (already-exists, missing order type) as an inline
+// generic message rather than the global modal.
+export const createProgramOrder = async (
+  storeId: string,
+  supplierId: string,
+  programOrderTypeId: string,
+  periodId: string
+): Promise<CreateResult> => {
+  const result = await graphqlFetch(
+    InsertProgramInternalOrder,
+    {
+      storeId,
+      input: {
+        id: generateUUID(),
+        otherPartyId: supplierId,
+        programOrderTypeId,
+        periodId,
+      },
+    },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'success') {
+    const response = result.data.insertProgramRequestRequisition;
+    if (response.__typename === 'RequisitionNode')
+      return { kind: 'created', id: response.id };
+    const key = PROGRAM_ERROR_KEYS[response.error.__typename];
+    return {
+      kind: 'error',
+      message: t(key ?? 'error.unable-to-create-requisition'),
+    };
+  }
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: t('error.unable-to-create-requisition') };
+  // Forbidden / transport / unexpected already surfaced globally.
+  return { kind: 'failed' };
+};
+
+// The recent-stocktake warning test (OMS-REG-REPL-04.45): true when the store's
+// finalised stocktakes within maxAge days cover fewer than minItems DISTINCT
+// items — so New order must confirm before opening the modal. Called only when
+// the preference is enabled. A failed read never blocks creation (returns
+// false).
+const recentStocktakeIsInsufficient = async (
+  storeId: string,
+  maxAge: number,
+  minItems: number
+): Promise<boolean> => {
+  const result = await graphqlFetch(RecentStocktakeItems, {
+    storeId,
+    onOrAfter: calendarDateDaysAgo(maxAge),
+  });
+  if (result.kind !== 'success') return false;
+  const items = new Set<string>();
+  for (const stocktake of result.data.stocktakes.nodes)
+    for (const line of stocktake.lines.nodes) items.add(line.itemId);
+  return items.size < minItems;
+};
+
+// The whole gate decision, shared by every New-order entry point (the
+// internal-orders list and the dashboard's Order more): the warning shows when
+// recent stocktakes are insufficient (rules › creation, OMS-REG-REPL-04.45).
+// Called only when the preference is enabled; never rejects (a failed
+// stocktake read answers false).
+//
+// No plugin suppression is consulted. The Cook Islands helper used to stand
+// this warning down where a counting cycle was in force, deferring to its own
+// per-item measure on the order (#505) — that measure came from a spec section
+// that was never a real requirement and has been withdrawn, so there is
+// nothing to defer to and this warning is every store's only measure again
+// (#822). The `host.warningSuppression` slot itself remains in the SDK.
+export const recentStocktakeGateShows = async (
+  storeId: string,
+  maxAge: number,
+  minItems: number
+): Promise<boolean> => recentStocktakeIsInsufficient(storeId, maxAge, minItems);

@@ -5,16 +5,16 @@ use repository::{
     EqualFilter, MasterListLine, MasterListLineFilter, MasterListLineSort, PaginationOption,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
     ListResult,
+    auth::{Resource, ResourceAccessRequest},
 };
 
 use graphql_core::{
+    ContextExt,
     generic_filters::EqualFilterStringInput,
     loader::ItemLoader,
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
 pub fn master_list_lines(

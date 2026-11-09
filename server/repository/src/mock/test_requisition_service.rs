@@ -1,15 +1,16 @@
 use chrono::NaiveDate;
 
 use crate::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
     MasterListRow, RequisitionLineRow, RequisitionRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 use super::{
+    MockData,
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockMasterList, FullMockRequisition},
     mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_program_a,
-    mock_stock_line_a, mock_store_a, MockData,
+    mock_stock_line_a, mock_store_a,
 };
 
 pub fn mock_test_requisition_service() -> MockData {
@@ -129,6 +130,7 @@ pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
         suggested_quantity: 5.0,
         available_stock_on_hand: 1.0,
         average_monthly_consumption: 1.0,
+        forecast_monthly_consumption: 1.0,
         ..Default::default()
     }
 }
@@ -160,6 +162,7 @@ pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
         suggested_quantity: 5.0,
         available_stock_on_hand: 1.0,
         average_monthly_consumption: 1.0,
+        forecast_monthly_consumption: 1.0,
         ..Default::default()
     }
 }
@@ -209,6 +212,7 @@ pub fn mock_new_response_requisition_for_update_test_line() -> RequisitionLineRo
         suggested_quantity: 5.0,
         available_stock_on_hand: 1.0,
         average_monthly_consumption: 1.0,
+        forecast_monthly_consumption: 1.0,
         ..Default::default()
     }
 }
@@ -238,6 +242,7 @@ pub fn mock_full_new_response_requisition_for_update_test() -> FullMockRequisiti
             suggested_quantity: 5.0,
             available_stock_on_hand: 1.0,
             average_monthly_consumption: 1.0,
+            forecast_monthly_consumption: 1.0,
             ..Default::default()
         }],
     }
@@ -274,6 +279,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 suggested_quantity: 5.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 1.0,
+                forecast_monthly_consumption: 1.0,
                 ..Default::default()
             },
             RequisitionLineRow {
@@ -293,6 +299,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 suggested_quantity: 5.0,
                 available_stock_on_hand: 6.0,
                 average_monthly_consumption: 1.0,
+                forecast_monthly_consumption: 1.0,
                 ..Default::default()
             },
             RequisitionLineRow {
@@ -303,6 +310,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
                 suggested_quantity: 200.0,
                 available_stock_on_hand: 20.0,
                 average_monthly_consumption: 1.0,
+                forecast_monthly_consumption: 1.0,
                 ..Default::default()
             },
         ],
@@ -356,6 +364,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
                 supply_quantity: 50.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 1.0,
+                forecast_monthly_consumption: 1.0,
                 ..Default::default()
             },
             RequisitionLineRow {
@@ -484,6 +493,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
             supply_quantity: 100.0,
             available_stock_on_hand: 1.0,
             average_monthly_consumption: 1.0,
+            forecast_monthly_consumption: 1.0,
             ..Default::default()
         }],
     }
@@ -521,6 +531,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
                 supply_quantity: 100.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 1.0,
+                forecast_monthly_consumption: 1.0,
                 option_id: None,
                 ..Default::default()
             },
@@ -533,6 +544,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
                 supply_quantity: 100.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 1.0,
+                forecast_monthly_consumption: 1.0,
                 option_id: None,
                 ..Default::default()
             },

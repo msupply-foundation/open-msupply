@@ -6,7 +6,6 @@ import {
   Formatter,
   Grid,
   InsertPurchaseOrderLineInput,
-  PurchaseOrderNodeStatus,
   useExportCSV,
   useUrlQuery,
   useNotification,
@@ -272,7 +271,6 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
                 onUploadComplete={() => {
                   changeTab(Tabs.Review);
                 }}
-                status={data?.status || PurchaseOrderNodeStatus.New}
               />
             </QueryParamsProvider>
             <ReviewTab

@@ -16,10 +16,10 @@ pub fn validate(
         return Err(InsertSyncMessageError::SyncMessageAlreadyExists);
     }
 
-    if let Some(to_store_id) = &input.to_store_id {
-        if !check_store_exists(connection, to_store_id)? {
-            return Err(InsertSyncMessageError::ToStoreDoesNotExist);
-        }
+    if let Some(to_store_id) = &input.to_store_id
+        && !check_store_exists(connection, to_store_id)?
+    {
+        return Err(InsertSyncMessageError::ToStoreDoesNotExist);
     }
 
     Ok(())

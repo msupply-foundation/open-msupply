@@ -1,9 +1,9 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
@@ -97,24 +97,24 @@ fn map_error(error: ServiceError) -> Result<UpdateReturnOtherPartyErrorInterface
         ServiceError::InvoiceDoesNotExist => {
             return Ok(UpdateReturnOtherPartyErrorInterface::InvoiceDoesNotExist(
                 RecordNotFound {},
-            ))
+            ));
         }
         ServiceError::InvoiceIsNotEditable => {
             return Ok(UpdateReturnOtherPartyErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotASupplier => {
             return Ok(
                 UpdateReturnOtherPartyErrorInterface::OtherPartyNotASupplier(
                     OtherPartyNotASupplier,
                 ),
-            )
+            );
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateReturnOtherPartyErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::NotAnSupplierReturn
         | ServiceError::NotThisStoreInvoice
@@ -134,17 +134,17 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_name_store_a, mock_store_a, mock_supplier_return_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
+        mock::{MockDataInserts, mock_name_store_a, mock_store_a, mock_supplier_return_a},
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             supplier_return::update_other_party::{
                 UpdateSupplierReturnOtherParty as ServiceInput,
                 UpdateSupplierReturnOtherPartyError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

@@ -6,13 +6,13 @@ use validate::validate;
 
 use super::InboundShipmentType;
 use crate::{
+    WithDBError,
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_in_line::{
-        delete_stock_in_line, DeleteStockInLine, DeleteStockInLineError, StockInType,
+        DeleteStockInLine, DeleteStockInLineError, StockInType, delete_stock_in_line,
     },
     service_provider::ServiceContext,
-    WithDBError,
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -102,13 +102,13 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceRowRepository,
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
-            mock_inbound_shipment_e, mock_outbound_shipment_e, mock_store_a, mock_store_b,
-            mock_user_account_a, MockDataInserts,
+            MockDataInserts, mock_inbound_shipment_a, mock_inbound_shipment_b,
+            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_outbound_shipment_e,
+            mock_store_a, mock_store_b, mock_user_account_a,
         },
         test_db::setup_all,
-        InvoiceRowRepository,
     };
 
     use crate::{

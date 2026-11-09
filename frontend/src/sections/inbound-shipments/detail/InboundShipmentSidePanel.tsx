@@ -1,0 +1,419 @@
+import { createSignal, Show, type Component } from 'solid-js';
+import { t, localisedDate } from '../../../intl';
+import { formatCurrency } from '../../../intl/currency';
+import { formatNumber } from '../../../intl/formatNumber';
+import { graphqlFetch } from '../../../api/graphql';
+import { createDebouncedField } from '@/domain/debouncedEdit';
+import {
+  SidePanelSection,
+  SidePanelActions,
+  SidePanelSubheading,
+} from '../../../ui/layout/SidePanel/SidePanel';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
+import { NumberField } from '../../../ui/elements/inputs/NumberField';
+import { IconButton } from '../../../ui/elements/buttons/IconButton';
+import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
+import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
+import { EditIcon } from '../../../ui/icons';
+import {
+  FullInboundShipment,
+  type InboundInfoFragment,
+} from './inboundShipmentDetail.generated';
+import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
+import type { InboundFieldEdit } from './inboundShipmentEdit';
+import { updateInboundShipment } from './inboundShipmentUpdate';
+import {
+  deleteRemovesStock,
+  sourceLinkOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
+import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
+import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
+import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
+import { DefaultDonorModal } from './modals/DefaultDonorModal';
+import { CurrencyModal } from '../../../domain/invoice';
+import { poLabel, ioLabel } from '../linkedOrder';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
+
+export interface InboundShipmentSidePanelProps {
+  storeId: string;
+  node: InboundInfoFragment;
+  /** The shipment's edit lock (rules § editability). */
+  disabled: boolean;
+  /**
+   * The delete's own lock — looser than `disabled` by Shipped, where the
+   * server still deletes (rules § deletion).
+   */
+  deleteDisabled: boolean;
+  /**
+   * Whether the shipment holds any stock-bearing lines — only those carry
+   * stock, so this and the status together decide the delete confirmation's
+   * stock warning.
+   */
+  hasLines: boolean;
+  /**
+   * The shipment's permission scope, from the route (see
+   * inboundShipmentScope). Selects `type` on the whole-shipment copy read and
+   * the plain-vs-`...External` mutation twins below.
+   */
+  scope: InboundScope;
+  edit: InboundFieldEdit;
+  /** Store gates for the donor section + foreign-currency change. */
+  donorTracking: boolean;
+  foreignCurrencyAllowed: boolean;
+  /** Resolves once the saved shipment is spliced back. */
+  onSaveField: (
+    patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
+  ) => Promise<unknown>;
+  onSaved: (node: InboundInfoFragment) => void;
+  onDeleted: () => void;
+}
+
+// The inbound-shipment detail side panel (spec S3 → side panel): record
+// actions, additional info (donor/edited-by/created/colour/comment), related
+// documents, charges (stock/service total/foreign-currency/grand total), and
+// — for a transfer — read-only transport details.
+export const InboundShipmentSidePanel: Component<
+  InboundShipmentSidePanelProps
+> = props => {
+  const [donorOpen, setDonorOpen] = createSignal(false);
+  const [currencyOpen, setCurrencyOpen] = createSignal(false);
+
+  // Which mutation twin the scope's writes go through (plain vs `...External`).
+  const isExternal = () => isExternalScope(props.scope);
+
+  // Change-currency is offered only when the store allows foreign currency and
+  // the supplier isn't itself a store (spec S3 charges → foreign currency).
+  const canChangeCurrency = () =>
+    props.foreignCurrencyAllowed &&
+    !supplierIsStore(props.node) &&
+    !props.disabled;
+
+  // The WHOLE shipment — header + every line, stock-in and service alike,
+  // unpaginated — for the copy action (rules § copy to clipboard, case .34).
+  // The detail's own lines read is server-paged and excludes SERVICE rows, so
+  // this is its own one-shot fetch through the FullInboundShipment query;
+  // `type` is the shipment's own permission scope, the one the route carries.
+  // A fetch failure routes to the global error modal; a NodeError (not expected
+  // from a screen showing the record) copies nothing.
+  const loadFullShipment = async () => {
+    const result = await graphqlFetch(FullInboundShipment, {
+      storeId: props.storeId,
+      id: props.node.id,
+      type: props.scope,
+    });
+    if (result.kind !== 'success') return undefined;
+    if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
+    return result.data.invoice;
+  };
+
+  const pricing = () => props.node.pricing;
+  // The stock tax rate saves as it is typed; it shows its own draft while it
+  // is being edited and the shipment's rate otherwise, so an answer to an
+  // earlier keystroke can't land over a later one (createDebouncedField).
+  const stockTax = createDebouncedField({
+    value: () => props.node.taxPercentage ?? 0,
+    save: percentage => props.onSaveField({ tax: { percentage } }),
+  });
+  const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
+
+  return (
+    <>
+      {/* Additional info ---------------------------------------------------- */}
+      <SidePanelSection
+        value="additional-info"
+        title={t('heading.additional-info')}
+        collapsible
+      >
+        <Show when={props.donorTracking}>
+          <FieldRow label={t('label.donor')}>
+            <span
+              style={{
+                display: 'flex',
+                gap: 'var(--space-2)',
+                'align-items': 'center',
+                'justify-content': 'space-between',
+                'inline-size': '100%',
+              }}
+            >
+              <span>{props.node.defaultDonor?.name ?? t('label.none')}</span>
+              <IconButton
+                bordered
+                size="small"
+                icon={<EditIcon />}
+                label={t('label.edit')}
+                disabled={props.disabled}
+                data-testid="edit-donor-button"
+                onClick={() => setDonorOpen(true)}
+              />
+            </span>
+          </FieldRow>
+        </Show>
+        <FieldRow label={t('label.edited-by')}>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.created')}>
+          <span>{localisedDate(props.node.createdDatetime)}</span>
+        </FieldRow>
+        <FieldRow label={t('label.colour')}>
+          <ColourTagPicker
+            colour={props.node.colour ?? null}
+            onSelect={colour => void props.onSaveField({ colour })}
+          />
+        </FieldRow>
+        <FieldRow label={t('label.comment')}>
+          <TextArea
+            label={t('label.comment')}
+            hideLabel
+            data-testid="comment-field"
+            value={props.edit.state.comment}
+            disabled={props.disabled}
+            onInput={e => props.edit.setField('comment', e.currentTarget.value)}
+            onBlur={() => props.edit.flush()}
+          />
+        </FieldRow>
+      </SidePanelSection>
+
+      {/* Related documents -------------------------------------------------- */}
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+        collapsible
+      >
+        <Show
+          when={props.node.purchaseOrder || props.node.requisition}
+          fallback={<span>{t('messages.no-related-documents')}</span>}
+        >
+          {/* Same kind-coloured PO-/IO- link as the list (spec S1 column 4). */}
+          <Show when={props.node.purchaseOrder}>
+            {po => (
+              <FieldRow label={t('label.purchase-order')}>
+                <RecordLink
+                  href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
+                  kind="po"
+                >
+                  {poLabel(po().number)}
+                </RecordLink>
+              </FieldRow>
+            )}
+          </Show>
+          <Show when={props.node.requisition}>
+            {req => (
+              <FieldRow label={t('internal-order')}>
+                <RecordLink
+                  href={`/${props.storeId}/replenishment/internal-order/${req().id}`}
+                  kind="io"
+                >
+                  {ioLabel(req().requisitionNumber)}
+                </RecordLink>
+              </FieldRow>
+            )}
+          </Show>
+        </Show>
+      </SidePanelSection>
+
+      {/* Charges ------------------------------------------------------------ */}
+      <SidePanelSection
+        value="charges"
+        title={t('heading.charges')}
+        collapsible
+      >
+        {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
+            off when not editable or the stock sub-total is zero) · total. */}
+        <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
+        {/* The discount the order's prices were seeded net of — the sub-total below already reflects it. */}
+        <Show when={props.node.purchaseOrder?.supplierDiscountPercentage}>
+          {percentage => (
+            <FieldRow
+              label={t('label.supplier-discount-applied')}
+              readOnly
+              valueTestId="supplier-discount-value"
+            >
+              {`${formatNumber(percentage(), { maximumFractionDigits: 2 })}%`}
+            </FieldRow>
+          )}
+        </Show>
+        <FieldRow label={t('label.sub-total')}>
+          <span>{formatCurrency(pricing().stockTotalBeforeTax)}</span>
+        </FieldRow>
+        <FieldRow label={t('label.tax')}>
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            value={stockTax.value()}
+            min={0}
+            emptyValue={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
+            helperText={formatCurrency(
+              pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
+            )}
+            onChange={value => stockTax.set(value ?? 0)}
+            onFocus={stockTax.onFocus}
+            onBlur={stockTax.onBlur}
+          />
+        </FieldRow>
+        <FieldRow label={t('label.total')}>
+          <span>{formatCurrency(pricing().stockTotalAfterTax)}</span>
+        </FieldRow>
+
+        {/* Itemised in the Service charges tab; the after-tax total here. */}
+        <SidePanelSubheading>
+          {t('heading.service-charges')}
+        </SidePanelSubheading>
+        <FieldRow
+          label={t('label.total')}
+          readOnly
+          valueTestId="service-charges-total"
+        >
+          {formatCurrency(pricing().serviceTotalAfterTax)}
+        </FieldRow>
+
+        {/* Foreign currency — code/rate/converted total + the gated
+            change-currency action (spec S3 charges → foreign currency). */}
+        <FieldRow label={t('label.currency')}>
+          <span
+            style={{
+              display: 'flex',
+              gap: 'var(--space-2)',
+              'align-items': 'center',
+              'justify-content': 'space-between',
+              'inline-size': '100%',
+            }}
+          >
+            <span>
+              {props.node.currency?.code ?? '—'}
+              <Show
+                when={
+                  props.node.currency && !props.node.currency.isHomeCurrency
+                }
+              >
+                {' '}
+                @ {props.node.currencyRate}
+              </Show>
+            </span>
+            <IconButton
+              bordered
+              size="small"
+              icon={<EditIcon />}
+              label={t('label.currency')}
+              disabled={!canChangeCurrency()}
+              data-testid="change-currency-button"
+              onClick={() => setCurrencyOpen(true)}
+            />
+          </span>
+        </FieldRow>
+        <Show when={props.node.currency && !props.node.currency.isHomeCurrency}>
+          <FieldRow label={t('label.foreign-currency-total')}>
+            <span>
+              {formatCurrency(
+                pricing().foreignCurrencyTotalAfterTax ?? 0,
+                props.node.currency?.code
+              )}
+            </span>
+          </FieldRow>
+        </Show>
+
+        <FieldRow label={t('heading.grand-total')}>
+          <strong>{formatCurrency(pricing().totalAfterTax)}</strong>
+        </FieldRow>
+      </SidePanelSection>
+
+      {/* Transport details (transfers only, read-only) ---------------------- */}
+      <Show when={isTransfer()}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+          collapsible
+        >
+          <FieldRow label={t('label.shipping-method')}>
+            <span>{props.node.shippingMethod?.method ?? '—'}</span>
+          </FieldRow>
+          <FieldRow label={t('label.expected-delivery-date')}>
+            <span>
+              {props.node.expectedDeliveryDate
+                ? localisedDate(props.node.expectedDeliveryDate)
+                : '—'}
+            </span>
+          </FieldRow>
+          <FieldRow label={t('label.transport-reference')}>
+            <span>{props.node.transportReference ?? '—'}</span>
+          </FieldRow>
+        </SidePanelSection>
+      </Show>
+
+      {/* Actions — the record-action cluster, its own titled section at the
+          panel's end (spec S3 side panel → Actions), so it carries the same
+          heading + padding as the info sections above. */}
+      <SidePanelSection value="actions" title={t('heading.actions')}>
+        <SidePanelActions>
+          {/* Delete — disabled where the server refuses it outright
+              (Picked, Verified, a write block; issue #628); elsewhere it is
+              submitted and the server's own reason surfaced (issue #1134).
+              The confirmation warns that the shipment's stock goes with it
+              ONLY where the delete would actually take stock: Received, and
+              holding at least one line. */}
+          <DeleteInboundShipmentAction
+            storeId={props.storeId}
+            invoiceId={props.node.id}
+            isExternal={isExternal()}
+            number={() => props.node.invoiceNumber}
+            status={() => props.node.status}
+            removesStock={() =>
+              deleteRemovesStock(props.node.status) && props.hasLines
+            }
+            disabled={props.deleteDisabled}
+            onDeleted={props.onDeleted}
+          />
+          <DuplicateInboundShipmentAction
+            invoiceId={props.node.id}
+            number={() => props.node.invoiceNumber}
+            supplierName={() => props.node.otherPartyName}
+          />
+          {/* Copy to clipboard — the shared control (controls § copy to
+              clipboard): it owns the JSON serialisation and the in-place
+              copied/failed feedback; this panel only supplies the record. */}
+          <CopyToClipboardButton load={loadFullShipment} />
+        </SidePanelActions>
+      </SidePanelSection>
+
+      <DefaultDonorModal
+        open={donorOpen()}
+        onClose={() => setDonorOpen(false)}
+        storeId={props.storeId}
+        node={props.node}
+        isExternal={isExternal()}
+        onSaved={props.onSaved}
+      />
+      {/* The shared change-currency modal with inbound's header update; a
+          saved node replaces the entity in place. */}
+      <CurrencyModal
+        open={currencyOpen()}
+        onClose={() => setCurrencyOpen(false)}
+        initialCurrencyId={props.node.currency?.id}
+        initialRate={props.node.currencyRate}
+        save={async input => {
+          const result = await updateInboundShipment(
+            props.storeId,
+            isExternal(),
+            { id: props.node.id, ...input }
+          );
+          if (result.kind !== 'saved') return result;
+          props.onSaved(result.node);
+          return { kind: 'saved' };
+        }}
+      />
+    </>
+  );
+};

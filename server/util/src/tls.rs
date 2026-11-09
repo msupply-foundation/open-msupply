@@ -3,9 +3,9 @@ use std::sync::OnceLock;
 
 use reqwest::Client;
 use reqwest::ClientBuilder;
-use rustls::crypto::aws_lc_rs;
 use rustls::ClientConfig;
 use rustls::RootCertStore;
+use rustls::crypto::aws_lc_rs;
 
 // Bundled Mozilla CA roots, used in place of reqwest's default
 // `rustls-platform-verifier`-backed trust store. The platform verifier needs

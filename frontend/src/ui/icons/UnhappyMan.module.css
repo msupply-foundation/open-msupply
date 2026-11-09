@@ -1,0 +1,16 @@
+/* The 404 illustration. Fixed illustration size (the current app renders it at
+   301×300px — ~18.8rem), shrinking with the viewport on small screens. Grows
+   in on mount like the current app's MUI <Grow in timeout={1000}>; the
+   duration token is zeroed by the tokens.css reduce block. */
+.illustration {
+  inline-size: min(18.8rem, 70vw);
+  block-size: auto;
+  animation: grow-in var(--motion-grow) ease-out;
+}
+
+@keyframes grow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}

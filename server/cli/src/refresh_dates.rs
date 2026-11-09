@@ -47,6 +47,8 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_breach", "start_datetime"),
         ("temperature_breach", "end_datetime"),
         ("temperature_log", "datetime"),
+        ("temperature_summary", "start_datetime"),
+        ("temperature_summary", "end_datetime"),
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
         ("sync_file_reference", "created_datetime"),
@@ -63,11 +65,18 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "sent_datetime"),
         ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
+        ("purchase_order", "cancelled_datetime"),
         ("stock_relocation", "created_datetime"),
         ("stock_relocation", "confirmed_datetime"),
         ("stock_relocation", "finalised_datetime"),
         ("plugin_data", "datetime"),
         ("help_document", "created_datetime"),
+        ("prescription_request", "created_datetime"),
+        ("prescription_request", "prescription_datetime"),
+        ("prescription_request", "ready_datetime"),
+        ("prescription_request", "dispensed_datetime"),
+        ("barcode_proposal", "created_datetime"),
+        ("barcode_proposal", "updated_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -165,8 +174,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("vaccination", "vaccination_date"),
         ("name_insurance_join", "expiry_date"),
         ("invoice", "expected_delivery_date"),
-        ("campaign", "start_date"),
-        ("campaign", "end_date"),
         ("purchase_order", "received_at_port_date"),
         ("purchase_order", "requested_delivery_date"),
         ("purchase_order_line", "requested_delivery_date"),
@@ -420,12 +427,12 @@ fn serialise_date(date: NaiveDate) -> String {
 #[cfg(test)]
 mod tests {
     use repository::{
+        InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
         mock::{
-            mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_item_link_from_item, mock_name_a,
+            mock_store_a,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
 
     use super::*;

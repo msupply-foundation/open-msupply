@@ -1,14 +1,16 @@
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::{
+    NullableUpdate,
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::{query::get_invoice, stock_effect::StockEffect},
+    processors::ProcessorType,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
-    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
-    StorageConnection,
+    CustomFieldValueType, EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError,
+    StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -55,7 +57,16 @@ pub enum UpdatePrescriptionError {
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
     PatientDoesNotExist,
+    /// A change to a field the prescriber owns, on a dispensation generated
+    /// from a prescription request. Holds the field's name.
+    CannotChangePrescriberField(&'static str),
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -63,6 +74,19 @@ pub enum UpdatePrescriptionError {
     InvoiceLineHasNoStockLine(String),
     /// Can't backdate an invoice with allocated lines
     CantBackDate(String),
+}
+
+impl From<CustomFieldPatchProblem> for UpdatePrescriptionError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdatePrescriptionError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdatePrescriptionError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 type OutError = UpdatePrescriptionError;
@@ -110,6 +134,14 @@ pub fn update_prescription(
         })
         .map_err(|error| error.to_inner_error())?;
 
+    // A verified dispensation generated from a prescription request flips the
+    // order to Dispensed via the processor. Triggering here (the same shape as
+    // trigger_invoice_transfer_processors on shipment updates) makes the flip
+    // immediate for the same-store flow instead of waiting for the post-sync
+    // trigger; the cursor makes a no-op trigger cheap.
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::PrescriptionRequestStatus);
+
     Ok(invoice)
 }
 
@@ -118,6 +150,13 @@ pub fn create_reverse_prescription(
     orig_invoice: &InvoiceRow,
 ) -> Result<(), UpdatePrescriptionError> {
     // Create a new invoice row based on original invoice
+    //
+    // The clone carries `prescription_request_id` onto the reversal, and that is
+    // deliberate: the cancellation is part of the same episode of prescribing,
+    // and a reversal that named no request would read as an unrelated
+    // adjustment. Cancelling does NOT reopen the request — it stays Dispensed,
+    // because it was: cancellation is only reachable once the dispensation is
+    // Verified.
     let mut new_invoice = orig_invoice.clone();
 
     new_invoice.id = uuid();
@@ -198,22 +237,22 @@ impl From<RepositoryError> for UpdatePrescriptionError {
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_patient, mock_patient_b, mock_prescription_a,
-            mock_prescription_verified, mock_stock_line_a, mock_store_a, mock_store_b, MockData,
-            MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, ClinicianRow, ClinicianStoreJoinRow,
         EqualFilter, InvoiceFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType,
         InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
         StockLineRow, StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_a, mock_patient, mock_patient_b,
+            mock_prescription_a, mock_prescription_verified, mock_stock_line_a, mock_store_a,
+            mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{
+        NullableUpdate,
         invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus},
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     use super::UpdatePrescriptionError;
@@ -497,6 +536,8 @@ mod test {
             received_number_of_packs: None,
             linked_invoice_line_id: None,
             legacy_goods_received_line_id: None,
+            transfer_comment: None,
+            barcode: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();

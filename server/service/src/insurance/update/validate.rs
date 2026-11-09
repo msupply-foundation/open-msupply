@@ -1,6 +1,6 @@
 use repository::{
-    name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinRowRepository},
     StorageConnection,
+    name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinRowRepository},
 };
 
 use super::{UpdateInsurance, UpdateInsuranceError};

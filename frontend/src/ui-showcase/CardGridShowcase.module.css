@@ -1,0 +1,62 @@
+/* Placeholder "cards" for the layout demo — plain coloured blocks with a big
+   centred number, given real height so the grid has something to reflow. The
+   colours are purely decorative token tints rotated per block; the demo is
+   about the grid's wrapping, not the block content. */
+.block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 6rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+.block:nth-child(6n + 1) {
+  background: color-mix(
+    in srgb,
+    var(--primary-main) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 2) {
+  background: color-mix(
+    in srgb,
+    var(--secondary-main) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 3) {
+  background: color-mix(
+    in srgb,
+    var(--status-shipped) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 4) {
+  background: color-mix(
+    in srgb,
+    var(--status-delivered) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 5) {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n) {
+  background: color-mix(
+    in srgb,
+    var(--color-warning) 16%,
+    var(--surface-raised)
+  );
+}

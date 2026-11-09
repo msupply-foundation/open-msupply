@@ -1,15 +1,15 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment::{self, validate_shipment_verify_authorisation};
 use graphql_invoice_line::mutations::inbound_shipment_line;
 use graphql_invoice_line::mutations::inbound_shipment_line::line::validate_line_edit_authorisation;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
 
-use crate::to_standard_error;
 use crate::VecOrNone;
+use crate::to_standard_error;
 
 type ServiceInput = BatchInboundShipment;
 type ServiceResult = BatchInboundShipmentResult;
@@ -301,7 +301,7 @@ fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertShipmentLinesR
             match inbound_shipment_line::line::insert::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -324,7 +324,7 @@ fn map_from_internal_order_lines(
             ) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -343,7 +343,7 @@ fn map_update_lines(responses: UpdateLinesResult) -> Result<UpdateShipmentLinesR
             match inbound_shipment_line::line::update::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -362,7 +362,7 @@ fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteShipmentLinesR
             match inbound_shipment_line::line::delete::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -383,7 +383,7 @@ fn map_insert_service_lines(
             match inbound_shipment_line::service_line::insert::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -404,7 +404,7 @@ fn map_update_service_lines(
             match inbound_shipment_line::service_line::update::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -425,7 +425,7 @@ fn map_delete_service_lines(
             match inbound_shipment_line::service_line::delete::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -444,25 +444,25 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, RepositoryError,
-        StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
+        InputWithResult,
         invoice::{
+            InvoiceServiceTrait,
             inbound_shipment::{
                 BatchInboundShipment, BatchInboundShipmentResult, DeleteInboundShipment,
                 DeleteInboundShipmentError, InsertInboundShipment, InsertInboundShipmentError,
                 UpdateInboundShipment, UpdateInboundShipmentError,
             },
-            InvoiceServiceTrait,
         },
         invoice_line::stock_in_line::{
             DeleteStockInLine, DeleteStockInLineError, InsertStockInLine, InsertStockInLineError,
             UpdateStockInLine, UpdateStockInLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        InputWithResult,
     };
 
     use crate::BatchMutations;

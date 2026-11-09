@@ -1,16 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
 use repository::{
-    requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
-};
-use repository::{
     ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorColumnRowRepository,
     IndicatorLineRow, IndicatorLineRowRepository, IndicatorValueType, MasterList, MasterListFilter,
     MasterListRepository, ProgramFilter, ProgramIndicatorFilter, ProgramIndicatorRepository,
     ProgramRepository, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionType,
+};
+use repository::{
+    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection, requisition_row::RequisitionRow,
 };
 
 use crate::preference::{Preference, ShowIndicativePriceInRequisitions};
@@ -236,7 +236,11 @@ pub(crate) fn related_indicator_schema(
     })
 }
 
-pub(crate) fn indicator_value_type<'a>(
+/// A cell's effective value type: the column's configured type, falling back to
+/// the line's when the column declares none (`var` in mSupply). This is what an
+/// edit is validated against, and what `IndicatorColumnNode.value_type` reports,
+/// so the input a client renders matches what the update will accept.
+pub fn indicator_value_type<'a>(
     line: &'a IndicatorLineRow,
     column: &'a IndicatorColumnRow,
 ) -> &'a Option<IndicatorValueType> {
@@ -293,9 +297,9 @@ pub(crate) fn get_indicative_price_pref(
 mod test_related_program_indicators {
     use super::*;
     use repository::{
-        mock::{context_program_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         IndicatorColumnRow, IndicatorLineRow, ProgramIndicatorRow, ProgramRow,
+        mock::{MockData, MockDataInserts, context_program_a},
+        test_db::setup_all_with_data,
     };
 
     // Two programs that share an elmis_code (e.g. CS + DISTRICT facility levels
@@ -438,8 +442,7 @@ mod test_related_program_indicators {
         )
         .await;
 
-        let mut result =
-            related_program_indicator_ids(&connection, &[pi_cs().id]).unwrap();
+        let mut result = related_program_indicator_ids(&connection, &[pi_cs().id]).unwrap();
         result.sort();
         assert_eq!(result, vec![pi_cs().id, pi_district().id]);
 
@@ -477,8 +480,7 @@ mod test_related_program_indicators {
         )
         .await;
 
-        let result =
-            related_program_indicator_ids(&connection, &[bare_pi.id.clone()]).unwrap();
+        let result = related_program_indicator_ids(&connection, &[bare_pi.id.clone()]).unwrap();
         assert_eq!(result, vec![bare_pi.id]);
     }
 

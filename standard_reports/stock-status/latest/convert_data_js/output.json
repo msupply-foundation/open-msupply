@@ -1,47 +1,51 @@
 {
-  "items": {
-    "nodes": [
-      {
-        "id": "101",
-        "code": "ITEM001",
-        "name": "Item A",
-        "stats": {
-          "totalConsumption": 1200,
-          "availableMonthsOfStockOnHand": 4.5,
-          "availableStockOnHand": 300.902,
-          "averageMonthlyConsumption": 266.7
+  "data": {
+    "items": {
+      "nodes": [
+        {
+          "code": "BCG20",
+          "name": "BCG vaccine, 20 dose vial",
+          "isVaccine": true,
+          "doses": 20,
+          "stats": {
+            "totalConsumption": 90,
+            "availableMonthsOfStockOnHand": 4,
+            "stockOnHand": 120,
+            "averageMonthlyConsumption": 30
+          },
+          "dosesOnHand": 2400
         },
-        "monthConsumption": 200,
-        "lastMonthConsumption": 500,
-        "twoMonthsAgoConsumption": 123,
-        "expiringInSixMonths": 150,
-        "expiringInTwelveMonths": 170,
-        "stockOnOrder": 0,
-        "AMC12": 150.8,
-        "AMC24": 250.8,
-        "SOH": 300.9,
-        "MOS": 4.5
-      },
-      {
-        "id": "101",
-        "code": "ITEM001",
-        "name": "Item A",
-        "stats": {
-          "availableStockOnHand": 200,
-          "totalConsumption": 100,
-          "availableMonthsOfStockOnHand": 4.5
+        {
+          "code": "MR10",
+          "name": "Measles-rubella vaccine",
+          "isVaccine": true,
+          "doses": 0,
+          "stats": {
+            "totalConsumption": 0,
+            "availableMonthsOfStockOnHand": null,
+            "stockOnHand": 15,
+            "averageMonthlyConsumption": 0
+          },
+          "dosesOnHand": 15
         },
-        "stockOnOrder": 0,
-        "AMC12": 150.8,
-        "AMC24": 250.8,
-        "SOH": 200,
-        "MOS": 4.5,
-        "expiringInSixMonths": 150,
-        "expiringInTwelveMonths": 170,
-        "lastMonthConsumption": 500,
-        "monthConsumption": 200,
-        "twoMonthsAgoConsumption": 123
-      }
-    ]
+        {
+          "code": "PAR500",
+          "name": "Paracetamol 500mg tablets",
+          "isVaccine": false,
+          "doses": 0,
+          "stats": {
+            "totalConsumption": 1200,
+            "availableMonthsOfStockOnHand": 2.5,
+            "stockOnHand": 1000,
+            "averageMonthlyConsumption": 400
+          }
+        }
+      ]
+    },
+    "showDoses": true
+  },
+  "arguments": {
+    "sort": "name",
+    "dir": "asc"
   }
 }

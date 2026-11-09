@@ -1,4 +1,5 @@
 use crate::{
+    PluginOrRepositoryError,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
@@ -8,17 +9,16 @@ use crate::{
     },
     service_provider::ServiceContext,
     validate::check_other_party_store_is_disabled,
-    PluginOrRepositoryError,
 };
+use repository::{EqualFilter, ItemType};
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     MasterListLineFilter, MasterListLineRepository, PluginDataRowRepository, RepositoryError,
     RequisitionLine, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
-use repository::{EqualFilter, ItemType};
 
-use super::generate_requisition_lines;
+use super::{generate_requisition_lines, recompute_ancillary_dependants};
 
 #[derive(Debug, PartialEq)]
 pub struct AddFromMasterList {
@@ -63,9 +63,20 @@ pub fn add_from_master_list(
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
+            let new_item_ids = new_requisition_line_rows
+                .iter()
+                .map(|row| row.item_id.clone())
+                .collect();
             for requisition_line_row in new_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
             }
+            // A new line can be a principal of existing Ancillary-ratio lines
+            recompute_ancillary_dependants(
+                connection,
+                &ctx.store_id,
+                &requisition_row,
+                new_item_ids,
+            )?;
 
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
@@ -175,7 +186,9 @@ mod test {
     };
     use assert_approx_eq::assert_approx_eq;
     use repository::{
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         mock::{
+            MockData, MockDataInserts,
             common::FullMockMasterList,
             mock_draft_request_requisition_for_update_test,
             mock_full_new_response_requisition_for_update_test, mock_item_a, mock_item_b,
@@ -183,10 +196,8 @@ mod test {
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
             test_item_stats::{self},
-            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
 
     #[actix_rt::test]

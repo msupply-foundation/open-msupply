@@ -1,10 +1,10 @@
-use super::{activity_log_row::activity_log, ActivityLogRow, DBType, StorageConnection};
+use super::{ActivityLogRow, DBType, StorageConnection, activity_log_row::activity_log};
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    repository_error::RepositoryError,
     ActivityLogType,
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    repository_error::RepositoryError,
 };
 
 use crate::{EqualFilter, Pagination, Sort};
@@ -69,7 +69,7 @@ impl<'a> ActivityLogRepository<'a> {
                     apply_sort_no_case!(query, sort, activity_log::id)
                 }
                 ActivityLogSortField::ActivityLogType => {
-                    apply_sort_no_case!(query, sort, activity_log::type_)
+                    apply_sort!(query, sort, activity_log::type_)
                 }
                 ActivityLogSortField::UserId => {
                     apply_sort_no_case!(query, sort, activity_log::user_id)
@@ -83,6 +83,9 @@ impl<'a> ActivityLogRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(activity_log::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<ActivityLogRow>(self.connection.lock().connection())?;
@@ -152,6 +155,36 @@ impl ActivityLogType {
             not_equal_all: None,
             equal_any_or_null: None,
             is_null: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, date, integer) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_activity_log_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_activity_log_sort", MockDataInserts::none()).await;
+        let repo = ActivityLogRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [
+                ActivityLogSortField::Id,
+                ActivityLogSortField::ActivityLogType,
+                ActivityLogSortField::UserId,
+                ActivityLogSortField::RecordId,
+            ] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
         }
     }
 }

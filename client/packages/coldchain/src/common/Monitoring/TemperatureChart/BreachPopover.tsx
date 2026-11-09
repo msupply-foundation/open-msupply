@@ -88,6 +88,8 @@ const Content = ({
       </Box>
 
       <Box
+        // e2e contract (frontend/e2e/TESTIDS.md § Cold chain › Monitoring).
+        data-testid="breach-summary"
         display="flex"
         flexDirection="column"
         sx={{ minHeight: '200px', width: '290px' }}
@@ -127,6 +129,7 @@ const Content = ({
             <Box flex={1} justifyContent="center" display="flex" paddingY={2}>
               <BaseButton
                 variant="contained"
+                data-testid="view-all-breaches-button"
                 onClick={() =>
                   navigate(
                     RouteBuilder.create(AppRoute.Coldchain)

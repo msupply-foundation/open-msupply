@@ -24,13 +24,20 @@
           {# Card list for child sections #}
           {% set index_path = current_path ~ "_index.md" | trim_start_matches(pat="/") %}
           {% set index = get_section(path=index_path) %}
-          {% if index.subsections %}
+          {% if index.subsections or index.pages %}
             <div class="card-list">
               {% for s in index.subsections %}
                 {% set subsection = get_section(path=s) %}
                 <div class="card my-2">
                   <div class="card-body">
                     <a class="stretched-link" href="{{ subsection.permalink }}">{{ subsection.title }} &rarr;</a>
+                  </div>
+                </div>
+              {% endfor %}
+              {% for p in index.pages %}
+                <div class="card my-2">
+                  <div class="card-body">
+                    <a class="stretched-link" href="{{ p.permalink }}">{{ p.title }} &rarr;</a>
                   </div>
                 </div>
               {% endfor %}

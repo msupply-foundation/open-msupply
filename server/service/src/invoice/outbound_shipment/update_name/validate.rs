@@ -1,7 +1,7 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateOutboundShipmentName, UpdateOutboundShipmentNameError};

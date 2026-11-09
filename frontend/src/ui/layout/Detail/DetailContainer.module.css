@@ -1,0 +1,20 @@
+/* Centred, width-capped detail-form frame — see DetailContainer.tsx. */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  inline-size: 100%;
+  box-sizing: border-box;
+}
+
+.inner {
+  inline-size: 100%;
+  /* Capped to a form width so the label columns sit close to the label text
+     (not a wide gap), keeping both sides balanced — matches the current app. */
+  max-inline-size: 44rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}

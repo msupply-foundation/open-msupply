@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The launch screen the theme hands to android:background
+  (values/styles.xml § AppTheme.NoActionBarLaunch).
+
+  It MUST be a composed drawable, not the bare logo bitmap: a bitmap set as a
+  background is scaled to its bounds, and the bounds are the window, so the
+  square logo came out stretched to the screen's aspect ratio (measured on a
+  1280x800 Android 8.1 tablet: 550x470 for a 1:1 source).
+
+  Below Android 12 this is the whole launch screen. From Android 12 the
+  platform draws its own from windowSplashScreenBackground +
+  windowSplashScreenAnimatedIcon, which take the logo bitmap directly — so the
+  background colour is read from the same theme attribute here, and the two
+  paths cannot drift apart.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <color android:color="?attr/windowSplashScreenBackground" />
+    </item>
+    <!-- No width/height: the bitmap draws at its intrinsic size (288dp, the
+         size the androidx compat splash uses below Android 12), centred, so
+         nothing scales it and the aspect ratio is preserved by construction. -->
+    <item>
+        <bitmap
+            android:src="@drawable/splash_logo"
+            android:gravity="center"
+            android:antialias="true"
+            android:filter="true" />
+    </item>
+</layer-list>

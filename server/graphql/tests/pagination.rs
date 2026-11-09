@@ -4,16 +4,16 @@ use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 use graphql_location::LocationQueries;
 use repository::PaginationOption;
 use repository::{
+    StorageConnectionManager,
     location::{Location, LocationFilter, LocationSort},
     mock::MockDataInserts,
-    StorageConnectionManager,
 };
 use serde_json::json;
 
 use service::{
+    ListError, ListResult,
     location::LocationServiceTrait,
     service_provider::{ServiceContext, ServiceProvider},
-    ListError, ListResult,
 };
 
 type GetLocations = dyn Fn(

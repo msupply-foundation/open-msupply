@@ -1,9 +1,9 @@
-use super::campaign_row::{campaign, CampaignRow};
+use super::campaign_row::{CampaignRow, campaign};
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     lower,
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -19,6 +19,7 @@ pub type CampaignSort = Sort<CampaignSortField>;
 pub struct CampaignFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
 }
 
 impl CampaignFilter {
@@ -33,6 +34,11 @@ impl CampaignFilter {
 
     pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: StringFilter) -> Self {
+        self.code = Some(filter);
         self
     }
 }
@@ -105,14 +111,20 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
     let mut query = campaign::table.into_boxed();
 
     if let Some(f) = filter {
-        let CampaignFilter { id, name } = f;
+        let CampaignFilter { id, name, code } = f;
 
         apply_equal_filter!(query, id, campaign::id);
 
-        if let Some(name_filter) = name {
-            if let Some(name_to_match) = name_filter.equal_to {
-                query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
-            }
+        if let Some(name_filter) = name
+            && let Some(name_to_match) = name_filter.equal_to
+        {
+            query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
+        }
+
+        if let Some(code_filter) = code
+            && let Some(code_to_match) = code_filter.equal_to
+        {
+            query = query.filter(lower(campaign::code).eq(lower(code_to_match)))
         }
     }
 
@@ -124,12 +136,13 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter, StringFilter,
         campaign::{
             campaign::CampaignRepository,
-            campaign_row::{CampaignRow, CampaignRowRepository},
+            campaign_row::{CampaignKind, CampaignRow, CampaignRowRepository},
         },
         mock::MockDataInserts,
-        test_db, EqualFilter, StringFilter,
+        test_db,
     };
 
     use super::CampaignFilter;
@@ -148,9 +161,7 @@ mod tests {
             .upsert_one(&CampaignRow {
                 id: id.clone(),
                 name: name.clone(),
-                start_date: None,
-                end_date: None,
-                deleted_datetime: None,
+                ..Default::default()
             })
             .unwrap();
 
@@ -171,5 +182,59 @@ mod tests {
 
         assert_eq!(campaign_row.id, id);
         assert_eq!(campaign_row.name, name);
+    }
+
+    #[actix_rt::test]
+    async fn test_campaign_kind() {
+        let (_, storage_connection, _, _) =
+            test_db::setup_all("test_campaign_kind", MockDataInserts::none()).await;
+        let repo = CampaignRowRepository::new(&storage_connection);
+
+        repo.upsert_one(&CampaignRow {
+            id: "a_campaign".to_string(),
+            name: "MR follow-up campaign 2026".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&CampaignRow {
+            id: "routine".to_string(),
+            name: "Routine".to_string(),
+            kind: CampaignKind::Routine,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&CampaignRow {
+            id: "an_outreach".to_string(),
+            name: "Outreach".to_string(),
+            kind: CampaignKind::Other("outreach".to_string()),
+            ..Default::default()
+        })
+        .unwrap();
+
+        let repo = CampaignRepository::new(&storage_connection);
+        // The register's read is UNFILTERED — both kinds come back together, and the
+        // Activity picker tiers them client-side from this one list
+        let kinds_of = |filter: CampaignFilter| {
+            let mut rows = repo
+                .query_by_filter(filter)
+                .unwrap()
+                .into_iter()
+                .map(|row| (row.id, row.kind))
+                .collect::<Vec<_>>();
+            rows.sort_by(|a, b| a.0.cmp(&b.0));
+            rows
+        };
+
+        assert_eq!(
+            kinds_of(CampaignFilter::new()),
+            vec![
+                ("a_campaign".to_string(), CampaignKind::Campaign),
+                (
+                    "an_outreach".to_string(),
+                    CampaignKind::Other("outreach".to_string())
+                ),
+                ("routine".to_string(), CampaignKind::Routine),
+            ]
+        );
     }
 }

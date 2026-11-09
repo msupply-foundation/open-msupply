@@ -3,18 +3,18 @@ use super::{
 };
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::VaccineCourseNode;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
         update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     },
-    NullableUpdate,
 };
 
 pub fn insert_vaccine_course(
@@ -62,6 +62,9 @@ pub struct InsertVaccineCourseInput {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub can_skip_dose: bool,
+    /// The average number of doses a person reached gets in a year, for population
+    /// forecasting. Null counts every dose in the course
+    pub annual_doses_per_person: Option<f64>,
 }
 
 impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
@@ -78,6 +81,7 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             use_in_gaps_calculations,
             wastage_rate,
             can_skip_dose,
+            annual_doses_per_person,
         }: InsertVaccineCourseInput,
     ) -> Self {
         InsertVaccineCourse {
@@ -121,6 +125,7 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             use_in_gaps_calculations,
             wastage_rate,
             can_skip_dose,
+            annual_doses_per_person,
         }
     }
 }
@@ -151,19 +156,20 @@ fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
         ServiceError::VaccineCourseAlreadyExists => {
             return Ok(InsertVaccineCourseErrorInterface::ItemAlreadyExists(
                 RecordAlreadyExist {},
-            ))
+            ));
         }
         ServiceError::VaccineCourseNameExistsForThisProgram => {
             return Ok(
                 InsertVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
                     RecordProgramCombinationAlreadyExists {},
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::ProgramDoesNotExist
         | ServiceError::DemographicIndicatorDoesNotExist
-        | ServiceError::DoseMinAgesAreNotInOrder => BadUserInput(formatted_error),
+        | ServiceError::DoseMinAgesAreNotInOrder
+        | ServiceError::AnnualDosesPerPersonNotPositive => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)
         }

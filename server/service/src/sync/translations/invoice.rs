@@ -1,16 +1,15 @@
 use super::{
-    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    utils::{LegacyCustomFieldsBuilder, custom_field_string, merge_legacy_custom_fields},
 };
+use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
-    name_insurance_join::NameInsuranceJoinTranslation,
-    purchase_order::PurchaseOrderTranslation, shipping_method::ShippingMethodTranslation,
-    store::StoreTranslation, to_legacy_time,
+    name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
+    shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
-use crate::sync::central_mapping_custom_fields::keys;
-use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -22,12 +21,13 @@ use repository::{
     UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
-use util::uuid::uuid;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 };
+use util::uuid::uuid;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -127,12 +127,16 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
+
 #[derive(Deserialize, Serialize, Default)]
 pub struct TransactRowOmsFields {
     #[serde(default)]
     pub charges_local_currency: f64,
     #[serde(default)]
     pub charges_foreign_currency: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -334,17 +338,26 @@ pub struct LegacyTransactRow {
 /// `central_mapping_custom_fields` asserts it (the migration SQL backfill is the
 /// one copy a test can't reach; a future category-bearing type needs a NEW
 /// migration anyway, since shipped ones are frozen).
-pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
-    keys::INBOUND_SHIPMENT_CATEGORY,
-    keys::OUTBOUND_SHIPMENT_CATEGORY,
-    keys::PRESCRIPTION_CATEGORY,
-    keys::SUPPLIER_RETURN_CATEGORY,
-    keys::CUSTOMER_RETURN_CATEGORY,
-    // `transact.category2_ID` is only ever written for prescriptions in OG
-    // (dispensary mode, from the "pi2" category pool), so it maps to a single
-    // prescription-scoped key rather than one per type.
-    keys::PRESCRIPTION_CATEGORY_2,
-];
+/// Derived from the mapping registry rather than retyped, so there is one list of
+/// OG-owned keys (`central_mapping_custom_fields`) instead of a copy here to drift
+/// out of step with it. Each invoice type's category definition is seeded onto that
+/// type's own scope, so the union of the five is the invoice importer's owned set —
+/// including `prescription_category_2`, which is seeded onto `prescription`
+/// alongside `prescription_category` (`transact.category2_ID` is only ever written
+/// for prescriptions in OG — dispensary mode, from the "pi2" category pool — so it
+/// maps to a single prescription-scoped key rather than one per type).
+///
+/// Computed once: the registry is filtered on each call and the import reads this
+/// per invoice row.
+pub(crate) static LEGACY_INVOICE_OWNED_KEYS: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+    legacy_owned_keys_for_scopes(&[
+        "inbound_shipment",
+        "outbound_shipment",
+        "prescription",
+        "supplier_return",
+        "customer_return",
+    ])
+});
 
 /// The `custom_fields` key holding the transaction category for an invoice of
 /// this type — `None` for types without a mapped category custom field (repack,
@@ -376,15 +389,6 @@ fn build_legacy_invoice_custom_fields(
         builder = builder.option(keys::PRESCRIPTION_CATEGORY_2, category2_id);
     }
     builder.build()
-}
-
-fn custom_field_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
-    custom_fields
-        .as_ref()?
-        .as_object()?
-        .get(key)?
-        .as_str()
-        .map(str::to_string)
 }
 
 /// Inverse of [`build_legacy_invoice_custom_fields`]: read the invoice type's
@@ -507,7 +511,7 @@ impl SyncTranslation for InvoiceTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported invoice type {:?}",
                     data._type
-                )))
+                )));
             }
         };
         let invoice_status = match invoice_status(&invoice_type, &data, is_transfer) {
@@ -516,7 +520,7 @@ impl SyncTranslation for InvoiceTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported invoice status {:?} (type: {:?}",
                     data.status, data._type
-                )))
+                )));
             }
         };
 
@@ -543,8 +547,11 @@ impl SyncTranslation for InvoiceTranslation {
         // name_id is a name id resolved to name_link on upsert; name_link.id == name.id by
         // convention, so validating the name id against name_link is correct.
         let name_id = check_fk(data.name_ID, "name_link_id", FkField::NameLink)?;
-        let default_donor_id =
-            fk_check(data.default_donor_id, "default_donor_link_id", FkField::NameLink)?;
+        let default_donor_id = fk_check(
+            data.default_donor_id,
+            "default_donor_link_id",
+            FkField::NameLink,
+        )?;
         let name_store_id = fk_check(name_store_id, "name_store_id", FkField::Store)?;
 
         let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
@@ -575,9 +582,10 @@ impl SyncTranslation for InvoiceTranslation {
         // record must not wipe them. On central we refresh the owned keys
         // (`category_ID`) from OG and keep the rest; off central we leave
         // `custom_fields` untouched — it arrives via v7 instead.
-        let existing_custom_fields = InvoiceRowRepository::new(connection)
-            .find_one_by_id(&data.ID)?
-            .and_then(|row| row.custom_fields);
+        let existing_row = InvoiceRowRepository::new(connection).find_one_by_id(&data.ID)?;
+        let existing_custom_fields = existing_row
+            .as_ref()
+            .and_then(|row| row.custom_fields.clone());
         let custom_fields = if CentralServerConfig::is_central_server() {
             merge_legacy_custom_fields(
                 existing_custom_fields,
@@ -586,7 +594,7 @@ impl SyncTranslation for InvoiceTranslation {
                     data.category_ID.as_deref(),
                     data.category2_ID.as_deref(),
                 ),
-                LEGACY_INVOICE_OWNED_KEYS,
+                &LEGACY_INVOICE_OWNED_KEYS,
             )
         } else {
             existing_custom_fields
@@ -651,39 +659,53 @@ impl SyncTranslation for InvoiceTranslation {
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
             custom_fields,
-            ..Default::default()
+            campaign_id: fk_check(oms_fields.campaign_id, "campaign_id", FkField::Campaign)?,
+            // Prescription requests are OMS-native and v7-only, so OG has no
+            // column for this and no site that holds one uses this translator
+            // (a v7 site syncs invoices as rows). Nothing is read off the wire —
+            // but the local value is carried over rather than defaulted away, so
+            // a v5 re-import of the transact cannot null a link it never knew
+            // about. Same hazard as `custom_fields` above.
+            prescription_request_id: existing_row.and_then(|row| row.prescription_request_id),
+            // NO `..Default::default()`. Every field is named above, so the
+            // spread was already filling nothing — but it stood ready to fill
+            // the NEXT one silently. A column added to InvoiceRow would have
+            // compiled here and quietly written its default on every v5 pull,
+            // which is exactly how `prescription_request_id` and
+            // `custom_fields` came to be nulled. Without it the compiler
+            // refuses the file until whoever adds a column decides what this
+            // translator owes it.
         };
 
         // HACK...
         // Inactive user aren't always synced from mSupply
         // To avoid referential issues we'll create a blank placeholder user
         // If the user is synced later the record will be updated to the correct data
-        if let Some(user_id) = &result.user_id {
-            if UserAccountRowRepository::new(connection)
+        if let Some(user_id) = &result.user_id
+            && UserAccountRowRepository::new(connection)
                 .find_one_by_id(user_id)?
                 .is_none()
-            {
-                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
-                    id: user_id.clone(),
-                    ..Default::default()
-                })?;
-            }
+        {
+            UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                id: user_id.clone(),
+                ..Default::default()
+            })?;
         }
 
         let mut operations = Vec::new();
 
         // On central, a prescription can arrive for a patient with no
-        // name_store_join for the prescription's store (this configuration is
-        // possible in OG, see issue #12365). Without one the patient doesn't sync
-        // to the site holding the prescription and integration there fails on FK
-        // constraints, so synthesize the join here. If OG later authors a join for
-        // this name & store, the synthesized one is removed in its favour (see
-        // dedup in the name_store_join translator)
+        // name_store_join for its store (possible in OG). Without one the patient
+        // doesn't sync to the site holding the prescription and integration there
+        // fails on FK constraints, so synthesize a join with `visible = false`: it
+        // routes the patient to the site without making them visible in the store.
+        // An OG join for this name & store later replaces it (see the
+        // name_store_join translator's dedup)
         if CentralServerConfig::is_central_server()
             && result.r#type == InvoiceType::Prescription
             && name.r#type == NameRowType::Patient
         {
-            let is_visible = !NameStoreJoinRepository::new(connection)
+            let has_join = !NameStoreJoinRepository::new(connection)
                 .query_by_filter(
                     NameStoreJoinFilter::new()
                         .name_id(EqualFilter::equal_to(name.id.clone()))
@@ -691,13 +713,14 @@ impl SyncTranslation for InvoiceTranslation {
                 )?
                 .is_empty();
 
-            if !is_visible {
+            if !has_join {
                 operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
                     id: uuid(),
                     name_id: name.id.clone(),
                     store_id: result.store_id.clone(),
                     name_is_customer: true,
                     name_is_supplier: false,
+                    visible: false,
                 }));
             }
         }
@@ -783,6 +806,9 @@ impl SyncTranslation for InvoiceTranslation {
                     charges_foreign_currency,
                     legacy_goods_received_id: _,
                     custom_fields,
+                    // OMS-native and v7-only — never pushed to OG
+                    prescription_request_id: _,
+                    campaign_id,
                 },
             name_row,
             clinician_row,
@@ -794,7 +820,7 @@ impl SyncTranslation for InvoiceTranslation {
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice type {type:?}"
-                )))
+                )));
             }
         };
 
@@ -803,7 +829,7 @@ impl SyncTranslation for InvoiceTranslation {
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice status: {status:?}"
-                )))
+                )));
             }
         };
 
@@ -870,6 +896,7 @@ impl SyncTranslation for InvoiceTranslation {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
                 charges_foreign_currency,
+                campaign_id,
             }),
         };
 
@@ -1258,16 +1285,16 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use repository::{
-        insurance_provider_row::InsuranceProviderRowRepository,
-        mock::{mock_store_a, MockData, MockDataInserts},
-        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
-        shipping_method_row::ShippingMethodRowRepository,
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
         CursorAndLimit, DiagnosisRow, DiagnosisRowRepository, FilterBuilder, InsuranceProviderRow,
         KeyType, KeyValueStoreRow, NameInsuranceJoinRowRepository, RowOrDelete, ShippingMethodRow,
         SyncAction, SyncRecordData,
+        insurance_provider_row::InsuranceProviderRowRepository,
+        mock::{MockData, MockDataInserts, mock_store_a},
+        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
+        shipping_method_row::ShippingMethodRowRepository,
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
     };
     use serde_json::json;
 
@@ -1433,6 +1460,110 @@ mod tests {
     /// shipping_method_id and purchase_order_id all reference records that don't exist, the
     /// translator should null each one on the translated row and write a SyncTranslationFkError
     /// for each.
+    /// A prescription request is OMS-native and v7-only, so OG has no column
+    /// for `invoice.prescription_request_id` and never sends one. A v5 re-import
+    /// of the transact must therefore leave the local link alone rather than
+    /// rebuilding the row without it — the same hazard `custom_fields` has.
+    #[actix_rt::test]
+    async fn test_invoice_v5_reimport_keeps_prescription_request_link() {
+        let translator = InvoiceTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_v5_reimport_keeps_prescription_request_link",
+            MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // The dispensation as a v7 site already holds it, linked to its request
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                id: "INVOICE_FROM_REQUEST".to_string(),
+                name_id: "name_store_a".to_string(),
+                store_id: "store_b".to_string(),
+                invoice_number: 1,
+                r#type: InvoiceType::Prescription,
+                status: InvoiceStatus::New,
+                prescription_request_id: Some("prescription_request_a".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+
+        let sync_record = SyncBufferRow {
+            table_name: "transact".to_string(),
+            record_id: "INVOICE_FROM_REQUEST".to_string(),
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
+              "ID": "INVOICE_FROM_REQUEST",
+              "name_ID": "name_store_a",
+              "store_ID": "store_b",
+              "invoice_num": 1,
+              "type": "ci",
+              "status": "nw",
+              "hold": false,
+              "comment": "",
+              "their_ref": "",
+              "om_transport_reference": "",
+              "requisition_ID": "",
+              "linked_transaction_id": "",
+              "entry_date": "2021-07-30",
+              "entry_time": 47046,
+              "finalised_date": "0000-00-00",
+              "finalised_time": 0,
+              "confirm_date": "2021-07-30",
+              "confirm_time": 47046,
+              "mode": "dispensary",
+              "om_created_datetime": "",
+              "om_allocated_datetime": "",
+              "om_picked_datetime": null,
+              "om_shipped_datetime": "",
+              "om_delivered_datetime": "",
+              "om_verified_datetime": "",
+              "om_expected_delivery_date": "",
+              "tax_rate": 0,
+              "currency_ID": "",
+              "currency_rate": 1.0,
+              "prescriber_ID": "",
+              "diagnosis_ID": "",
+              "nameInsuranceJoinID": "",
+              "donor_default_id": "",
+              "ship_method_ID": "",
+              "user_ID": "",
+              "is_cancellation": false,
+              "insuranceDiscountAmount": 0,
+              "insuranceDiscountRate": 0,
+              "goods_received_ID": "",
+              "original_PO_ID": ""
+            }"#,
+                )
+                .unwrap(),
+            ),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains(r#"prescription_request_id: Some("prescription_request_a")"#),
+            "{}",
+            format!("re-import dropped the request link; got:\n{debug}")
+        );
+    }
+
     #[actix_rt::test]
     async fn test_invoice_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = InvoiceTranslation {};
@@ -1650,9 +1781,8 @@ mod tests {
         }
     }
 
-    /// On central, a prescription for a patient with no name_store_join in the
-    /// prescription's store synthesizes one so the patient syncs to the site
-    /// holding the prescription (issue #12365)
+    /// On central, a prescription for a patient with no name_store_join in its
+    /// store synthesizes one that isn't visible
     #[actix_rt::test]
     async fn test_prescription_synthesizes_name_store_join_on_central() {
         use crate::sync::test_util_set_is_central_server;
@@ -1709,7 +1839,11 @@ mod tests {
         assert_eq!(operations.len(), 2);
         // The join id is a fresh uuid, so assert on the remaining fields
         let synthesized_join = format!("{:?}", operations[0]);
-        assert!(synthesized_join.contains("NameStoreJoinRow"), "{}", synthesized_join);
+        assert!(
+            synthesized_join.contains("NameStoreJoinRow"),
+            "{}",
+            synthesized_join
+        );
         assert!(
             synthesized_join.contains(r#"name_id: "testId""#),
             "{}",
@@ -1730,8 +1864,14 @@ mod tests {
             "{}",
             synthesized_join
         );
+        assert!(
+            synthesized_join.contains("visible: false"),
+            "{}",
+            synthesized_join
+        );
 
-        // Once the patient is visible in the store, no join is synthesized
+        // Once the patient has a join in the store, even one that isn't visible, no join
+        // is synthesized
         NameStoreJoinRepository::new(&connection)
             .upsert_one_without_changelog(&NameStoreJoinRow {
                 id: "og_name_store_join".to_string(),
@@ -1739,6 +1879,7 @@ mod tests {
                 store_id: "store_b".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
+                visible: false,
             })
             .unwrap();
 
@@ -1791,7 +1932,6 @@ mod tests {
         };
         assert_eq!(operations.len(), 1);
     }
-
 
     /// `transact.category_ID` maps to the resolved invoice type's category key
     /// in `custom_fields` — on central only (off central the value arrives via
@@ -1929,7 +2069,11 @@ mod tests {
             }))
         );
         assert_eq!(
-            build_legacy_invoice_custom_fields(&InvoiceType::InboundShipment, Some("C1"), Some("C2")),
+            build_legacy_invoice_custom_fields(
+                &InvoiceType::InboundShipment,
+                Some("C1"),
+                Some("C2")
+            ),
             Some(serde_json::json!({ "inbound_shipment_category": "C1" }))
         );
     }

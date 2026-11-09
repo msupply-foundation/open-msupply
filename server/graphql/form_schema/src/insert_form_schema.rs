@@ -4,11 +4,12 @@ use repository::FormSchema;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::form_schema_service::InsertFormSchemaError,
+    sync::CentralServerConfig,
 };
 
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
 #[derive(InputObject)]
@@ -36,6 +37,14 @@ pub fn insert_form_schema(
             require_central_standalone: false,
         },
     )?;
+    // Form schemas reach other sites from the central server, so they are
+    // written there only.
+    if !CentralServerConfig::is_central_server() {
+        return Err(StandardGraphqlError::Forbidden(
+            "Form schemas can only be written on a central server".to_string(),
+        )
+        .extend());
+    }
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

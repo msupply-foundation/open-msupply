@@ -12,9 +12,9 @@ use crate::{
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        translation_and_integration::integrate,
-        translations::special::merge::{apply_merge, MergeOutcome, MergeSyncMessageBody},
         CentralServerConfig,
+        translation_and_integration::integrate,
+        translations::special::merge::{MergeOutcome, MergeSyncMessageBody, apply_merge},
     },
 };
 
@@ -73,8 +73,9 @@ impl Processor for MergeSyncMessageProcessor {
             ))
         })?;
 
-        let outcome = apply_merge(&ctx.connection, &body)
-            .map_err(|e| ProcessorError::OtherError(format!("Merge failed for {}: {e}", message.id)))?;
+        let outcome = apply_merge(&ctx.connection, &body).map_err(|e| {
+            ProcessorError::OtherError(format!("Merge failed for {}: {e}", message.id))
+        })?;
 
         let summary = match outcome {
             MergeOutcome::Operations(ops) => {

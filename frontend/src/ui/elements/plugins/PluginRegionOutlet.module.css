@@ -1,0 +1,9 @@
+/* Neutral fallback for a contribution that threw — a muted text line occupying
+   the failed contribution's own slot only, matching StatsPanel's understated
+   loading / error treatment (a short text, not a skeleton or spinner). */
+.fallback {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}

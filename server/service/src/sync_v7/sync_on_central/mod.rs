@@ -5,35 +5,39 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
     ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
     RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
     StorageConnection, SyncBufferRepository, SyncVersion,
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
 };
 use thiserror::Error;
 use util::format_error;
 
 use crate::{
     apis::patient_v4::PatientV4,
-    programs::patient::patient_updated::create_patient_name_store_join,
+    processors::ProcessorType,
+    programs::patient::patient_updated::activate_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
+    static_files::{StaticFile, StaticFileService},
     sync::{
+        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
-        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
+        sync_api_pause::{
+            SYNC_API_PAUSED_MESSAGE, is_sync_api_paused, remote_knows_sync_api_paused,
+        },
     },
-    static_files::{StaticFile, StaticFileService},
     sync_v7::{
         api::{
-            download_file,
+            Common, download_file,
             get_token::{GetTokenInput, GetTokenOutput},
             patient_data_for_site, patient_search, pull, push,
             status::{self},
-            Common,
         },
-        sync::{sync_record_to_buffer_row, SyncBatchV7},
-        validate_translate_integrate::{validate_translate_integrate, SyncContext},
+        sync::{SyncBatchV7, sync_record_to_buffer_row},
+        translations::SendContext,
+        validate_translate_integrate::{SyncContext, validate_translate_integrate},
     },
 };
 
@@ -165,7 +169,14 @@ pub async fn get_token(
 ///   until every store's data has been moved to COMS — that error is propagated
 ///   unchanged so ROMS retries. On success the legacy server has flipped to v7,
 ///   but COMS must wait for that to arrive via sync, so we return
-///   `WaitingForCentralV7Upgrade` rather than upgrading locally.
+///   `WaitingForCentralV7Upgrade` rather than upgrading locally — after
+///   triggering COMS's own sync, so the wait is seconds, not a sync interval.
+///
+/// - Sync API paused (including maintenance mode): refuses with the pause error
+///   before any of the above. The site could not initialise anyway, since every
+///   pull is refused while paused, so there is no point asking the legacy server
+///   to transition it or triggering a COMS sync the pause would skip. An already
+///   v7 site still gets its token, so an initialised remote can report the pause.
 ///
 /// Acquires a connection per DB touch rather than holding one across the legacy
 /// server roundtrip, so a pool slot isn't tied up during the network call.
@@ -179,6 +190,9 @@ async fn ensure_site_is_v7(
     }
 
     let ctx = service_provider.basic_context()?;
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&input.version));
+    }
     let api_v5 = build_v5_api_for_request(&ctx.connection, input)?;
 
     // Ask the legacy server to transition the site to v7. This is idempotent:
@@ -202,6 +216,15 @@ async fn ensure_site_is_v7(
     // don't let ROMS initialise before this site's data is fully integrated on
     // COMS. ROMS retries; the early return above succeeds once the v7 `site` row
     // has synced + integrated.
+    //
+    // That arrival only happens on a COMS sync cycle, so kick one off now rather
+    // than leaving ROMS to wait out COMS's sync interval
+    // (open-msupply-frontend#504 — ROMS retries for ~a minute before showing the
+    // error). The trigger's single-slot channel coalesces: concurrent get_token
+    // calls while a sync is already queued are no-ops, and deliberately NOT
+    // triggering on the `stores_not_migrated` path above — that needs stores
+    // moved to COMS by an operator, which no sync cycle can do.
+    service_provider.sync_trigger.trigger();
     Err(SyncError::WaitingForCentralV7Upgrade)
 }
 
@@ -310,6 +333,32 @@ fn validate(
     Ok((site, ctx))
 }
 
+/// `validate` for endpoints that move records or files, which central refuses while inbound
+/// sync is paused. `get_token` and `site_status` skip this so remotes can report the state.
+fn validate_unpaused(
+    service_provider: &ServiceProvider,
+    common: &Common,
+) -> Result<(SiteRow, ServiceContext), SyncError> {
+    let (site, ctx) = validate(service_provider, common)?;
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&common.version));
+    }
+    Ok((site, ctx))
+}
+
+/// `SyncApiPaused`, or for a remote too old to read it the same news as a `ConnectionError`
+/// (see `FIRST_VERSION_WITH_SYNC_API_PAUSED`)
+fn sync_api_paused_error(remote_version: &Version) -> SyncError {
+    if remote_knows_sync_api_paused(remote_version) {
+        SyncError::SyncApiPaused
+    } else {
+        SyncError::ConnectionError {
+            url: String::new(),
+            e: SYNC_API_PAUSED_MESSAGE.to_string(),
+        }
+    }
+}
+
 /// Validate v7 bearer-token site auth for endpoints living outside this module's
 /// route scope (e.g. the tus file upload in the server crate). Same checks as
 /// every v7 endpoint; local to central's DB, no legacy server involved.
@@ -330,7 +379,7 @@ pub async fn download_file(
     base_dir: String,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncError> {
     tokio::task::spawn_blocking(move || {
-        let (_site, _ctx) = validate(&service_provider, &common)?;
+        let (_site, _ctx) = validate_unpaused(&service_provider, &common)?;
 
         log::info!(
             "Sending file to v7 remote site for table: {}, record: {}, file: {}",
@@ -364,6 +413,7 @@ pub async fn site_status(
             site_id: site.id,
             central_site_id,
             is_multi_device_site: site.is_multi_device,
+            is_sync_api_paused: is_sync_api_paused(&ctx.connection)?,
         })
     })
     .await
@@ -377,7 +427,7 @@ pub async fn pull(
     input: pull::Input,
 ) -> pull::Response {
     tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&service_provider, &common)?;
+        let (site, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let base = if site.is_multi_device {
             ChangelogFilter::multi_device_all_data_for_site(site.id, input.is_initialising, None)
@@ -390,7 +440,10 @@ pub async fn pull(
         };
 
         let batch = SyncBatchV7::generate(
-            &ctx.connection,
+            &SendContext {
+                connection: &ctx.connection,
+                receiver_version: Some(&common.version),
+            },
             filter,
             input.cursor,
             Some(input.batch_size),
@@ -407,15 +460,15 @@ pub async fn pull(
         // A pull batch with nothing remaining means the remote has fully caught
         // up: record last_sync (and first_sync on the initial sync). Best-effort.
         // #11784
-        if batch.remaining == 0 {
-            if let Err(e) = crate::site::sync_metadata::record_site_full_pull(
+        if batch.remaining == 0
+            && let Err(e) = crate::site::sync_metadata::record_site_full_pull(
                 &ctx.connection,
                 site.id,
                 input.is_initialising,
                 Utc::now().naive_utc(),
-            ) {
-                log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
-            }
+            )
+        {
+            log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
         }
 
         Ok(batch)
@@ -430,7 +483,7 @@ pub async fn patient_search(
     input: patient_search::Input,
 ) -> patient_search::Response {
     tokio::task::spawn_blocking(move || {
-        let (_, ctx) = validate(&service_provider, &common)?;
+        let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let results =
             service_provider
@@ -470,7 +523,7 @@ pub async fn patient_data_for_site(
     input: patient_data_for_site::Input,
 ) -> patient_data_for_site::Response {
     tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&service_provider, &common)?;
+        let (site, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let patient_data_for_site::Input {
             patient_id,
@@ -481,7 +534,7 @@ pub async fn patient_data_for_site(
         let nsj_id = ctx
             .connection
             .transaction_sync(|con| {
-                create_patient_name_store_join(
+                activate_patient_name_store_join(
                     con,
                     &store_id,
                     &patient_id,
@@ -495,7 +548,15 @@ pub async fn patient_data_for_site(
             ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
-        let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+        let batch = SyncBatchV7::generate(
+            &SendContext {
+                connection: &ctx.connection,
+                receiver_version: Some(&common.version),
+            },
+            filter,
+            0,
+            None,
+        )?;
 
         Ok(patient_data_for_site::Output {
             batch,
@@ -514,7 +575,7 @@ pub async fn push(
 ) -> push::Response {
     let sp = service_provider.clone();
     let (records_in_this_batch, remaining, site_id) = tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&sp, &common)?;
+        let (site, ctx) = validate_unpaused(&sp, &common)?;
         let site_id = site.id;
 
         let SyncBatchV7 {
@@ -628,6 +689,11 @@ fn integrate_for_site(
         },
         false,
     )?;
+
+    // Proposals pushed by the site may confirm a barcode, without waiting for
+    // central's own next sync to run its processors
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::BarcodeAutoConfirm);
     Ok(())
 }
 
@@ -656,13 +722,13 @@ fn set_site_lock(site_id: i32, error: Option<SiteLockError>) {
 mod tests {
     use super::*;
     use crate::{
-        sync::test_util_set_is_central_server,
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use httpmock::MockServer;
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository, SyncVersion,
+        KeyType, KeyValueStoreRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     const SITE_NAME: &str = "test_site";
@@ -1027,7 +1093,7 @@ mod tests {
 
         let ServiceTestContext {
             connection,
-            service_provider,
+            connection_manager,
             ..
         } = setup_all_and_service_provider(
             "ensure_site_is_v7_waits_for_central",
@@ -1035,6 +1101,11 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+
+        // A service provider whose sync trigger the test can observe.
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
 
         let site = non_v7_site(&connection, &mock_server.base_url());
 
@@ -1045,12 +1116,66 @@ mod tests {
             .unwrap_err();
         assert!(matches!(err, SyncError::WaitingForCentralV7Upgrade));
 
+        // ...and it must have kicked off its own sync to fetch that row, so the
+        // wait is seconds rather than a sync interval (open-msupply-frontend#504).
+        assert!(sync_receiver.try_recv().is_ok());
+
         // The local site row must be untouched (still V5_V6).
         let stored = SiteRowRepository::new(&connection)
             .find_one_by_id(1)
             .unwrap()
             .unwrap();
         assert_eq!(stored.sync_version, SyncVersion::V5V6);
+    }
+
+    /// A paused sync API refuses a not-yet-v7 site before asking the legacy server
+    /// to transition it: the site could not pull anyway, and the COMS sync it would
+    /// trigger is paused too.
+    #[actix_rt::test]
+    async fn ensure_site_is_v7_refuses_while_sync_api_paused() {
+        let mock_server = MockServer::start();
+        let upgrade = mock_server.mock(|when, then| {
+            when.method(httpmock::Method::GET)
+                .path("/sync/v5/v7_url_and_upgrade");
+            then.status(200)
+                .body(r#"{ "v7Url": "http://oms-central:8000" }"#);
+        });
+
+        let ServiceTestContext {
+            connection,
+            connection_manager,
+            ..
+        } = setup_all_and_service_provider(
+            "ensure_site_is_v7_refuses_while_sync_api_paused",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
+
+        let site = non_v7_site(&connection, &mock_server.base_url());
+
+        let err = ensure_site_is_v7(&service_provider, site, &input())
+            .await
+            .unwrap_err();
+        assert_eq!(err, sync_api_paused_error(&input().version));
+        // Neither the legacy server nor a COMS sync was touched
+        assert_eq!(upgrade.hits(), 0);
+        assert!(sync_receiver.try_recv().is_err());
+
+        // An already v7 site still gets through, so it can report the pause
+        let v7_site = test_site(&connection, None);
+        assert!(
+            ensure_site_is_v7(&service_provider, v7_site, &input())
+                .await
+                .is_ok()
+        );
     }
 
     #[actix_rt::test]
@@ -1066,7 +1191,7 @@ mod tests {
 
         let ServiceTestContext {
             connection,
-            service_provider,
+            connection_manager,
             ..
         } = setup_all_and_service_provider(
             "ensure_site_is_v7_stores_not_migrated",
@@ -1074,6 +1199,10 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
 
         let site = non_v7_site(&connection, &mock_server.base_url());
 
@@ -1083,6 +1212,10 @@ mod tests {
             .await
             .unwrap_err();
         assert!(!matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // No sync is kicked off for this path: syncing cannot move stores to
+        // COMS — that is an operator task on the legacy server.
+        assert!(sync_receiver.try_recv().is_err());
 
         // The local site row must remain V5_V6.
         let stored = SiteRowRepository::new(&connection)
@@ -1250,5 +1383,114 @@ mod tests {
             response,
             Err(SyncError::SyncVersionMismatch { .. })
         ));
+    }
+
+    #[test]
+    fn older_remotes_are_told_of_the_pause_as_a_connection_error() {
+        assert_eq!(
+            sync_api_paused_error(&Version::from_str("3.03.00")),
+            SyncError::SyncApiPaused
+        );
+        assert_eq!(
+            sync_api_paused_error(&Version::from_str("3.02.00")),
+            SyncError::ConnectionError {
+                url: String::new(),
+                e: SYNC_API_PAUSED_MESSAGE.to_string(),
+            }
+        );
+    }
+
+    #[actix_rt::test]
+    async fn paused_central_refuses_data_but_reports_status() {
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_inbound_paused").await;
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+        // What a remote on this build is told (the package version only reaches 3.03 on the
+        // release branch, and central refuses remotes newer than itself, so it is not pinned)
+        let paused_error = sync_api_paused_error(&common.version);
+
+        let pulled = pull(
+            service_provider.clone(),
+            common.clone(),
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert_eq!(pulled.err(), Some(paused_error.clone()));
+
+        // A remote too old to read `SyncApiPaused` is told in a form it can show
+        let old_remote_pulled = pull(
+            service_provider.clone(),
+            Common {
+                version: Version::from_str("3.02.00"),
+                ..common.clone()
+            },
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert_eq!(
+            old_remote_pulled.err(),
+            Some(SyncError::ConnectionError {
+                url: String::new(),
+                e: SYNC_API_PAUSED_MESSAGE.to_string(),
+            })
+        );
+
+        let pushed = push(
+            service_provider.clone(),
+            common.clone(),
+            SyncBatchV7 {
+                site_id: 1,
+                max_cursor: 0,
+                last_cursor_in_batch: 0,
+                remaining: 0,
+                records: vec![],
+            },
+        )
+        .await;
+        assert_eq!(pushed.err(), Some(paused_error));
+
+        // Status stays available so the remote can tell the user why sync is not running
+        let status = site_status(service_provider.clone(), common.clone())
+            .await
+            .unwrap();
+        assert!(status.is_sync_api_paused);
+
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(false))
+            .unwrap();
+        let status = site_status(service_provider.clone(), common.clone())
+            .await
+            .unwrap();
+        assert!(!status.is_sync_api_paused);
+        let pulled = pull(
+            service_provider,
+            common,
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert!(pulled.is_ok());
     }
 }

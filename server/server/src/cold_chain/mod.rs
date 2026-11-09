@@ -1,9 +1,9 @@
 use actix_web::{
-    web::{self},
     HttpRequest, Result,
+    web::{self},
 };
 use service::{
-    auth::{validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest},
+    auth::{AuthDeniedKind, AuthError, Resource, ResourceAccessRequest, validate_auth},
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     user_account::UserAccountService,
@@ -71,7 +71,7 @@ pub fn validate_access(
         None => {
             return Err(AuthError::InternalError(
                 "User not found in database".to_string(),
-            ))
+            ));
         }
     };
 

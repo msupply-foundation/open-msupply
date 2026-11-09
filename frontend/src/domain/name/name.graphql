@@ -1,0 +1,32 @@
+# Names (suppliers / donors / manufacturers) for the name-search selector,
+# paginated for infinite scroll: one page at a time (first/offset), server-side
+# filtered by codeOrName. The caller narrows by role (isSupplier / isDonor /
+# isManufacturer) + isVisible via the fetcher's filter. `store { id }`
+# distinguishes an external party from one that is itself another store in the
+# system (drives the kind icon: truck vs building, and the cost-price /
+# foreign-currency locks). `isOnHold` lets the supplier picker show and disable
+# an on-hold supplier (spec S2).
+query searchNames(
+  $storeId: String!
+  $filter: NameFilterInput
+  $page: PaginationInput
+  $sort: [NameSortInput!]
+) {
+  names(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
+    ... on NameConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        code
+        isSupplier
+        isDonor
+        isOnHold
+        store {
+          id
+        }
+      }
+    }
+  }
+}

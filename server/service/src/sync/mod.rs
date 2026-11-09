@@ -6,14 +6,19 @@ pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod central_data_synchroniser_v6;
 pub(crate) mod central_mapping_custom_fields;
+pub use central_mapping_custom_fields::seed_central_mapping_custom_fields;
 pub mod file_sync_driver;
 pub mod file_synchroniser;
 mod integrate_document;
+pub mod maintenance_mode;
 pub(crate) mod remote_data_synchroniser;
+pub(crate) mod repair_source_site_id;
 pub mod settings;
 pub mod site_auth;
+pub mod sync_api_pause;
 pub mod sync_buffer;
 pub mod sync_on_central;
+pub mod sync_pause;
 pub mod sync_status;
 pub mod synchroniser;
 pub mod synchroniser_driver;
@@ -211,4 +216,13 @@ pub fn test_util_set_is_central_server(is_central: bool) {
 // real central URL.
 pub fn test_util_set_central_server_url(url: String) {
     *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::CentralServerUrl(url);
+}
+
+// TEST ONLY — reset the cached initialisation latch. `is_initialised` only ever caches
+// `true`, so a test that needs to observe the not-yet-initialised path has to clear it.
+// nextest (used in CI) gives every test its own process, so this only guards against
+// another test in the same process latching first — it is not protection against
+// concurrent mutation.
+pub fn test_util_set_is_initialised(is_initialised: bool) {
+    *IS_INITIALISED.write().unwrap() = is_initialised;
 }

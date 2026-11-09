@@ -1,0 +1,87 @@
+# The reports vertical's wire surface for the record-screen report selector
+# (spec/reports S4 / "How reports arrive"). Two operations:
+#
+# - reports: the context-filtered list of installed report versions a user may
+#   pick from, for a given ReportContext (e.g. STOCKTAKE). The server already
+#   applies the custom-beats-standard / active-only selection (spec/reports
+#   "Which version a user sees") — we just list what it returns.
+# - generateReport: render one report against one record into a file, in the
+#   chosen format. Returns the same PrintReportResponse union as csvToExcel
+#   (domain/reportFiles), so its response reuses mapPrintResponse.
+#
+# argumentSchema mirrors ArgumentsModal's ArgumentSchemaSource ({ jsonSchema,
+# uiSchema }) so a listed report is structurally accepted by that modal with no
+# remapping (kdd/type-safety).
+
+query reports(
+  $storeId: String!
+  $userLanguage: String!
+  $filter: ReportFilterInput
+  $sort: [ReportSortInput!]
+) {
+  reports(
+    storeId: $storeId
+    userLanguage: $userLanguage
+    filter: $filter
+    sort: $sort
+  ) {
+    ... on ReportConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        context
+        subContext
+        argumentSchema {
+          id
+          type
+          jsonSchema
+          uiSchema
+        }
+      }
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+query generateReport(
+  $storeId: String!
+  $reportId: String!
+  $dataId: String
+  $arguments: JSON
+  $format: PrintFormat
+  $sort: PrintReportSortInput
+  $currentLanguage: String
+) {
+  generateReport(
+    storeId: $storeId
+    reportId: $reportId
+    dataId: $dataId
+    arguments: $arguments
+    format: $format
+    sort: $sort
+    currentLanguage: $currentLanguage
+  ) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        __typename
+        description
+        ... on FailedToFetchReportData {
+          errors
+        }
+      }
+    }
+  }
+}

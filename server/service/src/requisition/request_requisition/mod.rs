@@ -29,5 +29,8 @@ pub use self::indicator_information::*;
 mod insert_request_from_response_requisition;
 pub use self::insert_request_from_response_requisition::*;
 
-mod generate_population_forecast;
-pub use self::generate_population_forecast::*;
+mod forecast;
+pub use self::forecast::*;
+
+mod supply_interval_and_buffer;
+pub use self::supply_interval_and_buffer::*;

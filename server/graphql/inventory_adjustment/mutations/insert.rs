@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_types::generic_errors::{LedgerWouldGoBelowZero, StockLineReducedBelowZero};
 use graphql_types::types::{AdjustmentReasonNotProvided, InvoiceNode};
 use service::invoice::inventory_adjustment::InsertInventoryAdjustmentError as ServiceError;
@@ -111,19 +111,19 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(InsertErrorInterface::StockLineReducedBelowZero(
                 StockLineReducedBelowZero::from_domain(line),
-            ))
+            ));
         }
 
         ServiceError::LedgerGoesBelowZero(line) => {
             return Ok(InsertErrorInterface::LedgerWouldGoBelowZero(
                 LedgerWouldGoBelowZero::from_domain(line),
-            ))
+            ));
         }
 
         ServiceError::AdjustmentReasonNotProvided => {
             return Ok(InsertErrorInterface::AdustmentReasonNotProvided(
                 AdjustmentReasonNotProvided,
-            ))
+            ));
         }
 
         // Standard Graphql Errors

@@ -1,10 +1,10 @@
+use repository::EqualFilter;
 use repository::asset_internal_location::{
     AssetInternalLocationFilter, AssetInternalLocationRepository,
 };
-use repository::EqualFilter;
 use repository::{
-    location::{Location, LocationFilter, LocationRepository},
     RepositoryError, StorageConnectionManager,
+    location::{Location, LocationFilter, LocationRepository},
 };
 
 use async_graphql::dataloader::*;
@@ -57,11 +57,13 @@ impl Loader<String> for AssetLocationLoader {
 mod tests {
     use async_graphql::dataloader::Loader;
     use repository::{
-        asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
+        asset_internal_location_row::{
+            AssetInternalLocationRow, AssetInternalLocationRowRepository,
+        },
         location::Location,
         mock::{
-            mock_asset_a, mock_asset_b, mock_location_1, mock_location_2, mock_location_3,
-            MockDataInserts,
+            MockDataInserts, mock_asset_a, mock_asset_b, mock_location_1, mock_location_2,
+            mock_location_3,
         },
         test_db,
     };
@@ -85,7 +87,9 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        AssetInternalLocationRowRepository::new(&storage_connection).upsert_one(asset_internal_location_row).unwrap();
+        AssetInternalLocationRowRepository::new(&storage_connection)
+            .upsert_one(asset_internal_location_row)
+            .unwrap();
 
         let loader = AssetLocationLoader { connection_manager };
 
@@ -111,7 +115,9 @@ mod tests {
             location_id: mock_location_2().id,
         };
 
-        AssetInternalLocationRowRepository::new(&storage_connection).upsert_one(asset_internal_location_row).unwrap();
+        AssetInternalLocationRowRepository::new(&storage_connection)
+            .upsert_one(asset_internal_location_row)
+            .unwrap();
 
         let result: std::collections::HashMap<String, Vec<Location>> =
             loader.load(ids).await.unwrap();
@@ -142,7 +148,9 @@ mod tests {
             location_id: mock_location_3().id,
         };
 
-        AssetInternalLocationRowRepository::new(&storage_connection).upsert_one(asset_internal_location_row).unwrap();
+        AssetInternalLocationRowRepository::new(&storage_connection)
+            .upsert_one(asset_internal_location_row)
+            .unwrap();
 
         let result: std::collections::HashMap<String, Vec<Location>> =
             loader.load(ids).await.unwrap();

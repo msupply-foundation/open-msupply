@@ -1,0 +1,171 @@
+import { createSignal, Show, type Component, type JSX } from 'solid-js';
+import { t } from '../../../intl';
+import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
+import { StatusChangeAction, type StatusPreflight } from './actions';
+import { currentStep, trackStages } from '@/domain/invoice';
+import {
+  STATUS_FLOW,
+  STATUS_LABELS,
+  isEditable,
+  statusLabel,
+} from '../outboundStatus';
+import { allowedStatuses } from '../outboundStatusOptions';
+import type { OutboundNode } from './outboundUpdate';
+
+// The shipment status footer (spec S3 § status footer): the Hold toggle
+// (confirmation both ways — OMS-REG-DIST-02.10/.27), the lifecycle indicator
+// over the FULL status sequence (transfer statuses included, limited by the
+// invoice-status-options preference — OMS-REG-DIST-04.22), Close (back to
+// the list), and the status-change split button (its own action component).
+// Replaced by the bulk-action bar while lines are selected
+// (OMS-REG-DIST-04.20). A status change that lands is reported in the bar's
+// message slot, as a flash of the status it reached, in the crumb's own word
+// (issue #1127; spec/ui-standards/controls.md § action feedback) — the split
+// button is gone at Shipped, and the crumb alone is easy to miss.
+
+export interface OutboundStatusFooterProps {
+  storeId: string;
+  node: OutboundNode;
+  /**
+   * Whole-shipment pre-flight probe (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16),
+   * run when the status button is invoked — the current lines page can't
+   * answer for the whole shipment (rules.md § server-paginated line table).
+   * Undefined = the probe failed (already routed to the global error modal);
+   * the action aborts.
+   */
+  preflight: () => Promise<StatusPreflight | undefined>;
+  /** Toggle hold (writes onHold via the field-save path). */
+  onSetHold: (hold: boolean) => void;
+  /**
+   * The line table's pager, hosted HERE rather than in a band of its own
+   * (spec/ui-standards § tables → pagination): this bar is present at every
+   * line count, so a shipment that pages gets its controls without a second
+   * row of chrome. The pager renders itself away when there is nowhere to page
+   * to, leaving this bar exactly as it was.
+   */
+  pagination: PaginationProps;
+  /**
+   * The shipment totals, when the screen is too short of height to give them a
+   * band of their own (narrow viewports — see OutboundTotalsStrip's `inline`).
+   * Rendered as this bar's first item; nothing at all on a wide screen, where
+   * the band above the bar is still where they live.
+   */
+  totals?: JSX.Element;
+  /** A status change saved — replace the entity in place (the view also
+   * refetches the lines page: leaving NEW trims zero rows server-side). */
+  onSaved: (node: OutboundNode) => void;
+}
+
+export const OutboundStatusFooter: Component<
+  OutboundStatusFooterProps
+> = props => {
+  const [holdConfirm, setHoldConfirm] = createSignal(false);
+  const saved = createFlash<string>();
+
+  const editable = () => isEditable(props.node.status);
+  const holding = () => props.node.onHold;
+
+  // The lifecycle indicator over the preference-allowed sequence, plus the
+  // shipment's own stage when the preference excludes it — the current status
+  // is always shown, and always has a crumb to mark (OMS-REG-DIST-04.29).
+  const stages = () =>
+    trackStages(STATUS_FLOW, allowedStatuses(), props.node.status);
+  const steps = () => {
+    const stamps: Record<string, string | null | undefined> = {
+      NEW: props.node.createdDatetime,
+      ALLOCATED: props.node.allocatedDatetime,
+      PICKED: props.node.pickedDatetime,
+      SHIPPED: props.node.shippedDatetime,
+      DELIVERED: props.node.deliveredDatetime,
+      RECEIVED: props.node.receivedDatetime,
+      VERIFIED: props.node.verifiedDatetime,
+    };
+    return stages().map(status => ({
+      label: STATUS_LABELS[status],
+      date: stamps[status],
+    }));
+  };
+  const indicatorIndex = () => currentStep(stages(), props.node.status);
+
+  // Both of the action's success paths (the confirm, and the on-hold notice's
+  // release-and-confirm) come through here.
+  const onSaved = (node: OutboundNode) => {
+    props.onSaved(node);
+    saved.show(statusLabel(node.status));
+  };
+
+  return (
+    // The shared `table-footer` id (e2e/TESTIDS.md): this bar is the table's
+    // default footer face — the pager docks in it — and gives way to the
+    // `actions-footer` selection bar, exactly as DataTable's own footer does.
+    <ContentFooter testId="table-footer">
+      {/* The totals, on the bar itself rather than above it (narrow
+          viewports only — the prop is undefined on a wide screen). */}
+      {props.totals}
+
+      {/* Hold: blocks status changes only, not edits (rules.md § on hold).
+          Editable while the shipment is editable; hidden from SHIPPED. */}
+      <Show when={editable()}>
+        <CheckboxButton
+          data-testid="on-hold-button"
+          checked={holding()}
+          onChange={() => setHoldConfirm(true)}
+        >
+          {t('label.hold')}
+        </CheckboxButton>
+      </Show>
+
+      <StatusIndicator
+        recordId={props.node.id}
+        steps={steps()}
+        current={indicatorIndex()}
+      />
+
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
+
+      {/* The status-change split button, which hides entirely when read-only
+          (spec S3 § status footer). No Close beside it (D103): leaving the
+          shipment is the breadcrumb's job, as on every other screen. */}
+      <StatusChangeAction
+        storeId={props.storeId}
+        node={props.node}
+        preflight={props.preflight}
+        onSaved={onSaved}
+        leading={
+          <>
+            {/* The line pager, docked in the action cluster (`inBar` — it
+                sizes to its cluster, so a crowded bar wraps the cluster whole
+                rather than crushing the pager). Spread of the LIVE prop
+                object, as DataTable does, so offset/total changes reach it. */}
+            <Pagination {...props.pagination} inBar />
+          </>
+        }
+      />
+
+      {/* Mounted only while open — its confirmation-modal test hook must not
+          coexist with the status-change dialog's. */}
+      <Show when={holdConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setHoldConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={
+            holding()
+              ? t('messages.off-hold-confirmation')
+              : t('messages.on-hold-confirmation')
+          }
+          onConfirm={() => props.onSetHold(!holding())}
+        />
+      </Show>
+    </ContentFooter>
+  );
+};

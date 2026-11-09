@@ -2,12 +2,13 @@ use super::{
     AncillaryItemNode, ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode,
     StockLineConnector, WarningNode,
 };
-use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
+use crate::types::{ItemStorePropertiesNode, LocationTypeNode, program_node::ProgramNode};
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{
         AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
         AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
@@ -19,11 +20,14 @@ use graphql_core::{
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{category_row::CategoryRow, Item, ItemRow};
+use repository::{
+    EqualFilter, Item, ItemRow,
+    category_row::CategoryRow,
+    item_variant::item_variant::{ItemVariantFilter, ItemVariantRepository},
+};
 use serde_json::json;
-use service::ListResult;
+use service::{ListResult, item::ancillary_item::supply_wastage_rates_of, item_stats::ItemStats};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -124,6 +128,31 @@ impl ItemNode {
         #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
         period_end: Option<NaiveDate>,
     ) -> Result<ItemStatsNode> {
+        // The full item-stats path computes consumption and runs the AMC backend plugin —
+        // far too expensive when the query only selects stock on hand (e.g. the item list
+        // export asks for stats { stockOnHand } across every item). Serve those selections
+        // from the cheap batched stock_on_hand loader instead.
+        let only_stock_on_hand = ctx.field().selection_set().all(|field| {
+            matches!(
+                field.name(),
+                "stockOnHand" | "availableStockOnHand" | "__typename"
+            )
+        });
+        if only_stock_on_hand {
+            let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+            let stock_on_hand = loader
+                .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+                .await?
+                .unwrap_or_default();
+
+            return Ok(ItemStatsNode::from_domain(ItemStats {
+                item_id: self.row().id.clone(),
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+                ..Default::default()
+            }));
+        }
+
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
             .load_one(ItemStatsLoaderInput::new(
@@ -172,7 +201,7 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
-            .map(|soh| soh.available_stock_on_hand)
+            .map(|soh| soh.available_stock_on_hand as u32)
             .unwrap_or(0);
 
         Ok(result)
@@ -187,13 +216,30 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
-            .map(|soh| soh.total_stock_on_hand)
+            .map(|soh| soh.total_stock_on_hand as u32)
             .unwrap_or(0);
 
         Ok(result)
     }
 
-    pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
+    /// The item's variants. Auto-created ones, which central creates only to hold
+    /// a barcode, are left out unless `includeAutoCreated` is true.
+    pub async fn variants(
+        &self,
+        ctx: &Context<'_>,
+        include_auto_created: Option<bool>,
+    ) -> Result<Vec<ItemVariantNode>> {
+        if include_auto_created == Some(true) {
+            let variants = ItemVariantRepository::new(&ctx.get_connection_manager().connection()?)
+                .query_by_filter(
+                    ItemVariantFilter::new()
+                        .item_id(EqualFilter::equal_to(self.row().id.clone()))
+                        .include_auto_created(),
+                )
+                .map_err(StandardGraphqlError::from_repository_error)?;
+            return Ok(ItemVariantNode::from_vec(variants));
+        }
+
         let loader = ctx.get_loader::<DataLoader<ItemVariantsByItemIdLoader>>();
         let result = loader
             .load_one(self.row().id.clone())
@@ -225,6 +271,21 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    /// This item's own wastage rate (%) as an ancillary supply, added on top of what the
+    /// links ordering it give (e.g. syringes broken or dropped); 0 when none. Stored on
+    /// those links (`ancillaryFor`), so an item no link orders has none.
+    pub async fn supply_wastage_rate(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
+        let links = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+        Ok(supply_wastage_rates_of(&links)
+            .get(&self.row().id)
+            .copied()
+            .unwrap_or(0.0))
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {

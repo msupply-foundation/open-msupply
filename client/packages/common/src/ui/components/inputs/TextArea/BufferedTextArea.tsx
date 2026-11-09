@@ -14,6 +14,7 @@ export const BufferedTextArea = React.forwardRef<
       ref={ref}
       sx={{ width: '100%' }}
       slotProps={{
+        ...slotProps,
         input: {
           ...slotProps?.input,
           sx: {

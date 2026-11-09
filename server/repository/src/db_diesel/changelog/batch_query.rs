@@ -18,7 +18,7 @@ const ROW_FETCH_BATCH_SIZE: usize = 500;
 #[derive(Debug, Clone)]
 pub enum Row {
     ActivityLog(ActivityLogRow),
-    Barcode(BarcodeRow),
+    BarcodeProposal(BarcodeProposalRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
     Currency(CurrencyRow),
@@ -35,11 +35,14 @@ pub enum Row {
     PurchaseOrderLine(PurchaseOrderLineRow),
     Sensor(SensorRow),
     StockLine(StockLineRow),
+    PrescriptionRequest(PrescriptionRequestRow),
+    PrescriptionRequestLine(PrescriptionRequestLineRow),
     StockRelocation(StockRelocationRow),
     StockRelocationLine(StockRelocationLineRow),
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
     TemperatureBreach(TemperatureBreachRow),
+    TemperatureSummary(TemperatureSummaryRow),
     TemperatureLog(TemperatureLogRow),
     VVMStatusLog(VVMStatusLogRow),
     Requisition(RequisitionRow),
@@ -277,9 +280,9 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::ActivityLog(r));
                 }
             }
-            ChangelogTableName::Barcode => {
-                for r in BarcodeRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::Barcode(r));
+            ChangelogTableName::BarcodeProposal => {
+                for r in BarcodeProposalRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::BarcodeProposal(r));
                 }
             }
             ChangelogTableName::Clinician => {
@@ -362,6 +365,18 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::StockLine(r));
                 }
             }
+            ChangelogTableName::PrescriptionRequest => {
+                for r in PrescriptionRequestRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PrescriptionRequest(r));
+                }
+            }
+            ChangelogTableName::PrescriptionRequestLine => {
+                for r in
+                    PrescriptionRequestLineRowRepository::new(connection).find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::PrescriptionRequestLine(r));
+                }
+            }
             ChangelogTableName::StockRelocation => {
                 for r in StockRelocationRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::StockRelocation(r));
@@ -385,6 +400,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::TemperatureBreach => {
                 for r in TemperatureBreachRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::TemperatureBreach(r));
+                }
+            }
+            ChangelogTableName::TemperatureSummary => {
+                for r in TemperatureSummaryRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::TemperatureSummary(r));
                 }
             }
             ChangelogTableName::TemperatureLog => {
@@ -841,8 +861,8 @@ mod test {
     use util::assert_matches;
 
     use crate::{
-        dynamic_query_filter::FilterBuilder, mock::MockDataInserts, test_db::setup_all,
-        ChangeLogInsertRow,
+        ChangeLogInsertRow, dynamic_query_filter::FilterBuilder, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     fn unit_filter() -> ChangelogCondition::Inner {

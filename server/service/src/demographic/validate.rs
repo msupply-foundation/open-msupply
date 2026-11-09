@@ -1,9 +1,9 @@
 use repository::{
-    demographic_projection::{DemographicProjectionFilter, DemographicProjectionRepository},
     DemographicIndicatorFilter, DemographicIndicatorRepository, DemographicIndicatorRow,
     DemographicIndicatorRowRepository, DemographicProjectionRow,
     DemographicProjectionRowRepository, DemographicRow, DemographicRowRepository, EqualFilter,
     RepositoryError, StorageConnection, StringFilter,
+    demographic_projection::{DemographicProjectionFilter, DemographicProjectionRepository},
 };
 
 pub fn check_demographic_indicator_exists(

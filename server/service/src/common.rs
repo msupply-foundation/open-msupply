@@ -1,8 +1,7 @@
 use crate::preference::{DaysInMonth, Preference};
 use repository::{
-    shipping_method_row::ShippingMethodRowRepository, EqualFilter, ProgramRow,
-    ProgramRowRepository, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
-    StorageConnection,
+    EqualFilter, ProgramRow, ProgramRowRepository, RepositoryError, StockLine, StockLineFilter,
+    StockLineRepository, StorageConnection, shipping_method_row::ShippingMethodRowRepository,
 };
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
@@ -83,7 +82,7 @@ mod tests {
     use super::*;
     use crate::preference::DaysInMonth;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PreferenceRow, PreferenceRowRepository,
+        PreferenceRow, PreferenceRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
     use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 

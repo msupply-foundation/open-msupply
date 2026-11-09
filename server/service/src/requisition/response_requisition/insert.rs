@@ -3,13 +3,13 @@ use crate::{
     number::next_number,
     requisition::{common::check_requisition_row_exists, query::get_requisition},
     service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 use chrono::Utc;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, NumberRowType, RepositoryError, Requisition,
     RequisitionRowRepository, StorageConnection, StoreFilter, StoreRepository,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -54,7 +54,7 @@ pub fn insert_response_requisition(
                 None,
             )?;
 
-            get_requisition(ctx, None, &new_requisition.id)
+            get_requisition(ctx, None, &new_requisition.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
@@ -101,9 +101,8 @@ fn generate(
         min_months_of_stock,
     }: InsertResponseRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
-    let other_party_store = StoreRepository::new(connection).query_one(
-        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
-    )?;
+    let other_party_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
 
     let result = RequisitionRow {
         id,
@@ -153,12 +152,12 @@ mod test_insert {
         service_provider::ServiceProvider,
     };
     use repository::{
+        NameRow, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
         mock::{
-            mock_name_store_b, mock_name_store_c, mock_store_a, mock_user_account_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_name_store_b, mock_name_store_c, mock_store_a,
+            mock_user_account_a,
         },
         test_db::{setup_all, setup_all_with_data},
-        NameRow, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
     };
 
     #[actix_rt::test]

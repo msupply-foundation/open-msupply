@@ -4,8 +4,8 @@ use repository::{
 };
 
 use crate::{
-    get_default_pagination_unlimited, i64_to_u32, service_provider::ServiceContext, ListError,
-    ListResult,
+    ListError, ListResult, get_default_pagination_unlimited, i64_to_u32,
+    service_provider::ServiceContext,
 };
 
 pub fn get_master_list_lines(

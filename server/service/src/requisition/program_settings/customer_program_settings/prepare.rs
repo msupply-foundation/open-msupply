@@ -184,20 +184,20 @@ fn map_period_rows_and_requisitions_to_order_type(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
-        },
         ContextRow, MasterListNameJoinRow, MasterListRow, NameStoreJoinRow, NameTagJoinRow,
         NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
         ProgramRequisitionSettingsRow, ProgramRow, RequisitionRow, RequisitionType,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_a, mock_name_store_b, mock_name_store_c,
+            mock_store_a, mock_user_account_a,
+        },
     };
 
     use crate::{
         requisition::program_settings::customer_program_settings::prepare::{
             CustomerProgramRequisitionSetting, ProgramRequisitionOrderType, ProgramSetting,
         },
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
     };
 
     #[actix_rt::test]

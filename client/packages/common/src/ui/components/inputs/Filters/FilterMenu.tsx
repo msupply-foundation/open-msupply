@@ -160,6 +160,10 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
           {showRemoveOption && <Divider />}
           {showRemoveOption && (
             <FilterMenuItem
+              // Same id as the rewrite's bar-level "Clear all" — the e2e suites
+              // locate the action, not its placement (frontend/e2e/TESTIDS.md
+              // § Shared ids).
+              testId="filters-clear-all"
               onClick={() => handleSelect(RESET_KEYWORD)}
               label={t('label.remove-all-filters')}
             />

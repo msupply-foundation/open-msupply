@@ -1,4 +1,5 @@
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
@@ -6,7 +7,6 @@ use crate::{
     },
     requisition::query::get_requisition,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -50,6 +50,10 @@ pub enum UpdateRequestRequisitionError {
     CannotEditRequisition,
     NotARequestRequisition,
     CannotEditProgramRequisitionInformation,
+    /// The store fixes a general order's target months to its supply interval + safety
+    /// buffer
+    /// ([`CanChangeTargetMonthsOfStock`](crate::preference::CanChangeTargetMonthsOfStock))
+    CannotChangeTargetMonthsOfStock,
     // Name validation
     OtherPartyNotASupplier,
     OtherPartyNotVisible,
@@ -123,7 +127,7 @@ pub fn update_request_requisition(
                 )?;
             }
 
-            get_requisition(ctx, None, &updated_requisition_row.id)
+            get_requisition(ctx, None, &updated_requisition_row.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionDoesNotExist)
         })

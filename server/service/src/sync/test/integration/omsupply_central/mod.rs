@@ -10,6 +10,7 @@ use url::Url;
 use util::assert_variant;
 
 use crate::sync::{
+    CentralServerConfig,
     test::{
         check_integrated,
         integration::{
@@ -17,7 +18,6 @@ use crate::sync::{
             integrate_with_is_sync_reset,
         },
     },
-    CentralServerConfig,
 };
 
 use super::{GraphqlRequest, SyncRecordTester};

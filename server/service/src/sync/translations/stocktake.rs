@@ -10,7 +10,7 @@ use util::sync_serde::{
     empty_str_as_option_string, naive_time, zero_date_as_option,
 };
 
-use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, to_legacy_time};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -132,7 +132,7 @@ impl SyncTranslation for StocktakeTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unexpected stocktake status: {:?}",
                     data.status
-                )))
+                )));
             }
         };
 

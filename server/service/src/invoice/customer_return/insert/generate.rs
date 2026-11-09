@@ -5,8 +5,8 @@ use repository::{
     InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 
-use crate::invoice_line::stock_in_line::insert::InsertStockInLine;
 use crate::invoice_line::stock_in_line::StockInType;
+use crate::invoice_line::stock_in_line::insert::InsertStockInLine;
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
 

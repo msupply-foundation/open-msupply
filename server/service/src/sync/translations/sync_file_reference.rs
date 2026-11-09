@@ -1,6 +1,6 @@
 use repository::{
-    sync_file_reference_row::{SyncFileReferenceRowRepository, SyncFileReferenceWire},
     ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    sync_file_reference_row::{SyncFileReferenceRowRepository, SyncFileReferenceWire},
 };
 
 use crate::sync::translations::asset::AssetTranslation;
@@ -83,8 +83,7 @@ mod tests {
     use repository::{
         mock::MockDataInserts,
         sync_file_reference_row::{
-            SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository,
-            SyncFileStatus,
+            SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
         },
         test_db::setup_all,
     };

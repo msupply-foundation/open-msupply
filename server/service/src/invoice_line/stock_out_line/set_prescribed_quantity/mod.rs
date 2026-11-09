@@ -6,7 +6,7 @@ use util::uuid::uuid;
 
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext};
 
-mod generate;
+pub mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
@@ -25,6 +25,9 @@ pub enum SetPrescribedQuantityError {
     NotAStockItem,
     NotAPrescription,
     NotThisStoreInvoice,
+    /// The figure is the prescriber's, on a dispensation generated from a
+    /// prescription request, and this input would change it.
+    CannotChangePrescribedQuantity,
     NewlyCreatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -62,10 +65,11 @@ pub fn set_prescribed_quantity(
                 .find(|line| line.invoice_line_row.r#type == InvoiceLineType::UnallocatedStock);
 
             // Remove the unallocated line if a proper allocated line exists.
-            if existing_lines.len() > 1 && has_prescribed_quantity_or_stock_line {
-                if let Some(unallocated_line) = unallocated_line {
-                    invoice_line_row_repo.delete(&unallocated_line.invoice_line_row.id)?;
-                }
+            if existing_lines.len() > 1
+                && has_prescribed_quantity_or_stock_line
+                && let Some(unallocated_line) = unallocated_line
+            {
+                invoice_line_row_repo.delete(&unallocated_line.invoice_line_row.id)?;
             }
 
             // Find the line with a prescribed quantity
@@ -136,13 +140,13 @@ fn update_prescribed_quantity(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_prescription_picked, mock_stock_line_a,
-            mock_stock_line_b, mock_store_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineType,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_prescription_picked,
+            mock_stock_line_a, mock_stock_line_b, mock_store_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

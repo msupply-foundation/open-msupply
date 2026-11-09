@@ -132,8 +132,8 @@ pub(crate) fn validate_on_central(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{NameRow, Store, StoreRow};
     use ChangelogTableName::*;
+    use repository::{NameRow, Store, StoreRow};
 
     // Site 1 is "this site" with one active store, "store_a".
     // Site 2 is some other site.

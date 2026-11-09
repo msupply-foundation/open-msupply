@@ -145,6 +145,7 @@ export const PickedDateInput = () => {
       minDate={minDate}
       actions={['cancel', 'accept']}
       width={140}
+      textFieldTestId="picked-date-field"
     />
   );
 

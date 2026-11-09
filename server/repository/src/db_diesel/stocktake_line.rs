@@ -1,19 +1,19 @@
 use super::{
-    campaign_row::campaign, item_row::item, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line, CampaignRow, LocationRow, NameRow, ReasonOptionRow,
-    StockLineRow, StocktakeLineRow, StorageConnection,
+    CampaignRow, LocationRow, NameRow, ReasonOptionRow, StockLineRow, StocktakeLineRow,
+    StorageConnection, campaign_row::campaign, item_row::item, location_row::location,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    DBType, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination,
+    RepositoryError, Sort, StringFilter,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
         apply_sort_no_case, apply_string_filter,
     },
-    DBType, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination,
-    RepositoryError, Sort, StringFilter,
 };
 
 #[derive(Clone, Default)]
@@ -271,18 +271,62 @@ fn apply_item_filter(
     connection: &StorageConnection,
     store_id: String,
 ) -> BoxedStocktakeLineQuery {
-    if let Some(f) = filter {
-        if let Some(item_code_or_name) = &f.item_code_or_name {
-            let mut item_filter = ItemFilter::new();
-            item_filter.code_or_name = Some(item_code_or_name.clone());
-            item_filter.is_visible = Some(true);
-            let items = ItemRepository::new(connection)
-                .query_by_filter(item_filter, Some(store_id))
-                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
-            let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
+    if let Some(f) = filter
+        && let Some(item_code_or_name) = &f.item_code_or_name
+    {
+        let mut item_filter = ItemFilter::new();
+        item_filter.code_or_name = Some(item_code_or_name.clone());
+        item_filter.is_visible = Some(true);
+        let items = ItemRepository::new(connection)
+            .query_by_filter(item_filter, Some(store_id))
+            .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
+        let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(item::id.eq_any(item_ids));
-        }
+        return query.filter(item::id.eq_any(item_ids));
     }
     query
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        EqualFilter, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+        mock::{MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_stocktake_a},
+        test_db,
+    };
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_campaign_filter() {
+        let line_with_campaign = StocktakeLineRow {
+            id: "stocktake_line_with_campaign".to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            campaign_id: Some(mock_campaign_a().id),
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_campaign_filter",
+            MockDataInserts::all(),
+            MockData {
+                stocktake_lines: vec![line_with_campaign.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let lines = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                    .campaign_id(EqualFilter::equal_to(mock_campaign_a().id)),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(
+            lines.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
+            vec![line_with_campaign.id]
+        );
+    }
 }

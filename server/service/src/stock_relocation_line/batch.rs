@@ -1,13 +1,13 @@
 use repository::{RepositoryError, StockRelocationLineRow};
 
 use crate::{
-    service_provider::ServiceContext, BatchMutationsProcessor, InputWithResult, WithDBError,
+    BatchMutationsProcessor, InputWithResult, WithDBError, service_provider::ServiceContext,
 };
 
 use super::{
-    delete::{delete_stock_relocation_line, DeleteStockRelocationLineError},
+    delete::{DeleteStockRelocationLineError, delete_stock_relocation_line},
     upsert::{
-        upsert_stock_relocation_line, UpsertStockRelocationLine, UpsertStockRelocationLineError,
+        UpsertStockRelocationLine, UpsertStockRelocationLineError, upsert_stock_relocation_line,
     },
 };
 
@@ -80,9 +80,9 @@ pub fn batch_stock_relocation_line(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_location_1, MockDataInserts},
-        test_db::setup_all,
         StockLineRow, StockLineRowRepository, StockRelocationLineRowRepository,
+        mock::{MockDataInserts, mock_location_1},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 

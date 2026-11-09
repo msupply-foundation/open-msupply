@@ -327,12 +327,12 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
 #[cfg(test)]
 mod invoice_count_service_test {
     use repository::{
+        CurrencyRowRepository, InvoiceRowRepository, NameRowRepository, StoreRowRepository,
         mock::{
-            currency_a, mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a,
-            mock_store_b, MockDataInserts,
+            MockDataInserts, currency_a, mock_name_store_a, mock_name_store_b,
+            mock_outbound_shipment_a, mock_store_b,
         },
-        test_db, CurrencyRowRepository, InvoiceRowRepository, NameRowRepository,
-        StoreRowRepository,
+        test_db,
     };
     use util::timezone::offset_to_timezone;
 

@@ -1,0 +1,108 @@
+# The R&R form detail read + the draft save and finalise (spec/rnr-forms:
+# ui-surface S3, rules § editing / § finalise). The line fragment reads the
+# entered-over-snapshot folded figures the node serves (contract § line
+# generation wire trap: snapshots are unreadable once overridden).
+
+fragment RnrFormLine on RnRFormLineNode {
+  id
+  item {
+    id
+    code
+    name
+    unitName
+    venCategory
+  }
+  previousMonthlyConsumptionValues
+  averageMonthlyConsumption
+  initialBalance
+  quantityReceived
+  quantityConsumed
+  adjustedQuantityConsumed
+  losses
+  adjustments
+  stockOutDuration
+  finalBalance
+  minimumQuantity
+  maximumQuantity
+  expiryDate
+  calculatedRequestedQuantity
+  enteredRequestedQuantity
+  lowStock
+  comment
+  confirmed
+  approvedQuantity
+}
+
+fragment RnrFormInfo on RnRFormNode {
+  id
+  status
+  createdDatetime
+  theirReference
+  comment
+  periodLength
+  programId
+  programName
+  supplierId
+  supplierName
+  period {
+    id
+    name
+    startDate
+    endDate
+  }
+}
+
+query RnrFormDetail($storeId: String!, $id: String!) {
+  rAndRForm(storeId: $storeId, rnrFormId: $id) {
+    __typename
+    ... on RnRFormNode {
+      ...RnrFormInfo
+      lines {
+        ...RnrFormLine
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The store's months-of-stock preferences — the min/max multipliers the client
+# recompute uses (rules § line generation; contract § finalise effects reads
+# the same pair server-side).
+query RnrFormDetailContext($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    id
+    monthsOverstock
+    monthsUnderstock
+  }
+}
+
+# One save carries the header's reference/comment and any set of edited lines
+# (rules § editing a draft). Lines may be empty for a header-only save.
+mutation UpdateRnrForm($storeId: String!, $input: UpdateRnRFormInput!) {
+  updateRnrForm(storeId: $storeId, input: $input) {
+    ... on RnRFormNode {
+      __typename
+      ...RnrFormInfo
+      lines {
+        ...RnrFormLine
+      }
+    }
+  }
+}
+
+mutation FinaliseRnrForm($storeId: String!, $input: FinaliseRnRFormInput!) {
+  finaliseRnrForm(storeId: $storeId, input: $input) {
+    ... on RnRFormNode {
+      __typename
+      ...RnrFormInfo
+      lines {
+        ...RnrFormLine
+      }
+    }
+  }
+}

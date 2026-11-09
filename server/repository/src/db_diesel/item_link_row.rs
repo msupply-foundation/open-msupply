@@ -1,8 +1,8 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
-    location_type_row::location_type, StorageConnection,
+    StorageConnection, clinician_link_row::clinician_link, clinician_row::clinician,
+    item_row::item, location_type_row::location_type,
 };
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
+use crate::{ChangelogSyncType, Upsert, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 
@@ -109,7 +109,11 @@ impl<'a> ItemLinkRowRepository<'a> {
 }
 
 impl Upsert for ItemLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ItemLinkRowRepository::new(con).upsert_one(self)?;
         Ok(()) // Table not in Changelog
     }

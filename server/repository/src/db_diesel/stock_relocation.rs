@@ -1,7 +1,7 @@
 use super::{
-    stock_relocation_row::{stock_relocation, StockRelocationRow, StockRelocationStatus},
-    user_row::user_account,
     DBType, RepositoryError, StorageConnection,
+    stock_relocation_row::{StockRelocationRow, StockRelocationStatus, stock_relocation},
+    user_row::user_account,
 };
 use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
@@ -85,6 +85,9 @@ impl<'a> StockRelocationRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(stock_relocation::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<StockRelocationRow>(self.connection.lock().connection())?;
@@ -158,9 +161,9 @@ mod test {
     use chrono::NaiveDate;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, StockRelocationFilter,
-        StockRelocationRepository, StockRelocationRow, StockRelocationRowRepository,
-        StockRelocationSort, StockRelocationSortField, StockRelocationStatus,
+        EqualFilter, StockRelocationFilter, StockRelocationRepository, StockRelocationRow,
+        StockRelocationRowRepository, StockRelocationSort, StockRelocationSortField,
+        StockRelocationStatus, mock::MockDataInserts, test_db::setup_all,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
@@ -229,8 +232,10 @@ mod test {
                 }),
             )
             .unwrap();
-        assert!(sorted
-            .iter()
-            .any(|r| r.stock_relocation_row.id == "stock_relocation_1"));
+        assert!(
+            sorted
+                .iter()
+                .any(|r| r.stock_relocation_row.id == "stock_relocation_1")
+        );
     }
 }

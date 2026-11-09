@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
@@ -7,8 +8,7 @@ use graphql_core::{
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
@@ -159,6 +159,7 @@ pub struct InvoiceFilterInput {
     pub linked_invoice_id: Option<EqualFilterStringInput>,
     pub is_program_invoice: Option<bool>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
+    pub prescription_request_id: Option<EqualFilterStringInput>,
     pub purchase_order_number: Option<EqualFilterBigNumberInput>,
     pub linked_order_number: Option<EqualFilterBigNumberInput>,
     pub program_id: Option<EqualFilterStringInput>,
@@ -373,6 +374,7 @@ impl InvoiceFilterInput {
             stock_line_id: None,
             is_cancellation: None,
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
+            prescription_request_id: self.prescription_request_id.map(EqualFilter::from),
             purchase_order_number: self.purchase_order_number.map(EqualFilter::from),
             linked_order_number: self.linked_order_number.map(EqualFilter::from),
             // Parsed from the JSON `dynamicFilter` input in the resolver (a

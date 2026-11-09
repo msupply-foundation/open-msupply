@@ -5,7 +5,7 @@ use ts_rs::TS;
 use crate::{
     boajs::context::BoaJsContext,
     boajs::utils::*,
-    email::enqueue::{enqueue_email, EnqueueEmailData},
+    email::enqueue::{EnqueueEmailData, enqueue_email},
 };
 
 /// Input for the `enqueue_email` global. Adds an email to the queue

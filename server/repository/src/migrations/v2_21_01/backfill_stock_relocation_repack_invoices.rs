@@ -250,7 +250,8 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        let candidates = sql_query(CANDIDATE_SQL).load::<Candidate>(connection.lock().connection())?;
+        let candidates =
+            sql_query(CANDIDATE_SQL).load::<Candidate>(connection.lock().connection())?;
         if candidates.is_empty() {
             return Ok(());
         }
@@ -309,8 +310,10 @@ impl MigrationFragment for Migrate {
             .filter(number::type_.eq("REPACK"))
             .select((number::store_id, number::value))
             .load(connection.lock().connection())?;
-        let stores_with_number_row: Vec<String> =
-            number_rows.iter().map(|(store_id, _)| store_id.clone()).collect();
+        let stores_with_number_row: Vec<String> = number_rows
+            .iter()
+            .map(|(store_id, _)| store_id.clone())
+            .collect();
         for (store_id, value) in number_rows {
             let entry = next_numbers.entry(store_id).or_insert(0);
             *entry = (*entry).max(value);
@@ -401,8 +404,9 @@ impl MigrationFragment for Migrate {
                     invoice_line::location_id.eq(candidate.source_location_id.as_ref()),
                     invoice_line::batch.eq(candidate.batch.as_ref()),
                     invoice_line::expiry_date.eq(candidate.expiry_date),
-                    invoice_line::pack_size
-                        .eq(candidate.source_pack_size.unwrap_or(candidate.dest_pack_size)),
+                    invoice_line::pack_size.eq(candidate
+                        .source_pack_size
+                        .unwrap_or(candidate.dest_pack_size)),
                     invoice_line::cost_price_per_pack.eq(out_cost),
                     invoice_line::sell_price_per_pack.eq(candidate
                         .source_sell_price_per_pack
@@ -444,7 +448,8 @@ impl MigrationFragment for Migrate {
                         location_movement::id.eq(&movement_id),
                         location_movement::store_id.eq(&candidate.store_id),
                         location_movement::stock_line_id.eq(&candidate.destination_stock_line_id),
-                        location_movement::location_id.eq(candidate.destination_location_id.as_ref()),
+                        location_movement::location_id
+                            .eq(candidate.destination_location_id.as_ref()),
                         location_movement::enter_datetime.eq(Some(candidate.finalised_datetime)),
                         location_movement::exit_datetime.eq(None::<NaiveDateTime>),
                     ))
@@ -519,25 +524,67 @@ mod tests {
 
     fn setup_test_data(connection: &StorageConnection) {
         // Names: repack system name (name_link id == name id, as at runtime) + store names
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('repack', 'FACILITY', false, false, 'repack', 'Repack');");
-        run(connection, "INSERT INTO name_link (id, name_id) VALUES ('repack', 'repack');");
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store1_name', 'FACILITY', true, false, 'STORE1', 'Store One');");
-        run(connection, "INSERT INTO name_link (id, name_id) VALUES ('store1_name', 'store1_name');");
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store2_name', 'FACILITY', true, false, 'STORE2', 'Store Two');");
-        run(connection, "INSERT INTO name_link (id, name_id) VALUES ('store2_name', 'store2_name');");
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('repack', 'FACILITY', false, false, 'repack', 'Repack');",
+        );
+        run(
+            connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('repack', 'repack');",
+        );
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store1_name', 'FACILITY', true, false, 'STORE1', 'Store One');",
+        );
+        run(
+            connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('store1_name', 'store1_name');",
+        );
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store2_name', 'FACILITY', true, false, 'STORE2', 'Store Two');",
+        );
+        run(
+            connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('store2_name', 'store2_name');",
+        );
 
         // store1 is active on this site (site 1); store2 is a synced copy from site 2
-        run(connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store1', 'store1_name', 's1', 1);");
-        run(connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store2', 'store2_name', 's2', 2);");
-        run(connection, "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_SITE_ID', 1);");
+        run(
+            connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store1', 'store1_name', 's1', 1);",
+        );
+        run(
+            connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store2', 'store2_name', 's2', 2);",
+        );
+        run(
+            connection,
+            "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_SITE_ID', 1);",
+        );
 
-        run(connection, "INSERT INTO currency (id, rate, code, is_home_currency, is_active) VALUES ('currency1', 1.0, 'USD', true, true);");
+        run(
+            connection,
+            "INSERT INTO currency (id, rate, code, is_home_currency, is_active) VALUES ('currency1', 1.0, 'USD', true, true);",
+        );
 
-        run(connection, "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item1', 'Item One', 'ITEM1', 1.0, 'STOCK', '');");
-        run(connection, "INSERT INTO item_link (id, item_id) VALUES ('item1', 'item1');");
+        run(
+            connection,
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item1', 'Item One', 'ITEM1', 1.0, 'STOCK', '');",
+        );
+        run(
+            connection,
+            "INSERT INTO item_link (id, item_id) VALUES ('item1', 'item1');",
+        );
 
-        run(connection, "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_src', 'SRC', 'Source', false, 'store1');");
-        run(connection, "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_dst', 'DST', 'Destination', false, 'store1');");
+        run(
+            connection,
+            "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_src', 'SRC', 'Source', false, 'store1');",
+        );
+        run(
+            connection,
+            "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_dst', 'DST', 'Destination', false, 'store1');",
+        );
 
         let stock_line = |id: &str, store: &str, location: &str, packs: f64| {
             format!(
@@ -548,11 +595,26 @@ mod tests {
                  5.0, 8.0, {packs}, {packs}, false, 2.0, 0.5);"
             )
         };
-        run(connection, &stock_line("source_sl", "store1", "'loc_src'", 6.0));
-        run(connection, &stock_line("dest_sl", "store1", "'loc_dst'", 4.0));
-        run(connection, &stock_line("dest_sl_no_loc", "store1", "NULL", 1.0));
-        run(connection, &stock_line("dest_sl_existing", "store1", "'loc_dst'", 1.0));
-        run(connection, &stock_line("dest_sl_adjusted", "store1", "'loc_dst'", 2.0));
+        run(
+            connection,
+            &stock_line("source_sl", "store1", "'loc_src'", 6.0),
+        );
+        run(
+            connection,
+            &stock_line("dest_sl", "store1", "'loc_dst'", 4.0),
+        );
+        run(
+            connection,
+            &stock_line("dest_sl_no_loc", "store1", "NULL", 1.0),
+        );
+        run(
+            connection,
+            &stock_line("dest_sl_existing", "store1", "'loc_dst'", 1.0),
+        );
+        run(
+            connection,
+            &stock_line("dest_sl_adjusted", "store1", "'loc_dst'", 2.0),
+        );
         run(connection, &stock_line("s2_src", "store2", "NULL", 5.0));
         run(connection, &stock_line("s2_dest", "store2", "NULL", 3.0));
 
@@ -563,33 +625,78 @@ mod tests {
         //   srl4 - split into dest_sl_existing which already has a repack StockIn line (skipped)
         //   srl5 - split into dest_sl_adjusted which has a non-repack StockIn from an
         //          inventory addition (still backfilled - the guard is repack-only)
-        run(connection, "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr1', 'store1', 7, 'FINALISED', '2026-06-01 09:00:00', 'user1', '2026-06-01 09:30:00', '2026-06-01 10:00:00');");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl1', 'sr1', 'source_sl', 'dest_sl', 'loc_src', 'loc_dst', 4.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl2', 'sr1', 'source_sl', NULL, 'loc_src', 'loc_dst', 2.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl3', 'sr1', 'source_sl', 'dest_sl_no_loc', 'loc_src', NULL, 1.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl4', 'sr1', 'source_sl', 'dest_sl_existing', 'loc_src', 'loc_dst', 1.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl5', 'sr1', 'source_sl', 'dest_sl_adjusted', 'loc_src', 'loc_dst', 2.0);");
+        run(
+            connection,
+            "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr1', 'store1', 7, 'FINALISED', '2026-06-01 09:00:00', 'user1', '2026-06-01 09:30:00', '2026-06-01 10:00:00');",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl1', 'sr1', 'source_sl', 'dest_sl', 'loc_src', 'loc_dst', 4.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl2', 'sr1', 'source_sl', NULL, 'loc_src', 'loc_dst', 2.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl3', 'sr1', 'source_sl', 'dest_sl_no_loc', 'loc_src', NULL, 1.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl4', 'sr1', 'source_sl', 'dest_sl_existing', 'loc_src', 'loc_dst', 1.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl5', 'sr1', 'source_sl', 'dest_sl_adjusted', 'loc_src', 'loc_dst', 2.0);",
+        );
 
         // Inventory addition on dest_sl_adjusted - a non-repack StockIn that must NOT
         // suppress the backfill of srl5
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_addition', 'store1_name', 'store1', 1, false, '2026-06-05 00:00:00', 'INVENTORY_ADDITION', 'VERIFIED', 1.0, false);");
-        run(connection, "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('addition_in', 'inv_addition', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 10.0, 10.0, 2.0, 2.0, 'dest_sl_adjusted');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_addition', 'store1_name', 'store1', 1, false, '2026-06-05 00:00:00', 'INVENTORY_ADDITION', 'VERIFIED', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('addition_in', 'inv_addition', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 10.0, 10.0, 2.0, 2.0, 'dest_sl_adjusted');",
+        );
 
         // Finalised split on store2 - not active on this site, must be skipped
-        run(connection, "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr2', 'store2', 1, 'FINALISED', '2026-06-02 09:00:00', 'user2', '2026-06-02 09:30:00', '2026-06-02 10:00:00');");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('s2_srl', 'sr2', 's2_src', 's2_dest', NULL, NULL, 3.0);");
+        run(
+            connection,
+            "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr2', 'store2', 1, 'FINALISED', '2026-06-02 09:00:00', 'user2', '2026-06-02 09:30:00', '2026-06-02 10:00:00');",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('s2_srl', 'sr2', 's2_src', 's2_dest', NULL, NULL, 3.0);",
+        );
 
         // Existing repack invoice #5 (also provides dest_sl_existing's StockIn line)
         // and a number counter at 5 - backfilled invoices must continue from 6
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('existing_repack', 'repack', 'store1', 5, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);");
-        run(connection, "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('existing_in', 'existing_repack', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 5.0, 5.0, 1.0, 2.0, 'dest_sl_existing');");
-        run(connection, "INSERT INTO number (id, value, store_id, type) VALUES ('num1', 5, 'store1', 'REPACK');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('existing_repack', 'repack', 'store1', 5, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('existing_in', 'existing_repack', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 5.0, 5.0, 1.0, 2.0, 'dest_sl_existing');",
+        );
+        run(
+            connection,
+            "INSERT INTO number (id, value, store_id, type) VALUES ('num1', 5, 'store1', 'REPACK');",
+        );
 
         // store2's counter lags its max repack invoice number - the migration must
         // NOT touch it (store2 gets no backfilled invoices; its records are synced
         // copies owned by another site)
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('s2_repack', 'store2_name', 'store2', 3, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);");
-        run(connection, "INSERT INTO number (id, value, store_id, type) VALUES ('num2', 1, 'store2', 'REPACK');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('s2_repack', 'store2_name', 'store2', 3, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO number (id, value, store_id, type) VALUES ('num2', 1, 'store2', 'REPACK');",
+        );
     }
 
     #[actix_rt::test]
@@ -612,7 +719,10 @@ mod tests {
             crate::migrations::MigrationConfig::default(),
         )
         .unwrap();
-        assert_eq!(crate::migrations::get_database_version(&connection), version);
+        assert_eq!(
+            crate::migrations::get_database_version(&connection),
+            version
+        );
 
         let finalised = chrono::NaiveDate::from_ymd_opt(2026, 6, 1)
             .unwrap()
@@ -723,7 +833,10 @@ mod tests {
             .unwrap();
         assert_eq!(lines.len(), 2);
         let expiry = chrono::NaiveDate::from_ymd_opt(2027, 1, 1);
-        let stock_in = lines.iter().find(|l| l.0 == InvoiceLineType::StockIn).unwrap();
+        let stock_in = lines
+            .iter()
+            .find(|l| l.0 == InvoiceLineType::StockIn)
+            .unwrap();
         assert_eq!(stock_in.1, Some("dest_sl".to_string()));
         assert_eq!(stock_in.2, Some("loc_dst".to_string()));
         assert_eq!(stock_in.3, Some("b1".to_string()));
@@ -738,7 +851,10 @@ mod tests {
         assert_eq!(stock_in.12, "item1");
         assert_eq!(stock_in.13, "Item One");
         assert_eq!(stock_in.14, "ITEM1");
-        let stock_out = lines.iter().find(|l| l.0 == InvoiceLineType::StockOut).unwrap();
+        let stock_out = lines
+            .iter()
+            .find(|l| l.0 == InvoiceLineType::StockOut)
+            .unwrap();
         assert_eq!(stock_out.1, Some("source_sl".to_string()));
         assert_eq!(stock_out.2, Some("loc_src".to_string()));
         assert_eq!(stock_out.5, 2.0);
@@ -755,9 +871,13 @@ mod tests {
                 location_movement::enter_datetime,
                 location_movement::exit_datetime,
             ))
-            .load::<(String, String, Option<String>, Option<NaiveDateTime>, Option<NaiveDateTime>)>(
-                connection.lock().connection(),
-            )
+            .load::<(
+                String,
+                String,
+                Option<String>,
+                Option<NaiveDateTime>,
+                Option<NaiveDateTime>,
+            )>(connection.lock().connection())
             .unwrap();
         assert_eq!(movements.len(), 2);
         let dest_sl_movement = movements.iter().find(|m| m.0 == "dest_sl").unwrap();
@@ -769,7 +889,12 @@ mod tests {
 
         // Changelog rows created for everything that must sync
         let changelog_rows = changelog::table
-            .select((changelog::table_name, changelog::record_id, changelog::name_link_id, changelog::store_id))
+            .select((
+                changelog::table_name,
+                changelog::record_id,
+                changelog::name_link_id,
+                changelog::store_id,
+            ))
             .load::<(ChangelogTableName, String, Option<String>, Option<String>)>(
                 connection.lock().connection(),
             )

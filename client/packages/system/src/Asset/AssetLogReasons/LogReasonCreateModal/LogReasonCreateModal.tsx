@@ -77,7 +77,11 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
   onClose,
   logReason,
 }) => {
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    testId: 'create-log-reason-modal',
+  });
   const t = useTranslation();
   const { draft, onUpdate, onSave, isLoading } = useDraftLogReason(logReason);
   const isInvalid = !draft.reason.trim();
@@ -113,6 +117,9 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
               autoFocus
               value={draft.reason}
               onChange={e => onUpdate({ reason: e.target.value })}
+              slotProps={{
+                htmlInput: { 'data-testid': 'log-reason-text-input' },
+              }}
             />
           </Box>
 
@@ -125,6 +132,7 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
               width="150px"
               popperMinWidth={150}
               options={getStatusOptions(t)}
+              inputTestId="log-reason-status-select"
               value={{
                 label: parseStatus(draft.assetLogStatus, t),
                 value: draft.assetLogStatus,
@@ -140,6 +148,7 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
           >
             <Checkbox
               checked={draft.commentsRequired}
+              testId="log-reason-comments-required"
               onChange={e => onUpdate({ commentsRequired: e.target.checked })}
             />
             <InputLabel>{t('label.comments-required')}</InputLabel>

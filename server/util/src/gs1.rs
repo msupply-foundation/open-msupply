@@ -144,7 +144,7 @@ fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1Par
 
 #[cfg(test)]
 mod test {
-    use crate::{gs1::parse_gs1_string, GS1};
+    use crate::{GS1, gs1::parse_gs1_string};
 
     #[test]
     fn gs1_from_data_elements() {
@@ -230,6 +230,9 @@ mod test {
         // GS1 AI 92 : Company internal information
         // Urls
         let urls = gs1.get("92").unwrap();
-        assert_eq!(urls, "{\"pqs\":\"https://apps.who.int/immunization_standards/vaccine_quality/pqs_catalogue/LinkPDF.aspx?UniqueID=3bf9439f-3316-49b4-845e-d50360f8280f&TipoDoc=DataSheet&ID=0\"}");
+        assert_eq!(
+            urls,
+            "{\"pqs\":\"https://apps.who.int/immunization_standards/vaccine_quality/pqs_catalogue/LinkPDF.aspx?UniqueID=3bf9439f-3316-49b4-845e-d50360f8280f&TipoDoc=DataSheet&ID=0\"}"
+        );
     }
 }

@@ -1,7 +1,7 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 
 use repository::Invoice;
@@ -16,6 +16,10 @@ pub struct SaveOutboundShipmentLinesInput {
     pub item_id: String,
     pub lines: Vec<OutboundShipmentLineInput>,
     pub placeholder_quantity: Option<f64>,
+    /// The barcode scanned to issue the item, as read; recorded on the item's
+    /// saved lines, and on the stock they issue from where it has none. Doesn't
+    /// propose a barcode (see `proposeBarcode`).
+    pub barcode: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -28,6 +32,11 @@ pub struct OutboundShipmentLineInput {
     pub vvm_status_id: Option<String>,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
+    /// This store's reason for issuing a different quantity than the customer
+    /// requested. One value per ITEM — send the same one on every line of the
+    /// item. ⚠️ Like `receivedNumberOfPacks`, the set-save OVERWRITES it, so
+    /// omitting it on an updated line CLEARS the stored value.
+    pub transfer_comment: Option<String>,
 }
 
 pub fn save_outbound_shipment_item_lines(
@@ -70,12 +79,14 @@ impl SaveOutboundShipmentLinesInput {
             item_id,
             lines,
             placeholder_quantity,
+            barcode,
         } = self;
 
         SaveStockOutItemLines {
             invoice_id,
             item_id,
             placeholder_quantity,
+            barcode,
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
@@ -87,6 +98,7 @@ impl SaveOutboundShipmentLinesInput {
                     vvm_status_id: line.vvm_status_id,
                     received_number_of_packs: line.received_number_of_packs,
                     reason_option_id: line.reason_option_id,
+                    transfer_comment: line.transfer_comment,
                 })
                 .collect(),
             prescribed_quantity: None, // Only used for prescription lines

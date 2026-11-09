@@ -19,6 +19,7 @@ export const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   CONFIRMED: 'label.ready-to-send',
   SENT: 'label.sent',
   FINALISED: 'label.finalised',
+  CANCELLED: 'label.cancelled',
 };
 
 export const hasValidPurchaseOrderLines = (

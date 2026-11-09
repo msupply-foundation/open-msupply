@@ -1,6 +1,6 @@
-use super::{store_row::store, ChangelogRepository, RowActionType, StorageConnection};
+use super::{ChangelogRepository, RowActionType, StorageConnection, store_row::store};
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, repository_error::RepositoryError};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

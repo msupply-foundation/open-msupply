@@ -1,11 +1,11 @@
 use super::{
-    item_warning_join_row::item_warning_join, warning_row::warning, ItemRow, ItemWarningJoinRow,
-    StorageConnection, WarningRow,
+    ItemRow, ItemWarningJoinRow, StorageConnection, WarningRow,
+    item_warning_join_row::item_warning_join, warning_row::warning,
 };
 
 use crate::{
-    db_diesel::item_row::item, diesel_macros::apply_equal_filter,
-    repository_error::RepositoryError, DBType, EqualFilter,
+    DBType, EqualFilter, db_diesel::item_row::item, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -82,9 +82,7 @@ impl<'a> ItemWarningJoinRepository<'a> {
         Ok(final_result)
     }
 }
-fn to_domain(
-    (item_warning_join_row, item_row, warning_row): ItemWarningQueryJoin,
-) -> ItemWarning {
+fn to_domain((item_warning_join_row, item_row, warning_row): ItemWarningQueryJoin) -> ItemWarning {
     ItemWarning {
         warning_row,
         item_row,

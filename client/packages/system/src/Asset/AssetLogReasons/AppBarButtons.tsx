@@ -23,6 +23,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonsProps> = ({
           Icon={<PlusCircleIcon />}
           label={t('button.create-log-reason')}
           onClick={onCreate}
+          data-testid="create-log-reason-button"
         />
       </Grid>
     </AppBarButtonsPortal>

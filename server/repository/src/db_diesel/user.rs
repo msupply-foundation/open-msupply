@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use super::{
+    DBType, StorageConnection, StoreRow, UserAccountRow, UserStoreJoinRow,
     store_preference_row::store_preference, store_row::store, user_row::user_account,
-    user_store_join_row::user_store_join, DBType, StorageConnection, StoreRow, UserAccountRow,
-    UserStoreJoinRow,
+    user_store_join_row::user_store_join,
 };
 use crate::{
+    EqualFilter, Pagination, Sort, StorePreferenceRow, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, Pagination, Sort, StorePreferenceRow, StringFilter,
 };
 
 use diesel::{
@@ -103,6 +103,9 @@ impl<'a> UserRepository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(user_account::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

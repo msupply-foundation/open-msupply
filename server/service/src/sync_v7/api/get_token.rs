@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{response_or_err, ApiResponse};
+use super::{ApiResponse, response_or_err};
 use repository::{migrations::Version, syncv7::SyncError};
-use util::{with_retries, RetrySeconds};
+use util::{RetrySeconds, with_retries};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,6 +37,11 @@ pub async fn get_token(
         .join(ROUTE)
         .unwrap();
 
+    // If central allocates the token but the reply is lost, the site can't sync until the
+    // token is cleared on central: a re-send, now or on the next sync, gets
+    // `TokenAlreadyAllocated`. That's deliberate - the token is a security gate that needs a
+    // human to reset. Re-sending still helps when the request never reached central, so
+    // `with_retries` is kept, but a dropped body isn't retried: by then central has answered.
     let result = with_retries(RetrySeconds::default(), |client| {
         client.post(url.clone()).json(&input)
     })
@@ -46,6 +51,6 @@ pub async fn get_token(
     match res {
         Ok(ApiResponse::Ok(output)) => Ok(output),
         Ok(ApiResponse::Err(error)) => Err(error),
-        Err(error) => Err(error),
+        Err(error) => Err(error.into()),
     }
 }

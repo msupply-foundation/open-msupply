@@ -1,7 +1,9 @@
 use repository::{
-    Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
+    CustomFieldValueType, Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError,
+    StockLineRowRepository,
 };
 
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::get_invoice,
@@ -48,8 +50,27 @@ pub enum UpdateSupplierReturnError {
     CannotIssueSupplierReturnWithNoLines,
     InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     UpdatedReturnDoesNotExist,
     DatabaseError(RepositoryError),
+}
+
+impl From<CustomFieldPatchProblem> for UpdateSupplierReturnError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateSupplierReturnError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateSupplierReturnError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 pub fn update_supplier_return(
@@ -127,23 +148,23 @@ impl UpdateSupplierReturn {
 mod test {
     use crate::{
         invoice::{
+            UpdateSupplierReturnStatus,
             supplier_return::update::{
                 UpdateSupplierReturn, UpdateSupplierReturnError as ServiceError,
             },
-            UpdateSupplierReturnStatus,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_a,
-            mock_store_b, mock_supplier_return_a, mock_supplier_return_a_invoice_line_a,
-            mock_supplier_return_b, mock_supplier_return_b_invoice_line_a, mock_user_account_a,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_name_store_b,
+            mock_outbound_shipment_a, mock_store_a, mock_store_b, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a, mock_supplier_return_b,
+            mock_supplier_return_b_invoice_line_a, mock_user_account_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     #[actix_rt::test]

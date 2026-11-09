@@ -5,7 +5,7 @@ use crate::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, ItemRow, ItemType, StockLineRow,
 };
 
-use super::{mock_name_a, mock_store_a, mock_store_b, MockData};
+use super::{MockData, mock_name_a, mock_store_a, mock_store_b};
 
 const ITEM1_INDEX: usize = 0;
 const ITEM2_INDEX: usize = 1;

@@ -1,0 +1,8 @@
+/*
+ * NumberField owns no chrome — TextField's module has it all. The one numeric
+ * addition: digits end-align (logical, so it flips under RTL), matching the
+ * old OMS numeric input and the table numeric-column convention.
+ */
+.numeric input {
+  text-align: end;
+}

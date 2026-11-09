@@ -97,7 +97,12 @@ async fn do_fetch(
     let headers = response
         .headers()
         .iter()
-        .filter_map(|(key, value)| value.to_str().ok().map(|v| (key.to_string(), v.to_string())))
+        .filter_map(|(key, value)| {
+            value
+                .to_str()
+                .ok()
+                .map(|v| (key.to_string(), v.to_string()))
+        })
         .collect();
     let body = response.text().await?;
 

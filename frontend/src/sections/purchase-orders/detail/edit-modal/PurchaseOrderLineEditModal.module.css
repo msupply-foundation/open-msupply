@@ -1,0 +1,37 @@
+/* The line editor's body (spec/purchase-orders S10 § layout): the Top row —
+   the item heading or lookup taking the free space, the item summary and the
+   line status at its far end — then three wrapping columns of titled cards. */
+.top {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.itemSearch {
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.itemHeading {
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.topEnd {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-inline-start: auto;
+}
+
+.summary {
+  color: var(--text-secondary);
+}
+
+.columns {
+  margin-block-start: var(--space-4);
+  align-items: flex-start;
+}

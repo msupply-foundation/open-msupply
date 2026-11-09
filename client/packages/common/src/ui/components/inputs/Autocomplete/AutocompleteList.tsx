@@ -46,6 +46,8 @@ export type AutocompleteListProps<T> = {
     value: string,
     reason: AutocompleteInputChangeReason
   ) => void;
+  /** Stamp a `data-testid` on each rendered option row (e2e locators). */
+  getOptionTestId?: (option: T) => string;
 };
 
 export const AutocompleteList = <T,>({
@@ -71,14 +73,24 @@ export const AutocompleteList = <T,>({
   disableClearable,
   getOptionDisabled,
   onInputChange,
+  getOptionTestId,
 }: AutocompleteListProps<T>): JSX.Element => {
   const t = useTranslation();
   // Open by default
   const openOverrides = useOpenStateWithKeyboard({ open: true });
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
-  const optionRenderer = optionKey
+  const baseOptionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
+  // Inject a per-row testid through the `<li>` props the renderer spreads.
+  const optionRenderer: typeof baseOptionRenderer = getOptionTestId
+    ? (props, option, state) =>
+        baseOptionRenderer?.(
+          Object.assign({}, props, { 'data-testid': getOptionTestId(option) }),
+          option,
+          state
+        )
+    : baseOptionRenderer;
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput

@@ -1,8 +1,8 @@
+use repository::EqualFilter;
 use repository::vaccine_course::vaccine_course_store_config::{
     VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
 };
 use repository::vaccine_course::vaccine_course_store_config_row::VaccineCourseStoreConfigRow;
-use repository::EqualFilter;
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;

@@ -3,14 +3,14 @@ mod query;
 mod upsert;
 mod validate;
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
-pub use delete::{delete_campaign, DeleteCampaign, DeleteCampaignError};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
+pub use delete::{DeleteCampaign, DeleteCampaignError, delete_campaign, delete_campaigns};
 pub use query::get_campaigns;
 use repository::{
-    campaign::campaign::{Campaign, CampaignFilter, CampaignSort},
     PaginationOption,
+    campaign::campaign::{Campaign, CampaignFilter, CampaignSort},
 };
-pub use upsert::{upsert_campaign, UpsertCampaign, UpsertCampaignError};
+pub use upsert::{UpsertCampaign, UpsertCampaignError, upsert_campaign};
 pub use validate::{check_campaign_exists, check_campaign_exists_including_deleted};
 
 pub trait CampaignServiceTrait: Send + Sync {
@@ -38,6 +38,14 @@ pub trait CampaignServiceTrait: Send + Sync {
         input: DeleteCampaign,
     ) -> Result<String, DeleteCampaignError> {
         delete_campaign(ctx, input)
+    }
+
+    fn delete_campaigns(
+        &self,
+        ctx: &ServiceContext,
+        ids: Vec<String>,
+    ) -> Result<Vec<String>, DeleteCampaignError> {
+        delete_campaigns(ctx, ids)
     }
 }
 

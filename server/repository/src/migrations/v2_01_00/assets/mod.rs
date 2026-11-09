@@ -1,4 +1,4 @@
-use crate::{migrations::helpers::run_without_change_log_updates, StorageConnection};
+use crate::{StorageConnection, migrations::helpers::run_without_change_log_updates};
 
 pub mod asset;
 pub mod asset_catalogue;

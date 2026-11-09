@@ -1,0 +1,253 @@
+/*
+ * Tab strip — centred, with a single sliding underline. The strip carries its
+ * own bottom line so its edge reads as the boundary wherever it sits; the
+ * indicator is absolutely positioned over that line and animates between
+ * labels. As the last child of a Header it becomes the header's bottom edge
+ * (the header suppresses its own border and pulls the strip out to its edges —
+ * see Header.module.css). Ported from the RnD prototype's Tabs.module.css.
+ *
+ * A strip wider than its box scrolls sideways (labels never wrap). `safe
+ * center` falls back to start alignment when the strip overflows, so the
+ * first tab can't be pushed out of reach past the start edge. A scroll box
+ * clips anything outside it, so the boundary line is an inset shadow and the
+ * underline sits on it, both inside the box.
+ */
+/* The root div is a state boundary only — remove it from layout so children
+   sit directly in the surrounding flex/grid (see Tabs.tsx). */
+.root {
+  display: contents;
+}
+
+.list {
+  position: relative;
+  display: flex;
+  justify-content: safe center;
+  gap: var(--space-4);
+  padding-inline: var(--space-5);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  /* A tab scrolled into view stops clear of the edge, not flush with it. */
+  scroll-padding-inline: var(--space-5);
+  box-shadow: inset 0 -1px 0 var(--header-border);
+}
+
+.trigger {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-1) 0.125rem; /* tight bottom → label sits low */
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs); /* smaller than body */
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--motion-fast) ease;
+}
+
+.trigger:hover {
+  color: var(--text-body);
+}
+
+/* Kobalte marks a disabled trigger with data-disabled (and disables the
+   button); mirror every other disabled control — dimmed, no pointer. */
+.trigger[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.trigger[data-disabled]:hover {
+  color: var(--text-disabled);
+}
+
+.trigger[data-selected] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+/* A label always takes the width of its bold version: a hidden, zero-height
+   bold copy sits in a second grid row. Opening a tab then changes how two
+   labels look but not how wide any tab is, so the other tabs never shift as
+   the underline slides. The copy's alt text is empty, so a screen reader
+   doesn't read the label twice. `overflow: clip` cuts off the line of text
+   that hangs below the zero-height copy, which would otherwise give the
+   scrolling strip a few pixels of vertical scroll; `hidden` would make the
+   copy a scroll box and let a squeezed strip shrink the label back. */
+.label {
+  display: inline-grid;
+  justify-items: center;
+}
+
+.label::after {
+  content: attr(data-text) / '';
+  font-weight: var(--weight-bold);
+  visibility: hidden;
+  block-size: 0;
+  overflow: clip;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* The sliding underline (position/width set inline from measured geometry).
+   Anchored to physical `left`/`bottom` because offsetLeft is a physical
+   measurement — translateX(offsetLeft) then lands correctly in both LTR and
+   RTL. */
+.indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 0.125rem;
+  background: var(--primary-main);
+  transition:
+    transform var(--motion-slow) ease,
+    width var(--motion-slow) ease;
+  pointer-events: none;
+}
+
+/* --- Step tabs ----------------------------------------------------------
+ * A step tab's content: the marker, then the label with any attention note
+ * beneath it. The three marks differ in shape, not only colour — a tick on a
+ * tinted disc (done), the number on a solid disc (current), the number in a
+ * hollow ring (not started) — and the mark is also in the tab's accessible
+ * name. The open tab keeps the underline and bold label every tab has, so it
+ * never reads as the current step.
+ */
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.marker {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+  border: 1px solid var(--text-secondary);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+/* Room for the attention badge, so it doesn't run into the label. */
+.marker:has(.attentionBadge) {
+  margin-inline-end: var(--space-1);
+}
+
+/* The mark comes from the trigger's data-step-mark, the same hook e2e reads. */
+.trigger[data-step-mark='done'] .marker {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--primary-main) 15%, var(--bg-white));
+  color: var(--primary-dark);
+  font-size: 0.875rem;
+}
+
+.trigger[data-step-mark='current'] .marker {
+  border-color: var(--primary-main);
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+}
+
+/* The attention flag rides the marker's inline-end top corner, ringed in the
+   page colour so it reads against both the marker and the strip. */
+.attentionBadge {
+  position: absolute;
+  inset-block-start: -0.3125rem;
+  inset-inline-end: -0.4375rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg-white);
+  color: var(--warning-main);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* A step's label sits against its marker, so it keeps to the start. */
+.stepText > .label {
+  justify-items: start;
+}
+
+/* The attention note: a quieter line under the label, in the warning tone
+   darkened toward body text for contrast (as StatusBadge's warning label).
+   Capped so a long note can't push the rest of the strip out of view; a cut
+   note ends in an ellipsis, and the whole note is in the tab's accessible
+   name and its hover title. */
+.note {
+  max-inline-size: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+  font-weight: var(--weight-regular);
+}
+
+/* The line between two adjacent steps, drawn level with the markers: the same
+   block padding as a trigger, so its centre line lands on theirs. Solid into
+   a step the record has reached, dotted into one it hasn't. */
+.connector {
+  flex: 0 1 2rem;
+  min-inline-size: 1rem;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding-block: var(--space-2) 0.125rem;
+  /* Halve the strip's gap on both sides, so a step sits nearer its line than
+     the plain tabs sit to each other. */
+  margin-inline: calc(-0.5 * var(--space-4));
+}
+
+.connector::before {
+  content: '';
+  inline-size: 100%;
+  border-block-start: 2px dotted var(--text-disabled);
+}
+
+.connector[data-reached]::before {
+  border-block-start: 1px solid var(--text-secondary);
+}
+
+/* A marker is taller than a label, so the tight bottom that sets a label low
+   leaves it touching the underline. A strip with steps gives every tab, plain
+   ones included, the same room beneath, keeping all the labels level. */
+.list:has([data-step-mark]) :is(.trigger, .connector) {
+  padding-block-end: var(--space-2);
+}
+
+/* The active panel fills its parent as a flex column: inside a fill-body Page
+   (a flex column with min-block-size 0) the panel becomes the flex child, so a
+   single fill-and-scroll child (a DataTable) claims the full region and scrolls
+   internally — the same contract the Page body gives its own direct child.
+   Inert where the parent isn't a flex column (e.g. the standalone showcase),
+   so it costs nothing there. Only the active panel is in the DOM (Kobalte
+   unmounts the rest), so exactly one panel ever fills. */
+.panel {
+  flex: 1;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* A panel is a tab stop only when it has no tabbable child (Kobalte manages
+   this), so when it IS focused the ring must be visible — SC 2.4.7. The
+   prototype suppressed it; deliberate deviation. */
+.panel:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* NB: no pointer:coarse min-height bump on tabs — it inflated the trigger to
+   48px in touch mode, floating the label away from the underline. */

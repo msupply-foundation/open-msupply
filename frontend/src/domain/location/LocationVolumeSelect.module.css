@@ -1,0 +1,41 @@
+/* The volume-aware location picker's option layout: the fullness filter is
+   rendered inside the dropdown (the Combobox's listboxHeader slot); each option
+   is laid out code+name on the inline-start / %-used on the inline-end. */
+
+/* One option row: code+name on the inline-start, % used pushed to the inline-end. */
+.option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+/* Code then name, sharing the inline-start; the name truncates first. */
+.optionLabel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The code — the primary identifier, kept whole. */
+.code {
+  flex: none;
+}
+
+/* The name — secondary/muted, truncates when the row is tight. */
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+/* The % used — muted and smaller, so it reads as secondary to the code. */
+.percentUsed {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}

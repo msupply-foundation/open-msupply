@@ -1,0 +1,22 @@
+# The store's clinician list (spec/prescriptions › patient, clinician,
+# program, diagnosis): the offered-options set behind every clinician picker.
+# Active clinicians only; a store's list is small, so one page covers it and
+# the picker filters client-side.
+query clinicians($storeId: String!) {
+  clinicians(
+    storeId: $storeId
+    filter: { isActive: true }
+    page: { first: 1000 }
+  ) {
+    ... on ClinicianConnector {
+      totalCount
+      nodes {
+        id
+        code
+        firstName
+        lastName
+        initials
+      }
+    }
+  }
+}

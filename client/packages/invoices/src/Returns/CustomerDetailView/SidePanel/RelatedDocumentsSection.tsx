@@ -44,6 +44,7 @@ export const RelatedDocumentsSectionComponent = () => {
               </PanelLabel>
               <PanelField>
                 <Link
+                  data-testid="originating-shipment-link"
                   to={RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
                     .addPart(String(originalShipment.id))

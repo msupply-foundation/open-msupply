@@ -3,41 +3,26 @@ use std::collections::HashSet;
 
 use chrono::Utc;
 use repository::{
-    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
-    AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
-    CampaignRowRepository, CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository,
-    ContextRowRepository, CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
-    FormSchemaRowRepository, IndicatorColumnRowRepository, IndicatorLineRowRepository,
-    InsuranceProviderRowRepository, InvoiceLineRowRepository, InvoiceRowRepository,
-    ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository,
-    KeyValueStoreRepository, LocationRowRepository, LocationTypeRowRepository,
-    MasterListRowRepository, NameInsuranceJoinRowRepository, NameLinkRowRepository,
-    NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
+    AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, CampaignRowRepository,
+    CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository, ContextRowRepository,
+    CurrencyRowRepository, CustomFieldOptionRow, CustomFieldOptionRowRepository,
+    DemographicRowRepository, DiagnosisRowRepository, FormSchemaRowRepository,
+    IndicatorColumnRowRepository, IndicatorLineRowRepository, InsuranceProviderRowRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, ItemLinkRowRepository,
+    ItemVariantRowRepository, KeyValueStoreRepository, LocationRowRepository,
+    LocationTypeRowRepository, MasterListRowRepository, NameInsuranceJoinRowRepository,
+    NameLinkRowRepository, NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
     ProgramIndicatorRowRepository, ProgramRowRepository, PropertyRowRepository,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, ReasonOptionRowRepository,
     RepositoryError, RequisitionRowRepository, RnRFormRowRepository, SensorRowRepository,
-    ShippingMethodRowRepository, SiteRowRepository, StockLineRowRepository,
-    StocktakeRowRepository, StorageConnection, StoreRowRepository, SyncVersion,
-    TemperatureBreachRowRepository, UnitRowRepository, VVMStatusRowRepository,
-    VaccineCourseDoseRowRepository, VaccineCourseRowRepository, WarningRowRepository,
+    ShippingMethodRowRepository, SiteRowRepository, StockLineRowRepository, StocktakeRowRepository,
+    StorageConnection, StoreRowRepository, SyncVersion, TemperatureBreachRowRepository,
+    UnitRowRepository, VVMStatusRowRepository, VaccineCourseDoseRowRepository,
+    VaccineCourseRowRepository, WarningRowRepository,
+    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
 };
 use util::uuid::uuid;
-
-/// Custom fields is a v7-era feature: the OG→OMS legacy import runs on the
-/// central server only. A V5V6 remote (which still syncs v5 directly to OG
-/// during transition) must not derive custom fields locally — it would surface
-/// custom fields without the v7 infrastructure. Remotes receive `custom_fields`
-/// from central via v7 instead. `build` is only invoked on the central server.
-pub(crate) fn legacy_custom_fields_if_central(
-    build: impl FnOnce() -> Option<serde_json::Value>,
-) -> Option<serde_json::Value> {
-    if crate::sync::CentralServerConfig::is_central_server() {
-        build()
-    } else {
-        None
-    }
-}
 
 /// On central, decides whether a `name`/`name_store_join` changelog row should be
 /// skipped (`true`, reason logged) rather than relayed to legacy (OG) central,
@@ -205,6 +190,14 @@ impl LegacyCustomFieldsBuilder {
 ///  - overlay `legacy_derived` (the fresh owned-key values; absent ones stay dropped),
 ///  - return `None` when the result is empty so an untouched row's `custom_fields`
 ///    stays NULL rather than carrying an empty `{}`.
+///
+/// **Central only.** Custom fields is a v7-era feature: the OG→OMS legacy import
+/// runs on the central server only. A V5V6 remote (which still syncs v5 directly to
+/// OG during transition) must not derive custom fields locally — it would surface
+/// custom fields without the v7 infrastructure. Remotes receive `custom_fields` from
+/// central via v7 instead. So every caller gates this on
+/// `CentralServerConfig::is_central_server()` and keeps the existing blob untouched
+/// off central — never blanking it, since v7 is what put it there.
 pub(crate) fn merge_legacy_custom_fields(
     existing: Option<serde_json::Value>,
     legacy_derived: Option<serde_json::Value>,
@@ -230,6 +223,33 @@ pub(crate) fn merge_legacy_custom_fields(
     }
 }
 
+/// The option with `deleted_datetime` set, so the option set tracks a removed
+/// 4D category and the read dataloader filters it out. `None` when no option matches.
+pub(crate) fn soft_deleted_custom_field_option(
+    connection: &StorageConnection,
+    option_id: &str,
+) -> Result<Option<CustomFieldOptionRow>, RepositoryError> {
+    Ok(CustomFieldOptionRowRepository::new(connection)
+        .find_one_by_id(option_id)?
+        .map(|option| CustomFieldOptionRow {
+            deleted_datetime: Some(Utc::now().naive_utc()),
+            ..option
+        }))
+}
+
+/// A text value from a `custom_fields` blob, for pushing back to a legacy field.
+pub(crate) fn custom_field_string(
+    custom_fields: &Option<serde_json::Value>,
+    key: &str,
+) -> Option<String> {
+    custom_fields
+        .as_ref()?
+        .as_object()?
+        .get(key)?
+        .as_str()
+        .map(str::to_string)
+}
+
 /// The target table of an optional foreign key cleared during sync translation.
 ///
 /// Each variant maps to the repository used to check whether the referenced record exists.
@@ -242,7 +262,6 @@ pub(crate) enum FkField {
     AssetCategory,
     AssetClass,
     AssetLogReason,
-    Barcode,
     Campaign,
     Category,
     ClinicianLink,
@@ -256,7 +275,6 @@ pub(crate) enum FkField {
     InsuranceProvider,
     Invoice,
     InvoiceLine,
-    Item,
     ItemLink,
     ItemVariant,
     Location,
@@ -305,7 +323,6 @@ impl FkField {
             FkField::AssetLogReason => {
                 AssetLogReasonRowRepository::new(connection).check_exists_by_id(id)
             }
-            FkField::Barcode => BarcodeRowRepository::new(connection).check_exists_by_id(id),
             FkField::Campaign => CampaignRowRepository::new(connection).check_exists_by_id(id),
             FkField::Category => CategoryRowRepository::new(connection).check_exists_by_id(id),
             FkField::ClinicianLink => {
@@ -331,7 +348,6 @@ impl FkField {
             FkField::InvoiceLine => {
                 InvoiceLineRowRepository::new(connection).check_exists_by_id(id)
             }
-            FkField::Item => ItemRowRepository::new(connection).check_exists_by_id(id),
             FkField::ItemLink => ItemLinkRowRepository::new(connection).check_exists_by_id(id),
             FkField::ItemVariant => {
                 ItemVariantRowRepository::new(connection).check_exists_by_id(id)
@@ -431,7 +447,7 @@ impl FkChecker {
         connection: &'a StorageConnection,
         record_table: &'a str,
         record_id: &str,
-    ) -> impl Fn(Option<String>, &str, FkField) -> Result<Option<String>, RepositoryError> + 'a
+    ) -> impl Fn(Option<String>, &str, FkField) -> Result<Option<String>, RepositoryError> + 'a + use<'a>
     {
         let record_id = record_id.to_string();
         move |fk_id, fk_field_name, fk_field| {
@@ -458,7 +474,7 @@ impl FkChecker {
         connection: &'a StorageConnection,
         record_table: &'a str,
         record_id: &str,
-    ) -> impl Fn(String, &str, FkField) -> anyhow::Result<String> + 'a {
+    ) -> impl Fn(String, &str, FkField) -> anyhow::Result<String> + 'a + use<'a> {
         let record_id = record_id.to_string();
         move |fk_id, fk_field_name, fk_field| {
             self.check_fk(

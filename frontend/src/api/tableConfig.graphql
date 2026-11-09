@@ -1,0 +1,36 @@
+# Global table-config defaults, keyed by tableId, stored as a JSON blob in store
+# preferences (a Record<tableId, TableConfig>). Cross-cutting — every list table
+# reads it and narrows to its own tableId (see ui/elements/table/tableConfig.ts),
+# so it lives in the shared api layer, not in any one vertical.
+#
+# A user's own column changes always persist to app data (localStorage) as the
+# user layer. The global layer read here is the shared default that layer sits on
+# top of; it is writable only through the central-server mutation below, which
+# the server gates on EDIT_CENTRAL_DATA and rejects off a central server — so an
+# admin on central can promote their current layout to the install-wide default.
+query globalTableConfigs($storeId: String!) {
+  preferences(storeId: $storeId) {
+    globalTableConfigs
+  }
+}
+
+# Save the whole globalTableConfigs blob as the store's (and, via sync, the
+# install's) shared table-config default. Central-server + EDIT_CENTRAL_DATA
+# only — the server enforces both (Resource::MutatePreferences =
+# HasPermission(EditCentralData); off-central it errors), and the UI mirrors the
+# gate so the action only appears when it can succeed. We send the FULL blob
+# (every tableId), not just the one table, because upsertPreferences replaces the
+# value wholesale — createTableConfig merges the edited table into the current
+# blob before sending.
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
+  }
+}

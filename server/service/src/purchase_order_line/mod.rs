@@ -1,21 +1,23 @@
 use self::query::{
-    get_purchase_order_line, get_purchase_order_lines,
-    get_units_ordered_in_other_purchase_orders,
+    get_purchase_order_line, get_purchase_order_lines, get_units_ordered_in_other_purchase_orders,
 };
 pub mod query;
 use crate::{
+    ListError, ListResult,
     purchase_order_line::{
-        delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
+        delete::{
+            DeletePurchaseOrderLineError, DeletePurchaseOrderLineOutcome,
+            delete_purchase_order_line, delete_purchase_order_lines,
+        },
         insert::{
-            insert_purchase_order_line, InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+            InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput, insert_purchase_order_line,
         },
         update::{
-            update_purchase_order_line, UpdatePurchaseOrderLineInput,
-            UpdatePurchaseOrderLineInputError,
+            UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
+            update_purchase_order_line,
         },
     },
     service_provider::ServiceContext,
-    ListError, ListResult,
 };
 use repository::PurchaseOrderLineRow;
 use repository::{
@@ -25,6 +27,7 @@ use repository::{
 
 pub mod delete;
 pub mod insert;
+pub mod log;
 pub mod update;
 
 pub trait PurchaseOrderLineServiceTrait: Sync + Send {
@@ -61,9 +64,8 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: UpdatePurchaseOrderLineInput,
-        user_has_permission: Option<bool>,
     ) -> Result<PurchaseOrderLine, UpdatePurchaseOrderLineInputError> {
-        update_purchase_order_line(ctx, store_id, input, user_has_permission)
+        update_purchase_order_line(ctx, store_id, input)
     }
 
     fn delete_purchase_order_line(
@@ -74,6 +76,14 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         delete_purchase_order_line(ctx, id)
     }
 
+    fn delete_purchase_order_lines(
+        &self,
+        ctx: &ServiceContext,
+        ids: Vec<String>,
+    ) -> Result<Vec<DeletePurchaseOrderLineOutcome>, RepositoryError> {
+        delete_purchase_order_lines(ctx, ids)
+    }
+
     fn get_units_ordered_in_other_purchase_orders(
         &self,
         ctx: &ServiceContext,
@@ -81,7 +91,12 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         item_id: &str,
         exclude_purchase_order_id: &str,
     ) -> Result<f64, RepositoryError> {
-        get_units_ordered_in_other_purchase_orders(ctx, store_id, item_id, exclude_purchase_order_id)
+        get_units_ordered_in_other_purchase_orders(
+            ctx,
+            store_id,
+            item_id,
+            exclude_purchase_order_id,
+        )
     }
 }
 

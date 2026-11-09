@@ -1,11 +1,11 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, StringFilterInput},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::ShippingMethodConnector;
-use repository::{shipping_method::ShippingMethodFilter, EqualFilter, StringFilter};
+use repository::{EqualFilter, StringFilter, shipping_method::ShippingMethodFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject, Clone)]

@@ -55,6 +55,8 @@ type ErrorDisplayProps =
       formId: string;
       items?: undefined;
       sx?: SxProps;
+      /** `data-testid` for the summary's Alert (a locale-stable test hook). */
+      testId?: string;
     }
   | {
       // Override mode — render the supplied items verbatim. Use this with
@@ -62,6 +64,7 @@ type ErrorDisplayProps =
       formId?: undefined;
       items: ErrorDisplayItem[];
       sx?: SxProps;
+      testId?: string;
     };
 
 /**
@@ -79,17 +82,31 @@ type ErrorDisplayProps =
  */
 export const ErrorDisplay = (props: ErrorDisplayProps) => {
   if (props.items !== undefined) {
-    return <ErrorDisplayInternal items={props.items} sx={props.sx} />;
+    return (
+      <ErrorDisplayInternal
+        items={props.items}
+        sx={props.sx}
+        testId={props.testId}
+      />
+    );
   }
-  return <ErrorDisplayFromStore formId={props.formId} sx={props.sx} />;
+  return (
+    <ErrorDisplayFromStore
+      formId={props.formId}
+      sx={props.sx}
+      testId={props.testId}
+    />
+  );
 };
 
 const ErrorDisplayFromStore = ({
   formId,
   sx,
+  testId,
 }: {
   formId: string;
   sx?: SxProps;
+  testId?: string;
 }) => {
   const errors = useFormErrorList(formId);
   const items = errors.map(({ fieldId, label, message }) => ({
@@ -97,15 +114,17 @@ const ErrorDisplayFromStore = ({
     label,
     message,
   }));
-  return <ErrorDisplayInternal items={items} sx={sx} />;
+  return <ErrorDisplayInternal items={items} sx={sx} testId={testId} />;
 };
 
 const ErrorDisplayInternal = ({
   items,
   sx,
+  testId,
 }: {
   items: ErrorDisplayItem[];
   sx?: SxProps;
+  testId?: string;
 }) => {
   const t = useTranslation();
   if (items.length === 0) return null;
@@ -113,6 +132,7 @@ const ErrorDisplayInternal = ({
     <Alert
       severity="error"
       icon={<AlertIcon fontSize="large" />}
+      {...(testId ? { 'data-testid': testId } : {})}
       sx={{
         whiteSpace: 'pre-wrap',
         '& .MuiAlert-icon': { alignItems: 'center' },

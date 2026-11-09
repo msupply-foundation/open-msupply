@@ -1,9 +1,9 @@
 use repository::{
+    RepositoryError, StorageConnection,
     vvm_status::{
         vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
         vvm_status_row::VVMStatusRowRepository,
     },
-    RepositoryError, StorageConnection,
 };
 
 pub fn get_vvm_status_log(

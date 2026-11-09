@@ -1,10 +1,6 @@
-use super::{
-    ChangelogRepository, RowActionType, StorageConnection,
-};
+use super::{ChangelogRepository, RowActionType, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, repository_error::RepositoryError};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -54,6 +50,46 @@ pub enum FrontendPluginVariantType {
     BoaJs,
 }
 
+/// The plugin host runtime a bundle targets — which component runtime its
+/// contributions are written against (`react`, `solid`, ...).
+///
+/// The server never interprets the value: discovery compares it for exact
+/// equality against the runtime the asking client declares
+/// (`get_frontend_plugins_metadata`). That is deliberate — a new host can be
+/// introduced, and its bundles served, without a server release teaching the
+/// server its name.
+///
+/// It is a name and not a version, and the distinction is the point. A bundle
+/// exporting SolidJS components cannot be rendered by a React host whichever of
+/// the two is newer, and both hosts are served by one binary at one version for
+/// the whole of the rollout — so nothing on the version line can separate them.
+/// Whether a host is new *enough* is the version's job, and stays there
+/// ([`Version::is_compatible_by_major_and_minor`]).
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct HostRuntime(pub String);
+
+/// The runtime of every bundle that predates the column: the React
+/// module-federation UI served at `/old-ui/`.
+pub const LEGACY_HOST_RUNTIME: &str = "react";
+
+impl Default for HostRuntime {
+    fn default() -> Self {
+        Self(LEGACY_HOST_RUNTIME.to_string())
+    }
+}
+
+impl From<String> for HostRuntime {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+impl From<HostRuntime> for String {
+    fn from(value: HostRuntime) -> Self {
+        value.0
+    }
+}
+
 table! {
   frontend_plugin (id) {
       id -> Text,
@@ -62,6 +98,7 @@ table! {
       entry_point -> Text,
       types -> Text,
       files -> Text,
+      host_runtime -> Text,
   }
 }
 
@@ -80,6 +117,16 @@ pub struct FrontendPluginRow {
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
     pub files: FrontendPluginFiles,
+    /// Which front end can load this bundle. See [`HostRuntime`].
+    ///
+    /// The serde default is what keeps sync backwards compatible: a row pushed
+    /// by a central that predates the field arrives without it, and every such
+    /// row is by construction a React bundle — the field is introduced before
+    /// any bundle for another runtime can exist.
+    #[diesel(serialize_as = String)]
+    #[diesel(deserialize_as = String)]
+    #[serde(default)]
+    pub host_runtime: HostRuntime,
 }
 pub struct FrontendPluginRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -141,7 +188,10 @@ impl<'a> FrontendPluginRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
         Ok(frontend_plugin::table
             .filter(frontend_plugin::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -188,12 +238,14 @@ impl Delete for FrontendPluginRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FrontendPluginRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                FrontendPluginRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

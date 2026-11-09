@@ -1,7 +1,7 @@
 use crate::sync::{
     test::{
         integration::{
-            central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+            SyncRecordTester, TestStepData, central_server_configurations::NewSiteProperties,
         },
         test_data::item::test_pull_upsert_records,
     },

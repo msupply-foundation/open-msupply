@@ -1,7 +1,7 @@
 use repository::{InvoiceRow, InvoiceStatus, InvoiceType, Name, StorageConnection};
 
 use crate::invoice::{check_invoice_exists, check_invoice_type, check_store};
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 
 use super::{InsertCustomerReturn, InsertCustomerReturnError};
 

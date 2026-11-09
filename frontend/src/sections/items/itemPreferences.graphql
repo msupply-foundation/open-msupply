@@ -1,0 +1,16 @@
+# Store preferences that gate items surfaces (spec/items "store-preference
+# gates"). manageVaccinesInDoses → the doses display on list cells + the stats
+# band; adjustForNumberOfDaysOutOfStock → the AMC days-out-of-stock scaling;
+# numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts → the
+# recent-consumption window AND the UI gate for the at-risk filter (offered only
+# when set); numberOfMonthsThresholdToShowLowStockAlertsForProducts → the
+# at-risk threshold. (These are the new PreferencesNode, distinct from the
+# legacy storePreferences.monthlyConsumptionLookBackPeriod that drives AMC.)
+query itemPreferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    manageVaccinesInDoses
+    adjustForNumberOfDaysOutOfStock
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+  }
+}

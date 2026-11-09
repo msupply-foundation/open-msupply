@@ -1,6 +1,6 @@
 use crate::sync::{
     test::integration::{
-        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+        SyncRecordTester, TestStepData, central_server_configurations::NewSiteProperties,
     },
     translations::IntegrationOperation,
 };
@@ -47,6 +47,8 @@ impl SyncRecordTester for DocumentRegistryTester {
             name: Some("Some name".to_string()),
             form_schema_id: Some(form_row1.id.clone()),
             config: Some("{}".to_string()),
+            plugin_code: None,
+            program_key: None,
         };
         let doc_registry_json1 = json!({
             "ID": doc_registry1.id,

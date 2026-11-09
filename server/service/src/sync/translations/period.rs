@@ -71,7 +71,7 @@ impl SyncTranslation for PeriodTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PeriodScheduleRow, PeriodScheduleRowRepository,
+        PeriodScheduleRow, PeriodScheduleRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -24,6 +24,6 @@ static ROUTE: &str = "pull";
 
 impl SyncApiV7 {
     pub async fn pull(&self, input: Input) -> Response {
-        self.op(ROUTE, input).await
+        self.request_with_body_retry(ROUTE, input).await
     }
 }

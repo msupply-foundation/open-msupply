@@ -1,16 +1,20 @@
 #[cfg(test)]
 mod test_sync_v7_client_api {
-    use actix_web::{http::header::AUTHORIZATION, web, App, HttpRequest, HttpServer};
+    use actix_web::{App, HttpRequest, HttpServer, http::header::AUTHORIZATION, web};
     use assert_json_diff::assert_json_include;
     use repository::mock::MockData;
     use repository::{
-        migrations::Version, mock::MockDataInserts, ChangelogCondition, ChangelogRepository,
-        ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, ItemRow,
-        KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
-        StoreRow, SyncBufferRepository, UnitRow, Upsert,
+        ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
+        CursorAndLimit, FilterBuilder, ItemRow, KeyType, KeyValueStoreRepository, NameRow,
+        RowActionType, StockLineRow, StorageConnection, StoreRow, SyncBufferRepository, UnitRow,
+        Upsert, migrations::Version, mock::MockDataInserts,
     };
-    use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
+    use repository::{
+        KeyValueStoreRow, SyncAction, SyncBufferRow, SyncLogV7Condition, SyncLogV7Repository,
+        syncv7::SyncError,
+    };
     use serde_json::json;
+    use std::collections::VecDeque;
     use tokio::sync::Mutex;
 
     use crate::cursor_controller::CursorType;
@@ -18,7 +22,7 @@ mod test_sync_v7_client_api {
     use crate::sync_v7::api::{APP_NAME_HEADER, APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
     use crate::sync_v7::sync_request::{SyncRequest, SyncRequestStep};
-    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider};
 
     // ---- Test data: expected rows after integration ----
 
@@ -159,13 +163,24 @@ mod test_sync_v7_client_api {
         assert!(headers.get(HARDWARE_ID_HEADER).is_some());
     }
 
+    #[derive(Clone, Copy)]
+    struct CentralStatus {
+        is_multi_device: bool,
+        is_sync_api_paused: bool,
+    }
+
     async fn site_status(
-        is_multi_device: web::Data<bool>,
+        status: web::Data<CentralStatus>,
         req: HttpRequest,
     ) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "siteId": 1, "centralSiteId": 1, "isMultiDeviceSite": *is_multi_device.get_ref() }
+            "Ok": {
+                "siteId": 1,
+                "centralSiteId": 1,
+                "isMultiDeviceSite": status.is_multi_device,
+                "isSyncApiPaused": status.is_sync_api_paused,
+            }
         }))
     }
 
@@ -180,13 +195,16 @@ mod test_sync_v7_client_api {
         actix_web::HttpResponse::Ok().json(json!({ "Ok": 0 }))
     }
 
+    /// Serves the configured pull responses one per request, in order — so a
+    /// test can model a batched pull. Falls back to an empty batch when the
+    /// queue runs dry.
     async fn pull(
-        data: web::Data<Option<serde_json::Value>>,
+        data: web::Data<Mutex<VecDeque<serde_json::Value>>>,
         req: HttpRequest,
         _body: web::Json<serde_json::Value>,
     ) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
-        match data.get_ref() {
+        match data.lock().await.pop_front() {
             Some(value) => actix_web::HttpResponse::Ok().json(value),
             None => actix_web::HttpResponse::Ok().json(json!({
                 "Ok": { "siteId": 1, "maxCursor": 0, "lastCursorInBatch": 0, "remaining": 0, "records": [] }
@@ -199,23 +217,29 @@ mod test_sync_v7_client_api {
     #[derive(Default)]
     struct Test {
         db_name: &'static str,
-        pull_response: Option<serde_json::Value>,
+        /// One response per pull request, served in order (empty batch once drained).
+        pull_responses: Vec<serde_json::Value>,
         mock_data: Option<MockData>,
         batch_size: BatchSize,
         is_initialising: bool,
         is_multi_device: bool,
+        is_sync_api_paused: bool,
+        /// None expects the sync to succeed
+        expected_error: Option<SyncError>,
     }
 
-    /// Runs sync_v7 against a mock central with the given pull response.
+    /// Runs sync_v7 against a mock central with the given pull responses.
     /// Returns the connection for per-test assertions.
     async fn run_sync_v7_test(
         Test {
             db_name,
-            pull_response,
+            pull_responses,
             mock_data,
             batch_size,
             is_initialising,
             is_multi_device,
+            is_sync_api_paused,
+            expected_error,
         }: Test,
     ) -> (
         StorageConnection,
@@ -240,7 +264,6 @@ mod test_sync_v7_client_api {
                     value_string: Some("test_token".to_string()),
                     ..Default::default()
                 },
-
                 // After initialisation cursor gets advanced and is persisted
                 // across tests due to key value cache (its only disabled in repository tests)
                 // Hence we reset the cursors back
@@ -265,8 +288,11 @@ mod test_sync_v7_client_api {
         } = setup_all_with_data_and_service_provider(db_name, MockDataInserts::none(), mock_data)
             .await;
 
-        let pull_data = web::Data::new(pull_response);
-        let is_multi_device_data = web::Data::new(is_multi_device);
+        let pull_data = web::Data::new(Mutex::new(VecDeque::from(pull_responses)));
+        let central_status = web::Data::new(CentralStatus {
+            is_multi_device,
+            is_sync_api_paused,
+        });
 
         let captured_requests = web::Data::new(Mutex::new(Vec::<serde_json::Value>::new()));
         let server_captured_requests = captured_requests.clone();
@@ -274,7 +300,7 @@ mod test_sync_v7_client_api {
             App::new()
                 .app_data(server_captured_requests.clone())
                 .app_data(pull_data.clone())
-                .app_data(is_multi_device_data.clone())
+                .app_data(central_status.clone())
                 .route("/central/sync_v7/site_status", web::post().to(site_status))
                 .route("/central/sync_v7/push", web::post().to(push))
                 .route("/central/sync_v7/pull", web::post().to(pull))
@@ -314,8 +340,13 @@ mod test_sync_v7_client_api {
             request,
         )
         .await;
-        assert!(result.is_ok(), "sync_v7 failed: {:?}", result.err());
-        handle.stop(true).await;
+        assert_eq!(result.err(), expected_error, "unexpected sync_v7 result");
+        // Not graceful: every request has been answered by now, so there's nothing to drain,
+        // and a graceful stop can hang forever. It stops the accept thread before the
+        // workers; a worker that sees its connection channel close exits without replying,
+        // and the stop message sent to it at that moment can be stranded in its channel,
+        // so the stop waits on a reply that never comes (actix-server 2.6, tokio 1.50).
+        handle.stop(false).await;
         let push_response = captured_requests.lock().await.clone();
         (connection, json!(push_response))
     }
@@ -327,8 +358,87 @@ mod test_sync_v7_client_api {
         test_sync_v7_pull_and_integrate().await;
         test_sync_v7_integrates_records_out_of_fk_order().await;
         test_sync_v7_tolerates_unknown_table().await;
+        test_sync_v7_delete_then_recreate_across_pull_batches().await;
         test_sync_v7_push().await;
         test_sync_v7_writes_multi_device_kvs().await;
+        test_sync_v7_stops_before_push_when_central_paused().await;
+    }
+
+    /// Regression for issue #12610: a stale Delete arriving in an earlier pull
+    /// batch than the record's re-create Upsert (as an unfixed central sends
+    /// when the pair straddles a batch boundary) must not wipe the record —
+    /// the latest-wins pre-pass supersedes the delete before integration.
+    async fn test_sync_v7_delete_then_recreate_across_pull_batches() {
+        let batch_1 = json!({
+            "Ok": {
+                "siteId": 1,
+                "maxCursor": 3,
+                "lastCursorInBatch": 2,
+                "remaining": 1,
+                "records": [
+                    { "cursor": 1, "recordId": "unit_test_1",     "tableName": "Unit",     "action": "Delete", "data": null,       "storeId": null, "transferStoreId": null, "patientId": null },
+                    { "cursor": 2, "recordId": "currency_test_1", "tableName": "Currency", "action": "Upsert", "data": currency(), "storeId": null, "transferStoreId": null, "patientId": null },
+                ]
+            }
+        });
+        let batch_2 = json!({
+            "Ok": {
+                "siteId": 1,
+                "maxCursor": 3,
+                "lastCursorInBatch": 3,
+                "remaining": 0,
+                "records": [
+                    { "cursor": 3, "recordId": "unit_test_1", "tableName": "Unit", "action": "Upsert", "data": unit(), "storeId": null, "transferStoreId": null, "patientId": null },
+                ]
+            }
+        });
+
+        let (connection, _) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_delete_then_recreate_across_pull_batches",
+            pull_responses: vec![batch_1, batch_2],
+            // Batch size 2 makes the first response a full batch, so the pull
+            // loop requests the second one.
+            batch_size: BatchSize {
+                remote_pull: 2,
+                ..Default::default()
+            },
+            is_initialising: true,
+            ..Default::default()
+        })
+        .await;
+
+        // The re-created record survives (pre-fix, the delete phase ran last
+        // and removed it).
+        unit().assert_upserted(&connection);
+        currency().assert_upserted(&connection);
+
+        let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();
+        assert_eq!(buffers.len(), 3);
+        let stale_delete = buffers
+            .iter()
+            .find(|b| b.record_id == "unit_test_1" && b.action == SyncAction::Delete)
+            .expect("stale delete should be in the sync buffer");
+        assert!(
+            stale_delete
+                .integration_error
+                .as_deref()
+                .unwrap_or_default()
+                .contains("Superseded"),
+            "stale delete should be marked superseded, got {:?}",
+            stale_delete.integration_error
+        );
+        let recreate = buffers
+            .iter()
+            .find(|b| b.record_id == "unit_test_1" && b.action == SyncAction::Upsert)
+            .expect("re-create upsert should be in the sync buffer");
+        assert_eq!(recreate.integration_error, None);
+        assert!(recreate.integration_datetime.is_some());
+
+        // Pull cursor advanced through both batches.
+        let cursor = KeyValueStoreRepository::new(&connection)
+            .get_i32(KeyType::SyncPullCursorV7)
+            .unwrap();
+        assert_eq!(cursor, Some(3));
     }
 
     /// Regression for issue #12361: a newer central pushing a table this remote has never
@@ -353,7 +463,7 @@ mod test_sync_v7_client_api {
 
         let (connection, _) = run_sync_v7_test(Test {
             db_name: "test_sync_v7_tolerates_unknown_table",
-            pull_response: Some(pull_response),
+            pull_responses: vec![pull_response],
             is_initialising: true,
             ..Default::default()
         })
@@ -392,7 +502,7 @@ mod test_sync_v7_client_api {
     async fn test_sync_v7_pull_and_integrate() {
         let (connection, _) = run_sync_v7_test(Test {
             db_name: "test_sync_v7_pull_and_integrate",
-            pull_response: Some(pull_response_in_fk_order()),
+            pull_responses: vec![pull_response_in_fk_order()],
             is_initialising: true,
             ..Default::default()
         })
@@ -556,7 +666,7 @@ mod test_sync_v7_client_api {
     async fn test_sync_v7_integrates_records_out_of_fk_order() {
         let (connection, _) = run_sync_v7_test(Test {
             db_name: "test_sync_v7_integrates_records_out_of_fk_order",
-            pull_response: Some(pull_response_reversed()),
+            pull_responses: vec![pull_response_reversed()],
             is_initialising: true,
             ..Default::default()
         })
@@ -647,5 +757,25 @@ mod test_sync_v7_client_api {
             .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)
             .unwrap();
         assert_eq!(stored, Some(true));
+    }
+
+    /// A paused central is caught at the site_status pre-check: nothing is pushed, and the
+    /// run is logged with the typed error so the UI can show it as a paused state.
+    async fn test_sync_v7_stops_before_push_when_central_paused() {
+        let (connection, push_response) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_stops_before_push_when_central_paused",
+            is_initialising: false,
+            is_sync_api_paused: true,
+            expected_error: Some(SyncError::SyncApiPaused),
+            ..Default::default()
+        })
+        .await;
+
+        assert_eq!(push_response, json!([]));
+        let latest = SyncLogV7Repository::new(&connection)
+            .query_one(SyncLogV7Condition::TRUE)
+            .unwrap()
+            .expect("sync log row");
+        assert_eq!(latest.error, Some(SyncError::SyncApiPaused));
     }
 }

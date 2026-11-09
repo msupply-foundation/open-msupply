@@ -118,7 +118,6 @@ fragment InboundLine on InvoiceLineNode {
     __typename
     id
     lineNumber
-    adjustedNumberOfUnits
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits

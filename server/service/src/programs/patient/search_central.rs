@@ -14,14 +14,14 @@ use crate::{
     },
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        api::SyncApiV5,
-        settings::{SyncSettings, SYNC_V5_VERSION},
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
+        api::SyncApiV5,
+        settings::{SYNC_V5_VERSION, SyncSettings},
     },
     sync_v7::{api::SyncApiV7, patient_lookup::pull_and_integrate_patient_data},
 };
 
-use super::{patient_search_to_filter, PatientSearch};
+use super::{PatientSearch, patient_search_to_filter};
 
 // TODO: When standalone work done, also check OMS only central.
 fn is_v7_remote(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
@@ -216,7 +216,7 @@ async fn link_patient_to_store_v6(
         CentralServerConfig::NotConfigured => {
             return Err(CentralPatientRequestError::InternalError(
                 "Open mSupply Central Server not configured".to_string(),
-            ))
+            ));
         }
         // Don't need to push to central if we are central :)
         CentralServerConfig::IsCentralServer

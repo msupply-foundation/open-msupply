@@ -1,8 +1,7 @@
 use crate::sync::translations::store::StoreTranslation;
 
 use super::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 use repository::{
     ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete, Row, StorageConnection,
@@ -92,9 +91,9 @@ impl SyncTranslation for PreferenceTranslator {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
-        test_db::setup_all,
         StoreRow, StoreRowRepository,
+        mock::{MockDataInserts, mock_store_a},
+        test_db::setup_all,
     };
     #[actix_rt::test]
     async fn test_preference_translation() {

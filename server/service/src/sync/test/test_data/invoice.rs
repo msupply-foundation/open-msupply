@@ -159,6 +159,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
         purchase_order_id: Some("test_purchase_order_a".to_string()),
+        prescription_request_id: None,
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         charges_local_currency: 15.5,
         charges_foreign_currency: 20.0,
@@ -243,6 +244,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         oms_fields: Some(TransactRowOmsFields {
             charges_local_currency: 15.5,
             charges_foreign_currency: 20.0,
+            campaign_id: None,
         }),
     }
 }
@@ -384,6 +386,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
@@ -455,6 +458,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -628,6 +632,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
@@ -728,6 +733,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -876,6 +882,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
@@ -953,6 +960,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -1101,6 +1109,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
@@ -1177,6 +1186,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -1322,6 +1332,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
@@ -1398,6 +1409,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }
@@ -1549,6 +1561,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
@@ -1630,6 +1643,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
+                campaign_id: None,
             }),
         }),
     }

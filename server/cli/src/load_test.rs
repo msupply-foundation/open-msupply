@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use serde_yml;
 use service::{
     settings::{DiscoveryMode, ServerSettings, Settings},
@@ -145,6 +145,11 @@ struct OmsCentralFullSyncStatus {
 impl LoadTest {
     pub async fn run(&self) -> anyhow::Result<()> {
         use tokio::process::Command;
+
+        // This process holds an HTTP client per remote plus their log files, and every spawned
+        // remote inherits our soft limit as its starting point. Raise it first so neither side
+        // hits "Too many open files" as the site count grows.
+        util::raise_open_file_limit();
 
         println!("Starting load test with the following parameters:");
         let msupply_central_test_url = format!("{}/{}", self.msupply_central_url, TEST_API);
@@ -491,7 +496,8 @@ impl LoadTest {
                 standalone_admin_password: None,
                 workers: Some(2),
                 inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
-                token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                token_refresh_interval_seconds:
+                    service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 frontend_dir: "frontend".to_string(),
             },
             database: DatabaseSettings {
@@ -589,8 +595,10 @@ impl LoadTest {
                     standalone_admin_username: None,
                     standalone_admin_password: None,
                     workers: Some(1), // We're spawning many remote site in separate processes. Each one of these remote sites don't need several actix workers. Their main runtime will still have num CPU cores workers.
-                    inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
-                    token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                    inactivity_timeout_seconds:
+                        service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                    token_refresh_interval_seconds:
+                        service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                     frontend_dir: "frontend".to_string(),
                 },
                 database: DatabaseSettings {

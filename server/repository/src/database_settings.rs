@@ -9,8 +9,7 @@ use std::time::Duration;
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
-#[cfg(not(feature = "postgres"))]
-const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
+pub(crate) const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 
 #[cfg(not(feature = "postgres"))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
@@ -116,6 +115,10 @@ impl DatabaseSettings {
 #[derive(Debug)]
 pub struct SqliteConnectionOptions {
     pub busy_timeout_ms: Option<u32>,
+    /// `PRAGMA synchronous = OFF`: sqlite stops asking the OS to flush each commit to disk.
+    /// Test databases only - they are thrown away, and on Linux every flush really reaches the
+    /// disk, which made the sqlite test suite several times slower there than on macOS.
+    pub synchronous_off: bool,
 }
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
@@ -133,6 +136,11 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
         conn.batch_execute("PRAGMA foreign_keys = ON;")
             .expect("Can't enable foreign_keys in sqlite");
 
+        if self.synchronous_off {
+            conn.batch_execute("PRAGMA synchronous = OFF;")
+                .expect("Can't set synchronous in sqlite");
+        }
+
         Ok(())
     }
 }
@@ -142,7 +150,7 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     use crate::diesel::r2d2::ManageConnection;
     use crate::diesel_helper_types::Count;
-    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Text};
 
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(settings.connection_string());
@@ -150,42 +158,58 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     // Check the database connection, and attempt to create the database if required
     // Note: the build() call isn't failing when you have an incorrect server or database name
     // so we need to explicitly call connect() to test the connection
-    if let Err(connect_error) = connection_manager.connect() {
-        // The connect error text is localised by the postgres server (lc_messages), so it
-        // can't be used to detect a missing database. Connect to the base database and
-        // check pg_database instead.
-        let root_connection_manager =
-            ConnectionManager::<DBBackendConnection>::new(settings.connection_string_without_db());
+    //
+    // Whichever connection we end up with — to the database, or to the base
+    // database after creating it — is to the same server, and is reused below
+    // for the version check.
+    let mut server_connection = match connection_manager.connect() {
+        Ok(connection) => connection,
+        Err(connect_error) => {
+            // The connect error text is localised by the postgres server (lc_messages), so it
+            // can't be used to detect a missing database. Connect to the base database and
+            // check pg_database instead.
+            let root_connection_manager = ConnectionManager::<DBBackendConnection>::new(
+                settings.connection_string_without_db(),
+            );
 
-        let mut root_connection = match root_connection_manager.connect() {
-            Ok(connection) => connection,
-            Err(root_error) => {
-                panic!(
-                    "Failed to connect to database: {} (also failed to connect to the base database to check whether it exists: {})",
-                    connect_error, root_error
-                );
+            let mut root_connection = match root_connection_manager.connect() {
+                Ok(connection) => connection,
+                Err(root_error) => {
+                    panic!(
+                        "Failed to connect to database: {} (also failed to connect to the base database to check whether it exists: {})",
+                        connect_error, root_error
+                    );
+                }
+            };
+
+            let count =
+                sql_query("SELECT count(*)::bigint AS count FROM pg_database WHERE datname = $1")
+                    .bind::<Text, _>(&settings.database_name)
+                    .get_result::<Count>(&mut root_connection)
+                    .expect("Failed to check whether database exists")
+                    .count;
+
+            if count > 0 {
+                // Database exists, the original connection failure was something else
+                panic!("Failed to connect to database: {}", connect_error);
             }
-        };
 
-        let count =
-            sql_query("SELECT count(*)::bigint AS count FROM pg_database WHERE datname = $1")
-                .bind::<Text, _>(&settings.database_name)
-                .get_result::<Count>(&mut root_connection)
-                .expect("Failed to check whether database exists")
-                .count;
-
-        if count > 0 {
-            // Database exists, the original connection failure was something else
-            panic!("Failed to connect to database: {}", connect_error);
+            info!(
+                "Database {} does not exist. Attempting to create it.",
+                &settings.database_name
+            );
+            root_connection
+                .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
+                .expect("Failed to create database");
+            root_connection
         }
+    };
 
-        info!(
-            "Database {} does not exist. Attempting to create it.",
-            &settings.database_name
-        );
-        root_connection
-            .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
-            .expect("Failed to create database");
+    // Done here, not in `migrate()`, because every entry point — server, each
+    // CLI action (several never migrate), the test harness — comes through
+    // this one function.
+    if let Err(message) = check_postgres_version(&mut server_connection) {
+        panic!("{}", message);
     }
     info!("Connecting to database '{}'", settings.database_name);
     let pool = Pool::builder()
@@ -202,7 +226,44 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         ))
         .build(connection_manager)
         .expect("Failed to connect to database");
-    StorageConnectionManager::new(pool)
+    StorageConnectionManager::new(pool, settings.connection_string())
+}
+
+#[cfg(feature = "postgres")]
+fn check_postgres_version(connection: &mut DBBackendConnection) -> Result<(), String> {
+    use diesel::{RunQueryDsl, sql_query};
+
+    let version_num = sql_query("SHOW server_version_num")
+        .get_result::<ServerVersionNum>(connection)
+        .map_err(|e| format!("Failed to read postgres server_version_num: {e}"))?
+        .server_version_num
+        .parse::<i64>()
+        .map_err(|e| format!("postgres server_version_num is not a number: {e}"))?;
+    check_min_postgres_version(version_num)
+}
+
+/// Postgres 12.0. From 12, `ATTACH PARTITION` takes `SHARE UPDATE EXCLUSIVE`
+/// rather than `ACCESS EXCLUSIVE`; the changelog partition top-up relies on
+/// that not blocking inserts.
+#[cfg(feature = "postgres")]
+const MIN_POSTGRES_VERSION_NUM: i64 = 120_000;
+
+#[cfg(feature = "postgres")]
+#[derive(diesel::QueryableByName)]
+struct ServerVersionNum {
+    #[diesel(sql_type = diesel::sql_types::Text)]
+    server_version_num: String,
+}
+
+#[cfg(feature = "postgres")]
+fn check_min_postgres_version(version_num: i64) -> Result<(), String> {
+    if version_num >= MIN_POSTGRES_VERSION_NUM {
+        return Ok(());
+    }
+    Err(format!(
+        "Unsupported PostgreSQL version: server_version_num {} is below the minimum {} (PostgreSQL 12)",
+        version_num, MIN_POSTGRES_VERSION_NUM
+    ))
 }
 
 // feature sqlite
@@ -210,10 +271,11 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
     let db_path = settings.database_path();
-    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
+    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path.clone());
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
+            synchronous_off: false,
         }))
         .max_size(
             settings
@@ -229,7 +291,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         .build(connection_manager)
         .expect("Failed to connect to database");
 
-    StorageConnectionManager::new(pool)
+    StorageConnectionManager::new(pool, db_path)
 }
 
 #[cfg(test)]
@@ -250,6 +312,23 @@ mod database_setting_test {
             connection_pool_min_idle: None,
             connection_pool_timeout_seconds: None,
         }
+    }
+
+    /// The floor is a comparison on `server_version_num`; the real check runs
+    /// against whatever postgres the test suite uses (which must pass it), so
+    /// the boundary is pinned here without needing a Postgres 11 to hand.
+    #[cfg(feature = "postgres")]
+    #[test]
+    fn test_min_postgres_version_boundary() {
+        use super::check_min_postgres_version;
+
+        // Last 11.x patch.
+        let rejected = check_min_postgres_version(110_022).unwrap_err();
+        assert!(rejected.contains("110022 is below the minimum 120000"));
+
+        // Exactly the floor, and a current release.
+        assert!(check_min_postgres_version(120_000).is_ok());
+        assert!(check_min_postgres_version(170_007).is_ok());
     }
 
     // feature postgres
@@ -281,7 +360,7 @@ mod database_setting_test {
         use crate::database_settings::get_storage_connection_manager;
         use crate::test_db::get_test_db_settings;
         use diesel::r2d2::ManageConnection;
-        use diesel::{r2d2::ConnectionManager, sql_query, PgConnection, RunQueryDsl};
+        use diesel::{PgConnection, RunQueryDsl, r2d2::ConnectionManager, sql_query};
 
         let settings = get_test_db_settings("auto_create_db_test");
 

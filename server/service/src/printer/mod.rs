@@ -2,8 +2,8 @@ pub use self::insert::*;
 use crate::service_provider::ServiceContext;
 use query::get_printers;
 use repository::{
-    printer::{Printer, PrinterFilter},
     PrinterRow, RepositoryError, StorageConnection,
+    printer::{Printer, PrinterFilter},
 };
 
 mod insert;
@@ -11,7 +11,7 @@ mod query;
 mod update;
 mod validate;
 
-pub use update::{update_printer, UpdatePrinter, UpdatePrinterError};
+pub use update::{UpdatePrinter, UpdatePrinterError, update_printer};
 
 pub trait PrinterServiceTrait: Sync + Send {
     fn get_printers(

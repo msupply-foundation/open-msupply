@@ -8,15 +8,15 @@ pub mod types;
 use graphql_types::types::DraftStockRelocationLineNode;
 
 use mutations::{
-    batch_stock_relocation_line, delete_stock_relocation, delete_stock_relocations,
-    insert_stock_relocation, update_stock_relocation, BatchLineInput, BatchLineResponse,
-    DeleteInput, DeleteResponses, DeleteStockRelocationResponse, InsertInput, InsertResponse,
-    UpdateInput, UpdateResponse,
+    BatchLineInput, BatchLineResponse, DeleteInput, DeleteResponses, DeleteStockRelocationResponse,
+    InsertInput, InsertResponse, UpdateInput, UpdateResponse, batch_stock_relocation_line,
+    delete_stock_relocation, delete_stock_relocations, insert_stock_relocation,
+    update_stock_relocation,
 };
 use queries::{
-    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
     StockRelocationDraftLinesInput, StockRelocationFilterInput, StockRelocationResponse,
-    StockRelocationSortInput, StockRelocationsResponse,
+    StockRelocationSortInput, StockRelocationsResponse, get_stock_relocation,
+    get_stock_relocation_draft_lines, get_stock_relocations,
 };
 
 #[derive(Default, Clone)]

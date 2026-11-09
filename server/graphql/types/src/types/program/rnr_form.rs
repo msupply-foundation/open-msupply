@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
-use graphql_core::{loader::RnRFormLinesByRnRFormIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::RnRFormLinesByRnRFormIdLoader};
 use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow};
 use serde::Serialize;
 use service::rnr_form::get_period_length;

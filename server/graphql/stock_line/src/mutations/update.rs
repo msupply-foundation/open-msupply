@@ -1,17 +1,17 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     generic_inputs::NullableUpdateInput,
     simple_generic_errors::RecordNotFound,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::StockLineNode;
 use repository::StockLine;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     stock_line::{UpdateStockLine as ServiceInput, UpdateStockLineError as ServiceError},
-    NullableUpdate,
 };
 
 #[derive(InputObject)]
@@ -154,17 +154,16 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::StockDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::StockMovementNotFound => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         // Standard Graphql Errors
         ServiceError::DonorDoesNotExist
         | ServiceError::DonorNotVisible
         | ServiceError::DonorIsNotADonor
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::VVMStatusDoesNotExist
         | ServiceError::StockDoesNotBelongToStore
@@ -187,18 +186,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_item_a, mock_stock_line_a, MockDataInserts},
         StockLine, StorageConnectionManager,
+        mock::{MockDataInserts, mock_item_a, mock_stock_line_a},
     };
     use serde_json::json;
 
     use service::{
+        NullableUpdate,
         service_provider::{ServiceContext, ServiceProvider},
         stock_line::{
             StockLineServiceTrait, UpdateStockLine as ServiceInput,
             UpdateStockLineError as ServiceError,
         },
-        NullableUpdate,
     };
 
     type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<StockLine, ServiceError> + Sync + Send;
@@ -324,7 +323,6 @@ mod test {
                 item_row: mock_item_a(),
                 location_row: None,
                 supplier_name_row: None,
-                barcode_row: None,
                 item_variant_row: None,
                 vvm_status_row: None,
                 campaign_row: None,

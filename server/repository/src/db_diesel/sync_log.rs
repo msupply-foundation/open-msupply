@@ -1,10 +1,10 @@
-use super::{sync_log_row::sync_log, StorageConnection};
+use super::{StorageConnection, sync_log_row::sync_log};
 
 use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
 };
 
 use diesel::prelude::*;
@@ -47,11 +47,21 @@ impl<'a> SyncLogV5V6Repository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
+    /// Whether any row matches; stops at the first match.
+    pub fn exists(&self, filter: Option<SyncLogV5V6Filter>) -> Result<bool, RepositoryError> {
+        let query = create_filtered_query(filter);
+        Ok(diesel::select(diesel::dsl::exists(query))
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn query_one(&self, filter: SyncLogV5V6Filter) -> Result<Option<SyncLog>, RepositoryError> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: SyncLogV5V6Filter) -> Result<Vec<SyncLog>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: SyncLogV5V6Filter,
+    ) -> Result<Vec<SyncLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
@@ -70,7 +80,7 @@ impl<'a> SyncLogV5V6Repository<'a> {
                 }
                 SyncLogV5V6SortField::DoneDatetime => {
                     // If nulls last on desc search and nulls first on asc search is more
-                    // convenient for sync log rows datetimes that are nullable (see get_initialisation_status)
+                    // convenient for sync log rows datetimes that are nullable (see get_first_initialisation_finished_datetime)
                     apply_sort_asc_nulls_first!(query, sort, sync_log::finished_datetime)
                 }
             }
@@ -79,6 +89,9 @@ impl<'a> SyncLogV5V6Repository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(sync_log::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

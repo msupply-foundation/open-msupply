@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::{StorageConnection, migrations::*};
 
 pub(crate) struct Migrate;
 

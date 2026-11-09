@@ -28,6 +28,8 @@ export interface SlidePanelProps {
   cancelButton?: ReactNode;
   width?: string | number;
   preventClickAway?: boolean;
+  /** `data-testid` for the panel's Paper (a locale-stable test hook). */
+  testId?: string;
 }
 
 export const SlidePanel = ({
@@ -39,6 +41,7 @@ export const SlidePanel = ({
   cancelButton,
   width = '100%',
   preventClickAway = true,
+  testId,
 }: SlidePanelProps) => {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -67,6 +70,7 @@ export const SlidePanel = ({
         <Paper
           elevation={4}
           onKeyDown={handleKeyDown}
+          {...(testId ? { 'data-testid': testId } : {})}
           sx={{
             display: 'flex',
             flexDirection: 'column',

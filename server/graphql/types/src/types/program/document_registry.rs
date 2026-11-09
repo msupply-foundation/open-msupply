@@ -1,4 +1,9 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use graphql_core::{
+    ContextExt,
+    loader::{DocumentRegistryLoader, DocumentRegistryLoaderInput},
+};
 use repository::DocumentRegistry;
 use serde::Serialize;
 
@@ -11,6 +16,25 @@ pub struct DocumentRegistryConnector {
 pub struct DocumentRegistryNode {
     pub allowed_ctx: Vec<String>,
     pub document_registry: DocumentRegistry,
+}
+
+/// The registry entry of a document type, for a row that names its document's
+/// type and so needs no document loaded to answer.
+pub async fn document_registry_node(
+    ctx: &Context<'_>,
+    allowed_ctx: &[String],
+    document_type: &str,
+) -> Result<Option<DocumentRegistryNode>> {
+    let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
+    let document_registry = loader
+        .load_one(DocumentRegistryLoaderInput::new(allowed_ctx, document_type))
+        .await?;
+    Ok(
+        document_registry.map(|document_registry| DocumentRegistryNode {
+            allowed_ctx: allowed_ctx.to_vec(),
+            document_registry,
+        }),
+    )
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]

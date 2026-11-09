@@ -128,11 +128,7 @@ export const DetailView = () => {
 
   return (
     <RequestRequisitionLineErrorProvider>
-      <AppBarButtons
-        isDisabled={!data || isDisabled}
-        onAddItem={onAddItem}
-        showIndicators={showIndicatorTab}
-      />
+      <AppBarButtons isDisabled={!data || isDisabled} onAddItem={onAddItem} />
       <Toolbar />
 
       <DetailTabs tabs={tabs} />

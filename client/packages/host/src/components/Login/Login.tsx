@@ -27,6 +27,24 @@ import { useHost } from '../../api';
 // statically reducible, so it would ship the link in every build.
 declare const PUBLIC_PATH: string;
 
+// A device that followed the new frontend's own "switch to old UI" link
+// remembers that choice (open-msupply-frontend#1075) and bounces itself back
+// here on every later cold load/logout. Clicking this link back to '/' must
+// clear that choice, or the new frontend's login page redirects straight back
+// to this one. Deliberately a raw, un-prefixed localStorage key rather than
+// going through `LocalStorage` (which namespaces under '@openmsupply-client'
+// and JSON-encodes) — this key is a cross-app contract with a different
+// codebase, not this app's own preference store, so it stays outside both
+// apps' internal serialisation formats. Keep this key name in sync with
+// `oms-preferred-frontend` in that repo's src/preferredFrontend.ts.
+const clearPreferredFrontend = () => {
+  try {
+    localStorage.setItem('oms-preferred-frontend', 'new');
+  } catch {
+    // storage unavailable (private mode) — the link still navigates
+  }
+};
+
 export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
@@ -233,6 +251,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
             variant="body2"
             color="secondary"
             data-testid="try-new-ui-link"
+            onClick={clearPreferredFrontend}
           >
             {t('login.try-new-ui')}
           </MuiLink>

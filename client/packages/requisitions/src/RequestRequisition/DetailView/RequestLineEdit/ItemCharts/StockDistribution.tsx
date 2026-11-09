@@ -36,7 +36,7 @@ const MonthlyConsumption = ({
 }: MonthlyConsumptionProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
-  const text = ` (${month} ${t('label.months', {
+  const text = ` (${month} ${t('label.month-count', {
     count: month,
   })})`;
   const label = `${formatNumber.round(averageMonthlyConsumption * month)}${

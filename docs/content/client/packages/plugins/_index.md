@@ -525,6 +525,22 @@ The Stock Donor example uses the `tableStateLoader` slot to bulk-fetch plugin da
 
 > TODO: notes on plugin column ordering once it's been added to the framework.
 
+## Bundles for deployment
+
+A plugin's bundle carries its frontend for **both** UIs. A site can switch between the old React UI and the new SolidJS one on demand, so whoever installs a plugin needs both, and one file means nobody can install half of it. `pnpm build:plugins --react` in `frontend/` builds them: the SolidJS parts through the SolidJS preset, and each plugin's React parts (its `react/` directory, imported with the old `<country>-plugins` repo) with this toolchain — `yarn install` then `yarn build-plugin`, as `remote_server_cli generate-plugin-bundle` does. CI runs it on every merge that touches a plugin and publishes the result to the Launchpad, so deploying one needs no toolchain, just the downloaded file and `remote_server_cli install-plugin-bundle`. A plugin whose React parts fail — they disagree with its other parts, or don't build against today's `client/` — gets no bundle and an error in the run, and every other plugin is still published.
+
+A plugin with both UIs and a backend, say code `example_plugins` at 3.0.1, installs as three rows:
+
+| Row | From |
+| --- | --- |
+| `frontend_example_plugins_solid_3_0_1` | the plugin's directory — the SolidJS UI |
+| `frontend_example_plugins_react_3_0_1` | its `react/frontend/latest/` — the React UI, `/old-ui/` |
+| `backend_example_plugins_3_0_1` | its `backend/` — BoaJS and runtime-agnostic, so one row answers both UIs |
+
+Installing is an additive per-row upsert and a frontend row's id carries the runtime, so the two frontends never upsert over each other. Discovery then filters on `host_runtime` — exact equality against the runtime the asking client declares, with a client declaring none (the old UI as it shipped) resolving to `react` — and picks the highest version *within* that runtime.
+
+All of a plugin's parts share **one version**, and a plugin whose parts disagree gets no bundle: a bundle is released and listed under one. A version also never goes down, since discovery would keep serving the higher one already installed. Once a country has a SolidJS backend at `<country>/backend/`, its React backend goes, so there is one backend per plugin; a plugin with two gets no bundle.
+
 ## Compatibility / versioning
 
 > TODO: explain the folder structure (`frontend/latest`, `frontend/2_6`, …), how versions are linked to the minimum host version a plugin supports, and how older hosts can be tested with a newer plugin via the `include`/`exclude` lists in [getLocalPlugins.js](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/host/getLocalPlugins.js).

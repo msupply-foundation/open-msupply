@@ -1,0 +1,20 @@
+/*
+ * The custom-translations editor's layout (spec/global-preferences/
+ * ui-surface.md § S2): the namespace row — selector inline-start, action
+ * buttons inline-end — and the editable custom cell. Tokens only.
+ */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+/* The custom column carries the row's one input — let it take the width the
+   default column doesn't need. */
+.customCell {
+  inline-size: 40%;
+  min-inline-size: 12rem;
+}

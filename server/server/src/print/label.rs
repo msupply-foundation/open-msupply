@@ -1,14 +1,14 @@
 use actix_web::{
-    web::{self, Data},
     HttpRequest, HttpResponse,
+    web::{self, Data},
 };
 use repository::RepositoryError;
 use serde::Deserialize;
 use service::{
     auth_data::AuthData,
     print::label::{
-        host_status, print_asset_label, print_prescription_label, AssetLabelData,
-        PrescriptionLabelData,
+        AssetLabelData, PrescriptionLabelData, host_status, print_asset_label,
+        print_prescription_label,
     },
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
@@ -51,7 +51,7 @@ pub struct QueryParams {
 
 pub async fn get_label_asset(
     request: HttpRequest,
-    _service_provider: Data<ServiceProvider>,
+    service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     query: web::Query<QueryParams>,
 ) -> HttpResponse {
@@ -71,7 +71,10 @@ pub async fn get_label_asset(
                 .body(format!("Failed to parse data header as JSON: {err}"));
         }
     };
-    let zpl = service::print::label::get_asset_label(data);
+    // A USB printer needs no network settings, so print without the configured
+    // label size rather than fail when there are none.
+    let settings = get_printer_settings(service_provider).ok();
+    let zpl = service::print::label::get_asset_label(data, settings.as_ref());
     let response = serde_json::json!({ "zpl":zpl });
 
     HttpResponse::Ok().body(serde_json::to_string_pretty(&response).unwrap())

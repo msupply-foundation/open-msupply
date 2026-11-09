@@ -1,10 +1,10 @@
-use repository::{ancillary_item_row::AncillaryItemRow, RequisitionLineRow};
+use repository::{RequisitionLineRow, ancillary_item_row::AncillaryItemRow};
 use std::collections::{HashMap, HashSet};
-use util::{f64_approx_eq, EPSILON};
+use util::{EPSILON, f64_approx_eq};
 
 /// Max number of edges we'll follow when chasing ancillary chains. Matches the
 /// cap enforced on insert so this is defensive — real chains can't exceed it.
-const MAX_ANCILLARY_DEPTH: u32 = 5;
+pub const MAX_ANCILLARY_DEPTH: u32 = 5;
 
 /// Whether a requisition has missing or stale ancillary lines.
 ///
@@ -65,21 +65,40 @@ impl AncillaryPlan {
 /// `lines` should be every line on the requisition (already filtered by
 /// requisition_id by the caller). `ancillary_rows` should be every
 /// non-deleted `ancillary_item` row — we build a full graph once and walk
-/// only the nodes we actually start from.
+/// only the nodes we actually start from. `wastage_rates` is the wastage rate
+/// (%) each principal deducts in the requisition's store, for the links that
+/// exclude it (see `principal_wastage_rates`). `supply_wastage_rates` is each
+/// item's own wastage rate (%) as a supply.
 pub fn compute_ancillary_plan(
     lines: &[RequisitionLineRow],
     ancillary_rows: &[AncillaryItemRow],
+    wastage_rates: &HashMap<String, f64>,
+    supply_wastage_rates: &HashMap<String, f64>,
 ) -> AncillaryPlan {
     // Build adjacency: item_id -> list of (ancillary_item_id, ratio)
     //
     // Ratio here is "ancillary units per principal unit" — i.e. for every unit
     // of the principal item, we need this many units of the ancillary item.
+    // A link that excludes the principal's wastage applies its configured
+    // ratio to the principal's un-wasted share only. The ancillary's own
+    // wastage is then added on top.
     let mut graph: HashMap<&str, Vec<(&str, f64)>> = HashMap::new();
     for row in ancillary_rows {
         if row.item_quantity <= 0.0 {
             continue;
         }
-        let ratio = row.ancillary_quantity / row.item_quantity;
+        let usable_share = if row.exclude_principal_wastage {
+            1.0 - wastage_rates.get(&row.item_id).copied().unwrap_or(0.0) / 100.0
+        } else {
+            1.0
+        };
+        let own_share = 1.0
+            - supply_wastage_rates
+                .get(&row.ancillary_item_id)
+                .copied()
+                .unwrap_or(0.0)
+                / 100.0;
+        let ratio = usable_share * row.ancillary_quantity / row.item_quantity / own_share;
         graph
             .entry(&row.item_id)
             .or_default()
@@ -244,19 +263,25 @@ mod tests {
             item_quantity: i,
             ancillary_quantity: a,
             deleted_datetime: None,
+            exclude_principal_wastage: false,
+            wastage_rate: 0.0,
         }
+    }
+
+    fn plan_of(lines: &[RequisitionLineRow], links: &[AncillaryItemRow]) -> AncillaryPlan {
+        compute_ancillary_plan(lines, links, &HashMap::new(), &HashMap::new())
     }
 
     #[test]
     fn no_ancillary_links_is_none() {
-        let plan = compute_ancillary_plan(&[line("l1", "vaccine", 100.0)], &[]);
+        let plan = plan_of(&[line("l1", "vaccine", 100.0)], &[]);
         assert_eq!(plan.state(), AncillaryState::None);
     }
 
     #[test]
     fn missing_ancillary_surfaces_as_needs_add() {
         // 100 vaccines → need 1 safety box (100:1)
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "vaccine", 100.0)],
             &[link("vaccine", "safety_box", 100.0, 1.0)],
         );
@@ -269,7 +294,7 @@ mod tests {
 
     #[test]
     fn existing_line_with_correct_quantity_is_none() {
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "vaccine", 100.0), line("l2", "safety_box", 1.0)],
             &[link("vaccine", "safety_box", 100.0, 1.0)],
         );
@@ -278,7 +303,7 @@ mod tests {
 
     #[test]
     fn existing_line_with_wrong_quantity_surfaces_as_needs_update() {
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[
                 line("l1", "vaccine", 100.0),
                 line("l2", "safety_box", 0.5), // stale
@@ -296,7 +321,7 @@ mod tests {
     #[test]
     fn wastage_non_integer_ratio() {
         // 1 vaccine → 1.1 syringe (10% wastage) for 50 vaccines → 55 syringes (whole)
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "vaccine", 50.0)],
             &[link("vaccine", "syringe", 1.0, 1.1)],
         );
@@ -309,7 +334,7 @@ mod tests {
         // vaccine -> syringe -> safety_box
         // 100 vaccines, each vaccine needs 1.1 syringes → ceil(110) = 110
         // 110 syringes / 100 per safety_box = 1.1 → ceil = 2 safety boxes
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "vaccine", 100.0)],
             &[
                 link("vaccine", "syringe", 1.0, 1.1),
@@ -333,7 +358,7 @@ mod tests {
         // vaccine_a: 100/100 = 1, ceil = 1
         // vaccine_b: 50/100 = 0.5, ceil = 1
         // total = 2
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[
                 line("l1", "vaccine_a", 100.0),
                 line("l2", "vaccine_b", 50.0),
@@ -351,7 +376,7 @@ mod tests {
     fn needs_add_takes_priority_over_needs_update() {
         // Syringe is missing (needs add), safety_box is stale (needs update).
         // State should report NeedsAdd — update surfaces after add is done.
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[
                 line("l1", "vaccine", 100.0),
                 line("l2", "safety_box", 999.0), // stale
@@ -375,7 +400,7 @@ mod tests {
         // hidden dependency on deleted_datetime.
         let mut row = link("vaccine", "safety_box", 100.0, 1.0);
         row.deleted_datetime = Some(chrono::NaiveDateTime::default());
-        let plan = compute_ancillary_plan(&[line("l1", "vaccine", 100.0)], &[row]);
+        let plan = plan_of(&[line("l1", "vaccine", 100.0)], &[row]);
         // The row is present, so the caller DID include a deleted row — we'd
         // compute against it. This is the caller's responsibility to filter.
         assert_eq!(plan.state(), AncillaryState::NeedsAdd { count: 1 });
@@ -388,7 +413,7 @@ mod tests {
         // would accumulate contributions from every ancestor line as well as
         // from the graph walks starting from the intermediate lines themselves.
         // Only vaccine should be treated as a principal here.
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[
                 line("l1", "vaccine", 100.0),
                 line("l2", "syringe", 100.0),
@@ -407,7 +432,7 @@ mod tests {
         // User had a stable requisition (vaccine=100, syringe=100, safety_box=1)
         // and then bumped vaccine to 200. Both syringe and safety_box should now
         // be flagged stale in the same plan so one Update click fixes both.
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[
                 line("l1", "vaccine", 200.0),
                 line("l2", "syringe", 100.0),
@@ -439,7 +464,7 @@ mod tests {
         // 50 vaccines / 100 per safety_box = 0.5 → ceil = 1.
         // Suggested quantities are whole units so the user can adjust them
         // without first toggling between integer and decimal modes.
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "vaccine", 50.0)],
             &[link("vaccine", "safety_box", 100.0, 1.0)],
         );
@@ -448,10 +473,71 @@ mod tests {
     }
 
     #[test]
+    fn excluding_principal_wastage_orders_for_the_usable_share() {
+        // 100 vaccines at 50% wastage: syringes (not wasted with the vaccine) for
+        // the 50 doses given; safety boxes for every vial regardless. A link
+        // excluding wastage on a principal with no rate orders in full.
+        let wastage_rates = HashMap::from([("vaccine".to_string(), 50.0)]);
+        let mut syringe = link("vaccine", "syringe", 1.0, 1.0);
+        syringe.exclude_principal_wastage = true;
+        let mut lid = link("safety_box", "lid", 1.0, 1.0);
+        lid.exclude_principal_wastage = true;
+        let plan = compute_ancillary_plan(
+            &[line("l1", "vaccine", 100.0)],
+            &[syringe, link("vaccine", "safety_box", 100.0, 1.0), lid],
+            &wastage_rates,
+            &HashMap::new(),
+        );
+        let required = |item: &str| {
+            plan.to_add
+                .iter()
+                .find(|d| d.item_id == item)
+                .unwrap()
+                .required_quantity
+        };
+        assert!(f64_approx_eq(required("syringe"), 50.0));
+        assert!(f64_approx_eq(required("safety_box"), 1.0));
+        assert!(f64_approx_eq(required("lid"), 1.0));
+    }
+
+    #[test]
+    fn supply_wastage_is_added_on_top_and_flows_down_the_chain() {
+        // 100 vaccines at 50% wastage. Syringes are used for the 50 doses given and 20% of
+        // them break, so 50 / 0.8 = 62.5 -> 63. The safety box follows the syringes'
+        // wastage (broken ones go in the box too): 63 / 100 -> 1. A lid excluding the
+        // syringes' wastage deducts the 20% they're given as a principal (their own, as
+        // no vaccine course covers them).
+        let wastage_rates =
+            HashMap::from([("vaccine".to_string(), 50.0), ("syringe".to_string(), 20.0)]);
+        let supply_wastage_rates = HashMap::from([("syringe".to_string(), 20.0)]);
+        let mut syringe = link("vaccine", "syringe", 1.0, 1.0);
+        syringe.exclude_principal_wastage = true;
+        let mut lid = link("syringe", "lid", 1.0, 1.0);
+        lid.exclude_principal_wastage = true;
+        let plan = compute_ancillary_plan(
+            &[line("l1", "vaccine", 100.0)],
+            &[syringe, link("syringe", "safety_box", 100.0, 1.0), lid],
+            &wastage_rates,
+            &supply_wastage_rates,
+        );
+        let required = |item: &str| {
+            plan.to_add
+                .iter()
+                .find(|d| d.item_id == item)
+                .unwrap()
+                .required_quantity
+        };
+        assert!(f64_approx_eq(required("syringe"), 63.0));
+        assert!(f64_approx_eq(required("safety_box"), 1.0));
+        // 63 syringes, less their own 20%: 50.4 -> 51
+        assert!(f64_approx_eq(required("lid"), 51.0));
+    }
+
+    #[test]
     fn zero_parent_quantity_adds_nothing() {
         // A line with zero requested quantity shouldn't pull any ancillaries
         // into the plan — there's no demand to fulfil.
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "vaccine", 0.0)],
             &[
                 link("vaccine", "syringe", 1.0, 1.1),
@@ -468,7 +554,7 @@ mod tests {
         // A chain longer than MAX_ANCILLARY_DEPTH — simulating data that
         // somehow bypassed the upsert-time check. The walk stops and doesn't
         // blow up.
-        let plan = compute_ancillary_plan(
+        let plan = plan_of(
             &[line("l1", "a", 1.0)],
             &[
                 link("a", "b", 1.0, 1.0),

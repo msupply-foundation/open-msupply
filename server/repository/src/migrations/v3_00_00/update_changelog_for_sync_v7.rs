@@ -181,7 +181,7 @@ mod tests {
         migrations::{v2_18_00::V2_18_00, v3_00_00::V3_00_00, *},
         test_db::*,
     };
-    use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
+    use diesel::{RunQueryDsl, connection::SimpleConnection, prelude::*};
 
     // Minimal changelog columns needed for verification.
     // The test runs the full v3_00_00 sequence, which includes the
@@ -323,7 +323,12 @@ mod tests {
         setup_test_data(&connection);
 
         // Run migration
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         // Query changelog and verify backfilled fields

@@ -5,7 +5,7 @@ use repository::SyncVersion;
 
 use crate::{service_provider::ServiceProvider, sync_v7::synchroniser::SynchroniserV7};
 
-use super::{settings::SyncSettings, synchroniser::SynchroniserV5V6, CentralServerConfig};
+use super::{CentralServerConfig, settings::SyncSettings, synchroniser::SynchroniserV5V6};
 
 /// Single dispatch point that picks v5_v6 or v7 sync based on the stored
 /// `SyncVersion` setting. Central servers are always v5_v6.

@@ -1,0 +1,149 @@
+/*
+ * The camera-scan overlay (./CameraScanOverlay.tsx), drawn over the live
+ * camera preview the bundled MLKit scanner puts BEHIND the WebView.
+ *
+ * Seeing that preview needs every pixel the app paints to go: the document
+ * background, the app root, and anything already in the top layer (an open
+ * edit dialog, its backdrop, a popover). `data-camera-scanning` on <html>
+ * says a scan is running; the overlay itself is the one thing left visible.
+ * `visibility` rather than `display`, so nothing unmounts or reflows — the
+ * screen underneath is exactly as it was when the scan ends.
+ */
+
+:global(html[data-camera-scanning]),
+:global(html[data-camera-scanning] body) {
+  background: transparent;
+}
+
+:global(html[data-camera-scanning] body *) {
+  visibility: hidden;
+}
+
+:global(html[data-camera-scanning] ::backdrop) {
+  background: transparent;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--camera-overlay-ink);
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Only while shown: [popover] is display:none otherwise, and must stay so. */
+.overlay:popover-open {
+  display: flex;
+}
+
+/* Visible again, overlay and everything in it, over the hidden app. Anchored
+   on the same attribute so it outranks the hide-everything rule above. */
+:global(html[data-camera-scanning]) .overlay,
+:global(html[data-camera-scanning]) .overlay * {
+  visibility: visible;
+}
+
+.hint {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--camera-overlay-scrim);
+  font-size: var(--text-lg);
+  text-align: center;
+}
+
+/* Where to aim. Decorative: MLKit reads the whole frame, not just this box. */
+.viewfinder {
+  width: min(80vw, 20rem);
+  aspect-ratio: 1;
+  border: 3px solid var(--camera-overlay-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 100vmax var(--camera-overlay-scrim);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--camera-overlay-scrim);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+/* Detection markers (camera.ts § Detection), over the whole screen in the
+   overlay's own CSS-pixel coordinates. */
+.marks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  /* Above the viewfinder's box-shadow scrim, which would dim the markers of
+     exactly the codes outside the box. */
+  z-index: 1;
+}
+
+.mark polygon {
+  fill: none;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.mark text {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--camera-overlay-scrim);
+  stroke-width: 0.25rem;
+}
+
+.mark[data-state='chosen'] polygon {
+  stroke: var(--camera-mark-chosen);
+  stroke-width: 5;
+}
+
+.mark[data-state='chosen'] text {
+  fill: var(--camera-mark-chosen);
+}
+
+.mark[data-state='eligible'] polygon {
+  stroke: var(--camera-mark-eligible);
+}
+
+.mark[data-state='eligible'] text {
+  fill: var(--camera-mark-eligible);
+}
+
+.mark[data-state='ignored'] polygon {
+  stroke: var(--camera-mark-ignored);
+  stroke-dasharray: 8 6;
+}
+
+.mark[data-state='ignored'] text {
+  fill: var(--camera-mark-ignored);
+}

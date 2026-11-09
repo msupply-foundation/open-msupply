@@ -1,7 +1,7 @@
-use super::ancillary_item_row::{ancillary_item, AncillaryItemRow};
+use super::ancillary_item_row::{AncillaryItemRow, ancillary_item};
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    Pagination, StorageConnection,
+    DBType, EqualFilter, Pagination, StorageConnection, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -117,11 +117,7 @@ fn create_filtered_query(filter: Option<AncillaryItemFilter>) -> BoxedAncillaryI
 
         apply_equal_filter!(query, id, ancillary_item::id);
         apply_equal_filter!(query, item_id, ancillary_item::item_id);
-        apply_equal_filter!(
-            query,
-            ancillary_item_id,
-            ancillary_item::ancillary_item_id
-        );
+        apply_equal_filter!(query, ancillary_item_id, ancillary_item::ancillary_item_id);
     }
 
     query
@@ -154,7 +150,8 @@ pub fn validate_ancillary_item_link(
         return Err(AncillaryItemValidationError::SelfLink);
     }
 
-    let edges = AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
+    let edges =
+        AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
     // Build adjacency maps, skipping the row being updated (if any)
     let mut forward: HashMap<String, Vec<String>> = HashMap::new();
@@ -245,9 +242,10 @@ fn longest_path_from(adj: &HashMap<String, Vec<String>>, from: &str) -> u32 {
 mod tests {
     use super::*;
     use crate::{
+        ItemLinkRow, ItemLinkRowRepository, ItemRow, ItemRowRepository,
         ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
         mock::MockDataInserts,
-        test_db, ItemLinkRow, ItemLinkRowRepository, ItemRow, ItemRowRepository,
+        test_db,
     };
 
     async fn setup(name: &str) -> StorageConnection {
@@ -277,6 +275,8 @@ mod tests {
                 item_quantity: 1.0,
                 ancillary_quantity: 1.0,
                 deleted_datetime: None,
+                exclude_principal_wastage: false,
+                wastage_rate: 0.0,
             })
             .unwrap();
     }

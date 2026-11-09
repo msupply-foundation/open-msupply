@@ -1,10 +1,10 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
-use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::Delete;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 use serde::Deserialize;
@@ -127,7 +127,10 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         Ok(asset_internal_location::table
             .filter(asset_internal_location::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

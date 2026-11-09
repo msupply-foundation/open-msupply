@@ -3,12 +3,12 @@ use super::{
 };
 
 use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
     db_diesel::{
         clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
         name_row::name,
     },
-    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -117,7 +117,10 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseDoseRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<VaccineCourseDoseRow>, RepositoryError> {
         Ok(vaccine_course_dose::table
             .filter(vaccine_course_dose::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

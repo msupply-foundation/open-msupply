@@ -2,8 +2,8 @@
 mod update {
     use repository::{
         mock::{
-            mock_stock_line_a, mock_store_a, mock_user_account_a, mock_vvm_status_a,
-            MockDataInserts,
+            MockDataInserts, mock_stock_line_a, mock_store_a, mock_user_account_a,
+            mock_vvm_status_a,
         },
         test_db::setup_all,
     };

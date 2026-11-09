@@ -1,0 +1,36 @@
+/* Stand-in content for the page-layout anatomy demos — tinted labelled blocks
+   that make a container's box visible (same convention as the Form layout and
+   CardGrid demo stubs). */
+.stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(
+    in srgb,
+    var(--primary-main) 12%,
+    var(--surface-raised)
+  );
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+/* Blocks in the Stack-rhythm demo — given equal width so the three gap
+   presets read side by side as columns. */
+.rhythmStub {
+  min-inline-size: 9rem;
+}
+
+/* A taller stub for the HStack align demo — makes the cross (vertical) axis
+   visible by giving one item more height than its neighbour. */
+.tallStub {
+  min-block-size: 3rem;
+}
+
+/* The miniature page's body — white like a real page body, holding a stub
+   that marks the content area between the pinned regions. */
+.miniBody {
+  padding: var(--space-3);
+  background: var(--bg-white);
+}

@@ -3,27 +3,27 @@ use chrono::NaiveDate;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditPurchaseOrder;
 use graphql_core::{
-    standard_graphql_error::{
-        validate_auth,
-        StandardGraphqlError::{BadUserInput, InternalError},
-    },
     ContextExt,
+    standard_graphql_error::{
+        StandardGraphqlError::{BadUserInput, InternalError},
+        validate_auth,
+    },
 };
 use graphql_types::generic_errors::ItemCannotBeOrdered;
 use graphql_types::types::{IdResponse, PurchaseOrderLineStatusNode};
 use repository::PurchaseOrderLine;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput as ServiceInput,
         UpdatePurchaseOrderLineInputError as ServiceError,
     },
-    NullableUpdate,
 };
 
 use crate::mutations::errors::{
-    CannotEditAdjustedQuantity, CannotEditQuantityBelowReceived, CannotEditRequestedQuantity,
-    PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
+    CannotEditRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
+    UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]
@@ -33,7 +33,6 @@ pub struct UpdateInput {
     pub item_id: Option<String>,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
-    pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     pub expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     pub price_per_pack_before_discount: Option<f64>,
@@ -53,7 +52,6 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
-            adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             price_per_pack_before_discount,
@@ -71,7 +69,6 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
-            adjusted_number_of_units,
             requested_delivery_date: requested_delivery_date
                 .map(|v| NullableUpdate { value: v.value }),
             expected_delivery_date: expected_delivery_date
@@ -96,8 +93,6 @@ pub enum PurchaseOrderLineError {
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
     CannotEditRequestedQuantity(CannotEditRequestedQuantity),
-    CannotEditAdjustedQuantity(CannotEditAdjustedQuantity),
-    CannotEditQuantityBelowReceived(CannotEditQuantityBelowReceived),
     ItemCannotBeOrdered(ItemCannotBeOrdered),
 }
 
@@ -130,28 +125,10 @@ pub fn update_purchase_order_line(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let mut user_has_permission = false;
-    if input.adjusted_number_of_units.is_some() {
-        user_has_permission = validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::AuthorisePurchaseOrder,
-                store_id: Some(store_id.to_string()),
-                require_central_standalone: false,
-            },
-        )
-        .is_ok();
-    }
-
     map_response(
         service_provider
             .purchase_order_line_service
-            .update_purchase_order_line(
-                &service_context,
-                store_id,
-                input.to_domain(),
-                Some(user_has_permission),
-            ),
+            .update_purchase_order_line(&service_context, store_id, input.to_domain()),
     )
 }
 
@@ -171,50 +148,36 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::PurchaseOrderLineNotFound => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::PurchaseOrderLineNotFound(PurchaseOrderLineNotFound),
-            }))
+            }));
         }
         ServiceError::UpdatedLineDoesNotExist => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
-            }))
+            }));
         }
         ServiceError::PurchaseOrderDoesNotExist => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
-            }))
+            }));
         }
         ServiceError::CannotEditRequestedQuantity => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditRequestedQuantity(
                     CannotEditRequestedQuantity,
                 ),
-            }))
-        }
-        ServiceError::CannotEditAdjustedQuantity => {
-            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
-                error: PurchaseOrderLineError::CannotEditAdjustedQuantity(
-                    CannotEditAdjustedQuantity,
-                ),
-            }))
-        }
-        ServiceError::CannotEditQuantityBelowReceived => {
-            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
-                error: PurchaseOrderLineError::CannotEditQuantityBelowReceived(
-                    CannotEditQuantityBelowReceived,
-                ),
-            }))
+            }));
         }
         ServiceError::CannotEditPurchaseOrder => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-            }))
+            }));
         }
         ServiceError::ItemCannotBeOrdered(line) => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::ItemCannotBeOrdered(
                     ItemCannotBeOrdered::from_domain(line),
                 ),
-            }))
+            }));
         }
         // TODO return these as structured errors? Or leave as is
         ServiceError::PackSizeCodeCombinationExists(_pack_size_code_combination) => {
@@ -223,7 +186,9 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::ItemDoesNotExist
         | ServiceError::CannotChangeStatus
         | ServiceError::CannotEditPurchaseOrderLine
-        | ServiceError::CannotEditExpectedDeliveryDate => BadUserInput(formatted_error),
+        | ServiceError::CannotEditExpectedDeliveryDate
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

@@ -2,15 +2,15 @@
 mod query {
     use chrono::{Duration, Utc};
     use repository::{
+        EqualFilter, LocationRowRepository, LocationTypeRow, LocationTypeRowRepository,
         asset_internal_location_row::AssetInternalLocationRowRepository,
         asset_log_row::AssetLogType,
         assets::{
             asset_log::{AssetLogFilter, AssetLogRepository},
             asset_row::AssetRowRepository,
         },
-        mock::{mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
         test_db::setup_all,
-        EqualFilter, LocationRowRepository, LocationTypeRow, LocationTypeRowRepository,
     };
 
     use crate::{
@@ -33,6 +33,7 @@ mod query {
                 name: "Fridge 2-8°C".to_string(),
                 min_temperature: 2.0,
                 max_temperature: 8.0,
+                code: "Fridge 2-8°C".to_string(),
             })
             .unwrap();
         location_type_repo
@@ -41,6 +42,7 @@ mod query {
                 name: "Freezer".to_string(),
                 min_temperature: -25.0,
                 max_temperature: -15.0,
+                code: "Freezer".to_string(),
             })
             .unwrap();
 
@@ -101,15 +103,15 @@ mod query {
             .collect();
         locations.sort_by(|a, b| b.volume.partial_cmp(&a.volume).unwrap());
 
-        // +5°C zone -> fridge type, volume 99
-        assert_eq!(locations[0].volume, 99.0);
+        // +5°C zone -> fridge type, 99 L -> 0.099 m³
+        assert_eq!(locations[0].volume, 0.099);
         assert_eq!(
             locations[0].location_type_id.as_deref(),
             Some("fridge_type")
         );
         assert_eq!(locations[0].name, "test_code +5°C");
-        // -20°C zone -> freezer type, volume 42
-        assert_eq!(locations[1].volume, 42.0);
+        // -20°C zone -> freezer type, 42 L -> 0.042 m³
+        assert_eq!(locations[1].volume, 0.042);
         assert_eq!(
             locations[1].location_type_id.as_deref(),
             Some("freezer_type")

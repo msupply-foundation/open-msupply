@@ -1,15 +1,15 @@
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
 use crate::{
     programs::patient::{
-        add_patient_to_oms_central, patient_updated::create_patient_name_store_join,
+        add_patient_to_oms_central, patient_updated::activate_patient_name_store_join,
     },
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        api::{validate_site_auth, SyncApiSettings},
         CentralServerConfig,
+        api::{SyncApiSettings, validate_site_auth},
     },
     validate::check_patient_exists,
 };
@@ -46,7 +46,7 @@ pub async fn add_patient_name_store_join(
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {
         info!(
             "Attempting to add name_store_join for a patient not visible on OMS Central, requesting patient data..."
-       );
+        );
 
         add_patient_to_oms_central(service_provider, &ctx, &name_id)
             .await
@@ -59,9 +59,9 @@ pub async fn add_patient_name_store_join(
         wait_for_sync_of_patient_records(service_provider, &ctx, &name_id).await?;
     }
 
-    create_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
+    activate_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
 
-    info!("Created name_store_join for patient {name_id} and store {store_id}");
+    info!("Added patient {name_id} to store {store_id}");
 
     Ok(())
 }

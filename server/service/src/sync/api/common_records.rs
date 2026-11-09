@@ -135,7 +135,7 @@ impl CommonSyncRecord {
 // tests
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRepository};
+    use repository::{SyncBufferRepository, mock::MockDataInserts, test_db::setup_all};
 
     use crate::sync::translations::special::merge::MergeMessageBody;
 

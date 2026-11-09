@@ -1,10 +1,10 @@
 use super::StorageConnection;
 
-use crate::{
-    db_diesel::store_row::store, repository_error::RepositoryError, user_account,
-    ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
 use crate::{ChangelogRepository, RowActionType};
+use crate::{
+    ChangelogSyncType, Delete, SourceSiteId, Upsert, db_diesel::store_row::store,
+    repository_error::RepositoryError, user_account,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -106,6 +106,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
     StockLineEdit,
+    StockCampaignChange,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -120,6 +121,13 @@ pub enum ActivityLogType {
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
     PurchaseOrderLineStatusChangedFromSentToNew,
+    PurchaseOrderCancelled,
+    // Prescription requests (prescriber-authored prescriptions)
+    PrescriptionRequestCreated,
+    PrescriptionRequestUpdated,
+    PrescriptionRequestReadyToDispense,
+    PrescriptionRequestDispensed,
+    PrescriptionRequestDeleted,
     PatientUpdated,
     PatientCreated,
     InvoiceDateBackdated,
@@ -132,7 +140,17 @@ pub enum ActivityLogType {
     BundledItemDeleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = activity_log)]
 pub struct ActivityLogRow {

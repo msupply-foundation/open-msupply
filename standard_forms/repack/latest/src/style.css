@@ -77,6 +77,14 @@ body > table {
   border-bottom: 0.5px solid black;
 }
 
+/* The gap between the two sides carries no rule in the value row — it is a
+   spacer, not a column of data. It is a <td> (rather than a <th>) only so the
+   row's nine cells line up with the nine column labels the Excel export reads
+   above it. */
+.body_value td.spacer {
+  border-bottom: none;
+}
+
 hr {
   width: 100%;
   margin-inline-start: 8px;

@@ -11,7 +11,6 @@ pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
 pub(crate) mod backend_plugin;
-pub(crate) mod barcode;
 pub(crate) mod campaign;
 pub(crate) mod category;
 pub(crate) mod clinician;
@@ -23,6 +22,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod document_registry_om;
 pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
@@ -64,6 +64,7 @@ pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
 pub(crate) mod purchase_order;
+pub(crate) mod purchase_order_category;
 pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
 pub(crate) mod report;
@@ -132,6 +133,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         unit::boxed(),
         category::boxed(),
         transaction_category::boxed(),
+        purchase_order_category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
         site::boxed(),
@@ -150,6 +152,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         form_schema::boxed(),
         om_form_schema::boxed(),
         document_registry::boxed(),
+        document_registry_om::boxed(),
         property::boxed(),
         name_property::boxed(),
         legacy_field_labels::boxed(),
@@ -167,7 +170,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         requisition::boxed(),
         requisition_line::boxed(),
         activity_log::boxed(),
-        barcode::boxed(),
         clinician::boxed(),
         clinician_store_join::boxed(),
         name_store_join::boxed(),
@@ -586,6 +588,8 @@ fn translate_row_or_delete(
             continue;
         }
 
+        let is_upsert = matches!(row_or_delete, RowOrDelete::Row { .. });
+
         let translation_result = match &row_or_delete {
             RowOrDelete::Row { row, .. } => translator.try_translate_to_upsert_sync_record(
                 connection,
@@ -602,7 +606,19 @@ fn translate_row_or_delete(
             PushTranslateResult::Ignored(ignore_message) => {
                 log::debug!("Ignored record in push translation: {ignore_message}")
             }
-            PushTranslateResult::NotMatched => {}
+            // The translator claimed this row in should_translate_to_sync_record but
+            // produced nothing. Deletes are excluded: most translators have no
+            // delete-push implementation and fall through to the trait default.
+            PushTranslateResult::NotMatched => {
+                if is_upsert {
+                    log::warn!(
+                        "Push translation produced no record: table={:?} record_id={} translator={}",
+                        changelog.table_name,
+                        changelog.record_id,
+                        translator.table_name()
+                    )
+                }
+            }
         }
     }
 

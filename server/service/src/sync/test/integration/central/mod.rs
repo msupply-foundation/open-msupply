@@ -8,7 +8,7 @@ mod period_schedule_and_period;
 mod test;
 mod unit_and_item;
 
-use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
+use super::{SyncRecordTester, central_server_configurations::ConfigureCentralServer};
 use crate::sync::test::{
     check_integrated,
     integration::{create_site, init_test_context},
