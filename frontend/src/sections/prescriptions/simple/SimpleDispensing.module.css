@@ -1,0 +1,40 @@
+/* The unit, and the stock line when it is worth stopping for, under the
+   medicine's name. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.unit {
+  color: var(--text-secondary);
+}
+
+/* Low stock says so in words; the marker lets a low card be spotted down the
+   grid without reading it. */
+.low {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--warning-main);
+  font-weight: var(--weight-medium);
+}
+
+/* The usual amounts, then the another-amount button, on one row. Equal
+   columns so the buttons line up from card to card. */
+.amounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+/* The another-amount button always takes the last column, so a card with fewer
+   than three usual amounts still lines its button up with the others. */
+.another {
+  grid-column: 4;
+}

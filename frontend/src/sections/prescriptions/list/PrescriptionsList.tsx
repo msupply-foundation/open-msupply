@@ -31,7 +31,8 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { CardViewIcon, CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { LinkButton } from '../../../ui/elements/buttons/LinkButton';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
   DEFAULT_PAGE_SIZE,
@@ -312,6 +313,16 @@ const PrescriptionsList: Component = () => {
               customFieldFilter={() => query().cf}
               customFields={cfDefs}
             />
+            {/* Last in the cluster: the Simple screen's Standard view takes
+                the same slot, so the switch stays under the pointer. */}
+            <LinkButton
+              href={`/${params.storeId}/dispensary/dispensing/simple`}
+              variant="secondary"
+              icon={<CardViewIcon />}
+              data-testid="simple-view-button"
+            >
+              {t('button.simple-view')}
+            </LinkButton>
           </HeaderButtons>
         </Header>
       }
