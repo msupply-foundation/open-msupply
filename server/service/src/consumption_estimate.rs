@@ -306,9 +306,11 @@ fn validate_lines(
 
 /// Each item id or code → the item's id, found a batch at a time. An id
 /// wins over a code. A blank one matches nothing: plenty of items have no code.
+/// A code shared by several items matches the one that's active, and nothing
+/// when that still leaves more than one (see `only_match`).
 /// A spreadsheet reads a code like `030063` as a number and saves it back as
 /// `30063`, so a numeric code that matches nothing as written is matched
-/// ignoring leading zeros, when only one item's code fits.
+/// ignoring leading zeros, the same way.
 fn find_item_ids<'a>(
     connection: &StorageConnection,
     keys: impl Iterator<Item = &'a str>,
@@ -324,8 +326,17 @@ fn find_item_ids<'a>(
     let mut item_ids = HashMap::new();
     for chunk in keys.chunks(LOOKUP_BATCH_SIZE) {
         let by_code = ItemFilter::new().code(StringFilter::equal_any(chunk.to_vec()));
+        let mut with_code: HashMap<String, Vec<ItemRow>> = HashMap::new();
         for item in repo.query_by_filter(by_code, None)? {
-            item_ids.insert(item.item_row.code, item.item_row.id);
+            with_code
+                .entry(item.item_row.code.clone())
+                .or_default()
+                .push(item.item_row);
+        }
+        for (code, items) in with_code {
+            if let Some(id) = only_match(&items) {
+                item_ids.insert(code, id.to_string());
+            }
         }
         let by_id = ItemFilter::new().id(EqualFilter::equal_any(chunk.to_vec()));
         for item in repo.query_by_filter(by_id, None)? {
@@ -341,7 +352,7 @@ fn find_item_ids<'a>(
     if !unmatched.is_empty() {
         // Every item's code is read once rather than a query per code: a whole
         // file of codes can lose its zeros
-        let mut by_digits: HashMap<&str, Vec<&str>> = HashMap::new();
+        let mut by_digits: HashMap<&str, Vec<ItemRow>> = HashMap::new();
         let items = repo.query_by_filter(ItemFilter::new(), None)?;
         for item in &items {
             let code = item.item_row.code.as_str();
@@ -350,19 +361,43 @@ fn find_item_ids<'a>(
             }
             let digits = without_leading_zeros(code);
             if unmatched.contains(digits) {
-                by_digits.entry(digits).or_default().push(&item.item_row.id);
+                by_digits
+                    .entry(digits)
+                    .or_default()
+                    .push(item.item_row.clone());
             }
         }
         for key in &keys {
             if item_ids.contains_key(key) || !is_numeric_code(key) {
                 continue;
             }
-            if let Some([id]) = by_digits.get(without_leading_zeros(key)).map(Vec::as_slice) {
+            if let Some(id) = by_digits
+                .get(without_leading_zeros(key))
+                .and_then(|items| only_match(items))
+            {
                 item_ids.insert(key.clone(), id.to_string());
             }
         }
     }
     Ok(item_ids)
+}
+
+/// The one item a code names, among the items that have it: the only one, or
+/// else the only active one. None when that leaves more than one, rather than
+/// whichever happened to load last.
+fn only_match(items: &[ItemRow]) -> Option<&str> {
+    match items {
+        [item] => Some(&item.id),
+        _ => match items
+            .iter()
+            .filter(|item| item.is_active)
+            .collect::<Vec<_>>()
+            .as_slice()
+        {
+            [item] => Some(&item.id),
+            _ => None,
+        },
+    }
 }
 
 fn is_numeric_code(code: &str) -> bool {

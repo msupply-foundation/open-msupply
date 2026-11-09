@@ -91,23 +91,6 @@ impl<'a> ConsumptionEstimateRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        // Before the delete: the changelog reads the row for its store
-        let changelog = ConsumptionEstimateRow::generate_changelog(
-            RowOrId::Id(id),
-            self.connection,
-            RowActionType::Delete,
-            SourceSiteId::CurrentSiteId,
-        )?;
-        ChangelogRepository::new(self.connection).insert(&changelog)?;
-        diesel::delete(
-            consumption_estimate_with_links::table
-                .filter(consumption_estimate_with_links::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     /// Deletes the rows in one statement, each with its own changelog entry so the
     /// delete syncs
     pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {

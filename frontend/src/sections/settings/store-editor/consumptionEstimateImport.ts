@@ -141,18 +141,23 @@ export type ParsedEstimateFile =
       rows: EstimateImportRow[];
       blankRows: BlankEstimateRow[];
     }
-  | { kind: 'failed'; reason: ImportFileFailure };
+  | { kind: 'failed'; reason: ImportFileFailure | 'no-month-columns' };
 
 /*
  * Columns: the heading row is the first that names the code or name column
- * as the template does (`Code`, `Name`, in the user's language). Under it the
- * first column is the item CODE and the second its NAME; every other column
+ * as the template does (`Code`, `Name`, in the user's language), and those
+ * headings say which column is which, wherever they sit. Every other column
  * headed by a month (`YYYY-MM`) is that month. Any other column is ignored. A
  * row sets its item's estimates to exactly what it holds: a blank month cell is
  * no estimate for that month, and a row with every month blank (`blankRows`)
  * leaves the item none. A row with no code and nothing filled in is skipped.
  * A month headed twice is rejected wherever it's filled in, rather
  * than one column silently winning.
+ *
+ * A file with no code column, or no month column, is refused whole. With no
+ * month column every row would read as blank, and so as removing its item's
+ * estimates: what a spreadsheet that rewrote the `2026-10` headings as dates
+ * would otherwise do.
  */
 export const parseEstimateFile = (
   text: string,
@@ -163,9 +168,22 @@ export const parseEstimateFile = (
   const headerIndex = findHeaderRow(table, [t('label.code'), t('label.name')]);
   if (headerIndex === -1) return { kind: 'failed', reason: 'no-header' };
   const header = table[headerIndex] ?? [];
+  const columnOf = (title: string) =>
+    header.findIndex(
+      cell => cell.trim().toLowerCase() === title.trim().toLowerCase()
+    );
+  const codeColumn = columnOf(t('label.code'));
+  const nameColumn = columnOf(t('label.name'));
+  if (codeColumn === -1) return { kind: 'failed', reason: 'no-header' };
   const monthColumns = header
     .map((title, index) => ({ month: title.trim(), index }))
-    .filter(({ month, index }) => index >= 2 && monthStart(month));
+    .filter(
+      ({ month, index }) =>
+        index !== codeColumn && index !== nameColumn && monthStart(month)
+    );
+  if (monthColumns.length === 0) {
+    return { kind: 'failed', reason: 'no-month-columns' };
+  }
   const months = [...new Set(monthColumns.map(({ month }) => month))];
   const repeated = new Set(
     months.filter(
@@ -179,14 +197,15 @@ export const parseEstimateFile = (
     const filled = monthColumns.filter(
       ({ index }) => (cells[index] ?? '').trim() !== ''
     );
-    const itemCode = (cells[0] ?? '').trim();
+    const itemCode = (cells[codeColumn] ?? '').trim();
+    const itemName = nameColumn === -1 ? '' : (cells[nameColumn] ?? '').trim();
     const lineNumber = headerIndex + offset + 2;
     if (filled.length === 0) {
       if (itemCode) {
         blankRows.push({
           lineNumber,
           itemCode,
-          itemName: (cells[1] ?? '').trim(),
+          itemName,
         });
       }
       return;
@@ -195,7 +214,7 @@ export const parseEstimateFile = (
     const row: EstimateImportRow = {
       lineNumber,
       itemCode,
-      itemName: (cells[1] ?? '').trim(),
+      itemName,
       quantities: {},
       cells: {},
       errors: [],

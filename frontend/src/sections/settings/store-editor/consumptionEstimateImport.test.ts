@@ -167,6 +167,52 @@ describe('parsing a file', () => {
     expect(parseEstimateFile('label.code,label.name,2026-10\n', TODAY)).toEqual(
       { kind: 'failed', reason: 'no-rows' }
     );
+    // Only a name column: nothing says which column is the code
+    expect(parseEstimateFile('label.name,2026-10\nItem A,3', TODAY)).toEqual({
+      kind: 'failed',
+      reason: 'no-header',
+    });
+  });
+
+  it('refuses a file with no month columns rather than removing every item', () => {
+    // A spreadsheet that rewrote the month headings as dates
+    expect(
+      parseEstimateFile(
+        [
+          'label.code,label.name,Oct-26,Sep-26',
+          'A,Item A,,',
+          'B,Item B,,',
+        ].join('\n'),
+        TODAY
+      )
+    ).toEqual({ kind: 'failed', reason: 'no-month-columns' });
+  });
+
+  it('finds the code and name columns by their headings', () => {
+    const parsed = parseEstimateFile(
+      ['label.name,2026-10,label.code', 'Item A,310,A', 'Item B,,B'].join('\n'),
+      TODAY
+    );
+    expect(parsed.kind).toBe('ok');
+    if (parsed.kind !== 'ok') return;
+    expect(
+      parsed.rows.map(row => [row.itemCode, row.itemName, row.quantities])
+    ).toEqual([['A', 'Item A', { '2026-10': 310 }]]);
+    expect(parsed.blankRows).toEqual([
+      { lineNumber: 3, itemCode: 'B', itemName: 'Item B' },
+    ]);
+  });
+
+  it('reads a semicolon-separated file with decimal commas and a BOM', () => {
+    const parsed = parseEstimateFile(
+      ['﻿label.code;label.name;2026-10', 'A;Item A;12,5'].join('\r\n'),
+      TODAY
+    );
+    expect(parsed.kind).toBe('ok');
+    if (parsed.kind !== 'ok') return;
+    expect(parsed.rows.map(row => [row.itemCode, row.quantities])).toEqual([
+      ['A', { '2026-10': 12.5 }],
+    ]);
   });
 });
 

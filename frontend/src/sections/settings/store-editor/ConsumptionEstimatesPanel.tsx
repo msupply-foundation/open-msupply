@@ -1,4 +1,10 @@
-import { createResource, createSignal, Show, type Component } from 'solid-js';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  Show,
+  type Component,
+} from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t } from '@/intl';
@@ -66,6 +72,8 @@ export const ConsumptionEstimatesPanel: Component<{
   const [uploadError, setUploadError] = createSignal<string>();
   const [saving, setSaving] = createSignal(false);
   const [saveFailed, setSaveFailed] = createSignal(false);
+  const [checking, setChecking] = createSignal(false);
+  const [clearing, setClearing] = createSignal(false);
   const [confirmClear, setConfirmClear] = createSignal(false);
   const [downloading, setDownloading] = createSignal(false);
 
@@ -89,7 +97,7 @@ export const ConsumptionEstimatesPanel: Component<{
   );
   const current = () => gated(data) ?? undefined;
   const loadFailed = () => gated(data) === null;
-  const table = () => pivotEstimates(current()?.estimates ?? []);
+  const table = createMemo(() => pivotEstimates(current()?.estimates ?? []));
 
   // Only offered once the estimates have loaded: a template built before
   // then would leave out the months and values the store already has. The
@@ -106,7 +114,9 @@ export const ConsumptionEstimatesPanel: Component<{
     );
     setDownloading(false);
     if (items.kind !== 'success') {
-      setUploadError(t('error.problem-loading-consumption-estimates'));
+      setUploadError(
+        t('error.problem-downloading-consumption-estimates-template')
+      );
       return;
     }
     const csv = buildTemplateCsv(
@@ -135,18 +145,39 @@ export const ConsumptionEstimatesPanel: Component<{
       { background: true, returnGraphqlErrors: true }
     );
 
+  // Each upload's number: only the latest one's check may show its review,
+  // so a slow check of an earlier file can't replace a later file's
+  let latestUpload = 0;
+
   const onFile = async (file: File) => {
+    const upload = ++latestUpload;
     setUploadError(undefined);
     setSaveFailed(false);
     if (!isCsvFileName(file.name))
       return setUploadError(t('messages.invalid-file'));
+    setChecking(true);
+    try {
+      await checkFile(file, upload);
+    } finally {
+      if (upload === latestUpload) setChecking(false);
+    }
+  };
+
+  const checkFile = async (file: File, upload: number) => {
     try {
       // NOT file.text(): a spreadsheet saved on Windows uses the machine's
       // legacy code page (domain/reportFiles § readCsvFile).
       const parsed = parseEstimateFile(await readCsvFile(file), new Date());
+      if (upload !== latestUpload) return;
       if (parsed.kind === 'failed') {
         return setUploadError(
-          t('messages.upload-error', { error: t('error.no-data') })
+          {
+            'no-header': t('error.import-columns-not-recognised'),
+            'no-month-columns': t(
+              'error.consumption-estimate-no-month-columns'
+            ),
+            'no-rows': t('error.import-no-rows'),
+          }[parsed.reason]
         );
       }
       // The server checks the rows that passed our own checks, so every
@@ -160,6 +191,7 @@ export const ConsumptionEstimatesPanel: Component<{
       let rows = parsed.rows;
       if (lines.lines.length > 0 || clearedItems.length > 0) {
         const result = await replace(lines.lines, clearedItems, true);
+        if (upload !== latestUpload) return;
         if (result.kind !== 'success') {
           return setUploadError(
             t('messages.upload-error', { error: t('error.problem-saving') })
@@ -174,6 +206,7 @@ export const ConsumptionEstimatesPanel: Component<{
       }
       setReview({ months: parsed.months, rows, lines, clearedItems });
     } catch (error) {
+      if (upload !== latestUpload) return;
       setUploadError(t('messages.upload-error', { error: String(error) }));
     }
   };
@@ -199,12 +232,15 @@ export const ConsumptionEstimatesPanel: Component<{
   };
 
   const clear = async () => {
+    if (clearing()) return;
+    setClearing(true);
     setSaveFailed(false);
     const result = await graphqlFetch(
       ClearConsumptionEstimates,
       { storeId: props.storeId, forStoreId: props.forStoreId },
       { background: true, returnGraphqlErrors: true }
     );
+    setClearing(false);
     if (result.kind !== 'success') {
       setSaveFailed(true);
       return;
@@ -320,6 +356,8 @@ export const ConsumptionEstimatesPanel: Component<{
                 <Show when={(current()?.estimates.length ?? 0) > 0}>
                   <Button
                     variant="secondary"
+                    loading={clearing()}
+                    disabled={checking()}
                     data-testid="consumption-estimates-clear"
                     onClick={() => setConfirmClear(true)}
                   >
@@ -330,6 +368,7 @@ export const ConsumptionEstimatesPanel: Component<{
               <UploadZone
                 accept={CSV_ACCEPT}
                 multiple={false}
+                disabled={checking() || clearing()}
                 onFiles={files => {
                   const file = files[0];
                   if (file) void onFile(file);
@@ -341,7 +380,7 @@ export const ConsumptionEstimatesPanel: Component<{
               columns={currentColumns()}
               rows={table().rows}
               rowKey={row => row.itemId}
-              loading={data.loading}
+              loading={data.loading || checking()}
               emptyMessage={t('messages.no-consumption-estimates')}
               minBodyRem={12}
             />

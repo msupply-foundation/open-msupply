@@ -203,6 +203,20 @@ export const StoreEditorModal = (props: {
     }
   });
 
+  // So does moving to another store with the editor still open (the
+  // register's save-and-move-on): staged preferences belong to the store they
+  // were made on, and a later Save would otherwise write them to this one.
+  createEffect(
+    on(
+      () => props.facilityStoreId,
+      () => {
+        setSaveFailed(false);
+        setPrefDraft({});
+      },
+      { defer: true }
+    )
+  );
+
   const session = () => ({
     canMutate: hasPermission('NAME_PROPERTIES_MUTATE'),
     canEditCentralData: hasPermission('EDIT_CENTRAL_DATA'),
@@ -444,11 +458,18 @@ export const StoreEditorModal = (props: {
           <Show when={props.facilityStoreId}>
             {forStoreId => (
               <TabPanel value="consumption-estimates">
-                <ConsumptionEstimatesPanel
-                  storeId={props.storeId}
-                  forStoreId={forStoreId()}
-                  editable={prefsEditable()}
-                />
+                {/* Keyed: a new panel for each store, so an upload under
+                    review for one store can't be saved to the next when the
+                    register moves on with the editor still open. */}
+                <Show when={forStoreId()} keyed>
+                  {id => (
+                    <ConsumptionEstimatesPanel
+                      storeId={props.storeId}
+                      forStoreId={id}
+                      editable={prefsEditable()}
+                    />
+                  )}
+                </Show>
               </TabPanel>
             )}
           </Show>

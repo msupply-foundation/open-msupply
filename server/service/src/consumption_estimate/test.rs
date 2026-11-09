@@ -472,3 +472,40 @@ async fn an_item_named_with_no_months_loses_its_estimates() {
         }]
     );
 }
+
+#[actix_rt::test]
+async fn a_code_shared_by_items_matches_only_the_active_one() {
+    let item = |id: &str, code: &str, is_active: bool| ItemRow {
+        id: id.to_string(),
+        code: code.to_string(),
+        is_active,
+        ..Default::default()
+    };
+    let (_, connection, _, _) = setup_all_with_data(
+        "a_code_shared_by_items_matches_only_the_active_one",
+        MockDataInserts::none().stores().items(),
+        MockData {
+            items: vec![
+                // One of them active: that's the one
+                item("shared_active", "SHARED", true),
+                item("shared_inactive", "SHARED", false),
+                // Both active: neither, rather than whichever loads last
+                item("both_a", "BOTH", true),
+                item("both_b", "BOTH", true),
+                // The same with leading zeros lost
+                item("zeros_active", "0042", true),
+                item("zeros_inactive", "042", false),
+            ],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let found = find_item_ids(&connection, ["SHARED", "BOTH", "42"].into_iter()).unwrap();
+    assert_eq!(
+        found.get("SHARED").map(String::as_str),
+        Some("shared_active")
+    );
+    assert_eq!(found.get("BOTH"), None);
+    assert_eq!(found.get("42").map(String::as_str), Some("zeros_active"));
+}
