@@ -28,6 +28,24 @@ export const ConsumptionEstimates = {
   query: "query consumptionEstimates($storeId: String!, $forStoreId: String!) {\n  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n    amcLookBackMonths\n    estimates {\n      itemId\n      item {\n        id\n        code\n        name\n      }\n      periodStart\n      periodEnd\n      quantity\n    }\n  }\n}",
 } as TypedDocument<ConsumptionEstimatesResult, ConsumptionEstimatesVariables>;
 
+export type ConsumptionEstimateTemplateItemsVariables = {
+  storeId: string;
+  forStoreId: string;
+};
+
+export type ConsumptionEstimateTemplateItemsResult = {
+  consumptionEstimates: {
+  templateItems: Array<{
+  code: string;
+  name: string;
+}>;
+};
+};
+
+export const ConsumptionEstimateTemplateItems = {
+  query: "query consumptionEstimateTemplateItems($storeId: String!, $forStoreId: String!) {\n  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n    templateItems {\n      code\n      name\n    }\n  }\n}",
+} as TypedDocument<ConsumptionEstimateTemplateItemsResult, ConsumptionEstimateTemplateItemsVariables>;
+
 export type ReplaceConsumptionEstimatesVariables = {
   storeId: string;
   input: {
@@ -38,6 +56,7 @@ export type ReplaceConsumptionEstimatesVariables = {
     periodEnd: string;
     quantity: number;
   }>;
+    clearedItems?: Array<string> | null;
     dryRun?: boolean | null;
   };
 };
@@ -52,6 +71,7 @@ export type ReplaceConsumptionEstimatesResult = {
   line: number;
   actualQuantity: number;
 }>;
+  removedItems: Array<number>;
 }) | ({
   __typename: "ConsumptionEstimateLinesError";
 } & {
@@ -66,7 +86,7 @@ export type ReplaceConsumptionEstimatesResult = {
 };
 
 export const ReplaceConsumptionEstimates = {
-  query: "mutation replaceConsumptionEstimates($storeId: String!, $input: ReplaceConsumptionEstimatesInput!) {\n  centralServer {\n    preferences {\n      replaceConsumptionEstimates(storeId: $storeId, input: $input) {\n        __typename\n        ... on ReplaceConsumptionEstimatesNode {\n          overlaps {\n            line\n            actualQuantity\n          }\n        }\n        ... on ConsumptionEstimateLinesError {\n          errors {\n            line\n            problem\n            otherLine\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation replaceConsumptionEstimates($storeId: String!, $input: ReplaceConsumptionEstimatesInput!) {\n  centralServer {\n    preferences {\n      replaceConsumptionEstimates(storeId: $storeId, input: $input) {\n        __typename\n        ... on ReplaceConsumptionEstimatesNode {\n          overlaps {\n            line\n            actualQuantity\n          }\n          removedItems\n        }\n        ... on ConsumptionEstimateLinesError {\n          errors {\n            line\n            problem\n            otherLine\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ReplaceConsumptionEstimatesResult, ReplaceConsumptionEstimatesVariables>;
 
 export type ClearConsumptionEstimatesVariables = {

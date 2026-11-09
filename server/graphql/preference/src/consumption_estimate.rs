@@ -12,7 +12,8 @@ use service::{
     consumption_estimate::{
         ActualConsumptionOverlap, ConsumptionEstimate, ConsumptionEstimateInput, LineError,
         LineProblem, ReplaceConsumptionEstimates, ReplaceConsumptionEstimatesError,
-        clear_consumption_estimates, get_consumption_estimates, replace_consumption_estimates,
+        clear_consumption_estimates, get_consumption_estimates, get_template_items,
+        replace_consumption_estimates,
     },
     store_preference::get_store_preferences,
 };
@@ -64,10 +65,38 @@ fn estimate_nodes(estimates: Vec<ConsumptionEstimate>) -> Vec<ConsumptionEstimat
 }
 
 #[derive(SimpleObject)]
+#[graphql(complex)]
 pub struct ConsumptionEstimatesNode {
     pub estimates: Vec<ConsumptionEstimateNode>,
     /// The store's AMC look-back period: how many months of estimates count
     pub amc_look_back_months: f64,
+    #[graphql(skip)]
+    pub for_store_id: String,
+}
+
+#[derive(SimpleObject)]
+pub struct ConsumptionEstimateTemplateItemNode {
+    pub code: String,
+    pub name: String,
+}
+
+#[ComplexObject]
+impl ConsumptionEstimatesNode {
+    /// The active stock items visible in the store, by name: the rows of a blank
+    /// upload template. Only resolved when asked for, as there can be thousands.
+    pub async fn template_items(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<ConsumptionEstimateTemplateItemNode>> {
+        let connection = ctx.service_provider().connection()?;
+        Ok(get_template_items(&connection, &self.for_store_id)?
+            .into_iter()
+            .map(|item| ConsumptionEstimateTemplateItemNode {
+                code: item.code,
+                name: item.name,
+            })
+            .collect())
+    }
 }
 
 /// `store_id` is the signed-in store the request is authorised against;
@@ -93,6 +122,7 @@ pub fn consumption_estimates(
     Ok(ConsumptionEstimatesNode {
         estimates: estimate_nodes(estimates),
         amc_look_back_months: preferences.monthly_consumption_look_back_period,
+        for_store_id,
     })
 }
 
@@ -112,6 +142,10 @@ pub struct ReplaceConsumptionEstimatesInput {
     /// Each item named ends up with exactly these periods; items not named are
     /// left alone
     pub lines: Vec<ConsumptionEstimateLineInput>,
+    /// Items (by id or code) named with no periods, e.g. a blank row in the
+    /// file: their estimates are removed. One with no estimates, or that matches
+    /// no item, is ignored.
+    pub cleared_items: Option<Vec<String>>,
     /// Check the lines and report what would be saved, without saving
     pub dry_run: Option<bool>,
 }
@@ -147,6 +181,8 @@ pub struct ConsumptionEstimateLineErrorNode {
 pub struct ReplaceConsumptionEstimatesNode {
     pub estimates: Vec<ConsumptionEstimateNode>,
     pub overlaps: Vec<ActualConsumptionOverlapNode>,
+    /// Indexes into `clearedItems` of the items whose estimates are removed
+    pub removed_items: Vec<u32>,
 }
 
 /// Nothing is saved when any line has a problem
@@ -193,6 +229,7 @@ pub fn replace_estimates(
                     quantity: line.quantity,
                 })
                 .collect(),
+            cleared_items: input.cleared_items.unwrap_or_default(),
             dry_run: input.dry_run.unwrap_or(false),
         },
     );
@@ -213,6 +250,11 @@ pub fn replace_estimates(
                             actual_quantity,
                         },
                     )
+                    .collect(),
+                removed_items: result
+                    .removed
+                    .into_iter()
+                    .map(|index| index as u32)
                     .collect(),
             },
         )),

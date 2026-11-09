@@ -88,41 +88,43 @@ export const isFinishedMonth = (month: Month, today: Date): boolean =>
   month < monthOf(today);
 
 /*
- * The template: code and name, then one column per month, newest first. The
- * store's current estimates are filled in, so an upload is an edit of what's
- * there rather than a blank form; a month they cover that the look-back no
- * longer reaches keeps its column so a download-then-upload changes nothing.
+ * The template: code and name, then one column per month, newest first. Every
+ * item visible in the store gets a row, in the order given, so filling it in
+ * needs no separate item list; rows left blank upload as nothing. The store's
+ * current estimates are filled in, so an upload is an edit of what's there; an
+ * item with estimates that's no longer visible keeps its row (at the end), and
+ * a month they cover that the look-back no longer reaches keeps its column, so
+ * a download-then-upload changes nothing.
  */
 export const buildTemplateCsv = (
   lookBackMonths: number,
+  items: readonly { code: string; name: string }[],
   estimates: readonly Estimate[],
   today: Date
 ): string => {
   const months = new Set(templateMonths(lookBackMonths, today));
-  const byItem = new Map<
-    string,
-    { code: string; name: string; values: Map<Month, number> }
-  >();
+  // By code: the template names items by code, and the list and the
+  // estimates meet on it
+  const byCode = new Map<string, { name: string; values: Map<Month, number> }>(
+    items.map(item => [item.code, { name: item.name, values: new Map() }])
+  );
   for (const estimate of estimates) {
     const month = monthOfPeriod(estimate.periodStart, estimate.periodEnd);
     if (!month) continue;
     months.add(month);
-    const item = byItem.get(estimate.itemId) ?? {
-      code: estimate.item.code,
+    const item = byCode.get(estimate.item.code) ?? {
       name: estimate.item.name,
       values: new Map(),
     };
     item.values.set(month, estimate.quantity);
-    byItem.set(estimate.itemId, item);
+    byCode.set(estimate.item.code, item);
   }
   const columns = [...months].sort().reverse();
-  const rows = [...byItem.values()]
-    .sort((a, b) => a.code.localeCompare(b.code))
-    .map(item => [
-      item.code,
-      item.name,
-      ...columns.map(month => item.values.get(month) ?? ''),
-    ]);
+  const rows = [...byCode].map(([code, item]) => [
+    code,
+    item.name,
+    ...columns.map(month => item.values.get(month) ?? ''),
+  ]);
   return toCsv([t('label.code'), t('label.name'), ...columns], rows);
 };
 
@@ -142,8 +144,20 @@ export interface EstimateImportRow {
   warnings: string[];
 }
 
+/** A row with a code and every month blank: its item is to have none. */
+export interface BlankEstimateRow {
+  lineNumber: number;
+  itemCode: string;
+  itemName: string;
+}
+
 export type ParsedEstimateFile =
-  | { kind: 'ok'; months: Month[]; rows: EstimateImportRow[] }
+  | {
+      kind: 'ok';
+      months: Month[];
+      rows: EstimateImportRow[];
+      blankRows: BlankEstimateRow[];
+    }
   | { kind: 'failed'; reason: ImportFileFailure };
 
 /*
@@ -151,8 +165,10 @@ export type ParsedEstimateFile =
  * as the template does (`Code`, `Name`, in the user's language). Under it the
  * first column is the item CODE and the second its NAME; every other column
  * headed by a month (`YYYY-MM`) is that month. Any other column is ignored. A
- * blank month cell is no estimate for that month; a row with every month blank
- * is skipped. A month headed twice is rejected wherever it's filled in, rather
+ * row sets its item's estimates to exactly what it holds: a blank month cell is
+ * no estimate for that month, and a row with every month blank (`blankRows`)
+ * leaves the item none. A row with no code and nothing filled in is skipped.
+ * A month headed twice is rejected wherever it's filled in, rather
  * than one column silently winning.
  */
 export const parseEstimateFile = (
@@ -175,15 +191,26 @@ export const parseEstimateFile = (
   );
 
   const rows: EstimateImportRow[] = [];
+  const blankRows: BlankEstimateRow[] = [];
   table.slice(headerIndex + 1).forEach((cells, offset) => {
     const filled = monthColumns.filter(
       ({ index }) => (cells[index] ?? '').trim() !== ''
     );
     const itemCode = (cells[0] ?? '').trim();
-    if (!itemCode && filled.length === 0) return;
+    const lineNumber = headerIndex + offset + 2;
+    if (filled.length === 0) {
+      if (itemCode) {
+        blankRows.push({
+          lineNumber,
+          itemCode,
+          itemName: (cells[1] ?? '').trim(),
+        });
+      }
+      return;
+    }
 
     const row: EstimateImportRow = {
-      lineNumber: headerIndex + offset + 2,
+      lineNumber,
       itemCode,
       itemName: (cells[1] ?? '').trim(),
       quantities: {},
@@ -214,8 +241,10 @@ export const parseEstimateFile = (
     rows.push(row);
   });
 
-  if (rows.length === 0) return { kind: 'failed', reason: 'no-rows' };
-  return { kind: 'ok', months, rows };
+  if (rows.length === 0 && blankRows.length === 0) {
+    return { kind: 'failed', reason: 'no-rows' };
+  }
+  return { kind: 'ok', months, rows, blankRows };
 };
 
 /** Where each wire line came from, so the server's answer lands on its row. */
@@ -242,11 +271,15 @@ export const buildLines = (
 
 /*
  * The server's verdict on a dry run, put onto the rows the lines came from.
- * Rows are copied, never edited in place: the review table keys on them.
+ * Rows are copied, never edited in place: the review table keys on them. A
+ * blank row whose item has estimates to remove joins the review, in file
+ * order, so nothing is removed unseen; the rest of the blank rows change
+ * nothing and stay out of it.
  */
 export const applyServerResult = (
   rows: readonly EstimateImportRow[],
   origins: readonly LineOrigin[],
+  blankRows: readonly BlankEstimateRow[],
   result: ReplaceResult
 ): EstimateImportRow[] => {
   const added = new Map<
@@ -305,17 +338,36 @@ export const applyServerResult = (
     }
   }
 
-  return rows.map(row => {
-    const extra = added.get(row);
-    return extra
-      ? {
-          ...row,
-          errors: [...row.errors, ...extra.errors],
-          warnings: [...row.warnings, ...extra.warnings],
-        }
-      : row;
-  });
+  const removed =
+    result.__typename === 'ReplaceConsumptionEstimatesNode'
+      ? result.removedItems.flatMap(index => {
+          const blank = blankRows[index];
+          return blank ? [removedRow(blank)] : [];
+        })
+      : [];
+
+  return [
+    ...rows.map(row => {
+      const extra = added.get(row);
+      return extra
+        ? {
+            ...row,
+            errors: [...row.errors, ...extra.errors],
+            warnings: [...row.warnings, ...extra.warnings],
+          }
+        : row;
+    }),
+    ...removed,
+  ].sort((a, b) => a.lineNumber - b.lineNumber);
 };
+
+const removedRow = (blank: BlankEstimateRow): EstimateImportRow => ({
+  ...blank,
+  quantities: {},
+  cells: {},
+  errors: [],
+  warnings: [t('messages.consumption-estimates-removed')],
+});
 
 /*
  * The panel's table: one row per item, one column per month, newest first.

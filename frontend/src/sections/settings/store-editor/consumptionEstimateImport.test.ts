@@ -51,31 +51,42 @@ describe('months', () => {
 });
 
 describe('template', () => {
-  it('fills in the current estimates under their months', () => {
+  it('has a row per item, with the current estimates filled in', () => {
     const csv = buildTemplateCsv(
       2,
+      [
+        { code: 'B', name: 'Item B' },
+        { code: 'C', name: 'Item C' },
+        { code: 'A', name: 'Item A' },
+      ],
       [
         estimate('B', '2026-09-01', '2026-09-30', 30),
         estimate('A', '2026-10-01', '2026-10-31', 310),
         // Older than the look-back: still gets its column
         estimate('A', '2026-07-01', '2026-07-31', 62),
+        // No longer visible in the store: still gets its row, at the end
+        estimate('D', '2026-10-01', '2026-10-31', 5),
       ],
       TODAY
     );
     expect(csv.split('\r\n')).toEqual([
       'label.code,label.name,2026-10,2026-09,2026-07',
-      'A,Item A,310,,62',
       'B,Item B,,30,',
+      'C,Item C,,,',
+      'A,Item A,310,,62',
+      'D,Item D,5,,',
     ]);
   });
 });
 
 describe('parsing a file', () => {
-  it('reads code, name and month columns, skipping blank cells', () => {
+  it('reads code, name and month columns, skipping blank cells and rows', () => {
     const parsed = parseEstimateFile(
       [
         'label.code,label.name,2026-10,2026-09,notes',
         'A,Item A,310,300,ignored',
+        // A template row left blank
+        'Z,Item Z,,,',
         'B,Item B,,30,',
         ',,,,',
       ].join('\n'),
@@ -88,7 +99,11 @@ describe('parsing a file', () => {
       parsed.rows.map(row => [row.lineNumber, row.itemCode, row.quantities])
     ).toEqual([
       [2, 'A', { '2026-10': 310, '2026-09': 300 }],
-      [3, 'B', { '2026-09': 30 }],
+      [4, 'B', { '2026-09': 30 }],
+    ]);
+    // The blank template row leaves its item no estimates
+    expect(parsed.blankRows).toEqual([
+      { lineNumber: 3, itemCode: 'Z', itemName: 'Item Z' },
     ]);
     expect(parsed.rows.every(row => row.errors.length === 0)).toBe(true);
 
@@ -171,18 +186,26 @@ describe('parsing a file', () => {
 describe("the server's verdict", () => {
   const parse = () => {
     const parsed = parseEstimateFile(
-      ['label.code,label.name,2026-10,2026-09', 'A,Item A,1,2', 'X,,3,4'].join(
-        '\n'
-      ),
+      [
+        'label.code,label.name,2026-10,2026-09',
+        'A,Item A,1,2',
+        'B,Item B,,',
+        'X,,3,4',
+        'C,Item C,,',
+      ].join('\n'),
       TODAY
     );
     if (parsed.kind !== 'ok') throw new Error('expected rows');
-    return { rows: parsed.rows, ...buildLines(parsed.rows) };
+    return {
+      rows: parsed.rows,
+      blankRows: parsed.blankRows,
+      ...buildLines(parsed.rows),
+    };
   };
 
   it('puts line errors on their rows, an unknown code once', () => {
-    const { rows, origins } = parse();
-    const reviewed = applyServerResult(rows, origins, {
+    const { rows, origins, blankRows } = parse();
+    const reviewed = applyServerResult(rows, origins, blankRows, {
       __typename: 'ConsumptionEstimateLinesError',
       errors: [
         { line: 2, problem: 'ITEM_NOT_FOUND', otherLine: null },
@@ -199,14 +222,33 @@ describe("the server's verdict", () => {
   });
 
   it('warns about months that already have recorded consumption', () => {
-    const { rows, origins } = parse();
-    const reviewed = applyServerResult(rows, origins, {
+    const { rows, origins, blankRows } = parse();
+    const reviewed = applyServerResult(rows, origins, blankRows, {
       __typename: 'ReplaceConsumptionEstimatesNode',
       overlaps: [{ line: 0, actualQuantity: 40 }],
+      removedItems: [],
     });
     expect(reviewed.map(row => row.warnings)).toEqual([
       ['messages.consumption-estimate-overlaps-actual'],
       [],
+    ]);
+  });
+
+  it('adds the blank rows whose estimates are removed, in file order', () => {
+    const { rows, origins, blankRows } = parse();
+    expect(blankRows.map(row => row.itemCode)).toEqual(['B', 'C']);
+    const reviewed = applyServerResult(rows, origins, blankRows, {
+      __typename: 'ReplaceConsumptionEstimatesNode',
+      overlaps: [],
+      // C had no estimates, so only B's are removed
+      removedItems: [0],
+    });
+    expect(
+      reviewed.map(row => [row.lineNumber, row.itemCode, row.warnings])
+    ).toEqual([
+      [2, 'A', []],
+      [3, 'B', ['messages.consumption-estimates-removed']],
+      [4, 'X', []],
     ]);
   });
 });

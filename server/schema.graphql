@@ -1578,12 +1578,22 @@ type ConsumptionEstimateNode {
 	quantity: Float!
 }
 
+type ConsumptionEstimateTemplateItemNode {
+	code: String!
+	name: String!
+}
+
 type ConsumptionEstimatesNode {
 	estimates: [ConsumptionEstimateNode!]!
 	"""
 	The store's AMC look-back period: how many months of estimates count
 	"""
 	amcLookBackMonths: Float!
+	"""
+	The active stock items visible in the store, by name: the rows of a blank
+	upload template. Only resolved when asked for, as there can be thousands.
+	"""
+	templateItems: [ConsumptionEstimateTemplateItemNode!]!
 }
 
 type ConsumptionHistoryConnector {
@@ -8753,6 +8763,12 @@ input ReplaceConsumptionEstimatesInput {
 	"""
 	lines: [ConsumptionEstimateLineInput!]!
 	"""
+	Items (by id or code) named with no periods, e.g. a blank row in the
+	file: their estimates are removed. One with no estimates, or that matches
+	no item, is ignored.
+	"""
+	clearedItems: [String!]
+	"""
 	Check the lines and report what would be saved, without saving
 	"""
 	dryRun: Boolean
@@ -8761,6 +8777,10 @@ input ReplaceConsumptionEstimatesInput {
 type ReplaceConsumptionEstimatesNode {
 	estimates: [ConsumptionEstimateNode!]!
 	overlaps: [ActualConsumptionOverlapNode!]!
+	"""
+	Indexes into `clearedItems` of the items whose estimates are removed
+	"""
+	removedItems: [Int!]!
 }
 
 union ReplaceConsumptionEstimatesResponse = ReplaceConsumptionEstimatesNode | ConsumptionEstimateLinesError

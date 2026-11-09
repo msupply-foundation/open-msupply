@@ -19,10 +19,25 @@ query consumptionEstimates($storeId: String!, $forStoreId: String!) {
   }
 }
 
-# Gives each item named exactly the periods sent for it; items not named are
-# left alone, and unchanged periods aren't rewritten. `dryRun` checks the lines
-# and reports which already have real consumption, without saving. A line
-# problem saves nothing.
+# The rows of a blank upload template: the active stock items visible in the
+# store being edited. Fetched only when the template is downloaded.
+query consumptionEstimateTemplateItems(
+  $storeId: String!
+  $forStoreId: String!
+) {
+  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {
+    templateItems {
+      code
+      name
+    }
+  }
+}
+
+# Gives each item named exactly the periods sent for it, and each item in
+# `clearedItems` none; items not named are left alone, and unchanged periods
+# aren't rewritten. `removedItems` are the cleared items that had estimates.
+# `dryRun` checks the lines and reports which already have real consumption,
+# without saving. A line problem saves nothing.
 mutation replaceConsumptionEstimates(
   $storeId: String!
   $input: ReplaceConsumptionEstimatesInput!
@@ -36,6 +51,7 @@ mutation replaceConsumptionEstimates(
             line
             actualQuantity
           }
+          removedItems
         }
         ... on ConsumptionEstimateLinesError {
           errors {

@@ -18,6 +18,7 @@ import { readCsvFile } from '@/domain/reportFiles';
 import { CSV_ACCEPT, isCsvFileName } from '@/domain/csvImport';
 import {
   ClearConsumptionEstimates,
+  ConsumptionEstimateTemplateItems,
   ConsumptionEstimates,
   ReplaceConsumptionEstimates,
 } from './consumptionEstimates.generated';
@@ -59,11 +60,14 @@ export const ConsumptionEstimatesPanel: Component<{
     months: Month[];
     rows: EstimateImportRow[];
     lines: ReturnType<typeof buildLines>;
+    /** The codes of the rows with every month blank. */
+    clearedItems: string[];
   }>();
   const [uploadError, setUploadError] = createSignal<string>();
   const [saving, setSaving] = createSignal(false);
   const [saveFailed, setSaveFailed] = createSignal(false);
   const [confirmClear, setConfirmClear] = createSignal(false);
+  const [downloading, setDownloading] = createSignal(false);
 
   const [data, { refetch }] = createResource(
     () =>
@@ -88,12 +92,26 @@ export const ConsumptionEstimatesPanel: Component<{
   const table = () => pivotEstimates(current()?.estimates ?? []);
 
   // Only offered once the estimates have loaded: a template built before
-  // then would leave out the months and values the store already has
+  // then would leave out the months and values the store already has. The
+  // item rows are fetched here, not with the estimates: there can be
+  // thousands, and only a download needs them.
   const downloadTemplate = async () => {
     const loaded = current();
     if (!loaded) return;
+    setDownloading(true);
+    const items = await graphqlFetch(
+      ConsumptionEstimateTemplateItems,
+      { storeId: props.storeId, forStoreId: props.forStoreId },
+      { background: true }
+    );
+    setDownloading(false);
+    if (items.kind !== 'success') {
+      setUploadError(t('error.problem-loading-consumption-estimates'));
+      return;
+    }
     const csv = buildTemplateCsv(
       loaded.amcLookBackMonths,
+      items.data.consumptionEstimates.templateItems,
       loaded.estimates,
       new Date()
     );
@@ -105,13 +123,14 @@ export const ConsumptionEstimatesPanel: Component<{
 
   const replace = (
     lines: ReturnType<typeof buildLines>['lines'],
+    clearedItems: string[],
     dryRun: boolean
   ) =>
     graphqlFetch(
       ReplaceConsumptionEstimates,
       {
         storeId: props.storeId,
-        input: { forStoreId: props.forStoreId, lines, dryRun },
+        input: { forStoreId: props.forStoreId, lines, clearedItems, dryRun },
       },
       { background: true, returnGraphqlErrors: true }
     );
@@ -132,13 +151,15 @@ export const ConsumptionEstimatesPanel: Component<{
       }
       // The server checks the rows that passed our own checks, so every
       // problem in the file shows at once. Nothing can be saved while any row
-      // has an error, so these are also the lines a save sends.
+      // has an error, so these are also the lines a save sends. It also says
+      // which blank rows' items have estimates to remove.
       const lines = buildLines(
         parsed.rows.filter(row => row.errors.length === 0)
       );
+      const clearedItems = parsed.blankRows.map(row => row.itemCode);
       let rows = parsed.rows;
-      if (lines.lines.length > 0) {
-        const result = await replace(lines.lines, true);
+      if (lines.lines.length > 0 || clearedItems.length > 0) {
+        const result = await replace(lines.lines, clearedItems, true);
         if (result.kind !== 'success') {
           return setUploadError(
             t('messages.upload-error', { error: t('error.problem-saving') })
@@ -147,19 +168,23 @@ export const ConsumptionEstimatesPanel: Component<{
         rows = applyServerResult(
           rows,
           lines.origins,
+          parsed.blankRows,
           result.data.centralServer.preferences.replaceConsumptionEstimates
         );
       }
-      setReview({ months: parsed.months, rows, lines });
+      setReview({ months: parsed.months, rows, lines, clearedItems });
     } catch (error) {
       setUploadError(t('messages.upload-error', { error: String(error) }));
     }
   };
 
-  const save = async (lines: ReturnType<typeof buildLines>['lines']) => {
+  const save = async (
+    lines: ReturnType<typeof buildLines>['lines'],
+    clearedItems: string[]
+  ) => {
     setSaving(true);
     setSaveFailed(false);
-    const result = await replace(lines, false);
+    const result = await replace(lines, clearedItems, false);
     setSaving(false);
     if (
       result.kind !== 'success' ||
@@ -253,9 +278,7 @@ export const ConsumptionEstimatesPanel: Component<{
 
   return (
     <Stack data-testid="consumption-estimates">
-      <Text variant="subtitle">
-        {t('messages.consumption-estimates-description')}
-      </Text>
+      <Text>{t('messages.consumption-estimates-description')}</Text>
 
       <Show when={uploadError()}>
         {message => (
@@ -280,36 +303,35 @@ export const ConsumptionEstimatesPanel: Component<{
         fallback={
           <>
             <Show when={props.editable && current()}>
-              <Stack gap="sm">
-                <UploadZone
-                  accept={CSV_ACCEPT}
-                  multiple={false}
-                  onFiles={files => {
-                    const file = files[0];
-                    if (file) void onFile(file);
-                  }}
-                  onRejected={() => setUploadError(t('messages.invalid-file'))}
-                />
-                <HStack gap="sm">
+              <HStack gap="sm" justify="end">
+                <Button
+                  variant="secondary"
+                  icon={<DownloadIcon />}
+                  loading={downloading()}
+                  data-testid="consumption-estimates-download-template"
+                  onClick={() => void downloadTemplate()}
+                >
+                  {t('button.download-consumption-estimates-template')}
+                </Button>
+                <Show when={(current()?.estimates.length ?? 0) > 0}>
                   <Button
-                    variant="ghost"
-                    icon={<DownloadIcon />}
-                    data-testid="consumption-estimates-download-template"
-                    onClick={() => void downloadTemplate()}
+                    variant="secondary"
+                    data-testid="consumption-estimates-clear"
+                    onClick={() => setConfirmClear(true)}
                   >
-                    {t('button.download-consumption-estimates-template')}
+                    {t('button.clear-consumption-estimates')}
                   </Button>
-                  <Show when={(current()?.estimates.length ?? 0) > 0}>
-                    <Button
-                      variant="ghost"
-                      data-testid="consumption-estimates-clear"
-                      onClick={() => setConfirmClear(true)}
-                    >
-                      {t('button.clear-consumption-estimates')}
-                    </Button>
-                  </Show>
-                </HStack>
-              </Stack>
+                </Show>
+              </HStack>
+              <UploadZone
+                accept={CSV_ACCEPT}
+                multiple={false}
+                onFiles={files => {
+                  const file = files[0];
+                  if (file) void onFile(file);
+                }}
+                onRejected={() => setUploadError(t('messages.invalid-file'))}
+              />
             </Show>
             <DataTable
               columns={currentColumns()}
@@ -373,7 +395,9 @@ export const ConsumptionEstimatesPanel: Component<{
                 loading={saving()}
                 disabled={reviewHasErrors() || saving()}
                 data-testid="consumption-estimates-save"
-                onClick={() => void save(pending().lines.lines)}
+                onClick={() =>
+                  void save(pending().lines.lines, pending().clearedItems)
+                }
               >
                 {t('button.replace-consumption-estimates')}
               </Button>

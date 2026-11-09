@@ -8,7 +8,8 @@
 //!   share of the quantity, so a window covering part of a period counts about the
 //!   right part of it without the view having to split periods by day.
 //! - Saving replaces the estimates of the items it names: each item ends up with
-//!   exactly the periods given for it. Items it doesn't name are left alone, and
+//!   exactly the periods given for it, and an item named with none (a blank row
+//!   in the file) ends up with none. Items it doesn't name are left alone, and
 //!   periods that haven't changed aren't rewritten, so re-uploading a file writes
 //!   (and syncs) only what changed. Clearing removes all of a store's estimates.
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -17,7 +18,8 @@ use chrono::{Duration, NaiveDate};
 use repository::{
     ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateSource,
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, ItemFilter, ItemRepository,
-    RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
+    ItemRow, ItemSort, ItemSortField, ItemType, Pagination, RepositoryError, StorageConnection,
+    StoreRowRepository, StringFilter,
 };
 use util::{date_now, uuid::uuid};
 
@@ -66,6 +68,29 @@ pub fn get_consumption_estimates(
         .collect())
 }
 
+/// The active stock items visible in a store, by name: the rows of a blank upload
+/// template
+pub fn get_template_items(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<Vec<ItemRow>, RepositoryError> {
+    let items = ItemRepository::new(connection).query(
+        Pagination::all(),
+        Some(
+            ItemFilter::new()
+                .is_visible(true)
+                .is_active(true)
+                .r#type(ItemType::Stock.equal_to()),
+        ),
+        Some(ItemSort {
+            key: ItemSortField::Name,
+            desc: None,
+        }),
+        Some(store_id.to_string()),
+    )?;
+    Ok(items.into_iter().map(|item| item.item_row).collect())
+}
+
 /// The pieces of a period add back up to its quantity only to within floating
 /// point error (872.58 can come back as 872.5800000000002), so a sum of pieces
 /// is rounded well below anything a person enters
@@ -90,6 +115,10 @@ pub struct ReplaceConsumptionEstimates {
     pub store_id: String,
     pub source: ConsumptionEstimateSource,
     pub lines: Vec<ConsumptionEstimateInput>,
+    /// Items (by id or code) named with no periods, whose estimates are removed.
+    /// One that matches no item, or has no estimates, is ignored: a blank
+    /// template row changes nothing.
+    pub cleared_items: Vec<String>,
     /// Check the lines and report what would be saved, without saving
     pub dry_run: bool,
 }
@@ -127,6 +156,8 @@ pub struct ActualConsumptionOverlap {
 pub struct ReplaceConsumptionEstimatesResult {
     pub estimates: Vec<ConsumptionEstimate>,
     pub overlaps: Vec<ActualConsumptionOverlap>,
+    /// Indexes into `cleared_items` of the items whose estimates are removed
+    pub removed: Vec<usize>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -156,26 +187,61 @@ pub fn replace_consumption_estimates(
                 return Err(ReplaceConsumptionEstimatesError::StoreDoesNotExist);
             }
 
-            let estimates = validate_lines(connection, &input.lines)?;
+            let item_ids = find_item_ids(
+                connection,
+                input
+                    .lines
+                    .iter()
+                    .map(|line| line.item_id_or_code.as_str())
+                    .chain(input.cleared_items.iter().map(String::as_str)),
+            )?;
+            let estimates = validate_lines(&item_ids, &input.lines)?;
             let overlaps = find_actual_consumption(connection, &input.store_id, &estimates)?;
 
+            // A cleared item that also has lines keeps them
+            let with_lines: HashSet<&str> = estimates.iter().map(|e| e.item_id.as_str()).collect();
+            let cleared: Vec<(usize, &str)> = input
+                .cleared_items
+                .iter()
+                .enumerate()
+                .filter_map(|(index, key)| Some((index, item_ids.get(key.trim())?.as_str())))
+                .filter(|(_, item_id)| !with_lines.contains(item_id))
+                .collect();
+            let saved_items: HashSet<String> = ConsumptionEstimateRowRepository::new(connection)
+                .find_many_by_store_and_source(&input.store_id, &input.source)?
+                .into_iter()
+                .map(|row| row.item_id)
+                .collect();
+            let removed = cleared
+                .iter()
+                .filter(|(_, item_id)| saved_items.contains(*item_id))
+                .map(|(index, _)| *index)
+                .collect();
+
             if !input.dry_run {
-                save_changes(connection, &input.store_id, &input.source, &estimates)?;
+                let cleared_ids: Vec<&str> = cleared.iter().map(|(_, id)| *id).collect();
+                save_changes(
+                    connection,
+                    &input.store_id,
+                    &input.source,
+                    &estimates,
+                    &cleared_ids,
+                )?;
             }
 
             Ok(ReplaceConsumptionEstimatesResult {
                 estimates,
                 overlaps,
+                removed,
             })
         })
         .map_err(|error| error.to_inner_error())
 }
 
 fn validate_lines(
-    connection: &StorageConnection,
+    item_ids: &HashMap<String, String>,
     lines: &[ConsumptionEstimateInput],
 ) -> Result<Vec<ConsumptionEstimate>, ReplaceConsumptionEstimatesError> {
-    let item_ids = find_item_ids(connection, lines)?;
     let today = date_now();
     let mut errors = Vec::new();
     let mut estimates = Vec::new();
@@ -230,16 +296,18 @@ fn validate_lines(
     Ok(estimates)
 }
 
-/// Each line's item id or code → the item's id, found a batch at a time. An id
+/// Each item id or code → the item's id, found a batch at a time. An id
 /// wins over a code. A blank one matches nothing: plenty of items have no code.
-fn find_item_ids(
+/// A spreadsheet reads a code like `030063` as a number and saves it back as
+/// `30063`, so a numeric code that matches nothing as written is matched
+/// ignoring leading zeros, when only one item's code fits.
+fn find_item_ids<'a>(
     connection: &StorageConnection,
-    lines: &[ConsumptionEstimateInput],
+    keys: impl Iterator<Item = &'a str>,
 ) -> Result<HashMap<String, String>, RepositoryError> {
     let repo = ItemRepository::new(connection);
-    let keys: Vec<String> = lines
-        .iter()
-        .map(|line| line.item_id_or_code.trim().to_string())
+    let keys: Vec<String> = keys
+        .map(|key| key.trim().to_string())
         .filter(|key| !key.is_empty())
         .collect::<HashSet<_>>()
         .into_iter()
@@ -256,7 +324,45 @@ fn find_item_ids(
             item_ids.insert(item.item_row.id.clone(), item.item_row.id);
         }
     }
+
+    let unmatched: HashSet<&str> = keys
+        .iter()
+        .filter(|key| !item_ids.contains_key(*key) && is_numeric_code(key))
+        .map(|key| without_leading_zeros(key))
+        .collect();
+    if !unmatched.is_empty() {
+        // Every item's code is read once rather than a query per code: a whole
+        // file of codes can lose its zeros
+        let mut by_digits: HashMap<&str, Vec<&str>> = HashMap::new();
+        let items = repo.query_by_filter(ItemFilter::new(), None)?;
+        for item in &items {
+            let code = item.item_row.code.as_str();
+            if !is_numeric_code(code) {
+                continue;
+            }
+            let digits = without_leading_zeros(code);
+            if unmatched.contains(digits) {
+                by_digits.entry(digits).or_default().push(&item.item_row.id);
+            }
+        }
+        for key in &keys {
+            if item_ids.contains_key(key) || !is_numeric_code(key) {
+                continue;
+            }
+            if let Some([id]) = by_digits.get(without_leading_zeros(key)).map(Vec::as_slice) {
+                item_ids.insert(key.clone(), id.to_string());
+            }
+        }
+    }
     Ok(item_ids)
+}
+
+fn is_numeric_code(code: &str) -> bool {
+    !code.is_empty() && code.bytes().all(|byte| byte.is_ascii_digit())
+}
+
+fn without_leading_zeros(code: &str) -> &str {
+    code.trim_start_matches('0')
 }
 
 fn find_actual_consumption(
@@ -314,18 +420,23 @@ fn find_actual_consumption(
         .collect())
 }
 
-/// Gives each item named in `estimates` exactly the periods given for it,
-/// writing only what changed: a period already saved with the same quantity is
-/// left as it is, a changed one is rewritten, and one the item no longer has is
-/// removed. Items not named are left alone.
+/// Gives each item named in `estimates` exactly the periods given for it, and
+/// each of `cleared_item_ids` none, writing only what changed: a period already
+/// saved with the same quantity is left as it is, a changed one is rewritten,
+/// and one the item no longer has is removed. Items not named are left alone.
 fn save_changes(
     connection: &StorageConnection,
     store_id: &str,
     source: &ConsumptionEstimateSource,
     estimates: &[ConsumptionEstimate],
+    cleared_item_ids: &[&str],
 ) -> Result<(), RepositoryError> {
     let repo = ConsumptionEstimateRowRepository::new(connection);
-    let items: HashSet<&str> = estimates.iter().map(|e| e.item_id.as_str()).collect();
+    let items: HashSet<&str> = estimates
+        .iter()
+        .map(|e| e.item_id.as_str())
+        .chain(cleared_item_ids.iter().copied())
+        .collect();
 
     // What's saved for those items, by period
     let mut saved: HashMap<(String, NaiveDate, NaiveDate), (f64, Vec<String>)> = HashMap::new();

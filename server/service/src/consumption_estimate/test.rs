@@ -1,9 +1,10 @@
 use chrono::{Duration, NaiveDate};
 use repository::{
     ChangelogRepository, ConsumptionEstimateSource, ConsumptionFilter, ConsumptionRepository,
-    EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+    EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
     mock::{
-        MockData, MockDataInserts, mock_item_a, mock_item_b, mock_store_a, mock_user_account_a,
+        MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_store_a,
+        mock_user_account_a,
     },
     test_db::{setup_all, setup_all_with_data},
 };
@@ -30,6 +31,7 @@ fn replace(lines: Vec<ConsumptionEstimateInput>, dry_run: bool) -> ReplaceConsum
         store_id: mock_store_a().id,
         source: ConsumptionEstimateSource::InitialUpload,
         lines,
+        cleared_items: vec![],
         dry_run,
     }
 }
@@ -413,6 +415,106 @@ async fn overlap_with_actual_consumption_is_reported() {
         vec![ActualConsumptionOverlap {
             line: 1,
             actual_quantity: 40.0
+        }]
+    );
+}
+
+#[actix_rt::test]
+async fn a_code_that_lost_its_leading_zeros_still_matches() {
+    let item_with_zeros = ItemRow {
+        id: "item_with_zeros".to_string(),
+        code: "030063".to_string(),
+        ..Default::default()
+    };
+    // These two both read as 77 without their zeros, so neither is picked
+    let ambiguous_a = ItemRow {
+        id: "ambiguous_a".to_string(),
+        code: "077".to_string(),
+        ..Default::default()
+    };
+    let ambiguous_b = ItemRow {
+        id: "ambiguous_b".to_string(),
+        code: "0077".to_string(),
+        ..Default::default()
+    };
+    let (_, connection, _, _) = setup_all_with_data(
+        "a_code_that_lost_its_leading_zeros_still_matches",
+        MockDataInserts::none().stores().items(),
+        MockData {
+            items: vec![item_with_zeros, ambiguous_a, ambiguous_b],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let found = find_item_ids(&connection, ["30063", "030063", "77", "0077"].into_iter()).unwrap();
+    assert_eq!(
+        found.get("30063").map(String::as_str),
+        Some("item_with_zeros")
+    );
+    assert_eq!(
+        found.get("030063").map(String::as_str),
+        Some("item_with_zeros")
+    );
+    assert_eq!(found.get("77"), None);
+    // Written exactly, an ambiguous code is still found
+    assert_eq!(found.get("0077").map(String::as_str), Some("ambiguous_b"));
+}
+
+#[actix_rt::test]
+async fn an_item_named_with_no_periods_loses_its_estimates() {
+    let (_, connection, connection_manager, _) =
+        setup_all("consumption_estimate_cleared_items", MockDataInserts::all()).await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider
+        .context(mock_store_a().id, mock_user_account_a().id)
+        .unwrap();
+    let source = ConsumptionEstimateSource::InitialUpload;
+    let september = (date(2026, 9, 1), date(2026, 9, 30));
+
+    replace_consumption_estimates(
+        &ctx,
+        replace(
+            vec![
+                line(&mock_item_a().code, september.0, september.1, 30.0),
+                line(&mock_item_b().code, september.0, september.1, 20.0),
+            ],
+            false,
+        ),
+    )
+    .unwrap();
+
+    // Item a is cleared; the others named have nothing to remove; item b,
+    // cleared but also given a line, keeps the line
+    let mut input = replace(
+        vec![line(&mock_item_b().code, september.0, september.1, 25.0)],
+        true,
+    );
+    input.cleared_items = vec![
+        "no_such_item".to_string(),
+        mock_item_a().code,
+        mock_item_c().code,
+        mock_item_b().code,
+    ];
+    let result = replace_consumption_estimates(&ctx, input.clone()).unwrap();
+    assert_eq!(result.removed, vec![1]);
+    // A dry run removes nothing
+    assert_eq!(
+        get_consumption_estimates(&connection, &mock_store_a().id, &source)
+            .unwrap()
+            .len(),
+        2
+    );
+
+    input.dry_run = false;
+    replace_consumption_estimates(&ctx, input).unwrap();
+    assert_eq!(
+        get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
+        vec![ConsumptionEstimate {
+            item_id: mock_item_b().id,
+            period_start: september.0,
+            period_end: september.1,
+            quantity: 25.0,
         }]
     );
 }
