@@ -34,7 +34,7 @@
  * Compares the working tree, so it sees uncommitted changes too.
  */
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inRepoPluginDirs } from './pluginDirs.mjs';
@@ -183,7 +183,8 @@ const bump = plugin => {
     bumped.push(`${v.path} ${v.head} → ${next}`);
   }
   const helpers = join(ROOT, 'frontend/e2e/helpers');
-  for (const name of plugin.code ? readdirSync(helpers) : []) {
+  const pinned = plugin.code && existsSync(helpers);
+  for (const name of pinned ? readdirSync(helpers) : []) {
     const path = join(helpers, name);
     const text = readFileSync(path, 'utf8');
     if (!text.includes(`PLUGIN_CODE = '${plugin.code}'`)) continue;
