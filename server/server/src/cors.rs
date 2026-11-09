@@ -3,7 +3,10 @@ use actix_web::{
     Error, HttpResponse,
     body::{EitherBody, MessageBody},
     dev::{RequestHead, Service, ServiceRequest, ServiceResponse, Transform},
-    http::header::{self, HeaderValue},
+    http::{
+        Uri,
+        header::{self, HeaderValue},
+    },
     middleware::{Next, from_fn},
 };
 use log::warn;
@@ -88,6 +91,31 @@ where
     })
 }
 
+/// Logs a warning for each `server.cors_origins` entry that isn't an origin. Such an entry is
+/// compared byte for byte with a browser's `Origin` header, so a typo (a trailing slash, a missing
+/// scheme) quietly allows nothing.
+pub fn warn_on_invalid_cors_origins(config_settings: &Settings) {
+    for entry in &config_settings.server.cors_origins {
+        if !is_valid_origin(entry) {
+            warn!(
+                "server.cors_origins entry {:?} is not a valid origin: expected scheme://host[:port], with no path or trailing slash",
+                entry
+            );
+        }
+    }
+}
+
+/// An origin as a browser sends it in the `Origin` header: `scheme://host[:port]` and nothing more.
+fn is_valid_origin(entry: &str) -> bool {
+    let Ok(uri) = entry.parse::<Uri>() else {
+        return false;
+    };
+    match (uri.scheme_str(), uri.authority()) {
+        (Some(scheme), Some(authority)) => format!("{scheme}://{authority}") == entry,
+        _ => false,
+    }
+}
+
 /// Whether a browser page at `origin` may make credentialed requests to this server. The one
 /// rule shared by the HTTP CORS policy and the WebSocket upgrade check, so the two can't drift
 /// apart (#1644).
@@ -124,7 +152,7 @@ fn is_websocket_upgrade(req: &RequestHead) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::cors_policy_for;
+    use super::{cors_policy_for, is_valid_origin};
     use crate::middleware::wrap_main_server;
     use actix_web::{
         App, Error, HttpRequest, HttpResponse,
@@ -331,5 +359,33 @@ mod tests {
             allowed.headers().get(header::ACCESS_CONTROL_ALLOW_ORIGIN),
             Some(&header::HeaderValue::from_static(LISTED_ORIGIN))
         );
+    }
+
+    #[actix_web::test]
+    async fn cors_origins_entry_must_be_an_origin() {
+        for entry in [
+            "https://example.org",
+            "http://localhost:3003",
+            "http://192.168.1.10:8000",
+            "https://[::1]:8000",
+        ] {
+            assert!(is_valid_origin(entry), "{entry:?} should be an origin");
+        }
+
+        for entry in [
+            // A browser's Origin has no trailing slash or path
+            "https://example.org/",
+            "https://example.org/omsupply",
+            "https://example.org?a=b",
+            // No scheme
+            "example.org",
+            "localhost:3003",
+            // Browsers send the scheme in lower case
+            "HTTPS://example.org",
+            "",
+            "not an origin",
+        ] {
+            assert!(!is_valid_origin(entry), "{entry:?} should not be an origin");
+        }
     }
 }

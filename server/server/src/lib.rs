@@ -5,10 +5,10 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    custom_translations::config_custom_translations, middleware::central_server_only,
-    middleware::wrap_main_server, print::config_print, serve_frontend::config_serve_frontend,
-    static_files::config_static_files, support::config_support,
-    upload_fridge_tag::config_upload_fridge_tag,
+    cors::warn_on_invalid_cors_origins, custom_translations::config_custom_translations,
+    middleware::central_server_only, middleware::wrap_main_server, print::config_print,
+    serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use actix_cors::Cors;
@@ -321,6 +321,7 @@ pub async fn start_server(
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
+    warn_on_invalid_cors_origins(&settings);
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
