@@ -283,6 +283,24 @@ mod tests {
             Ok(())
         );
 
+        // Sync style: CentralForStore — as Remote: rows central sends for our own store are
+        // accepted, even post-initialisation (central refuses them from a site, see
+        // `on_central_refuses_user_permissions`).
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &UserPermission,
+                &site(),
+                false,
+                false,
+            ),
+            Ok(())
+        );
+
         // Sync style: Transfer — transfer_store must be active.
         // (Requisition's styles are RemoteOwned+Transfer; the RemoteOwned arm rejects
         // with NoStoreId, but Transfer accepts.)
@@ -565,22 +583,6 @@ mod tests {
                 }
             }
         }
-
-        // Remotes still accept the permission rows central sends for their stores.
-        assert_eq!(
-            validate_on_remote(
-                &SyncBufferRow {
-                    store_id: Some("store_a".into()),
-                    source_site_id: 2,
-                    ..Default::default()
-                },
-                &UserPermission,
-                &site(),
-                false,
-                false,
-            ),
-            Ok(())
-        );
     }
 
     // On a multi-device site, non-multi-device tables are rejected by the gate; multi-device
