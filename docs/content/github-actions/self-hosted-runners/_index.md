@@ -227,13 +227,12 @@ flowchart LR
         open[":80<br/>open"]
     end
     gated --> dash[Dashboard]
-    gated -->|public pages| pub[Public half<br/>files only]
     gated -.->|once wildcard DNS exists| deps
     open --> deps[Deployments]
     dash <--> gh[(GitHub)]
 ```
 
-**The two doors.** Which one a request uses is decided by where it arrives, not by anything in the request: the edge only ever connects to `:8080`, and office/VPN machines reach `:80` directly. On `:8080`, Caddy asks the dashboard's `/auth/check` about every request first (`forward_auth`). The exceptions are the dashboard's own `/auth/*`, where sign-in starts, its `/api/config`, and [the public half](#the-launchpads-public-half), which goes to its own container and never reaches the dashboard. The bare domain must not resolve to the box on office/VPN DNS: `:80` would serve the dashboard over plain http, and sign-in breaks there. The proxy never looks at client addresses. If the edge is ever pointed at `:80`, the internet gets in without a sign-in.
+**The two doors.** Which one a request uses is decided by where it arrives, not by anything in the request: the edge only ever connects to `:8080`, and office/VPN machines reach `:80` directly. On `:8080`, Caddy asks the dashboard's `/auth/check` about every request first (`forward_auth`). The one exception is the dashboard's own `/auth/*`, where sign-in starts. Anyone without a sign-in wants [the public Launchpad](#the-public-launchpad), which isn't on the box. The bare domain must not resolve to the box on office/VPN DNS: `:80` would serve the dashboard over plain http, and sign-in breaks there. The proxy never looks at client addresses. If the edge is ever pointed at `:80`, the internet gets in without a sign-in.
 
 **What the dashboard holds.** Signing in goes through the GitHub App, and is refused unless that GitHub account can see the repository. Read access shows the page; write access adds the buttons. The GitHub token stays in the dashboard's memory and is never sent to the browser or written to disk. The client secret in `~/dashboard/.env` is the only credential on the box. Nothing calls GitHub while nobody has the page open.
 
@@ -248,7 +247,7 @@ flowchart LR
 **What happens when the dashboard is down or restarted:**
 
 - **Restarted** (every deploy that changes `.github/deploy/dashboard/`): sessions are only in memory, so everyone is signed out, on the dashboard and through the gated door, and signs in again.
-- **Down:** the gated door answers every request with an error, because there is nothing to answer `/auth/check` - except the public pages, which don't depend on the dashboard. The open door keeps working: deployments on the VPN don't depend on the dashboard.
+- **Down:** the gated door answers every request with an error, because there is nothing to answer `/auth/check`. The public Launchpad isn't affected. The open door keeps working: deployments on the VPN don't depend on the dashboard.
 - **GitHub down:** nobody can sign in, and the dashboard's GitHub details (commit subjects, "N behind", "deploying now") stop updating. What's running, and the state of each container, still come from `snapshot`.
 
 ### Reverse proxy
@@ -292,7 +291,7 @@ Deployments are plain HTTP on the VPN, which encrypts the hop already. What that
 
 #### The gate in front of every deployment
 
-Deployments are seeded with datasets whose logins are known, and a logged-in user can download a deployment's whole database — so the internet door lets nothing through without a GitHub sign-in. Caddy puts each request to the dashboard's `/auth/check` first (`forward_auth`). Let through unasked, on the dashboard's address only: its `/auth/*`, where sign-in starts; `/api/config`, which tells a signed-out page nobody is signed in; and [the Launchpad's public half](#the-launchpads-public-half).
+Deployments are seeded with datasets whose logins are known, and a logged-in user can download a deployment's whole database — so the internet door lets nothing through without a GitHub sign-in. Caddy puts each request to the dashboard's `/auth/check` first (`forward_auth`), and only the dashboard's own `/auth/*` is let through unasked.
 
 - **Who gets in:** anyone who can see this repository — the dashboard's own rule. Write access is still what the dashboard's buttons need.
 - **How:** signing in sets a second cookie, `oms_gate`, for the whole domain. It holds no token — a deployment runs some branch's code, so nothing sent to one may be worth stealing — and the proxy strips it before a request reaches a deployment. It ends when the dashboard session does: after at most 12 hours, on sign-out, or when the dashboard restarts.
@@ -300,14 +299,21 @@ Deployments are seeded with datasets whose logins are known, and a logged-in use
 - **No exception for sync:** sync credentials are in the seeded datasets, so they protect nothing. A remote site has to be in the office or on the VPN.
 - **If the dashboard is down**, every deployment is unreachable through the internet door. The open door does not depend on it.
 
-#### The Launchpad's public half
+#### The public Launchpad
 
-Signed out, anyone can open the Launchpad's Home, Downloads and Schema pages. Every other page asks for a sign-in, through a **Team sign in** button.
+The Home, Downloads and Schema pages are also published for anyone, as a static site on GitHub Pages. It isn't served from the box at all: `publish-launchpad.yaml` runs on the deploy lane, builds the site and pushes it to a public repo, and Pages serves that repo.
 
-- **Served by a different container:** `oms-dashboard-public` is Caddy serving plain files (`.github/deploy/dashboard/public.Caddyfile`). It holds no secret, has no docker socket and doesn't run `web.mjs`. The proxy's `launchpad_public` sends it the public page paths, `/assets/*` and `/public/*`, on both doors and without the gate.
-- **What it can serve is what is mounted into it:** `releases.json` from the `releases` container, and `<DEPLOY_BUNDLES_DIR>/public/schemas`. That directory is a copy of the schema store that names only releases, develop and main (what the public mirror carries) and sets their PR, deployment, commit and run fields to null. `publish-schema.mjs` rewrites it after every capture, and `docker-deploy-services.yaml` writes it once on each run, so it's never missing.
-- **Signed in**, Schema still reads the full store through `web.mjs`, with pull requests and branches.
-- **First rollout:** if the `public` container fails its health check on the run that adds it, there's no earlier image to roll back to. The Downloads page is then empty until it's fixed, because `web.mjs` no longer serves `/api/releases`.
+- **One codebase:** the site is the dashboard's own page (`.github/deploy/dashboard/ui`) built with `pnpm build:public`, which keeps only those three pages and reads its data from `/data` instead of `/api`. `ui/src/site.ts` says which build is running.
+- **What leaves the box:** `releases.json` (the same lookup as the `releases` container, run once) and the public copy of the schema store, which names only releases, develop and main and sets their PR, deployment, commit and run fields to null (`publicIndex` in `publish-schema.mjs`). Nothing else of the store is read.
+- **When:** after any workflow that publishes something it lists (tag releases, installers, APKs, tag clean-ups, schema captures, named deployments), and once a day. A run with nothing new pushes nothing. A Docker Hub error fails the run, so the site keeps its last good list.
+- **The public repo** holds only what the workflow pushes, and is overwritten on each push. Don't edit it by hand.
+
+**Setting it up**, once:
+
+1. Create the public repo, empty, and install the tmf-ci-bot App on it.
+2. Set the repository variables `LAUNCHPAD_PUBLIC_REPO` (`<owner>/<name>`) and `LAUNCHPAD_PUBLIC_DOMAIN` (e.g. `launchpad.msupply.foundation`). The workflow does nothing until the first is set, and fails without the second: the site only works at the root of a domain, not at `<owner>.github.io/<name>/`.
+3. Run `publish-launchpad.yaml` by hand. Then in the public repo's **Settings → Pages**, deploy from the `main` branch, root folder.
+4. Point a DNS `CNAME` for the domain at `<owner>.github.io`. Once Pages has checked it, tick **Enforce HTTPS**.
 
 #### Database schemas
 
@@ -316,7 +322,7 @@ The Schema page's schemas are captured per **image**, never from a deployment. A
 - **When:** after every deploy (`docker-deploy.yaml`, which never fails the deploy over it) and for releases (`publish-schema.yaml`, or **Add a release**).
 - **Once per image:** the store remembers which images it has captured, so a reseed, a restart or a second server on the same commit only files the schema under its name, without starting anything. A new image costs one throwaway server start: a minute or two on the box.
 - **Files:** each file is named by a hash of exactly what it holds. Two versions share a file only when their schemas are identical.
-- **Upgrading from schema 1:** an older store was captured from deployments. The first publish (or the services deploy) clears it, and develop and the PR previews come back as they next deploy. Dispatch `publish-schema.yaml` with the release tags you want listed, e.g. `v2.20.0 v3.00.00 v3.04.00`.
+- **Upgrading from schema 1:** an older store was captured from deployments. The first publish clears it, and develop and the PR previews come back as they next deploy. Dispatch `publish-schema.yaml` with the release tags you want listed, e.g. `v2.20.0 v3.00.00 v3.04.00`.
 
 There is no local HTTPS on the box any more: everything comes through the edge, which serves the real certificate. A box set up before this keeps the `oms-proxy_caddy-data` and `oms-proxy_caddy-config` volumes, which held the old internal CA — `docker volume rm` them, and anyone who trusted its root can remove it.
 
@@ -349,7 +355,7 @@ chmod 600 ~/dashboard/.env
 **3. Run `docker-deploy-services.yaml`**, then open `https://<DEPLOY_DOMAIN>`. Its old address, `https://dashboard.<DEPLOY_DOMAIN>`, redirects there. The same sign-in is the [gate in front of every deployment](#the-gate-in-front-of-every-deployment) on the internet door. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
 
 - **The proxy finds it by name**: the bare domain goes to the container `dashboard` on port 8000, on `oms-edge`.
-- **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases`, `oms-dashboard-public` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
+- **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
 - **Buttons that dispatch a workflow branch** before it merges: add `DISPATCH_REF=<branch>` to `~/dashboard/.env` and rerun the workflow. The buttons dispatch on `develop` otherwise.
 
 ### Plugin bundles
