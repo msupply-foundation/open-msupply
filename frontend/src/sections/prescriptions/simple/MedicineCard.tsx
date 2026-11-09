@@ -32,13 +32,17 @@ export const MedicineCardView = (props: {
       testId={`common-medicine-card-${props.card.item.id}`}
     >
       <div class={styles.meta}>
-        <span class={styles.unit}>{unit()}</span>
+        <span class={styles.unit} data-testid="common-medicine-unit">
+          {unit()}
+        </span>
         <Switch>
           <Match when={state() === 'out'}>
-            <Badge label={t('label.out-of-stock')} tone="error" />
+            <span data-testid="common-medicine-stock">
+              <Badge label={t('label.out-of-stock')} tone="error" />
+            </span>
           </Match>
           <Match when={state() === 'low'}>
-            <span class={styles.low}>
+            <span class={styles.low} data-testid="common-medicine-stock">
               <AlertTriangleIcon />
               {t('label.low-stock-left', {
                 quantity: roundedText(props.card.available),
@@ -54,6 +58,7 @@ export const MedicineCardView = (props: {
           {amount => (
             <Button
               variant="secondary"
+              data-testid="amount-button"
               disabled={state() === 'out'}
               aria-label={t('label.give-amount-of', {
                 quantity: roundedText(amount),
@@ -73,6 +78,7 @@ export const MedicineCardView = (props: {
             props.card.medicine.amounts.length > 0 ? styles.another : undefined
           }
           label={t('label.give-another-amount-of', { item: name() })}
+          data-testid="another-amount-button"
           disabled={state() === 'out'}
           onClick={() => props.onAskAmount(props.card)}
         />
