@@ -25,10 +25,10 @@ mod test {
     async fn migration_3_05_00() {
         use crate::migrations::*;
         use crate::test_db::*;
-        use v3_04_00::V3_04_00;
+        use v3_04_01::V3_04_01;
         use v3_05_00::V3_05_00;
 
-        let previous_version = V3_04_00.version();
+        let previous_version = V3_04_01.version();
         let version = V3_05_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {

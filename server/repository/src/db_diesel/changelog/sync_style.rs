@@ -52,7 +52,8 @@ impl Distribution {
                     ..
                 } = table.sync_style();
                 if let Some(sync_style_options) = &sync_style_options
-                    && sync_style_options != &transport
+                    && !((sync_style_options.is_v5 && transport.is_v5)
+                        || (sync_style_options.is_v6 && transport.is_v6))
                 {
                     return false;
                 }
@@ -91,7 +92,7 @@ impl ChangelogTableName {
             NameStoreJoin => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
             ItemStoreJoin => SyncStyle {
@@ -238,7 +239,7 @@ impl ChangelogTableName {
             SyncMessage => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Central, D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
 
@@ -399,19 +400,19 @@ impl ChangelogTableName {
             VaccineCourse => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseDose => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseItem => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseStoreConfig => SyncStyle {
@@ -464,8 +465,8 @@ impl ChangelogTableName {
             },
             // Legacy central sends its entries to v5/v6 sites itself. The v6 tag
             // carries the ones a form plugin owns, which open mSupply central writes
-            // on install, to those sites; tagging both would take it out of the v6
-            // pull. Only owned entries go, see `OmDocumentRegistryTranslation`.
+            // on install, to those sites. Only owned entries go, see
+            // `OmDocumentRegistryTranslation`.
             DocumentRegistry => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
@@ -702,13 +703,13 @@ impl ChangelogTableName {
             Encounter => SyncStyle {
                 authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             Vaccination => SyncStyle {
                 authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             ContactTrace => SyncStyle {

@@ -13,7 +13,7 @@ import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { formatIsoDate } from '@/ui/elements/inputs/dateTimeConvert';
+import { formatCalendarDate } from '@/ui/elements/inputs/dateTimeConvert';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { Num } from '@/ui/elements/typography/Num';
 import { Text } from '@/ui/elements/typography/Text';
@@ -83,6 +83,9 @@ export interface PurchaseOrderLineEditModalProps {
     requestedDeliveryDate: string | null | undefined;
     supplierDiscountPercentage: number | null;
   };
+  /** Whether the user holds the change permission — without it an existing
+   *  line opens with every field closed. */
+  canMutate: boolean;
   /** The latest expected date among the order's lines — a new line's seed. */
   latestExpectedDate: string | undefined;
   /** How many lines the order has — a new line's number is the next. */
@@ -210,6 +213,7 @@ const LineEditContent = (
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
       addMode: !props.initialLine,
+      canMutate: props.canMutate,
     })
   );
   const closed = (open: boolean) => !open || saving();
@@ -293,7 +297,7 @@ const LineEditContent = (
   // six decimals only where the figure needs it (spec S10 § pricing).
   const price = (value: number) =>
     formatCurrency(value, currency(), PRICE_DECIMALS);
-  const dateText = (value: string | null) => formatIsoDate(value) || EMPTY;
+  const dateText = (value: string | null) => formatCalendarDate(value) || EMPTY;
 
   return (
     <Dialog

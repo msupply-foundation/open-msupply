@@ -659,8 +659,7 @@ const InternalOrderDetailView: Component = () => {
   const crumbs = (node: InternalOrderInfoFragment) => [
     {
       label: t('internal-order'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/internal-order`),
+      to: `/${params.storeId}/replenishment/internal-order`,
     },
     { label: String(node.requisitionNumber) },
   ];

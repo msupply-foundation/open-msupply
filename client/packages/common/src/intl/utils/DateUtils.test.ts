@@ -87,3 +87,21 @@ describe('formatDaysFromToday', () => {
     expect(formatDaysFromToday(5)).toBe('2025-10-06');
   });
 });
+
+describe('isExpired', () => {
+  // A batch is usable to the end of its expiry day (#1786).
+  it('is expired only once the expiry day has passed', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-08-13T23:30:00'));
+    expect(DateUtils.isExpired('2026-08-14')).toBe(false);
+    expect(DateUtils.isExpired('2026-08-13')).toBe(false);
+    expect(DateUtils.isExpired('2026-08-12')).toBe(true);
+    jest.useRealTimers();
+  });
+
+  it('brings the cutoff forward by the threshold', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-08-13T09:00:00'));
+    expect(DateUtils.isExpired('2026-08-22', 10)).toBe(true);
+    expect(DateUtils.isExpired('2026-08-23', 10)).toBe(false);
+    jest.useRealTimers();
+  });
+});

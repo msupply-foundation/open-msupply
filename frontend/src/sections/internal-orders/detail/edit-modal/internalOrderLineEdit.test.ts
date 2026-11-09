@@ -35,6 +35,7 @@ import {
   saveNewLine,
   unitsToMode,
   type EditorLine,
+  monthsOfStockAfterOrder,
 } from './internalOrderLineEdit';
 
 vi.mock('@/api/graphql', () => ({
@@ -510,5 +511,22 @@ describe('requested quantity entry modes (OMS-REG-REPL-04.69)', () => {
   it('round-trips a whole-vial dose count unchanged', () => {
     const units = modeToUnits(120, 'doses', 1, 20);
     expect(unitsToMode(units, 'doses', 1, 20)).toBe(120);
+  });
+});
+
+describe('OMS-REG-REPL-04.106 — months of stock after this order', () => {
+  it('adds the requested quantity to stock on hand over the monthly demand', () => {
+    const line = { availableStockOnHand: 50, monthlyDemand: 100 };
+    expect(monthsOfStockAfterOrder(line, 0)).toBe(0.5);
+    expect(monthsOfStockAfterOrder(line, 250)).toBe(3);
+  });
+
+  it('is 0 with no monthly demand, like the current months of stock', () => {
+    expect(
+      monthsOfStockAfterOrder(
+        { availableStockOnHand: 50, monthlyDemand: 0 },
+        10
+      )
+    ).toBe(0);
   });
 });

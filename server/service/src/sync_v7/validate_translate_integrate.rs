@@ -114,6 +114,7 @@ fn translate_delete(
         ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
         ChangelogTableName::NameTag => Box::new(NameTagRowDelete(id)),
         ChangelogTableName::NameTagJoin => Box::new(NameTagJoinRowDelete(id)),
+        ChangelogTableName::PluginData => Box::new(PluginDataRowDelete(id)),
         ChangelogTableName::Preference => Box::new(PreferenceRowDelete(id)),
         ChangelogTableName::ProgramRequisitionOrderType => {
             Box::new(ProgramRequisitionOrderTypeRowDelete(id))
@@ -140,6 +141,7 @@ fn translate_delete(
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
         ChangelogTableName::UserPermission => Box::new(UserPermissionRowDelete(id)),
+        ChangelogTableName::UserStoreJoin => Box::new(UserStoreJoinRowDelete(id)),
         ChangelogTableName::VVMStatus => Box::new(VVMStatusRowDelete(id)),
         ChangelogTableName::VVMStatusLog => Box::new(VVMStatusLogRowDelete(id)),
         ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
@@ -187,7 +189,6 @@ fn translate_delete(
         | ChangelogTableName::PackagingVariant
         | ChangelogTableName::Period
         | ChangelogTableName::PeriodSchedule
-        | ChangelogTableName::PluginData
         | ChangelogTableName::Printer
         | ChangelogTableName::ProgramEnrolment
         | ChangelogTableName::ProgramEvent
@@ -206,7 +207,6 @@ fn translate_delete(
         | ChangelogTableName::TemperatureBreach
         | ChangelogTableName::TemperatureSummary
         | ChangelogTableName::TemperatureLog
-        | ChangelogTableName::UserStoreJoin
         | ChangelogTableName::Vaccination
         | ChangelogTableName::VaccineCourse
         | ChangelogTableName::VaccineCourseDose
@@ -593,9 +593,12 @@ mod test {
     use super::*;
     use crate::sync::ActiveStoresOnSite;
     use repository::{
-        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
+        mock::{
+            MockDataInserts, mock_store_a, mock_user_account_a, mock_user_store_join_a_store_a,
+        },
         test_db::setup_all,
     };
+    use strum::IntoEnumIterator;
 
     /// Matches `mock_store_a().site_id`, making store_a active on this site.
     const SITE_ID: i32 = 100;
@@ -957,6 +960,129 @@ mod test {
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Ignored));
         assert!(error.unwrap().contains("Superseded"));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_user_store_join_delete() {
+        // #1949: unticking "can log in" in legacy mSupply deletes the join on central,
+        // which must reach the store's v7 site, or the user still sees the store there.
+        let connection = setup(
+            "integrate_user_store_join_delete",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
+        )
+        .await;
+        let join = mock_user_store_join_a_store_a();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "user_store_join".to_string(),
+                store_id: Some(join.store_id.clone()),
+                ..buffer_row(&join.id, SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_one_by_id(&join.id)
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[actix_rt::test]
+    async fn integrate_plugin_data_delete() {
+        // #1949: a plugin's `deletePluginData` writes a delete changelog row, so it
+        // must be applied wherever the row was synced to.
+        let connection = setup(
+            "integrate_plugin_data_delete",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        PluginDataRowRepository::new(&connection)
+            .upsert_one(&PluginDataRow {
+                id: "plugin_data".to_string(),
+                store_id: Some(mock_store_a().id),
+                plugin_code: "plugin".to_string(),
+                related_record_id: None,
+                data_identifier: "data".to_string(),
+                data: "{}".to_string(),
+                datetime: None,
+            })
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "plugin_data".to_string(),
+                store_id: Some(mock_store_a().id),
+                ..buffer_row("plugin_data", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            PluginDataRowRepository::new(&connection)
+                .find_one_by_id("plugin_data")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[test]
+    fn every_delete_type_is_handled() {
+        // #1949: a table whose `Delete` writes a delete changelog row syncs that delete
+        // over v7, so `translate_delete` must have an arm for it. Every `impl Delete`
+        // in the repository crate is checked against the types `translate_delete`
+        // returns, so a new one can't be missed.
+        //
+        // Not deleted over v7, by design:
+        // - ReasonOptionRowDelete soft-deletes and writes an upsert changelog row.
+        const NOT_V7_DELETES: &[&str] = &["ReasonOptionRowDelete"];
+
+        let handled: HashSet<String> = ChangelogTableName::iter()
+            .filter_map(|table| translate_delete(&table, "id").ok())
+            .map(|delete| {
+                let debug = format!("{delete:?}");
+                debug
+                    .split(|c: char| !c.is_alphanumeric() && c != '_')
+                    .next()
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+
+        let impl_delete = regex::Regex::new(r"impl Delete for (\w+)").unwrap();
+        let repository_src =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../repository/src");
+        let mut unhandled: Vec<String> = walkdir::WalkDir::new(repository_src)
+            .into_iter()
+            .map(|entry| entry.unwrap())
+            .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "rs"))
+            .flat_map(|entry| {
+                let source = std::fs::read_to_string(entry.path()).unwrap();
+                impl_delete
+                    .captures_iter(&source)
+                    .map(|captures| captures[1].to_string())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|name| !handled.contains(name) && !NOT_V7_DELETES.contains(&name.as_str()))
+            .collect();
+        unhandled.sort();
+
+        assert!(
+            unhandled.is_empty(),
+            "translate_delete has no arm for {unhandled:?}: add one, or list it in NOT_V7_DELETES with the reason"
+        );
     }
 
     #[actix_rt::test]

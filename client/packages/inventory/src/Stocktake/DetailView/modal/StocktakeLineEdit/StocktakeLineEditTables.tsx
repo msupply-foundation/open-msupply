@@ -124,7 +124,7 @@ export const BatchTable = ({
         id: 'expiryDate',
         header: t('label.expiry-date'),
         size: 160,
-        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
+        accessorFn: row => DateUtils.getNaiveDate(row.expiryDate),
         Cell: ({ cell, row }) => {
           const value = cell.getValue<Date | null>();
           return (
@@ -145,7 +145,7 @@ export const BatchTable = ({
         id: 'manufactureDate',
         header: t('label.manufacture-date'),
         size: 160,
-        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
+        accessorFn: row => DateUtils.getNaiveDate(row.manufactureDate),
         Cell: ({ cell, row }) => {
           const value = cell.getValue<Date | null>();
           return (
@@ -206,7 +206,7 @@ export const BatchTable = ({
           errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
         Cell: ({ cell }) => (
-          <NumberInputCell cell={cell} disabled updateFn={() => { }} />
+          <NumberInputCell cell={cell} disabled updateFn={() => {}} />
         ),
       },
       {
@@ -567,7 +567,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-    row.sellPricePerPack;
+      row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -589,7 +589,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,
