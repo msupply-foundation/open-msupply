@@ -11,13 +11,15 @@ import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
-  dateToIsoDate,
   defaultDateFormat,
-  formatIsoDate,
+  formatCalendarDate,
   formatPlaceholder,
-  isoDateToDate,
   parseDateInput,
 } from './dateTimeConvert';
+import {
+  dateToCalendarDate,
+  calendarDateToDate,
+} from '../../../intl/calendarDate';
 import styles from './DateTimeFields.module.css';
 
 export interface DateFieldProps {
@@ -25,9 +27,9 @@ export interface DateFieldProps {
   /** Max-width cap — opt-in; defaults to `full`. `compact` (10rem box) /
    * `short` / `long` (see FieldShell). */
   width?: 'compact' | 'short' | 'long' | 'full';
-  /** ISO calendar date `YYYY-MM-DD`, or null/undefined when empty. */
+  /** A calendar date, `YYYY-MM-DD`, or null/undefined when empty. */
   value?: string | null;
-  /** Fired with the new ISO date, or null when cleared. */
+  /** Fired with the new calendar date, or null when cleared. */
   onChange?: (value: string | null) => void;
   /** Earliest selectable date, ISO `YYYY-MM-DD`. Earlier dates unselectable. */
   min?: string;
@@ -86,7 +88,7 @@ const MONTH_FORMAT = 'MMM yyyy';
  * DatePickerPanel) behind a calendar icon — headless, so it renders identically
  * in every browser. Both display and typed parsing follow the `format` prop.
  *
- * Value IS the wire value: a plain ISO `YYYY-MM-DD` (schema `Date`, no
+ * Value IS the wire value: a calendar date, `YYYY-MM-DD` (schema `NaiveDate`, no
  * timezone) passes straight through. Typed text is parsed on blur/Enter
  * (invalid input reverts to the last value); picking from the calendar sets it
  * too; clearing emits null. `min`/`max` make out-of-range days unselectable.
@@ -107,9 +109,11 @@ export const DateField = (props: DateFieldProps) => {
   // Local text buffer for typing; resynced from the external value only when
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
   // never mid-typing, so keystrokes don't get clobbered.
-  const [text, setText] = createSignal(formatIsoDate(props.value, fmt()));
+  const [text, setText] = createSignal(formatCalendarDate(props.value, fmt()));
   createEffect(
-    on([() => props.value, locale], ([v]) => setText(formatIsoDate(v, fmt())))
+    on([() => props.value, locale], ([v]) =>
+      setText(formatCalendarDate(v, fmt()))
+    )
   );
 
   // Apply a committed value: notify the parent AND write the local text buffer
@@ -118,13 +122,13 @@ export const DateField = (props: DateFieldProps) => {
   // so the two stay symmetric — reuses the existing buffer, no extra state.
   const apply = (iso: string | null) => {
     props.onChange?.(iso);
-    setText(formatIsoDate(iso, fmt()));
+    setText(formatCalendarDate(iso, fmt()));
   };
 
   const commit = () => {
     const parsed = parseDateInput(text(), fmt());
     // Rejection gate — parseDateInput is tri-state (undefined = unparseable,
-    // null = deliberately blanked, string = a valid ISO date). Any arm true →
+    // null = deliberately blanked, string = a valid calendar date). Any arm true →
     // the entry reverts to the last good value, like invalid input; onChange
     // never fires. ISO YYYY-MM-DD compares chronologically as a plain string.
     if (
@@ -145,7 +149,7 @@ export const DateField = (props: DateFieldProps) => {
         props.max !== undefined &&
         bound(parsed) > bound(props.max))
     ) {
-      setText(formatIsoDate(props.value, fmt())); // invalid → revert
+      setText(formatCalendarDate(props.value, fmt())); // invalid → revert
       return;
     }
     apply(parsed);
@@ -199,9 +203,9 @@ export const DateField = (props: DateFieldProps) => {
           >
             {close => (
               <DatePickerPanel
-                value={isoDateToDate(props.value)}
-                min={isoDateToDate(props.min) ?? undefined}
-                max={isoDateToDate(props.max) ?? undefined}
+                value={calendarDateToDate(props.value)}
+                min={calendarDateToDate(props.min) ?? undefined}
+                max={calendarDateToDate(props.max) ?? undefined}
                 // Also stops the calendar DESELECTING (click the selected day
                 // again → null) — the commit() guard below only covers the
                 // typed path.
@@ -209,7 +213,7 @@ export const DateField = (props: DateFieldProps) => {
                 monthOnly={props.monthOnly}
                 openCount={openCount()}
                 onSelect={d => {
-                  apply(d ? dateToIsoDate(d) : null);
+                  apply(d ? dateToCalendarDate(d) : null);
                   close();
                 }}
               />

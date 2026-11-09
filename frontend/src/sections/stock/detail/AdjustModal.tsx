@@ -21,9 +21,9 @@ import {
   backdatedDatetime as computeBackdatedDatetime,
 } from '../stockCalc';
 import {
-  localTodayIso,
-  localIsoDaysAgo,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+  todayCalendarDate,
+  calendarDateDaysAgo,
+} from '../../../intl/calendarDate';
 import {
   HistoricalStockLines,
   type StockLineDetailFragment,
@@ -75,7 +75,7 @@ const AdjustContent = (props: {
   const [reasonId, setReasonId] = createSignal<string | undefined>();
   // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
   // never treats its own today as backdated (spec/stock S4).
-  const today = localTodayIso();
+  const today = todayCalendarDate();
   // The date field starts at today (spec/stock S4) — today means "not
   // backdated", so the default still submits with no backdatedDatetime.
   const [date, setDate] = createSignal<string | null>(today);
@@ -86,7 +86,7 @@ const AdjustContent = (props: {
   const backdating = () => prefs().backdating;
   const minDate = () => {
     const maxDays = backdating().maxDays;
-    return maxDays <= 0 ? undefined : localIsoDaysAgo(maxDays);
+    return maxDays <= 0 ? undefined : calendarDateDaysAgo(maxDays);
   };
 
   // A chosen date earlier than today means "backdated"; today (or unset) is

@@ -4,11 +4,11 @@
 // component resolves the returned message KEYS via t() and owns the
 // stocktake-conflict query).
 
+import { addDays } from '../../../ui/elements/inputs/dateTimeConvert';
 import {
-  addDays,
-  dateToIsoDate,
-  localDayToUtc,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+} from '../../../intl/calendarDate';
 
 export type BackdatingReasonKey =
   | 'messages.received-date-backdating-not-enabled'
@@ -54,9 +54,9 @@ export const backdateBounds = (
   now: Date,
   maxDays: number
 ): { min?: string; max: string } => {
-  const max = dateToIsoDate(now);
+  const max = dateToCalendarDate(now);
   if (maxDays <= 0) return { max };
-  return { min: dateToIsoDate(addDays(now, -(maxDays - 1))), max };
+  return { min: dateToCalendarDate(addDays(now, -(maxDays - 1))), max };
 };
 
 // OMS-REG-DIST-04.23 rejection on the SAVE path: the native min/max only
@@ -73,9 +73,9 @@ export const withinBackdateBounds = (
 // stamped at its LOCAL end-of-day via the shared conversion (#456), so the
 // entry sorts after same-day activity. Input is a `DateTime<Utc>`.
 export const backdatedDatetimeFor = (now: Date, day: string): string =>
-  day === dateToIsoDate(now)
+  day === dateToCalendarDate(now)
     ? now.toISOString()
-    : localDayToUtc(day, { endOfDay: true });
+    : calendarDateToInstant(day, { endOfDay: true });
 
 export type BackdateWarningKey =
   | 'messages.confirm-backdate-picked-date'

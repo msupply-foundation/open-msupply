@@ -1,8 +1,8 @@
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  localDayToUtc,
-  localTodayIso,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+  calendarDateToInstant,
+  todayCalendarDate,
+} from '../../../intl/calendarDate';
 import {
   UpdatePrescription,
   DeletePrescriptionLines,
@@ -81,9 +81,9 @@ export const deleteLines = async (
  * created today it is indistinguishable from not backdating at all.
  */
 export const prescriptionDateInstant = (isoDay: string): string =>
-  isoDay === localTodayIso()
+  isoDay === todayCalendarDate()
     ? new Date().toISOString()
-    : localDayToUtc(isoDay, { endOfDay: true });
+    : calendarDateToInstant(isoDay, { endOfDay: true });
 
 /**
  * The prescription date for CREATION — `undefined` for today, meaning **send
@@ -106,4 +106,4 @@ export const prescriptionDateInstant = (isoDay: string): string =>
  * {@link prescriptionDateInstant}.
  */
 export const newPrescriptionDate = (isoDay: string): string | undefined =>
-  isoDay === localTodayIso() ? undefined : prescriptionDateInstant(isoDay);
+  isoDay === todayCalendarDate() ? undefined : prescriptionDateInstant(isoDay);

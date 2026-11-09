@@ -9,7 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
-import { dateToIsoDate } from './dateTimeConvert';
+import { dateToCalendarDate } from '../../../intl/calendarDate';
 import { locale } from '../../../intl';
 import styles from './DatePickerPanel.module.css';
 
@@ -116,7 +116,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     on(
       () => {
         const d = focusDate();
-        return d ? dateToIsoDate(d) : '';
+        return d ? dateToCalendarDate(d) : '';
       },
       () => {
         const d = focusDate();
@@ -129,8 +129,10 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'short' });
 
   const disabled = (day: Date): boolean => {
-    if (props.min && dateToIsoDate(day) < dateToIsoDate(props.min)) return true;
-    if (props.max && dateToIsoDate(day) > dateToIsoDate(props.max)) return true;
+    if (props.min && dateToCalendarDate(day) < dateToCalendarDate(props.min))
+      return true;
+    if (props.max && dateToCalendarDate(day) > dateToCalendarDate(props.max))
+      return true;
     return false;
   };
 
@@ -141,10 +143,11 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
   // the intervening days valid (OMS-REG-RPT-10.44).
   const monthDisabled = (year: number, monthIndex: number): boolean =>
     (props.min !== undefined &&
-      dateToIsoDate(new Date(year, monthIndex + 1, 0)) <
-        dateToIsoDate(props.min)) ||
+      dateToCalendarDate(new Date(year, monthIndex + 1, 0)) <
+        dateToCalendarDate(props.min)) ||
     (props.max !== undefined &&
-      dateToIsoDate(new Date(year, monthIndex, 1)) > dateToIsoDate(props.max));
+      dateToCalendarDate(new Date(year, monthIndex, 1)) >
+        dateToCalendarDate(props.max));
 
   const monthSelected = (ctx: CalendarCtx, monthIndex: number): boolean => {
     if (props.mode === 'range' || !props.monthOnly)

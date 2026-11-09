@@ -13,7 +13,7 @@ import {
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, tPlural } from '../../../../intl';
-import { roundedText } from '../../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
 import {
@@ -77,6 +77,8 @@ import { mirroredIssueValue, roundedLensValue } from './issueMirror';
 import {
   availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
+  availableDoses as sumAvailableDoses,
+  issuedDoses as sumIssuedDoses,
   distinctPackSizes as packSizesIn,
   autoAllocateBarReasons,
   barReasons,
@@ -440,6 +442,44 @@ const warningMessages = (
     }
   });
 
+// A distribution's warnings, held unresolved: the over-allocation and
+// shortfall figures read in the CURRENT lens, so a lens switch re-expresses
+// them in place (OMS-REG-SMV-11.45) — `switchLensTo` changes no allocation and
+// raises nothing new. A manual entry's adjustment (below) is held the same
+// way; any other banner is already a resolved IssueBanner.
+type DistributionReport = {
+  derived: readonly IssueWarning[];
+  requestedUnits: number;
+  outcome: DistributionOutcome;
+};
+// A manual per-batch entry the whole-pack clamp changed (OMS-REG-SMV-11.33),
+// held as packs with the line's own rates so it too reads in the current lens:
+// doses under the doses lens, otherwise packs (what the cell takes there).
+type AdjustedEntry = {
+  appliedPacks: number;
+  requestedPacks: number;
+  packSize: number;
+  dosesPerUnit: number;
+};
+type WarningEntry = IssueBanner | DistributionReport | AdjustedEntry;
+const adjustedEntryBanner = (
+  entry: AdjustedEntry,
+  lens: AllocateUnit
+): IssueBanner => {
+  const inLens = (packs: number) =>
+    lens.kind === 'doses'
+      ? packsToDoses(packs, entry.packSize, entry.dosesPerUnit)
+      : packs;
+  return {
+    testId: 'outbound-adjusted-entry-warning',
+    message: t('messages.over-allocated-line', {
+      quantity: roundedText(inLens(entry.appliedPacks)),
+      issueQuantity: roundedText(inLens(entry.requestedPacks)),
+    }),
+    severity: 'warning',
+  };
+};
+
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
     props.initialItem
@@ -500,7 +540,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // zero-pack lines, silently dropping that status change (spec S4 § save).
   const [vvmConfirm, setVvmConfirm] = createSignal(false);
   // Warnings raised by the last distribution (spec S4 § warnings).
-  const [warnings, setWarnings] = createSignal<IssueBanner[]>([]);
+  const [warnings, setWarnings] = createSignal<WarningEntry[]>([]);
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
@@ -921,6 +961,47 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Per-batch doses ⇔ packs uses the LINE's own pack size / doses-per-unit (a
   // variant may override the item's), so the grid converts row by row via the
   // shared domain helpers (packsToDoses / dosesToPacks).
+  const packsInLens = (line: DraftLine, packs: number) =>
+    dosesView() ? packsToDoses(packs, line.packSize, line.dosesPerUnit) : packs;
+  const inStoreFigure = (line: DraftLine) =>
+    packsInLens(line, line.inStorePacks);
+  const availableFigure = (line: DraftLine) =>
+    line.stockLineOnHold || line.location?.onHold
+      ? 0
+      : packsInLens(line, line.availablePacks);
+
+  // The placeholder and the requested total it falls short of, as the footer
+  // and the placeholder notice both read them: doses under the doses lens
+  // (old-app parity — "Total doses"; #2067), units under the units and packs
+  // lenses. One memo, so the two can't drift apart. The doses placeholder
+  // rounds as the Issue field does: 301 doses leaves 20.333333333 units,
+  // which would read back as 60.999999999 doses.
+  const placeholderFigures = createMemo(() => {
+    const placeholder = placeholderUnits();
+    if (!dosesView())
+      return { placeholder, total: issuedUnits() + placeholder };
+    const placeholderDoses = roundedLensValue(placeholder, allocateIn());
+    return {
+      placeholder: placeholderDoses,
+      total: sumIssuedDoses(draft) + placeholderDoses,
+    };
+  });
+
+  // The banners as shown: a distribution's report resolved in the current lens.
+  const banners = createMemo(() =>
+    warnings().flatMap(entry =>
+      'derived' in entry
+        ? warningMessages(
+            entry.derived,
+            entry.requestedUnits,
+            allocateIn(),
+            entry.outcome
+          )
+        : 'appliedPacks' in entry
+          ? [adjustedEntryBanner(entry, allocateIn())]
+          : [entry]
+    )
+  );
 
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
@@ -977,14 +1058,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // (OMS-REG-SMV-11.7/.11). While NEW the shortfall is surfaced separately as
     // the placeholder notice; past NEW it has no placeholder to land in, so it
     // is reported here instead (OMS-REG-SMV-11.13).
-    setWarnings(
-      warningMessages(
-        deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
-        units,
-        lens,
-        distributionOutcome(result, allocationPrefs())
-      )
-    );
+    setWarnings([
+      {
+        derived: deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
+        requestedUnits: units,
+        outcome: distributionOutcome(result, allocationPrefs()),
+      },
+    ]);
     setDirty(true);
     // The allocation just changed — any earlier zero-allocation / unsaved-VVM
     // confirmation no longer applies (spec S4 § save; it must be re-earned
@@ -1050,15 +1130,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
       : applied;
     setWarnings(
-      value != null && appliedQuantity !== value
+      requestedPacks != null && appliedQuantity !== value
         ? [
             {
-              testId: 'outbound-adjusted-entry-warning',
-              message: t('messages.over-allocated-line', {
-                quantity: roundedText(appliedQuantity),
-                issueQuantity: roundedText(value),
-              }),
-              severity: 'warning',
+              appliedPacks: applied,
+              requestedPacks,
+              packSize: line.packSize,
+              dosesPerUnit: line.dosesPerUnit,
             },
           ]
         : []
@@ -1516,46 +1594,36 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       : []),
     {
       // In-store stock — re-expressed in doses under the doses lens (old-app
-      // parity). Static per row, so an accessor is safe: a lens flip rebuilds
-      // the whole column set (columns() reads the lens), unlike the in-place
-      // per-batch edits the canAllocate note covers.
-      c: {
-        accessor: line =>
-          dosesView()
-            ? packsToDoses(line.inStorePacks, line.packSize, line.dosesPerUnit)
-            : line.inStorePacks,
-        id: 'inStorePacks',
-      },
+      // parity). The cell reads the row, not info.getValue(): TanStack caches
+      // each row's accessor value by column id for as long as the row model
+      // lives, and a lens flip rebuilds the columns but not the rows — so a
+      // cached value would keep the previous lens's figure under the new
+      // header (#2067).
+      c: { accessor: inStoreFigure, id: 'inStorePacks' },
       header: () =>
         dosesView() ? t('label.in-store-doses') : t('label.in-store'),
       cardGroup: 'batch',
       ...getNumberCell(),
+      cell: info => (
+        <Num value={displayNumber(inStoreFigure(info.row.original))} />
+      ),
       // No CELL_DEF key — "In store (doses)" is the binding constraint.
       size: remToPx(7),
     },
     {
       // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
       // (old-app parity: nothing here may be issued); doses under the doses
-      // lens.
-      c: {
-        accessor: line => {
-          if (line.stockLineOnHold || line.location?.onHold) return 0;
-          return dosesView()
-            ? packsToDoses(
-                line.availablePacks,
-                line.packSize,
-                line.dosesPerUnit
-              )
-            : line.availablePacks;
-        },
-        id: 'availablePacks',
-      },
+      // lens. Read from the row for the reason In store is.
+      c: { accessor: availableFigure, id: 'availablePacks' },
       header: () =>
         dosesView()
           ? t('label.available-doses')
           : t('label.available-in-packs'),
       cardGroup: 'batch',
       ...getCellDefinition('availablePacks'),
+      cell: info => (
+        <Num value={displayNumber(availableFigure(info.row.original))} />
+      ),
     },
     {
       // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available —
@@ -1777,11 +1845,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       // Other-campaign flag, CARD-ONLY — the companion to the table's "Not for
-      // this campaign" badge beside the batch code, which cards hide.
+      // this activity" badge beside the batch code, which cards hide.
       c: { accessor: lineOtherCampaign, id: 'otherCampaign' },
-      header: () => t('label.not-for-this-campaign'),
+      header: () => t('label.not-for-this-activity'),
       ...getFlagCell(
-        t('label.not-for-this-campaign'),
+        t('label.not-for-this-activity'),
         {
           headerPosition: 'badge',
           hideOnTable: true,
@@ -1845,12 +1913,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           fallback={
             <Show when={item()}>
               <HStack gap="md">
+                {/* In doses under the doses lens, units otherwise — see
+                  placeholderFigures. */}
                 <span data-testid="outbound-unallocated-units">
-                  {t('label.unallocated')}: <Num value={placeholderUnits()} />
+                  {t('label.unallocated')}:{' '}
+                  <Num value={placeholderFigures().placeholder} />
                 </span>
                 <span data-testid="outbound-total-units">
-                  {t('label.total-units')}:{' '}
-                  <Num value={issuedUnits() + placeholderUnits()} />
+                  {dosesView()
+                    ? t('label.total-doses')
+                    : t('label.total-units')}
+                  : <Num value={placeholderFigures().total} />
                 </span>
               </HStack>
             </Show>
@@ -2027,7 +2100,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     than a labelled input, and the row's end-alignment would
                     otherwise drop its label below theirs. */}
                   <span class={styles.availableValue}>
-                    <Num value={availableUnits()} /> {unitName()}
+                    {/* Under the doses lens: doses, with the units behind them
+                      (old-app parity — "Available: 99,968 doses (9,997
+                      vials)", whole numbers both; #2067). */}
+                    <Show
+                      when={dosesView()}
+                      fallback={
+                        <>
+                          <Num value={availableUnits()} /> {unitName()}
+                        </>
+                      }
+                    >
+                      {t('label.available-doses-with-units', {
+                        doseCount: roundedText(sumAvailableDoses(draft), 0),
+                        unitCount: roundedText(Math.round(availableUnits()), 0),
+                        unitName: unitName(),
+                      })}
+                    </Show>
                   </span>
                 </LabelledValue>
               </div>
@@ -2170,15 +2259,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {/* The shortfall that became a placeholder — a consequence of the
                 Issue entry, so it reads with the batches it failed to fill,
                 not up in the header row where it reflowed the inputs as the
-                user typed. */}
+                user typed. In the footer's figures, doses under the doses
+                lens (old-app parity). */}
             <Show when={placeholderUnits() > 0}>
               <Alert severity="info" testId="outbound-placeholder-notice">
-                {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: roundedText(
-                    issuedUnits() + placeholderUnits()
-                  ),
-                  placeholderQuantity: roundedText(placeholderUnits()),
-                })}
+                {t(
+                  dosesView()
+                    ? 'messages.placeholder-allocated-doses'
+                    : 'messages.placeholder-allocated-units',
+                  {
+                    requestedQuantity: roundedText(placeholderFigures().total),
+                    placeholderQuantity: roundedText(
+                      placeholderFigures().placeholder
+                    ),
+                  }
+                )}
               </Alert>
             </Show>
 
@@ -2203,7 +2298,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             </Show>
 
             {/* Stacked warning banners (spec S4 § warnings). */}
-            <For each={warnings()}>
+            <For each={banners()}>
               {banner => (
                 <Alert severity={banner.severity} testId={banner.testId}>
                   {banner.message}
