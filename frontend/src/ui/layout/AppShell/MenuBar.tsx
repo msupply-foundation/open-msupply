@@ -7,6 +7,7 @@ import {
 } from '../../icons';
 import { AppLogo } from '../../branding/AppLogo';
 import { t } from '../../../intl';
+import { onLinkClick } from '../../utils/linkClick';
 import { NavFlyout, type FlyoutTarget } from './NavFlyout';
 import { isBetweenAnchorAndPanel } from './flyoutCorridor';
 import { type NavItem, type NavLeaf } from './navModel';
@@ -40,6 +41,14 @@ interface MenuBarProps {
   lower?: NavItem[];
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
+  /**
+   * The URL of a destination's store-relative `to` ('' for home) — a document
+   * href, mount included. Given, every destination (and the brand mark) renders
+   * as a real link, so it can be opened in a new tab, copied, or middle-clicked
+   * (#271); a plain click still goes through `onSelect`/`onHome`. Omitted (the
+   * showcase, whose sections are not routes), they stay buttons.
+   */
+  hrefFor?: (to: string) => string;
   /**
    * Activating the brand mark — the conventional "home" of an app's chrome
    * (Jira, Confluence, Zendesk all send you home from the logo). Wiring it is
@@ -116,26 +125,35 @@ const nameProps = (label: string, collapsed: boolean) => ({
 /**
  * Top-level leaf link: icon + empty chevron slot (so labels align with
  * sections). Collapsed, hover or focus raises the label as a flyout tooltip.
+ * A real `<a>` when the host gives destinations URLs (see `hrefFor`).
  */
 const TopLeaf = (props: {
   item: NavItem;
   selected: boolean;
   onSelect: () => void;
   rail: RailFlyout;
+  href?: string;
 }) => (
   <li class={styles.item}>
-    <button
-      type="button"
+    <Dynamic
+      component={props.href ? 'a' : 'button'}
+      type={props.href ? undefined : 'button'}
+      href={props.href}
       class={styles.navButton}
       data-selected={props.selected ? 'true' : undefined}
+      aria-current={props.href && props.selected ? 'page' : undefined}
       data-testid={`nav-${props.item.id}`}
       {...nameProps(t(props.item.labelKey), props.rail.collapsed())}
-      onClick={props.onSelect}
-      onMouseEnter={e => props.rail.hover(props.item, e.currentTarget)}
+      onClick={(e: MouseEvent) => onLinkClick(e, props.href, props.onSelect)}
+      onMouseEnter={(e: MouseEvent & { currentTarget: HTMLElement }) =>
+        props.rail.hover(props.item, e.currentTarget)
+      }
       onMouseLeave={props.rail.scheduleClose}
-      onFocus={e => props.rail.open(props.item, e.currentTarget)}
+      onFocus={(e: FocusEvent & { currentTarget: HTMLElement }) =>
+        props.rail.open(props.item, e.currentTarget)
+      }
       onBlur={props.rail.scheduleClose}
-      onKeyDown={e => {
+      onKeyDown={(e: KeyboardEvent) => {
         if (e.key === 'Escape') props.rail.close(false);
       }}
     >
@@ -144,7 +162,7 @@ const TopLeaf = (props: {
       </span>
       <span class={styles.chevronSlot} aria-hidden="true" />
       <span class={styles.label}>{t(props.item.labelKey)}</span>
-    </button>
+    </Dynamic>
   </li>
 );
 
@@ -164,6 +182,7 @@ const NavSection = (props: {
   onToggle: () => void;
   onSelect: (leaf: NavLeaf) => void;
   rail: RailFlyout;
+  hrefFor?: (to: string) => string;
 }) => {
   const containsSelected = () =>
     props.item.children?.some(c => c.id === props.selectedId) ?? false;
@@ -222,24 +241,35 @@ const NavSection = (props: {
       <Show when={props.open}>
         <ul class={styles.childList}>
           <For each={props.item.children}>
-            {leaf => (
-              <li class={styles.item}>
-                <button
-                  type="button"
-                  class={styles.navButton}
-                  // Keyed by its route, as the flyout's rows are
-                  // (e2e/TESTIDS.md › nav-<destination>).
-                  data-testid={`nav-${leaf.id}`}
-                  data-selected={
-                    leaf.id === props.selectedId ? 'true' : undefined
-                  }
-                  title={t(leaf.labelKey)}
-                  onClick={() => props.onSelect(leaf)}
-                >
-                  <span class={styles.label}>{t(leaf.labelKey)}</span>
-                </button>
-              </li>
-            )}
+            {leaf => {
+              // The section header above stays a button — it opens a list in
+              // place and goes nowhere — but each entry under it is a
+              // destination, so a link when the host gives it a URL.
+              const href = () => props.hrefFor?.(leaf.to);
+              const selected = () => leaf.id === props.selectedId;
+              return (
+                <li class={styles.item}>
+                  <Dynamic
+                    component={href() ? 'a' : 'button'}
+                    type={href() ? undefined : 'button'}
+                    href={href()}
+                    class={styles.navButton}
+                    // Keyed by its route, as the flyout's rows are
+                    // (e2e/TESTIDS.md › nav-<destination>).
+                    data-testid={`nav-${leaf.id}`}
+                    data-selected={selected() ? 'true' : undefined}
+                    aria-current={href() && selected() ? 'page' : undefined}
+                    title={t(leaf.labelKey)}
+                    onClick={(e: MouseEvent) =>
+                      // eslint-disable-next-line solid/reactivity -- runs in this click handler; the rule can't see Dynamic's onClick as one
+                      onLinkClick(e, href(), () => props.onSelect(leaf))
+                    }
+                  >
+                    <span class={styles.label}>{t(leaf.labelKey)}</span>
+                  </Dynamic>
+                </li>
+              );
+            }}
           </For>
         </ul>
       </Show>
@@ -254,6 +284,7 @@ const NavGroup = (props: {
   onToggleSection: (id: string) => void;
   onSelect: (leaf: NavLeaf) => void;
   rail: RailFlyout;
+  hrefFor?: (to: string) => string;
   class?: string;
 }) => (
   <ul class={`${styles.navList} ${props.class ?? ''}`}>
@@ -266,6 +297,7 @@ const NavGroup = (props: {
               item={item}
               selected={item.id === props.selectedId}
               rail={props.rail}
+              href={props.hrefFor?.(item.to)}
               onSelect={() =>
                 props.onSelect({
                   id: item.id,
@@ -283,6 +315,7 @@ const NavGroup = (props: {
             onToggle={() => props.onToggleSection(item.id)}
             onSelect={props.onSelect}
             rail={props.rail}
+            hrefFor={props.hrefFor}
           />
         </Show>
       )}
@@ -304,21 +337,26 @@ const NavGroup = (props: {
  * which covers the page it would navigate to, exactly as picking a
  * destination does.
  */
-const BrandMark = (props: { onActivate?: () => void }) => (
+const BrandMark = (props: { onActivate?: () => void; href?: string }) => (
   <div class={styles.logoArea}>
     <Show when={props.onActivate} fallback={<AppLogo class={styles.logo} />}>
-      <button
-        type="button"
-        class={styles.logoButton}
-        // `nav-brand`, not `nav-home`: the menu's Home ENTRY owns that id now
-        // (its registry id is 'home'). The two are separate affordances for one
-        // destination, and a test that means the logo must be able to say so.
-        data-testid="nav-brand"
-        onClick={() => props.onActivate?.()}
-        aria-label={t('label.home')}
-      >
-        <AppLogo class={styles.logo} />
-      </button>
+      {activate => (
+        <Dynamic
+          component={props.href ? 'a' : 'button'}
+          type={props.href ? undefined : 'button'}
+          href={props.href}
+          class={styles.logoButton}
+          // `nav-brand`, not `nav-home`: the menu's Home ENTRY owns that id
+          // now (its registry id is 'home'). The two are separate affordances
+          // for one destination, and a test that means the logo must be able
+          // to say so.
+          data-testid="nav-brand"
+          onClick={(e: MouseEvent) => onLinkClick(e, props.href, activate())}
+          aria-label={t('label.home')}
+        >
+          <AppLogo class={styles.logo} />
+        </Dynamic>
+      )}
     </Show>
   </div>
 );
@@ -331,6 +369,7 @@ const NavLists = (props: {
   onToggleSection: (id: string) => void;
   onSelect: (leaf: NavLeaf) => void;
   rail: RailFlyout;
+  hrefFor?: (to: string) => string;
 }) => (
   // One scroll region spanning BOTH groups (not per-section) so the two lists
   // never scroll independently and overlap (#421). The lower group is pushed to
@@ -345,6 +384,7 @@ const NavLists = (props: {
       onToggleSection={props.onToggleSection}
       onSelect={props.onSelect}
       rail={props.rail}
+      hrefFor={props.hrefFor}
       class={styles.upper}
     />
     <Show when={props.lower?.length}>
@@ -355,6 +395,7 @@ const NavLists = (props: {
         onToggleSection={props.onToggleSection}
         onSelect={props.onSelect}
         rail={props.rail}
+        hrefFor={props.hrefFor}
         class={styles.lower}
       />
     </Show>
@@ -545,7 +586,7 @@ export const MenuBar = (props: MenuBarProps) => {
               rail exactly when the rail is hardest to read.
               Losing the mark on the rail costs no route home: the Dashboard
               entry directly below it goes to the same place. */}
-          <BrandMark onActivate={homeAction()} />
+          <BrandMark onActivate={homeAction()} href={props.hrefFor?.('')} />
           <NavLists
             upper={props.upper}
             lower={props.lower}
@@ -554,6 +595,7 @@ export const MenuBar = (props: MenuBarProps) => {
             onToggleSection={toggleSection}
             onSelect={select}
             rail={rail}
+            hrefFor={props.hrefFor}
           />
           {/* The rail's collapse toggle — a disc straddling the rail's own
               inline-end border, the handle-on-the-border pattern (spec/chrome
@@ -614,6 +656,7 @@ export const MenuBar = (props: MenuBarProps) => {
           <NavFlyout
             target={flyout()}
             selectedId={props.selectedId}
+            hrefFor={props.hrefFor}
             onSelect={select}
             onDismiss={rail.close}
             onPointerEnter={clearTimers}
@@ -636,7 +679,7 @@ export const MenuBar = (props: MenuBarProps) => {
         aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
-        <BrandMark onActivate={homeAction()} />
+        <BrandMark onActivate={homeAction()} href={props.hrefFor?.('')} />
         <NavLists
           upper={props.upper}
           lower={props.lower}
@@ -645,6 +688,7 @@ export const MenuBar = (props: MenuBarProps) => {
           onToggleSection={toggleSection}
           onSelect={select}
           rail={rail}
+          hrefFor={props.hrefFor}
         />
       </nav>
     </Show>

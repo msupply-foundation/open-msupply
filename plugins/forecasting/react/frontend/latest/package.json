@@ -1,0 +1,16 @@
+{
+  "//": "As a frontend plugins, unlike backend plugins 'types' here is just metadata, only used to tell user which area plugin affects",
+  "name": "forecasting_plugins",
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": [
+      "forecastQuantites"
+    ]
+  },
+  "version": "2.16.0",
+  "main": "plugin.js",
+  "scripts": {
+    "build-plugin": "NODE_ENV=production npx webpack"
+  },
+  "license": "MIT"
+}

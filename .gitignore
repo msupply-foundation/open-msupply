@@ -78,3 +78,6 @@ __pycache__/
 
 # Staged discovery-page slice for the desktop installer (yarn stage-discovery-page)
 client/packages/electron/discovery-page/
+
+# feature-pipeline status server build output (normally built with CARGO_TARGET_DIR outside the repo)
+.claude/skills/feature-pipeline/status/target/

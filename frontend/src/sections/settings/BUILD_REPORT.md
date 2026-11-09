@@ -1,10 +1,10 @@
 # Build report — settings
 
-**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
-Scoped build: **settings** only (`src/sections/settings/` wiped and regenerated from [`spec/settings/`](../../../spec/settings/)). Gates at completion: `pnpm check` ✓ · `pnpm test` ✓ (331, incl. 49 new behaviour-citing) · `pnpm build` ✓ (SettingsPage chunk 30.1 kB / gzip 8.9 kB; TestScannerPage split separately).
+Scoped build: **settings** only (`src/sections/settings/` wiped and regenerated from [`spec/settings/`](../../../../spec/settings/)). Gates at completion: `pnpm check` ✓ · `pnpm test` ✓ (331, incl. 49 new behaviour-citing) · `pnpm build` ✓ (SettingsPage chunk 30.1 kB / gzip 8.9 kB; TestScannerPage split separately).
 
-Spec: [`spec/settings/`](../../../spec/settings/) (reverse spec). Replaces the chrome placeholder page; routes (`settings: settingsRoutes` in `src/App.tsx`) and the nav entry already existed, so no shared routing/nav files changed. All cited i18n keys already existed in `src/intl/locales/en/common.json` — **zero locale keys added**. Shared-file edits: `src/config.ts` (+`SUPPORT_DATABASE_URL`, `PRINT_LABEL_TEST_URL`), `src/appData.ts` (+device-local `labelPrinterUseUsb`, per OMS-REG-SET-05.22).
+Spec: [`spec/settings/`](../../../../spec/settings/) (reverse spec). Replaces the chrome placeholder page; routes (`settings: settingsRoutes` in `src/App.tsx`) and the nav entry already existed, so no shared routing/nav files changed. All cited i18n keys already existed in `src/intl/locales/en/common.json` — **zero locale keys added**. Shared-file edits: `src/config.ts` (+`SUPPORT_DATABASE_URL`, `PRINT_LABEL_TEST_URL`), `src/appData.ts` (+device-local `labelPrinterUseUsb`, per OMS-REG-SET-05.22).
 
 ## AC coverage
 
@@ -44,7 +44,7 @@ Spec: [`spec/settings/`](../../../spec/settings/) (reverse spec). Replaces the c
 ## Follow-up build — S5 store editor (issue #760)
 
 Added after this report's original scope: `store-editor/` (the footer Edit cell's
-modal, [ui-surface § S5](../../../spec/settings/ui-surface.md#s5--store-editor)),
+modal, [ui-surface § S5](../../../../spec/settings/ui-surface.md#s5--store-editor)),
 wired from `src/nav/ShellLayout.tsx` through the `onStoreEdit` prop `AppShell`
 already carried. Zero locale keys added; `nameId` added to the `UserInfo`
 fragment (`UserStoreNode.nameId`) so the facility row is known before the editor
@@ -54,7 +54,7 @@ equalTo } })` is the only way to fetch one. Behaviours `.28`–`.32` are unit-co
 save → reopen → restore) was driven live against `localhost:8000`.
 
 - **Preferences tab deliberately absent** — the spec captures it at gating level
-  only ([README § Status](../../../spec/settings/README.md#status)), so the tab
+  only ([README § Status](../../../../spec/settings/README.md#status)), so the tab
   group renders Properties alone rather than guessing a 23-field inventory.
 - **One departure from the reference client:** its geolocation read is unbounded,
   so a permission prompt the user never answers leaves the GPS block in its
@@ -64,7 +64,7 @@ save → reopen → restore) was driven live against `localhost:8000`.
   automated browser can't answer the prompt — the block recovers and shows the
   timed-out reason).
 - **The row-alignment decision below recurred here and has since been made**
-  ([D114](../../../spec/DIVERGENCES.md), issue #1032): the store editor's
+  ([D114](../../../../spec/DIVERGENCES.md), issue #1032): the store editor's
   definition labels vary widely in length ("Facility Type" vs "Supply Interval
   (Months between deliveries)"), and `FieldRow`'s per-row grid left the controls
   ragged. The editor is now the shared sectioned edit form at the prose measure
@@ -85,7 +85,7 @@ consuming vertical's own endpoint and payload and returns one of four outcomes
 `LabelPrintOutcomeDialog` is the single surface that says what an attempt that
 did not print means. A consuming screen decides only **what** is printed and
 **when**, and where its report lands — never what it says
-([rules § Devices — label printer](../../../spec/settings/rules.md#devices--label-printer)).
+([rules § Devices — label printer](../../../../spec/settings/rules.md#devices--label-printer)).
 In this vertical the only code change is `DevicesSection` hiding the toggle on
 Android (`showPrintViaUsbRow`).
 
@@ -132,7 +132,7 @@ removed.
 
 **Manual, with hardware:** a label was physically printed over USB, with the
 local print service installed and a printer attached — the leg no hermetic run
-can cover ([`OMS-REG-SET-05` Preconditions](<../../../spec/settings/cases/OMS-REG-SET-05 - Validate Devices Settings.md>)).
+can cover ([`OMS-REG-SET-05` Preconditions](<../../../../spec/settings/cases/OMS-REG-SET-05 - Validate Devices Settings.md>)).
 
 - **Spec corrected, not just flagged:** `/write`'s `device.version` is the API
   level **the caller speaks**, not the device's — echo back the level
@@ -141,7 +141,7 @@ can cover ([`OMS-REG-SET-05` Preconditions](<../../../spec/settings/cases/OMS-RE
   nothing. The contract said `device` was "the entry from `available`", which is
   precisely the wrong instruction; it now spells out the constructed shape and
   carries the trap
-  ([contract § Devices — label printer](../../../spec/settings/contract.md#devices--label-printer)).
+  ([contract § Devices — label printer](../../../../spec/settings/contract.md#devices--label-printer)).
   This build pins 2 and the e2e asserts it, so a regeneration reproduces it.
 - **"No USB printer found" cannot cover a print service that is not running.**
   The contract called the two indistinguishable; they are not — a rejected
@@ -191,10 +191,10 @@ Full in-browser pass against the running dev server (`localhost:8000` backend, a
 - **Password visibility toggle:** the sync password now uses the shared `PasswordField` — a `TextField` variant with a show/hide eye toggle (`sync-settings-password-visibility`), matching login/initialisation. Toast correctly avoided — all outcomes are inline `Alert`s per controls › action feedback.
 - **Decisions the spec should own (refinement candidates):**
   - Field alignment in settings rows: the reference app end-aligns each row's control at the section's inline end (controls column-align at the right edge); `FieldRow` places the control directly after its label, so sibling rows' controls don't align (label widths differ). Whether the settings rows should match the reference's end-alignment is a spec/registry decision — it would need a sanctioned `FieldRow` capability (or a different mapped role) first; deliberately not improvised by this build (an `alignControl` prop was prototyped and reverted as out of scope).
-  - Theme editor's pre-fill when nothing is saved — **resolved as [D52](../../../spec/DIVERGENCES.md)**: the editor seeds an empty JSON object (this app has no built-in theme document); rules § Display settings now states it. What a custom theme _does_ in this implementation remains the open theming question. Label-printer unconfigured defaults (blank address / 9100 / 290 / 576) are also now stated in rules § Devices — label printer.
+  - Theme editor's pre-fill when nothing is saved — **resolved as [D52](../../../../spec/DIVERGENCES.md)**: the editor seeds an empty JSON object (this app has no built-in theme document); rules § Display settings now states it. What a custom theme _does_ in this implementation remains the open theming question. Label-printer unconfigured defaults (blank address / 9100 / 290 / 576) are also now stated in rules § Devices — label printer.
   - `databaseSettings` (`databaseType`) — **resolved**: reference source shows it consumed only by the Android/native download path (SQLite → vacuum-then-native-read); contract § Support now scopes it there, so this web build's non-use is per spec.
   - Clear encoding — **resolved**: contract § Display settings now states clearing sends the field as `""` (no null sentinel / dedicated operation), matching both the reference client and this build.
-  - ~~The GAPS/forecasting property sets are only named generically~~ — **resolved**: tabulated record-for-record in [`spec/settings/property-sets.md`](../../../spec/settings/property-sets.md) (ids, keys, en/fr seeded names/values, the configured-check key sets), referenced from rules/contract § Configuration; the ids are upsert identities so a rebuild must send them verbatim.
+  - ~~The GAPS/forecasting property sets are only named generically~~ — **resolved**: tabulated record-for-record in [`spec/settings/property-sets.md`](../../../../spec/settings/property-sets.md) (ids, keys, en/fr seeded names/values, the configured-check key sets), referenced from rules/contract § Configuration; the ids are upsert identities so a rebuild must send them verbatim.
 - **C2 tooling:** unchanged — no CI harness for real-backend AC legs; rows above marked "C2 pending". This build's live-verified rows (OMS-REG-SET-02.9, OMS-REG-SET-05.26, OMS-REG-SET-05.20/.21, OMS-REG-SET-01.13, OMS-REG-SET-03.1–.3) were exercised manually against the dev server, not in CI.
 - **C7 note:** the live dev server's schema is slightly newer than the pinned `schema.graphql` (`customFields` on invoice update, `dynamicFilter` on invoice filter — both surfaced during codegen in out-of-scope generated files, reverted here). The pinned schema wants a wholesale refresh in its own pass.
 - **Cross-vertical reuse:** `SyncSection` maps failure variants through `src/sections/sync-modal/syncErrors.ts` (precedent: `src/initialisation/` imports the same module). Candidate for promotion to `src/domain/` if a third consumer appears.

@@ -1,7 +1,7 @@
 {
   // The BACKEND halves of the in-repo plugins: the country plugins
-  // (`plugins/<name>/backend`) and the reference plugin
-  // (`plugins/examples/<name>/backend`).
+  // (`../private/plugins/<name>/backend`) and the reference plugin
+  // (`../plugins/examples/<name>/backend`).
   //
   // A separate project from tsconfig.plugins.json because the two halves do not
   // run in the same place: this code runs in the server's BoaJS engine, so
@@ -18,21 +18,20 @@
   // run (the `backend-plugins` vitest project); they are not type-checked.
   //
   // The reference plugin is included on purpose, and load-bearingly so: the
-  // public mirror carves out the country plugins (.github/mirror/rules.txt
-  // publishes only `plugins/examples/`), so without it this project has ZERO
+  // public mirror carries no `private/`, so without it this project has ZERO
   // inputs there and `tsc -b` dies with TS18003 — taking `pnpm check`, `build`
   // and `build:showcase` down with it. `plugins/examples/*/backend` is a
   // separate include line because the examples sit one directory deeper than
   // the country plugins.
   //
-  // One backend half is still NOT here: `plugins/cook_islands/backend`. It
+  // One backend half is still NOT here: `private/plugins/cook_islands/backend`. It
   // declares the host globals itself in a `host.d.ts` rather than importing
   // `@common/types`, and two declarations of `sql` in one program do not
   // compile, so it is type-checked by tsconfig.plugins.json instead — which is
   // why the include below is a glob but the exclude names cook_islands: a
   // backend half that carries its own `host.d.ts` belongs over there.
   //
-  // `plugins/cook_islands/shared` goes with it: the wire contract is imported
+  // `private/plugins/cook_islands/shared` goes with it: the wire contract is imported
   // by both of that plugin's halves, so it is type-checked once, alongside the
   // frontend half that also consumes it.
   //
@@ -62,13 +61,19 @@
     "paths": { "@common/*": ["../client/packages/plugins/backendCommon/*"] }
   },
   "include": [
-    "plugins/examples/*/backend/src/**/*.ts",
-    "plugins/*/backend/src/**/*.ts",
-    "plugins/*/shared/**/*.ts"
+    "../plugins/examples/*/backend/src/**/*.ts",
+    "../plugins/*/backend/src/**/*.ts",
+    "../plugins/*/shared/**/*.ts",
+    "../private/plugins/*/backend/src/**/*.ts",
+    "../private/plugins/*/shared/**/*.ts"
   ],
   "exclude": [
     "**/*.test.ts",
-    "plugins/cook_islands/backend/**",
-    "plugins/cook_islands/shared/**"
+    // `**` is anchored at this file's directory, so it never reaches the
+    // plugins outside frontend/ — they need their own `../` forms.
+    "../plugins/**/*.test.ts",
+    "../private/plugins/**/*.test.ts",
+    "../private/plugins/cook_islands/backend/**",
+    "../private/plugins/cook_islands/shared/**"
   ]
 }

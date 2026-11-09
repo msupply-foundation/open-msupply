@@ -185,6 +185,8 @@ export type StockLineCountVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    onHold?: boolean | null;
+    isExpired?: boolean | null;
   } | null;
 };
 

@@ -99,6 +99,25 @@ const gateRegex = (
   return new RegExp(`^${sign}${DIGIT}*${frac}$`);
 };
 
+/**
+ * How many characters an input event put in: the new text minus what it
+ * shares with the previous text at both ends. A keystroke puts in at most one
+ * (typing over a selection replaces it with one); a paste, drop or autofill
+ * can put in many.
+ */
+const insertedLength = (raw: string, previous: string): number => {
+  const shortest = Math.min(raw.length, previous.length);
+  let start = 0;
+  while (start < shortest && raw[start] === previous[start]) start++;
+  let end = 0;
+  while (
+    end < shortest - start &&
+    raw[raw.length - 1 - end] === previous[previous.length - 1 - end]
+  )
+    end++;
+  return raw.length - start - end;
+};
+
 /** Valid-so-far text that doesn't yet parse to a committable number. */
 export const isIncompleteText = (
   text: string,
@@ -161,11 +180,13 @@ export const editString = (
  * Process one input event's raw text. Not accepted → the component restores
  * the previous DOM value. Accepted → `text` is what the field shows; `commit`
  * (when present) is the value for onChange — undefined meaning cleared.
+ * `previous` is the field's text before this event (omitted = empty).
  */
 export const processInput = (
   raw: string,
   o: NumberFieldConstraints,
-  locale: SupportedLocale
+  locale: SupportedLocale,
+  previous = ''
 ): ProcessedInput => {
   const symbols = getNumberSymbols(locale);
   const text = normalize(raw, symbols);
@@ -194,9 +215,14 @@ export const processInput = (
     };
   }
 
-  // Gate failed — usually a paste ("$1,234.567", "-5" where negatives are
-  // banned, over-precise decimals). Try to repair: parse what was given,
-  // strip a banned sign, round to the decimal limit, and re-gate the result.
+  // Gate failed on a single keystroke: drop it and leave the text as it was.
+  // Repairing it would rewrite text the user is still building — "0.00" + "0"
+  // would round to "0", so the next "1" reads "01".
+  if (insertedLength(raw, previous) <= 1) return { accepted: false };
+
+  // Gate failed on a paste ("$1,234.567", "-5" where negatives are banned,
+  // over-precise decimals). Try to repair: parse what was given, strip a
+  // banned sign, round to the decimal limit, and re-gate the result.
   const parsed = parseNumber(text, symbols.decimal);
   if (Number.isNaN(parsed)) return { accepted: false };
   const signed = o.min >= 0 ? Math.abs(parsed) : parsed;

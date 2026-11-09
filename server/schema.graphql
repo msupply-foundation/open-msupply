@@ -4368,6 +4368,11 @@ input InsertRequestRequisitionInput {
 	Defaults to 2 weeks from now
 	"""
 	expectedDeliveryDate: NaiveDate
+	"""
+	Starts the order with a line for every item on this master list, each requesting its
+	suggested quantity. Created in one step: if the lines can't be added, no order is created
+	"""
+	masterListId: String
 }
 
 type InsertRequestRequisitionLineError {
@@ -7992,6 +7997,10 @@ type Queries {
 		"""
 		daysTillExpired: Int
 	): StockCounts!
+	"""
+	A request requisition line's consumption history and stock evolution. Only the series
+	the query selects are read; the others are null
+	"""
 	requisitionLineChart(storeId: String!, requestRequisitionLineId: String!, consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): RequisitionLineChartResponse!
 	"""
 	An item's request line as the line editor's draft would save it, under a chosen
@@ -8185,7 +8194,12 @@ type Queries {
 	insurancePolicy(storeId: String!, id: String!): InsuranceResponse!
 	insuranceProviders(storeId: String!): InsuranceProvidersResponse!
 	shippingMethods(storeId: String!, filter: ShippingMethodFilterInput): ShippingMethodsResponse!
-	requisition(storeId: String!, id: String!): RequisitionResponse!
+	requisition(		storeId: String!,		id: String!,
+		"""
+		Only a requisition of this type resolves; any other is RecordNotFound
+		"""
+		type: RequisitionNodeType
+	): RequisitionResponse!
 	requisitions(storeId: String!, page: PaginationInput, filter: RequisitionFilterInput, sort: [RequisitionSortInput!]): RequisitionsResponse!
 	requisitionByNumber(storeId: String!, requisitionNumber: Int!, type: RequisitionNodeType!): RequisitionResponse!
 	supplierProgramRequisitionSettings(storeId: String!): [SupplierProgramRequisitionSettingNode!]!
@@ -8244,7 +8258,11 @@ type Queries {
 		"""
 		Sort options (only first sort input is evaluated for this endpoint)
 		"""
-		sort: [StockLineSortInput!]
+		sort: [StockLineSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): StockLinesResponse!
 	"""
 	Query for items that have at least one stock_line matching `filter`
@@ -8266,7 +8284,11 @@ type Queries {
 		"""
 		Item-level sort (only first sort input is evaluated)
 		"""
-		sort: [ItemSortInput!]
+		sort: [ItemSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): ItemsResponse!
 	"""
 	Query for "historical_stock_line" entries
@@ -8544,7 +8566,7 @@ type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & Delet
 	description: String!
 }
 
-type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
+type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & QueryReportErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
 	description: String!
 }
 
@@ -8824,8 +8846,9 @@ type RequisitionLineForecastPreviewNode {
 	The consumption history and stock evolution for the previewed line, as
 	`requisitionLineChart` gives them for a saved one — so an item being added charts
 	before its line exists. The draft's requested quantity isn't part of the preview, so
-	the stock projection adds nothing at delivery. Null if the chart can't be read: the
-	chart is context, so failing to read it doesn't fail the preview
+	the stock projection adds nothing at delivery. Only the series the query selects are
+	read; the others are null. Null if the chart can't be read: the chart is context, so
+	failing to read it doesn't fail the preview
 	"""
 	chart(consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): ItemChartNode
 	suggestedQuantity: Float!
@@ -8991,9 +9014,10 @@ type RequisitionNode {
 	"""
 	minMonthsOfStock: Float!
 	"""
-	The ordering store's supply interval and safety buffer (from its facility record) as
-	they stand now, null when it carries no supply interval. A general
-	order's default target months of stock.
+	The ordering store's supply interval and safety buffer (from its facility record) and
+	delivery lead time (from its store preferences) as they stand now, null when its
+	facility record carries no supply interval. Their sum is a general order's default
+	target months of stock.
 	"""
 	supplyIntervalAndBuffer: SupplyIntervalAndBufferNode
 	documents: SyncFileReferenceConnector!
@@ -9584,6 +9608,12 @@ input StockLineFilterInput {
 	isActive: Boolean
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
+	onHold: Boolean
+	"""
+	true: expiry date before today. false: expiry date today or later, or no expiry date.
+	Today is in the query's `timezoneOffset`, or the server's timezone without one
+	"""
+	isExpired: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
@@ -9653,6 +9683,7 @@ enum StockLineSortFieldInput {
 	sellPricePerPack
 	vvmStatusThenExpiry
 	campaign
+	onHold
 }
 
 input StockLineSortInput {
@@ -10104,6 +10135,10 @@ type SupplyIntervalAndBufferNode {
 	Zero when the facility record carries none
 	"""
 	safetyBufferMonths: Float!
+	"""
+	How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset
+	"""
+	deliveryLeadTimeMonths: Float!
 }
 
 type SupplyRequestedQuantityError {

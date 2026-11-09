@@ -60,6 +60,8 @@ export interface NamesListProps {
   crumbs: () => Crumb[];
   /** Open a row's detail (customer modal / supplier navigation). */
   onRowClick: (row: NameRow) => void;
+  /** Where a navigating row (supplier) goes — makes the row a link. */
+  rowHref?: (row: NameRow) => string | undefined;
   /** Stable table id for per-user column config. */
   tableId: string;
 }
@@ -218,6 +220,7 @@ export const NamesList: Component<NamesListProps> = props => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={props.onRowClick}
+        rowHref={props.rowHref}
         emptyMessage={t('name.empty')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}

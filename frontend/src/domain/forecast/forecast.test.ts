@@ -276,8 +276,21 @@ describe("OMS-REG-REPL-17.17 — target months from the store's supply interval 
       targetStockCaption('120 units', 3.5, {
         supplyIntervalMonths: 3,
         safetyBufferMonths: 0.5,
+        deliveryLeadTimeMonths: 0,
       })
     ).toBe('120 units × 3.5 months (supply interval 3 + safety buffer 0.5)');
+  });
+
+  it('adds the delivery lead time where the store has one', () => {
+    expect(
+      targetStockCaption('120 units', 4.5, {
+        supplyIntervalMonths: 3,
+        safetyBufferMonths: 0.5,
+        deliveryLeadTimeMonths: 1,
+      })
+    ).toBe(
+      '120 units × 4.5 months (supply interval 3 + safety buffer 0.5 + delivery lead time 1)'
+    );
   });
 });
 

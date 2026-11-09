@@ -23,15 +23,16 @@ import { searchForWorkspaceRoot, type Plugin } from 'vite';
  * plugin's failure — the loader still registers its siblings (OMS-REG-PLG-01.4).
  *
  * Dev plugins are OPT-IN: only the directories named by OMS_PLUGIN_DIRS load
- * (absolute, or relative to the repo root — `OMS_PLUGIN_DIRS=plugins/civ` for
- * an in-repo plugin, `../civ-plugins/frontend/latest` for a checkout).
+ * (absolute, or relative to the repo root — `private/plugins/civ` for an
+ * in-repo plugin, `../civ-plugins/frontend/latest` for a checkout).
  * Deliberately nothing by default: the in-repo country plugins target
- * overlapping slots, so an all-of-`plugins/*` dev session would render every
- * deployment's contributions at once. Each named directory is identified by a
- * package.json declaring `omSupplyPlugin.target === 'frontend'`, with the
+ * overlapping slots, so an all-of-`private/plugins/*` dev session would render
+ * every deployment's contributions at once. Each named directory is identified
+ * by a package.json declaring `omSupplyPlugin.target === 'frontend'`, with the
  * entry module the first of ENTRY_CANDIDATES that exists — the same rule
- * `scripts/build-plugins.mjs` uses (that one DOES walk `plugins/examples/*`
- * and `plugins/*`: building everything is packaging, not a dev session).
+ * `scripts/build-plugins.mjs` uses (that one DOES walk `plugins/examples/*`,
+ * `plugins/*` and `private/plugins/*`: building everything is packaging, not a
+ * dev session).
  *
  * The discovery/codegen half is pure and injected-fs, so it is unit-testable
  * (devPlugins.test.ts); only `devPluginsPlugin` touches the disk.
@@ -96,7 +97,7 @@ export const parsePluginDirs = (
 };
 
 /**
- * Whether `dir` sits outside the repo — i.e. whether the dev server has to be
+ * Whether `dir` sits outside the Vite project (frontend/) — i.e. whether the dev server has to be
  * told to serve files from it (`server.fs.allow`).
  */
 export const isOutsideRoot = (root: string, dir: string): boolean => {
@@ -225,9 +226,13 @@ const nodeFs: DevPluginFs = {
  * is emitted (verified by the dist grep in the PR gates).
  */
 export const devPluginsPlugin = (): Plugin => {
-  // This file lives in <repo>/vite/, and it is only ever used by this repo's
-  // own vite.config.ts.
+  // This file lives in <repo>/frontend/vite/, and it is only ever used by
+  // this repo's own vite.config.ts. `root` is the Vite project (frontend/);
+  // OMS_PLUGIN_DIRS is read against the repo root above it, where the in-repo
+  // plugins live (plugins/, private/plugins/) — so they are outside `root`
+  // and get the same serving allowance as an out-of-tree checkout.
   const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+  const repoRoot = resolve(root, '..');
   let serving = false;
 
   return {
@@ -238,7 +243,7 @@ export const devPluginsPlugin = (): Plugin => {
       if (!serving) return undefined;
       const outOfTree = parsePluginDirs(
         process.env.OMS_PLUGIN_DIRS,
-        root
+        repoRoot
       ).filter(dir => isOutsideRoot(root, dir));
       if (outOfTree.length === 0) return undefined;
       return {
@@ -265,7 +270,7 @@ export const devPluginsPlugin = (): Plugin => {
       if (id !== RESOLVED_ID) return undefined;
       if (!serving) return renderDevPluginsModule([]);
       const { plugins, problems } = discoverDevPlugins(
-        root,
+        repoRoot,
         process.env.OMS_PLUGIN_DIRS,
         nodeFs
       );
@@ -275,7 +280,7 @@ export const devPluginsPlugin = (): Plugin => {
       if (plugins.length > 0) {
         this.info(
           `[dev-plugins] serving from source: ${plugins
-            .map(p => `${p.code} (${relative(root, p.entry)})`)
+            .map(p => `${p.code} (${relative(repoRoot, p.entry)})`)
             .join(', ')}`
         );
       }

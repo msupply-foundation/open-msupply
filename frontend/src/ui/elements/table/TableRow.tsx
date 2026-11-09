@@ -10,6 +10,7 @@ import { renderTemplate } from './renderTemplate';
 import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { ChevronDownIcon } from '../../icons';
+import { RowLink, leftToBrowser } from './RowLink';
 import { groupLabelColumnId, type GroupPosition } from './rowGroups';
 import styles from './DataTable.module.css';
 
@@ -106,6 +107,8 @@ export function TableRow<T>(props: {
   onRowClick?: (row: T) => void;
   /** Whether `onRowClick` applies to this row (see DataTable's prop). */
   rowClickable?: (row: T) => boolean;
+  /** The address a clickable row opens, as a link (see DataTable's prop). */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Keyboard row navigation (spec/keyboard KB-N1). When set, this row can take
    * the keyboard highlight: the arrows move real DOM focus onto it and `Enter`
@@ -220,6 +223,10 @@ export function TableRow<T>(props: {
     isGroup() ||
     (props.onRowClick !== undefined &&
       (props.rowClickable?.(props.row.original) ?? true));
+  // Only a row that opens something can be a link to it; a group row opens
+  // nothing (a click expands or collapses it).
+  const href = () =>
+    clickable() && !isGroup() ? props.rowHref?.(props.row.original) : undefined;
   const selected = () =>
     isGroup() ? props.row.getIsAllSubRowsSelected() : props.row.getIsSelected();
   return (
@@ -280,9 +287,10 @@ export function TableRow<T>(props: {
       onFocus={event => {
         if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
       }}
-      onClick={() => {
+      onClick={event => {
         if (isGroup()) props.row.toggleExpanded();
-        else if (clickable()) props.onRowClick?.(props.row.original);
+        else if (clickable() && !leftToBrowser(event, Boolean(href())))
+          props.onRowClick?.(props.row.original);
       }}
     >
       <Show when={props.expander}>
@@ -410,6 +418,8 @@ export function TableRow<T>(props: {
                 // below that sentinel is a real cap. A pinned column
                 // additionally gets sticky position + offset.
                 data-wrap={cellWrapLines(cell) ? '' : undefined}
+                // The row's link fills this cell behind its content (RowLink).
+                data-row-link={href() ? '' : undefined}
                 style={{
                   'min-width': `${cell.column.getSize()}px`,
                   ...(cellMaxWidthPx(cell) !== undefined
@@ -421,6 +431,7 @@ export function TableRow<T>(props: {
                   ...props.pinnedStyle(cell.column),
                 }}
               >
+                <Show when={href()}>{link => <RowLink href={link()} />}</Show>
                 {/* A group row (rowGroup) shows the grouped value with its line
                   count in the first figure-free visible column (labelColumnId),
                   and a figure only in a column that aggregates; every other

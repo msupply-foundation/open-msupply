@@ -1,4 +1,4 @@
-import { createRoot } from 'solid-js';
+import { createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
@@ -49,6 +49,7 @@ import {
   type PatientDetails,
   type PatientNode,
 } from './patientDetails';
+import { notFound } from '../../../api/gated';
 import { Patient, PatientWithDocument } from './patient.generated';
 import { UpdatePatient } from './updatePatient.generated';
 
@@ -275,43 +276,201 @@ describe('createPatientDetails', () => {
     });
   });
 
-  // A save re-reads the patient and re-seeds the draft from what the server
-  // now holds (OMS-REG-DIS-02.41). The re-read keeps the record from before
-  // the save showing while it runs; the draft must not be re-seeded from that
-  // one, which would leave it holding the pre-save values against the saved
-  // record: dirty, and asking to discard on leave (#2025).
-  describe('after a save on the plain path', () => {
-    it('re-seeds from the record the save wrote, leaving the form pristine', async () => {
-      const details = await open(undefined);
-      const saved: PatientNode = { ...record, address1: 'after' };
-      let answerReread!: () => void;
+  // The patient screen shows its not-found notice only for the server's own
+  // "no such patient", never for a read that failed (#1746): that one has the
+  // global error modal up, whose Retry reloads, and must not be told the
+  // patient is gone.
+  describe('a patient read that finds no patient', () => {
+    const openMissing = async (answer: unknown) => {
+      fetchPatientRegistry.mockResolvedValue({ entry: undefined });
+      graphqlFetch.mockImplementation(async () => answer);
+      const details = create();
+      await vi.waitFor(() => expect(details.patient.state).toBe('ready'));
+      return details;
+    };
+
+    it('settles null when the server has no such patient', async () => {
+      const details = await openMissing({
+        kind: 'success',
+        data: { patient: null },
+      });
+      expect(details.patient.latest).toBeNull();
+      expect(notFound(details.patient)).toBe(true);
+      expect(details.node()).toBeUndefined();
+    });
+
+    it('settles undefined when the read failed', async () => {
+      const details = await openMissing({ kind: 'unexpectedError' });
+      expect(details.patient.latest).toBeUndefined();
+      expect(notFound(details.patient)).toBe(false);
+      expect(details.node()).toBeUndefined();
+    });
+  });
+
+  // The screen re-reads the patient after a plain-path save, and the draft
+  // re-seeds from that read. Until it answers, the read still holds the
+  // patient as it was before the save, which must not be taken for it.
+  describe('after a plain-path save', () => {
+    /** Takes the save, and answers the re-read with `reread`. */
+    const answerSave = (reread: () => Promise<PatientNode>) =>
       graphqlFetch.mockImplementation(async (query: unknown) => {
         if (query === UpdatePatient) {
           return {
             kind: 'success',
-            data: { updatePatient: { id: record.id } },
+            data: {
+              updatePatient: { __typename: 'PatientNode', id: record.id },
+            },
           };
         }
         if (query === Patient) {
-          await new Promise<void>(resolve => (answerReread = resolve));
-          return { kind: 'success', data: { patient: saved } };
+          return { kind: 'success', data: { patient: await reread() } };
         }
         return { kind: 'transportError' };
       });
 
-      const { editor } = details;
-      editor.setField('address1', 'after');
+    const openSeeded = async () => {
+      const details = await open(undefined);
+      await vi.waitFor(() => expect(details.editor.edit.code).toBe('CF0002'));
+      return details;
+    };
+
+    it('shows the saved values, unchanged, while the re-read is out and once it lands', async () => {
+      const details = await openSeeded();
+      const editor = details.editor;
+      editor.setField('isDeceased', true);
       expect(editor.isDirty()).toBe(true);
 
-      await editor.doSave(() => details.refetch());
-      // The re-read is under way: the record from before the save still shows.
-      await vi.waitFor(() => expect(answerReread).toBeDefined());
-      expect(details.node()).toBe(record);
-      expect(editor.edit.address1).toBe('after');
+      const saved: PatientNode = { ...record, isDeceased: true };
+      let answerRead: (() => void) | undefined;
+      answerSave(async () => {
+        await new Promise<void>(resolve => (answerRead = resolve));
+        return saved;
+      });
+      // The save awaits the re-read, so it does not resolve until the read
+      // lands below; hold the promise and let the read start first.
+      const done = editor.doSave(details.refetch);
+      await vi.waitFor(() => expect(answerRead).toBeTypeOf('function'));
 
-      answerReread();
-      await vi.waitFor(() => expect(details.node()).toBe(saved));
-      expect(editor.edit.address1).toBe('after');
+      // The re-read is out: the form holds the saved draft, pristine.
+      expect(details.node()).toBe(record);
+      expect(editor.edit.isDeceased).toBe(true);
+      expect(editor.isDirty()).toBe(false);
+
+      answerRead!();
+      await done;
+      expect(details.node()).toBe(saved);
+      expect(editor.edit.isDeceased).toBe(true);
+      expect(editor.isDirty()).toBe(false);
+    });
+
+    // Spaces in Code 2 are saved as no Code 2: the re-read answers as before,
+    // with the same object (api/graphql.ts › structural sharing).
+    it('counts the next edit after a save the re-read shows no change in', async () => {
+      const details = await openSeeded();
+      const editor = details.editor;
+      editor.setField('code2', '  ');
+      expect(editor.isDirty()).toBe(true);
+
+      answerSave(async () => record);
+      await editor.doSave(details.refetch);
+      expect(patientReads()).toEqual([Patient, Patient]);
+      expect(editor.isDirty()).toBe(false);
+
+      editor.setField('firstName', 'Sam');
+      expect(editor.isDirty()).toBe(true);
+      editor.resetDraft();
+      expect(editor.isDirty()).toBe(false);
+    });
+
+    // The re-read is the same object, so the draft must still re-seed from it:
+    // the spaces typed into Code 2 were stored as none, and the form shows
+    // that, not the spaces.
+    it('shows what was stored after a save the re-read shows no change in', async () => {
+      const details = await openSeeded();
+      const editor = details.editor;
+      expect(editor.edit.code2).toBe('');
+      editor.setField('code2', '  ');
+
+      answerSave(async () => record);
+      await editor.doSave(details.refetch);
+      expect(patientReads()).toEqual([Patient, Patient]);
+
+      expect(editor.edit.code2).toBe('');
+      expect(editor.isDirty()).toBe(false);
+    });
+
+    // The after-save state ends with the re-read, so a later read of the same
+    // patient (a background refresh) leaves an unsaved edit alone, as a new
+    // read of an already-seeded patient always does.
+    it('keeps a later edit when a new read of the same patient lands after a save', async () => {
+      const details = await openSeeded();
+      const editor = details.editor;
+
+      editor.setField('code2', '  ');
+      answerSave(async () => record);
+      await editor.doSave(details.refetch);
+      expect(patientReads()).toEqual([Patient, Patient]);
+      expect(editor.isDirty()).toBe(false);
+
+      editor.setField('firstName', 'Sam');
+      expect(editor.isDirty()).toBe(true);
+
+      const refreshed: PatientNode = { ...record };
+      graphqlFetch.mockImplementation(async (query: unknown) =>
+        query === Patient
+          ? { kind: 'success', data: { patient: refreshed } }
+          : { kind: 'transportError' }
+      );
+      await details.refetch();
+      await vi.waitFor(() => expect(details.node()).toBe(refreshed));
+
+      expect(editor.edit.firstName).toBe('Sam');
+      expect(editor.isDirty()).toBe(true);
+    });
+
+    // A re-read that fails keeps the saved draft as the baseline. Another
+    // patient opened on the same screen seeds from that patient and drops it,
+    // so the new patient isn't counted as edited.
+    it('drops the saved draft when another patient opens after a failed re-read', async () => {
+      fetchPatientRegistry.mockResolvedValue({ entry: undefined });
+      answerPatient();
+      const [patientId, setPatientId] = createSignal('patient-1');
+      const details = createRoot(d => {
+        dispose = d;
+        return createPatientDetails({ storeId: () => 'store', patientId });
+      });
+      await vi.waitFor(() => expect(details.editor.edit.code).toBe('CF0002'));
+      const editor = details.editor;
+
+      editor.setField('isDeceased', true);
+      graphqlFetch.mockImplementation(async (query: unknown) =>
+        query === UpdatePatient
+          ? {
+              kind: 'success',
+              data: {
+                updatePatient: { __typename: 'PatientNode', id: record.id },
+              },
+            }
+          : { kind: 'transportError' }
+      );
+      await editor.doSave(details.refetch);
+      expect(editor.edit.isDeceased).toBe(true);
+      expect(editor.isDirty()).toBe(false);
+
+      const other: PatientNode = {
+        ...record,
+        id: 'patient-2',
+        code: 'CF0003',
+        isDeceased: false,
+      };
+      graphqlFetch.mockImplementation(async (query: unknown) =>
+        query === Patient
+          ? { kind: 'success', data: { patient: other } }
+          : { kind: 'transportError' }
+      );
+      setPatientId('patient-2');
+      await vi.waitFor(() => expect(editor.edit.code).toBe('CF0003'));
+      expect(editor.edit.isDeceased).toBe(false);
       expect(editor.isDirty()).toBe(false);
     });
   });

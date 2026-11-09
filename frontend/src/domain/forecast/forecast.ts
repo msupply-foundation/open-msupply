@@ -312,11 +312,22 @@ export const principalItemLabel = (
     : principal.itemId;
 
 /**
+ * The target months a store sets a general order: its supply interval + safety
+ * buffer + delivery lead time (spec/internal-orders › target months of stock).
+ */
+export const storeTargetMonths = (
+  intervalAndBuffer: SupplyIntervalAndBufferFragment
+): number =>
+  intervalAndBuffer.supplyIntervalMonths +
+  intervalAndBuffer.safetyBufferMonths +
+  intervalAndBuffer.deliveryLeadTimeMonths;
+
+/**
  * The target-stock step's caption: monthly demand × target months. Where the
  * target came from the store's supply interval + safety buffer, the months
  * show the supply interval and safety buffer that make them up (spec S4 › the
  * forecast, OMS-REG-REPL-17.17) — "120 units × 3.5 months (supply interval 3
- * + safety buffer 0.5)".
+ * + safety buffer 0.5)" — and its delivery lead time where it has one.
  */
 export const targetStockCaption = (
   monthlyDemand: string,
@@ -329,9 +340,14 @@ export const targetStockCaption = (
   });
   const step = `${monthlyDemand} × ${months}`;
   if (!intervalAndBuffer) return step;
-  const makeup = t('label.supply-interval-plus-buffer', {
+  const params = {
     supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths),
     safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths),
-  });
+    leadTime: formatNumber(intervalAndBuffer.deliveryLeadTimeMonths),
+  };
+  const makeup =
+    intervalAndBuffer.deliveryLeadTimeMonths > 0
+      ? t('label.supply-interval-plus-buffer-plus-lead-time', params)
+      : t('label.supply-interval-plus-buffer', params);
   return `${step} (${makeup})`;
 };

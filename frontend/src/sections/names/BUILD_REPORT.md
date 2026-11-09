@@ -2,7 +2,7 @@
 
 **Target stack:** SolidJS + Vite, composed from the shared component library in
 [`src/ui/`](../../ui/) through the roles in
-[`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+[`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
 **Scope of this run.** A **scoped, additive** build of **slice 3 only** — the
 central server's **facility register** (Manage › Stores, `spec/names` S5) and its
@@ -35,7 +35,7 @@ files this run authored carry **0 lint errors**.
 ## Anchor coverage
 
 Behaviours from
-[`spec/names/cases/OMS-REG-MNG-02`](../../../spec/names/cases/OMS-REG-MNG-02%20-%20Validate%20Facilities%20Management.md).
+[`spec/names/cases/OMS-REG-MNG-02`](../../../../spec/names/cases/OMS-REG-MNG-02%20-%20Validate%20Facilities%20Management.md).
 `L` = live-verified by driving this FE at `:3111` against the probe central
 server (`:8890`, store _Tamaki Central Medical Store_) during the build.
 

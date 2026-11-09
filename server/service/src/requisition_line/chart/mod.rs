@@ -44,11 +44,13 @@ pub struct ItemChart {
     pub suggested_quantity_calculation: SuggestedQuantityCalculation,
 }
 
+/// The line's chart. A series whose options are None isn't read, and comes back None, so a
+/// caller that draws only one series doesn't pay for the other.
 pub fn get_requisition_line_chart(
     ctx: &ServiceContext,
     requisition_line_id: &str,
-    consumption_history_options: ConsumptionHistoryOptions,
-    stock_evolution_options: StockEvolutionOptions,
+    consumption_history_options: Option<ConsumptionHistoryOptions>,
+    stock_evolution_options: Option<StockEvolutionOptions>,
 ) -> Result<ItemChart, OutError> {
     // Validate
     let requisition_line = validate(&ctx.connection, &ctx.store_id, requisition_line_id)?;
@@ -70,8 +72,8 @@ pub fn get_forecast_preview_chart(
     connection: &StorageConnection,
     store_id: &str,
     preview: &RequisitionLineForecastPreview,
-    consumption_history_options: ConsumptionHistoryOptions,
-    stock_evolution_options: StockEvolutionOptions,
+    consumption_history_options: Option<ConsumptionHistoryOptions>,
+    stock_evolution_options: Option<StockEvolutionOptions>,
 ) -> Result<ItemChart, RepositoryError> {
     chart_for_line(
         connection,
@@ -88,8 +90,8 @@ fn chart_for_line(
     store_id: &str,
     requisition: &RequisitionRow,
     line: &RequisitionLineRow,
-    consumption_history_options: ConsumptionHistoryOptions,
-    stock_evolution_options: StockEvolutionOptions,
+    consumption_history_options: Option<ConsumptionHistoryOptions>,
+    stock_evolution_options: Option<StockEvolutionOptions>,
 ) -> Result<ItemChart, RepositoryError> {
     let suggested_quantity_calculation = SuggestedQuantityCalculation::from_rows(requisition, line);
 
@@ -117,44 +119,54 @@ fn chart_for_line(
     } = *line;
     let item_id = &line.item_id;
 
-    let mut consumption_history = get_historic_consumption_for_item(
-        connection,
-        store_id,
-        item_id,
-        requisition_line_datetime.date(),
-        consumption_history_options,
-    )?;
+    let consumption_history = consumption_history_options
+        .map(|options| -> Result<_, RepositoryError> {
+            let mut consumption_history = get_historic_consumption_for_item(
+                connection,
+                store_id,
+                item_id,
+                requisition_line_datetime.date(),
+                options,
+            )?;
 
-    // Add in the projected month which shows the requisition line AMC (current AMC)
-    if let Some(last) = consumption_history.last() {
-        consumption_history.push(ConsumptionHistory {
-            consumption: average_monthly_consumption as u32,
-            average_monthly_consumption,
-            date: last_day_of_the_month(&date_with_months_offset(&last.date, 1)),
-        });
-    }
+            // Add in the projected month which shows the requisition line AMC (current AMC)
+            if let Some(last) = consumption_history.last() {
+                consumption_history.push(ConsumptionHistory {
+                    consumption: average_monthly_consumption as u32,
+                    average_monthly_consumption,
+                    date: last_day_of_the_month(&date_with_months_offset(&last.date, 1)),
+                });
+            }
+            Ok(consumption_history)
+        })
+        .transpose()?;
 
-    let StockEvolutionResult {
-        mut projected_stock,
-        mut historic_stock,
-    } = get_stock_evolution_for_item(
-        connection,
-        store_id,
-        item_id,
-        *requisition_line_datetime,
-        available_stock_on_hand as u32,
-        *expected_delivery_date,
-        requested_quantity as u32,
-        // Stock is projected to fall at the line's monthly demand, whatever its forecast method
-        forecast_monthly_consumption,
-        stock_evolution_options,
-    )?;
+    let stock_evolution = stock_evolution_options
+        .map(|options| -> Result<_, RepositoryError> {
+            let StockEvolutionResult {
+                mut projected_stock,
+                mut historic_stock,
+            } = get_stock_evolution_for_item(
+                connection,
+                store_id,
+                item_id,
+                *requisition_line_datetime,
+                available_stock_on_hand as u32,
+                *expected_delivery_date,
+                requested_quantity as u32,
+                // Stock is projected to fall at the line's monthly demand, whatever its forecast method
+                forecast_monthly_consumption,
+                options,
+            )?;
 
-    historic_stock.append(&mut projected_stock);
+            historic_stock.append(&mut projected_stock);
+            Ok(historic_stock)
+        })
+        .transpose()?;
 
     Ok(ItemChart {
-        consumption_history: Some(consumption_history),
-        stock_evolution: Some(historic_stock),
+        consumption_history,
+        stock_evolution,
         reference_date: Some(requisition_line_datetime.date()),
         suggested_quantity_calculation,
     })
@@ -251,8 +263,8 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 "n/a",
-                consumption_history_options(),
-                StockEvolutionOptions::default(),
+                Some(consumption_history_options()),
+                Some(StockEvolutionOptions::default()),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
@@ -264,8 +276,8 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 &test_line.id,
-                consumption_history_options(),
-                StockEvolutionOptions::default(),
+                Some(consumption_history_options()),
+                Some(StockEvolutionOptions::default()),
             ),
             Err(ServiceError::NotARequestRequisition)
         );
@@ -276,8 +288,8 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 &test_line.id,
-                consumption_history_options(),
-                StockEvolutionOptions::default(),
+                Some(consumption_history_options()),
+                Some(StockEvolutionOptions::default()),
             ),
             Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
         );
@@ -331,8 +343,8 @@ mod test {
                 &connection,
                 &context.store_id,
                 &preview,
-                consumption_history_options(),
-                StockEvolutionOptions::default(),
+                Some(consumption_history_options()),
+                Some(StockEvolutionOptions::default()),
             )
             .unwrap()
         };
@@ -567,11 +579,11 @@ mod test {
             .get_requisition_line_chart(
                 &context,
                 &requisition_line().id,
-                ConsumptionHistoryOptions {
+                Some(ConsumptionHistoryOptions {
                     amc_lookback_months: 5.0,
                     number_of_data_points: 3,
-                },
-                StockEvolutionOptions::default(),
+                }),
+                Some(StockEvolutionOptions::default()),
             )
             .unwrap();
 
@@ -620,6 +632,30 @@ mod test {
                 },
             ]
         );
+        assert!(result.stock_evolution.is_some());
+
+        // A series given no options (None) isn't read
+        let result = service
+            .get_requisition_line_chart(
+                &context,
+                &requisition_line().id,
+                Some(consumption_history_options()),
+                None,
+            )
+            .unwrap();
+        assert!(result.consumption_history.is_some());
+        assert_eq!(result.stock_evolution, None);
+
+        let result = service
+            .get_requisition_line_chart(
+                &context,
+                &requisition_line().id,
+                None,
+                Some(StockEvolutionOptions::default()),
+            )
+            .unwrap();
+        assert_eq!(result.consumption_history, None);
+        assert!(result.stock_evolution.is_some());
     }
 
     #[actix_rt::test]
@@ -819,11 +855,11 @@ mod test {
             .get_requisition_line_chart(
                 &context,
                 &requisition_line().id,
-                consumption_history_options(),
-                StockEvolutionOptions {
+                Some(consumption_history_options()),
+                Some(StockEvolutionOptions {
                     number_of_historic_data_points: 3,
                     number_of_projected_data_points: 4,
-                },
+                }),
             )
             .unwrap();
 

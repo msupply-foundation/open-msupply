@@ -79,8 +79,8 @@ export const storeRelativePath = (
  * cannot drift apart.
  *
  * Router-space, not a document href: the mount is NOT included, which is what
- * the router's own `<A>`/`navigate` expect. The SDK's `storeHref` prefixes
- * `routerBase` to make a document href of it.
+ * the router's own `<A>`/`navigate` expect. `documentHref` makes a document
+ * href of it.
  */
 export const storePath = (storeId: string, path: string): string => {
   const relative = path.replace(/^\/+/, '');
@@ -88,3 +88,20 @@ export const storePath = (storeId: string, path: string): string => {
   if (relative === '' || relative.startsWith('?')) return `${root}${relative}`;
   return `${root}/${relative}`;
 };
+
+/**
+ * A router-space path (what `navigate()` and `<A>` take — `storePath`'s
+ * output, or any `/{store}/…`) as a document href: the mount in front, so a
+ * raw `<a href>` works wherever the app is mounted (#271).
+ *
+ * The ONE place a mount is joined to a path. A raw anchor gets no resolution
+ * from the router: on a nested mount ('/rc/', a '/pr-123/' branch deploy) an
+ * href without the mount points outside the app, the router declines to
+ * intercept it, and the browser loads a page that isn't this app — while at
+ * the root mount, where local dev and CI run, the two spellings agree and
+ * nothing shows. So every raw anchor's href comes through here
+ * (scripts/check-nav-links.mjs fails a hand-built one), and a component that
+ * renders the router's own `<A>` passes the router-space path instead, since
+ * `<A>` resolves the mount itself and would apply it twice.
+ */
+export const documentHref = (path: string): string => `${routerBase}${path}`;
