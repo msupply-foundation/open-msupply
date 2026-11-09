@@ -18,7 +18,7 @@ use crate::{
 };
 use repository::{
     EqualFilter, ForecastMethod, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
-    RequisitionLineRow, requisition_row::RequisitionType,
+    RequisitionLineRow, RequisitionRow, requisition_row::RequisitionType,
 };
 
 /// An item's line on a request requisition as the editor's draft would save it, without
@@ -39,8 +39,9 @@ pub struct RequisitionLineForecastPreviewInput {
 pub struct RequisitionLineForecastPreview {
     /// Never persisted. A new line's id is not the one its insert will use
     pub line: RequisitionLineRow,
-    /// The requisition's target months, for the line's target stock
-    pub max_months_of_stock: f64,
+    /// The order the line is on: its target months give the line's target stock, its
+    /// expected delivery date the end of the line's stock projection
+    pub requisition: RequisitionRow,
     pub forecast_method_options: Vec<ForecastMethodOption>,
 }
 
@@ -159,8 +160,8 @@ pub fn get_requisition_line_forecast_preview(
 
     Ok(RequisitionLineForecastPreview {
         forecast_method_options: inputs.options(&input.item_id, &order),
-        max_months_of_stock: requisition.max_months_of_stock,
         line,
+        requisition,
     })
 }
 

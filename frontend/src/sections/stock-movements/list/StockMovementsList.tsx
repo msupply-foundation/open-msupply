@@ -200,8 +200,9 @@ const StockMovementsList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: MovementRow) =>
-    navigate(`/${params.storeId}/inventory/stock-movement/${row.id}`);
+  const rowHref = (row: MovementRow) =>
+    `/${params.storeId}/inventory/stock-movement/${row.id}`;
+  const openRow = (row: MovementRow) => navigate(rowHref(row));
 
   // Columns per ui-surface S1 § columns, in display order. Accessors so t()
   // re-reads on a language switch.
@@ -309,6 +310,7 @@ const StockMovementsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         emptyMessage={t('messages.no-stock-movements')}
         empty={
           <Button

@@ -287,10 +287,9 @@ const InboundShipmentsList: Component = () => {
   // Both scopes share one detail route; the row's purchaseOrderId names which
   // scope this shipment is in, and the link carries it so the detail's single
   // read can name the right `type` (see inboundShipmentHref).
-  const openRow = (row: Row) =>
-    navigate(
-      inboundShipmentHref(params.storeId, row.id, scopeOf(row.purchaseOrderId))
-    );
+  const rowHref = (row: Row) =>
+    inboundShipmentHref(params.storeId, row.id, scopeOf(row.purchaseOrderId));
+  const openRow = (row: Row) => navigate(rowHref(row));
 
   // Inline supplier colour-tag edit (spec S1 column 1: the swatch is editable
   // inline). Submits the colour via the twin-aware update and refetches.
@@ -500,6 +499,7 @@ const InboundShipmentsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         emptyMessage={t('error.no-inbound-shipments')}
         empty={
           <Button

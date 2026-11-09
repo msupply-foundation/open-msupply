@@ -80,7 +80,7 @@ pub fn insert_request_from_response_requisition(
                 None,
             )?;
 
-            get_requisition(ctx, None, &requisition.id)
+            get_requisition(ctx, None, &requisition.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })

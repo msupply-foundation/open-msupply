@@ -1,6 +1,7 @@
 import { ErrorBoundary, lazy, Show, Suspense } from 'solid-js';
 import { pageActions, pageFooter, pageTrail } from './pageSlots';
-import { storeHref } from '../plugin-sdk/navigation';
+import { currentStoreId } from '../store/storeContext';
+import { storePath } from '../nav/storeRelativePath';
 import type { Component } from 'solid-js';
 import { t, type LocaleKey } from '../intl';
 import { FileIcon, type IconProps } from '../ui/icons';
@@ -563,6 +564,12 @@ const pageComponent = (registered: RegisteredPage): Component => {
     })
   );
   const labelKey = namespacedPluginKey(registered.pluginCode, page.labelKey);
+  // A crumb takes a router-space path and puts the mount in front itself
+  // (Breadcrumb), so this is the store path, not the SDK's storeHref.
+  const crumbPath = (path: string): string | undefined => {
+    const storeId = currentStoreId();
+    return storeId === undefined ? undefined : storePath(storeId, path);
+  };
   const Screen: Component = () => (
     // The host frame (spec/plugins/ui-surface.md § S2): app frame and page
     // frame are the host's — the Page geometry and the header put the
@@ -582,12 +589,12 @@ const pageComponent = (registered: RegisteredPage): Component => {
                 label: t(labelKey),
                 to:
                   pageTrail.value().length > 0
-                    ? storeHref(page.path)
+                    ? crumbPath(page.path)
                     : undefined,
               },
               ...pageTrail.value().map(crumb => ({
                 label: crumb.label,
-                to: crumb.path ? storeHref(crumb.path) : undefined,
+                to: crumb.path ? crumbPath(crumb.path) : undefined,
               })),
             ]}
           />

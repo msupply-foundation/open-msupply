@@ -229,8 +229,8 @@ static TRANSLATED_TABLES: LazyLock<HashSet<String>> = LazyLock::new(translated_t
 /// Rejects a pushed batch that contains a table the sending site may not author.
 ///
 /// The whole batch is refused rather than the offending rows dropped: a legitimate
-/// site never sends one (`build_v6_push_filter` only picks up locally originated
-/// records), so a record reaching here means the site is broken or hostile, and
+/// site never sends one (`ChangelogFilter::all_data_edited_on_site_for_v6` only picks up
+/// locally originated records), so a record reaching here means the site is broken or hostile, and
 /// silently dropping it would hide that.
 ///
 /// A table this server has no translator for is a different thing and is let through.

@@ -9,7 +9,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -320,13 +320,15 @@ const OutboundDetailView: Component = () => {
     async variables => {
       // A not-found NodeError is NOT routed to the global error modal (which
       // would offer a useless reload of the same bad id, and shadow the local
-      // notice); it falls through to `undefined` here and the view shows the
-      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list.
+      // notice); it resolves `null` here and the view shows the
+      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list. A failed
+      // read resolves `undefined` and keeps the spinner, under the global error
+      // modal.
       const result = await graphqlFetch(OutboundDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
 
@@ -336,7 +338,7 @@ const OutboundDetailView: Component = () => {
   // allocate report) mid-interaction. `.latest` suspends only until the FIRST
   // load resolves, so the initial spinner is unchanged
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
-  const node = (): OutboundNode | undefined => data.latest;
+  const node = (): OutboundNode | undefined => data.latest ?? undefined;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query
   // (OMS-REG-DIST-03.28). Keyed on the SERIALISED variables (a stable string)
@@ -764,8 +766,7 @@ const OutboundDetailView: Component = () => {
   const crumbs = (current: OutboundNode) => [
     {
       label: t('outbound-shipments'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/outbound-shipment`),
+      to: `/${params.storeId}/distribution/outbound-shipment`,
     },
     { label: String(current.invoiceNumber) },
   ];
@@ -1077,7 +1078,7 @@ const OutboundDetailView: Component = () => {
       <Show
         when={node()}
         fallback={
-          <Show when={!data.loading}>
+          <Show when={notFound(data)} fallback={<Spinner center />}>
             <Dialog
               open
               dismissable={false}

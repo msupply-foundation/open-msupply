@@ -68,24 +68,53 @@
   min-inline-size: 0;
 }
 
-/* Below — the read-only context charts (spec S4), matching the original
-   open-msupply: the target-quantity breakdown centred on its own row (capped
-   width), then the consumption / stock-evolution pair centred beneath it — a
-   row on wide viewports, stacked on narrow. A single 1rem gap between them. */
+/* Below — the read-only context charts (spec S4): the consumption history
+   centred on its own row, then the "Additional charts" accordion holding the
+   target-quantity breakdown and the stock evolution (issue 2102). A single
+   1rem gap between them. */
 .charts {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   margin-block-start: var(--space-4);
   /* Cap the region and centre it as a cohesive block, so the charts don't
-     sprawl across the modal (they'd read as uncentered). Wide enough for the
-     two ~29rem charts + gap + padding side by side — which is why this editor
-     is a card at the wide measure (80rem) rather than the 56rem `large`
-     default: a ~53rem body can't reach this cap, so the pair would stack
-     (#771); the wide card's body clears it (#617). */
+     sprawl across the modal (they'd read as uncentered) — which is why this
+     editor is a card at the wide measure (80rem) rather than the 56rem `large`
+     default (#771, #617). */
   inline-size: 100%;
   max-inline-size: 64rem;
   margin-inline: auto;
+  /* The dialog body is a scrolling flex column: without this the region
+     shrinks to fit it when the accordion opens, squeezing the charts, rather
+     than the body scrolling. */
+  flex-shrink: 0;
+}
+
+/* "Additional charts" — a card accordion, its trigger a chart icon and one
+   line of text, its body the breakdown and stock evolution centred in a
+   column. */
+.additionalCharts {
+  flex-shrink: 0;
+}
+
+.additionalChartsTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.additionalChartsIcon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: var(--primary-main);
+}
+
+.additionalChartsBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding-block: var(--space-2);
 }
 
 /* The breakdown row — centred, width-capped like the original's maxWidth 900. */
@@ -94,15 +123,6 @@
   max-inline-size: 56rem;
   margin-inline: auto;
   padding: var(--space-2) var(--space-4);
-}
-
-.chartPair {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  padding: var(--space-4);
 }
 
 .chartHeading {
@@ -124,8 +144,8 @@
 }
 
 /* Each chart is a fixed-width SVG; the section sizes to it (never stretched)
-   so the pair sits centred with a gap, matching the original. The heading and
-   chart stack centred within it. */
+   so it sits centred in its row. The heading and chart stack centred within
+   it. */
 .chartSection {
   display: flex;
   flex-direction: column;

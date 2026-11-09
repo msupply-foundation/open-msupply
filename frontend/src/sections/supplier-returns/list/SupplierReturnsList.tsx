@@ -297,8 +297,9 @@ const SupplierReturnsList: Component = () => {
         row.lines.totalCount > 0
     );
 
-  const openRow = (row: ReturnRow) =>
-    navigate(`/${params.storeId}/replenishment/supplier-return/${row.id}`);
+  const rowHref = (row: ReturnRow) =>
+    `/${params.storeId}/replenishment/supplier-return/${row.id}`;
+  const openRow = (row: ReturnRow) => navigate(rowHref(row));
 
   // The Name cell's swatch setter (ui-surface S1): header-level colour save,
   // then re-query so the row reflects it. Disabled (dot only) on rows the
@@ -483,6 +484,7 @@ const SupplierReturnsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // Rows the store can no longer edit (Shipped and beyond) take the
         // disabled state — ui-surface S1.
         rowState={row => (isReturnDisabled(row) ? 'disabled' : undefined)}

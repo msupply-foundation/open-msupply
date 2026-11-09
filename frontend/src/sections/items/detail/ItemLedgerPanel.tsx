@@ -431,6 +431,7 @@ export const ItemLedgerPanel: Component<{
         const href = ledgerRowHref(props.storeId, row);
         if (href) navigate(href);
       }}
+      rowHref={row => ledgerRowHref(props.storeId, row)}
       emptyMessage={t('messages.no-item-ledger')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}

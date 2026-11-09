@@ -106,8 +106,8 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         requisition_line_id: &str,
-        consumption_history_options: ConsumptionHistoryOptions,
-        stock_evolution_options: StockEvolutionOptions,
+        consumption_history_options: Option<ConsumptionHistoryOptions>,
+        stock_evolution_options: Option<StockEvolutionOptions>,
     ) -> Result<ItemChart, RequisitionLineChartError> {
         get_requisition_line_chart(
             ctx,

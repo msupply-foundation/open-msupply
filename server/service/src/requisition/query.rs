@@ -27,13 +27,17 @@ pub fn get_requisitions(
     })
 }
 
+/// A named `r#type` narrows the read: a requisition of the other type is
+/// `None`, the same as a missing id.
 pub fn get_requisition(
     ctx: &ServiceContext,
     store_id_option: Option<&str>,
     id: &str,
+    r#type: Option<RequisitionType>,
 ) -> Result<Option<Requisition>, RepositoryError> {
     let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string()));
     filter.store_id = store_id_option.map(|store_id| EqualFilter::equal_to(store_id.to_string()));
+    filter.r#type = r#type.map(|r#type| r#type.equal_to());
 
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(filter)?;
 
@@ -105,6 +109,7 @@ mod test {
                 &context,
                 Some(&mock_request_draft_requisition2().store_id),
                 &mock_request_draft_requisition2().id,
+                None,
             )
             .unwrap()
             .unwrap();

@@ -3,6 +3,7 @@ import { t, localisedDate } from '../../../intl';
 import { formatCurrency } from '../../../intl/currency';
 import { formatNumber } from '../../../intl/formatNumber';
 import { graphqlFetch } from '../../../api/graphql';
+import { createDebouncedField } from '@/domain/debouncedEdit';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -62,9 +63,10 @@ export interface InboundShipmentSidePanelProps {
   /** Store gates for the donor section + foreign-currency change. */
   donorTracking: boolean;
   foreignCurrencyAllowed: boolean;
+  /** Resolves once the saved shipment is spliced back. */
   onSaveField: (
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
-  ) => void;
+  ) => Promise<unknown>;
   onSaved: (node: InboundInfoFragment) => void;
   onDeleted: () => void;
 }
@@ -109,6 +111,13 @@ export const InboundShipmentSidePanel: Component<
   };
 
   const pricing = () => props.node.pricing;
+  // The stock tax rate saves as it is typed; it shows its own draft while it
+  // is being edited and the shipment's rate otherwise, so an answer to an
+  // earlier keystroke can't land over a later one (createDebouncedField).
+  const stockTax = createDebouncedField({
+    value: () => props.node.taxPercentage ?? 0,
+    save: percentage => props.onSaveField({ tax: { percentage } }),
+  });
   const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
 
   return (
@@ -157,7 +166,7 @@ export const InboundShipmentSidePanel: Component<
         <FieldRow label={t('label.colour')}>
           <ColourTagPicker
             colour={props.node.colour ?? null}
-            onSelect={colour => props.onSaveField({ colour })}
+            onSelect={colour => void props.onSaveField({ colour })}
           />
         </FieldRow>
         <FieldRow label={t('label.comment')}>
@@ -240,7 +249,7 @@ export const InboundShipmentSidePanel: Component<
             label={t('label.tax')}
             hideLabel
             size="small"
-            value={props.node.taxPercentage ?? 0}
+            value={stockTax.value()}
             min={0}
             emptyValue={0}
             max={100}
@@ -250,9 +259,9 @@ export const InboundShipmentSidePanel: Component<
             helperText={formatCurrency(
               pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
             )}
-            onChange={value =>
-              props.onSaveField({ tax: { percentage: value ?? 0 } })
-            }
+            onChange={value => stockTax.set(value ?? 0)}
+            onFocus={stockTax.onFocus}
+            onBlur={stockTax.onBlur}
           />
         </FieldRow>
         <FieldRow label={t('label.total')}>

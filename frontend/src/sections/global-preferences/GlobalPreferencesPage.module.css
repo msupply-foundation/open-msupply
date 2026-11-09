@@ -112,3 +112,36 @@
   gap: var(--space-1);
   padding-block-start: var(--space-3);
 }
+
+/* The global logo row: the logo as it stands (or "None uploaded") beside its
+   Edit button. Capped small so a tall logo can't stretch the row. */
+.logoControl {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* A fixed height, not just a max: with only a max-height the row sizes the
+   control from the image's natural width, so a large logo pushed the Edit
+   button out past the column. object-fit keeps a wide logo's shape inside the
+   width cap. */
+.logoThumbnail {
+  block-size: 2.5rem;
+  inline-size: auto;
+  max-inline-size: 7.5rem;
+  object-fit: contain;
+}
+
+/* The logo editor's preview of the draft, with its Remove beneath. */
+.logoPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logoPreviewImage {
+  max-block-size: 12.5rem;
+  max-inline-size: 100%;
+  object-fit: contain;
+}

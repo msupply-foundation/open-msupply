@@ -1,6 +1,6 @@
 use ::serde::Serialize;
 use async_graphql::*;
-use graphql_core::simple_generic_errors::FailedTranslation;
+use graphql_core::simple_generic_errors::{FailedTranslation, RecordNotFound};
 use graphql_core::standard_graphql_error::{StandardGraphqlError, list_error_to_gql_err};
 use graphql_core::{ContextExt, map_filter};
 use graphql_core::{
@@ -101,6 +101,7 @@ pub struct ReportConnector {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum QueryReportErrorInterface {
     ReportTranslationError(FailedTranslation),
+    RecordNotFound(RecordNotFound),
 }
 
 #[derive(Interface)]
@@ -327,6 +328,9 @@ impl ReportSortInput {
 
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
+        GetReportError::ReportNotFound => Ok(ReportResponse::Error(QueryReportError {
+            error: QueryReportErrorInterface::RecordNotFound(RecordNotFound),
+        })),
         GetReportError::TranslationError(error) => Ok(ReportResponse::Error(QueryReportError {
             error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
                 error.to_string(),

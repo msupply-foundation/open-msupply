@@ -486,7 +486,7 @@ async fn forecast_preview_matches_save() {
     assert_eq!(preview.line.forecast_method, ForecastMethod::AncillaryRatio);
     assert_eq!(preview.line.forecast_monthly_consumption, 5.0);
     assert_eq!(
-        preview.max_months_of_stock,
+        preview.requisition.max_months_of_stock,
         requisition().max_months_of_stock
     );
     assert!(

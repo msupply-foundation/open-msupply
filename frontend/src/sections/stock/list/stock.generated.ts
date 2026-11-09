@@ -204,6 +204,7 @@ export type StockLinesVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     onHold?: boolean | null;
+    isExpired?: boolean | null;
   } | null;
   sort?: Array<{
     key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry" | "campaign" | "onHold";

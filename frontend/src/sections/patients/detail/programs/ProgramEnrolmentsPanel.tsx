@@ -28,6 +28,12 @@ export interface ProgramEnrolmentsPanelProps {
    */
   onRowClick?: (enrolment: Row) => void;
   /**
+   * The address a row opens, where it navigates (the Vaccinations tab's
+   * vaccination card) — makes each row a link. The modal-opening Programs tab
+   * leaves it unset.
+   */
+  rowHref?: (enrolment: Row) => string | undefined;
+  /**
    * The Additional info column, the enrolment's status events: the Programs
    * tab shows it, the Vaccinations tab does not.
    */
@@ -102,6 +108,7 @@ export const ProgramEnrolmentsPanel: Component<
       rowKey={r => r.id}
       loading={props.loading}
       onRowClick={props.onRowClick}
+      rowHref={props.rowHref}
       emptyMessage={props.emptyMessage}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}

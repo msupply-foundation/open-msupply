@@ -24,8 +24,8 @@ const site = (over: Partial<SiteRow> = {}): SiteRow => ({
   hardwareId: 'HW-1',
   syncVersion: 'V7',
   appVersion: '3.0.0',
-  lastConnectionDatetime: '2026-08-06T05:13:46',
-  lastSyncDatetime: '2026-08-06T05:13:47',
+  lastConnectionDatetime: '2026-08-06T05:13:46+00:00',
+  lastSyncDatetime: '2026-08-06T05:13:47+00:00',
   isMultiDevice: false,
   ...over,
 });
