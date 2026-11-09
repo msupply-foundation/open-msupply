@@ -4,14 +4,13 @@
 extern crate machine_uid;
 
 use crate::{
-    central::config_central, certs::Certificates, cold_chain::config_cold_chain, cors::cors_policy,
-    cors::websocket_origin_check, custom_translations::config_custom_translations,
-    middleware::central_server_only, print::config_print, serve_frontend::config_serve_frontend,
+    central::config_central, certs::Certificates, cold_chain::config_cold_chain,
+    custom_translations::config_custom_translations, middleware::central_server_only,
+    middleware::wrap_main_server, print::config_print, serve_frontend::config_serve_frontend,
     static_files::config_static_files, support::config_support,
     upload_fridge_tag::config_upload_fridge_tag,
 };
 
-use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
 use chrono::{NaiveDateTime, Utc};
 use graphql_core::loader::{LoaderRegistry, get_loaders};
@@ -326,13 +325,7 @@ pub async fn start_server(
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
     let mut http_server = HttpServer::new(move || {
-        App::new()
-            .app_data(Data::new(closure_settings.clone()))
-            // Inside the logger, so a refused upgrade shows in the request log
-            .wrap(websocket_origin_check(&closure_settings))
-            .wrap(logger_middleware())
-            .wrap(cors_policy(&closure_settings))
-            .wrap(compress_middleware())
+        wrap_main_server(App::new(), &closure_settings, is_develop())
             // needed for static files service
             .app_data(Data::new(closure_settings.clone()))
             // Configure JSON payload limit (default is 2MB, setting to 10MB)

@@ -13,7 +13,7 @@ pub fn cors_policy(config_settings: &Settings) -> Cors {
     cors_policy_for(config_settings, is_develop())
 }
 
-fn cors_policy_for(config_settings: &Settings, is_develop: bool) -> Cors {
+pub(crate) fn cors_policy_for(config_settings: &Settings, is_develop: bool) -> Cors {
     let cors = if is_develop {
         Cors::permissive()
     } else {
@@ -44,23 +44,7 @@ fn cors_policy_for(config_settings: &Settings, is_develop: bool) -> Cors {
 /// No `Origin` header is let through: browsers always send one on a WebSocket upgrade, so it's a
 /// non-browser client. That holds no user's browser cookies and could send any `Origin`, so
 /// refusing it protects nothing. HTTP is the same: actix-cors only checks requests with an `Origin`.
-pub fn websocket_origin_check<S, B>(
-    config_settings: &Settings,
-) -> impl Transform<
-    S,
-    ServiceRequest,
-    Response = ServiceResponse<EitherBody<B>>,
-    Error = Error,
-    InitError = (),
-> + use<S, B>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    B: MessageBody + 'static,
-{
-    websocket_origin_check_for(config_settings, is_develop())
-}
-
-fn websocket_origin_check_for<S, B>(
+pub(crate) fn websocket_origin_check_for<S, B>(
     config_settings: &Settings,
     is_develop: bool,
 ) -> impl Transform<
@@ -140,13 +124,13 @@ fn is_websocket_upgrade(req: &RequestHead) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{cors_policy_for, websocket_origin_check_for};
+    use super::cors_policy_for;
+    use crate::middleware::wrap_main_server;
     use actix_web::{
         App, Error, HttpRequest, HttpResponse,
         body::MessageBody,
         dev::{ServiceFactory, ServiceRequest, ServiceResponse},
         http::{Method, StatusCode, header},
-        middleware::Condition,
         test, web,
     };
     use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
@@ -191,11 +175,9 @@ mod tests {
             .start(&req, payload)
     }
 
-    /// The main server's middleware as built for a release binary (both checks are given
-    /// `is_develop: false`, since tests run as a debug build).
-    fn release_app(
-        with_websocket_check: bool,
-    ) -> App<
+    /// The main server's middleware as built for a release binary (`is_develop: false`, since
+    /// tests run as a debug build).
+    fn release_app() -> App<
         impl ServiceFactory<
             ServiceRequest,
             Config = (),
@@ -204,13 +186,7 @@ mod tests {
             InitError = (),
         >,
     > {
-        let settings = settings();
-        App::new()
-            .wrap(Condition::new(
-                with_websocket_check,
-                websocket_origin_check_for(&settings, false),
-            ))
-            .wrap(cors_policy_for(&settings, false))
+        wrap_main_server(App::new(), &settings(), false)
             .route("/graphql", web::post().to(HttpResponse::Ok))
             .route("/graphql/ws", web::get().to(graphql_ws))
     }
@@ -237,7 +213,12 @@ mod tests {
     // GraphQL WebSocket handshake (#1644)
     #[actix_web::test]
     async fn cors_alone_does_not_refuse_a_websocket_upgrade() {
-        let app = test::init_service(release_app(false)).await;
+        let app = test::init_service(
+            App::new()
+                .wrap(cors_policy_for(&settings(), false))
+                .route("/graphql/ws", web::get().to(graphql_ws)),
+        )
+        .await;
         let response = test::call_service(
             &app,
             websocket_upgrade(Some("https://evil.example"), Some("cross-site")).to_request(),
@@ -248,7 +229,7 @@ mod tests {
 
     #[actix_web::test]
     async fn websocket_upgrade_from_disallowed_origin_is_refused() {
-        let app = test::init_service(release_app(true)).await;
+        let app = test::init_service(release_app()).await;
 
         for (origin, sec_fetch_site) in [
             ("https://evil.example", "cross-site"),
@@ -270,7 +251,7 @@ mod tests {
 
     #[actix_web::test]
     async fn websocket_upgrade_from_allowed_origin_is_accepted() {
-        let app = test::init_service(release_app(true)).await;
+        let app = test::init_service(release_app()).await;
 
         for (origin, sec_fetch_site) in [
             // The page is served by this server
@@ -291,9 +272,38 @@ mod tests {
         }
     }
 
+    // INV-NET-2's legacy arm: a browser too old to send Sec-Fetch-Site is let through from any
+    // origin, on a WebSocket upgrade as on HTTP
+    #[actix_web::test]
+    async fn websocket_upgrade_with_origin_but_no_sec_fetch_site_is_accepted() {
+        let app = test::init_service(release_app()).await;
+        let response = test::call_service(
+            &app,
+            websocket_upgrade(Some("https://evil.example"), None).to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::SWITCHING_PROTOCOLS);
+    }
+
+    // Develop builds skip the check, matching their permissive CORS (INV-NET-1)
+    #[actix_web::test]
+    async fn develop_build_accepts_a_cross_site_websocket_upgrade() {
+        let app = test::init_service(
+            wrap_main_server(App::new(), &settings(), true)
+                .route("/graphql/ws", web::get().to(graphql_ws)),
+        )
+        .await;
+        let response = test::call_service(
+            &app,
+            websocket_upgrade(Some("https://evil.example"), Some("cross-site")).to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::SWITCHING_PROTOCOLS);
+    }
+
     #[actix_web::test]
     async fn same_site_request_from_unlisted_origin_is_refused() {
-        let app = test::init_service(release_app(true)).await;
+        let app = test::init_service(release_app()).await;
 
         let preflight = |origin: &str| {
             test::TestRequest::default()
