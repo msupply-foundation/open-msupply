@@ -39,7 +39,7 @@ use service::sync::file_synchroniser::{self, FileSynchroniser};
 use service::usize_to_i32;
 use std::sync::Arc;
 use thiserror::Error;
-use util::format_error;
+use util::{format_error, sanitize_filename};
 
 use crate::authentication::{validate_cookie_auth, validate_resource_access};
 use crate::middleware::limit_content_length;
@@ -168,10 +168,9 @@ fn check_help_document_editable(
                 "You don't have permission to change help documents".to_string(),
                 StatusCode::FORBIDDEN,
             ),
-            service::auth::AuthError::InternalError(reason) => InternalError::new(
-                reason.clone(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            ),
+            service::auth::AuthError::InternalError(reason) => {
+                InternalError::new(reason.clone(), StatusCode::INTERNAL_SERVER_ERROR)
+            }
         }
     })?;
 
@@ -264,7 +263,11 @@ fn check_help_document_file_types(
 pub(crate) fn refuse_files_that_run_script(files: &[TempFile]) -> Result<(), actix_web::Error> {
     for f in files {
         let file_name = f.file_name.as_deref().unwrap_or("file");
-        let active_extension = Path::new(file_name)
+        // The file is stored and served under its cleaned-up name, which can have a
+        // different extension from the one sent (`x.ht?ml` is stored as `x.html`), so
+        // the name checks look at that one.
+        let stored_name = sanitize_filename(file_name.to_string());
+        let active_extension = Path::new(&stored_name)
             .extension()
             .and_then(|extension| extension.to_str())
             .is_some_and(|extension| {
@@ -273,10 +276,10 @@ pub(crate) fn refuse_files_that_run_script(files: &[TempFile]) -> Result<(), act
         // The extension list can't name every extension the server serves as an XML
         // document (`.xsd`, `.wsdl`, `.dtd` → `text/xml`; `.rdf`, `.atom`, `.xul`, … →
         // `+xml`), and keeping it in step with `mime_guess`'s table would drift. The
-        // stored file carries the upload's name, so the download route serves exactly
-        // this type — refuse when THAT is a type the browser runs script from.
+        // download route serves the stored name's type — refuse when THAT is a type
+        // the browser runs script from.
         let served_content_type =
-            is_active_content_type(&mime_guess::from_path(file_name).first_or_octet_stream());
+            is_active_content_type(&mime_guess::from_path(&stored_name).first_or_octet_stream());
         let active_content_type = f.content_type.as_ref().is_some_and(is_active_content_type);
         let markup = starts_with_markup(f.file.path())
             .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
@@ -1054,6 +1057,8 @@ mod test {
             ("guide.html", "application/octet-stream", "hello"),
             ("guide.HTM", "application/octet-stream", "hello"),
             ("diagram.svg", "application/octet-stream", "hello"),
+            // By the name it's stored under, once the `?` is cleaned out
+            ("guide.ht?ml", "application/octet-stream", "hello"),
             // By declared type
             ("guide", "text/html", "hello"),
             ("diagram", "image/svg+xml", "hello"),
@@ -1136,6 +1141,13 @@ mod test {
                 "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"/>",
             ),
             ("feed.rdf", "application/octet-stream", "<rdf:RDF/>"),
+            // Stored as `x.html` once the `?` is cleaned out of the name, with HTML
+            // that doesn't start with `<`
+            (
+                "x.ht?ml",
+                "application/octet-stream",
+                "hi<script>alert(document.domain)</script>",
+            ),
         ];
         for (file_name, content_type, body) in refused {
             let response = actix_test::call_service(
