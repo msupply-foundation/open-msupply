@@ -138,4 +138,33 @@ describe('default date format (numeric, #774)', () => {
       setLocale('en');
     }
   });
+
+  // The browser's default calendar for Dari and Pashto is Solar Hijri, so
+  // without `calendar: 'gregory'` October would show as Mizan (میزان) in Dari
+  // and Tala (تله) in Pashto, a month the stored value only partly overlaps.
+  // Only January and October are pinned: other months' spellings change
+  // between ICU versions.
+  it('names the Gregorian months in Dari and Pashto', async () => {
+    try {
+      for (const [language, january] of [
+        ['prs', 'جنوری'],
+        ['ps', 'جنوري'],
+      ] as const) {
+        await loadDateFnsLocale(language);
+        setLocale(language);
+        expect(formatCalendarDate('2026-01-01', 'MMMM yyyy')).toBe(
+          `${january} 2026`
+        );
+        expect(formatCalendarDate('2026-10-01', 'MMMM yyyy')).toBe(
+          'اکتوبر 2026'
+        );
+        expect(formatCalendarDate('2026-10-01', 'MMM yyyy')).toBe(
+          'اکتوبر 2026'
+        );
+        expect(parseDateInput('اکتوبر 2026', 'MMM yyyy')).toBe('2026-10-01');
+      }
+    } finally {
+      setLocale('en');
+    }
+  });
 });

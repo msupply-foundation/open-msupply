@@ -125,8 +125,13 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     )
   );
 
+  // Month names are always Gregorian, the calendar the grid lays out: left
+  // to the browser, Dari and Pashto would name Solar Hijri months.
   const monthShort = (i: number) =>
-    new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'short' });
+    new Date(2000, i, 1).toLocaleDateString(locale(), {
+      month: 'short',
+      calendar: 'gregory',
+    });
 
   const disabled = (day: Date): boolean => {
     if (props.min && dateToCalendarDate(day) < dateToCalendarDate(props.min))
@@ -186,7 +191,10 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               class={styles.headingBtn}
               onClick={() => setView('month')}
             >
-              {ctx.month.toLocaleDateString(locale(), { month: 'long' })}
+              {ctx.month.toLocaleDateString(locale(), {
+                month: 'long',
+                calendar: 'gregory',
+              })}
             </button>
             <button
               type="button"

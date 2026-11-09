@@ -70,13 +70,22 @@ export const defaultDateFormat = (): string => localeDateFormat();
 
 const TOKEN = /yyyy|yy|MMMM|MMM|MM|M|dd|d/g;
 
-/** Localised month names for the app language, `[short, long]` per month. */
+/**
+ * Localised month names for the app language, `[short, long]` per month.
+ * Always the Gregorian months the value is stored in: left to the browser,
+ * Dari and Pashto would name the Solar Hijri month instead (Mizan for most
+ * of October).
+ */
 const monthNames = (): { short: string; long: string }[] =>
   Array.from({ length: 12 }, (_, i) => ({
     short: new Date(2000, i, 1).toLocaleDateString(locale(), {
       month: 'short',
+      calendar: 'gregory',
     }),
-    long: new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'long' }),
+    long: new Date(2000, i, 1).toLocaleDateString(locale(), {
+      month: 'long',
+      calendar: 'gregory',
+    }),
   }));
 
 // Placeholder token letters per language — only the letters that differ from
