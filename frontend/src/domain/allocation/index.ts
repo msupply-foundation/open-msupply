@@ -29,8 +29,11 @@ export {
   round9,
   availableUnits,
   issuedUnits,
+  availableDoses,
+  issuedDoses,
   distinctPackSizes,
   type AllocateUnit,
+  type DoseCountableBatch,
   type UnitCountableBatch,
 } from './units';
 export {
