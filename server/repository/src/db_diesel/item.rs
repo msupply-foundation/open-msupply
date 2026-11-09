@@ -554,20 +554,21 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
-        EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow, ItemRowRepository,
-        ItemStoreJoinRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, ItemType,
-        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, StockLineRow, StockLineRowRepository, StoreRow, StoreRowRepository,
-        StringFilter,
+        EqualFilter, InvoiceLineRow, InvoiceRow, ItemFilter, ItemLinkRowRepository, ItemRepository,
+        ItemRow, ItemRowRepository, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+        ItemStoreJoinRowRepositoryTrait, ItemType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, RequisitionLineRow,
+        RequisitionRow, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
+        StoreRow, StoreRowRepository, StringFilter,
         mock::{
-            MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_link_from_item,
-            mock_item_universal_code, mock_store_a,
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c,
+            mock_item_link_from_item, mock_item_universal_code, mock_name_a, mock_store_a,
         },
         test_db,
     };
 
-    use super::{Item, ItemSort, ItemSortField};
+    use super::{Item, ItemNotInRecordFilter, ItemNotInRecordType, ItemSort, ItemSortField};
 
     impl PartialEq<ItemRow> for Item {
         fn eq(&self, other: &ItemRow) -> bool {
@@ -1059,6 +1060,112 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_filter_not_in_record() {
+        let stocktake = StocktakeRow {
+            id: "not_in_record_stocktake".to_string(),
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let other_stocktake = StocktakeRow {
+            id: "not_in_record_other_stocktake".to_string(),
+            ..stocktake.clone()
+        };
+        let requisition = RequisitionRow {
+            id: "not_in_record_requisition".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let invoice = InvoiceRow {
+            id: "not_in_record_invoice".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let stocktake_line = |id: &str, stocktake_id: &str, item_id: String| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: stocktake_id.to_string(),
+            item_id,
+            ..Default::default()
+        };
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_item_query_filter_not_in_record",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                stocktakes: vec![stocktake.clone(), other_stocktake.clone()],
+                stocktake_lines: vec![
+                    stocktake_line("stocktake_line_a", &stocktake.id, mock_item_a().id),
+                    // Only the given record's lines exclude an item
+                    stocktake_line(
+                        "other_stocktake_line_b",
+                        &other_stocktake.id,
+                        mock_item_b().id,
+                    ),
+                ],
+                requisitions: vec![requisition.clone()],
+                requisition_lines: vec![RequisitionLineRow {
+                    id: "requisition_line_b".to_string(),
+                    requisition_id: requisition.id.clone(),
+                    item_id: mock_item_b().id,
+                    ..Default::default()
+                }],
+                invoices: vec![invoice.clone()],
+                invoice_lines: vec![InvoiceLineRow {
+                    id: "invoice_line_c".to_string(),
+                    invoice_id: invoice.id.clone(),
+                    item_id: mock_item_c().id,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repository = ItemRepository::new(&connection);
+        let ids = |record: ItemNotInRecordType, id: &str| -> Vec<String> {
+            let mut ids: Vec<String> = repository
+                .query(
+                    Pagination::new(),
+                    Some(
+                        ItemFilter::new()
+                            .id(EqualFilter::equal_any(vec![
+                                mock_item_a().id,
+                                mock_item_b().id,
+                                mock_item_c().id,
+                            ]))
+                            .is_visible(false)
+                            .not_in_record(ItemNotInRecordFilter {
+                                record,
+                                id: id.to_string(),
+                            }),
+                    ),
+                    None,
+                    Some(mock_store_a().id),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|item| item.item_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        assert_eq!(
+            ids(ItemNotInRecordType::Stocktake, &stocktake.id),
+            vec![mock_item_b().id, mock_item_c().id]
+        );
+        assert_eq!(
+            ids(ItemNotInRecordType::Requisition, &requisition.id),
+            vec![mock_item_a().id, mock_item_c().id]
+        );
+        assert_eq!(
+            ids(ItemNotInRecordType::Invoice, &invoice.id),
+            vec![mock_item_a().id, mock_item_b().id]
+        );
     }
 
     #[actix_rt::test]

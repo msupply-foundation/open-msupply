@@ -179,10 +179,96 @@ fn create_filtered_query(
 mod test {
     use crate::{
         EqualFilter, FloatFilter, Pagination, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRow, RequisitionLineSort, RequisitionLineSortField,
-        mock::{MockData, MockDataInserts, mock_item_a, mock_request_draft_requisition},
+        RequisitionLineRow, RequisitionLineSort, RequisitionLineSortField, StringFilter,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_name_a,
+            mock_request_draft_requisition, mock_store_a,
+        },
+        requisition_row::RequisitionRow,
         test_db,
     };
+
+    #[actix_rt::test]
+    async fn test_requisition_line_filter_and_sort() {
+        let requisition = RequisitionRow {
+            id: "filter_requisition".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let line_a = RequisitionLineRow {
+            id: "filter_line_a".to_string(),
+            requisition_id: requisition.id.clone(),
+            item_id: mock_item_a().id,
+            comment: Some("urgent".to_string()),
+            ..Default::default()
+        };
+        let line_b = RequisitionLineRow {
+            id: "filter_line_b".to_string(),
+            item_id: mock_item_b().id,
+            comment: None,
+            ..line_a.clone()
+        };
+        let other_requisition = RequisitionRow {
+            id: "other_requisition".to_string(),
+            ..requisition.clone()
+        };
+        // Same item as line_b, so an item search that leaks past the
+        // requisition filter would return it
+        let other_line_b = RequisitionLineRow {
+            id: "other_line_b".to_string(),
+            requisition_id: other_requisition.id.clone(),
+            ..line_b.clone()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_requisition_line_filter_and_sort",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                requisitions: vec![requisition.clone(), other_requisition],
+                requisition_lines: vec![line_a.clone(), line_b.clone(), other_line_b],
+                ..Default::default()
+            },
+        )
+        .await;
+        let repo = RequisitionLineRepository::new(&connection);
+        let this_requisition = || {
+            RequisitionLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(requisition.id.clone()))
+        };
+        let ids =
+            |filter: RequisitionLineFilter, sort: Option<RequisitionLineSort>| -> Vec<String> {
+                repo.query(Pagination::all(), Some(filter), sort)
+                    .unwrap()
+                    .into_iter()
+                    .map(|l| l.requisition_line_row.id)
+                    .collect()
+            };
+
+        // Matches on name as well as code, and still only within the requisition
+        let mut by_name = this_requisition();
+        by_name.item_code_or_name = Some(StringFilter::like("Item B"));
+        assert_eq!(ids(by_name, None), vec![line_b.id.clone()]);
+
+        let mut by_code = this_requisition();
+        by_code.item_code_or_name = Some(StringFilter::like("item_a_code"));
+        assert_eq!(ids(by_code, None), vec![line_a.id.clone()]);
+
+        assert_eq!(
+            ids(this_requisition().comment(StringFilter::like("urg")), None),
+            vec![line_a.id.clone()]
+        );
+
+        assert_eq!(
+            ids(
+                this_requisition(),
+                Some(RequisitionLineSort {
+                    key: RequisitionLineSortField::ItemName,
+                    desc: Some(true),
+                })
+            ),
+            vec![line_b.id, line_a.id]
+        );
+    }
 
     #[actix_rt::test]
     async fn test_requisition_line_months_of_stock() {
