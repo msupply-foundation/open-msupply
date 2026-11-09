@@ -80,13 +80,14 @@ export type ReplaceConsumptionEstimatesResult = {
   problem: "ITEM_NOT_FOUND" | "INVALID_PERIOD" | "PERIOD_IN_FUTURE" | "INVALID_QUANTITY" | "OVERLAPS_LINE";
   otherLine: number | null;
 }>;
+  removedItems: Array<number>;
 });
 };
 };
 };
 
 export const ReplaceConsumptionEstimates = {
-  query: "mutation replaceConsumptionEstimates($storeId: String!, $input: ReplaceConsumptionEstimatesInput!) {\n  centralServer {\n    preferences {\n      replaceConsumptionEstimates(storeId: $storeId, input: $input) {\n        __typename\n        ... on ReplaceConsumptionEstimatesNode {\n          overlaps {\n            line\n            actualQuantity\n          }\n          removedItems\n        }\n        ... on ConsumptionEstimateLinesError {\n          errors {\n            line\n            problem\n            otherLine\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation replaceConsumptionEstimates($storeId: String!, $input: ReplaceConsumptionEstimatesInput!) {\n  centralServer {\n    preferences {\n      replaceConsumptionEstimates(storeId: $storeId, input: $input) {\n        __typename\n        ... on ReplaceConsumptionEstimatesNode {\n          overlaps {\n            line\n            actualQuantity\n          }\n          removedItems\n        }\n        ... on ConsumptionEstimateLinesError {\n          errors {\n            line\n            problem\n            otherLine\n          }\n          removedItems\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ReplaceConsumptionEstimatesResult, ReplaceConsumptionEstimatesVariables>;
 
 export type ClearConsumptionEstimatesVariables = {

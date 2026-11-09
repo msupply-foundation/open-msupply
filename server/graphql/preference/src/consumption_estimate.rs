@@ -189,6 +189,9 @@ pub struct ReplaceConsumptionEstimatesNode {
 #[derive(SimpleObject)]
 pub struct ConsumptionEstimateLinesError {
     pub errors: Vec<ConsumptionEstimateLineErrorNode>,
+    /// As on a successful response: the cleared items whose estimates would be
+    /// removed once the lines are fixed
+    pub removed_items: Vec<u32>,
 }
 
 #[derive(Union)]
@@ -258,9 +261,10 @@ pub fn replace_estimates(
                     .collect(),
             },
         )),
-        Err(ReplaceConsumptionEstimatesError::InvalidLines(errors)) => Ok(
+        Err(ReplaceConsumptionEstimatesError::InvalidLines { errors, removed }) => Ok(
             ReplaceConsumptionEstimatesResponse::Error(ConsumptionEstimateLinesError {
                 errors: errors.into_iter().map(line_error_node).collect(),
+                removed_items: removed.into_iter().map(|index| index as u32).collect(),
             }),
         ),
         Err(ReplaceConsumptionEstimatesError::StoreDoesNotExist) => {

@@ -338,13 +338,12 @@ export const applyServerResult = (
     }
   }
 
-  const removed =
-    result.__typename === 'ReplaceConsumptionEstimatesNode'
-      ? result.removedItems.flatMap(index => {
-          const blank = blankRows[index];
-          return blank ? [removedRow(blank)] : [];
-        })
-      : [];
+  // Shown beside line errors too, so a removal isn't first seen only after
+  // the file's been fixed
+  const removed = result.removedItems.flatMap(index => {
+    const blank = blankRows[index];
+    return blank ? [removedRow(blank)] : [];
+  });
 
   return [
     ...rows.map(row => {

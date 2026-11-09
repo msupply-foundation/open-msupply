@@ -211,10 +211,16 @@ describe("the server's verdict", () => {
         { line: 2, problem: 'ITEM_NOT_FOUND', otherLine: null },
         { line: 3, problem: 'ITEM_NOT_FOUND', otherLine: null },
       ],
+      // A removal still shows beside the errors
+      removedItems: [0],
     });
-    expect(reviewed.map(row => row.errors)).toEqual([
-      [],
-      ['error.item-code-not-found'],
+    expect(reviewed.map(row => [row.itemCode, row.errors])).toEqual([
+      ['A', []],
+      ['B', []],
+      ['X', ['error.item-code-not-found']],
+    ]);
+    expect(reviewed[1]!.warnings).toEqual([
+      'messages.consumption-estimates-removed',
     ]);
     // Rows are copied, not edited
     expect(rows[1]!.errors).toEqual([]);

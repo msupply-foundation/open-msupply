@@ -59,6 +59,7 @@ mutation replaceConsumptionEstimates(
             problem
             otherLine
           }
+          removedItems
         }
       }
     }

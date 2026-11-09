@@ -248,32 +248,35 @@ async fn replace_rejects_bad_lines_and_saves_nothing() {
     ];
     assert_eq!(
         replace_consumption_estimates(&ctx, replace(lines, false)),
-        Err(ReplaceConsumptionEstimatesError::InvalidLines(vec![
-            LineError {
-                line: 1,
-                problem: LineProblem::ItemNotFound
-            },
-            LineError {
-                line: 2,
-                problem: LineProblem::InvalidPeriod
-            },
-            LineError {
-                line: 3,
-                problem: LineProblem::PeriodInFuture
-            },
-            LineError {
-                line: 4,
-                problem: LineProblem::InvalidQuantity
-            },
-            LineError {
-                line: 5,
-                problem: LineProblem::OverlapsLine(0)
-            },
-            LineError {
-                line: 6,
-                problem: LineProblem::ItemNotFound
-            },
-        ]))
+        Err(ReplaceConsumptionEstimatesError::InvalidLines {
+            errors: vec![
+                LineError {
+                    line: 1,
+                    problem: LineProblem::ItemNotFound
+                },
+                LineError {
+                    line: 2,
+                    problem: LineProblem::InvalidPeriod
+                },
+                LineError {
+                    line: 3,
+                    problem: LineProblem::PeriodInFuture
+                },
+                LineError {
+                    line: 4,
+                    problem: LineProblem::InvalidQuantity
+                },
+                LineError {
+                    line: 5,
+                    problem: LineProblem::OverlapsLine(0)
+                },
+                LineError {
+                    line: 6,
+                    problem: LineProblem::ItemNotFound
+                },
+            ],
+            removed: vec![],
+        })
     );
     assert_eq!(
         get_consumption_estimates(
@@ -504,6 +507,23 @@ async fn an_item_named_with_no_periods_loses_its_estimates() {
             .unwrap()
             .len(),
         2
+    );
+
+    // A bad line saves nothing, but the removal is still reported, so it
+    // shows beside the error rather than only after the file is fixed
+    let mut with_bad_line = input.clone();
+    with_bad_line
+        .lines
+        .push(line("no_such_item", september.0, september.1, 1.0));
+    assert_eq!(
+        replace_consumption_estimates(&ctx, with_bad_line),
+        Err(ReplaceConsumptionEstimatesError::InvalidLines {
+            errors: vec![LineError {
+                line: 1,
+                problem: LineProblem::ItemNotFound
+            }],
+            removed: vec![1],
+        })
     );
 
     input.dry_run = false;

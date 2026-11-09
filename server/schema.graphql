@@ -1565,6 +1565,11 @@ Nothing is saved when any line has a problem
 """
 type ConsumptionEstimateLinesError {
 	errors: [ConsumptionEstimateLineErrorNode!]!
+	"""
+	As on a successful response: the cleared items whose estimates would be
+	removed once the lines are fixed
+	"""
+	removedItems: [Int!]!
 }
 
 type ConsumptionEstimateNode {

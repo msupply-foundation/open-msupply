@@ -223,13 +223,13 @@ export const ConsumptionEstimatesPanel: Component<{
       c: { accessor: code, id: 'code' },
       header: () => t('label.code'),
       ...getTextCell(),
-      size: remToPx(8),
+      size: remToPx(7),
     },
     {
       c: { accessor: name, id: 'name' },
       header: () => t('label.name'),
-      ...getTextCell(),
-      size: remToPx(16),
+      ...getTextCell({ wrapLines: 2 }),
+      size: remToPx(14),
     },
   ];
 
@@ -257,23 +257,27 @@ export const ConsumptionEstimatesPanel: Component<{
       row => row.itemCode,
       row => row.itemName
     ),
-    ...(review()?.months ?? []).map(
-      (month): Column<EstimateImportRow, never> => ({
-        c: { accessor: row => row.cells[month] ?? '', id: `month-${month}` },
-        header: () => month,
-        ...getTextCell(),
-        size: remToPx(7),
-      })
-    ),
+    // Before the months and wrapped, not after them and cut off: there's a
+    // column per month of the look-back, so the end of the row can be well
+    // past the dialog's edge, and the reason a row is highlighted has to be
+    // readable without scrolling sideways
     {
       c: {
         accessor: row => [...row.errors, ...row.warnings].join(' '),
         id: 'message',
       },
       header: () => t('label.error-message'),
-      ...getTextCell(),
-      size: remToPx(20),
+      ...getTextCell({ wrapLines: 4 }),
+      size: remToPx(18),
     },
+    ...(review()?.months ?? []).map(
+      (month): Column<EstimateImportRow, never> => ({
+        c: { accessor: row => row.cells[month] ?? '', id: `month-${month}` },
+        header: () => month,
+        ...getTextCell(),
+        size: remToPx(6),
+      })
+    ),
   ];
 
   return (

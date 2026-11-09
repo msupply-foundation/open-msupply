@@ -163,8 +163,12 @@ pub struct ReplaceConsumptionEstimatesResult {
 #[derive(Debug, PartialEq)]
 pub enum ReplaceConsumptionEstimatesError {
     StoreDoesNotExist,
-    /// Nothing is saved when any line has a problem
-    InvalidLines(Vec<LineError>),
+    /// Nothing is saved when any line has a problem. `removed` is as in the
+    /// result, so a fixed file's removals can be shown alongside its errors.
+    InvalidLines {
+        errors: Vec<LineError>,
+        removed: Vec<usize>,
+    },
     DatabaseError(RepositoryError),
 }
 
@@ -195,11 +199,14 @@ pub fn replace_consumption_estimates(
                     .map(|line| line.item_id_or_code.as_str())
                     .chain(input.cleared_items.iter().map(String::as_str)),
             )?;
-            let estimates = validate_lines(&item_ids, &input.lines)?;
-            let overlaps = find_actual_consumption(connection, &input.store_id, &estimates)?;
 
             // A cleared item that also has lines keeps them
-            let with_lines: HashSet<&str> = estimates.iter().map(|e| e.item_id.as_str()).collect();
+            let with_lines: HashSet<&str> = input
+                .lines
+                .iter()
+                .filter_map(|line| item_ids.get(line.item_id_or_code.trim()))
+                .map(String::as_str)
+                .collect();
             let cleared: Vec<(usize, &str)> = input
                 .cleared_items
                 .iter()
@@ -212,11 +219,19 @@ pub fn replace_consumption_estimates(
                 .into_iter()
                 .map(|row| row.item_id)
                 .collect();
-            let removed = cleared
+            let removed: Vec<usize> = cleared
                 .iter()
                 .filter(|(_, item_id)| saved_items.contains(*item_id))
                 .map(|(index, _)| *index)
                 .collect();
+
+            let estimates = validate_lines(&item_ids, &input.lines).map_err(|errors| {
+                ReplaceConsumptionEstimatesError::InvalidLines {
+                    errors,
+                    removed: removed.clone(),
+                }
+            })?;
+            let overlaps = find_actual_consumption(connection, &input.store_id, &estimates)?;
 
             if !input.dry_run {
                 let cleared_ids: Vec<&str> = cleared.iter().map(|(_, id)| *id).collect();
@@ -241,7 +256,7 @@ pub fn replace_consumption_estimates(
 fn validate_lines(
     item_ids: &HashMap<String, String>,
     lines: &[ConsumptionEstimateInput],
-) -> Result<Vec<ConsumptionEstimate>, ReplaceConsumptionEstimatesError> {
+) -> Result<Vec<ConsumptionEstimate>, Vec<LineError>> {
     let today = date_now();
     let mut errors = Vec::new();
     let mut estimates = Vec::new();
@@ -291,7 +306,7 @@ fn validate_lines(
     }
 
     if !errors.is_empty() {
-        return Err(ReplaceConsumptionEstimatesError::InvalidLines(errors));
+        return Err(errors);
     }
     Ok(estimates)
 }
