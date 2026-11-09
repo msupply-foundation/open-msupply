@@ -1903,6 +1903,26 @@ export type CodeRequired = UpsertSiteErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type CommonMedicineInput = {
+  amounts: Array<Scalars['Float']['input']>;
+  itemId: Scalars['String']['input'];
+};
+
+export type CommonMedicineNode = {
+  __typename: 'CommonMedicineNode';
+  /**
+   * The one-press amounts, in the item's own unit. Empty when the card asks
+   * for the amount instead.
+   */
+  amounts: Array<Scalars['Float']['output']>;
+  itemId: Scalars['String']['output'];
+};
+
+export type CommonMedicinesInput = {
+  storeId: Scalars['String']['input'];
+  value: Array<CommonMedicineInput>;
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -8510,6 +8530,7 @@ export enum PreferenceKey {
   BlindStocktake = 'blindStocktake',
   CanChangeTargetMonthsOfStock = 'canChangeTargetMonthsOfStock',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
+  CommonMedicines = 'commonMedicines',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
@@ -8571,6 +8592,7 @@ export enum PreferenceValueNodeType {
   BackdatingData = 'BACKDATING_DATA',
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
+  CommonMedicines = 'COMMON_MEDICINES',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   Float = 'FLOAT',
@@ -8590,6 +8612,8 @@ export type PreferencesNode = {
   blindStocktake: Scalars['Boolean']['output'];
   canChangeTargetMonthsOfStock: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
+  /** The medicines shown as cards on the Simple dispensing screen, in order. */
+  commonMedicines: Array<CommonMedicineNode>;
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
@@ -14086,6 +14110,7 @@ export type UpsertPreferencesInput = {
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;
+  commonMedicines?: InputMaybe<Array<CommonMedicinesInput>>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   /**
    * v2 custom translations, shape: `language -> namespace -> key -> value`.

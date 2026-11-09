@@ -1502,6 +1502,25 @@ type CodeRequired implements UpsertSiteErrorInterface {
 	description: String!
 }
 
+input CommonMedicineInput {
+	itemId: String!
+	amounts: [Float!]!
+}
+
+type CommonMedicineNode {
+	itemId: String!
+	"""
+	The one-press amounts, in the item's own unit. Empty when the card asks
+	for the amount instead.
+	"""
+	amounts: [Float!]!
+}
+
+input CommonMedicinesInput {
+	storeId: String!
+	value: [CommonMedicineInput!]!
+}
+
 union ConfigureNamePropertiesResponse = Success
 
 input ConfigureNamePropertyInput {
@@ -6991,6 +7010,7 @@ enum PreferenceKey {
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
+	commonMedicines
 }
 
 type PreferenceMutations {
@@ -7014,6 +7034,7 @@ enum PreferenceValueNodeType {
 	STRING
 	COLOUR
 	IMAGE
+	COMMON_MEDICINES
 }
 
 type PreferencesNode {
@@ -7067,6 +7088,10 @@ type PreferencesNode {
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
 	promptForBatchAndExpiryOnInboundShipments: Boolean!
+	"""
+	The medicines shown as cards on the Simple dispensing screen, in order.
+	"""
+	commonMedicines: [CommonMedicineNode!]!
 }
 
 input PrescriptionLineInput {
@@ -12002,6 +12027,7 @@ input UpsertPreferencesInput {
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
+	commonMedicines: [CommonMedicinesInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

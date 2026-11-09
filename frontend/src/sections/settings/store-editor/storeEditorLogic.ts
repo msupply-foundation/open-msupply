@@ -503,6 +503,9 @@ export type EveryStorePreferenceHandled<
     | 'warnWhenMissingRecentStocktake'
     | 'invoiceStatusOptions'
     | 'authorisePurchaseOrderStoreOverride'
+    // Not in the server's preference list, so the panel never renders it:
+    // it gets its own editor under Dispensing › Common medicines (#2188).
+    | 'commonMedicines'
   >,
 > = Unhandled;
 
