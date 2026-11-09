@@ -26,8 +26,9 @@
  *          one of origin/develop and origin/v*-RC this branch left most
  *          recently, so a branch off an RC is compared with that RC. CI
  *          passes HEAD^1: the PR's merge commit's first parent is the base it
- *          merges onto, so a base that has moved on — another PR released
- *          the same number — is compared against too.
+ *          merges onto, so a run after another PR released the same number
+ *          fails. A run from before that merge is not redone: without a merge
+ *          queue, two PRs bumping to one number both pass unless rerun.
  * --fix    bumps the patch of each plugin that needs it, in every current
  *          manifest and in an e2e helper's PLUGIN_VERSION pin.
  *
@@ -36,7 +37,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inRepoPluginDirs } from './pluginDirs.mjs';
 
 const DOC_DIRS = new Set(['cases', 'decisions', 'test-env', '__tests__']);
@@ -205,6 +206,9 @@ const bump = plugin => {
 };
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  // pluginDirs.mjs walks paths relative to frontend/: run from anywhere else,
+  // it would find no plugins and pass everything.
+  process.chdir(fileURLToPath(new URL('..', import.meta.url)));
   const args = process.argv.slice(2);
   const fix = args.includes('--fix');
   const ref = args.includes('--base')
