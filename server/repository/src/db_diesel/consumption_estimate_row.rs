@@ -14,22 +14,25 @@ diesel_string_enum! {
     db_case = SCREAMING_SNAKE_CASE;
     #[derive(Clone, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
-    // Stored as plain TEXT so a source added on a newer central syncs to an older site
-    // as `Other(String)` rather than failing.
-    pub enum ConsumptionEstimateSource {
-        /// Uploaded for a store that has no consumption history yet, e.g. a new site
+    // What the rows' quantities were entered for, and so how they group back into
+    // estimates. Stored as plain TEXT so a type added on a newer central syncs to an
+    // older site as `Other(String)` rather than failing.
+    pub enum ConsumptionEstimateType {
+        /// A quantity per calendar month: the rows dated in a month are the pieces
+        /// of that month's estimate
         #[default]
-        InitialUpload,
+        Monthly,
         #[strum(default, transparent)]
         Other(String),
     }
 }
 
 // Estimated consumption for a store, added on top of real consumption by the
-// `consumption` view. An estimate covers a period (`period_start`..=`period_end`) and
-// is stored as week-long pieces: each row is one piece, dated at its midpoint, with
-// its share of the period's quantity. Authored on central and synced to the store's
-// site.
+// `consumption` view. Each row is a quantity used on a date, like any row of that
+// view: one week-long piece of an estimate, dated at its midpoint, with its share of
+// the estimate's quantity. `type` says what the estimates were entered for (a
+// calendar month), so how the rows group back into them. Authored on central and
+// synced to the store's site.
 define_linked_tables! {
     view: consumption_estimate = "consumption_estimate_view",
     core: consumption_estimate_with_links = "consumption_estimate",
@@ -37,9 +40,7 @@ define_linked_tables! {
     repo: ConsumptionEstimateRowRepository,
     shared: {
         store_id -> Text,
-        source -> diesel::sql_types::Text,
-        period_start -> Date,
-        period_end -> Date,
+        #[sql_name = "type"] type_ -> diesel::sql_types::Text,
         date -> Date,
         quantity -> Double,
     },
@@ -60,13 +61,11 @@ allow_tables_to_appear_in_same_query!(consumption_estimate, store);
 pub struct ConsumptionEstimateRow {
     pub id: String,
     pub store_id: String,
-    pub source: ConsumptionEstimateSource,
-    /// The period the estimate was entered for, the same on every piece of it
-    pub period_start: NaiveDate,
-    pub period_end: NaiveDate,
+    #[diesel(column_name = type_)]
+    pub r#type: ConsumptionEstimateType,
     /// The midpoint of this piece: the date the `consumption` view gives it
     pub date: NaiveDate,
-    /// This piece's share of the period's quantity, in units
+    /// This piece's share of the estimate's quantity, in units
     pub quantity: f64,
     // Resolved from link tables - must be last to match view column order
     pub item_id: String,
@@ -156,15 +155,15 @@ impl<'a> ConsumptionEstimateRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    /// A store's estimates from one source, in item and date order
-    pub fn find_many_by_store_and_source(
+    /// A store's estimates of one type, in item and date order
+    pub fn find_many_by_store_and_type(
         &self,
         store_id: &str,
-        source: &ConsumptionEstimateSource,
+        r#type: &ConsumptionEstimateType,
     ) -> Result<Vec<ConsumptionEstimateRow>, RepositoryError> {
         Ok(consumption_estimate::table
             .filter(consumption_estimate::store_id.eq(store_id))
-            .filter(consumption_estimate::source.eq(source))
+            .filter(consumption_estimate::type_.eq(r#type))
             .order((
                 consumption_estimate::item_id.asc(),
                 consumption_estimate::date.asc(),

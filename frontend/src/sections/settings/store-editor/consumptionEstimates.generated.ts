@@ -17,15 +17,14 @@ export type ConsumptionEstimatesResult = {
   code: string;
   name: string;
 };
-  periodStart: string;
-  periodEnd: string;
+  month: string;
   quantity: number;
 }>;
 };
 };
 
 export const ConsumptionEstimates = {
-  query: "query consumptionEstimates($storeId: String!, $forStoreId: String!) {\n  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n    amcLookBackMonths\n    estimates {\n      itemId\n      item {\n        id\n        code\n        name\n      }\n      periodStart\n      periodEnd\n      quantity\n    }\n  }\n}",
+  query: "query consumptionEstimates($storeId: String!, $forStoreId: String!) {\n  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n    amcLookBackMonths\n    estimates {\n      itemId\n      item {\n        id\n        code\n        name\n      }\n      month\n      quantity\n    }\n  }\n}",
 } as TypedDocument<ConsumptionEstimatesResult, ConsumptionEstimatesVariables>;
 
 export type ConsumptionEstimateTemplateItemsVariables = {
@@ -52,8 +51,7 @@ export type ReplaceConsumptionEstimatesVariables = {
     forStoreId: string;
     lines: Array<{
     itemIdOrCode: string;
-    periodStart: string;
-    periodEnd: string;
+    month: string;
     quantity: number;
   }>;
     clearedItems?: Array<string> | null;
@@ -77,7 +75,7 @@ export type ReplaceConsumptionEstimatesResult = {
 } & {
   errors: Array<{
   line: number;
-  problem: "ITEM_NOT_FOUND" | "INVALID_PERIOD" | "PERIOD_IN_FUTURE" | "INVALID_QUANTITY" | "OVERLAPS_LINE";
+  problem: "ITEM_NOT_FOUND" | "MONTH_NOT_FINISHED" | "INVALID_QUANTITY" | "REPEATED_MONTH";
   otherLine: number | null;
 }>;
   removedItems: Array<number>;

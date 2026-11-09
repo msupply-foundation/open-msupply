@@ -236,7 +236,7 @@ export type ActivityLogSortInput = {
 };
 
 /**
- * A line whose period already has real consumption for its item: the estimate is
+ * A line whose month already has real consumption for its item: the estimate is
  * added on top of it
  */
 export type ActualConsumptionOverlapNode = {
@@ -1936,25 +1936,26 @@ export type ConsumptionEstimateLineErrorNode = {
   __typename: 'ConsumptionEstimateLineErrorNode';
   /** Index into the input lines */
   line: Scalars['Int']['output'];
-  /** For `OVERLAPS_LINE`: the earlier line it overlaps */
+  /** For `REPEATED_MONTH`: the earlier line with the same item and month */
   otherLine?: Maybe<Scalars['Int']['output']>;
   problem: ConsumptionEstimateLineProblem;
 };
 
 export type ConsumptionEstimateLineInput = {
   itemIdOrCode: Scalars['String']['input'];
-  periodEnd: Scalars['NaiveDate']['input'];
-  periodStart: Scalars['NaiveDate']['input'];
+  /** Any day in the month: the estimate is for the whole calendar month */
+  month: Scalars['NaiveDate']['input'];
   /** In units */
   quantity: Scalars['Float']['input'];
 };
 
 export enum ConsumptionEstimateLineProblem {
-  InvalidPeriod = 'INVALID_PERIOD',
   InvalidQuantity = 'INVALID_QUANTITY',
   ItemNotFound = 'ITEM_NOT_FOUND',
-  OverlapsLine = 'OVERLAPS_LINE',
-  PeriodInFuture = 'PERIOD_IN_FUTURE',
+  /** This month or later: only finished months can have an estimate */
+  MonthNotFinished = 'MONTH_NOT_FINISHED',
+  /** The same item and month as an earlier line */
+  RepeatedMonth = 'REPEATED_MONTH',
 }
 
 /** Nothing is saved when any line has a problem */
@@ -1972,8 +1973,8 @@ export type ConsumptionEstimateNode = {
   __typename: 'ConsumptionEstimateNode';
   item: ItemNode;
   itemId: Scalars['String']['output'];
-  periodEnd: Scalars['NaiveDate']['output'];
-  periodStart: Scalars['NaiveDate']['output'];
+  /** The first day of the month the estimate is for */
+  month: Scalars['NaiveDate']['output'];
   /** In units */
   quantity: Scalars['Float']['output'];
 };
@@ -8604,7 +8605,7 @@ export type PreferenceMutations = {
   clearConsumptionEstimates: OkResponse;
   /**
    * Replaces the estimated consumption of the items named: each ends up with
-   * exactly the periods given, and unchanged periods aren't rewritten. Items not
+   * exactly the months given, and unchanged months aren't rewritten. Items not
    * named are left alone. Nothing is saved if any line has a problem; `dryRun`
    * checks the lines without saving.
    */
@@ -10733,7 +10734,7 @@ export type RepackStockLineNode = {
 
 export type ReplaceConsumptionEstimatesInput = {
   /**
-   * Items (by id or code) named with no periods, e.g. a blank row in the
+   * Items (by id or code) named with no months, e.g. a blank row in the
    * file: their estimates are removed. One with no estimates, or that matches
    * no item, is ignored.
    */
@@ -10743,7 +10744,7 @@ export type ReplaceConsumptionEstimatesInput = {
   /** The store whose estimates these are */
   forStoreId: Scalars['String']['input'];
   /**
-   * Each item named ends up with exactly these periods; items not named are
+   * Each item named ends up with exactly these months; items not named are
    * left alone
    */
   lines: Array<ConsumptionEstimateLineInput>;

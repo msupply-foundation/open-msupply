@@ -116,7 +116,7 @@ impl PreferenceMutations {
     }
 
     /// Replaces the estimated consumption of the items named: each ends up with
-    /// exactly the periods given, and unchanged periods aren't rewritten. Items not
+    /// exactly the months given, and unchanged months aren't rewritten. Items not
     /// named are left alone. Nothing is saved if any line has a problem; `dryRun`
     /// checks the lines without saving.
     pub async fn replace_consumption_estimates(

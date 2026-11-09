@@ -6,7 +6,6 @@ use graphql_core::{
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::ItemNode;
-use repository::ConsumptionEstimateSource;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     consumption_estimate::{
@@ -17,9 +16,6 @@ use service::{
     },
     store_preference::get_store_preferences,
 };
-
-// Only the upload for a store without history goes through the API for now
-const SOURCE: ConsumptionEstimateSource = ConsumptionEstimateSource::InitialUpload;
 
 pub struct ConsumptionEstimateNode {
     estimate: ConsumptionEstimate,
@@ -43,12 +39,9 @@ impl ConsumptionEstimateNode {
         )
     }
 
-    pub async fn period_start(&self) -> NaiveDate {
-        self.estimate.period_start
-    }
-
-    pub async fn period_end(&self) -> NaiveDate {
-        self.estimate.period_end
+    /// The first day of the month the estimate is for
+    pub async fn month(&self) -> NaiveDate {
+        self.estimate.month
     }
 
     /// In units
@@ -117,7 +110,7 @@ pub fn consumption_estimates(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-    let estimates = get_consumption_estimates(&service_context.connection, &for_store_id, &SOURCE)?;
+    let estimates = get_consumption_estimates(&service_context.connection, &for_store_id)?;
     let preferences = get_store_preferences(&service_context.connection, &for_store_id)?;
     Ok(ConsumptionEstimatesNode {
         estimates: estimate_nodes(estimates),
@@ -129,8 +122,8 @@ pub fn consumption_estimates(
 #[derive(InputObject)]
 pub struct ConsumptionEstimateLineInput {
     pub item_id_or_code: String,
-    pub period_start: NaiveDate,
-    pub period_end: NaiveDate,
+    /// Any day in the month: the estimate is for the whole calendar month
+    pub month: NaiveDate,
     /// In units
     pub quantity: f64,
 }
@@ -139,10 +132,10 @@ pub struct ConsumptionEstimateLineInput {
 pub struct ReplaceConsumptionEstimatesInput {
     /// The store whose estimates these are
     pub for_store_id: String,
-    /// Each item named ends up with exactly these periods; items not named are
+    /// Each item named ends up with exactly these months; items not named are
     /// left alone
     pub lines: Vec<ConsumptionEstimateLineInput>,
-    /// Items (by id or code) named with no periods, e.g. a blank row in the
+    /// Items (by id or code) named with no months, e.g. a blank row in the
     /// file: their estimates are removed. One with no estimates, or that matches
     /// no item, is ignored.
     pub cleared_items: Option<Vec<String>>,
@@ -150,7 +143,7 @@ pub struct ReplaceConsumptionEstimatesInput {
     pub dry_run: Option<bool>,
 }
 
-/// A line whose period already has real consumption for its item: the estimate is
+/// A line whose month already has real consumption for its item: the estimate is
 /// added on top of it
 #[derive(SimpleObject)]
 pub struct ActualConsumptionOverlapNode {
@@ -162,10 +155,11 @@ pub struct ActualConsumptionOverlapNode {
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum ConsumptionEstimateLineProblem {
     ItemNotFound,
-    InvalidPeriod,
-    PeriodInFuture,
+    /// This month or later: only finished months can have an estimate
+    MonthNotFinished,
     InvalidQuantity,
-    OverlapsLine,
+    /// The same item and month as an earlier line
+    RepeatedMonth,
 }
 
 #[derive(SimpleObject)]
@@ -173,7 +167,7 @@ pub struct ConsumptionEstimateLineErrorNode {
     /// Index into the input lines
     pub line: u32,
     pub problem: ConsumptionEstimateLineProblem,
-    /// For `OVERLAPS_LINE`: the earlier line it overlaps
+    /// For `REPEATED_MONTH`: the earlier line with the same item and month
     pub other_line: Option<u32>,
 }
 
@@ -221,14 +215,12 @@ pub fn replace_estimates(
         &service_context,
         ReplaceConsumptionEstimates {
             store_id: input.for_store_id,
-            source: SOURCE,
             lines: input
                 .lines
                 .into_iter()
                 .map(|line| ConsumptionEstimateInput {
                     item_id_or_code: line.item_id_or_code,
-                    period_start: line.period_start,
-                    period_end: line.period_end,
+                    month: line.month,
                     quantity: line.quantity,
                 })
                 .collect(),
@@ -278,10 +270,9 @@ fn line_error_node(LineError { line, problem }: LineError) -> ConsumptionEstimat
     use ConsumptionEstimateLineProblem as P;
     let (problem, other_line) = match problem {
         LineProblem::ItemNotFound => (P::ItemNotFound, None),
-        LineProblem::InvalidPeriod => (P::InvalidPeriod, None),
-        LineProblem::PeriodInFuture => (P::PeriodInFuture, None),
+        LineProblem::MonthNotFinished => (P::MonthNotFinished, None),
         LineProblem::InvalidQuantity => (P::InvalidQuantity, None),
-        LineProblem::OverlapsLine(other) => (P::OverlapsLine, Some(other as u32)),
+        LineProblem::RepeatedMonth(other) => (P::RepeatedMonth, Some(other as u32)),
     };
     ConsumptionEstimateLineErrorNode {
         line: line as u32,
@@ -303,6 +294,6 @@ pub fn clear_estimates(ctx: &Context<'_>, store_id: String, for_store_id: String
     )?;
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
-    clear_consumption_estimates(&service_context, &for_store_id, &SOURCE)?;
+    clear_consumption_estimates(&service_context, &for_store_id)?;
     Ok(())
 }

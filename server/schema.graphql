@@ -177,7 +177,7 @@ input ActivityLogSortInput {
 }
 
 """
-A line whose period already has real consumption for its item: the estimate is
+A line whose month already has real consumption for its item: the estimate is
 added on top of it
 """
 type ActualConsumptionOverlapNode {
@@ -1537,15 +1537,17 @@ type ConsumptionEstimateLineErrorNode {
 	line: Int!
 	problem: ConsumptionEstimateLineProblem!
 	"""
-	For `OVERLAPS_LINE`: the earlier line it overlaps
+	For `REPEATED_MONTH`: the earlier line with the same item and month
 	"""
 	otherLine: Int
 }
 
 input ConsumptionEstimateLineInput {
 	itemIdOrCode: String!
-	periodStart: NaiveDate!
-	periodEnd: NaiveDate!
+	"""
+	Any day in the month: the estimate is for the whole calendar month
+	"""
+	month: NaiveDate!
 	"""
 	In units
 	"""
@@ -1554,10 +1556,15 @@ input ConsumptionEstimateLineInput {
 
 enum ConsumptionEstimateLineProblem {
 	ITEM_NOT_FOUND
-	INVALID_PERIOD
-	PERIOD_IN_FUTURE
+	"""
+	This month or later: only finished months can have an estimate
+	"""
+	MONTH_NOT_FINISHED
 	INVALID_QUANTITY
-	OVERLAPS_LINE
+	"""
+	The same item and month as an earlier line
+	"""
+	REPEATED_MONTH
 }
 
 """
@@ -1575,8 +1582,10 @@ type ConsumptionEstimateLinesError {
 type ConsumptionEstimateNode {
 	itemId: String!
 	item: ItemNode!
-	periodStart: NaiveDate!
-	periodEnd: NaiveDate!
+	"""
+	The first day of the month the estimate is for
+	"""
+	month: NaiveDate!
 	"""
 	In units
 	"""
@@ -7043,7 +7052,7 @@ type PreferenceMutations {
 	upsertPreferences(storeId: String!, input: UpsertPreferencesInput!): OkResponse!
 	"""
 	Replaces the estimated consumption of the items named: each ends up with
-	exactly the periods given, and unchanged periods aren't rewritten. Items not
+	exactly the months given, and unchanged months aren't rewritten. Items not
 	named are left alone. Nothing is saved if any line has a problem; `dryRun`
 	checks the lines without saving.
 	"""
@@ -8772,12 +8781,12 @@ input ReplaceConsumptionEstimatesInput {
 	"""
 	forStoreId: String!
 	"""
-	Each item named ends up with exactly these periods; items not named are
+	Each item named ends up with exactly these months; items not named are
 	left alone
 	"""
 	lines: [ConsumptionEstimateLineInput!]!
 	"""
-	Items (by id or code) named with no periods, e.g. a blank row in the
+	Items (by id or code) named with no months, e.g. a blank row in the
 	file: their estimates are removed. One with no estimates, or that matches
 	no item, is ignored.
 	"""

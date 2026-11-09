@@ -3,7 +3,7 @@ import {
   applyServerResult,
   buildLines,
   buildTemplateCsv,
-  monthPeriod,
+  monthStart,
   parseEstimateFile,
   pivotEstimates,
   templateMonths,
@@ -13,28 +13,18 @@ import {
 // 5 November 2026
 const TODAY = new Date(2026, 10, 5);
 
-const estimate = (
-  code: string,
-  periodStart: string,
-  periodEnd: string,
-  quantity: number
-): Estimate => ({
+const estimate = (code: string, month: string, quantity: number): Estimate => ({
   itemId: `id-${code}`,
   item: { id: `id-${code}`, code, name: `Item ${code}` },
-  periodStart,
-  periodEnd,
+  month,
   quantity,
 });
 
 describe('months', () => {
-  it('reads a month as its first and last day', () => {
-    expect(monthPeriod('2026-02')).toEqual({
-      periodStart: '2026-02-01',
-      periodEnd: '2026-02-28',
-    });
-    expect(monthPeriod('2024-02')?.periodEnd).toBe('2024-02-29');
-    expect(monthPeriod('2026-13')).toBeUndefined();
-    expect(monthPeriod('October')).toBeUndefined();
+  it('reads a month as its first day', () => {
+    expect(monthStart('2026-02')).toBe('2026-02-01');
+    expect(monthStart('2026-13')).toBeUndefined();
+    expect(monthStart('October')).toBeUndefined();
   });
 
   it('offers the finished months the look-back counts, newest first', () => {
@@ -60,12 +50,12 @@ describe('template', () => {
         { code: 'A', name: 'Item A' },
       ],
       [
-        estimate('B', '2026-09-01', '2026-09-30', 30),
-        estimate('A', '2026-10-01', '2026-10-31', 310),
+        estimate('B', '2026-09-01', 30),
+        estimate('A', '2026-10-01', 310),
         // Older than the look-back: still gets its column
-        estimate('A', '2026-07-01', '2026-07-31', 62),
+        estimate('A', '2026-07-01', 62),
         // No longer visible in the store: still gets its row, at the end
-        estimate('D', '2026-10-01', '2026-10-31', 5),
+        estimate('D', '2026-10-01', 5),
       ],
       TODAY
     );
@@ -111,20 +101,17 @@ describe('parsing a file', () => {
     expect(lines).toEqual([
       {
         itemIdOrCode: 'A',
-        periodStart: '2026-10-01',
-        periodEnd: '2026-10-31',
+        month: '2026-10-01',
         quantity: 310,
       },
       {
         itemIdOrCode: 'A',
-        periodStart: '2026-09-01',
-        periodEnd: '2026-09-30',
+        month: '2026-09-01',
         quantity: 300,
       },
       {
         itemIdOrCode: 'B',
-        periodStart: '2026-09-01',
-        periodEnd: '2026-09-30',
+        month: '2026-09-01',
         quantity: 30,
       },
     ]);
@@ -263,9 +250,9 @@ describe('the current estimates table', () => {
   it('has a row per item and a column per month, newest first', () => {
     expect(
       pivotEstimates([
-        estimate('B', '2026-09-01', '2026-09-30', 30),
-        estimate('A', '2026-09-01', '2026-09-30', 300),
-        estimate('A', '2026-10-01', '2026-10-31', 310),
+        estimate('B', '2026-09-01', 30),
+        estimate('A', '2026-09-01', 300),
+        estimate('A', '2026-10-01', 310),
       ])
     ).toEqual({
       months: ['2026-10', '2026-09'],

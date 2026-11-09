@@ -4,10 +4,10 @@ use crate::migrations::*;
 /// a new site. The `consumption` view adds each row on top of real consumption,
 /// so AMC uses it until the rows fall out of the look-back window.
 ///
-/// An estimate is entered for a period (`period_start`..=`period_end`) and
-/// stored as week-long pieces, each dated at its midpoint and holding its share
-/// of the period's quantity, so a window that covers part of a period counts
-/// about the right part of it.
+/// An estimate is entered for a calendar month (`type` MONTHLY) and stored as
+/// week-long pieces, each dated at its midpoint and holding its share of the
+/// month's quantity, so a window that covers part of a month counts about the
+/// right part of it. A month is the pieces dated in it.
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
@@ -23,9 +23,7 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     store_id TEXT NOT NULL REFERENCES store(id),
                     item_link_id TEXT NOT NULL REFERENCES item_link(id),
-                    source TEXT NOT NULL,
-                    period_start {DATE} NOT NULL,
-                    period_end {DATE} NOT NULL,
+                    type TEXT NOT NULL,
                     date {DATE} NOT NULL,
                     quantity {DOUBLE} NOT NULL
                 );

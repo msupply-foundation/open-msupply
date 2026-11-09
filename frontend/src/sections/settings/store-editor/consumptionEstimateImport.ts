@@ -40,34 +40,18 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const monthOf = (date: Date): Month =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
 
-/** The month a period starting on its 1st is for, or undefined. */
-export const monthOfPeriod = (
-  periodStart: string,
-  periodEnd: string
-): Month | undefined => {
-  const month = periodStart.slice(0, 7);
-  const period = monthPeriod(month);
-  return period?.periodStart === periodStart && period.periodEnd === periodEnd
-    ? month
-    : undefined;
-};
-
-/** A month's first and last day, as the wire's ISO dates. */
-export const monthPeriod = (
-  month: Month
-): { periodStart: string; periodEnd: string } | undefined => {
+/** A month's first day, as the wire's ISO date, or undefined. */
+export const monthStart = (month: Month): string | undefined => {
   const match = MONTH_PATTERN.exec(month.trim());
   if (!match) return undefined;
-  const year = Number(match[1]);
   const monthNumber = Number(match[2]);
   if (monthNumber < 1 || monthNumber > 12) return undefined;
-  // Day 0 of the next month is this month's last day
-  const lastDay = new Date(year, monthNumber, 0).getDate();
-  return {
-    periodStart: `${year}-${pad(monthNumber)}-01`,
-    periodEnd: `${year}-${pad(monthNumber)}-${pad(lastDay)}`,
-  };
+  return `${match[1]}-${match[2]}-01`;
 };
+
+/** The month an estimate is for: the server sends its first day. */
+const monthOfEstimate = (estimate: Estimate): Month =>
+  estimate.month.slice(0, 7);
 
 /**
  * The template's months, newest first: the last finished month and the ones
@@ -109,8 +93,7 @@ export const buildTemplateCsv = (
     items.map(item => [item.code, { name: item.name, values: new Map() }])
   );
   for (const estimate of estimates) {
-    const month = monthOfPeriod(estimate.periodStart, estimate.periodEnd);
-    if (!month) continue;
+    const month = monthOfEstimate(estimate);
     months.add(month);
     const item = byCode.get(estimate.item.code) ?? {
       name: estimate.item.name,
@@ -182,7 +165,7 @@ export const parseEstimateFile = (
   const header = table[headerIndex] ?? [];
   const monthColumns = header
     .map((title, index) => ({ month: title.trim(), index }))
-    .filter(({ month, index }) => index >= 2 && monthPeriod(month));
+    .filter(({ month, index }) => index >= 2 && monthStart(month));
   const months = [...new Set(monthColumns.map(({ month }) => month))];
   const repeated = new Set(
     months.filter(
@@ -260,9 +243,9 @@ export const buildLines = (
   const origins: LineOrigin[] = [];
   for (const row of rows) {
     for (const [month, quantity] of Object.entries(row.quantities)) {
-      const period = monthPeriod(month);
-      if (!period) continue;
-      lines.push({ itemIdOrCode: row.itemCode, ...period, quantity });
+      const start = monthStart(month);
+      if (!start) continue;
+      lines.push({ itemIdOrCode: row.itemCode, month: start, quantity });
       origins.push({ row, month });
     }
   }
@@ -303,7 +286,7 @@ export const applyServerResult = (
             return t('error.item-code-not-found', {
               code: origin.row.itemCode,
             });
-          case 'OVERLAPS_LINE': {
+          case 'REPEATED_MONTH': {
             const other =
               error.otherLine === null || error.otherLine === undefined
                 ? undefined
@@ -313,7 +296,7 @@ export const applyServerResult = (
               line: other?.row.lineNumber ?? '',
             });
           }
-          case 'PERIOD_IN_FUTURE':
+          case 'MONTH_NOT_FINISHED':
             return t('error.consumption-estimate-month-not-finished', {
               month,
             });
@@ -370,8 +353,6 @@ const removedRow = (blank: BlankEstimateRow): EstimateImportRow => ({
 
 /*
  * The panel's table: one row per item, one column per month, newest first.
- * An estimate that isn't a whole calendar month (none come from the upload) is
- * shown under the month it starts in.
  */
 export interface EstimateTableRow {
   itemId: string;
@@ -386,7 +367,7 @@ export const pivotEstimates = (
   const months = new Set<Month>();
   const byItem = new Map<string, EstimateTableRow>();
   for (const estimate of estimates) {
-    const month = estimate.periodStart.slice(0, 7);
+    const month = monthOfEstimate(estimate);
     months.add(month);
     const row = byItem.get(estimate.itemId) ?? {
       itemId: estimate.itemId,

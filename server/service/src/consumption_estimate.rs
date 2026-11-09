@@ -1,22 +1,24 @@
 //! Estimated consumption for a store without consumption history of its own, e.g.
 //! a new site, so its AMC isn't zero until it has some.
 //!
-//! - An estimate is a quantity for an item over a period, in units. The
+//! - An estimate is a quantity for an item in a calendar month, in units. The
 //!   `consumption` view adds it on top of the store's real consumption, so every
 //!   AMC calculation uses it until it falls out of the look-back window.
 //! - It's stored as week-long pieces, each dated at its midpoint and holding its
-//!   share of the quantity, so a window covering part of a period counts about the
-//!   right part of it without the view having to split periods by day.
+//!   share of the quantity, so a window covering part of a month counts about the
+//!   right part of it. Each row is then what any row of the view is: a quantity
+//!   used on a date. A month is rebuilt from the pieces dated in it, which the
+//!   rows' type (`Monthly`) says is how they group.
 //! - Saving replaces the estimates of the items it names: each item ends up with
-//!   exactly the periods given for it, and an item named with none (a blank row
+//!   exactly the months given for it, and an item named with none (a blank row
 //!   in the file) ends up with none. Items it doesn't name are left alone, and
-//!   periods that haven't changed aren't rewritten, so re-uploading a file writes
+//!   months that haven't changed aren't rewritten, so re-uploading a file writes
 //!   (and syncs) only what changed. Clearing removes all of a store's estimates.
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use chrono::{Duration, NaiveDate};
+use chrono::{Datelike, Duration, Months, NaiveDate};
 use repository::{
-    ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateSource,
+    ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateType,
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, ItemFilter, ItemRepository,
     ItemRow, ItemSort, ItemSortField, ItemType, Pagination, RepositoryError, StorageConnection,
     StoreRowRepository, StringFilter,
@@ -29,42 +31,47 @@ use crate::service_provider::ServiceContext;
 /// the edge of an AMC window more exactly but make more rows to store and sync.
 pub const ESTIMATE_PIECE_DAYS: i64 = 7;
 
-/// An estimate as it was entered: a quantity for an item over a period
+/// An estimate as it was entered: a quantity for an item in a month
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConsumptionEstimate {
     pub item_id: String,
-    pub period_start: NaiveDate,
-    pub period_end: NaiveDate,
+    /// The first day of the month
+    pub month: NaiveDate,
     pub quantity: f64,
 }
 
-/// A store's estimates from one source, rebuilt from their stored pieces, in item
-/// and period order
+/// The first day of a date's month
+pub fn month_of(date: NaiveDate) -> NaiveDate {
+    date.with_day(1).expect("every month has a first day")
+}
+
+fn last_day_of(month: NaiveDate) -> NaiveDate {
+    month + Months::new(1) - Duration::days(1)
+}
+
+/// A store's monthly estimates, rebuilt from their stored pieces, in item and
+/// month order
 pub fn get_consumption_estimates(
     connection: &StorageConnection,
     store_id: &str,
-    source: &ConsumptionEstimateSource,
 ) -> Result<Vec<ConsumptionEstimate>, RepositoryError> {
     let rows = ConsumptionEstimateRowRepository::new(connection)
-        .find_many_by_store_and_source(store_id, source)?;
+        .find_many_by_store_and_type(store_id, &ConsumptionEstimateType::Monthly)?;
 
-    let mut periods: BTreeMap<(String, NaiveDate, NaiveDate), f64> = BTreeMap::new();
+    let mut months: BTreeMap<(String, NaiveDate), f64> = BTreeMap::new();
     for row in rows {
-        *periods
-            .entry((row.item_id, row.period_start, row.period_end))
+        *months
+            .entry((row.item_id, month_of(row.date)))
             .or_insert(0.0) += row.quantity;
     }
 
-    Ok(periods
+    Ok(months
         .into_iter()
-        .map(
-            |((item_id, period_start, period_end), quantity)| ConsumptionEstimate {
-                item_id,
-                period_start,
-                period_end,
-                quantity: round_quantity(quantity),
-            },
-        )
+        .map(|((item_id, month), quantity)| ConsumptionEstimate {
+            item_id,
+            month,
+            quantity: round_quantity(quantity),
+        })
         .collect())
 }
 
@@ -91,7 +98,7 @@ pub fn get_template_items(
     Ok(items.into_iter().map(|item| item.item_row).collect())
 }
 
-/// The pieces of a period add back up to its quantity only to within floating
+/// The pieces of a month add back up to its quantity only to within floating
 /// point error (872.58 can come back as 872.5800000000002), so a sum of pieces
 /// is rounded well below anything a person enters
 fn round_quantity(quantity: f64) -> f64 {
@@ -105,17 +112,16 @@ const LOOKUP_BATCH_SIZE: usize = 500;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConsumptionEstimateInput {
     pub item_id_or_code: String,
-    pub period_start: NaiveDate,
-    pub period_end: NaiveDate,
+    /// Any day in the month: the estimate is for the whole calendar month
+    pub month: NaiveDate,
     pub quantity: f64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReplaceConsumptionEstimates {
     pub store_id: String,
-    pub source: ConsumptionEstimateSource,
     pub lines: Vec<ConsumptionEstimateInput>,
-    /// Items (by id or code) named with no periods, whose estimates are removed.
+    /// Items (by id or code) named with no months, whose estimates are removed.
     /// One that matches no item, or has no estimates, is ignored: a blank
     /// template row changes nothing.
     pub cleared_items: Vec<String>,
@@ -126,14 +132,12 @@ pub struct ReplaceConsumptionEstimates {
 #[derive(Debug, Clone, PartialEq)]
 pub enum LineProblem {
     ItemNotFound,
-    /// Starts after it ends
-    InvalidPeriod,
-    /// Ends after today: an estimate is for consumption that has happened
-    PeriodInFuture,
+    /// This month or later: an estimate is for consumption that has happened
+    MonthNotFinished,
     /// Negative, or not a number
     InvalidQuantity,
-    /// Overlaps an earlier line for the same item, which would count twice
-    OverlapsLine(usize),
+    /// The same item and month as an earlier line, which would count twice
+    RepeatedMonth(usize),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -143,8 +147,8 @@ pub struct LineError {
     pub problem: LineProblem,
 }
 
-/// A line whose period already has real consumption for its item. The estimate
-/// is added on top of it, which is fine for a period before the store had any
+/// A line whose month already has real consumption for its item. The estimate
+/// is added on top of it, which is fine for a month before the store had any
 /// history and double counts otherwise, so the user is told.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActualConsumptionOverlap {
@@ -215,7 +219,7 @@ pub fn replace_consumption_estimates(
                 .filter(|(_, item_id)| !with_lines.contains(item_id))
                 .collect();
             let saved_items: HashSet<String> = ConsumptionEstimateRowRepository::new(connection)
-                .find_many_by_store_and_source(&input.store_id, &input.source)?
+                .find_many_by_store_and_type(&input.store_id, &ConsumptionEstimateType::Monthly)?
                 .into_iter()
                 .map(|row| row.item_id)
                 .collect();
@@ -235,13 +239,7 @@ pub fn replace_consumption_estimates(
 
             if !input.dry_run {
                 let cleared_ids: Vec<&str> = cleared.iter().map(|(_, id)| *id).collect();
-                save_changes(
-                    connection,
-                    &input.store_id,
-                    &input.source,
-                    &estimates,
-                    &cleared_ids,
-                )?;
+                save_changes(connection, &input.store_id, &estimates, &cleared_ids)?;
             }
 
             Ok(ReplaceConsumptionEstimatesResult {
@@ -257,11 +255,11 @@ fn validate_lines(
     item_ids: &HashMap<String, String>,
     lines: &[ConsumptionEstimateInput],
 ) -> Result<Vec<ConsumptionEstimate>, Vec<LineError>> {
-    let today = date_now();
+    let this_month = month_of(date_now());
     let mut errors = Vec::new();
     let mut estimates = Vec::new();
-    // Earlier lines' periods by item, to catch overlaps
-    let mut periods_by_item: HashMap<String, Vec<(usize, NaiveDate, NaiveDate)>> = HashMap::new();
+    // Earlier lines by item and month, to catch repeats
+    let mut seen: HashMap<(String, NaiveDate), usize> = HashMap::new();
 
     for (index, line) in lines.iter().enumerate() {
         let mut problem = |problem| {
@@ -275,11 +273,9 @@ fn validate_lines(
         if item_id.is_none() {
             problem(LineProblem::ItemNotFound);
         }
-        if line.period_start > line.period_end {
-            problem(LineProblem::InvalidPeriod);
-        }
-        if line.period_end > today {
-            problem(LineProblem::PeriodInFuture);
+        let month = month_of(line.month);
+        if month >= this_month {
+            problem(LineProblem::MonthNotFinished);
         }
         if !line.quantity.is_finite() || line.quantity < 0.0 {
             problem(LineProblem::InvalidQuantity);
@@ -288,19 +284,16 @@ fn validate_lines(
         let Some(item_id) = item_id else {
             continue;
         };
-        let item_periods = periods_by_item.entry(item_id.clone()).or_default();
-        if let Some((other, _, _)) = item_periods
-            .iter()
-            .find(|(_, start, end)| line.period_start <= *end && *start <= line.period_end)
-        {
-            problem(LineProblem::OverlapsLine(*other));
+        match seen.get(&(item_id.clone(), month)) {
+            Some(other) => problem(LineProblem::RepeatedMonth(*other)),
+            None => {
+                seen.insert((item_id.clone(), month), index);
+            }
         }
-        item_periods.push((index, line.period_start, line.period_end));
 
         estimates.push(ConsumptionEstimate {
             item_id: item_id.clone(),
-            period_start: line.period_start,
-            period_end: line.period_end,
+            month,
             quantity: line.quantity,
         });
     }
@@ -386,8 +379,8 @@ fn find_actual_consumption(
     estimates: &[ConsumptionEstimate],
 ) -> Result<Vec<ActualConsumptionOverlap>, RepositoryError> {
     let (Some(from), Some(to)) = (
-        estimates.iter().map(|e| e.period_start).min(),
-        estimates.iter().map(|e| e.period_end).max(),
+        estimates.iter().map(|e| e.month).min(),
+        estimates.iter().map(|e| last_day_of(e.month)).max(),
     ) else {
         return Ok(Vec::new());
     };
@@ -398,7 +391,7 @@ fn find_actual_consumption(
         .into_iter()
         .collect();
 
-    // The store's recorded consumption of these items across all the periods,
+    // The store's recorded consumption of these items across all the months,
     // by item, then shared out to the lines
     let repo = ConsumptionRepository::new(connection);
     let mut by_item: HashMap<String, Vec<(NaiveDate, f64)>> = HashMap::new();
@@ -424,7 +417,7 @@ fn find_actual_consumption(
             let actual_quantity: f64 = by_item
                 .get(&estimate.item_id)?
                 .iter()
-                .filter(|(date, _)| (estimate.period_start..=estimate.period_end).contains(date))
+                .filter(|(date, _)| month_of(*date) == estimate.month)
                 .map(|(_, quantity)| quantity)
                 .sum();
             (actual_quantity > 0.0).then_some(ActualConsumptionOverlap {
@@ -435,14 +428,13 @@ fn find_actual_consumption(
         .collect())
 }
 
-/// Gives each item named in `estimates` exactly the periods given for it, and
-/// each of `cleared_item_ids` none, writing only what changed: a period already
+/// Gives each item named in `estimates` exactly the months given for it, and
+/// each of `cleared_item_ids` none, writing only what changed: a month already
 /// saved with the same quantity is left as it is, a changed one is rewritten,
 /// and one the item no longer has is removed. Items not named are left alone.
 fn save_changes(
     connection: &StorageConnection,
     store_id: &str,
-    source: &ConsumptionEstimateSource,
     estimates: &[ConsumptionEstimate],
     cleared_item_ids: &[&str],
 ) -> Result<(), RepositoryError> {
@@ -453,14 +445,14 @@ fn save_changes(
         .chain(cleared_item_ids.iter().copied())
         .collect();
 
-    // What's saved for those items, by period
-    let mut saved: HashMap<(String, NaiveDate, NaiveDate), (f64, Vec<String>)> = HashMap::new();
-    for row in repo.find_many_by_store_and_source(store_id, source)? {
+    // What's saved for those items, by month
+    let mut saved: HashMap<(String, NaiveDate), (f64, Vec<String>)> = HashMap::new();
+    for row in repo.find_many_by_store_and_type(store_id, &ConsumptionEstimateType::Monthly)? {
         if !items.contains(row.item_id.as_str()) {
             continue;
         }
         let entry = saved
-            .entry((row.item_id, row.period_start, row.period_end))
+            .entry((row.item_id, month_of(row.date)))
             .or_insert((0.0, Vec::new()));
         entry.0 += row.quantity;
         entry.1.push(row.id);
@@ -468,11 +460,7 @@ fn save_changes(
 
     let mut to_insert = Vec::new();
     for estimate in estimates {
-        let key = (
-            estimate.item_id.clone(),
-            estimate.period_start,
-            estimate.period_end,
-        );
+        let key = (estimate.item_id.clone(), estimate.month);
         match saved.get(&key) {
             Some((quantity, _))
                 if round_quantity(*quantity) == round_quantity(estimate.quantity) =>
@@ -487,24 +475,23 @@ fn save_changes(
     let to_delete: Vec<String> = saved.into_values().flat_map(|(_, ids)| ids).collect();
     repo.delete_many(&to_delete)?;
     for estimate in to_insert {
-        for row in split_into_pieces(store_id, source, estimate) {
+        for row in split_into_pieces(store_id, estimate) {
             repo.upsert_one(&row)?;
         }
     }
     Ok(())
 }
 
-/// Removes all of a store's estimates from one source
+/// Removes all of a store's monthly estimates
 pub fn clear_consumption_estimates(
     ctx: &ServiceContext,
     store_id: &str,
-    source: &ConsumptionEstimateSource,
 ) -> Result<(), RepositoryError> {
     ctx.connection
         .transaction_sync(|connection| {
             let repo = ConsumptionEstimateRowRepository::new(connection);
             let ids: Vec<String> = repo
-                .find_many_by_store_and_source(store_id, source)?
+                .find_many_by_store_and_type(store_id, &ConsumptionEstimateType::Monthly)?
                 .into_iter()
                 .map(|row| row.id)
                 .collect();
@@ -513,29 +500,27 @@ pub fn clear_consumption_estimates(
         .map_err(|error| error.to_inner_error())
 }
 
-/// Splits an estimate into pieces of `ESTIMATE_PIECE_DAYS` from the start of its
-/// period (the last may be shorter), each dated at its midpoint with its share of
-/// the quantity by days
+/// Splits a month's estimate into pieces of `ESTIMATE_PIECE_DAYS` from the 1st
+/// (the last may be shorter), each dated at its midpoint with its share of the
+/// quantity by days. Every piece is dated inside the month, so the month is the
+/// month of any piece's date.
 fn split_into_pieces(
     store_id: &str,
-    source: &ConsumptionEstimateSource,
     estimate: &ConsumptionEstimate,
 ) -> Vec<ConsumptionEstimateRow> {
-    let period_days = (estimate.period_end - estimate.period_start).num_days() + 1;
+    let month_end = last_day_of(estimate.month);
+    let month_days = (month_end - estimate.month).num_days() + 1;
     let mut pieces = Vec::new();
-    let mut piece_start = estimate.period_start;
-    while piece_start <= estimate.period_end {
-        let piece_end =
-            (piece_start + Duration::days(ESTIMATE_PIECE_DAYS - 1)).min(estimate.period_end);
+    let mut piece_start = estimate.month;
+    while piece_start <= month_end {
+        let piece_end = (piece_start + Duration::days(ESTIMATE_PIECE_DAYS - 1)).min(month_end);
         let piece_days = (piece_end - piece_start).num_days() + 1;
         pieces.push(ConsumptionEstimateRow {
             id: uuid(),
             store_id: store_id.to_string(),
-            source: source.clone(),
-            period_start: estimate.period_start,
-            period_end: estimate.period_end,
+            r#type: ConsumptionEstimateType::Monthly,
             date: piece_start + Duration::days((piece_days - 1) / 2),
-            quantity: estimate.quantity * piece_days as f64 / period_days as f64,
+            quantity: estimate.quantity * piece_days as f64 / month_days as f64,
             item_id: estimate.item_id.clone(),
         });
         piece_start = piece_end + Duration::days(1);

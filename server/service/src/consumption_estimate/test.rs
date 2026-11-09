@@ -1,7 +1,7 @@
-use chrono::{Duration, NaiveDate};
+use chrono::{Duration, Months, NaiveDate};
 use repository::{
-    ChangelogRepository, ConsumptionEstimateSource, ConsumptionFilter, ConsumptionRepository,
-    EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
+    ChangelogRepository, ConsumptionFilter, ConsumptionRepository, EqualFilter, InvoiceLineRow,
+    InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
     mock::{
         MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_store_a,
         mock_user_account_a,
@@ -17,11 +17,10 @@ fn date(y: i32, m: u32, d: u32) -> NaiveDate {
     NaiveDate::from_ymd_opt(y, m, d).unwrap()
 }
 
-fn line(item: &str, start: NaiveDate, end: NaiveDate, quantity: f64) -> ConsumptionEstimateInput {
+fn line(item: &str, month: NaiveDate, quantity: f64) -> ConsumptionEstimateInput {
     ConsumptionEstimateInput {
         item_id_or_code: item.to_string(),
-        period_start: start,
-        period_end: end,
+        month,
         quantity,
     }
 }
@@ -29,7 +28,6 @@ fn line(item: &str, start: NaiveDate, end: NaiveDate, quantity: f64) -> Consumpt
 fn replace(lines: Vec<ConsumptionEstimateInput>, dry_run: bool) -> ReplaceConsumptionEstimates {
     ReplaceConsumptionEstimates {
         store_id: mock_store_a().id,
-        source: ConsumptionEstimateSource::InitialUpload,
         lines,
         cleared_items: vec![],
         dry_run,
@@ -37,20 +35,15 @@ fn replace(lines: Vec<ConsumptionEstimateInput>, dry_run: bool) -> ReplaceConsum
 }
 
 #[test]
-fn a_period_is_split_into_week_long_pieces_at_their_midpoints() {
+fn a_month_is_split_into_week_long_pieces_at_their_midpoints() {
     let estimate = ConsumptionEstimate {
         item_id: "item".to_string(),
-        period_start: date(2026, 9, 1),
-        period_end: date(2026, 9, 30),
+        month: date(2026, 9, 1),
         quantity: 300.0,
     };
-    let pieces = split_into_pieces(
-        "store",
-        &ConsumptionEstimateSource::InitialUpload,
-        &estimate,
-    );
+    let pieces = split_into_pieces("store", &estimate);
 
-    // 7 + 7 + 7 + 7 + 2 days
+    // 7 + 7 + 7 + 7 + 2 days, every piece dated inside the month
     assert_eq!(
         pieces.iter().map(|p| p.date).collect::<Vec<_>>(),
         vec![
@@ -64,18 +57,20 @@ fn a_period_is_split_into_week_long_pieces_at_their_midpoints() {
     assert_eq!(pieces[0].quantity, 70.0);
     assert_eq!(pieces[4].quantity, 20.0);
     assert_eq!(pieces.iter().map(|p| p.quantity).sum::<f64>(), 300.0);
-    assert!(pieces.iter().all(|p| p.period_start == estimate.period_start
-        && p.period_end == estimate.period_end));
+    assert!(
+        pieces
+            .iter()
+            .all(|p| p.r#type == ConsumptionEstimateType::Monthly)
+    );
 
-    // A single day is one piece on that day
-    let day = ConsumptionEstimate {
-        period_end: date(2026, 9, 1),
+    // February: 7 + 7 + 7 + 7 days, the last piece ending on the 28th
+    let february = ConsumptionEstimate {
+        month: date(2026, 2, 1),
         ..estimate
     };
-    let pieces = split_into_pieces("store", &ConsumptionEstimateSource::InitialUpload, &day);
-    assert_eq!(pieces.len(), 1);
-    assert_eq!(pieces[0].date, date(2026, 9, 1));
-    assert_eq!(pieces[0].quantity, 300.0);
+    let pieces = split_into_pieces("store", &february);
+    assert_eq!(pieces.len(), 4);
+    assert_eq!(pieces[3].date, date(2026, 2, 25));
 }
 
 #[actix_rt::test]
@@ -86,59 +81,40 @@ async fn replace_saves_replaces_and_clears() {
     let ctx = service_provider
         .context(mock_store_a().id, mock_user_account_a().id)
         .unwrap();
-    let source = ConsumptionEstimateSource::InitialUpload;
 
     // By code or by id
     let lines = vec![
-        line(
-            &mock_item_a().code,
-            date(2026, 8, 1),
-            date(2026, 8, 31),
-            310.0,
-        ),
-        line(
-            &mock_item_a().id,
-            date(2026, 9, 1),
-            date(2026, 9, 30),
-            300.0,
-        ),
-        line(
-            &mock_item_b().code,
-            date(2026, 9, 1),
-            date(2026, 9, 30),
-            30.0,
-        ),
+        line(&mock_item_a().code, date(2026, 8, 1), 310.0),
+        line(&mock_item_a().id, date(2026, 9, 1), 300.0),
+        line(&mock_item_b().code, date(2026, 9, 1), 30.0),
     ];
 
     // A dry run saves nothing
     let result = replace_consumption_estimates(&ctx, replace(lines.clone(), true)).unwrap();
     assert_eq!(result.estimates.len(), 3);
     assert_eq!(
-        get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
+        get_consumption_estimates(&connection, &mock_store_a().id).unwrap(),
         vec![]
     );
 
     replace_consumption_estimates(&ctx, replace(lines, false)).unwrap();
-    let saved = get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap();
+    let saved = get_consumption_estimates(&connection, &mock_store_a().id).unwrap();
     assert_eq!(
         saved,
         vec![
             ConsumptionEstimate {
                 item_id: mock_item_a().id,
-                period_start: date(2026, 8, 1),
-                period_end: date(2026, 8, 31),
+                month: date(2026, 8, 1),
                 quantity: 310.0,
             },
             ConsumptionEstimate {
                 item_id: mock_item_a().id,
-                period_start: date(2026, 9, 1),
-                period_end: date(2026, 9, 30),
+                month: date(2026, 9, 1),
                 quantity: 300.0,
             },
             ConsumptionEstimate {
                 item_id: mock_item_b().id,
-                period_start: date(2026, 9, 1),
-                period_end: date(2026, 9, 30),
+                month: date(2026, 9, 1),
                 quantity: 30.0,
             },
         ]
@@ -147,32 +123,24 @@ async fn replace_saves_replaces_and_clears() {
     // Uploading again replaces the estimates of the items it names: item_b now
     // has only July, and item_a, not named, is left alone
     let changelog_before = estimate_changelog_count(&connection);
-    let lines = vec![line(
-        &mock_item_b().code,
-        date(2026, 7, 1),
-        date(2026, 7, 31),
-        62.0,
-    )];
+    let lines = vec![line(&mock_item_b().code, date(2026, 7, 1), 62.0)];
     replace_consumption_estimates(&ctx, replace(lines.clone(), false)).unwrap();
     assert_eq!(
-        get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
+        get_consumption_estimates(&connection, &mock_store_a().id).unwrap(),
         vec![
             ConsumptionEstimate {
                 item_id: mock_item_a().id,
-                period_start: date(2026, 8, 1),
-                period_end: date(2026, 8, 31),
+                month: date(2026, 8, 1),
                 quantity: 310.0,
             },
             ConsumptionEstimate {
                 item_id: mock_item_a().id,
-                period_start: date(2026, 9, 1),
-                period_end: date(2026, 9, 30),
+                month: date(2026, 9, 1),
                 quantity: 300.0,
             },
             ConsumptionEstimate {
                 item_id: mock_item_b().id,
-                period_start: date(2026, 7, 1),
-                period_end: date(2026, 7, 31),
+                month: date(2026, 7, 1),
                 quantity: 62.0,
             },
         ]
@@ -186,9 +154,9 @@ async fn replace_saves_replaces_and_clears() {
     assert_eq!(estimate_changelog_count(&connection), changelog_before);
 
     // Clearing removes them all
-    clear_consumption_estimates(&ctx, &mock_store_a().id, &source).unwrap();
+    clear_consumption_estimates(&ctx, &mock_store_a().id).unwrap();
     assert_eq!(
-        get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
+        get_consumption_estimates(&connection, &mock_store_a().id).unwrap(),
         vec![]
     );
 }
@@ -199,7 +167,7 @@ fn estimate_changelog_count(connection: &StorageConnection) -> u64 {
     ChangelogRepository::new(connection).max_cursor().unwrap()
 }
 
-/// The pieces of a period add back up to what was entered, not to within
+/// The pieces of a month add back up to what was entered, not to within
 /// floating point error of it
 #[actix_rt::test]
 async fn quantities_read_back_as_entered() {
@@ -209,19 +177,9 @@ async fn quantities_read_back_as_entered() {
     let ctx = service_provider
         .context(mock_store_a().id, mock_user_account_a().id)
         .unwrap();
-    let lines = vec![line(
-        &mock_item_a().code,
-        date(2026, 10, 1),
-        date(2026, 10, 31),
-        872.58,
-    )];
+    let lines = vec![line(&mock_item_a().code, date(2026, 10, 1), 872.58)];
     replace_consumption_estimates(&ctx, replace(lines, false)).unwrap();
-    let saved = get_consumption_estimates(
-        &connection,
-        &mock_store_a().id,
-        &ConsumptionEstimateSource::InitialUpload,
-    )
-    .unwrap();
+    let saved = get_consumption_estimates(&connection, &mock_store_a().id).unwrap();
     assert_eq!(saved[0].quantity, 872.58);
 }
 
@@ -237,14 +195,15 @@ async fn replace_rejects_bad_lines_and_saves_nothing() {
     let today = date_now();
 
     let lines = vec![
-        line(&item, date(2026, 1, 1), date(2026, 1, 31), 10.0),
-        line("no_such_item", date(2026, 1, 1), date(2026, 1, 31), 10.0),
-        line(&item, date(2026, 3, 31), date(2026, 3, 1), 10.0),
-        line(&item, today, today + Duration::days(1), 10.0),
-        line(&item, date(2026, 4, 1), date(2026, 4, 30), -1.0),
-        line(&item, date(2026, 1, 31), date(2026, 2, 27), 10.0),
+        line(&item, date(2026, 1, 1), 10.0),
+        line("no_such_item", date(2026, 1, 1), 10.0),
+        // This month hasn't finished
+        line(&item, today, 10.0),
+        line(&item, date(2026, 4, 1), -1.0),
+        // Another day in January is still January
+        line(&item, date(2026, 1, 20), 10.0),
         // Plenty of items have no code: a blank one mustn't match them
-        line(" ", date(2026, 5, 1), date(2026, 5, 31), 10.0),
+        line(" ", date(2026, 5, 1), 10.0),
     ];
     assert_eq!(
         replace_consumption_estimates(&ctx, replace(lines, false)),
@@ -256,22 +215,18 @@ async fn replace_rejects_bad_lines_and_saves_nothing() {
                 },
                 LineError {
                     line: 2,
-                    problem: LineProblem::InvalidPeriod
+                    problem: LineProblem::MonthNotFinished
                 },
                 LineError {
                     line: 3,
-                    problem: LineProblem::PeriodInFuture
-                },
-                LineError {
-                    line: 4,
                     problem: LineProblem::InvalidQuantity
                 },
                 LineError {
-                    line: 5,
-                    problem: LineProblem::OverlapsLine(0)
+                    line: 4,
+                    problem: LineProblem::RepeatedMonth(0)
                 },
                 LineError {
-                    line: 6,
+                    line: 5,
                     problem: LineProblem::ItemNotFound
                 },
             ],
@@ -279,12 +234,7 @@ async fn replace_rejects_bad_lines_and_saves_nothing() {
         })
     );
     assert_eq!(
-        get_consumption_estimates(
-            &connection,
-            &mock_store_a().id,
-            &ConsumptionEstimateSource::InitialUpload
-        )
-        .unwrap(),
+        get_consumption_estimates(&connection, &mock_store_a().id).unwrap(),
         vec![]
     );
 
@@ -323,14 +273,9 @@ async fn estimates_add_to_consumption_and_amc() {
     };
     let before = amc();
 
-    // Four weeks ending yesterday: inside a 3 month window
-    let yesterday = date_now() - Duration::days(1);
-    let lines = vec![line(
-        &item_id,
-        yesterday - Duration::days(27),
-        yesterday,
-        280.0,
-    )];
+    // Last month: inside a 3 month window
+    let last_month = month_of(date_now()) - Months::new(1);
+    let lines = vec![line(&item_id, last_month, 280.0)];
     replace_consumption_estimates(&ctx, replace(lines, false)).unwrap();
 
     let estimated: Vec<_> = ConsumptionRepository::new(&connection)
@@ -343,8 +288,10 @@ async fn estimates_add_to_consumption_and_amc() {
         .into_iter()
         .filter(|row| row.is_estimate)
         .collect();
-    assert_eq!(estimated.len(), 4);
-    assert_eq!(estimated.iter().map(|row| row.quantity).sum::<f64>(), 280.0);
+    // A piece per started week of the month
+    let month_days = ((last_month + Months::new(1)) - last_month).num_days();
+    assert_eq!(estimated.len() as i64, (month_days + 6) / 7);
+    assert!((estimated.iter().map(|row| row.quantity).sum::<f64>() - 280.0).abs() < 1e-9);
 
     assert!((amc() - before - 280.0 / 3.0).abs() < 1e-9);
 
@@ -360,10 +307,12 @@ async fn estimates_add_to_consumption_and_amc() {
     );
 }
 
-/// A period that already has real consumption is saved, with a warning
+/// A month that already has real consumption is saved, with a warning
 #[actix_rt::test]
 async fn overlap_with_actual_consumption_is_reported() {
-    let issued = date_now() - Duration::days(10);
+    // In last month, which has finished, so can have an estimate
+    let last_month = month_of(date_now()) - Months::new(1);
+    let issued = last_month + Duration::days(9);
     let (_, _, connection_manager, _) = setup_all_with_data(
         "consumption_estimate_overlap",
         MockDataInserts::all(),
@@ -397,20 +346,10 @@ async fn overlap_with_actual_consumption_is_reported() {
         .unwrap();
 
     let lines = vec![
-        // Before the shipment
-        line(
-            &mock_item_b().code,
-            issued - Duration::days(40),
-            issued - Duration::days(11),
-            5.0,
-        ),
-        // Covers it
-        line(
-            &mock_item_b().code,
-            issued - Duration::days(10),
-            issued,
-            5.0,
-        ),
+        // The month before the shipment
+        line(&mock_item_b().code, last_month - Months::new(1), 5.0),
+        // The shipment's month
+        line(&mock_item_b().code, last_month, 5.0),
     ];
     let result = replace_consumption_estimates(&ctx, replace(lines, true)).unwrap();
     assert_eq!(
@@ -465,22 +404,21 @@ async fn a_code_that_lost_its_leading_zeros_still_matches() {
 }
 
 #[actix_rt::test]
-async fn an_item_named_with_no_periods_loses_its_estimates() {
+async fn an_item_named_with_no_months_loses_its_estimates() {
     let (_, connection, connection_manager, _) =
         setup_all("consumption_estimate_cleared_items", MockDataInserts::all()).await;
     let service_provider = ServiceProvider::new(connection_manager);
     let ctx = service_provider
         .context(mock_store_a().id, mock_user_account_a().id)
         .unwrap();
-    let source = ConsumptionEstimateSource::InitialUpload;
-    let september = (date(2026, 9, 1), date(2026, 9, 30));
+    let september = date(2026, 9, 1);
 
     replace_consumption_estimates(
         &ctx,
         replace(
             vec![
-                line(&mock_item_a().code, september.0, september.1, 30.0),
-                line(&mock_item_b().code, september.0, september.1, 20.0),
+                line(&mock_item_a().code, september, 30.0),
+                line(&mock_item_b().code, september, 20.0),
             ],
             false,
         ),
@@ -489,10 +427,7 @@ async fn an_item_named_with_no_periods_loses_its_estimates() {
 
     // Item a is cleared; the others named have nothing to remove; item b,
     // cleared but also given a line, keeps the line
-    let mut input = replace(
-        vec![line(&mock_item_b().code, september.0, september.1, 25.0)],
-        true,
-    );
+    let mut input = replace(vec![line(&mock_item_b().code, september, 25.0)], true);
     input.cleared_items = vec![
         "no_such_item".to_string(),
         mock_item_a().code,
@@ -503,7 +438,7 @@ async fn an_item_named_with_no_periods_loses_its_estimates() {
     assert_eq!(result.removed, vec![1]);
     // A dry run removes nothing
     assert_eq!(
-        get_consumption_estimates(&connection, &mock_store_a().id, &source)
+        get_consumption_estimates(&connection, &mock_store_a().id)
             .unwrap()
             .len(),
         2
@@ -514,7 +449,7 @@ async fn an_item_named_with_no_periods_loses_its_estimates() {
     let mut with_bad_line = input.clone();
     with_bad_line
         .lines
-        .push(line("no_such_item", september.0, september.1, 1.0));
+        .push(line("no_such_item", september, 1.0));
     assert_eq!(
         replace_consumption_estimates(&ctx, with_bad_line),
         Err(ReplaceConsumptionEstimatesError::InvalidLines {
@@ -529,11 +464,10 @@ async fn an_item_named_with_no_periods_loses_its_estimates() {
     input.dry_run = false;
     replace_consumption_estimates(&ctx, input).unwrap();
     assert_eq!(
-        get_consumption_estimates(&connection, &mock_store_a().id, &source).unwrap(),
+        get_consumption_estimates(&connection, &mock_store_a().id).unwrap(),
         vec![ConsumptionEstimate {
             item_id: mock_item_b().id,
-            period_start: september.0,
-            period_end: september.1,
+            month: september,
             quantity: 25.0,
         }]
     );
