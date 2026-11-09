@@ -21,7 +21,7 @@ Scope: CORS policy, the auxiliary discovery server, the GraphQL playground, and 
 
 Production branch of `cors_policy` (`server/server/src/cors.rs`): `allowed_origin_fn` calls `is_origin_allowed`, which permits an origin listed in `server.cors_origins`, or any origin when `Sec-Fetch-Site` is `same-origin | none | <absent>`.
 
-`same-site` is **not** allowed (#1644). It used to be, which let a page on any other subdomain of the same site (another `*.msupply.org` server, say) make credentialed requests. The shipped clients don't need it: the web UI at `/` and `/old-ui/` and the desktop and Android shells all load the UI from the server they talk to (same-origin), and non-browser clients send no `Sec-Fetch-Site`. A sibling origin that really does need access goes in `cors_origins`. One known case: the new Android shell's draft local mode (`frontend/kdd/android/android-spec.md`) has the page stay on the Capacitor origin `https://localhost` and call the embedded server at `https://localhost:8000`, which only worked through `same-site`. If it ships that way, the embedded server's `cors_origins` (`server/android/src/android.rs`) needs `https://localhost`.
+`same-site` is **not** allowed (#1644): it would let a page on another subdomain of the same site (another `*.msupply.org` server, say) or on another port of the same host make credentialed requests and read the replies. The shipped clients don't need it: the web UI at `/` and `/old-ui/` and the desktop and Android shells all load the UI from the server they talk to (same-origin), and non-browser clients send no `Sec-Fetch-Site`. A sibling origin that really does need access goes in `cors_origins`. Each entry must be an origin exactly as a browser sends it (`scheme://host[:port]`, no trailing slash), since it's compared byte for byte; the server logs a warning at startup for an entry that isn't. One known case: the new Android shell's draft local mode (`frontend/kdd/android/android-spec.md`) has the page stay on the Capacitor origin `https://localhost` and call the embedded server at `https://localhost:8000`. That's `same-site`, so if it ships that way, the embedded server's `cors_origins` (`server/android/src/android.rs`) needs `https://localhost`.
 
 The `<absent> → allow` arm is a **2023 workaround** for a Chrome bug that omitted the header for bare-IP targets:
 
@@ -32,12 +32,12 @@ Current browsers send `Sec-Fetch-Site` on all cross-origin fetches including IP 
 
 ### INV-NET-6 — WebSocket upgrades are held to the same origin rule as HTTP
 
-Browsers don't apply CORS to WebSocket upgrades, and actix-cors doesn't refuse a request from a disallowed origin: it only leaves out `Access-Control-Allow-Origin`, which a WebSocket never checks. Before #1644 a page on any origin could open `/graphql/ws` with the user's session cookie and run subscriptions (`cors_alone_does_not_refuse_a_websocket_upgrade` pins this).
+Browsers don't apply CORS to WebSocket upgrades, and actix-cors doesn't refuse a request from a disallowed origin: it only leaves out `Access-Control-Allow-Origin`, which a WebSocket never checks (`cors_alone_does_not_refuse_a_websocket_upgrade` pins this). The session cookie is `SameSite=Strict` (`set_session_cookie` in `server/graphql/general/src/queries/login.rs`), so a browser sends it on an upgrade only from a page on the same site as the server. That still includes a page on another subdomain (another `*.msupply.org` server, say) or another port of the same host. With CORS alone, such a page could open `/graphql/ws` as the signed-in user and run subscriptions.
 
-`websocket_origin_check` (`server/server/src/cors.rs`, wrapped on the main server app) answers `403` to any request carrying `Upgrade: websocket` whose `Origin` fails `is_origin_allowed`, the same function the HTTP policy uses, so the two can't drift apart. Develop builds skip it, matching `Cors::permissive()` (INV-NET-1).
+`websocket_origin_check_for` (`server/server/src/cors.rs`, part of `wrap_main_server` in `server/server/src/middleware/mod.rs`) answers `403` to any request carrying `Upgrade: websocket` whose `Origin` fails `is_origin_allowed`, the same function the HTTP policy uses, so the two can't drift apart. That refuses the same-site page above. It also refuses a cross-site page, which only matters for a browser that sends the cookie cross-site in spite of `SameSite=Strict`; any other browser sends that page's upgrade no cookie, so it isn't signed in anyway. Develop builds skip the check, matching `Cors::permissive()` (INV-NET-1).
 
 - **No `Origin` → allow.** Browsers always send `Origin` on a WebSocket upgrade, so a missing one means a non-browser client. That client holds no user's browser cookies and could send any `Origin` it liked, so refusing it protects nothing. HTTP behaves the same: actix-cors only checks requests that carry an `Origin`. (The desktop and Android shells are browsers here: their pages come from the server, so they send `Origin` and pass as `same-origin`.)
-- **`Origin` present, `Sec-Fetch-Site` absent → allow.** INV-NET-2's legacy arm applies here too, so a browser too old to send fetch metadata is let through from any origin. Same residual as HTTP; if that arm is ever removed, it goes for both.
+- **`Origin` present, `Sec-Fetch-Site` absent → allow.** INV-NET-2's legacy arm applies here too, so a browser too old to send fetch metadata is let through from any origin. That includes any browser old enough to ignore `SameSite`: the major browsers all shipped `SameSite` years before `Sec-Fetch-Site`. Same residual as HTTP; if that arm is ever removed, it goes for both.
 
 ### INV-NET-3 — The discovery server (port+1) is currently over-permissive; pinned intended behavior
 
@@ -58,7 +58,7 @@ Today there are no `limit_depth`/`limit_complexity` calls on any schema builder 
 curl -s -o /dev/null -w '%{http_code}' -X OPTIONS http://<server>/graphql \
   -H 'Origin: http://evil.example' -H 'Access-Control-Request-Method: POST'   # expect 403-ish / no ACAO echo
 
-# Same-site origin not in cors_origins (#1644) — expect 400 / no ACAO echo:
+# Same-site origin not in cors_origins — expect 400 / no ACAO echo:
 curl -s -o /dev/null -w '%{http_code}' -X OPTIONS http://<server>/graphql \
   -H 'Origin: https://other.msupply.org' -H 'Access-Control-Request-Method: POST' \
   -H 'Sec-Fetch-Site: same-site'
