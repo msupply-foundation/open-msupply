@@ -235,6 +235,17 @@ export type ActivityLogSortInput = {
   key: ActivityLogSortFieldInput;
 };
 
+/**
+ * A line whose period already has real consumption for its item: the estimate is
+ * added on top of it
+ */
+export type ActualConsumptionOverlapNode = {
+  __typename: 'ActualConsumptionOverlapNode';
+  actualQuantity: Scalars['Float']['output'];
+  /** Index into the input lines */
+  line: Scalars['Int']['output'];
+};
+
 export type AddFromMasterListError = {
   __typename: 'AddFromMasterListError';
   error: AddFromMasterListErrorInterface;
@@ -1920,6 +1931,70 @@ export type ConnectionError = CentralPatientSearchErrorInterface &
     __typename: 'ConnectionError';
     description: Scalars['String']['output'];
   };
+
+export type ConsumptionEstimateLineErrorNode = {
+  __typename: 'ConsumptionEstimateLineErrorNode';
+  /** Index into the input lines */
+  line: Scalars['Int']['output'];
+  /** For `OVERLAPS_LINE`: the earlier line it overlaps */
+  otherLine?: Maybe<Scalars['Int']['output']>;
+  problem: ConsumptionEstimateLineProblem;
+};
+
+export type ConsumptionEstimateLineInput = {
+  itemIdOrCode: Scalars['String']['input'];
+  periodEnd: Scalars['NaiveDate']['input'];
+  periodStart: Scalars['NaiveDate']['input'];
+  /** In units */
+  quantity: Scalars['Float']['input'];
+};
+
+export enum ConsumptionEstimateLineProblem {
+  InvalidPeriod = 'INVALID_PERIOD',
+  InvalidQuantity = 'INVALID_QUANTITY',
+  ItemNotFound = 'ITEM_NOT_FOUND',
+  OverlapsLine = 'OVERLAPS_LINE',
+  PeriodInFuture = 'PERIOD_IN_FUTURE',
+}
+
+/** Nothing is saved when any line has a problem */
+export type ConsumptionEstimateLinesError = {
+  __typename: 'ConsumptionEstimateLinesError';
+  errors: Array<ConsumptionEstimateLineErrorNode>;
+  /**
+   * As on a successful response: the cleared items whose estimates would be
+   * removed once the lines are fixed
+   */
+  removedItems: Array<Scalars['Int']['output']>;
+};
+
+export type ConsumptionEstimateNode = {
+  __typename: 'ConsumptionEstimateNode';
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  periodEnd: Scalars['NaiveDate']['output'];
+  periodStart: Scalars['NaiveDate']['output'];
+  /** In units */
+  quantity: Scalars['Float']['output'];
+};
+
+export type ConsumptionEstimateTemplateItemNode = {
+  __typename: 'ConsumptionEstimateTemplateItemNode';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ConsumptionEstimatesNode = {
+  __typename: 'ConsumptionEstimatesNode';
+  /** The store's AMC look-back period: how many months of estimates count */
+  amcLookBackMonths: Scalars['Float']['output'];
+  estimates: Array<ConsumptionEstimateNode>;
+  /**
+   * The active stock items visible in the store, by name: the rows of a blank
+   * upload template. Only resolved when asked for, as there can be thousands.
+   */
+  templateItems: Array<ConsumptionEstimateTemplateItemNode>;
+};
 
 export type ConsumptionHistoryConnector = {
   __typename: 'ConsumptionHistoryConnector';
@@ -8525,7 +8600,26 @@ export enum PreferenceKey {
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
+  /** Removes all of a store's estimated consumption */
+  clearConsumptionEstimates: OkResponse;
+  /**
+   * Replaces the estimated consumption of the items named: each ends up with
+   * exactly the periods given, and unchanged periods aren't rewritten. Items not
+   * named are left alone. Nothing is saved if any line has a problem; `dryRun`
+   * checks the lines without saving.
+   */
+  replaceConsumptionEstimates: ReplaceConsumptionEstimatesResponse;
   upsertPreferences: OkResponse;
+};
+
+export type PreferenceMutationsClearConsumptionEstimatesArgs = {
+  forStoreId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type PreferenceMutationsReplaceConsumptionEstimatesArgs = {
+  input: ReplaceConsumptionEstimatesInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type PreferenceMutationsUpsertPreferencesArgs = {
@@ -9338,6 +9432,11 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
+  /**
+   * The store's estimated consumption, entered for a store without consumption
+   * history of its own and added on top of real consumption when calculating AMC
+   */
+  consumptionEstimates: ConsumptionEstimatesNode;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
   csvToExcel: PrintReportResponse;
@@ -9696,6 +9795,11 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesConsumptionEstimatesArgs = {
+  forStoreId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -10626,6 +10730,36 @@ export type RepackStockLineNode = {
   packSize: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
 };
+
+export type ReplaceConsumptionEstimatesInput = {
+  /**
+   * Items (by id or code) named with no periods, e.g. a blank row in the
+   * file: their estimates are removed. One with no estimates, or that matches
+   * no item, is ignored.
+   */
+  clearedItems?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Check the lines and report what would be saved, without saving */
+  dryRun?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The store whose estimates these are */
+  forStoreId: Scalars['String']['input'];
+  /**
+   * Each item named ends up with exactly these periods; items not named are
+   * left alone
+   */
+  lines: Array<ConsumptionEstimateLineInput>;
+};
+
+export type ReplaceConsumptionEstimatesNode = {
+  __typename: 'ReplaceConsumptionEstimatesNode';
+  estimates: Array<ConsumptionEstimateNode>;
+  overlaps: Array<ActualConsumptionOverlapNode>;
+  /** Indexes into `clearedItems` of the items whose estimates are removed */
+  removedItems: Array<Scalars['Int']['output']>;
+};
+
+export type ReplaceConsumptionEstimatesResponse =
+  | ConsumptionEstimateLinesError
+  | ReplaceConsumptionEstimatesNode;
 
 export type ReportConnector = {
   __typename: 'ReportConnector';
