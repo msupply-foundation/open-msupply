@@ -345,11 +345,11 @@ macro_rules! apply_date_filter {
 ///         query = query.filter(months_of_stock().ge(value));
 ///     }
 ///
-///     if let Some(value) = float_filter.below_than {
+///     if let Some(value) = float_filter.less_than {
 ///         query = query.filter(months_of_stock().lt(value));
 ///     }
 ///
-///     if let Some(value) = float_filter.above_than {
+///     if let Some(value) = float_filter.greater_than {
 ///         query = query.filter(months_of_stock().gt(value));
 ///     }
 /// }
@@ -369,11 +369,11 @@ macro_rules! apply_float_filter {
                 $query = $query.filter($dsl_field.ge(value));
             }
 
-            if let Some(value) = float_filter.below_than {
+            if let Some(value) = float_filter.less_than {
                 $query = $query.filter($dsl_field.lt(value));
             }
 
-            if let Some(value) = float_filter.above_than {
+            if let Some(value) = float_filter.greater_than {
                 $query = $query.filter($dsl_field.gt(value));
             }
         }

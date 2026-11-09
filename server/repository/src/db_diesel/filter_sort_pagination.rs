@@ -305,10 +305,10 @@ pub struct FloatFilter {
     pub above_or_equal_to: Option<f64>,
     /// Strict less-than (exclusive)
     #[ts(optional)]
-    pub below_than: Option<f64>,
+    pub less_than: Option<f64>,
     /// Strict greater-than (exclusive)
     #[ts(optional)]
-    pub above_than: Option<f64>,
+    pub greater_than: Option<f64>,
 }
 
 impl FloatFilter {
@@ -333,16 +333,16 @@ impl FloatFilter {
         }
     }
 
-    pub fn below_than(value: f64) -> Self {
+    pub fn less_than(value: f64) -> Self {
         Self {
-            below_than: Some(value),
+            less_than: Some(value),
             ..Default::default()
         }
     }
 
-    pub fn above_than(value: f64) -> Self {
+    pub fn greater_than(value: f64) -> Self {
         Self {
-            above_than: Some(value),
+            greater_than: Some(value),
             ..Default::default()
         }
     }

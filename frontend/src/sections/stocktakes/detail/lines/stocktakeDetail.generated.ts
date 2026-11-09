@@ -180,10 +180,7 @@ export type StocktakeLinesVariables = {
   } | null;
     campaignName?: {
     equalTo?: string | null;
-    equalAny?: Array<string> | null;
-    notEqualTo?: string | null;
-    equalAnyOrNull?: Array<string> | null;
-    notEqualAll?: Array<string> | null;
+    like?: string | null;
   } | null;
   } | null;
   sort?: Array<{

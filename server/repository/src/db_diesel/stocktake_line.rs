@@ -28,7 +28,7 @@ pub struct StocktakeLineFilter {
     pub campaign_id: Option<EqualFilter<String>>,
     pub batch: Option<StringFilter>,
     pub manufacture_date: Option<DateFilter>,
-    pub campaign_name: Option<EqualFilter<String>>,
+    pub campaign_name: Option<StringFilter>,
 }
 
 impl StocktakeLineFilter {
@@ -81,7 +81,7 @@ impl StocktakeLineFilter {
         self
     }
 
-    pub fn campaign_name(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn campaign_name(mut self, filter: StringFilter) -> Self {
         self.campaign_name = Some(filter);
         self
     }
@@ -231,7 +231,7 @@ impl<'a> StocktakeLineRepository<'a> {
             apply_equal_filter!(query, f.campaign_id, stocktake_line::campaign_id);
             apply_string_filter!(query, f.batch, stocktake_line::batch);
             apply_date_filter!(query, f.manufacture_date, stocktake_line::manufacture_date);
-            apply_equal_filter!(query, f.campaign_name, campaign::name);
+            apply_string_filter!(query, f.campaign_name, campaign::name);
         }
 
         query

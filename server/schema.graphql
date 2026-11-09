@@ -3153,11 +3153,11 @@ input FloatFilterInput {
 	"""
 	Strict less-than (exclusive)
 	"""
-	belowThan: Float
+	lessThan: Float
 	"""
 	Strict greater-than (exclusive)
 	"""
-	aboveThan: Float
+	greaterThan: Float
 }
 
 input FloatStorePrefInput {
@@ -8849,7 +8849,6 @@ type RequisitionLineConnector {
 
 input RequisitionLineFilterInput {
 	id: EqualFilterStringInput
-	storeId: EqualFilterStringInput
 	requisitionId: EqualFilterStringInput
 	itemId: EqualFilterStringInput
 	itemCodeOrName: StringFilterInput
@@ -9899,7 +9898,7 @@ input StocktakeLineFilterInput {
 	campaignId: EqualFilterStringInput
 	batch: StringFilterInput
 	manufactureDate: DateFilterInput
-	campaignName: EqualFilterStringInput
+	campaignName: StringFilterInput
 }
 
 type StocktakeLineNode {

@@ -15,7 +15,6 @@ use service::auth::{Resource, ResourceAccessRequest};
 #[derive(InputObject, Clone)]
 pub struct RequisitionLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub store_id: Option<EqualFilterStringInput>,
     pub requisition_id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub item_code_or_name: Option<StringFilterInput>,
@@ -29,7 +28,7 @@ impl From<RequisitionLineFilterInput> for RequisitionLineFilter {
     fn from(f: RequisitionLineFilterInput) -> Self {
         RequisitionLineFilter {
             id: f.id.map(EqualFilter::from),
-            store_id: f.store_id.map(EqualFilter::from),
+            store_id: None,
             requisition_id: f.requisition_id.map(EqualFilter::from),
             item_id: f.item_id.map(EqualFilter::from),
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),

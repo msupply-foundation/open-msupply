@@ -310,7 +310,7 @@ mod test {
 
         // Unknown months of stock (stock, no consumption) never matches a filter
         let under_one_month = repo
-            .query_by_filter(these_lines().months_of_stock(FloatFilter::below_than(1.0)))
+            .query_by_filter(these_lines().months_of_stock(FloatFilter::less_than(1.0)))
             .unwrap();
         assert_eq!(ids(under_one_month), vec!["no_stock_no_consumption"]);
 

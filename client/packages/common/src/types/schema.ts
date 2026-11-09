@@ -3719,12 +3719,12 @@ export type FinalisedRequisition = DeleteResponseRequisitionErrorInterface & {
 
 export type FloatFilterInput = {
   aboveOrEqualTo?: InputMaybe<Scalars['Float']['input']>;
-  /** Strict greater-than (exclusive) */
-  aboveThan?: InputMaybe<Scalars['Float']['input']>;
   belowOrEqualTo?: InputMaybe<Scalars['Float']['input']>;
-  /** Strict less-than (exclusive) */
-  belowThan?: InputMaybe<Scalars['Float']['input']>;
   equalTo?: InputMaybe<Scalars['Float']['input']>;
+  /** Strict greater-than (exclusive) */
+  greaterThan?: InputMaybe<Scalars['Float']['input']>;
+  /** Strict less-than (exclusive) */
+  lessThan?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type FloatStorePrefInput = {
@@ -10822,7 +10822,6 @@ export type RequisitionLineFilterInput = {
   monthsOfStock?: InputMaybe<FloatFilterInput>;
   requestedQuantity?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
-  storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type RequisitionLineForecastPreviewError = {
@@ -11887,7 +11886,7 @@ export type StocktakeLineConnector = {
 export type StocktakeLineFilterInput = {
   batch?: InputMaybe<StringFilterInput>;
   campaignId?: InputMaybe<EqualFilterStringInput>;
-  campaignName?: InputMaybe<EqualFilterStringInput>;
+  campaignName?: InputMaybe<StringFilterInput>;
   donorId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;

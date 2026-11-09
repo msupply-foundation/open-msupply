@@ -112,9 +112,9 @@ pub struct FloatFilterInput {
     pub below_or_equal_to: Option<f64>,
     pub above_or_equal_to: Option<f64>,
     /// Strict less-than (exclusive)
-    pub below_than: Option<f64>,
+    pub less_than: Option<f64>,
     /// Strict greater-than (exclusive)
-    pub above_than: Option<f64>,
+    pub greater_than: Option<f64>,
 }
 
 impl From<FloatFilterInput> for FloatFilter {
@@ -123,8 +123,8 @@ impl From<FloatFilterInput> for FloatFilter {
             equal_to: f.equal_to,
             below_or_equal_to: f.below_or_equal_to,
             above_or_equal_to: f.above_or_equal_to,
-            below_than: f.below_than,
-            above_than: f.above_than,
+            less_than: f.less_than,
+            greater_than: f.greater_than,
         }
     }
 }
