@@ -5,11 +5,19 @@
  * filled in before typing the next one. A modal would cover exactly the thing
  * being tested.
  *
- * Native `popover`, so the top layer does the stacking with no z-index and no
- * portal — and, because the top layer orders by when each element was shown,
+ * Native `popover`, so the top layer does the stacking with no z-index — and,
+ * because the top layer orders by when each element was shown,
  * it sits above an already-open <dialog> without either knowing about the
- * other (the reason Dialog and Popover both take this route).
+ * other (the reason Dialog and Popover both take this route). Stacking isn't
+ * the whole story, though: an open modal makes everything outside it inert,
+ * so ManualScanInput.tsx mounts the panel inside the topmost modal (#2138).
  */
+
+/* The Portal's wrapper div. Inside a dialog it would otherwise be a flex item,
+   adding a gap at the dialog's foot; the panel is in the top layer anyway. */
+.host {
+  display: contents;
+}
 
 .panel {
   position: fixed;
@@ -27,6 +35,16 @@
   background: var(--surface-raised);
   box-shadow: var(--shadow-3);
   overflow: visible;
+}
+
+/* Not in use: only the chip that expands it again, so it covers as little of
+   a line editor as it can. The chip is a button with its own surface. */
+.panel[data-collapsed] {
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .heading {
