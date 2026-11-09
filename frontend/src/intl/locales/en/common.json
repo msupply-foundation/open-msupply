@@ -1057,7 +1057,7 @@
   "json-forms-error.required": "This field is required",
   "json-forms-error.type": "Invalid input",
   "label.ancillary-per-principal": "{{ancillary}} per {{principal}}",
-  "label.ancillary-per-principal-item": "{{ancillary}} per {{principal}} of {{item}}",
+  "label.ancillary-per-principal-items": "{{ancillary}} of {{ancillaryItem}} per {{principal}} of {{principalItem}}",
   "label.course-monthly-demand": "Course monthly demand",
   "label.principal-monthly-demand": "Principal monthly demand",
   "label.annual-target-doses": "Annual target doses",

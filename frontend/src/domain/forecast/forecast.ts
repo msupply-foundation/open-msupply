@@ -184,11 +184,13 @@ export const populationSteps = (
  * A principal's configured ratio in words, each side in its own item's units —
  * "1.1 Syringe per 100 Vial" — so it reads the one way round whichever screen
  * shows it. Where both sides would carry the same word ("1 Each per 100
- * Each"), the principal side names its item, so the numbers can't swap.
+ * Each", or "units" when neither item names a unit), both sides name their
+ * item, so the numbers can't swap.
  */
 export const ancillaryRatio = (
   principal: AncillaryRatioPrincipal,
-  unitName: string | null
+  unitName: string | null,
+  itemName: string
 ): string => {
   const ancillaryWord = measureWord(
     'units',
@@ -204,12 +206,14 @@ export const ancillaryRatio = (
     ancillary: `${formatNumber(principal.ancillaryQuantity)} ${ancillaryWord}`,
     principal: `${formatNumber(principal.itemQuantity)} ${principalWord}`,
   };
-  return ancillaryWord === principalWord
-    ? t('label.ancillary-per-principal-item', {
-        ...values,
-        item: principal.item?.name ?? principal.itemId,
-      })
-    : t('label.ancillary-per-principal', values);
+  if (ancillaryWord !== principalWord) {
+    return t('label.ancillary-per-principal', values);
+  }
+  return t('label.ancillary-per-principal-items', {
+    ...values,
+    ancillaryItem: itemName,
+    principalItem: principal.item?.name ?? principal.itemId,
+  });
 };
 
 /**
@@ -226,7 +230,8 @@ export const ancillaryRatio = (
  */
 export const principalSteps = (
   principal: AncillaryRatioPrincipal,
-  unitName: string | null
+  unitName: string | null,
+  itemName: string
 ): CalculationStep[] => {
   const principalUnitName = principal.item?.unitName ?? null;
   const monthlyDemand: Term = {
@@ -277,7 +282,7 @@ export const principalSteps = (
           '×',
           {
             label: t('label.ratio'),
-            value: ancillaryRatio(principal, unitName),
+            value: ancillaryRatio(principal, unitName, itemName),
           },
           ...(principal.ownWastageRate > 0
             ? [

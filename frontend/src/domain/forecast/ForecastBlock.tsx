@@ -68,6 +68,11 @@ export interface ForecastBlockProps {
    */
   unitName?: string | null;
   /**
+   * The line's item's name — an ancillary ratio names both items where their
+   * unit words alone wouldn't tell the sides apart.
+   */
+  itemName: string;
+  /**
    * The method select's options. Omitted → the read-only form: the method as
    * text, no select.
    */
@@ -285,7 +290,11 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
                     </AccordionTrigger>
                     <AccordionContent>
                       <CalculationSteps
-                        steps={principalSteps(principal, unitName())}
+                        steps={principalSteps(
+                          principal,
+                          unitName(),
+                          props.itemName
+                        )}
                         testId="forecast-principal"
                       />
                     </AccordionContent>

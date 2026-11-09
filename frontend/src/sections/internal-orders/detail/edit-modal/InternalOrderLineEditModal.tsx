@@ -926,6 +926,7 @@ const LineEditContent = (
               targetIntervalAndBuffer={props.targetIntervalAndBuffer}
               formatQuantity={forecastQuantity}
               unitName={current()?.unitName}
+              itemName={current()?.itemName ?? ''}
               options={editorLine().forecastMethodOptions}
               ownMethod={editorLine().ownForecastMethod}
               disabled={disabled() || saving() || previewing()}

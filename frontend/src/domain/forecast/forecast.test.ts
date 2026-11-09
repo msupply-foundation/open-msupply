@@ -170,13 +170,13 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
   // bare "1.1 : 100" here read the wrong way round. In words, with each
   // side's units, it can't.
   it('shows the ratio in words, each side in its own units', () => {
-    expect(ancillaryRatio(principal, 'Syringe')).toBe(
+    expect(ancillaryRatio(principal, 'Syringe', 'Syringe 5ml')).toBe(
       '1.1 Syringe per 100 Vial'
     );
   });
 
   it('works the contribution out of the principal demand and the ratio', () => {
-    expect(read(principalSteps(principal, 'Syringe'))).toEqual([
+    expect(read(principalSteps(principal, 'Syringe', 'Syringe 5ml'))).toEqual([
       'Monthly contribution: [Principal monthly demand 100 Vial] × [Ratio 1.1 Syringe per 100 Vial] = 1.1 Syringe',
     ]);
   });
@@ -196,7 +196,8 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
             principalUsableConsumption: 50,
             monthlyConsumption: 0.6875,
           },
-          'Syringe'
+          'Syringe',
+          'Syringe 5ml'
         )
       )
     ).toEqual([
@@ -206,15 +207,27 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
   });
 
   // Review of #1832: two items sharing a unit word would read "1 Each per
-  // 100 Each" — the issue's ambiguity again — so the principal side names its
-  // item.
-  it('names the principal item where both sides share a unit word', () => {
+  // 100 Each" — the issue's ambiguity again — so both sides name their item.
+  it('names both items where both sides share a unit word', () => {
     expect(
       ancillaryRatio(
         { ...principal, item: { code: 'BCG', name: 'BCG', unitName: 'Each' } },
-        'Each'
+        'Each',
+        'Safety box'
       )
-    ).toBe('1.1 Each per 100 Each of BCG');
+    ).toBe('1.1 Each of Safety box per 100 Each of BCG');
+  });
+
+  // PR review of #1832: neither item naming a unit left "1.1 units per 100
+  // units of BCG", which didn't say which side was which.
+  it('names both items where neither names a unit', () => {
+    expect(
+      ancillaryRatio(
+        { ...principal, item: { code: 'BCG', name: 'BCG', unitName: null } },
+        null,
+        'Safety box'
+      )
+    ).toBe('1.1 units of Safety box per 100 units of BCG');
   });
 
   // The server contributes nothing for a ratio over 0 principal units or an
@@ -229,7 +242,8 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
       expect(
         principalSteps(
           { ...principal, ...broken, monthlyConsumption: 0 },
-          'Syringe'
+          'Syringe',
+          'Syringe 5ml'
         )
       ).toEqual([
         { name: 'Monthly contribution', terms: [], result: '0 Syringe' },
