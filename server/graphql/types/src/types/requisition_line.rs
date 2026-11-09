@@ -505,7 +505,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q5(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_a(),
-                        months_of_stock_row: Default::default(),
                     },
                 }
             }
@@ -516,7 +515,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q2(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_b(),
-                        months_of_stock_row: Default::default(),
                     },
                 }
             }
@@ -527,7 +525,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q1(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_c(),
-                        months_of_stock_row: Default::default(),
                     },
                 }
             }
@@ -538,7 +535,6 @@ mod test {
                         requisition_line_row: TestData::line_to_supply_q0(),
                         requisition_row: TestData::requisition(),
                         item_row: mock_item_d(),
-                        months_of_stock_row: Default::default(),
                     },
                 }
             }

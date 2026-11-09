@@ -9,27 +9,23 @@ use crate::{
     requisition_row::requisition,
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
-
-use super::{
-    RequisitionLineFilter, RequisitionLineMonthsOfStockRow, RequisitionLineRow,
-    RequisitionLineSort, RequisitionLineSortField,
-    requisition_line_row::{requisition_line, requisition_line_months_of_stock},
+use diesel::{
+    dsl::{IntoBoxed, case_when},
+    prelude::*,
 };
 
-type RequisitionLineJoin = (
-    RequisitionLineRow,
-    ItemRow,
-    RequisitionRow,
-    RequisitionLineMonthsOfStockRow,
-);
+use super::{
+    RequisitionLineFilter, RequisitionLineRow, RequisitionLineSort, RequisitionLineSortField,
+    requisition_line_row::requisition_line,
+};
+
+type RequisitionLineJoin = (RequisitionLineRow, ItemRow, RequisitionRow);
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequisitionLine {
     pub requisition_line_row: RequisitionLineRow,
     pub item_row: ItemRow,
     pub requisition_row: RequisitionRow,
-    pub months_of_stock_row: RequisitionLineMonthsOfStockRow,
 }
 
 pub struct RequisitionLineRepository<'a> {
@@ -97,11 +93,7 @@ impl<'a> RequisitionLineRepository<'a> {
                     apply_sort!(query, sort, item::default_pack_size);
                 }
                 RequisitionLineSortField::MonthsOfStock => {
-                    apply_sort_asc_nulls_last!(
-                        query,
-                        sort,
-                        requisition_line_months_of_stock::months_of_stock
-                    );
+                    apply_sort_asc_nulls_last!(query, sort, months_of_stock());
                 }
             };
         }
@@ -117,13 +109,10 @@ impl<'a> RequisitionLineRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(requisition_line_row, item_row, requisition_row, months_of_stock_row)| {
-                    RequisitionLine {
-                        requisition_line_row,
-                        item_row,
-                        requisition_row,
-                        months_of_stock_row,
-                    }
+                |(requisition_line_row, item_row, requisition_row)| RequisitionLine {
+                    requisition_line_row,
+                    item_row,
+                    requisition_row,
                 },
             )
             .collect())
@@ -135,7 +124,23 @@ fn query() -> _ {
     requisition_line::table
         .inner_join(item::table)
         .inner_join(requisition::table)
-        .inner_join(requisition_line_months_of_stock::table)
+}
+
+// No stock and no consumption counts as 0 months; stock but no consumption is
+// unknown (NULL, so it never matches a filter)
+#[diesel::dsl::auto_type]
+fn months_of_stock() -> _ {
+    let zero: f64 = 0.0;
+    case_when(
+        requisition_line::average_monthly_consumption
+            .eq(zero)
+            .and(requisition_line::available_stock_on_hand.eq(zero)),
+        zero.into_sql::<diesel::sql_types::Double>(),
+    )
+    .when(
+        requisition_line::average_monthly_consumption.ne(zero),
+        requisition_line::available_stock_on_hand / requisition_line::average_monthly_consumption,
+    )
 }
 
 type BoxedRequisitionLineQuery = IntoBoxed<'static, query, DBType>;
@@ -164,12 +169,82 @@ fn create_filtered_query(
         apply_equal_filter!(query, f.r#type, requisition::type_);
         apply_equal_filter!(query, f.status, requisition::status);
         apply_string_filter!(query, f.comment, requisition_line::comment);
-        apply_float_filter!(
-            query,
-            f.months_of_stock,
-            requisition_line_months_of_stock::months_of_stock
-        );
+        apply_float_filter!(query, f.months_of_stock, months_of_stock());
     }
 
     Ok(query)
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        EqualFilter, FloatFilter, Pagination, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRow, RequisitionLineSort, RequisitionLineSortField,
+        mock::{MockData, MockDataInserts, mock_item_a, mock_request_draft_requisition},
+        test_db,
+    };
+
+    #[actix_rt::test]
+    async fn test_requisition_line_months_of_stock() {
+        let line = |id: &str, stock: f64, consumption: f64| RequisitionLineRow {
+            id: id.to_string(),
+            requisition_id: mock_request_draft_requisition().id,
+            item_id: mock_item_a().id,
+            available_stock_on_hand: stock,
+            average_monthly_consumption: consumption,
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_requisition_line_months_of_stock",
+            MockDataInserts::all(),
+            MockData {
+                requisition_lines: vec![
+                    line("no_stock_no_consumption", 0.0, 0.0),
+                    line("two_months", 20.0, 10.0),
+                    line("stock_no_consumption", 5.0, 0.0),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+        let repo = RequisitionLineRepository::new(&connection);
+        let these_lines = || {
+            RequisitionLineFilter::new().id(EqualFilter::equal_any(vec![
+                "no_stock_no_consumption".to_string(),
+                "two_months".to_string(),
+                "stock_no_consumption".to_string(),
+            ]))
+        };
+        let ids = |lines: Vec<crate::RequisitionLine>| -> Vec<String> {
+            lines
+                .into_iter()
+                .map(|l| l.requisition_line_row.id)
+                .collect()
+        };
+
+        // Unknown months of stock (stock, no consumption) never matches a filter
+        let under_one_month = repo
+            .query_by_filter(these_lines().months_of_stock(FloatFilter::below_than(1.0)))
+            .unwrap();
+        assert_eq!(ids(under_one_month), vec!["no_stock_no_consumption"]);
+
+        let sorted = repo
+            .query(
+                Pagination::all(),
+                Some(these_lines()),
+                Some(RequisitionLineSort {
+                    key: RequisitionLineSortField::MonthsOfStock,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+        assert_eq!(
+            ids(sorted),
+            vec![
+                "no_stock_no_consumption",
+                "two_months",
+                "stock_no_consumption"
+            ]
+        );
+    }
 }

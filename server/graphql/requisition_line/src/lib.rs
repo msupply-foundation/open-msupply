@@ -5,8 +5,8 @@ use self::mutations::{
     response_requisition_line,
 };
 use self::requisition_line_queries::{
-    requisition_lines, RequisitionLineFilterInput, RequisitionLineSortInput,
-    RequisitionLinesResponse,
+    RequisitionLineFilterInput, RequisitionLineSortInput, RequisitionLinesResponse,
+    requisition_lines,
 };
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;

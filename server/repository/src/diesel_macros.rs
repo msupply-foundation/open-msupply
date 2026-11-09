@@ -328,29 +328,29 @@ macro_rules! apply_date_filter {
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_float_filter!(query, filter.months_of_stock, requisition_line_months_of_stock::months_of_stock)
+/// apply_float_filter!(query, filter.months_of_stock, months_of_stock())
 /// ```
 ///
 /// ```
 /// if let Some(float_filter) = filter.months_of_stock {
 ///     if let Some(value) = float_filter.equal_to {
-///         query = query.filter(requisition_line_months_of_stock::months_of_stock.eq(value));
+///         query = query.filter(months_of_stock().eq(value));
 ///     }
 ///
 ///     if let Some(value) = float_filter.below_or_equal_to {
-///         query = query.filter(requisition_line_months_of_stock::months_of_stock.le(value));
+///         query = query.filter(months_of_stock().le(value));
 ///     }
 ///
 ///     if let Some(value) = float_filter.above_or_equal_to {
-///         query = query.filter(requisition_line_months_of_stock::months_of_stock.ge(value));
+///         query = query.filter(months_of_stock().ge(value));
 ///     }
 ///
 ///     if let Some(value) = float_filter.below_than {
-///         query = query.filter(requisition_line_months_of_stock::months_of_stock.lt(value));
+///         query = query.filter(months_of_stock().lt(value));
 ///     }
 ///
 ///     if let Some(value) = float_filter.above_than {
-///         query = query.filter(requisition_line_months_of_stock::months_of_stock.gt(value));
+///         query = query.filter(months_of_stock().gt(value));
 ///     }
 /// }
 /// ```

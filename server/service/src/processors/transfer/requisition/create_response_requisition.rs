@@ -333,7 +333,6 @@ fn generate_response_requisition_lines(
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
-        months_of_stock_row: _,
     } in request_lines
     {
         let price_per_unit = {

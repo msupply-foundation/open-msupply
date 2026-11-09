@@ -89,25 +89,6 @@ impl ForecastMethod {
 joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
 
-table! {
-    requisition_line_months_of_stock (requisition_line_id) {
-        requisition_line_id -> Text,
-        months_of_stock -> Nullable<Double>,
-    }
-}
-
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
-#[diesel(table_name = requisition_line_months_of_stock)]
-pub struct RequisitionLineMonthsOfStockRow {
-    pub requisition_line_id: String,
-    pub months_of_stock: Option<f64>,
-}
-
-joinable!(requisition_line -> requisition_line_months_of_stock (id));
-allow_tables_to_appear_in_same_query!(requisition_line, requisition_line_months_of_stock);
-allow_tables_to_appear_in_same_query!(requisition_line_months_of_stock, item);
-allow_tables_to_appear_in_same_query!(requisition_line_months_of_stock, requisition);
-
 #[derive(TS, Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {

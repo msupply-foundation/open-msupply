@@ -1,10 +1,10 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::generic_filters::{
     EqualFilterBigFloatingNumberInput, EqualFilterStringInput, FloatFilterInput, StringFilterInput,
 };
 use graphql_core::pagination::PaginationInput;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::{RequisitionLineConnector, RequisitionLineNode};
 use repository::{
     EqualFilter, FloatFilter, PaginationOption, RequisitionLineFilter, RequisitionLineSort,
@@ -131,15 +131,15 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::{mock_item_a, mock_sent_request_requisition, MockDataInserts},
         PaginationOption, RequisitionLine, RequisitionLineFilter, RequisitionLineRow,
         RequisitionLineSort, RequisitionRow, StorageConnectionManager,
+        mock::{MockDataInserts, mock_item_a, mock_sent_request_requisition},
     };
     use serde_json::json;
     use service::{
+        ListError, ListResult,
         requisition_line::RequisitionLineServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        ListError, ListResult,
     };
 
     use crate::RequisitionLineQueries;
@@ -216,7 +216,6 @@ mod test {
                         id: mock_sent_request_requisition().id.clone(),
                         ..mock_sent_request_requisition()
                     },
-                    months_of_stock_row: Default::default(),
                 }],
                 count: 1,
             })
