@@ -286,16 +286,11 @@ pub(crate) fn validate_translate_integrate<'a>(
     is_initialising: bool,
 ) -> Result<(), RepositoryError> {
     // A site's first sync has no readers to protect (only the initialisation endpoints are up and processors
-    // aren't running), so instead of one outer transaction each `INTEGRATION_COMMIT_SIZE` chunk commits on its
-    // own (#845): no huge transaction on Postgres, no commit per write on SQLite, and a restart keeps what was
-    // committed. Everything else keeps the outer transaction, including auxiliary syncs: they set
-    // `is_initialising` for the initialisation pull rules, but carry a `reference_id` and run on a live site.
-    let commit_in_chunks = is_initialising && reference_id.is_none();
-    let wrap_in_outer_tx = !commit_in_chunks;
-
-    // Isolate each record + changelog write in its own nested transaction so a single failure doesn't roll back
-    // the whole outer transaction or chunk. Not needed for sqlite as it doesn't poison a transaction on failure.
-    let wrap_record_in_tx = cfg!(feature = "postgres");
+    // aren't running), so it runs without the outer transaction and each `INTEGRATION_COMMIT_SIZE` chunk
+    // commits on its own (#845): no huge transaction on Postgres, no commit per write on SQLite, and a restart
+    // keeps what was committed. Everything else keeps the outer transaction, including auxiliary syncs: they
+    // set `is_initialising` for the initialisation pull rules, but carry a `reference_id` and run on a live site.
+    let wrap_in_outer_tx = !(is_initialising && reference_id.is_none());
 
     if wrap_in_outer_tx {
         return connection
@@ -306,8 +301,6 @@ pub(crate) fn validate_translate_integrate<'a>(
                     source_site_id,
                     reference_id,
                     sync_context,
-                    wrap_record_in_tx,
-                    false,
                 )
             })
             .map_err(|e| e.to_inner_error());
@@ -319,10 +312,13 @@ pub(crate) fn validate_translate_integrate<'a>(
         source_site_id,
         reference_id,
         sync_context,
-        wrap_record_in_tx,
-        commit_in_chunks,
     )
 }
+
+/// Isolate each record + changelog write in its own nested transaction (a savepoint) so a single failure
+/// doesn't roll back the whole outer transaction or chunk. Not needed for sqlite, which doesn't poison a
+/// transaction on failure, and where a savepoint per record is slow (open-msupply#3932).
+const WRAP_RECORD_IN_TX: bool = cfg!(feature = "postgres");
 
 fn validate_translate_integrate_inner<'a>(
     connection: &StorageConnection,
@@ -330,8 +326,6 @@ fn validate_translate_integrate_inner<'a>(
     source_site_id: i32,
     reference_id: Option<&str>,
     sync_context: SyncContext,
-    wrap_record_in_tx: bool,
-    commit_in_chunks: bool,
 ) -> Result<(), RepositoryError> {
     // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
@@ -401,7 +395,7 @@ fn validate_translate_integrate_inner<'a>(
             let mut integrate_rows = |rows: &[SyncBufferRow]| -> Result<(), RepositoryError> {
                 for row in rows {
                     let started = datetime_now();
-                    let one_result = if wrap_record_in_tx {
+                    let one_result = if WRAP_RECORD_IN_TX {
                         connection
                             .transaction_sync_etc(
                                 |sub| validate_translate_integrate_one(sub, row, &sync_context),
@@ -443,12 +437,10 @@ fn validate_translate_integrate_inner<'a>(
                 Ok(())
             };
 
-            if !commit_in_chunks {
-                integrate_rows(&rows)?;
-                continue;
-            }
-            // Each row's buffer mark is written in the same chunk transaction as the row, so a crash leaves
-            // the chunk in progress pending again rather than half integrated.
+            // One transaction per `INTEGRATION_COMMIT_SIZE` chunk. Inside the outer transaction this reuses it and
+            // changes nothing (`transaction_sync` doesn't nest). Without it each chunk commits on its own, with
+            // each row's buffer mark in the same chunk, so a crash leaves the chunk in progress pending again
+            // rather than half integrated. Same shape as v5/v6's `process_action`.
             for chunk in rows.chunks(INTEGRATION_COMMIT_SIZE) {
                 connection
                     .transaction_sync(|_| integrate_rows(chunk))
