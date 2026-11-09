@@ -100,27 +100,11 @@
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
-    "description.annual-target-doses-calculation-with-doses-per-person": {
-      "date": "2026-10-29",
-      "ref": "fr-backlog-trial"
-    },
     "description.barcode-target-auto-created": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
     "description.exclude-principal-wastage": {
-      "date": "2026-10-29",
-      "ref": "fr-backlog-trial"
-    },
-    "description.less-principal-wastage": {
-      "date": "2026-10-29",
-      "ref": "fr-backlog-trial"
-    },
-    "description.monthly-units-calculation": {
-      "date": "2026-10-29",
-      "ref": "fr-backlog-trial"
-    },
-    "description.plus-supply-wastage": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
@@ -692,10 +676,6 @@
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
-    "label.monthly-units-calculation": {
-      "date": "2026-10-29",
-      "ref": "fr-backlog-trial"
-    },
     "label.months-of-stock-forecast-demand": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
@@ -933,10 +913,6 @@
       "ref": "fr-backlog-trial"
     },
     "label.take-over-forms": {
-      "date": "2026-10-29",
-      "ref": "fr-backlog-trial"
-    },
-    "label.units-per-month": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     },
@@ -1891,6 +1867,106 @@
     "tooltip.set-from-manufacturer-label": {
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
+    }
+  },
+  "prs": {
+    "label.ancillary-per-principal": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.ancillary-per-principal-items": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.annual-target-doses": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.course-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.demand-excluding-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-own-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.monthly-contribution": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.months-in-a-year": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.principal-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.target-population": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.wastage-percent": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    }
+  },
+  "ps": {
+    "label.ancillary-per-principal": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.ancillary-per-principal-items": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.annual-target-doses": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.course-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.demand-excluding-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-own-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.monthly-contribution": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.months-in-a-year": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.principal-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.target-population": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.wastage-percent": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
     }
   }
 }
