@@ -1868,5 +1868,105 @@
       "date": "2026-10-29",
       "ref": "fr-backlog-trial"
     }
+  },
+  "prs": {
+    "label.ancillary-per-principal": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.ancillary-per-principal-items": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.annual-target-doses": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.course-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.demand-excluding-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-own-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.monthly-contribution": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.months-in-a-year": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.principal-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.target-population": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.wastage-percent": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    }
+  },
+  "ps": {
+    "label.ancillary-per-principal": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.ancillary-per-principal-items": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.annual-target-doses": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.course-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.demand-excluding-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-own-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.loss-factor-wastage": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.monthly-contribution": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.months-in-a-year": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.principal-monthly-demand": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.target-population": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    },
+    "label.wastage-percent": {
+      "date": "2026-11-09",
+      "ref": "pr-2177"
+    }
   }
 }
