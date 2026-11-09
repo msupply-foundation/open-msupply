@@ -7,8 +7,8 @@ use service::usize_to_u32;
 use graphql_core::{
     ContextExt,
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
-        NameByIdLoaderInput, ProgramByIdLoader, StockLineByIdLoader, VVMStatusByIdLoader,
+        ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader, NameByIdLoaderInput,
+        ProgramByIdLoader, StockLineByIdLoader, VVMStatusByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
 };
@@ -202,15 +202,8 @@ impl StocktakeLineNode {
         self.line.line.volume_per_pack
     }
 
-    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
-        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
-
-        let Some(campaign_id) = &self.line.line.campaign_id else {
-            return Ok(None);
-        };
-
-        let result = loader.load_one(campaign_id.clone()).await?;
-        Ok(result.map(CampaignNode::from_domain))
+    pub async fn campaign(&self) -> Option<CampaignNode> {
+        self.line.campaign.clone().map(CampaignNode::from_domain)
     }
 
     pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {

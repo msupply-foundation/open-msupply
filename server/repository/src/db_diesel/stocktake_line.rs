@@ -290,7 +290,8 @@ fn apply_item_filter(
 #[cfg(test)]
 mod test {
     use crate::{
-        EqualFilter, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+        CampaignRow, EqualFilter, Pagination, StocktakeLineFilter, StocktakeLineRepository,
+        StocktakeLineRow, StocktakeLineSort, StocktakeLineSortField, StringFilter,
         mock::{MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_stocktake_a},
         test_db,
     };
@@ -327,6 +328,72 @@ mod test {
         assert_eq!(
             lines.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
             vec![line_with_campaign.id]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_campaign_name_filter_and_sort() {
+        // Lower case, so a case-sensitive sort would put it after "Campaign A"
+        let campaign_b = CampaignRow {
+            id: "campaign_b".to_string(),
+            name: "another campaign".to_string(),
+            ..Default::default()
+        };
+        let line = |id: &str, campaign_id: Option<String>| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            campaign_id,
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_campaign_name_filter_and_sort",
+            MockDataInserts::all(),
+            MockData {
+                campaigns: vec![campaign_b.clone()],
+                stocktake_lines: vec![
+                    line("line_campaign_a", Some(mock_campaign_a().id)),
+                    line("line_campaign_b", Some(campaign_b.id.clone())),
+                    line("line_no_campaign", None),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+        let repo = StocktakeLineRepository::new(&connection);
+
+        let by_name = repo
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                    .campaign_name(StringFilter::like("Campaign A")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(by_name.len(), 1);
+        assert_eq!(by_name[0].line.id, "line_campaign_a");
+        assert_eq!(by_name[0].campaign, Some(mock_campaign_a()));
+
+        let sorted = repo
+            .query(
+                Pagination::all(),
+                Some(
+                    StocktakeLineFilter::new().campaign_id(EqualFilter::equal_any(vec![
+                        mock_campaign_a().id,
+                        campaign_b.id,
+                    ])),
+                ),
+                Some(StocktakeLineSort {
+                    key: StocktakeLineSortField::Campaign,
+                    desc: None,
+                }),
+                None,
+            )
+            .unwrap();
+        assert_eq!(
+            sorted.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
+            vec!["line_campaign_b", "line_campaign_a"]
         );
     }
 }

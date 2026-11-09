@@ -312,37 +312,9 @@ pub struct FloatFilter {
 }
 
 impl FloatFilter {
-    pub fn equal_to(value: f64) -> Self {
-        Self {
-            equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn below_or_equal_to(value: f64) -> Self {
-        Self {
-            below_or_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn above_or_equal_to(value: f64) -> Self {
-        Self {
-            above_or_equal_to: Some(value),
-            ..Default::default()
-        }
-    }
-
     pub fn less_than(value: f64) -> Self {
         Self {
             less_than: Some(value),
-            ..Default::default()
-        }
-    }
-
-    pub fn greater_than(value: f64) -> Self {
-        Self {
-            greater_than: Some(value),
             ..Default::default()
         }
     }

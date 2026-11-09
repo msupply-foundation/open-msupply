@@ -10818,7 +10818,11 @@ export type RequisitionLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
-  /** Filter by months of stock (available_stock_on_hand / average_monthly_consumption) */
+  /**
+   * Filter by months of stock (available_stock_on_hand / average_monthly_consumption).
+   * No stock and no consumption is 0; stock but no consumption has no value and
+   * never matches.
+   */
   monthsOfStock?: InputMaybe<FloatFilterInput>;
   requestedQuantity?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;

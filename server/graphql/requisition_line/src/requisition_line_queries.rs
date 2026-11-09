@@ -20,7 +20,9 @@ pub struct RequisitionLineFilterInput {
     pub item_code_or_name: Option<StringFilterInput>,
     pub requested_quantity: Option<EqualFilterBigFloatingNumberInput>,
     pub comment: Option<StringFilterInput>,
-    /// Filter by months of stock (available_stock_on_hand / average_monthly_consumption)
+    /// Filter by months of stock (available_stock_on_hand / average_monthly_consumption).
+    /// No stock and no consumption is 0; stock but no consumption has no value and
+    /// never matches.
     pub months_of_stock: Option<FloatFilterInput>,
 }
 
@@ -130,7 +132,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        PaginationOption, RequisitionLine, RequisitionLineFilter, RequisitionLineRow,
+        EqualFilter, PaginationOption, RequisitionLine, RequisitionLineFilter, RequisitionLineRow,
         RequisitionLineSort, RequisitionRow, StorageConnectionManager,
         mock::{MockDataInserts, mock_item_a, mock_sent_request_requisition},
     };
@@ -201,7 +203,12 @@ mod test {
             }
         }"#;
 
-        let test_service = TestService(Box::new(|_, _, _, _| {
+        let test_service = TestService(Box::new(|_, _, filter, _| {
+            // The storeId argument must always scope the lines, whatever the filter says
+            assert_eq!(
+                filter.unwrap().store_id,
+                Some(EqualFilter::equal_to("store_id".to_string()))
+            );
             Ok(ListResult {
                 rows: vec![RequisitionLine {
                     requisition_line_row: RequisitionLineRow {
