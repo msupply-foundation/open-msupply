@@ -11,9 +11,9 @@ impl MigrationFragment for Migrate {
         "seed_sync_request_name_oms_fields"
     }
 
-    /// Re-pull name properties on sites that have done a v7 pull. Their initialisation
-    /// applied name_oms_fields before name, so those updates found no row. Central,
-    /// v5/v6 sites and fresh installs don't need it.
+    /// Re-pull name properties on sites that have synced over v7. Sites that initialised
+    /// on v7 lost them; sites that moved from v6 pull them again, harmlessly. Central,
+    /// v5/v6 sites and fresh installs are skipped.
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         if !v7_pull_has_started(connection)? {
             return Ok(());

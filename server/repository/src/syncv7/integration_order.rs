@@ -180,7 +180,7 @@ mod tests {
         }
     }
 
-    /// Validates `tables_in_order` against three rules:
+    /// Validates `tables_in_order` against these rules:
     /// 1. No duplicates within `tables_in_order`.
     /// 2. Every `all_tables` entry is in `tables_in_order` or `skipped`.
     /// 3. `tables_in_order` respects every FK constraint in the `public`
