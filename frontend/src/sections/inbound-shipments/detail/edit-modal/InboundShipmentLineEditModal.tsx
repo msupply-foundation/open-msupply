@@ -1565,6 +1565,29 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               />
             ),
           } satisfies Column<DraftBatch, never, GroupKey>,
+          // Doses received (computed) — units received × doses per unit, so an
+          // EPI receiver reads the doses arriving without doing the sum (H5,
+          // #2071). A read-only value like Difference: derived, never typed.
+          {
+            c: { id: 'dosesReceived' },
+            header: () => t('label.doses-received'),
+            cardGroup: 'batch',
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
+            // Read from the row and the item getter, not info.getValue(), so
+            // the figure follows the draft as packs / pack size are typed
+            // (see Units received).
+            cell: info => (
+              <span class={styles.statValue}>
+                <Num
+                  value={displayNumber(
+                    info.row.original.numberOfPacks *
+                      info.row.original.packSize *
+                      (item()?.doses ?? 0)
+                  )}
+                />
+              </span>
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
     // VVM status — gated by the manage-VVM preference AND a vaccine
