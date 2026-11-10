@@ -23,6 +23,7 @@ import {
   getFlagCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
+import { flashOnArrival } from '../../../ui/utils/createArrivalFlash';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PauseIcon, PlusCircleIcon } from '../../../ui/icons';
@@ -510,6 +511,8 @@ const StockList: Component = () => {
         onClose={() => setCreateOpen(false)}
         onCreated={id => {
           setCreateOpen(false);
+          // The new line's screen confirms the create (OMS-REG-SMV-02.48).
+          flashOnArrival(id, t('messages.stock-line-added'));
           openLine(id);
         }}
       />

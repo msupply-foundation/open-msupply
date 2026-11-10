@@ -19,6 +19,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createArrivalFlash } from '../../../ui/utils/createArrivalFlash';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { FormColumns } from '../../../ui/layout/Form/FormColumns';
@@ -169,6 +171,11 @@ const StockLineDetailView: Component = () => {
     }
   );
   const line = (): Line | undefined => data.latest;
+  // "Stockline added", when the new-stock flow opened this line
+  // (OMS-REG-SMV-02.48): shown once the line has loaded, in the footer. Read
+  // through `gated`: this effect sits above the screen's Suspense, where a
+  // first pending `.latest` would suspend the whole section.
+  const added = createArrivalFlash(() => gated(data)?.id);
 
   // Seed the editable draft from a line: sets the draft and records the seeded
   // id. Called on load / line-id change (the effect below) and after a save
@@ -440,6 +447,11 @@ const StockLineDetailView: Component = () => {
               contentFooter={
                 <Show when={activeTab() === 'details'}>
                   <ContentFooter>
+                    <ContentFooterMessage
+                      message={added()}
+                      recordId={l().id}
+                      testId="create-success"
+                    />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"

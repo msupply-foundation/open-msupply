@@ -5,7 +5,8 @@ import styles from './ContentFooterMessage.module.css';
 export interface ContentFooterMessageProps {
   /**
    * A success confirmation to show — the status the record just reached, in
-   * its crumb's own word ("Received", "Finalised"; issue #1127). The footer
+   * its crumb's own word ("Received", "Finalised"; issue #1127), or what a
+   * create just made ("Patient created"; issue #1555). The footer
    * flashes it with createFlash, so it clears itself; undefined shows nothing.
    */
   message?: string;
@@ -16,6 +17,11 @@ export interface ContentFooterMessageProps {
    * at once, with no exit.
    */
   recordId?: string;
+  /**
+   * The chip's `data-testid` (e2e/TESTIDS.md): `status-success` for a status
+   * change, the default; `create-success` for a create (issue #1555).
+   */
+  testId?: string;
 }
 
 /*
@@ -110,7 +116,7 @@ export const ContentFooterMessage = (props: ContentFooterMessageProps) => {
               compact
               truncate
               announce={false}
-              testId="status-success"
+              testId={props.testId ?? 'status-success'}
             >
               {text}
             </Alert>

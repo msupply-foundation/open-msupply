@@ -23,6 +23,7 @@ import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { remToPx } from '../../../ui/utils/rem';
+import { flashOnArrival } from '../../../ui/utils/createArrivalFlash';
 import { ProgressList } from '../../../ui/sync/ProgressList';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { HStack } from '../../../ui/layout/Stack/HStack';
@@ -360,7 +361,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   };
 
   // Hand the new patient back to the caller and close
-  // (OMS-REG-DIS-01.4/.7/.32), or open its detail.
+  // (OMS-REG-DIS-01.4/.7/.32), or open its detail, which confirms the create
+  // in its footer (OMS-REG-DIS-01.54). The caller's surface confirms nothing:
+  // the patient it now holds is the result.
   const finish = (id: string, firstName: string, lastName: string) => {
     if (props.onCreated) {
       const name = [lastName, firstName].filter(Boolean).join(', ');
@@ -369,7 +372,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       return;
     }
     props.onClose();
-    navigate(`/${props.storeId}/dispensary/patients/${id}`);
+    flashOnArrival(id, t('messages.patient-created'));
+    navigate(patientHref(id));
   };
 
   // The document path's create: the editor validates against the installed

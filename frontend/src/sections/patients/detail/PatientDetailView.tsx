@@ -16,6 +16,8 @@ import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createArrivalFlash } from '../../../ui/utils/createArrivalFlash';
 import {
   Tabs,
   TabList,
@@ -133,6 +135,11 @@ const PatientDetailView: Component = () => {
   // global error modal.
   const { patient: data, refetch } = patientDetails;
   const node = () => data.latest ?? undefined;
+  // "Patient created", when the create flow opened this patient
+  // (OMS-REG-DIS-01.54): shown once the patient has loaded, in the footer.
+  // Read through `gated`: this effect sits above the screen's Suspense, where
+  // a first pending `.latest` would suspend the whole section.
+  const created = createArrivalFlash(() => gated(data)?.id);
   const editor = patientDetails.editor;
   const details = patientDetails.active;
 
@@ -526,6 +533,11 @@ const PatientDetailView: Component = () => {
               contentFooter={
                 <Show when={activeTab() === 'details'}>
                   <ContentFooter>
+                    <ContentFooterMessage
+                      message={created()}
+                      recordId={n().id}
+                      testId="create-success"
+                    />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"

@@ -9,6 +9,8 @@ import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import { Button } from '@/ui/elements/buttons/Button';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
@@ -154,8 +156,22 @@ const LocationsList: Component = () => {
   };
 
   // A save landed in the modal (create or edit): re-query so the list shows it
-  // (kdd/state-management — refresh by direct call).
-  const onSaved = () => void refetch();
+  // (kdd/state-management — refresh by direct call). A create is confirmed in
+  // the footer, on Save and on Save & next alike — the dialog that made it is
+  // gone or already blank for the next one (OMS-REG-INV-01.64).
+  const added = createFlash<string>();
+  const onSaved = (outcome: 'created' | 'updated') => {
+    void refetch();
+    if (outcome === 'created') added.show(t('messages.location-added'));
+  };
+  // The footer is the bulk-action bar while rows are selected. It also shows
+  // while a create is open and while its confirmation is up: the message slot
+  // is a polite live region, which a screen reader only follows if it is
+  // already mounted when the chip lands.
+  const footerShown = () =>
+    selectedIds().length > 0 ||
+    editor()?.mode === 'create' ||
+    added.value() !== undefined;
 
   // Row click opens the edit modal — locations has no detail screen
   // (ui-surface S1 § layout).
@@ -251,35 +267,46 @@ const LocationsList: Component = () => {
         </Header>
       }
       contentFooter={
-        // The bulk-action bar, only on an active selection: Delete is the one
-        // bulk action (ui-surface S1 § layout), plus clear-selection.
-        <Show when={selectedIds().length > 0}>
-          <ContentFooter testId="actions-footer">
-            <strong data-testid="selected-rows-count">
-              {selectedIds().length} {t('label.selected')}
-            </strong>
-            {/* Delete (confirm + per-location outcomes + in-use report). Two
-                separate callbacks: the action re-queries mid-flow so deleted
-                rows disappear, but clears the selection — which gates this
-                footer, and with it the action's own dialog — only once the
-                interaction ends (issue #374). */}
-            <DeleteLocationsAction
-              storeId={params.storeId}
-              selectedRows={() =>
-                rows().filter(row => selectedIds().includes(row.id))
-              }
-              refetchList={() => void refetch()}
-              clearSelection={() => setSelectedIds([])}
+        // The bulk-action bar on an active selection: Delete is the one bulk
+        // action (ui-surface S1 § layout), plus clear-selection. Otherwise
+        // the bar holds only the create confirmation (footerShown above).
+        <Show when={footerShown()}>
+          <ContentFooter
+            testId={selectedIds().length > 0 ? 'actions-footer' : undefined}
+          >
+            <Show when={selectedIds().length > 0}>
+              <strong data-testid="selected-rows-count">
+                {selectedIds().length} {t('label.selected')}
+              </strong>
+              {/* Delete (confirm + per-location outcomes + in-use report). Two
+                  separate callbacks: the action re-queries mid-flow so deleted
+                  rows disappear, but clears the selection — which gates this
+                  part of the footer, and with it the action's own dialog —
+                  only once the interaction ends (issue #374). */}
+              <DeleteLocationsAction
+                storeId={params.storeId}
+                selectedRows={() =>
+                  rows().filter(row => selectedIds().includes(row.id))
+                }
+                refetchList={() => void refetch()}
+                clearSelection={() => setSelectedIds([])}
+              />
+            </Show>
+            <ContentFooterMessage
+              message={added.value()}
+              testId="create-success"
             />
-            <ContentFooterActions>
-              <Button
-                variant="secondary"
-                icon={<CloseIcon />}
-                onClick={() => setSelectedIds([])}
-              >
-                {t('label.clear-selection')}
-              </Button>
-            </ContentFooterActions>
+            <Show when={selectedIds().length > 0}>
+              <ContentFooterActions>
+                <Button
+                  variant="secondary"
+                  icon={<CloseIcon />}
+                  onClick={() => setSelectedIds([])}
+                >
+                  {t('label.clear-selection')}
+                </Button>
+              </ContentFooterActions>
+            </Show>
           </ContentFooter>
         </Show>
       }
