@@ -6,18 +6,12 @@
  * being tested.
  *
  * Native `popover`, so the top layer does the stacking with no z-index — and,
- * because the top layer orders by when each element was shown,
- * it sits above an already-open <dialog> without either knowing about the
- * other (the reason Dialog and Popover both take this route). Stacking isn't
- * the whole story, though: an open modal makes everything outside it inert,
- * so ManualScanInput.tsx mounts the panel inside the topmost modal (#2138).
+ * because the top layer orders by when each element was shown, it sits above
+ * an already-open <dialog> without either knowing about the other (the reason
+ * Dialog and Popover both take this route). Stacking isn't the whole story,
+ * though: an open modal makes everything outside it inert, so
+ * ManualScanInput.tsx mounts the panel inside the topmost modal (#2138).
  */
-
-/* The Portal's wrapper div. Inside a dialog it would otherwise be a flex item,
-   adding a gap at the dialog's foot; the panel is in the top layer anyway. */
-.host {
-  display: contents;
-}
 
 .panel {
   position: fixed;
@@ -27,24 +21,29 @@
   inset-block-start: var(--space-4);
   inset-inline-start: var(--space-4);
   margin: 0;
-  width: 18rem;
   max-width: calc(100vw - 2 * var(--space-4));
-  padding: var(--space-4);
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
+  /* No UA frame: the open panel draws its own below, and folded the chip is
+     a button with its own surface. The shadow stays in both, so the chip
+     reads as floating over a line editor rather than part of it. */
+  padding: 0;
+  border: 0;
+  background: none;
   box-shadow: var(--shadow-3);
   overflow: visible;
 }
 
+.panel:not([data-collapsed]) {
+  width: 18rem;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
 /* Not in use: only the chip that expands it again, so it covers as little of
-   a line editor as it can. The chip is a button with its own surface. */
+   a line editor as it can. The chip's corners, so the shadow follows them. */
 .panel[data-collapsed] {
-  width: auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
+  border-radius: var(--radius-sm);
 }
 
 .heading {

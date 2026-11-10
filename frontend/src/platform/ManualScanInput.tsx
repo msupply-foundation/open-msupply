@@ -167,12 +167,11 @@ export const ManualScanInput = () => {
   };
 
   // Keyed, so a new host mounts a new panel; the typed value lives above it
-  // and carries over. The Portal's own wrapper div gets no box, or it would
-  // become a flex item (and another gap) at the foot of the dialog.
+  // and carries over.
   return (
     <Show when={host()} keyed>
       {mount => (
-        <Portal mount={mount} ref={el => el.classList.add(styles.host)}>
+        <Portal mount={mount}>
           <div
             ref={setPanel}
             popover="manual"
