@@ -12,7 +12,7 @@ use service::{
         ActualConsumptionOverlap, ConsumptionEstimate, ConsumptionEstimateInput, LineError,
         LineProblem, ReplaceConsumptionEstimates, ReplaceConsumptionEstimatesError,
         clear_consumption_estimates, get_consumption_estimates, get_template_items,
-        replace_consumption_estimates,
+        replace_consumption_estimates, store_site_syncs_over_v5_v6,
     },
     store_preference::get_store_preferences,
 };
@@ -89,6 +89,16 @@ impl ConsumptionEstimatesNode {
                 name: item.name,
             })
             .collect())
+    }
+
+    /// The store is on another site that has been set up and syncs over v5/v6,
+    /// which estimates (synced over v7 only) don't reach
+    pub async fn site_syncs_over_v5_v6(&self, ctx: &Context<'_>) -> Result<bool> {
+        let connection = ctx.service_provider().connection()?;
+        Ok(store_site_syncs_over_v5_v6(
+            &connection,
+            &self.for_store_id,
+        )?)
     }
 }
 

@@ -1608,6 +1608,11 @@ type ConsumptionEstimatesNode {
 	upload template. Only resolved when asked for, as there can be thousands.
 	"""
 	templateItems: [ConsumptionEstimateTemplateItemNode!]!
+	"""
+	The store is on another site that has been set up and syncs over v5/v6,
+	which estimates (synced over v7 only) don't reach
+	"""
+	siteSyncsOverV5V6: Boolean!
 }
 
 type ConsumptionHistoryConnector {

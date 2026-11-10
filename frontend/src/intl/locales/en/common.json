@@ -2829,6 +2829,7 @@
   "messages.confirm-zero-shipment-lines_other": "This will set the quantity of {{count}} lines to 0",
   "messages.connected-to-printer": "Connected successfully to printer!",
   "messages.consumption-estimate-overlaps-actual": "{{month}} already has {{quantity}} units of recorded consumption; the estimate is added to it.",
+  "messages.consumption-estimates-v5-v6-site": "This store's site syncs over v5/v6. Estimates are only sent over v7 sync, so they won't reach the site until it moves to v7.",
   "messages.consumption-estimates-description": "Estimated consumption, in units, for a store that doesn't have its own consumption history yet. AMC adds it to the store's recorded consumption, and stops counting it once it's older than the AMC look-back period. Uploading a file replaces the estimates of the items in it; other items keep theirs.",
   "messages.consumption-estimates-removed": "Every month is blank, so this item's estimates will be removed.",
   "messages.consumption-estimates-review-warning": "Check the highlighted rows before replacing: some months already have recorded consumption, which the estimates are added to, or some items will lose their estimates.",

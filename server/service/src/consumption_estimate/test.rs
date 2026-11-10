@@ -1,7 +1,7 @@
 use chrono::{Duration, Months, NaiveDate};
 use repository::{
     ChangelogRepository, ConsumptionFilter, ConsumptionRepository, EqualFilter, InvoiceLineRow,
-    InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
+    InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow, KeyType, SiteRow,
     mock::{
         MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_store_a,
         mock_user_account_a,
@@ -508,4 +508,49 @@ async fn a_code_shared_by_items_matches_only_the_active_one() {
     );
     assert_eq!(found.get("BOTH"), None);
     assert_eq!(found.get("42").map(String::as_str), Some("zeros_active"));
+}
+
+#[actix_rt::test]
+async fn a_store_on_a_set_up_v5_v6_site_is_flagged() {
+    let (_, connection, _, _) = setup_all(
+        "a_store_on_a_set_up_v5_v6_site_is_flagged",
+        MockDataInserts::none().stores(),
+    )
+    .await;
+    let store_id = mock_store_a().id;
+    let site_repo = SiteRowRepository::new(&connection);
+    let site = |sync_version, hardware_id: Option<&str>| SiteRow {
+        id: mock_store_a().site_id,
+        code: "site".to_string(),
+        name: "site".to_string(),
+        sync_version,
+        hardware_id: hardware_id.map(str::to_string),
+        ..Default::default()
+    };
+
+    // No site record yet
+    assert!(!store_site_syncs_over_v5_v6(&connection, &store_id).unwrap());
+
+    // Not set up yet: it may well start on v7
+    site_repo.upsert(&site(SyncVersion::V5V6, None)).unwrap();
+    assert!(!store_site_syncs_over_v5_v6(&connection, &store_id).unwrap());
+
+    site_repo
+        .upsert(&site(SyncVersion::V5V6, Some("hardware")))
+        .unwrap();
+    assert!(store_site_syncs_over_v5_v6(&connection, &store_id).unwrap());
+
+    // The store is on this server's own site, so it has its estimates already
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+        .unwrap();
+    assert!(!store_site_syncs_over_v5_v6(&connection, &store_id).unwrap());
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+        .unwrap();
+
+    site_repo
+        .upsert(&site(SyncVersion::V7, Some("hardware")))
+        .unwrap();
+    assert!(!store_site_syncs_over_v5_v6(&connection, &store_id).unwrap());
 }

@@ -320,6 +320,14 @@ export const ConsumptionEstimatesPanel: Component<{
     <Stack data-testid="consumption-estimates">
       <Text>{t('messages.consumption-estimates-description')}</Text>
 
+      {/* Estimates sync over v7 only: say so rather than let them silently
+          never arrive */}
+      <Show when={current()?.siteSyncsOverV5V6}>
+        <Alert severity="warning" testId="consumption-estimates-v5-v6-site">
+          {t('messages.consumption-estimates-v5-v6-site')}
+        </Alert>
+      </Show>
+
       <Show when={uploadError()}>
         {message => (
           <Alert severity="error" testId="consumption-estimates-upload-error">

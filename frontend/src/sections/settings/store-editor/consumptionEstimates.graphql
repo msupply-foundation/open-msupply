@@ -5,6 +5,7 @@
 query consumptionEstimates($storeId: String!, $forStoreId: String!) {
   consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {
     amcLookBackMonths
+    siteSyncsOverV5V6
     estimates {
       itemId
       item {

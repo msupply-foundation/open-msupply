@@ -1991,6 +1991,11 @@ export type ConsumptionEstimatesNode = {
   amcLookBackMonths: Scalars['Float']['output'];
   estimates: Array<ConsumptionEstimateNode>;
   /**
+   * The store is on another site that has been set up and syncs over v5/v6,
+   * which estimates (synced over v7 only) don't reach
+   */
+  siteSyncsOverV5V6: Scalars['Boolean']['output'];
+  /**
    * The active stock items visible in the store, by name: the rows of a blank
    * upload template. Only resolved when asked for, as there can be thousands.
    */

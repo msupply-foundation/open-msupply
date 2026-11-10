@@ -20,8 +20,9 @@ use chrono::{Datelike, Duration, Months, NaiveDate};
 use repository::{
     ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateType,
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, ItemFilter, ItemRepository,
-    ItemRow, ItemSort, ItemSortField, ItemType, Pagination, RepositoryError, StorageConnection,
-    StoreRowRepository, StringFilter,
+    ItemRow, ItemSort, ItemSortField, ItemType, KeyValueStoreRepository, Pagination,
+    RepositoryError, SiteRowRepository, StorageConnection, StoreRowRepository, StringFilter,
+    SyncVersion,
 };
 use util::{date_now, uuid::uuid};
 
@@ -73,6 +74,26 @@ pub fn get_consumption_estimates(
             quantity: round_quantity(quantity),
         })
         .collect())
+}
+
+/// Whether the store is on another site that has been set up and syncs over
+/// v5/v6. Estimates sync over v7 only, so they don't reach such a site until it
+/// moves to v7. A site that hasn't been set up yet isn't flagged: it may well
+/// start on v7, and its record says v5/v6 until it first syncs either way.
+pub fn store_site_syncs_over_v5_v6(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<bool, RepositoryError> {
+    let Some(store) = StoreRowRepository::new(connection).find_one_by_id(store_id)? else {
+        return Ok(false);
+    };
+    if KeyValueStoreRepository::new(connection).get_current_site_id()? == Some(store.site_id) {
+        return Ok(false);
+    }
+    let Some(site) = SiteRowRepository::new(connection).find_one_by_id(store.site_id)? else {
+        return Ok(false);
+    };
+    Ok(site.sync_version == SyncVersion::V5V6 && site.hardware_id.is_some())
 }
 
 /// The active stock items visible in a store, by name: the rows of a blank upload

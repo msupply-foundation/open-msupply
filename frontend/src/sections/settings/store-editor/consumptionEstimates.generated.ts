@@ -10,6 +10,7 @@ export type ConsumptionEstimatesVariables = {
 export type ConsumptionEstimatesResult = {
   consumptionEstimates: {
   amcLookBackMonths: number;
+  siteSyncsOverV5V6: boolean;
   estimates: Array<{
   itemId: string;
   item: {
@@ -24,7 +25,7 @@ export type ConsumptionEstimatesResult = {
 };
 
 export const ConsumptionEstimates = {
-  query: "query consumptionEstimates($storeId: String!, $forStoreId: String!) {\n  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n    amcLookBackMonths\n    estimates {\n      itemId\n      item {\n        id\n        code\n        name\n      }\n      month\n      quantity\n    }\n  }\n}",
+  query: "query consumptionEstimates($storeId: String!, $forStoreId: String!) {\n  consumptionEstimates(storeId: $storeId, forStoreId: $forStoreId) {\n    amcLookBackMonths\n    siteSyncsOverV5V6\n    estimates {\n      itemId\n      item {\n        id\n        code\n        name\n      }\n      month\n      quantity\n    }\n  }\n}",
 } as TypedDocument<ConsumptionEstimatesResult, ConsumptionEstimatesVariables>;
 
 export type ConsumptionEstimateTemplateItemsVariables = {
