@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod drop_changelog_dedup_index;
 mod requeue_failed_v7_deletes;
+mod seed_sync_request_name_oms_fields;
 
 pub(crate) struct V3_04_01;
 
@@ -19,6 +20,7 @@ impl Migration for V3_04_01 {
         vec![
             Box::new(requeue_failed_v7_deletes::Migrate),
             Box::new(drop_changelog_dedup_index::Migrate),
+            Box::new(seed_sync_request_name_oms_fields::Migrate),
         ]
     }
 }
