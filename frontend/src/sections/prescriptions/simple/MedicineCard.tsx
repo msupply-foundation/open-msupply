@@ -44,9 +44,13 @@ export const MedicineCardView = (props: {
           <Match when={state() === 'low'}>
             <span class={styles.low} data-testid="common-medicine-stock">
               <AlertTriangleIcon />
+              {/* The unit as the store set it up, singular or plural: units
+                  are never pluralised by the app (#666). An item with no
+                  unit leaves no gap. */}
               {t('label.low-stock-left', {
                 quantity: roundedText(props.card.available),
-              })}
+                unit: unit(),
+              }).replace(/\s+/g, ' ')}
             </span>
           </Match>
         </Switch>
