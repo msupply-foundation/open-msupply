@@ -16,6 +16,8 @@ query OutboundShipments(
       nodes {
         id
         otherPartyName
+        invoiceNumber
+        shippedDatetime
         lines {
           nodes {
             id

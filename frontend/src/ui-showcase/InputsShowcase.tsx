@@ -15,11 +15,11 @@ import { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
-import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../intl/calendarDate';
 import { TimeField } from '../ui/elements/inputs/TimeField';
 import {
   DateRangeField,
-  type IsoDateRange,
+  type CalendarDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { SaveButton } from '../ui/elements/buttons/StandardButtons';
@@ -180,7 +180,7 @@ export const InputsShowcase = () => {
   const [appointment, setAppointment] = createSignal<string | null>(
     '2026-07-17T02:30:00.000Z'
   );
-  const [period, setPeriod] = createSignal<IsoDateRange>({
+  const [period, setPeriod] = createSignal<CalendarDateRange>({
     start: '2026-07-01',
     end: '2026-07-31',
   });
@@ -721,7 +721,7 @@ export const InputsShowcase = () => {
             <Field caption="Bounded — future unselectable">
               <DateField
                 label="Manufacture date"
-                max={localTodayIso()}
+                max={todayCalendarDate()}
                 value={manufacture()}
                 onChange={setManufacture}
                 helperText={`max = today; later dates greyed out. Stored: ${

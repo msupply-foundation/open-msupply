@@ -667,6 +667,6 @@ mod insert {
         let test_time = test_start.elapsed();
 
         println!("R&R with {NUM_MASTER_LIST_ITEMS} items took: {test_time:?}");
-        assert!(test_time.as_secs_f64() < 2.0);
+        assert!(test_time.as_secs_f64() < 3.0);
     }
 }

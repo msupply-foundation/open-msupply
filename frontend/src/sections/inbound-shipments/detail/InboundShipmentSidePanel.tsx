@@ -3,6 +3,7 @@ import { t, localisedDate } from '../../../intl';
 import { formatCurrency } from '../../../intl/currency';
 import { formatNumber } from '../../../intl/formatNumber';
 import { graphqlFetch } from '../../../api/graphql';
+import { createDebouncedField } from '@/domain/debouncedEdit';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -42,6 +43,11 @@ export interface InboundShipmentSidePanelProps {
   /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   /**
+   * The delete's own lock — looser than `disabled` by Shipped, where the
+   * server still deletes (rules § deletion).
+   */
+  deleteDisabled: boolean;
+  /**
    * Whether the shipment holds any stock-bearing lines — only those carry
    * stock, so this and the status together decide the delete confirmation's
    * stock warning.
@@ -57,9 +63,10 @@ export interface InboundShipmentSidePanelProps {
   /** Store gates for the donor section + foreign-currency change. */
   donorTracking: boolean;
   foreignCurrencyAllowed: boolean;
+  /** Resolves once the saved shipment is spliced back. */
   onSaveField: (
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
-  ) => void;
+  ) => Promise<unknown>;
   onSaved: (node: InboundInfoFragment) => void;
   onDeleted: () => void;
 }
@@ -104,6 +111,13 @@ export const InboundShipmentSidePanel: Component<
   };
 
   const pricing = () => props.node.pricing;
+  // The stock tax rate saves as it is typed; it shows its own draft while it
+  // is being edited and the shipment's rate otherwise, so an answer to an
+  // earlier keystroke can't land over a later one (createDebouncedField).
+  const stockTax = createDebouncedField({
+    value: () => props.node.taxPercentage ?? 0,
+    save: percentage => props.onSaveField({ tax: { percentage } }),
+  });
   const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
 
   return (
@@ -152,7 +166,7 @@ export const InboundShipmentSidePanel: Component<
         <FieldRow label={t('label.colour')}>
           <ColourTagPicker
             colour={props.node.colour ?? null}
-            onSelect={colour => props.onSaveField({ colour })}
+            onSelect={colour => void props.onSaveField({ colour })}
           />
         </FieldRow>
         <FieldRow label={t('label.comment')}>
@@ -235,7 +249,7 @@ export const InboundShipmentSidePanel: Component<
             label={t('label.tax')}
             hideLabel
             size="small"
-            value={props.node.taxPercentage ?? 0}
+            value={stockTax.value()}
             min={0}
             emptyValue={0}
             max={100}
@@ -245,9 +259,9 @@ export const InboundShipmentSidePanel: Component<
             helperText={formatCurrency(
               pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
             )}
-            onChange={value =>
-              props.onSaveField({ tax: { percentage: value ?? 0 } })
-            }
+            onChange={value => stockTax.set(value ?? 0)}
+            onFocus={stockTax.onFocus}
+            onBlur={stockTax.onBlur}
           />
         </FieldRow>
         <FieldRow label={t('label.total')}>
@@ -344,12 +358,12 @@ export const InboundShipmentSidePanel: Component<
           heading + padding as the info sections above. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete — offered at every status, matching the list's bulk
-              delete: it is submitted and the server's own reason surfaced,
-              never pre-screened here (issue #1134). The confirmation warns
-              that the shipment's stock goes with it ONLY where the delete
-              would actually take stock: Received (Verified is refused
-              outright), and holding at least one line. */}
+          {/* Delete — disabled where the server refuses it outright
+              (Picked, Verified, a write block; issue #628); elsewhere it is
+              submitted and the server's own reason surfaced (issue #1134).
+              The confirmation warns that the shipment's stock goes with it
+              ONLY where the delete would actually take stock: Received, and
+              holding at least one line. */}
           <DeleteInboundShipmentAction
             storeId={props.storeId}
             invoiceId={props.node.id}
@@ -359,6 +373,7 @@ export const InboundShipmentSidePanel: Component<
             removesStock={() =>
               deleteRemovesStock(props.node.status) && props.hasLines
             }
+            disabled={props.deleteDisabled}
             onDeleted={props.onDeleted}
           />
           <DuplicateInboundShipmentAction

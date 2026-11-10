@@ -1,6 +1,6 @@
 # Dashboard — UI migration report
 
-Scope: the whole `dashboard` vertical — one screen (`DashboardPage.tsx`) plus the four create-flow modals it borrows from other verticals. Audited against the eleven dimensions in [`src/ui/docs/MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md), the registry ([`spec/ui-standards/components.md` § Dashboard](../../../spec/ui-standards/components.md)), the `#/showcase/statistics` page, the stocktakes reference, and the sibling verticals that fill the same roles (reports, items, outbound-shipments).
+Scope: the whole `dashboard` vertical — one screen (`DashboardPage.tsx`) plus the four create-flow modals it borrows from other verticals. Audited against the eleven dimensions in [`src/ui/docs/MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md), the registry ([`spec/ui-standards/components.md` § Dashboard](../../../../spec/ui-standards/components.md)), the `#/showcase/statistics` page, the stocktakes reference, and the sibling verticals that fill the same roles (reports, items, outbound-shipments).
 
 **Status: migrated.** F1, F3, F4 and F7 fixed; F5 resolved as a spec edit; F2 filed as a library issue; F6 awaiting a ruling. `pnpm check` and `pnpm test` green (886 tests), `check-reactivity` clean on the diff. The visual pass is the operator's.
 
@@ -39,7 +39,7 @@ Line numbers in the findings below refer to the **pre-fix** file.
 
 [`src/ui/elements/dashboard/Statistic.tsx:56-60`](../../ui/elements/dashboard/Statistic.tsx#L56-L60) renders `info` as `<span title={props.info} aria-hidden="true"><InfoIcon /></span>`.
 
-The library already owns this role: [`InfoTooltip`](../../ui/elements/feedback/InfoTooltip.tsx) is a `Popover`-backed tooltip that opens on hover, focus **and** tap, with a required accessible name — and its own doc comment names this exact consumer: _"the '?'/info affordance the current app hangs off field labels **and dashboard stats**"_. Eight sibling verticals use it (patients, settings, inbound-shipments, customer-returns, outbound-shipments ×2, internal-orders). As written, the _products at risk_ explanation the spec quotes verbatim ([ui-surface § inventory-management](../../../spec/dashboard/ui-surface.md)) is unreachable by keyboard and invisible to assistive tech — `aria-hidden` hides the element carrying the `title`, and the row's composed `aria-label` omits it.
+The library already owns this role: [`InfoTooltip`](../../ui/elements/feedback/InfoTooltip.tsx) is a `Popover`-backed tooltip that opens on hover, focus **and** tap, with a required accessible name — and its own doc comment names this exact consumer: _"the '?'/info affordance the current app hangs off field labels **and dashboard stats**"_. Eight sibling verticals use it (patients, settings, inbound-shipments, customer-returns, outbound-shipments ×2, internal-orders). As written, the _products at risk_ explanation the spec quotes verbatim ([ui-surface § inventory-management](../../../../spec/dashboard/ui-surface.md)) is unreachable by keyboard and invisible to assistive tech — `aria-hidden` hides the element carrying the `title`, and the row's composed `aria-label` omits it.
 
 The vertical does the right thing (`info={t('messages.products-at-risk-of-stock-out-info', …)}`, [DashboardPage.tsx:578](DashboardPage.tsx#L578)); the defect is inside a shared component, so per the migration guardrail it is a **library task, not a migration fix**. It is also not a one-liner: the info marker currently sits _inside_ the row's `<A>`, and an `InfoTooltip` is a `<button>` — a button inside an anchor is invalid, so the fix has to move the marker out of the link. That is exactly why it wants its own signed-off change.
 
@@ -62,7 +62,7 @@ Every generated document is `as TypedDocument<…Result, …Variables>` and ever
 
 ### F4 — An `errored` resource shows "Loading…" forever (dimension 11 / S2) · REAL · **FIXED**
 
-[DashboardPage.tsx:132-135](DashboardPage.tsx#L132-L135) — `value()` returns `undefined` for every state that isn't `ready`/`refreshing`, and `countPanelState(undefined)` maps to `loading` ([panelState.ts:19](panelState.ts#L19)). That folds `state === 'errored'` into the loading state, so a panel whose fetcher threw would sit on "Loading…" indefinitely — against [ui-surface § S2](../../../spec/dashboard/ui-surface.md#s2--states): _"a panel whose count query fails shows an error state in place of its values"_.
+[DashboardPage.tsx:132-135](DashboardPage.tsx#L132-L135) — `value()` returns `undefined` for every state that isn't `ready`/`refreshing`, and `countPanelState(undefined)` maps to `loading` ([panelState.ts:19](panelState.ts#L19)). That folds `state === 'errored'` into the loading state, so a panel whose fetcher threw would sit on "Loading…" indefinitely — against [ui-surface § S2](../../../../spec/dashboard/ui-surface.md#s2--states): _"a panel whose count query fails shows an error state in place of its values"_.
 
 Reachability is low today: `graphqlFetch` never throws by contract, so it takes an unexpected throw (e.g. `JSON.parse` on a malformed source string) to hit. But the mapping is wrong in the direction that hides failure, and the fix is two lines.
 
@@ -70,7 +70,7 @@ Reachability is low today: `graphqlFetch` never throws by contract, so it takes 
 
 ### F5 — The spec's **N/A** stat state has no implementation and no reachable trigger (dimension 11) · REAL · **RESOLVED as a spec edit**
 
-[ui-surface § S1](../../../spec/dashboard/ui-surface.md#s1--dashboard-screen) and § S2 both require it: _"a stat whose value is unavailable while its panel is otherwise shown renders **N/A** (`messages.not-applicable`) with an explanatory tooltip (`messages.no-data-available`) — never a blank."_
+[ui-surface § S1](../../../../spec/dashboard/ui-surface.md#s1--dashboard-screen) and § S2 both require it: _"a stat whose value is unavailable while its panel is otherwise shown renders **N/A** (`messages.not-applicable`) with an explanatory tooltip (`messages.no-data-available`) — never a blank."_
 
 The implementation has no N/A path — [DashboardPage.tsx:274](DashboardPage.tsx#L274) is `const num = (n) => formatNumber(n ?? 0)`, so an absent value would print `0`, which is a _wrong number_ rather than a blank. But the state is currently **unreachable**: every count field is non-nullable ([dashboardCounts.generated.ts](dashboardCounts.generated.ts)), and stats only instantiate on the `ready` branch of `StatsPanel`'s `<Switch>`, so a rendered stat always has its value. The `?? 0` exists only to satisfy the `data(): T | undefined` type. Neither `messages.not-applicable` nor `messages.no-data-available` is used anywhere in `src/` — there is no sibling precedent to copy.
 
@@ -78,17 +78,17 @@ Also: `Statistic` has no slot for a **value-level** tooltip distinct from `info`
 
 Two coherent end states; the operator chose **(a) spec moves** (Carl, 2026-07-29). The rejected alternative was to have `num()` return `t('messages.not-applicable')` for `undefined` and give `Statistic` a value-tooltip prop — a dead branch plus a library prop serving a state the contract cannot produce.
 
-**Applied** to [`spec/dashboard/ui-surface.md`](../../../spec/dashboard/ui-surface.md), three places, code unchanged:
+**Applied** to [`spec/dashboard/ui-surface.md`](../../../../spec/dashboard/ui-surface.md), three places, code unchanged:
 
 - § S1 — the zero/blank sentence now states positively that counts resolve a family at a time and every count the schema returns is a number, so an individual stat is never unavailable while its panel shows values; unavailability is the panel's loading / error state.
 - § S2 _Empty / zero_ — the per-stat N/A clause is replaced by "unavailability is a panel state, never a per-stat one".
 - The § S2 locale-key table — the _Stat value unavailable_ row (`messages.not-applicable` / `messages.no-data-available`) is removed, so a build no longer reads those keys as ones it must place.
 
-No [`DIVERGENCES.md`](../../../spec/DIVERGENCES.md) entry: the schema is shared with the reference app, so this is an unreachable state being described accurately, not a deliberate behavioural difference.
+No [`DIVERGENCES.md`](../../../../spec/DIVERGENCES.md) entry: the schema is shared with the reference app, so this is an unreachable state being described accurately, not a deliberate behavioural difference.
 
 ### F6 — Plugin slot regions are specified as live but nothing mounts them (dimension 11) · REAL · **RESOLVED as a spec edit**
 
-[ui-surface § S3](../../../spec/dashboard/ui-surface.md#s3--plugin-slot-regions): _"The regions are live from the dashboard's first build, rendering the built-ins against an empty contribution set … no plugin system is required for the dashboard to be complete."_ The registry lists `PluginRegionOutlet` as ✅ built, and the showcase demonstrates it mounted inside a `StatsPanel` ([StatisticsShowcase.tsx:195](../../ui-showcase/StatisticsShowcase.tsx#L195)).
+[ui-surface § S3](../../../../spec/dashboard/ui-surface.md#s3--plugin-slot-regions): _"The regions are live from the dashboard's first build, rendering the built-ins against an empty contribution set … no plugin system is required for the dashboard to be complete."_ The registry lists `PluginRegionOutlet` as ✅ built, and the showcase demonstrates it mounted inside a `StatsPanel` ([StatisticsShowcase.tsx:195](../../ui-showcase/StatisticsShowcase.tsx#L195)).
 
 `DashboardPage.tsx` mounts no outlet and never imports `regions.ts` — the published-id tree and `mergeRegion` exist and are unit-tested, but nothing renders them. [`BUILD_REPORT.md`](BUILD_REPORT.md) records this as a deliberate deferral to the plugins vertical, with a real rationale (a `<For>` over freshly-merged entries risks remounting stats on every count update; scaffolding three container regions for zero contributions is overkill).
 
@@ -103,8 +103,8 @@ The operator chose **(a) spec moves** (Carl, 2026-07-29), matching the BUILD_REP
 
 **Applied,** in two places, code unchanged apart from a comment:
 
-- [`ui-surface.md`](../../../spec/dashboard/ui-surface.md) § S3 › _Built-ins first_ — states positively that no plugin system is required for completeness (built-ins render directly, gated only by their display gates), that the **semantics** are the dashboard's and hold against an empty contribution set, and that **mounting** contributions at the three regions belongs to the plugins vertical that supplies them.
-- [`rules.md`](../../../spec/dashboard/rules.md) § Extensibility carried the same claim ("renders its built-ins through its regions from the start") and got the same split: the semantics are built with the dashboard and testable before any plugin exists; mounting arrives with the plugin system.
+- [`ui-surface.md`](../../../../spec/dashboard/ui-surface.md) § S3 › _Built-ins first_ — states positively that no plugin system is required for completeness (built-ins render directly, gated only by their display gates), that the **semantics** are the dashboard's and hold against an empty contribution set, and that **mounting** contributions at the three regions belongs to the plugins vertical that supplies them.
+- [`rules.md`](../../../../spec/dashboard/rules.md) § Extensibility carried the same claim ("renders its built-ins through its regions from the start") and got the same split: the semantics are built with the dashboard and testable before any plugin exists; mounting arrives with the plugin system.
 
 The `DashboardPage.tsx` header comment now cites `ui-surface § S3` for the ownership split instead of pointing readers at `BUILD_REPORT.md` — the spec is the source of truth for it.
 
@@ -112,7 +112,7 @@ To be unambiguous about the state of play: **no plugin can contribute to the das
 
 ### F7 — Create-shortcut buttons opt out of the primary variant (dimension 1 / cross-vertical consistency) · REAL · **FIXED**
 
-Raised by the operator as a visual change; the audit's cross-vertical check confirms it as a finding. The three footer create buttons passed `variant="secondary"` ([DashboardPage.tsx:291](DashboardPage.tsx#L291), [:399](DashboardPage.tsx#L399), [:466](DashboardPage.tsx#L466)) while every sibling's create button passes **no** `variant` at all and takes `Button`'s `primary` default — [`InboundShipmentsList.tsx:354`](../inbound-shipments/list/InboundShipmentsList.tsx#L354), [`PatientsList.tsx:244`](../patients/list/PatientsList.tsx#L244). Two-plus verticals agreeing is the house pattern, so the dashboard was the odd one out. Nothing in `ui-surface.md` names a variant (it names the [labelled action button](../../../spec/ui-standards/components.md) role), so no spec edit is implied.
+Raised by the operator as a visual change; the audit's cross-vertical check confirms it as a finding. The three footer create buttons passed `variant="secondary"` ([DashboardPage.tsx:291](DashboardPage.tsx#L291), [:399](DashboardPage.tsx#L399), [:466](DashboardPage.tsx#L466)) while every sibling's create button passes **no** `variant` at all and takes `Button`'s `primary` default — [`InboundShipmentsList.tsx:354`](../inbound-shipments/list/InboundShipmentsList.tsx#L354), [`PatientsList.tsx:244`](../patients/list/PatientsList.tsx#L244). Two-plus verticals agreeing is the house pattern, so the dashboard was the odd one out. Nothing in `ui-surface.md` names a variant (it names the [labelled action button](../../../../spec/ui-standards/components.md) role), so no spec edit is implied.
 
 **Fixed** by _dropping_ the prop rather than writing `variant="primary"` — the [reach-for order](../../ui/docs/MIGRATING_A_VERTICAL.md#the-reach-for-order) puts component defaults above props. The showcase's three demo cards ([`StatisticsShowcase.tsx`](../../ui-showcase/StatisticsShowcase.tsx)) are updated the same way, so the reference composition still matches the real screen.
 
@@ -147,10 +147,10 @@ No ⛔ registry roles were needed, and no new component is proposed.
 
 Both signed off by Carl, 2026-07-29; both are pure-UI/content clarifications of unreachable or not-yet-owned states.
 
-1. **F5** — three edits to [`spec/dashboard/ui-surface.md`](../../../spec/dashboard/ui-surface.md): the § S1 sentence, the § S2 _Empty / zero_ bullet, and the § S2 locale-key row for `messages.not-applicable`.
-2. **F6** — [`ui-surface.md`](../../../spec/dashboard/ui-surface.md) § S3 › _Built-ins first_ and [`rules.md`](../../../spec/dashboard/rules.md) § Extensibility, which carried the same claim.
+1. **F5** — three edits to [`spec/dashboard/ui-surface.md`](../../../../spec/dashboard/ui-surface.md): the § S1 sentence, the § S2 _Empty / zero_ bullet, and the § S2 locale-key row for `messages.not-applicable`.
+2. **F6** — [`ui-surface.md`](../../../../spec/dashboard/ui-surface.md) § S3 › _Built-ins first_ and [`rules.md`](../../../../spec/dashboard/rules.md) § Extensibility, which carried the same claim.
 
-No [`DIVERGENCES.md`](../../../spec/DIVERGENCES.md) entry: nothing here changes what the screen does relative to the reference app.
+No [`DIVERGENCES.md`](../../../../spec/DIVERGENCES.md) entry: nothing here changes what the screen does relative to the reference app.
 
 ## Outcome
 

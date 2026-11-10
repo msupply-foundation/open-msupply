@@ -159,7 +159,12 @@ describe('OMS-FUN-PO-02.12 — the packs write the requested quantity', () => {
 describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () => {
   it('opens the quantity while drafting', () => {
     for (const status of ['NEW', 'REQUEST_APPROVAL'] as const) {
-      const gates = lineGates({ status, lineStatus: 'NEW', addMode: false });
+      const gates = lineGates({
+        status,
+        lineStatus: 'NEW',
+        addMode: false,
+        canMutate: true,
+      });
       expect(gates.drafting).toBe(true);
     }
   });
@@ -169,6 +174,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       status: 'NEW',
       lineStatus: 'NEW',
       addMode: false,
+      canMutate: true,
     });
     expect(gates.requestedDate).toBe(true);
     expect(gates.expectedDate).toBe(true);
@@ -177,11 +183,20 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
 
   it('fixes the quantity from Approved', () => {
     expect(
-      lineGates({ status: 'CONFIRMED', lineStatus: 'NEW', addMode: false })
-        .drafting
+      lineGates({
+        status: 'CONFIRMED',
+        lineStatus: 'NEW',
+        addMode: false,
+        canMutate: true,
+      }).drafting
     ).toBe(false);
     expect(
-      lineGates({ status: 'SENT', lineStatus: 'SENT', addMode: false }).drafting
+      lineGates({
+        status: 'SENT',
+        lineStatus: 'SENT',
+        addMode: false,
+        canMutate: true,
+      }).drafting
     ).toBe(false);
   });
 
@@ -190,6 +205,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       status: 'SENT',
       lineStatus: 'SENT',
       addMode: false,
+      canMutate: true,
     });
     expect(gates.requestedDate).toBe(false);
     expect(gates.expectedDate).toBe(true);
@@ -204,6 +220,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
       const gates = lineGates({
         ...options,
         addMode: false,
+        canMutate: true,
       });
       expect(gates.drafting).toBe(false);
       expect(gates.requestedDate).toBe(false);
@@ -218,6 +235,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
         status: 'NEW',
         lineStatus: 'NEW',
         addMode: true,
+        canMutate: true,
       }).item
     ).toBe(true);
     expect(
@@ -225,8 +243,39 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
         status: 'NEW',
         lineStatus: 'NEW',
         addMode: false,
+        canMutate: true,
       }).item
     ).toBe(false);
+  });
+
+  it('closes every field of an existing line without the change permission, in every state (OMS-REG-PO-01.34)', () => {
+    for (const options of [
+      { status: 'NEW' as const, lineStatus: 'NEW' as const },
+      { status: 'REQUEST_APPROVAL' as const, lineStatus: 'NEW' as const },
+      { status: 'CONFIRMED' as const, lineStatus: 'NEW' as const },
+      { status: 'SENT' as const, lineStatus: 'SENT' as const },
+    ]) {
+      const gates = lineGates({
+        ...options,
+        addMode: false,
+        canMutate: false,
+      });
+      expect(gates.drafting, options.status).toBe(false);
+      expect(gates.requestedDate, options.status).toBe(false);
+      expect(gates.expectedDate, options.status).toBe(false);
+      expect(gates.text, options.status).toBe(false);
+    }
+  });
+
+  it('leaves a new line open without the change permission — the save is refused instead (OMS-REG-PO-01.33)', () => {
+    const gates = lineGates({
+      status: 'NEW',
+      lineStatus: 'NEW',
+      addMode: true,
+      canMutate: false,
+    });
+    expect(gates.item).toBe(true);
+    expect(gates.drafting).toBe(true);
   });
 
   it('never opens the status control (OMS-FUN-PO-02.22)', () => {
@@ -242,6 +291,7 @@ describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () =
           status,
           lineStatus: 'NEW',
           addMode: false,
+          canMutate: true,
         }).status
       ).toBe(false);
   });

@@ -524,8 +524,7 @@ const RequisitionDetailView: Component = () => {
   const crumbs = (node: RequisitionInfoFragment) => [
     {
       label: t('customer-requisition'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/customer-requisition`),
+      to: `/${params.storeId}/distribution/customer-requisition`,
     },
     { label: String(node.requisitionNumber) },
   ];

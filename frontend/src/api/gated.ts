@@ -12,3 +12,13 @@ export const gated = <T>(resource: Resource<T>): T | undefined =>
   resource.state === 'ready' || resource.state === 'refreshing'
     ? resource.latest
     : undefined;
+
+// A detail read's own "no such record" (#1746). Its fetcher resolves `null`
+// when the server answered the id as not found, and `undefined` when the read
+// itself failed: graphqlFetch has already opened the global unexpected-error
+// modal for that, and its Retry reloads. Only the first is the screen's
+// not-found notice; under a failure the screen keeps its spinner, so a slow or
+// dropped connection never tells the user a record they can reach is gone.
+// Reads `.latest` only once settled, so it never suspends.
+export const notFound = (resource: Resource<unknown>): boolean =>
+  resource.state === 'ready' && resource.latest === null;

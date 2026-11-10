@@ -803,6 +803,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           <ItemSearch
             label={t('label.item')}
             storeId={props.storeId}
+            includeHiddenWithStock
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
             value={current()?.itemId}
@@ -944,6 +945,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           entryMode={entryMode()}
           packSize={packSize()}
           unitName={current()?.unitName ?? null}
+          itemName={current()?.itemName ?? ''}
           finalised={props.finalised}
           forecast={customerForecast()}
           volume={

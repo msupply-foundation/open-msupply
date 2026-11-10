@@ -295,6 +295,31 @@ impl DateFilter {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
+pub struct FloatFilter {
+    #[ts(optional)]
+    pub equal_to: Option<f64>,
+    #[ts(optional)]
+    pub below_or_equal_to: Option<f64>,
+    #[ts(optional)]
+    pub above_or_equal_to: Option<f64>,
+    /// Strict less-than (exclusive)
+    #[ts(optional)]
+    pub less_than: Option<f64>,
+    /// Strict greater-than (exclusive)
+    #[ts(optional)]
+    pub greater_than: Option<f64>,
+}
+
+impl FloatFilter {
+    pub fn less_than(value: f64) -> Self {
+        Self {
+            less_than: Some(value),
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct Sort<T> {
     pub key: T,

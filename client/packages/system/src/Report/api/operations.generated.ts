@@ -32,7 +32,9 @@ export type ReportQuery = {
   report:
     | {
         __typename: 'QueryReportError';
-        error: { __typename: 'FailedTranslation'; description: string };
+        error:
+          | { __typename: 'FailedTranslation'; description: string }
+          | { __typename: 'RecordNotFound' };
       }
     | {
         __typename: 'ReportNode';

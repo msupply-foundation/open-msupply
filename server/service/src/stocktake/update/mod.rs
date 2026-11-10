@@ -406,6 +406,7 @@ mod test {
                 item: mock_item_a(),
                 donor: None,
                 reason_option: None,
+                campaign: None,
             }])
         );
 

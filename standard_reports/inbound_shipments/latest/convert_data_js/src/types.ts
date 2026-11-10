@@ -13,6 +13,8 @@ export interface InvoiceConnector {
   nodes: {
     id: string;
     otherPartyName: string;
+    invoiceNumber: number;
+    receivedDatetime: string | null;
     lines: InvoiceLine;
   }[];
 }
@@ -53,4 +55,6 @@ export type Lines = {
   costPricePerPack: string;
   totalCost: number | string;
   otherPartyName: string;
+  invoiceNumber: number;
+  receivedDatetime: string | null;
 }[];

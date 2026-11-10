@@ -1,5 +1,7 @@
 import { For, Show, createEffect, onCleanup, onMount } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import { t } from '../../../intl';
+import { onLinkClick } from '../../utils/linkClick';
 import type { NavItem, NavLeaf } from './navModel';
 import styles from './NavFlyout.module.css';
 
@@ -47,6 +49,8 @@ const EDGE = 8;
 export const NavFlyout = (props: {
   target: FlyoutTarget | undefined;
   selectedId: string;
+  /** A destination's URL — given, the rows are real links (MenuBar's prop). */
+  hrefFor?: (to: string) => string;
   onSelect: (leaf: NavLeaf) => void;
   /** Escape / ← / a chosen destination — the boolean asks for focus back. */
   onDismiss: (restoreFocus: boolean) => void;
@@ -110,7 +114,8 @@ export const NavFlyout = (props: {
     }
     if (!panel.matches(':popover-open')) panel.showPopover();
     place(target.anchor);
-    if (target.focusFirst) panel.querySelector('button')?.focus();
+    if (target.focusFirst)
+      panel.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
   });
 
   // A window resize, or scrolling the rail's list, moves the rail button out
@@ -151,8 +156,12 @@ export const NavFlyout = (props: {
       onMouseEnter={props.onPointerEnter}
       onMouseLeave={props.onPointerLeave}
       onKeyDown={e => {
-        const rows = [...panel.querySelectorAll('button')];
-        const at = rows.indexOf(document.activeElement as HTMLButtonElement);
+        // By role, not tag: a row is a link or a button depending on whether
+        // the host gave destinations URLs.
+        const rows = [
+          ...panel.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+        ];
+        const at = rows.indexOf(document.activeElement as HTMLElement);
         // ← (→ in RTL) walks back out to the rail, as Escape does.
         const back =
           getComputedStyle(panel).direction === 'rtl'
@@ -167,6 +176,11 @@ export const NavFlyout = (props: {
         } else if (e.key === 'Escape' || e.key === back) {
           e.preventDefault();
           props.onDismiss(true);
+        } else if (e.key === ' ' && rows[at] instanceof HTMLAnchorElement) {
+          // A menu item activates on Space as well as Enter (the ARIA menu
+          // contract), which a link row doesn't do natively.
+          e.preventDefault();
+          rows[at]?.click();
         }
       }}
     >
@@ -183,8 +197,10 @@ export const NavFlyout = (props: {
                 <div class={styles.title}>{t(target().item.labelKey)}</div>
                 <For each={children()}>
                   {leaf => (
-                    <button
-                      type="button"
+                    <Dynamic
+                      component={props.hrefFor ? 'a' : 'button'}
+                      type={props.hrefFor ? undefined : 'button'}
+                      href={props.hrefFor?.(leaf.to)}
                       role="menuitem"
                       class={styles.item}
                       /* The current destination: marked by a leading dot and
@@ -198,13 +214,18 @@ export const NavFlyout = (props: {
                         leaf.id === props.selectedId ? 'page' : undefined
                       }
                       data-testid={`nav-flyout-${leaf.id}`}
-                      onClick={() => {
-                        props.onSelect(leaf);
-                        props.onDismiss(false);
-                      }}
+                      // A modified click opens a new tab and leaves the
+                      // flyout open, so the user can take another.
+                      onClick={(e: MouseEvent) =>
+                        // eslint-disable-next-line solid/reactivity -- runs in this click handler; the rule can't see Dynamic's onClick as one
+                        onLinkClick(e, props.hrefFor?.(leaf.to), () => {
+                          props.onSelect(leaf);
+                          props.onDismiss(false);
+                        })
+                      }
                     >
                       {t(leaf.labelKey)}
-                    </button>
+                    </Dynamic>
                   )}
                 </For>
               </>

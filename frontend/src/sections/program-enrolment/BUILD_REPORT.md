@@ -1,8 +1,8 @@
 # Build report — program-enrolment
 
-**Target stack:** SolidJS + Vite; shared component library `src/ui/`, every slot resolved through the roles in [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+**Target stack:** SolidJS + Vite; shared component library `src/ui/`, every slot resolved through the roles in [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md).
 
-Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/README.md) (#1490, on top of the spec branch `fe/890-program-enrolment-spec`). The picker and the enrolment dialog already existed on `feature/custom-forms`, built ahead of their spec (custom-forms plan H8, H10); this build moves them into this section, brings them to the spec, and adds the host's enrolment ID field. Status history and closing (`OMS-REG-PAT-04.40`–`.50`) are #1491 and stay pending.
+Scoped build of [`spec/program-enrolment`](../../../../spec/program-enrolment/README.md) (#1490, on top of the spec branch `fe/890-program-enrolment-spec`). The picker and the enrolment dialog already existed on `feature/custom-forms`, built ahead of their spec (custom-forms plan H8, H10); this build moves them into this section, brings them to the spec, and adds the host's enrolment ID field. Status history and closing (`OMS-REG-PAT-04.40`–`.50`) are #1491 and stay pending.
 
 **Gates: green.** `pnpm check` · `pnpm test` (all files, including 64 new tests: 20 in this section, 44 in `src/domain/documentForm/`) · `pnpm build` (the field and its query sit in the lazy form library chunk, 42.36 kB gzip; nothing reaches the eager entry, which `vite/lazyChunkGuard.ts` checks) · ESLint on every changed file · the `check-reactivity` review (below).
 
@@ -31,7 +31,7 @@ Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/READM
 
 ## Spec refinements the build exposed (made on this branch)
 
-1. **`EnrolmentIdField` takes `record`** (and `testId`), as [sdk-contract § the enrolment form](../../../spec/plugins/sdk-contract.md#the-document-form-slots-specified-in-full) now says. The field needs the form's record view for two things: whether this open is a new enrolment, and which enrolment holds its own ID.
+1. **`EnrolmentIdField` takes `record`** (and `testId`), as [sdk-contract § the enrolment form](../../../../spec/plugins/sdk-contract.md#the-document-form-slots-specified-in-full) now says. The field needs the form's record view for two things: whether this open is a new enrolment, and which enrolment holds its own ID.
 2. **`draft.fill`** is in the sdk-contract's draft paragraph. Generating on open would otherwise make every new enrolment read as changed, and closing it would ask to discard.
 3. **The `(pending: #1490)` markers** came off `OMS-REG-PAT-04`, and `spec/PROGRESS.md`'s Build cell is ticked.
 4. **A typed duplicate ID now blocks the save** (decided 2026-10-14, after the browser run below). The first rule, the current app's (flagged, not taken, the last accepted ID kept), saved a half-typed ID accepted during a pause: `GRY-000` while `GRY-0005` showed flagged. `.37` was reworded in place (never published), `.51` was added, and rules, contract, ui-surface, the README's decision 5 and the sdk-contract's draft paragraph (`setError`, `wait`) changed with it.
@@ -107,7 +107,7 @@ The unit tests mock the GraphQL edge. The real-backend half is the deterministic
 
 ## Gaps closed after the first exploratory run (2026-10-15)
 
-The run ([`exploratory/workflows/program-enrolment.md`](../../../exploratory/workflows/program-enrolment.md), 2026-10-14) raised two findings and five gap candidates. Decisions are in [the spec README's decisions 7–10](../../../spec/program-enrolment/README.md#status).
+The run ([`exploratory/workflows/program-enrolment.md`](../../../exploratory/workflows/program-enrolment.md), 2026-10-14) raised two findings and five gap candidates. Decisions are in [the spec README's decisions 7–10](../../../../spec/program-enrolment/README.md#status).
 
 - **`ENR-20261014-F1`, `.13` unreachable:** reworded. A required date restores itself when emptied, so the case now says that.
 - **`ENR-20261014-F2`, the default form's dead end:** `EnrolmentModal` validates the draft against the registry's schema. When no plugin form is contributed and a `required` failure falls outside the default form's fields, the enrolment shows the not-installed notice (`enrolment-form-missing`, `messages.enrolment-form-not-installed`), and offers neither Save nor the error summary.
@@ -173,7 +173,7 @@ An independent review of each PR found four bugs in the ID field and the dialog'
 
 ## Left for later
 
-- **Product re-check of generate-on-open** (decided 2026-10-14, [spec README § status](../../../spec/program-enrolment/README.md#status)). Every opened new enrolment draws a counter number, cancelled or not. The live run spent GRY-0001 that way. A format that reads the enrolment (Djibouti's carries the enrolment year) draws from what the form holds as it opens, so a backdated enrolment keeps the year it was opened in unless Generate is pressed again.
+- **Product re-check of generate-on-open** (decided 2026-10-14, [spec README § status](../../../../spec/program-enrolment/README.md#status)). Every opened new enrolment draws a counter number, cancelled or not. The live run spent GRY-0001 that way. A format that reads the enrolment (Djibouti's carries the enrolment year) draws from what the form holds as it opens, so a backdated enrolment keeps the year it was opened in unless Generate is pressed again.
 - **Djibouti's own enrolment ID field** (`EnrolmentIdField.tsx` on `custom-forms/misc-open-tasks`, not on this base) should move onto the host field when that branch lands.
 - **#1491**: status history through the form library's list control (#1148), and closing.
 

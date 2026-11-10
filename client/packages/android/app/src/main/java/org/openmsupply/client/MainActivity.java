@@ -3,6 +3,7 @@ package org.openmsupply.client;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
@@ -66,13 +67,29 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
         ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
             Insets bars = insets.getInsets(
                     WindowInsetsCompat.Type.systemBars()
-                            | WindowInsetsCompat.Type.displayCutout()
-                            | WindowInsetsCompat.Type.ime());
+                            | WindowInsetsCompat.Type.displayCutout());
+
+            // Edge-to-edge (enforced from Android 15) stops the window shrinking
+            // for the keyboard, so it draws over the page. Lift the WebView's
+            // bottom edge to the keyboard's top instead: the page's viewport
+            // shrinks and it can scroll the focused field into view, whichever
+            // front end is loaded — including an older server's (issue #2115).
+            int keyboard = insets.isVisible(WindowInsetsCompat.Type.ime())
+                    ? insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+                    : 0;
+            ViewGroup.MarginLayoutParams layout = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            if (layout.bottomMargin != keyboard) {
+                layout.bottomMargin = keyboard;
+                v.setLayoutParams(layout);
+            }
+            // The keyboard covers the navigation bar, so while it is up there is
+            // nothing below the WebView for the page to avoid
+            int bottom = keyboard > 0 ? 0 : bars.bottom;
 
             float d = v.getResources().getDisplayMetrics().density;
-            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars, cutouts, or the keyboard
+            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars or cutouts
             js = "document.documentElement.style.setProperty('--inset-top',    '" + (bars.top / d)    + "px');" +
-                    "document.documentElement.style.setProperty('--inset-bottom', '" + (bars.bottom / d) + "px');" +
+                    "document.documentElement.style.setProperty('--inset-bottom', '" + (bottom / d) + "px');" +
                     "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
                     "document.documentElement.style.setProperty('--inset-right',  '" + (bars.right / d)  + "px');";
 

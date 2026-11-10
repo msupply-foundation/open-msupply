@@ -20,7 +20,7 @@ export const OTHER_FACILITY = 'other';
 export interface DoseDraft {
   /** Undefined until the user chooses (a new dose starts with neither). */
   given: boolean | undefined;
-  /** ISO calendar date. */
+  /** A calendar date, `YYYY-MM-DD`. */
   date: string;
   /**
    * This store's name id, the name id a record was entered at, or

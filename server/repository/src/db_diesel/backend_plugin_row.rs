@@ -15,6 +15,7 @@ pub enum PluginType {
     // TODO backwards compatibility ? When integrating this one via sync
     Processor,
     Schedule,
+    TransformItemStoreProperties,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]

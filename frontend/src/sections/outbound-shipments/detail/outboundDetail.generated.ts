@@ -300,9 +300,27 @@ export type OutboundLinesVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    batch?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    expiryDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    locationCode?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    manufactureDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "manufactureDate" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
 };

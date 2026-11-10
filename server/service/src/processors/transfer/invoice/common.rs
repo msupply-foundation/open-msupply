@@ -1,11 +1,16 @@
+use std::collections::HashMap;
+
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository,
-    ItemStoreJoinRowRepositoryTrait, NameFilter, NameRepository, Pagination,
+    InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository, NameFilter, NameRepository,
+    Pagination,
 };
 use repository::{InvoiceLineRow, RepositoryError, StockLineRow, StorageConnection};
 use util::uuid::uuid;
 
+use crate::backend_plugin::{
+    plugin_provider::PluginInstance, types::transform_item_store_properties::Context,
+};
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
     InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError,
@@ -30,7 +35,14 @@ pub(crate) fn generate_inbound_lines(
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
     )?;
-    let item_properties_repo = ItemStoreJoinRowRepository::new(connection);
+    let item_properties_by_item = get_item_properties_by_item(
+        connection,
+        inbound_store_id,
+        outbound_lines
+            .iter()
+            .map(|l| l.item_row.id.clone())
+            .collect(),
+    )?;
 
     // When the source outbound shipment was issued at cost, its sell price is the
     // supplying store's cost price, so it can't also carry a sell price to base the
@@ -91,9 +103,7 @@ pub(crate) fn generate_inbound_lines(
                 },
                 source_stock_line,
             )| {
-                let item_properties = item_properties_repo
-                    .find_one_by_item_and_store_id(&item_id, inbound_store_id)
-                    .unwrap_or(None);
+                let item_properties = item_properties_by_item.get(&item_id).cloned();
 
                 // Legacy customer invoice lines sync with `sentQuantity` and `sent_pack_size`
                 // of 0, so when the outbound hasn't recorded what it shipped, fall back to the
@@ -347,6 +357,33 @@ pub(super) fn get_cost_plus_margin(
     Ok(cost_price_per_pack + (cost_price_per_pack * margin) / 100.0)
 }
 
+/// The inbound store's item properties, after any transform_item_store_properties
+/// plugin, keyed by item id
+fn get_item_properties_by_item(
+    connection: &StorageConnection,
+    store_id: &str,
+    mut item_ids: Vec<String>,
+) -> Result<HashMap<String, ItemStoreJoinRow>, RepositoryError> {
+    item_ids.sort();
+    item_ids.dedup();
+
+    let rows = ItemStoreJoinRowRepository::new(connection)
+        .find_many_by_item_and_store_ids(&item_ids, &[store_id.to_string()])?;
+    let rows = PluginInstance::transform_item_store_properties(
+        Context::InboundShipmentTransfer,
+        store_id,
+        &item_ids,
+        rows,
+    );
+
+    let mut by_item = HashMap::new();
+    for row in rows {
+        // First row wins, as the previous one-row lookup did
+        by_item.entry(row.item_id.clone()).or_insert(row);
+    }
+    Ok(by_item)
+}
+
 fn get_item_margin(item_properties: Option<ItemStoreJoinRow>) -> Option<f64> {
     item_properties.as_ref().map(|i| i.margin)
 }
@@ -382,7 +419,13 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
     };
 
+    use base64::{Engine, prelude::BASE64_STANDARD};
+    use repository::{
+        BackendPluginRow, PluginType, PluginTypes, PluginVariantType, migrations::Version,
+    };
+
     use crate::{
+        backend_plugin::plugin_provider::PluginInstance,
         preference::{
             ItemMarginOverridesSupplierMargin, Preference,
             TransferStockToInternalCustomersAtCostPrice,
@@ -674,6 +717,104 @@ mod test {
         )
         .unwrap();
 
+        assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
+    }
+
+    // Sets every requested item's default price, and returns a row for another store
+    // first, which core should drop rather than let it win
+    const PLUGIN_SELL_PRICE_PER_PACK: f64 = 42.0;
+    const TRANSFORM_ITEM_STORE_PROPERTIES_PLUGIN: &str = r#"
+export const plugins = {
+  transform_item_store_properties: ({ store_id, item_ids, rows }) => ({
+    transformed_rows: [
+      { ...rows[0], id: "other_store_row", store_id: "other_store", default_sell_price_per_pack: 1 },
+      ...item_ids.map((item_id) => ({
+        ...rows.find((row) => row.item_id === item_id),
+        item_id,
+        store_id,
+        default_sell_price_per_pack: 42,
+      })),
+    ],
+  }),
+};
+"#;
+
+    #[actix_rt::test]
+    async fn generate_inbound_lines_uses_transform_item_store_properties_plugin() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "generate_inbound_lines_uses_transform_item_store_properties_plugin",
+            MockDataInserts::all(),
+            transfer_at_cost_mock_data(),
+        )
+        .await;
+
+        PluginInstance::bind(BackendPluginRow {
+            id: "transform_item_store_properties".to_string(),
+            code: "transform_item_store_properties".to_string(),
+            version: Version::from_package_json().to_string(),
+            bundle_base64: BASE64_STANDARD.encode(TRANSFORM_ITEM_STORE_PROPERTIES_PLUGIN),
+            types: PluginTypes(vec![PluginType::TransformItemStoreProperties]),
+            variant_type: PluginVariantType::BoaJs,
+        });
+
+        let source_invoice = Invoice {
+            invoice_row: transfer_at_cost_invoice(),
+            name_row: mock_name_store_a(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].sell_price_per_pack, PLUGIN_SELL_PRICE_PER_PACK);
+    }
+
+    #[actix_rt::test]
+    async fn generate_inbound_lines_falls_back_when_transform_item_store_properties_plugin_fails() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "generate_inbound_lines_falls_back_when_transform_item_store_properties_plugin_fails",
+            MockDataInserts::all(),
+            transfer_at_cost_mock_data(),
+        )
+        .await;
+
+        PluginInstance::bind(BackendPluginRow {
+            id: "transform_item_store_properties".to_string(),
+            code: "transform_item_store_properties".to_string(),
+            version: Version::from_package_json().to_string(),
+            bundle_base64: BASE64_STANDARD.encode(
+                r#"export const plugins = {
+  transform_item_store_properties: () => { throw new Error("broken plugin"); },
+};"#,
+            ),
+            types: PluginTypes(vec![PluginType::TransformItemStoreProperties]),
+            variant_type: PluginVariantType::BoaJs,
+        });
+
+        let source_invoice = Invoice {
+            invoice_row: transfer_at_cost_invoice(),
+            name_row: mock_name_store_a(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+
+        // The shipment is still made, at the store's own default price
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
         assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
     }
 

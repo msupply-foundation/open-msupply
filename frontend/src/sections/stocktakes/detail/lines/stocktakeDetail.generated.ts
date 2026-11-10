@@ -155,6 +155,13 @@ export type StocktakeLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    donorId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     campaignId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;
@@ -162,9 +169,22 @@ export type StocktakeLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    batch?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    manufactureDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    campaignName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationCode" | "snapshotNumberOfPacks" | "countedNumberOfPacks" | "reasonOption";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationCode" | "snapshotNumberOfPacks" | "countedNumberOfPacks" | "reasonOption" | "manufactureDate" | "donor" | "campaign";
     desc?: boolean | null;
   }> | null;
 };

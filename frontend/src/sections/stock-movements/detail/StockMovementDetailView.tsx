@@ -295,7 +295,7 @@ const StockMovementDetailView: Component = () => {
   const crumbs = (n: MovementNode) => [
     {
       label: t('stock-movement'),
-      onClick: () => navigate(`/${params.storeId}/inventory/stock-movement`),
+      to: `/${params.storeId}/inventory/stock-movement`,
     },
     { label: String(n.stockMovementNumber) },
   ];

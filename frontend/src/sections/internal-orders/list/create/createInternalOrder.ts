@@ -1,7 +1,7 @@
 import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
-import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { calendarDateDaysAgo } from '../../../../intl/calendarDate';
 import {
   InsertInternalOrder,
   InsertProgramInternalOrder,
@@ -23,30 +23,42 @@ export type CreateResult =
   | { kind: 'error'; message: string }
   | { kind: 'failed' };
 
-// General create (OMS-REG-REPL-04.6/.43): sends only id + otherPartyId with the default
-// reorder threshold, leaving the target to the server's default (the
-// store's supply interval + safety buffer). The picker offers only visible,
-// store-backed suppliers, so the typed supplier rejections are unreachable
-// (contract wire trap) and any non-success falls through to the generic
-// mutation path (the global unexpected-error modal) — hence no
-// returnGraphqlErrors here.
+// General create (OMS-REG-REPL-04.6/.101/.104): sends id + otherPartyId with
+// the default reorder threshold, leaving the target to the server's default
+// (the store's supply interval + safety buffer), and the chosen master list,
+// if any — the server then adds its items requesting their suggestions, all or
+// nothing. The picker offers only visible, store-backed suppliers, so the typed
+// supplier rejections are unreachable (contract wire trap). A rejection must
+// keep the dialog open (OMS-REG-REPL-04.50), so returnGraphqlErrors surfaces
+// the untyped ones (a master list no longer the store's) inline.
 export const createGeneralOrder = async (
   storeId: string,
-  supplierId: string
+  supplierId: string,
+  masterListId?: string
 ): Promise<CreateResult> => {
-  const result = await graphqlFetch(InsertInternalOrder, {
-    storeId,
-    input: {
-      id: generateUUID(),
-      otherPartyId: supplierId,
-      minMonthsOfStock: GENERAL_MIN_MONTHS_OF_STOCK,
+  const result = await graphqlFetch(
+    InsertInternalOrder,
+    {
+      storeId,
+      input: {
+        id: generateUUID(),
+        otherPartyId: supplierId,
+        minMonthsOfStock: GENERAL_MIN_MONTHS_OF_STOCK,
+        masterListId,
+      },
     },
-  });
-  if (result.kind !== 'success') return { kind: 'failed' };
-  const response = result.data.insertRequestRequisition;
-  if (response.__typename === 'RequisitionNode')
-    return { kind: 'created', id: response.id };
-  return { kind: 'error', message: t('error.unable-to-create-requisition') };
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'success') {
+    const response = result.data.insertRequestRequisition;
+    if (response.__typename === 'RequisitionNode')
+      return { kind: 'created', id: response.id };
+    return { kind: 'error', message: t('error.unable-to-create-requisition') };
+  }
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: t('error.unable-to-create-requisition') };
+  // Forbidden / transport / unexpected already surfaced globally.
+  return { kind: 'failed' };
 };
 
 // The typed program-create rejections the client maps to copy (contract ›
@@ -108,7 +120,7 @@ const recentStocktakeIsInsufficient = async (
 ): Promise<boolean> => {
   const result = await graphqlFetch(RecentStocktakeItems, {
     storeId,
-    onOrAfter: localIsoDaysAgo(maxAge),
+    onOrAfter: calendarDateDaysAgo(maxAge),
   });
   if (result.kind !== 'success') return false;
   const items = new Set<string>();

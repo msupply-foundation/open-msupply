@@ -1,5 +1,5 @@
 import { graphqlFetch } from '@/api/graphql';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
+import { calendarDateToDate, todayCalendarDate } from '@/intl/calendarDate';
 import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
 import {
   encounterTypesFor,
@@ -44,7 +44,7 @@ interface Dose {
 
 /** `day` (a local calendar day) at `now`'s time of day, as a UTC instant. */
 const dayAtTimeOfDay = (day: string, now: Date): string => {
-  const at = new Date(`${day}T00:00:00`);
+  const at = calendarDateToDate(day) ?? new Date(NaN);
   at.setHours(now.getHours(), now.getMinutes(), 0, 0);
   return at.toISOString();
 };
@@ -133,7 +133,7 @@ export const fetchNextVisit = async (args: {
         : undefined,
       card?.__typename === 'VaccinationCardNode' ? card.items : undefined,
       now,
-      localTodayIso()
+      todayCalendarDate()
     ),
   };
 };

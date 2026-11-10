@@ -212,16 +212,18 @@ const NUMBER_PREFERENCE_KEYS = [
  * explicitly: customTranslationsV2 saves through the editor's own path;
  * customTranslations (legacy) only ever rides along with it;
  * globalTableConfigs is the table-configuration feature's
- * (src/api/tableConfig.graphql), never this page's.
+ * (src/api/tableConfig.graphql), never this page's. Strings are in the net
+ * too — globalLogo, the one string, saves through its own editor (S5).
  */
 export type EveryGlobalPreferenceHandled<
   Unhandled extends never = Exclude<
-    GlobalPreferenceKeyOf<boolean | number | object>,
+    GlobalPreferenceKeyOf<boolean | number | string | object>,
     | (typeof BOOL_PREFERENCE_KEYS)[number]
     | (typeof NUMBER_PREFERENCE_KEYS)[number]
     | GlobalPreferenceKeyOf<object> // arrays (store-scoped) + composites, handled below/elsewhere
     | 'genderOptions'
     | 'backdating'
+    | 'globalLogo'
   >,
 > = Unhandled;
 
@@ -237,8 +239,8 @@ const isNumberKey = (
 /*
  * One changed preference as the mutation input — a one-field input, the
  * others untouched (contract § Editing). Undefined for keys this page never
- * auto-saves (the translations editor has its own save path; store-typed keys
- * never appear in a GLOBAL read).
+ * auto-saves (the translations and logo editors have their own save paths;
+ * store-typed keys never appear in a GLOBAL read).
  */
 export const buildAutoSaveInput = (
   key: GlobalPreference['key'],
