@@ -919,7 +919,8 @@ mod test {
     #[actix_rt::test]
     async fn integrate_user_permission_delete_recreate() {
         // High-fidelity #12610 reproduction: user_permission is hard-deleted,
-        // uses deterministic ids, and is Remote-authored (store-scoped).
+        // uses deterministic ids, and is CentralForStore-authored (store-scoped,
+        // so this remote accepts it for its own store).
         let connection = setup(
             "integrate_user_permission_delete_recreate",
             MockDataInserts::none().names().stores().user_accounts(),
