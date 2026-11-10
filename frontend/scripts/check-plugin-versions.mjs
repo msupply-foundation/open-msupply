@@ -4,10 +4,11 @@
  * A plugin's `version` is its release: publish-bundles.yaml publishes the
  * first build of a version and never a different build under it, warning
  * after the merge that the version wants bumping. This catches it before the
- * merge instead. For each in-repo plugin (pluginDirs.mjs), a change since the
- * base to anything that goes into its bundle needs a version above the
- * base's. Once per PR: a version already above the base is enough, however
- * many commits follow.
+ * merge instead. For each in-repo country plugin (pluginDirs.mjs, less the
+ * examples, which publish-bundles never releases), a change since the base to
+ * anything that goes into its bundle needs a version above the base's. Once
+ * per PR: a version already above the base is enough, however many commits
+ * follow.
  *
  * What goes into the bundle is approximated by path: everything in the
  * plugin's directory except its docs and tests (`isBuilt`). A change that
@@ -43,6 +44,12 @@ import { inRepoPluginDirs } from './pluginDirs.mjs';
 const DOC_DIRS = new Set(['cases', 'decisions', 'test-env', '__tests__']);
 const TEST_FILE = /\.(test|spec)\.[cm]?[jt]sx?$/;
 const PINNED = /^\d+\.\d+\.\d+$/;
+
+/**
+ * Whether a plugin directory is one publish-bundles releases: the examples
+ * (`hello_world`, `api_too_new`, …) are reference plugins, never published.
+ */
+export const isPublished = dir => !dir.split(/[\\/]/).includes('examples');
 
 /** Whether a file, by its path within the plugin, goes into the bundle. */
 export const isBuilt = path => {
@@ -125,32 +132,34 @@ const readPlugins = base => {
     ...lines(git('diff', '--name-only', base)),
     ...lines(git('ls-files', '--others', '--exclude-standard')),
   ];
-  return inRepoPluginDirs().map(dir => {
-    const pluginDir = relative(ROOT, resolve(dir));
-    const within = path => relative(pluginDir, path);
-    const files = lines(
-      git('ls-files', '--cached', '--others', '--exclude-standard', pluginDir)
-    );
-    const versions = files
-      .filter(p => isCurrentManifest(within(p)))
-      .map(path => ({
-        path,
-        base: versionOf(atBase(base, path) ?? ''),
-        head: versionOf(readFileSync(join(ROOT, path), 'utf8')),
-      }))
-      .filter(v => v.head !== undefined);
-    const rootManifest = files.find(p => within(p) === 'package.json');
-    return {
-      name: pluginDir,
-      code: rootManifest
-        ? JSON.parse(readFileSync(join(ROOT, rootManifest), 'utf8')).name
-        : undefined,
-      built: changed.filter(
-        p => p.startsWith(`${pluginDir}/`) && isBuilt(within(p))
-      ),
-      versions,
-    };
-  });
+  return inRepoPluginDirs()
+    .filter(isPublished)
+    .map(dir => {
+      const pluginDir = relative(ROOT, resolve(dir));
+      const within = path => relative(pluginDir, path);
+      const files = lines(
+        git('ls-files', '--cached', '--others', '--exclude-standard', pluginDir)
+      );
+      const versions = files
+        .filter(p => isCurrentManifest(within(p)))
+        .map(path => ({
+          path,
+          base: versionOf(atBase(base, path) ?? ''),
+          head: versionOf(readFileSync(join(ROOT, path), 'utf8')),
+        }))
+        .filter(v => v.head !== undefined);
+      const rootManifest = files.find(p => within(p) === 'package.json');
+      return {
+        name: pluginDir,
+        code: rootManifest
+          ? JSON.parse(readFileSync(join(ROOT, rootManifest), 'utf8')).name
+          : undefined,
+        built: changed.filter(
+          p => p.startsWith(`${pluginDir}/`) && isBuilt(within(p))
+        ),
+        versions,
+      };
+    });
 };
 
 /** Of develop and the RC branches, the one this branch left most recently. */
@@ -242,5 +251,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     `\nA plugin's version is its release; a changed build needs a new one, once per PR.\n` +
       `Fix: cd frontend && pnpm check:plugin-versions ${ref === 'HEAD^1' ? '' : `--base ${ref} `}--fix`
   );
+  // In CI a PR that did bump fails here when another PR released the same
+  // number first. Locally --fix compares with the fork point, which predates
+  // that release, so it finds nothing to do until the base is merged in.
+  if (ref === 'HEAD^1') {
+    const target = process.env.GITHUB_BASE_REF ?? 'the base branch';
+    console.error(
+      `Bumped already? Another PR has released that number since: merge ${target} into your branch, then run the fix.`
+    );
+  }
   process.exit(1);
 }

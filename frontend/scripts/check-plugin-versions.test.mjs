@@ -4,8 +4,21 @@ import {
   isBuilt,
   isCurrentManifest,
   isNewer,
+  isPublished,
   needingBump,
 } from './check-plugin-versions.mjs';
+
+describe('which plugins publish-bundles releases', () => {
+  it.each(['plugins/afghanistan', '../private/plugins/cook_islands'])(
+    '%s is',
+    dir => expect(isPublished(dir)).toBe(true)
+  );
+
+  it.each(['plugins/examples/hello_world', '../plugins/examples/api_too_new'])(
+    '%s is not',
+    dir => expect(isPublished(dir)).toBe(false)
+  );
+});
 
 describe('what goes into a plugin bundle', () => {
   it.each([
