@@ -1,22 +1,44 @@
 import { describe, expect, it } from 'vitest';
+import type { AllocationPreferences } from '@/domain/allocation';
 import {
-  availableUnits,
+  addAmount,
   buildCards,
+  fillableBatches,
+  priceOf,
+  removeLine,
+  setAmount,
   stockState,
+  unitsIn,
   type CardItem,
+  type ListLine,
 } from './simpleDispensingLogic';
 
-const item = (
-  id: string,
-  batches: { availableNumberOfPacks: number; packSize: number }[] = []
-): CardItem => ({
+const PREFS: AllocationPreferences = {
+  expiredStockPreventIssue: false,
+  expiredStockIssueThreshold: 0,
+  manageVvmStatusForStock: false,
+  sortByVvmStatusThenExpiry: false,
+};
+const TODAY = new Date('2026-11-10T00:00:00Z');
+
+type Batch = CardItem['availableBatches']['nodes'][number];
+const batch = (id: string, over: Partial<Batch> = {}): Batch => ({
+  id,
+  availableNumberOfPacks: 10,
+  packSize: 10,
+  sellPricePerPack: 1,
+  expiryDate: '2030-01-01',
+  onHold: false,
+  location: null,
+  vvmStatus: null,
+  ...over,
+});
+
+const item = (id: string, batches: Batch[] = []): CardItem => ({
   id,
   name: `Item ${id}`,
   unitName: 'Tablet',
-  availableBatches: {
-    __typename: 'StockLineConnector',
-    nodes: batches.map((batch, i) => ({ id: `${id}-${i}`, ...batch })),
-  },
+  availableBatches: { __typename: 'StockLineConnector', nodes: batches },
 });
 
 describe('buildCards', () => {
@@ -27,7 +49,9 @@ describe('buildCards', () => {
         { itemId: 'a', amounts: [] },
       ],
       // The query returns items in its own order, not the store's.
-      [item('a'), item('b')]
+      [item('a'), item('b')],
+      PREFS,
+      TODAY
     );
     expect(cards.map(card => card.item.id)).toEqual(['b', 'a']);
   });
@@ -38,34 +62,140 @@ describe('buildCards', () => {
         { itemId: 'gone', amounts: [10] },
         { itemId: 'a', amounts: [5] },
       ],
-      [item('a')]
+      [item('a')],
+      PREFS,
+      TODAY
     );
     expect(cards.map(card => card.item.id)).toEqual(['a']);
   });
 
-  it('carries the usual amounts in the order set', () => {
+  it('counts only the stock dispensing may take', () => {
     const [card] = buildCards(
-      [{ itemId: 'a', amounts: [30, 10, 20] }],
-      [item('a')]
+      [{ itemId: 'a', amounts: [10] }],
+      [
+        item('a', [
+          batch('good', { availableNumberOfPacks: 2, packSize: 100 }),
+          batch('half', { availableNumberOfPacks: 0.5, packSize: 10 }),
+          batch('held', { onHold: true }),
+        ]),
+      ],
+      PREFS,
+      TODAY
     );
-    expect(card?.medicine.amounts).toEqual([30, 10, 20]);
+    expect(card?.stock).toBe(205);
   });
 });
 
-describe('availableUnits', () => {
-  it('sums available packs times pack size across batches', () => {
-    expect(
-      availableUnits(
-        item('a', [
-          { availableNumberOfPacks: 2, packSize: 100 },
-          { availableNumberOfPacks: 0.5, packSize: 10 },
-        ])
-      )
-    ).toBe(205);
+describe('fillableBatches', () => {
+  it('OMS-REG-DIS-12.34: stock on hold, in a held location or expired is not available', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('held', { onHold: true }),
+        batch('held-location', { location: { onHold: true } }),
+        batch('expired', { expiryDate: '2026-01-01' }),
+        batch('good'),
+      ]),
+      PREFS,
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['good']);
   });
 
-  it('is zero with no available batches', () => {
-    expect(availableUnits(item('a'))).toBe(0);
+  it('takes the earliest expiry first', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('later', { expiryDate: '2029-01-01' }),
+        batch('sooner', { expiryDate: '2027-01-01' }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['sooner', 'later']);
+  });
+
+  it('leaves out batches with nothing available', () => {
+    expect(
+      unitsIn(
+        fillableBatches(
+          item('a', [batch('empty', { availableNumberOfPacks: 0 })]),
+          PREFS,
+          TODAY
+        )
+      )
+    ).toBe(0);
+  });
+});
+
+describe('priceOf', () => {
+  it('OMS-REG-DIS-12.26: prices the batches first expiry first, each at its own sell price', () => {
+    const batches = fillableBatches(
+      item('a', [
+        // 10 units at 2 per pack of 10 expire later; 5 at 3 per pack of 5
+        // expire first, so they go first.
+        batch('later', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          sellPricePerPack: 2,
+          expiryDate: '2029-01-01',
+        }),
+        batch('sooner', {
+          availableNumberOfPacks: 1,
+          packSize: 5,
+          sellPricePerPack: 3,
+          expiryDate: '2027-01-01',
+        }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    // 5 from "sooner" (one pack, 3) + 5 from "later" (half a pack, 1).
+    expect(priceOf(batches, 10)).toBeCloseTo(4);
+  });
+});
+
+describe('the list', () => {
+  it('OMS-REG-DIS-12.24: a press starts a line for the medicine', () => {
+    expect(addAmount([], 'a', 10, 100)).toEqual([{ itemId: 'a', units: 10 }]);
+  });
+
+  it('OMS-REG-DIS-12.25: a press for a medicine already on the list adds to its line', () => {
+    const lines: ListLine[] = [
+      { itemId: 'a', units: 20 },
+      { itemId: 'b', units: 5 },
+    ];
+    expect(addAmount(lines, 'a', 20, 100)).toEqual([
+      { itemId: 'a', units: 40 },
+      { itemId: 'b', units: 5 },
+    ]);
+  });
+
+  it('a press past what the card has leaves the list as it was', () => {
+    const lines: ListLine[] = [{ itemId: 'a', units: 90 }];
+    expect(addAmount(lines, 'a', 20, 100)).toEqual(lines);
+  });
+
+  it('OMS-REG-DIS-12.29: an amount above what is available is brought down to it', () => {
+    expect(setAmount([{ itemId: 'a', units: 10 }], 'a', 500, 120)).toEqual([
+      { itemId: 'a', units: 120 },
+    ]);
+  });
+
+  it('an amount of zero, or none, leaves the line as it was', () => {
+    const lines: ListLine[] = [{ itemId: 'a', units: 10 }];
+    expect(setAmount(lines, 'a', 0, 100)).toEqual(lines);
+    expect(setAmount(lines, 'a', undefined, 100)).toEqual(lines);
+  });
+
+  it('OMS-REG-DIS-12.30: removing a line takes its medicine off the list', () => {
+    expect(
+      removeLine(
+        [
+          { itemId: 'a', units: 10 },
+          { itemId: 'b', units: 5 },
+        ],
+        'a'
+      )
+    ).toEqual([{ itemId: 'b', units: 5 }]);
   });
 });
 

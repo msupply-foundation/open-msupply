@@ -30,3 +30,74 @@
 .another {
   grid-column: 4;
 }
+
+/* The cards beside the list: the cards take the room, the list a narrower
+   column at the inline end. Wraps to the list under the cards where the body
+   is too narrow for both — intrinsic, no breakpoint. */
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-5);
+}
+
+.cardsColumn {
+  flex: 999 1 34rem;
+  min-inline-size: 0;
+}
+
+/* Stays in view as the cards scroll. */
+.listColumn {
+  position: sticky;
+  inset-block-start: 0;
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.listEmpty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Name over the amount, price and remove button, so a long name never
+   squeezes the amount field. */
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'name name name'
+    'amount price remove';
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.lineName {
+  grid-area: name;
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.linePrice {
+  grid-area: price;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--color-border-value);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}

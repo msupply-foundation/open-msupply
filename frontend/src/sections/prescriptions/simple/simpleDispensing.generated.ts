@@ -25,6 +25,16 @@ export type SimpleDispensingItemsResult = {
   id: string;
   availableNumberOfPacks: number;
   packSize: number;
+  sellPricePerPack: number;
+  expiryDate: string | null;
+  onHold: boolean;
+  location: {
+  onHold: boolean;
+} | null;
+  vvmStatus: {
+  unusable: boolean;
+  priority: number;
+} | null;
 }>;
 };
 }>;
@@ -32,5 +42,5 @@ export type SimpleDispensingItemsResult = {
 };
 
 export const SimpleDispensingItems = {
-  query: "query simpleDispensingItems($storeId: String!, $ids: [String!]!, $page: PaginationInput) {\n  items(\n    storeId: $storeId\n    filter: {id: {equalAny: $ids}, type: {equalTo: STOCK}, isActive: true, isVisibleOrOnHand: true}\n    page: $page\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        name\n        unitName\n        availableBatches(storeId: $storeId) {\n          ... on StockLineConnector {\n            __typename\n            nodes {\n              id\n              availableNumberOfPacks\n              packSize\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query simpleDispensingItems($storeId: String!, $ids: [String!]!, $page: PaginationInput) {\n  items(\n    storeId: $storeId\n    filter: {id: {equalAny: $ids}, type: {equalTo: STOCK}, isActive: true, isVisibleOrOnHand: true}\n    page: $page\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        name\n        unitName\n        availableBatches(storeId: $storeId) {\n          ... on StockLineConnector {\n            __typename\n            nodes {\n              id\n              availableNumberOfPacks\n              packSize\n              sellPricePerPack\n              expiryDate\n              onHold\n              location {\n                onHold\n              }\n              vvmStatus {\n                unusable\n                priority\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SimpleDispensingItemsResult, SimpleDispensingItemsVariables>;

@@ -15,13 +15,17 @@ import styles from './SimpleDispensing.module.css';
  */
 export const MedicineCardView = (props: {
   card: MedicineCard;
+  /** Units still available: the card's stock less what the list holds. */
+  available: number;
+  /** Whether anything can be added yet: someone has been chosen. */
+  canAdd: boolean;
   /** A usual amount pressed. */
   onAmount: (card: MedicineCard, amount: number) => void;
   /** Another amount asked for. */
   onAskAmount: (card: MedicineCard) => void;
 }) => {
-  const state = () =>
-    stockState(props.card.available, props.card.medicine.amounts);
+  const state = () => stockState(props.available, props.card.medicine.amounts);
+  const offered = () => props.canAdd && state() !== 'out';
   const unit = () => props.card.item.unitName ?? '';
   const name = () => props.card.item.name;
 
@@ -53,7 +57,7 @@ export const MedicineCardView = (props: {
                 leaves no gap. */}
             <StatusBadge
               label={t('label.low-stock-left', {
-                quantity: roundedText(props.card.available),
+                quantity: roundedText(props.available),
                 unit: unit(),
               }).replace(/\s+/g, ' ')}
               tone="warning"
@@ -71,7 +75,9 @@ export const MedicineCardView = (props: {
             <Button
               variant="secondary"
               data-testid="amount-button"
-              disabled={state() === 'out'}
+              // More than is left would take the list past what can be given
+              // out (rules › the Simple screen).
+              disabled={!offered() || amount > props.available}
               aria-label={t('label.give-amount-of', {
                 quantity: roundedText(amount),
                 unit: unit(),
@@ -91,7 +97,7 @@ export const MedicineCardView = (props: {
           }
           label={t('label.give-another-amount-of', { item: name() })}
           data-testid="another-amount-button"
-          disabled={state() === 'out'}
+          disabled={!offered()}
           onClick={() => props.onAskAmount(props.card)}
         />
       </div>
