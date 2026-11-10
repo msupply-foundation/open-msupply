@@ -13,16 +13,6 @@
   color: var(--text-secondary);
 }
 
-/* Low stock says so in words; the marker lets a low card be spotted down the
-   grid without reading it. */
-.low {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--warning-main);
-  font-weight: var(--weight-medium);
-}
-
 /* The usual amounts, then the another-amount button, on one row. Equal
    columns so the buttons line up from card to card, and pushed to the card's
    bottom edge so they line up across a row of cards too, however many lines

@@ -3,8 +3,8 @@ import { roundedText, t } from '@/intl';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
-import { Badge } from '@/ui/elements/feedback/Badge';
-import { AlertTriangleIcon, PlusCircleIcon } from '@/ui/icons';
+import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
+import { AlertCircleIcon, AlertTriangleIcon, PlusCircleIcon } from '@/ui/icons';
 import { stockState, type MedicineCard } from './simpleDispensingLogic';
 import styles from './SimpleDispensing.module.css';
 
@@ -35,23 +35,31 @@ export const MedicineCardView = (props: {
         <span class={styles.unit} data-testid="common-medicine-unit">
           {unit()}
         </span>
+        {/* Both stock states are the same row-status badge, so they read
+            as one kind of thing: the tone escalates and the words say which
+            (never colour alone). */}
         <Switch>
           <Match when={state() === 'out'}>
-            <span data-testid="common-medicine-stock">
-              <Badge label={t('label.out-of-stock')} tone="error" />
-            </span>
+            <StatusBadge
+              label={t('label.out-of-stock')}
+              tone="error"
+              icon={<AlertCircleIcon />}
+              testId="common-medicine-stock"
+            />
           </Match>
           <Match when={state() === 'low'}>
-            <span class={styles.low} data-testid="common-medicine-stock">
-              <AlertTriangleIcon />
-              {/* The unit as the store set it up, singular or plural: units
-                  are never pluralised by the app (#666). An item with no
-                  unit leaves no gap. */}
-              {t('label.low-stock-left', {
+            {/* The unit as the store set it up, singular or plural: units
+                are never pluralised by the app (#666). An item with no unit
+                leaves no gap. */}
+            <StatusBadge
+              label={t('label.low-stock-left', {
                 quantity: roundedText(props.card.available),
                 unit: unit(),
               }).replace(/\s+/g, ' ')}
-            </span>
+              tone="warning"
+              icon={<AlertTriangleIcon />}
+              testId="common-medicine-stock"
+            />
           </Match>
         </Switch>
       </div>
