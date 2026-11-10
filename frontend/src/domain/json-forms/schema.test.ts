@@ -5,6 +5,7 @@ import {
   dateArgumentValue,
   dateFieldBounds,
   dateFieldViolation,
+  dateRangeViolation,
   instantToLocalDate,
   parseArgumentSchema,
   periodSearchWrites,
@@ -498,7 +499,24 @@ describe('cleanArguments — DateRange', () => {
   const fields = parseArgumentSchema(dateRangeSchema);
 
   it('parses the DateRange control to the dateRange kind', () => {
-    expect(byKey(fields, 'startDatetime').kind).toBe('dateRange');
+    expect(byKey(fields, 'startDatetime')).toEqual({
+      kind: 'dateRange',
+      key: 'startDatetime',
+      label: '',
+      nullable: true,
+      required: false,
+      requiredBothDates: false,
+      disableFuture: false,
+    });
+  });
+
+  it('never blocks OK on an optional range left empty', () => {
+    const range = byKey(fields, 'startDatetime');
+    if (range.kind !== 'dateRange') throw new Error('expected dateRange');
+    expect(dateRangeViolation(range, undefined)).toBeUndefined();
+    expect(
+      dateRangeViolation(range, { start: '2026-07-01', end: '' })
+    ).toBeUndefined();
   });
 
   it('parses PatientProgramSearch to the program kind, carrying required', () => {
@@ -546,6 +564,75 @@ describe('cleanArguments — DateRange', () => {
     expect(
       cleanArguments(fields, { startDatetime: { start: '', end: '' } })
     ).toEqual({});
+  });
+});
+
+// Liberia inventory-adjustments shape: a required DateRange with both options.
+const requiredDateRangeSchema = {
+  jsonSchema: {
+    allOf: [{ $ref: '#/definitions/Filters' }],
+    definitions: {
+      Filters: {
+        properties: {
+          programId: { type: 'string' },
+          dateRange: { type: ['object'], format: 'date-time' },
+        },
+        required: ['programId', 'dateRange'],
+      },
+    },
+  },
+  uiSchema: {
+    elements: [
+      {
+        type: 'DateRange',
+        scope: '#/properties/dateRange',
+        label: '',
+        options: { disableFuture: true, requiredBothDates: true },
+      },
+    ],
+  },
+};
+
+describe('dateRangeViolation', () => {
+  const range = byKey(
+    parseArgumentSchema(requiredDateRangeSchema),
+    'dateRange'
+  );
+  if (range.kind !== 'dateRange') throw new Error('expected dateRange');
+
+  it('carries required and the element options through the parse', () => {
+    expect(range).toMatchObject({
+      required: true,
+      requiredBothDates: true,
+      disableFuture: true,
+    });
+  });
+
+  it('blocks OK on a required range left empty (OMS-REG-RPT-10.13)', () => {
+    expect(dateRangeViolation(range, undefined)).toBe('required');
+  });
+
+  it('blocks OK on a range with one end picked (OMS-REG-RPT-10.44)', () => {
+    expect(dateRangeViolation(range, { start: '2026-11-01', end: '' })).toBe(
+      'bothDates'
+    );
+    expect(dateRangeViolation(range, { start: '', end: '2026-11-30' })).toBe(
+      'bothDates'
+    );
+  });
+
+  it('lets a complete range through', () => {
+    expect(
+      dateRangeViolation(range, { start: '2026-11-01', end: '2026-11-30' })
+    ).toBeUndefined();
+  });
+
+  it('allows one end when the element does not ask for both', () => {
+    const oneEndOk = { ...range, requiredBothDates: false };
+    expect(
+      dateRangeViolation(oneEndOk, { start: '2026-11-01', end: '' })
+    ).toBeUndefined();
+    expect(dateRangeViolation(oneEndOk, undefined)).toBe('required');
   });
 });
 

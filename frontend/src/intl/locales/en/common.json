@@ -451,6 +451,7 @@
   "error.customer-not-found": "Customer not found",
   "error.database-error": "Database error",
   "error.date-in-future": "The date cannot be in the future.",
+  "error.date-range-both-required": "Pick both a start and an end date.",
   "error.date-in-past": "Date is in the past",
   "error.date_disableFuture": "Date must not be in the future",
   "error.date_disablePast": "Date must not be in the past",
