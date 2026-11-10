@@ -100,12 +100,6 @@ export const createPatientEditor = (
     else validation.arm();
   };
 
-  // The patient by identity: `params.node` also notifies when its read changes
-  // state with the same value — a re-read starting keeps the record from before
-  // it showing — so the seed effect listens to this memo, not to `params.node`
-  // directly (#2025).
-  const loaded = createMemo(params.node);
-
   // Seed, and re-seed, from a patient of a different id than the one already
   // seeded — never from a fresh read of the same patient, which would wipe an
   // unsaved edit. A different patient also drops any saved draft, which
@@ -113,7 +107,7 @@ export const createPatientEditor = (
   // re-read) is doSave's, so the draft keeps showing what was saved until that
   // read lands.
   createEffect(
-    on(loaded, n => {
+    on(params.node, n => {
       if (n && n.id !== seededId()) {
         const seed = seedDraft(n);
         setEdit(seed);
