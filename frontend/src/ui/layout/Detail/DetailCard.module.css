@@ -41,8 +41,12 @@
   flex-shrink: 0;
 }
 
+/* Grows into any height the card is given (a CardGrid with equalHeight), so
+   the caller can push its last content to the card's bottom edge. With no
+   extra height it changes nothing. */
 .body {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-4);
 }

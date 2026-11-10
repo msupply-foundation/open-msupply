@@ -100,7 +100,10 @@ const SimpleDispensingPage: Component = () => {
           {list => (
             // At most three columns, never narrower than three amount
             // buttons and the another-amount button need.
-            <CardGrid minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))">
+            <CardGrid
+              equalHeight
+              minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
+            >
               <For each={list()}>
                 {card => (
                   // Pressing an amount dispenses it: the next step on #2188.

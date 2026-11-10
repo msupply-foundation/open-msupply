@@ -24,13 +24,15 @@
 }
 
 /* The usual amounts, then the another-amount button, on one row. Equal
-   columns so the buttons line up from card to card. */
+   columns so the buttons line up from card to card, and pushed to the card's
+   bottom edge so they line up across a row of cards too, however many lines
+   a medicine's name takes. */
 .amounts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   align-items: center;
   gap: var(--space-2);
-  margin-block-start: var(--space-3);
+  margin-block-start: auto;
 }
 
 /* The another-amount button always takes the last column, so a card with fewer
