@@ -20,6 +20,8 @@ import {
 } from './barcodeSources/manual';
 import styles from './ManualScanInput.module.css';
 
+type PromptMode = ReturnType<typeof manualPromptMode>;
+
 /** The open modal <dialog> on top, if any; later in the document wins. */
 const topModalDialog = (): HTMLDialogElement | undefined =>
   [...document.querySelectorAll('dialog')]
@@ -66,45 +68,58 @@ export const ManualScanInput = () => {
     onCleanup(() => observer.disconnect());
   });
 
+  // Each new ask starts from the full panel, not the chip a click elsewhere
+  // left it as: the prompt opening, and a Scan once taking over the prompt
+  // while it's already open to listen. A computation, so the input is
+  // rendered again before the effect below focuses it.
+  createComputed<PromptMode>(was => {
+    const mode = manualPromptMode();
+    if (mode !== was) setExpanded(true);
+    return mode;
+  });
+
   // The top layer is entered by showPopover(), not by CSS, so the open signal
   // has to drive it imperatively — and again for each new host, since moving
   // hosts mounts a fresh panel. Both calls throw if the element is already in
   // the requested state (a double-open, or a UA-dismissed panel we then ask
-  // to hide), and neither case is worth failing on. Only opening takes focus:
-  // a dialog opening under the prompt has just put focus where it wants it.
+  // to hide), and neither case is worth failing on. Only a new ask takes
+  // focus: a dialog opening under the prompt has just put focus where it
+  // wants it.
   //
   // Hidden while the re-login modal is up: following the topmost modal would
   // otherwise put the prompt over it, and a scan typed there would reach the
   // screen behind before anyone has logged back in.
-  createEffect<boolean>(wasOpen => {
+  createEffect<PromptMode>(was => {
     const open = manualPromptOpen() && !reLoginRequired();
+    const ask = open ? manualPromptMode() : undefined;
     const el = panel();
-    if (!el) return wasOpen;
+    if (!el) return was;
     try {
       if (open) el.showPopover();
       else el.hidePopover();
     } catch {
       /* already in that state */
     }
-    if (open && !wasOpen) {
+    if (ask && ask !== was) {
       setValue('');
       input?.focus();
     }
     // The next opening starts expanded, with the input already rendered for
-    // the focus above.
+    // the focus above — after re-login too, when the ask itself is unchanged.
     if (!open) setExpanded(true);
-    return open;
-  }, false);
+    return ask;
+  }, undefined);
 
   // Not in use = the user has clicked somewhere else. Drawn over a line
   // editor, the full panel covers the editor's corner (its notices among it),
   // so it shrinks to a chip there until asked for again. A pointer, not
   // focus: focus also moves without the user leaving the panel — a dialog
   // opening under it focuses its own first field, and a screenshot tool takes
-  // the window's focus — and neither should fold it away.
+  // the window's focus — and neither should fold it away. Not while hidden
+  // for re-login either, or logging back in would bring back the chip.
   createEffect(() => {
     const el = panel();
-    if (!el || !expanded() || !manualPromptOpen()) return;
+    if (!el || !expanded() || !manualPromptOpen() || reLoginRequired()) return;
     const onPointerDown = (event: PointerEvent) => {
       if (!(event.target instanceof Node) || !el.contains(event.target))
         setExpanded(false);
@@ -128,10 +143,17 @@ export const ManualScanInput = () => {
     // the scan has just raised something on screen (an editor, a notice in
     // one) that the full panel would sit over. Focus goes to the chip, so the
     // next scan is Enter away from the keyboard — unless the scan opened a
-    // dialog, which has taken focus already.
+    // dialog, which has taken focus already. A one-shot is done after one
+    // scan and has closed the prompt, so focus goes back as on dismiss.
     setValue('');
+    if (!manualPromptOpen()) return restoreFocus();
     setExpanded(false);
     chip?.focus();
+  };
+
+  const restoreFocus = () => {
+    if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    returnFocus = undefined;
   };
 
   const dismiss = () => {
@@ -141,8 +163,7 @@ export const ManualScanInput = () => {
     // do-the-right-thing helper, so both paths stay traceable.
     if (manualPromptMode() === 'listening') void stopListening();
     else cancelManualScan();
-    if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
-    returnFocus = undefined;
+    restoreFocus();
   };
 
   // Keyed, so a new host mounts a new panel; the typed value lives above it
