@@ -66,3 +66,15 @@ _Author to complete._
 
 - _(e.g.)_ I didn't test sync to older versions of open-mSupply, would be good if we QA could run a backwards compatibility check
 - _(e.g.)_ I didn't test on android, as I don't expect it to be impacted by this change
+
+# 📃 Documentation
+
+<!--
+Tick one. A change users can see or do differently needs the user docs updated in msupply_docs:
+open a draft docs PR against `staging` (`/update-user-docs` can draft it) and label this PR `docs: external`.
+Product reviews, finishes and merges the docs PR. See docs/content/process/documentation.
+-->
+
+- [ ] **Docs PR:** <!-- link to the msupply_docs PR -->
+- [ ] **Part of an epic**, docs covered there: <!-- link the epic, or the docs PR that will cover it -->
+- [ ] **No user docs needed**: nothing a user sees or does changes
