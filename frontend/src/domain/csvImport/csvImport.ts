@@ -3,6 +3,8 @@
 // how a number and a date cell are read, and what blocks a run. Each import
 // keeps its own columns, row shape and row rules beside its modal.
 
+import { calendarDateToDate } from '../../intl/calendarDate';
+
 /** Only a comma-separated-values file is accepted, judged by its NAME. */
 export const isCsvFileName = (fileName: string): boolean =>
   fileName.trim().toLowerCase().endsWith('.csv');
@@ -79,7 +81,7 @@ export const parseImportNumber = (
 };
 
 /**
- * A date cell → the ISO day the wire wants, or null. Day-first with `/`, `-`
+ * A date cell → the calendar date the wire wants, or null. Day-first with `/`, `-`
  * or `.` (what a spreadsheet hands back under most locales), or ISO, which
  * leads with its four-digit year. `MM/DD/YYYY` is deliberately NOT read:
  * `05/10/2026` is a real date under both readings, so it falls to the caller's
@@ -99,12 +101,10 @@ export const parseImportDate = (value: string): string | null => {
   if (!dayNumber || !monthNumber || !yearNumber) return null;
   if (monthNumber < 1 || monthNumber > 12 || dayNumber < 1 || dayNumber > 31)
     return null;
-  const date = new Date(yearNumber, monthNumber - 1, dayNumber);
-  // Rejects an impossible day that would otherwise roll over (31/02/2024).
-  if (date.getMonth() !== monthNumber - 1 || date.getDate() !== dayNumber)
-    return null;
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${yearNumber}-${pad(monthNumber)}-${pad(dayNumber)}`;
+  const isoDay = `${yearNumber}-${pad(monthNumber)}-${pad(dayNumber)}`;
+  // Rejects an impossible day that would otherwise roll over (31/02/2024).
+  return calendarDateToDate(isoDay) ? isoDay : null;
 };
 
 export type ImportRowVerdict = { errors: string[]; warnings: string[] };

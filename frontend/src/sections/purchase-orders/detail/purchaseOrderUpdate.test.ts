@@ -93,25 +93,45 @@ describe('updatePurchaseOrder', () => {
       await updatePurchaseOrder('s1', { id: 'po-1', status: 'SENT' })
     ).toEqual({
       kind: 'error',
-      message: 'Items cannot be ordered',
+      message: 'error.cannot-order-items',
       blockedLines: ['l1', 'l3'],
     });
   });
 
-  it('reports the other typed refusal with no lines to mark', async () => {
+  it.each([
+    ['InboundShipmentsNotVerified', 'error.inbound-shipments-not-verified'],
+    ['InboundShipmentsInProgress', 'error.inbound-shipments-in-progress'],
+  ])(
+    'words the %s refusal from the locale, not the server, with no lines to mark',
+    async (errorType, key) => {
+      fetchMock.mockResolvedValue(
+        refused(
+          'updatePurchaseOrder',
+          'UpdatePurchaseOrderError',
+          errorType,
+          'Server English'
+        )
+      );
+      expect(
+        await updatePurchaseOrder('s1', { id: 'po-1', status: 'FINALISED' })
+      ).toEqual({ kind: 'error', message: key, blockedLines: undefined });
+    }
+  );
+
+  it('falls back to the description for a typed refusal it has no key for', async () => {
     fetchMock.mockResolvedValue(
       refused(
         'updatePurchaseOrder',
         'UpdatePurchaseOrderError',
-        'InboundShipmentsNotVerified',
-        'Shipments not verified'
+        'SomeNewRefusal',
+        'Server English'
       )
     );
     expect(
       await updatePurchaseOrder('s1', { id: 'po-1', status: 'FINALISED' })
     ).toEqual({
       kind: 'error',
-      message: 'Shipments not verified',
+      message: 'Server English',
       blockedLines: undefined,
     });
   });

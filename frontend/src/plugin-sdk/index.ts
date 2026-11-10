@@ -272,6 +272,7 @@ export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
 export type {
   DateRangeFieldProps,
+  CalendarDateRange,
   IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 
@@ -743,7 +744,10 @@ export { gated } from '../api/gated';
 export { allocateProgramNumber, useActiveProgramEvents } from './programs';
 export type { ProgramEventView, ActiveProgramEventsInput } from './programs';
 export { usePreviousEncounter } from './encounters';
-export type { PreviousEncounterInput, PreviousEncounterView } from './encounters';
+export type {
+  PreviousEncounterInput,
+  PreviousEncounterView,
+} from './encounters';
 export {
   createPrescription,
   useItemBatches,

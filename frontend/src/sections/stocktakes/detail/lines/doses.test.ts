@@ -5,7 +5,8 @@ import { dosesPerUnit, dosesCounted, type DosesLine } from './doses';
 // preference on, dose equivalents display for vaccine items' counts (and
 // nowhere when it is off). The preference gate + rendering are exercised
 // elsewhere; here we pin the pure per-line dose formula that feeds it:
-//   doses-per-unit = packSize × item.doses; doses-counted = counted × that.
+//   doses-per-unit = item.doses (whatever the pack size);
+//   doses-counted = counted packs × packSize × doses-per-unit.
 // A null result is what the column renders blank, so the null cases below are
 // the "nowhere" half of the behaviour for a non-vaccine line.
 
@@ -17,13 +18,16 @@ const line = (over: Partial<DosesLine> = {}): DosesLine => ({
 });
 
 describe('OMS-REG-INV-03.64 — dose equivalents', () => {
-  it('doses-per-unit is packSize × item.doses for a vaccine line', () => {
+  it("doses-per-unit is the item's doses per unit, not per pack (pack size 10 still reads 2)", () => {
     expect(
       dosesPerUnit(line({ packSize: 10, item: { isVaccine: true, doses: 2 } }))
-    ).toBe(20);
+    ).toBe(2);
+    expect(
+      dosesPerUnit(line({ packSize: 1, item: { isVaccine: true, doses: 2 } }))
+    ).toBe(2);
   });
 
-  it('doses-counted is counted packs × doses-per-unit', () => {
+  it('doses-counted is counted packs × pack size × doses-per-unit', () => {
     expect(dosesCounted(line({ countedNumberOfPacks: 3 }))).toBe(60);
   });
 
@@ -33,8 +37,8 @@ describe('OMS-REG-INV-03.64 — dose equivalents', () => {
     expect(dosesCounted(nonVaccine)).toBeNull();
   });
 
-  it('is blank (null) when the pack size is unknown', () => {
-    expect(dosesPerUnit(line({ packSize: null }))).toBeNull();
+  it('doses-counted is blank (null) when the pack size is unknown; doses-per-unit still shows', () => {
+    expect(dosesPerUnit(line({ packSize: null }))).toBe(2);
     expect(dosesCounted(line({ packSize: null }))).toBeNull();
   });
 
@@ -49,9 +53,7 @@ describe('OMS-REG-INV-03.64 — dose equivalents', () => {
 
 describe('D58 — unconfigured doses-per-unit counts as 1, not 0', () => {
   it('treats item.doses = 0 as 1 in doses-per-unit', () => {
-    expect(dosesPerUnit(line({ item: { isVaccine: true, doses: 0 } }))).toBe(
-      10
-    );
+    expect(dosesPerUnit(line({ item: { isVaccine: true, doses: 0 } }))).toBe(1);
   });
 
   it('tracks a live-edited count for a vaccine with no configured doses-per-unit, never pinned at 0', () => {

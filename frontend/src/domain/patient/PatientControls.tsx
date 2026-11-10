@@ -4,7 +4,7 @@ import { FormRow } from '../../ui/layout/Form/FormRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { DateField } from '../../ui/elements/inputs/DateField';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
-import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../intl/calendarDate';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';
@@ -180,7 +180,7 @@ export interface DateOfBirthControlProps {
 export const DateOfBirthControl = (
   props: DateOfBirthControlProps
 ): JSX.Element => {
-  const today = localTodayIso();
+  const today = todayCalendarDate();
   const age = () => ageFromDob(props.value);
 
   // Which date of birth an age entry produced, and on which patient. It
@@ -366,7 +366,7 @@ export const DeceasedControls = (props: DeceasedControlsProps): JSX.Element => (
     <Show when={props.isDeceased}>
       <DateField
         label={t('label.date-of-death')}
-        max={localTodayIso()}
+        max={todayCalendarDate()}
         value={props.dateOfDeath}
         error={props.error}
         disabled={props.disabled}

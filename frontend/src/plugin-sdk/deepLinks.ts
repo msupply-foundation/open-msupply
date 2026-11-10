@@ -44,13 +44,14 @@
  *
  * Eager-surface note (kdd/bundling § the SDK-eager rule), as measured in
  * kdd/bundle-size-by-pr.md (#304): this module needs only the two small date
- * helpers (`addDays`, `dateToIsoDate`), which arrive through the existing
+ * helpers (`addDays`, `dateToCalendarDate`), which arrive through the existing
  * shared dateTimeConvert chunk — one the app entry already loads at boot — so
  * linking it costs the SDK no new download. The module itself splits out as a
  * small shared chunk linked by both importers (the SDK entry and the
  * dashboard's statLinks), fetched with whichever side loads first.
  */
-import { addDays, dateToIsoDate } from '../ui/elements/inputs/dateTimeConvert';
+import { addDays } from '../ui/elements/inputs/dateTimeConvert';
+import { dateToCalendarDate } from '../intl/calendarDate';
 import type { StockLinesVariables } from '../sections/stock/list/stock.generated';
 
 // The stock list filter object, exactly the generated GraphQL filter shape —
@@ -92,11 +93,11 @@ export const listPath = (path: string, filter?: object): string => {
   return `${path}?query=${encodeURIComponent(JSON.stringify({ filter }))}`;
 };
 
-// An inclusive expiry window over the `Date` scalar (plain ISO days — the
+// An inclusive expiry window over the `NaiveDate` scalar (calendar dates — the
 // stock list's expiryDate field), open-ended where a bound is null.
 const dateRange = (from: Date | null, to: Date | null) => ({
-  ...(from ? { afterOrEqualTo: dateToIsoDate(from) } : {}),
-  ...(to ? { beforeOrEqualTo: dateToIsoDate(to) } : {}),
+  ...(from ? { afterOrEqualTo: dateToCalendarDate(from) } : {}),
+  ...(to ? { beforeOrEqualTo: dateToCalendarDate(to) } : {}),
 });
 
 // ── Task-list targets ────────────────────────────────────────────────────────

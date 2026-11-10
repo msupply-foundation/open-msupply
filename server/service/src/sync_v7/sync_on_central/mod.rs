@@ -723,13 +723,20 @@ mod tests {
     use super::*;
     use crate::{
         sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
+        sync_v7::sync::SyncRecordV7,
         test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use httpmock::MockServer;
     use repository::{
-        KeyType, KeyValueStoreRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+        ChangelogTableName, IntegrationResult, KeyType, KeyValueStoreRepository, LocationRow,
+        LocationRowRepository, PermissionType, RowActionType, StoreRow, StoreRowRepository,
+        SyncVersion, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+        UserStoreJoinRowRepository,
+        migrations::Version,
+        mock::{MockDataInserts, mock_store_a, mock_store_b, mock_user_account_a},
         test_db::setup_all,
     };
+    use serde_json::{json, to_value};
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
@@ -770,7 +777,11 @@ mod tests {
     }
 
     async fn setup(name: &str) -> (ServiceTestContext, Common) {
-        let context = setup_all_and_service_provider(name, MockDataInserts::none()).await;
+        setup_with(name, MockDataInserts::none()).await
+    }
+
+    async fn setup_with(name: &str, inserts: MockDataInserts) -> (ServiceTestContext, Common) {
+        let context = setup_all_and_service_provider(name, inserts).await;
         CentralServerConfig::set_is_central_server_on_startup();
         KeyValueStoreRepository::new(&context.connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
@@ -1353,6 +1364,207 @@ mod tests {
         .unwrap();
 
         assert_eq!(count, 0);
+    }
+
+    /// #1639: a site's v7 push can't create, change or remove user permissions on central.
+    /// The new rows are the shape from the issue: every record's outer `storeId` is the
+    /// site's own store, while the row inside names another site's store.
+    #[actix_rt::test]
+    async fn push_cannot_change_user_permissions() {
+        use ChangelogTableName::{Location, UserPermission, UserStoreJoin};
+        use RowActionType::{Delete, Upsert};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup_with(
+            "sync_v7_push_cannot_change_user_permissions",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+        let site_id = 1;
+        let user_id = mock_user_account_a().id;
+        // store_a is the pushing site's own store; store_b belongs to site 2.
+        let own_store_id = mock_store_a().id;
+        let other_store_id = mock_store_b().id;
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                site_id,
+                ..mock_store_a()
+            })
+            .unwrap();
+
+        // What central already holds, which the push tries to move and remove.
+        let existing_join = UserStoreJoinRow {
+            id: "existing_join".to_string(),
+            user_id: user_id.clone(),
+            store_id: own_store_id.clone(),
+            is_default: true,
+        };
+        let existing_permission = UserPermissionRow {
+            id: "existing_permission".to_string(),
+            user_id: user_id.clone(),
+            store_id: Some(own_store_id.clone()),
+            permission: PermissionType::StoreAccess,
+            context_id: None,
+        };
+        UserStoreJoinRowRepository::new(&connection)
+            .upsert_one(&existing_join)
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&existing_permission)
+            .unwrap();
+
+        let record = |table_name, record_id: &str, action, data| SyncRecordV7 {
+            cursor: 0,
+            record_id: record_id.to_string(),
+            table_name,
+            action,
+            data,
+            store_id: Some(own_store_id.clone()),
+            transfer_store_id: None,
+            patient_id: None,
+        };
+        let grant = |id: &str, permission| {
+            let row = UserPermissionRow {
+                id: id.to_string(),
+                user_id: user_id.clone(),
+                store_id: Some(other_store_id.clone()),
+                permission,
+                context_id: None,
+            };
+            record(UserPermission, id, Upsert, to_value(row).unwrap())
+        };
+        let location = LocationRow {
+            id: "pushed_location".to_string(),
+            name: "Shelf 1".to_string(),
+            code: "S1".to_string(),
+            store_id: own_store_id.clone(),
+            ..Default::default()
+        };
+
+        let records = vec![
+            // The batch from the issue.
+            record(
+                UserStoreJoin,
+                "pushed_join",
+                Upsert,
+                to_value(UserStoreJoinRow {
+                    id: "pushed_join".to_string(),
+                    user_id: user_id.clone(),
+                    store_id: other_store_id.clone(),
+                    is_default: false,
+                })
+                .unwrap(),
+            ),
+            grant("pushed_store_access", PermissionType::StoreAccess),
+            grant("pushed_server_admin", PermissionType::ServerAdmin),
+            grant("pushed_report", PermissionType::Report),
+            // Changing and removing rows central already has.
+            record(
+                UserStoreJoin,
+                &existing_join.id,
+                Upsert,
+                to_value(UserStoreJoinRow {
+                    store_id: other_store_id.clone(),
+                    ..existing_join.clone()
+                })
+                .unwrap(),
+            ),
+            record(UserPermission, &existing_permission.id, Delete, json!({})),
+            // An ordinary record for the site's own store, in the same batch.
+            record(
+                Location,
+                &location.id,
+                Upsert,
+                to_value(location.clone()).unwrap(),
+            ),
+        ];
+        let pushed = records.len() as i64;
+
+        let count = push(
+            service_provider.clone(),
+            common,
+            SyncBatchV7 {
+                site_id,
+                max_cursor: 0,
+                last_cursor_in_batch: 0,
+                // Not the last batch, so push doesn't start integration in the
+                // background; the test runs it below instead.
+                remaining: 1,
+                records,
+            },
+        )
+        .await
+        .unwrap();
+        assert_eq!(count, pushed);
+
+        integrate_for_site(&service_provider, site_id).unwrap();
+
+        // Nothing granted, moved or removed.
+        let permission_repo = UserPermissionRowRepository::new(&connection);
+        for id in [
+            "pushed_store_access",
+            "pushed_server_admin",
+            "pushed_report",
+        ] {
+            assert_eq!(permission_repo.find_one_by_id(id).unwrap(), None, "{id}");
+        }
+        assert_eq!(
+            permission_repo
+                .find_one_by_id(&existing_permission.id)
+                .unwrap(),
+            Some(existing_permission)
+        );
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_many_by_user_id(&user_id)
+                .unwrap(),
+            vec![existing_join]
+        );
+
+        // The ordinary record still integrates.
+        assert_eq!(
+            LocationRowRepository::new(&connection)
+                .find_one_by_id(&location.id)
+                .unwrap(),
+            Some(location)
+        );
+
+        let buffer_rows: Vec<_> = SyncBufferRepository::new(&connection)
+            .get_all()
+            .unwrap()
+            .into_iter()
+            .filter(|row| row.source_site_id == site_id)
+            .collect();
+        assert_eq!(buffer_rows.len() as i64, pushed);
+        for row in buffer_rows {
+            if row.table_name == Location.to_string() {
+                assert_eq!(
+                    row.integration_result,
+                    Some(IntegrationResult::Success),
+                    "{:?}",
+                    row.integration_error
+                );
+            } else {
+                assert_eq!(
+                    row.integration_result,
+                    Some(IntegrationResult::Ignored),
+                    "{} {}",
+                    row.table_name,
+                    row.record_id
+                );
+                assert!(
+                    row.integration_error
+                        .unwrap()
+                        .contains("only editable by the central site")
+                );
+            }
+        }
     }
 
     #[actix_rt::test]
