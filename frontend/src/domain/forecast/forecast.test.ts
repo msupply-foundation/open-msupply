@@ -4,16 +4,16 @@ import commonEn from '../../intl/locales/en/common.json';
 import {
   FORECAST_METHODS,
   ancillaryRatio,
-  annualTargetFormulaKey,
   courseTitle,
   forecastMethodLabel,
+  isOperator,
   populationSteps,
   principalItemLabel,
-  principalWastageDeduction,
-  supplyWastageAddition,
+  principalSteps,
   targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
+  type CalculationStep,
   type PopulationCourse,
 } from './forecast';
 
@@ -21,7 +21,21 @@ import {
 // forecast; rules › the Population method, the Ancillary ratio method). The
 // forecast itself is the server's (behavioural acceptance lives in the e2e/
 // suites, OMS-REG-REPL-11 / OMS-REG-REPL-17); these cover how its stored
-// figures are substituted into each step.
+// figures are laid out in each calculation step.
+
+// A step as "Name: [label value] op [label value] = result", a term carried
+// from an earlier step marked ^.
+const read = (steps: CalculationStep[]): string[] =>
+  steps.map(
+    step =>
+      `${step.name}: ${step.terms
+        .map(term =>
+          isOperator(term)
+            ? term
+            : `[${term.ref ? '^' : ''}${term.label} ${term.value}]`
+        )
+        .join(' ')} = ${step.result}`
+  );
 
 // Measles (General Population): population 10 000, 2 doses, 60% coverage, 50%
 // wastage → loss factor 2.0, 24 000 doses a year; 2 doses per unit → 2 000
@@ -42,28 +56,54 @@ const measles: PopulationCourse = {
 };
 
 describe('OMS-REG-REPL-11.11 — each course walks annual target doses → monthly units', () => {
-  it('walks annual target doses, then monthly units', () => {
-    const [annual, monthly] = populationSteps(measles);
-    expect(annual.substitution).toBe('10,000 × 2 × (60 / 100) × 2');
-    expect(annual.result).toContain('= 24,000');
-    expect(monthly.substitution).toBe('24,000 / 12 / 2');
-    expect(monthly.result).toContain('= 1,000');
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+  });
+  afterAll(() => setDictionaries({}));
+
+  it('walks annual target doses, then monthly units from them', () => {
+    expect(read(populationSteps(measles, 'Vial'))).toEqual([
+      'Annual target doses: [Target population 10,000] × [Number of doses 2] × [Coverage rate 60%] × [Loss factor (50% wastage) 2] = 24,000 doses',
+      'Course monthly demand: [^Annual target doses 24,000 doses] ÷ [Months in a year 12] ÷ [Doses per unit 2] = 1,000 Vial',
+    ]);
   });
 
   it('keeps monthly units to the configured places rather than rounding up', () => {
-    const [, monthly] = populationSteps({
-      ...measles,
-      annualTargetDoses: 6666.666666666667,
-      lossFactor: 1.1111111111111112,
-      monthlyUnits: 277.77777777777777,
-    });
-    // A rounded figure in the sentence is marked (spec § display rounding).
-    expect(monthly.substitution).toBe('6,666.67* / 12 / 2');
-    expect(monthly.result).toContain('= 277.78*');
+    const [annual, monthly] = populationSteps(
+      {
+        ...measles,
+        annualTargetDoses: 6666.666666666667,
+        lossFactor: 1.1111111111111112,
+        monthlyUnits: 277.77777777777777,
+      },
+      null
+    );
+    // A rounded figure is marked (spec § display rounding).
+    expect(annual.result).toBe('6,666.67* doses');
+    expect(monthly.result).toBe('277.78* units');
+  });
+
+  it('leaves out the loss factor where there is no wastage', () => {
+    const [annual] = populationSteps(
+      { ...measles, wastageRate: 0, lossFactor: 1 },
+      null
+    );
+    expect(
+      annual.terms.some(
+        term => !isOperator(term) && term.label.startsWith('Loss factor')
+      )
+    ).toBe(false);
   });
 });
 
-describe("OMS-REG-REPL-11.16 — step 1 counts a course's doses per person per year only when it sets one", () => {
+describe('OMS-REG-REPL-11.16 — a course counts its doses per person per year only when it sets one', () => {
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+  });
+  afterAll(() => setDictionaries({}));
+
   // Td for pregnant women: 5 doses spread over about 2.5 pregnancies, so a
   // woman reached gets 2 a year.
   // 4 000 × 2 × (80 / 100) × 1 = 6 400 doses a year.
@@ -82,20 +122,18 @@ describe("OMS-REG-REPL-11.16 — step 1 counts a course's doses per person per y
     monthlyUnits: 533.3333333333334,
   };
 
-  it('puts the doses per person per year into step 1 and its formula', () => {
-    const [annual] = populationSteps(td);
-    expect(annual.substitution).toBe('4,000 × 2 × (80 / 100) × 1');
-    expect(annualTargetFormulaKey(td)).toBe(
-      'description.annual-target-doses-calculation-with-doses-per-person'
-    );
+  it('counts the doses per person per year in place of the number of doses', () => {
+    expect(populationSteps(td, null)[0].terms[2]).toEqual({
+      label: 'Average doses per person per year',
+      value: '2',
+    });
   });
 
   it('leaves a course counting every dose as it was', () => {
-    const [annual] = populationSteps(measles);
-    expect(annual.substitution).toBe('10,000 × 2 × (60 / 100) × 2');
-    expect(annualTargetFormulaKey(measles)).toBe(
-      'description.annual-target-doses-calculation'
-    );
+    expect(populationSteps(measles, null)[0].terms[2]).toEqual({
+      label: 'Number of doses',
+      value: '2',
+    });
   });
 });
 
@@ -110,49 +148,106 @@ describe('courseTitle', () => {
 });
 
 describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () => {
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+  });
+  afterAll(() => setDictionaries({}));
+
   const principal: AncillaryRatioPrincipal = {
     itemId: 'vaccine',
     item: { code: 'VAC1', name: 'Vaccine', unitName: 'Vial' },
     principalMonthlyConsumption: 100,
     itemQuantity: 100,
-    ancillaryQuantity: 1,
+    ancillaryQuantity: 1.1,
     wastageRate: 0,
     ownWastageRate: 0,
     principalUsableConsumption: 100,
-    monthlyConsumption: 1,
+    monthlyConsumption: 1.1,
   };
 
-  it('shows the ratio as ancillary : principal', () => {
-    expect(ancillaryRatio(principal)).toBe('1 : 100');
+  // Issue #1832: the item's Ancillary tab shows principal : ancillary, so a
+  // bare "1.1 : 100" here read the wrong way round. In words, with each
+  // side's units, it can't.
+  it('shows the ratio in words, each side in its own units', () => {
+    expect(ancillaryRatio(principal, 'Syringe', 'Syringe 5ml')).toBe(
+      '1.1 Syringe per 100 Vial'
+    );
+  });
+
+  it('works the contribution out of the principal demand and the ratio', () => {
+    expect(read(principalSteps(principal, 'Syringe', 'Syringe 5ml'))).toEqual([
+      'Monthly contribution: [Principal monthly demand 100 Vial] × [Ratio 1.1 Syringe per 100 Vial] = 1.1 Syringe',
+    ]);
   });
 
   // Rules › the Ancillary ratio method: a link that excludes the principal's
-  // wastage shows the deduction; one ordering for the wasted units shows none.
-  it('shows the wastage deducted, only when there is some', () => {
-    setDictionaries({ en: commonEn });
-    setLocale('en');
-    expect(principalWastageDeduction(principal)).toBeUndefined();
+  // wastage deducts it first, as a step of its own the contribution carries
+  // on from; the ancillary's own wastage as a supply is made up as a loss
+  // factor. Each shows only when there is some.
+  it('deducts the principal wastage and makes up its own, only when there is some', () => {
     expect(
-      principalWastageDeduction({
-        ...principal,
-        wastageRate: 50,
-        principalUsableConsumption: 50,
-        monthlyConsumption: 0.5,
-      })
-    ).toBe('− 50% wastage');
-    setDictionaries({});
+      read(
+        principalSteps(
+          {
+            ...principal,
+            wastageRate: 50,
+            ownWastageRate: 20,
+            principalUsableConsumption: 50,
+            monthlyConsumption: 0.6875,
+          },
+          'Syringe',
+          'Syringe 5ml'
+        )
+      )
+    ).toEqual([
+      'Demand excluding wastage: [Principal monthly demand 100 Vial] − [Wastage (50%) 50 Vial] = 50 Vial',
+      'Monthly contribution: [^Demand excluding wastage 50 Vial] × [Ratio 1.1 Syringe per 100 Vial] × [Loss factor (20% own wastage) 1.25] = 0.69* Syringe',
+    ]);
   });
 
-  // Rules › the Ancillary ratio method: the ancillary's own wastage as a supply
-  // is added on top of the ratio, shown only when it has some.
-  it('shows the supply wastage added, only when there is some', () => {
-    setDictionaries({ en: commonEn });
-    setLocale('en');
-    expect(supplyWastageAddition(principal)).toBeUndefined();
-    expect(supplyWastageAddition({ ...principal, ownWastageRate: 20 })).toBe(
-      '÷ (1 − 20% own wastage)'
-    );
-    setDictionaries({});
+  // Review of #1832: two items sharing a unit word would read "1 Each per
+  // 100 Each" — the issue's ambiguity again — so both sides name their item.
+  it('names both items where both sides share a unit word', () => {
+    expect(
+      ancillaryRatio(
+        { ...principal, item: { code: 'BCG', name: 'BCG', unitName: 'Each' } },
+        'Each',
+        'Safety box'
+      )
+    ).toBe('1.1 Each of Safety box per 100 Each of BCG');
+  });
+
+  // PR review of #1832: neither item naming a unit left "1.1 units per 100
+  // units of BCG", which didn't say which side was which.
+  it('names both items where neither names a unit', () => {
+    expect(
+      ancillaryRatio(
+        { ...principal, item: { code: 'BCG', name: 'BCG', unitName: null } },
+        null,
+        'Safety box'
+      )
+    ).toBe('1.1 units of Safety box per 100 units of BCG');
+  });
+
+  // The server contributes nothing for a ratio over 0 principal units or an
+  // own wastage outside [0, 100) (monthly_consumption); the step shows its
+  // result without working that wouldn't multiply out to it.
+  it('shows no working where the server contributes nothing', () => {
+    for (const broken of [
+      { itemQuantity: 0 },
+      { ownWastageRate: 100 },
+      { ownWastageRate: -5 },
+    ])
+      expect(
+        principalSteps(
+          { ...principal, ...broken, monthlyConsumption: 0 },
+          'Syringe',
+          'Syringe 5ml'
+        )
+      ).toEqual([
+        { name: 'Monthly contribution', terms: [], result: '0 Syringe' },
+      ]);
   });
 
   it('names the principal item by code and name, else its id', () => {

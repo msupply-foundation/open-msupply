@@ -231,6 +231,9 @@ export const RequestLineEditModal: Component<
           // The whole of the store's catalogue: the prescriber's side carries
           // no program to narrow it by (issue #514). Dispensing still scopes
           // its own line editor to the prescription's program.
+          // Hidden items that still hold stock too, as dispensing offers
+          // them (issue #1763).
+          includeHiddenWithStock
           onSelect={picked => {
             setItem(picked);
             // Quantity is the next entry point once the item is chosen, as it

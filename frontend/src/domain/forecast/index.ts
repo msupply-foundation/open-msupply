@@ -9,6 +9,7 @@ export {
   unavailableReasonMessage,
   courseTitle,
   populationSteps,
+  principalSteps,
   ancillaryRatio,
   principalItemLabel,
   targetStockCaption,
@@ -16,7 +17,9 @@ export {
   type ForecastMethodOption,
   type ForecastMethodUnavailableReason,
   type ForecastBreakdown,
-  type ForecastStep,
+  type CalculationStep,
+  type Term,
+  type Operator,
   type PopulationCourse,
   type AncillaryRatioPrincipal,
 } from './forecast';
