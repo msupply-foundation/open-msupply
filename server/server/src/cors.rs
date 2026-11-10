@@ -98,7 +98,7 @@ pub fn warn_on_invalid_cors_origins(config_settings: &Settings) {
     for entry in &config_settings.server.cors_origins {
         if !is_valid_origin(entry) {
             warn!(
-                "server.cors_origins entry {:?} is not a valid origin: expected scheme://host[:port], with no path or trailing slash",
+                "server.cors_origins entry {:?} is not a valid origin: expected scheme://host[:port], with the host in lower case, no :80 on http or :443 on https, and no path or trailing slash",
                 entry
             );
         }
@@ -110,10 +110,17 @@ fn is_valid_origin(entry: &str) -> bool {
     let Ok(uri) = entry.parse::<Uri>() else {
         return false;
     };
-    match (uri.scheme_str(), uri.authority()) {
-        (Some(scheme), Some(authority)) => format!("{scheme}://{authority}") == entry,
-        _ => false,
-    }
+    let (Some(scheme), Some(authority)) = (uri.scheme_str(), uri.authority()) else {
+        return false;
+    };
+    format!("{scheme}://{authority}") == entry
+        // Browsers send the host in lower case...
+        && !authority.host().bytes().any(|byte| byte.is_ascii_uppercase())
+        // ...and leave out the port when it's the scheme's default
+        && !matches!(
+            (scheme, authority.port_u16()),
+            ("http", Some(80)) | ("https", Some(443))
+        )
 }
 
 /// Whether a browser page at `origin` may make credentialed requests to this server. The one
@@ -368,6 +375,9 @@ mod tests {
             "http://localhost:3003",
             "http://192.168.1.10:8000",
             "https://[::1]:8000",
+            // A port is only left out when it's the scheme's default
+            "http://example.org:443",
+            "https://example.org:80",
         ] {
             assert!(is_valid_origin(entry), "{entry:?} should be an origin");
         }
@@ -382,6 +392,12 @@ mod tests {
             "localhost:3003",
             // Browsers send the scheme in lower case
             "HTTPS://example.org",
+            // ...and the host in lower case
+            "https://Example.org",
+            "http://EXAMPLE.ORG:8000",
+            // ...and leave out the scheme's default port
+            "http://example.org:80",
+            "https://example.org:443",
             "",
             "not an origin",
         ] {
