@@ -78,8 +78,13 @@ pub fn get_consumption_estimates(
 
 /// Whether the store is on another site that has been set up and syncs over
 /// v5/v6. Estimates sync over v7 only, so they don't reach such a site until it
-/// moves to v7. A site that hasn't been set up yet isn't flagged: it may well
-/// start on v7, and its record says v5/v6 until it first syncs either way.
+/// moves to v7 (its initialisation then pulls them).
+///
+/// The site record comes down from the legacy central, which sets the hardware
+/// id when a site first initialises with it. A site with no hardware id hasn't
+/// been set up, so it isn't flagged: a fresh install always starts on v7, and
+/// the legacy central flips the record to v7 when it initialises. The store's
+/// `site_id` is the same site id, and is what v7 routes the store's records by.
 pub fn store_site_syncs_over_v5_v6(
     connection: &StorageConnection,
     store_id: &str,
