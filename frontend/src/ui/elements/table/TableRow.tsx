@@ -339,15 +339,14 @@ export function TableRow<T>(props: {
             checked={selected()}
             indeterminate={isGroup() && props.row.getIsSomeSelected()}
             onChange={event => {
-              if (!isGroup()) {
-                props.row.getToggleSelectedHandler()(event);
-                return;
-              }
-              const next = !props.row.getIsAllSubRowsSelected();
-              props.row.toggleSelected(next);
-              // Same DOM resync as the header's select-all: from the dash the
-              // native click already ticked the box.
-              event.currentTarget.checked = next;
+              if (isGroup())
+                props.row.toggleSelected(!props.row.getIsAllSubRowsSelected());
+              else props.row.getToggleSelectedHandler()(event);
+              // Same DOM resync as the header's select-all: the native click
+              // already flipped the box, and if the page didn't take the
+              // change (a group from the dash, or a row the page drops from
+              // the selection) the controlled value never moves to undo it.
+              event.currentTarget.checked = selected();
             }}
             onClick={event => event.stopPropagation()}
           />

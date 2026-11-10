@@ -1,6 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use graphql_core::ContextExt;
 use graphql_core::loader::CustomFieldOptionsByCustomFieldIdLoader;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
@@ -202,8 +202,10 @@ impl CustomFieldOptionNode {
     /// id — clients resolve values against the whole list and must filter on
     /// this field when building a picker, so a deleted option can be read but
     /// not newly selected.
-    pub async fn deleted_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.option.deleted_datetime
+    pub async fn deleted_datetime(&self) -> Option<DateTime<Utc>> {
+        self.option
+            .deleted_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 }
 

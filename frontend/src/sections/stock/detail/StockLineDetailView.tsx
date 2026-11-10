@@ -67,7 +67,7 @@ import {
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
 import { totalVolume } from '../stockCalc';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import {
@@ -578,7 +578,7 @@ const StockLineDetailView: Component = () => {
                             <DateField
                               label={t('label.manufacture-date')}
                               testId="field-manufacture-date"
-                              max={localTodayIso()}
+                              max={todayCalendarDate()}
                               value={edit.manufactureDate}
                               onChange={v => setEdit('manufactureDate', v)}
                             />

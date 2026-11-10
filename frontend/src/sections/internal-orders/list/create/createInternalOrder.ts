@@ -1,7 +1,7 @@
 import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
-import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { calendarDateDaysAgo } from '../../../../intl/calendarDate';
 import {
   InsertInternalOrder,
   InsertProgramInternalOrder,
@@ -108,7 +108,7 @@ const recentStocktakeIsInsufficient = async (
 ): Promise<boolean> => {
   const result = await graphqlFetch(RecentStocktakeItems, {
     storeId,
-    onOrAfter: localIsoDaysAgo(maxAge),
+    onOrAfter: calendarDateDaysAgo(maxAge),
   });
   if (result.kind !== 'success') return false;
   const items = new Set<string>();

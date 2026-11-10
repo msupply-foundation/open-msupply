@@ -6,7 +6,7 @@ import {
   backdatingGate,
   withinBackdateBounds,
 } from './backdating';
-import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
+import { dateToCalendarDate } from '../../../intl/calendarDate';
 
 describe('backdatingGate (OMS-REG-DIST-04.23)', () => {
   it('is enabled while NEW with the preference on and the panel editable', () => {
@@ -110,7 +110,7 @@ describe('backdatedDatetimeFor', () => {
     const iso = backdatedDatetimeFor(now, '2026-07-15');
     expect(iso).toBe(new Date(2026, 6, 15, 23, 59, 59, 999).toISOString());
     // Round-trips to the chosen local day, whatever the device zone.
-    expect(dateToIsoDate(new Date(iso))).toBe('2026-07-15');
+    expect(dateToCalendarDate(new Date(iso))).toBe('2026-07-15');
   });
 
   it('today keeps the actual current moment (not backdated)', () => {

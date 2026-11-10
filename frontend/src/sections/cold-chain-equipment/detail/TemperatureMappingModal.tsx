@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
+import { todayCalendarDate } from '@/intl/calendarDate';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
@@ -20,13 +21,6 @@ import { buildMappingLogInput, isMappingDateValid } from './statusLog';
 // recalculates the asset's two mapping-date properties, server-side, from the
 // whole history (OMS-REG-CCE-06.33/.34).
 
-/** Today, as the ISO day the picker and the cap both speak. */
-const todayIso = (): string => {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-};
-
 export interface TemperatureMappingModalProps {
   storeId: string;
   assetId: string;
@@ -38,7 +32,7 @@ export const TemperatureMappingModal: Component<
   TemperatureMappingModalProps
 > = props => {
   // Defaults to today — the common case is recording a survey just done.
-  const [date, setDate] = createSignal(todayIso());
+  const [date, setDate] = createSignal(todayCalendarDate());
   const [comment, setComment] = createSignal('');
   const [saving, setSaving] = createSignal(false);
   // The observations field takes the opening focus: the date already carries
@@ -98,7 +92,7 @@ export const TemperatureMappingModal: Component<
           hideLabel
           // Nothing later than today is selectable — the server refuses a
           // datetime in the future.
-          max={todayIso()}
+          max={todayCalendarDate()}
           testId="mapping-date-input"
           disabled={saving()}
           value={date() || null}

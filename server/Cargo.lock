@@ -9606,6 +9606,7 @@ dependencies = [
  "bcrypt",
  "boa_engine",
  "chrono",
+ "chrono-tz",
  "csv",
  "flate2",
  "headless_chrome",

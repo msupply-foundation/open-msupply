@@ -89,8 +89,14 @@ export const createPatientEditor = (
     else validation.arm();
   };
 
+  // The patient by identity: `params.node` also notifies when its read changes
+  // state with the same value — a re-read starting keeps the record from before
+  // it showing — and a seed on that notification, after a save cleared
+  // seededId, would seed the record the save replaced (#2025).
+  const loaded = createMemo(params.node);
+
   createEffect(
-    on(params.node, n => {
+    on(loaded, n => {
       if (n && n.id !== seededId()) {
         const seed = seedDraft(n);
         setEdit(seed);

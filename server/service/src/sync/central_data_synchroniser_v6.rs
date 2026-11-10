@@ -112,7 +112,7 @@ impl SynchroniserV6 {
     ) -> Result<(), RepositoryError> {
         let cursor = ChangelogRepository::new(connection).max_cursor()?;
 
-        CursorController::new(KeyType::SyncPushCursorV6).update(connection, cursor + 1)?;
+        CursorController::new(KeyType::SyncPushCursorV6).update(connection, cursor)?;
         Ok(())
     }
 

@@ -8,7 +8,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '@/intl/calendarDate';
 import { fetchCard, fetchCardPatient } from './cardApi';
 import { cardCounts, patientAgeLabel } from './cardModel';
 import {
@@ -89,7 +89,7 @@ const VaccinationCardView: Component = () => {
               {/* An absent value beside a label shows a dash
                   (ui-standards › detail views). */}
               <Show when={dateOfBirth()} fallback="—">
-                {dob => patientAgeLabel(dob(), localTodayIso())}
+                {dob => patientAgeLabel(dob(), todayCalendarDate())}
               </Show>
             </LabelledValue>
             <LabelledValue
