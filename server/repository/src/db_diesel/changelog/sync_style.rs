@@ -11,13 +11,14 @@ pub struct SyncVersions {
 // Authoring axis — what central accepts when validating an incoming push; a sanity check, not routing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Authoring {
-    Central,     // reject any remote push — central manages it
-    Remote,      // store-scoped; owning store and central may edit
-    RemoteOwned, // accept if store_id is active on the source site
-    Transfer,    // cross-store; accept via the transfer-store id
-    Patient,     // accept if patient_id present (store_id, if set, active on source)
-    Anyone,      // accept as-is, no checks
-    LegacyOnly,  // not a v7 record; reject
+    Central,         // reject any remote push — central manages it
+    CentralForStore, // store-scoped, but only central may edit; reject any remote push
+    Remote,          // store-scoped; owning store and central may edit
+    RemoteOwned,     // accept if store_id is active on the source site
+    Transfer,        // cross-store; accept via the transfer-store id
+    Patient,         // accept if patient_id present (store_id, if set, active on source)
+    Anyone,          // accept as-is, no checks
+    LegacyOnly,      // not a v7 record; reject
 }
 
 // Distribution axis — which sites central sends each row to; drives the changelog filters.
@@ -621,14 +622,15 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: true,
             },
+            // User access is managed on central; sites only receive it (#1639)
             UserPermission => SyncStyle {
-                authoring: vec![Remote],
+                authoring: vec![CentralForStore],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
             },
             UserStoreJoin => SyncStyle {
-                authoring: vec![Remote],
+                authoring: vec![CentralForStore],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
