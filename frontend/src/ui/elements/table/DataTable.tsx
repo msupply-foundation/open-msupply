@@ -92,6 +92,7 @@ import { ColumnSettings, listedColumnIds } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
+import { scrollTableToTop } from './scrollTableToTop';
 import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
@@ -999,6 +1000,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // rather than its control (scrollCellIntoView).
   const [frozenWidths, setFrozenWidths] = createSignal({ left: 0, right: 0 });
   let scrollBox: HTMLDivElement | undefined;
+  let rootEl: HTMLDivElement | undefined;
+
+  // Changing page (or rows per page) goes back to the first row: the pager
+  // sits at the table's foot, so without this the new page opens scrolled to
+  // its bottom. The page's own callback still does the paging.
+  const onOffsetChange = (offset: number) => {
+    scrollTableToTop(rootEl, scrollBox);
+    props.pagination?.onOffsetChange(offset);
+  };
+  const onPageSizeChange = (pageSize: number) => {
+    scrollTableToTop(rootEl, scrollBox);
+    props.pagination?.onPageSizeChange?.(pageSize);
+  };
 
   // Walk the header row from each end, accumulating RENDERED widths for as long
   // as the cells are pinned to that side (a frozen block is always a prefix or
@@ -1600,7 +1614,9 @@ export function DataTable<T, K extends string, G extends string = never>(
             // state — the table owns no page state of its own.
             pageSize={props.pagination?.pageSize}
             pageSizes={props.pagination?.pageSizes}
-            onPageSizeChange={props.pagination?.onPageSizeChange}
+            onPageSizeChange={
+              props.pagination?.onPageSizeChange ? onPageSizeChange : undefined
+            }
           />
         </Popover>
       </Show>
@@ -1627,6 +1643,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     // full-bleed the table from its own CSS module (Page.module.css) — a
     // descendant selector can't name this .root class across CSS Modules.
     <div
+      ref={rootEl}
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
       style={
@@ -2071,7 +2088,10 @@ export function DataTable<T, K extends string, G extends string = never>(
                     stays reactive so Pagination sees the new offset/total. A
                     `{...accessor()}` snapshot would freeze the pager on its
                     first values (offset never advances). */}
-                <Pagination {...props.pagination!} />
+                <Pagination
+                  {...props.pagination!}
+                  onOffsetChange={onOffsetChange}
+                />
               </Show>
             }
           >
