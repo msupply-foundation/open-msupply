@@ -157,6 +157,9 @@ export function HeaderCell<T>(props: {
           onTouchStart={startResize}
           onClick={event => event.stopPropagation()}
           aria-hidden="true"
+          // e2e/TESTIDS.md: the divider is pointer-only and hidden from
+          // assistive tech, so a test reaches it by this id.
+          data-testid={`header-resize-${column().id}`}
         />
       </Show>
     </th>
