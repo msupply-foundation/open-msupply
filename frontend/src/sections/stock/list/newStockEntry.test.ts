@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { canConfirmNewStock, packSizeValid, packsValid } from './newStockEntry';
+import {
+  canConfirmNewStock,
+  followingSellPrice,
+  packSizeValid,
+  packsValid,
+} from './newStockEntry';
 
 // The new-stock modal's pre-validation. The server enforces the same rules and
 // is exercised in the e2e/ suites (conformance C2); these pin the client gate
@@ -87,5 +92,50 @@ describe('OMS-REG-SMV-02.36 — the positive reason, when configured', () => {
     expect(canConfirmNewStock(entry({ positiveReasonsRequired: false }))).toBe(
       true
     );
+  });
+});
+
+// The sell price as the item or pack size changes (spec/stock rules › Default
+// sell price for new stock).
+describe('followingSellPrice', () => {
+  const item = { defaultPackSize: 10, defaultSellPricePerPack: 5 };
+  const following = (packSize: number | undefined, over = {}) =>
+    followingSellPrice({
+      sellPricePerPack: 5,
+      sellTyped: false,
+      item,
+      packSize,
+      ...over,
+    });
+
+  it('is the default sell price at the default pack size', () => {
+    expect(following(10, { sellPricePerPack: undefined })).toBe(5);
+  });
+
+  it('scales the default to another pack size', () => {
+    expect(following(20)).toBe(10);
+    expect(following(1)).toBe(0.5);
+  });
+
+  it('is the default again after a change away and back', () => {
+    const away = following(7);
+    expect(following(10, { sellPricePerPack: away })).toBe(5);
+  });
+
+  it('keeps a sell price the user typed', () => {
+    expect(following(20, { sellPricePerPack: 7, sellTyped: true })).toBe(7);
+  });
+
+  it('is zero with no default sell price', () => {
+    expect(
+      following(20, {
+        item: { defaultPackSize: 10, defaultSellPricePerPack: undefined },
+      })
+    ).toBe(0);
+  });
+
+  it('is left as it is with no item defaults or no pack size yet', () => {
+    expect(following(20, { item: undefined })).toBe(5);
+    expect(following(undefined)).toBe(5);
   });
 });

@@ -8,7 +8,7 @@ import {
   newBatchDefaultsFromLine,
   orderLinePrice,
   packDifference,
-  perUnitAtPackSize,
+  savedSellOverridden,
 } from './inboundShipmentLine';
 
 // The Difference figure's DIRECTION (spec/inbound-shipments/ui-surface.md
@@ -178,24 +178,6 @@ describe('orderLinePrice', () => {
   });
 });
 
-// What a transfer's read-only cost (OMS-REG-REPL-09.44) and any batch's
-// volume per pack (.45) follow on a pack-size change
-// (spec/inbound-shipments/rules.md › new-batch defaults).
-describe('perUnitAtPackSize', () => {
-  it('keeps the default price per unit at another pack size', () => {
-    expect(perUnitAtPackSize(10, 100, 50)).toBe(5);
-    expect(perUnitAtPackSize(10, 100, 200)).toBe(20);
-  });
-
-  it('is the default price at the default pack size', () => {
-    expect(perUnitAtPackSize(10, 100, 100)).toBe(10);
-  });
-
-  it('is zero where the item has no default pack size', () => {
-    expect(perUnitAtPackSize(10, 0, 50)).toBe(0);
-  });
-});
-
 // What a pack-size change does to a batch's figures, by shipment kind
 // (spec/inbound-shipments/rules.md › new-batch defaults). The base is the
 // item's defaults on a new batch, or the source's figures on a duplicate.
@@ -210,17 +192,58 @@ describe('figuresAtPackSize', () => {
     volumePerPack: 0.5,
   };
 
-  it('OMS-REG-REPL-09.11 clears both prices away from the base pack size where cost can be typed', () => {
+  it('OMS-REG-REPL-09.11 clears the cost away from the base pack size where cost can be typed, and moves the sell price at its price per unit', () => {
     expect(figuresAtPackSize(itemDefaults, 50, manual)).toEqual({
+      volumePerPack: 0.25,
+      costPricePerPack: 0,
+      sellPricePerPack: 5,
+    });
+    expect(figuresAtPackSize(itemDefaults, 200, manual)).toEqual({
+      volumePerPack: 1,
+      costPricePerPack: 0,
+      sellPricePerPack: 20,
+    });
+  });
+
+  it("is the base's own sell price at the base pack size where cost can be typed, leaving the cost alone", () => {
+    expect(figuresAtPackSize(itemDefaults, 100, manual)).toEqual({
+      volumePerPack: 0.5,
+      sellPricePerPack: 10,
+    });
+  });
+
+  it('restores the base sell price when the pack size changes away and back', () => {
+    const awkward = { ...itemDefaults, packSize: 3, sellPricePerPack: 0.1 };
+    expect(figuresAtPackSize(awkward, 7, manual).sellPricePerPack).toBeCloseTo(
+      0.7 / 3
+    );
+    expect(figuresAtPackSize(awkward, 3, manual).sellPricePerPack).toBe(0.1);
+  });
+
+  it('keeps the sell price at zero where there is no default sell price', () => {
+    const noDefault = {
+      ...itemDefaults,
+      costPricePerPack: 0,
+      sellPricePerPack: 0,
+    };
+    expect(figuresAtPackSize(noDefault, 50, manual)).toEqual({
       volumePerPack: 0.25,
       costPricePerPack: 0,
       sellPricePerPack: 0,
     });
   });
 
-  it('leaves the prices alone at the base pack size where cost can be typed', () => {
-    expect(figuresAtPackSize(itemDefaults, 100, manual)).toEqual({
-      volumePerPack: 0.5,
+  it("moves a duplicate's sell price from its source's where cost can be typed", () => {
+    const source = {
+      packSize: 10,
+      costPricePerPack: 5,
+      sellPricePerPack: 8,
+      volumePerPack: 0.2,
+    };
+    expect(figuresAtPackSize(source, 20, manual)).toEqual({
+      volumePerPack: 0.4,
+      costPricePerPack: 0,
+      sellPricePerPack: 16,
     });
   });
 
@@ -250,5 +273,74 @@ describe('figuresAtPackSize', () => {
       costPricePerPack: 10,
       sellPricePerPack: 16,
     });
+  });
+});
+
+// Whether a saved line's sell price follows a pack-size change in the editor
+// (spec/stock rules › Default sell price for new stock): only one still at the
+// default for its pack size, on a shipment with no source link.
+describe('savedSellOverridden', () => {
+  const manual = { purchaseOrderLinked: false, costLocked: false };
+  const item = {
+    id: 'item-1',
+    code: 'PARA',
+    name: 'Paracetamol',
+    unitName: 'Tab',
+    isVaccine: false,
+    doses: 1,
+    defaultPackSize: 10,
+    itemStoreProperties: { defaultSellPricePerPack: 4 },
+    volumePerPack: 0.25,
+  };
+  const line = (packSize: number, sellPricePerPack: number) => ({
+    item,
+    packSize,
+    sellPricePerPack,
+  });
+
+  it('follows a pack-size change from a saved line still at the default', () => {
+    expect(savedSellOverridden(line(10, 4), manual)).toBe(false);
+  });
+
+  it('follows from a saved line at the default for another pack size', () => {
+    expect(savedSellOverridden(line(20, 8), manual)).toBe(false);
+    // 4 / 10 × 3, which floating point doesn't land on exactly.
+    expect(savedSellOverridden(line(3, 1.2000000000000002), manual)).toBe(
+      false
+    );
+  });
+
+  it('keeps a saved sell price that differs from the default', () => {
+    expect(savedSellOverridden(line(10, 4.5), manual)).toBe(true);
+    expect(savedSellOverridden(line(20, 4), manual)).toBe(true);
+    expect(savedSellOverridden(line(10, 0), manual)).toBe(true);
+  });
+
+  it('follows from a saved zero where the item has no default', () => {
+    expect(
+      savedSellOverridden(
+        {
+          item: { ...item, itemStoreProperties: null },
+          packSize: 20,
+          sellPricePerPack: 0,
+        },
+        manual
+      )
+    ).toBe(false);
+  });
+
+  it('keeps every saved sell price on a transfer or a PO-linked shipment', () => {
+    expect(
+      savedSellOverridden(line(10, 4), {
+        purchaseOrderLinked: false,
+        costLocked: true,
+      })
+    ).toBe(true);
+    expect(
+      savedSellOverridden(line(10, 4), {
+        purchaseOrderLinked: true,
+        costLocked: true,
+      })
+    ).toBe(true);
   });
 });

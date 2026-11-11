@@ -84,8 +84,8 @@ impl From<RepositoryError> for InsertFromInternalOrderLineError {
 mod test {
     use repository::{
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow,
-        InvoiceStatus, InvoiceType, RequisitionLineRow, RequisitionRow, StockLineRowRepository,
-        StorePreferenceRow,
+        InvoiceStatus, InvoiceType, ItemRow, ItemStoreJoinRow, ItemType, RequisitionLineRow,
+        RequisitionRow, StockLineRowRepository, StorePreferenceRow,
         mock::{
             MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_name_store_b,
             mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
@@ -389,5 +389,62 @@ mod test {
             Some(mock_campaign_a().id)
         );
         assert_eq!(stock_line.campaign_id, Some(mock_campaign_a().id));
+    }
+
+    #[actix_rt::test]
+    async fn insert_from_internal_order_line_takes_default_sell_price() {
+        // The store's default sell price is 50.00 for a pack of 10, so 5.00 for the
+        // line's pack of one
+        let item = ItemRow {
+            id: "internal_order_priced_item".to_string(),
+            name: "Internal order priced item".to_string(),
+            code: "internal_order_priced_item".to_string(),
+            r#type: ItemType::Stock,
+            default_pack_size: 10.0,
+            ..Default::default()
+        };
+        let requisition_line = RequisitionLineRow {
+            id: "requisition_line_priced_item".to_string(),
+            item_id: item.id.clone(),
+            ..requisition_line_test()
+        };
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_from_internal_order_line_takes_default_sell_price",
+            MockDataInserts::all(),
+            MockData {
+                items: vec![item.clone()],
+                item_store_joins: vec![ItemStoreJoinRow {
+                    id: "internal_order_priced_item_store_a".to_string(),
+                    item_id: item.id.clone(),
+                    store_id: mock_store_a().id,
+                    default_sell_price_per_pack: 50.0,
+                    ..Default::default()
+                }],
+                store_preferences: vec![store_pref()],
+                requisitions: vec![requisition_test()],
+                requisition_lines: vec![requisition_line.clone()],
+                invoices: vec![invoice_linked_to_requisition()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        let result = insert_from_internal_order_line(
+            &context,
+            InsertFromInternalOrderLine {
+                invoice_id: invoice_linked_to_requisition().id,
+                requisition_line_id: requisition_line.id,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(result.invoice_line_row.pack_size, 1.0);
+        assert_eq!(result.invoice_line_row.sell_price_per_pack, 5.0);
     }
 }
