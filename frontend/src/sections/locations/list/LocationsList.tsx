@@ -1,4 +1,10 @@
-import { createMemo, createResource, createSignal, Show } from 'solid-js';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  onCleanup,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
@@ -11,6 +17,7 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
 import { createFlash } from '@/ui/utils/createFlash';
+import { ARRIVAL_DELAY_MS } from '@/ui/utils/createArrivalFlash';
 import { Button } from '@/ui/elements/buttons/Button';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
@@ -159,18 +166,34 @@ const LocationsList: Component = () => {
   // (kdd/state-management — refresh by direct call). A create is confirmed in
   // the footer, on Save and on Save & next alike — the dialog that made it is
   // gone or already blank for the next one (OMS-REG-INV-01.64).
+  //
+  // The chip lands a beat after the save, not with it. The save lands while
+  // the dialog is still open, and a modal dialog hides the rest of the page
+  // from a screen reader, so a message set then is never read. By the time it
+  // shows, OK has closed the dialog. (Save & next keeps it open, so there the
+  // chip is seen but not announced.)
   const added = createFlash<string>();
+  const [addPending, setAddPending] = createSignal(false);
+  let addHandle: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(addHandle));
   const onSaved = (outcome: 'created' | 'updated') => {
     void refetch();
-    if (outcome === 'created') added.show(t('messages.location-added'));
+    if (outcome !== 'created') return;
+    clearTimeout(addHandle);
+    setAddPending(true);
+    addHandle = setTimeout(() => {
+      setAddPending(false);
+      added.show(t('messages.location-added'));
+    }, ARRIVAL_DELAY_MS);
   };
   // The footer is the bulk-action bar while rows are selected. It also shows
-  // while a create is open and while its confirmation is up: the message slot
-  // is a polite live region, which a screen reader only follows if it is
-  // already mounted when the chip lands.
+  // while a create is open, while its confirmation is on its way, and while it
+  // is up: the message slot is a polite live region, which a screen reader
+  // only follows if it is already mounted when the chip lands.
   const footerShown = () =>
     selectedIds().length > 0 ||
     editor()?.mode === 'create' ||
+    addPending() ||
     added.value() !== undefined;
 
   // Row click opens the edit modal — locations has no detail screen
