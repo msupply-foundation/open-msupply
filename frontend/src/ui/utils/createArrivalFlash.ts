@@ -1,4 +1,4 @@
-import { createEffect, on, type Accessor } from 'solid-js';
+import { createEffect, on, onCleanup, type Accessor } from 'solid-js';
 import { createFlash } from './createFlash';
 
 /*
@@ -21,6 +21,15 @@ export const flashOnArrival = (recordId: string, message: string) => {
 };
 
 /**
+ * How long after the record loads the message is shown. The footer's message
+ * slot is a polite live region, and a screen reader only announces a change
+ * to a region that was already in the page: the footer mounts as the record
+ * loads, so a message shown in the same moment arrives WITH its region and is
+ * never read. The beat lets the empty region land first.
+ */
+export const ARRIVAL_DELAY_MS = 500;
+
+/**
  * The message left for this screen's record, flashed once the record has
  * loaded: `loadedId` is the id of the record on screen, undefined while it
  * loads. Pass the value to ContentFooterMessage's `message`.
@@ -34,7 +43,8 @@ export const createArrivalFlash = (
       if (id === undefined || pending?.recordId !== id) return;
       const { message } = pending;
       pending = undefined;
-      flash.show(message);
+      const handle = setTimeout(() => flash.show(message), ARRIVAL_DELAY_MS);
+      onCleanup(() => clearTimeout(handle));
     })
   );
   return flash.value;
