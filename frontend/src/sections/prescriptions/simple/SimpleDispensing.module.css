@@ -31,75 +31,25 @@
   grid-column: 4;
 }
 
-/* The cards beside the list: the cards take the room, the list a narrower
-   column at the inline end. Wraps to the list under the cards where the body
-   is too narrow for both — intrinsic, no breakpoint. */
+/* The cards beside the list (DispensingList.module.css › .panel): the body's
+   one scroller, filling it (Page fillBody), with the list docked at its
+   inline end. The cards take the room; the list wraps under them where the
+   body is too narrow for both — intrinsic, no breakpoint. */
 .columns {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-5);
+  min-block-size: 0;
+  overflow: auto;
 }
 
+/* At least one card column (CardGrid's 17rem floor) and the body's padding,
+   which this column carries itself: the docked list sits flush with the
+   body's edges. */
 .cardsColumn {
-  flex: 999 1 34rem;
+  flex: 999 1 20rem;
   min-inline-size: 0;
-}
-
-/* Stays in view as the cards scroll. */
-.listColumn {
-  position: sticky;
-  inset-block-start: 0;
-  flex: 1 1 20rem;
-  min-inline-size: 0;
-}
-
-.listEmpty {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.lines {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Name over the amount, price and remove button, so a long name never
-   squeezes the amount field. */
-.line {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  grid-template-areas:
-    'name name name'
-    'amount price remove';
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-}
-
-.lineName {
-  grid-area: name;
-  font-weight: var(--weight-medium);
-  overflow-wrap: anywhere;
-}
-
-.linePrice {
-  grid-area: price;
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
-
-.total {
-  display: flex;
-  justify-content: space-between;
-  padding-block-start: var(--space-3);
-  border-block-start: 1px solid var(--color-border-value);
-  font-weight: var(--weight-bold);
-  font-variant-numeric: tabular-nums;
+  padding: var(--space-5);
 }
 
 /* A numbered step: the number in a filled circle, the step's name and an
@@ -144,21 +94,4 @@
    pressed yet. Disabled controls are exempt from contrast minimums. */
 .waiting {
   opacity: 0.55;
-}
-
-/* Step 3: the list for the person at the counter. */
-.listPanel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-
-.listFor {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
 }

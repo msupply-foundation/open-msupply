@@ -119,6 +119,9 @@ const SimpleDispensingPage: Component = () => {
 
   return (
     <Page
+      // The cards and the list fill the body and own its scroll, so the list
+      // can dock at its inline end, the body's full height.
+      fillBody
       header={
         <Header>
           <Breadcrumb crumbs={[{ label: t('dispensing') }]} />
@@ -188,24 +191,19 @@ const SimpleDispensingPage: Component = () => {
                   </For>
                 </CardGrid>
               </div>
-              <div class={styles.listColumn}>
-                <DispensingList
-                  forName={patient()?.name}
-                  lines={lines}
-                  cardOf={cardOf}
-                  onAmount={(itemId, units) =>
-                    update(
-                      setAmount(
-                        lines,
-                        itemId,
-                        units,
-                        cardOf(itemId)?.stock ?? 0
-                      )
-                    )
-                  }
-                  onRemove={itemId => update(removeLine(lines, itemId))}
-                />
-              </div>
+              {/* Docked at the columns' inline end (its own CSS). */}
+              <DispensingList
+                forName={patient()?.name}
+                lines={lines}
+                cardOf={cardOf}
+                onAmount={(itemId, units) =>
+                  update(
+                    setAmount(lines, itemId, units, cardOf(itemId)?.stock ?? 0)
+                  )
+                }
+                onRemove={itemId => update(removeLine(lines, itemId))}
+                onClear={() => update([])}
+              />
             </div>
           )}
         </Match>
