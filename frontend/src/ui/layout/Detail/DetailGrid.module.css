@@ -5,9 +5,9 @@
    tight. Rows place themselves into columns via DetailRow's `side`/`full`. */
 .grid {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) var(
-      --space-5
-    ) max-content minmax(0, 1fr);
+  grid-template-columns:
+    max-content minmax(0, 1fr) var(--space-5)
+    max-content minmax(0, 1fr);
   gap: var(--space-2);
   align-items: center;
   inline-size: 100%;

@@ -23,6 +23,12 @@ export interface DetailCardProps {
    * separation only needs stating once per edge.
    */
   surface?: 'raised' | 'bordered';
+  /**
+   * Spacing. `default` is a miniature detail view's room; `compact` tightens
+   * the padding, the gaps and the title for a dense grid of many small cards
+   * (the Simple dispensing screen's medicines), so more fit on one screen.
+   */
+  density?: 'default' | 'compact';
   /** `data-testid` on the card's root (e2e/TESTIDS.md). */
   testId?: string;
 }
@@ -48,6 +54,7 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
     <section
       class={styles.card}
       data-surface={props.surface ?? 'raised'}
+      data-density={props.density ?? 'default'}
       data-testid={props.testId}
     >
       <div class={styles.header}>

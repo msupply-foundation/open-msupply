@@ -38,6 +38,7 @@ import {
 } from './simpleDispensingLogic';
 import { MedicineCardView } from './MedicineCard';
 import { DispensingList } from './DispensingList';
+import { StepHeading } from './StepHeading';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -123,8 +124,10 @@ const SimpleDispensingPage: Component = () => {
           <Breadcrumb crumbs={[{ label: t('dispensing') }]} />
           <HeaderButtons>{standardView('secondary')}</HeaderButtons>
           <Toolbar>
+            <StepHeading n={1} label={t('label.who-is-it-for')} />
             <PatientSearch
               label={t('label.who-is-it-for')}
+              hideLabel
               storeId={params.storeId}
               selected={patient() ?? undefined}
               onSelect={setPatient}
@@ -147,10 +150,24 @@ const SimpleDispensingPage: Component = () => {
           {list => (
             <div class={styles.columns}>
               <div class={styles.cardsColumn}>
+                <StepHeading
+                  n={2}
+                  heading
+                  label={t('heading.choose-medicines')}
+                  hint={
+                    patient() === null
+                      ? t('messages.choose-who-first')
+                      : t('messages.press-an-amount')
+                  }
+                  testId="choose-medicines-hint"
+                />
                 {/* At most three columns, never narrower than three amount
                     buttons and the another-amount button need. */}
                 <CardGrid
                   equalHeight
+                  // Dimmed until someone is chosen: nothing here can be
+                  // pressed yet (the buttons are disabled too).
+                  class={patient() === null ? styles.waiting : undefined}
                   minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
                 >
                   <For each={list()}>

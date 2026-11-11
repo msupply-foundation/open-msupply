@@ -1,6 +1,5 @@
 import { For, Show } from 'solid-js';
 import { formatCurrency, t } from '@/intl';
-import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { TrashIcon } from '@/ui/icons';
@@ -9,6 +8,7 @@ import {
   type ListLine,
   type MedicineCard,
 } from './simpleDispensingLogic';
+import { StepHeading } from './StepHeading';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -37,14 +37,13 @@ export const DispensingList = (props: {
   };
 
   return (
-    <DetailCard
-      title={
-        props.forName === undefined
+    <section class={styles.listPanel} data-testid="dispensing-list">
+      <StepHeading n={3} label={t('heading.check-and-dispense')} heading />
+      <p class={styles.listFor} data-testid="dispensing-list-for">
+        {props.forName === undefined
           ? t('label.for-not-chosen-yet')
-          : t('label.for-patient', { name: props.forName })
-      }
-      testId="dispensing-list"
-    >
+          : t('label.for-patient', { name: props.forName })}
+      </p>
       <Show
         when={props.lines.length > 0}
         fallback={
@@ -98,6 +97,6 @@ export const DispensingList = (props: {
           </span>
         </div>
       </Show>
-    </DetailCard>
+    </section>
   );
 };

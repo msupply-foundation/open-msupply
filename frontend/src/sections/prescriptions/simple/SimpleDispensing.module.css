@@ -5,8 +5,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  min-block-size: var(--space-5);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
 }
 
 .unit {
@@ -23,6 +22,7 @@
   align-items: center;
   gap: var(--space-2);
   margin-block-start: auto;
+  padding-block-start: var(--space-1);
 }
 
 /* The another-amount button always takes the last column, so a card with fewer
@@ -100,4 +100,65 @@
   border-block-start: 1px solid var(--color-border-value);
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
+}
+
+/* A numbered step: the number in a filled circle, the step's name and an
+   optional hint. One look for all three steps, whatever has been done. */
+.stepHeading {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.cardsColumn > .stepHeading {
+  margin-block-end: var(--space-3);
+}
+
+.stepNumber {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 50%;
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepLabel {
+  font-weight: var(--weight-semibold);
+}
+
+.stepHint {
+  color: var(--text-secondary);
+}
+
+/* The medicines before anyone is chosen: dimmed, since nothing can be
+   pressed yet. Disabled controls are exempt from contrast minimums. */
+.waiting {
+  opacity: 0.55;
+}
+
+/* Step 3: the list for the person at the counter. */
+.listPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.listFor {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }

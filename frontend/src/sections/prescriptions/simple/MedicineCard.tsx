@@ -33,6 +33,7 @@ export const MedicineCardView = (props: {
     <DetailCard
       title={name()}
       surface="bordered"
+      density="compact"
       testId={`common-medicine-card-${props.card.item.id}`}
     >
       <div class={styles.meta}>
