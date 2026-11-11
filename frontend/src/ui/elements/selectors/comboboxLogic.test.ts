@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  firstMatchKey,
   PINNED_SECTION,
+  type OptionNode,
   sectionOptions,
   typedQuery,
   visibleOptions,
@@ -145,5 +147,42 @@ describe('sectionOptions — grouped mode', () => {
 
   it('returns nothing at all for no items', () => {
     expect(sections([])).toEqual([]);
+  });
+});
+
+describe('firstMatchKey', () => {
+  const item = (key: string, disabled = false): OptionNode<string> => ({
+    type: 'item',
+    key,
+    rawValue: key,
+    disabled,
+  });
+  const section = (key: string): OptionNode<string> => ({
+    type: 'section',
+    key,
+    rawValue: key,
+    disabled: false,
+  });
+
+  it('picks the first option', () => {
+    expect(firstMatchKey([item('a'), item('b')])).toBe('a');
+  });
+
+  it('passes over section headings and disabled options', () => {
+    expect(
+      firstMatchKey([section('Group'), item('on-hold', true), item('ok')])
+    ).toBe('ok');
+  });
+
+  it('passes over skipped options — grouped mode pins', () => {
+    const pinned = new Set(['none']);
+    expect(
+      firstMatchKey([item('none'), item('match')], key => pinned.has(key))
+    ).toBe('match');
+  });
+
+  it('highlights nothing when no option qualifies', () => {
+    expect(firstMatchKey([item('x', true)])).toBeUndefined();
+    expect(firstMatchKey([])).toBeUndefined();
   });
 });

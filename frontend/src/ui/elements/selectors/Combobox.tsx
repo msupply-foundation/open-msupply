@@ -18,6 +18,7 @@ import { t, tPlural } from '../../../intl';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
+import { HighlightFirstMatch } from './HighlightFirstMatch';
 import {
   sectionOptions,
   typedQuery,
@@ -682,6 +683,16 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Item>
       )}
     >
+      {/* Typing highlights the first match, so Enter picks it. Grouped mode's
+          pinned items are listed whatever is typed, so they're never it. */}
+      <HighlightFirstMatch<T>
+        query={queryText}
+        skip={
+          props.itemGroup
+            ? item => props.itemGroup!(item) === undefined
+            : undefined
+        }
+      />
       {/* hideLabel names the input via aria-label instead of a visually-hidden
           label element — same accessible name, no duplicate text node beside
           the label the surrounding layout (a FieldRow) already shows (a hidden

@@ -110,3 +110,34 @@ export const sectionOptions = <T>(
     .filter(([, bucket]) => bucket.length > 0)
     .map(([label, bucket]) => ({ label, options: bucket }));
 };
+
+/** The slice of a Kobalte collection node {@link firstMatchKey} reads. */
+export interface OptionNode<T> {
+  type: 'item' | 'section';
+  key: string;
+  rawValue: T;
+  disabled: boolean;
+}
+
+/**
+ * The option to highlight once the user has typed: the first one Enter could
+ * actually pick. Sections are headings, not options, and a disabled option
+ * can't be chosen, so both are passed over. `skip` drops options that are
+ * listed but aren't a MATCH for what was typed — grouped mode's pinned items,
+ * which stay at the top whatever the query, so highlighting them would make
+ * Enter choose "None" instead of the row the user was typing towards.
+ *
+ * Undefined when nothing qualifies: highlighting nothing leaves Enter inert,
+ * which beats committing an option the user never asked for.
+ */
+export const firstMatchKey = <T>(
+  nodes: Iterable<OptionNode<T>>,
+  skip?: (item: T) => boolean
+): string | undefined => {
+  for (const node of nodes) {
+    if (node.type !== 'item' || node.disabled) continue;
+    if (skip?.(node.rawValue)) continue;
+    return node.key;
+  }
+  return undefined;
+};
