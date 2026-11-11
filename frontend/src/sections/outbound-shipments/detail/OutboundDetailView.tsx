@@ -1351,6 +1351,9 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // Filters live WITH the table, in its own toolbar — never the
                   // page header (ui-standards § tables › toolbar, binding). The
                   // item search is the permanent default chip; Location is

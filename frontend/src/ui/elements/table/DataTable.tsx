@@ -488,6 +488,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   // not page rows itself (manual, server-driven; see kdd/table-state). Omit for
   // a non-paginated table.
   pagination?: PaginationProps;
+  /**
+   * The page shown, for a host that pages this table but renders the pager
+   * itself — a detail view's line table, whose pager sits in the status
+   * footer (ui-standards § tables → pagination). The table only reads it to
+   * scroll back to the first row when the page changes; it draws no pager
+   * and no row count. Ignored when `pagination` is set.
+   */
+  page?: Pick<PaginationProps, 'offset' | 'pageSize'>;
 };
 
 export function DataTable<T, K extends string, G extends string = never>(
@@ -1004,15 +1012,24 @@ export function DataTable<T, K extends string, G extends string = never>(
 
   // Changing page (or rows per page) goes back to the first row: the pager
   // sits at the table's foot, so without this the new page opens scrolled to
-  // its bottom. The page's own callback still does the paging.
-  const onOffsetChange = (offset: number) => {
-    scrollTableToTop(rootEl, scrollBox);
-    props.pagination?.onOffsetChange(offset);
-  };
-  const onPageSizeChange = (pageSize: number) => {
-    scrollTableToTop(rootEl, scrollBox);
-    props.pagination?.onPageSizeChange?.(pageSize);
-  };
+  // its bottom. Keyed on the page shown, not on the pager's clicks, so it
+  // also follows a pager the host renders elsewhere (`page`), the browser's
+  // back/forward, and a filter that resets the offset. The memo holds a
+  // string so a page that did not move (a refetch with a new total, the page
+  // jump given the current page) changes nothing.
+  const shownPage = createMemo(() => {
+    const page = props.pagination ?? props.page;
+    return page ? `${page.offset}:${page.pageSize}` : undefined;
+  });
+  // Not `defer`: a deferred `on` does not record the value it skipped, so
+  // its first real change would arrive with no `before` and be dropped. The
+  // first run (mount) has none either, which is what skips it.
+  createEffect(
+    on(shownPage, (now, before) => {
+      if (now !== undefined && before !== undefined)
+        scrollTableToTop(rootEl, scrollBox);
+    })
+  );
 
   // Walk the header row from each end, accumulating RENDERED widths for as long
   // as the cells are pinned to that side (a frozen block is always a prefix or
@@ -1614,9 +1631,7 @@ export function DataTable<T, K extends string, G extends string = never>(
             // state — the table owns no page state of its own.
             pageSize={props.pagination?.pageSize}
             pageSizes={props.pagination?.pageSizes}
-            onPageSizeChange={
-              props.pagination?.onPageSizeChange ? onPageSizeChange : undefined
-            }
+            onPageSizeChange={props.pagination?.onPageSizeChange}
           />
         </Popover>
       </Show>
@@ -2088,10 +2103,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                     stays reactive so Pagination sees the new offset/total. A
                     `{...accessor()}` snapshot would freeze the pager on its
                     first values (offset never advances). */}
-                <Pagination
-                  {...props.pagination!}
-                  onOffsetChange={onOffsetChange}
-                />
+                <Pagination {...props.pagination!} />
               </Show>
             }
           >

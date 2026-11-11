@@ -1425,6 +1425,9 @@ const InboundShipmentDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}
