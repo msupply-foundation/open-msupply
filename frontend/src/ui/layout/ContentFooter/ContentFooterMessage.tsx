@@ -22,6 +22,13 @@ export interface ContentFooterMessageProps {
    * change, the default; `create-success` for a create (issue #1555).
    */
   testId?: string;
+  /**
+   * Called once a chip has finished sinking out and is gone. For a footer that
+   * is mounted only for its chip (the locations list with nothing selected):
+   * it keeps the bar until then, so the exit plays instead of the bar
+   * vanishing under it.
+   */
+  onGone?: () => void;
 }
 
 /*
@@ -109,6 +116,7 @@ export const ContentFooterMessage = (props: ContentFooterMessageProps) => {
               if (event.target !== event.currentTarget || !leaving()) return;
               setShown(undefined);
               setLeaving(false);
+              props.onGone?.();
             }}
           >
             <Alert

@@ -173,25 +173,31 @@ const LocationsList: Component = () => {
   // shows, OK has closed the dialog. (Save & next keeps it open, so there the
   // chip is seen but not announced.)
   const added = createFlash<string>();
-  const [addPending, setAddPending] = createSignal(false);
+  // From the save until the chip has sunk back out (the slot's onGone).
+  const [confirming, setConfirming] = createSignal(false);
   let addHandle: ReturnType<typeof setTimeout> | undefined;
   onCleanup(() => clearTimeout(addHandle));
   const onSaved = (outcome: 'created' | 'updated') => {
     void refetch();
     if (outcome !== 'created') return;
     clearTimeout(addHandle);
-    setAddPending(true);
+    setConfirming(true);
     addHandle = setTimeout(() => {
-      setAddPending(false);
+      addHandle = undefined;
       added.show(t('messages.location-added'));
     }, ARRIVAL_DELAY_MS);
   };
+  // A chip that has gone ends the confirmation, unless another create's chip
+  // is already on its way.
+  const onChipGone = () => {
+    if (addHandle === undefined) setConfirming(false);
+  };
   // The footer is the bulk-action bar while rows are selected. It also shows
-  // from the save until its confirmation has gone: the message slot is a
+  // while a create is being confirmed: from the save, so the message slot (a
   // polite live region, which a screen reader only follows if it is already
-  // mounted when the chip lands.
-  const footerShown = () =>
-    selectedIds().length > 0 || addPending() || added.value() !== undefined;
+  // mounted when the chip lands) is in the page first, until the chip has
+  // sunk back out, so the exit plays instead of the bar vanishing under it.
+  const footerShown = () => selectedIds().length > 0 || confirming();
 
   // Row click opens the edit modal — locations has no detail screen
   // (ui-surface S1 § layout).
@@ -315,6 +321,7 @@ const LocationsList: Component = () => {
             <ContentFooterMessage
               message={added.value()}
               testId="create-success"
+              onGone={onChipGone}
             />
             <Show when={selectedIds().length > 0}>
               <ContentFooterActions>

@@ -191,7 +191,9 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
 
     props.onSaved(location ? 'updated' : 'created');
     if (!advance) {
-      // Success closes the dialog — closure IS the confirmation (D21).
+      // Success closes the dialog. For an edit, closure IS the confirmation
+      // (D21); a create is also confirmed in the list's footer
+      // (OMS-REG-INV-01.64).
       props.onClose();
       return;
     }
