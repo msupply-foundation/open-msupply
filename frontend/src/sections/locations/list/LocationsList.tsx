@@ -187,14 +187,11 @@ const LocationsList: Component = () => {
     }, ARRIVAL_DELAY_MS);
   };
   // The footer is the bulk-action bar while rows are selected. It also shows
-  // while a create is open, while its confirmation is on its way, and while it
-  // is up: the message slot is a polite live region, which a screen reader
-  // only follows if it is already mounted when the chip lands.
+  // from the save until its confirmation has gone: the message slot is a
+  // polite live region, which a screen reader only follows if it is already
+  // mounted when the chip lands.
   const footerShown = () =>
-    selectedIds().length > 0 ||
-    editor()?.mode === 'create' ||
-    addPending() ||
-    added.value() !== undefined;
+    selectedIds().length > 0 || addPending() || added.value() !== undefined;
 
   // Row click opens the edit modal — locations has no detail screen
   // (ui-surface S1 § layout).
