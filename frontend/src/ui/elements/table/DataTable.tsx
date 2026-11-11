@@ -96,31 +96,12 @@ import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
 import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
-
-// Same items / same keys and values — for the config-derived state memos
-// below, which must keep their reference while nothing in them changed (see
-// columnOrder).
-const sameList = (
-  a: readonly string[] | undefined,
-  b: readonly string[] | undefined
-): boolean =>
-  a === b ||
-  (a !== undefined &&
-    b !== undefined &&
-    a.length === b.length &&
-    a.every((v, i) => v === b[i]));
-const sameRecord = <V,>(
-  a: Record<string, V>,
-  b: Record<string, V>
-): boolean => {
-  if (a === b) return true;
-  const keys = Object.keys(a);
-  return (
-    keys.length === Object.keys(b).length && keys.every(k => a[k] === b[k])
-  );
-};
-const samePinning = (a: ColumnPinningState, b: ColumnPinningState): boolean =>
-  sameList(a.left, b.left) && sameList(a.right, b.right);
+import { sameList, samePinning, sameRecord } from './stateEquality';
+import {
+  resizeMoved,
+  resizeStartWidth,
+  type ResizeStart,
+} from './columnResize';
 
 // The column model
 // (Column/ColumnIdentity/toColumnDef/CardGroup/SortState + the ColumnMeta
@@ -740,7 +721,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     createSignal<ColumnSizingState | null>(null);
   // The dragged column's width when its drag started (px), so a press that
   // never moves commits nothing (the drag-end effect below).
-  let resizeStart: { id: string; px: number } | undefined;
+  let resizeStart: ResizeStart | undefined;
   const configSizingPx = createMemo(
     (): ColumnSizingState => {
       const rem = props.config?.columnSizing ?? {};
@@ -906,9 +887,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     on(isResizing, (resizing, wasResizing) => {
       if (wasResizing && !resizing) {
         const pending = transientSizing();
-        const moved =
-          !resizeStart || pending?.[resizeStart.id] !== resizeStart.px;
-        if (pending && moved)
+        if (pending && resizeMoved(resizeStart, pending))
           props.setConfig?.('columnSizing', pxToRemSizing(pending));
         setTransientSizing(null);
         resizeStart = undefined;
@@ -963,10 +942,10 @@ export function DataTable<T, K extends string, G extends string = never>(
   // and a drag narrower than the visible width did nothing at all. HeaderCell
   // calls this just before TanStack's handler, which reads the new size as the
   // drag's start. Parked in the transient sizing, not config, so it only
-  // persists if the drag goes on to move.
+  // persists if the drag goes on to move (the rules: columnResize.ts).
   const startColumnResize = (column: TanColumn<T>, renderedPx: number) => {
-    const px = Math.round(renderedPx);
-    if (px !== column.getSize()) {
+    const px = resizeStartWidth(renderedPx, column.getSize());
+    if (px !== undefined) {
       setTransientSizing({ ...columnSizing(), [column.id]: px });
     }
     resizeStart = { id: column.id, px: column.getSize() };

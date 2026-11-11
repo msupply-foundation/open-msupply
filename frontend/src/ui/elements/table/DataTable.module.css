@@ -176,9 +176,8 @@
      growing unbounded and pushing its neighbours off-screen. It's only a
      ceiling on CONTENT-driven growth — an explicit width (a resize drag, which
      sets the header cell's min-width floor) or a per-column `maxSize` both
-     override it, so
-     columns stay freely draggable wider and a column that opts into a tighter
-     cap (Code, Comment) still wins. */
+     override it, so columns stay freely draggable wider and a column that opts
+     into a tighter cap (the Comment icon) still wins. */
   --table-cell-max-grow: 36rem;
 }
 
