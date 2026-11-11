@@ -16,6 +16,7 @@ import { sameFetchedValue } from '@/typeHelpers';
 import { t } from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
 import type { PatientOption } from '@/domain/patient';
+import { ItemSearch } from '@/domain/item';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -30,10 +31,12 @@ import { generateUUID } from '@/uuid';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
 import { SimpleDispense } from './simpleDispense.generated';
 import { ReducedStockDialog } from './ReducedStockDialog';
+import { AmountDialog } from './AmountDialog';
 import {
   addAmount,
   buildCards,
   dispenseInput,
+  medicinesFor,
   reduceToAvailable,
   removeLine,
   setAmount,
@@ -101,8 +104,33 @@ const SimpleDispensingPage: Component = () => {
     undefined,
     { equals: sameFetchedValue }
   );
+
+  // Medicines chosen from the search that have no card (rules › another
+  // amount, and other medicines): fetched like the cards, so a line for one is
+  // priced, checked and saved the same way. Their own resource, so choosing
+  // one never refetches the cards. Kept until the visit is dispensed.
+  const [searchedIds, setSearchedIds] = createSignal<string[]>([]);
+  const [searchedItems] = createResource(
+    () => {
+      const ids = searchedIds();
+      return ids.length > 0 ? { storeId: params.storeId, ids } : false;
+    },
+    ({ storeId, ids }) => fetchItems(storeId, ids)
+  );
+  const searched = createMemo<MedicineCard[]>(
+    () =>
+      buildCards(
+        medicinesFor(searchedIds(), []),
+        gated(searchedItems) ?? [],
+        prescriptionPreferences()
+      ),
+    [],
+    { equals: sameFetchedValue }
+  );
+
   const cardOf = (itemId: string) =>
-    cards()?.find(card => card.item.id === itemId);
+    cards()?.find(card => card.item.id === itemId) ??
+    searched().find(card => card.item.id === itemId);
 
   // Who the visit is for (rules › who it's for and the list): nothing can be
   // added until someone is chosen, and choosing someone else keeps the list.
@@ -116,6 +144,26 @@ const SimpleDispensingPage: Component = () => {
     setLines(reconcile(next, { key: 'itemId' }));
   const available = (card: MedicineCard) =>
     card.stock - unitsListed(lines, card.item.id);
+  const addToList = (card: MedicineCard, units: number) => {
+    setNotice(undefined);
+    update(addAmount(lines, card.item.id, units, card.stock));
+  };
+
+  // The amount box (ui-surface S9): the medicine it is open for, from a
+  // card's another-amount button or the search. The search shows that
+  // medicine while its box is open, and is empty again once it closes.
+  const [asking, setAsking] = createSignal<string | undefined>();
+  const [searchValue, setSearchValue] = createSignal('');
+  const askAmount = (itemId: string) => {
+    if (!cardOf(itemId) && !searchedIds().includes(itemId)) {
+      setSearchedIds([...searchedIds(), itemId]);
+    }
+    setAsking(itemId);
+  };
+  const closeAmount = () => {
+    setAsking(undefined);
+    setSearchValue('');
+  };
 
   // A phone (spec ui-surface S9 › layout): one-row cards, and the list as a
   // bar at the bottom of the screen. Which layout renders, not spacing.
@@ -134,12 +182,11 @@ const SimpleDispensingPage: Component = () => {
 
   /** The list's medicines as the stock stands now. */
   const freshCards = async (): Promise<MedicineCard[] | undefined> => {
-    const list = medicines() ?? [];
     const ids = lines.map(line => line.itemId);
     const fetched = await fetchItems(params.storeId, ids);
     if (!fetched) return undefined;
     return buildCards(
-      list.filter(m => ids.includes(m.itemId)),
+      medicinesFor(ids, medicines() ?? []),
       fetched,
       prescriptionPreferences()
     );
@@ -184,6 +231,7 @@ const SimpleDispensingPage: Component = () => {
     if (lineRefused) return retried ? failed() : checkAndSave(true);
     update([]);
     setPatient(null);
+    setSearchedIds([]);
     setNotice({
       severity: 'success',
       text: t('messages.dispensed-to', { name: who.name }),
@@ -271,6 +319,25 @@ const SimpleDispensingPage: Component = () => {
                   }
                   testId="choose-medicines-hint"
                 />
+                <div class={styles.search}>
+                  <ItemSearch
+                    label={t('label.search-all-medicines')}
+                    hideLabel
+                    placeholder={t('label.search-all-medicines')}
+                    storeId={params.storeId}
+                    // The same medicines as the line editor's search.
+                    includeHiddenWithStock
+                    width="full"
+                    clearable={false}
+                    disabled={patient() === null}
+                    value={searchValue()}
+                    onSelect={item => {
+                      if (!item) return;
+                      setSearchValue(item.id);
+                      askAmount(item.id);
+                    }}
+                  />
+                </div>
                 {/* At most three columns, never narrower than three amount
                     buttons and the another-amount button need. */}
                 <CardGrid
@@ -288,14 +355,8 @@ const SimpleDispensingPage: Component = () => {
                         listed={unitsListed(lines, card.item.id)}
                         oneRow={isPhone()}
                         canAdd={patient() !== null}
-                        onAmount={(_, amount) => {
-                          setNotice(undefined);
-                          update(
-                            addAmount(lines, card.item.id, amount, card.stock)
-                          );
-                        }}
-                        // Another amount: the next step on #2188.
-                        onAskAmount={() => {}}
+                        onAmount={(_, amount) => addToList(card, amount)}
+                        onAskAmount={() => askAmount(card.item.id)}
                       />
                     )}
                   </For>
@@ -329,6 +390,21 @@ const SimpleDispensingPage: Component = () => {
           <EmptyState graphic={false} message={t('loading')} />
         </Match>
       </Switch>
+      {/* Opens once its medicine's batches are in: at once from a card, a
+          moment after the search for a medicine with no card. */}
+      <Show when={asking() ? cardOf(asking()!) : undefined}>
+        {card => (
+          <AmountDialog
+            card={card()}
+            available={available(card())}
+            onAdd={units => {
+              addToList(card(), units);
+              closeAmount();
+            }}
+            onClose={closeAmount}
+          />
+        )}
+      </Show>
       <Show when={review()}>
         {pending => (
           <ReducedStockDialog

@@ -1,11 +1,13 @@
-# The Simple screen's cards (spec/prescriptions › the Simple screen): the
-# store's common medicines that it can still dispense. isVisibleOrOnHand drops
-# an item that is no longer visible in the store and has none on hand, so it
-# gets no card. Each batch carries what the shared allocation policy needs to
-# choose batches the way the line editor does — hold, expiry and VVM for the
-# bars, expiry (and VVM priority) for the fill order, the sell price for a
-# line's price — so available stock and prices are worked out client-side
-# (see domain/item/item.graphql for why not the stats field).
+# The Simple screen's medicines (spec/prescriptions › the Simple screen): the
+# store's common medicines that it can still dispense, and any medicine chosen
+# from the screen's search (› another amount, and other medicines).
+# isVisibleOrOnHand drops an item that is no longer visible in the store and
+# has none on hand, so it gets no card — the same items the search offers.
+# Each batch carries what the shared allocation policy needs to choose batches
+# the way the line editor does — hold, expiry and VVM for the bars, expiry
+# (and VVM priority) for the fill order, the sell price for a line's price — so
+# available stock and prices are worked out client-side (see
+# domain/item/item.graphql for why not the stats field).
 query simpleDispensingItems(
   $storeId: String!
   $ids: [String!]!
@@ -25,6 +27,8 @@ query simpleDispensingItems(
       __typename
       nodes {
         id
+        # The amount box names the medicine by its code as well.
+        code
         name
         unitName
         availableBatches(storeId: $storeId) {

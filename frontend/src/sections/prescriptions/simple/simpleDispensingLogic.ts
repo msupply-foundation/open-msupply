@@ -113,6 +113,24 @@ export const buildCards = (
 };
 
 /**
+ * The medicines for some item ids: a common medicine keeps its usual amounts,
+ * and one chosen from the search has none (rules › another amount, and other
+ * medicines). Built into cards that are never shown, so a searched medicine's
+ * line is priced, checked and saved like a card's.
+ */
+export const medicinesFor = (
+  itemIds: readonly string[],
+  common: readonly CommonMedicine[]
+): CommonMedicine[] =>
+  itemIds.map(
+    itemId =>
+      common.find(medicine => medicine.itemId === itemId) ?? {
+        itemId,
+        amounts: [],
+      }
+  );
+
+/**
  * Packs per batch for a number of units, taken the way dispensing takes them:
  * in fill order, splitting packs (dispensing works in units — the
  * prescriptions variant of the shared distribution).
@@ -191,6 +209,15 @@ export const setAmount = (
     line.itemId === itemId ? { ...line, units: capped } : line
   );
 };
+
+/**
+ * Whether the amount box can add a typed amount (rules › another amount, and
+ * other medicines): something above zero, and no more than what's available.
+ */
+export const canAddTyped = (
+  units: number | undefined,
+  available: number
+): boolean => units !== undefined && units > 0 && units <= available;
 
 export const removeLine = (
   lines: readonly ListLine[],

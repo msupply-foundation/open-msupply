@@ -3,10 +3,12 @@ import type { AllocationPreferences } from '@/domain/allocation';
 import {
   addAmount,
   buildCards,
+  canAddTyped,
   dispenseInput,
   reduceToAvailable,
   shortfalls,
   fillableBatches,
+  medicinesFor,
   priceOf,
   removeLine,
   setAmount,
@@ -39,6 +41,7 @@ const batch = (id: string, over: Partial<Batch> = {}): Batch => ({
 
 const item = (id: string, batches: Batch[] = []): CardItem => ({
   id,
+  code: id.toUpperCase(),
   name: `Item ${id}`,
   unitName: 'Tablet',
   availableBatches: { __typename: 'StockLineConnector', nodes: batches },
@@ -86,6 +89,17 @@ describe('buildCards', () => {
       TODAY
     );
     expect(card?.stock).toBe(205);
+  });
+});
+
+describe('medicinesFor', () => {
+  it('OMS-REG-DIS-12.84: a medicine from the search has no usual amounts, and a common one keeps its own', () => {
+    expect(
+      medicinesFor(['searched', 'common'], [{ itemId: 'common', amounts: [5] }])
+    ).toEqual([
+      { itemId: 'searched', amounts: [] },
+      { itemId: 'common', amounts: [5] },
+    ]);
   });
 });
 
@@ -199,6 +213,22 @@ describe('the list', () => {
         'a'
       )
     ).toEqual([{ itemId: 'b', units: 5 }]);
+  });
+});
+
+describe('the amount box', () => {
+  it('OMS-REG-DIS-12.78: an amount above what is available cannot be added', () => {
+    expect(canAddTyped(29, 28)).toBe(false);
+    expect(canAddTyped(28, 28)).toBe(true);
+  });
+
+  it('OMS-REG-DIS-12.79: nothing typed, or zero, cannot be added', () => {
+    expect(canAddTyped(undefined, 28)).toBe(false);
+    expect(canAddTyped(0, 28)).toBe(false);
+  });
+
+  it('OMS-REG-DIS-12.86: with none available, nothing can be added', () => {
+    expect(canAddTyped(1, 0)).toBe(false);
   });
 });
 
