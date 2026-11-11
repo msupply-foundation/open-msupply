@@ -212,6 +212,44 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 - **A bad change does not take the box down.** A Caddyfile that does not validate, a `.mjs` that does not parse, or a dashboard page that fails its typecheck or tests fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
 - **Trying a change before it merges:** run the workflow from your branch. That branch's copy stays on the box until the next run from `develop` — at the latest the daily scheduled one, which also puts back anything changed on the box by hand.
 
+#### How a request gets in
+
+As set up today ([VPN-only deployments](#vpn-only-deployments)). The dotted line comes into use once the wildcard DNS record and certificate are added at the edge.
+
+```mermaid
+flowchart LR
+    inet[Internet] --> edge[Edge<br/>TLS]
+    office[Office / VPN] -->|dashboard| edge
+    office -->|deployments| open
+    edge --> gated
+    subgraph caddy[Caddy on the box]
+        gated[":8080<br/>sign-in required"]
+        open[":80<br/>open"]
+    end
+    gated --> dash[Dashboard]
+    gated -.->|once wildcard DNS exists| deps
+    open --> deps[Deployments]
+    dash <--> gh[(GitHub)]
+```
+
+**The two doors.** Which one a request uses is decided by where it arrives, not by anything in the request: the edge only ever connects to `:8080`, and office/VPN machines reach `:80` directly. On `:8080`, Caddy asks the dashboard's `/auth/check` about every request first (`forward_auth`). The one exception is the dashboard's own `/auth/*`, where sign-in starts. Anyone without a sign-in wants [the public Launchpad](#the-public-launchpad), which isn't on the box. The bare domain must not resolve to the box on office/VPN DNS: `:80` would serve the dashboard over plain http, and sign-in breaks there. The proxy never looks at client addresses. If the edge is ever pointed at `:80`, the internet gets in without a sign-in.
+
+**What the dashboard holds.** Signing in goes through the GitHub App, and is refused unless that GitHub account can see the repository. Read access shows the page; write access adds the buttons. The GitHub token stays in the dashboard's memory and is never sent to the browser or written to disk. The client secret in `~/dashboard/.env` is the only credential on the box. Nothing calls GitHub while nobody has the page open.
+
+**The cookies**, for when a sign-in misbehaves:
+
+| cookie | set for | what it is | lasts |
+|---|---|---|---|
+| `oms_dash_state` | the bare domain | a sign-in in progress, checked when GitHub sends the browser back | 10 minutes, or until the sign-in completes |
+| `oms_dash_session` | the bare domain | the dashboard session, and through it the person's GitHub token | the token's own life (8 hours), never more than 12 |
+| `oms_gate` | the whole domain | opens the `:8080` door for this browser; points at the session and holds no token | exactly as long as the session |
+
+**What happens when the dashboard is down or restarted:**
+
+- **Restarted** (every deploy that changes `.github/deploy/dashboard/`): sessions are only in memory, so everyone is signed out, on the dashboard and through the gated door, and signs in again.
+- **Down:** the gated door answers every request with an error, because there is nothing to answer `/auth/check`. The public Launchpad isn't affected. The open door keeps working: deployments on the VPN don't depend on the dashboard.
+- **GitHub down:** nobody can sign in, and the dashboard's GitHub details (commit subjects, "N behind", "deploying now") stop updating. What's running, and the state of each container, still come from `snapshot`.
+
 ### Reverse proxy
 
 | file | |
@@ -261,15 +299,40 @@ Deployments are seeded with datasets whose logins are known, and a logged-in use
 - **No exception for sync:** sync credentials are in the seeded datasets, so they protect nothing. A remote site has to be in the office or on the VPN.
 - **If the dashboard is down**, every deployment is unreachable through the internet door. The open door does not depend on it.
 
+#### The public Launchpad
+
+The Home, Downloads and Schema pages are also published for anyone, as a static site on GitHub Pages. It isn't served from the box at all: `publish-launchpad.yaml` runs on the deploy lane, builds the site and pushes it to a public repo, and Pages serves that repo.
+
+- **One codebase:** the site is the dashboard's own page (`.github/deploy/dashboard/ui`) built with `pnpm build:public`, which keeps only those three pages and reads its data from `/data` instead of `/api`. `ui/src/site.ts` says which build is running.
+- **What leaves the box:** `<store>/releases.json`, the same file the Launchpad's Downloads page reads (see [Deployments dashboard](#deployments-dashboard)), and the public copy of the schema store, which names only releases, develop and main and sets their PR, deployment, commit and run fields to null (`publicIndex` in `publish-schema.mjs`). Nothing else of the store is read.
+- **When:** after any workflow that publishes something it lists (tag releases, installers, APKs, tag clean-ups, schema captures, named deployments), after the dashboard itself deploys, and once a day. A run with nothing new pushes nothing. A Docker Hub error fails the run, so both sides keep their last good list.
+- **The public repo** holds only what the workflow pushes, and is overwritten on each push. Don't edit it by hand.
+
+**Setting it up**, once:
+
+1. Create the public repo, empty, and install the tmf-ci-bot App on it.
+2. Set the repository variable `LAUNCHPAD_PUBLIC_REPO` (`<owner>/<name>`). Until it's set, the workflow only updates the Launchpad's own Downloads list. The site then works at `https://<owner>.github.io/<name>/`. For a domain of its own, also set `LAUNCHPAD_PUBLIC_DOMAIN` (e.g. `launchpad.msupply.foundation`); it must not be the Launchpad's own `DEPLOY_DOMAIN`.
+3. Run `publish-launchpad.yaml` by hand. Then in the public repo's **Settings → Pages**, deploy from the `main` branch, root folder.
+4. With a domain of its own: point a DNS `CNAME` for it at `<owner>.github.io`, and once Pages has checked it, tick **Enforce HTTPS**.
+
+#### Database schemas
+
+The Schema page's schemas are captured per **image**, never from a deployment. A deployment's database may have been restored from any dump, a client's included, and the dump would bring along objects the migrations don't remove, plus partitions sized to its data. So `schema-publish.sh` starts the image in a throwaway container instead: empty, no network, long enough to run its migrations. It reads the schema there and removes the container.
+
+- **When:** after every deploy (`docker-deploy.yaml`, which never fails the deploy over it) and for releases (`publish-schema.yaml`, or **Add a release**).
+- **Once per image:** the store remembers which images it has captured, so a reseed, a restart or a second server on the same commit only files the schema under its name, without starting anything. A new image costs one throwaway server start: a minute or two on the box.
+- **Files:** each file is named by a hash of exactly what it holds. Two versions share a file only when their schemas are identical.
+- **Upgrading from schema 1:** an older store was captured from deployments. The first publish clears it, and develop and the PR previews come back as they next deploy. Dispatch `publish-schema.yaml` with the release tags you want listed, e.g. `v2.20.0 v3.00.00 v3.04.00`.
+
 There is no local HTTPS on the box any more: everything comes through the edge, which serves the real certificate. A box set up before this keeps the `oms-proxy_caddy-data` and `oms-proxy_caddy-config` volumes, which held the old internal CA — `docker volume rm` them, and anyone who trusted its root can remove it.
 
 ### Deployments dashboard
 
 Shows every deployment on the box — the commit actually running, how far behind its branch, expiry, and whether a deploy is in flight — and lets QA and product start, extend, reseed and remove servers without the GitHub form. Its buttons dispatch the same workflows, with the signed-in person's own token.
 
-Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. A third container, `releases`, builds that list every ten minutes from Docker Hub's public tags and the public `msupply-releases` B2 bucket, and writes it to a file the dashboard serves. It needs no credentials: the bucket can't be listed without a key, so each file is looked up by the name the release workflows upload it under. It lists whatever Docker Hub still holds: every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`. APKs are named after `package.json`'s version rather than the tag, so they're looked for under each way the tag spells its version; that misses only a one-off tag whose version differs from its branch's.
+Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. `publish-launchpad.yaml` builds that list from Docker Hub's public tags and the public `msupply-releases` B2 bucket whenever a workflow publishes a build, and once a day, and writes it to `<store>/releases.json`, which the dashboard serves and [the public Launchpad](#the-public-launchpad) copies. Something uploaded by hand shows up at the next daily run, or run the workflow by hand. To keep within B2's free daily transactions, a run only asks B2 about tags it hasn't listed before or that are less than three days old; everything else is taken from the last list. A box set up before this had a `releases` container: the services deploy removes it, and its volume can go with `docker volume rm oms-dashboard_releases`. It needs no credentials: the bucket can't be listed without a key, so each file is looked up by the name the release workflows upload it under. It lists whatever Docker Hub still holds: every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`. APKs are named after `package.json`'s version rather than the tag, so they're looked for under each way the tag spells its version; that misses only a one-off tag whose version differs from its branch's.
 
-Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs` and `web.mjs`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
+Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs`, `web.mjs` and `publish-launchpad.yaml`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
