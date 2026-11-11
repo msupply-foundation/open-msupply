@@ -66,6 +66,12 @@ fragment StocktakeLine on StocktakeLineNode {
     # OMS-REG-INV-03.79/.80): a new batch starts at it, and a zero-stock item's
     # generated line (packSize null, no stock line) is prefilled with it.
     defaultPackSize
+    # With defaultPackSize, the default sell price a new batch starts with and
+    # follows across pack-size changes (spec/stock rules › Default sell price
+    # for new stock).
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
   # The stock line this stocktake line counts (if any). The editor passes these ids as
   # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered

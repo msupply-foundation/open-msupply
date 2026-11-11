@@ -28,6 +28,8 @@ pub struct Input {
 pub enum Context {
     ItemStorePropertiesQuery,
     InboundShipmentTransfer,
+    #[doc = "Server-created new stock taking the store's default sell price: lines added from a master list or an internal order, and new batches when a stocktake is finalised"]
+    NewStock,
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]

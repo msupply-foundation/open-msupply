@@ -648,6 +648,8 @@ const StocktakeDetailView: Component = () => {
             doses: line.item.doses,
             unitName: line.item.unitName,
             defaultPackSize: line.item.defaultPackSize,
+            defaultSellPricePerPack:
+              line.item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
           }
         );
       },

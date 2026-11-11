@@ -1,16 +1,11 @@
-use std::collections::HashMap;
-
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository, NameFilter, NameRepository,
-    Pagination,
+    InvoiceType, ItemRow, ItemStoreJoinRow, NameFilter, NameRepository, Pagination,
 };
 use repository::{InvoiceLineRow, RepositoryError, StockLineRow, StorageConnection};
 use util::uuid::uuid;
 
-use crate::backend_plugin::{
-    plugin_provider::PluginInstance, types::transform_item_store_properties::Context,
-};
+use crate::backend_plugin::types::transform_item_store_properties::Context;
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
     InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError,
@@ -18,6 +13,7 @@ use crate::invoice::inbound_shipment::{
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::pricing::calculate_sell_price::issue_at_cost_price;
+use crate::pricing::default_sell_price::{DefaultSellPrices, default_price_for_pack};
 use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
@@ -35,8 +31,9 @@ pub(crate) fn generate_inbound_lines(
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
     )?;
-    let item_properties_by_item = get_item_properties_by_item(
+    let item_properties_by_item = DefaultSellPrices::load(
         connection,
+        Context::InboundShipmentTransfer,
         inbound_store_id,
         outbound_lines
             .iter()
@@ -103,7 +100,7 @@ pub(crate) fn generate_inbound_lines(
                 },
                 source_stock_line,
             )| {
-                let item_properties = item_properties_by_item.get(&item_id).cloned();
+                let item_properties = item_properties_by_item.item_properties(&item_id).cloned();
 
                 // Legacy customer invoice lines sync with `sentQuantity` and `sent_pack_size`
                 // of 0, so when the outbound hasn't recorded what it shipped, fall back to the
@@ -134,7 +131,7 @@ pub(crate) fn generate_inbound_lines(
                     .as_ref()
                     .map_or(0.0, |i| i.default_sell_price_per_pack);
 
-                let default_price_for_inbound_pack = get_default_price_for_pack(
+                let default_price_for_inbound_pack = default_price_for_pack(
                     default_price_per_default_pack,
                     default_pack_size,
                     pack_size,
@@ -321,18 +318,6 @@ fn get_supplying_store_sell_price(
     source_stock_line.map(|stock_line| stock_line.sell_price_per_pack)
 }
 
-pub(super) fn get_default_price_for_pack(
-    default_sell_price_per_pack: f64,
-    default_pack_size: f64,
-    inbound_pack_size: f64,
-) -> f64 {
-    if default_pack_size == 0.0 {
-        return 0.0;
-    }
-    let price_per_unit = default_sell_price_per_pack / default_pack_size;
-    price_per_unit * inbound_pack_size
-}
-
 pub(super) fn get_cost_plus_margin(
     connection: &StorageConnection,
     cost_price_per_pack: f64,
@@ -359,31 +344,6 @@ pub(super) fn get_cost_plus_margin(
 
 /// The inbound store's item properties, after any transform_item_store_properties
 /// plugin, keyed by item id
-fn get_item_properties_by_item(
-    connection: &StorageConnection,
-    store_id: &str,
-    mut item_ids: Vec<String>,
-) -> Result<HashMap<String, ItemStoreJoinRow>, RepositoryError> {
-    item_ids.sort();
-    item_ids.dedup();
-
-    let rows = ItemStoreJoinRowRepository::new(connection)
-        .find_many_by_item_and_store_ids(&item_ids, &[store_id.to_string()])?;
-    let rows = PluginInstance::transform_item_store_properties(
-        Context::InboundShipmentTransfer,
-        store_id,
-        &item_ids,
-        rows,
-    );
-
-    let mut by_item = HashMap::new();
-    for row in rows {
-        // First row wins, as the previous one-row lookup did
-        by_item.entry(row.item_id.clone()).or_insert(row);
-    }
-    Ok(by_item)
-}
-
 fn get_item_margin(item_properties: Option<ItemStoreJoinRow>) -> Option<f64> {
     item_properties.as_ref().map(|i| i.margin)
 }
@@ -406,7 +366,7 @@ fn get_supplier_margin(connection: &StorageConnection, supplier_id: &String) -> 
 
 #[cfg(test)]
 mod test {
-    use super::{generate_inbound_lines, get_cost_plus_margin, get_default_price_for_pack};
+    use super::{generate_inbound_lines, get_cost_plus_margin};
 
     use repository::{
         Invoice, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
@@ -520,49 +480,6 @@ mod test {
                 &supplier_no_margin_id
             ),
             Ok(cost_price_per_pack)
-        );
-    }
-
-    #[test]
-    fn test_get_default_price_for_pack_conversion() {
-        let default_price = 5.0;
-        let default_pack_size = 10.0;
-
-        // Exact pack
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            5.0
-        );
-
-        // Pack of one
-        let inbound_pack_size = 1.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.5
-        );
-
-        // Larger pack
-        let inbound_pack_size = 100.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            50.0
-        );
-
-        // Zero default pack size
-        let default_pack_size = 0.0;
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.0
-        );
-
-        // Zero default price
-        let default_price = 0.0;
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.0
         );
     }
 
