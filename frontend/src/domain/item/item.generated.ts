@@ -15,6 +15,7 @@ export type ItemsWithStockVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "SERVICE" | "STOCK" | "NON_STOCK" | null;
@@ -25,6 +26,7 @@ export type ItemsWithStockVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     categoryId?: string | null;
     categoryName?: string | null;
@@ -34,6 +36,7 @@ export type ItemsWithStockVariables = {
     codeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isActive?: boolean | null;
     isVaccine?: boolean | null;
@@ -53,6 +56,7 @@ export type ItemsWithStockVariables = {
     universalCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     notInRecord?: {
     record: "stocktake" | "requisition" | "invoice";

@@ -15,18 +15,22 @@ export type MasterListsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     description?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForNameId?: {
     equalTo?: string | null;

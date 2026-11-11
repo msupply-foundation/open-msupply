@@ -51,6 +51,10 @@ export type CentralPatientSearchVariables = {
     firstName?: string | null;
     lastName?: string | null;
     dateOfBirth?: string | null;
+    dateOfBirthFrom?: string | null;
+    dateOfBirthTo?: string | null;
+    first?: number | null;
+    offset?: number | null;
   };
 };
 
