@@ -289,10 +289,14 @@ mod tests {
                 continue;
             }
             match aliases.iter().find(|(alias, _)| alias == t) {
-                // A table missing from the order is already reported as missing.
                 Some((alias, table)) if in_order_set.contains(*table) => {
                     deps.push((alias.to_string(), table.to_string()))
                 }
+                // An alias whose target is no table, such as a misspelled one.
+                Some((_, table)) if !schema_tables.contains(*table) => {
+                    report.undeclared_aliases.push(t.to_string())
+                }
+                // A table missing from the order is already reported as missing.
                 Some(_) => {}
                 None => report.undeclared_aliases.push(t.to_string()),
             }
