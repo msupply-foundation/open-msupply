@@ -3,6 +3,9 @@ import type { AllocationPreferences } from '@/domain/allocation';
 import {
   addAmount,
   buildCards,
+  dispenseInput,
+  reduceToAvailable,
+  shortfalls,
   fillableBatches,
   priceOf,
   removeLine,
@@ -216,5 +219,100 @@ describe('stockState', () => {
   it('with no usual amounts, is low below two units', () => {
     expect(stockState(1, [])).toBe('low');
     expect(stockState(2, [])).toBe('plenty');
+  });
+});
+
+describe('dispensing the visit', () => {
+  const cardsFor = (...items: CardItem[]) =>
+    buildCards(
+      items.map(i => ({ itemId: i.id, amounts: [] })),
+      items,
+      PREFS,
+      TODAY
+    );
+
+  it('OMS-REG-DIS-12.57: finds the lines the stock can no longer cover', () => {
+    const fresh = cardsFor(
+      item('a', [batch('a1', { availableNumberOfPacks: 2, packSize: 10 })]),
+      item('b', [batch('b1', { availableNumberOfPacks: 5, packSize: 10 })])
+    );
+    expect(
+      shortfalls(
+        [
+          { itemId: 'a', units: 30 },
+          { itemId: 'b', units: 30 },
+          { itemId: 'gone', units: 5 },
+        ],
+        fresh
+      )
+    ).toEqual([
+      { itemId: 'a', wanted: 30, available: 20 },
+      { itemId: 'gone', wanted: 5, available: 0 },
+    ]);
+  });
+
+  it('OMS-REG-DIS-12.59: reduces a short line to what is available, and removes one with none left', () => {
+    expect(
+      reduceToAvailable(
+        [
+          { itemId: 'a', units: 30 },
+          { itemId: 'b', units: 5 },
+          { itemId: 'c', units: 7 },
+        ],
+        [
+          { itemId: 'a', wanted: 30, available: 20 },
+          { itemId: 'c', wanted: 7, available: 0 },
+        ]
+      )
+    ).toEqual([
+      { itemId: 'a', units: 20 },
+      { itemId: 'b', units: 5 },
+    ]);
+  });
+
+  it('OMS-REG-DIS-12.51-.53: saves one record, a line per batch first expiry first, and finishes it as Verified', () => {
+    const cards = cardsFor(
+      item('a', [
+        batch('later', {
+          availableNumberOfPacks: 10,
+          packSize: 10,
+          expiryDate: '2029-01-01',
+        }),
+        batch('sooner', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          expiryDate: '2027-01-01',
+        }),
+      ])
+    );
+    let n = 0;
+    const input = dispenseInput(
+      'rx',
+      'patient',
+      [{ itemId: 'a', units: 15 }],
+      cards,
+      () => `line-${++n}`
+    );
+    expect(input.insertPrescriptions).toEqual([
+      { id: 'rx', patientId: 'patient' },
+    ]);
+    expect(input.insertPrescriptionLines).toEqual([
+      {
+        id: 'line-1',
+        invoiceId: 'rx',
+        stockLineId: 'sooner',
+        numberOfPacks: 1,
+      },
+      {
+        id: 'line-2',
+        invoiceId: 'rx',
+        stockLineId: 'later',
+        numberOfPacks: 0.5,
+      },
+    ]);
+    expect(input.updatePrescriptions).toEqual([
+      { id: 'rx', status: 'VERIFIED' },
+    ]);
+    expect(input.continueOnError).toBe(false);
   });
 });

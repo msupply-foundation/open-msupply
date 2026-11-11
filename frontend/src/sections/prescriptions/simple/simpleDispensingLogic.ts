@@ -196,3 +196,74 @@ export const removeLine = (
   lines: readonly ListLine[],
   itemId: string
 ): ListLine[] => lines.filter(line => line.itemId !== itemId);
+
+/** A line the stock can no longer give out in full, and what it can. */
+export interface Shortfall {
+  itemId: string;
+  wanted: number;
+  available: number;
+}
+
+/**
+ * The lines the stock can no longer cover, checked against freshly read cards
+ * (spec/prescriptions rules › dispensing the visit). A medicine that has no
+ * card any more has nothing available.
+ */
+export const shortfalls = (
+  lines: readonly ListLine[],
+  fresh: readonly MedicineCard[]
+): Shortfall[] =>
+  lines.flatMap(line => {
+    const available =
+      fresh.find(card => card.item.id === line.itemId)?.stock ?? 0;
+    return line.units > available
+      ? [{ itemId: line.itemId, wanted: line.units, available }]
+      : [];
+  });
+
+/**
+ * The list with each short line brought down to what is available, or removed.
+ */
+export const reduceToAvailable = (
+  lines: readonly ListLine[],
+  short: readonly Shortfall[]
+): ListLine[] =>
+  lines.flatMap(line => {
+    const cut = short.find(s => s.itemId === line.itemId);
+    if (!cut) return [line];
+    return cut.available > 0 ? [{ ...line, units: cut.available }] : [];
+  });
+
+/**
+ * The batch save for a visit: the record, one line per batch taken (packs
+ * split where needed, first expiry first), and the move to Verified.
+ */
+export const dispenseInput = (
+  prescriptionId: string,
+  patientId: string,
+  lines: readonly ListLine[],
+  cards: readonly MedicineCard[],
+  newId: () => string
+) => ({
+  insertPrescriptions: [{ id: prescriptionId, patientId }],
+  insertPrescriptionLines: lines.flatMap(line => {
+    const card = cards.find(c => c.item.id === line.itemId);
+    if (!card) return [];
+    const packs = allocate(card.batches, line.units);
+    return card.batches.flatMap(batch => {
+      const numberOfPacks = packs.get(batch.id) ?? 0;
+      return numberOfPacks > 0
+        ? [
+            {
+              id: newId(),
+              invoiceId: prescriptionId,
+              stockLineId: batch.id,
+              numberOfPacks,
+            },
+          ]
+        : [];
+    });
+  }),
+  updatePrescriptions: [{ id: prescriptionId, status: 'VERIFIED' as const }],
+  continueOnError: false,
+});

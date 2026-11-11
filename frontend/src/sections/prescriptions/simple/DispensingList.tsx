@@ -3,7 +3,8 @@ import { formatCurrency, t, tPlural } from '@/intl';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
-import { TrashIcon } from '@/ui/icons';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { CheckCircleIcon, TrashIcon } from '@/ui/icons';
 import {
   priceOf,
   type ListLine,
@@ -34,6 +35,17 @@ export const DispensingList = (props: {
   onRemove: (itemId: string) => void;
   /** Empty the list. Nothing was saved, so nothing else changes. */
   onClear: () => void;
+  /** Save the visit (rules › dispensing the visit). */
+  onDispense: () => void;
+  /** Someone is chosen, so there is someone to dispense to. */
+  canDispense: boolean;
+  /** A save is in flight. */
+  dispensing: boolean;
+  /**
+   * What the last Dispense did: who it went to, or why it failed. Shown in
+   * the list itself — never a toast (ui-standards › action feedback).
+   */
+  notice?: { severity: 'success' | 'error'; text: string };
 }) => {
   const priceOfLine = (line: ListLine): number => {
     const card = props.cardOf(line.itemId);
@@ -65,6 +77,17 @@ export const DispensingList = (props: {
       </header>
 
       <div class={styles.body}>
+        <Show when={props.notice}>
+          {notice => (
+            <Alert
+              severity={notice().severity}
+              compact
+              testId="dispense-notice"
+            >
+              {notice().text}
+            </Alert>
+          )}
+        </Show>
         <Show
           when={hasLines()}
           fallback={
@@ -145,16 +168,24 @@ export const DispensingList = (props: {
             </span>
           </div>
         </Show>
-        {/* The panel's actions, at its inline end — Dispense joins Clear
-            here, last. */}
+        {/* The panel's actions, at its inline end, Dispense last. */}
         <div class={styles.actions}>
           <Button
             variant="ghost"
-            disabled={!hasLines()}
+            disabled={!hasLines() || props.dispensing}
             data-testid="clear-list-button"
             onClick={() => props.onClear()}
           >
             {t('common.clear')}
+          </Button>
+          <Button
+            icon={<CheckCircleIcon />}
+            disabled={!hasLines() || !props.canDispense}
+            loading={props.dispensing}
+            data-testid="dispense-button"
+            onClick={() => props.onDispense()}
+          >
+            {t('button.dispense')}
           </Button>
         </div>
       </footer>

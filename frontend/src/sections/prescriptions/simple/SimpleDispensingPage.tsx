@@ -25,15 +25,23 @@ import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { MenuLinesIcon } from '@/ui/icons';
 import { CreatePatientModal } from '../../patients';
+import { generateUUID } from '@/uuid';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
+import { SimpleDispense } from './simpleDispense.generated';
+import { ReducedStockDialog } from './ReducedStockDialog';
 import {
   addAmount,
   buildCards,
+  dispenseInput,
+  reduceToAvailable,
   removeLine,
   setAmount,
+  shortfalls,
   unitsListed,
+  type CardItem,
   type ListLine,
   type MedicineCard,
+  type Shortfall,
 } from './simpleDispensingLogic';
 import { MedicineCardView } from './MedicineCard';
 import { DispensingList } from './DispensingList';
@@ -55,23 +63,29 @@ const SimpleDispensingPage: Component = () => {
   // as "none set up".
   const medicines = () => prescriptionPreferences().commonMedicines;
 
-  const [items] = createResource(
+  // The cards' items: on load, and again when Dispense checks the stock.
+  const fetchItems = async (
+    storeId: string,
+    ids: string[]
+  ): Promise<CardItem[] | undefined> => {
+    const result = await graphqlFetch(SimpleDispensingItems, {
+      storeId,
+      ids,
+      page: { first: ids.length },
+    });
+    if (result.kind !== 'success') return undefined;
+    return result.data.items.__typename === 'ItemConnector'
+      ? result.data.items.nodes
+      : undefined;
+  };
+
+  const [items, { refetch: refetchItems }] = createResource(
     () => {
       const list = medicines();
       if (!list || list.length === 0) return false;
       return { storeId: params.storeId, ids: list.map(m => m.itemId) };
     },
-    async ({ storeId, ids }) => {
-      const result = await graphqlFetch(SimpleDispensingItems, {
-        storeId,
-        ids,
-        page: { first: ids.length },
-      });
-      if (result.kind !== 'success') return undefined;
-      return result.data.items.__typename === 'ItemConnector'
-        ? result.data.items.nodes
-        : undefined;
-    }
+    ({ storeId, ids }) => fetchItems(storeId, ids)
   );
 
   // Rebuilt per load, so compared by value: a refresh that returns the same
@@ -102,6 +116,96 @@ const SimpleDispensingPage: Component = () => {
   const available = (card: MedicineCard) =>
     card.stock - unitsListed(lines, card.item.id);
 
+  // Dispense (rules › dispensing the visit): check the stock again, show
+  // what has to be reduced if anything ran out, then save the whole visit in
+  // one transaction and clear the screen for the next person.
+  const [dispensing, setDispensing] = createSignal(false);
+  const [notice, setNotice] = createSignal<
+    { severity: 'success' | 'error'; text: string } | undefined
+  >();
+  const [review, setReview] = createSignal<
+    { short: Shortfall[]; fresh: MedicineCard[] } | undefined
+  >();
+
+  /** The list's medicines as the stock stands now. */
+  const freshCards = async (): Promise<MedicineCard[] | undefined> => {
+    const list = medicines() ?? [];
+    const ids = lines.map(line => line.itemId);
+    const fetched = await fetchItems(params.storeId, ids);
+    if (!fetched) return undefined;
+    return buildCards(
+      list.filter(m => ids.includes(m.itemId)),
+      fetched,
+      prescriptionPreferences()
+    );
+  };
+
+  const failed = (): void => {
+    setNotice({ severity: 'error', text: t('error.dispense-failed') });
+  };
+
+  /** Check the list against the stock now; save it if it is all there. */
+  const checkAndSave = async (retried = false): Promise<void> => {
+    const who = patient();
+    if (!who) return;
+    const fresh = await freshCards();
+    if (!fresh) return failed();
+    const short = shortfalls(lines, fresh);
+    if (short.length > 0) {
+      setReview({ short, fresh });
+      return;
+    }
+    const prescriptionId = generateUUID();
+    const result = await graphqlFetch(
+      SimpleDispense,
+      {
+        storeId: params.storeId,
+        input: dispenseInput(
+          prescriptionId,
+          who.id,
+          [...lines],
+          fresh,
+          generateUUID
+        ),
+      },
+      { returnGraphqlErrors: true }
+    );
+    if (result.kind !== 'success') return failed();
+    const lineRefused = (
+      result.data.batchPrescription.insertPrescriptionLines ?? []
+    ).some(line => line.response.__typename === 'InsertPrescriptionLineError');
+    // The stock moved between the check and the save: nothing was saved, so
+    // check again (once) and show what has to be reduced.
+    if (lineRefused) return retried ? failed() : checkAndSave(true);
+    update([]);
+    setPatient(null);
+    setNotice({
+      severity: 'success',
+      text: t('messages.dispensed-to', { name: who.name }),
+    });
+    void refetchItems();
+  };
+
+  const dispense = async () => {
+    setNotice(undefined);
+    setDispensing(true);
+    try {
+      await checkAndSave();
+    } finally {
+      setDispensing(false);
+    }
+  };
+
+  /** Bring the short lines down to what is available, or remove them. */
+  const applyReview = (): void => {
+    const pending = review();
+    if (!pending) return;
+    update(reduceToAvailable(lines, pending.short));
+    setReview(undefined);
+    // The cards follow the stock as it now is.
+    void refetchItems();
+  };
+
   const standardView = (variant: 'secondary' | 'ghost') => (
     <LinkButton
       href={listHref()}
@@ -128,7 +232,10 @@ const SimpleDispensingPage: Component = () => {
           <WhoIsItFor
             storeId={params.storeId}
             patient={patient()}
-            onSelect={setPatient}
+            onSelect={chosen => {
+              setNotice(undefined);
+              setPatient(chosen);
+            }}
             onCreatePatient={() => setCreatePatientOpen(true)}
           />
           <HeaderButtons>{standardView('secondary')}</HeaderButtons>
@@ -174,11 +281,12 @@ const SimpleDispensingPage: Component = () => {
                         card={card}
                         available={available(card)}
                         canAdd={patient() !== null}
-                        onAmount={(_, amount) =>
+                        onAmount={(_, amount) => {
+                          setNotice(undefined);
                           update(
                             addAmount(lines, card.item.id, amount, card.stock)
-                          )
-                        }
+                          );
+                        }}
                         // Another amount: the next step on #2188.
                         onAskAmount={() => {}}
                       />
@@ -198,6 +306,10 @@ const SimpleDispensingPage: Component = () => {
                 }
                 onRemove={itemId => update(removeLine(lines, itemId))}
                 onClear={() => update([])}
+                onDispense={() => void dispense()}
+                canDispense={patient() !== null}
+                dispensing={dispensing()}
+                notice={notice()}
               />
             </div>
           )}
@@ -206,6 +318,20 @@ const SimpleDispensingPage: Component = () => {
           <EmptyState graphic={false} message={t('loading')} />
         </Match>
       </Switch>
+      <Show when={review()}>
+        {pending => (
+          <ReducedStockDialog
+            short={pending().short}
+            cardOf={cardOf}
+            canDispense={reduceToAvailable(lines, pending().short).length > 0}
+            onGoBack={applyReview}
+            onDispense={() => {
+              applyReview();
+              void dispense();
+            }}
+          />
+        )}
+      </Show>
       {/* Create-patient-on-no-match, as on the create flow: on success the
           new patient is the one the visit is for. Mounted only while open,
           so its test ids are never on the page twice (e2e/TESTIDS.md). */}
