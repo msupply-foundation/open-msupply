@@ -24,6 +24,7 @@ import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { MenuLinesIcon } from '@/ui/icons';
+import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
@@ -115,6 +116,10 @@ const SimpleDispensingPage: Component = () => {
     setLines(reconcile(next, { key: 'itemId' }));
   const available = (card: MedicineCard) =>
     card.stock - unitsListed(lines, card.item.id);
+
+  // A phone (spec ui-surface S9 › layout): one-row cards, and the list as a
+  // bar at the bottom of the screen. Which layout renders, not spacing.
+  const isPhone = useIsCompact();
 
   // Dispense (rules › dispensing the visit): check the stock again, show
   // what has to be reduced if anything ran out, then save the whole visit in
@@ -280,6 +285,8 @@ const SimpleDispensingPage: Component = () => {
                       <MedicineCardView
                         card={card}
                         available={available(card)}
+                        listed={unitsListed(lines, card.item.id)}
+                        oneRow={isPhone()}
                         canAdd={patient() !== null}
                         onAmount={(_, amount) => {
                           setNotice(undefined);
@@ -294,8 +301,12 @@ const SimpleDispensingPage: Component = () => {
                   </For>
                 </CardGrid>
               </div>
-              {/* Docked at the columns' inline end (its own CSS). */}
+              {/* Docked at the columns' inline end, or a bar at the bottom
+                  of the screen on a phone (its own CSS). One instance at
+                  every width: crossing the line restyles it, never rebuilds
+                  its lines. */}
               <DispensingList
+                isPhone={isPhone()}
                 forName={patient()?.name}
                 lines={lines}
                 cardOf={cardOf}
