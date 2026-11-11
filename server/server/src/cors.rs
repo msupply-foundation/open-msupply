@@ -336,6 +336,30 @@ mod tests {
         assert_eq!(response.status(), StatusCode::SWITCHING_PROTOCOLS);
     }
 
+    // The main chain sends the security headers (#1669), on the 403 for a refused WebSocket
+    // upgrade too
+    #[actix_web::test]
+    async fn main_server_sends_the_security_headers() {
+        let app = test::init_service(release_app()).await;
+
+        let graphql = test::TestRequest::post().uri("/graphql").to_request();
+        let refused_upgrade =
+            websocket_upgrade(Some("https://evil.example"), Some("cross-site")).to_request();
+        for (request, status) in [
+            (graphql, StatusCode::OK),
+            (refused_upgrade, StatusCode::FORBIDDEN),
+        ] {
+            let response = test::call_service(&app, request).await;
+            assert_eq!(response.status(), status);
+            let headers = response.headers();
+            assert_eq!(headers.get(header::X_FRAME_OPTIONS).unwrap(), "SAMEORIGIN");
+            assert_eq!(
+                headers.get(header::X_CONTENT_TYPE_OPTIONS).unwrap(),
+                "nosniff"
+            );
+        }
+    }
+
     #[actix_web::test]
     async fn same_site_request_from_unlisted_origin_is_refused() {
         let app = test::init_service(release_app()).await;
