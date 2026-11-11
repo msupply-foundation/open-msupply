@@ -43,6 +43,8 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
+    /// Matches the code or the secondary code (code 2)
+    pub code_or_code_2: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
     pub next_of_kin_name: Option<StringFilterInput>,
@@ -70,6 +72,7 @@ impl From<PatientFilterInput> for PatientFilter {
             country: f.country.map(StringFilter::from),
             email: f.email.map(StringFilter::from),
             identifier: f.identifier.map(StringFilter::from),
+            code_or_code_2: f.code_or_code_2.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
             next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),

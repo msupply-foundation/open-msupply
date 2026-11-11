@@ -42,6 +42,10 @@ pub struct PatientFilter {
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
+    /// The code or the secondary code (name::national_health_number) matches.
+    /// Each is looked up on its own and the results combined, so the filter
+    /// stays one condition that ANDs with the rest.
+    pub code_or_code_2: Option<StringFilter>,
     pub program_enrolment_name: Option<StringFilter>,
 
     /// Client-provided dynamic filter AST (currently property conditions only).
@@ -89,6 +93,22 @@ impl<'a> PatientRepository<'a> {
         Ok(query
             .count()
             .get_result(self.connection.lock().connection())?)
+    }
+
+    /// Counts the matching patients, but stops at `limit`: a short search on a
+    /// big site can match most of it, and counting all of them is the slow
+    /// part. Returns `limit` when there are at least that many.
+    pub fn count_up_to(
+        &self,
+        filter: Option<PatientFilter>,
+        allowed_ctx: Option<&[String]>,
+        limit: u32,
+    ) -> Result<i64, RepositoryError> {
+        let ids: Vec<String> = Self::create_filtered_query(filter, allowed_ctx)
+            .select(name::id)
+            .limit(limit as i64)
+            .load(self.connection.lock().connection())?;
+        Ok(ids.len() as i64)
     }
 
     pub fn query_by_filter(
@@ -194,6 +214,7 @@ impl<'a> PatientRepository<'a> {
                 country,
                 email,
                 identifier,
+                code_or_code_2,
                 program_enrolment_name,
                 next_of_kin_name,
                 dynamic_filter,
@@ -245,6 +266,20 @@ impl<'a> PatientRepository<'a> {
                 .select(name::id);
 
                 query = query.filter(name::id.eq_any(sub_query))
+            }
+
+            // After next of kin's `or_filter`, which would otherwise OR against it
+            if let Some(filter) = code_or_code_2 {
+                let mut code_lookup = name::table.select(name::id).into_boxed();
+                apply_string_filter!(code_lookup, Some(filter.clone()), name::code);
+                let mut national_health_number_lookup = name::table.select(name::id).into_boxed();
+                apply_string_filter!(
+                    national_health_number_lookup,
+                    Some(filter),
+                    name::national_health_number
+                );
+                query =
+                    query.filter(name::id.eq_any(code_lookup.union(national_health_number_lookup)));
             }
 
             apply_equal_filter!(query, id, name::id);
@@ -317,6 +352,11 @@ impl PatientFilter {
 
     pub fn identifier(mut self, filter: StringFilter) -> Self {
         self.identifier = Some(filter);
+        self
+    }
+
+    pub fn code_or_code_2(mut self, filter: StringFilter) -> Self {
+        self.code_or_code_2 = Some(filter);
         self
     }
 
@@ -742,5 +782,78 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_code_or_code_2_filter() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_patient_code_or_code_2_filter",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let patient = |id: &str, code: &str, code_2: Option<&str>| NameRow {
+            id: id.to_string(),
+            name: id.to_string(),
+            code: code.to_string(),
+            national_health_number: code_2.map(str::to_string),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        let rows = [
+            patient("by_code", "ABC-001", Some("ZZZ-1")),
+            patient("by_code_2", "QQQ-002", Some("abc-777")),
+            patient("no_code_2", "abd-003", None),
+            patient("neither", "XYZ-004", Some("XYZ-5")),
+            NameRow {
+                deleted_datetime: Some(Utc::now().naive_utc()),
+                ..patient("deleted", "ABC-009", None)
+            },
+            NameRow {
+                r#type: NameRowType::Store,
+                ..patient("not_a_patient", "ABC-010", None)
+            },
+        ];
+        for row in &rows {
+            NameRowRepository::new(&connection).upsert_one(row).unwrap();
+        }
+
+        let repo = PatientRepository::new(&connection);
+        let ids = |filter: PatientFilter| -> Vec<String> {
+            let mut ids: Vec<String> = repo
+                .query_by_filter(filter, None)
+                .unwrap()
+                .into_iter()
+                .map(|patient| patient.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        // Start of either code, ignoring case
+        assert_eq!(
+            ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("abc"))),
+            ["by_code", "by_code_2"]
+        );
+        assert_eq!(
+            ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("AB"))),
+            ["by_code", "by_code_2", "no_code_2"]
+        );
+        // Only the start
+        assert!(
+            ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("777"))).is_empty()
+        );
+        // Other operators apply to both columns too
+        assert_eq!(
+            ids(PatientFilter::new().code_or_code_2(StringFilter::equal_to("ZZZ-1"))),
+            ["by_code"]
+        );
+        // ANDs with the other filters
+        assert_eq!(
+            ids(PatientFilter::new()
+                .code_or_code_2(StringFilter::starts_with("abc"))
+                .name(StringFilter::equal_to("by_code_2"))),
+            ["by_code_2"]
+        );
     }
 }

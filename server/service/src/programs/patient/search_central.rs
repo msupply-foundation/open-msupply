@@ -1,5 +1,8 @@
+use chrono::NaiveDate;
 use log::{error, info};
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::{
+    DateFilter, KeyType, KeyValueStoreRepository, PatientFilter, RepositoryError, StringFilter,
+};
 use thiserror::Error;
 use url::Url;
 use util::format_error;
@@ -18,10 +21,64 @@ use crate::{
         api::SyncApiV5,
         settings::{SYNC_V5_VERSION, SyncSettings},
     },
-    sync_v7::{api::SyncApiV7, patient_lookup::pull_and_integrate_patient_data},
+    sync_v7::{
+        api::{SyncApiV7, patient_search},
+        patient_lookup::pull_and_integrate_patient_data,
+    },
 };
 
-use super::{PatientSearch, patient_search_to_filter};
+use super::PatientSearch;
+
+/// Searching other facilities' patients on the central server.
+#[derive(Default)]
+pub struct CentralPatientSearch {
+    /// Matches the start of the patient code (v7); exactly on legacy mSupply.
+    pub code: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    /// An exact date of birth.
+    pub date_of_birth: Option<NaiveDate>,
+    /// A range of dates of birth, for a year or a month (v7 only).
+    pub date_of_birth_from: Option<NaiveDate>,
+    pub date_of_birth_to: Option<NaiveDate>,
+    /// A page, in name order (v7 only; legacy mSupply returns every match).
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+}
+
+/// The filter sent to the central server. Built here, on the remote, so the
+/// matching is this version's: names and code from the start of the text, as
+/// in this site's own search, and a date of birth as a date or a range.
+fn central_search_filter(params: &CentralPatientSearch) -> PatientFilter {
+    let mut filter = PatientFilter::new();
+    // The patient ID matches the start of the code or code 2, as this site's
+    // own search does. The central is never older than its remotes, so it
+    // reads the filter.
+    if let Some(code) = &params.code {
+        filter = filter.code_or_code_2(StringFilter::starts_with(code));
+    }
+    if let Some(first_name) = &params.first_name {
+        filter = filter.first_name(StringFilter::starts_with(first_name));
+    }
+    if let Some(last_name) = &params.last_name {
+        filter = filter.last_name(StringFilter::starts_with(last_name));
+    }
+    let date_of_birth = match (
+        params.date_of_birth,
+        params.date_of_birth_from,
+        params.date_of_birth_to,
+    ) {
+        (Some(date), _, _) => Some(DateFilter::equal_to(date)),
+        (None, Some(from), Some(to)) => Some(DateFilter::date_range(&from, &to)),
+        (None, Some(from), None) => Some(DateFilter::after_or_equal_to(from)),
+        (None, None, Some(to)) => Some(DateFilter::before_or_equal_to(to)),
+        (None, None, None) => None,
+    };
+    if let Some(date_of_birth) = date_of_birth {
+        filter = filter.date_of_birth(date_of_birth);
+    }
+    filter
+}
 
 // TODO: When standalone work done, also check OMS only central.
 fn is_v7_remote(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
@@ -53,7 +110,7 @@ pub enum CentralPatientRequestError {
 pub async fn patient_search_central(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
-    params: PatientSearch,
+    params: CentralPatientSearch,
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
     let sync_settings = service_provider
         .settings
@@ -66,7 +123,21 @@ pub async fn patient_search_central(
         return patient_search_central_v7(service_provider, &sync_settings, params).await;
     }
 
-    patient_search_central_v4(&sync_settings, params).await
+    // Legacy mSupply takes an exact date of birth only, and no page.
+    patient_search_central_v4(
+        &sync_settings,
+        PatientSearch {
+            code: params.code,
+            code_2: None,
+            first_name: params.first_name,
+            last_name: params.last_name,
+            name: None,
+            date_of_birth: params.date_of_birth,
+            gender: None,
+            identifier: None,
+        },
+    )
+    .await
 }
 
 async fn patient_search_central_v4(
@@ -115,13 +186,17 @@ async fn patient_search_central_v4(
 async fn patient_search_central_v7(
     service_provider: &ServiceProvider,
     sync_settings: &SyncSettings,
-    params: PatientSearch,
+    params: CentralPatientSearch,
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
     let api = SyncApiV7::new(service_provider, &sync_settings.url).map_err(map_v7_sync_error)?;
 
-    api.patient_search(patient_search_to_filter(params))
-        .await
-        .map_err(map_v7_sync_error)
+    api.patient_search(patient_search::Input {
+        filter: central_search_filter(&params),
+        limit: params.limit,
+        offset: params.offset,
+    })
+    .await
+    .map_err(map_v7_sync_error)
 }
 
 #[derive(Clone, Debug)]

@@ -5,7 +5,8 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository,
+    NameRowRepository, Pagination, PatientRepository, PatientSort, PatientSortField,
     RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
     StorageConnection, SyncBufferRepository, SyncVersion,
     migrations::Version,
@@ -485,19 +486,82 @@ pub async fn patient_search(
     tokio::task::spawn_blocking(move || {
         let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
-        let results =
-            service_provider
-                .patient_service
-                .get_patients(&ctx, None, Some(input), None, None)?;
+        let patient_search::Input {
+            filter,
+            limit,
+            offset,
+        } = input;
 
-        Ok(results
-            .rows
-            .into_iter()
-            .map(name_row_to_patient_v4)
-            .collect())
+        let paged = limit.is_some();
+        let rows = match limit {
+            // A page: name order (ties broken by id, so pages don't overlap),
+            // and no count — the remote asks for one more than it shows to
+            // know whether there are more.
+            Some(limit) => PatientRepository::new(&ctx.connection).query(
+                Pagination {
+                    limit,
+                    offset: offset.unwrap_or(0),
+                },
+                Some(filter),
+                Some(PatientSort {
+                    key: PatientSortField::Name,
+                    desc: None,
+                }),
+                None,
+            )?,
+            // A remote from before the page was added: every match, as before.
+            None => {
+                service_provider
+                    .patient_service
+                    .get_patients(&ctx, None, Some(filter), None, None)?
+                    .rows
+            }
+        };
+
+        // A remote that sends no page is from before next_of_kin_name was
+        // sent, and can't read it, so its next of kin aren't looked up
+        Ok(patients_v4(&ctx.connection, rows, paged)?)
     })
     .await
     .map_err(join_error)?
+}
+
+/// The patients central's search returns. A next of kin linked to a name shows
+/// as that name, as on the patient node; `look_up_next_of_kin` false leaves the
+/// plain text field.
+fn patients_v4(
+    connection: &StorageConnection,
+    rows: Vec<repository::NameRow>,
+    look_up_next_of_kin: bool,
+) -> Result<Vec<PatientV4>, RepositoryError> {
+    let next_of_kin_names: HashMap<String, String> = if look_up_next_of_kin {
+        let ids: Vec<String> = rows
+            .iter()
+            .filter_map(|row| row.next_of_kin_id.clone())
+            .collect();
+        NameRowRepository::new(connection)
+            .find_many_by_id(&ids)?
+            .into_iter()
+            .map(|row| (row.id, row.name))
+            .collect()
+    } else {
+        HashMap::new()
+    };
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            let linked_name = row
+                .next_of_kin_id
+                .as_ref()
+                .and_then(|id| next_of_kin_names.get(id).cloned());
+            let mut patient = name_row_to_patient_v4(row);
+            if linked_name.is_some() {
+                patient.next_of_kin_name = linked_name;
+            }
+            patient
+        })
+        .collect())
 }
 
 fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
@@ -513,6 +577,8 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         gender: name.gender,
         code_2: name.national_health_number,
         is_deceased: name.is_deceased,
+        address1: name.address1,
+        next_of_kin_name: name.next_of_kin_name,
     }
 }
 
@@ -1326,6 +1392,79 @@ mod tests {
         .unwrap();
 
         assert_eq!(batch.records.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn patient_search_returns_address_and_next_of_kin() {
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_fields").await;
+
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: "kin".to_string(),
+            name: "Koné, Awa".to_string(),
+            code: "KIN-1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "linked".to_string(),
+            name: "Traoré, Moussa".to_string(),
+            code: "SEARCH-1".to_string(),
+            phone: Some("555 0100".to_string()),
+            address1: Some("12 Rue du Marché".to_string()),
+            next_of_kin_id: Some("kin".to_string()),
+            next_of_kin_name: Some("stale text".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "text_only".to_string(),
+            name: "Traoré, Fanta".to_string(),
+            code: "SEARCH-2".to_string(),
+            next_of_kin_name: Some("Ibrahim Traoré".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        let search = |limit: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("search-")),
+            limit,
+            offset: None,
+        };
+
+        // A page (this version's remotes)
+        let patients = patient_search(service_provider.clone(), common.clone(), search(Some(10)))
+            .await
+            .unwrap();
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.phone, "555 0100");
+        assert_eq!(linked.address1.as_deref(), Some("12 Rue du Marché"));
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+        let text_only = patients.iter().find(|p| p.id == "text_only").unwrap();
+        assert_eq!(
+            text_only.next_of_kin_name.as_deref(),
+            Some("Ibrahim Traoré")
+        );
+
+        // No page (an older remote): every match, without the linked lookup
+        let patients = patient_search(service_provider, common, search(None))
+            .await
+            .unwrap();
+        assert_eq!(patients.len(), 2);
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("stale text"));
     }
 
     #[actix_rt::test]
