@@ -1,0 +1,22 @@
+/*
+ * The chosen patient's facts (WhoIsItFor.tsx). Their size and tone come from
+ * the HeaderField's detail slot; this only runs them together as one line,
+ * wrapping between facts rather than inside one.
+ */
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A dot after each fact but the last, drawn rather than said: the list
+   already tells a screen reader where one fact ends. After, not before, so a
+   wrapped line starts with a fact. */
+.fact:not(:last-child)::after {
+  content: '·' / '';
+  margin-inline-start: var(--space-2);
+}

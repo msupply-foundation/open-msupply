@@ -1,0 +1,52 @@
+/*
+ * A field on the header's main row (see HeaderField.tsx). The slotting
+ * contract with Header.module.css: a zero basis with a floor, so the field
+ * takes whatever the breadcrumb and the actions leave and wraps onto the
+ * next line once that is less than the floor — the line-break uses the
+ * floor, not the control's full width.
+ */
+
+.field {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  /* Room for the label and a usable control on one line. min() keeps a
+     field alone on a narrow line from overflowing it. */
+  min-inline-size: min(100%, 24rem);
+}
+
+.label {
+  flex: none;
+}
+
+/* The control fills its slot (it is passed width="full"); the slot grows to
+   a short input's cap and no further, so a wide screen's spare room goes to
+   the detail, not to a stretched picker. */
+.control {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  max-inline-size: var(--input-max-short);
+}
+
+/* The read-out of the chosen value: quieter than the control, wrapping
+   inside itself beside the control, and under it when the line can't hold
+   both. */
+.detail {
+  flex: 1 1 10rem;
+  min-inline-size: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* Narrow viewports (≤1023px, breakpoints.navOverlay — Header's single-row
+   tier): the title row keeps the breadcrumb and the actions, and the field
+   takes a row of its own under it (order: after the actions, which come
+   later in the markup). */
+@media (max-width: 1023px) {
+  .field {
+    flex-basis: 100%;
+    order: 1;
+  }
+}
