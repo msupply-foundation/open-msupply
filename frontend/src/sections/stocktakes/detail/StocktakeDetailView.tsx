@@ -704,12 +704,11 @@ const StocktakeDetailView: Component = () => {
       header: () => t('label.code'),
       cardGroup: 'more',
       // Sized as the shared `itemCode` column (the `code` cell kind: 5rem off a
-      // ~9-char measure, capped at 7, monospace so digits align down the
-      // column). It was carrying no definition at all, so it auto-sized to
-      // whatever the widest code on the page happened to be and moved as the
-      // user paged. Any change to what a code column is worth belongs in
-      // _globalColumnConfig.ts, which is the one place those widths are tuned —
-      // not here.
+      // ~9-char measure, monospace so digits align down the column). It was
+      // carrying no definition at all, so it auto-sized to whatever the widest
+      // code on the page happened to be and moved as the user paged. Any change
+      // to what a code column is worth belongs in _globalColumnConfig.ts, which
+      // is the one place those widths are tuned — not here.
       ...getCellDefinition('itemCode'),
     },
     {
