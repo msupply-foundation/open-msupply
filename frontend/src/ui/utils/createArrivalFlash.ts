@@ -1,4 +1,10 @@
-import { createEffect, on, onCleanup, type Accessor } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  on,
+  onCleanup,
+  type Accessor,
+} from 'solid-js';
 import { createFlash } from './createFlash';
 
 /*
@@ -11,13 +17,19 @@ import { createFlash } from './createFlash';
  *
  * One slot, not router state: history state survives a reload and comes back
  * on back/forward, and the notice is for the arrival the create caused, once.
- * Taking the message empties the slot, and a later create overwrites it.
+ * Taking the message empties the slot, and a later create overwrites it. A
+ * message nobody took (the user left before the record loaded) expires, so
+ * opening that record later in the session doesn't confirm a create the user
+ * has long moved on from.
  */
-let pending: { recordId: string; message: string } | undefined;
+let pending: { recordId: string; message: string; at: number } | undefined;
+
+/** How long a message waits for its record's screen. */
+export const ARRIVAL_EXPIRY_MS = 15_000;
 
 /** Leave `message` for the screen about to open the record `recordId`. */
 export const flashOnArrival = (recordId: string, message: string) => {
-  pending = { recordId, message };
+  pending = { recordId, message, at: Date.now() };
 };
 
 /**
@@ -38,11 +50,16 @@ export const createArrivalFlash = (
   loadedId: Accessor<string | undefined>
 ): Accessor<string | undefined> => {
   const flash = createFlash<string>();
+  // Through a memo: the caller reads the id off its record, so a bare accessor
+  // re-runs whenever the record is re-read with the id unchanged, and that
+  // re-run would cancel the pending message without showing it.
+  const id = createMemo(loadedId);
   createEffect(
-    on(loadedId, id => {
-      if (id === undefined || pending?.recordId !== id) return;
-      const { message } = pending;
+    on(id, loaded => {
+      if (loaded === undefined || pending?.recordId !== loaded) return;
+      const { message, at } = pending;
       pending = undefined;
+      if (Date.now() - at > ARRIVAL_EXPIRY_MS) return;
       const handle = setTimeout(() => flash.show(message), ARRIVAL_DELAY_MS);
       onCleanup(() => clearTimeout(handle));
     })

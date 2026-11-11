@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRoot, createSignal, type Accessor } from 'solid-js';
 import {
   ARRIVAL_DELAY_MS,
+  ARRIVAL_EXPIRY_MS,
   createArrivalFlash,
   flashOnArrival,
 } from './createArrivalFlash';
@@ -43,6 +44,33 @@ describe('createArrivalFlash', () => {
     vi.advanceTimersByTime(ARRIVAL_DELAY_MS);
     expect(again.message()).toBeUndefined();
     again.dispose();
+  });
+
+  it('shows it once when the record loads again during the delay', () => {
+    flashOnArrival('p1', 'Patient created');
+    // A refetch publishes a new record object with the same id.
+    const [record, setRecord] = createSignal<{ id: string }>();
+    // eslint-disable-next-line solid/reactivity
+    const screen = mount(() => record()?.id);
+    setRecord({ id: 'p1' });
+    vi.advanceTimersByTime(ARRIVAL_DELAY_MS / 2);
+    setRecord({ id: 'p1' });
+    vi.advanceTimersByTime(ARRIVAL_DELAY_MS);
+    expect(screen.message()).toBe('Patient created');
+    vi.advanceTimersByTime(FLASH_MS);
+    expect(screen.message()).toBeUndefined();
+    vi.advanceTimersByTime(ARRIVAL_DELAY_MS);
+    expect(screen.message()).toBeUndefined();
+    screen.dispose();
+  });
+
+  it('forgets a message its record never came to take', () => {
+    flashOnArrival('p1', 'Patient created');
+    vi.advanceTimersByTime(ARRIVAL_EXPIRY_MS + 1);
+    const late = mount(() => 'p1');
+    vi.advanceTimersByTime(ARRIVAL_DELAY_MS);
+    expect(late.message()).toBeUndefined();
+    late.dispose();
   });
 
   it('shows nothing once the screen has gone', () => {
