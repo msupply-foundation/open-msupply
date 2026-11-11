@@ -5,6 +5,7 @@ use crate::service_provider::ServiceContext;
 use cells::{Row, RowError};
 use repository::{RepositoryError, StorageConnection};
 use std::{collections::HashMap, path::Path};
+use umya_spreadsheet::helper::coordinate::string_from_column_index;
 
 pub mod cells;
 pub mod delete;
@@ -326,6 +327,7 @@ fn export(
             Ok(sheet::SheetData {
                 name: table.table().sheet_name().to_string(),
                 header_row: 1,
+                first_column: 1,
                 headers: [table.columns(), table.export_only_columns()]
                     .concat()
                     .into_iter()
@@ -526,9 +528,10 @@ fn check_headers(table: &dyn ImportTable, sheet: &sheet::Sheet) -> Vec<RowError>
                 .iter()
                 .any(|row| row.cells.get(position).is_some_and(|cell| !cell.is_empty()));
             if column_used {
+                let column = string_from_column_index(&(sheet.first_column + position as u32));
                 errors.push(header_error(
                     "",
-                    format!("Column {} has values but no heading", position + 1),
+                    format!("Column {column} has values but no heading"),
                 ));
             }
         } else if !table.has_column(header) {
@@ -576,7 +579,7 @@ fn errors_file_sheets(sheets: &[sheet::Sheet], errors: &[RowError]) -> Vec<sheet
         .map(|sheet| {
             let table = find_table(sheet).filter(|_| !sheet.headers.is_empty());
             let kept: Vec<usize> = (0..sheet.headers.len())
-                .filter(|&position| sheet.headers[position] != ERROR_COLUMN)
+                .filter(|&position| table.is_none() || sheet.headers[position] != ERROR_COLUMN)
                 .collect();
             let cells_by_number: HashMap<u32, &Vec<String>> = sheet
                 .rows
@@ -622,6 +625,7 @@ fn errors_file_sheets(sheets: &[sheet::Sheet], errors: &[RowError]) -> Vec<sheet
             sheet::SheetData {
                 name: sheet.name.clone(),
                 header_row: sheet.header_row,
+                first_column: sheet.first_column,
                 headers,
                 text_columns,
                 rows,
@@ -652,4 +656,116 @@ fn cell_value(table: Option<&(dyn ImportTable + Sync)>, header: &str, cell: &str
         }
     }
     sheet::Value::Text(cell.to_string())
+}
+
+/// Tests that need no table. Kept out of `mod tests`, which the first table brings.
+#[cfg(test)]
+mod no_table_tests {
+    use super::*;
+    use sheet::{Sheet, SheetRow, Value};
+
+    struct Stub;
+    impl ImportTable for Stub {
+        fn table(&self) -> CentralDataTable {
+            unreachable!()
+        }
+        fn columns(&self) -> &'static [&'static str] {
+            &["code", "name"]
+        }
+        fn text_columns(&self) -> &'static [&'static str] {
+            &[]
+        }
+        fn export(
+            &self,
+            _: &StorageConnection,
+            _: &ExportFilter,
+        ) -> Result<Vec<Vec<Value>>, RepositoryError> {
+            unreachable!()
+        }
+        fn count(
+            &self,
+            _: &StorageConnection,
+            _: &ExportFilter,
+        ) -> Result<RecordCount, RepositoryError> {
+            unreachable!()
+        }
+        fn start_sheet(
+            &self,
+            _: &StorageConnection,
+        ) -> Result<Box<dyn SheetImport>, RepositoryError> {
+            unreachable!()
+        }
+    }
+
+    /// Headings on row 2 from column C, as in a sheet with a title row and two blank columns.
+    fn sheet(headers: &[&str], rows: &[(u32, &[&str])]) -> Sheet {
+        Sheet {
+            name: "notes".to_string(),
+            header_row: 2,
+            first_column: 3,
+            headers: headers.iter().map(|header| header.to_string()).collect(),
+            rows: rows
+                .iter()
+                .map(|(number, cells)| SheetRow {
+                    number: *number,
+                    cells: cells.iter().map(|cell| cell.to_string()).collect(),
+                })
+                .collect(),
+        }
+    }
+
+    // covers: OMS-REG-CDIO-01.60
+
+    #[test]
+    fn unknown_repeated_and_unheaded_columns_are_errors_on_the_heading_row() {
+        let sheet = sheet(
+            &["code", "nmae", "", "code", "error"],
+            &[(3, &["A", "x", "stray", "B", "old"])],
+        );
+        let errors: Vec<_> = check_headers(&Stub, &sheet)
+            .into_iter()
+            .map(|error| (error.row, error.column, error.message))
+            .collect();
+        assert_eq!(
+            errors,
+            [
+                (
+                    2,
+                    Some("nmae".to_string()),
+                    "Unknown column. The notes sheet can have: code, name".to_string()
+                ),
+                // Excel's letter: the sheet starts in column C.
+                (2, None, "Column E has values but no heading".to_string()),
+                (
+                    2,
+                    Some("code".to_string()),
+                    "This column appears twice".to_string()
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn errors_file_copies_a_sheet_that_is_not_a_table_as_it_is() {
+        let notes = sheet(&["note", "error"], &[(3, &["a", "b"]), (5, &["c", ""])]);
+        let copied = errors_file_sheets(&[notes], &[]).pop().unwrap();
+
+        assert_eq!(copied.headers, ["note", "error"]);
+        assert_eq!((copied.header_row, copied.first_column), (2, 3));
+        // Rows 3 to 5, the blank row 4 included, so row numbers still match.
+        let rows: Vec<Vec<&str>> = copied
+            .rows
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|value| match value {
+                        Value::Text(text) => text.as_str(),
+                        Value::Empty => "",
+                        _ => panic!("a non-table cell is copied as text"),
+                    })
+                    .collect()
+            })
+            .collect();
+        assert_eq!(rows, [vec!["a", "b"], vec!["", ""], vec!["c", ""]]);
+    }
 }

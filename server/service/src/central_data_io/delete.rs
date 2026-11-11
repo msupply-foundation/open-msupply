@@ -27,7 +27,8 @@ pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowErro
                 return false;
             };
             match value {
-                Value::Text(text) => cell != text,
+                // Cells are read trimmed, so a padded saved value reads back without its spaces.
+                Value::Text(text) => cell != text.trim(),
                 // Excel numbers are floats: 3 can read as "3.0".
                 Value::Number(number) => cell.parse::<f64>().ok() != Some(*number),
                 Value::Bool(flag) => !cell.eq_ignore_ascii_case(&flag.to_string()),
@@ -128,6 +129,14 @@ mod tests {
                 error.message,
                 "A row marked DELETE can't also change name. Clear it or put back the saved value"
             );
+        });
+    }
+
+    #[test]
+    fn a_padded_saved_value_matches_its_exported_cell() {
+        let saved = [("name", Value::Text(" Clinic ".into()))];
+        with_row(&["A", "Clinic", "", "DELETE"], |row| {
+            assert_eq!(check_unchanged(&row, &saved), Ok(()))
         });
     }
 

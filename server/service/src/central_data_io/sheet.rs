@@ -9,6 +9,8 @@ use umya_spreadsheet::{NumberingFormat, Style};
 pub struct Sheet {
     pub name: String,
     pub header_row: u32,
+    /// Where `headers` and each row's `cells` start, as Excel numbers columns (A is 1).
+    pub first_column: u32,
     /// Trimmed, lower case.
     pub headers: Vec<String>,
     /// Blank rows skipped.
@@ -54,7 +56,9 @@ pub fn read(path: &Path, max_rows: usize) -> Result<Vec<Sheet>, ReadError> {
         .map(|name| -> Result<Sheet, ReadError> {
             let range = workbook.worksheet_range(&name)?;
             // The range starts at the first used cell: the header row.
-            let header_row = range.start().map(|(row, _)| row + 1).unwrap_or(1);
+            let (header_row, first_column) = range
+                .start()
+                .map_or((1, 1), |(row, column)| (row + 1, column + 1));
             let mut rows = range.rows().map(|cells| {
                 cells
                     .iter()
@@ -75,6 +79,7 @@ pub fn read(path: &Path, max_rows: usize) -> Result<Vec<Sheet>, ReadError> {
             Ok(Sheet {
                 name,
                 header_row,
+                first_column,
                 headers,
                 rows,
             })
@@ -157,6 +162,8 @@ pub struct SheetData {
     pub name: String,
     /// Rows follow it, one per row number.
     pub header_row: u32,
+    /// Where headers and rows start, as Excel numbers columns (A is 1).
+    pub first_column: u32,
     pub headers: Vec<String>,
     /// Formatted as Text, column and cells.
     pub text_columns: Vec<&'static str>,
@@ -183,22 +190,29 @@ pub fn write(sheets: Vec<SheetData>) -> Result<Vec<u8>, String> {
             .map(|header| sheet_data.text_columns.contains(&header.as_str()))
             .collect();
         for (column, header) in sheet_data.headers.iter().enumerate() {
-            let cell = sheet.get_cell_mut((column as u32 + 1, sheet_data.header_row));
+            let cell = sheet.get_cell_mut((
+                column as u32 + sheet_data.first_column,
+                sheet_data.header_row,
+            ));
             cell.set_value_string(header);
             cell.get_style_mut().get_font_mut().set_bold(true);
             // A General cell drops a typed number's leading zeros, so the whole column is Text.
             if is_text[column] {
                 set_text_format(
                     sheet
-                        .get_column_dimension_by_number_mut(&(column as u32 + 1))
+                        .get_column_dimension_by_number_mut(
+                            &(column as u32 + sheet_data.first_column),
+                        )
                         .get_style_mut(),
                 );
             }
         }
         for (row, values) in sheet_data.rows.into_iter().enumerate() {
             for (column, value) in values.into_iter().enumerate() {
-                let cell =
-                    sheet.get_cell_mut((column as u32 + 1, sheet_data.header_row + 1 + row as u32));
+                let cell = sheet.get_cell_mut((
+                    column as u32 + sheet_data.first_column,
+                    sheet_data.header_row + 1 + row as u32,
+                ));
                 if is_text.get(column) == Some(&true) {
                     set_text_format(cell.get_style_mut());
                 }
@@ -241,6 +255,7 @@ mod tests {
         let bytes = write(vec![SheetData {
             name: "table".to_string(),
             header_row: 1,
+            first_column: 1,
             headers: vec!["name".to_string(), "index".to_string()],
             text_columns: vec![],
             rows,
@@ -254,6 +269,40 @@ mod tests {
     }
 
     // covers: OMS-REG-CDIO-01.64
+
+    #[test]
+    fn data_away_from_a1_keeps_excels_row_and_column_numbers() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("offset.xlsx");
+        let mut book = umya_spreadsheet::new_file();
+        let sheet = book.get_sheet_mut(&0).unwrap();
+        sheet.get_cell_mut((3, 3)).set_value_string("Name");
+        sheet.get_cell_mut((4, 3)).set_value_string("Code");
+        sheet.get_cell_mut((3, 4)).set_value_string("a");
+        sheet.get_cell_mut((4, 6)).set_value_string("b");
+        umya_spreadsheet::writer::xlsx::write(&book, &path).unwrap();
+
+        let mut workbook: Xlsx<BufReader<File>> = open_workbook(&path).unwrap();
+        let size = measure(&mut workbook).unwrap();
+        // Rows 3 to 6 by columns C and D, as `worksheet_range` loads them.
+        assert_eq!((size.rows, size.cells), (2, 8));
+
+        let sheet = read(&path, 10).ok().unwrap().pop().unwrap();
+        assert_eq!((sheet.header_row, sheet.first_column), (3, 3));
+        assert_eq!(sheet.headers, ["name", "code"]);
+        let rows: Vec<_> = sheet
+            .rows
+            .iter()
+            .map(|row| (row.number, &row.cells[..]))
+            .collect();
+        assert_eq!(
+            rows,
+            [
+                (4, &["a".to_string(), String::new()][..]),
+                (6, &[String::new(), "b".to_string()][..])
+            ]
+        );
+    }
 
     #[test]
     fn a_value_far_from_the_data_is_refused_before_loading() {
@@ -278,6 +327,7 @@ mod tests {
         let bytes = write(vec![SheetData {
             name: "table".to_string(),
             header_row: 1,
+            first_column: 1,
             headers: vec!["name".to_string(), "index".to_string()],
             text_columns: vec!["name"],
             rows: vec![vec!["007".to_string().into(), 3.into()]],
