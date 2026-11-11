@@ -75,7 +75,6 @@ pub trait SettingsServiceTrait: Sync + Send {
                 .map(|v| v as u32)
                 .unwrap_or(fallback.central_pull),
         };
-        let disable_integration_transaction = ctx.disable_integration_transaction;
         let relax_hardware_id_token_checks = ctx.relax_hardware_id_token_checks;
 
         // `?` inside this closure would result in closure returning `None`
@@ -86,7 +85,6 @@ pub trait SettingsServiceTrait: Sync + Send {
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
                 batch_size,
-                disable_integration_transaction,
                 relax_hardware_id_token_checks,
             })
         };
@@ -210,7 +208,6 @@ mod test {
             password_sha256: "password_hash".to_string(),
             interval_seconds: 300,
             batch_size,
-            disable_integration_transaction: false,
             relax_hardware_id_token_checks: false,
         }
     }

@@ -594,7 +594,7 @@ type AssetLogNode {
 	type: AssetLogTypeNodeType!
 	reason: AssetLogReasonNode
 	logDatetime: DateTime!
-	createdDatetime: NaiveDateTime!
+	createdDatetime: DateTime!
 	documents: SyncFileReferenceConnector!
 }
 
@@ -1843,7 +1843,7 @@ type CustomFieldOptionNode {
 	this field when building a picker, so a deleted option can be read but
 	not newly selected.
 	"""
-	deletedDatetime: NaiveDateTime
+	deletedDatetime: DateTime
 }
 
 union CustomFieldsResponse = CustomFieldConnector
@@ -8820,6 +8820,14 @@ type RequisitionLineForecastPreviewNode {
 	The requisition's target months × the monthly demand
 	"""
 	targetStock: Float!
+	"""
+	The consumption history and stock evolution for the previewed line, as
+	`requisitionLineChart` gives them for a saved one — so an item being added charts
+	before its line exists. The draft's requested quantity isn't part of the preview, so
+	the stock projection adds nothing at delivery. Null if the chart can't be read: the
+	chart is context, so failing to read it doesn't fail the preview
+	"""
+	chart(consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): ItemChartNode
 	suggestedQuantity: Float!
 	averageMonthlyConsumption: Float!
 	availableStockOnHand: Float!
@@ -9477,15 +9485,15 @@ type SiteNode {
 	"""
 	Last time the remote made any authenticated v7 request.
 	"""
-	lastConnectionDatetime: NaiveDateTime
+	lastConnectionDatetime: DateTime
 	"""
 	Last time the remote fully pulled from this central server.
 	"""
-	lastSyncDatetime: NaiveDateTime
+	lastSyncDatetime: DateTime
 	"""
 	First time the remote completed an initialising pull.
 	"""
-	firstSyncDatetime: NaiveDateTime
+	firstSyncDatetime: DateTime
 	isMultiDevice: Boolean!
 }
 

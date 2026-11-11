@@ -18,7 +18,9 @@ const row = (over: Partial<ShipmentRow> = {}): ShipmentRow => ({
   otherPartyName: 'Lodudu HP',
   status: 'NEW',
   invoiceNumber: 615,
-  createdDatetime: '2026-07-28T02:14:15.191530+00:00',
+  // Mid-morning UTC: 28 July in every zone the suite runs in, from Los Angeles
+  // to Auckland. Early-morning UTC is still the 27th west of Greenwich.
+  createdDatetime: '2026-07-28T10:14:15.191530+00:00',
   theirReference: 'ref-9',
   comment: 'urgent',
   colour: null,

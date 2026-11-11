@@ -158,8 +158,7 @@ export const PurchaseOrderStatusFooter: Component<
       {/* A declined or rejected move shows here, full width at the control.
           A blocked move names the offending items and the table marks those
           lines; a finalise blocked by an unverified shipment names that
-          instead — though its wording denies a delivered shipment exists,
-          which is the server's message, not ours (contract ⚠️). */}
+          instead. */}
       <Show when={errorMessage()}>
         {message => (
           <Alert severity="error" testId="status-error">

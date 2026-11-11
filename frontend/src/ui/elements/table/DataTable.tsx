@@ -1828,13 +1828,15 @@ export function DataTable<T, K extends string, G extends string = never>(
                                   table.getIsAllRowsSelected() ||
                                   table.getIsSomeRowsSelected();
                                 table.toggleAllRowsSelected(!anySelected);
-                                // The native click already flipped the DOM box
-                                // to checked; toggling OFF from indeterminate
-                                // leaves the controlled `checked` value
-                                // false→false, so Solid's binding never re-runs
-                                // to undo it. Sync the box to the state we just
-                                // set.
-                                e.currentTarget.checked = !anySelected;
+                                // The native click already flipped the DOM box;
+                                // when the controlled `checked` value doesn't
+                                // change (OFF from indeterminate, or a page
+                                // whose onSelectionChange narrows select-all
+                                // to nothing), Solid's binding never re-runs
+                                // to undo it. Put the box back to what the
+                                // selection now holds, not what was asked for.
+                                e.currentTarget.checked =
+                                  table.getIsAllRowsSelected();
                               }}
                             />
                           </th>

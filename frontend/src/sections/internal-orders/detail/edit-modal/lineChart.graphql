@@ -1,7 +1,8 @@
 # The line editor's context charts (spec/internal-orders S4 § charts,
 # contract › editing lines). Display-only, keyed by a SAVED line id — an
-# unsaved add-mode draft has no charts until its first save. Option inputs are
-# omitted so the server defaults apply (3 consumption points; 30 historic / 20
+# unsaved add-mode draft has no id to read by, so its series come with its
+# forecast preview instead (internalOrderLineEdit.graphql, issue 1189). Option
+# inputs are omitted so the server defaults apply (3 consumption points; 30 historic / 20
 # projected stock points). An order with no expected-delivery-date (or a line
 # with no snapshot moment) returns both series null — the editor then shows the
 # target-quantity breakdown alone (that breakdown is derived client-side from

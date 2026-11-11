@@ -176,25 +176,38 @@ impl CentralServerConfig {
         Ok(())
     }
 }
-pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
-    // We cache the initialised state to avoid having to check the database every time. This stops
-    // unnecessary database queries and avoids having to unwrap the database connection. We still
-    // unwrap on the first check as there's no point starting up without the database.
+// We cache the initialised state to avoid having to check the database every time. A site never
+// goes back to not initialised, so only `true` is cached.
+fn try_is_initialised(service_provider: &ServiceProvider) -> Result<bool, RepositoryError> {
     if *IS_INITIALISED.read().unwrap() {
-        true
-    } else {
-        let ctx = service_provider.basic_context().unwrap();
-        let is_initialised = service_provider
-            .sync_status_service
-            .is_initialised(&ctx)
-            .unwrap();
-
-        if is_initialised {
-            *IS_INITIALISED.write().unwrap() = true;
-        }
-
-        is_initialised
+        return Ok(true);
     }
+
+    let ctx = service_provider.basic_context()?;
+    let is_initialised = service_provider.sync_status_service.is_initialised(&ctx)?;
+    if is_initialised {
+        *IS_INITIALISED.write().unwrap() = true;
+    }
+    Ok(is_initialised)
+}
+
+/// Panics if the database is unreachable, as there's no point syncing without it.
+pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
+    try_is_initialised(service_provider).unwrap()
+}
+
+/// [`is_initialised`] for anything that must stay off this site's data until its first sync has
+/// integrated: the `/central` and cold chain APIs, schedule plugins and ledger fix. v5/v6 and
+/// v7 integration both commit in batches while the site initialises (see
+/// `integration_uses_transaction` and `validate_translate_integrate`), so until then the data is
+/// partial. A database error reads as not initialised, so callers refuse rather than panic.
+pub fn is_initialised_or_log(service_provider: &ServiceProvider) -> bool {
+    try_is_initialised(service_provider).unwrap_or_else(|error| {
+        log::error!(
+            "Failed to read initialisation status, treating as not initialised: {error:#?}"
+        );
+        false
+    })
 }
 
 // TEST ONLY

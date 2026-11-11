@@ -53,6 +53,8 @@ serde_json = { workspace = true }
 [dev-dependencies]
 actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 httpmock = { workspace = true }
 tempfile = "3.10.1"
 

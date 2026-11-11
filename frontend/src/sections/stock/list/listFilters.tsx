@@ -117,8 +117,8 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
-  // Expiry — a `Date` scalar; FilterDateRange (type="date") passes the plain
-  // ISO dates through, no conversion (#456).
+  // Expiry — a `NaiveDate` scalar; FilterDateRange (type="date") passes the
+  // calendar dates through, no conversion (#456).
   expiryDate: {
     label: () => t('label.expiry-date'),
     render: props => (
