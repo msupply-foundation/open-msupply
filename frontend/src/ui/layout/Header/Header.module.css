@@ -1,7 +1,8 @@
 /*
  * Page header strip. One flat flex-wrap container — the parts slot
  * themselves: HeaderButtons pushes to the inline-end edge with an auto
- * margin, Toolbar forces its own full-width row with flex-basis: 100%.
+ * margin, a HeaderField fills the room between it and the breadcrumb, and
+ * Toolbar forces its own full-width row with flex-basis: 100%.
  * When the row is too narrow the buttons wrap below the breadcrumb
  * intrinsically; row-gap spaces the wrapped lines. No breakpoints.
  */
@@ -98,9 +99,15 @@
   }
 
   .header:has(> [data-header-buttons] > [data-variant]):not(
-      :has(> [data-tab-bar], > [data-toolbar])
+      :has(> [data-tab-bar], > [data-toolbar], > [data-header-field])
     ) {
     flex-wrap: nowrap;
+  }
+
+  /* A HeaderField takes its own row here (HeaderField.module.css, order 1),
+     directly under the title row: a toolbar or tab bar stays below it. */
+  .header:has(> [data-header-field]) > :is([data-toolbar], [data-tab-bar]) {
+    order: 2;
   }
 
   .header > [data-tab-bar] {

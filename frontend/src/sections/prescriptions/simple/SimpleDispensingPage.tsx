@@ -15,12 +15,11 @@ import { gated } from '@/api/gated';
 import { sameFetchedValue } from '@/typeHelpers';
 import { t } from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
-import { PatientSearch, type PatientOption } from '@/domain/patient';
+import type { PatientOption } from '@/domain/patient';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
-import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
@@ -39,6 +38,7 @@ import {
 import { MedicineCardView } from './MedicineCard';
 import { DispensingList } from './DispensingList';
 import { StepHeading } from './StepHeading';
+import { WhoIsItFor } from './WhoIsItFor';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -122,18 +122,13 @@ const SimpleDispensingPage: Component = () => {
       header={
         <Header>
           <Breadcrumb crumbs={[{ label: t('dispensing') }]} />
+          <WhoIsItFor
+            storeId={params.storeId}
+            patient={patient()}
+            onSelect={setPatient}
+            onCreatePatient={() => setCreatePatientOpen(true)}
+          />
           <HeaderButtons>{standardView('secondary')}</HeaderButtons>
-          <Toolbar>
-            <StepHeading n={1} label={t('label.who-is-it-for')} />
-            <PatientSearch
-              label={t('label.who-is-it-for')}
-              hideLabel
-              storeId={params.storeId}
-              selected={patient() ?? undefined}
-              onSelect={setPatient}
-              onCreatePatient={() => setCreatePatientOpen(true)}
-            />
-          </Toolbar>
         </Header>
       }
     >
