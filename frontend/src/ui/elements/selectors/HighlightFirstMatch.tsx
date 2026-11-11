@@ -1,6 +1,6 @@
 import { createEffect, on } from 'solid-js';
 import { useComboboxContext } from '@kobalte/core/combobox';
-import { firstMatchKey } from './comboboxLogic';
+import { nextHighlightKey } from './comboboxLogic';
 
 /*
  * Once the user has typed, keep the first matching option highlighted, so
@@ -24,7 +24,7 @@ import { firstMatchKey } from './comboboxLogic';
 export const HighlightFirstMatch = <T,>(props: {
   /** What the user has typed, '' when the input isn't a search. */
   query: () => string;
-  /** Listed but not a match for the query — see firstMatchKey. */
+  /** Listed but not a match for the query — see skipsHighlight. */
   skip?: (item: T) => boolean;
 }) => {
   const context = useComboboxContext();
@@ -40,18 +40,14 @@ export const HighlightFirstMatch = <T,>(props: {
         () => context.listState().selectionManager().focusedKey(),
       ],
       ([query, open, collection, focused], previous) => {
-        if (!open || query.trim() === '') return;
-        const node = focused == null ? undefined : collection.getItem(focused);
-        // A highlight still listed is kept — the user's own arrowing or
-        // hovering — UNLESS the query has just changed and it sits on a row
-        // that isn't a match: Kobalte highlights the committed selection when
-        // the picker reopens, and typing over it doesn't always clear that
-        // before the results land, so a quick type-and-Enter re-picked the
-        // item already held. Arrowing onto such a row leaves the query as it
-        // was, so it still stays where the user put it.
-        const queryChanged = previous === undefined || previous[0] !== query;
-        if (node && !(queryChanged && props.skip?.(node.rawValue as T))) return;
-        const key = firstMatchKey<T>(collection, props.skip);
+        if (!open) return;
+        const key = nextHighlightKey<T>({
+          query,
+          queryChanged: previous === undefined || previous[0] !== query,
+          nodes: collection,
+          focused,
+          skip: props.skip,
+        });
         if (key !== undefined)
           context.listState().selectionManager().setFocusedKey(key);
       }

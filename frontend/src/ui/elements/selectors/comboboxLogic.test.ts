@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   firstMatchKey,
+  nextHighlightKey,
+  skipsHighlight,
   PINNED_SECTION,
   type OptionNode,
   sectionOptions,
@@ -184,5 +186,134 @@ describe('firstMatchKey', () => {
   it('highlights nothing when no option qualifies', () => {
     expect(firstMatchKey([item('x', true)])).toBeUndefined();
     expect(firstMatchKey([])).toBeUndefined();
+  });
+});
+
+describe('skipsHighlight', () => {
+  it('keeps an ordinary row', () => {
+    expect(
+      skipsHighlight({ held: false, pinned: false, matchesQuery: true })
+    ).toBe(false);
+  });
+
+  it('keeps the held selection while it matches the query', () => {
+    // Skipping it would make Enter swap it for the next match.
+    expect(
+      skipsHighlight({ held: true, pinned: false, matchesQuery: true })
+    ).toBe(false);
+  });
+
+  it('skips the held selection when it is listed without matching', () => {
+    expect(
+      skipsHighlight({ held: true, pinned: false, matchesQuery: false })
+    ).toBe(true);
+  });
+
+  it('skips a pinned item the query does not name, keeps one it does', () => {
+    expect(
+      skipsHighlight({ held: false, pinned: true, matchesQuery: false })
+    ).toBe(true);
+    expect(
+      skipsHighlight({ held: false, pinned: true, matchesQuery: true })
+    ).toBe(false);
+  });
+});
+
+describe('nextHighlightKey', () => {
+  const item = (key: string): OptionNode<string> => ({
+    type: 'item',
+    key,
+    rawValue: key,
+    disabled: false,
+  });
+  // A Kobalte-collection-shaped list: iterable, with lookup by key.
+  const list = (...keys: string[]) => {
+    const nodes = keys.map(item);
+    return Object.assign(nodes, {
+      getItem: (key: string) => nodes.find(n => n.key === key),
+    });
+  };
+  const held = new Set(['held']);
+  const skip = (key: string) => held.has(key);
+
+  it('highlights the first match when nothing is highlighted', () => {
+    expect(
+      nextHighlightKey({
+        query: 'a',
+        queryChanged: true,
+        nodes: list('a1', 'a2'),
+        focused: undefined,
+      })
+    ).toBe('a1');
+  });
+
+  it('moves nothing while there is no query', () => {
+    expect(
+      nextHighlightKey({
+        query: ' ',
+        queryChanged: true,
+        nodes: list('a1'),
+        focused: undefined,
+      })
+    ).toBeUndefined();
+  });
+
+  it('keeps a row the user arrowed to while the results refresh', () => {
+    expect(
+      nextHighlightKey({
+        query: 'a',
+        queryChanged: false,
+        nodes: list('a1', 'a2'),
+        focused: 'a2',
+      })
+    ).toBeUndefined();
+  });
+
+  it('moves to the first match when the highlighted row drops out', () => {
+    expect(
+      nextHighlightKey({
+        query: 'ab',
+        queryChanged: true,
+        nodes: list('ab1', 'ab2'),
+        focused: 'a2',
+      })
+    ).toBe('ab1');
+  });
+
+  it('moves off a skipped row when the query changes', () => {
+    // Reopened on the held item, then typed over: it is still listed (the
+    // seed), but no longer an answer.
+    expect(
+      nextHighlightKey({
+        query: 'o',
+        queryChanged: true,
+        nodes: list('held', 'o1'),
+        focused: 'held',
+        skip,
+      })
+    ).toBe('o1');
+  });
+
+  it('leaves a skipped row the user arrowed onto', () => {
+    expect(
+      nextHighlightKey({
+        query: 'o',
+        queryChanged: false,
+        nodes: list('held', 'o1'),
+        focused: 'held',
+        skip,
+      })
+    ).toBeUndefined();
+  });
+
+  it('reports no move when the first match is already highlighted', () => {
+    expect(
+      nextHighlightKey({
+        query: 'a',
+        queryChanged: true,
+        nodes: list('a1'),
+        focused: 'a1',
+      })
+    ).toBeUndefined();
   });
 });

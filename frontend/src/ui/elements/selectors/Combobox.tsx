@@ -21,6 +21,7 @@ import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import { HighlightFirstMatch } from './HighlightFirstMatch';
 import {
   sectionOptions,
+  skipsHighlight,
   typedQuery,
   visibleOptions,
   type Section,
@@ -443,21 +444,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     return textMatches(item, input);
   };
 
-  // Listed, but not what Enter should land on once the user has typed (see
-  // HighlightFirstMatch) — rows that are on screen without matching it:
-  // - the committed selection: a server-mode caller holding a controlled
-  //   value lists it first whatever is typed (AsyncCombobox's seed), so it
-  //   would always win, and re-picking it changes nothing — Enter would look
-  //   dead with the query still in the box. A selection that DOES match stays
-  //   eligible: skipping it would make Enter silently swap it for the next
-  //   match;
-  // - a pinned item: listed whatever is typed, so highlighting it would make
-  //   Enter choose "None" over the row the user was typing towards. One the
-  //   user typed by name is fair game.
+  // Listed rows the first-match highlight passes over (see skipsHighlight).
   const skipHighlight = (item: T) => {
     const sel = selected();
-    const isSelection = sel !== null && keyOf(sel) === keyOf(item);
-    return (isSelection || isPinned(item)) && !textMatches(item, queryText());
+    return skipsHighlight({
+      held: sel !== null && keyOf(sel) === keyOf(item),
+      pinned: isPinned(item),
+      matchesQuery: textMatches(item, queryText()),
+    });
   };
 
   // What this combobox is searching for: the input text ONLY counts while it's
