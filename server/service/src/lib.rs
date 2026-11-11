@@ -36,6 +36,7 @@ pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
 mod common;
+pub mod consumption_estimate;
 pub mod contact;
 pub mod contact_form;
 pub mod currency;
