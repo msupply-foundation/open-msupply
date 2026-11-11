@@ -23,7 +23,6 @@
     "check": "pnpm css:types && tsc -b && stylelint \"src/**/*.css\" \"plugins/*/src/**/*.css\" \"plugins/examples/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-reduced-motion.mjs && node scripts/check-min-browser.mjs && node scripts/check-progress.mjs && node scripts/emit-form-schemas.mjs --check && node scripts/check-e2e-api-url.mjs && node scripts/check-e2e-test-import.mjs && node --no-warnings=ExperimentalWarning scripts/check-test-runners.mjs && node scripts/e2e/affected.mjs --check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "check:plugin-versions": "node scripts/check-plugin-versions.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
