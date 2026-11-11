@@ -899,6 +899,9 @@ export function DataTable<T, K extends string, G extends string = never>(
   // Guarded by `on` so it only fires on the resizing-state transition, not on
   // unrelated reactivity.
   const isResizing = () => table.getState().columnSizingInfo.isResizingColumn;
+  // Whether ANY column is being dragged — true from press to release. A memo,
+  // because the drag state behind it changes on every pointer move.
+  const resizeActive = createMemo(() => Boolean(isResizing()));
   createEffect(
     on(isResizing, (resizing, wasResizing) => {
       if (wasResizing && !resizing) {
@@ -910,6 +913,45 @@ export function DataTable<T, K extends string, G extends string = never>(
         setTransientSizing(null);
         resizeStart = undefined;
       }
+    })
+  );
+
+  // While a column is being dragged, body rows out of view paint nothing
+  // (#1890). The browser repaints every row on each tick of a drag, scrolled
+  // out of view or not (its paint area runs thousands of pixels past the
+  // scroll box), which made each tick slower and, worse, uneven. A row parked
+  // with `visibility: hidden` (data-paint-off) still takes part in layout, so
+  // the column widths come out exactly as before; it just isn't drawn. An
+  // IntersectionObserver keeps the set right as rows move during the drag: a
+  // scroll, or a wrapping column whose rows grow or shrink, brings rows in and
+  // out of view, and the margin reveals a row before it arrives. The row
+  // holding focus is never hidden (that would blur its field). Everything
+  // comes back on release.
+  createEffect(
+    on(resizeActive, active => {
+      const body = scrollBox?.querySelector('table')?.tBodies[0];
+      if (!active || !scrollBox || !body) return;
+      const parked = new Set<HTMLElement>();
+      const observer = new IntersectionObserver(
+        entries => {
+          for (const { target, isIntersecting } of entries) {
+            const row = target as HTMLElement;
+            if (isIntersecting || row.contains(document.activeElement)) {
+              delete row.dataset.paintOff;
+              parked.delete(row);
+            } else {
+              row.dataset.paintOff = '';
+              parked.add(row);
+            }
+          }
+        },
+        { root: scrollBox, rootMargin: '200px 0px' }
+      );
+      for (const row of body.rows) observer.observe(row);
+      onCleanup(() => {
+        observer.disconnect();
+        for (const row of parked) delete row.dataset.paintOff;
+      });
     })
   );
 
@@ -930,16 +972,16 @@ export function DataTable<T, K extends string, G extends string = never>(
     resizeStart = { id: column.id, px: column.getSize() };
   };
 
-  // A column's width (px) for its cells' min-width — one memo per column
-  // (#1890). Read straight off column.getSize(), every cell depended on the
-  // WHOLE sizing state, so each tick of a resize drag re-ran the render effect
-  // of every cell in the table (517 on the items list) — and that effect
-  // recomputes all of the cell's attributes, pinned-column lookups included,
-  // only to write the same values back. A memo stops at an unchanged value, so
-  // a tick now reaches the dragged column's cells alone. Keyed by id and
-  // resolved through the table on each run, so a column rebuilt from a new
-  // `columns` prop still reads its own def. Created under the table's owner,
-  // so they're disposed with it.
+  // A column's width (px) for its header cell's min-width — one memo per
+  // column (#1890). Read straight off column.getSize(), every cell that showed
+  // it depended on the WHOLE sizing state, so each tick of a resize drag re-ran
+  // the render effect of every one of them — and that effect recomputes all of
+  // the cell's attributes, pinned-column lookups included, only to write the
+  // same values back. A memo stops at an unchanged value, so a tick now reaches
+  // the dragged column's header alone (body cells carry no width at all — see
+  // TableRow). Keyed by id and resolved through the table on each run, so a
+  // column rebuilt from a new `columns` prop still reads its own def. Created
+  // under the table's owner, so they're disposed with it.
   const owner = getOwner();
   const widthMemos = new Map<string, () => number>();
   const columnWidth = (column: TanColumn<T>): number => {
@@ -1786,6 +1828,15 @@ export function DataTable<T, K extends string, G extends string = never>(
       <Show when={props.controlsMount}>
         {mount => <Portal mount={mount()}>{controls()}</Portal>}
       </Show>
+      {/* While a column is being dragged, a transparent layer covers the page
+          (#1890). A hand drifts down over the rows as it drags, and each row
+          and cell the pointer crossed ran its hover styles and its clipped-
+          text check, which reads layout mid-drag. The layer takes the pointer
+          instead (TanStack follows the drag on the document, which the layer's
+          events still reach) and keeps the resize cursor showing. */}
+      <Show when={resizeActive()}>
+        <div class={styles.resizeOverlay} aria-hidden="true" />
+      </Show>
       {/* tableArea fills the remaining height between the toolbar and the
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
@@ -2044,7 +2095,6 @@ export function DataTable<T, K extends string, G extends string = never>(
                             rowTint={props.rowTint}
                             rowAccent={props.rowAccent}
                             pinnedStyle={pinnedStyle}
-                            columnWidth={columnWidth}
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}
                             leadingIsFrozenEdge={leadingIsFrozenEdge()}
