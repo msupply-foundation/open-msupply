@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { createMemo, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { type Column as TanColumn, type Header } from '@tanstack/solid-table';
 import { renderTemplate } from './renderTemplate';
@@ -25,11 +25,22 @@ export function HeaderCell<T>(props: {
    * are DataTable's (autoFitColumn); this cell only carries the gesture.
    */
   onAutoFit: (column: TanColumn<T>) => void;
+  /**
+   * Called as a resize drag starts, with the width this header is RENDERED at,
+   * so the drag starts from the width the user sees rather than the column's
+   * min-width floor (DataTable.startColumnResize).
+   */
+  onResizeStart: (column: TanColumn<T>, renderedPx: number) => void;
+  /** This column's width in px — its min-width (DataTable.columnWidth). */
+  columnWidth: (column: TanColumn<T>) => number;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
   const canResize = () => column().getCanResize();
-  const isResizing = () => column().getIsResizing();
+  // A memo, so the handle only re-renders when THIS column starts or stops
+  // resizing: getIsResizing reads TanStack's drag state, which changes on every
+  // tick of a drag (#1890).
+  const isResizing = createMemo(() => column().getIsResizing());
   const align = () => column().columnDef.meta?.align;
   // A real growth cap (delivered as max-width). TanStack merges its default
   // maxSize (Number.MAX_SAFE_INTEGER) into every columnDef, so treat only a
@@ -39,6 +50,15 @@ export function HeaderCell<T>(props: {
     return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
   };
   const pin = () => props.pinnedStyle(column());
+  // Hand DataTable the width this header renders at, then start TanStack's
+  // drag (mouse + touch). A second finger is no resize — TanStack ignores it,
+  // so it must not move the start width either.
+  const startResize = (event: MouseEvent | TouchEvent) => {
+    if ('touches' in event && event.touches.length > 1) return;
+    const th = (event.currentTarget as HTMLElement).closest('th');
+    if (th) props.onResizeStart(column(), th.getBoundingClientRect().width);
+    props.header.getResizeHandler()(event);
+  };
   const sorted = () => column().getIsSorted();
   // The arrow slot is RESERVED on every sortable header (empty until sorted,
   // fixed width — see .sortIndicator) so toggling a sort never shifts the
@@ -86,7 +106,7 @@ export function HeaderCell<T>(props: {
       // (docs/CELL_TYPES.md). A pinned column additionally gets sticky position
       // + its edge offset.
       style={{
-        'min-width': `${column().getSize()}px`,
+        'min-width': `${props.columnWidth(column())}px`,
         ...(maxWidthPx() !== undefined
           ? { 'max-width': `${maxWidthPx()}px` }
           : {}),
@@ -132,9 +152,9 @@ export function HeaderCell<T>(props: {
               props.onAutoFit(column());
               return;
             }
-            props.header.getResizeHandler()(event);
+            startResize(event);
           }}
-          onTouchStart={props.header.getResizeHandler()}
+          onTouchStart={startResize}
           onClick={event => event.stopPropagation()}
           aria-hidden="true"
         />

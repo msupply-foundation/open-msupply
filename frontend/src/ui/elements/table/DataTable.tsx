@@ -4,10 +4,12 @@ import {
   createMemo,
   createSignal,
   For,
+  getOwner,
   Match,
   on,
   onCleanup,
   onMount,
+  runWithOwner,
   Show,
   Switch,
 } from 'solid-js';
@@ -94,6 +96,31 @@ import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
 import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
+
+// Same items / same keys and values — for the config-derived state memos
+// below, which must keep their reference while nothing in them changed (see
+// columnOrder).
+const sameList = (
+  a: readonly string[] | undefined,
+  b: readonly string[] | undefined
+): boolean =>
+  a === b ||
+  (a !== undefined &&
+    b !== undefined &&
+    a.length === b.length &&
+    a.every((v, i) => v === b[i]));
+const sameRecord = <V,>(
+  a: Record<string, V>,
+  b: Record<string, V>
+): boolean => {
+  if (a === b) return true;
+  const keys = Object.keys(a);
+  return (
+    keys.length === Object.keys(b).length && keys.every(k => a[k] === b[k])
+  );
+};
+const samePinning = (a: ColumnPinningState, b: ColumnPinningState): boolean =>
+  sameList(a.left, b.left) && sameList(a.right, b.right);
 
 // The column model
 // (Column/ColumnIdentity/toColumnDef/CardGroup/SortState + the ColumnMeta
@@ -585,14 +612,27 @@ export function DataTable<T, K extends string, G extends string = never>(
   // sort/selection above) and hands the concrete value to setConfig — so the
   // page receives a value, not an updater. Inlined per field (no generic
   // helper) — four small, click-through handlers.
-  const columnOrder = createMemo<ColumnOrderState>(
-    () => props.config?.columnOrder ?? []
+  //
+  // Each keeps its previous value while the contents are unchanged (#1890).
+  // The resolved config is a NEW object on every write, so without that a
+  // width saved at the end of a resize drag handed TanStack a fresh `[]`
+  // column order — and TanStack's memos compare by reference, so it rebuilt
+  // every cell object and the table remounted every body cell (517 on the
+  // items list) just to save one width.
+  const columnOrder = createMemo(
+    (): ColumnOrderState => props.config?.columnOrder ?? [],
+    undefined,
+    { equals: sameList }
   );
-  const columnPinning = createMemo<ColumnPinningState>(
-    () => props.config?.columnPinning ?? {}
+  const columnPinning = createMemo(
+    (): ColumnPinningState => props.config?.columnPinning ?? {},
+    undefined,
+    { equals: samePinning }
   );
-  const columnVisibility = createMemo<VisibilityState>(
-    () => props.config?.columnVisibility ?? {}
+  const columnVisibility = createMemo(
+    (): VisibilityState => props.config?.columnVisibility ?? {},
+    undefined,
+    { equals: sameRecord }
   );
 
   // View mode is a config field but NOT a TanStack state (no on*Change) — read
@@ -611,8 +651,12 @@ export function DataTable<T, K extends string, G extends string = never>(
     props.rowGroup !== undefined &&
     viewMode() === 'table' &&
     props.config?.groupRows === true;
-  const grouping = createMemo<GroupingState>(() =>
-    grouped() ? [props.rowGroup!.columnId] : []
+  // Same reference-keeping as columnOrder above: a fresh `[]` here also makes
+  // TanStack rebuild every cell.
+  const grouping = createMemo(
+    (): GroupingState => (grouped() ? [props.rowGroup!.columnId] : []),
+    undefined,
+    { equals: sameList }
   );
   const [expanded, setExpanded] = createSignal<ExpandedState>({});
 
@@ -694,12 +738,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // come through setConfig directly and persist immediately.
   const [transientSizing, setTransientSizing] =
     createSignal<ColumnSizingState | null>(null);
-  const configSizingPx = createMemo<ColumnSizingState>(() => {
-    const rem = props.config?.columnSizing ?? {};
-    return Object.fromEntries(
-      Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
-    );
-  });
+  // The dragged column's width when its drag started (px), so a press that
+  // never moves commits nothing (the drag-end effect below).
+  let resizeStart: { id: string; px: number } | undefined;
+  const configSizingPx = createMemo(
+    (): ColumnSizingState => {
+      const rem = props.config?.columnSizing ?? {};
+      return Object.fromEntries(
+        Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
+      );
+    },
+    undefined,
+    { equals: sameRecord }
+  );
   const pxToRemSizing = (px: ColumnSizingState): ColumnSizingState =>
     Object.fromEntries(Object.entries(px).map(([id, p]) => [id, pxToRem(p)]));
   const columnSizing = (): ColumnSizingState =>
@@ -735,8 +786,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // isn't enough). Resolved here rather than per page so it's one rule for
   // every caller, and the change handler below resolves TanStack's updater
   // against THIS map, so the next visibility write heals a stale entry.
-  const resolvedColumnVisibility = createMemo<VisibilityState>(() =>
-    resolveColumnVisibility(columnVisibility(), columnDefs())
+  const resolvedColumnVisibility = createMemo(
+    (): VisibilityState =>
+      resolveColumnVisibility(columnVisibility(), columnDefs()),
+    undefined,
+    { equals: sameRecord }
   );
 
   const table = createSolidTable<T>({
@@ -849,11 +903,59 @@ export function DataTable<T, K extends string, G extends string = never>(
     on(isResizing, (resizing, wasResizing) => {
       if (wasResizing && !resizing) {
         const pending = transientSizing();
-        if (pending) props.setConfig?.('columnSizing', pxToRemSizing(pending));
+        const moved =
+          !resizeStart || pending?.[resizeStart.id] !== resizeStart.px;
+        if (pending && moved)
+          props.setConfig?.('columnSizing', pxToRemSizing(pending));
         setTransientSizing(null);
+        resizeStart = undefined;
       }
     })
   );
+
+  // Start a drag from the width the user SEES (#1890). A column's size is only
+  // its min-width floor, and its content or the table's spare space usually
+  // renders it wider — but TanStack starts a drag from getSize(), the floor. So
+  // the first stretch of every drag only raised the hidden floor up to the
+  // visible edge and nothing moved (by 54px on the items list's Code column),
+  // and a drag narrower than the visible width did nothing at all. HeaderCell
+  // calls this just before TanStack's handler, which reads the new size as the
+  // drag's start. Parked in the transient sizing, not config, so it only
+  // persists if the drag goes on to move.
+  const startColumnResize = (column: TanColumn<T>, renderedPx: number) => {
+    const px = Math.round(renderedPx);
+    if (px !== column.getSize()) {
+      setTransientSizing({ ...columnSizing(), [column.id]: px });
+    }
+    resizeStart = { id: column.id, px: column.getSize() };
+  };
+
+  // A column's width (px) for its cells' min-width — one memo per column
+  // (#1890). Read straight off column.getSize(), every cell depended on the
+  // WHOLE sizing state, so each tick of a resize drag re-ran the render effect
+  // of every cell in the table (517 on the items list) — and that effect
+  // recomputes all of the cell's attributes, pinned-column lookups included,
+  // only to write the same values back. A memo stops at an unchanged value, so
+  // a tick now reaches the dragged column's cells alone. Keyed by id and
+  // resolved through the table on each run, so a column rebuilt from a new
+  // `columns` prop still reads its own def. Created under the table's owner,
+  // so they're disposed with it.
+  const owner = getOwner();
+  const widthMemos = new Map<string, () => number>();
+  const columnWidth = (column: TanColumn<T>): number => {
+    let width = widthMemos.get(column.id);
+    if (!width) {
+      const id = column.id;
+      width = runWithOwner(owner, () => {
+        const memo = createMemo(() =>
+          (table.getAllLeafColumns().find(c => c.id === id) ?? column).getSize()
+        );
+        return memo;
+      })!;
+      widthMemos.set(id, width);
+    }
+    return width();
+  };
 
   // --- Keyboard row navigation (KB-N1/KB-E5, issue #1006) ---
   // Table-owned, unlike sort/selection which the page owns — row focus is
@@ -1868,6 +1970,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                                 pinnedStyle={pinnedStyle}
                                 frozenEdge={frozenEdge}
                                 onAutoFit={autoFitColumn}
+                                onResizeStart={startColumnResize}
+                                columnWidth={columnWidth}
                               />
                             </Show>
                           )}
@@ -1940,6 +2044,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             rowTint={props.rowTint}
                             rowAccent={props.rowAccent}
                             pinnedStyle={pinnedStyle}
+                            columnWidth={columnWidth}
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}
                             leadingIsFrozenEdge={leadingIsFrozenEdge()}
