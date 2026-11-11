@@ -29,6 +29,21 @@ export interface DetailCardProps {
    * (the Simple dispensing screen's medicines), so more fit on one screen.
    */
   density?: 'default' | 'compact';
+  /**
+   * A quiet line under the title — a unit, a state badge — that belongs with
+   * the name rather than with the body. In the `inline` layout it stays with
+   * the title at the inline start.
+   */
+  meta?: JSX.Element;
+  /**
+   * `stacked` (default): the header over the body. `inline`: one row — the
+   * title and meta at the inline start, taking the room and wrapping, the body
+   * at the inline end, sized to its content. For a grid of many small cards
+   * whose body is a short row of controls (the Simple dispensing screen's
+   * amounts on a phone), so a card costs one row of the screen rather than
+   * two. The caller decides when, e.g. by viewport (createMediaQuery).
+   */
+  layout?: 'stacked' | 'inline';
   /** `data-testid` on the card's root (e2e/TESTIDS.md). */
   testId?: string;
 }
@@ -50,17 +65,24 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
   // insertion — resolve once so it isn't instantiated twice
   // (kdd/solid-reactivity-pitfalls §3).
   const actions = children(() => props.actions);
+  const meta = children(() => props.meta);
   return (
     <section
       class={styles.card}
       data-surface={props.surface ?? 'raised'}
       data-density={props.density ?? 'default'}
+      data-layout={props.layout ?? 'stacked'}
       data-testid={props.testId}
     >
       <div class={styles.header}>
-        <h2 class={styles.title} dir="auto">
-          {props.title}
-        </h2>
+        <div class={styles.heading}>
+          <h2 class={styles.title} dir="auto">
+            {props.title}
+          </h2>
+          <Show when={meta()}>
+            <div class={styles.meta}>{meta()}</div>
+          </Show>
+        </div>
         <Show when={actions()}>
           <div class={styles.actions}>{actions()}</div>
         </Show>

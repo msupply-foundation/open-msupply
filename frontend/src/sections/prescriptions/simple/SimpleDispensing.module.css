@@ -1,17 +1,3 @@
-/* The unit, and the stock line when it is worth stopping for, under the
-   medicine's name. */
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-}
-
-.unit {
-  color: var(--text-secondary);
-}
-
 /* The usual amounts, then the another-amount button, on one row. Equal
    columns so the buttons line up from card to card, and pushed to the card's
    bottom edge so they line up across a row of cards too, however many lines
@@ -31,6 +17,57 @@
   grid-column: 4;
 }
 
+/* A phone's one-row card (DetailCard layout="inline"): the amounts at the
+   inline end, each key a fixed width so they line up down the page and the
+   name keeps what is left. The number is the key's whole label, so it needs
+   none of a labelled button's 4rem floor or side padding. `button.key` (not
+   `.key`) so this outranks the library button's own size rule whichever
+   stylesheet loads first. */
+.amounts[data-one-row] {
+  grid-template-columns: repeat(3, 2.75rem) auto;
+  margin-block-start: 0;
+  padding-block-start: 0;
+}
+
+.amounts[data-one-row] > button.key:not(.another) {
+  min-inline-size: 0;
+  padding-inline: 0;
+}
+
+/*
+ * Touch: the keys are thumb-sized — at least 48px tall, the touch-target
+ * standard (spec/ui-standards accessibility › touch targets) — and the
+ * another-amount key is a 48px square beside them: the standard field's touch
+ * height (--input-height-touch), so they match each line's amount field. A
+ * fine pointer keeps the compact keys. The row's height decides, and the keys
+ * stretch to it.
+ */
+@media (pointer: coarse) {
+  .amounts {
+    grid-auto-rows: var(--input-height-touch);
+    align-items: stretch;
+  }
+
+  .amounts > button.key {
+    block-size: auto;
+  }
+
+  .amounts > button.another {
+    inline-size: var(--input-height-touch);
+  }
+}
+
+/* What the list holds of a medicine — shown where the list is out of sight
+   (a phone, or the list wrapped under the cards). Hidden while the list is
+   docked beside the cards, where it would repeat the list: they sit side by
+   side once the columns hold both flex bases, 20rem of cards + the list's
+   24rem (--side-panel-width; a container query can't read a property). */
+@container simple-columns (min-width: 44rem) {
+  .onList {
+    display: none;
+  }
+}
+
 /* The cards beside the list (DispensingList.module.css › .panel): the body's
    one scroller, filling it (Page fillBody), with the list docked at its
    inline end. The cards take the room; the list wraps under them where the
@@ -41,6 +78,19 @@
   flex-wrap: wrap;
   min-block-size: 0;
   overflow: auto;
+  /* Whether the list sits beside the cards is this box's width (the cards'
+     on-the-list badge answers to it). */
+  container: simple-columns / inline-size;
+}
+
+/* Phone (< compact, as the Page frame's own rule): the whole main column
+   scrolls, so this box must not be a scroller of its own — the list's bar
+   sticks to the bottom of the main column's scroll (DispensingList.module.css),
+   and a sticky box sticks to its nearest scroller. */
+@media (max-width: 599px) {
+  .columns {
+    overflow: visible;
+  }
 }
 
 /* At least one card column (CardGrid's 17rem floor) and the body's padding,
