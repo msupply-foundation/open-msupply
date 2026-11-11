@@ -54,3 +54,58 @@ async fn upload(
         file_id: static_file.id,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, http::StatusCode, test};
+    use std::sync::{Arc, RwLock};
+
+    fn multipart(size: usize) -> (String, Vec<u8>) {
+        let boundary = "test-boundary";
+        let mut body = format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"files\"; filename=\"big.xlsx\"\r\nContent-Type: application/octet-stream\r\n\r\n"
+        )
+        .into_bytes();
+        body.extend(std::iter::repeat_n(b'a', size));
+        body.extend(format!("\r\n--{boundary}--\r\n").into_bytes());
+        (format!("multipart/form-data; boundary={boundary}"), body)
+    }
+
+    // covers: OMS-REG-CDIO-01.61
+
+    /// actix's default 50 MiB limit, checked before the login.
+    #[actix_rt::test]
+    async fn an_upload_over_50_mib_is_refused() {
+        let settings = service::settings::test_settings(
+            repository::test_db::get_test_db_settings("upload"),
+            None,
+        );
+        let auth_data = AuthData {
+            session_store: Arc::new(RwLock::new(Default::default())),
+            cookie_suffix: "8000".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+        let app = test::init_service(
+            App::new()
+                .app_data(Data::new(auth_data))
+                .app_data(Data::new(settings))
+                .configure(config_upload),
+        )
+        .await;
+        let send = async |size: usize| {
+            let (content_type, body) = multipart(size);
+            let request = test::TestRequest::post()
+                .uri("/upload")
+                .insert_header(("content-type", content_type))
+                .set_payload(body)
+                .to_request();
+            test::call_service(&app, request).await.status()
+        };
+
+        // Under the limit it reaches the login check.
+        assert_eq!(send(1024).await, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(send(50 * 1024 * 1024 + 1).await.is_client_error());
+    }
+}
