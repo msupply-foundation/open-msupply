@@ -1,4 +1,4 @@
-import { createEffect, on, untrack } from 'solid-js';
+import { createEffect, on } from 'solid-js';
 import { useComboboxContext } from '@kobalte/core/combobox';
 import { firstMatchKey } from './comboboxLogic';
 
@@ -9,7 +9,9 @@ import { firstMatchKey } from './comboboxLogic';
  * focused option), so without this choosing by keyboard meant reaching for the
  * arrow keys after every search. Arrowing or hovering still moves the
  * highlight as before; this only fills it in when there is none, or when the
- * one there has dropped out of the results.
+ * one there has dropped out of the results. "None" includes after ArrowLeft /
+ * ArrowRight, which Kobalte answers by clearing the highlight: moving the caret
+ * to fix a typo puts it back on the first match, not on a row arrowed to.
  *
  * Only while there is a QUERY: a picker merely opened (or reopened on its
  * committed selection, where Kobalte highlights the selection itself) shows
@@ -37,14 +39,21 @@ export const HighlightFirstMatch = <T,>(props: {
         // filled straight back in.
         () => context.listState().selectionManager().focusedKey(),
       ],
-      ([query, open, collection, focused]) => {
+      ([query, open, collection, focused], previous) => {
         if (!open || query.trim() === '') return;
-        if (focused != null && collection.getItem(focused)) return;
+        const node = focused == null ? undefined : collection.getItem(focused);
+        // A highlight still listed is kept — the user's own arrowing or
+        // hovering — UNLESS the query has just changed and it sits on a row
+        // that isn't a match: Kobalte highlights the committed selection when
+        // the picker reopens, and typing over it doesn't always clear that
+        // before the results land, so a quick type-and-Enter re-picked the
+        // item already held. Arrowing onto such a row leaves the query as it
+        // was, so it still stays where the user put it.
+        const queryChanged = previous === undefined || previous[0] !== query;
+        if (node && !(queryChanged && props.skip?.(node.rawValue as T))) return;
         const key = firstMatchKey<T>(collection, props.skip);
         if (key !== undefined)
-          untrack(() =>
-            context.listState().selectionManager().setFocusedKey(key)
-          );
+          context.listState().selectionManager().setFocusedKey(key);
       }
     )
   );

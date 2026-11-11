@@ -421,18 +421,43 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // portal is used.
   const portalMount = usePortalMount();
 
-  const matches = (item: T, input: string) => {
-    // Grouped mode: an item with no group is PINNED, and a pinned item is
-    // never searched for — it stays listed whatever is typed. Applied here, so
-    // the rule holds for the capped client list AND Kobalte's own filter
-    // below, which share this predicate.
-    if (props.itemGroup && props.itemGroup(item) === undefined) return true;
-    return props.filter
+  // Whether the item itself answers what was typed — the caller's predicate,
+  // or the default locale-aware substring test on its label.
+  const textMatches = (item: T, input: string) =>
+    props.filter
       ? props.filter(item, input)
       : props
           .itemToString(item)
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
+
+  const isPinned = (item: T) =>
+    props.itemGroup !== undefined && props.itemGroup(item) === undefined;
+
+  const matches = (item: T, input: string) => {
+    // Grouped mode: an item with no group is PINNED, and a pinned item is
+    // never searched for — it stays listed whatever is typed. Applied here, so
+    // the rule holds for the capped client list AND Kobalte's own filter
+    // below, which share this predicate.
+    if (isPinned(item)) return true;
+    return textMatches(item, input);
+  };
+
+  // Listed, but not what Enter should land on once the user has typed (see
+  // HighlightFirstMatch) — rows that are on screen without matching it:
+  // - the committed selection: a server-mode caller holding a controlled
+  //   value lists it first whatever is typed (AsyncCombobox's seed), so it
+  //   would always win, and re-picking it changes nothing — Enter would look
+  //   dead with the query still in the box. A selection that DOES match stays
+  //   eligible: skipping it would make Enter silently swap it for the next
+  //   match;
+  // - a pinned item: listed whatever is typed, so highlighting it would make
+  //   Enter choose "None" over the row the user was typing towards. One the
+  //   user typed by name is fair game.
+  const skipHighlight = (item: T) => {
+    const sel = selected();
+    const isSelection = sel !== null && keyOf(sel) === keyOf(item);
+    return (isSelection || isPinned(item)) && !textMatches(item, queryText());
   };
 
   // What this combobox is searching for: the input text ONLY counts while it's
@@ -683,16 +708,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Item>
       )}
     >
-      {/* Typing highlights the first match, so Enter picks it. Grouped mode's
-          pinned items are listed whatever is typed, so they're never it. */}
-      <HighlightFirstMatch<T>
-        query={queryText}
-        skip={
-          props.itemGroup
-            ? item => props.itemGroup!(item) === undefined
-            : undefined
-        }
-      />
+      {/* Typing highlights the first match, so Enter picks it. */}
+      <HighlightFirstMatch<T> query={queryText} skip={skipHighlight} />
       {/* hideLabel names the input via aria-label instead of a visually-hidden
           label element — same accessible name, no duplicate text node beside
           the label the surrounding layout (a FieldRow) already shows (a hidden
