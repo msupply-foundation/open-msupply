@@ -1,3 +1,8 @@
+import {
+  defaultSellPriceAtPackSize,
+  isDefaultSellPrice,
+  type DefaultSellPriceSource,
+} from '@/domain/item/defaultSellPrice';
 import { roundTo } from '@/intl/formatNumber';
 
 // Pure per-line count arithmetic for the stocktake detail table
@@ -85,6 +90,40 @@ export const defaultedPackSize = (
   item: { defaultPackSize: number },
   packSize?: number | null
 ): number => packSize ?? (item.defaultPackSize > 0 ? item.defaultPackSize : 1);
+
+// The sell price a new batch — one with no stock behind it — starts with at
+// `packSize`, and moves to when its pack size changes until the user types a
+// sell price of their own (spec/stock rules › Default sell price for new
+// stock): the store's default sell price carried to that pack size. Blank,
+// as a new batch has always started, where there is no default or no pack
+// size yet.
+export const newBatchSellPrice = (
+  item: DefaultSellPriceSource,
+  packSize: number | null | undefined
+): number | null => {
+  if (packSize == null) return null;
+  const price = defaultSellPriceAtPackSize(item, packSize);
+  return price > 0 ? price : null;
+};
+
+// Whether a saved line's sell price follows its pack size when the editor
+// loads it, as a new batch's does: only on a batch with no stock behind it
+// (whose pack size can change at all), and only while the price is still the
+// default at its pack size — one the user typed is kept. A line with no sell
+// price, such as one from a master list, follows too: nobody gave it one, and
+// finalising gives it the default.
+export const savedSellFollowsDefault = (
+  line: {
+    stockLine?: { id: string } | null;
+    packSize?: number | null;
+    sellPricePerPack?: number | null;
+  },
+  item: DefaultSellPriceSource
+): boolean =>
+  packSizeEditable(line) &&
+  line.packSize != null &&
+  (line.sellPricePerPack == null ||
+    isDefaultSellPrice(line.sellPricePerPack, item, line.packSize));
 
 // The line editor's batch order when an item loads (OMS-REG-INV-03.91):
 // soonest expiry first, then by batch name as people read it — digit runs

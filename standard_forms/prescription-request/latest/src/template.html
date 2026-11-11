@@ -15,8 +15,8 @@ shifting it by one would change the date of birth. #}
 {% macro formatPlainDay(date) %} {% if date %}{{ date |
 date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
 
-{# The printed-at stamp. Tera's now() is already the SERVER's local time, not
-UTC, so converting it again would double-shift it. #}
+{# The printed-at stamp. The server's now() is already in the user's timezone
+(from arguments.timezone), so it is printed as is. #}
 {% macro formatPrintedAt(datetime) %} {% if datetime %}{{ datetime |
 date(format="%d/%m/%Y %H:%M:%S") }}{% endif %} {% endmacro input %}
 

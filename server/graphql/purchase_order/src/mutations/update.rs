@@ -114,7 +114,7 @@ pub struct InboundShipmentsNotVerified;
 #[Object]
 impl InboundShipmentsNotVerified {
     pub async fn description(&self) -> &str {
-        "Cannot finalise this purchase order because there are open inbound shipments that have not been delivered."
+        "Cannot finalise this purchase order because there are external inbound shipments that have not been verified."
     }
 }
 

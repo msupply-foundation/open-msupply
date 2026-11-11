@@ -945,6 +945,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           entryMode={entryMode()}
           packSize={packSize()}
           unitName={current()?.unitName ?? null}
+          itemName={current()?.itemName ?? ''}
           finalised={props.finalised}
           forecast={customerForecast()}
           volume={
