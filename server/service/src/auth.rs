@@ -182,6 +182,7 @@ pub enum Resource {
     MutateHelpDocuments,
 
     MutateSites,
+    ImportExportCentralData,
 }
 
 impl Resource {
@@ -316,7 +317,8 @@ impl Resource {
             | Resource::MutateCampaigns
             | Resource::MutateCustomFieldConfig
             | Resource::MutateHelpDocuments
-            | Resource::MutateSites => false,
+            | Resource::MutateSites
+            | Resource::ImportExportCentralData => false,
         }
     }
 }
@@ -1058,6 +1060,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::MutateSites,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::ImportExportCentralData,
         PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
