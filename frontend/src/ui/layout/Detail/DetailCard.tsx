@@ -7,9 +7,10 @@ export interface DetailCardProps {
    * `dir="auto"`, so a title in another script than the screen's keeps its own
    * reading order (a plugin's configuration label, say, still untranslated in
    * the operator's locale). The heading is shrink-to-fit in the header's flex
-   * row, so its own direction does not re-align the card.
+   * row, so its own direction does not re-align the card. Optional: without
+   * a title or actions there is no header.
    */
-  title: string;
+  title?: string;
   /** Header-end actions (e.g. Edit/Delete IconButtons). */
   actions?: JSX.Element;
   /** The card body — arbitrary content (DetailSection/DetailRow, tables,
@@ -50,14 +51,18 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
       data-surface={props.surface ?? 'raised'}
       data-testid={props.testId}
     >
-      <div class={styles.header}>
-        <h2 class={styles.title} dir="auto">
-          {props.title}
-        </h2>
-        <Show when={actions()}>
-          <div class={styles.actions}>{actions()}</div>
-        </Show>
-      </div>
+      <Show when={props.title || actions()}>
+        <div class={styles.header}>
+          <Show when={props.title}>
+            <h2 class={styles.title} dir="auto">
+              {props.title}
+            </h2>
+          </Show>
+          <Show when={actions()}>
+            <div class={styles.actions}>{actions()}</div>
+          </Show>
+        </div>
+      </Show>
       <div class={styles.body}>{props.children}</div>
     </section>
   );
