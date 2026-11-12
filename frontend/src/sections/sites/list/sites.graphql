@@ -64,16 +64,15 @@ query sites(
 
 # The deployment gates and the two site ids the editor needs, in one round trip
 # and OUTSIDE the centralServer namespace (see the header note):
-#  - isCentralStandalone — whether sites may be created, edited or deleted here
-#    at all (rules.md § where sites are managed). `isCentralServer` is already a
-#    startup-wide signal (src/api/serverInfo.ts) and is not re-read.
+#  `isCentralServer` and `isCentralStandalone` (whether sites may be created,
+#    edited or deleted here at all, rules.md § where sites are managed) are
+#    already startup-wide signals (src/api/serverInfo.ts) and are not re-read.
 #  - featureFlags — the CLIENT-side `enable_multi_device_site` gate; the server
 #    accepts setSiteMultiDevice regardless of it (contract.md § sync pairing).
 #  - syncSettings.syncSiteId — the server's OWN site, which no pairing action
 #    may target; centralServerSiteId — where a removed store is handed back to.
 #    `syncSettings` is nullable (a server that has never been configured).
 query siteDeployment {
-  isCentralStandalone
   featureFlags
   syncSettings {
     centralServerSiteId
