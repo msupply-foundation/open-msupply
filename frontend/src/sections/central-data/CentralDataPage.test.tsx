@@ -26,9 +26,11 @@ interface PreviewCardProps {
 }
 interface PreviewFooterProps extends PreviewCardProps {
   onConfirm: () => void;
+  onDownloadErrors: () => void;
 }
 interface ButtonProps {
   onClick: () => void;
+  disabled?: boolean;
   'data-testid'?: string;
   children: unknown;
 }
@@ -161,6 +163,7 @@ vi.mock('@/api/graphql', () => ({
   graphqlFetch: (...args: unknown[]) => graphqlFetch(...args),
 }));
 
+import { saveDocument } from '@/platform/openDocument';
 import CentralDataPage from './CentralDataPage';
 
 let dispose: (() => void) | undefined;
@@ -343,6 +346,44 @@ describe('CentralDataPage import', () => {
     expect(shown.previewCard).toBeUndefined();
     expect(shown.footer).toBeUndefined();
     expect(shown.zone).toBeDefined();
+  });
+
+  it('holds Choose another file while the errors file downloads, then clears its failure banner', async () => {
+    await previewed();
+    let saved!: (result: { ok: false; message: string }) => void;
+    vi.mocked(saveDocument).mockReturnValueOnce(
+      new Promise(resolve => (saved = resolve))
+    );
+    graphqlFetch.mockResolvedValueOnce({
+      kind: 'success',
+      data: {
+        centralServer: {
+          centralData: {
+            errorsFile: { __typename: 'CentralDataExportNode', fileId: 'e1' },
+          },
+        },
+      },
+    });
+
+    shown.footer!.onDownloadErrors();
+    await settle();
+    render();
+    expect(shown.buttons['central-data-choose-another']!.disabled).toBe(true);
+
+    saved({ ok: false, message: 'denied' });
+    await settle();
+    render();
+    expect(alerts()).toEqual([
+      [
+        'central-data-import-error',
+        'error.unable-to-download-file {"reason":"denied"}',
+      ],
+    ]);
+
+    shown.buttons['central-data-choose-another']!.onClick();
+    render();
+    expect(shown.zone).toBeDefined();
+    expect(alerts()).toEqual([]);
   });
 
   it('imports the previewed upload, then replaces the preview with the counts (OMS-REG-CDIO-01.14, .18)', async () => {

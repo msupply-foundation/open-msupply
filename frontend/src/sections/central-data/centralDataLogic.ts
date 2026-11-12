@@ -36,8 +36,9 @@ export const TABLES: {
   },
 ];
 
+/** `undefined` for a table this screen doesn't know yet. */
 export const tableEntry = (table: TableKey) =>
-  TABLES.find(entry => entry.value === table) ?? TABLES[0];
+  TABLES.find(entry => entry.value === table);
 
 export type Status = 'ALL' | 'ACTIVE' | 'INACTIVE';
 

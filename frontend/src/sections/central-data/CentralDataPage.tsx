@@ -221,9 +221,12 @@ const CentralDataPage: Component = () => {
                         <Text variant="subtitle">{current().fileName}</Text>
                         <Button
                           variant="secondary"
-                          disabled={busy()}
+                          disabled={busy() || downloadingErrors()}
                           data-testid="central-data-choose-another"
-                          onClick={() => setPreview(undefined)}
+                          onClick={() => {
+                            setPreview(undefined);
+                            setImportError(undefined);
+                          }}
                         >
                           {t('button.choose-another-file')}
                         </Button>

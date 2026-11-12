@@ -38,16 +38,18 @@ export type Preview = {
 
 /** The changed-row badge; unchanged rows are never listed. */
 const CHANGE_BADGE: Record<
-  Preview['summary']['changes'][number]['change'],
+  Exclude<Preview['summary']['changes'][number]['change'], 'UNCHANGED'>,
   { labelKey: LocaleKey; tone?: 'info' | 'warning' }
 > = {
   INSERTED: { labelKey: 'label.change-new', tone: 'info' },
   UPDATED: { labelKey: 'label.change-updated' },
   DELETED: { labelKey: 'label.change-deleted', tone: 'warning' },
-  UNCHANGED: { labelKey: 'label.change-unchanged' },
 };
 
 type RowChange = Preview['summary']['changes'][number];
+
+const changeBadge = (change: RowChange['change']) =>
+  change === 'UNCHANGED' ? undefined : CHANGE_BADGE[change];
 type RowError = Preview['summary']['errors'][number];
 
 /** Rows per page of either list. */
@@ -73,10 +75,11 @@ const changeColumns: Column<RowChange, never>[] = [
     header: () => t('label.change-kind'),
     size: remToPx(8),
     cell: info => (
-      <StatusBadge
-        tone={CHANGE_BADGE[info.row.original.change].tone}
-        label={t(CHANGE_BADGE[info.row.original.change].labelKey)}
-      />
+      <Show when={changeBadge(info.row.original.change)}>
+        {badge => (
+          <StatusBadge tone={badge().tone} label={t(badge().labelKey)} />
+        )}
+      </Show>
     ),
   },
   {
@@ -142,9 +145,9 @@ export const ImportPreviewCard = (props: { preview: Preview }) => {
               const problems = () => row.errorCount;
               return (
                 <DetailCard
-                  title={t(entry.labelKey)}
+                  title={entry ? t(entry.labelKey) : row.table}
                   surface="bordered"
-                  testId={`central-data-preview-${entry.sheet}`}
+                  testId={`central-data-preview-${entry?.sheet ?? row.table}`}
                   actions={
                     <Text variant="bodySmall">
                       {problems() > 0
