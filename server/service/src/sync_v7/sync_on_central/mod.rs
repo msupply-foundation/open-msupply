@@ -496,7 +496,6 @@ pub async fn patient_search(
             offset,
         } = input;
 
-        let paged = limit.is_some();
         let rows = match limit {
             // A page: name order, then date of birth (ties broken by id, so
             // pages don't overlap),
@@ -527,36 +526,27 @@ pub async fn patient_search(
             }
         };
 
-        // A remote that sends no page is from before the linked next of kin
-        // was looked up, and only shows the stored text, so the lookup is
-        // skipped for it
-        Ok(patients_v4(&ctx.connection, rows, paged)?)
+        Ok(patients_v4(&ctx.connection, rows)?)
     })
     .await
     .map_err(join_error)?
 }
 
 /// The patients central's search returns. A next of kin linked to a name shows
-/// as that name, as on the patient node; `look_up_next_of_kin` false leaves the
-/// plain text field.
+/// as that name, as on the patient node.
 fn patients_v4(
     connection: &StorageConnection,
     rows: Vec<repository::NameRow>,
-    look_up_next_of_kin: bool,
 ) -> Result<Vec<PatientV4>, RepositoryError> {
-    let next_of_kin_names: HashMap<String, String> = if look_up_next_of_kin {
-        let ids: Vec<String> = rows
-            .iter()
-            .filter_map(|row| row.next_of_kin_id.clone())
-            .collect();
-        NameRowRepository::new(connection)
-            .find_many_by_id(&ids)?
-            .into_iter()
-            .map(|row| (row.id, row.name))
-            .collect()
-    } else {
-        HashMap::new()
-    };
+    let ids: Vec<String> = rows
+        .iter()
+        .filter_map(|row| row.next_of_kin_id.clone())
+        .collect();
+    let next_of_kin_names: HashMap<String, String> = NameRowRepository::new(connection)
+        .find_many_by_id(&ids)?
+        .into_iter()
+        .map(|row| (row.id, row.name))
+        .collect();
 
     Ok(rows
         .into_iter()
@@ -1468,13 +1458,13 @@ mod tests {
             Some("Ibrahim Traoré")
         );
 
-        // No page (an older remote): every match, without the linked lookup
+        // No page (an older remote): every match, with the same lookup
         let patients = patient_search(service_provider, common, search(None))
             .await
             .unwrap();
         assert_eq!(patients.len(), 2);
         let linked = patients.iter().find(|p| p.id == "linked").unwrap();
-        assert_eq!(linked.next_of_kin_name.as_deref(), Some("stale text"));
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
     }
 
     #[actix_rt::test]
