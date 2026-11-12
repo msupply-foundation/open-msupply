@@ -77,6 +77,10 @@ export type SimpleDispenseResult = {
   insertPrescriptionLines: Array<{
   id: string;
   response: ({
+  __typename: "InvoiceLineNode";
+} & {
+  id: string;
+}) | ({
   __typename: "InsertPrescriptionLineError";
 } & {
   error: {
@@ -95,5 +99,29 @@ export type SimpleDispenseResult = {
 };
 
 export const SimpleDispense = {
-  query: "mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {\n  batchPrescription(storeId: $storeId, input: $input) {\n    insertPrescriptions {\n      id\n      response {\n        __typename\n      }\n    }\n    insertPrescriptionLines {\n      id\n      response {\n        __typename\n        ... on InsertPrescriptionLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n    updatePrescriptions {\n      id\n      response {\n        __typename\n      }\n    }\n  }\n}",
+  query: "mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {\n  batchPrescription(storeId: $storeId, input: $input) {\n    insertPrescriptions {\n      id\n      response {\n        __typename\n      }\n    }\n    insertPrescriptionLines {\n      id\n      response {\n        __typename\n        ... on InvoiceLineNode {\n          id\n        }\n        ... on InsertPrescriptionLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n    updatePrescriptions {\n      id\n      response {\n        __typename\n      }\n    }\n  }\n}",
 } as TypedDocument<SimpleDispenseResult, SimpleDispenseVariables>;
+
+export type SimpleDispensedVisitVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type SimpleDispensedVisitResult = {
+  invoice: ({
+  __typename: "InvoiceNode";
+} & {
+  id: string;
+  status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
+}) | ({
+  __typename: "NodeError";
+} & {
+  error: {
+  __typename: "DatabaseError" | "RecordNotFound";
+};
+});
+};
+
+export const SimpleDispensedVisit = {
+  query: "query simpleDispensedVisit($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      id\n      status\n    }\n    ... on NodeError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<SimpleDispensedVisitResult, SimpleDispensedVisitVariables>;

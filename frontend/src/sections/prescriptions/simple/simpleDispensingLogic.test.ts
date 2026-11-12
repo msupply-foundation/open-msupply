@@ -5,6 +5,7 @@ import {
   buildCards,
   canAddTyped,
   dispenseInput,
+  dispenseOutcome,
   reduceToAvailable,
   shortfalls,
   fillableBatches,
@@ -14,9 +15,11 @@ import {
   setAmount,
   stockState,
   unitsIn,
+  visitWasSaved,
   type CardItem,
   type ListLine,
 } from './simpleDispensingLogic';
+import type { SimpleDispenseResult } from './simpleDispense.generated';
 
 const PREFS: AllocationPreferences = {
   expiredStockPreventIssue: false,
@@ -141,6 +144,100 @@ describe('fillableBatches', () => {
       )
     ).toBe(0);
   });
+
+  it('puts a batch with no expiry date last', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('no-expiry', { expiryDate: null }),
+        batch('dated', { expiryDate: '2029-01-01' }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['dated', 'no-expiry']);
+  });
+
+  it('keeps the order the server gave for batches that expire on the same day', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('first', { expiryDate: '2029-01-01' }),
+        batch('second', { expiryDate: '2029-01-01' }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['first', 'second']);
+  });
+
+  it('counts a batch that expires today as not yet expired', () => {
+    const batches = fillableBatches(
+      item('a', [batch('today', { expiryDate: '2026-11-10' })]),
+      PREFS,
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['today']);
+  });
+
+  it('leaves out a batch inside the prevent-issue-of-expired-stock window', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('soon', { expiryDate: '2026-11-20' }),
+        batch('later', { expiryDate: '2027-06-01' }),
+      ]),
+      {
+        ...PREFS,
+        expiredStockPreventIssue: true,
+        expiredStockIssueThreshold: 30,
+      },
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['later']);
+  });
+
+  it('leaves out a batch whose VVM status is unusable', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('unusable', { vvmStatus: { unusable: true, priority: 3 } }),
+        batch('usable', { vvmStatus: { unusable: false, priority: 1 } }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['usable']);
+  });
+
+  it('under sort by VVM status then expiry, takes the better VVM status first', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('sooner-worse', {
+          expiryDate: '2027-01-01',
+          vvmStatus: { unusable: false, priority: 2 },
+        }),
+        batch('later-better', {
+          expiryDate: '2029-01-01',
+          vvmStatus: { unusable: false, priority: 1 },
+        }),
+      ]),
+      { ...PREFS, sortByVvmStatusThenExpiry: true },
+      TODAY
+    );
+    expect(batches.map(b => b.id)).toEqual(['later-better', 'sooner-worse']);
+  });
+
+  it('counts units across fractional pack sizes without float dust', () => {
+    expect(
+      unitsIn(
+        fillableBatches(
+          item('a', [
+            batch('a1', { availableNumberOfPacks: 0.29, packSize: 100 }),
+            batch('a2', { availableNumberOfPacks: 4, packSize: 2.5 }),
+          ]),
+          PREFS,
+          TODAY
+        )
+      )
+    ).toBe(39);
+  });
 });
 
 describe('priceOf', () => {
@@ -168,6 +265,50 @@ describe('priceOf', () => {
     // 5 from "sooner" (one pack, 3) + 5 from "later" (half a pack, 1).
     expect(priceOf(batches, 10)).toBeCloseTo(4);
   });
+
+  it('prices an amount that spans three batches', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('third', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          sellPricePerPack: 4,
+          expiryDate: '2029-01-01',
+        }),
+        batch('first', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          sellPricePerPack: 1,
+          expiryDate: '2027-01-01',
+        }),
+        batch('second', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          sellPricePerPack: 2,
+          expiryDate: '2028-01-01',
+        }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    // 10 at 1 + 10 at 2 + half a pack at 4.
+    expect(priceOf(batches, 25)).toBeCloseTo(5);
+  });
+
+  it('prices no more than the batches hold', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('only', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          sellPricePerPack: 3,
+        }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    expect(priceOf(batches, 50)).toBeCloseTo(3);
+  });
 });
 
 describe('the list', () => {
@@ -191,6 +332,19 @@ describe('the list', () => {
     expect(addAmount(lines, 'a', 20, 100)).toEqual(lines);
   });
 
+  it('a press of zero or less leaves the list as it was', () => {
+    const lines: ListLine[] = [{ itemId: 'a', units: 10 }];
+    expect(addAmount(lines, 'a', 0, 100)).toEqual(lines);
+    expect(addAmount(lines, 'a', -5, 100)).toEqual(lines);
+    expect(addAmount([], 'b', 0, 100)).toEqual([]);
+  });
+
+  it('a press that brings the line to exactly what the card has is taken, without float dust', () => {
+    expect(addAmount([{ itemId: 'a', units: 0.1 }], 'a', 0.2, 0.3)).toEqual([
+      { itemId: 'a', units: 0.3 },
+    ]);
+  });
+
   it('OMS-REG-DIS-12.29: an amount above what is available is brought down to it', () => {
     expect(setAmount([{ itemId: 'a', units: 10 }], 'a', 500, 120)).toEqual([
       { itemId: 'a', units: 120 },
@@ -200,6 +354,7 @@ describe('the list', () => {
   it('an amount of zero, or none, leaves the line as it was', () => {
     const lines: ListLine[] = [{ itemId: 'a', units: 10 }];
     expect(setAmount(lines, 'a', 0, 100)).toEqual(lines);
+    expect(setAmount(lines, 'a', -3, 100)).toEqual(lines);
     expect(setAmount(lines, 'a', undefined, 100)).toEqual(lines);
   });
 
@@ -344,5 +499,124 @@ describe('dispensing the visit', () => {
       { id: 'rx', status: 'VERIFIED' },
     ]);
     expect(input.continueOnError).toBe(false);
+  });
+
+  it('OMS-REG-DIS-12.51: saves every medicine on the list, each from its own batches', () => {
+    const cards = cardsFor(
+      item('a', [batch('a1', { availableNumberOfPacks: 5, packSize: 10 })]),
+      item('b', [batch('b1', { availableNumberOfPacks: 5, packSize: 10 })])
+    );
+    let n = 0;
+    const input = dispenseInput(
+      'rx',
+      'patient',
+      [
+        { itemId: 'a', units: 20 },
+        { itemId: 'b', units: 5 },
+      ],
+      cards,
+      () => `line-${++n}`
+    );
+    expect(
+      input.insertPrescriptionLines.map(line => [
+        line.stockLineId,
+        line.numberOfPacks,
+      ])
+    ).toEqual([
+      ['a1', 2],
+      ['b1', 0.5],
+    ]);
+  });
+
+  it('never saves more than the batches hold', () => {
+    const cards = cardsFor(
+      item('a', [batch('a1', { availableNumberOfPacks: 1, packSize: 10 })])
+    );
+    const input = dispenseInput(
+      'rx',
+      'patient',
+      [{ itemId: 'a', units: 50 }],
+      cards,
+      () => 'line'
+    );
+    expect(input.insertPrescriptionLines.map(l => l.numberOfPacks)).toEqual([
+      1,
+    ]);
+  });
+});
+
+describe('dispenseOutcome', () => {
+  type Result = SimpleDispenseResult['batchPrescription'];
+  const saved = (lines = 2): Result => ({
+    insertPrescriptions: [
+      { id: 'rx', response: { __typename: 'InvoiceNode' } },
+    ],
+    insertPrescriptionLines: Array.from({ length: lines }, (_, i) => ({
+      id: `l${i}`,
+      response: { __typename: 'InvoiceLineNode', id: `l${i}` },
+    })),
+    updatePrescriptions: [
+      { id: 'rx', response: { __typename: 'InvoiceNode' } },
+    ],
+  });
+
+  it('OMS-REG-DIS-12.51: everything came back saved', () => {
+    expect(dispenseOutcome(saved(), 2)).toBe('saved');
+  });
+
+  it('OMS-REG-DIS-12.89: a batch refusing its line is worth checking again', () => {
+    const result = saved();
+    result.insertPrescriptionLines = [
+      {
+        id: 'l0',
+        response: {
+          __typename: 'InsertPrescriptionLineError',
+          error: {
+            __typename: 'NotEnoughStockForReduction',
+            description: 'Not enough stock',
+          },
+        },
+      },
+    ];
+    expect(dispenseOutcome(result, 2)).toBe('line-refused');
+  });
+
+  it('OMS-REG-DIS-12.93: a refused move to Verified is not saved', () => {
+    const result = saved();
+    result.updatePrescriptions = [
+      { id: 'rx', response: { __typename: 'UpdatePrescriptionError' } },
+    ];
+    expect(dispenseOutcome(result, 2)).toBe('refused');
+    result.updatePrescriptions = [
+      { id: 'rx', response: { __typename: 'NodeError' } },
+    ];
+    expect(dispenseOutcome(result, 2)).toBe('refused');
+  });
+
+  it('OMS-REG-DIS-12.93: a part missing from the reply is not saved', () => {
+    expect(dispenseOutcome({ ...saved(), updatePrescriptions: null }, 2)).toBe(
+      'refused'
+    );
+    expect(dispenseOutcome({ ...saved(), insertPrescriptions: null }, 2)).toBe(
+      'refused'
+    );
+    expect(dispenseOutcome(saved(1), 2)).toBe('refused');
+  });
+});
+
+describe('visitWasSaved', () => {
+  it('OMS-REG-DIS-12.92: a visit whose record exists as Verified was saved', () => {
+    expect(
+      visitWasSaved({ __typename: 'InvoiceNode', id: 'rx', status: 'VERIFIED' })
+    ).toBe(true);
+  });
+
+  it('OMS-REG-DIS-12.92: a visit with no record was not saved', () => {
+    expect(
+      visitWasSaved({
+        __typename: 'NodeError',
+        error: { __typename: 'RecordNotFound' },
+      })
+    ).toBe(false);
   });
 });

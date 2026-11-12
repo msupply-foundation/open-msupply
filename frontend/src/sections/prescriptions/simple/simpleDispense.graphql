@@ -14,6 +14,9 @@ mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {
       id
       response {
         __typename
+        ... on InvoiceLineNode {
+          id
+        }
         ... on InsertPrescriptionLineError {
           error {
             __typename
@@ -25,6 +28,24 @@ mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {
     updatePrescriptions {
       id
       response {
+        __typename
+      }
+    }
+  }
+}
+
+# Whether a visit whose save couldn't be confirmed was saved after all
+# (rules › dispensing the visit): the save is one transaction that ends with
+# the move to Verified, so a record that exists as Verified was saved whole.
+query simpleDispensedVisit($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {
+    __typename
+    ... on InvoiceNode {
+      id
+      status
+    }
+    ... on NodeError {
+      error {
         __typename
       }
     }

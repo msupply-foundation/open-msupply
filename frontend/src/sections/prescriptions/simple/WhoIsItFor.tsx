@@ -19,6 +19,8 @@ import styles from './WhoIsItFor.module.css';
 export const WhoIsItFor = (props: {
   storeId: string;
   patient: PatientOption | null;
+  /** While the visit is being dispensed: who it is for can't change. */
+  disabled?: boolean;
   onSelect: (patient: PatientOption | null) => void;
   onCreatePatient: () => void;
 }) => (
@@ -37,6 +39,7 @@ export const WhoIsItFor = (props: {
       width="full"
       storeId={props.storeId}
       selected={props.patient ?? undefined}
+      disabled={props.disabled}
       onSelect={props.onSelect}
       onCreatePatient={props.onCreatePatient}
     />
@@ -46,7 +49,8 @@ export const WhoIsItFor = (props: {
 /*
  * The facts the record carries, in the spec's order; one it doesn't carry is
  * left out rather than shown as a dash. A patient just created from the
- * picker comes back with its id and name only, so it shows none of them.
+ * picker comes back with its id and name only; the page reads its record and
+ * hands it back, so its facts show a moment later.
  */
 const ChosenPatientDetails = (props: { patient: PatientOption }) => (
   <Show

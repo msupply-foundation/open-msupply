@@ -56,6 +56,11 @@ export const DispensingList = (props: {
   /** A save is in flight. */
   dispensing: boolean;
   /**
+   * A save is in flight or its reply was lost: the lines can't change, and
+   * only Dispense is offered (rules › dispensing the visit).
+   */
+  locked: boolean;
+  /**
    * What the last Dispense did: who it went to, or why it failed. Shown in
    * the list itself — never a toast (ui-standards › action feedback).
    */
@@ -247,6 +252,7 @@ export const DispensingList = (props: {
                               width="full"
                               decimalLimit={2}
                               max={card()?.stock}
+                              disabled={props.locked}
                               value={line.units}
                               data-testid="line-amount-input"
                               onChange={units =>
@@ -264,6 +270,7 @@ export const DispensingList = (props: {
                               class={styles.removeButton}
                               label={t('label.remove-item', { item: name() })}
                               data-testid="remove-line-button"
+                              disabled={props.locked}
                               onClick={() => props.onRemove(line.itemId)}
                             />
                           </td>
@@ -292,7 +299,7 @@ export const DispensingList = (props: {
             <div class={styles.actions}>
               <Button
                 variant="ghost"
-                disabled={!hasLines() || props.dispensing}
+                disabled={!hasLines() || props.locked}
                 data-testid="clear-list-button"
                 onClick={() => props.onClear()}
               >

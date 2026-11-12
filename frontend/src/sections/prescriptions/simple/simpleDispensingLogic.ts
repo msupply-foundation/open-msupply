@@ -3,10 +3,15 @@ import {
   barReasons,
   distributeIssue,
   fillOrderCompare,
+  round9,
   type AllocationPreferences,
 } from '@/domain/allocation';
 import type { StoreContextResult } from '../../../store/storeContext.generated';
 import type { SimpleDispensingItemsResult } from './simpleDispensing.generated';
+import type {
+  SimpleDispensedVisitResult,
+  SimpleDispenseResult,
+} from './simpleDispense.generated';
 
 /** One of the store's common medicines, as the preference holds it. */
 export type CommonMedicine =
@@ -75,11 +80,16 @@ export const fillableBatches = (
       sellPricePerPack: batch.sellPricePerPack,
     }));
 
-/** Units across batches. */
+/**
+ * Units across batches, without float dust: 0.29 packs of 100 is 29 units,
+ * not 28.999999999999996, or a press of 29 would be refused.
+ */
 export const unitsIn = (batches: readonly FillableBatch[]): number =>
-  batches.reduce(
-    (sum, batch) => sum + batch.availablePacks * batch.packSize,
-    0
+  round9(
+    batches.reduce(
+      (sum, batch) => sum + batch.availablePacks * batch.packSize,
+      0
+    )
   );
 
 export const stockState = (
@@ -184,10 +194,11 @@ export const addAmount = (
   stock: number
 ): ListLine[] => {
   const listed = unitsListed(lines, itemId);
-  if (amount <= 0 || listed + amount > stock) return [...lines];
+  const total = round9(listed + amount);
+  if (amount <= 0 || total > stock) return [...lines];
   return listed > 0
     ? lines.map(line =>
-        line.itemId === itemId ? { ...line, units: line.units + amount } : line
+        line.itemId === itemId ? { ...line, units: total } : line
       )
     : [...lines, { itemId, units: amount }];
 };
@@ -294,3 +305,47 @@ export const dispenseInput = (
   updatePrescriptions: [{ id: prescriptionId, status: 'VERIFIED' as const }],
   continueOnError: false,
 });
+
+/**
+ * What a Dispense save did (rules › dispensing the visit). The save is one
+ * transaction, so a refusal anywhere means nothing was saved:
+ * - `saved`: the record, every line and the move to Verified all came back
+ *   saved;
+ * - `line-refused`: a batch refused its line, most likely because the stock
+ *   moved since the check, so the list is worth checking again;
+ * - `refused`: anything else refused, or a part came back missing.
+ */
+export type DispenseOutcome = 'saved' | 'line-refused' | 'refused';
+
+export const dispenseOutcome = (
+  result: SimpleDispenseResult['batchPrescription'],
+  expectedLines: number
+): DispenseOutcome => {
+  const lines = result.insertPrescriptionLines ?? [];
+  if (
+    lines.some(
+      line => line.response.__typename === 'InsertPrescriptionLineError'
+    )
+  )
+    return 'line-refused';
+  const records = result.insertPrescriptions ?? [];
+  const updates = result.updatePrescriptions ?? [];
+  const saved =
+    records.length === 1 &&
+    records.every(record => record.response.__typename === 'InvoiceNode') &&
+    lines.length === expectedLines &&
+    lines.every(line => line.response.__typename === 'InvoiceLineNode') &&
+    updates.length === 1 &&
+    updates.every(update => update.response.__typename === 'InvoiceNode');
+  return saved ? 'saved' : 'refused';
+};
+
+/**
+ * Whether a visit whose save couldn't be confirmed was saved after all: its
+ * record exists as Verified. The move to Verified is the save's last step, in
+ * the same transaction, so a record that reached it holds the whole visit.
+ */
+export const visitWasSaved = (
+  invoice: SimpleDispensedVisitResult['invoice']
+): boolean =>
+  invoice.__typename === 'InvoiceNode' && invoice.status === 'VERIFIED';
