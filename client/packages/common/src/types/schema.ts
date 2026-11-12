@@ -6100,6 +6100,11 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
+  /**
+   * Items with no counted line in a finalised stocktake of this store since the given
+   * datetime, including items never counted in this store
+   */
+  notCountedSince?: InputMaybe<Scalars['DateTime']['input']>;
   /** Excludes items already present as a line on the given record */
   notInRecord?: InputMaybe<ItemNotInRecordFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
