@@ -29,6 +29,7 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_batch_mutations::BatchMutations;
+use graphql_central_data::{CentralDataMutations, CentralDataQueries};
 use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_contact::ContactQueries;
@@ -157,6 +158,10 @@ impl CentralServerMutationNode {
     async fn site(&self) -> CentralSiteMutations {
         CentralSiteMutations
     }
+
+    async fn central_data(&self) -> CentralDataMutations {
+        CentralDataMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -173,6 +178,10 @@ impl CentralServerQueryNode {
 
     async fn site(&self) -> CentralSiteQueries {
         CentralSiteQueries
+    }
+
+    async fn central_data(&self) -> CentralDataQueries {
+        CentralDataQueries
     }
 
     async fn custom_field(&self) -> CustomFieldConfigQueries {

@@ -4332,6 +4332,7 @@ dependencies = [
  "graphql_asset",
  "graphql_asset_catalogue",
  "graphql_batch_mutations",
+ "graphql_central_data",
  "graphql_clinician",
  "graphql_cold_chain",
  "graphql_contact",
@@ -4459,6 +4460,18 @@ dependencies = [
  "serde_json",
  "service",
  "util",
+]
+
+[[package]]
+name = "graphql_central_data"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "async-graphql",
+ "graphql_core",
+ "repository",
+ "service",
+ "tokio",
 ]
 
 [[package]]
