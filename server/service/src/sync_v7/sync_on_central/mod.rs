@@ -494,7 +494,8 @@ pub async fn patient_search(
 
         let paged = limit.is_some();
         let rows = match limit {
-            // A page: name order (ties broken by id, so pages don't overlap),
+            // A page: name order, then date of birth (ties broken by id, so
+            // pages don't overlap),
             // and no count — the remote asks for one more than it shows to
             // know whether there are more.
             Some(limit) => PatientRepository::new(&ctx.connection).query(
@@ -518,8 +519,9 @@ pub async fn patient_search(
             }
         };
 
-        // A remote that sends no page is from before next_of_kin_name was
-        // sent, and can't read it, so its next of kin aren't looked up
+        // A remote that sends no page is from before the linked next of kin
+        // was looked up, and only shows the stored text, so the lookup is
+        // skipped for it
         Ok(patients_v4(&ctx.connection, rows, paged)?)
     })
     .await
@@ -1465,6 +1467,58 @@ mod tests {
         assert_eq!(patients.len(), 2);
         let linked = patients.iter().find(|p| p.id == "linked").unwrap();
         assert_eq!(linked.next_of_kin_name.as_deref(), Some("stale text"));
+    }
+
+    #[actix_rt::test]
+    async fn patient_search_pages_in_name_then_date_of_birth_order() {
+        use chrono::NaiveDate;
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_paging").await;
+
+        let repo = NameRowRepository::new(&connection);
+        let patient = |id: &str, name: &str, born: Option<(i32, u32, u32)>| NameRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            code: format!("PAGE-{id}"),
+            date_of_birth: born.map(|(y, m, d)| NaiveDate::from_ymd_opt(y, m, d).unwrap()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        for row in [
+            patient("d1990", "Diallo, Awa", Some((1990, 1, 1))),
+            patient("camara", "Camara, Ibou", None),
+            patient("d1980", "diallo, awa", Some((1980, 1, 1))),
+            patient("bah", "Bah, Sira", None),
+        ] {
+            repo.upsert_one(&row).unwrap();
+        }
+
+        let page = |offset: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("page-")),
+            limit: Some(2),
+            offset,
+        };
+        let ids = |patients: Vec<PatientV4>| -> Vec<String> {
+            patients.into_iter().map(|p| p.id).collect()
+        };
+
+        let first = patient_search(service_provider.clone(), common.clone(), page(None))
+            .await
+            .unwrap();
+        assert_eq!(ids(first), ["bah", "camara"]);
+        // Namesakes, ignoring case, in date of birth order
+        let second = patient_search(service_provider, common, page(Some(2)))
+            .await
+            .unwrap();
+        assert_eq!(ids(second), ["d1980", "d1990"]);
     }
 
     #[actix_rt::test]

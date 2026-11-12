@@ -1706,7 +1706,10 @@ export type CentralPatientSearchErrorInterface = {
 };
 
 export type CentralPatientSearchInput = {
-  /** Patient code, matched from the start */
+  /**
+   * Patient code: the start of the code or code 2, ignoring case. Exactly
+   * the code on legacy mSupply.
+   */
   code?: InputMaybe<Scalars['String']['input']>;
   /** An exact date of birth */
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -1797,6 +1800,11 @@ export type CentralServerMutationNode = {
   reports: CentralReportMutations;
   site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
+};
+
+export type CentralServerNoAnswer = CentralPatientSearchErrorInterface & {
+  __typename: 'CentralServerNoAnswer';
+  description: Scalars['String']['output'];
 };
 
 export type CentralServerQueryNode = {

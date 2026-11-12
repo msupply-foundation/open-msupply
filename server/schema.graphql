@@ -1363,7 +1363,8 @@ interface CentralPatientSearchErrorInterface {
 
 input CentralPatientSearchInput {
 	"""
-	Patient code, matched from the start
+	Patient code: the start of the code or code 2, ignoring case. Exactly
+	the code on legacy mSupply.
 	"""
 	code: String
 	firstName: String
@@ -1434,6 +1435,10 @@ type CentralServerMutationNode {
 	customField: CustomFieldMutations!
 	reports: CentralReportMutations!
 	site: CentralSiteMutations!
+}
+
+type CentralServerNoAnswer implements CentralPatientSearchErrorInterface {
+	description: String!
 }
 
 type CentralServerQueryNode {

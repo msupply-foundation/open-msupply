@@ -22,7 +22,7 @@ use crate::{
         settings::{SYNC_V5_VERSION, SyncSettings},
     },
     sync_v7::{
-        api::{SyncApiV7, patient_search},
+        api::{InteractiveError, SyncApiV7, patient_search},
         patient_lookup::pull_and_integrate_patient_data,
     },
 };
@@ -80,11 +80,30 @@ fn central_search_filter(params: &CentralPatientSearch) -> PatientFilter {
     filter
 }
 
+/// Whether legacy mSupply has anything to filter on: it ignores a date of
+/// birth range.
+fn legacy_can_filter(params: &CentralPatientSearch) -> bool {
+    params.code.is_some()
+        || params.first_name.is_some()
+        || params.last_name.is_some()
+        || params.date_of_birth.is_some()
+}
+
 // TODO: When standalone work done, also check OMS only central.
 fn is_v7_remote(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
     let token =
         KeyValueStoreRepository::new(&ctx.connection).get_string(KeyType::SettingsSyncV7Token)?;
     Ok(token.is_some())
+}
+
+fn map_interactive_error(err: InteractiveError) -> CentralPatientRequestError {
+    match err {
+        InteractiveError::Sync(err) => map_v7_sync_error(err),
+        InteractiveError::NoAnswer { .. } => {
+            error!("v7 patient search: {err}");
+            CentralPatientRequestError::NoAnswer(format_error(&err))
+        }
+    }
 }
 
 fn map_v7_sync_error(err: repository::syncv7::SyncError) -> CentralPatientRequestError {
@@ -105,6 +124,9 @@ pub enum CentralPatientRequestError {
     InternalError(String),
     #[error("Connection error: {0}")]
     ConnectionError(String),
+    /// Reached central, but it didn't answer in time
+    #[error("No answer: {0}")]
+    NoAnswer(String),
 }
 
 pub async fn patient_search_central(
@@ -123,7 +145,12 @@ pub async fn patient_search_central(
         return patient_search_central_v7(service_provider, &sync_settings, params).await;
     }
 
-    // Legacy mSupply takes an exact date of birth only, and no page.
+    // Legacy mSupply takes an exact date of birth only, and no page. With
+    // nothing else to go on (a year or month of birth alone), it would return
+    // every patient, so ask it nothing.
+    if !legacy_can_filter(&params) {
+        return Ok(Vec::new());
+    }
     patient_search_central_v4(
         &sync_settings,
         PatientSearch {
@@ -196,7 +223,7 @@ async fn patient_search_central_v7(
         offset: params.offset,
     })
     .await
-    .map_err(map_v7_sync_error)
+    .map_err(map_interactive_error)
 }
 
 #[derive(Clone, Debug)]
@@ -376,4 +403,86 @@ pub async fn add_patient_to_oms_central(
     info!("Sync cycle triggered to receive patient records");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use chrono::NaiveDate;
+    use repository::{DateFilter, PatientFilter, StringFilter};
+
+    use super::{CentralPatientSearch, central_search_filter, legacy_can_filter};
+
+    fn date(y: i32, m: u32, d: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    }
+
+    #[test]
+    fn central_filter_matches_names_and_either_code_from_the_start() {
+        let filter = central_search_filter(&CentralPatientSearch {
+            code: Some("AB1".to_string()),
+            first_name: Some("Awa".to_string()),
+            last_name: Some("Diallo".to_string()),
+            ..Default::default()
+        });
+        assert_eq!(
+            filter,
+            PatientFilter::new()
+                .code_or_code_2(StringFilter::starts_with("AB1"))
+                .first_name(StringFilter::starts_with("Awa"))
+                .last_name(StringFilter::starts_with("Diallo"))
+        );
+    }
+
+    #[test]
+    fn central_filter_takes_a_date_of_birth_as_a_day_or_a_range() {
+        let born = |from: Option<NaiveDate>, to: Option<NaiveDate>, day: Option<NaiveDate>| {
+            central_search_filter(&CentralPatientSearch {
+                date_of_birth: day,
+                date_of_birth_from: from,
+                date_of_birth_to: to,
+                ..Default::default()
+            })
+            .date_of_birth
+        };
+        let (jan, dec) = (date(1984, 1, 1), date(1984, 12, 31));
+
+        assert_eq!(born(None, None, Some(jan)), Some(DateFilter::equal_to(jan)));
+        // A day wins over a range
+        assert_eq!(
+            born(Some(jan), Some(dec), Some(jan)),
+            Some(DateFilter::equal_to(jan))
+        );
+        assert_eq!(
+            born(Some(jan), Some(dec), None),
+            Some(DateFilter::date_range(&jan, &dec))
+        );
+        assert_eq!(
+            born(Some(jan), None, None),
+            Some(DateFilter::after_or_equal_to(jan))
+        );
+        assert_eq!(
+            born(None, Some(dec), None),
+            Some(DateFilter::before_or_equal_to(dec))
+        );
+        assert_eq!(born(None, None, None), None);
+    }
+
+    // A year or month of birth alone would ask legacy mSupply for every patient
+    #[test]
+    fn legacy_is_not_asked_with_only_a_date_of_birth_range() {
+        assert!(!legacy_can_filter(&CentralPatientSearch {
+            date_of_birth_from: Some(date(1984, 1, 1)),
+            date_of_birth_to: Some(date(1984, 12, 31)),
+            limit: Some(51),
+            ..Default::default()
+        }));
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            last_name: Some("Diallo".to_string()),
+            ..Default::default()
+        }));
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            date_of_birth: Some(date(1984, 3, 14)),
+            ..Default::default()
+        }));
+    }
 }

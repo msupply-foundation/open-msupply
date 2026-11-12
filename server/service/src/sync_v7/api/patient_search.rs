@@ -1,7 +1,7 @@
 use repository::PatientFilter;
 use serde::{Deserialize, Serialize};
 
-use super::{ApiResponse, SyncApiV7};
+use super::{ApiResponse, InteractiveError, SyncApiV7};
 use crate::apis::patient_v4::PatientV4;
 
 /// The body is the patient filter itself, with an optional page beside its
@@ -27,7 +27,7 @@ static ROUTE: &str = "patient_search";
 impl SyncApiV7 {
     /// Someone is waiting on the result, so this gives up quickly when central can't be
     /// reached, rather than retrying like sync does.
-    pub async fn patient_search(&self, input: Input) -> Response {
+    pub async fn patient_search(&self, input: Input) -> Result<Output, InteractiveError> {
         self.request_interactive(ROUTE, input).await
     }
 }

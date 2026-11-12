@@ -140,6 +140,9 @@ impl<'a> PatientRepository<'a> {
             match sort.key {
                 PatientSortField::Name => {
                     apply_sort_no_case!(query, sort, name::name_);
+                    // Namesakes in date of birth order (spec/patients rules,
+                    // the patient search)
+                    query = query.then_order_by(name::date_of_birth.asc());
                 }
                 PatientSortField::Code => {
                     apply_sort_no_case!(query, sort, name::code);
@@ -782,6 +785,34 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_count_up_to() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_patient_count_up_to",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        for id in ["count_1", "count_2", "count_3"] {
+            NameRowRepository::new(&connection)
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    name: id.to_string(),
+                    code: id.to_uppercase(),
+                    r#type: NameRowType::Patient,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let repo = PatientRepository::new(&connection);
+        let filter = || Some(PatientFilter::new().code(StringFilter::starts_with("count_")));
+        // Stops at the limit
+        assert_eq!(repo.count_up_to(filter(), None, 2).unwrap(), 2);
+        // Or counts them all when there are fewer
+        assert_eq!(repo.count_up_to(filter(), None, 10).unwrap(), 3);
     }
 
     #[actix_rt::test]

@@ -12,7 +12,8 @@ use service::{
 
 #[derive(InputObject, Clone)]
 pub struct CentralPatientSearchInput {
-    /// Patient code, matched from the start
+    /// Patient code: the start of the code or code 2, ignoring case. Exactly
+    /// the code on legacy mSupply.
     code: Option<String>,
     first_name: Option<String>,
     last_name: Option<String>,
@@ -41,6 +42,16 @@ pub struct CentralPatientSearchConnector {
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum CentralPatientSearchErrorInterface {
     ConnectionError(ConnectionError),
+    CentralServerNoAnswer(CentralServerNoAnswer),
+}
+
+/// Reached the central server, but it didn't answer the search in time
+pub struct CentralServerNoAnswer;
+#[Object]
+impl CentralServerNoAnswer {
+    pub async fn description(&self) -> &str {
+        "The central server didn't answer in time"
+    }
 }
 
 #[derive(SimpleObject)]
@@ -127,6 +138,15 @@ pub fn map_central_patient_search_result(
                         CentralPatientSearchError {
                             error: CentralPatientSearchErrorInterface::ConnectionError(
                                 ConnectionError,
+                            ),
+                        },
+                    ));
+                }
+                CentralPatientRequestError::NoAnswer(_) => {
+                    return Ok(CentralPatientSearchResponse::Error(
+                        CentralPatientSearchError {
+                            error: CentralPatientSearchErrorInterface::CentralServerNoAnswer(
+                                CentralServerNoAnswer,
                             ),
                         },
                     ));

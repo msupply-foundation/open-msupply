@@ -77,7 +77,7 @@ export type CentralPatientSearchResult = {
   __typename: "CentralPatientSearchError";
 } & {
   error: {
-  __typename: "ConnectionError";
+  __typename: "CentralServerNoAnswer" | "ConnectionError";
   description: string;
 };
 });

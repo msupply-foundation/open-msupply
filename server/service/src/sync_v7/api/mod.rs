@@ -8,6 +8,7 @@ use reqwest::{
     header::{AUTHORIZATION, HeaderMap, HeaderValue, IntoHeaderName},
 };
 use serde::{Serialize, de::DeserializeOwned};
+use thiserror::Error;
 use util::{RetrySeconds, format_error, with_retries};
 
 pub mod download_file;
@@ -120,6 +121,18 @@ pub type ApiResponse<O> = Result<O, SyncError>;
 /// The longest a request from `request_interactive` may take.
 const INTERACTIVE_LIMIT: std::time::Duration = std::time::Duration::from_secs(15);
 
+/// Why a request from `request_interactive` failed.
+#[derive(Error, Debug)]
+pub enum InteractiveError {
+    #[error(transparent)]
+    Sync(#[from] SyncError),
+    /// Connected, but no answer inside `INTERACTIVE_LIMIT`. Each attempt gives up
+    /// connecting after a few seconds, so a central that can't be reached fails as
+    /// `Sync` well before this: reaching the limit means central is slow to answer.
+    #[error("No answer from the central server {url} in {seconds}s")]
+    NoAnswer { url: String, seconds: u64 },
+}
+
 #[derive(Clone)]
 pub(crate) struct SyncApiV7 {
     pub(crate) url: reqwest::Url,
@@ -170,22 +183,13 @@ impl SyncApiV7 {
         &self,
         route: &str,
         input: I,
-    ) -> Result<O, SyncError> {
-        let url = self
-            .url
-            .join("central/sync_v7/")
-            .unwrap()
-            .join(route)
-            .unwrap();
+    ) -> Result<O, InteractiveError> {
         let request = self.attempt_with(RetrySeconds::new(vec![3, 3]), route, &input);
         match tokio::time::timeout(INTERACTIVE_LIMIT, request).await {
-            Ok(result) => result.map_err(SyncError::from),
-            Err(_) => Err(SyncError::ConnectionError {
-                url: url.to_string(),
-                e: format!(
-                    "No answer from the central server in {}s",
-                    INTERACTIVE_LIMIT.as_secs()
-                ),
+            Ok(result) => Ok(result.map_err(SyncError::from)?),
+            Err(_) => Err(InteractiveError::NoAnswer {
+                url: self.url.to_string(),
+                seconds: INTERACTIVE_LIMIT.as_secs(),
             }),
         }
     }
@@ -363,8 +367,8 @@ mod tests {
     }
 
     /// A central that accepts the connection but never answers fails a patient search
-    /// within the interactive limit, as a connection error, not after the 5-minute idle
-    /// read timeout sync uses.
+    /// within the interactive limit, as no answer rather than unreachable, not after the
+    /// 5-minute idle read timeout sync uses.
     #[actix_rt::test]
     async fn patient_search_gives_up_on_a_silent_central() {
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -383,10 +387,33 @@ mod tests {
             .await;
 
         assert!(
-            matches!(result, Err(SyncError::ConnectionError { .. })),
-            "Expected a connection error, got {result:#?}"
+            matches!(result, Err(InteractiveError::NoAnswer { .. })),
+            "Expected no answer, got {result:#?}"
         );
         assert!(started.elapsed() < INTERACTIVE_LIMIT + std::time::Duration::from_secs(2));
+    }
+
+    /// A central that refuses the connection fails a patient search as unreachable,
+    /// straight away rather than at the interactive limit.
+    #[actix_rt::test]
+    async fn patient_search_reports_an_unreachable_central() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/", listener.local_addr().unwrap());
+        drop(listener);
+
+        let started = std::time::Instant::now();
+        let result = api(&url)
+            .patient_search(patient_search::Input::default())
+            .await;
+
+        assert!(
+            matches!(
+                result,
+                Err(InteractiveError::Sync(SyncError::ConnectionError { .. }))
+            ),
+            "Expected a connection error, got {result:#?}"
+        );
+        assert!(started.elapsed() < INTERACTIVE_LIMIT);
     }
 
     /// Reads other than pull use `request_with_body_retry` too, so they get the same retry.
