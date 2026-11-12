@@ -1,0 +1,156 @@
+# Central data import and export (spec/central-data). The three operations sit
+# under the `centralServer` namespace. The screen is offered only on a
+# standalone central server; the nav gate reads that (api/serverInfo.ts).
+
+# How many records each ticked table's filters match, and the most rows an
+# export can hold (rules.md § export). Asked again as the filters change.
+query centralDataExportCounts($tables: [CentralDataExportTableInput!]!) {
+  centralServer {
+    centralData {
+      exportCounts(tables: $tables) {
+        tables {
+          table
+          matching
+          total
+        }
+        maxRows
+      }
+    }
+  }
+}
+
+# A mutation: it writes the workbook to a temporary file on the server.
+mutation centralDataExport($tables: [CentralDataExportTableInput!]!) {
+  centralServer {
+    centralData {
+      export(tables: $tables) {
+        __typename
+        ... on CentralDataExportNode {
+          fileId
+        }
+        ... on CentralDataExportError {
+          error {
+            __typename
+            description
+            ... on CentralDataTooManyRows {
+              rowCount
+              maxRows
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Preview and import answer the same shape: row errors are data, not GraphQL
+# errors, and when there are any nothing was applied (rules.md § preview and
+# import).
+fragment CentralDataImportResult on CentralDataImportResponse {
+  __typename
+  ... on CentralDataImportNode {
+    tables {
+      table
+      inserted
+      updated
+      deleted
+      unchanged
+      errorCount
+    }
+    changes {
+      sheet
+      row
+      record
+      change
+      fields {
+        column
+        from
+        to
+      }
+    }
+    errors {
+      sheet
+      row
+      column
+      message
+    }
+    errorCount
+  }
+  ... on CentralDataImportError {
+    error {
+      __typename
+      description
+      ... on CentralDataTooManyRows {
+        rowCount
+        maxRows
+      }
+      ... on CentralDataTooManyCells {
+        cellCount
+        maxCells
+      }
+      ... on CentralDataCannotReadFile {
+        description
+      }
+      ... on CentralDataUploadExpired {
+        description
+      }
+    }
+  }
+}
+
+query centralDataImportPreview($fileId: String!) {
+  centralServer {
+    centralData {
+      importPreview(fileId: $fileId) {
+        ...CentralDataImportResult
+      }
+    }
+  }
+}
+
+# A mutation: it writes the errors file to a temporary file on the server. It
+# checks the upload as a preview does, so it writes nothing to the database
+# (rules.md § the errors file).
+mutation centralDataErrorsFile($fileId: String!) {
+  centralServer {
+    centralData {
+      errorsFile(fileId: $fileId) {
+        __typename
+        ... on CentralDataExportNode {
+          fileId
+        }
+        # The same selection as CentralDataImportResult's, so one reader takes both.
+        ... on CentralDataImportError {
+          error {
+            __typename
+            description
+            ... on CentralDataTooManyRows {
+              rowCount
+              maxRows
+            }
+            ... on CentralDataTooManyCells {
+              cellCount
+              maxCells
+            }
+            ... on CentralDataCannotReadFile {
+              description
+            }
+            ... on CentralDataUploadExpired {
+              description
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation centralDataImport($fileId: String!) {
+  centralServer {
+    centralData {
+      import(fileId: $fileId) {
+        ...CentralDataImportResult
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ vi.mock('../../store/storeContext', () => ({
 }));
 vi.mock('../../api/serverInfo', () => ({
   isCentralServer: () => state.central,
+  isCentralStandalone: () => false,
 }));
 
 const { navConfig } = await import('../../nav/navConfig');
