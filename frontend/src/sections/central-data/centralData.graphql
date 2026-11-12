@@ -43,6 +43,29 @@ mutation centralDataExport($tables: [CentralDataExportTableInput!]!) {
   }
 }
 
+# Why a file can't be checked at all, as the import, its preview and the
+# errors file all answer it.
+fragment CentralDataImportProblem on CentralDataImportError {
+  error {
+    __typename
+    description
+    ... on CentralDataTooManyRows {
+      rowCount
+      maxRows
+    }
+    ... on CentralDataTooManyCells {
+      cellCount
+      maxCells
+    }
+    ... on CentralDataCannotReadFile {
+      description
+    }
+    ... on CentralDataUploadExpired {
+      description
+    }
+  }
+}
+
 # Preview and import answer the same shape: row errors are data, not GraphQL
 # errors, and when there are any nothing was applied (rules.md § preview and
 # import).
@@ -77,24 +100,7 @@ fragment CentralDataImportResult on CentralDataImportResponse {
     errorCount
   }
   ... on CentralDataImportError {
-    error {
-      __typename
-      description
-      ... on CentralDataTooManyRows {
-        rowCount
-        maxRows
-      }
-      ... on CentralDataTooManyCells {
-        cellCount
-        maxCells
-      }
-      ... on CentralDataCannotReadFile {
-        description
-      }
-      ... on CentralDataUploadExpired {
-        description
-      }
-    }
+    ...CentralDataImportProblem
   }
 }
 
@@ -119,26 +125,8 @@ mutation centralDataErrorsFile($fileId: String!) {
         ... on CentralDataExportNode {
           fileId
         }
-        # The same selection as CentralDataImportResult's, so one reader takes both.
         ... on CentralDataImportError {
-          error {
-            __typename
-            description
-            ... on CentralDataTooManyRows {
-              rowCount
-              maxRows
-            }
-            ... on CentralDataTooManyCells {
-              cellCount
-              maxCells
-            }
-            ... on CentralDataCannotReadFile {
-              description
-            }
-            ... on CentralDataUploadExpired {
-              description
-            }
-          }
+          ...CentralDataImportProblem
         }
       }
     }
