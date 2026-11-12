@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
     db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
 };
 
@@ -111,6 +111,87 @@ impl<'a> LocationTypeRowRepository<'a> {
             .filter(location_type::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        let result = location_type::table
+            .order((location_type::code.asc(), location_type::id.asc()))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// Whether any foreign key refers to it.
+    pub fn is_in_use(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        use super::{
+            item_row::item, item_variant::item_variant_row::item_variant, location_row::location,
+            requisition_line::requisition_line_row::requisition_line,
+        };
+        let connection = &mut self.connection.lock();
+        let in_use: bool = diesel::select(
+            diesel::dsl::exists(location::table.filter(location::location_type_id.eq(lookup_id)))
+                .or(diesel::dsl::exists(
+                    item::table.filter(item::restricted_location_type_id.eq(lookup_id)),
+                ))
+                .or(diesel::dsl::exists(
+                    item_variant::table.filter(item_variant::location_type_id.eq(lookup_id)),
+                ))
+                .or(diesel::dsl::exists(
+                    requisition_line::table
+                        .filter(requisition_line::location_type_id.eq(lookup_id)),
+                )),
+        )
+        .get_result(connection.connection())?;
+        Ok(in_use)
+    }
+
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(location_type::table.filter(location_type::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        self._delete(id)?;
+        let changelog = LocationTypeRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LocationTypeRowDelete(pub String);
+impl Delete for LocationTypeRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                LocationTypeRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        LocationTypeRowRepository::new(con)._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            LocationTypeRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 

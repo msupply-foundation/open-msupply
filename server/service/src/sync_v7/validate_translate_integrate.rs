@@ -108,6 +108,7 @@ fn translate_delete(
         ChangelogTableName::InvoiceLine => Box::new(InvoiceLineRowDelete(id)),
         ChangelogTableName::ItemDirection => Box::new(ItemDirectionRowDelete(id)),
         ChangelogTableName::Location => Box::new(LocationRowDelete(id)),
+        ChangelogTableName::LocationType => Box::new(LocationTypeRowDelete(id)),
         ChangelogTableName::MasterListLine => Box::new(MasterListLineRowDelete(id)),
         ChangelogTableName::MasterListNameJoin => Box::new(MasterListNameJoinRowDelete(id)),
         ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
@@ -180,7 +181,6 @@ fn translate_delete(
         | ChangelogTableName::ItemVariant
         | ChangelogTableName::ItemWarningJoin
         | ChangelogTableName::LocationMovement
-        | ChangelogTableName::LocationType
         | ChangelogTableName::MasterList
         | ChangelogTableName::NameInsuranceJoin
         | ChangelogTableName::NameOmsFields
@@ -1030,6 +1030,37 @@ mod test {
         assert_eq!(
             PluginDataRowRepository::new(&connection)
                 .find_one_by_id("plugin_data")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[actix_rt::test]
+    async fn integrate_location_type_delete() {
+        // A central data import can delete an unused location type.
+        let connection = setup("integrate_location_type_delete", MockDataInserts::none()).await;
+        LocationTypeRowRepository::new(&connection)
+            .upsert_one(&LocationTypeRow {
+                id: "location_type".to_string(),
+                code: "COLD".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "location_type".to_string(),
+                ..buffer_row("location_type", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            LocationTypeRowRepository::new(&connection)
+                .find_one_by_id("location_type")
                 .unwrap(),
             None
         );
