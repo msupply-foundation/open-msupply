@@ -28,6 +28,7 @@ table! {
     serde::Deserialize,
 )]
 #[diesel(table_name = unit)]
+#[diesel(treat_none_as_null = true)]
 pub struct UnitRow {
     pub id: String,
     pub name: String,
@@ -101,6 +102,13 @@ impl<'a> UnitRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .order((index.asc(), name.asc()))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

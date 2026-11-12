@@ -111,6 +111,7 @@ pub mod sync;
 pub mod sync_message;
 pub mod sync_v7;
 pub mod temperature_excursion;
+pub mod unit;
 pub mod user_account;
 pub mod vaccination;
 pub mod vaccine_course;
