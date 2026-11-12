@@ -25,10 +25,13 @@ export interface HeaderFieldProps {
  * a HeaderToolbar's job, on a row of their own.
  *
  * It takes the row's spare width (the control capped at a short input's
- * width) and wraps onto the next line when the row can't spare a usable
- * share — intrinsically, by flex-wrap. Header's narrow tier, where the title
- * row is kept to one line, gives it a row of its own under the title row
- * instead (Header.module.css owns that, as it owns the other rows).
+ * width). When the row runs short the page actions give way first, as on any
+ * header: they shed their labels to icons, then wrap under the breadcrumb
+ * (they come after the field, and flex-wrap breaks in that order). The field
+ * wraps onto a line of its own only once the breadcrumb and its floor no
+ * longer fit on one line. Header's narrow tier, where the title row is kept
+ * to one line, gives it a row of its own under the title row instead
+ * (Header.module.css owns that, as it owns the other rows).
  */
 export const HeaderField = (props: HeaderFieldProps) => {
   // Resolved once: JSX-element props are read in one place only.

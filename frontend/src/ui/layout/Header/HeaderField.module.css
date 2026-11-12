@@ -1,9 +1,10 @@
 /*
  * A field on the header's main row (see HeaderField.tsx). The slotting
  * contract with Header.module.css: a zero basis with a floor, so the field
- * takes whatever the breadcrumb and the actions leave and wraps onto the
- * next line once that is less than the floor — the line-break uses the
- * floor, not the control's full width.
+ * takes whatever the breadcrumb and the actions leave. The line-break uses
+ * the floor, not the control's full width, in markup order: the actions,
+ * after the field, wrap first (Header sheds their labels to icons as they
+ * do), and the field wraps only once the breadcrumb and the floor don't fit.
  */
 
 .field {

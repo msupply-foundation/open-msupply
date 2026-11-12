@@ -262,12 +262,14 @@ export const HeaderShowcase = () => {
             header's main row, between the breadcrumb and the page actions, for
             a screen whose first job is that one choice (the Simple dispensing
             screen's "Who is it for?"). It takes the room the breadcrumb and the
-            actions leave, the control capped at a short input's width, and
-            wraps onto the next line when that room falls below a usable floor;
-            in the header's narrow tier it takes a row of its own under the
-            title row. <code>detail</code> is a quieter read-out of the chosen
-            value beside the control, wrapping under it when the row can't hold
-            both. Several fields are a <code>&lt;HeaderToolbar&gt;</code>'s job.
+            actions leave, the control capped at a short input's width. When the
+            row runs short the actions give way first — they shed their labels,
+            then wrap under the breadcrumb — and the field wraps onto a line of
+            its own only once the breadcrumb and its usable floor don't fit; in
+            the header's narrow tier it takes a row of its own under the title
+            row. <code>detail</code> is a quieter read-out of the chosen value
+            beside the control, wrapping under it when the row can't hold both.
+            Several fields are a <code>&lt;HeaderToolbar&gt;</code>'s job.
           </Lead>
           <PageFrame>
             <Header>
