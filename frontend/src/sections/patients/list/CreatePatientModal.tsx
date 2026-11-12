@@ -16,42 +16,37 @@ import { useNavigate } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
-import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
-import { remToPx } from '../../../ui/utils/rem';
-import { ProgressList } from '../../../ui/sync/ProgressList';
-import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { DateField } from '../../../ui/elements/inputs/DateField';
-import { todayCalendarDate } from '../../../intl/calendarDate';
-import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import {
-  DownloadIcon,
-  HomeIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  ChevronLeftIcon,
   PlusCircleIcon,
+  RefreshIcon,
   SaveIcon,
-  SearchIcon,
   XCircleIcon,
 } from '../../../ui/icons';
+import { Text } from '../../../ui/elements/typography/Text';
+import { StatusBadge } from '../../../ui/elements/feedback/StatusBadge';
+import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { remToPx } from '../../../ui/utils/rem';
 import {
-  searchLocalPatients,
-  searchCentralPatients,
-  genderOptions,
-  genderLabel,
   minimalPatientOption,
-  type Gender,
-  type GenderOption,
-  type CentralPatient,
+  type NewPatientSeed,
   type PatientOption,
 } from '../../../domain/patient';
+import { linkPatientToStore } from '../../../domain/patient/patientResource';
+import { type PatientFindRow } from '../../../domain/patient/patientFind';
+import { patientFindColumns } from '../../../domain/patient/patientFindColumns';
+import {
+  createDuplicateCheck,
+  type DuplicateMatch,
+} from '../../../domain/patient/duplicateCheck';
 import { runInsertPatient } from '../patientApi';
 import {
   emptyDraft,
@@ -59,8 +54,14 @@ import {
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
-import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
+import {
+  createCodeTakenCheck,
+  generatedCodeFits,
+  generatePatientCode,
+} from '../../../domain/patient/patientCode';
+import { currentStoreName } from '../../../store/storeContext';
 import type { Patient } from '../../../plugin-sdk/documents';
+import type { Draft } from '../../../domain/documentForm/draft';
 import { gated } from '../../../api/gated';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import {
@@ -68,37 +69,18 @@ import {
   type NewPatientFields,
 } from '../detail/patientDocumentSeed';
 import { fetchPatientRegistry } from '../detail/programs/programsApi';
-import { FetchFromCentralModal } from './FetchFromCentralModal';
 
-// S2 — the create wizard (spec/patients). A blocking modal with a
-// three-step flow: ① details + search → ② the mandatory local + central
-// duplicate check → ③ the full details form, on the store's persistence path:
+// S2 — creating a patient (spec/patients; #631 spike). The patient search
+// comes first, in PatientSearchDialog: this dialog opens only once the user
+// has looked and pressed New patient, so it is just the details form, filled
+// in from what they searched with. It saves on the store's persistence path:
 // the plain-path form over the patient record, or, where the store has a
 // Patient registry entry, its patient form over the new patient's first
 // document (spec/patients › effects of creation). A fresh patient identifier
 // is minted when the modal opens (OMS-REG-DIS-01.4/.7/.32), so a duplicate-id
-// rejection is unreachable. The step rail is a section-local
-// presentational stepper — the "wizard stepper" role is not in the component
-// registry (see the implementation flags).
+// rejection is unreachable.
 
-type Step = 1 | 2 | 3;
-
-type SearchForm = NewPatientFields;
-
-// A unified duplicate-check row: a local patient or a central-only candidate.
-interface MatchRow {
-  kind: 'local' | 'central';
-  id: string;
-  code: string;
-  code2: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  dateOfBirth: string | null;
-  gender: Gender | null;
-  isDeceased: boolean;
-}
-
-const emptySearch = (): SearchForm => ({
+const emptyFields = (): NewPatientFields => ({
   firstName: '',
   lastName: '',
   dateOfBirth: null,
@@ -107,10 +89,10 @@ const emptySearch = (): SearchForm => ({
   phone: '',
 });
 
-// The document path's form host and its view, loaded the first time step ③
-// takes that path rather than with this module: the startup bundle reaches
-// the wizard through the dashboard's new prescription request, and the form
-// host must stay out of it (vite/lazyChunkGuard.ts). One load, shared by
+// The document path's form host and its view, loaded the first time the
+// form takes that path rather than with this module: the startup bundle reaches
+// the create dialog through the dashboard's new prescription request, and the
+// form host must stay out of it (vite/lazyChunkGuard.ts). One load, shared by
 // every opening of the modal; a failed one is forgotten, so the next tries
 // again.
 interface DocumentPathModules {
@@ -147,26 +129,31 @@ export interface CreatePatientModalProps {
    * the standalone list flow (navigate to the new patient).
    */
   onCreated?: (patient: PatientOption) => void;
+  /** What the user searched with, to start the form from. */
+  seed?: NewPatientSeed;
+  /** The save button's label: Save, or Save & dispense from dispensing. */
+  saveLabel?: string;
+  /**
+   * A possible duplicate was chosen in Review, instead of creating a patient
+   * (spec/patients S2 › the duplicate check). Already in this store. A
+   * returned message is shown in the dialog. Omit to open the patient.
+   */
+  onChooseExisting?: (
+    patient: PatientFindRow
+  ) => Promise<string | undefined> | void;
 }
+
+const likelyCount = (matches: DuplicateMatch[]) =>
+  matches.filter(m => m.likely.length > 0).length;
 
 export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const navigate = useNavigate();
-  const [step, setStep] = createSignal<Step>(1);
   const [patientId, setPatientId] = createSignal('');
-  const [search, setSearch] = createStore<SearchForm>(emptySearch());
   const [draft, setDraft] = createStore<PatientDraft>(emptyDraft());
-  const [localMatches, setLocalMatches] = createSignal<PatientOption[]>([]);
-  const [centralMatches, setCentralMatches] = createSignal<CentralPatient[]>(
-    []
-  );
-  const [centralUnreachable, setCentralUnreachable] = createSignal(false);
-  const [searching, setSearching] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal('');
-  const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
-  const [fetchOpen, setFetchOpen] = createSignal(false);
 
-  // The store's Patient registry entry decides step ③'s path, as it decides
+  // The store's Patient registry entry decides the form's path, as it decides
   // the Details tab's (patientDetails.ts). Read each time the modal opens,
   // non-suspending, since the modal is already open.
   const [registryData, { refetch: refetchRegistry }] = createResource(
@@ -175,14 +162,14 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   );
   const registry = () => gated(registryData);
   const onDocumentPath = () => registry()?.entry !== undefined;
-  // A read that failed answers, with nothing: the path is unknown, so step
-  // ③ says so rather than guessing the plain path, which on a store with a
+  // A read that failed answers, with nothing: the path is unknown, so the
+  // dialog says so rather than guessing the plain path, which on a store with a
   // Patient entry would create a patient without its document.
   const registryFailed = () =>
     registryData.state === 'ready' && registryData.latest === undefined;
 
-  // The document path's step ③: the new patient's first document, seeded
-  // from step ① when the wizard reaches it (seedNewPatientDocument).
+  // The document path's form: the new patient's first document, seeded from
+  // the search (seedNewPatientDocument).
   const [seedFields, setSeedFields] = createSignal<NewPatientFields>();
   const documentSeed = createMemo((): Patient | undefined => {
     const fields = seedFields();
@@ -225,139 +212,132 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     patientId: () => undefined,
   });
 
-  // Details-step validation (OMS-REG-DIS-01.5/.6/.30): required errors stay
+  // Validation (OMS-REG-DIS-01.5/.6/.30): required errors stay
   // quiet until the first Save attempt, then surface per field and as the
   // summary below the form.
   const validation = createFormValidation(() =>
     patientFieldErrors(draft, codeCheck.taken())
   );
 
-  // Mint a fresh identifier + reset the flow each time the modal opens
-  // (OMS-REG-DIS-01.4/.7/.32).
+  // Mint a fresh identifier and start the form from the search each time the
+  // modal opens (OMS-REG-DIS-01.4/.7/.32).
   createEffect(() => {
     if (props.open) {
-      setStep(1);
+      const fields = {
+        ...emptyFields(),
+        ...(props.seed && {
+          firstName: props.seed.firstName,
+          lastName: props.seed.lastName,
+          dateOfBirth: props.seed.dateOfBirth,
+        }),
+      };
       setPatientId(generateUUID());
-      setSearch(emptySearch());
-      setDraft(emptyDraft());
-      setSeedFields(undefined);
-      setLocalMatches([]);
-      setCentralMatches([]);
-      setCentralUnreachable(false);
+      setSeedFields(fields);
+      setDraft({
+        ...emptyDraft(),
+        firstName: fields.firstName,
+        lastName: fields.lastName,
+        gender: fields.gender,
+        dateOfBirth: fields.dateOfBirth,
+        address1: fields.address,
+        phone: fields.phone,
+      });
       setSaveError('');
       validation.reset();
+      setReviewing(false);
+      setChooseError(undefined);
+      duplicates.reset();
+      // The searched names may already match someone: say so straight away.
+      queueMicrotask(() => void duplicates.run());
     }
   });
+
+  // The duplicate check (spec/patients S2 › the duplicate check), on whichever
+  // form is showing: the plain draft, or the document form's data.
+  const duplicates = createDuplicateCheck({
+    storeId: () => props.storeId,
+    terms: () => {
+      const data = onDocumentPath() ? newDocument()?.form.draft.data : draft;
+      return {
+        firstName: data?.firstName ?? '',
+        lastName: data?.lastName ?? '',
+        dateOfBirth: data?.dateOfBirth ?? null,
+        nationalId: data?.code2 ?? '',
+      };
+    },
+    centralChecked: () => props.seed?.centralChecked,
+  });
+
+  // The code starts out generated, once per opening, on whichever form is
+  // showing (#631; spec/patients § generating a code). It stays editable,
+  // with Generate beside it. Left empty where the schema's pattern would
+  // refuse a generated code, as Generate is then left out too.
+  let generatedFor = '';
+  const fillCode = async (
+    id: string,
+    storeName: string,
+    doc: Draft<Patient> | undefined
+  ) => {
+    const code = await generatePatientCode(props.storeId, storeName, id);
+    // Dropped if the form moved on to another patient, or a code was typed
+    // meanwhile; a failed draw is already shown globally.
+    if (!code || patientId() !== id) return;
+    if (doc) {
+      if (doc.data.id === id && !doc.data.code) doc.set('code', code);
+    } else if (!draft.code) setDraft('code', code);
+  };
+  createEffect(() => {
+    const id = patientId();
+    const storeName = currentStoreName();
+    if (!props.open || !id || !storeName || generatedFor === id) return;
+    if (registryData.state !== 'ready' || registryFailed()) return;
+    // The document form's draft only once it's seeded for this patient,
+    // which would otherwise wipe the code.
+    const form = onDocumentPath() ? newDocument()?.form : undefined;
+    if (onDocumentPath() && form?.status() !== 'ready') return;
+    const doc = form?.draft;
+    generatedFor = id;
+    if (doc && !generatedCodeFits(storeName, doc.schemaFor('code')?.pattern))
+      return;
+    void fillCode(id, storeName, doc);
+  });
+
+  const [reviewing, setReviewing] = createSignal(false);
+  const [choosingMatch, setChoosingMatch] = createSignal(false);
+  const [chooseError, setChooseError] = createSignal<string>();
+
+  // Using a possible duplicate instead of creating: one from another facility
+  // is added to this store first.
+  const chooseMatch = async (match: DuplicateMatch) => {
+    if (choosingMatch()) return;
+    setChoosingMatch(true);
+    setChooseError(undefined);
+    if (match.where === 'elsewhere') {
+      const linked = await linkPatientToStore(props.storeId, match.id);
+      if (linked.kind !== 'ok') {
+        setChoosingMatch(false);
+        if (linked.kind === 'unreachable')
+          setChooseError(
+            linked.message || t('messages.failed-to-reach-central')
+          );
+        return;
+      }
+    }
+    if (props.onChooseExisting) {
+      const message = await props.onChooseExisting(match);
+      setChoosingMatch(false);
+      if (message) setChooseError(message);
+      return;
+    }
+    setChoosingMatch(false);
+    props.onClose();
+    navigate(`/${props.storeId}/dispensary/patients/${match.id}`);
+  };
 
   const setDraftField = <K extends keyof PatientDraft>(
     key: K,
     value: PatientDraft[K]
   ) => setDraft(key, value);
-
-  const canSearch = () =>
-    search.firstName.trim() !== '' && search.lastName.trim() !== '';
-
-  // Local + central duplicate check (OMS-REG-DIS-01.8–.10/.28/.38). Central
-  // honours only code / first / last / dob (OMS-REG-DIS-01.39);
-  // central-unreachable is decoded to a banner.
-  const runSearch = async () => {
-    setSearching(true);
-    setCentralUnreachable(false);
-    const [local, central] = await Promise.all([
-      searchLocalPatients(props.storeId, {
-        firstName: search.firstName || null,
-        lastName: search.lastName || null,
-        dateOfBirth: search.dateOfBirth,
-        gender: search.gender,
-      }),
-      searchCentralPatients(props.storeId, {
-        firstName: search.firstName || null,
-        lastName: search.lastName || null,
-        dateOfBirth: search.dateOfBirth,
-      }),
-    ]);
-    setLocalMatches(local ?? []);
-    if (central.kind === 'ok') setCentralMatches(central.nodes);
-    else {
-      setCentralMatches([]);
-      if (central.kind === 'unreachable') setCentralUnreachable(true);
-    }
-    setSearching(false);
-    setStep(2);
-  };
-
-  // De-dup central against local (OMS-REG-DIS-01.9/.10/.38): a central
-  // candidate already present locally is not shown a second time.
-  const matches = createMemo<MatchRow[]>(() => {
-    const localIds = new Set(localMatches().map(p => p.id));
-    const local: MatchRow[] = localMatches().map(p => ({
-      kind: 'local',
-      id: p.id,
-      code: p.code,
-      code2: p.code2,
-      firstName: p.firstName,
-      lastName: p.lastName,
-      dateOfBirth: p.dateOfBirth,
-      gender: p.gender,
-      isDeceased: p.isDeceased,
-    }));
-    const central: MatchRow[] = centralMatches()
-      .filter(c => !localIds.has(c.id))
-      .map(c => ({
-        kind: 'central',
-        id: c.id,
-        code: c.code,
-        code2: c.code2,
-        firstName: c.firstName,
-        lastName: c.lastName,
-        dateOfBirth: c.dateOfBirth,
-        gender: c.gender,
-        isDeceased: c.isDeceased,
-      }));
-    return [...local, ...central];
-  });
-
-  const patientHref = (id: string) =>
-    `/${props.storeId}/dispensary/patients/${id}`;
-  const openExisting = (id: string) => {
-    props.onClose();
-    navigate(patientHref(id));
-  };
-
-  const openFetch = (row: MatchRow) => {
-    const candidate = centralMatches().find(c => c.id === row.id);
-    if (candidate) {
-      setFetchCandidate(candidate);
-      setFetchOpen(true);
-    }
-  };
-
-  // What a match row DOES: a local match opens that patient, a central-only one
-  // opens the fetch modal. Bound to the whole row as well as its trailing icon
-  // — the step's own instruction (messages.patients-create) tells the user to
-  // "click an existing patient below", so the row itself has to be the target.
-  const openMatch = (row: MatchRow) =>
-    row.kind === 'central' ? openFetch(row) : openExisting(row.id);
-  // Only a local match has an address; a central one opens a modal.
-  const matchHref = (row: MatchRow) =>
-    row.kind === 'central' ? undefined : patientHref(row.id);
-
-  // Advance to the details step, seeding its form from the entered search
-  // details (spec/patients step ③): the plain form's draft, and the new
-  // document's seed for the document path.
-  const advanceToDetails = () => {
-    setSeedFields({ ...search });
-    setDraft({
-      ...emptyDraft(),
-      firstName: search.firstName,
-      lastName: search.lastName,
-      gender: search.gender,
-      dateOfBirth: search.dateOfBirth,
-      address1: search.address,
-      phone: search.phone,
-    });
-    setStep(3);
-  };
 
   // Hand the new patient back to the caller and close
   // (OMS-REG-DIS-01.4/.7/.32), or open its detail.
@@ -407,10 +387,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     finish(outcome.id, draft.firstName, draft.lastName);
   };
 
-  const busy = () => saving() || (newDocument()?.saving() ?? false);
-  const stepThreeError = () =>
+  const busy = () =>
+    saving() || choosingMatch() || (newDocument()?.saving() ?? false);
+  const formError = () =>
     onDocumentPath() ? newDocument()?.saveError() : saveError();
-  // Step ③'s document form, once its modules have loaded and its form is
+  // The document form, once its modules have loaded and its form is
   // ready to edit.
   const readyDocument = () => {
     const View = documentPath()?.View;
@@ -422,358 +403,311 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const formNotLoaded = () =>
     documentPathFailed() || (newDocument()?.form.libraryFailed() ?? false);
 
-  // Cell-type presets carry the rendering AND the width
-  // (ui/docs/CELL_TYPES.md). Deceased reads as a word here, not the list's
-  // flag: this table is scanned to judge whether a candidate IS the patient,
-  // and it holds a handful of rows.
-  const resultColumns = (): Column<MatchRow, never>[] => [
-    {
-      c: { key: 'code' },
-      header: () => t('label.patient-id'),
-      ...getCellDefinition('code'),
-    },
-    {
-      c: { key: 'code2' },
-      header: () => t('label.patient-nuic'),
-      ...getCellDefinition('code2'),
-    },
-    {
-      c: { key: 'firstName' },
-      header: () => t('label.first-name'),
-      ...getCellDefinition('firstName'),
-    },
-    {
-      c: { key: 'lastName' },
-      header: () => t('label.last-name'),
-      ...getCellDefinition('lastName'),
-    },
-    {
-      c: { key: 'dateOfBirth' },
-      header: () => t('label.date-of-birth'),
-      ...getCellDefinition('dateOfBirth'),
-    },
+  const actions = () => (
+    <Show
+      when={!reviewing()}
+      fallback={
+        <Button
+          variant="secondary"
+          icon={<ChevronLeftIcon />}
+          data-testid="duplicate-check-back"
+          onClick={() => setReviewing(false)}
+        >
+          {t('button.back-to-form')}
+        </Button>
+      }
+    >
+      <Button
+        variant="secondary"
+        icon={<XCircleIcon />}
+        confirms="cancel"
+        data-testid="dialog-button-cancel"
+        onClick={props.onClose}
+      >
+        {t('button.cancel')}
+      </Button>
+      <Button
+        icon={<SaveIcon />}
+        confirms="plain"
+        data-testid="dialog-button-ok"
+        loading={busy()}
+        disabled={!registry() || (onDocumentPath() && !readyDocument())}
+        onClick={() => void save()}
+      >
+        {props.saveLabel ?? t('button.save')}
+      </Button>
+    </Show>
+  );
+
+  // The footer's one line (spec/patients S2 › the duplicate check).
+  const duplicateLine = () => {
+    const state = duplicates.state();
+    if (state.status === 'off') return undefined;
+    return (
+      <HStack gap="sm" align="center" wrap data-testid="duplicate-check">
+        <span role="status" aria-live="polite">
+          <Switch>
+            <Match when={state.status === 'checking'}>
+              <HStack
+                gap="sm"
+                align="center"
+                data-testid="duplicate-check-checking"
+              >
+                <Spinner sizeRem={1} />
+                <Text variant="bodySmall">
+                  {t('messages.checking-existing-patients')}
+                </Text>
+              </HStack>
+            </Match>
+            <Match when={state.status === 'done' && state}>
+              {done => (
+                <Show
+                  when={done().matches.length > 0}
+                  fallback={
+                    <Show
+                      when={done().central === 'pending'}
+                      fallback={
+                        // The tick only when every place was checked: with
+                        // other facilities unreachable it's just this store.
+                        <Show
+                          when={done().central === 'done'}
+                          fallback={
+                            <Text
+                              variant="bodySmall"
+                              data-testid="duplicate-check-none-here"
+                            >
+                              {t('messages.none-at-this-store')}
+                            </Text>
+                          }
+                        >
+                          <HStack
+                            gap="sm"
+                            align="center"
+                            data-testid="duplicate-check-none"
+                          >
+                            <CheckIcon />
+                            <Text variant="bodySmall">
+                              {t('messages.no-existing-patients')}
+                            </Text>
+                          </HStack>
+                        </Show>
+                      }
+                    >
+                      <HStack
+                        gap="sm"
+                        align="center"
+                        data-testid="duplicate-check-none-here-pending"
+                      >
+                        <Spinner sizeRem={1} />
+                        <Text variant="bodySmall">
+                          {t('messages.none-here-checking-other-facilities')}
+                        </Text>
+                      </HStack>
+                    </Show>
+                  }
+                >
+                  <HStack gap="sm" align="center">
+                    {/* A warning, not an error: it never blocks the save. The
+                        line around it is already the live region. */}
+                    <Alert
+                      severity="warning"
+                      compact
+                      announce={false}
+                      testId="duplicate-check-warning"
+                    >
+                      <HStack gap="sm" align="center">
+                        <span>
+                          {tPlural(
+                            'messages.existing-patients-with-name',
+                            done().matches.length
+                          )}
+                          <Show when={likelyCount(done().matches) > 0}>
+                            {', '}
+                            {t('messages.existing-patients-likely', {
+                              count: likelyCount(done().matches),
+                            })}
+                          </Show>
+                        </span>
+                        <Show when={!reviewing()}>
+                          <Button
+                            variant="ghost"
+                            size="small"
+                            icon={<ArrowRightIcon />}
+                            iconPosition="end"
+                            data-testid="duplicate-check-review"
+                            onClick={() => setReviewing(true)}
+                          >
+                            {t('button.review')}
+                          </Button>
+                        </Show>
+                      </HStack>
+                    </Alert>
+                    <Show when={done().central === 'pending'}>
+                      <Spinner sizeRem={1} />
+                      <Text
+                        variant="bodySmall"
+                        data-testid="duplicate-check-central-pending"
+                      >
+                        {t('messages.checking-other-facilities')}
+                      </Text>
+                    </Show>
+                  </HStack>
+                </Show>
+              )}
+            </Match>
+          </Switch>
+        </span>
+        <Show when={state.status === 'done' && state.central === 'failed'}>
+          <HStack
+            gap="sm"
+            align="center"
+            data-testid="duplicate-check-central-failed"
+          >
+            <Text variant="bodySmall">
+              {t('messages.other-facilities-not-checked')}
+            </Text>
+            <Button
+              variant="ghost"
+              size="small"
+              icon={<RefreshIcon />}
+              data-testid="duplicate-check-retry"
+              onClick={() => void duplicates.retry()}
+            >
+              {t('button.retry')}
+            </Button>
+          </HStack>
+        </Show>
+      </HStack>
+    );
+  };
+
+  const matches = () => {
+    const state = duplicates.state();
+    return state.status === 'done' ? state.matches : [];
+  };
+  const reviewColumns: Column<DuplicateMatch, never>[] = [
     {
       c: {
-        accessor: (row: MatchRow) =>
-          row.gender ? genderLabel(row.gender) : '',
-        id: 'gender',
+        accessor: row =>
+          row.where === 'here'
+            ? t('label.this-store')
+            : t('label.other-facility'),
+        id: 'where',
       },
-      header: () => t('label.gender'),
-      ...getCellDefinition('gender'),
+      header: () => t('label.where'),
+      size: remToPx(8),
     },
     {
-      c: { key: 'isDeceased' },
-      header: () => t('label.deceased'),
-      ...getBooleanCell({ display: 'yesNo' }),
-      // Yes/No text under the header word, which is the wider of the two.
-      size: remToPx(5.5),
-    },
-    {
-      c: { id: 'action' },
-      header: () => '',
-      // One icon button, never grows.
-      size: remToPx(3),
-      maxSize: remToPx(3),
-      // The trailing icon does what the row does — it is here to distinguish a
-      // central-only candidate (download → retrieve) from a local match (home →
-      // open). Its click must not ALSO bubble to the row handler.
+      c: { accessor: row => row.likely.length, id: 'likely' },
+      header: () => t('label.likely-match'),
+      size: remToPx(10),
       cell: info => {
         const row = info.row.original;
-        const open = (event: MouseEvent) => {
-          event.stopPropagation();
-          openMatch(row);
-        };
         return (
-          <>
-            {row.kind === 'central' ? (
-              <IconButton
-                icon={<DownloadIcon />}
-                label={t('messages.click-to-fetch')}
-                onClick={open}
-              />
-            ) : (
-              <IconButton
-                icon={<HomeIcon />}
-                label={t('label.details')}
-                onClick={open}
-              />
-            )}
-          </>
+          <Show when={row.likely.length > 0}>
+            <StatusBadge
+              tone="warning"
+              label={row.likely
+                .map(reason =>
+                  reason === 'birth-year'
+                    ? t('label.same-birth-year')
+                    : t('label.same-national-id')
+                )
+                .join(', ')}
+            />
+          </Show>
         );
       },
     },
+    ...patientFindColumns<DuplicateMatch>(),
   ];
 
-  const actions = () => (
-    <Switch>
-      <Match when={step() === 1}>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          confirms="cancel"
-          data-testid="dialog-button-cancel"
-          onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
-        {/* Each step's forward action is that step's confirm, so Enter advances
-            the wizard from anywhere in its form (spec/keyboard KB-E2). */}
-        <Button
-          icon={<SearchIcon />}
-          confirms="plain"
-          data-testid="dialog-button-ok"
-          loading={searching()}
-          disabled={!canSearch()}
-          onClick={() => void runSearch()}
-        >
-          {t('messages.search')}
-        </Button>
-      </Match>
-      <Match when={step() === 2}>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          confirms="cancel"
-          data-testid="dialog-button-cancel"
-          onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
-        <Button
-          icon={<PlusCircleIcon />}
-          confirms="plain"
-          data-testid="create-new-patient-button"
-          onClick={advanceToDetails}
-        >
-          {t('button.create-new-patient')}
-        </Button>
-      </Match>
-      <Match when={step() === 3}>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          confirms="cancel"
-          data-testid="dialog-button-cancel"
-          onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
-        <Button
-          icon={<SaveIcon />}
-          confirms="plain"
-          data-testid="dialog-button-ok"
-          loading={busy()}
-          disabled={!registry() || (onDocumentPath() && !readyDocument())}
-          onClick={() => void save()}
-        >
-          {t('button.save')}
-        </Button>
-      </Match>
-    </Switch>
-  );
-
   return (
-    <>
-      <Dialog
-        open={props.open}
-        testId="create-patient-modal"
-        title={t('label.create-patient')}
-        icon={<PlusCircleIcon />}
-        dismissable={!searching() && !busy()}
-        onClose={props.onClose}
-        // ONE width for every step — the shared form measure, so the dialog is
-        // a steady box the flow moves through rather than one that jumps wider
-        // on the results step and back again. The results table fits: its
-        // columns' width presets total ~51rem (Carl, 2026-07-31).
-        width="form"
-        minBodyHeightRem={34}
-        actions={actions()}
+    <Dialog
+      open={props.open}
+      testId="create-patient-modal"
+      title={t('label.new-patient')}
+      icon={<PlusCircleIcon />}
+      dismissable={!busy()}
+      onClose={props.onClose}
+      width="form"
+      minBodyHeightRem={34}
+      actionsLead={duplicateLine()}
+      actions={actions()}
+    >
+      <Show when={formError() ?? chooseError()}>
+        {message => <Alert severity="error">{message()}</Alert>}
+      </Show>
+      <Show when={reviewing()}>
+        <Stack gap="sm" data-testid="duplicate-check-matches">
+          <Text variant="subtitle">{t('heading.existing-patients')}</Text>
+          <Show when={matches().some(m => m.where === 'elsewhere')}>
+            <Text variant="body">{t('messages.choosing-links-to-store')}</Text>
+          </Show>
+          <DataTable
+            dialogTable
+            columns={reviewColumns}
+            rows={matches()}
+            rowKey={r => r.id}
+            loading={choosingMatch()}
+            onRowClick={row => void chooseMatch(row)}
+            showFullScreen={false}
+            emptyMessage={t('messages.no-existing-patients')}
+          />
+        </Stack>
+      </Show>
+      {/* Kept mounted while reviewing, so nothing typed is lost. Leaving a
+          field re-runs the duplicate check when what it checks changed. */}
+      <div
+        style={{ display: reviewing() ? 'none' : 'contents' }}
+        onFocusOut={() => void duplicates.run()}
       >
-        {/* The wizard's step rail — the shared determinate progress list, the
-            same role the reference app's WizardStepper fills with its one
-            horizontal stepper. A step is finished once the flow has moved past
-            it, so the step you are on reads as in-progress and the ones behind
-            it as done. It needs no measure wrapper (the customer-return wizards
-            cap theirs): this dialog is already the form measure, so the rail can
-            divide the body's full width between its three steps. */}
-        <ProgressList
-          variant="secondary"
-          steps={[
-            {
-              label: t('label.create-patient'),
-              started: true,
-              finished: step() > 1,
-            },
-            {
-              label: t('label.search-results'),
-              started: step() >= 2,
-              finished: step() > 2,
-            },
-            {
-              label: t('label.patient-details'),
-              started: step() >= 3,
-              finished: false,
-            },
-          ]}
-        />
-
-        <Switch>
-          <Match when={step() === 1}>
-            <Alert severity="info">{t('messages.patients-search')}</Alert>
-            <FormSection title={t('heading.patient-details')}>
-              <TextField
-                label={t('label.first-name')}
-                required
-                data-testid="input-firstName"
-                value={search.firstName}
-                onInput={e => setSearch('firstName', e.currentTarget.value)}
-              />
-              <TextField
-                label={t('label.last-name')}
-                required
-                data-testid="input-lastName"
-                value={search.lastName}
-                onInput={e => setSearch('lastName', e.currentTarget.value)}
-              />
-              <DateField
-                label={t('label.date-of-birth')}
-                max={todayCalendarDate()}
-                value={search.dateOfBirth}
-                onChange={value => setSearch('dateOfBirth', value)}
-              />
-              <Combobox<GenderOption>
-                label={t('label.gender')}
-                items={genderOptions()}
-                itemToString={o => o.label}
-                itemToValue={o => o.value}
-                inputTestId="input-gender"
-                value={search.gender ?? undefined}
-                onChange={o => setSearch('gender', o?.value ?? null)}
-              />
-              <TextField
-                label={t('label.address')}
-                value={search.address}
-                onInput={e => setSearch('address', e.currentTarget.value)}
-              />
-              <TextField
-                label={t('label.phone')}
-                value={search.phone}
-                onInput={e => setSearch('phone', e.currentTarget.value)}
-              />
-            </FormSection>
+        <Switch fallback={<Spinner center />}>
+          <Match when={registryFailed()}>
+            <Stack gap="sm">
+              <Alert severity="error">
+                {t('error.patient-form-settings-not-read')}
+              </Alert>
+              <HStack justify="start">
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => void refetchRegistry()}
+                  data-testid="create-patient-registry-retry"
+                >
+                  {t('button.retry')}
+                </Button>
+              </HStack>
+            </Stack>
           </Match>
-
-          <Match when={step() === 2}>
-            <Show when={searching()}>
-              <Spinner center />
-            </Show>
-            <Show when={!searching()}>
-              <Show
-                when={matches().length > 0}
-                fallback={
-                  <Alert severity="info">
-                    {t('messages.no-matching-patients')}
-                  </Alert>
-                }
-              >
-                <Alert severity="info">
-                  {tPlural('messages.patients-found', matches().length)}
-                </Alert>
-                <Alert severity="neutral">
-                  {t('messages.patients-create')}
-                </Alert>
-              </Show>
-              <Show when={centralUnreachable()}>
-                <Alert severity="warning" testId="central-search-error">
-                  {t('messages.failed-to-reach-central')}{' '}
-                  <Button
-                    variant="secondary"
-                    icon={<SearchIcon />}
-                    onClick={() => void runSearch()}
-                  >
-                    {t('button.retry')}
-                  </Button>
-                </Alert>
-              </Show>
-              <Show when={matches().length > 0}>
-                <DataTable
-                  columns={resultColumns()}
-                  rows={matches()}
-                  rowKey={row => `${row.kind}:${row.id}`}
-                  onRowClick={openMatch}
-                  rowHref={matchHref}
-                  showFullScreen={false}
-                  emptyMessage={t('messages.no-matching-patients')}
-                />
-              </Show>
-            </Show>
+          <Match when={formNotLoaded()}>
+            <Alert severity="error">{t('error.patient-form-not-loaded')}</Alert>
           </Match>
-
-          <Match when={step() === 3}>
-            <Show when={stepThreeError()}>
-              <Alert severity="error">{stepThreeError()}</Alert>
-            </Show>
-            <Switch fallback={<Spinner center />}>
-              <Match when={registryFailed()}>
-                <Stack gap="sm">
-                  <Alert severity="error">
-                    {t('error.patient-form-settings-not-read')}
-                  </Alert>
-                  <HStack justify="start">
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      onClick={() => void refetchRegistry()}
-                      data-testid="create-patient-registry-retry"
-                    >
-                      {t('button.retry')}
-                    </Button>
-                  </HStack>
-                </Stack>
-              </Match>
-              <Match when={formNotLoaded()}>
-                <Alert severity="error">
-                  {t('error.patient-form-not-loaded')}
-                </Alert>
-              </Match>
-              <Match when={registry() && !onDocumentPath()}>
-                <PatientDetailsForm
-                  storeId={props.storeId}
-                  patientId={patientId()}
-                  draft={draft}
-                  setField={setDraftField}
-                  errorFor={validation.errorFor}
-                />
-                <FormErrorSummary
-                  errors={validation.visible()}
-                  testId="create-patient-error-summary"
-                />
-              </Match>
-              <Match when={onDocumentPath() && readyDocument()}>
-                {ready => (
-                  <Dynamic
-                    component={ready().View}
-                    patientId={patientId()}
-                    form={ready().form}
-                    errorSummaryTestId="create-patient-error-summary"
-                  />
-                )}
-              </Match>
-            </Switch>
+          <Match when={registry() && !onDocumentPath()}>
+            <PatientDetailsForm
+              storeId={props.storeId}
+              patientId={patientId()}
+              draft={draft}
+              setField={setDraftField}
+              errorFor={validation.errorFor}
+            />
+            <FormErrorSummary
+              errors={validation.visible()}
+              testId="create-patient-error-summary"
+            />
+          </Match>
+          <Match when={onDocumentPath() && readyDocument()}>
+            {ready => (
+              <Dynamic
+                component={ready().View}
+                patientId={patientId()}
+                form={ready().form}
+                errorSummaryTestId="create-patient-error-summary"
+              />
+            )}
           </Match>
         </Switch>
-      </Dialog>
-
-      <FetchFromCentralModal
-        open={fetchOpen()}
-        storeId={props.storeId}
-        candidate={fetchCandidate()}
-        onClose={() => setFetchOpen(false)}
-        onViewPatient={id => {
-          setFetchOpen(false);
-          openExisting(id);
-        }}
-      />
-    </>
+      </div>
+    </Dialog>
   );
 };

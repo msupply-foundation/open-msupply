@@ -306,6 +306,13 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   empty?: JSX.Element;
   /**
+   * Show the empty state's illustration and "Nothing here" heading. Default
+   * true. Pass false for a table that sits among other content — a dialog's
+   * search results — where the full empty state would dwarf it; the message
+   * (and `empty`) still show, under the column headers.
+   */
+  emptyGraphic?: boolean;
+  /**
    * Show the full-screen toggle in the control bar. Default true. Pass false
    * where full
    *  screen makes no sense — e.g. a table inside a modal (the shell it would
@@ -1439,7 +1446,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // instead (see .root[data-no-toolbar] in the CSS).
   const toolbarInputs = (): ToolbarInputs => ({
     hasFilters: !!filters(),
-    hasPagination: !!props.pagination,
+    // The toolbar carries the row count, which a pager with no total hasn't got.
+    hasPagination: props.pagination?.total !== undefined,
     controlsLifted: !!props.controlsMount,
     hasControls: hasControls(),
   });
@@ -1700,12 +1708,10 @@ export function DataTable<T, K extends string, G extends string = never>(
               data does, and it sits beside the filters that change the number.
               Read from `pagination.total`, so any paginated table shows it
               without the host passing anything extra. */}
-          <Show when={props.pagination}>
-            {pagination => (
-              <span class={styles.toolbarCount} data-testid="table-row-count">
-                {tPlural('pagination.rows-total', pagination().total)}
-              </span>
-            )}
+          <Show when={props.pagination?.total !== undefined}>
+            <span class={styles.toolbarCount} data-testid="table-row-count">
+              {tPlural('pagination.rows-total', props.pagination?.total ?? 0)}
+            </span>
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>
@@ -2051,12 +2057,16 @@ export function DataTable<T, K extends string, G extends string = never>(
                 Loading with no rows shows the spinner; a settled empty list shows
                 the "nothing here" empty state. */}
           <Show when={table.getRowModel().rows.length === 0}>
-            <div class={styles.emptyBody}>
+            <div
+              class={styles.emptyBody}
+              data-plain={props.emptyGraphic === false ? '' : undefined}
+            >
               <Show
                 when={props.loading}
                 fallback={
                   <EmptyState
                     data-testid="nothing-here"
+                    graphic={props.emptyGraphic !== false}
                     message={props.emptyMessage ?? t('table.no-results')}
                   >
                     {props.empty}

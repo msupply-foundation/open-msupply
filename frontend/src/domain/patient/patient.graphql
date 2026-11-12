@@ -53,6 +53,8 @@ query centralPatientSearch(
         gender
         dateOfBirth
         isDeceased
+        address1
+        phone
       }
     }
     ... on CentralPatientSearchError {

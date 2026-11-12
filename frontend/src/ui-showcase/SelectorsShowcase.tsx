@@ -4,6 +4,8 @@ import { Combobox } from '../ui/elements/selectors/Combobox';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+import { PickerField } from '../ui/elements/selectors/PickerField';
+import { IconButton } from '../ui/elements/buttons/IconButton';
 import {
   ColourTagDot,
   ColourTagPicker,
@@ -14,7 +16,7 @@ import { Dialog } from '../ui/elements/feedback/Dialog';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { Button } from '../ui/elements/buttons/Button';
 import { CancelButton } from '../ui/elements/buttons/StandardButtons';
-import { PlusCircleIcon } from '../ui/icons';
+import { EditIcon, PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterCheckbox,
@@ -316,6 +318,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
     },
     {
+      id: 'selectors-picker-field',
+      title: 'Picker field (opens a dialog)',
+      searchTerms: ['picker', 'dialog', 'patient', 'search', 'choose'],
+    },
+    {
       id: 'selectors-message-states',
       title: 'Error vs warning',
       searchTerms: ['error', 'warning', 'message', 'invalid', 'advisory'],
@@ -387,6 +394,8 @@ const EMPTY_OPTION_FILTERS: Filter<EmptyOptionFilter>[] = [
 ];
 
 export const SelectorsShowcase = () => {
+  const [pickedPatient, setPickedPatient] = createSignal('Koriander, Basil');
+  const [pickerOpen, setPickerOpen] = createSignal(false);
   const [status, setStatus] = createSignal('allocated');
   const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
     'addition'
@@ -622,6 +631,72 @@ export const SelectorsShowcase = () => {
                 : 'Try "amox", "500", or a code like "ORS20"'
             }
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-picker-field"
+          title="Picker field — PickerField (picks in a dialog)"
+        >
+          <Lead>
+            For a choice too big for a drop-down that needs a search of its own
+            (a record's patient): a field-shaped button showing the value, which
+            opens the owner's dialog. Nothing is typed into it. An{' '}
+            <code>endAction</code> sits inside the box, outside the button.
+          </Lead>
+          <Stack gap="md">
+            <PickerField
+              label="Patient"
+              value={pickedPatient()}
+              placeholder="Choose a patient"
+              onOpen={() => setPickerOpen(true)}
+              endAction={
+                <IconButton
+                  icon={<EditIcon />}
+                  label="Edit"
+                  onClick={() => undefined}
+                />
+              }
+            />
+            <PickerField
+              label="Patient (small, empty)"
+              size="small"
+              placeholder="Choose a patient"
+              onOpen={() => setPickerOpen(true)}
+            />
+            <PickerField
+              label="Patient (disabled)"
+              value="Koriander, Basil"
+              disabled
+              onOpen={() => undefined}
+            />
+          </Stack>
+          <Dialog
+            open={pickerOpen()}
+            onClose={() => setPickerOpen(false)}
+            title="Choose a patient"
+          >
+            <Stack gap="sm">
+              <For
+                each={[
+                  'Koriander, Basil',
+                  'Traoré, Aminata',
+                  "Kouadio, N'Guessan",
+                ]}
+              >
+                {name => (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setPickedPatient(name);
+                      setPickerOpen(false);
+                    }}
+                  >
+                    {name}
+                  </Button>
+                )}
+              </For>
+            </Stack>
+          </Dialog>
         </DashboardCard>
 
         <DashboardCard title="Async autocomplete — AsyncCombobox (server-paginated)">

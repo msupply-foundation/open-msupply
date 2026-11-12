@@ -1,4 +1,11 @@
-import { createSignal, Show, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  untrack,
+  type JSX,
+} from 'solid-js';
 import { t } from '../../intl';
 import { FormRow } from '../../ui/layout/Form/FormRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
@@ -33,6 +40,24 @@ import fieldAction from '../documentForm/FieldAction.module.css';
  * plugin forms compose too. The behaviour spec/patients defines for a field
  * lives here, so the two forms cannot drift apart on it.
  */
+
+/**
+ * Code 2 (the patient's `code2`) is left off the host's patient forms: it
+ * means nothing to most sites, and one that uses it adds it in its own
+ * form (#631). A patient who already has one still shows it, so a value
+ * from legacy mSupply stays visible and editable. Decided once per patient,
+ * from the value the form opened with, so clearing it doesn't hide the
+ * field mid-edit.
+ */
+export const createShowCode2 = (
+  patientId: () => string | undefined,
+  code2: () => string | null | undefined
+) => {
+  const shown = createMemo(
+    on(patientId, () => Boolean(untrack(code2)?.trim()))
+  );
+  return shown;
+};
 
 // Upper bound on a typed age, so a slip can't mint a nonsense birth year (the
 // date-of-birth field is bounded by today at the other end).

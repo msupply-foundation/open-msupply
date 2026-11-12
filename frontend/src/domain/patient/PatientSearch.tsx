@@ -1,8 +1,5 @@
-import { Show, type JSX } from 'solid-js';
+import type { JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
-import { Button } from '../../ui/elements/buttons/Button';
-import { IconButton } from '../../ui/elements/buttons/IconButton';
-import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
@@ -44,26 +41,6 @@ export interface PatientSearchProps {
    */
   focusTarget?: FocusTarget;
   class?: string;
-  /**
-   * When set, a **Create patient** affordance is offered beside the picker
-   * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
-   * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
-   * patient-create flow from this callback and selects the result via
-   * `onSelect`.
-   */
-  onCreatePatient?: () => void;
-  /**
-   * When set, the picker offers its **edit-patient** affordance for the
-   * currently-selected patient (spec/patients S4 allow-edit): an edit button
-   * at the end of the field, as the current app has. The consuming vertical
-   * decides what it opens (routing is the app's concern, not the domain
-   * module's) and is handed the selected patient's id.
-   *
-   * Offered only while a patient IS selected, and NOT gated by `disabled`: it
-   * edits the patient, not the record hosting this picker (prescriptions
-   * ui-surface S3 — it stays available on a read-only prescription).
-   */
-  onEditPatient?: (patientId: string) => void;
 }
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
@@ -101,35 +78,13 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * `messages.no-matching-patients` — the fact the user is actually after
  * (OMS-REG-DIS-01 `.52`, D68).
  *
- * Consumed by other surfaces (prescriptions, next-of-kin). Its allow-edit
- * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
- * of the field — the current app's placement — so it costs the label row
- * nothing and stays live while the picker itself is disabled. The consumer
- * decides where the affordance leads — prescriptions opens the S4 edit modal
- * (`EditPatientModal`, `src/sections/patients`) in place, never a
- * navigate-away (#1038).
+ * Now only the next-of-kin field's picker: a record's patient is picked in
+ * the patient search instead (#631; sections/patients/list/PatientField).
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>
     label={props.label}
     hideLabel={props.hideLabel}
-    // The edit-patient button, at the end of the field: offered only once a
-    // patient is selected (there is nothing to edit otherwise), and
-    // deliberately NOT gated by `disabled` — it edits the patient, not the
-    // record hosting the picker (prescriptions ui-surface S3).
-    endAction={
-      <Show when={props.onEditPatient && props.selected}>
-        {selected => (
-          <IconButton
-            icon={<EditIcon />}
-            label={t('label.edit')}
-            size="small"
-            data-testid="edit-patient-button"
-            onClick={() => props.onEditPatient?.(selected().id)}
-          />
-        )}
-      </Show>
-    }
     size={props.size}
     width={props.width}
     class={props.class}
@@ -156,23 +111,5 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     matchTriggerWidth={false}
     selected={props.selected}
     onSelect={props.onSelect}
-    // Create-patient entry (opt-in) at the foot of the result list, offered
-    // once text is typed — so it's there in the no-match state, which is what
-    // it's for (spec/patients S4). It lives in the popup rather than beside the
-    // input because the field is often in a dialog, where a sibling button has
-    // no room: the picker's own min-content already fills the column.
-    listboxFooter={query => (
-      <Show when={props.onCreatePatient && query().trim() !== ''}>
-        <Button
-          variant="secondary"
-          icon={<PlusCircleIcon />}
-          disabled={props.disabled}
-          data-testid="create-patient-button"
-          onClick={() => props.onCreatePatient?.()}
-        >
-          {t('label.create-patient')}
-        </Button>
-      </Show>
-    )}
   />
 );

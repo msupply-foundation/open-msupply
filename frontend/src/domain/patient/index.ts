@@ -17,3 +17,8 @@ export {
   type Gender,
   type GenderOption,
 } from './gender';
+export {
+  PatientSearchDialog,
+  type NewPatientSeed,
+  type PatientSearchDialogProps,
+} from './PatientSearchDialog';

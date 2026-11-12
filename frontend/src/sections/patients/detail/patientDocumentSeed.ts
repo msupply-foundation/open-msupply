@@ -45,7 +45,7 @@ export const seedPatientDocument = (node: PatientNode): Patient => {
   return JSON.parse(JSON.stringify(seed)) as Patient;
 };
 
-/** What the create wizard's first step asks, as it carries it forward. */
+/** What the patient search asks, as the create form carries it forward. */
 export interface NewPatientFields {
   firstName: string;
   lastName: string;
@@ -55,7 +55,7 @@ export interface NewPatientFields {
   phone: string;
 }
 
-// A new patient's first document from the create wizard's first step: the
+// A new patient's first document from the patient search: the
 // fields it asked, at the paths the server projects onto the patient record,
 // the address and phone in the first contact block. It also starts with an
 // empty `extension`, as the old client's create starts every new patient, so
