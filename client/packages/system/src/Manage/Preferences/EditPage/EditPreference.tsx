@@ -275,6 +275,11 @@ export const EditPreference = ({
           disabled={disabled}
         />
       );
+    case PreferenceValueNodeType.CommonMedicines:
+      // The new front end's Simple dispensing screen owns this setting; it is
+      // never edited here. The server leaves it out of the preferences listed
+      // for editing, so this case is only for the exhaustive check.
+      return null;
     default:
       try {
         noOtherVariants(preference.valueType);
