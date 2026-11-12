@@ -17,6 +17,9 @@ actix-web = { workspace = true }
 async-graphql = { workspace = true }
 tokio = { workspace = true }
 
+[dev-dependencies]
+tempfile = "3.10.1"
+
 [features]
 default = ["sqlite"]
 sqlite = ["repository/sqlite"]

@@ -12,8 +12,10 @@ use service::{
         ImportSummary, MAX_IMPORT_ROWS, RowChange, TableChanges, cells::RowError, sheet::MAX_CELLS,
     },
     service_provider::ServiceProvider,
+    settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},
 };
+use std::path::Path;
 
 #[derive(Default, Clone)]
 pub struct CentralDataQueries;
@@ -85,14 +87,7 @@ impl CentralDataMutations {
                     return Err(StandardGraphqlError::InternalError(format!("{error:?}")).extend());
                 }
             };
-            let file = StaticFileService::new(&base_dir)
-                .and_then(|files| {
-                    files.store_file("central_data.xlsx", StaticFileCategory::Temporary, &bytes)
-                })
-                .map_err(|error| {
-                    StandardGraphqlError::InternalError(format!("{error:#}")).extend()
-                })?;
-            Ok(Ok(file.id))
+            Ok(Ok(store_temporary(&base_dir, "central_data.xlsx", &bytes)?))
         })
         .await
         .map_err(StandardGraphqlError::from_join_error)??;
@@ -143,38 +138,48 @@ async fn import(
 ) -> Result<CentralDataImportResponse> {
     validate(ctx)?;
     let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
-    let Some(path) = uploaded_path(ctx, file_id)? else {
-        return Ok(CentralDataImportResponse::Error(upload_expired()));
-    };
+    let settings = ctx.data_unchecked::<Data<Settings>>().clone();
 
     // Blocking pool, to free the worker; the transaction is as long either way.
     let result = tokio::task::spawn_blocking(move || -> Result<_> {
         let context = service_provider.basic_context()?;
         let service = &service_provider.central_data_service;
-        Ok(if commit {
-            service.import(&context, &path)
-        } else {
-            service.preview_import(&context, &path)
+        read_upload(&settings, file_id, |path| {
+            if commit {
+                service.import(&context, path)
+            } else {
+                service.preview_import(&context, path)
+            }
         })
     })
     .await
     .map_err(StandardGraphqlError::from_join_error)??;
 
     let error = match result {
-        Ok(summary) => return Ok(CentralDataImportResponse::Response(summary.into())),
-        Err(error) => import_error(error)?,
+        None => upload_expired(),
+        Some(Ok(summary)) => return Ok(CentralDataImportResponse::Response(summary.into())),
+        Some(Err(error)) => CentralDataImportError {
+            error: import_error(error)?,
+        },
     };
-    Ok(CentralDataImportResponse::Error(CentralDataImportError {
-        error,
-    }))
+    Ok(CentralDataImportResponse::Error(error))
 }
 
-/// `None` once the upload is deleted, an hour after it's made.
-fn uploaded_path(ctx: &Context<'_>, file_id: String) -> Result<Option<std::path::PathBuf>> {
-    match (UploadedFile { file_id }).as_static_file(ctx.get_settings()) {
-        Ok(file) => Ok(Some(file.to_path_buf())),
-        Err(UploadedFileConversionError::FileNotFound) => Ok(None),
-        Err(error) => Err(StandardGraphqlError::BadUserInput(error.to_string()).extend()),
+/// Runs `read` on the upload. `None` once the upload is deleted, an hour after it's made, even
+/// when that happens after the lookup.
+fn read_upload<T>(
+    settings: &Settings,
+    file_id: String,
+    read: impl FnOnce(&Path) -> Result<T, ImportError>,
+) -> Result<Option<Result<T, ImportError>>> {
+    let path = match (UploadedFile { file_id }).as_static_file(settings) {
+        Ok(file) => file.to_path_buf(),
+        Err(UploadedFileConversionError::FileNotFound) => return Ok(None),
+        Err(error) => return Err(StandardGraphqlError::BadUserInput(error.to_string()).extend()),
+    };
+    match read(&path) {
+        Err(ImportError::CannotReadFile(_)) if !path.exists() => Ok(None),
+        result => Ok(Some(result)),
     }
 }
 
@@ -208,44 +213,47 @@ fn internal_import_error(error: ImportError) -> Error {
 async fn errors_file(ctx: &Context<'_>, file_id: String) -> Result<CentralDataErrorsFileResponse> {
     validate(ctx)?;
     let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
-    let base_dir = ctx.get_settings().server.base_dir.clone();
-    let Some(path) = uploaded_path(ctx, file_id)? else {
-        return Ok(CentralDataErrorsFileResponse::Error(upload_expired()));
-    };
+    let settings = ctx.data_unchecked::<Data<Settings>>().clone();
 
-    let result = tokio::task::spawn_blocking(move || -> Result<_> {
+    let file_id = tokio::task::spawn_blocking(move || -> Result<_> {
         let context = service_provider.basic_context()?;
-        Ok(service_provider
-            .central_data_service
-            .import_errors_file(&context, &path)
-            .map(|bytes| {
-                StaticFileService::new(&base_dir).and_then(|files| {
-                    files.store_file(
-                        "central_data_errors.xlsx",
-                        StaticFileCategory::Temporary,
-                        &bytes,
-                    )
-                })
-            }))
+        let Some(result) = read_upload(&settings, file_id, |path| {
+            service_provider
+                .central_data_service
+                .import_errors_file(&context, path)
+        })?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(match result {
+            Ok(bytes) => Ok(store_temporary(
+                &settings.server.base_dir,
+                "central_data_errors.xlsx",
+                &bytes,
+            )?),
+            Err(error) => Err(error),
+        }))
     })
     .await
     .map_err(StandardGraphqlError::from_join_error)??;
 
-    match result {
-        Ok(stored) => {
-            let file = stored.map_err(|error| {
-                StandardGraphqlError::InternalError(format!("{error:#}")).extend()
-            })?;
-            Ok(CentralDataErrorsFileResponse::Response(
-                CentralDataExportNode { file_id: file.id },
-            ))
+    Ok(match file_id {
+        None => CentralDataErrorsFileResponse::Error(upload_expired()),
+        Some(Ok(file_id)) => {
+            CentralDataErrorsFileResponse::Response(CentralDataExportNode { file_id })
         }
-        Err(error) => Ok(CentralDataErrorsFileResponse::Error(
-            CentralDataImportError {
-                error: import_error(error)?,
-            },
-        )),
-    }
+        Some(Err(error)) => CentralDataErrorsFileResponse::Error(CentralDataImportError {
+            error: import_error(error)?,
+        }),
+    })
+}
+
+/// Returns its id for /files; it's deleted an hour later.
+fn store_temporary(base_dir: &str, name: &str, bytes: &[u8]) -> Result<String> {
+    StaticFileService::new(base_dir)
+        .and_then(|files| files.store_file(name, StaticFileCategory::Temporary, bytes))
+        .map(|file| file.id)
+        .map_err(|error| StandardGraphqlError::InternalError(format!("{error:#}")).extend())
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -456,7 +464,7 @@ impl TooManyRows {
     }
 
     pub async fn row_count(&self) -> u32 {
-        self.row_count as u32
+        self.row_count.try_into().unwrap_or(u32::MAX)
     }
 
     pub async fn max_rows(&self) -> u32 {
@@ -531,4 +539,58 @@ pub enum CentralDataExportResponse {
 pub enum CentralDataErrorsFileResponse {
     Error(CentralDataImportError),
     Response(CentralDataExportNode),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::test_db::get_test_db_settings;
+    use service::settings::test_settings;
+
+    fn settings(base_dir: &Path) -> Settings {
+        let mut settings = test_settings(get_test_db_settings("unused"), None);
+        settings.server.base_dir = base_dir.to_string_lossy().to_string();
+        settings
+    }
+
+    fn upload(settings: &Settings) -> String {
+        StaticFileService::new(&settings.server.base_dir)
+            .unwrap()
+            .store_file("units.xlsx", StaticFileCategory::Temporary, b"x")
+            .unwrap()
+            .id
+    }
+
+    fn unreadable(_: &Path) -> Result<(), ImportError> {
+        Err(ImportError::CannotReadFile("no".to_string()))
+    }
+
+    #[test]
+    fn an_unknown_upload_has_expired() {
+        let dir = tempfile::tempdir().unwrap();
+        let result = read_upload(&settings(dir.path()), "gone".to_string(), |_| Ok(()));
+        assert!(matches!(result, Ok(None)));
+    }
+
+    #[test]
+    fn a_file_that_cannot_be_read_is_reported_as_such() {
+        let dir = tempfile::tempdir().unwrap();
+        let settings = settings(dir.path());
+        let result = read_upload(&settings, upload(&settings), unreadable);
+        assert!(matches!(
+            result,
+            Ok(Some(Err(ImportError::CannotReadFile(_))))
+        ));
+    }
+
+    #[test]
+    fn an_upload_deleted_after_its_lookup_has_expired() {
+        let dir = tempfile::tempdir().unwrap();
+        let settings = settings(dir.path());
+        let result = read_upload(&settings, upload(&settings), |path| {
+            std::fs::remove_file(path).unwrap();
+            unreadable(path)
+        });
+        assert!(matches!(result, Ok(None)));
+    }
 }
