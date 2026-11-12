@@ -2,6 +2,7 @@ import { createMemo, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { type Column as TanColumn, type Header } from '@tanstack/solid-table';
 import { renderTemplate } from './renderTemplate';
+import type { ColumnWidth } from './columnResize';
 import styles from './DataTable.module.css';
 
 // A header cell: a sortable label + a resize handle on the trailing edge.
@@ -31,8 +32,8 @@ export function HeaderCell<T>(props: {
    * min-width floor (DataTable.startColumnResize).
    */
   onResizeStart: (column: TanColumn<T>, renderedPx: number) => void;
-  /** This column's width in px — its min-width (DataTable.columnWidth). */
-  columnWidth: (column: TanColumn<T>) => number;
+  /** This column's width, and whether it's exact (DataTable.columnWidth). */
+  columnWidth: (column: TanColumn<T>) => ColumnWidth;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
@@ -50,6 +51,7 @@ export function HeaderCell<T>(props: {
     return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
   };
   const pin = () => props.pinnedStyle(column());
+  const width = () => props.columnWidth(column());
   // Hand DataTable the width this header renders at, then start TanStack's
   // drag (mouse + touch). A second finger is no resize — TanStack ignores it,
   // so it must not move the start width either.
@@ -100,13 +102,20 @@ export function HeaderCell<T>(props: {
       // Cross-FE test-id contract (e2e/TESTIDS.md): every header cell carries
       // `header-<columnId>`, sortable or not.
       data-testid={`header-${column().id}`}
-      // Auto table layout (columns flex to fill); getSize() is the min-width
-      // FLOOR (a column's `size`, or a resize drag) — a SOFT default the drag
-      // moves both ways. maxSize is the growth cap, applied as max-width
-      // (docs/CELL_TYPES.md). A pinned column additionally gets sticky position
-      // + its edge offset.
+      // Auto table layout (columns flex to fill). A column's default `size` is
+      // its min-width FLOOR, which content or the table's spare room stretches
+      // it past. A width the user set (a resize drag or a double-click) is also
+      // its `width`, which makes it exact: the spare room goes to the columns
+      // still on their defaults (#1890). As a floor alone, the table handed the
+      // column a share of the spare room in proportion to its size, so in a
+      // table with room to spare it never drew at the width dragged to, and
+      // the press that starts a drag (which raises the size to the drawn
+      // width) made it jump wider. maxSize is the growth cap, applied as
+      // max-width (docs/CELL_TYPES.md). A pinned column additionally gets
+      // sticky position + its edge offset.
       style={{
-        'min-width': `${props.columnWidth(column())}px`,
+        'min-width': `${width().px}px`,
+        ...(width().exact ? { width: `${width().px}px` } : {}),
         ...(maxWidthPx() !== undefined
           ? { 'max-width': `${maxWidthPx()}px` }
           : {}),

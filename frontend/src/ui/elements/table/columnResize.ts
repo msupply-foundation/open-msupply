@@ -9,6 +9,33 @@ import type { ColumnSizingState } from '@tanstack/solid-table';
 export type ResizeStart = { id: string; px: number };
 
 /**
+ * A column's width as its header cell applies it: `px` is its size, and
+ * `exact` says the column is drawn at exactly that width rather than with it
+ * as a floor the table may stretch it past. A width the user set (a drag or a
+ * double-click) is exact; a default isn't (DataTable.columnWidth).
+ */
+export type ColumnWidth = { px: number; exact: boolean };
+
+/**
+ * The column that fills the row, or `undefined` when none has to.
+ *
+ * A width the user set is exact, so the row's spare room goes to the columns
+ * still on their defaults. Once every column drawn has a width the user set,
+ * nothing is left to take it, and the browser shares it out over all of them
+ * again — so a press that starts a drag (which sets the column to its drawn
+ * width) would make it jump wider once more. The last column stays a floor
+ * instead and fills the row, as the last column of a full-width table does.
+ *
+ * @param drawnIds the columns in the order they're drawn
+ * @param sizing the widths the user set
+ */
+export const fillColumnId = (
+  drawnIds: readonly string[],
+  sizing: ColumnSizingState
+): string | undefined =>
+  drawnIds.every(id => sizing[id] !== undefined) ? drawnIds.at(-1) : undefined;
+
+/**
  * The width (px) a drag should start from, or `undefined` to start from the
  * column's size as it is.
  *

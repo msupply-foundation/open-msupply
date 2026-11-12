@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fillColumnId,
   resizeMoved,
   resizeStartWidth,
 } from '@/ui/elements/table/columnResize';
@@ -44,5 +45,27 @@ describe('resizeMoved', () => {
 
   it('saves when the dragged column is missing from the result', () => {
     expect(resizeMoved(start, { name: 300 })).toBe(true);
+  });
+});
+
+describe('fillColumnId', () => {
+  const drawn = ['period', 'created', 'status'];
+
+  it('leaves the row to the columns on their defaults while any are left', () => {
+    expect(fillColumnId(drawn, {})).toBeUndefined();
+    expect(fillColumnId(drawn, { period: 300, status: 120 })).toBeUndefined();
+  });
+
+  it('has the last drawn column fill the row once every column is sized', () => {
+    expect(
+      fillColumnId(drawn, { period: 300, created: 140, status: 120 })
+    ).toBe('status');
+  });
+
+  it('ignores widths set on columns that are not drawn', () => {
+    expect(fillColumnId(['period'], { period: 300, hidden: 90 })).toBe(
+      'period'
+    );
+    expect(fillColumnId(['period', 'created'], { hidden: 90 })).toBeUndefined();
   });
 });

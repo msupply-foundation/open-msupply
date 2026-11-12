@@ -98,8 +98,10 @@ import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 import { sameList, samePinning, sameRecord } from './stateEquality';
 import {
+  fillColumnId,
   resizeMoved,
   resizeStartWidth,
+  type ColumnWidth,
   type ResizeStart,
 } from './columnResize';
 
@@ -951,25 +953,48 @@ export function DataTable<T, K extends string, G extends string = never>(
     resizeStart = { id: column.id, px: column.getSize() };
   };
 
-  // A column's width (px) for its header cell's min-width — one memo per
-  // column (#1890). Read straight off column.getSize(), every cell that showed
-  // it depended on the WHOLE sizing state, so each tick of a resize drag re-ran
-  // the render effect of every one of them — and that effect recomputes all of
-  // the cell's attributes, pinned-column lookups included, only to write the
-  // same values back. A memo stops at an unchanged value, so a tick now reaches
-  // the dragged column's header alone (body cells carry no width at all — see
-  // TableRow). Keyed by id and resolved through the table on each run, so a
-  // column rebuilt from a new `columns` prop still reads its own def. Created
-  // under the table's owner, so they're disposed with it.
+  // A column's width for its header cell — one memo per column (#1890). Read
+  // straight off column.getSize(), every cell that showed it depended on the
+  // WHOLE sizing state, so each tick of a resize drag re-ran the render effect
+  // of every one of them — and that effect recomputes all of the cell's
+  // attributes, pinned-column lookups included, only to write the same values
+  // back. A memo stops at an unchanged value, so a tick now reaches the dragged
+  // column's header alone (body cells carry no width at all — see TableRow).
+  // Keyed by id and resolved through the table on each run, so a column rebuilt
+  // from a new `columns` prop still reads its own def. Created under the
+  // table's owner, so they're disposed with it.
+  //
+  // A width the user set is exact (HeaderCell) — except on the column that
+  // fills the row once every column has one (the rule: columnResize.ts). Drawn
+  // order is the DOM's: left-pinned, unpinned, right-pinned.
+  const fillColumn = createMemo(() =>
+    fillColumnId(
+      [
+        ...table.getLeftVisibleLeafColumns(),
+        ...table.getCenterVisibleLeafColumns(),
+        ...table.getRightVisibleLeafColumns(),
+      ]
+        .filter(c => showInTableView(c.columnDef))
+        .map(c => c.id),
+      columnSizing()
+    )
+  );
   const owner = getOwner();
-  const widthMemos = new Map<string, () => number>();
-  const columnWidth = (column: TanColumn<T>): number => {
+  const widthMemos = new Map<string, () => ColumnWidth>();
+  const columnWidth = (column: TanColumn<T>): ColumnWidth => {
     let width = widthMemos.get(column.id);
     if (!width) {
       const id = column.id;
       width = runWithOwner(owner, () => {
-        const memo = createMemo(() =>
-          (table.getAllLeafColumns().find(c => c.id === id) ?? column).getSize()
+        const memo = createMemo(
+          (): ColumnWidth => ({
+            px: (
+              table.getAllLeafColumns().find(c => c.id === id) ?? column
+            ).getSize(),
+            exact: columnSizing()[id] !== undefined && fillColumn() !== id,
+          }),
+          undefined,
+          { equals: (a, b) => a.px === b.px && a.exact === b.exact }
         );
         return memo;
       })!;
