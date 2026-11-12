@@ -565,6 +565,148 @@ mod tests {
         Err(ImportError::CannotReadFile("no".to_string()))
     }
 
+    mod graphql {
+        use super::super::*;
+        use graphql_core::test_helpers::{
+            TestGraphqlSettings, run_test_gql_query, setup_graphql_test,
+        };
+        use repository::{PermissionType, StorageConnectionManager, mock::MockDataInserts};
+        use serde_json::{Value, json};
+        use service::{
+            auth::{
+                AuthDeniedKind, AuthError, AuthServiceTrait, PermissionDSL, ResourceAccessRequest,
+                ValidatedUser,
+            },
+            auth_data::AuthData,
+            service_provider::ServiceContext,
+            sync::{CentralServerConfig, test_util_set_is_central_server},
+        };
+        use std::sync::{Arc, Mutex};
+
+        type Settings = TestGraphqlSettings<CentralDataQueries, CentralDataMutations>;
+
+        /// Every operation, each asking only for its `__typename`s.
+        const OPERATIONS: [&str; 5] = [
+            "query { exportCounts(tables: [{ table: UNIT }]) { maxRows } }",
+            "query($id: String!) { importPreview(fileId: $id) { __typename ... on CentralDataImportError { error { __typename } } } }",
+            "mutation { export(tables: [{ table: UNIT }]) { __typename } }",
+            "mutation($id: String!) { errorsFile(fileId: $id) { __typename ... on CentralDataImportError { error { __typename } } } }",
+            "mutation($id: String!) { import(fileId: $id) { __typename ... on CentralDataImportError { error { __typename } } } }",
+        ];
+
+        async fn setup(db_name: &str) -> (StorageConnectionManager, Settings) {
+            let (_, _, connection_manager, settings) = setup_graphql_test(
+                CentralDataQueries,
+                CentralDataMutations,
+                db_name,
+                MockDataInserts::none().units(),
+            )
+            .await;
+            (connection_manager, settings)
+        }
+
+        async fn run(
+            settings: &Settings,
+            operation: &str,
+            service_provider: Option<ServiceProvider>,
+        ) -> Value {
+            run_test_gql_query(
+                settings,
+                operation,
+                &Some(json!({ "id": "not_uploaded" })),
+                service_provider,
+            )
+            .await
+        }
+
+        /// Records what it was asked for and refuses it, as for a user without the permission.
+        #[derive(Clone, Default)]
+        struct Refuse(Arc<Mutex<Vec<ResourceAccessRequest>>>);
+        impl AuthServiceTrait for Refuse {
+            fn validate(
+                &self,
+                _: &ServiceContext,
+                _: &AuthData,
+                _: &Option<String>,
+                _: &Option<String>,
+                request: &ResourceAccessRequest,
+            ) -> Result<ValidatedUser, AuthError> {
+                self.0.lock().unwrap().push(request.clone());
+                Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
+                    msg: "Missing permission".to_string(),
+                    required_permissions: PermissionDSL::HasPermission(
+                        PermissionType::EditCentralData,
+                    ),
+                }))
+            }
+        }
+
+        // covers: OMS-REG-CDIO-01.4
+
+        #[actix_rt::test]
+        async fn refused_unless_the_central_server_is_standalone() {
+            let (_, settings) = setup("central_data_graphql_not_standalone").await;
+            for is_central in [false, true] {
+                test_util_set_is_central_server(is_central);
+                for operation in OPERATIONS {
+                    let result = run(&settings, operation, None).await;
+                    assert_eq!(
+                        result["errors"][0]["extensions"]["details"],
+                        "Only available on standalone central servers",
+                        "{operation}: {result}"
+                    );
+                }
+            }
+        }
+
+        // covers: OMS-REG-CDIO-01.32
+
+        #[actix_rt::test]
+        async fn refused_without_the_central_data_edit_permission() {
+            let (connection_manager, settings) = setup("central_data_graphql_permission").await;
+            CentralServerConfig::set_standalone_central();
+            for operation in OPERATIONS {
+                let refuse = Refuse::default();
+                let mut service_provider = ServiceProvider::new(connection_manager.clone());
+                service_provider.validation_service = Box::new(refuse.clone());
+
+                let result = run(&settings, operation, Some(service_provider)).await;
+                assert_eq!(
+                    result["errors"][0]["message"], "Forbidden",
+                    "{operation}: {result}"
+                );
+                assert_eq!(result["data"], Value::Null, "{operation}: {result}");
+                let requests = refuse.0.lock().unwrap();
+                assert_eq!(requests.len(), 1, "{operation}");
+                assert_eq!(requests[0].resource, Resource::ImportExportCentralData);
+                assert_eq!(requests[0].store_id, None);
+            }
+        }
+
+        // covers: OMS-REG-CDIO-01.50
+
+        #[actix_rt::test]
+        async fn an_upload_that_is_no_longer_on_the_server_has_expired() {
+            let (_, settings) = setup("central_data_graphql_upload_expired").await;
+            CentralServerConfig::set_standalone_central();
+            for (operation, field) in [
+                (OPERATIONS[1], "importPreview"),
+                (OPERATIONS[3], "errorsFile"),
+                (OPERATIONS[4], "import"),
+            ] {
+                let result = run(&settings, operation, None).await;
+                assert_eq!(
+                    result["data"][field],
+                    json!({
+                        "__typename": "CentralDataImportError",
+                        "error": { "__typename": "CentralDataUploadExpired" }
+                    }),
+                    "{result}"
+                );
+            }
+        }
+    }
+
     #[test]
     fn an_unknown_upload_has_expired() {
         let dir = tempfile::tempdir().unwrap();

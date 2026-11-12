@@ -4466,10 +4466,12 @@ dependencies = [
 name = "graphql_central_data"
 version = "0.1.0"
 dependencies = [
+ "actix-rt",
  "actix-web",
  "async-graphql",
  "graphql_core",
  "repository",
+ "serde_json",
  "service",
  "tempfile",
  "tokio",

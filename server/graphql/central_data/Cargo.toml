@@ -18,6 +18,8 @@ async-graphql = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]
+actix-rt = { workspace = true }
+serde_json = { workspace = true }
 tempfile = "3.10.1"
 
 [features]

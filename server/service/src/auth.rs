@@ -2236,3 +2236,43 @@ mod mutate_json_schema_test {
         assert!(result.is_ok(), "{result:?}");
     }
 }
+
+#[cfg(test)]
+mod import_export_central_data_test {
+    use repository::{PermissionType, UserPermissionRow};
+
+    use super::{Resource, ResourceAccessRequest, all_permissions, validate_resource_permissions};
+
+    // covers: OMS-REG-CDIO-01.32
+
+    #[test]
+    fn import_and_export_need_the_central_data_edit_permission() {
+        let required_permissions = all_permissions()
+            .get(&Resource::ImportExportCentralData)
+            .expect("ImportExportCentralData must be mapped")
+            .clone();
+        let validate = |permission: PermissionType| {
+            validate_resource_permissions(
+                "test_user_id",
+                &[UserPermissionRow {
+                    id: "permission".to_string(),
+                    user_id: "test_user_id".to_string(),
+                    permission,
+                    store_id: None,
+                    context_id: None,
+                }],
+                &ResourceAccessRequest {
+                    resource: Resource::ImportExportCentralData,
+                    store_id: None,
+                    require_central_standalone: true,
+                },
+                &required_permissions,
+                &mut Vec::new(),
+            )
+        };
+
+        // Server admin alone only shows the menu entry.
+        assert!(validate(PermissionType::ServerAdmin).is_err());
+        assert!(validate(PermissionType::EditCentralData).is_ok());
+    }
+}
