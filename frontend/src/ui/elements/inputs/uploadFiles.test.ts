@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { partitionFiles, type FileLike } from './uploadFiles';
+import { chooseOne, partitionFiles, type FileLike } from './uploadFiles';
 
 const file = (name: string, type: string, size: number): FileLike => ({
   name,
@@ -63,5 +63,26 @@ describe('partitionFiles', () => {
         reason: 'type',
       },
     ]);
+  });
+});
+
+describe('chooseOne', () => {
+  const pdf = file('a.pdf', 'application/pdf', 10);
+  const exe = file('b.exe', 'application/x-msdownload', 10);
+
+  it('chooses the one accepted file, or refuses the one rejected', () => {
+    expect(chooseOne([pdf], [])).toEqual({ kind: 'chosen', file: pdf });
+    expect(chooseOne([], [{ file: exe, reason: 'type' }])).toEqual({
+      kind: 'refused',
+      rejection: { file: exe, reason: 'type' },
+    });
+  });
+
+  it('chooses none for an empty drop or several files, valid or not', () => {
+    expect(chooseOne([], [])).toEqual({ kind: 'none' });
+    expect(chooseOne([pdf, pdf], [])).toEqual({ kind: 'none' });
+    expect(chooseOne([pdf], [{ file: exe, reason: 'type' }])).toEqual({
+      kind: 'none',
+    });
   });
 });

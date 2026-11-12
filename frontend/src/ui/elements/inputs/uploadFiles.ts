@@ -65,3 +65,27 @@ export const partitionFiles = <T extends FileLike>(
   }
   return { accepted, rejected };
 };
+
+/** The outcome of one pick or drop on a single-file zone. */
+export type SingleFileChoice<F> =
+  | { kind: 'chosen'; file: F }
+  | { kind: 'refused'; rejection: FileRejection<F> }
+  /** Several files at once, or none: nothing is chosen, and nothing is said. */
+  | { kind: 'none' };
+
+/**
+ * One pick or drop on a single-file zone, as `partitionFiles` split it. One
+ * file — accepted or refused — is the only batch that decides anything: a drop
+ * of several, valid or not, chooses none, so it never replaces the file
+ * already chosen either.
+ */
+export const chooseOne = <F extends FileLike>(
+  accepted: readonly F[],
+  rejected: readonly FileRejection<F>[]
+): SingleFileChoice<F> => {
+  if (accepted.length + rejected.length !== 1) return { kind: 'none' };
+  const [file] = accepted;
+  if (file) return { kind: 'chosen', file };
+  const [rejection] = rejected;
+  return rejection ? { kind: 'refused', rejection } : { kind: 'none' };
+};

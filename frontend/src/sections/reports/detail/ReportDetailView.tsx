@@ -14,7 +14,7 @@ import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { gated } from '../../../api/gated';
 import { graphqlFetch } from '../../../api/graphql';
 import { locale, t } from '../../../intl';
-import { FILES_URL } from '../../../config';
+import { fileUrl } from '../../../config';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -246,9 +246,7 @@ const ReportDetailView: Component = () => {
 
   const fileSrc = (): string | undefined => {
     const r = result();
-    return r?.kind === 'fileId'
-      ? `${FILES_URL}?id=${encodeURIComponent(r.fileId)}`
-      : undefined;
+    return r?.kind === 'fileId' ? fileUrl(r.fileId) : undefined;
   };
   // The generation fault behind the document region, as the banner shows it:
   // the typed data-fetch failure's raw query errors, or an untyped fault's
