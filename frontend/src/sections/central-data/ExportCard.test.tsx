@@ -27,9 +27,16 @@ vi.mock('solid-js/web', async importOriginal => {
   return {
     ...web,
     template: () => node,
-    insert: (_: unknown, value: unknown) => web.effect(() => resolve(value)),
+    // Remembers what it last put in its element, so a test can read a cell.
+    insert: (_: unknown, value: unknown) => {
+      const slot: { current?: unknown } = {};
+      inserted.push(slot);
+      web.effect(() => (slot.current = resolve(value)));
+    },
   };
 });
+
+const inserted: { current?: unknown }[] = [];
 
 interface ButtonProps {
   onClick: () => void;
@@ -172,6 +179,7 @@ afterEach(() => {
   shown.checkboxes = {};
   shown.fields = {};
   shown.selects = {};
+  inserted.length = 0;
   graphqlFetch.mockReset();
   vi.mocked(saveDocument).mockReset();
   vi.useRealTimers();
@@ -198,6 +206,10 @@ const alerts = () =>
   shown.alerts.map(alert => [alert.testId, resolve(alert.children)]);
 
 const download = () => shown.buttons['central-data-download']!;
+
+/** The text the cells hold now. */
+const cellTexts = () =>
+  inserted.map(slot => slot.current).filter(text => typeof text === 'string');
 
 const tickUnits = async () => {
   shown.checkboxes['central-data-export-unit']!.onChange(true);
@@ -250,6 +262,23 @@ describe('ExportCard', () => {
     expect(countRequests()[2]).toEqual({
       tables: [{ table: 'UNIT', contains: 'tab', isActive: true }],
     });
+  });
+
+  it('shows the count the filters match in Rows, and the new one when they change (OMS-REG-CDIO-01.47)', async () => {
+    open();
+    // A dash until the table is ticked.
+    expect(cellTexts()).toContain('—');
+
+    await tickUnits();
+    expect(cellTexts()).toContain('10');
+
+    graphqlFetch.mockImplementation(async () => counts(3, 10));
+    shown.selects['central-data-export-unit-status']!.onValueChange('ACTIVE');
+    await settle();
+    expect(cellTexts()).toContain(
+      'label.count-of-total {"matching":"3","total":"10"}'
+    );
+    expect(cellTexts()).not.toContain('10');
   });
 
   it('warns and disables Download when the ticked tables come to more rows than an import allows (OMS-REG-CDIO-01.53)', async () => {

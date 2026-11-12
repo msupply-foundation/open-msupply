@@ -70,6 +70,18 @@ export const ExportCard = (props: {
     if (!filter.ticked) return undefined;
     return counts()?.tables.find(count => count.table === filter.table);
   };
+  // A plain expression, not a <Show> callback: that runs once, so its text
+  // would keep the first count.
+  const rowsText = (index: number) => {
+    const count = countFor(index);
+    if (!count) return '—';
+    return count.matching === count.total
+      ? formatNumber(count.total)
+      : t('label.count-of-total', {
+          matching: formatNumber(count.matching),
+          total: formatNumber(count.total),
+        });
+  };
   const tickedCount = () =>
     props.filters.filter(filter => filter.ticked).length;
   const rowTotal = () => {
@@ -203,16 +215,7 @@ export const ExportCard = (props: {
                       data-numeric
                       data-testid={`central-data-export-${id}-rows`}
                     >
-                      <Show when={countFor(index())} fallback="—">
-                        {count =>
-                          count().matching === count().total
-                            ? formatNumber(count().total)
-                            : t('label.count-of-total', {
-                                matching: formatNumber(count().matching),
-                                total: formatNumber(count().total),
-                              })
-                        }
-                      </Show>
+                      {rowsText(index())}
                     </td>
                   </tr>
                 );
