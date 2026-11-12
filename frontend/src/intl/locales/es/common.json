@@ -1382,6 +1382,7 @@
   "messages.could-not-save": "No se pudo guardar",
   "messages.create-new-asset-confirmation": "El activo que escaneaste no está actualmente en el sistema, pero ha proporcionado los datos GS1 adecuados. ¿Te gustaría crear un nuevo activo con estos datos?",
   "messages.create-outbound-from-requisition": "¿Estás seguro de que quieres crear un envío de salida desde esta solicitud de compra del cliente?",
+  "messages.create-patient-not-allowed": "No tienes permiso para crear pacientes",
   "messages.created-new-vaccine-course": "Esquema de vacunación creado con éxito",
   "messages.customer-requisition-created-on": "Solicitud del cliente creada el {{date}}",
   "messages.delete-this-line": "Eliminar esta línea",

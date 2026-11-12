@@ -2852,6 +2852,7 @@
   "messages.create-asset-from-scan": "په راجستر کې هیڅ شی د دې لیبل سره سمون نه لري. له دې څخه نوې شتمني جوړه کړئ؟",
   "messages.create-new-asset-confirmation": "هغه شتمنۍ چې تاسو سکین کړې اوس مهال په سیسټم کې ندي، مګر مناسب GS1 ډاټا چمتو کړي. ایا تاسو غواړئ د دې معلوماتو سره نوې شتمنۍ رامینځته کړئ؟",
   "messages.create-outbound-from-requisition": "ایا تاسو ډاډه یاست چې تاسو غواړئ د دې پیرودونکي غوښتنې څخه بهر ته لیږد رامینځته کړئ؟",
+  "messages.create-patient-not-allowed": "تاسو د ناروغانو د جوړولو اجازه نلرئ",
   "messages.created-clinician": "په بریالیتوب سره کلینیک جوړ شو",
   "messages.created-new-vaccine-course": "په بریالیتوب سره د واکسین کورس جوړ شو",
   "messages.currency-rate-info": "د یوې سیمه ایزې اسعارې واحد پر مقابل د بهرنیو (PO) اسعارو واحدونو شمیر. د بیلګې لپاره، که سیمه ایزه NZD وي او PO د USD وي، د 0.6 نرخ معنا دا ده چې 1 NZD = 0.6 USD.",
