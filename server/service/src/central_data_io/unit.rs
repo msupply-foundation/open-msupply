@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport,
-    cells::Row,
+    cells::{Row, keep_padded},
     lookup::{LookupError, resolve},
     sheet::Value,
 };
@@ -198,14 +198,6 @@ fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
         .filter(|((_, from), (_, to))| from != to)
         .map(|((column, from), (_, to))| FieldChange { column, from, to })
         .collect()
-}
-
-/// Cells are read trimmed: keep a saved value whose cell differs only by its spaces.
-fn keep_padded(cell: Option<String>, saved: Option<&str>) -> Option<String> {
-    match saved {
-        Some(saved) if saved.trim() == cell.as_deref().unwrap_or("") => Some(saved.to_string()),
-        _ => cell,
-    }
 }
 
 /// Active units first, so an old inactive namesake doesn't make the name ambiguous.

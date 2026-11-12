@@ -7,6 +7,14 @@ pub struct RowError {
     pub message: String,
 }
 
+/// Cells are read trimmed: keep a saved value whose cell differs only by its spaces.
+pub fn keep_padded(cell: Option<String>, saved: Option<&str>) -> Option<String> {
+    match saved {
+        Some(saved) if saved.trim() == cell.as_deref().unwrap_or("") => Some(saved.to_string()),
+        _ => cell,
+    }
+}
+
 pub struct Row<'a> {
     pub sheet: &'a str,
     pub number: u32,
@@ -55,6 +63,16 @@ impl Row<'_> {
                 Ok(Some(number as i32))
             }
             _ => Err(self.error(column, format!("\"{text}\" must be a whole number"))),
+        }
+    }
+
+    pub fn number(&self, column: &str) -> Result<Option<f64>, RowError> {
+        let Some(text) = self.text(column) else {
+            return Ok(None);
+        };
+        match text.parse::<f64>() {
+            Ok(number) if number.is_finite() => Ok(Some(number)),
+            _ => Err(self.error(column, format!("\"{text}\" must be a number"))),
         }
     }
 
@@ -128,6 +146,23 @@ mod tests {
         for cell in ["3.5", "abc", "1e12"] {
             with_row(&["", "", cell], |row| {
                 assert!(row.int("number").is_err(), "{cell}")
+            });
+        }
+    }
+
+    // covers: OMS-REG-CDIO-01.72
+
+    #[test]
+    fn number_accepts_decimals_and_refuses_text() {
+        for (cell, expected) in [("-18.5", Some(-18.5)), ("4", Some(4.0)), ("", None)] {
+            with_row(&["", "", cell], |row| {
+                assert_eq!(row.number("number"), Ok(expected))
+            });
+        }
+        for cell in ["abc", "inf", "NaN"] {
+            with_row(&["", "", cell], |row| {
+                let error = row.number("number").unwrap_err();
+                assert_eq!(error.message, format!("\"{cell}\" must be a number"));
             });
         }
     }
