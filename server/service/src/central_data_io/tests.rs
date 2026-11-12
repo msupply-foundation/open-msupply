@@ -1,7 +1,7 @@
 use super::{
     CentralDataService, CentralDataServiceTrait, CentralDataTable, Change, ExportCount,
-    ExportError, ExportFilter, ExportTable, FieldChange, MAX_IMPORT_ROWS, MAX_ROWS_LISTED,
-    RecordCount, RowChange, TableChanges,
+    ExportError, ExportFilter, ExportTable, FieldChange, ImportError, MAX_IMPORT_ROWS,
+    MAX_ROWS_LISTED, RecordCount, RowChange, TableChanges,
     sheet::{self, SheetData, Value},
 };
 use crate::service_provider::ServiceProvider;
@@ -107,6 +107,39 @@ async fn export_then_import_makes_no_changes() {
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 0, 3));
     assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        UnitRowRepository::new(&connection).find_all().unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.8
+
+#[actix_rt::test]
+async fn a_file_that_is_not_a_workbook_is_refused_with_the_readers_reason() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_not_a_workbook",
+        MockDataInserts::none().units(),
+    )
+    .await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+    let before = UnitRowRepository::new(&connection).find_all().unwrap();
+    // A CSV saved with the workbook's extension.
+    let path = write_file(dir.path(), b"name,index,is_active\nTab,1,TRUE\n".to_vec());
+
+    let refused = |result: Result<(), ImportError>| match result {
+        Err(ImportError::CannotReadFile(reason)) => assert!(!reason.is_empty()),
+        other => panic!("expected CannotReadFile, got {other:?}"),
+    };
+    refused(CentralDataService.preview_import(&ctx, &path).map(|_| ()));
+    refused(CentralDataService.import(&ctx, &path).map(|_| ()));
+    refused(
+        CentralDataService
+            .import_errors_file(&ctx, &path)
+            .map(|_| ()),
+    );
     assert_eq!(
         UnitRowRepository::new(&connection).find_all().unwrap(),
         before
@@ -806,6 +839,140 @@ async fn a_name_without_the_saved_names_spaces_finds_its_unit() {
     assert_eq!(units_named(&connection, "Capsule"), vec![]);
 }
 
+fn bottle(id: &str, is_active: bool) -> UnitRow {
+    UnitRow {
+        id: id.to_string(),
+        name: "Bottle".to_string(),
+        description: None,
+        index: 7,
+        is_active,
+    }
+}
+
+// covers: OMS-REG-CDIO-01.24
+
+#[actix_rt::test]
+async fn a_name_two_active_units_share_asks_for_the_id() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_unit_ambiguous_name",
+        MockDataInserts::none().units(),
+    )
+    .await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+    let repo = UnitRowRepository::new(&connection);
+    // Saved before names had to be unique.
+    repo.upsert_one(&bottle("bottle_a", true)).unwrap();
+    repo.upsert_one(&bottle("bottle_b", true)).unwrap();
+    let headers = vec!["id", "name", "index", "is_active"];
+
+    let path = write_file(
+        dir.path(),
+        unit_sheet(
+            headers.clone(),
+            vec![vec![
+                Value::Empty,
+                "Bottle".to_string().into(),
+                9.into(),
+                true.into(),
+            ]],
+        ),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|e| (e.row, e.column.as_deref(), e.message.as_str()))
+        .collect();
+    assert_eq!(
+        errors,
+        vec![(
+            2,
+            Some("name"),
+            "ambiguous reference, please provide id instead"
+        )]
+    );
+    assert_eq!(units_named(&connection, "Bottle").len(), 2);
+
+    // The id settles it.
+    let path = write_file(
+        dir.path(),
+        unit_sheet(
+            headers,
+            vec![vec![
+                "bottle_b".to_string().into(),
+                "Bottle".to_string().into(),
+                9.into(),
+                true.into(),
+            ]],
+        ),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables, unit_changes(0, 1, 0));
+    assert_eq!(
+        repo.find_one_by_id("bottle_b").unwrap(),
+        Some(UnitRow {
+            index: 9,
+            ..bottle("bottle_b", true)
+        })
+    );
+    assert_eq!(
+        repo.find_one_by_id("bottle_a").unwrap(),
+        Some(bottle("bottle_a", true))
+    );
+}
+
+// covers: OMS-REG-CDIO-01.41
+
+#[actix_rt::test]
+async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_unit_new_id_duplicate_name",
+        MockDataInserts::none().units(),
+    )
+    .await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+    let repo = UnitRowRepository::new(&connection);
+    repo.upsert_one(&bottle("bottle_old", false)).unwrap();
+    let existing = mock_unit(&connection);
+    let new_unit = |name: &str| {
+        vec![
+            "new_unit".to_string().into(),
+            name.to_string().into(),
+            1.into(),
+            true.into(),
+        ]
+    };
+    let headers = vec!["id", "name", "index", "is_active"];
+
+    let path = write_file(
+        dir.path(),
+        unit_sheet(headers.clone(), vec![new_unit(&existing.name)]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|e| (e.row, e.column.as_deref()))
+        .collect();
+    assert_eq!(errors, vec![(2, Some("name"))]);
+    assert_eq!(repo.find_one_by_id("new_unit").unwrap(), None);
+
+    let path = write_file(dir.path(), unit_sheet(headers, vec![new_unit("Bottle")]));
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables, unit_changes(1, 0, 0));
+    assert!(repo.find_one_by_id("new_unit").unwrap().unwrap().is_active);
+    assert_eq!(
+        repo.find_one_by_id("bottle_old").unwrap(),
+        Some(bottle("bottle_old", false))
+    );
+}
+
 // covers: OMS-REG-CDIO-01.30, .33, .34
 
 #[actix_rt::test]
@@ -818,13 +985,6 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
     let repo = UnitRowRepository::new(&connection);
     let existing = mock_unit(&connection);
     assert!(existing.is_active);
-    let bottle = |id: &str, is_active| UnitRow {
-        id: id.to_string(),
-        name: "Bottle".to_string(),
-        description: None,
-        index: 7,
-        is_active,
-    };
     // Inactive written last, so a lookup ignoring activity would find it.
     repo.upsert_one(&bottle("bottle_active", true)).unwrap();
     repo.upsert_one(&bottle("bottle_inactive", false)).unwrap();
