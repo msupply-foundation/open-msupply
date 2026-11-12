@@ -16,10 +16,9 @@ import {
   emptyBatch,
   installOutcome,
   judgePick,
-  uploadReportFile,
-  MAX_BUNDLE_BYTES,
   type BatchOutcome,
 } from './reportInstall';
+import { MAX_UPLOAD_BYTES, uploadFile } from '@/api/postFiles';
 
 // The report-bundle installer — spec/manage-reports S2.
 //
@@ -87,7 +86,7 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
     let rejection: string | undefined;
 
     for (const file of files()) {
-      const uploaded = await uploadReportFile(file);
+      const uploaded = await uploadFile(file);
       if (uploaded.kind === 'failed') {
         batch = addToBatch(batch, file.name, { kind: 'failed' });
         rejection = uploaded.message;
@@ -174,7 +173,7 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
         <p>{t('messages.report-upload-helper')}</p>
         <UploadZone
           multiple
-          maxSize={MAX_BUNDLE_BYTES}
+          maxSize={MAX_UPLOAD_BYTES}
           disabled={installing()}
           inputTestId="report-upload-input"
           onPick={(accepted, rejected) => {
@@ -195,7 +194,7 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
               tooLarge
                 ? t('error.file-exceeds-size-limit', {
                     filename: tooLarge,
-                    maxSize: formatFileSize(MAX_BUNDLE_BYTES),
+                    maxSize: formatFileSize(MAX_UPLOAD_BYTES),
                   })
                 : undefined
             );
