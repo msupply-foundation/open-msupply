@@ -13,6 +13,12 @@ pub const MAX_COMMON_MEDICINE_AMOUNTS: usize = 3;
 /// One medicine on the Simple dispensing screen, with the amounts staff give
 /// most often. Amounts are in the item's own unit (e.g. tablets), and an empty
 /// list means the card asks for the amount instead.
+///
+/// `item_id` is the id as it was set, held in the preference's JSON, so it
+/// can't follow an item merge the way an `item_link_id` column does. Once an
+/// item is merged into another, the screen still reads the merged-away id,
+/// whose stock now belongs to the item it was kept as: its card shows no
+/// stock, or none at all, until the list is set again with the kept item.
 #[derive(Default, Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommonMedicine {
