@@ -42,7 +42,7 @@ fn v7_pull_has_started(connection: &StorageConnection) -> anyhow::Result<bool> {
 mod test {
     use crate::{
         ChangelogCondition, ChangelogTableName, FilterBuilder,
-        migrations::{v3_04_00::V3_04_00, v3_04_01::V3_04_01, *},
+        migrations::{v3_04_01::V3_04_01, v3_04_02::V3_04_02, *},
         test_db::*,
     };
     use diesel::{RunQueryDsl, prelude::*, sql_query};
@@ -63,10 +63,10 @@ mod test {
         V7,
     }
 
-    async fn migrate_to_3_04_01(db_name: &str, pull_started: PullStarted) -> Vec<Option<String>> {
+    async fn migrate_to_3_04_02(db_name: &str, pull_started: PullStarted) -> Vec<Option<String>> {
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name,
-            version: Some(V3_04_00.version()),
+            version: Some(V3_04_01.version()),
             ..Default::default()
         })
         .await;
@@ -90,7 +90,7 @@ mod test {
 
         migrate(
             &connection,
-            Some(V3_04_01.version()),
+            Some(V3_04_02.version()),
             MigrationConfig::default(),
         )
         .unwrap();
@@ -106,7 +106,7 @@ mod test {
     /// A site that has pulled over v7 gets one request to pull name_oms_fields again.
     #[actix_rt::test]
     async fn seeds_request_after_v7_pull() {
-        let pull_filters = migrate_to_3_04_01(
+        let pull_filters = migrate_to_3_04_02(
             "migration_seed_sync_request_name_oms_fields_v7",
             PullStarted::V7,
         )
@@ -122,7 +122,7 @@ mod test {
     /// Central, or a site still on v5/v6, has only v5/v6 pulls and gets no request.
     #[actix_rt::test]
     async fn skips_v5_v6_pull_only() {
-        let pull_filters = migrate_to_3_04_01(
+        let pull_filters = migrate_to_3_04_02(
             "migration_seed_sync_request_name_oms_fields_v5_v6",
             PullStarted::V5V6,
         )
@@ -134,7 +134,7 @@ mod test {
     /// A fresh install gets no request.
     #[actix_rt::test]
     async fn skips_fresh_install() {
-        let pull_filters = migrate_to_3_04_01(
+        let pull_filters = migrate_to_3_04_02(
             "migration_seed_sync_request_name_oms_fields_fresh",
             PullStarted::None,
         )
