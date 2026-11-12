@@ -70,13 +70,22 @@ export const defaultDateFormat = (): string => localeDateFormat();
 
 const TOKEN = /yyyy|yy|MMMM|MMM|MM|M|dd|d/g;
 
-/** Localised month names for the app language, `[short, long]` per month. */
+/**
+ * Localised month names for the app language, `[short, long]` per month.
+ * Always the Gregorian months the value is stored in: left to the browser,
+ * Dari and Pashto would name the Solar Hijri month instead (Mizan for most
+ * of October).
+ */
 const monthNames = (): { short: string; long: string }[] =>
   Array.from({ length: 12 }, (_, i) => ({
     short: new Date(2000, i, 1).toLocaleDateString(locale(), {
       month: 'short',
+      calendar: 'gregory',
     }),
-    long: new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'long' }),
+    long: new Date(2000, i, 1).toLocaleDateString(locale(), {
+      month: 'long',
+      calendar: 'gregory',
+    }),
   }));
 
 // Placeholder token letters per language — only the letters that differ from
@@ -142,8 +151,10 @@ export const formatCalendarDate = (
 /**
  * Typed date text → ISO `YYYY-MM-DD`, interpreting the day/month/year ORDER
  * from `format`. Lenient about separators (`/ - .`, spaces) and month form
- * (numeric or a localised name). '' → null (cleared); anything unparseable or
- * out-of-range → undefined (invalid — the caller keeps the text for a fix).
+ * (numeric or a localised name). A format with no day token (`MMM yyyy`, a
+ * month-only field) reads a month and year as that month's 1st. '' → null
+ * (cleared); anything unparseable or out-of-range → undefined (invalid — the
+ * caller keeps the text for a fix).
  */
 export const parseDateInput = (
   text: string,
@@ -159,17 +170,35 @@ export const parseDateInput = (
     if (!order.includes(kind)) order.push(kind);
     return tok;
   });
-  if (order.length !== 3) return undefined;
+  const monthOnly = order.length === 2 && !order.includes('d');
+  if (order.length !== 3 && !monthOnly) return undefined;
 
   // Parts: runs of digits or letters, in order (month names have letters).
-  const parts = s.match(/\p{L}+|\d+/gu);
-  if (!parts || parts.length !== 3) return undefined;
+  // "Letters" include combining marks: Lao vowel signs (the `ິ` in `ມິ.ຖ.`,
+  // the `ຸ` in `ຕຸລາ`) are marks, not letters, and a name must stay one run.
+  // Some languages abbreviate a month with INTERNAL dots (Lao `ຕ.ລ.`), which
+  // this split would cut into two letter runs — drop a separator that sits
+  // between two LETTERS, in the text, so both sides see the same token; the
+  // names additionally lose a TRAILING dot (`oct.`, `ຕລ.`, the abbreviation
+  // mark). A separator between digits stands (`23.04.2023` must stay three
+  // parts).
+  const parts = s
+    .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+    .match(/[\p{L}\p{M}]+|\d+/gu);
+  if (!parts || parts.length !== order.length) return undefined;
 
-  const names = monthNames();
-  let day = 0;
+  const names = monthNames().map(n => ({
+    short: n.short
+      .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+      .replace(/(?<=[\p{L}\p{M}])[.,'’]+$/u, ''),
+    long: n.long
+      .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+      .replace(/(?<=[\p{L}\p{M}])[.,'’]+$/u, ''),
+  }));
+  let day = monthOnly ? 1 : 0;
   let month = 0;
   let year = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < order.length; i++) {
     const part = parts[i];
     const kind = order[i];
     if (kind === 'M' && /\D/.test(part)) {
