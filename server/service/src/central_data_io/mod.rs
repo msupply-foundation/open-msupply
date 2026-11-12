@@ -1,6 +1,3 @@
-// shortcut: with no table yet, `CentralDataTable` has no values, so code after `table()` reads
-// as unreachable. Remove this with the first table.
-#![allow(unreachable_code, unused_variables, dead_code)]
 use crate::service_provider::ServiceContext;
 use cells::{Row, RowError};
 use repository::{RepositoryError, StorageConnection};
@@ -11,6 +8,10 @@ pub mod cells;
 pub mod delete;
 pub mod lookup;
 pub mod sheet;
+mod unit;
+
+#[cfg(test)]
+mod tests;
 
 /// shortcut: one cap for the whole file; raise it if a catalogue needs more.
 pub const MAX_IMPORT_ROWS: usize = 100_000;
@@ -23,7 +24,9 @@ pub const ERROR_COLUMN: &str = "error";
 
 /// One variant per table, added with the table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CentralDataTable {}
+pub enum CentralDataTable {
+    Unit,
+}
 
 /// Empty exports every record.
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -75,12 +78,14 @@ pub struct ExportCount {
 
 impl CentralDataTable {
     pub fn sheet_name(&self) -> &'static str {
-        match *self {}
+        match self {
+            CentralDataTable::Unit => "unit",
+        }
     }
 }
 
 /// In import order, so a sheet can refer to rows an earlier sheet adds.
-static TABLES: &[&(dyn ImportTable + Sync)] = &[];
+static TABLES: &[&(dyn ImportTable + Sync)] = &[&unit::UnitTable];
 
 pub(crate) trait ImportTable {
     fn table(&self) -> CentralDataTable;
