@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { formatNumber, t, tPlural, type LocaleKey } from '@/intl';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
@@ -12,6 +12,7 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import { createLocalPagination } from '@/ui/elements/table/createLocalPagination';
 import { remToPx } from '@/ui/utils/rem';
 import {
   Accordion,
@@ -105,25 +106,16 @@ const errorColumns: Column<RowError, never>[] = [
   },
 ];
 
-/** Pages rows already in memory. */
-const createPage = <T,>(rows: () => T[]) => {
-  const [offset, setOffset] = createSignal(0);
-  return {
-    rows: () => rows().slice(offset(), offset() + PAGE_SIZE),
-    pagination: () => ({
-      offset: offset(),
-      pageSize: PAGE_SIZE,
-      total: rows().length,
-      onOffsetChange: setOffset,
-    }),
-  };
-};
-
 export const ImportPreviewCard = (props: { preview: Preview }) => {
   const errorCount = () => props.preview.summary.errorCount;
   const changes = () => changeCount(props.preview.summary);
-  const changePage = createPage(() => props.preview.summary.changes);
-  const errorPage = createPage(() => props.preview.summary.errors);
+  const changePage = createLocalPagination(
+    () => props.preview.summary.changes,
+    { pageSize: PAGE_SIZE }
+  );
+  const errorPage = createLocalPagination(() => props.preview.summary.errors, {
+    pageSize: PAGE_SIZE,
+  });
   return (
     <DetailCard
       title={props.preview.fileName}
