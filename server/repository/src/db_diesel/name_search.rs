@@ -2,11 +2,13 @@
 //! ignoring case and accents: "trao" finds "Traoré" and "helene" finds
 //! "Marie-Hélène", but "an" doesn't find "Hassan".
 //!
-//! Each database folds the stored names its own way, so the two can differ at
-//! the edges (Đ isn't folded on either):
+//! Each database folds the stored names its own way, both splitting words at
+//! anything that isn't a letter, digit or mark, so they agree on Latin
+//! accents and punctuation but can differ at the edges (Đ isn't folded on
+//! either):
 //! - SQLite calls `search_words_match` below, registered on every connection
-//!   (`SqliteConnectionOptions`). Remote sites read every patient for a search,
-//!   as they did before; there is no index.
+//!   (`SqliteConnectionOptions`). There is no index: a search checks every
+//!   patient the query's other conditions leave, as it did before.
 //! - Postgres has a `search_fold` SQL function and an index on the words of
 //!   each name (migration `add_patient_search_indexes`), for central's search
 //!   across every site's patients.
@@ -85,9 +87,11 @@ pub(crate) fn register_sqlite_functions(
     search_words_match_utils::register_impl(connection, |name: Option<String>, words: String| {
         name.map(|name| {
             let name = fold_for_search(&name);
-            words
-                .split_whitespace()
-                .all(|word| name.contains(&format!(" {word}")))
+            // Every word of the folded name follows a space
+            words.split_whitespace().all(|word| {
+                name.match_indices(' ')
+                    .any(|(space, _)| name[space + 1..].starts_with(word))
+            })
         })
     })
 }

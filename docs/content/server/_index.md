@@ -165,7 +165,7 @@ See [Config section](#configs) for more info on yaml configurations.
 
 ## Dependencies
 
-When using Postgres, Postgres 12 or higher is required.
+When using Postgres, Postgres 13 or higher is required.
 
 ### Windows
 

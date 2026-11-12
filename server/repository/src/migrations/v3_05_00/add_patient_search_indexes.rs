@@ -26,14 +26,19 @@ impl MigrationFragment for Migrate {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         if cfg!(feature = "postgres") {
-            // Lowercase without the accents Latin letters break down into
-            // (Combining Diacritical Marks). normalize() needs a UTF-8
-            // database; any other only gets the lowercase.
-            let fold = if is_utf8(connection)? {
-                r#"regexp_replace(normalize(lower($1), NFD), '[̀-ͯ]', '', 'g')"#
+            // Lowercase, without the accents Latin letters break down into
+            // (Combining Diacritical Marks), and with punctuation turned into
+            // spaces. The text search parser keeps "Mary.Ann" or "Ali/Hassan"
+            // as one word, but the typed text is split there
+            // (name_search.rs), so the stored name must be too. normalize()
+            // needs a UTF-8 database; any other doesn't ignore accents.
+            let unaccented = if is_utf8(connection)? {
+                r#"regexp_replace(normalize(lower($1), NFD), '[\u0300-\u036f]', '', 'g')"#
             } else {
                 "lower($1)"
             };
+            let fold =
+                format!(r#"regexp_replace({unaccented}, '[[:punct:][:space:]]+', ' ', 'g')"#);
             sql!(
                 connection,
                 r#"

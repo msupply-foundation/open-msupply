@@ -313,7 +313,10 @@ impl<'a> PatientRepository<'a> {
             if let Some(filter) = code_or_code_2 {
                 // On Postgres, the start of a code is a range on its lowercase
                 // form, which the code indexes (migration
-                // add_patient_search_indexes) serve; ILIKE can't use an index
+                // add_patient_search_indexes) serve; ILIKE can't use an index.
+                // `starts_with` combined with another operator then means
+                // (either code starts with it) AND (either code matches the
+                // other), not per code as on SQLite; nothing combines them.
                 #[cfg(feature = "postgres")]
                 let filter = {
                     let mut filter = filter;
@@ -1011,6 +1014,7 @@ mod tests {
             patient("nguessan", Some("Awa"), "N'Guessan Kouadio"),
             patient("hassan", Some("Ali"), "HASSAN"),
             patient("no_first_name", None, "Traore"),
+            patient("dotted", Some("Mary.Ann"), "St.John"),
             NameRow {
                 r#type: NameRowType::Store,
                 ..patient("not_a_patient", Some("Hélène"), "Traoré")
@@ -1042,6 +1046,12 @@ mod tests {
         // The start of a later word, after a space, hyphen or apostrophe
         assert_eq!(last("kouad"), ["nguessan"]);
         assert_eq!(last("guess"), ["nguessan"]);
+        // Words split at any punctuation, the same on both databases, so the
+        // whole name typed as stored still finds it
+        assert_eq!(last("st.john"), ["dotted"]);
+        assert_eq!(last("john"), ["dotted"]);
+        assert_eq!(first("Mary.Ann"), ["dotted"]);
+        assert_eq!(first("ann"), ["dotted"]);
         assert_eq!(first("helene"), ["traore"]);
         // Every typed word, in any order
         assert_eq!(last("kouadio n"), ["nguessan"]);
