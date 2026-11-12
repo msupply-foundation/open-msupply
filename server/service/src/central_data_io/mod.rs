@@ -6,6 +6,7 @@ use umya_spreadsheet::helper::coordinate::string_from_column_index;
 
 pub mod cells;
 pub mod delete;
+mod location_type;
 pub mod lookup;
 pub mod sheet;
 mod unit;
@@ -26,6 +27,7 @@ pub const ERROR_COLUMN: &str = "error";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CentralDataTable {
     Unit,
+    LocationType,
 }
 
 /// Empty exports every record.
@@ -80,12 +82,14 @@ impl CentralDataTable {
     pub fn sheet_name(&self) -> &'static str {
         match self {
             CentralDataTable::Unit => "unit",
+            CentralDataTable::LocationType => "location_type",
         }
     }
 }
 
 /// In import order, so a sheet can refer to rows an earlier sheet adds.
-static TABLES: &[&(dyn ImportTable + Sync)] = &[&unit::UnitTable];
+static TABLES: &[&(dyn ImportTable + Sync)] =
+    &[&unit::UnitTable, &location_type::LocationTypeTable];
 
 pub(crate) trait ImportTable {
     fn table(&self) -> CentralDataTable;

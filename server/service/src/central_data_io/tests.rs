@@ -6,7 +6,11 @@ use super::{
 };
 use crate::service_provider::ServiceProvider;
 use repository::{
-    StorageConnection, UnitRow, UnitRowRepository, mock::MockDataInserts, test_db::setup_all,
+    ItemVariantRow, ItemVariantRowRepository, LocationTypeRow, LocationTypeRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, UnitRow,
+    UnitRowRepository,
+    mock::{MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1},
+    test_db::setup_all,
 };
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
@@ -1097,4 +1101,431 @@ async fn errors_past_the_listed_rows_are_counted_not_listed() {
     assert_eq!(summary.error_count, bad_rows as u32);
     assert_eq!(summary.tables[0].error_count, bad_rows as u32);
     assert_eq!(summary.errors[0].row, 2);
+}
+
+// Location types
+
+const LOCATION_TYPE_HEADERS: [&str; 6] = [
+    "id",
+    "code",
+    "name",
+    "min_temperature",
+    "max_temperature",
+    "delete",
+];
+
+fn location_type_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data(
+        "location_type",
+        &LOCATION_TYPE_HEADERS,
+        rows,
+    )])
+    .unwrap()
+}
+
+/// One row of `LOCATION_TYPE_HEADERS`; blank cells are `""`.
+fn location_type_row(cells: [&str; 6]) -> Vec<Value> {
+    cells
+        .into_iter()
+        .map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        })
+        .collect()
+}
+
+fn unused_location_type() -> LocationTypeRow {
+    LocationTypeRow {
+        id: "unused_type".to_string(),
+        code: "UNUSED".to_string(),
+        name: "Unused".to_string(),
+        min_temperature: 15.0,
+        max_temperature: 25.0,
+    }
+}
+
+fn row_errors(summary: &super::ImportSummary) -> Vec<(u32, Option<&str>, &str)> {
+    summary
+        .errors
+        .iter()
+        .map(|e| (e.row, e.column.as_deref(), e.message.as_str()))
+        .collect()
+}
+
+/// Location type a is a location's type and b an item's restricted type.
+async fn location_type_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (_, connection, connection_manager, _) = setup_all(
+        name,
+        MockDataInserts::none().names().stores().locations().items(),
+    )
+    .await;
+    LocationTypeRowRepository::new(&connection)
+        .upsert_one(&unused_location_type())
+        .unwrap();
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+    )
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .65
+
+#[actix_rt::test]
+async fn location_types_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        location_type_setup("central_data_location_type_round_trip").await;
+    // A code taken from a padded legacy name keeps its spaces.
+    LocationTypeRowRepository::new(&connection)
+        .upsert_one(&LocationTypeRow {
+            id: "padded_type".to_string(),
+            code: "Fridge ".to_string(),
+            name: "Fridge ".to_string(),
+            min_temperature: 2.5,
+            max_temperature: 8.0,
+        })
+        .unwrap();
+    let before = LocationTypeRowRepository::new(&connection)
+        .find_all()
+        .unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let table = ExportTable {
+        table: CentralDataTable::LocationType,
+        filter: ExportFilter::default(),
+    };
+    let bytes = CentralDataService.export(&ctx, &[table]).unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, before.len() as u32);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        LocationTypeRowRepository::new(&connection)
+            .find_all()
+            .unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46, .47
+
+#[actix_rt::test]
+async fn a_location_type_export_searches_name_and_code() {
+    let (_, service_provider, _) = location_type_setup("central_data_location_type_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let search = |contains: &str| ExportTable {
+        table: CentralDataTable::LocationType,
+        filter: ExportFilter {
+            contains: Some(contains.to_string()),
+            // No active flag, so it's ignored.
+            is_active: Some(false),
+        },
+    };
+
+    let counts = CentralDataService
+        .export_counts(&ctx, &[search("unused")])
+        .unwrap();
+    assert_eq!(
+        counts,
+        vec![ExportCount {
+            table: CentralDataTable::LocationType,
+            count: RecordCount {
+                matching: 1,
+                total: 3,
+            },
+        }]
+    );
+    let counts = CentralDataService
+        .export_counts(&ctx, &[search("LOCATION_TYPE")])
+        .unwrap();
+    assert_eq!(counts[0].count.matching, 2);
+}
+
+// covers: OMS-REG-CDIO-01.12, .35, .63, .73, .75
+
+#[actix_rt::test]
+async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
+    let (connection, service_provider, dir) =
+        location_type_setup("central_data_location_type_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let unused = unused_location_type();
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            location_type_row(["", "FREEZER", "Freezer", "-25", "-15", ""]),
+            // Found by code; blank cells keep their values.
+            location_type_row(["", "UNUSED", "Room", "", "30", ""]),
+            location_type_row(["", "NEW", "", "abc", "", ""]),
+            location_type_row(["", "BACKWARDS", "Backwards", "8", "2", ""]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (4, Some("min_temperature"), "\"abc\" must be a number"),
+            (4, Some("name"), "name is required for a new location type"),
+            (
+                4,
+                Some("max_temperature"),
+                "max_temperature is required for a new location type"
+            ),
+            (
+                5,
+                Some("max_temperature"),
+                "max_temperature 2 is below min_temperature 8"
+            ),
+        ]
+    );
+    assert_eq!(
+        LocationTypeRowRepository::new(&connection)
+            .find_one_by_id(&unused.id)
+            .unwrap(),
+        Some(unused.clone())
+    );
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            location_type_row(["", "FREEZER", "Freezer", "-25", "-15", ""]),
+            location_type_row(["", "UNUSED", "Room", "", "30", ""]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![
+            FieldChange {
+                column: "name",
+                from: "Unused".to_string(),
+                to: "Room".to_string(),
+            },
+            FieldChange {
+                column: "max_temperature",
+                from: "25".to_string(),
+                to: "30".to_string(),
+            },
+        ]
+    );
+    let repo = LocationTypeRowRepository::new(&connection);
+    assert_eq!(
+        repo.find_one_by_id(&unused.id).unwrap(),
+        Some(LocationTypeRow {
+            name: "Room".to_string(),
+            max_temperature: 30.0,
+            ..unused
+        })
+    );
+    let freezer = repo
+        .find_all()
+        .unwrap()
+        .into_iter()
+        .find(|location_type| location_type.code == "FREEZER")
+        .unwrap();
+    assert_eq!(
+        (freezer.min_temperature, freezer.max_temperature),
+        (-25.0, -15.0)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.39, .40, .51
+
+#[actix_rt::test]
+async fn a_location_type_code_is_not_changed_by_import() {
+    let (connection, service_provider, dir) =
+        location_type_setup("central_data_location_type_conflicts").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            // The id's location type has another code.
+            location_type_row(["unused_type", "RENAMED", "", "", "", ""]),
+            // A new id beside a saved code.
+            location_type_row(["new_id", "UNUSED", "Copy", "1", "2", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("code"),
+                "code and id conflict: unused_type is Unused, whose code is UNUSED, not RENAMED"
+            ),
+            (
+                3,
+                Some("code"),
+                "code and id conflict: UNUSED resolves to unused_type but id column contains new_id"
+            ),
+        ]
+    );
+
+    // Another letter case is another code, so it adds a location type.
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![location_type_row([
+            "", "unused", "Lower", "1", "2", "",
+        ])]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(
+        LocationTypeRowRepository::new(&connection)
+            .find_all()
+            .unwrap()
+            .len(),
+        4
+    );
+}
+
+// covers: OMS-REG-CDIO-01.25, .26, .36, .55, .74
+
+#[actix_rt::test]
+async fn a_delete_row_removes_an_unused_location_type_only() {
+    let (connection, service_provider, dir) =
+        location_type_setup("central_data_location_type_delete").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let repo = LocationTypeRowRepository::new(&connection);
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            // A location's type, and an item's.
+            location_type_row(["location_type_a_id", "", "", "", "", "DELETE"]),
+            location_type_row(["", "freezer_location_type", "", "", "", "DELETE"]),
+            location_type_row(["", "MISSING", "", "", "", "DELETE"]),
+            location_type_row(["", "UNUSED", "Renamed", "", "", "DELETE"]),
+            location_type_row(["", "UNUSED", "", "", "", "Delete"]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("delete"),
+                "cold_location_type is used by a location, an item, an item variant or a requisition line, so it can't be deleted"
+            ),
+            (
+                3,
+                Some("delete"),
+                "freezer_location_type is used by a location, an item, an item variant or a requisition line, so it can't be deleted"
+            ),
+            (4, Some("code"), "referenced record not found"),
+            (
+                5,
+                Some("delete"),
+                "A row marked DELETE can't also change name. Clear it or put back the saved value"
+            ),
+            (
+                6,
+                Some("delete"),
+                "\"Delete\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+        ]
+    );
+    assert_eq!(repo.find_all().unwrap().len(), 3);
+
+    // As exported: every saved value kept.
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![location_type_row([
+            "unused_type",
+            "UNUSED",
+            "Unused",
+            "15",
+            "25",
+            "DELETE",
+        ])]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        summary.changes,
+        vec![RowChange {
+            sheet: "location_type".to_string(),
+            row: 2,
+            record: "Unused (UNUSED)".to_string(),
+            change: Change::Deleted,
+            fields: vec![],
+        }]
+    );
+    assert_eq!(repo.find_one_by_id("unused_type").unwrap(), None);
+}
+
+// covers: OMS-REG-CDIO-01.74
+
+#[actix_rt::test]
+async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_variant() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_location_type_delete_other_uses",
+        MockDataInserts::all(),
+    )
+    .await;
+    let dir = TempDir::new().unwrap();
+    let ctx = ServiceProvider::new(connection_manager)
+        .basic_context()
+        .unwrap();
+    let repo = LocationTypeRowRepository::new(&connection);
+    for (id, code) in [("requested_type", "REQUESTED"), ("variant_type", "VARIANT")] {
+        repo.upsert_one(&LocationTypeRow {
+            id: id.to_string(),
+            code: code.to_string(),
+            name: code.to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    }
+    RequisitionLineRowRepository::new(&connection)
+        .upsert_one(&RequisitionLineRow {
+            location_type_id: Some("requested_type".to_string()),
+            ..mock_draft_request_requisition_line()
+        })
+        .unwrap();
+    ItemVariantRowRepository::new(&connection)
+        .upsert_one(&ItemVariantRow {
+            location_type_id: Some("variant_type".to_string()),
+            ..mock_item_a_variant_1()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            location_type_row(["", "REQUESTED", "", "", "", "DELETE"]),
+            location_type_row(["", "VARIANT", "", "", "", "DELETE"]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    let in_use = |name: &str| {
+        format!(
+            "{name} is used by a location, an item, an item variant or a requisition line, so it can't be deleted"
+        )
+    };
+    assert_eq!(
+        summary
+            .errors
+            .iter()
+            .map(|e| (e.row, e.column.clone(), e.message.clone()))
+            .collect::<Vec<_>>(),
+        vec![
+            (2, Some("delete".to_string()), in_use("REQUESTED")),
+            (3, Some("delete".to_string()), in_use("VARIANT")),
+        ]
+    );
+    assert!(repo.find_one_by_id("requested_type").unwrap().is_some());
+    assert!(repo.find_one_by_id("variant_type").unwrap().is_some());
 }

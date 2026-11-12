@@ -260,6 +260,7 @@ fn store_temporary(base_dir: &str, name: &str, bytes: &[u8]) -> Result<String> {
 #[graphql(remote = "service::central_data_io::CentralDataTable")]
 pub enum CentralDataTableNode {
     Unit,
+    LocationType,
 }
 
 #[derive(InputObject)]
