@@ -178,6 +178,7 @@ afterEach(() => {
   shown.buttons = {};
   uploadFile.mockReset();
   graphqlFetch.mockReset();
+  vi.mocked(saveDocument).mockReset();
   delete shown.tabs;
   delete shown.tabList;
   delete searchParams.tab;
@@ -249,6 +250,11 @@ const refusal = (error: Record<string, unknown>) => ({
 const answer = (field: 'importPreview' | 'import', response: unknown) => ({
   kind: 'success',
   data: { centralServer: { centralData: { [field]: response } } },
+});
+
+const errorsFileAnswer = (response: unknown) => ({
+  kind: 'success',
+  data: { centralServer: { centralData: { errorsFile: response } } },
 });
 
 /** Picks a file whose preview is one updated unit; returns at the preview. */
@@ -354,16 +360,9 @@ describe('CentralDataPage import', () => {
     vi.mocked(saveDocument).mockReturnValueOnce(
       new Promise(resolve => (saved = resolve))
     );
-    graphqlFetch.mockResolvedValueOnce({
-      kind: 'success',
-      data: {
-        centralServer: {
-          centralData: {
-            errorsFile: { __typename: 'CentralDataExportNode', fileId: 'e1' },
-          },
-        },
-      },
-    });
+    graphqlFetch.mockResolvedValueOnce(
+      errorsFileAnswer({ __typename: 'CentralDataExportNode', fileId: 'e1' })
+    );
 
     shown.footer!.onDownloadErrors();
     await settle();
@@ -384,6 +383,45 @@ describe('CentralDataPage import', () => {
     render();
     expect(shown.zone).toBeDefined();
     expect(alerts()).toEqual([]);
+  });
+
+  it("saves the errors file under the upload's name, marked (errors) (OMS-REG-CDIO-01.45)", async () => {
+    await previewed();
+    vi.mocked(saveDocument).mockResolvedValueOnce({ ok: true, saved: true });
+    graphqlFetch.mockResolvedValueOnce(
+      errorsFileAnswer({ __typename: 'CentralDataExportNode', fileId: 'e1' })
+    );
+
+    shown.footer!.onDownloadErrors();
+    await settle();
+    render();
+
+    expect(saveDocument).toHaveBeenCalledWith(
+      '/files?id=e1',
+      'units (errors).xlsx'
+    );
+    expect(shown.previewCard!.preview.fileId).toBe('f1');
+    expect(alerts()).toEqual([]);
+  });
+
+  it('closes the preview and asks for the file again when the upload expired before the errors file (OMS-REG-CDIO-01.50)', async () => {
+    await previewed();
+    graphqlFetch.mockResolvedValueOnce(
+      errorsFileAnswer(
+        refusal({ __typename: 'CentralDataUploadExpired', description: '' })
+      )
+    );
+
+    shown.footer!.onDownloadErrors();
+    await settle();
+    render();
+
+    expect(saveDocument).not.toHaveBeenCalled();
+    expect(shown.previewCard).toBeUndefined();
+    expect(shown.footer).toBeUndefined();
+    expect(alerts()).toEqual([
+      ['central-data-import-error', 'error.central-data-upload-expired'],
+    ]);
   });
 
   it('imports the previewed upload, then replaces the preview with the counts (OMS-REG-CDIO-01.14, .18)', async () => {
