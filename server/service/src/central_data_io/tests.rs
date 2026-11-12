@@ -768,6 +768,44 @@ async fn a_name_in_another_letter_case_adds_a_unit() {
     assert_eq!(summary.tables, unit_changes(1, 0, 0));
 }
 
+#[actix_rt::test]
+async fn a_name_without_the_saved_names_spaces_finds_its_unit() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_lookup_padded_name",
+        MockDataInserts::none().units(),
+    )
+    .await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+    let repo = UnitRowRepository::new(&connection);
+    let padded = UnitRow {
+        id: "unit_padded".to_string(),
+        name: " Capsule ".to_string(),
+        description: None,
+        index: 3,
+        is_active: true,
+    };
+    repo.upsert_one(&padded).unwrap();
+
+    let path = write_file(
+        dir.path(),
+        unit_sheet(
+            vec!["name", "index", "is_active"],
+            vec![vec!["Capsule".to_string().into(), 4.into(), true.into()]],
+        ),
+    );
+
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables, unit_changes(0, 1, 0));
+    assert_eq!(
+        repo.find_one_by_id(&padded.id).unwrap(),
+        Some(UnitRow { index: 4, ..padded })
+    );
+    assert_eq!(units_named(&connection, "Capsule"), vec![]);
+}
+
 // covers: OMS-REG-CDIO-01.30, .33, .34
 
 #[actix_rt::test]

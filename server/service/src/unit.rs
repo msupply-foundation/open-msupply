@@ -44,10 +44,10 @@ impl UnitLookup {
         self.by_id.get(id)
     }
 
-    /// Letter case counts, as in the database.
+    /// Letter case counts, as in the database; surrounding spaces, which legacy sync can save, don't.
     pub fn by_name(&self, name: &str) -> Vec<&UnitRow> {
         self.ids_by_name
-            .get(name)
+            .get(name.trim())
             .into_iter()
             .flatten()
             .filter_map(|id| self.by_id.get(id))
@@ -55,13 +55,17 @@ impl UnitLookup {
     }
 
     fn put(&mut self, unit: UnitRow) {
-        let old_name = self.by_id.get(&unit.id).map(|old| old.name.clone());
-        if old_name.as_ref() != Some(&unit.name) {
-            if let Some(ids) = old_name.and_then(|name| self.ids_by_name.get_mut(&name)) {
+        let key = unit.name.trim();
+        let old_key = self
+            .by_id
+            .get(&unit.id)
+            .map(|old| old.name.trim().to_string());
+        if old_key.as_deref() != Some(key) {
+            if let Some(ids) = old_key.and_then(|old_key| self.ids_by_name.get_mut(&old_key)) {
                 ids.retain(|id| *id != unit.id);
             }
             self.ids_by_name
-                .entry(unit.name.clone())
+                .entry(key.to_string())
                 .or_default()
                 .push(unit.id.clone());
         }
@@ -95,7 +99,7 @@ fn validate(lookup: &UnitLookup, unit: &UnitRow) -> Result<(), UpsertUnitError> 
     let brings_in_clash = unit.is_active
         && lookup
             .by_id(&unit.id)
-            .is_none_or(|saved| !saved.is_active || saved.name != unit.name);
+            .is_none_or(|saved| !saved.is_active || saved.name.trim() != unit.name.trim());
     if !brings_in_clash {
         return Ok(());
     }
@@ -188,8 +192,23 @@ mod tests {
             upsert_unit(&connection, &unit("old", "Tab", true)),
             duplicate()
         );
+        // Surrounding spaces don't.
+        assert_eq!(
+            upsert_unit(&connection, &unit("new", " Tab ", true)),
+            duplicate()
+        );
         // Letter case counts, as it does in lookups.
         upsert_unit(&connection, &unit("new", "TAB", true)).unwrap();
+    }
+
+    #[test]
+    fn lookup_ignores_spaces_around_a_name() {
+        let mut lookup = UnitLookup::from_rows(vec![unit("a", "Tab ", true)]);
+        assert_eq!(lookup.by_name("Tab").len(), 1);
+        assert_eq!(lookup.by_name(" Tab").len(), 1);
+        // Trimming the saved name doesn't list it twice.
+        lookup.put(unit("a", "Tab", true));
+        assert_eq!(lookup.by_name("Tab").len(), 1);
     }
 
     #[actix_rt::test]
