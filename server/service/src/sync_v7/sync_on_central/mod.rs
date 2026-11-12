@@ -478,6 +478,10 @@ pub async fn pull(
     .map_err(join_error)?
 }
 
+/// The most matches a page of central's patient search is sorted from: about
+/// 300 ms for the broadest search over 8M patients (`PatientRepository::query_capped`).
+const SEARCH_MATCH_CAP: u32 = 1000;
+
 pub async fn patient_search(
     service_provider: Arc<ServiceProvider>,
     common: Common,
@@ -498,7 +502,10 @@ pub async fn patient_search(
             // pages don't overlap),
             // and no count — the remote asks for one more than it shows to
             // know whether there are more.
-            Some(limit) => PatientRepository::new(&ctx.connection).query(
+            // Central has every site's patients, so a broad search can match
+            // millions, and sorting them is the slow part: the pages only
+            // cover the first SEARCH_MATCH_CAP found (PatientRepository::query_capped).
+            Some(limit) => PatientRepository::new(&ctx.connection).query_capped(
                 Pagination {
                     limit,
                     offset: offset.unwrap_or(0),
@@ -509,6 +516,7 @@ pub async fn patient_search(
                     desc: None,
                 }),
                 None,
+                SEARCH_MATCH_CAP,
             )?,
             // A remote from before the page was added: every match, as before.
             None => {

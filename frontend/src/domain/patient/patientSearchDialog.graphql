@@ -1,9 +1,10 @@
 # Finding a patient (spec/patients S2 step ①, and the create form's duplicate
 # check; #631 spike). The `patients` list query, not `patientSearch`, because
-# each typed field is its own case-insensitive prefix filter and the date of
-# birth can be a range. Sorted by name ("last, first") and paged by the
-# caller with no total: it asks for one more than it shows, to know whether
-# there's a next page. countLimit 1 keeps the server from counting.
+# each typed field is its own filter (a name matches the start of any word,
+# ignoring case and accents) and the date of birth can be a range. Sorted by
+# name ("last, first") and paged by the caller with no total: it asks for one
+# more than it shows, to know whether there's a next page. countLimit 1 keeps
+# the server from counting.
 fragment PatientFindRow on PatientNode {
   id
   code

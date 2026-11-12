@@ -141,6 +141,10 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
                 .expect("Can't set synchronous in sqlite");
         }
 
+        // Patient name search (db_diesel/name_search.rs)
+        crate::db_diesel::name_search::register_sqlite_functions(conn)
+            .expect("Can't register search functions in sqlite");
+
         Ok(())
     }
 }
