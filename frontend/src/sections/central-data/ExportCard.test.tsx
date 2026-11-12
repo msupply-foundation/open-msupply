@@ -56,6 +56,7 @@ interface CheckboxProps {
 interface TextFieldProps {
   'data-testid': string;
   value: string;
+  placeholder?: string;
   disabled: boolean;
   onInput: (event: { currentTarget: { value: string } }) => void;
 }
@@ -233,6 +234,23 @@ describe('ExportCard', () => {
     expect(shown.fields['central-data-export-unit-search']!.disabled).toBe(
       false
     );
+  });
+
+  it('gives location types a code-or-name search and no Status filter (OMS-REG-CDIO-01.46)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-location_type-search']!.placeholder
+    ).toBe('label.code-or-name-contains');
+    // A dash in place of the Status select.
+    expect(shown.selects['central-data-export-location_type-status']).toBe(
+      undefined
+    );
+
+    shown.checkboxes['central-data-export-location_type']!.onChange(true);
+    await settle();
+    expect(countRequests()).toEqual([
+      { tables: [{ table: 'LOCATION_TYPE', contains: null, isActive: null }] },
+    ]);
   });
 
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {

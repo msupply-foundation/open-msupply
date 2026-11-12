@@ -1782,8 +1782,16 @@ export type CentralDataTableChangesNode = {
 };
 
 export enum CentralDataTableNode {
+  LocationType = 'LOCATION_TYPE',
   Unit = 'UNIT',
 }
+
+export type CentralDataTooManyCells = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataTooManyCells';
+  cellCount: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  maxCells: Scalars['Int']['output'];
+};
 
 export type CentralDataTooManyRows = CentralDataExportErrorInterface &
   CentralDataImportErrorInterface & {

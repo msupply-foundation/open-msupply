@@ -34,6 +34,13 @@ export const TABLES: {
     searchKey: 'label.name-contains',
     hasStatus: true,
   },
+  {
+    value: 'LOCATION_TYPE',
+    labelKey: 'label.location-types',
+    sheet: 'location_type',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: false,
+  },
 ];
 
 /** `undefined` for a table this screen doesn't know yet. */
