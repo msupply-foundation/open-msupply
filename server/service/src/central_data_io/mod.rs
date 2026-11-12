@@ -545,7 +545,9 @@ fn check_headers(table: &dyn ImportTable, sheet: &sheet::Sheet) -> Vec<RowError>
                 format!(
                     "Unknown column. The {} sheet can have: {}",
                     sheet.name,
-                    table.columns().join(", ")
+                    [table.columns(), table.export_only_columns()]
+                        .concat()
+                        .join(", ")
                 ),
             ));
         } else if sheet.headers[..position].contains(header) {
@@ -680,6 +682,9 @@ mod no_table_tests {
         fn text_columns(&self) -> &'static [&'static str] {
             &[]
         }
+        fn export_only_columns(&self) -> &'static [&'static str] {
+            &["created_date"]
+        }
         fn export(
             &self,
             _: &StorageConnection,
@@ -737,7 +742,8 @@ mod no_table_tests {
                 (
                     2,
                     Some("nmae".to_string()),
-                    "Unknown column. The notes sheet can have: code, name".to_string()
+                    "Unknown column. The notes sheet can have: code, name, created_date"
+                        .to_string()
                 ),
                 // Excel's letter: the sheet starts in column C.
                 (2, None, "Column E has values but no heading".to_string()),
