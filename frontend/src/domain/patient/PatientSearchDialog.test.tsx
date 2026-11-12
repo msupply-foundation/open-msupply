@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The patient search (spec/patients S2 step ①; cases OMS-REG-DIS-01 `.55`–
- * `.58`, `.61`, `.66`, `.69`, `.70`, `.73`, `.74`). The dialog's own logic
+ * `.58`, `.61`, `.69`, `.70`, `.73`, `.74`). The dialog's own logic
  * runs for real — the debounce (on fake timers), the token checks, when other
  * facilities are asked and
  * what New patient hands on. The library components are stand-ins that keep
@@ -531,6 +531,24 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
     expect(centralRows()).toEqual(['c1']);
   });
 
+  it('says when central was reached but too slow to answer, and pauses it the same', async () => {
+    findPatients.mockResolvedValue(here([]));
+    findCentralPatients.mockResolvedValue({ kind: 'slow' });
+    mount();
+    type('lastName', 'Smith');
+    await pause();
+    expect(centralWarning()).toBe(true);
+    expect(texts()).toContain('messages.central-slow');
+    expect(texts()).not.toContain('messages.failed-to-reach-central');
+    expect(buttonLabelled('button.retry')).toBeDefined();
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    type('lastName', 'Smyth');
+    await pause();
+    expect(findCentralPatients).toHaveBeenCalledOnce();
+    expect(texts()).toContain('messages.other-facilities-skipped-slow');
+  });
+
   it('skips asking again within a minute, saying so with a Search other facilities button (.70)', async () => {
     findPatients.mockResolvedValue(here([]));
     findCentralPatients.mockResolvedValue({ kind: 'unreachable' });
@@ -642,7 +660,7 @@ describe('OMS-REG-DIS-01.69 — the other-facilities results across a new search
   });
 });
 
-describe('OMS-REG-DIS-01.61 / .66 — New patient starts the form from the search', () => {
+describe('OMS-REG-DIS-01.61 — New patient starts the form from the search', () => {
   it('hands on the typed names, trimmed, and a full date of birth', async () => {
     findPatients.mockResolvedValue(here([row('a')]));
     const { onCreatePatient } = mount();
@@ -654,7 +672,6 @@ describe('OMS-REG-DIS-01.61 / .66 — New patient starts the form from the searc
       lastName: 'Smith',
       firstName: 'Jo',
       dateOfBirth: '1984-03-14',
-      centralChecked: undefined,
     });
   });
 
@@ -663,35 +680,6 @@ describe('OMS-REG-DIS-01.61 / .66 — New patient starts the form from the searc
     type('dateOfBirth', '3/1984');
     button('create-patient-button')?.onClick();
     expect(onCreatePatient.mock.calls[0][0].dateOfBirth).toBeNull();
-  });
-
-  it('hands on other facilities’ results for the names now searched (.66)', async () => {
-    findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([row('c1')]));
-    const { onCreatePatient } = mount();
-    type('lastName', 'Smith');
-    type('firstName', 'Élodie');
-    await pause();
-    button('nothing-here-create-button')?.onClick();
-    expect(onCreatePatient.mock.calls[0][0].centralChecked).toEqual({
-      forNames: 'elodie|smith',
-      rows: [expect.objectContaining({ id: 'c1' })],
-    });
-  });
-
-  it('hands on none left from an earlier search', async () => {
-    findPatients.mockResolvedValueOnce(here([]));
-    findCentralPatients.mockResolvedValueOnce(ok([row('c1')]));
-    const { onCreatePatient } = mount();
-    type('lastName', 'Smith');
-    await pause();
-    // A new search is running; other facilities' rows are still for Smith.
-    findPatients.mockReturnValueOnce(deferred<FindResult>().promise);
-    type('lastName', 'Smyth');
-    await pause();
-    expect(otherFacilitiesShown()).toBe(true);
-    button('create-patient-button')?.onClick();
-    expect(onCreatePatient.mock.calls[0][0].centralChecked).toBeUndefined();
   });
 
   it('is not offered when the caller gives no create action', () => {

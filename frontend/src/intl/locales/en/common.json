@@ -4259,6 +4259,8 @@
   "messages.existing-patients-with-name_other": "{{count}} existing patients with this name",
   "messages.existing-patients-likely": "{{count}} likely",
   "messages.other-facilities-skipped": "Other facilities weren't searched: the central server couldn't be reached a moment ago.",
+  "messages.other-facilities-skipped-slow": "Other facilities weren't searched: the central server was too slow to answer a moment ago.",
+  "messages.central-slow": "The central server is taking too long to answer.",
   "messages.none-at-this-store": "None at this store.",
   "messages.checking-other-facilities": "Checking other facilities…",
   "messages.none-here-checking-other-facilities": "None at this store. Checking other facilities…",

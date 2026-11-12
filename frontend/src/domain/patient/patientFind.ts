@@ -100,6 +100,7 @@ export const findPatients = async (
 export type CentralFind =
   | { kind: 'ok'; rows: PatientFindRow[]; more: boolean }
   | { kind: 'unreachable' }
+  | { kind: 'slow' }
   | { kind: 'failed' };
 
 /**

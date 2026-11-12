@@ -1,4 +1,4 @@
-import { createUniqueId, Show, type JSX } from 'solid-js';
+import { children, createUniqueId, Show, type JSX } from 'solid-js';
 import { SearchIcon } from '../../icons';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './PickerField.module.css';
@@ -35,6 +35,9 @@ export interface PickerFieldProps {
  */
 export const PickerField = (props: PickerFieldProps): JSX.Element => {
   const labelId = createUniqueId();
+  // Resolved once: the owner often passes its own <Show>, which may render
+  // nothing, and then the wrapper shouldn't render either.
+  const endAction = children(() => props.endAction);
   return (
     <div class={styles.field} data-size={props.size ?? 'default'}>
       <Show when={!props.hideLabel}>
@@ -68,8 +71,8 @@ export const PickerField = (props: PickerFieldProps): JSX.Element => {
             {props.value || props.placeholder}
           </span>
         </button>
-        <Show when={props.endAction}>
-          <span class={styles.endAction}>{props.endAction}</span>
+        <Show when={endAction.toArray().length > 0}>
+          <span class={styles.endAction}>{endAction()}</span>
         </Show>
       </div>
     </div>

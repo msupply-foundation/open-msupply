@@ -1,4 +1,4 @@
-import { createRoot, createSignal } from 'solid-js';
+import { createRoot, createSignal, Show } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
@@ -296,6 +296,19 @@ describe('OMS-REG-DIS-01.80 — the end action (the patient field’s pencil)', 
       .all()
       .filter(el => el.tagName === 'span' && !button().all().includes(el));
     // Only the label.
+    expect(spans.map(s => s.textContent)).toEqual(['Patient']);
+  });
+
+  // The patient field passes its pencil inside its own <Show>.
+  it('renders no end action slot when the end action renders nothing', () => {
+    const { field, button } = mount({
+      get endAction() {
+        return <Show when={false}>pencil</Show>;
+      },
+    });
+    const spans = field
+      .all()
+      .filter(el => el.tagName === 'span' && !button().all().includes(el));
     expect(spans.map(s => s.textContent)).toEqual(['Patient']);
   });
 });

@@ -37,9 +37,16 @@ export interface PatientDetailsFormProps {
    * cannot follow the form onto the next patient.
    */
   patientId?: string;
+  /**
+   * Set where the draft fills in after the form mounts (the Details tab, the
+   * edit dialog): the patient the draft holds, undefined until it holds one.
+   * Code 2's visibility is decided from the draft once it does, not from the
+   * empty draft before.
+   */
+  seededId?: string;
 }
 
-// The plain-path (built-in) patient form (spec/patients S3 Details; S2 step ③),
+// The plain-path (built-in) patient form (spec/patients S3 Details; S2 step ②),
 // shared by the create form and the detail Details tab. The
 // field set is FIXED here; on the document path the Details tab renders the
 // patient document's form instead (domain/patient/documentFields.tsx, or a
@@ -54,7 +61,7 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
   const errorFor = (id: string) => props.errorFor?.(id);
 
   const showCode2 = createShowCode2(
-    () => props.patientId,
+    () => ('seededId' in props ? props.seededId : props.patientId),
     () => props.draft.code2
   );
   return (

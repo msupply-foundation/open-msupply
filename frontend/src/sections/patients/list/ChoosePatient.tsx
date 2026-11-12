@@ -38,6 +38,9 @@ export const ChoosePatient = (props: ChoosePatientProps): JSX.Element => {
   const [createOpen, setCreateOpen] = createSignal(false);
   const [seed, setSeed] = createSignal<NewPatientSeed>();
   const [error, setError] = createSignal<string>();
+  // Acting on a patient the create form made (Save & dispense): the search
+  // shows again meanwhile, and mustn't start a second record.
+  const [finishing, setFinishing] = createSignal(false);
 
   const chosen = async (patient: {
     id: string;
@@ -61,6 +64,7 @@ export const ChoosePatient = (props: ChoosePatientProps): JSX.Element => {
         showRecent={props.showRecent}
         changingFrom={props.changingFrom}
         error={error()}
+        busy={finishing()}
         onClose={() => {
           setError(undefined);
           props.onClose();
@@ -82,8 +86,13 @@ export const ChoosePatient = (props: ChoosePatientProps): JSX.Element => {
           props.onChosen &&
           (async created => {
             setCreateOpen(false);
-            const message = await chosen(created);
-            if (message) setError(message);
+            setFinishing(true);
+            try {
+              const message = await chosen(created);
+              if (message) setError(message);
+            } finally {
+              setFinishing(false);
+            }
           })
         }
         onChooseExisting={

@@ -25,10 +25,12 @@ export type CentralPatient = Extract<
 // A decoded central outcome. `unreachable` is the ONE patient error the app
 // decodes and surfaces (the typed ConnectionError — spec/patients
 // OMS-REG-DIS-01.41); `failed` means a transport/unexpected error the global
-// modal already showed.
+// modal already showed. A search can also be `slow`: central was reached but
+// didn't answer in time (CentralServerNoAnswer).
 export type CentralSearchOutcome =
   | { kind: 'ok'; nodes: CentralPatient[] }
   | { kind: 'unreachable'; message: string }
+  | { kind: 'slow' }
   | { kind: 'failed' };
 
 export type LinkOutcome =
@@ -127,7 +129,9 @@ export const searchCentralPatients = async (
   if (result.kind !== 'success') return { kind: 'failed' };
   const res = result.data.centralPatientSearch;
   if (res.__typename === 'CentralPatientSearchError')
-    return { kind: 'unreachable', message: res.error.description };
+    return res.error.__typename === 'CentralServerNoAnswer'
+      ? { kind: 'slow' }
+      : { kind: 'unreachable', message: res.error.description };
   return { kind: 'ok', nodes: res.nodes };
 };
 

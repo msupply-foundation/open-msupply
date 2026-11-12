@@ -27,13 +27,11 @@ import {
   findPatients,
   fold,
   hasTerms,
-  namesKey,
   recentPatients,
   type FindTerms,
   type PatientFindRow,
 } from './patientFind';
 import { patientFindColumns } from './patientFindColumns';
-import { type CentralChecked } from './duplicateCheck';
 import styles from './PatientSearchDialog.module.css';
 
 // What the user has typed, one entry per search field. Date of birth is text:
@@ -66,14 +64,15 @@ type LocalState =
 
 // Other facilities: searched automatically when nothing matches here, else on
 // request. They're the central server, which can be slow or out of reach.
-// `unreachable` with `skipped`: not asked, as it was out of reach moments ago.
+// `unreachable` with `skipped`: not asked, as it was out of reach moments ago;
+// `slow`: it was reached but didn't answer in time, which pauses it the same.
 type CentralState =
   | { kind: 'idle' }
   | { kind: 'searching'; previous?: Page }
   // `terms`: what this page was searched for — a new search keeps it on
   // screen until this store's results decide whether it goes.
   | ({ kind: 'done'; terms: FindTerms } & Page)
-  | { kind: 'unreachable'; previous?: Page; skipped?: boolean };
+  | { kind: 'unreachable'; previous?: Page; skipped?: boolean; slow?: boolean };
 
 // After central is out of reach, searches stop asking it by themselves for this
 // long (each try can take seconds to fail); Retry or the button still ask.
@@ -97,11 +96,6 @@ export type NewPatientSeed = {
   lastName: string;
   firstName: string;
   dateOfBirth: string | null;
-  /**
-   * What other facilities returned for the names searched, if they were
-   * asked, so the form's duplicate check doesn't ask them again.
-   */
-  centralChecked?: CentralChecked;
 };
 
 export interface PatientSearchDialogProps {
@@ -123,6 +117,11 @@ export interface PatientSearchDialogProps {
   changingFrom?: string;
   /** A failure from the caller's own action (e.g. after creating a patient). */
   error?: string;
+  /**
+   * The caller is acting on a patient chosen elsewhere (one just created):
+   * the dialog holds still, as while choosing, until it's done.
+   */
+  busy?: boolean;
 }
 
 /**
@@ -148,6 +147,8 @@ export const PatientSearchDialog = (
   let centralToken = 0;
   // When central was last found out of reach; 0 once it answers.
   let centralDownAt = 0;
+  // Whether that was central answering too slowly rather than out of reach.
+  let centralSlow = false;
 
   const dob = () => parseDobSearch(fields.dateOfBirth, localeDateFormat());
   const dobError = () =>
@@ -162,14 +163,16 @@ export const PatientSearchDialog = (
     };
   };
 
-  const busy = () => choosing() || link().kind === 'linking';
+  const busy = () => !!props.busy || choosing() || link().kind === 'linking';
 
   const searchOtherFacilities = async (forTerms: FindTerms, offset = 0) => {
     const token = ++centralToken;
     setCentral({ kind: 'searching', previous: pageOf(central()) });
     const outcome = await findCentralPatients(props.storeId, forTerms, offset);
     if (token !== centralToken) return;
-    centralDownAt = outcome.kind === 'unreachable' ? Date.now() : 0;
+    const down = outcome.kind === 'unreachable' || outcome.kind === 'slow';
+    centralDownAt = down ? Date.now() : 0;
+    centralSlow = outcome.kind === 'slow';
     if (outcome.kind === 'ok')
       setCentral({
         kind: 'done',
@@ -178,8 +181,12 @@ export const PatientSearchDialog = (
         offset,
         more: outcome.more,
       });
-    else if (outcome.kind === 'unreachable')
-      setCentral({ kind: 'unreachable', previous: pageOf(central()) });
+    else if (down)
+      setCentral({
+        kind: 'unreachable',
+        previous: pageOf(central()),
+        slow: centralSlow,
+      });
     else setCentral({ kind: 'idle' });
   };
 
@@ -222,7 +229,7 @@ export const PatientSearchDialog = (
     }
     if (rows.length === 0 && !isCentralServer()) {
       if (Date.now() - centralDownAt < CENTRAL_PAUSE_MS)
-        setCentral({ kind: 'unreachable', skipped: true });
+        setCentral({ kind: 'unreachable', skipped: true, slow: centralSlow });
       else void searchOtherFacilities(forTerms);
     }
   };
@@ -315,25 +322,26 @@ export const PatientSearchDialog = (
 
   const createPatient = () => {
     const parsed = dob();
-    const c = central();
-    const s = searched();
     props.onCreatePatient?.({
       lastName: fields.lastName.trim(),
       firstName: fields.firstName.trim(),
       dateOfBirth:
         parsed && parsed !== 'invalid' && parsed.exact ? parsed.from : null,
-      // Only results for what's searched now, not ones left from before.
-      centralChecked:
-        c.kind === 'done' && c.terms === s
-          ? {
-              forNames: namesKey(c.terms.firstName, c.terms.lastName),
-              rows: c.rows,
-            }
-          : undefined,
     });
   };
 
   const localRows = () => pageOf(local())?.rows ?? [];
+  const centralMessage = () => {
+    const c = central();
+    if (c.kind !== 'unreachable') return '';
+    if (c.slow)
+      return c.skipped
+        ? t('messages.other-facilities-skipped-slow')
+        : t('messages.central-slow');
+    return c.skipped
+      ? t('messages.other-facilities-skipped')
+      : t('messages.failed-to-reach-central');
+  };
   const skippedCentral = () => {
     const c = central();
     return c.kind === 'unreachable' && c.skipped === true;
@@ -599,11 +607,7 @@ export const PatientSearchDialog = (
             <Show when={central().kind === 'unreachable'}>
               <Alert severity="warning" testId="central-search-error">
                 <HStack gap="md" align="center" wrap>
-                  <span>
-                    {skippedCentral()
-                      ? t('messages.other-facilities-skipped')
-                      : t('messages.failed-to-reach-central')}
-                  </span>
+                  <span>{centralMessage()}</span>
                   <Button
                     variant="secondary"
                     size="small"

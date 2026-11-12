@@ -32,7 +32,7 @@ import { ageFromDob, ageMonthsAndDays, dobFromAge } from './age';
 import fieldAction from '../documentForm/FieldAction.module.css';
 
 /*
- * The patient form's controls (spec/patients S3 Details; S2 step ③), each over
+ * The patient form's controls (spec/patients S3 Details; S2 step ②), each over
  * a value and a change callback so that both of the host's patient forms
  * share one implementation: the plain-path form over its own field bag
  * (sections/patients/detail/PatientDetailsForm.tsx), and the document-path

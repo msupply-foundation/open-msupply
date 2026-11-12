@@ -87,4 +87,14 @@ describe('OMS-REG-DIS-01.76 — Code 2 shows only for a patient who had one when
     setPatientId('p3');
     expect(shown()).toBe(false);
   });
+
+  // The Details tab and the edit dialog key on the patient the draft was
+  // seeded from, which is unset until the read lands and fills the draft.
+  it('decides from the seeded draft, not the empty one before it', () => {
+    const { shown, setPatientId, setValue } = mount(undefined, '');
+    expect(shown()).toBe(false);
+    setValue('N-1');
+    setPatientId('p1');
+    expect(shown()).toBe(true);
+  });
 });

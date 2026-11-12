@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The create form's code starts out generated, once per opening, on whichever
- * form is showing (spec/patients § generating a code; S2 step ③). The modal's
+ * form is showing (spec/patients § generating a code; S2 step ②). The modal's
  * own effect runs for real; the code generator, the Patient registry read and
  * both forms are stand-ins: the plain-path form keeps the props it was given
  * (its draft, and setField to type a code), and the document path's editor is

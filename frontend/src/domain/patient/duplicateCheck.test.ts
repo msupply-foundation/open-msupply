@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The create form's duplicate check (spec/patients S2 › the duplicate check;
- * cases OMS-REG-DIS-01 `.62`–`.64`, `.66`, `.72`, `.76`). The two searches it
+ * cases OMS-REG-DIS-01 `.62`–`.64`, `.72`, `.76`). The two searches it
  * asks — this store's and other facilities' — are mocked, each answering when
  * the test
  * says so; the keying, merging and ordering run for real.
@@ -20,11 +20,7 @@ vi.mock('./patientFind', async importOriginal => ({
   findCentralPatients: (...args: unknown[]) => findCentralPatients(...args),
 }));
 
-import {
-  createDuplicateCheck,
-  type CentralChecked,
-  type DuplicateTerms,
-} from './duplicateCheck';
+import { createDuplicateCheck, type DuplicateTerms } from './duplicateCheck';
 import type { CentralFind, FindResult, PatientFindRow } from './patientFind';
 
 let dispose: (() => void) | undefined;
@@ -68,10 +64,7 @@ const ok = (rows: PatientFindRow[]): CentralFind => ({
   more: false,
 });
 
-const mount = (
-  initial: Partial<DuplicateTerms>,
-  centralChecked?: CentralChecked
-) => {
+const mount = (initial: Partial<DuplicateTerms>) => {
   let terms: DuplicateTerms = {
     firstName: '',
     lastName: '',
@@ -84,7 +77,6 @@ const mount = (
     return createDuplicateCheck({
       storeId: () => 'store',
       terms: () => terms,
-      centralChecked: () => centralChecked,
     });
   });
   const setTerms = (more: Partial<DuplicateTerms>) => {
@@ -227,7 +219,9 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
     expect(done(check)?.matches.map(m => m.id)).toEqual(['a']);
   });
 
-  it('treats a central request that failed outright as done (handled globally)', async () => {
+  // The failure itself is reported globally; the footer mustn't then claim
+  // there are no existing patients.
+  it('marks other facilities failed when the central request fails outright', async () => {
     findPatients.mockResolvedValue(here([]));
     findCentralPatients.mockResolvedValue({ kind: 'failed' });
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
@@ -235,7 +229,7 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
     expect(done(check)).toEqual({
       status: 'done',
       matches: [],
-      central: 'done',
+      central: 'failed',
     });
   });
 
@@ -257,45 +251,6 @@ describe('OMS-REG-DIS-01.57 — on the central server, other facilities are neve
     expect(findCentralPatients).not.toHaveBeenCalled();
     expect(done(check)?.central).toBe('done');
     expect(done(check)?.matches.map(m => m.id)).toEqual(['a']);
-  });
-});
-
-describe('OMS-REG-DIS-01.66 — names the search already asked other facilities about', () => {
-  it('reuses the search’s results and asks central nothing', async () => {
-    findPatients.mockResolvedValue(here([row('a')]));
-    const { check } = mount(
-      { firstName: 'Jo', lastName: 'Smith' },
-      { forNames: 'jo|smith', rows: [row('a'), row('c')] }
-    );
-    await check.run();
-    expect(findCentralPatients).not.toHaveBeenCalled();
-    expect(done(check)?.central).toBe('done');
-    expect(done(check)?.matches.map(m => [m.id, m.where])).toEqual([
-      ['a', 'here'],
-      ['c', 'elsewhere'],
-    ]);
-  });
-
-  it('matches the searched names without case or accents', async () => {
-    findPatients.mockResolvedValue(here([]));
-    const { check } = mount(
-      { firstName: 'JO', lastName: 'Smîth' },
-      { forNames: 'jo|smith', rows: [] }
-    );
-    await check.run();
-    expect(findCentralPatients).not.toHaveBeenCalled();
-  });
-
-  it('asks central again once the names differ from the searched ones', async () => {
-    findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([row('z')]));
-    const { check } = mount(
-      { firstName: 'Joe', lastName: 'Smith' },
-      { forNames: 'jo|smith', rows: [row('c')] }
-    );
-    await check.run();
-    expect(findCentralPatients).toHaveBeenCalledOnce();
-    expect(done(check)?.matches.map(m => m.id)).toEqual(['z']);
   });
 });
 

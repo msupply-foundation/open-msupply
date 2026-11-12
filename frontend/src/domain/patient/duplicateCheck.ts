@@ -40,9 +40,6 @@ export type DuplicateState =
       central: 'pending' | 'done' | 'failed';
     };
 
-/** Other facilities' results the patient search already has for some names. */
-export type CentralChecked = { forNames: string; rows: PatientFindRow[] };
-
 const MIN_LETTERS = 2;
 
 const likelyReasons = (
@@ -64,8 +61,6 @@ const likelyReasons = (
 export const createDuplicateCheck = (options: {
   storeId: () => string;
   terms: () => DuplicateTerms;
-  /** Skip asking other facilities again for names the search asked them. */
-  centralChecked: () => CentralChecked | undefined;
 }) => {
   const [state, setState] = createSignal<DuplicateState>({ status: 'off' });
   // What was last checked: the names without case or accents, the birth year
@@ -95,17 +90,14 @@ export const createDuplicateCheck = (options: {
     const mine = ++token;
     setState({ status: 'checking' });
 
-    const checked = options.centralChecked();
-    const reuseCentral = checked?.forNames === names;
     const nameTerms = {
       lastName: terms.lastName,
       firstName: terms.firstName,
       id: '',
     };
-    const centralRequest =
-      isCentralServer() || reuseCentral
-        ? undefined
-        : findCentralPatients(options.storeId(), nameTerms);
+    const centralRequest = isCentralServer()
+      ? undefined
+      : findCentralPatients(options.storeId(), nameTerms);
 
     const local = await findPatients(options.storeId(), nameTerms);
     if (mine !== token) return;
@@ -134,13 +126,14 @@ export const createDuplicateCheck = (options: {
       setState({ status: 'done', matches, central });
     };
 
-    if (!centralRequest)
-      return show(reuseCentral ? (checked?.rows ?? []) : [], 'done');
+    if (!centralRequest) return show([], 'done');
     show([], 'pending');
     const central = await centralRequest;
     if (mine !== token) return;
+    // Anything but an answer means other facilities weren't checked, so it
+    // never reads as "no existing patients".
     if (central.kind === 'ok') show(central.rows, 'done');
-    else show([], central.kind === 'unreachable' ? 'failed' : 'done');
+    else show([], 'failed');
   };
 
   const reset = () => {

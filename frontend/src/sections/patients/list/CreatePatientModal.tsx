@@ -265,7 +265,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         nationalId: data?.code2 ?? '',
       };
     },
-    centralChecked: () => props.seed?.centralChecked,
   });
 
   // The code starts out generated, once per opening, on whichever form is
@@ -440,14 +439,19 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   );
 
   // The footer's one line (spec/patients S2 › the duplicate check).
-  const duplicateLine = () => {
+  // Built once: the state is read only inside the conditions below, so a
+  // change (other facilities answering) updates the line in place and the
+  // Review and Retry buttons keep their focus.
+  const doneState = createMemo(() => {
     const state = duplicates.state();
-    if (state.status === 'off') return undefined;
-    return (
+    return state.status === 'done' ? state : undefined;
+  });
+  const duplicateLine = (
+    <Show when={duplicates.state().status !== 'off'}>
       <HStack gap="sm" align="center" wrap data-testid="duplicate-check">
         <span role="status" aria-live="polite">
           <Switch>
-            <Match when={state.status === 'checking'}>
+            <Match when={duplicates.state().status === 'checking'}>
               <HStack
                 gap="sm"
                 align="center"
@@ -459,7 +463,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 </Text>
               </HStack>
             </Match>
-            <Match when={state.status === 'done' && state}>
+            <Match when={doneState()}>
               {done => (
                 <Show
                   when={done().matches.length > 0}
@@ -557,7 +561,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             </Match>
           </Switch>
         </span>
-        <Show when={state.status === 'done' && state.central === 'failed'}>
+        <Show when={doneState()?.central === 'failed'}>
           <HStack
             gap="sm"
             align="center"
@@ -578,8 +582,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           </HStack>
         </Show>
       </HStack>
-    );
-  };
+    </Show>
+  );
 
   const matches = () => {
     const state = duplicates.state();
@@ -632,7 +636,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       onClose={props.onClose}
       width="form"
       minBodyHeightRem={34}
-      actionsLead={duplicateLine()}
+      actionsLead={duplicateLine}
       actions={actions()}
     >
       <Show when={formError() ?? chooseError()}>
