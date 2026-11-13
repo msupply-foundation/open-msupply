@@ -18,7 +18,7 @@ import {
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { sameFetchedValue } from '@/typeHelpers';
-import { t } from '@/intl';
+import { locale, t } from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
 import { fetchPatientOptionById, type PatientOption } from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
@@ -39,7 +39,6 @@ import {
   SimpleDispense,
   SimpleDispensedVisit,
 } from './simpleDispense.generated';
-import { ReducedStockDialog } from './ReducedStockDialog';
 import { AmountDialog } from './AmountDialog';
 import {
   addAmount,
@@ -47,16 +46,15 @@ import {
   dispenseInput,
   dispenseOutcome,
   medicinesFor,
-  reduceToAvailable,
   removeLine,
   setAmount,
-  shortfalls,
+  shortLines,
+  stockAtCheck,
   unitsListed,
   visitWasSaved,
   type CardItem,
   type ListLine,
   type MedicineCard,
-  type Shortfall,
 } from './simpleDispensingLogic';
 import { MedicineCardView } from './MedicineCard';
 import { DispensingList } from './DispensingList';
@@ -139,9 +137,16 @@ const SimpleDispensingPage: Component = () => {
     { equals: sameFetchedValue }
   );
 
+  // The list's medicines as Dispense's last check found them (rules ›
+  // dispensing the visit): until the visit is dispensed, the stock the screen
+  // shows for them, so the cards, prices and short lines all agree with it.
+  const [checked, setChecked] = createSignal<MedicineCard[]>([]);
+
   const cardOf = (itemId: string) =>
+    checked().find(card => card.item.id === itemId) ??
     cards()?.find(card => card.item.id === itemId) ??
     searched().find(card => card.item.id === itemId);
+  const stockOf = (itemId: string) => cardOf(itemId)?.stock ?? 0;
 
   // Who the visit is for (rules › who it's for and the list): nothing can be
   // added until someone is chosen, and choosing someone else keeps the list.
@@ -159,11 +164,13 @@ const SimpleDispensingPage: Component = () => {
   const [lines, setLines] = createStore<ListLine[]>([]);
   const update = (next: ListLine[]) =>
     setLines(reconcile(next, { key: 'itemId' }));
+  // Below zero once the check finds less stock than the list holds: the card
+  // then says how much it is short.
   const available = (card: MedicineCard) =>
-    round9(card.stock - unitsListed(lines, card.item.id));
+    round9(stockOf(card.item.id) - unitsListed(lines, card.item.id));
   const addToList = (card: MedicineCard, units: number) => {
     setNotice(undefined);
-    update(addAmount(lines, card.item.id, units, card.stock));
+    update(addAmount(lines, card.item.id, units, stockOf(card.item.id)));
   };
 
   // The amount box (ui-surface S9): the medicine it is open for, from a
@@ -186,15 +193,12 @@ const SimpleDispensingPage: Component = () => {
   // bar at the bottom of the screen. Which layout renders, not spacing.
   const isPhone = useIsCompact();
 
-  // Dispense (rules › dispensing the visit): check the stock again, show
-  // what has to be reduced if anything ran out, then save the whole visit in
+  // Dispense (rules › dispensing the visit): check the stock again, stop with
+  // the short lines marked if anything ran out, else save the whole visit in
   // one transaction and clear the screen for the next person.
   const [dispensing, setDispensing] = createSignal(false);
   const [notice, setNotice] = createSignal<
     { severity: 'success' | 'error'; text: string } | undefined
-  >();
-  const [review, setReview] = createSignal<
-    { short: Shortfall[]; fresh: MedicineCard[] } | undefined
   >();
   // The visit's record id, from its first save until it is saved or the list
   // is cleared: a save repeated after a lost reply reuses it, so the visit
@@ -234,6 +238,7 @@ const SimpleDispensingPage: Component = () => {
   const finished = (who: PatientOption): void => {
     visitId = undefined;
     setUnconfirmed(false);
+    setChecked([]);
     update([]);
     setPatient(null);
     setSearchedIds([]);
@@ -278,11 +283,13 @@ const SimpleDispensingPage: Component = () => {
     const listed = lines.map(line => ({ ...line }));
     const fresh = await freshCards(listed);
     if (!fresh) return failed();
-    const short = shortfalls(listed, fresh);
-    if (short.length > 0) {
-      setReview({ short, fresh });
-      return;
-    }
+    // The stock as it now is becomes the screen's. A short line is left as it
+    // is, and says so: staff choose, then press Dispense again.
+    const now = stockAtCheck(listed, fresh, cardOf);
+    setChecked(now);
+    const stockNow = (itemId: string) =>
+      now.find(card => card.item.id === itemId)?.stock ?? 0;
+    if (shortLines(listed, stockNow).length > 0) return;
     const id = (visitId ??= generateUUID());
     const input = dispenseInput(id, who.id, listed, fresh, generateUUID);
     // Background: a lost reply is this screen's to explain (its notice, and
@@ -316,7 +323,7 @@ const SimpleDispensingPage: Component = () => {
       if (saved) return finished(who);
     }
     // The stock moved between the check and the save: nothing was saved, so
-    // check again (once) and show what has to be reduced.
+    // check again (once), which marks the short lines.
     if (outcome === 'line-refused')
       return retried ? failed() : checkAndSave(true);
     // Refused, so nothing was saved. Missing permission gets the app's own
@@ -336,14 +343,21 @@ const SimpleDispensingPage: Component = () => {
     }
   };
 
-  /** Bring the short lines down to what is available, or remove them. */
-  const applyReview = (): void => {
-    const pending = review();
-    if (!pending) return;
-    update(reduceToAvailable(lines, pending.short));
-    setReview(undefined);
-    // The cards follow the stock as it now is.
-    void refetchItems();
+  // Lines holding more than the stock now shows, and while there are any (and
+  // Dispense isn't checking again), the notice that the visit wasn't
+  // dispensed, naming each of them.
+  const short = () => shortLines(lines, stockOf);
+  const shownNotice = () => {
+    const names = short().map(line => cardOf(line.itemId)?.item.name ?? '');
+    if (names.length === 0 || dispensing()) return notice();
+    return {
+      severity: 'warning' as const,
+      text: t('messages.not-dispensed-short', {
+        items: new Intl.ListFormat(locale(), { type: 'conjunction' }).format(
+          names
+        ),
+      }),
+    };
   };
 
   const standardView = (variant: 'secondary' | 'ghost') => (
@@ -466,9 +480,7 @@ const SimpleDispensingPage: Component = () => {
                 lines={lines}
                 cardOf={cardOf}
                 onAmount={(itemId, units) =>
-                  update(
-                    setAmount(lines, itemId, units, cardOf(itemId)?.stock ?? 0)
-                  )
+                  update(setAmount(lines, itemId, units, stockOf(itemId)))
                 }
                 onRemove={itemId => update(removeLine(lines, itemId))}
                 onClear={() => {
@@ -479,7 +491,7 @@ const SimpleDispensingPage: Component = () => {
                 canDispense={patient() !== null}
                 dispensing={dispensing()}
                 locked={locked()}
-                notice={notice()}
+                notice={shownNotice()}
               />
             </div>
           )}
@@ -500,20 +512,6 @@ const SimpleDispensingPage: Component = () => {
               closeAmount();
             }}
             onClose={closeAmount}
-          />
-        )}
-      </Show>
-      <Show when={review()}>
-        {pending => (
-          <ReducedStockDialog
-            short={pending().short}
-            cardOf={cardOf}
-            canDispense={reduceToAvailable(lines, pending().short).length > 0}
-            onGoBack={applyReview}
-            onDispense={() => {
-              applyReview();
-              void dispense();
-            }}
           />
         )}
       </Show>

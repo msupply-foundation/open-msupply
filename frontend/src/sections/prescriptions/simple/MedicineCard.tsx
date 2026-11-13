@@ -22,7 +22,10 @@ import styles from './SimpleDispensing.module.css';
  */
 export const MedicineCardView = (props: {
   card: MedicineCard;
-  /** Units still available: the card's stock less what the list holds. */
+  /**
+   * Units still available: the card's stock less what the list holds. Below
+   * zero when Dispense found less stock than the list holds.
+   */
   available: number;
   /** Units of it the list holds. */
   listed: number;
@@ -54,6 +57,19 @@ export const MedicineCardView = (props: {
               as one kind of thing: the tone escalates and the words say which
               (never colour alone). */}
           <Switch>
+            {/* Dispense found less stock than the list holds (rules ›
+                dispensing the visit): how much the list is short of it. */}
+            <Match when={props.available < 0}>
+              <StatusBadge
+                label={t('label.units-short', {
+                  quantity: roundedText(-props.available),
+                  unit: unit(),
+                }).replace(/\s+/g, ' ')}
+                tone="error"
+                icon={<AlertCircleIcon />}
+                testId="common-medicine-short"
+              />
+            </Match>
             <Match when={state() === 'out'}>
               <StatusBadge
                 label={t('label.out-of-stock')}
