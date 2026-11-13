@@ -94,7 +94,7 @@ impl SheetImport for UnitSheet {
 
         let existing = match (&id, &name) {
             (Some(id), _) => self.units.by_id(id).cloned(),
-            (None, Some(name)) => pick_by_name(self.units.by_name(name)).unwrap_or_else(|e| {
+            (None, Some(name)) => pick_by_name(self.units.by_key(name)).unwrap_or_else(|e| {
                 errors.push(row.error(NAME, e.message(name)));
                 None
             }),

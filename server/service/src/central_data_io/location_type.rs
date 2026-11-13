@@ -187,7 +187,7 @@ impl LocationTypeSheet {
     ) -> Result<Option<LocationTypeRow>, RowError> {
         let by_code = |code: &str| -> Vec<String> {
             self.location_types
-                .by_code(code)
+                .by_key(code)
                 .into_iter()
                 .map(|other| other.id.clone())
                 .collect()

@@ -1,5 +1,5 @@
+use crate::keyed_lookup::{Keyed, KeyedLookup};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUnitError {
@@ -17,12 +17,16 @@ impl From<RepositoryError> for UpsertUnitError {
     }
 }
 
-/// Saved units in memory, so a run of writes reads the table once. `upsert_unit_in` keeps it
-/// current.
-#[derive(Default)]
-pub struct UnitLookup {
-    by_id: HashMap<String, UnitRow>,
-    ids_by_name: HashMap<String, Vec<String>>,
+pub type UnitLookup = KeyedLookup<UnitRow>;
+
+/// Looked up by name.
+impl Keyed for UnitRow {
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn key(&self) -> &str {
+        &self.name
+    }
 }
 
 impl UnitLookup {
@@ -30,46 +34,6 @@ impl UnitLookup {
         Ok(Self::from_rows(
             UnitRowRepository::new(connection).find_all()?,
         ))
-    }
-
-    fn from_rows(rows: Vec<UnitRow>) -> Self {
-        let mut lookup = Self::default();
-        for row in rows {
-            lookup.put(row);
-        }
-        lookup
-    }
-
-    pub fn by_id(&self, id: &str) -> Option<&UnitRow> {
-        self.by_id.get(id)
-    }
-
-    /// Letter case counts, as in the database; surrounding spaces, which legacy sync can save, don't.
-    pub fn by_name(&self, name: &str) -> Vec<&UnitRow> {
-        self.ids_by_name
-            .get(name.trim())
-            .into_iter()
-            .flatten()
-            .filter_map(|id| self.by_id.get(id))
-            .collect()
-    }
-
-    fn put(&mut self, unit: UnitRow) {
-        let key = unit.name.trim();
-        let old_key = self
-            .by_id
-            .get(&unit.id)
-            .map(|old| old.name.trim().to_string());
-        if old_key.as_deref() != Some(key) {
-            if let Some(ids) = old_key.and_then(|old_key| self.ids_by_name.get_mut(&old_key)) {
-                ids.retain(|id| *id != unit.id);
-            }
-            self.ids_by_name
-                .entry(key.to_string())
-                .or_default()
-                .push(unit.id.clone());
-        }
-        self.by_id.insert(unit.id.clone(), unit);
     }
 }
 
@@ -104,7 +68,7 @@ fn validate(lookup: &UnitLookup, unit: &UnitRow) -> Result<(), UpsertUnitError> 
         return Ok(());
     }
     match lookup
-        .by_name(&unit.name)
+        .by_key(&unit.name)
         .into_iter()
         .find(|other| other.is_active && other.id != unit.id)
     {
@@ -133,26 +97,6 @@ mod tests {
     /// Saves as the import does, from a fresh lookup.
     fn upsert_unit(connection: &StorageConnection, unit: &UnitRow) -> Result<(), UpsertUnitError> {
         upsert_unit_in(connection, &mut UnitLookup::load_all(connection)?, unit)
-    }
-
-    #[test]
-    fn lookup_follows_a_rename() {
-        let mut lookup =
-            UnitLookup::from_rows(vec![unit("a", "Tab", true), unit("b", "Tab", true)]);
-        lookup.put(unit("a", "Tablet", true));
-        let ids = |lookup: &UnitLookup, name| {
-            lookup
-                .by_name(name)
-                .into_iter()
-                .map(|unit| unit.id.clone())
-                .collect::<Vec<_>>()
-        };
-        assert_eq!(ids(&lookup, "Tab"), vec!["b"]);
-        assert_eq!(ids(&lookup, "Tablet"), vec!["a"]);
-        assert_eq!(lookup.by_id("a").unwrap().name, "Tablet");
-        // Saving it unchanged doesn't list it twice.
-        lookup.put(unit("a", "Tablet", false));
-        assert_eq!(ids(&lookup, "Tablet"), vec!["a"]);
     }
 
     #[actix_rt::test]
@@ -199,16 +143,6 @@ mod tests {
         );
         // Letter case counts, as it does in lookups.
         upsert_unit(&connection, &unit("new", "TAB", true)).unwrap();
-    }
-
-    #[test]
-    fn lookup_ignores_spaces_around_a_name() {
-        let mut lookup = UnitLookup::from_rows(vec![unit("a", "Tab ", true)]);
-        assert_eq!(lookup.by_name("Tab").len(), 1);
-        assert_eq!(lookup.by_name(" Tab").len(), 1);
-        // Trimming the saved name doesn't list it twice.
-        lookup.put(unit("a", "Tab", true));
-        assert_eq!(lookup.by_name("Tab").len(), 1);
     }
 
     #[actix_rt::test]

@@ -1,10 +1,12 @@
-use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
+use crate::{
+    ListError, ListResult, get_pagination_or_default, i64_to_u32,
+    keyed_lookup::{Keyed, KeyedLookup},
+};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
     LocationTypeRowRepository, LocationTypeSort, PaginationOption, RepositoryError,
     StorageConnection, StorageConnectionManager,
 };
-use std::collections::HashMap;
 
 pub fn get_location_types(
     connection_manager: &StorageConnectionManager,
@@ -53,12 +55,16 @@ impl From<RepositoryError> for DeleteLocationTypeError {
     }
 }
 
-/// Saved location types in memory, so a run of writes reads the table once. The writes below
-/// keep it current.
-#[derive(Default)]
-pub struct LocationTypeLookup {
-    by_id: HashMap<String, LocationTypeRow>,
-    ids_by_code: HashMap<String, Vec<String>>,
+pub type LocationTypeLookup = KeyedLookup<LocationTypeRow>;
+
+/// Looked up by code.
+impl Keyed for LocationTypeRow {
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn key(&self) -> &str {
+        &self.code
+    }
 }
 
 impl LocationTypeLookup {
@@ -66,46 +72,6 @@ impl LocationTypeLookup {
         Ok(Self::from_rows(
             LocationTypeRowRepository::new(connection).find_all()?,
         ))
-    }
-
-    fn from_rows(rows: Vec<LocationTypeRow>) -> Self {
-        let mut lookup = Self::default();
-        for row in rows {
-            lookup.put(row);
-        }
-        lookup
-    }
-
-    pub fn by_id(&self, id: &str) -> Option<&LocationTypeRow> {
-        self.by_id.get(id)
-    }
-
-    /// Letter case counts, as in the database; surrounding spaces, which a code taken from a
-    /// legacy name can have, don't.
-    pub fn by_code(&self, code: &str) -> Vec<&LocationTypeRow> {
-        self.ids_by_code
-            .get(code.trim())
-            .into_iter()
-            .flatten()
-            .filter_map(|id| self.by_id.get(id))
-            .collect()
-    }
-
-    fn put(&mut self, row: LocationTypeRow) {
-        self.remove(&row.id);
-        self.ids_by_code
-            .entry(row.code.trim().to_string())
-            .or_default()
-            .push(row.id.clone());
-        self.by_id.insert(row.id.clone(), row);
-    }
-
-    fn remove(&mut self, id: &str) {
-        if let Some(old) = self.by_id.remove(id)
-            && let Some(ids) = self.ids_by_code.get_mut(old.code.trim())
-        {
-            ids.retain(|other| other != id);
-        }
     }
 }
 
@@ -168,7 +134,7 @@ fn validate(
         return Ok(());
     }
     match lookup
-        .by_code(&row.code)
+        .by_key(&row.code)
         .into_iter()
         .find(|other| other.id != row.id)
     {
@@ -208,18 +174,6 @@ mod tests {
             &mut LocationTypeLookup::load_all(connection)?,
             row,
         )
-    }
-
-    #[test]
-    fn lookup_follows_a_code_change_and_ignores_spaces() {
-        let mut lookup = LocationTypeLookup::from_rows(vec![location_type("a", "COLD ")]);
-        assert_eq!(lookup.by_code("COLD").len(), 1);
-        lookup.put(location_type("a", "FREEZER"));
-        assert!(lookup.by_code("COLD").is_empty());
-        assert_eq!(lookup.by_code("FREEZER").len(), 1);
-        lookup.remove("a");
-        assert!(lookup.by_code("FREEZER").is_empty());
-        assert!(lookup.by_id("a").is_none());
     }
 
     #[actix_rt::test]
