@@ -2,6 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport,
     cells::{Row, collect, keep_or_saved, keep_padded},
+    field_changes,
     lookup::{LookupError, resolve},
     sheet::Value,
 };
@@ -59,10 +60,7 @@ impl ImportTable for UnitTable {
         filter: &ExportFilter,
     ) -> Result<RecordCount, RepositoryError> {
         let units = UnitRowRepository::new(connection).find_all()?;
-        Ok(RecordCount {
-            matching: units.iter().filter(|unit| matches(filter, unit)).count() as u32,
-            total: units.len() as u32,
-        })
+        Ok(RecordCount::in_memory(&units, |unit| matches(filter, unit)))
     }
 
     fn start_sheet(
@@ -185,12 +183,7 @@ fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
             (IS_ACTIVE, unit.is_active.to_string().to_uppercase()),
         ]
     };
-    values(old)
-        .into_iter()
-        .zip(values(new))
-        .filter(|((_, from), (_, to))| from != to)
-        .map(|((column, from), (_, to))| FieldChange { column, from, to })
-        .collect()
+    field_changes(values(old), values(new))
 }
 
 /// Active units first, so an old inactive namesake doesn't make the name ambiguous.

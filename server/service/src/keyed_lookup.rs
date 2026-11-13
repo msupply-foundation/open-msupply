@@ -50,10 +50,15 @@ impl<R: Keyed> KeyedLookup<R> {
     }
 
     pub fn remove(&mut self, id: &str) {
-        if let Some(old) = self.by_id.remove(id)
-            && let Some(ids) = self.ids_by_key.get_mut(old.key().trim())
-        {
+        let Some(old) = self.by_id.remove(id) else {
+            return;
+        };
+        let key = old.key().trim();
+        if let Some(ids) = self.ids_by_key.get_mut(key) {
             ids.retain(|other| other != id);
+            if ids.is_empty() {
+                self.ids_by_key.remove(key);
+            }
         }
     }
 }
@@ -106,5 +111,6 @@ mod tests {
         lookup.remove("a");
         assert!(ids(&lookup, "Tab").is_empty());
         assert!(lookup.by_id("a").is_none());
+        assert!(lookup.ids_by_key.is_empty());
     }
 }

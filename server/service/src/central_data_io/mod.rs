@@ -72,6 +72,16 @@ pub struct RecordCount {
     pub total: u32,
 }
 
+impl RecordCount {
+    /// For a table small enough to filter in memory.
+    pub fn in_memory<R>(rows: &[R], matches: impl Fn(&R) -> bool) -> Self {
+        RecordCount {
+            matching: rows.iter().filter(|row| matches(row)).count() as u32,
+            total: rows.len() as u32,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct ExportCount {
     pub table: CentralDataTable,
@@ -182,6 +192,18 @@ pub struct FieldChange {
     pub column: &'static str,
     pub from: String,
     pub to: String,
+}
+
+/// The columns whose value differs, given each record's values in the same column order.
+pub fn field_changes<const N: usize>(
+    old: [(&'static str, String); N],
+    new: [(&'static str, String); N],
+) -> Vec<FieldChange> {
+    old.into_iter()
+        .zip(new)
+        .filter(|((_, from), (_, to))| from != to)
+        .map(|((column, from), (_, to))| FieldChange { column, from, to })
+        .collect()
 }
 
 #[derive(Debug, PartialEq)]

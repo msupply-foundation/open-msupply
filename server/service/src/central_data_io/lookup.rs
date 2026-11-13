@@ -5,10 +5,12 @@ pub enum LookupError {
     Conflict { resolved: String, provided: String },
 }
 
+pub const NOT_FOUND: &str = "referenced record not found";
+
 impl LookupError {
     pub fn message(&self, code: &str) -> String {
         match self {
-            LookupError::NotFound => "referenced record not found".to_string(),
+            LookupError::NotFound => NOT_FOUND.to_string(),
             LookupError::Ambiguous => "ambiguous reference, please provide id instead".to_string(),
             LookupError::Conflict { resolved, provided } => format!(
                 "code and id conflict: {code} resolves to {resolved} but id column contains {provided}"

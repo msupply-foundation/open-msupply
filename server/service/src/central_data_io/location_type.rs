@@ -3,7 +3,8 @@ use super::{
     RowOutcome, SheetImport,
     cells::{Row, RowError, collect, keep_or_saved},
     delete::{DELETE_COLUMN, check_unchanged, is_delete},
-    lookup::{LookupError, record_conflict},
+    field_changes,
+    lookup::{LookupError, NOT_FOUND, record_conflict},
     sheet::Value,
 };
 use crate::location_type::{
@@ -74,13 +75,9 @@ impl ImportTable for LocationTypeTable {
         filter: &ExportFilter,
     ) -> Result<RecordCount, RepositoryError> {
         let location_types = LocationTypeRowRepository::new(connection).find_all()?;
-        Ok(RecordCount {
-            matching: location_types
-                .iter()
-                .filter(|location_type| matches(filter, location_type))
-                .count() as u32,
-            total: location_types.len() as u32,
-        })
+        Ok(RecordCount::in_memory(&location_types, |location_type| {
+            matches(filter, location_type)
+        }))
     }
 
     fn start_sheet(
@@ -224,7 +221,7 @@ impl LocationTypeSheet {
     ) -> Result<RowOutcome, RowFailure> {
         let Some(saved) = existing else {
             let column = if row.text(ID).is_some() { ID } else { CODE };
-            errors.push(row.error(column, LookupError::NotFound.message("")));
+            errors.push(row.error(column, NOT_FOUND));
             return Err(RowFailure::Invalid(errors));
         };
         if let Err(e) = check_unchanged(
@@ -315,10 +312,5 @@ fn changed_fields(old: &LocationTypeRow, new: &LocationTypeRow) -> Vec<FieldChan
             (MAX_TEMPERATURE, location_type.max_temperature.to_string()),
         ]
     };
-    values(old)
-        .into_iter()
-        .zip(values(new))
-        .filter(|((_, from), (_, to))| from != to)
-        .map(|((column, from), (_, to))| FieldChange { column, from, to })
-        .collect()
+    field_changes(values(old), values(new))
 }
