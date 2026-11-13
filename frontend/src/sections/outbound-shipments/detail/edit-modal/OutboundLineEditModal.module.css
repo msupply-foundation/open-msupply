@@ -90,7 +90,8 @@
    to pin the advisories: flex would hand this box next to nothing under them.
    So it stops scrolling and takes its content height, and the dialog body is
    the only scroller — the advisories scroll away above the cards, and the grid
-   keeps its floor (.batchGrid). */
+   keeps its floor (.batchGrid). 40rem is breakpoints.ts › veryShortViewport
+   (640px); a media query can't read the TS value, so keep the two in step. */
 @media (max-height: 40rem) {
   .workArea {
     flex: none;

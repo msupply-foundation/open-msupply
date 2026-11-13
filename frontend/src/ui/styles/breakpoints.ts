@@ -50,8 +50,9 @@ export const breakpoints = {
   railDefaultExpanded: 1440,
   /**
    * Below this HEIGHT the viewport is "short": a landscape tablet, or a
-   * windowed laptop. The only breakpoint keyed to height, and the same kind of
-   * decision as the rest — which element renders — not a styling nudge.
+   * windowed laptop. One of two breakpoints keyed to height (veryShortViewport
+   * below is the other), and the same kind of decision as the rest — which
+   * element renders — not a styling nudge.
    *
    * Every other line here asks how much WIDTH there is, which on a landscape
    * screen answers the wrong question: a detail view is wide and short, so a
@@ -72,6 +73,24 @@ export const breakpoints = {
    * it falls below; an emulator set to a bare 800 sits on the line.
    */
   shortViewport: 800,
+  /**
+   * Below this HEIGHT there is no room to pin anything above an editor's own
+   * scroll box: the outbound line editor pins its advisory banners above the
+   * batch grid (#885), and under this line flex would hand the grid next to
+   * nothing beneath them. So the editor stops pinning and its dialog body
+   * scrolls as one — the banners scroll away above the cards.
+   *
+   * It sits below shortViewport on purpose. The fleet's landscape tablets
+   * (~715–728px of viewport) are short but still have room to pin, so reusing
+   * shortViewport would stop them pinning at all. 640 catches what is left
+   * once something takes more height away, such as the soft keyboard in the
+   * Android app (its WebView resizes to the space above the keyboard) or a
+   * small laptop window.
+   *
+   * Used from CSS (OutboundLineEditModal.module.css, as `40rem`), since the
+   * switch is a scroll-box change with no element to render conditionally.
+   */
+  veryShortViewport: 640,
 } as const;
 
 /** matchMedia query strings built from the values above. */
