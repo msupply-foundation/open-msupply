@@ -3343,7 +3343,6 @@
   "messages.total-breaches": "ټول نه منل شوي: {{count}}",
   "messages.total-excursions": "ټول سفرونه: {{count}}",
   "messages.translations-loaded": "ژباړې لوډ شوې — د پلي کولو لپاره خوندي کول کلیک وکړئ",
-  "messages.type-to-search": "د لټون لپاره ټایپ کول پیل کړئ",
   "messages.unassign-min-mos": "دا به د سټاک بیا تنظیم کولو حد لرې کړي. د بیا تنظیم کولو حد به اوس د ټاکل شوي سټاک میاشتو په څیر ورته وي.",
   "messages.under-allocated": "د دې بستې د کڅوړې اندازې له امله، د واحد مقدار له {{receivedQuantity}} څخه {{quantity}} ته تازه شوی دی",
   "messages.unknown-error": "نامعلومه تېروتنه",
