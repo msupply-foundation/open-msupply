@@ -244,19 +244,33 @@ const SimpleDispensingPage: Component = () => {
     void refetchItems();
   };
 
+  /**
+   * Whether an earlier save of this visit went through: undefined when the
+   * server couldn't be asked. Quiet (background): the screen's own notice
+   * says what a failed look means.
+   */
+  const savedEarlier = async (id: string): Promise<boolean | undefined> => {
+    const visit = await graphqlFetch(
+      SimpleDispensedVisit,
+      { storeId: params.storeId, id },
+      { background: true }
+    );
+    return visit.kind === 'success'
+      ? visitWasSaved(visit.data.invoice)
+      : undefined;
+  };
+
   /** Check the list against the stock now; save it if it is all there. */
   const checkAndSave = async (retried = false): Promise<void> => {
     const who = patient();
     if (!who) return;
     // A save whose reply was lost: find out whether it went through before
     // saving anything again.
-    if (unconfirmed() && visitId) {
-      const visit = await graphqlFetch(SimpleDispensedVisit, {
-        storeId: params.storeId,
-        id: visitId,
-      });
-      if (visit.kind !== 'success') return unsure();
-      if (visitWasSaved(visit.data.invoice)) return finished(who);
+    const resending = unconfirmed() && visitId !== undefined;
+    if (resending) {
+      const saved = await savedEarlier(visitId!);
+      if (saved === undefined) return unsure();
+      if (saved) return finished(who);
       setUnconfirmed(false);
     }
     // The list as it stands now, so the check and the save are of the same
@@ -269,39 +283,47 @@ const SimpleDispensingPage: Component = () => {
       setReview({ short, fresh });
       return;
     }
-    visitId ??= generateUUID();
-    const input = dispenseInput(visitId, who.id, listed, fresh, generateUUID);
+    const id = (visitId ??= generateUUID());
+    const input = dispenseInput(id, who.id, listed, fresh, generateUUID);
+    // Background: a lost reply is this screen's to explain (its notice, and
+    // the hold on the visit), not the app's error dialog, which would say the
+    // connection failed over a visit the look below finds dispensed.
     const result = await graphqlFetch(
       SimpleDispense,
       { storeId: params.storeId, input },
-      { returnGraphqlErrors: true }
+      { returnGraphqlErrors: true, background: true }
     );
-    switch (result.kind) {
-      case 'success':
-        break;
-      case 'graphqlError':
-        // The server answered and refused, so nothing was saved. Missing
-        // permission gets the app's own permission-denied message as well.
-        if (isForbidden(result.errors))
-          reportPermissionDenied(missingPermissions(result.errors));
-        return failed();
-      case 'unexpectedError':
-        // The reply never came, or couldn't be read: the save may have gone
-        // through.
-        return unsure();
-      default:
-        return failed();
+    // The reply never came, or couldn't be read: the save may have gone
+    // through. Look once straight away, so a visit that was saved is finished
+    // without Dispense being pressed again.
+    if (result.kind === 'unexpectedError')
+      return (await savedEarlier(id)) ? finished(who) : unsure();
+    const outcome =
+      result.kind === 'success'
+        ? dispenseOutcome(
+            result.data.batchPrescription,
+            input.insertPrescriptionLines.length
+          )
+        : 'refused';
+    if (outcome === 'saved') return finished(who);
+    // Saving again after a lost reply: the first save may have landed while
+    // this one was on its way, and this one was then refused as a second
+    // record with the same id (a plain GraphQL error, not a typed one). Look
+    // before saying it failed.
+    if (resending) {
+      const saved = await savedEarlier(id);
+      if (saved === undefined) return unsure();
+      if (saved) return finished(who);
     }
-    const outcome = dispenseOutcome(
-      result.data.batchPrescription,
-      input.insertPrescriptionLines.length
-    );
     // The stock moved between the check and the save: nothing was saved, so
     // check again (once) and show what has to be reduced.
     if (outcome === 'line-refused')
       return retried ? failed() : checkAndSave(true);
-    if (outcome === 'refused') return failed();
-    finished(who);
+    // Refused, so nothing was saved. Missing permission gets the app's own
+    // permission-denied message as well.
+    if (result.kind === 'graphqlError' && isForbidden(result.errors))
+      reportPermissionDenied(missingPermissions(result.errors));
+    failed();
   };
 
   const dispense = async () => {
