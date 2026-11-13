@@ -6,13 +6,13 @@ import {
   canAddTyped,
   dispenseInput,
   dispenseOutcome,
-  reduceToAvailable,
-  shortfalls,
   fillableBatches,
   medicinesFor,
   priceOf,
   removeLine,
   setAmount,
+  shortLines,
+  stockAtCheck,
   stockState,
   unitsIn,
   visitWasSaved,
@@ -339,16 +339,43 @@ describe('the list', () => {
     expect(addAmount([], 'b', 0, 100)).toEqual([]);
   });
 
+  it('OMS-REG-DIS-12.105: a press on a line whose typed amount stopped at the stock drops its message', () => {
+    expect(
+      addAmount([{ itemId: 'a', units: 10, capped: true }], 'a', 5, 100)
+    ).toEqual([{ itemId: 'a', units: 15 }]);
+  });
+
   it('a press that brings the line to exactly what the card has is taken, without float dust', () => {
     expect(addAmount([{ itemId: 'a', units: 0.1 }], 'a', 0.2, 0.3)).toEqual([
       { itemId: 'a', units: 0.3 },
     ]);
   });
 
-  it('OMS-REG-DIS-12.29: an amount above what is available is brought down to it', () => {
+  it('OMS-REG-DIS-12.29, .104: an amount above what is available stops at it, and the line says so', () => {
     expect(setAmount([{ itemId: 'a', units: 10 }], 'a', 500, 120)).toEqual([
-      { itemId: 'a', units: 120 },
+      { itemId: 'a', units: 120, capped: true },
     ]);
+  });
+
+  it('OMS-REG-DIS-12.105: an amount within the stock drops the stopped-at-stock message', () => {
+    expect(
+      setAmount([{ itemId: 'a', units: 120, capped: true }], 'a', 50, 120)
+    ).toEqual([{ itemId: 'a', units: 50 }]);
+    // Exactly the stock is within it.
+    expect(
+      setAmount([{ itemId: 'a', units: 120, capped: true }], 'a', 120, 120)
+    ).toEqual([{ itemId: 'a', units: 120 }]);
+  });
+
+  it('OMS-REG-DIS-12.90: with none left, a typed amount leaves the line as it was: it can only be removed', () => {
+    const lines: ListLine[] = [{ itemId: 'a', units: 6 }];
+    expect(setAmount(lines, 'a', 3, 0)).toEqual(lines);
+  });
+
+  it('OMS-REG-DIS-12.58, .100: giving what there is brings a short line within the stock', () => {
+    const given = setAmount([{ itemId: 'a', units: 6 }], 'a', 4, 4);
+    expect(given).toEqual([{ itemId: 'a', units: 4 }]);
+    expect(shortLines(given, () => 4)).toEqual([]);
   });
 
   it('an amount of zero, or none, leaves the line as it was', () => {
@@ -416,43 +443,39 @@ describe('dispensing the visit', () => {
       TODAY
     );
 
-  it('OMS-REG-DIS-12.57: finds the lines the stock can no longer cover', () => {
-    const fresh = cardsFor(
-      item('a', [batch('a1', { availableNumberOfPacks: 2, packSize: 10 })]),
-      item('b', [batch('b1', { availableNumberOfPacks: 5, packSize: 10 })])
+  it('OMS-REG-DIS-12.57, .59: finds the lines the stock can no longer cover, and leaves their amounts alone', () => {
+    const before = cardsFor(item('gone', [batch('g1')]));
+    const listed: ListLine[] = [
+      { itemId: 'a', units: 30 },
+      { itemId: 'b', units: 30 },
+      { itemId: 'gone', units: 5 },
+    ];
+    const checked = stockAtCheck(
+      listed,
+      cardsFor(
+        item('a', [batch('a1', { availableNumberOfPacks: 2, packSize: 10 })]),
+        item('b', [batch('b1', { availableNumberOfPacks: 5, packSize: 10 })])
+      ),
+      id => before.find(card => card.item.id === id)
     );
-    expect(
-      shortfalls(
-        [
-          { itemId: 'a', units: 30 },
-          { itemId: 'b', units: 30 },
-          { itemId: 'gone', units: 5 },
-        ],
-        fresh
-      )
-    ).toEqual([
-      { itemId: 'a', wanted: 30, available: 20 },
-      { itemId: 'gone', wanted: 5, available: 0 },
+    const stockOf = (id: string) =>
+      checked.find(card => card.item.id === id)?.stock ?? 0;
+    expect(checked.map(card => [card.item.id, card.stock])).toEqual([
+      ['a', 20],
+      ['b', 50],
+      // No longer returned: the store can't dispense it, so none available.
+      ['gone', 0],
+    ]);
+    expect(shortLines(listed, stockOf)).toEqual([
+      { itemId: 'a', units: 30 },
+      { itemId: 'gone', units: 5 },
     ]);
   });
 
-  it('OMS-REG-DIS-12.59: reduces a short line to what is available, and removes one with none left', () => {
+  it('a medicine the check no longer returns, and that never had a card, is left out', () => {
     expect(
-      reduceToAvailable(
-        [
-          { itemId: 'a', units: 30 },
-          { itemId: 'b', units: 5 },
-          { itemId: 'c', units: 7 },
-        ],
-        [
-          { itemId: 'a', wanted: 30, available: 20 },
-          { itemId: 'c', wanted: 7, available: 0 },
-        ]
-      )
-    ).toEqual([
-      { itemId: 'a', units: 20 },
-      { itemId: 'b', units: 5 },
-    ]);
+      stockAtCheck([{ itemId: 'x', units: 1 }], [], () => undefined)
+    ).toEqual([]);
   });
 
   it('OMS-REG-DIS-12.51-.53: saves one record, a line per batch first expiry first, and saves it as Picked', () => {
@@ -495,9 +518,7 @@ describe('dispensing the visit', () => {
         numberOfPacks: 0.5,
       },
     ]);
-    expect(input.updatePrescriptions).toEqual([
-      { id: 'rx', status: 'PICKED' },
-    ]);
+    expect(input.updatePrescriptions).toEqual([{ id: 'rx', status: 'PICKED' }]);
     expect(input.continueOnError).toBe(false);
   });
 
