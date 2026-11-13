@@ -178,6 +178,12 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     label={props.label}
     hideLabel={props.hideLabel}
     items={reasonsOfKind(props.kind, { isVaccine: props.isVaccine })}
+    // A saved reason the narrowing no longer offers (e.g. a vaccine line saved
+    // with a plain negative reason before #456) still shows its label, rather
+    // than a blank field over a reason that's still stored.
+    selectedItem={reasonOptionsResource
+      .noSuspense()
+      .find(r => r.id === props.value)}
     loading={reasonOptionsResource.loading()}
     itemToString={r => r.reason}
     itemToValue={r => r.id}
