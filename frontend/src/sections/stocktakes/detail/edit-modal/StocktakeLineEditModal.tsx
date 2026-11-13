@@ -1544,6 +1544,7 @@ const StocktakeLineEditContent = (
               return (
                 <ReasonSelect
                   kind={direction() ?? 'positive'}
+                  isVaccine={line.item.isVaccine}
                   label={t('label.reason')}
                   hideLabel
                   // The compact height its neighbours use. Without it the

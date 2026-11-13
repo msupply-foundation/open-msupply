@@ -167,8 +167,9 @@ const AdjustContent = (props: {
   // (ui-standards › validation — don't pre-validate an action), which lands in
   // the banner beside the actions.
   const reasonRequired = () =>
-    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative').length >
-    0;
+    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative', {
+      isVaccine: isVaccine(),
+    }).length > 0;
 
   const onOk = async () => {
     if (!canConfirm()) return;
@@ -339,6 +340,7 @@ const AdjustContent = (props: {
         <FieldRow label={t('label.reason')} required={reasonRequired()}>
           <ReasonSelect
             kind={direction() === 'ADDITION' ? 'positive' : 'negative'}
+            isVaccine={isVaccine()}
             label={t('label.reason')}
             inputTestId="adjust-reason"
             hideLabel
