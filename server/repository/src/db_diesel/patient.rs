@@ -145,6 +145,10 @@ impl<'a> PatientRepository<'a> {
         )
     }
 
+    /// The most matches a page of patient search is sorted from (`query_capped`):
+    /// about 300 ms for the broadest search over 8M patients.
+    pub const SEARCH_MATCH_CAP: u32 = 1000;
+
     /// As `query`, but sorts and pages only the first `cap` matches found, in
     /// no particular order. With fewer matches than that it's the same as
     /// `query`. With more, sorting them all is the slow part of a broad search

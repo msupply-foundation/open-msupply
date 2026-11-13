@@ -8520,7 +8520,7 @@ type Queries {
 	documentRegistries(filter: DocumentRegistryFilterInput, sort: [DocumentRegistrySortInput!], storeId: String!): DocumentRegistryResponse!
 	patients(		storeId: String!,		page: PaginationInput,		filter: PatientFilterInput,		sort: [PatientSortInput!],
 		"""
-		Stop counting at this many: totalCount is then at most this
+		Stop counting at this many: totalCount is then at most this. For a search: the page is also sorted from only the first 1000 matches found, so past that paging may repeat or miss a patient
 		"""
 		countLimit: Int
 	): PatientResponse!

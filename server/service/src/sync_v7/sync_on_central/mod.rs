@@ -478,10 +478,6 @@ pub async fn pull(
     .map_err(join_error)?
 }
 
-/// The most matches a page of central's patient search is sorted from: about
-/// 300 ms for the broadest search over 8M patients (`PatientRepository::query_capped`).
-const SEARCH_MATCH_CAP: u32 = 1000;
-
 pub async fn patient_search(
     service_provider: Arc<ServiceProvider>,
     common: Common,
@@ -515,7 +511,7 @@ pub async fn patient_search(
                     desc: None,
                 }),
                 None,
-                SEARCH_MATCH_CAP,
+                PatientRepository::SEARCH_MATCH_CAP,
             )?,
             // A remote from before the page was added: every match, as before.
             None => {
