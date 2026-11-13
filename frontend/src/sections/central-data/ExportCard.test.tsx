@@ -253,6 +253,21 @@ describe('ExportCard', () => {
     ]);
   });
 
+  it('gives items a code-or-name search and a Status filter (OMS-REG-CDIO-01.46)', async () => {
+    open();
+    expect(shown.fields['central-data-export-item-search']!.placeholder).toBe(
+      'label.code-or-name-contains'
+    );
+
+    shown.checkboxes['central-data-export-item']!.onChange(true);
+    await settle();
+    shown.selects['central-data-export-item-status']!.onValueChange('INACTIVE');
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'ITEM', contains: null, isActive: false }],
+    });
+  });
+
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {
     open();
     await tickUnits();
