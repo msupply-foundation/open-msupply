@@ -330,13 +330,9 @@ The open door answers on 443 too, for `*.<DEPLOY_DOMAIN>` and the old dashboard 
 
 Not the bare domain: that goes to the edge (see [VPN-only deployments](#vpn-only-deployments)), and the dashboard sends HSTS, so a browser that has signed in once refuses a self-signed certificate there outright rather than warning. The same goes for a deployment if its domain ever comes under HSTS.
 
-The CA is in the `oms-proxy_caddy-data` volume, so it survives the new container each Caddyfile edit makes; a box set up while there was an earlier internal CA reuses that one. A browser warns once per name until its machine trusts the root. To trust it, pull it off the box:
+Use `http://` links: the 443 door is only there so an `https://` one doesn't dead-end. **Don't add the CA's root to a machine's trust store.** It can sign a certificate for any site, not just this domain, and its key is in a docker volume on a box whose runners run any branch's workflows - so anyone who can push a branch could intercept that machine's HTTPS traffic.
 
-```bash
-docker exec oms-proxy cat /data/caddy/pki/authorities/local/root.crt > oms-proxy-root.crt
-```
-
-and add it to the machine's trust store (Keychain Access on macOS, `certmgr` on Windows). Deleting the volume (`docker compose down -v` on the proxy does) mints a new CA, and every machine that trusted the old root warns again.
+The CA is in the `oms-proxy_caddy-data` volume, so it survives the new container each Caddyfile edit makes and a browser's click-through for a deployment keeps working. `docker compose down -v` on the proxy deletes it, and the warnings come back once.
 
 ### Deployments dashboard
 
