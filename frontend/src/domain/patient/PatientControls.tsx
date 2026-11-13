@@ -373,17 +373,22 @@ export const NextOfKinControl = (props: NextOfKinControlProps): JSX.Element => {
           </Show>
         }
       />
-      <PatientSearchDialog
-        open={choosing()}
-        storeId={props.storeId}
-        title={label()}
-        changingFrom={props.name || undefined}
-        onClose={() => setChoosing(false)}
-        onChoose={patient => {
-          setChoosing(false);
-          if (patient.id !== props.id) props.onChange(patient.id, patient.name);
-        }}
-      />
+      {/* Mounted only while choosing: the form this sits in (often a dialog
+          itself) shouldn't carry a closed search, and its buttons, inside it. */}
+      <Show when={choosing()}>
+        <PatientSearchDialog
+          open
+          storeId={props.storeId}
+          title={label()}
+          changingFrom={props.name || undefined}
+          onClose={() => setChoosing(false)}
+          onChoose={patient => {
+            setChoosing(false);
+            if (patient.id !== props.id)
+              props.onChange(patient.id, patient.name);
+          }}
+        />
+      </Show>
     </>
   );
 };

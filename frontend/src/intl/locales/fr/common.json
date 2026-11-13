@@ -3498,7 +3498,6 @@
   "messages.total-breaches": "Total non reconnu : {{count}}",
   "messages.total-excursions": "Nombre total d'écarts : {{count}}",
   "messages.translations-loaded": "Traductions téléchargées - cliquez sur Sauvegarder pour appliquer",
-  "messages.type-to-search": "Commencez à taper pour rechercher",
   "messages.unassign-min-mos": "Le seuil de réapprovisionnement sera supprimé. La valeur par défaut sera alors égale à la couverture souhaitée (en mois).",
   "messages.under-allocated": "En raison du nombre d'unités par conditionnement de ce lot, la quantité unitaire a été mise à jour de {{receivedQuantity}} à {{quantity}}",
   "messages.unknown-error": "Erreur inconnue",

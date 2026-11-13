@@ -3331,7 +3331,6 @@
   "messages.total-breaches": "Total unacknowledged: {{count}}",
   "messages.total-excursions": "Total excursions: {{count}}",
   "messages.translations-loaded": "Translations loaded — click Save to apply",
-  "messages.type-to-search": "Start typing to search",
   "messages.unassign-min-mos": "This will remove the stock reorder threshold. Reorder threshold will now default to be the same as target months of stock.",
   "messages.under-allocated": "Due to the pack size of this batch, the unit quantity has been updated from {{receivedQuantity}} to {{quantity}}",
   "messages.unknown-error": "Unknown error",
