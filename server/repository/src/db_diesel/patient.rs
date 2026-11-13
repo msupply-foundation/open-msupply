@@ -325,12 +325,7 @@ impl<'a> PatientRepository<'a> {
                 let filter = {
                     let mut filter = filter;
                     if let Some(text) = filter.starts_with.take() {
-                        query = query.filter(
-                            name::id.eq_any(
-                                code_prefix_lookup("code", &text)
-                                    .union(code_prefix_lookup("national_health_number", &text)),
-                            ),
-                        );
+                        query = query.filter(code_or_code_2_prefix(&text));
                     }
                     filter
                 };
@@ -415,25 +410,33 @@ type BoxedNameQuery = IntoBoxed<'static, name::table, DBType>;
 /// The ids of names whose `column` starts with `text`, ignoring case: a range
 /// on the column's lowercase form, so the index on that form applies (an
 /// ILIKE can't use it). `column` is one of a fixed few, never input.
+/// Either code starts with `text`, ignoring case: a range on each code's
+/// lowercase form, so the indexes on those forms apply (an ILIKE can't use
+/// them). One OR'd condition rather than a UNION of two lookups, so Postgres
+/// can combine the two index scans with the other filters and stop at a LIMIT
+/// instead of collecting every id with the prefix first.
 #[cfg(feature = "postgres")]
-fn code_prefix_lookup(
-    column: &'static str,
+fn code_or_code_2_prefix(
     text: &str,
-) -> IntoBoxed<'static, diesel::dsl::Select<name::table, name::id>, DBType> {
+) -> Box<dyn diesel::BoxableExpression<name::table, DBType, SqlType = diesel::sql_types::Bool>> {
     use diesel::{
         dsl::sql,
         sql_types::{Bool, Text},
     };
     // Every text starting with the prefix sorts (as "C", by bytes) from the
     // prefix itself up to the prefix followed by the last code point
-    let condition = sql::<Bool>(&format!(r#"lower(name.{column}) COLLATE "C" >= lower("#))
-        .bind::<Text, _>(text.to_string())
-        .sql(&format!(
-            r#") AND lower(name.{column}) COLLATE "C" < lower("#
-        ))
-        .bind::<Text, _>(text.to_string())
-        .sql(") || chr(1114111)");
-    name::table.select(name::id).filter(condition).into_boxed()
+    let text = text.to_string();
+    Box::new(
+        sql::<Bool>(r#"((lower(name.code) COLLATE "C" >= lower("#)
+            .bind::<Text, _>(text.clone())
+            .sql(r#") AND lower(name.code) COLLATE "C" < lower("#)
+            .bind::<Text, _>(text.clone())
+            .sql(r#") || chr(1114111)) OR (lower(name.national_health_number) COLLATE "C" >= lower("#)
+            .bind::<Text, _>(text.clone())
+            .sql(r#") AND lower(name.national_health_number) COLLATE "C" < lower("#)
+            .bind::<Text, _>(text)
+            .sql(") || chr(1114111)))"),
+    )
 }
 
 impl PatientFilter {

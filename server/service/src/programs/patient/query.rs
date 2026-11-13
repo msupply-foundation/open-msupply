@@ -41,7 +41,12 @@ pub fn get_patients_with_count_limit(
                 allowed_ctx,
                 PatientRepository::SEARCH_MATCH_CAP,
             )?,
-            repository.count_up_to(filter, allowed_ctx, limit)?,
+            // No more than the pages can reach
+            repository.count_up_to(
+                filter,
+                allowed_ctx,
+                limit.min(PatientRepository::SEARCH_MATCH_CAP),
+            )?,
         ),
         None => (
             repository.query(pagination, filter.clone(), sort, allowed_ctx)?,

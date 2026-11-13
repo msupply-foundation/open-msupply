@@ -513,13 +513,19 @@ pub async fn patient_search(
                 None,
                 PatientRepository::SEARCH_MATCH_CAP,
             )?,
-            // A remote from before the page was added: every match, as before.
-            None => {
-                service_provider
-                    .patient_service
-                    .get_patients(&ctx, None, Some(filter), None, None)?
-                    .rows
-            }
+            // A remote from before the page was added, which shows every match
+            // it gets: at most SEARCH_MATCH_CAP of them, unsorted and
+            // uncounted, as a broad search would otherwise read and send
+            // millions.
+            None => PatientRepository::new(&ctx.connection).query(
+                Pagination {
+                    limit: PatientRepository::SEARCH_MATCH_CAP,
+                    offset: 0,
+                },
+                Some(filter),
+                None,
+                None,
+            )?,
         };
 
         Ok(patients_v4(&ctx.connection, rows)?)
