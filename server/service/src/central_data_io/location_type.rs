@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport,
-    cells::{Row, RowError, keep_padded},
+    cells::{Row, RowError, collect, keep_or_saved},
     delete::{DELETE_COLUMN, check_unchanged, is_delete},
     lookup::{LookupError, resolve},
     sheet::Value,
@@ -102,18 +102,9 @@ impl SheetImport for LocationTypeSheet {
         row: &Row,
     ) -> Result<RowOutcome, RowFailure> {
         let mut errors = Vec::new();
-        let delete = is_delete(row).unwrap_or_else(|e| {
-            errors.push(e);
-            false
-        });
-        let min_temperature = row.number(MIN_TEMPERATURE).unwrap_or_else(|e| {
-            errors.push(e);
-            None
-        });
-        let max_temperature = row.number(MAX_TEMPERATURE).unwrap_or_else(|e| {
-            errors.push(e);
-            None
-        });
+        let delete = collect(&mut errors, is_delete(row));
+        let min_temperature = collect(&mut errors, row.number(MIN_TEMPERATURE));
+        let max_temperature = collect(&mut errors, row.number(MAX_TEMPERATURE));
         let id = row.text(ID);
         let code = row.text(CODE);
 
@@ -130,30 +121,25 @@ impl SheetImport for LocationTypeSheet {
             return self.delete(connection, row, existing, errors);
         }
 
-        let code = keep_padded(code, existing.as_ref().map(|saved| saved.code.as_str()))
-            .or(existing.as_ref().map(|saved| saved.code.clone()));
-        let name = keep_padded(
+        let code = keep_or_saved(code, existing.as_ref().map(|saved| saved.code.as_str()));
+        let name = keep_or_saved(
             row.text(NAME),
             existing.as_ref().map(|saved| saved.name.as_str()),
-        )
-        .or(existing.as_ref().map(|saved| saved.name.clone()));
+        );
         let min_temperature =
             min_temperature.or(existing.as_ref().map(|saved| saved.min_temperature));
         let max_temperature =
             max_temperature.or(existing.as_ref().map(|saved| saved.max_temperature));
-        for (column, missing) in [
-            (CODE, code.is_none()),
-            (NAME, name.is_none()),
-            (MIN_TEMPERATURE, min_temperature.is_none()),
-            (MAX_TEMPERATURE, max_temperature.is_none()),
-        ] {
-            if missing && !errors.iter().any(|e| e.column.as_deref() == Some(column)) {
-                errors.push(row.error(
-                    column,
-                    format!("{column} is required for a new location type"),
-                ));
-            }
-        }
+        row.require_for_new(
+            &mut errors,
+            "location type",
+            &[
+                (CODE, code.is_none()),
+                (NAME, name.is_none()),
+                (MIN_TEMPERATURE, min_temperature.is_none()),
+                (MAX_TEMPERATURE, max_temperature.is_none()),
+            ],
+        );
         if !errors.is_empty() {
             return Err(RowFailure::Invalid(errors));
         }

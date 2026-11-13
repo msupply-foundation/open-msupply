@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport,
-    cells::{Row, keep_padded},
+    cells::{Row, collect, keep_or_saved, keep_padded},
     lookup::{LookupError, resolve},
     sheet::Value,
 };
@@ -87,14 +87,8 @@ impl SheetImport for UnitSheet {
         row: &Row,
     ) -> Result<RowOutcome, RowFailure> {
         let mut errors = Vec::new();
-        let index = row.int(INDEX).unwrap_or_else(|e| {
-            errors.push(e);
-            None
-        });
-        let is_active = row.bool(IS_ACTIVE).unwrap_or_else(|e| {
-            errors.push(e);
-            None
-        });
+        let index = collect(&mut errors, row.int(INDEX));
+        let is_active = collect(&mut errors, row.bool(IS_ACTIVE));
         let id = row.text(ID);
         let name = row.text(NAME);
 
@@ -107,19 +101,18 @@ impl SheetImport for UnitSheet {
             (None, None) => None,
         };
 
-        let name = keep_padded(name, existing.as_ref().map(|unit| unit.name.as_str()))
-            .or(existing.as_ref().map(|unit| unit.name.clone()));
+        let name = keep_or_saved(name, existing.as_ref().map(|unit| unit.name.as_str()));
         let index = index.or(existing.as_ref().map(|unit| unit.index));
         let is_active = is_active.or(existing.as_ref().map(|unit| unit.is_active));
-        for (column, missing) in [
-            (NAME, name.is_none()),
-            (INDEX, index.is_none()),
-            (IS_ACTIVE, is_active.is_none()),
-        ] {
-            if missing && !errors.iter().any(|e| e.column.as_deref() == Some(column)) {
-                errors.push(row.error(column, format!("{column} is required for a new unit")));
-            }
-        }
+        row.require_for_new(
+            &mut errors,
+            "unit",
+            &[
+                (NAME, name.is_none()),
+                (INDEX, index.is_none()),
+                (IS_ACTIVE, is_active.is_none()),
+            ],
+        );
         if !errors.is_empty() {
             return Err(RowFailure::Invalid(errors));
         }

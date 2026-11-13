@@ -15,6 +15,19 @@ pub fn keep_padded(cell: Option<String>, saved: Option<&str>) -> Option<String> 
     }
 }
 
+/// As `keep_padded`, but a blank cell keeps the saved value too.
+pub fn keep_or_saved(cell: Option<String>, saved: Option<&str>) -> Option<String> {
+    keep_padded(cell, saved).or(saved.map(str::to_string))
+}
+
+/// The value, or its default with the error added to `errors`.
+pub fn collect<T: Default>(errors: &mut Vec<RowError>, result: Result<T, RowError>) -> T {
+    result.unwrap_or_else(|error| {
+        errors.push(error);
+        T::default()
+    })
+}
+
 pub struct Row<'a> {
     pub sheet: &'a str,
     pub number: u32,
@@ -73,6 +86,20 @@ impl Row<'_> {
         match text.parse::<f64>() {
             Ok(number) if number.is_finite() => Ok(Some(number)),
             _ => Err(self.error(column, format!("\"{text}\" must be a number"))),
+        }
+    }
+
+    /// Adds an error for each missing column that has none yet.
+    pub fn require_for_new(
+        &self,
+        errors: &mut Vec<RowError>,
+        record: &str,
+        columns: &[(&str, bool)],
+    ) {
+        for (column, missing) in columns {
+            if *missing && !errors.iter().any(|e| e.column.as_deref() == Some(column)) {
+                errors.push(self.error(column, format!("{column} is required for a new {record}")));
+            }
         }
     }
 
