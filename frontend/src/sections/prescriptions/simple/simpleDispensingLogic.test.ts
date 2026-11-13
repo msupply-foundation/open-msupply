@@ -455,7 +455,7 @@ describe('dispensing the visit', () => {
     ]);
   });
 
-  it('OMS-REG-DIS-12.51-.53: saves one record, a line per batch first expiry first, and finishes it as Verified', () => {
+  it('OMS-REG-DIS-12.51-.53: saves one record, a line per batch first expiry first, and saves it as Picked', () => {
     const cards = cardsFor(
       item('a', [
         batch('later', {
@@ -496,7 +496,7 @@ describe('dispensing the visit', () => {
       },
     ]);
     expect(input.updatePrescriptions).toEqual([
-      { id: 'rx', status: 'VERIFIED' },
+      { id: 'rx', status: 'PICKED' },
     ]);
     expect(input.continueOnError).toBe(false);
   });
@@ -581,7 +581,7 @@ describe('dispenseOutcome', () => {
     expect(dispenseOutcome(result, 2)).toBe('line-refused');
   });
 
-  it('OMS-REG-DIS-12.93: a refused move to Verified is not saved', () => {
+  it('OMS-REG-DIS-12.93: a refused move to Picked is not saved', () => {
     const result = saved();
     result.updatePrescriptions = [
       { id: 'rx', response: { __typename: 'UpdatePrescriptionError' } },
@@ -605,10 +605,14 @@ describe('dispenseOutcome', () => {
 });
 
 describe('visitWasSaved', () => {
-  it('OMS-REG-DIS-12.92: a visit whose record exists as Verified was saved', () => {
+  it('OMS-REG-DIS-12.92: a visit whose record exists past New was saved, even if it has moved on since', () => {
+    for (const status of ['PICKED', 'VERIFIED', 'CANCELLED'] as const)
+      expect(
+        visitWasSaved({ __typename: 'InvoiceNode', id: 'rx', status })
+      ).toBe(true);
     expect(
-      visitWasSaved({ __typename: 'InvoiceNode', id: 'rx', status: 'VERIFIED' })
-    ).toBe(true);
+      visitWasSaved({ __typename: 'InvoiceNode', id: 'rx', status: 'NEW' })
+    ).toBe(false);
   });
 
   it('OMS-REG-DIS-12.92: a visit with no record was not saved', () => {

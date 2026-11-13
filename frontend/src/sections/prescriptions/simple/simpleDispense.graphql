@@ -1,6 +1,6 @@
 # Dispense on the Simple screen (spec/prescriptions › dispensing the visit):
 # the whole visit in one batchPrescription call — the record, a line per batch
-# taken, and the move to Verified — which the server runs as one transaction
+# taken, and the move to Picked — which the server runs as one transaction
 # (continueOnError false), so a refusal anywhere saves nothing.
 mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {
   batchPrescription(storeId: $storeId, input: $input) {
@@ -36,7 +36,7 @@ mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {
 
 # Whether a visit whose save couldn't be confirmed was saved after all
 # (rules › dispensing the visit): the save is one transaction that ends with
-# the move to Verified, so a record that exists as Verified was saved whole.
+# the move to Picked, so a record that exists past New was saved whole.
 query simpleDispensedVisit($storeId: String!, $id: String!) {
   invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {
     __typename

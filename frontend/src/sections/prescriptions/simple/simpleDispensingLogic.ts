@@ -274,7 +274,7 @@ export const reduceToAvailable = (
 
 /**
  * The batch save for a visit: the record, one line per batch taken (packs
- * split where needed, first expiry first), and the move to Verified.
+ * split where needed, first expiry first), and the move to Picked.
  */
 export const dispenseInput = (
   prescriptionId: string,
@@ -302,14 +302,14 @@ export const dispenseInput = (
         : [];
     });
   }),
-  updatePrescriptions: [{ id: prescriptionId, status: 'VERIFIED' as const }],
+  updatePrescriptions: [{ id: prescriptionId, status: 'PICKED' as const }],
   continueOnError: false,
 });
 
 /**
  * What a Dispense save did (rules › dispensing the visit). The save is one
  * transaction, so a refusal anywhere means nothing was saved:
- * - `saved`: the record, every line and the move to Verified all came back
+ * - `saved`: the record, every line and the move to Picked all came back
  *   saved;
  * - `line-refused`: a batch refused its line, most likely because the stock
  *   moved since the check, so the list is worth checking again;
@@ -342,10 +342,11 @@ export const dispenseOutcome = (
 
 /**
  * Whether a visit whose save couldn't be confirmed was saved after all: its
- * record exists as Verified. The move to Verified is the save's last step, in
- * the same transaction, so a record that reached it holds the whole visit.
+ * record exists past New. The move to Picked is the save's last step, in the
+ * same transaction, so a record that reached it holds the whole visit; it may
+ * have moved on since (finished, or cancelled), and was still saved.
  */
 export const visitWasSaved = (
   invoice: SimpleDispensedVisitResult['invoice']
 ): boolean =>
-  invoice.__typename === 'InvoiceNode' && invoice.status === 'VERIFIED';
+  invoice.__typename === 'InvoiceNode' && invoice.status !== 'NEW';
