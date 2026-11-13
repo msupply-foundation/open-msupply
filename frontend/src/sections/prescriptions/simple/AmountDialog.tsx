@@ -1,12 +1,16 @@
 import { createSignal, For, Show } from 'solid-js';
-import { roundedText, t, type LocaleKey } from '@/intl';
+import { roundedText, t, tPlural, type LocaleKey } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { createMediaQuery } from '@/ui/utils/createMediaQuery';
-import { canAddTyped, type MedicineCard } from './simpleDispensingLogic';
+import {
+  amountLimit,
+  canAddTyped,
+  type MedicineCard,
+} from './simpleDispensingLogic';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -45,6 +49,21 @@ export const AmountDialog = (props: {
       /\s+/g,
       ' '
     );
+
+  // Why a typed amount can't be added (rules › another amount, and other
+  // medicines): the stock the system shows, and, once the list holds some of
+  // it, how much that is and how much can still be added.
+  const limitText = () => {
+    const limit = amountLimit(props.card.stock, props.available);
+    if (limit.selected <= 0)
+      return amountText('messages.system-shows-only', limit.stock);
+    return tPlural('messages.system-shows-only-selected', limit.selected, {
+      quantity: roundedText(limit.stock),
+      unit: unit(),
+      selected: roundedText(limit.selected),
+      available: roundedText(limit.upTo),
+    }).replace(/\s+/g, ' ');
+  };
 
   return (
     <Dialog
@@ -135,11 +154,7 @@ export const AmountDialog = (props: {
             onChange={setTyped}
             // Not clamped to what's available: the field says why the amount
             // can't be added rather than quietly changing it.
-            error={
-              tooMany()
-                ? amountText('messages.only-units-available', props.available)
-                : undefined
-            }
+            error={tooMany() ? limitText() : undefined}
             errorTestId="amount-modal-error"
             data-testid="amount-modal-input"
           />

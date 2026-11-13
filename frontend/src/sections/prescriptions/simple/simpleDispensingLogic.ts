@@ -45,9 +45,16 @@ export interface MedicineCard {
 /**
  * Whether a card's stock is worth stopping for (spec/prescriptions › the
  * Simple screen): `out` with none available, `low` with less than twice the
- * largest usual amount, `plenty` otherwise — when the card shows no stock line.
+ * largest usual amount, `plenty` otherwise.
  */
 export type StockState = 'plenty' | 'low' | 'out';
+
+/**
+ * What a card says about its stock (rules › the Simple screen): how much is
+ * `left`, or the `low` / `out` warning. On a phone only the warnings show, and
+ * a card with neither says nothing (undefined) — it shows its unit alone.
+ */
+export type StockLine = 'left' | 'low' | 'out' | undefined;
 
 /**
  * The item's batches that dispensing may take on its own, in fill order
@@ -101,6 +108,16 @@ export const stockState = (
   // amount were 1.
   const largest = Math.max(1, ...amounts);
   return available < largest * 2 ? 'low' : 'plenty';
+};
+
+export const stockLine = (
+  available: number,
+  amounts: number[],
+  phone: boolean
+): StockLine => {
+  const state = stockState(available, amounts);
+  if (state !== 'plenty') return state;
+  return phone ? undefined : 'left';
 };
 
 /**
@@ -230,6 +247,20 @@ export const canAddTyped = (
   available: number
 ): boolean => units !== undefined && units > 0 && units <= available;
 
+/**
+ * Why the amount box can't add more (rules › another amount, and other
+ * medicines): the stock the system shows before the list, what the list holds
+ * of it (`selected`), and what can still be added (`upTo`).
+ */
+export const amountLimit = (
+  stock: number,
+  available: number
+): { stock: number; selected: number; upTo: number } => ({
+  stock,
+  selected: round9(stock - available),
+  upTo: available,
+});
+
 export const removeLine = (
   lines: readonly ListLine[],
   itemId: string
@@ -348,5 +379,4 @@ export const dispenseOutcome = (
  */
 export const visitWasSaved = (
   invoice: SimpleDispensedVisitResult['invoice']
-): boolean =>
-  invoice.__typename === 'InvoiceNode' && invoice.status !== 'NEW';
+): boolean => invoice.__typename === 'InvoiceNode' && invoice.status !== 'NEW';

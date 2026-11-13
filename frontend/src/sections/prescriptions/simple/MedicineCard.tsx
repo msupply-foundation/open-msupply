@@ -10,7 +10,11 @@ import {
   CheckIcon,
   PlusCircleIcon,
 } from '@/ui/icons';
-import { stockState, type MedicineCard } from './simpleDispensingLogic';
+import {
+  stockLine,
+  stockState,
+  type MedicineCard,
+} from './simpleDispensingLogic';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -26,7 +30,8 @@ export const MedicineCardView = (props: {
   available: number;
   /** Units of it the list holds. */
   listed: number;
-  /** A phone: the card is one row (the page's viewport query). */
+  /** A phone: the card is one row (the page's viewport query), and shows
+   *  only the low and out-of-stock warnings, not how much is left. */
   oneRow: boolean;
   /** Whether anything can be added yet: someone has been chosen. */
   canAdd: boolean;
@@ -36,6 +41,8 @@ export const MedicineCardView = (props: {
   onAskAmount: (card: MedicineCard) => void;
 }) => {
   const state = () => stockState(props.available, props.card.medicine.amounts);
+  const line = () =>
+    stockLine(props.available, props.card.medicine.amounts, props.oneRow);
   const offered = () => props.canAdd && state() !== 'out';
   const unit = () => props.card.item.unitName ?? '';
   const name = () => props.card.item.name;
@@ -49,7 +56,20 @@ export const MedicineCardView = (props: {
       testId={`common-medicine-card-${props.card.item.id}`}
       meta={
         <>
-          <span data-testid="common-medicine-unit">{unit()}</span>
+          {/* How much is left, in the unit's place: it names the unit (as
+              set up, never pluralised — #666). On a phone, and beside a
+              warning, the unit alone. */}
+          <Show
+            when={line() === 'left'}
+            fallback={<span data-testid="common-medicine-unit">{unit()}</span>}
+          >
+            <span data-testid="common-medicine-stock">
+              {t('label.amount-left', {
+                quantity: roundedText(props.available),
+                unit: unit(),
+              }).replace(/\s+/g, ' ')}
+            </span>
+          </Show>
           {/* Both stock states are the same row-status badge, so they read
               as one kind of thing: the tone escalates and the words say which
               (never colour alone). */}

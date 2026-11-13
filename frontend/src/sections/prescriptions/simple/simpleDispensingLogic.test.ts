@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AllocationPreferences } from '@/domain/allocation';
 import {
   addAmount,
+  amountLimit,
   buildCards,
   canAddTyped,
   dispenseInput,
@@ -13,6 +14,7 @@ import {
   priceOf,
   removeLine,
   setAmount,
+  stockLine,
   stockState,
   unitsIn,
   visitWasSaved,
@@ -385,6 +387,16 @@ describe('the amount box', () => {
   it('OMS-REG-DIS-12.86: with none available, nothing can be added', () => {
     expect(canAddTyped(1, 0)).toBe(false);
   });
+
+  it('OMS-REG-DIS-12.78: with nothing on the list, the limit is the stock and none is selected', () => {
+    expect(amountLimit(28, 28)).toEqual({ stock: 28, selected: 0, upTo: 28 });
+  });
+
+  it('OMS-REG-DIS-12.113: with some on the list, says what is selected and what can still be added', () => {
+    expect(amountLimit(28, 16)).toEqual({ stock: 28, selected: 12, upTo: 16 });
+    // Without float dust: 0.3 of 0.9 leaves 0.6, not 0.6000000000000001.
+    expect(amountLimit(0.9, 0.6).selected).toBe(0.3);
+  });
 });
 
 describe('stockState', () => {
@@ -397,13 +409,33 @@ describe('stockState', () => {
     expect(stockState(1, [10, 20])).toBe('low');
   });
 
-  it('OMS-REG-DIS-12.11: at least twice the largest usual amount shows no stock line', () => {
+  it('OMS-REG-DIS-12.11: at least twice the largest usual amount is plenty', () => {
     expect(stockState(40, [10, 20])).toBe('plenty');
   });
 
   it('with no usual amounts, is low below two units', () => {
     expect(stockState(1, [])).toBe('low');
     expect(stockState(2, [])).toBe('plenty');
+  });
+});
+
+describe('stockLine', () => {
+  it('OMS-REG-DIS-12.11: plenty shows how much is left', () => {
+    expect(stockLine(40, [10, 20], false)).toBe('left');
+  });
+
+  it('OMS-REG-DIS-12.10/.12: low and out show their warnings', () => {
+    expect(stockLine(39, [10, 20], false)).toBe('low');
+    expect(stockLine(0, [10, 20], false)).toBe('out');
+  });
+
+  it('OMS-REG-DIS-12.110: on a phone, plenty shows nothing', () => {
+    expect(stockLine(40, [10, 20], true)).toBeUndefined();
+  });
+
+  it('OMS-REG-DIS-12.111: on a phone, low and out still show', () => {
+    expect(stockLine(39, [10, 20], true)).toBe('low');
+    expect(stockLine(0, [10, 20], true)).toBe('out');
   });
 });
 
@@ -495,9 +527,7 @@ describe('dispensing the visit', () => {
         numberOfPacks: 0.5,
       },
     ]);
-    expect(input.updatePrescriptions).toEqual([
-      { id: 'rx', status: 'PICKED' },
-    ]);
+    expect(input.updatePrescriptions).toEqual([{ id: 'rx', status: 'PICKED' }]);
     expect(input.continueOnError).toBe(false);
   });
 

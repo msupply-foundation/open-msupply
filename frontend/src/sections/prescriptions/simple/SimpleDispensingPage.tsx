@@ -34,6 +34,7 @@ import { MenuLinesIcon } from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
+import { newRecordHref } from '../newRecordLink';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
 import {
   SimpleDispense,
@@ -346,9 +347,18 @@ const SimpleDispensingPage: Component = () => {
     void refetchItems();
   };
 
+  // The header's Standard view carries on with the visit's person: the list
+  // opens its New dispensing record dialog for them, or for nobody yet (rules
+  // › the Simple screen). The empty state's opens the list alone, to dispense
+  // from it meanwhile. Nothing on the list goes with either: it was never
+  // saved.
   const standardView = (variant: 'secondary' | 'ghost') => (
     <LinkButton
-      href={listHref()}
+      href={
+        variant === 'ghost'
+          ? listHref()
+          : newRecordHref(listHref(), patient()?.id)
+      }
       variant={variant}
       icon={variant === 'ghost' ? undefined : <MenuLinesIcon />}
       data-testid={
