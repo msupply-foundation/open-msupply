@@ -4,8 +4,8 @@ use crate::{
 };
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
-    LocationTypeRowRepository, LocationTypeSort, PaginationOption, RepositoryError,
-    StorageConnection, StorageConnectionManager,
+    LocationTypeRowRepository, LocationTypeSort, LocationTypeUser, PaginationOption,
+    RepositoryError, StorageConnection, StorageConnectionManager,
 };
 
 pub fn get_location_types(
@@ -44,8 +44,8 @@ impl From<RepositoryError> for UpsertLocationTypeError {
 
 #[derive(Debug, PartialEq)]
 pub enum DeleteLocationTypeError {
-    /// A location, item, item variant or requisition line refers to it.
-    InUse,
+    /// The first kind of record found that refers to it.
+    InUse(LocationTypeUser),
     DatabaseError(RepositoryError),
 }
 
@@ -101,8 +101,8 @@ pub fn delete_location_type_in(
     connection
         .transaction_sync(|connection| -> Result<(), DeleteLocationTypeError> {
             let repo = LocationTypeRowRepository::new(connection);
-            if repo.is_in_use(id)? {
-                return Err(DeleteLocationTypeError::InUse);
+            if let Some(user) = repo.used_by(id)? {
+                return Err(DeleteLocationTypeError::InUse(user));
             }
             repo.delete(id)?;
             Ok(())
@@ -251,7 +251,7 @@ mod tests {
 
         assert_eq!(
             delete_location_type_in(&connection, &mut lookup, &in_use.id),
-            Err(DeleteLocationTypeError::InUse)
+            Err(DeleteLocationTypeError::InUse(LocationTypeUser::Item))
         );
         assert!(lookup.by_id(&in_use.id).is_some());
 
@@ -285,7 +285,9 @@ mod tests {
 
         assert_eq!(
             delete_location_type_in(&connection, &mut lookup, "requested"),
-            Err(DeleteLocationTypeError::InUse)
+            Err(DeleteLocationTypeError::InUse(
+                LocationTypeUser::RequisitionLine
+            ))
         );
     }
 }

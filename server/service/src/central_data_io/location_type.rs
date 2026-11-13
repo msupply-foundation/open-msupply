@@ -3,14 +3,17 @@ use super::{
     RowOutcome, SheetImport,
     cells::{Row, RowError, collect, keep_or_saved},
     delete::{DELETE_COLUMN, check_unchanged, is_delete},
-    lookup::{LookupError, resolve},
+    lookup::{LookupError, record_conflict},
     sheet::Value,
 };
 use crate::location_type::{
     DeleteLocationTypeError, LocationTypeLookup, UpsertLocationTypeError, delete_location_type_in,
     upsert_location_type_in,
 };
-use repository::{LocationTypeRow, LocationTypeRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    LocationTypeRow, LocationTypeRowRepository, LocationTypeUser, RepositoryError,
+    StorageConnection,
+};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -162,9 +165,8 @@ impl SheetImport for LocationTypeSheet {
             None => Change::Inserted,
         };
         if change != Change::Unchanged {
-            upsert_location_type_in(connection, &mut self.location_types, &location_type).map_err(
-                |error| upsert_failure(row, &self.location_types, &location_type, error),
-            )?;
+            upsert_location_type_in(connection, &mut self.location_types, &location_type)
+                .map_err(|error| upsert_failure(row, &location_type, error))?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -185,40 +187,31 @@ impl LocationTypeSheet {
         id: Option<&str>,
         code: Option<&str>,
     ) -> Result<Option<LocationTypeRow>, RowError> {
-        let by_code = |code: &str| -> Vec<String> {
-            self.location_types
-                .by_key(code)
-                .into_iter()
-                .map(|other| other.id.clone())
-                .collect()
+        let conflict = |saved: &LocationTypeRow, id: &str, code: &str| {
+            row.error(
+                CODE,
+                record_conflict(CODE, &saved.name, &saved.code, &saved.id, code, id),
+            )
         };
-        match (id, code) {
-            (Some(id), code) => match (self.location_types.by_id(id), code) {
-                (Some(saved), Some(code)) if saved.code.trim() != code => Err(row.error(
-                    CODE,
-                    format!(
-                        "code and id conflict: {id} is {}, whose code is {}, not {code}",
-                        saved.name, saved.code
-                    ),
-                )),
-                (Some(saved), _) => Ok(Some(saved.clone())),
+        let Some(code) = code else {
+            return Ok(id.and_then(|id| self.location_types.by_id(id)).cloned());
+        };
+        let by_code = self.location_types.by_key(code);
+        match id {
+            Some(id) => match self.location_types.by_id(id) {
+                Some(saved) if saved.code.trim() != code => Err(conflict(saved, id, code)),
+                Some(saved) => Ok(Some(saved.clone())),
                 // A new id beside a saved code is a copied row with one column edited.
-                (None, Some(code)) if !by_code(code).is_empty() => Err(row.error(
-                    CODE,
-                    LookupError::Conflict {
-                        resolved: by_code(code).join(", "),
-                        provided: id.to_string(),
-                    }
-                    .message(code),
-                )),
-                (None, _) => Ok(None),
+                None => match by_code.first() {
+                    Some(saved) => Err(conflict(saved, id, code)),
+                    None => Ok(None),
+                },
             },
-            (None, Some(code)) => match resolve(None, false, Some(&by_code(code))) {
-                Ok(found) => Ok(found.and_then(|id| self.location_types.by_id(&id).cloned())),
-                Err(LookupError::NotFound) => Ok(None),
-                Err(e) => Err(row.error(CODE, e.message(code))),
+            None => match by_code.as_slice() {
+                [] => Ok(None),
+                [saved] => Ok(Some((*saved).clone())),
+                _ => Err(row.error(CODE, LookupError::Ambiguous.message(code))),
             },
-            (None, None) => Ok(None),
         }
     }
 
@@ -250,12 +243,18 @@ impl LocationTypeSheet {
 
         delete_location_type_in(connection, &mut self.location_types, &saved.id).map_err(
             |error| match error {
-                DeleteLocationTypeError::InUse => row
+                DeleteLocationTypeError::InUse(user) => row
                     .error(
                         DELETE_COLUMN,
                         format!(
-                            "{} is used by a location, an item, an item variant or a requisition line, so it can't be deleted",
-                            saved.name
+                            "{} is used by {}, so it can't be deleted",
+                            record_name(&saved),
+                            match user {
+                                LocationTypeUser::Location => "a location",
+                                LocationTypeUser::Item => "an item",
+                                LocationTypeUser::ItemVariant => "an item variant",
+                                LocationTypeUser::RequisitionLine => "a requisition line",
+                            }
                         ),
                     )
                     .into(),
@@ -273,7 +272,6 @@ impl LocationTypeSheet {
 
 fn upsert_failure(
     row: &Row,
-    location_types: &LocationTypeLookup,
     location_type: &LocationTypeRow,
     error: UpsertLocationTypeError,
 ) -> RowFailure {
@@ -289,22 +287,10 @@ fn upsert_failure(
                 ),
             )
             .into(),
-        // Unreachable here: a saved code is matched first.
-        UpsertLocationTypeError::DuplicateCode { other_id } => {
-            let other = location_types
-                .by_id(&other_id)
-                .map_or(other_id.clone(), |other| {
-                    format!("{} ({other_id})", other.name)
-                });
-            row.error(
-                CODE,
-                format!(
-                    "Location type {other} already has the code {}. Give this location type another code",
-                    location_type.code
-                ),
-            )
-            .into()
-        }
+        // Unreachable here: `find` turns a saved code into a match or a conflict first.
+        UpsertLocationTypeError::DuplicateCode { other_id } => row
+            .error(CODE, format!("location type {other_id} has this code"))
+            .into(),
         UpsertLocationTypeError::DatabaseError(error) => RowFailure::Database(error),
     }
 }

@@ -17,6 +17,20 @@ impl LookupError {
     }
 }
 
+/// For a row whose id and lookup key don't find the same saved record. `column` is the key's.
+pub fn record_conflict(
+    column: &str,
+    record: &str,
+    saved_key: &str,
+    saved_id: &str,
+    key: &str,
+    id: &str,
+) -> String {
+    format!(
+        "{column} and id conflict: {record} has {column} {saved_key} and id {saved_id}, but this row has {column} {key} and id {id}"
+    )
+}
+
 /// `code_matches` holds the ids the code matched, `None` when no code was given. Given both, id
 /// and code must agree.
 pub fn resolve(

@@ -17,6 +17,15 @@ table! {
     }
 }
 
+/// A kind of record that can refer to a location type.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LocationTypeUser {
+    Location,
+    Item,
+    ItemVariant,
+    RequisitionLine,
+}
+
 #[derive(
     Clone,
     Queryable,
@@ -120,28 +129,44 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(result)
     }
 
-    /// Whether any foreign key refers to it.
-    pub fn is_in_use(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+    /// The first kind of record whose foreign key refers to it, if any.
+    pub fn used_by(&self, lookup_id: &str) -> Result<Option<LocationTypeUser>, RepositoryError> {
         use super::{
             item_row::item, item_variant::item_variant_row::item_variant, location_row::location,
             requisition_line::requisition_line_row::requisition_line,
         };
-        let connection = &mut self.connection.lock();
-        let in_use: bool = diesel::select(
-            diesel::dsl::exists(location::table.filter(location::location_type_id.eq(lookup_id)))
-                .or(diesel::dsl::exists(
-                    item::table.filter(item::restricted_location_type_id.eq(lookup_id)),
-                ))
-                .or(diesel::dsl::exists(
-                    item_variant::table.filter(item_variant::location_type_id.eq(lookup_id)),
-                ))
-                .or(diesel::dsl::exists(
-                    requisition_line::table
-                        .filter(requisition_line::location_type_id.eq(lookup_id)),
-                )),
-        )
-        .get_result(connection.connection())?;
-        Ok(in_use)
+        use diesel::dsl::exists;
+        let mut guard = self.connection.lock();
+        let connection = guard.connection();
+        if diesel::select(exists(
+            location::table.filter(location::location_type_id.eq(lookup_id)),
+        ))
+        .get_result(connection)?
+        {
+            return Ok(Some(LocationTypeUser::Location));
+        }
+        if diesel::select(exists(
+            item::table.filter(item::restricted_location_type_id.eq(lookup_id)),
+        ))
+        .get_result(connection)?
+        {
+            return Ok(Some(LocationTypeUser::Item));
+        }
+        if diesel::select(exists(
+            item_variant::table.filter(item_variant::location_type_id.eq(lookup_id)),
+        ))
+        .get_result(connection)?
+        {
+            return Ok(Some(LocationTypeUser::ItemVariant));
+        }
+        if diesel::select(exists(
+            requisition_line::table.filter(requisition_line::location_type_id.eq(lookup_id)),
+        ))
+        .get_result(connection)?
+        {
+            return Ok(Some(LocationTypeUser::RequisitionLine));
+        }
+        Ok(None)
     }
 
     fn _delete(&self, id: &str) -> Result<(), RepositoryError> {

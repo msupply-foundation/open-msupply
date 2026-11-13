@@ -1360,12 +1360,12 @@ async fn a_location_type_code_is_not_changed_by_import() {
             (
                 2,
                 Some("code"),
-                "code and id conflict: unused_type is Unused, whose code is UNUSED, not RENAMED"
+                "code and id conflict: Unused has code UNUSED and id unused_type, but this row has code RENAMED and id unused_type"
             ),
             (
                 3,
                 Some("code"),
-                "code and id conflict: UNUSED resolves to unused_type but id column contains new_id"
+                "code and id conflict: Unused has code UNUSED and id unused_type, but this row has code UNUSED and id new_id"
             ),
         ]
     );
@@ -1387,6 +1387,40 @@ async fn a_location_type_code_is_not_changed_by_import() {
             .len(),
         4
     );
+}
+
+// covers: OMS-REG-CDIO-01.24
+
+#[actix_rt::test]
+async fn a_code_two_location_types_share_asks_for_the_id() {
+    let (_, service_provider, dir) =
+        location_type_setup("central_data_location_type_ambiguous_code").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Legacy data can hold duplicates the import would refuse.
+    LocationTypeRowRepository::new(&ctx.connection)
+        .upsert_one(&LocationTypeRow {
+            id: "unused_copy".to_string(),
+            ..unused_location_type()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            location_type_row(["", "UNUSED", "Renamed", "", "", ""]),
+            location_type_row(["unused_copy", "UNUSED", "Renamed", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("code"),
+            "ambiguous reference, please provide id instead"
+        )]
+    );
+    assert_eq!(summary.tables[0].updated, 1);
 }
 
 // covers: OMS-REG-CDIO-01.25, .26, .36, .55, .74
@@ -1416,12 +1450,12 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
             (
                 2,
                 Some("delete"),
-                "cold_location_type is used by a location, an item, an item variant or a requisition line, so it can't be deleted"
+                "cold_location_type (cold_location_type) is used by a location, so it can't be deleted"
             ),
             (
                 3,
                 Some("delete"),
-                "freezer_location_type is used by a location, an item, an item variant or a requisition line, so it can't be deleted"
+                "freezer_location_type (freezer_location_type) is used by an item, so it can't be deleted"
             ),
             (4, Some("code"), "referenced record not found"),
             (
@@ -1510,11 +1544,6 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
         ]),
     );
     let summary = CentralDataService.import(&ctx, &path).unwrap();
-    let in_use = |name: &str| {
-        format!(
-            "{name} is used by a location, an item, an item variant or a requisition line, so it can't be deleted"
-        )
-    };
     assert_eq!(
         summary
             .errors
@@ -1522,8 +1551,17 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
             .map(|e| (e.row, e.column.clone(), e.message.clone()))
             .collect::<Vec<_>>(),
         vec![
-            (2, Some("delete".to_string()), in_use("REQUESTED")),
-            (3, Some("delete".to_string()), in_use("VARIANT")),
+            (
+                2,
+                Some("delete".to_string()),
+                "REQUESTED (REQUESTED) is used by a requisition line, so it can't be deleted"
+                    .to_string()
+            ),
+            (
+                3,
+                Some("delete".to_string()),
+                "VARIANT (VARIANT) is used by an item variant, so it can't be deleted".to_string()
+            ),
         ]
     );
     assert!(repo.find_one_by_id("requested_type").unwrap().is_some());
