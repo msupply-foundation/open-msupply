@@ -92,6 +92,7 @@ import { ColumnSettings, listedColumnIds } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
+import { scrollTableToTop } from './scrollTableToTop';
 import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
@@ -187,6 +188,21 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Omitted, every row is clickable whenever `onRowClick` is set.
    */
   rowClickable?: (row: T) => boolean;
+  /**
+   * The address a clickable row opens — set it on every table whose rows
+   * navigate, so a row can be opened in a new tab like any link: right-click →
+   * "Open link in new tab" / "Copy link address", Cmd/Ctrl-click,
+   * middle-click (#271). Router-space, the same path `onRowClick` hands
+   * `navigate()`; the mount is added for the link (RowLink).
+   *
+   * A link, not a second way to open the row: a plain click still runs
+   * `onRowClick`, so its guards and side effects are untouched, and a
+   * modified click never does — the browser opens the link elsewhere, or, on
+   * a control the link can't reach, nothing happens. Rows that
+   * open a modal have no address and leave this unset; a row it answers
+   * undefined for, or that isn't clickable, gets no link.
+   */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
@@ -471,6 +487,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   // not page rows itself (manual, server-driven; see kdd/table-state). Omit for
   // a non-paginated table.
   pagination?: PaginationProps;
+  /**
+   * The page shown, for a host that pages this table but renders the pager
+   * itself — a detail view's line table, whose pager sits in the status
+   * footer (ui-standards § tables → pagination). The table only reads it to
+   * scroll back to the first row when the page changes; it draws no pager
+   * and no row count. Ignored when `pagination` is set.
+   */
+  page?: Pick<PaginationProps, 'offset' | 'pageSize'>;
 };
 
 export function DataTable<T, K extends string, G extends string = never>(
@@ -983,6 +1007,28 @@ export function DataTable<T, K extends string, G extends string = never>(
   // rather than its control (scrollCellIntoView).
   const [frozenWidths, setFrozenWidths] = createSignal({ left: 0, right: 0 });
   let scrollBox: HTMLDivElement | undefined;
+  let rootEl: HTMLDivElement | undefined;
+
+  // Changing page (or rows per page) goes back to the first row: the pager
+  // sits at the table's foot, so without this the new page opens scrolled to
+  // its bottom. Keyed on the page shown, not on the pager's clicks, so it
+  // also follows a pager the host renders elsewhere (`page`), the browser's
+  // back/forward, and a filter that resets the offset. The memo holds a
+  // string so a page that did not move (a refetch with a new total, the page
+  // jump given the current page) changes nothing.
+  const shownPage = createMemo(() => {
+    const page = props.pagination ?? props.page;
+    return page ? `${page.offset}:${page.pageSize}` : undefined;
+  });
+  // Not `defer`: a deferred `on` does not record the value it skipped, so
+  // its first real change would arrive with no `before` and be dropped. The
+  // first run (mount) has none either, which is what skips it.
+  createEffect(
+    on(shownPage, (now, before) => {
+      if (now !== undefined && before !== undefined)
+        scrollTableToTop(rootEl, scrollBox);
+    })
+  );
 
   // Walk the header row from each end, accumulating RENDERED widths for as long
   // as the cells are pinned to that side (a frozen block is always a prefix or
@@ -1611,6 +1657,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     // full-bleed the table from its own CSS module (Page.module.css) — a
     // descendant selector can't name this .root class across CSS Modules.
     <div
+      ref={rootEl}
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
       style={
@@ -1827,13 +1874,15 @@ export function DataTable<T, K extends string, G extends string = never>(
                                   table.getIsAllRowsSelected() ||
                                   table.getIsSomeRowsSelected();
                                 table.toggleAllRowsSelected(!anySelected);
-                                // The native click already flipped the DOM box
-                                // to checked; toggling OFF from indeterminate
-                                // leaves the controlled `checked` value
-                                // false→false, so Solid's binding never re-runs
-                                // to undo it. Sync the box to the state we just
-                                // set.
-                                e.currentTarget.checked = !anySelected;
+                                // The native click already flipped the DOM box;
+                                // when the controlled `checked` value doesn't
+                                // change (OFF from indeterminate, or a page
+                                // whose onSelectionChange narrows select-all
+                                // to nothing), Solid's binding never re-runs
+                                // to undo it. Put the box back to what the
+                                // selection now holds, not what was asked for.
+                                e.currentTarget.checked =
+                                  table.getIsAllRowsSelected();
                               }}
                             />
                           </th>
@@ -1874,6 +1923,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
                         rowClickable={props.rowClickable}
+                        rowHref={props.rowHref}
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
@@ -1915,6 +1965,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
                             rowClickable={props.rowClickable}
+                            rowHref={props.rowHref}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}

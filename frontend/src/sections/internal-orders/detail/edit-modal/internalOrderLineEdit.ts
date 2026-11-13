@@ -91,6 +91,13 @@ export type EditorLine = {
   reason: string | null;
   /** True in add mode — no line exists on the wire until the first save. */
   isNew: boolean;
+  /**
+   * The chart series of the line's latest preview (issue 1189), null when it
+   * has none or the server couldn't read them. Drawn only while `isNew` — an
+   * unsaved add-mode draft has no line to read them by; a stored line's
+   * series are read by its id, whatever its previews carry.
+   */
+  previewChart: ForecastPreview['chart'] | null;
 };
 
 // --- Entry-mode re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90)
@@ -153,6 +160,20 @@ export const defaultEntryMode = (
   return 'units';
 };
 
+/**
+ * Months of stock once the requested quantity arrives, taking it to arrive
+ * today: (stock on hand + requested) ÷ the line's monthly demand — the same
+ * demand as its current months of stock, and like it 0 when there's no demand
+ * (OMS-REG-REPL-04.106).
+ */
+export const monthsOfStockAfterOrder = (
+  line: Pick<EditorLine, 'availableStockOnHand' | 'monthlyDemand'>,
+  requestedUnits: number
+): number =>
+  line.monthlyDemand > 0
+    ? (line.availableStockOnHand + requestedUnits) / line.monthlyDemand
+    : 0;
+
 // --- Forecast preview (rules › choosing a method) --------------------------
 
 export type ForecastPreviewResult =
@@ -178,6 +199,7 @@ const withPreview = (
     | 'monthlyDemand'
     | 'forecast'
     | 'forecastMethodOptions'
+    | 'previewChart'
   >,
   preview: ForecastPreview
 ): EditorLine => ({
@@ -192,6 +214,7 @@ const withPreview = (
   monthlyDemand: preview.forecastMonthlyConsumption,
   forecast: preview,
   forecastMethodOptions: preview.forecastMethodOptions,
+  previewChart: preview.chart,
 });
 
 // The draft's line for an item under `method` (null → the line's own) and held
@@ -372,6 +395,7 @@ export const editorLineFromLine = (
   reason: line.reason?.reason ?? null,
   campaign: line.campaign ?? null,
   isNew: false,
+  previewChart: null,
 });
 
 // --- Save (OMS-REG-REPL-04.65/.68)

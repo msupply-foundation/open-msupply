@@ -3,14 +3,14 @@ import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
+import { addDays } from '../../../ui/elements/inputs/dateTimeConvert';
 import {
-  addDays,
-  dateToIsoDate,
-  dateToOffsetIso,
-  isoDateToDate,
-  localTodayIso,
-  utcToLocalDay,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  dateToOffsetInstant,
+  calendarDateToDate,
+  todayCalendarDate,
+  instantToCalendarDate,
+} from '../../../intl/calendarDate';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
@@ -101,10 +101,10 @@ export const InboundShipmentDetailToolbar: Component<
   // would reject the exact now − maxDays day for stores ahead of UTC.
   const receivedMin = () =>
     props.backdatingMaxDays > 0
-      ? dateToIsoDate(addDays(new Date(), -(props.backdatingMaxDays - 1)))
+      ? dateToCalendarDate(addDays(new Date(), -(props.backdatingMaxDays - 1)))
       : undefined;
   const receivedMax = () =>
-    utcToLocalDay(props.node.receivedDatetime) ?? undefined;
+    instantToCalendarDate(props.node.receivedDatetime) ?? undefined;
   // The current received date already sits beyond the window — every earlier
   // pick would too, so no valid target date exists and the field disables
   // with the reason (ui-surface S3 "within the backdating window").
@@ -181,7 +181,10 @@ export const InboundShipmentDetailToolbar: Component<
         label={t('label.received')}
         testId="received-date-field"
         size="small"
-        value={draftReceivedDay() ?? utcToLocalDay(props.node.receivedDatetime)}
+        value={
+          draftReceivedDay() ??
+          instantToCalendarDate(props.node.receivedDatetime)
+        }
         disabled={!receivedDateEditable()}
         // The blocking reason is a TOOLTIP on the label, per spec S3 ("disabled
         // state carries an explanatory tooltip for each blocking reason") — not
@@ -200,7 +203,7 @@ export const InboundShipmentDetailToolbar: Component<
         min={receivedMin()}
         max={receivedMax()}
         onChange={value => {
-          const picked = isoDateToDate(value);
+          const picked = calendarDateToDate(value);
           if (!value || !picked) return;
           setReceivedError(undefined);
           // Offset-preserving so the server's backdating log records the
@@ -208,9 +211,9 @@ export const InboundShipmentDetailToolbar: Component<
           // → the current moment; a backdated day → its local start (matches
           // the current app).
           const received =
-            value === localTodayIso()
-              ? dateToOffsetIso(new Date())
-              : dateToOffsetIso(picked);
+            value === todayCalendarDate()
+              ? dateToOffsetInstant(new Date())
+              : dateToOffsetInstant(picked);
           // The re-stamp this causes can't be undone (rules § backdating the
           // received date), so it's confirmed before saving — not applied
           // straight away like the rest of this cluster's fields.

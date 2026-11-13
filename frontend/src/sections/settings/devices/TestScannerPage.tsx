@@ -464,6 +464,8 @@ const TestScannerPage: Component = () => {
               variant="secondary"
               icon={<XCircleIcon />}
               data-testid="close-button"
+              // not-a-link: Close is an action on this screen, not a
+              // destination to open in a new tab.
               onClick={() => navigate(settingsPath())}
             >
               {t('button.close')}

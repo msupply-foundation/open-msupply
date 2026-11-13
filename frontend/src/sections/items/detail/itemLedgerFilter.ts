@@ -1,4 +1,4 @@
-import type { IsoDateTimeRange } from '../../../ui/elements/selectors/FilterBar';
+import type { InstantRange } from '../../../ui/elements/selectors/FilterBar';
 import type {
   ItemLedgerResult,
   ItemLedgerVariables,
@@ -31,7 +31,7 @@ export type InvoiceStatus = LedgerRow['invoiceStatus'];
 export type LedgerFilter = {
   invoiceType?: InvoiceType[] | null;
   invoiceStatus?: InvoiceStatus[] | null;
-  datetime?: IsoDateTimeRange | null;
+  datetime?: InstantRange | null;
 };
 
 /** The UI filter state → the wire ItemLedgerFilterInput, scoped to one item. */

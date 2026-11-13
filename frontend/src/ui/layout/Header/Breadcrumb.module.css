@@ -95,6 +95,18 @@
   box-shadow: var(--focus-ring);
 }
 
+/* An ActionCrumb (no route to link to) is a <button>: drop the button's own
+   box so it reads exactly as a link crumb. Before the touch rule below, which
+   still widens it. */
+.action {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
 /*
  * Touch: on a tablet this link carries the whole weight of leaving a detail
  * screen (Escape → up one level needs a keyboard), so it takes the shared

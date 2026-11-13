@@ -4573,6 +4573,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
+ "base64",
  "chrono",
  "futures",
  "graphql_core",
@@ -4736,6 +4737,7 @@ name = "graphql_preference"
 version = "0.1.0"
 dependencies = [
  "async-graphql",
+ "chrono",
  "graphql_core",
  "graphql_types",
  "log",
@@ -5065,6 +5067,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "log",
  "repository",
  "serde",
  "serde_json",
@@ -9605,6 +9608,7 @@ dependencies = [
  "bcrypt",
  "boa_engine",
  "chrono",
+ "chrono-tz",
  "csv",
  "flate2",
  "headless_chrome",

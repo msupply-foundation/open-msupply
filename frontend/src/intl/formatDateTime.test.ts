@@ -66,6 +66,34 @@ describe('getDisplayAge (spec/patients — age display)', () => {
 });
 
 /*
+ * A calendar date (`YYYY-MM-DD`, a GraphQL NaiveDate) shows the day it names,
+ * in every zone (#1500). Read as a UTC instant, a date of birth of 1 October
+ * shows as 30/09 anywhere west of Greenwich — so these fail on any machine,
+ * because the suite runs west of UTC by default (vitest.config.ts).
+ */
+describe('calendar dates show the day they name (#1500)', () => {
+  it('localisedDate', () => {
+    expect(localisedDate('2025-10-01')).toBe('01/10/2025');
+    expect(localisedDate('2026-01-01')).toBe('01/01/2026');
+  });
+
+  it('exportDate', () => {
+    expect(exportDate('2025-10-01')).toBe('01/10/2025');
+  });
+
+  it('customDate', () => {
+    expect(customDate('2025-10-01', 'yyyy-MM-dd')).toBe('2025-10-01');
+    expect(customDate('2025-10-01', 'd MMM yyyy')).toBe('1 Oct 2025');
+  });
+
+  it('a timestamp still shows the user’s own day and time', () => {
+    const instant = new Date(2025, 9, 1, 23, 30);
+    expect(localisedDate(instant.toISOString())).toBe('01/10/2025');
+    expect(localisedTime(instant.toISOString())).toBe('23:30');
+  });
+});
+
+/*
  * The sync cell's relative-time ladder (spec/chrome § sync status,
  * OMS-REG-FTR-03.23). `now` is passed explicitly rather than read off the fake
  * clock, because the caller ticks its own minutely `now` signal and the

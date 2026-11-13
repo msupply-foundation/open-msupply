@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  availableDoses,
   availableUnits,
   clampManualPacks,
   distinctPackSizes,
   dosesToPacks,
+  issuedDoses,
   issuedUnits,
   lensToUnits,
   packsToDoses,
@@ -90,6 +92,21 @@ describe('unit sums', () => {
 
   it('distinctPackSizes lists each size once', () => {
     expect(distinctPackSizes(batches)).toEqual([10, 5, 20]);
+  });
+
+  it('availableDoses / issuedDoses convert each batch through its own doses per unit, on-hold excluded from available (old-app parity)', () => {
+    const withDoses = batches.map((batch, i) => ({
+      ...batch,
+      dosesPerUnit: [3, 2, 3, 3][i] ?? 1,
+    }));
+    expect(availableDoses(withDoses)).toBe(2 * 10 * 3 + 4 * 5 * 2);
+    expect(issuedDoses(withDoses)).toBe(1 * 10 * 3 + 0.5 * 5 * 2 + 2 * 10 * 3);
+    // A missing rate counts as 1, like packsToDoses.
+    expect(
+      availableDoses([
+        { packSize: 1, availablePacks: 7, numberOfPacks: 0, dosesPerUnit: 0 },
+      ])
+    ).toBe(7);
   });
 });
 

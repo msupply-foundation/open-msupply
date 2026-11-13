@@ -1,35 +1,17 @@
-use crate::types::ItemChartNode;
 use async_graphql::*;
 use graphql_core::{
     ContextExt,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
+use graphql_types::types::{ConsumptionOptionsInput, ItemChartNode, StockEvolutionOptionsInput};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    requisition_line::chart::{
-        ConsumptionHistoryOptions, RequisitionLineChartError, StockEvolutionOptions,
-    },
+    requisition_line::chart::RequisitionLineChartError,
     store_preference::get_store_preferences,
 };
 
 type ServiceError = RequisitionLineChartError;
-
-#[derive(InputObject)]
-pub struct ConsumptionOptionsInput {
-    /// Defaults to store preference amc_lookback_months
-    amc_lookback_months: Option<f64>,
-    /// Defaults to 12
-    number_of_data_points: Option<u32>,
-}
-
-#[derive(InputObject)]
-pub struct StockEvolutionOptionsInput {
-    /// Defaults to 30, number of data points for historic stock on hand in stock evolution chart
-    number_of_historic_data_points: Option<u32>,
-    /// Defaults to 20, number of data points for projected stock on hand in stock evolution chart
-    number_of_projected_data_points: Option<u32>,
-}
 
 #[derive(Interface)]
 #[graphql(name = "RequisitionLineChartErrorInterface")]
@@ -72,15 +54,21 @@ pub fn chart(
     let amc_lookback_months = get_store_preferences(&service_context.connection, store_id)?
         .monthly_consumption_look_back_period;
 
+    // Only the series the query selects are read
+    let look_ahead = ctx.look_ahead();
     let result = match service_provider
         .requisition_line_service
         .get_requisition_line_chart(
             &service_context,
             request_requisition_line_id,
-            ConsumptionOptionsInput::to_domain(amc_lookback_months, consumption_options_input),
-            stock_evolution_options_input
-                .map(|i| i.to_domain())
-                .unwrap_or_default(),
+            look_ahead.field("consumptionHistory").exists().then(|| {
+                ConsumptionOptionsInput::to_domain(amc_lookback_months, consumption_options_input)
+            }),
+            look_ahead.field("stockEvolution").exists().then(|| {
+                stock_evolution_options_input
+                    .map(|i| i.to_domain())
+                    .unwrap_or_default()
+            }),
         ) {
         Ok(requisition_line_chart) => {
             ChartResponse::Response(ItemChartNode::from_domain(requisition_line_chart))
@@ -111,46 +99,6 @@ fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
     Err(graphql_error.extend())
 }
 
-impl ConsumptionOptionsInput {
-    fn to_domain(
-        default_amc_lookback_months: f64,
-        from: Option<Self>,
-    ) -> ConsumptionHistoryOptions {
-        let default_number_of_datapoints = 3;
-
-        from.map(
-            |ConsumptionOptionsInput {
-                 amc_lookback_months,
-                 number_of_data_points,
-             }| ConsumptionHistoryOptions {
-                amc_lookback_months: amc_lookback_months.unwrap_or(default_amc_lookback_months),
-                number_of_data_points: number_of_data_points
-                    .unwrap_or(default_number_of_datapoints),
-            },
-        )
-        .unwrap_or(ConsumptionHistoryOptions {
-            amc_lookback_months: default_amc_lookback_months,
-            number_of_data_points: default_number_of_datapoints,
-        })
-    }
-}
-
-impl StockEvolutionOptionsInput {
-    fn to_domain(self) -> StockEvolutionOptions {
-        let StockEvolutionOptionsInput {
-            number_of_historic_data_points,
-            number_of_projected_data_points,
-        } = self;
-        let default = StockEvolutionOptions::default();
-        StockEvolutionOptions {
-            number_of_historic_data_points: number_of_historic_data_points
-                .unwrap_or(default.number_of_historic_data_points),
-            number_of_projected_data_points: number_of_projected_data_points
-                .unwrap_or(default.number_of_projected_data_points),
-        }
-    }
-}
-
 #[cfg(test)]
 mod graphql {
     use async_graphql::EmptyMutation;
@@ -174,8 +122,8 @@ mod graphql {
 
     type GetRequisitionLineChart = dyn Fn(
             &str,
-            ConsumptionHistoryOptions,
-            StockEvolutionOptions,
+            Option<ConsumptionHistoryOptions>,
+            Option<StockEvolutionOptions>,
         ) -> Result<ItemChart, RequisitionLineChartError>
         + Sync
         + Send;
@@ -187,8 +135,8 @@ mod graphql {
             &self,
             _: &ServiceContext,
             requisition_line_id: &str,
-            consumption_history_options: ConsumptionHistoryOptions,
-            stock_evolution_options: StockEvolutionOptions,
+            consumption_history_options: Option<ConsumptionHistoryOptions>,
+            stock_evolution_options: Option<StockEvolutionOptions>,
         ) -> Result<ItemChart, RequisitionLineChartError> {
             self.0(
                 requisition_line_id,
@@ -229,6 +177,14 @@ mod graphql {
               stockEvolutionOptionsInput: $stockEvolutionOptionsInput
             ) {
               __typename
+              ... on ItemChartNode {
+                consumptionHistory {
+                  totalCount
+                }
+                stockEvolution {
+                  totalCount
+                }
+              }
               ... on RequisitionLineChartError {
                 error {
                     __typename
@@ -312,13 +268,13 @@ mod graphql {
 
         // Test defaults
         let test_service = TestService(Box::new(|_, consumption_history, stock_evolution| {
-            assert_eq!(stock_evolution, StockEvolutionOptions::default());
+            assert_eq!(stock_evolution, Some(StockEvolutionOptions::default()));
             assert_eq!(
                 consumption_history,
-                ConsumptionHistoryOptions {
+                Some(ConsumptionHistoryOptions {
                     amc_lookback_months: 20.0,
                     number_of_data_points: 3,
-                }
+                })
             );
             Ok(ItemChart::default())
         }));
@@ -351,17 +307,17 @@ mod graphql {
             |requisition_line_id, consumption_history, stock_evolution| {
                 assert_eq!(
                     stock_evolution,
-                    StockEvolutionOptions {
+                    Some(StockEvolutionOptions {
                         number_of_historic_data_points: 9,
                         number_of_projected_data_points: 10,
-                    }
+                    })
                 );
                 assert_eq!(
                     consumption_history,
-                    ConsumptionHistoryOptions {
+                    Some(ConsumptionHistoryOptions {
                         amc_lookback_months: 11.0,
                         number_of_data_points: 12
-                    }
+                    })
                 );
 
                 // assert_eq!(store_id, "store_id");
@@ -395,6 +351,41 @@ mod graphql {
             &query(),
             &Some(variables),
             &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // A series the query doesn't select isn't read
+        let test_service = TestService(Box::new(|_, consumption_history, stock_evolution| {
+            assert!(consumption_history.is_some());
+            assert_eq!(stock_evolution, None);
+            Ok(ItemChart::default())
+        }));
+
+        let consumption_only = r#"
+        query MyQuery($requestRequisitionLineId: String!, $storeId: String!) {
+            requisitionLineChart(
+              requestRequisitionLineId: $requestRequisitionLineId
+              storeId: $storeId
+            ) {
+              ... on ItemChartNode {
+                consumptionHistory {
+                  totalCount
+                }
+              }
+            }
+          }
+        "#;
+
+        let variables = json!({
+            "requestRequisitionLineId": "n/a",
+            "storeId": "n/a",
+        });
+
+        assert_graphql_query!(
+            &settings,
+            consumption_only,
+            &Some(variables),
+            &json!({ "requisitionLineChart": {} }),
             Some(service_provider(test_service, &connection_manager))
         );
     }

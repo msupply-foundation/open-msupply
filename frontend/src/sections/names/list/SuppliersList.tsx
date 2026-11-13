@@ -19,6 +19,7 @@ const SuppliersList: Component = () => {
       tableId="names-suppliers"
       crumbs={() => [{ label: t('nav.replenishment.suppliers') }]}
       onRowClick={row => navigate(supplierDetailPath(params.storeId, row.id))}
+      rowHref={row => supplierDetailPath(params.storeId, row.id)}
     />
   );
 };

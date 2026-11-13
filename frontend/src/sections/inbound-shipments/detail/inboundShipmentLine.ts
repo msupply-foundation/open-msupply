@@ -1,3 +1,7 @@
+import {
+  isDefaultSellPrice,
+  perUnitAtPackSize,
+} from '@/domain/item/defaultSellPrice';
 import type { InboundLineFragment } from './inboundShipmentDetail.generated';
 
 // Line arithmetic shared by every surface that reports it. One definition
@@ -86,18 +90,6 @@ export const orderLinePrice = (
 ): number => pricePerPackAfterSupplierDiscount * (rate || 1);
 
 /**
- * A per-pack figure for `defaultPackSize` carried to `packSize` at the same
- * figure per unit — what a transfer's read-only cost follows when the pack
- * size changes (OMS-REG-REPL-09.44), and what volume per pack follows on any
- * shipment (.45). Zero where there is no default pack size to divide by.
- */
-export const perUnitAtPackSize = (
-  perPack: number,
-  defaultPackSize: number,
-  packSize: number
-): number => (defaultPackSize > 0 ? (perPack / defaultPackSize) * packSize : 0);
-
-/**
  * The figures a batch's pack-size change starts from: the item's defaults for
  * a new batch, or the source batch's figures as they were when it was
  * duplicated. Fixed for the batch's life, so a figure is always scaled from
@@ -117,8 +109,10 @@ export type PackSizeBase = {
  * can be typed: kept on a PO-linked shipment, since an order line's price
  * applies at any pack size; at the base's price per unit on a transfer, where
  * a zero cost could never be corrected; and on a shipment with no source link,
- * cleared to zero away from the base's pack size for the receiver to enter. A
- * price left out is left as it is.
+ * the cost cleared to zero away from the base's pack size for the receiver to
+ * enter, while the sell price follows at the base's sell price per unit
+ * (spec/stock rules › Default sell price for new stock) — back at the base's
+ * pack size it is the base's own again. A price left out is left as it is.
  */
 export const figuresAtPackSize = (
   base: PackSizeBase,
@@ -135,9 +129,36 @@ export const figuresAtPackSize = (
       costPricePerPack: perUnit(base.costPricePerPack),
       sellPricePerPack: perUnit(base.sellPricePerPack),
     };
-  if (packSize === base.packSize) return { volumePerPack };
-  return { volumePerPack, costPricePerPack: 0, sellPricePerPack: 0 };
+  const sellPricePerPack = perUnit(base.sellPricePerPack);
+  if (packSize === base.packSize) return { volumePerPack, sellPricePerPack };
+  return { volumePerPack, costPricePerPack: 0, sellPricePerPack };
 };
+
+/**
+ * Whether a saved line's sell price counts as typed when the editor opens it,
+ * so a pack-size change leaves it alone. On a shipment with no source link, a
+ * sell price still at the default for the line's pack size is not — it
+ * follows a pack-size change as a new batch's does (spec/stock rules ›
+ * Default sell price for new stock); a line made from a master list or an
+ * internal order arrives at it. Any other saved sell price is, as is every
+ * saved one on a transfer or a PO-linked shipment.
+ */
+export const savedSellOverridden = (
+  line: Pick<InboundLineFragment, 'item' | 'packSize' | 'sellPricePerPack'>,
+  shipment: { purchaseOrderLinked: boolean; costLocked: boolean }
+): boolean =>
+  shipment.purchaseOrderLinked ||
+  shipment.costLocked ||
+  !line.item ||
+  !isDefaultSellPrice(
+    line.sellPricePerPack,
+    {
+      defaultPackSize: line.item.defaultPackSize,
+      defaultSellPricePerPack:
+        line.item.itemStoreProperties?.defaultSellPricePerPack,
+    },
+    line.packSize
+  );
 
 /**
  * The defaults for another batch of an item already on the shipment, read off

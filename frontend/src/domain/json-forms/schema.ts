@@ -32,9 +32,9 @@
 // Labels arrive pre-translated (OMS-REG-RPT-10.3) and are used verbatim.
 
 import {
-  localDayToUtc,
-  utcToLocalDay,
-} from '../../ui/elements/inputs/dateTimeConvert';
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../../intl/calendarDate';
 
 /** One option for an enum select: raw schema value + its display label. */
 export interface EnumOption {
@@ -133,7 +133,17 @@ export type ParsedField =
       nullable: boolean;
       default?: unknown;
     }
-  | { kind: 'dateRange'; key: string; label: string; nullable: boolean }
+  | {
+      kind: 'dateRange';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.requiredBothDates` — one end alone blocks OK. */
+      requiredBothDates: boolean;
+      /** uiSchema `options.disableFuture` — no days after today. */
+      disableFuture: boolean;
+    }
   | { kind: 'masterList'; key: string; label: string; nullable: boolean }
   | { kind: 'location'; key: string; label: string; nullable: boolean }
   /**
@@ -484,7 +494,15 @@ export const parseArgumentSchema = (raw: {
         });
         break;
       case 'DateRange':
-        fields.push({ kind: 'dateRange', key, label, nullable });
+        fields.push({
+          kind: 'dateRange',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+          requiredBothDates: options?.requiredBothDates === true,
+          disableFuture: options?.disableFuture === true,
+        });
         break;
       case 'MasterListSearch':
         fields.push({ kind: 'masterList', key, label, nullable });
@@ -655,7 +673,8 @@ const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
  * (OMS-REG-RPT-10.17/.31/.35; the captured client parsed bare dates at UTC
  * midnight — normalized here, see the contract).
  */
-export const dayStartInstant = (date: string): string => localDayToUtc(date);
+export const dayStartInstant = (date: string): string =>
+  calendarDateToInstant(date);
 
 /**
  * A calendar date's last instant (23:59:59.999 local) as an RFC3339 UTC
@@ -663,7 +682,7 @@ export const dayStartInstant = (date: string): string => localDayToUtc(date);
  * captured client's hour-24 overflow normalized away, see the contract).
  */
 export const dayEndInstant = (date: string): string =>
-  localDayToUtc(date, { endOfDay: true });
+  calendarDateToInstant(date, { endOfDay: true });
 
 /**
  * An RFC3339 instant → the viewer's local calendar date (`yyyy-mm-dd`), for
@@ -671,7 +690,7 @@ export const dayEndInstant = (date: string): string =>
  * from/to bounds). '' for absent or garbled values.
  */
 export const instantToLocalDate = (value: unknown): string =>
-  typeof value === 'string' ? (utcToLocalDay(value) ?? '') : '';
+  typeof value === 'string' ? (instantToCalendarDate(value) ?? '') : '';
 
 /** The date-kind slice of ParsedField the date-entry helpers below read. */
 type DateField = Extract<ParsedField, { kind: 'date' }>;
@@ -693,7 +712,7 @@ export const dateArgumentValue = (field: DateField, isoDay: string): string =>
 /**
  * A date field's stored value → the local calendar day it edits: plain
  * 'YYYY-MM-DD' values pass through, instant values read back as the local day
- * (never sliced — see `utcToLocalDay`). '' for absent/garbled values.
+ * (never sliced — see `instantToCalendarDate`). '' for absent/garbled values.
  */
 export const dateArgumentDay = (value: unknown): string => {
   if (typeof value !== 'string' || value === '') return '';
@@ -704,7 +723,7 @@ export const dateArgumentDay = (value: unknown): string => {
  * A date field's selectable day bounds (OMS-REG-RPT-10.40): the sibling values
  * its `min`/`max` scope refs point at — read live from the form's current
  * values — with the ceiling tightened to today when the element disallows
- * future days. ISO days compare lexicographically, so the tighter ceiling is a
+ * future days. Calendar dates compare lexicographically, so the tighter ceiling is a
  * string compare. `today` is passed in (this module stays clock-free / pure).
  */
 export const dateFieldBounds = (
@@ -737,6 +756,22 @@ export const dateFieldViolation = (
   if (min && day < min) return 'min';
   const max = field.maxKey ? dateArgumentDay(values[field.maxKey]) : '';
   if (max && day > max) return 'max';
+  return undefined;
+};
+
+/** Why a date range blocks OK; `value` is `{ start, end }` or undefined. */
+export const dateRangeViolation = (
+  field: Extract<ParsedField, { kind: 'dateRange' }>,
+  value: unknown
+): 'required' | 'bothDates' | undefined => {
+  const range =
+    value && typeof value === 'object'
+      ? (value as { start?: unknown; end?: unknown })
+      : {};
+  const hasStart = typeof range.start === 'string' && range.start !== '';
+  const hasEnd = typeof range.end === 'string' && range.end !== '';
+  if (!hasStart && !hasEnd) return field.required ? 'required' : undefined;
+  if (field.requiredBothDates && !(hasStart && hasEnd)) return 'bothDates';
   return undefined;
 };
 

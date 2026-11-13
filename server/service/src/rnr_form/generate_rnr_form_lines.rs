@@ -297,9 +297,11 @@ pub fn get_usage_map(
     let store_id_filter = Some(EqualFilter::equal_to(store_id.to_string()));
     let date_filter = Some(DateFilter::date_range(&start_date, end_date));
 
-    // Get all usage rows for the period
+    // Get all usage rows for the period. Consumption estimates are left out:
+    // the form's balances are stock that physically moved, and its AMC comes
+    // from this period's consumption and previous forms, not a look-back.
     let consumption_rows =
-        ConsumptionRepository::new(connection).query(Some(ConsumptionFilter {
+        ConsumptionRepository::new(connection).query_actual(Some(ConsumptionFilter {
             item_id: item_id_filter.clone(),
             store_id: store_id_filter.clone(),
             date: date_filter.clone(),

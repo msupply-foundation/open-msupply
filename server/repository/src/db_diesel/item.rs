@@ -1,8 +1,10 @@
 use super::{
-    DBType, ItemRow, ItemType, StorageConnection, UnitRow, item_category_row::item_category_join,
-    item_row::item, master_list_line_row::master_list_line,
+    DBType, ItemRow, ItemType, StorageConnection, UnitRow, invoice_line_row::invoice_line,
+    item_category_row::item_category_join, item_row::item, master_list_line_row::master_list_line,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
-    program_row::program, stock_on_hand::store_stock_on_hand, store_row::store, unit_row::unit,
+    program_row::program, requisition_line_row::requisition_line,
+    stock_on_hand::store_stock_on_hand, stocktake_line_row::stocktake_line, store_row::store,
+    unit_row::unit,
 };
 
 use diesel::{
@@ -82,12 +84,28 @@ pub struct ItemFilter {
     #[ts(optional)]
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
     pub universal_code: Option<StringFilter>,
+    #[ts(optional)]
+    pub not_in_record: Option<ItemNotInRecordFilter>,
 
     /// Client-provided dynamic filter AST (currently property conditions only).
     /// ANDs with the other filters. Keys must be validated against the "item"
     /// table scope's allowed property keys in the service layer.
     #[ts(skip)]
     pub dynamic_filter: Option<ItemCondition::Inner>,
+}
+
+/// Excludes items already present as a line on the given record.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+pub struct ItemNotInRecordFilter {
+    pub record: ItemNotInRecordType,
+    pub id: String,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+pub enum ItemNotInRecordType {
+    Stocktake,
+    Requisition,
+    Invoice,
 }
 
 // Dynamic query filter for the item table, applied to joined queries via an
@@ -180,6 +198,11 @@ impl ItemFilter {
 
     pub fn dynamic_filter(mut self, condition: ItemCondition::Inner) -> Self {
         self.dynamic_filter = Some(condition);
+        self
+    }
+
+    pub fn not_in_record(mut self, filter: ItemNotInRecordFilter) -> Self {
+        self.not_in_record = Some(filter);
         self
     }
 }
@@ -285,6 +308,7 @@ impl<'a> ItemRepository<'a> {
                 is_program_item,
                 ignore_for_orders,
                 universal_code,
+                not_in_record,
                 dynamic_filter,
                 // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
                 max_months_of_stock: _,
@@ -460,6 +484,36 @@ impl<'a> ItemRepository<'a> {
                     query.filter(item::id.ne_all(ignored_item_ids))
                 };
             }
+
+            if let Some(ItemNotInRecordFilter {
+                record,
+                id: record_id,
+            }) = not_in_record
+            {
+                query = match record {
+                    ItemNotInRecordType::Stocktake => {
+                        let item_ids_in_stocktake = stocktake_line::table
+                            .select(stocktake_line::item_id)
+                            .filter(stocktake_line::stocktake_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_stocktake))
+                    }
+                    ItemNotInRecordType::Requisition => {
+                        let item_ids_in_requisition = requisition_line::table
+                            .select(requisition_line::item_id)
+                            .filter(requisition_line::requisition_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_requisition))
+                    }
+                    ItemNotInRecordType::Invoice => {
+                        let item_ids_in_invoice = invoice_line::table
+                            .select(invoice_line::item_id)
+                            .filter(invoice_line::invoice_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_invoice))
+                    }
+                };
+            }
         }
         query
     }
@@ -500,20 +554,21 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
-        EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow, ItemRowRepository,
-        ItemStoreJoinRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, ItemType,
-        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, StockLineRow, StockLineRowRepository, StoreRow, StoreRowRepository,
-        StringFilter,
+        EqualFilter, InvoiceLineRow, InvoiceRow, ItemFilter, ItemLinkRowRepository, ItemRepository,
+        ItemRow, ItemRowRepository, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+        ItemStoreJoinRowRepositoryTrait, ItemType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, RequisitionLineRow,
+        RequisitionRow, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
+        StoreRow, StoreRowRepository, StringFilter,
         mock::{
-            MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_link_from_item,
-            mock_item_universal_code, mock_store_a,
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c,
+            mock_item_link_from_item, mock_item_universal_code, mock_name_a, mock_store_a,
         },
         test_db,
     };
 
-    use super::{Item, ItemSort, ItemSortField};
+    use super::{Item, ItemNotInRecordFilter, ItemNotInRecordType, ItemSort, ItemSortField};
 
     impl PartialEq<ItemRow> for Item {
         fn eq(&self, other: &ItemRow) -> bool {
@@ -1005,6 +1060,112 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_filter_not_in_record() {
+        let stocktake = StocktakeRow {
+            id: "not_in_record_stocktake".to_string(),
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let other_stocktake = StocktakeRow {
+            id: "not_in_record_other_stocktake".to_string(),
+            ..stocktake.clone()
+        };
+        let requisition = RequisitionRow {
+            id: "not_in_record_requisition".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let invoice = InvoiceRow {
+            id: "not_in_record_invoice".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let stocktake_line = |id: &str, stocktake_id: &str, item_id: String| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: stocktake_id.to_string(),
+            item_id,
+            ..Default::default()
+        };
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_item_query_filter_not_in_record",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                stocktakes: vec![stocktake.clone(), other_stocktake.clone()],
+                stocktake_lines: vec![
+                    stocktake_line("stocktake_line_a", &stocktake.id, mock_item_a().id),
+                    // Only the given record's lines exclude an item
+                    stocktake_line(
+                        "other_stocktake_line_b",
+                        &other_stocktake.id,
+                        mock_item_b().id,
+                    ),
+                ],
+                requisitions: vec![requisition.clone()],
+                requisition_lines: vec![RequisitionLineRow {
+                    id: "requisition_line_b".to_string(),
+                    requisition_id: requisition.id.clone(),
+                    item_id: mock_item_b().id,
+                    ..Default::default()
+                }],
+                invoices: vec![invoice.clone()],
+                invoice_lines: vec![InvoiceLineRow {
+                    id: "invoice_line_c".to_string(),
+                    invoice_id: invoice.id.clone(),
+                    item_id: mock_item_c().id,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repository = ItemRepository::new(&connection);
+        let ids = |record: ItemNotInRecordType, id: &str| -> Vec<String> {
+            let mut ids: Vec<String> = repository
+                .query(
+                    Pagination::new(),
+                    Some(
+                        ItemFilter::new()
+                            .id(EqualFilter::equal_any(vec![
+                                mock_item_a().id,
+                                mock_item_b().id,
+                                mock_item_c().id,
+                            ]))
+                            .is_visible(false)
+                            .not_in_record(ItemNotInRecordFilter {
+                                record,
+                                id: id.to_string(),
+                            }),
+                    ),
+                    None,
+                    Some(mock_store_a().id),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|item| item.item_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        assert_eq!(
+            ids(ItemNotInRecordType::Stocktake, &stocktake.id),
+            vec![mock_item_b().id, mock_item_c().id]
+        );
+        assert_eq!(
+            ids(ItemNotInRecordType::Requisition, &requisition.id),
+            vec![mock_item_a().id, mock_item_c().id]
+        );
+        assert_eq!(
+            ids(ItemNotInRecordType::Invoice, &invoice.id),
+            vec![mock_item_a().id, mock_item_b().id]
+        );
     }
 
     #[actix_rt::test]

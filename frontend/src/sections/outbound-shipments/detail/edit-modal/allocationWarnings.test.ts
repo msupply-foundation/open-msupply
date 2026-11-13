@@ -14,6 +14,52 @@ describe('issueWarningMessages (OMS-REG-SMV-11.7/.11/.13)', () => {
     ]);
   });
 
+  it('expresses over-allocation in the entry lens — doses and packs, not the units behind them (#2067)', () => {
+    // 101 doses at 10 doses/vial = 10.1 vials requested; whole packs of 1
+    // allocate 11 vials = 110 doses.
+    const derived: IssueWarning[] = [{ kind: 'over-allocated', units: 0.9 }];
+    expect(
+      issueWarningMessages(
+        derived,
+        10.1,
+        { kind: 'doses', dosesPerUnit: 10 },
+        short
+      )
+    ).toEqual([
+      { key: 'messages.over-allocated', quantity: 110, issueQuantity: 101 },
+    ]);
+    // 6 units through packs of 4 → 8 units = 2 packs rather than 1.5.
+    expect(
+      issueWarningMessages(
+        [{ kind: 'over-allocated', units: 2 }],
+        6,
+        { kind: 'packs', size: 4 },
+        short
+      )
+    ).toEqual([
+      { key: 'messages.over-allocated', quantity: 2, issueQuantity: 1.5 },
+    ]);
+  });
+
+  it('reads the request as the Issue field shows it, without the round trip’s float dust', () => {
+    // 182 doses at 3 doses/unit = 60.666666667 units, which × 3 is
+    // 182.000000001; the allocation rounds up to 61 units = 183 doses.
+    const requested = 60.666666667;
+    const derived: IssueWarning[] = [
+      { kind: 'over-allocated', units: 61 - requested },
+    ];
+    expect(
+      issueWarningMessages(
+        derived,
+        requested,
+        { kind: 'doses', dosesPerUnit: 3 },
+        short
+      )
+    ).toEqual([
+      { key: 'messages.over-allocated', quantity: 183, issueQuantity: 182 },
+    ]);
+  });
+
   it('reports each skipped category as its own sentence, on hold left to its badge (OMS-REG-SMV-11.7, #1168)', () => {
     const derived: IssueWarning[] = [
       {
@@ -24,7 +70,7 @@ describe('issueWarningMessages (OMS-REG-SMV-11.7/.11/.13)', () => {
     expect(issueWarningMessages(derived, 0, units, short)).toEqual([
       { key: 'messages.stock-expired', reason: 'expired' },
       { key: 'messages.stock-unusable-vvm', reason: 'unusable-vvm' },
-      { key: 'messages.stock-other-campaign', reason: 'other-campaign' },
+      { key: 'messages.stock-other-activity', reason: 'other-campaign' },
     ]);
   });
 

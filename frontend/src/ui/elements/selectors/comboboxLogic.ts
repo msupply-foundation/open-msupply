@@ -110,3 +110,79 @@ export const sectionOptions = <T>(
     .filter(([, bucket]) => bucket.length > 0)
     .map(([label, bucket]) => ({ label, options: bucket }));
 };
+
+/** The slice of a Kobalte collection node {@link firstMatchKey} reads. */
+export interface OptionNode<T> {
+  type: 'item' | 'section';
+  key: string;
+  rawValue: T;
+  disabled: boolean;
+}
+
+/**
+ * The option to highlight once the user has typed: the first one Enter could
+ * actually pick. Sections are headings, not options, and a disabled option
+ * can't be chosen, so both are passed over. `skip` drops options that are
+ * listed but aren't a MATCH for what was typed (see {@link skipsHighlight}).
+ *
+ * Undefined when nothing qualifies: highlighting nothing leaves Enter inert,
+ * which beats committing an option the user never asked for.
+ */
+export const firstMatchKey = <T>(
+  nodes: Iterable<OptionNode<T>>,
+  skip?: (item: T) => boolean
+): string | undefined => {
+  for (const node of nodes) {
+    if (node.type !== 'item' || node.disabled) continue;
+    if (skip?.(node.rawValue)) continue;
+    return node.key;
+  }
+  return undefined;
+};
+
+/**
+ * Whether a listed row is passed over by the first-match highlight: it is on
+ * screen without answering the query.
+ * - The committed selection (`held`): a server-mode caller holding a controlled
+ *   value lists it first whatever is typed (AsyncCombobox's seed), so it would
+ *   always win, and re-picking it changes nothing — Enter would look dead with
+ *   the query still in the box. A selection that DOES match stays eligible:
+ *   skipping it would make Enter silently swap it for the next match.
+ * - A `pinned` item (grouped mode): listed whatever is typed, so highlighting
+ *   it would make Enter choose "None" over the row the user was typing
+ *   towards. One the user typed by name is fair game.
+ */
+export const skipsHighlight = (row: {
+  held: boolean;
+  pinned: boolean;
+  matchesQuery: boolean;
+}): boolean => (row.held || row.pinned) && !row.matchesQuery;
+
+/**
+ * The key the highlight should move to, or undefined to leave it be.
+ *
+ * Nothing moves without a query (see HighlightFirstMatch). A highlight still
+ * listed is the user's own — arrowed or hovered to — and is kept, UNLESS the
+ * query has just changed and it sits on a skipped row: Kobalte highlights the
+ * committed selection when the picker reopens, and typing over it doesn't
+ * always clear that before the results land, so a quick type-and-Enter
+ * re-picked the item already held. Arrowing onto such a row leaves the query
+ * as it was, so the highlight stays where the user put it.
+ */
+export const nextHighlightKey = <T>(state: {
+  query: string;
+  queryChanged: boolean;
+  nodes: Iterable<OptionNode<T>> & {
+    getItem(key: string): OptionNode<T> | undefined;
+  };
+  focused: string | null | undefined;
+  skip?: (item: T) => boolean;
+}): string | undefined => {
+  if (state.query.trim() === '') return undefined;
+  const node =
+    state.focused == null ? undefined : state.nodes.getItem(state.focused);
+  if (node && !(state.queryChanged && state.skip?.(node.rawValue)))
+    return undefined;
+  const key = firstMatchKey(state.nodes, state.skip);
+  return key === state.focused ? undefined : key;
+};

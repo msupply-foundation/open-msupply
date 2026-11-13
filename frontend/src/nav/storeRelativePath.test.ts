@@ -116,3 +116,26 @@ describe('storePath', () => {
     );
   });
 });
+
+/*
+ * The way back out to the browser (#271): every raw anchor's href is built
+ * here, so a link copied, Cmd/Ctrl-clicked or middle-clicked on a nested
+ * mount lands inside the app rather than at the same path outside it.
+ */
+describe('documentHref (OMS-REG-NAV-02.5)', () => {
+  it('leaves a router-space path alone at the root mount', async () => {
+    const { documentHref } = await at('/');
+    expect(documentHref('/STORE1/inventory/stock')).toBe(
+      '/STORE1/inventory/stock'
+    );
+  });
+
+  it('puts a nested mount in front, exactly once', async () => {
+    const { documentHref, storePath } = await at('/rc/');
+    expect(documentHref(storePath('STORE1', 'inventory/stock'))).toBe(
+      '/rc/STORE1/inventory/stock'
+    );
+    // The store root keeps its one spelling (OMS-REG-NAV-01.22).
+    expect(documentHref(storePath('STORE1', ''))).toBe('/rc/STORE1');
+  });
+});

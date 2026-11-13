@@ -8,7 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -32,6 +32,7 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Comment } from '../../../ui/elements/feedback/Comment';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import {
   DataTable,
   type Column,
@@ -298,22 +299,23 @@ const InboundShipmentDetailView: Component = () => {
 
   // Header/side-panel/footer node. `type` is the permission scope selector and
   // must match the shipment's own scope — which the URL carries, put there by
-  // whatever surfaced this shipment (see inboundShipmentHref). ONE request: a
-  // RecordNotFound here is a real missing record, promoted to the global
-  // unexpected-error modal, and never the wrong-scope kind.
+  // whatever surfaced this shipment (see inboundShipmentHref). The `type` also
+  // filters, so another invoice kind's id, another store's shipment, or a bad
+  // id all come back as a NodeError (RecordNotFound) and resolve to null — the
+  // not-found deep-link alert renders below (#1746); a failed read resolves
+  // undefined and keeps the spinner, under the global error modal. That
+  // NodeError is deliberately NOT routed to the global unexpected-error modal
+  // (no mapSuccessToError): it would offer a useless reload of the same bad id
+  // and shadow the local notice — the same call the outbound and return details
+  // make.
   const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId, type: scope() }),
     async variables => {
-      const result = await graphqlFetch(InboundShipment, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
-      return result.kind === 'success' &&
-        result.data.invoice.__typename === 'InvoiceNode'
+      const result = await graphqlFetch(InboundShipment, variables);
+      if (result.kind !== 'success') return undefined;
+      return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
   // Header/side-panel/footer node — read NON-SUSPENDING (kdd/solid-reactivity-
@@ -324,7 +326,7 @@ const InboundShipmentDetailView: Component = () => {
   // gone, focus lost). gated keeps the previous node on screen
   // while it refreshes. Initial load (no live state) is handled by the <Show>
   // fallback below, not by suspending.
-  const info = (): InboundInfoFragment | undefined => gated(data);
+  const info = (): InboundInfoFragment | undefined => gated(data) ?? undefined;
 
   // One server-paginated page of the shipment's stock lines (invoiceId + type
   // forced; user filter/sort/page from the URL). Keyed on serialised variables
@@ -528,8 +530,14 @@ const InboundShipmentDetailView: Component = () => {
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
     void refetchLines();
   };
-  const onNodeSaved = (saved: InboundInfoFragment) =>
+  // The side panel's modal saves — currency (cascades the rate to line costs)
+  // and default donor (may apply to lines) — change the lines too, so refetch
+  // them as saveField does; splicing the node alone left the Financial tab on
+  // the old rate until a reload.
+  const onNodeSaved = (saved: InboundInfoFragment) => {
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
+    void refetchLines();
+  };
 
   const onDeleted = () =>
     navigate(`/${params.storeId}/replenishment/inbound-shipment`, {
@@ -669,8 +677,7 @@ const InboundShipmentDetailView: Component = () => {
   const crumbs = (node: InboundInfoFragment) => [
     {
       label: t('inbound-shipment'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/inbound-shipment`),
+      to: `/${params.storeId}/replenishment/inbound-shipment`,
     },
     {
       label: String(node.invoiceNumber),
@@ -1133,9 +1140,25 @@ const InboundShipmentDetailView: Component = () => {
     // info()/rows() are read non-suspending (above), so the initial-load
     // spinner comes from this <Show> fallback, not from the <Suspense> (which
     // stays only as the lazy-route-chunk boundary). Once the node is present it
-    // stays rendered through every refetch — no remount of the open editor.
+    // stays rendered through every refetch — no remount of the open editor. A
+    // read the server answers as not found is the not-found deep-link alert;
+    // a failed one keeps the spinner, under the global error modal.
     <Suspense fallback={<Spinner center />}>
-      <Show when={info()} fallback={<Spinner center />}>
+      <Show
+        when={info()}
+        fallback={
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="shipment-not-found-notice"
+              title={t('error.shipment-not-found')}
+              description={t('messages.click-to-return-to-shipments')}
+              onClose={() =>
+                navigate(`/${params.storeId}/replenishment/inbound-shipment`)
+              }
+            />
+          </Show>
+        }
+      >
         {node => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
@@ -1402,6 +1425,9 @@ const InboundShipmentDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}

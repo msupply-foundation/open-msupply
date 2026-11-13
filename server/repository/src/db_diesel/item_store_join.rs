@@ -1,4 +1,5 @@
 use diesel::prelude::*;
+use ts_rs::TS;
 
 use crate::db_diesel::item_row::item;
 use crate::diesel_macros::define_linked_tables;
@@ -30,6 +31,7 @@ joinable!(item_store_join -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_store_join, item);
 
 #[derive(
+    TS,
     Clone,
     Queryable,
     Insertable,

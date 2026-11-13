@@ -112,9 +112,8 @@ export const SyncModal: Component<{
       overview() === undefined
   );
 
-  // Server-admin only: closes the modal and navigates to sync settings. The
-  // sync-settings screen is owned elsewhere (spec/sync-modal/README § scope),
-  // not yet built; the app's Settings destination is its current home.
+  // Server-admin only: closes the modal and opens Settings, home of the sync
+  // settings.
   const onSettings = () => {
     props.onClose();
     navigate(`/${params.storeId}/settings`);

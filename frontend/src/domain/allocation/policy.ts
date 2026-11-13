@@ -6,10 +6,8 @@
 // preference fields), so any issue-side vertical can feed it from its own
 // preferences query.
 
-import {
-  addDays,
-  dateToIsoDate,
-} from '../../ui/elements/inputs/dateTimeConvert';
+import { addDays } from '../../ui/elements/inputs/dateTimeConvert';
+import { dateToCalendarDate } from '../../intl/calendarDate';
 
 /**
  * The preference values that shape barring and ordering (consumer-resolved).
@@ -80,13 +78,16 @@ export interface BarrableBatch {
 // The expiry guard compares calendar DAYS (`today + threshold` vs the
 // expiry's date part), so the verdict is stable across the whole day rather
 // than flipping with the time of day the check happens to run. Both sides are
-// the LOCAL day (the store clock's), via the shared conversion.
+// the LOCAL day (the store clock's), via the shared conversion. A batch is
+// usable to the end of its expiry day (#1786), so the comparison is strict:
+// at threshold 0 a batch expiring today is not yet expired, matching the
+// server's allocate.
 const expiredWithin = (
   expiryDate: string,
   thresholdDays: number,
   today: Date
 ): boolean =>
-  expiryDate.slice(0, 10) <= dateToIsoDate(addDays(today, thresholdDays));
+  expiryDate.slice(0, 10) < dateToCalendarDate(addDays(today, thresholdDays));
 
 /**
  * Is this batch PAST its expiry date — literally, with no preference threshold

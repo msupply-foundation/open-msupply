@@ -15,11 +15,11 @@ import { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
-import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../intl/calendarDate';
 import { TimeField } from '../ui/elements/inputs/TimeField';
 import {
   DateRangeField,
-  type IsoDateRange,
+  type CalendarDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { SaveButton } from '../ui/elements/buttons/StandardButtons';
@@ -44,8 +44,7 @@ const SHOWCASE_DOSES: Record<string, { label: string; description: string }> = {
 };
 
 // Mock source for the home-currency selector: the currencies old OMS shipped
-// hand-configured. The real source is the entered store's homeCurrencyCode —
-// see the TODO in src/intl/currency.ts; this selector stands in until then.
+// hand-configured. It stands in for the entered store's home currency here.
 const MOCK_STORE_CURRENCIES = [
   'USD',
   'EUR',
@@ -181,7 +180,7 @@ export const InputsShowcase = () => {
   const [appointment, setAppointment] = createSignal<string | null>(
     '2026-07-17T02:30:00.000Z'
   );
-  const [period, setPeriod] = createSignal<IsoDateRange>({
+  const [period, setPeriod] = createSignal<CalendarDateRange>({
     start: '2026-07-01',
     end: '2026-07-31',
   });
@@ -604,10 +603,9 @@ export const InputsShowcase = () => {
             symbol is field <em>chrome</em> (a TextField adornment), never part
             of the text, so the whole NumberField machinery is inherited — try
             pasting <code>$1,234.56</code>. With no <code>currency</code> prop
-            the field follows the store's home currency — mocked by the selector
-            below until the store wiring lands (TODO in{' '}
-            <code>src/intl/currency.ts</code>). Symbol placement follows the app
-            language: switch to French and the € moves after the number.
+            the field follows the store's home currency — mocked here by the
+            selector below. Symbol placement follows the app language: switch to
+            French and the € moves after the number.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Mock store home currency" class={styles.fullRow}>
@@ -723,7 +721,7 @@ export const InputsShowcase = () => {
             <Field caption="Bounded — future unselectable">
               <DateField
                 label="Manufacture date"
-                max={localTodayIso()}
+                max={todayCalendarDate()}
                 value={manufacture()}
                 onChange={setManufacture}
                 helperText={`max = today; later dates greyed out. Stored: ${

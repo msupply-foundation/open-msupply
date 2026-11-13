@@ -1,5 +1,4 @@
 use crate::{
-    processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         CentralServerConfig, maintenance_mode::integration_uses_transaction,
@@ -371,8 +370,6 @@ impl SynchroniserV5V6 {
             // initialisation triggers below, for a cycle that completes.
             if is_initialised {
                 ctx.processors_trigger.trigger_all();
-                ctx.processors_trigger
-                    .trigger_processor(ProcessorType::SupportUploadFiles);
             }
             return Err(error);
         }
@@ -389,9 +386,6 @@ impl SynchroniserV5V6 {
         // the trigger's other consumers do. V7 orders these the same way, see
         // sync_v7::sync::sync_inner.
         run_post_sync_triggers(ctx, &self.service_provider, is_initialised);
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::SupportUploadFiles);
 
         Ok(())
     }

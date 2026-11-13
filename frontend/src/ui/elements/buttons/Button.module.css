@@ -44,6 +44,8 @@
      centring leaves the glyphs untouched. */
   line-height: 1;
   white-space: nowrap;
+  /* LinkButton renders this class on an <a>; a button has no underline. */
+  text-decoration: none;
   cursor: pointer;
   transition:
     background var(--motion-fast) ease,

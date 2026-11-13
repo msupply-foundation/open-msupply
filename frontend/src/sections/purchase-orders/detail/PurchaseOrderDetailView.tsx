@@ -17,6 +17,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
@@ -393,6 +394,13 @@ const PurchaseOrderDetailView: Component = () => {
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
+  // The order's own fields save as they are edited, so without the change
+  // permission they close in every state: an open one would keep showing a
+  // value the server refused (rules § availability). An existing line closes
+  // in the editor too; adding and the actions stay as they are — their
+  // refusal is the permission-denied notice.
+  const canMutate = () => hasPermission('PURCHASE_ORDER_MUTATE');
+  const fieldsDisabled = () => isDisabled() || !canMutate();
   // A line with no quantity — not yet ordered (spec S7) — on an order and a
   // line that can still change. Sent orders and closed lines need no more work.
   const isOpenPlaceholder = (line: Line) =>
@@ -407,7 +415,9 @@ const PurchaseOrderDetailView: Component = () => {
 
   // Nothing on this screen is saved by hand — there is no save action anywhere
   // on it (rules § an order's own screen). A save the domain refuses leaves the
-  // field showing what was typed until the screen is read again.
+  // field showing what was typed until the screen is read again — except the
+  // discounts, which show the order's figure again once left
+  // (createDebouncedField).
   const saveField = async (
     patch: PurchaseOrderPatch
   ): Promise<SaveFieldResult> => {
@@ -419,8 +429,9 @@ const PurchaseOrderDetailView: Component = () => {
     });
     if (result.kind === 'saved') {
       // The node carries derived money (both totals, the discount amount), so
-      // re-read rather than splicing the patch in.
-      void refetchInfo();
+      // re-read rather than splicing the patch in — awaited, so a buffered
+      // field (the discounts) shows the server's figure only once it is in.
+      await refetchInfo();
       return { ok: true };
     }
     if (result.kind === 'forbidden') reportPermissionDenied(result.permissions);
@@ -738,7 +749,8 @@ const PurchaseOrderDetailView: Component = () => {
                   storeId={params.storeId}
                   node={node()}
                   lineCount={lineCount()}
-                  disabled={isDisabled()}
+                  disabled={fieldsDisabled()}
+                  readOnly={!canMutate()}
                   edit={edit}
                   onSaveField={saveField}
                   onDeleted={toList}
@@ -792,12 +804,30 @@ const PurchaseOrderDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <HeaderToolbar>
+                  {/* Says why every field is closed — a compact chip at the
+                      cluster's end, the internal-order read-only notices'
+                      pattern. */}
+                  <HeaderToolbar
+                    alert={
+                      <Show when={!canMutate()}>
+                        <Alert
+                          severity="info"
+                          compact
+                          testId="no-edit-permission-notice"
+                        >
+                          {t('info.cannot-edit-purchase-order-no-permission')}
+                        </Alert>
+                      </Show>
+                    }
+                  >
                     <PurchaseOrderDetailToolbar
                       storeId={params.storeId}
                       node={node()}
-                      disabled={isDisabled()}
-                      expectedDateDisabled={!canSetExpectedDate(status())}
+                      disabled={fieldsDisabled()}
+                      readOnly={!canMutate()}
+                      expectedDateDisabled={
+                        !canMutate() || !canSetExpectedDate(status())
+                      }
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
                       datesVary={field => deliveryDatesVary(lineSet(), field)}
@@ -878,6 +908,9 @@ const PurchaseOrderDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // The code-or-name filter lives in the table's own toolbar
                   // (ui-standards › tables › toolbar), never the page header.
                   filters={
@@ -957,7 +990,10 @@ const PurchaseOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="details">
-                <PurchaseOrderDetailsTab disabled={isDisabled()} edit={edit} />
+                <PurchaseOrderDetailsTab
+                  disabled={fieldsDisabled()}
+                  edit={edit}
+                />
               </TabPanel>
               <TabPanel value="documents">
                 <PurchaseOrderDocumentsTab
@@ -970,6 +1006,7 @@ const PurchaseOrderDetailView: Component = () => {
                 <CustomFieldsEditTab
                   scope="purchase_order"
                   values={node().customFields}
+                  disabled={!canMutate()}
                   onSave={saveCustomFields}
                 />
               </TabPanel>
@@ -993,6 +1030,7 @@ const PurchaseOrderDetailView: Component = () => {
                   requestedDeliveryDate: node().requestedDeliveryDate,
                   supplierDiscountPercentage: node().supplierDiscountPercentage,
                 }}
+                canMutate={canMutate()}
                 latestExpectedDate={latestExpectedDate()}
                 lineCount={lineCount()}
                 initialLine={editor()?.line}

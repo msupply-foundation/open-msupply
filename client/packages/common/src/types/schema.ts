@@ -235,6 +235,17 @@ export type ActivityLogSortInput = {
   key: ActivityLogSortFieldInput;
 };
 
+/**
+ * A line whose month already has real consumption for its item: the estimate is
+ * added on top of it
+ */
+export type ActualConsumptionOverlapNode = {
+  __typename: 'ActualConsumptionOverlapNode';
+  actualQuantity: Scalars['Float']['output'];
+  /** Index into the input lines */
+  line: Scalars['Int']['output'];
+};
+
 export type AddFromMasterListError = {
   __typename: 'AddFromMasterListError';
   error: AddFromMasterListErrorInterface;
@@ -692,7 +703,7 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['DateTime']['output'];
@@ -1921,6 +1932,76 @@ export type ConnectionError = CentralPatientSearchErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type ConsumptionEstimateLineErrorNode = {
+  __typename: 'ConsumptionEstimateLineErrorNode';
+  /** Index into the input lines */
+  line: Scalars['Int']['output'];
+  /** For `REPEATED_MONTH`: the earlier line with the same item and month */
+  otherLine?: Maybe<Scalars['Int']['output']>;
+  problem: ConsumptionEstimateLineProblem;
+};
+
+export type ConsumptionEstimateLineInput = {
+  itemIdOrCode: Scalars['String']['input'];
+  /** Any day in the month: the estimate is for the whole calendar month */
+  month: Scalars['NaiveDate']['input'];
+  /** In units */
+  quantity: Scalars['Float']['input'];
+};
+
+export enum ConsumptionEstimateLineProblem {
+  InvalidQuantity = 'INVALID_QUANTITY',
+  ItemNotFound = 'ITEM_NOT_FOUND',
+  /** This month or later: only finished months can have an estimate */
+  MonthNotFinished = 'MONTH_NOT_FINISHED',
+  /** The same item and month as an earlier line */
+  RepeatedMonth = 'REPEATED_MONTH',
+}
+
+/** Nothing is saved when any line has a problem */
+export type ConsumptionEstimateLinesError = {
+  __typename: 'ConsumptionEstimateLinesError';
+  errors: Array<ConsumptionEstimateLineErrorNode>;
+  /**
+   * As on a successful response: the cleared items whose estimates would be
+   * removed once the lines are fixed
+   */
+  removedItems: Array<Scalars['Int']['output']>;
+};
+
+export type ConsumptionEstimateNode = {
+  __typename: 'ConsumptionEstimateNode';
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  /** The first day of the month the estimate is for */
+  month: Scalars['NaiveDate']['output'];
+  /** In units */
+  quantity: Scalars['Float']['output'];
+};
+
+export type ConsumptionEstimateTemplateItemNode = {
+  __typename: 'ConsumptionEstimateTemplateItemNode';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ConsumptionEstimatesNode = {
+  __typename: 'ConsumptionEstimatesNode';
+  /** The store's AMC look-back period: how many months of estimates count */
+  amcLookBackMonths: Scalars['Float']['output'];
+  estimates: Array<ConsumptionEstimateNode>;
+  /**
+   * The store is on another site that has been set up and syncs over v5/v6,
+   * which estimates (synced over v7 only) don't reach
+   */
+  siteSyncsOverV5V6: Scalars['Boolean']['output'];
+  /**
+   * The active stock items visible in the store, by name: the rows of a blank
+   * upload template. Only resolved when asked for, as there can be thousands.
+   */
+  templateItems: Array<ConsumptionEstimateTemplateItemNode>;
+};
+
 export type ConsumptionHistoryConnector = {
   __typename: 'ConsumptionHistoryConnector';
   nodes: Array<ConsumptionHistoryNode>;
@@ -2241,7 +2322,7 @@ export type CustomFieldOptionNode = {
    * this field when building a picker, so a deleted option can be read but
    * not newly selected.
    */
-  deletedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  deletedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -3715,6 +3796,16 @@ export type FinaliseRnRFormResponse = RnRFormNode;
 export type FinalisedRequisition = DeleteResponseRequisitionErrorInterface & {
   __typename: 'FinalisedRequisition';
   description: Scalars['String']['output'];
+};
+
+export type FloatFilterInput = {
+  aboveOrEqualTo?: InputMaybe<Scalars['Float']['input']>;
+  belowOrEqualTo?: InputMaybe<Scalars['Float']['input']>;
+  equalTo?: InputMaybe<Scalars['Float']['input']>;
+  /** Strict greater-than (exclusive) */
+  greaterThan?: InputMaybe<Scalars['Float']['input']>;
+  /** Strict less-than (exclusive) */
+  lessThan?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type FloatStorePrefInput = {
@@ -5576,6 +5667,8 @@ export type InvoiceLineConnector = {
 };
 
 export type InvoiceLineFilterInput = {
+  batch?: InputMaybe<StringFilterInput>;
+  expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** @deprecated Since 2.8.0. Use reason_option */
   inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
@@ -5586,7 +5679,9 @@ export type InvoiceLineFilterInput = {
   /** Matches on item code OR item name */
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  locationCode?: InputMaybe<StringFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  manufactureDate?: InputMaybe<DateFilterInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
   reasonOption?: InputMaybe<EqualFilterStringInput>;
@@ -5696,6 +5791,8 @@ export enum InvoiceLineSortFieldInput {
   ItemName = 'itemName',
   /** Invoice line item stock location name */
   LocationName = 'locationName',
+  /** Invoice line manufacture date */
+  ManufactureDate = 'manufactureDate',
   /** Invoice line pack size */
   PackSize = 'packSize',
   /** Units requested for the line's item on the invoice's linked requisition */
@@ -6003,6 +6100,8 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
+  /** Excludes items already present as a line on the given record */
+  notInRecord?: InputMaybe<ItemNotInRecordFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
   universalCode?: InputMaybe<StringFilterInput>;
@@ -6166,6 +6265,17 @@ export enum ItemNodeType {
   NonStock = 'NON_STOCK',
   Service = 'SERVICE',
   Stock = 'STOCK',
+}
+
+export type ItemNotInRecordFilterInput = {
+  id: Scalars['String']['input'];
+  record: ItemNotInRecordTypeInput;
+};
+
+export enum ItemNotInRecordTypeInput {
+  Invoice = 'invoice',
+  Requisition = 'requisition',
+  Stocktake = 'stocktake',
 }
 
 export type ItemPriceInput = {
@@ -8525,7 +8635,26 @@ export enum PreferenceKey {
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
+  /** Removes all of a store's estimated consumption */
+  clearConsumptionEstimates: OkResponse;
+  /**
+   * Replaces the estimated consumption of the items named: each ends up with
+   * exactly the months given, and unchanged months aren't rewritten. Items not
+   * named are left alone. Nothing is saved if any line has a problem; `dryRun`
+   * checks the lines without saving.
+   */
+  replaceConsumptionEstimates: ReplaceConsumptionEstimatesResponse;
   upsertPreferences: OkResponse;
+};
+
+export type PreferenceMutationsClearConsumptionEstimatesArgs = {
+  forStoreId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type PreferenceMutationsReplaceConsumptionEstimatesArgs = {
+  input: ReplaceConsumptionEstimatesInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type PreferenceMutationsUpsertPreferencesArgs = {
@@ -9338,6 +9467,11 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
+  /**
+   * The store's estimated consumption, entered for a store without consumption
+   * history of its own and added on top of real consumption when calculating AMC
+   */
+  consumptionEstimates: ConsumptionEstimatesNode;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
   csvToExcel: PrintReportResponse;
@@ -9514,6 +9648,10 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
+  /**
+   * A request requisition line's consumption history and stock evolution. Only the series
+   * the query selects are read; the others are null
+   */
   requisitionLineChart: RequisitionLineChartResponse;
   /**
    * An item's request line as the line editor's draft would save it, under a chosen
@@ -9521,6 +9659,7 @@ export type Queries = {
    * adding the item would create
    */
   requisitionLineForecastPreview: RequisitionLineForecastPreviewResponse;
+  requisitionLines: RequisitionLinesResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
@@ -9692,6 +9831,11 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesConsumptionEstimatesArgs = {
+  forStoreId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -9964,6 +10108,7 @@ export type QueriesItemsByStockLineFilterArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesLedgerArgs = {
@@ -10185,6 +10330,7 @@ export type QueriesReportsArgs = {
 export type QueriesRequisitionArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<RequisitionNodeType>;
 };
 
 export type QueriesRequisitionByNumberArgs = {
@@ -10206,6 +10352,13 @@ export type QueriesRequisitionLineChartArgs = {
 
 export type QueriesRequisitionLineForecastPreviewArgs = {
   input: RequisitionLineForecastPreviewInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesRequisitionLinesArgs = {
+  filter?: InputMaybe<RequisitionLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<RequisitionLineSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -10255,6 +10408,7 @@ export type QueriesStockLinesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StockLineSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesStockRelocationArgs = {
@@ -10487,6 +10641,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
+  QueryReportErrorInterface &
   RequisitionLineChartErrorInterface &
   RequisitionLineForecastPreviewErrorInterface &
   RequisitionLineStatsErrorInterface &
@@ -10618,6 +10773,36 @@ export type RepackStockLineNode = {
   packSize: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
 };
+
+export type ReplaceConsumptionEstimatesInput = {
+  /**
+   * Items (by id or code) named with no months, e.g. a blank row in the
+   * file: their estimates are removed. One with no estimates, or that matches
+   * no item, is ignored.
+   */
+  clearedItems?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Check the lines and report what would be saved, without saving */
+  dryRun?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The store whose estimates these are */
+  forStoreId: Scalars['String']['input'];
+  /**
+   * Each item named ends up with exactly these months; items not named are
+   * left alone
+   */
+  lines: Array<ConsumptionEstimateLineInput>;
+};
+
+export type ReplaceConsumptionEstimatesNode = {
+  __typename: 'ReplaceConsumptionEstimatesNode';
+  estimates: Array<ConsumptionEstimateNode>;
+  overlaps: Array<ActualConsumptionOverlapNode>;
+  /** Indexes into `clearedItems` of the items whose estimates are removed */
+  removedItems: Array<Scalars['Int']['output']>;
+};
+
+export type ReplaceConsumptionEstimatesResponse =
+  | ConsumptionEstimateLinesError
+  | ReplaceConsumptionEstimatesNode;
 
 export type ReportConnector = {
   __typename: 'ReportConnector';
@@ -10768,6 +10953,21 @@ export type RequisitionLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type RequisitionLineFilterInput = {
+  comment?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * Filter by months of stock (available_stock_on_hand / average_monthly_consumption).
+   * No stock and no consumption is 0; stock but no consumption has no value and
+   * never matches.
+   */
+  monthsOfStock?: InputMaybe<FloatFilterInput>;
+  requestedQuantity?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  requisitionId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type RequisitionLineForecastPreviewError = {
   __typename: 'RequisitionLineForecastPreviewError';
   error: RequisitionLineForecastPreviewErrorInterface;
@@ -10797,6 +10997,15 @@ export type RequisitionLineForecastPreviewNode = {
   __typename: 'RequisitionLineForecastPreviewNode';
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  /**
+   * The consumption history and stock evolution for the previewed line, as
+   * `requisitionLineChart` gives them for a saved one — so an item being added charts
+   * before its line exists. The draft's requested quantity isn't part of the preview, so
+   * the stock projection adds nothing at delivery. Only the series the query selects are
+   * read; the others are null. Null if the chart can't be read: the chart is context, so
+   * failing to read it doesn't fail the preview
+   */
+  chart?: Maybe<ItemChartNode>;
   forecastBreakdown: ForecastBreakdownNode;
   forecastMethod: ForecastMethodNode;
   forecastMethodOptions: Array<ForecastMethodOptionNode>;
@@ -10804,6 +11013,11 @@ export type RequisitionLineForecastPreviewNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** The requisition's target months × the monthly demand */
   targetStock: Scalars['Float']['output'];
+};
+
+export type RequisitionLineForecastPreviewNodeChartArgs = {
+  consumptionOptionsInput?: InputMaybe<ConsumptionOptionsInput>;
+  stockEvolutionOptionsInput?: InputMaybe<StockEvolutionOptionsInput>;
 };
 
 export type RequisitionLineForecastPreviewResponse =
@@ -10893,6 +11107,28 @@ export type RequisitionLineNodeItemStatsArgs = {
   periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
+export enum RequisitionLineSortFieldInput {
+  ApprovedQuantity = 'approvedQuantity',
+  Comment = 'comment',
+  DefaultPackSize = 'defaultPackSize',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  MonthsOfStock = 'monthsOfStock',
+  RequestedQuantity = 'requestedQuantity',
+  SuggestedQuantity = 'suggestedQuantity',
+  SupplyQuantity = 'supplyQuantity',
+}
+
+export type RequisitionLineSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: RequisitionLineSortFieldInput;
+};
+
 export type RequisitionLineStatsError = {
   __typename: 'RequisitionLineStatsError';
   error: RequisitionLineStatsErrorInterface;
@@ -10912,6 +11148,8 @@ export type RequisitionLineWithItemIdExists =
       __typename: 'RequisitionLineWithItemIdExists';
       description: Scalars['String']['output'];
     };
+
+export type RequisitionLinesResponse = RequisitionLineConnector;
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
@@ -10968,9 +11206,10 @@ export type RequisitionNode = {
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
   /**
-   * The ordering store's supply interval and safety buffer (from its facility record) as
-   * they stand now, null when it carries no supply interval. A general
-   * order's default target months of stock.
+   * The ordering store's supply interval and safety buffer (from its facility record) and
+   * delivery lead time (from its store preferences) as they stand now, null when its
+   * facility record carries no supply interval. Their sum is a general order's default
+   * target months of stock.
    */
   supplyIntervalAndBuffer?: Maybe<SupplyIntervalAndBufferNode>;
   theirReference?: Maybe<Scalars['String']['output']>;
@@ -11450,14 +11689,14 @@ export type SiteNode = {
   appVersion?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   /** First time the remote completed an initialising pull. */
-  firstSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  firstSyncDatetime?: Maybe<Scalars['DateTime']['output']>;
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isMultiDevice: Scalars['Boolean']['output'];
   /** Last time the remote made any authenticated v7 request. */
-  lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  lastConnectionDatetime?: Maybe<Scalars['DateTime']['output']>;
   /** Last time the remote fully pulled from this central server. */
-  lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  lastSyncDatetime?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
   /**
    * Which sync flow the site runs. Hardware-id / token clearing is only
@@ -11553,6 +11792,11 @@ export type StockLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * true: expiry date before today. false: expiry date today or later, or no expiry date.
+   * Today is in the query's `timezoneOffset`, or the server's timezone without one
+   */
+  isExpired?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStockLine?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
@@ -11784,11 +12028,15 @@ export type StocktakeLineConnector = {
 };
 
 export type StocktakeLineFilterInput = {
+  batch?: InputMaybe<StringFilterInput>;
   campaignId?: InputMaybe<EqualFilterStringInput>;
+  campaignName?: InputMaybe<StringFilterInput>;
+  donorId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  manufactureDate?: InputMaybe<DateFilterInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -11834,11 +12082,14 @@ export type StocktakeLineNodeManufacturerArgs = {
 
 export enum StocktakeLineSortFieldInput {
   Batch = 'batch',
+  Campaign = 'campaign',
   CountedNumberOfPacks = 'countedNumberOfPacks',
+  Donor = 'donor',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
   LocationCode = 'locationCode',
+  ManufactureDate = 'manufactureDate',
   PackSize = 'packSize',
   ReasonOption = 'reasonOption',
   SnapshotNumberOfPacks = 'snapshotNumberOfPacks',
@@ -12116,6 +12367,8 @@ export type SupplierReturnLineNode = {
 
 export type SupplyIntervalAndBufferNode = {
   __typename: 'SupplyIntervalAndBufferNode';
+  /** How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset */
+  deliveryLeadTimeMonths: Scalars['Float']['output'];
   /** Zero when the facility record carries none */
   safetyBufferMonths: Scalars['Float']['output'];
   supplyIntervalMonths: Scalars['Float']['output'];
