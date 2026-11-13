@@ -1,3 +1,6 @@
+use super::cells::{Row, RowError};
+use crate::keyed_lookup::{Keyed, KeyedLookup};
+
 #[derive(Debug, PartialEq)]
 pub enum LookupError {
     NotFound,
@@ -31,6 +34,84 @@ pub fn record_conflict(
     format!(
         "{column} and id conflict: {record} has {column} {saved_key} and id {saved_id}, but this row has {column} {key} and id {id}"
     )
+}
+
+/// The saved record a row changes, by id, else by its lookup key in `column`. `None` for a row
+/// that adds one. `name` names the saved record in a conflict.
+pub fn find_record<R: Keyed + Clone>(
+    lookup: &KeyedLookup<R>,
+    row: &Row,
+    column: &str,
+    id: Option<&str>,
+    key: Option<&str>,
+    name: impl Fn(&R) -> &str,
+) -> Result<Option<R>, RowError> {
+    let conflict = |saved: &R, id: &str, key: &str| {
+        row.error(
+            column,
+            record_conflict(column, name(saved), saved.key(), saved.id(), key, id),
+        )
+    };
+    let Some(key) = key else {
+        return Ok(id.and_then(|id| lookup.by_id(id)).cloned());
+    };
+    let by_key = lookup.by_key(key);
+    match id {
+        Some(id) => match lookup.by_id(id) {
+            Some(saved) if saved.key().trim() != key => Err(conflict(saved, id, key)),
+            Some(saved) => Ok(Some(saved.clone())),
+            // A new id beside a saved key is a copied row with one column edited.
+            None => match by_key.first() {
+                Some(saved) => Err(conflict(saved, id, key)),
+                None => Ok(None),
+            },
+        },
+        None => match by_key.as_slice() {
+            [] => Ok(None),
+            [saved] => Ok(Some((*saved).clone())),
+            _ => Err(row.error(column, LookupError::Ambiguous.message(key))),
+        },
+    }
+}
+
+/// A reference to another table's record, given by a code column, an id column or both. `None`
+/// when the sheet has neither column, so the saved reference is kept; `Some(None)` clears it.
+/// `narrow` picks among the records a code alone matches, as an id settles which one is meant.
+pub fn find_reference<'a, R: Keyed>(
+    lookup: &'a KeyedLookup<R>,
+    row: &Row,
+    code_column: &str,
+    id_column: &str,
+    narrow: impl Fn(Vec<&'a R>) -> Vec<&'a R>,
+) -> Result<Option<Option<String>>, RowError> {
+    if !row.has(code_column) && !row.has(id_column) {
+        return Ok(None);
+    }
+    let id = row.text(id_column);
+    let code = row.text(code_column);
+    let id_exists = id.as_deref().is_some_and(|id| lookup.by_id(id).is_some());
+    let code_matches: Option<Vec<String>> = code.as_deref().map(|code| {
+        let matches = lookup.by_key(code);
+        let matches = if id.is_some() {
+            matches
+        } else {
+            narrow(matches)
+        };
+        matches
+            .into_iter()
+            .map(|record| record.id().to_string())
+            .collect()
+    });
+    resolve(id.as_deref(), id_exists, code_matches.as_deref())
+        .map(Some)
+        .map_err(|error| {
+            let column = if id.is_some() && !id_exists {
+                id_column
+            } else {
+                code_column
+            };
+            row.error(column, error.message(code.as_deref().unwrap_or_default()))
+        })
 }
 
 /// `code_matches` holds the ids the code matched, `None` when no code was given. Given both, id

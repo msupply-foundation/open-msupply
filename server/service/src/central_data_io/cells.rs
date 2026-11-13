@@ -1,3 +1,5 @@
+use super::sheet::Value;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct RowError {
     pub sheet: String,
@@ -18,6 +20,14 @@ pub fn keep_padded(cell: Option<String>, saved: Option<&str>) -> Option<String> 
 /// As `keep_padded`, but a blank cell keeps the saved value too.
 pub fn keep_or_saved(cell: Option<String>, saved: Option<&str>) -> Option<String> {
     keep_padded(cell, saved).or(saved.map(str::to_string))
+}
+
+/// A choice column's cell for `value`, as `Row::choice` reads it back.
+pub fn choice_cell<T: PartialEq>(choices: &[(&'static str, T)], value: &T) -> Value {
+    choices
+        .iter()
+        .find(|(_, choice)| choice == value)
+        .map_or(Value::Empty, |(label, _)| Value::Text(label.to_string()))
 }
 
 /// The value, or its default with the error added to `errors`.
@@ -53,6 +63,24 @@ impl Row<'_> {
             .map(str::to_string)
     }
 
+    /// An optional text column: a blank cell clears it, a missing column keeps `saved`.
+    pub fn optional_text(&self, column: &str, saved: Option<&str>) -> Option<String> {
+        if self.has(column) {
+            keep_padded(self.text(column), saved)
+        } else {
+            saved.map(str::to_string)
+        }
+    }
+
+    /// An optional column's value: a blank cell gives the default, a missing column keeps `saved`.
+    pub fn optional<T: Default>(&self, column: &str, cell: Option<T>, saved: Option<T>) -> T {
+        if self.has(column) {
+            cell.unwrap_or_default()
+        } else {
+            saved.unwrap_or_default()
+        }
+    }
+
     pub fn bool(&self, column: &str) -> Result<Option<bool>, RowError> {
         match self.text(column) {
             None => Ok(None),
@@ -86,6 +114,30 @@ impl Row<'_> {
         match text.parse::<f64>() {
             Ok(number) if number.is_finite() => Ok(Some(number)),
             _ => Err(self.error(column, format!("\"{text}\" must be a number"))),
+        }
+    }
+
+    /// One of `choices`, written as listed and read in any letter case.
+    pub fn choice<T: Clone>(
+        &self,
+        column: &str,
+        choices: &[(&str, T)],
+    ) -> Result<Option<T>, RowError> {
+        let Some(text) = self.text(column) else {
+            return Ok(None);
+        };
+        match choices
+            .iter()
+            .find(|(choice, _)| choice.eq_ignore_ascii_case(&text))
+        {
+            Some((_, value)) => Ok(Some(value.clone())),
+            None => {
+                let listed: Vec<&str> = choices.iter().map(|(choice, _)| *choice).collect();
+                Err(self.error(
+                    column,
+                    format!("\"{text}\" must be one of {}", listed.join(", ")),
+                ))
+            }
         }
     }
 
@@ -175,6 +227,22 @@ mod tests {
                 assert!(row.int("number").is_err(), "{cell}")
             });
         }
+    }
+
+    // covers: OMS-REG-CDIO-01.37
+
+    #[test]
+    fn choice_accepts_any_letter_case_and_lists_the_choices() {
+        let choices = [("STOCK", 1), ("NON_STOCK", 2)];
+        for (cell, expected) in [("non_stock", Some(2)), ("STOCK", Some(1)), ("", None)] {
+            with_row(&[cell], |row| {
+                assert_eq!(row.choice("text", &choices), Ok(expected))
+            });
+        }
+        with_row(&["drug"], |row| {
+            let error = row.choice("text", &choices).unwrap_err();
+            assert_eq!(error.message, "\"drug\" must be one of STOCK, NON_STOCK");
+        });
     }
 
     // covers: OMS-REG-CDIO-01.72

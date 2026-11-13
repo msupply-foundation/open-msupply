@@ -4,7 +4,8 @@ use super::{
     cells::{Row, RowError, collect, keep_or_saved},
     delete::{DELETE_COLUMN, check_unchanged, is_delete},
     field_changes,
-    lookup::{LookupError, NOT_FOUND, record_conflict},
+    lookup::{NOT_FOUND, find_record},
+    name_with_code,
     sheet::Value,
 };
 use crate::location_type::{
@@ -22,6 +23,14 @@ const CODE: &str = "code";
 const NAME: &str = "name";
 const MIN_TEMPERATURE: &str = "min_temperature";
 const MAX_TEMPERATURE: &str = "max_temperature";
+const COLUMNS: &[&str] = &[
+    ID,
+    CODE,
+    NAME,
+    MIN_TEMPERATURE,
+    MAX_TEMPERATURE,
+    DELETE_COLUMN,
+];
 
 /// Matched by `id`, else `code`. Every column but `id` is required, so on an update a blank cell
 /// keeps the value.
@@ -33,14 +42,7 @@ impl ImportTable for LocationTypeTable {
     }
 
     fn columns(&self) -> &'static [&'static str] {
-        &[
-            ID,
-            CODE,
-            NAME,
-            MIN_TEMPERATURE,
-            MAX_TEMPERATURE,
-            DELETE_COLUMN,
-        ]
+        COLUMNS
     }
 
     fn text_columns(&self) -> &'static [&'static str] {
@@ -56,16 +58,7 @@ impl ImportTable for LocationTypeTable {
             .find_all()?
             .into_iter()
             .filter(|location_type| matches(filter, location_type))
-            .map(|location_type| {
-                vec![
-                    location_type.id.into(),
-                    location_type.code.into(),
-                    location_type.name.into(),
-                    Value::Number(location_type.min_temperature),
-                    Value::Number(location_type.max_temperature),
-                    Value::Empty,
-                ]
-            })
+            .map(|location_type| cells(&location_type))
             .collect())
     }
 
@@ -109,7 +102,14 @@ impl SheetImport for LocationTypeSheet {
         let code = row.text(CODE);
 
         // Without its record, the row's other checks would treat it as a new location type.
-        let existing = match self.find(row, id.as_deref(), code.as_deref()) {
+        let existing = match find_record(
+            &self.location_types,
+            row,
+            CODE,
+            id.as_deref(),
+            code.as_deref(),
+            |saved| &saved.name,
+        ) {
             Ok(existing) => existing,
             Err(e) => {
                 errors.push(e);
@@ -156,11 +156,7 @@ impl SheetImport for LocationTypeSheet {
             max_temperature: max_temperature.unwrap_or_default(),
         };
 
-        let change = match &existing {
-            Some(saved) if *saved == location_type => Change::Unchanged,
-            Some(_) => Change::Updated,
-            None => Change::Inserted,
-        };
+        let change = Change::between_upserts(existing.as_ref(), &location_type);
         if change != Change::Unchanged {
             upsert_location_type_in(connection, &mut self.location_types, &location_type)
                 .map_err(|error| upsert_failure(row, &location_type, error))?;
@@ -169,7 +165,7 @@ impl SheetImport for LocationTypeSheet {
             fields: existing
                 .map(|saved| changed_fields(&saved, &location_type))
                 .unwrap_or_default(),
-            record: record_name(&location_type),
+            record: name_with_code(&location_type.name, &location_type.code),
             record_id: location_type.id,
             change,
         })
@@ -177,41 +173,6 @@ impl SheetImport for LocationTypeSheet {
 }
 
 impl LocationTypeSheet {
-    /// `None` for a row that adds a location type.
-    fn find(
-        &self,
-        row: &Row,
-        id: Option<&str>,
-        code: Option<&str>,
-    ) -> Result<Option<LocationTypeRow>, RowError> {
-        let conflict = |saved: &LocationTypeRow, id: &str, code: &str| {
-            row.error(
-                CODE,
-                record_conflict(CODE, &saved.name, &saved.code, &saved.id, code, id),
-            )
-        };
-        let Some(code) = code else {
-            return Ok(id.and_then(|id| self.location_types.by_id(id)).cloned());
-        };
-        let by_code = self.location_types.by_key(code);
-        match id {
-            Some(id) => match self.location_types.by_id(id) {
-                Some(saved) if saved.code.trim() != code => Err(conflict(saved, id, code)),
-                Some(saved) => Ok(Some(saved.clone())),
-                // A new id beside a saved code is a copied row with one column edited.
-                None => match by_code.first() {
-                    Some(saved) => Err(conflict(saved, id, code)),
-                    None => Ok(None),
-                },
-            },
-            None => match by_code.as_slice() {
-                [] => Ok(None),
-                [saved] => Ok(Some((*saved).clone())),
-                _ => Err(row.error(CODE, LookupError::Ambiguous.message(code))),
-            },
-        }
-    }
-
     fn delete(
         &mut self,
         connection: &StorageConnection,
@@ -224,14 +185,13 @@ impl LocationTypeSheet {
             errors.push(row.error(column, NOT_FOUND));
             return Err(RowFailure::Invalid(errors));
         };
-        if let Err(e) = check_unchanged(
-            row,
-            &[
-                (NAME, Value::Text(saved.name.clone())),
-                (MIN_TEMPERATURE, Value::Number(saved.min_temperature)),
-                (MAX_TEMPERATURE, Value::Number(saved.max_temperature)),
-            ],
-        ) {
+        let saved_cells: Vec<_> = COLUMNS
+            .iter()
+            .copied()
+            .zip(cells(&saved))
+            .filter(|(column, _)| *column != DELETE_COLUMN)
+            .collect();
+        if let Err(e) = check_unchanged(row, &saved_cells) {
             errors.push(e);
         }
         if !errors.is_empty() {
@@ -245,7 +205,7 @@ impl LocationTypeSheet {
                         DELETE_COLUMN,
                         format!(
                             "{} is used by {}, so it can't be deleted",
-                            record_name(&saved),
+                            name_with_code(&saved.name, &saved.code),
                             match user {
                                 LocationTypeUser::Location => "a location",
                                 LocationTypeUser::Item => "an item",
@@ -259,7 +219,7 @@ impl LocationTypeSheet {
             },
         )?;
         Ok(RowOutcome {
-            record: record_name(&saved),
+            record: name_with_code(&saved.name, &saved.code),
             record_id: saved.id,
             change: Change::Deleted,
             fields: Vec::new(),
@@ -292,25 +252,23 @@ fn upsert_failure(
     }
 }
 
-/// With the code, as two location types can share a name.
-fn record_name(location_type: &LocationTypeRow) -> String {
-    format!("{} ({})", location_type.name, location_type.code)
-}
-
 /// Location types are few, so they're filtered in memory.
 fn matches(filter: &ExportFilter, location_type: &LocationTypeRow) -> bool {
     filter.matches(&[&location_type.name, &location_type.code], None)
 }
 
-/// As the sheet shows them.
+/// One per column, as the export writes them and the preview shows them.
+fn cells(location_type: &LocationTypeRow) -> Vec<Value> {
+    vec![
+        location_type.id.clone().into(),
+        location_type.code.clone().into(),
+        location_type.name.clone().into(),
+        Value::Number(location_type.min_temperature),
+        Value::Number(location_type.max_temperature),
+        Value::Empty,
+    ]
+}
+
 fn changed_fields(old: &LocationTypeRow, new: &LocationTypeRow) -> Vec<FieldChange> {
-    let values = |location_type: &LocationTypeRow| {
-        [
-            (CODE, location_type.code.clone()),
-            (NAME, location_type.name.clone()),
-            (MIN_TEMPERATURE, location_type.min_temperature.to_string()),
-            (MAX_TEMPERATURE, location_type.max_temperature.to_string()),
-        ]
-    };
-    field_changes(values(old), values(new))
+    field_changes(COLUMNS, cells(old), cells(new))
 }

@@ -6,9 +6,9 @@ use super::{
 };
 use crate::service_provider::ServiceProvider;
 use repository::{
-    ItemVariantRow, ItemVariantRowRepository, LocationTypeRow, LocationTypeRowRepository,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, UnitRow,
-    UnitRowRepository,
+    ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository,
+    LocationTypeRow, LocationTypeRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
+    StorageConnection, UnitRow, UnitRowRepository, VENCategory,
     mock::{MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1},
     test_db::setup_all,
 };
@@ -1566,4 +1566,781 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
     );
     assert!(repo.find_one_by_id("requested_type").unwrap().is_some());
     assert!(repo.find_one_by_id("variant_type").unwrap().is_some());
+}
+
+const ITEM_HEADERS: [&str; 16] = [
+    "id",
+    "code",
+    "name",
+    "unit_name",
+    "unit_id",
+    "strength",
+    "ven_category",
+    "default_pack_size",
+    "type",
+    "is_active",
+    "is_vaccine",
+    "vaccine_doses",
+    "restricted_location_type_code",
+    "restricted_location_type_id",
+    "volume_per_pack",
+    "universal_code",
+];
+
+fn item_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("item", &ITEM_HEADERS, rows)]).unwrap()
+}
+
+/// One row of `ITEM_HEADERS`; blank cells are `""`.
+fn item_row(cells: [&str; 16]) -> Vec<Value> {
+    cells
+        .into_iter()
+        .map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        })
+        .collect()
+}
+
+/// A row that only names the item, leaving every other column blank.
+fn item_named(id: &'static str, code: &'static str) -> [&'static str; 16] {
+    let mut cells = [""; 16];
+    cells[0] = id;
+    cells[1] = code;
+    cells
+}
+
+/// `item_named(id, code)` with the given cells filled in by position.
+fn item_with(cells: &[(usize, &'static str)], code: &'static str) -> Vec<Value> {
+    let mut row = item_named("", code);
+    for (position, value) in cells {
+        row[*position] = value;
+    }
+    item_row(row)
+}
+
+/// A complete new item row with the given references.
+fn new_item(
+    code: &'static str,
+    unit_name: &'static str,
+    unit_id: &'static str,
+    location_type: &'static str,
+) -> Vec<Value> {
+    item_with(
+        &[
+            (2, "New"),
+            (3, unit_name),
+            (4, unit_id),
+            (6, "N"),
+            (7, "1"),
+            (8, "STOCK"),
+            (9, "TRUE"),
+            (10, "FALSE"),
+            (11, "0"),
+            (12, location_type),
+            (14, "0"),
+        ],
+        code,
+    )
+}
+
+fn paracetamol() -> ItemRow {
+    ItemRow {
+        id: "paracetamol".to_string(),
+        code: "PARA".to_string(),
+        name: "Paracetamol".to_string(),
+        unit_id: Some("tab".to_string()),
+        strength: Some("500mg".to_string()),
+        ven_category: VENCategory::E,
+        default_pack_size: 100.0,
+        r#type: ItemType::Stock,
+        legacy_record: r#"{"margin":0.3}"#.to_string(),
+        is_active: true,
+        is_vaccine: false,
+        vaccine_doses: 0,
+        restricted_location_type_id: Some("cold".to_string()),
+        volume_per_pack: 0.25,
+        universal_code: Some("UPC1".to_string()),
+        custom_fields: Some(serde_json::json!({ "user_field_1": "Cold chain" })),
+    }
+}
+
+fn find_item(connection: &StorageConnection, code: &str) -> ItemRow {
+    ItemRowRepository::new(connection)
+        .find_one_by_code(code)
+        .unwrap()
+        .unwrap()
+}
+
+/// Units Tab and Vial, an inactive Tab, location types COLD and FREEZER, and Paracetamol.
+async fn item_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (_, connection, connection_manager, _) = setup_all(name, MockDataInserts::none()).await;
+    let units = UnitRowRepository::new(&connection);
+    for (id, name, is_active) in [
+        ("tab", "Tab", true),
+        ("vial", "Vial", true),
+        ("old_tab", "Tab", false),
+    ] {
+        units
+            .upsert_one(&UnitRow {
+                id: id.to_string(),
+                name: name.to_string(),
+                description: None,
+                index: 1,
+                is_active,
+            })
+            .unwrap();
+    }
+    for (id, code) in [("cold", "COLD"), ("freezer", "FREEZER")] {
+        LocationTypeRowRepository::new(&connection)
+            .upsert_one(&LocationTypeRow {
+                id: id.to_string(),
+                code: code.to_string(),
+                name: code.to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+    }
+    ItemRowRepository::new(&connection)
+        .upsert_one(&paracetamol())
+        .unwrap();
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+    )
+}
+
+fn all_items() -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::Item,
+        filter: ExportFilter::default(),
+    }
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .22, .65
+
+#[actix_rt::test]
+async fn items_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_round_trip").await;
+    // Leading zeros, padded text, an inactive vaccine and no references must survive.
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "zinc".to_string(),
+            code: "007".to_string(),
+            name: "Zinc ".to_string(),
+            strength: Some(" 20mg".to_string()),
+            default_pack_size: 2.5,
+            r#type: ItemType::NonStock,
+            is_active: false,
+            is_vaccine: true,
+            vaccine_doses: 10,
+            ..Default::default()
+        })
+        .unwrap();
+    let before = ItemRowRepository::new(&connection).find_all().unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let bytes = CentralDataService.export(&ctx, &[all_items()]).unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 2);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        ItemRowRepository::new(&connection).find_all().unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46, .47
+
+#[actix_rt::test]
+async fn an_item_export_searches_code_and_name_and_filters_by_status() {
+    let (connection, service_provider, _) = item_setup("central_data_item_filter").await;
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "zinc".to_string(),
+            code: "ZN".to_string(),
+            name: "Zinc".to_string(),
+            is_active: false,
+            ..Default::default()
+        })
+        .unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+    let matching = |contains: Option<&str>, is_active: Option<bool>| {
+        let table = ExportTable {
+            table: CentralDataTable::Item,
+            filter: ExportFilter {
+                contains: contains.map(str::to_string),
+                is_active,
+            },
+        };
+        let count = CentralDataService.export_counts(&ctx, &[table]).unwrap()[0].count;
+        assert_eq!(count.total, 2);
+        count.matching
+    };
+
+    assert_eq!(matching(Some(" para "), None), 1);
+    assert_eq!(matching(Some("zn"), None), 1);
+    assert_eq!(matching(None, Some(false)), 1);
+    assert_eq!(matching(Some("para"), Some(false)), 0);
+    assert_eq!(matching(Some(""), None), 2);
+}
+
+// covers: OMS-REG-CDIO-01.12, .35, .37, .58, .63, .76, .78, .79, .81
+
+#[actix_rt::test]
+async fn item_rows_add_and_update_by_code() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let new_item = [
+        "",
+        "AMOX",
+        "Amoxicillin",
+        "Vial",
+        "",
+        "250mg",
+        "v",
+        "20",
+        "stock",
+        "TRUE",
+        "FALSE",
+        "0",
+        "FREEZER",
+        "",
+        "0.5",
+        "",
+    ];
+    // Found by code; blank required cells keep their values, blank optional ones clear them,
+    // including the saved unit and location type.
+    let mut renamed = item_named("", "PARA");
+    renamed[2] = "Paracetamol tablets";
+
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            item_row(new_item),
+            item_row(renamed),
+            item_row([
+                "", "NEW", "", "", "", "", "X", "1", "drug", "", "", "", "", "", "-1", "",
+            ]),
+            item_row([
+                "", "ZERO", "Zero", "", "", "", "N", "0", "STOCK", "TRUE", "FALSE", "0", "", "",
+                "0", "",
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                4,
+                Some("ven_category"),
+                "\"X\" must be one of V, E, N, NOT_ASSIGNED"
+            ),
+            (
+                4,
+                Some("type"),
+                "\"drug\" must be one of STOCK, SERVICE, NON_STOCK"
+            ),
+            (4, Some("name"), "name is required for a new item"),
+            (4, Some("is_active"), "is_active is required for a new item"),
+            (
+                5,
+                Some("default_pack_size"),
+                "default_pack_size must be above 0"
+            ),
+        ]
+    );
+    assert_eq!(find_item(&connection, "PARA"), paracetamol());
+
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![item_row(new_item), item_row(renamed)]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+    assert_eq!(summary.changes[1].record, "Paracetamol tablets (PARA)");
+    let changed: Vec<&str> = summary.changes[1]
+        .fields
+        .iter()
+        .map(|field| field.column)
+        .collect();
+    assert_eq!(
+        changed,
+        [
+            "name",
+            "unit_name",
+            "unit_id",
+            "strength",
+            "ven_category",
+            "restricted_location_type_code",
+            "restricted_location_type_id",
+            "volume_per_pack",
+            "universal_code",
+        ]
+    );
+    assert_eq!(
+        find_item(&connection, "PARA"),
+        ItemRow {
+            name: "Paracetamol tablets".to_string(),
+            unit_id: None,
+            strength: None,
+            ven_category: VENCategory::NotAssigned,
+            restricted_location_type_id: None,
+            volume_per_pack: 0.0,
+            universal_code: None,
+            ..paracetamol()
+        }
+    );
+    let amoxicillin = find_item(&connection, "AMOX");
+    assert_eq!(
+        amoxicillin,
+        ItemRow {
+            id: amoxicillin.id.clone(),
+            code: "AMOX".to_string(),
+            name: "Amoxicillin".to_string(),
+            unit_id: Some("vial".to_string()),
+            strength: Some("250mg".to_string()),
+            ven_category: VENCategory::V,
+            default_pack_size: 20.0,
+            r#type: ItemType::Stock,
+            restricted_location_type_id: Some("freezer".to_string()),
+            volume_per_pack: 0.5,
+            ..Default::default()
+        }
+    );
+}
+
+// covers: OMS-REG-CDIO-01.23, .76
+
+#[actix_rt::test]
+async fn item_references_are_found_by_code_or_id() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_references").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A unit name and id that disagree, then an unknown unit, location type and unit id.
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            item_with(&[(3, "Vial"), (4, "tab")], "PARA"),
+            new_item("B", "Box", "", "WARM"),
+            new_item("C", "", "missing_unit", ""),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("unit_name"),
+                "code and id conflict: Vial resolves to vial but id column contains tab"
+            ),
+            (3, Some("unit_name"), "referenced record not found"),
+            (
+                3,
+                Some("restricted_location_type_code"),
+                "referenced record not found"
+            ),
+            (4, Some("unit_id"), "referenced record not found"),
+        ]
+    );
+
+    // A name the active Tab and an inactive one share finds the active one; an id alone finds
+    // its record, and a code finds its location type.
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            new_item("B", "Tab", "", "FREEZER"),
+            new_item("C", "", "old_tab", ""),
+            item_with(&[(4, "vial"), (13, "freezer")], "PARA"),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let references = |code: &str| {
+        let item = find_item(&connection, code);
+        (item.unit_id, item.restricted_location_type_id)
+    };
+    assert_eq!(
+        references("B"),
+        (Some("tab".to_string()), Some("freezer".to_string()))
+    );
+    assert_eq!(references("C"), (Some("old_tab".to_string()), None));
+    assert_eq!(
+        references("PARA"),
+        (Some("vial".to_string()), Some("freezer".to_string()))
+    );
+
+    // A sheet without the reference columns keeps them.
+    let bytes = sheet::write(vec![sheet_data(
+        "item",
+        &["code", "name"],
+        vec![vec![
+            Value::Text("PARA".to_string()),
+            Value::Text("Renamed".to_string()),
+        ]],
+    )])
+    .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        references("PARA"),
+        (Some("vial".to_string()), Some("freezer".to_string()))
+    );
+}
+
+// covers: OMS-REG-CDIO-01.39, .51, .77
+
+#[actix_rt::test]
+async fn an_item_code_is_not_changed_or_taken_by_import() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_conflicts").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            item_row([
+                "amox",
+                "AMOX",
+                "Amoxicillin",
+                "",
+                "",
+                "",
+                "N",
+                "1",
+                "STOCK",
+                "TRUE",
+                "FALSE",
+                "0",
+                "",
+                "",
+                "0",
+                "",
+            ]),
+            // A new id beside a code added earlier in the file, then beside a saved one.
+            item_row(item_named("copy_id", "AMOX")),
+            item_row(item_named("new_id", "PARA")),
+            // The id's item has another code.
+            item_row(item_named("paracetamol", "AMOX")),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                3,
+                Some("code"),
+                "code and id conflict: Amoxicillin has code AMOX and id amox, but this row has code AMOX and id copy_id"
+            ),
+            (
+                4,
+                Some("code"),
+                "code and id conflict: Paracetamol has code PARA and id paracetamol, but this row has code PARA and id new_id"
+            ),
+            (
+                5,
+                Some("code"),
+                "code and id conflict: Paracetamol has code PARA and id paracetamol, but this row has code AMOX and id paracetamol"
+            ),
+        ]
+    );
+    assert_eq!(find_item(&connection, "PARA"), paracetamol());
+}
+
+// covers: OMS-REG-CDIO-01.80
+
+#[actix_rt::test]
+async fn setting_an_item_inactive_counts_as_a_delete() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_deactivate").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // The other columns are left out, so they keep their values.
+    let bytes = sheet::write(vec![sheet_data(
+        "item",
+        &["code", "is_active"],
+        vec![vec![Value::Text("PARA".to_string()), false.into()]],
+    )])
+    .unwrap();
+    let path = write_file(dir.path(), bytes);
+
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(summary.changes[0].change, Change::Deleted);
+    assert_eq!(
+        find_item(&connection, "PARA"),
+        ItemRow {
+            is_active: false,
+            ..paracetamol()
+        }
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24
+
+#[actix_rt::test]
+async fn a_shared_unit_name_location_type_code_or_item_code_asks_for_the_id() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_ambiguous").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Legacy data can hold duplicates the import would refuse.
+    for id in ["bottle_a", "bottle_b"] {
+        UnitRowRepository::new(&connection)
+            .upsert_one(&bottle(id, true))
+            .unwrap();
+    }
+    LocationTypeRowRepository::new(&connection)
+        .upsert_one(&LocationTypeRow {
+            id: "cold_copy".to_string(),
+            code: "COLD".to_string(),
+            name: "COLD".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "paracetamol_copy".to_string(),
+            ..paracetamol()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            new_item("B", "Bottle", "", ""),
+            new_item("C", "", "", "COLD"),
+            item_with(&[(2, "Renamed")], "PARA"),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let ambiguous = "ambiguous reference, please provide id instead";
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("unit_name"), ambiguous),
+            (3, Some("restricted_location_type_code"), ambiguous),
+            (4, Some("code"), ambiguous),
+        ]
+    );
+
+    // The ids settle each one.
+    let mut cold = new_item("C", "", "", "COLD");
+    cold[13] = Value::Text("cold_copy".to_string());
+    let mut renamed = item_named("paracetamol_copy", "PARA");
+    renamed[2] = "Renamed";
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            new_item("B", "Bottle", "bottle_b", ""),
+            cold,
+            item_row(renamed),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_item(&connection, "B").unit_id.as_deref(),
+        Some("bottle_b")
+    );
+    assert_eq!(
+        find_item(&connection, "C")
+            .restricted_location_type_id
+            .as_deref(),
+        Some("cold_copy")
+    );
+    let item = |id: &str| {
+        ItemRowRepository::new(&connection)
+            .find_one_by_id(id)
+            .unwrap()
+            .unwrap()
+    };
+    assert_eq!(item("paracetamol_copy").name, "Renamed");
+    assert_eq!(item("paracetamol"), paracetamol());
+}
+
+// covers: OMS-REG-CDIO-01.82
+
+#[actix_rt::test]
+async fn an_item_refers_to_a_unit_and_location_type_added_by_earlier_sheets() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_earlier_sheets").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // The item sheet comes first in the workbook: the tables' order decides, not the sheets'.
+    let bytes = sheet::write(vec![
+        sheet_data(
+            "item",
+            &ITEM_HEADERS,
+            vec![new_item("B", "Box", "", "WARM")],
+        ),
+        sheet_data(
+            "unit",
+            &["name", "index", "is_active"],
+            vec![vec!["Box".to_string().into(), 2.into(), true.into()]],
+        ),
+        sheet_data(
+            "location_type",
+            &LOCATION_TYPE_HEADERS,
+            vec![location_type_row(["", "WARM", "Warm", "25", "30", ""])],
+        ),
+    ])
+    .unwrap();
+    let path = write_file(dir.path(), bytes);
+
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let inserted: Vec<_> = summary
+        .tables
+        .iter()
+        .map(|table| (table.table, table.inserted))
+        .collect();
+    assert_eq!(
+        inserted,
+        vec![
+            (CentralDataTable::Unit, 1),
+            (CentralDataTable::LocationType, 1),
+            (CentralDataTable::Item, 1),
+        ]
+    );
+    let unit = units_named(&connection, "Box").remove(0);
+    let warm = LocationTypeRowRepository::new(&connection)
+        .find_all()
+        .unwrap()
+        .into_iter()
+        .find(|location_type| location_type.code == "WARM")
+        .unwrap();
+    let item = find_item(&connection, "B");
+    assert_eq!(
+        (item.unit_id, item.restricted_location_type_id),
+        (Some(unit.id), Some(warm.id))
+    );
+}
+
+// covers: OMS-REG-CDIO-01.83
+
+#[actix_rt::test]
+async fn blank_optional_item_cells_save_defaults() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_defaults").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let plain = || {
+        item_with(
+            &[(2, "Plain"), (7, "1"), (8, "STOCK"), (9, "TRUE")],
+            "PLAIN",
+        )
+    };
+    let vaccine = |doses: &'static str| {
+        item_with(
+            &[
+                (2, "Vaccine"),
+                (7, "1"),
+                (8, "STOCK"),
+                (9, "TRUE"),
+                (10, "TRUE"),
+                (11, doses),
+            ],
+            "VAX",
+        )
+    };
+    // A saved item's blank cells clear to the defaults too.
+    let blank_para = || item_row(item_named("", "PARA"));
+
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![plain(), vaccine(""), blank_para()]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("vaccine_doses"),
+            "vaccine_doses is required for a new vaccine"
+        )]
+    );
+
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![plain(), vaccine("10"), blank_para()]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let defaults = |code: &str| {
+        let item = find_item(&connection, code);
+        (item.ven_category, item.vaccine_doses, item.volume_per_pack)
+    };
+    assert_eq!(defaults("PLAIN"), (VENCategory::NotAssigned, 0, 0.0));
+    assert_eq!(defaults("VAX"), (VENCategory::NotAssigned, 10, 0.0));
+    assert_eq!(defaults("PARA"), (VENCategory::NotAssigned, 0, 0.0));
+
+    // A saved vaccine's blank cells keep it a vaccine with its doses.
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![item_row(item_named("", "VAX"))]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(defaults("VAX"), (VENCategory::NotAssigned, 10, 0.0));
+    assert!(find_item(&connection, "VAX").is_vaccine);
+    assert!(!find_item(&connection, "PLAIN").is_vaccine);
+}
+
+// covers: OMS-REG-CDIO-01.79
+
+#[actix_rt::test]
+async fn a_saved_item_with_a_pack_size_of_0_can_be_renamed_but_not_given_one() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_legacy_pack").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Legacy data has items with a pack size of 0.
+    let legacy = ItemRow {
+        default_pack_size: 0.0,
+        ..paracetamol()
+    };
+    ItemRowRepository::new(&connection)
+        .upsert_one(&legacy)
+        .unwrap();
+    let sheet = |name: &str, default_pack_size: &str| {
+        let cells = ["PARA", name, default_pack_size].map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        });
+        let bytes = sheet::write(vec![sheet_data(
+            "item",
+            &["code", "name", "default_pack_size"],
+            vec![cells.into()],
+        )])
+        .unwrap();
+        write_file(dir.path(), bytes)
+    };
+
+    let summary = CentralDataService
+        .import(&ctx, &sheet("Paracetamol tablets", "0"))
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_item(&connection, "PARA"),
+        ItemRow {
+            name: "Paracetamol tablets".to_string(),
+            ..legacy
+        }
+    );
+
+    let summary = CentralDataService
+        .preview_import(&ctx, &sheet("", "-1"))
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("default_pack_size"),
+            "default_pack_size must be above 0"
+        )]
+    );
 }

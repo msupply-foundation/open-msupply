@@ -1782,6 +1782,7 @@ export type CentralDataTableChangesNode = {
 };
 
 export enum CentralDataTableNode {
+  Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
   Unit = 'UNIT',
 }

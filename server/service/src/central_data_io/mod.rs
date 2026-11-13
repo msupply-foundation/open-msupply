@@ -6,6 +6,7 @@ use umya_spreadsheet::helper::coordinate::string_from_column_index;
 
 pub mod cells;
 pub mod delete;
+mod item;
 mod location_type;
 pub mod lookup;
 pub mod sheet;
@@ -28,6 +29,7 @@ pub const ERROR_COLUMN: &str = "error";
 pub enum CentralDataTable {
     Unit,
     LocationType,
+    Item,
 }
 
 /// Empty exports every record.
@@ -93,13 +95,17 @@ impl CentralDataTable {
         match self {
             CentralDataTable::Unit => "unit",
             CentralDataTable::LocationType => "location_type",
+            CentralDataTable::Item => "item",
         }
     }
 }
 
 /// In import order, so a sheet can refer to rows an earlier sheet adds.
-static TABLES: &[&(dyn ImportTable + Sync)] =
-    &[&unit::UnitTable, &location_type::LocationTypeTable];
+static TABLES: &[&(dyn ImportTable + Sync)] = &[
+    &unit::UnitTable,
+    &location_type::LocationTypeTable,
+    &item::ItemTable,
+];
 
 pub(crate) trait ImportTable {
     fn table(&self) -> CentralDataTable;
@@ -159,6 +165,32 @@ pub enum Change {
     Unchanged,
 }
 
+impl Change {
+    /// What writing `new` over `saved` does. Making an active record inactive is a delete.
+    pub fn between<R: PartialEq>(
+        saved: Option<&R>,
+        new: &R,
+        is_active: impl Fn(&R) -> bool,
+    ) -> Self {
+        match saved {
+            Some(saved) if saved == new => Change::Unchanged,
+            Some(saved) if is_active(saved) && !is_active(new) => Change::Deleted,
+            Some(_) => Change::Updated,
+            None => Change::Inserted,
+        }
+    }
+
+    /// As `between`, for a table whose updates never delete: it deletes by its `delete` column.
+    pub fn between_upserts<R: PartialEq>(saved: Option<&R>, new: &R) -> Self {
+        Self::between(saved, new, |_| true)
+    }
+}
+
+/// How the preview and messages name a record whose name can repeat.
+pub(crate) fn name_with_code(name: &str, code: &str) -> String {
+    format!("{name} ({code})")
+}
+
 pub(crate) enum RowFailure {
     Invalid(Vec<RowError>),
     Database(RepositoryError),
@@ -194,15 +226,19 @@ pub struct FieldChange {
     pub to: String,
 }
 
-/// The columns whose value differs, given each record's values in the same column order.
-pub fn field_changes<const N: usize>(
-    old: [(&'static str, String); N],
-    new: [(&'static str, String); N],
+/// The columns whose value differs, given each record's cells in `columns` order.
+pub fn field_changes(
+    columns: &[&'static str],
+    old: Vec<sheet::Value>,
+    new: Vec<sheet::Value>,
 ) -> Vec<FieldChange> {
-    old.into_iter()
-        .zip(new)
-        .filter(|((_, from), (_, to))| from != to)
-        .map(|((column, from), (_, to))| FieldChange { column, from, to })
+    debug_assert_eq!((old.len(), new.len()), (columns.len(), columns.len()));
+    columns
+        .iter()
+        .zip(old.iter().zip(&new))
+        .map(|(column, (from, to))| (*column, from.display(), to.display()))
+        .filter(|(_, from, to)| from != to)
+        .map(|(column, from, to)| FieldChange { column, from, to })
         .collect()
 }
 

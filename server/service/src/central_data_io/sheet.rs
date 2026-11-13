@@ -134,6 +134,18 @@ pub enum Value {
     Empty,
 }
 
+impl Value {
+    /// As a preview shows the cell.
+    pub fn display(&self) -> String {
+        match self {
+            Value::Text(text) => text.clone(),
+            Value::Number(number) => number.to_string(),
+            Value::Bool(flag) => flag.to_string().to_uppercase(),
+            Value::Empty => String::new(),
+        }
+    }
+}
+
 impl From<String> for Value {
     fn from(value: String) -> Self {
         Value::Text(value)

@@ -1446,6 +1446,7 @@ type CentralDataTableChangesNode {
 enum CentralDataTableNode {
 	UNIT
 	LOCATION_TYPE
+	ITEM
 }
 
 type CentralDataTooManyCells implements CentralDataImportErrorInterface {

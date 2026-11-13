@@ -1,12 +1,12 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport,
-    cells::{Row, collect, keep_or_saved, keep_padded},
+    cells::{Row, collect, keep_or_saved},
     field_changes,
     lookup::{LookupError, resolve},
     sheet::Value,
 };
-use crate::unit::{UnitLookup, UpsertUnitError, upsert_unit_in};
+use crate::unit::{UnitLookup, UpsertUnitError, active_first, upsert_unit_in};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 use util::uuid::uuid;
 
@@ -15,6 +15,7 @@ const NAME: &str = "name";
 const DESCRIPTION: &str = "description";
 const INDEX: &str = "index";
 const IS_ACTIVE: &str = "is_active";
+const COLUMNS: &[&str] = &[ID, NAME, DESCRIPTION, INDEX, IS_ACTIVE];
 
 /// Matched by `id`, else `name`. On an update a blank cell keeps the value, except `description`,
 /// which it clears.
@@ -26,7 +27,7 @@ impl ImportTable for UnitTable {
     }
 
     fn columns(&self) -> &'static [&'static str] {
-        &[ID, NAME, DESCRIPTION, INDEX, IS_ACTIVE]
+        COLUMNS
     }
 
     fn text_columns(&self) -> &'static [&'static str] {
@@ -42,15 +43,7 @@ impl ImportTable for UnitTable {
             .find_all()?
             .into_iter()
             .filter(|unit| matches(filter, unit))
-            .map(|unit| {
-                vec![
-                    unit.id.into(),
-                    unit.name.into(),
-                    unit.description.into(),
-                    unit.index.into(),
-                    unit.is_active.into(),
-                ]
-            })
+            .map(|unit| cells(&unit))
             .collect())
     }
 
@@ -122,26 +115,17 @@ impl SheetImport for UnitSheet {
                 .or(id)
                 .unwrap_or_else(uuid),
             name: name.unwrap_or_default(),
-            description: if row.has(DESCRIPTION) {
-                keep_padded(
-                    row.text(DESCRIPTION),
-                    existing
-                        .as_ref()
-                        .and_then(|unit| unit.description.as_deref()),
-                )
-            } else {
-                existing.as_ref().and_then(|unit| unit.description.clone())
-            },
+            description: row.optional_text(
+                DESCRIPTION,
+                existing
+                    .as_ref()
+                    .and_then(|unit| unit.description.as_deref()),
+            ),
             index: index.unwrap_or_default(),
             is_active: is_active.unwrap_or_default(),
         };
 
-        let change = match &existing {
-            Some(existing) if *existing == unit => Change::Unchanged,
-            Some(existing) if existing.is_active && !unit.is_active => Change::Deleted,
-            Some(_) => Change::Updated,
-            None => Change::Inserted,
-        };
+        let change = Change::between(existing.as_ref(), &unit, |unit| unit.is_active);
         if change != Change::Unchanged {
             upsert_unit_in(connection, &mut self.units, &unit).map_err(|error| match error {
                 UpsertUnitError::NameRequired => row.error(NAME, "name is required").into(),
@@ -173,23 +157,23 @@ fn matches(filter: &ExportFilter, unit: &UnitRow) -> bool {
     filter.matches(&[&unit.name], Some(unit.is_active))
 }
 
-/// As the sheet shows them.
-fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
-    let values = |unit: &UnitRow| {
-        [
-            (NAME, unit.name.clone()),
-            (DESCRIPTION, unit.description.clone().unwrap_or_default()),
-            (INDEX, unit.index.to_string()),
-            (IS_ACTIVE, unit.is_active.to_string().to_uppercase()),
-        ]
-    };
-    field_changes(values(old), values(new))
+/// One per column, as the export writes them and the preview shows them.
+fn cells(unit: &UnitRow) -> Vec<Value> {
+    vec![
+        unit.id.clone().into(),
+        unit.name.clone().into(),
+        unit.description.clone().into(),
+        unit.index.into(),
+        unit.is_active.into(),
+    ]
 }
 
-/// Active units first, so an old inactive namesake doesn't make the name ambiguous.
+fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
+    field_changes(COLUMNS, cells(old), cells(new))
+}
+
 fn pick_by_name(units: Vec<&UnitRow>) -> Result<Option<UnitRow>, LookupError> {
-    let (active, inactive): (Vec<_>, Vec<_>) = units.into_iter().partition(|unit| unit.is_active);
-    let candidates = if active.is_empty() { inactive } else { active };
+    let candidates = active_first(units);
     let ids: Vec<String> = candidates.iter().map(|unit| unit.id.clone()).collect();
     match resolve(None, false, Some(&ids)) {
         Ok(id) => Ok(candidates
