@@ -32,7 +32,13 @@ vi.mock('../../ui/elements/buttons/Button', () => ({ Button: () => null }));
 vi.mock('../../ui/elements/typography/LabelledValue', () => ({
   LabelledValue: () => null,
 }));
-vi.mock('./PatientSearch', () => ({ PatientSearch: () => null }));
+vi.mock('./PatientSearchDialog', () => ({ PatientSearchDialog: () => null }));
+vi.mock('../../ui/elements/selectors/PickerField', () => ({
+  PickerField: () => null,
+}));
+vi.mock('../../ui/elements/buttons/IconButton', () => ({
+  IconButton: () => null,
+}));
 vi.mock('../../store/storeContext', () => ({
   currentStoreName: () => 'Store',
 }));

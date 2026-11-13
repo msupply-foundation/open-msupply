@@ -1,5 +1,4 @@
 import { graphqlFetch } from '../../api/graphql';
-import type { Page } from '../../ui/utils/createPaginatedSearch';
 import {
   PatientSearch,
   type PatientSearchFragment,
@@ -37,29 +36,6 @@ export type LinkOutcome =
   | { kind: 'ok'; nameId: string }
   | { kind: 'unreachable'; message: string }
   | { kind: 'failed' };
-
-/**
- * Local-search page fetcher for the reusable picker (spec/patients S4). The
- * typed text is placed in `identifier` — the broad match across code /
- * secondary code / name / program-enrolment id. The server hard-codes a
- * 100-row page sorted by code and ignores paging (contract › searching wire
- * trap), so we report `totalCount = rows returned` to stop the picker paging
- * futilely.
- */
-export const patientSearchPageFetcher =
-  (storeId: string) =>
-  async (
-    search: string,
-    _offset: number
-  ): Promise<Page<PatientOption> | undefined> => {
-    const result = await graphqlFetch(PatientSearch, {
-      storeId,
-      input: search ? { identifier: search } : {},
-    });
-    if (result.kind !== 'success') return undefined;
-    const nodes = result.data.patientSearch.nodes.map(node => node.patient);
-    return { nodes, totalCount: nodes.length };
-  };
 
 /**
  * Local duplicate search for the create flow's step ② (spec/patients

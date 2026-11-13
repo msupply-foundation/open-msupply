@@ -1,6 +1,4 @@
-export { PatientSearch, type PatientSearchProps } from './PatientSearch';
 export {
-  patientSearchPageFetcher,
   searchLocalPatients,
   searchCentralPatients,
   fetchPatientOptionById,
