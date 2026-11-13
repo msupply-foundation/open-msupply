@@ -1,6 +1,7 @@
 package org.openmsupply.client;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,7 +75,10 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
             // bottom edge to the keyboard's top instead: the page's viewport
             // shrinks and it can scroll the focused field into view, whichever
             // front end is loaded — including an older server's (issue #2115).
-            int keyboard = insets.isVisible(WindowInsetsCompat.Type.ime())
+            // Before Android 15 the window still shrinks for the keyboard
+            // itself, so lifting the WebView as well would lift it twice
+            int keyboard = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+                    && insets.isVisible(WindowInsetsCompat.Type.ime())
                     ? insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
                     : 0;
             ViewGroup.MarginLayoutParams layout = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
