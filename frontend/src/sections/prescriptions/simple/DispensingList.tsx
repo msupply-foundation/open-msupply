@@ -5,7 +5,13 @@ import {
   For,
   Show,
 } from 'solid-js';
-import { formatCurrency, t, tPlural } from '@/intl';
+import {
+  formatCurrency,
+  roundedText,
+  t,
+  tPlural,
+  type LocaleKey,
+} from '@/intl';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
@@ -61,10 +67,11 @@ export const DispensingList = (props: {
    */
   locked: boolean;
   /**
-   * What the last Dispense did: who it went to, or why it failed. Shown in
-   * the list itself — never a toast (ui-standards › action feedback).
+   * What the last Dispense did: who it went to, why it failed, or that it
+   * stopped on short stock. Shown in the list itself — never a toast
+   * (ui-standards › action feedback).
    */
-  notice?: { severity: 'success' | 'error'; text: string };
+  notice?: { severity: 'success' | 'warning' | 'error'; text: string };
   /** A phone: the list is the bottom bar and its sheet. */
   isPhone: boolean;
 }) => {
@@ -225,15 +232,27 @@ export const DispensingList = (props: {
                     <td />
                   </tr>
                 </thead>
-                <tbody>
-                  {/* The page's store rows, keyed by medicine: editing one
-                  line's amount never rebuilds its row. */}
-                  <For each={props.lines}>
-                    {line => {
-                      const card = () => props.cardOf(line.itemId);
-                      const name = () => card()?.item.name ?? '';
-                      return (
-                        <tr data-testid={`dispensing-list-line-${line.itemId}`}>
+                {/* The page's store rows, keyed by medicine: editing one
+                    line's amount never rebuilds its row. Each line is a body
+                    of its own, so what it has to say sits under it. */}
+                <For each={props.lines}>
+                  {line => {
+                    const card = () => props.cardOf(line.itemId);
+                    const name = () => card()?.item.name ?? '';
+                    const unit = () => card()?.item.unitName ?? '';
+                    const stock = () => card()?.stock ?? 0;
+                    // The unit as set up, never pluralised (#666); an item
+                    // with no unit leaves no gap.
+                    const amountText = (key: LocaleKey, quantity: number) =>
+                      t(key, {
+                        quantity: roundedText(quantity),
+                        unit: unit(),
+                      }).replace(/\s+/g, ' ');
+                    return (
+                      <tbody
+                        data-testid={`dispensing-list-line-${line.itemId}`}
+                      >
+                        <tr>
                           <td>
                             <span class={styles.name}>{name()}</span>
                             <Show when={card()?.item.unitName}>
@@ -251,7 +270,10 @@ export const DispensingList = (props: {
                               // width and lines up under its heading.
                               width="full"
                               decimalLimit={2}
-                              max={card()?.stock}
+                              // No max: the page stops an amount at the stock
+                              // itself, so the line can say why. It answers
+                              // inside onChange, even with the value it held.
+                              parentAnswersSynchronously
                               disabled={props.locked}
                               value={line.units}
                               data-testid="line-amount-input"
@@ -275,10 +297,81 @@ export const DispensingList = (props: {
                             />
                           </td>
                         </tr>
-                      );
-                    }}
-                  </For>
-                </tbody>
+                        {/* Typed above the stock: the amount stopped there,
+                            and this says why. */}
+                        <Show when={line.capped && line.units <= stock()}>
+                          <tr class={styles.note}>
+                            <td colSpan={4}>
+                              <p
+                                class={styles.limit}
+                                data-testid="line-stock-limit"
+                              >
+                                {amountText(
+                                  'messages.only-units-in-stock',
+                                  stock()
+                                )}
+                              </p>
+                            </td>
+                          </tr>
+                        </Show>
+                        {/* Dispense found less stock than the line holds:
+                            nothing was saved, and staff choose. */}
+                        <Show when={line.units > stock()}>
+                          <tr class={styles.note}>
+                            <td colSpan={4}>
+                              <div
+                                class={styles.shortWarning}
+                                data-testid="line-stock-warning"
+                              >
+                                <p>
+                                  <strong>
+                                    {t('messages.stock-went-down')}
+                                  </strong>{' '}
+                                  {stock() > 0
+                                    ? amountText(
+                                        'messages.stock-now-shows',
+                                        stock()
+                                      )
+                                    : t('messages.stock-now-shows-none')}
+                                </p>
+                                <Show
+                                  when={stock() > 0}
+                                  fallback={
+                                    <Button
+                                      variant="secondary"
+                                      size="small"
+                                      disabled={props.locked}
+                                      data-testid="line-warning-remove-button"
+                                      onClick={() =>
+                                        props.onRemove(line.itemId)
+                                      }
+                                    >
+                                      {t('label.remove')}
+                                    </Button>
+                                  }
+                                >
+                                  <Button
+                                    variant="secondary"
+                                    size="small"
+                                    disabled={props.locked}
+                                    data-testid="give-instead-button"
+                                    onClick={() =>
+                                      props.onAmount(line.itemId, stock())
+                                    }
+                                  >
+                                    {t('button.give-instead', {
+                                      quantity: roundedText(stock()),
+                                    })}
+                                  </Button>
+                                </Show>
+                              </div>
+                            </td>
+                          </tr>
+                        </Show>
+                      </tbody>
+                    );
+                  }}
+                </For>
               </table>
             </Show>
           </div>

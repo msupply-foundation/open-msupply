@@ -191,6 +191,12 @@ export const priceOf = (
 export interface ListLine {
   itemId: string;
   units: number;
+  /**
+   * The amount last typed was above the stock and stopped there, so the line
+   * says how much the system shows (rules › who it's for and the list). Gone
+   * once the amount changes again.
+   */
+  capped?: true;
 }
 
 /** What the list holds of a medicine. */
@@ -215,15 +221,16 @@ export const addAmount = (
   if (amount <= 0 || total > stock) return [...lines];
   return listed > 0
     ? lines.map(line =>
-        line.itemId === itemId ? { ...line, units: total } : line
+        line.itemId === itemId ? { itemId, units: total } : line
       )
     : [...lines, { itemId, units: amount }];
 };
 
 /**
- * A line's amount entered: brought down to what the card has; zero or no
- * amount leaves the line as it was (spec/prescriptions rules › who it's for
- * and the list).
+ * A line's amount entered (spec/prescriptions rules › who it's for and the
+ * list): above the stock, it stops at the stock and the line is marked so it
+ * can say why; zero or no amount leaves the line as it was, and so does any
+ * amount for a medicine with none left, which can only be removed.
  */
 export const setAmount = (
   lines: readonly ListLine[],
@@ -231,11 +238,10 @@ export const setAmount = (
   units: number | undefined,
   stock: number
 ): ListLine[] => {
-  if (units == null || units <= 0) return [...lines];
-  const capped = Math.min(units, stock);
-  return lines.map(line =>
-    line.itemId === itemId ? { ...line, units: capped } : line
-  );
+  if (units == null || units <= 0 || stock <= 0) return [...lines];
+  const next: ListLine =
+    units > stock ? { itemId, units: stock, capped: true } : { itemId, units };
+  return lines.map(line => (line.itemId === itemId ? next : line));
 };
 
 /**
@@ -266,42 +272,33 @@ export const removeLine = (
   itemId: string
 ): ListLine[] => lines.filter(line => line.itemId !== itemId);
 
-/** A line the stock can no longer give out in full, and what it can. */
-export interface Shortfall {
-  itemId: string;
-  wanted: number;
-  available: number;
-}
-
 /**
- * The lines the stock can no longer cover, checked against freshly read cards
- * (spec/prescriptions rules › dispensing the visit). A medicine that has no
- * card any more has nothing available.
+ * The list's medicines as Dispense's check found them (spec/prescriptions
+ * rules › dispensing the visit): the freshly read card, or — for a medicine
+ * the read no longer returns, which the store can no longer dispense — its
+ * card as it was, with nothing available.
  */
-export const shortfalls = (
-  lines: readonly ListLine[],
-  fresh: readonly MedicineCard[]
-): Shortfall[] =>
-  lines.flatMap(line => {
-    const available =
-      fresh.find(card => card.item.id === line.itemId)?.stock ?? 0;
-    return line.units > available
-      ? [{ itemId: line.itemId, wanted: line.units, available }]
-      : [];
+export const stockAtCheck = (
+  listed: readonly ListLine[],
+  fresh: readonly MedicineCard[],
+  before: (itemId: string) => MedicineCard | undefined
+): MedicineCard[] =>
+  listed.flatMap(line => {
+    const now = fresh.find(card => card.item.id === line.itemId);
+    if (now) return [now];
+    const was = before(line.itemId);
+    return was ? [{ ...was, batches: [], stock: 0 }] : [];
   });
 
 /**
- * The list with each short line brought down to what is available, or removed.
+ * The lines holding more than the stock the screen now knows of, in list
+ * order (spec/prescriptions rules › dispensing the visit). Never changed here:
+ * staff choose what to do about each.
  */
-export const reduceToAvailable = (
+export const shortLines = (
   lines: readonly ListLine[],
-  short: readonly Shortfall[]
-): ListLine[] =>
-  lines.flatMap(line => {
-    const cut = short.find(s => s.itemId === line.itemId);
-    if (!cut) return [line];
-    return cut.available > 0 ? [{ ...line, units: cut.available }] : [];
-  });
+  stockOf: (itemId: string) => number
+): ListLine[] => lines.filter(line => line.units > stockOf(line.itemId));
 
 /**
  * The batch save for a visit: the record, one line per batch taken (packs
