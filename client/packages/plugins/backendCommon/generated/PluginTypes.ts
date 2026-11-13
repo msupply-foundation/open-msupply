@@ -16,6 +16,8 @@ import type { ProcessorOutput } from './ProcessorOutput';
 import type { ScheduleInput } from './ScheduleInput';
 import type { ScheduleOutput } from './ScheduleOutput';
 import type { StorePreferenceRow } from './StorePreferenceRow';
+import type { TransformItemStorePropertiesInput } from './TransformItemStorePropertiesInput';
+import type { TransformItemStorePropertiesOutput } from './TransformItemStorePropertiesOutput';
 import type { TransformRequestRequisitionLineInput } from './TransformRequestRequisitionLineInput';
 import type { TransformRequestRequisitionLineOutput } from './TransformRequestRequisitionLineOutput';
 import type { UseGraphqlInput } from './UseGraphqlInput';
@@ -50,6 +52,10 @@ export type PluginTypes = {
   transform_request_requisition_lines: Function<
     TransformRequestRequisitionLineInput,
     TransformRequestRequisitionLineOutput
+  >;
+  transform_item_store_properties: Function<
+    TransformItemStorePropertiesInput,
+    TransformItemStorePropertiesOutput
   >;
   get_consumption: Function<GetConsumptionInput, { [key in string]: number }>;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;

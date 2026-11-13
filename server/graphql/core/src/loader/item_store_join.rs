@@ -4,6 +4,9 @@ use async_graphql::dataloader::Loader;
 use repository::{
     ItemStoreJoinRow, ItemStoreJoinRowRepository, RepositoryError, StorageConnectionManager,
 };
+use service::backend_plugin::{
+    plugin_provider::PluginInstance, types::transform_item_store_properties::Context,
+};
 
 pub struct ItemStoreJoinLoader {
     pub connection_manager: StorageConnectionManager,
@@ -53,6 +56,38 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
         // search/dropdown requests this field for up to 100 items at once.
         let rows = ItemStoreJoinRowRepository::new(&connection)
             .find_many_by_item_and_store_ids(&item_ids, &store_ids)?;
+        // Give the connection back before awaiting plugins, which check out their own
+        drop(connection);
+
+        // Plugins see one store at a time, with the items asked for in that store
+        let mut item_ids_by_store: HashMap<String, Vec<String>> = HashMap::new();
+        for input in loader_inputs {
+            item_ids_by_store
+                .entry(input.store_id.clone())
+                .or_default()
+                .push(input.item_id.clone());
+        }
+        let mut rows_by_store: HashMap<String, Vec<ItemStoreJoinRow>> = HashMap::new();
+        for row in rows {
+            rows_by_store
+                .entry(row.store_id.clone())
+                .or_default()
+                .push(row);
+        }
+
+        let mut rows = Vec::new();
+        for (store_id, item_ids) in item_ids_by_store {
+            let store_rows = rows_by_store.remove(&store_id).unwrap_or_default();
+            rows.extend(
+                PluginInstance::transform_item_store_properties_async(
+                    Context::ItemStorePropertiesQuery,
+                    &store_id,
+                    &item_ids,
+                    store_rows,
+                )
+                .await,
+            );
+        }
 
         let mut result_map: HashMap<ItemStoreJoinLoaderInput, Self::Value> = HashMap::new();
         for row in rows {

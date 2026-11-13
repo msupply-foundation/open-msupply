@@ -1,6 +1,7 @@
 use super::{
-    StorageConnection, item_row::item, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
+    StorageConnection, campaign_row::campaign, item_row::item, location_row::location,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_row::stocktake,
 };
 
 use crate::db_diesel::changelog::changelog::RowOrId;
@@ -54,7 +55,9 @@ joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
 joinable!(stocktake_line -> name (donor_id));
+joinable!(stocktake_line -> campaign (campaign_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
+allow_tables_to_appear_in_same_query!(stocktake_line, campaign);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = stocktake_line)]

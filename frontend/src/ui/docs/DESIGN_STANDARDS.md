@@ -466,7 +466,7 @@ The Settings popover also carries a bold **"Settings"** heading and a leading ic
 
 The internal-order and requisition editors got there without a wide table at all, which is the more useful half of this entry. (#617 later moved the internal-order editor to a sized card and tried the same for the requisition, which went back to the sheet; see the entry at the foot of this ledger.)
 
-- **Internal order** — a **charts region** (target-quantity breakdown + the consumption / stock-evolution pair) capping itself at `64rem` so the pair sits side by side, matching the original app. A 56rem card gives a ~53rem body, so the cap is unreachable and the charts stack.
+- **Internal order** — a **charts region** (the consumption history, then an "Additional charts" accordion holding the target-quantity breakdown and stock evolution) capping itself at `64rem`. A 56rem card gives a ~53rem body, too narrow for the region's wider consumption chart.
 - **Requisition** — a **figure grid** whose `.column` is `flex: 1 1 16rem`, three columns wide on an extra-fields program requisition: ~50rem of basis before gaps, so in a ~53rem body every column sits pinned at its floor with a labelled figure and its measure word squeezed into 16rem.
 
 Both were first assessed on their most obvious capped region (the requisition's stats block caps at 50rem and fits `large` fine) and both were judged wrong on that basis, then corrected against the running app. The lesson: the question is **what the widest self-capping region inside the modal asks for** — and check every such region, not the first one you find. Column count is a symptom, not the test.

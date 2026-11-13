@@ -254,6 +254,10 @@ export type NoStockItemCountVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    notInRecord?: {
+    record: "stocktake" | "requisition" | "invoice";
+    id: string;
+  } | null;
     dynamicFilter?: unknown | null;
   } | null;
 };

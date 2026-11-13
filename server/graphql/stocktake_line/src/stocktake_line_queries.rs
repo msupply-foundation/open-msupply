@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::ContextExt;
-use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
+use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
 use graphql_core::generic_inputs::{PrintReportSortInput, report_sort_to_typed_sort};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::{
@@ -20,7 +20,11 @@ pub struct StocktakeLineFilterInput {
     pub item_code_or_name: Option<StringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub stock_line_id: Option<EqualFilterStringInput>,
+    pub donor_id: Option<EqualFilterStringInput>,
     pub campaign_id: Option<EqualFilterStringInput>,
+    pub batch: Option<StringFilterInput>,
+    pub manufacture_date: Option<DateFilterInput>,
+    pub campaign_name: Option<StringFilterInput>,
 }
 
 impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
@@ -32,7 +36,11 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
+            donor_id: f.donor_id.map(EqualFilter::from),
             campaign_id: f.campaign_id.map(EqualFilter::from),
+            batch: f.batch.map(StringFilterInput::into),
+            manufacture_date: f.manufacture_date.map(DateFilter::from),
+            campaign_name: f.campaign_name.map(StringFilterInput::into),
         }
     }
 }
@@ -52,6 +60,9 @@ pub enum StocktakeLineSortFieldInput {
     SnapshotNumberOfPacks,
     CountedNumberOfPacks,
     ReasonOption,
+    ManufactureDate,
+    Donor,
+    Campaign,
 }
 
 #[derive(InputObject)]

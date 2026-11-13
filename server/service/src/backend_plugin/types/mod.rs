@@ -3,6 +3,7 @@ pub mod get_consumption;
 pub mod graphql_query;
 pub mod processor;
 pub mod schedule;
+pub mod transform_item_store_properties;
 pub mod transform_request_requisition_lines;
 
 pub mod generate_typescript_types {
@@ -53,6 +54,10 @@ pub mod generate_typescript_types {
         transform_request_requisition_lines: Function<
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,
+        >,
+        transform_item_store_properties: Function<
+            transform_item_store_properties::Input,
+            transform_item_store_properties::Output,
         >,
         get_consumption: Function<get_consumption::Input, get_consumption::Output>,
         graphql_query: Function<graphql_query::Input, graphql_query::Output>,

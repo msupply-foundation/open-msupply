@@ -8,7 +8,9 @@ use service::{
     preference::PreferenceType,
 };
 
+mod consumption_estimate;
 mod upsert;
+use consumption_estimate::*;
 use upsert::*;
 
 #[derive(Default, Clone)]
@@ -78,6 +80,17 @@ impl PreferenceQueries {
             .map(|pref| PreferenceDescriptionNode { pref })
             .collect())
     }
+
+    /// The store's estimated consumption, entered for a store without consumption
+    /// history of its own and added on top of real consumption when calculating AMC
+    pub async fn consumption_estimates(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        for_store_id: String,
+    ) -> Result<ConsumptionEstimatesNode> {
+        consumption_estimates(ctx, store_id, for_store_id)
+    }
 }
 
 // --
@@ -99,6 +112,30 @@ impl PreferenceMutations {
             err
         })?;
 
+        Ok(OkResponse)
+    }
+
+    /// Replaces the estimated consumption of the items named: each ends up with
+    /// exactly the months given, and unchanged months aren't rewritten. Items not
+    /// named are left alone. Nothing is saved if any line has a problem; `dryRun`
+    /// checks the lines without saving.
+    pub async fn replace_consumption_estimates(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: ReplaceConsumptionEstimatesInput,
+    ) -> Result<ReplaceConsumptionEstimatesResponse> {
+        replace_estimates(ctx, store_id, input)
+    }
+
+    /// Removes all of a store's estimated consumption
+    pub async fn clear_consumption_estimates(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        for_store_id: String,
+    ) -> Result<OkResponse> {
+        clear_estimates(ctx, store_id, for_store_id)?;
         Ok(OkResponse)
     }
 }

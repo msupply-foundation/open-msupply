@@ -18,8 +18,10 @@ import { t, tPlural } from '../../../intl';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
+import { HighlightFirstMatch } from './HighlightFirstMatch';
 import {
   sectionOptions,
+  skipsHighlight,
   typedQuery,
   visibleOptions,
   type Section,
@@ -420,18 +422,36 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // portal is used.
   const portalMount = usePortalMount();
 
-  const matches = (item: T, input: string) => {
-    // Grouped mode: an item with no group is PINNED, and a pinned item is
-    // never searched for — it stays listed whatever is typed. Applied here, so
-    // the rule holds for the capped client list AND Kobalte's own filter
-    // below, which share this predicate.
-    if (props.itemGroup && props.itemGroup(item) === undefined) return true;
-    return props.filter
+  // Whether the item itself answers what was typed — the caller's predicate,
+  // or the default locale-aware substring test on its label.
+  const textMatches = (item: T, input: string) =>
+    props.filter
       ? props.filter(item, input)
       : props
           .itemToString(item)
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
+
+  const isPinned = (item: T) =>
+    props.itemGroup !== undefined && props.itemGroup(item) === undefined;
+
+  const matches = (item: T, input: string) => {
+    // Grouped mode: an item with no group is PINNED, and a pinned item is
+    // never searched for — it stays listed whatever is typed. Applied here, so
+    // the rule holds for the capped client list AND Kobalte's own filter
+    // below, which share this predicate.
+    if (isPinned(item)) return true;
+    return textMatches(item, input);
+  };
+
+  // Listed rows the first-match highlight passes over (see skipsHighlight).
+  const skipHighlight = (item: T) => {
+    const sel = selected();
+    return skipsHighlight({
+      held: sel !== null && keyOf(sel) === keyOf(item),
+      pinned: isPinned(item),
+      matchesQuery: textMatches(item, queryText()),
+    });
   };
 
   // What this combobox is searching for: the input text ONLY counts while it's
@@ -682,6 +702,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Item>
       )}
     >
+      {/* Typing highlights the first match, so Enter picks it. */}
+      <HighlightFirstMatch<T> query={queryText} skip={skipHighlight} />
       {/* hideLabel names the input via aria-label instead of a visually-hidden
           label element — same accessible name, no duplicate text node beside
           the label the surrounding layout (a FieldRow) already shows (a hidden

@@ -160,6 +160,20 @@ export const defaultEntryMode = (
   return 'units';
 };
 
+/**
+ * Months of stock once the requested quantity arrives, taking it to arrive
+ * today: (stock on hand + requested) ÷ the line's monthly demand — the same
+ * demand as its current months of stock, and like it 0 when there's no demand
+ * (OMS-REG-REPL-04.106).
+ */
+export const monthsOfStockAfterOrder = (
+  line: Pick<EditorLine, 'availableStockOnHand' | 'monthlyDemand'>,
+  requestedUnits: number
+): number =>
+  line.monthlyDemand > 0
+    ? (line.availableStockOnHand + requestedUnits) / line.monthlyDemand
+    : 0;
+
 // --- Forecast preview (rules › choosing a method) --------------------------
 
 export type ForecastPreviewResult =

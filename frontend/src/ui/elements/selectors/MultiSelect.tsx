@@ -8,6 +8,7 @@ import {
   CloseIcon,
 } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
+import { HighlightFirstMatch } from './HighlightFirstMatch';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './MultiSelect.module.css';
 
@@ -178,6 +179,8 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
         </KCombobox.Item>
       )}
     >
+      {/* Typing highlights the first match, so Enter picks it. As <Combobox>. */}
+      <HighlightFirstMatch<T> query={inputValue} />
       <Show
         when={props.labelInfo}
         fallback={

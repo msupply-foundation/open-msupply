@@ -21,9 +21,8 @@ import type { OutboundLineFilter } from './outboundLineFilter';
 // filtering): `itemCodeOrName` is the screen's DEFAULT filter (seeded by the
 // view, D91) and `locationId` is addable from the filter menu (exact-match
 // location picker, volume-blind — capacity is irrelevant to narrowing a line
-// list). The filters a user might expect from the old app but the server can't
-// do yet — batch and expiry-before — are backend gaps (spec contract § detail
-// line table).
+// list). The server now supports batch and expiry date filters too; they are
+// dismissed below until the screen offers chips for them.
 export const outboundDetailFilters = (
   locations: () => Location[]
 ): Filter<OutboundLineFilter>[] =>
@@ -97,4 +96,10 @@ export const outboundDetailFilters = (
     // backwards compatibility. Dismissed for the same reason, and doubly so:
     // exposing both would offer two chips that filter the same thing.
     inventoryAdjustmentReason: null,
+    // Server-supported, no chip yet.
+    batch: null,
+    expiryDate: null,
+    manufactureDate: null,
+    // `locationId` above already narrows by location.
+    locationCode: null,
   });

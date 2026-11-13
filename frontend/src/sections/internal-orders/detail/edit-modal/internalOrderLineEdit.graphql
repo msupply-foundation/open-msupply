@@ -189,10 +189,12 @@ query internalOrderLineForecastPreview(
         isAvailable
         unavailableReason
       }
-      # The previewed line's chart series (issue 1189) — what an unsaved
-      # add-mode draft charts, before its line exists. The same selection, and
-      # server option defaults, as the saved line's read (lineChart.graphql).
-      chart {
+      # The previewed line's consumption history (issue 1189) — what an unsaved
+      # add-mode draft charts, before its line exists. The same selection and
+      # 12 months as the saved line's read (lineChart.graphql); its stock
+      # evolution is read only when the editor's "Additional charts" section
+      # opens (internalOrderLinePreviewStockEvolution, issue 2102).
+      chart(consumptionOptionsInput: { numberOfDataPoints: 12 }) {
         consumptionHistory {
           nodes {
             date
@@ -200,16 +202,6 @@ query internalOrderLineForecastPreview(
             averageMonthlyConsumption
             isHistoric
             isCurrent
-          }
-        }
-        stockEvolution {
-          nodes {
-            date
-            stockOnHand
-            minimumStockOnHand
-            maximumStockOnHand
-            isHistoric
-            isProjected
           }
         }
       }

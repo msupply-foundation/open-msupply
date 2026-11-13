@@ -50,6 +50,25 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
   return errors[0]?.message ?? translateServerError('UnknownError');
 };
 
+// The typed refusals are worded here, not by the server, whose descriptions
+// are untranslated English (issue #2018). A member added to the union later
+// still reports its description until it is given a key.
+const lifecycleRefusalMessage = (error: {
+  __typename: string;
+  description: string;
+}): string => {
+  switch (error.__typename) {
+    case 'ItemsCannotBeOrdered':
+      return t('error.cannot-order-items');
+    case 'InboundShipmentsNotVerified':
+      return t('error.inbound-shipments-not-verified');
+    case 'InboundShipmentsInProgress':
+      return t('error.inbound-shipments-in-progress');
+    default:
+      return error.description;
+  }
+};
+
 /** A Forbidden, naming the permissions the server said were missing. */
 export type Forbidden = { kind: 'forbidden'; permissions: string[] };
 
@@ -92,7 +111,7 @@ export const updatePurchaseOrder = async (
   const error = response.error;
   return {
     kind: 'error',
-    message: error.description,
+    message: lifecycleRefusalMessage(error),
     // `lines` is a list of error types, each wrapping the line it names.
     blockedLines:
       error.__typename === 'ItemsCannotBeOrdered'

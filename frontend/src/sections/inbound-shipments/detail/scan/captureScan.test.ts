@@ -434,9 +434,24 @@ describe('captureBatch', () => {
     });
   });
 
-  it('OMS-REG-REPL-09.11 prices are zero off the default pack size', () => {
+  it('OMS-REG-REPL-09.11 off the default pack size cost is zero and sell follows the default price per unit', () => {
+    // Default 5.00 for a pack of 10 → sell 10.00 for a pack of 20.
     const line = captureBatch({ ...draft, packSize: 20 }, undefined, context)
       ?.insertInboundShipmentLines?.[0];
+    expect(line?.costPricePerPack).toBe(0);
+    expect(line?.sellPricePerPack).toBe(10);
+  });
+
+  it('a new line with no default sell price is priced at zero at any pack size', () => {
+    const line = captureBatch(
+      {
+        ...draft,
+        item: { ...item, defaultSellPricePerPack: 0 },
+        packSize: 20,
+      },
+      undefined,
+      context
+    )?.insertInboundShipmentLines?.[0];
     expect(line?.costPricePerPack).toBe(0);
     expect(line?.sellPricePerPack).toBe(0);
   });
