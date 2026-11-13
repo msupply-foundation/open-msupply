@@ -40,6 +40,20 @@ impl<R: Keyed> KeyedLookup<R> {
             .collect()
     }
 
+    /// Another row with `row`'s key, when saving `row` brings the clash in. A clash already saved
+    /// isn't one, so existing duplicates stay editable.
+    pub fn taken_by(&self, row: &R) -> Option<&R> {
+        let brings_in_clash = self
+            .by_id(row.id())
+            .is_none_or(|saved| saved.key().trim() != row.key().trim());
+        if !brings_in_clash {
+            return None;
+        }
+        self.by_key(row.key())
+            .into_iter()
+            .find(|other| other.id() != row.id())
+    }
+
     pub fn put(&mut self, row: R) {
         self.remove(row.id());
         self.ids_by_key

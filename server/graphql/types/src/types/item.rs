@@ -343,7 +343,7 @@ impl ItemNode {
     }
 
     pub async fn volume_per_pack(&self) -> f64 {
-        self.legacy_f64("volume_per_pack")
+        self.row().volume_per_pack
     }
 
     pub async fn margin(&self) -> f64 {
@@ -649,6 +649,7 @@ mod test {
                             }"#
                             .to_string(),
                             universal_code: Some("universal code".to_string()),
+                            volume_per_pack: 0.5,
                             ..Default::default()
                         },
                         ..Default::default()

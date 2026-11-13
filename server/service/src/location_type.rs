@@ -125,19 +125,8 @@ fn validate(
     if row.max_temperature < row.min_temperature {
         return Err(UpsertLocationTypeError::MaxBelowMin);
     }
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
     // Trimmed on purpose; sync's `code_is_taken` is exact.
-    let brings_in_clash = lookup
-        .by_id(&row.id)
-        .is_none_or(|saved| saved.code.trim() != row.code.trim());
-    if !brings_in_clash {
-        return Ok(());
-    }
-    match lookup
-        .by_key(&row.code)
-        .into_iter()
-        .find(|other| other.id != row.id)
-    {
+    match lookup.taken_by(row) {
         Some(other) => Err(UpsertLocationTypeError::DuplicateCode {
             other_id: other.id.clone(),
         }),

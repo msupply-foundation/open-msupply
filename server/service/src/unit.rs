@@ -37,6 +37,13 @@ impl UnitLookup {
     }
 }
 
+/// The active units among those a name matches, or the inactive ones when none is active, so an
+/// old inactive namesake doesn't make the name ambiguous.
+pub fn active_first(units: Vec<&UnitRow>) -> Vec<&UnitRow> {
+    let (active, inactive): (Vec<_>, Vec<_>) = units.into_iter().partition(|unit| unit.is_active);
+    if active.is_empty() { inactive } else { active }
+}
+
 /// Joins the caller's transaction when there is one.
 pub fn upsert_unit_in(
     connection: &StorageConnection,

@@ -179,9 +179,63 @@ impl<'a> ItemRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_all(&mut self) -> Result<Vec<ItemRow>, RepositoryError> {
+    pub fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item.load(self.connection.lock().connection());
         Ok(result?)
+    }
+
+    /// Every item with `legacy_record` empty, without reading the legacy JSON.
+    pub fn find_all_without_legacy_record(&self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item
+            .select((
+                id,
+                name,
+                code,
+                unit_id,
+                strength,
+                ven_category,
+                default_pack_size,
+                type_,
+                "".into_sql::<diesel::sql_types::Text>(),
+                is_active,
+                is_vaccine,
+                vaccine_doses,
+                restricted_location_type_id,
+                volume_per_pack,
+                universal_code,
+                custom_fields,
+            ))
+            .load::<ItemRow>(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// Updates a saved item, leaving its `legacy_record` as it is.
+    pub fn update_keeping_legacy_record(&self, row: &ItemRow) -> Result<(), RepositoryError> {
+        diesel::update(item.find(&row.id))
+            .set((
+                name.eq(&row.name),
+                code.eq(&row.code),
+                unit_id.eq(&row.unit_id),
+                strength.eq(&row.strength),
+                ven_category.eq(&row.ven_category),
+                default_pack_size.eq(row.default_pack_size),
+                type_.eq(&row.r#type),
+                is_active.eq(row.is_active),
+                is_vaccine.eq(row.is_vaccine),
+                vaccine_doses.eq(row.vaccine_doses),
+                restricted_location_type_id.eq(&row.restricted_location_type_id),
+                volume_per_pack.eq(row.volume_per_pack),
+                universal_code.eq(&row.universal_code),
+                custom_fields.eq(&row.custom_fields),
+            ))
+            .execute(self.connection.lock().connection())?;
+        let changelog = ItemRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_code(&self, item_code: &str) -> Result<Option<ItemRow>, RepositoryError> {
