@@ -221,6 +221,14 @@ impl ChangelogTableName {
                 transport: V7_ONLY,
                 multi_device_site: true,
             },
+            // OMS-native: estimated consumption for a store with no history yet, entered
+            // on central and sent to the store's site so its AMC uses it, over v7 only.
+            ConsumptionEstimate => SyncStyle {
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             VVMStatusLog => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],

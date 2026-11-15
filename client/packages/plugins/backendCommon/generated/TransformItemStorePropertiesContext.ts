@@ -2,4 +2,5 @@
 
 export type TransformItemStorePropertiesContext =
   | 'ItemStorePropertiesQuery'
-  | 'InboundShipmentTransfer';
+  | 'InboundShipmentTransfer'
+  | 'NewStock';

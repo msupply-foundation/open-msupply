@@ -176,6 +176,18 @@ input ActivityLogSortInput {
 	desc: Boolean
 }
 
+"""
+A line whose month already has real consumption for its item: the estimate is
+added on top of it
+"""
+type ActualConsumptionOverlapNode {
+	"""
+	Index into the input lines
+	"""
+	line: Int!
+	actualQuantity: Float!
+}
+
 type AddFromMasterListError {
 	error: AddFromMasterListErrorInterface!
 }
@@ -1516,6 +1528,91 @@ input ConfigureNamePropertyInput {
 
 type ConnectionError implements CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface {
 	description: String!
+}
+
+type ConsumptionEstimateLineErrorNode {
+	"""
+	Index into the input lines
+	"""
+	line: Int!
+	problem: ConsumptionEstimateLineProblem!
+	"""
+	For `REPEATED_MONTH`: the earlier line with the same item and month
+	"""
+	otherLine: Int
+}
+
+input ConsumptionEstimateLineInput {
+	itemIdOrCode: String!
+	"""
+	Any day in the month: the estimate is for the whole calendar month
+	"""
+	month: NaiveDate!
+	"""
+	In units
+	"""
+	quantity: Float!
+}
+
+enum ConsumptionEstimateLineProblem {
+	ITEM_NOT_FOUND
+	"""
+	This month or later: only finished months can have an estimate
+	"""
+	MONTH_NOT_FINISHED
+	INVALID_QUANTITY
+	"""
+	The same item and month as an earlier line
+	"""
+	REPEATED_MONTH
+}
+
+"""
+Nothing is saved when any line has a problem
+"""
+type ConsumptionEstimateLinesError {
+	errors: [ConsumptionEstimateLineErrorNode!]!
+	"""
+	As on a successful response: the cleared items whose estimates would be
+	removed once the lines are fixed
+	"""
+	removedItems: [Int!]!
+}
+
+type ConsumptionEstimateNode {
+	itemId: String!
+	item: ItemNode!
+	"""
+	The first day of the month the estimate is for
+	"""
+	month: NaiveDate!
+	"""
+	In units
+	"""
+	quantity: Float!
+}
+
+type ConsumptionEstimateTemplateItemNode {
+	code: String!
+	name: String!
+}
+
+type ConsumptionEstimatesNode {
+	estimates: [ConsumptionEstimateNode!]!
+	"""
+	The store's AMC look-back period: how many months of estimates count
+	"""
+	amcLookBackMonths: Float!
+	"""
+	The active stock items visible in the store, by name: the rows of a blank
+	upload template. Only resolved when asked for, as there can be thousands.
+	"""
+	templateItems: [ConsumptionEstimateTemplateItemNode!]!
+	"""
+	The store is on another site that has been set up and syncs over v5/v6,
+	which estimates (synced over v7 only) don't reach
+	"""
+	siteSyncsOverV5V6: Boolean!
 }
 
 type ConsumptionHistoryConnector {
@@ -6995,6 +7092,17 @@ enum PreferenceKey {
 
 type PreferenceMutations {
 	upsertPreferences(storeId: String!, input: UpsertPreferencesInput!): OkResponse!
+	"""
+	Replaces the estimated consumption of the items named: each ends up with
+	exactly the months given, and unchanged months aren't rewritten. Items not
+	named are left alone. Nothing is saved if any line has a problem; `dryRun`
+	checks the lines without saving.
+	"""
+	replaceConsumptionEstimates(storeId: String!, input: ReplaceConsumptionEstimatesInput!): ReplaceConsumptionEstimatesResponse!
+	"""
+	Removes all of a store's estimated consumption
+	"""
+	clearConsumptionEstimates(storeId: String!, forStoreId: String!): OkResponse!
 }
 
 enum PreferenceNodeType {
@@ -8521,6 +8629,11 @@ type Queries {
 	The list of preferences and their current values (used for the admin/edit page)
 	"""
 	preferenceDescriptions(storeId: String!, prefType: PreferenceNodeType!, prefContext: PreferenceDescriptionContext!): [PreferenceDescriptionNode!]!
+	"""
+	The store's estimated consumption, entered for a store without consumption
+	history of its own and added on top of real consumption when calculating AMC
+	"""
+	consumptionEstimates(storeId: String!, forStoreId: String!): ConsumptionEstimatesNode!
 	centralServer: CentralServerQueryNode!
 	activeVvmStatuses(storeId: String!): VvmstatusesResponse!
 	getVvmStatusLogByStockLine(storeId: String!, stockLineId: String!): VvmstatusLogResponse!
@@ -8704,6 +8817,39 @@ type RepackStockLineNode {
 	location: LocationNode
 	stockLine: StockLineNode
 }
+
+input ReplaceConsumptionEstimatesInput {
+	"""
+	The store whose estimates these are
+	"""
+	forStoreId: String!
+	"""
+	Each item named ends up with exactly these months; items not named are
+	left alone
+	"""
+	lines: [ConsumptionEstimateLineInput!]!
+	"""
+	Items (by id or code) named with no months, e.g. a blank row in the
+	file: their estimates are removed. One with no estimates, or that matches
+	no item, is ignored.
+	"""
+	clearedItems: [String!]
+	"""
+	Check the lines and report what would be saved, without saving
+	"""
+	dryRun: Boolean
+}
+
+type ReplaceConsumptionEstimatesNode {
+	estimates: [ConsumptionEstimateNode!]!
+	overlaps: [ActualConsumptionOverlapNode!]!
+	"""
+	Indexes into `clearedItems` of the items whose estimates are removed
+	"""
+	removedItems: [Int!]!
+}
+
+union ReplaceConsumptionEstimatesResponse = ReplaceConsumptionEstimatesNode | ConsumptionEstimateLinesError
 
 type ReportConnector {
 	totalCount: Int!

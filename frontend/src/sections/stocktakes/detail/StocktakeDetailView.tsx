@@ -648,6 +648,8 @@ const StocktakeDetailView: Component = () => {
             doses: line.item.doses,
             unitName: line.item.unitName,
             defaultPackSize: line.item.defaultPackSize,
+            defaultSellPricePerPack:
+              line.item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
           }
         );
       },
@@ -1202,6 +1204,9 @@ const StocktakeDetailView: Component = () => {
                   cardGroups={CARD_GROUPS}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // Filters live in the table's own toolbar (ui-standards §
                   // tables → filtering), never the page header.
                   filters={

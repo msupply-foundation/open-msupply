@@ -4737,6 +4737,7 @@ name = "graphql_preference"
 version = "0.1.0"
 dependencies = [
  "async-graphql",
+ "chrono",
  "graphql_core",
  "graphql_types",
  "log",

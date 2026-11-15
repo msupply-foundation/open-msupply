@@ -133,7 +133,17 @@ export type ParsedField =
       nullable: boolean;
       default?: unknown;
     }
-  | { kind: 'dateRange'; key: string; label: string; nullable: boolean }
+  | {
+      kind: 'dateRange';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.requiredBothDates` — one end alone blocks OK. */
+      requiredBothDates: boolean;
+      /** uiSchema `options.disableFuture` — no days after today. */
+      disableFuture: boolean;
+    }
   | { kind: 'masterList'; key: string; label: string; nullable: boolean }
   | { kind: 'location'; key: string; label: string; nullable: boolean }
   /**
@@ -484,7 +494,15 @@ export const parseArgumentSchema = (raw: {
         });
         break;
       case 'DateRange':
-        fields.push({ kind: 'dateRange', key, label, nullable });
+        fields.push({
+          kind: 'dateRange',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+          requiredBothDates: options?.requiredBothDates === true,
+          disableFuture: options?.disableFuture === true,
+        });
         break;
       case 'MasterListSearch':
         fields.push({ kind: 'masterList', key, label, nullable });
@@ -738,6 +756,22 @@ export const dateFieldViolation = (
   if (min && day < min) return 'min';
   const max = field.maxKey ? dateArgumentDay(values[field.maxKey]) : '';
   if (max && day > max) return 'max';
+  return undefined;
+};
+
+/** Why a date range blocks OK; `value` is `{ start, end }` or undefined. */
+export const dateRangeViolation = (
+  field: Extract<ParsedField, { kind: 'dateRange' }>,
+  value: unknown
+): 'required' | 'bothDates' | undefined => {
+  const range =
+    value && typeof value === 'object'
+      ? (value as { start?: unknown; end?: unknown })
+      : {};
+  const hasStart = typeof range.start === 'string' && range.start !== '';
+  const hasEnd = typeof range.end === 'string' && range.end !== '';
+  if (!hasStart && !hasEnd) return field.required ? 'required' : undefined;
+  if (field.requiredBothDates && !(hasStart && hasEnd)) return 'bothDates';
   return undefined;
 };
 
