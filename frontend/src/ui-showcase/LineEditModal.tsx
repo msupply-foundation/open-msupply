@@ -16,7 +16,7 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { DateField } from '../ui/elements/inputs/DateField';
-import { localTodayIso } from '../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../intl/calendarDate';
 import { Select } from '../ui/elements/selectors/Select';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
@@ -177,16 +177,17 @@ type DraftBatch = {
   locationCode: string | null;
   manufactureDate: string | null;
   manufacturerName: string | null;
+  programName: string | null;
   campaignName: string | null;
   volumePerPack: number;
   note: string;
 };
 
 // Static option lists standing in for the real modal's GraphQL-backed pickers
-// (LocationVolumeSelect / NameSearch / CampaignOrProgramSelect) — the showcase
-// has no store, so these are seeded from the detail table's own sample data so
-// the picked values round-trip. Value is what a row stores; label is what
-// shows.
+// (LocationVolumeSelect / NameSearch / ProgramSelect / ActivitySelect) — the
+// showcase has no store, so these are seeded from the detail table's own sample
+// data so the picked values round-trip. Value is what a row stores; label is
+// what shows.
 const LOCATION_OPTIONS = [
   { value: 'A.01', label: 'A.01 · Aisle A · Bay 01' },
   { value: 'A.02', label: 'A.02 · Aisle A · Bay 02' },
@@ -198,6 +199,10 @@ const MANUFACTURER_OPTIONS = [
   { value: 'Teva', label: 'Teva' },
   { value: 'Sun Pharma', label: 'Sun Pharma' },
   { value: 'Aurobindo', label: 'Aurobindo' },
+];
+const PROGRAM_OPTIONS = [
+  { value: 'EPI', label: 'EPI' },
+  { value: 'HIV', label: 'HIV' },
 ];
 const CAMPAIGN_OPTIONS = [
   { value: 'Measles 2026', label: 'Measles 2026' },
@@ -219,6 +224,7 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   locationCode: line.location?.code ?? null,
   manufactureDate: line.manufactureDate ?? null,
   manufacturerName: line.manufacturer?.name ?? null,
+  programName: line.program?.name ?? null,
   campaignName: line.campaign?.name ?? null,
   volumePerPack: line.volumePerPack,
   note: line.note ?? '',
@@ -239,6 +245,7 @@ const emptyBatch = (packSize: number): DraftBatch => ({
   locationCode: null,
   manufactureDate: null,
   manufacturerName: null,
+  programName: null,
   campaignName: null,
   volumePerPack: 0,
   note: '',
@@ -627,7 +634,7 @@ const Body: Component<LineEditModalProps> = props => {
             label={t('label.manufacture-date')}
             hideLabel
             value={b.manufactureDate}
-            max={localTodayIso()}
+            max={todayCalendarDate()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );
@@ -651,14 +658,31 @@ const Body: Component<LineEditModalProps> = props => {
       },
     },
     {
-      c: { id: 'campaignOrProgram' },
-      header: () => t('label.campaign'),
+      c: { id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'other',
       cell: info => {
         const b = info.row.original;
         return (
           <Select
-            label={t('label.campaign')}
+            label={t('label.program')}
+            hideLabel
+            value={b.programName ?? undefined}
+            options={PROGRAM_OPTIONS}
+            onValueChange={v => updateBatch(b.id, 'programName', v)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'other',
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <Select
+            label={t('label.activity')}
             hideLabel
             value={b.campaignName ?? undefined}
             options={CAMPAIGN_OPTIONS}

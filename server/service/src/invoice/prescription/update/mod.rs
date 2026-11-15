@@ -537,6 +537,7 @@ mod test {
             linked_invoice_line_id: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();

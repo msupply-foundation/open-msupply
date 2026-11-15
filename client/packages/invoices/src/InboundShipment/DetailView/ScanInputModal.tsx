@@ -14,6 +14,8 @@ import {
   useNotification,
   LoadingButton,
   CheckIcon,
+  DateUtils,
+  Formatter,
 } from '@openmsupply-client/common';
 import { FnUtils, ScanResult, useBarcodeScannerContext } from '@common/utils';
 import React, { useCallback, useState } from 'react';
@@ -107,12 +109,14 @@ export const ScanInputModal = ({
 
         // If we found a matching line with an expiry date and we don't already have one, use it
         if (matchingLine?.expiryDate && !newState.expiryDate) {
-          newState.expiryDate = new Date(matchingLine.expiryDate);
+          newState.expiryDate = DateUtils.getNaiveDate(matchingLine.expiryDate);
         }
 
         // Same for manufacture date
         if (matchingLine?.manufactureDate && !newState.manufactureDate) {
-          newState.manufactureDate = new Date(matchingLine.manufactureDate);
+          newState.manufactureDate = DateUtils.getNaiveDate(
+            matchingLine.manufactureDate
+          );
         }
 
         return newState;
@@ -144,12 +148,8 @@ export const ScanInputModal = ({
       const updatedLine: Partial<DraftInboundLine> = {
         type: InvoiceLineNodeType.StockIn,
         batch: draftState.batch.trim(),
-        expiryDate: draftState.expiryDate
-          ? draftState.expiryDate.toISOString().substring(0, 10)
-          : null,
-        manufactureDate: draftState.manufactureDate
-          ? draftState.manufactureDate.toISOString().substring(0, 10)
-          : null,
+        expiryDate: Formatter.naiveDate(draftState.expiryDate),
+        manufactureDate: Formatter.naiveDate(draftState.manufactureDate),
         packSize: draftState.packSize,
         numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
         item: {
@@ -304,10 +304,10 @@ export const ScanInputModal = ({
         }
         if (batch) newState.batch = batch;
         if (expiryDate) {
-          newState.expiryDate = new Date(expiryDate);
+          newState.expiryDate = DateUtils.getNaiveDate(expiryDate);
         }
         if (manufactureDate) {
-          newState.manufactureDate = new Date(manufactureDate);
+          newState.manufactureDate = DateUtils.getNaiveDate(manufactureDate);
         }
 
         if (packSize) newState.packSize = packSize;

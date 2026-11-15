@@ -1,11 +1,12 @@
 import type { SlotContext, SlotStoreMode } from '../plugin-sdk/types';
 import {
+  currentStoreCode,
   currentStoreId,
   currentStoreMode,
   storeContext,
   type StoreMode,
 } from '../store/storeContext';
-import { currentUserId, storeCodeOf } from '../auth/authContext';
+import { currentUserId } from '../auth/authContext';
 
 // The host's wire `storeMode` → the SDK's domain word. A total map, keyed off
 // the host's own generated union, so a mode added to the schema fails THIS
@@ -36,9 +37,11 @@ export const slotContext = (): SlotContext => {
   const storeId = currentStoreId();
   return {
     storeId,
-    // Both ride the login response (authContext), like the store mode below:
-    // no query of their own, undefined while the session is unresolved.
-    storeCode: storeId === undefined ? undefined : storeCodeOf(storeId),
+    // From the me/login store list, like the mode below; undefined while the
+    // store is unresolved, never the id as a stand-in.
+    storeCode: currentStoreCode(),
+    // Rides the login response (authContext): no query of its own, undefined
+    // while the session is unresolved.
     userId: currentUserId(),
     // Passed through as the wire's own `UserPermission` values (SCREAMING_CASE)
     // — not remapped to a parallel vocabulary (kdd/type-safety). The query is

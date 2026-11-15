@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PO_LADDER,
   PO_STATUS_KEY,
   PO_STATUSES,
   isRowRestricted,
@@ -9,7 +10,7 @@ import {
 } from './purchaseOrderStatus';
 
 // The purchase-order status mapping (spec/purchase-orders ui-surface § status
-// labels): two of the five stored names mislead, so nothing may render the
+// labels): two of the stored names mislead, so nothing may render the
 // enum. Shared by the list's chip, its status filter, the CSV export and the
 // supplier detail's Purchase Orders tab (spec/names OMS-REG-REPL-08.23), so the
 // mapping is pinned here once. The t() wrapper (poStatusLabel) is a thin call
@@ -21,17 +22,24 @@ describe('purchase-order status labels', () => {
     expect(poStatusLabelKey('REQUEST_APPROVAL')).toBe(
       'label.ready-for-approval'
     );
-    // The stored name is "confirmed" and the key is `ready-to-send`; the text
-    // it resolves to is "Ready for sending". None of the three match, which is
-    // exactly why nothing may infer this.
-    expect(poStatusLabelKey('CONFIRMED')).toBe('label.ready-to-send');
+    // The stored name is "confirmed" but the state reads "Approved"
+    // (OMS-FUN-PO-04.39) — which is exactly why nothing may infer this.
+    expect(poStatusLabelKey('CONFIRMED')).toBe('label.approved');
     expect(poStatusLabelKey('SENT')).toBe('label.sent');
     expect(poStatusLabelKey('FINALISED')).toBe('label.finalised');
+    expect(poStatusLabelKey('CANCELLED')).toBe('label.cancelled');
   });
 
-  it('covers exactly the five PurchaseOrderNodeStatus values', () => {
+  it('covers exactly the six PurchaseOrderNodeStatus values', () => {
     expect(Object.keys(PO_STATUS_KEY).sort()).toEqual(
-      ['CONFIRMED', 'FINALISED', 'NEW', 'REQUEST_APPROVAL', 'SENT'].sort()
+      [
+        'CANCELLED',
+        'CONFIRMED',
+        'FINALISED',
+        'NEW',
+        'REQUEST_APPROVAL',
+        'SENT',
+      ].sort()
     );
   });
 
@@ -43,10 +51,10 @@ describe('purchase-order status labels', () => {
     );
   });
 
-  it('offers the five states in lifecycle order, not enum order', () => {
-    // The status filter reads this, so it must read as the ladder does
-    // (rules § the status lifecycle).
-    expect(PO_STATUSES).toEqual([
+  it('walks the five rungs in lifecycle order, not enum order', () => {
+    // The footer's ladder reads this, so it must read as the lifecycle does
+    // (rules § the status lifecycle). Cancelled is a branch, not a rung.
+    expect(PO_LADDER).toEqual([
       'NEW',
       'REQUEST_APPROVAL',
       'CONFIRMED',
@@ -54,11 +62,21 @@ describe('purchase-order status labels', () => {
       'FINALISED',
     ]);
   });
+
+  it('offers every status to the filter, the terminal branch last', () => {
+    // The status filter reads this (OMS-FUN-PO-15.16): a cancelled order is a
+    // real list state, so it is filterable like any other.
+    expect(PO_STATUSES).toEqual([...PO_LADDER, 'CANCELLED']);
+  });
 });
 
-describe('OMS-FUN-PO-15.10 — restricted rows', () => {
-  it('marks a Sent or Finalised order as restricted, and no other', () => {
-    expect(PO_STATUSES.filter(isRowRestricted)).toEqual(['SENT', 'FINALISED']);
+describe('OMS-FUN-PO-15.10, .16 — restricted rows', () => {
+  it('marks a Sent, Finalised or Cancelled order as restricted, and no other', () => {
+    expect(PO_STATUSES.filter(isRowRestricted)).toEqual([
+      'SENT',
+      'FINALISED',
+      'CANCELLED',
+    ]);
   });
 });
 

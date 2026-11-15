@@ -1,10 +1,10 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
-  dateToIsoDate,
-  localDayToUtc,
-  utcToLocalDay,
-} from '../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../intl/calendarDate';
 import {
   DataTable,
   type CardGroup,
@@ -146,7 +146,7 @@ const PACK_SIZES = [1, 10, 20, 30, 50, 100];
 // A stored instant for the given local calendar day, via the shared
 // conversion — so the mock rows display the intended day in any timezone.
 const isoDay = (month: number, day: number, year: number): string =>
-  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
+  calendarDateToInstant(dateToCalendarDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry red tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -740,6 +740,76 @@ const RowStatesDemo = () => {
   );
 };
 
+// Cell errors (meta.cellTone): an error about ONE field of a line rings that
+// field's cell — here the quantity of a line that would take stock below zero
+// — and the cell states it in words beneath the value. One predicate drives
+// both. The button clears and re-stamps the errors, as a page does when the
+// server answers again: the ring takes no room; only the message adds a line.
+const CellErrorsDemo = () => {
+  const [stamped, setStamped] = createSignal(true);
+  const quantityError = (row: StockLine) =>
+    stamped() && (row.id === 'sl-2' || row.id === 'sl-3');
+  const { config, setConfig } = createViewConfig('table');
+  const columns = (): Column<StockLine, SortKey>[] => [
+    {
+      c: { key: 'code' },
+      header: () => 'Code',
+      ...getCellDefinition<StockLine>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => 'Name',
+      ...getCellDefinition<StockLine>('name', { headerPosition: 'primary' }),
+    },
+    {
+      c: { key: 'quantity' },
+      header: () => 'Quantity',
+      ...getNumberCell<StockLine>({
+        cellTone: (row: StockLine) =>
+          quantityError(row) ? 'error' : undefined,
+      }),
+      size: remToPx(8),
+      // The number, and the error in words beneath it: the cell's own
+      // alignment places both, at the end in table view (a number column)
+      // and at the start on a card.
+      cell: info => (
+        <>
+          {info.row.original.quantity}
+          <Show when={quantityError(info.row.original)}>
+            <span
+              style={{
+                display: 'block',
+                color: 'var(--error-main)',
+                'font-size': 'var(--text-xs)',
+                'white-space': 'normal',
+              }}
+            >
+              Would take stock below zero
+            </span>
+          </Show>
+        </>
+      ),
+    },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Button variant="secondary" onClick={() => setStamped(on => !on)}>
+          {stamped() ? 'Clear the errors' : 'Stamp the errors'}
+        </Button>
+      </div>
+      <DataTable
+        columns={columns()}
+        rows={DATA.slice(0, 4)}
+        rowKey={r => r.id}
+        showCardToggle
+        config={config()}
+        setConfig={setConfig}
+      />
+    </Stack>
+  );
+};
+
 // ============================================================================
 // § The card model
 // ============================================================================
@@ -849,6 +919,52 @@ const EditorTableDemo = () => {
       showFullScreen={false}
       cellAlign="start"
       emptyMessage="No lines"
+    />
+  );
+};
+
+// Grouped rows and a column rule: a schedule whose doses fall at shared ages.
+// The Age column takes meta.groupRows — each age shows once, on the first dose
+// at it, and its run's cells join, so a tinted run reads as one block — and
+// meta.dividerEnd, which rules it off from the doses it heads.
+interface ScheduleDose {
+  id: string;
+  age: string;
+  dose: string;
+  due: boolean;
+}
+
+const SCHEDULE: ScheduleDose[] = [
+  { id: 's1', age: 'At birth', dose: 'BCG', due: false },
+  { id: 's2', age: 'At birth', dose: 'Hep B 1', due: false },
+  { id: 's3', age: '6 weeks', dose: 'DTP 1', due: true },
+  { id: 's4', age: '6 weeks', dose: 'Polio 1', due: true },
+  { id: 's5', age: '6 weeks', dose: 'PCV 1', due: true },
+  { id: 's6', age: '10 weeks', dose: 'DTP 2', due: false },
+];
+
+const GroupedRowsDemo = () => {
+  const columns: Column<ScheduleDose, never>[] = [
+    {
+      c: { key: 'age' },
+      header: () => 'Age',
+      meta: { groupRows: true, dividerEnd: true },
+      size: remToPx(8),
+    },
+    { c: { key: 'dose' }, header: () => 'Dose', size: remToPx(10) },
+    {
+      c: { accessor: r => (r.due ? 'Due' : ''), id: 'status' },
+      header: () => 'Status',
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns}
+      rows={SCHEDULE}
+      rowKey={r => r.id}
+      rowTint={r => (r.due ? 'unfinished' : undefined)}
+      rowAccent={r => (r.due ? 'unfinished' : undefined)}
+      showFullScreen={false}
     />
   );
 };
@@ -1221,7 +1337,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN2044',
     numberOfPacks: 12,
     packSize: 100,
-    expiryDate: utcToLocalDay(monthsFromNow(14, 12)),
+    expiryDate: instantToCalendarDate(monthsFromNow(14, 12)),
     costPrice: 3.5,
     sellPrice: 4.73,
     location: 'A.01',
@@ -1232,7 +1348,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN3120',
     numberOfPacks: 6,
     packSize: 50,
-    expiryDate: utcToLocalDay(monthsFromNow(2, 8)),
+    expiryDate: instantToCalendarDate(monthsFromNow(2, 8)),
     costPrice: 5.2,
     sellPrice: 7.02,
     location: 'COLD.1',
@@ -1546,7 +1662,15 @@ export const tableCardMetadata: PageMetadata = {
     {
       id: 'table-card-basics',
       title: 'Table basics',
-      searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+      searchTerms: [
+        'cell',
+        'column',
+        'width',
+        'row states',
+        'tint',
+        'grouped rows',
+        'column rule',
+      ],
     },
     {
       id: 'table-card-proportion',
@@ -1692,6 +1816,20 @@ export const TableCardShowcase = () => (
           <RowStatesDemo />
         </DashboardCard>
 
+        <DashboardCard title="Table basics · Cell errors">
+          <Lead>
+            An error about <em>one field</em> of a line rings that field's cell:{' '}
+            <code>meta.cellTone</code>, a function from the row to{' '}
+            <code>'error'</code> or nothing, set on the column the error is
+            about. The ring is colour, so the cell also says it in words on
+            screen, here a short message beneath the value — drive both from one
+            predicate. The ring is an outline, so it takes no room; only the
+            message adds a line. Flip to cards and the ring goes round the
+            value. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
+          </Lead>
+          <CellErrorsDemo />
+        </DashboardCard>
+
         <DashboardCard title="Table basics · An editor table">
           <Lead>
             A table of in-place controls — a modal's line editor, the vaccine
@@ -1706,6 +1844,19 @@ export const TableCardShowcase = () => (
             centre-aligned table.
           </Lead>
           <EditorTableDemo />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · Grouped rows and a column rule">
+          <Lead>
+            A column that heads the rows after it — a schedule's age, a ledger's
+            date — takes <code>meta.groupRows</code>: each value shows once, on
+            the first row of its run of equal values, and the run's cells join
+            with no divider between them, so a row tint runs straight through.
+            Runs follow the rows as rendered, sorted and paged; an empty value
+            never groups. <code>meta.dividerEnd</code> rules the column off from
+            the ones it heads, header to footer, pinned or not. Table view only.
+          </Lead>
+          <GroupedRowsDemo />
         </DashboardCard>
 
         <DashboardCard

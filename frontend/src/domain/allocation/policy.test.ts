@@ -16,7 +16,11 @@ import {
   availableUnits,
   distinctPackSizes,
 } from './units';
-import { deriveIssueWarnings } from './warnings';
+import {
+  deriveIssueWarnings,
+  distributionOutcome,
+  expiredSkipReport,
+} from './warnings';
 
 // The shared barred-batch policy, FEFO comparator, lens conversion, and
 // warning derivation (spec/stock-allocation).
@@ -73,18 +77,18 @@ describe('barReasons / isBarred', () => {
       expiredStockPreventIssue: true,
       expiredStockIssueThreshold: 30,
     });
-    const batch = { stockLineOnHold: false, expiryDate: '2026-08-16' };
+    const batch = { stockLineOnHold: false, expiryDate: '2026-08-15' };
     for (const clock of [
       '2026-07-17T00:00:01',
       '2026-07-17T12:00:00',
       '2026-07-17T23:59:59',
     ]) {
-      // today + 30d = 2026-08-16 → the expiry day itself is barred, at any
-      // time of day.
+      // today + 30d = 2026-08-16; a batch is usable through its expiry day,
+      // so the day before that is the last one barred, at any time of day.
       expect(barReasons(batch, guard, new Date(clock))).toEqual(['expired']);
     }
-    // One day later is out of the threshold, again at any time of day.
-    const dayAfter = { stockLineOnHold: false, expiryDate: '2026-08-17' };
+    // today + 30d itself is out of the threshold, again at any time of day.
+    const dayAfter = { stockLineOnHold: false, expiryDate: '2026-08-16' };
     for (const clock of ['2026-07-17T00:00:01', '2026-07-17T23:59:59']) {
       expect(barReasons(dayAfter, guard, new Date(clock))).toEqual([]);
     }
@@ -112,10 +116,10 @@ describe('barReasons / isBarred', () => {
 // client/packages/invoices/src/StockOut/utils.test.ts): auto-distribution's
 // exclusions are UNCONDITIONAL — the issue preferences only widen them.
 describe('isExpired (D112 — the display predicate)', () => {
-  // Threshold-free calendar comparison: a batch is expired ON its expiry day
-  // (the guard's threshold-0 semantics), the day before it is not, and the
-  // verdict cannot flip with the time of day the check runs.
-  it('flips exactly at the expiry day, at any time of day', () => {
+  // Threshold-free calendar comparison: a batch is usable to the end of its
+  // expiry day (#1786; the guard's threshold-0 semantics), expired from the
+  // day after, and the verdict cannot flip with the time of day the check runs.
+  it('flips the day after the expiry day, at any time of day', () => {
     for (const clock of [
       '2026-08-13T00:00:01',
       '2026-08-13T12:00:00',
@@ -123,7 +127,7 @@ describe('isExpired (D112 — the display predicate)', () => {
     ]) {
       const today = new Date(clock);
       expect(isExpired('2026-08-14', today)).toBe(false); // day before expiry
-      expect(isExpired('2026-08-13', today)).toBe(true); // the expiry day
+      expect(isExpired('2026-08-13', today)).toBe(false); // the expiry day
       expect(isExpired('2026-08-12', today)).toBe(true); // day after
     }
   });
@@ -179,6 +183,50 @@ describe('autoAllocateBarReasons (OMS-REG-SMV-11.4–.6/.28)', () => {
         today
       )
     ).toEqual(['on-hold']);
+  });
+
+  it("another campaign's stock is never auto-allocated when the record matches campaigns", () => {
+    const campaignA = { stockLineOnHold: false, campaign: { id: 'a' } };
+    const routine = { stockLineOnHold: false, campaign: null };
+    const forA = prefs({ issueCampaignId: 'a' });
+    const forRoutine = prefs({ issueCampaignId: null });
+    expect(autoAllocateBarReasons(campaignA, forA, today)).toEqual([]);
+    expect(autoAllocateBarReasons(routine, forA, today)).toEqual([
+      'other-campaign',
+    ]);
+    // A routine record skips every campaign's stock.
+    expect(autoAllocateBarReasons(campaignA, forRoutine, today)).toEqual([
+      'other-campaign',
+    ]);
+    expect(autoAllocateBarReasons(routine, forRoutine, today)).toEqual([]);
+    // No issueCampaignId (prescriptions) = no campaign matching at all.
+    expect(autoAllocateBarReasons(campaignA, prefs(), today)).toEqual([]);
+    // …and manual entry is never barred by campaign.
+    expect(barReasons(routine, forA, today)).toEqual([]);
+  });
+
+  it("another campaign's batch reports only other-campaign, not its other reasons", () => {
+    const heldExpiredCampaignB = {
+      stockLineOnHold: true,
+      expiryDate: '2000-01-01',
+      vvmStatus: { unusable: true },
+      campaign: { id: 'b' },
+    };
+    expect(
+      autoAllocateBarReasons(
+        heldExpiredCampaignB,
+        prefs({ issueCampaignId: null }),
+        today
+      )
+    ).toEqual(['other-campaign']);
+    // Its own campaign's record still sees every reason.
+    expect(
+      autoAllocateBarReasons(
+        heldExpiredCampaignB,
+        prefs({ issueCampaignId: 'b' }),
+        today
+      )
+    ).toEqual(['on-hold', 'expired', 'unusable-vvm']);
   });
 });
 
@@ -440,6 +488,28 @@ describe('deriveIssueWarnings', () => {
   });
 });
 
+// rules.md § reporting — the expired skip report by outcome, shared by every
+// issuing line editor (OMS-REG-SMV-11.44).
+describe('expiredSkipReport', () => {
+  const report = (shortfallUnits: number, expiredStockPreventIssue: boolean) =>
+    expiredSkipReport(
+      distributionOutcome(
+        { shortfallUnits },
+        prefs({ expiredStockPreventIssue })
+      )
+    );
+
+  it('a met request warns against picking the expired stock, guard or not', () => {
+    expect(report(0, false)).toBe('skipped');
+    expect(report(0, true)).toBe('skipped');
+  });
+
+  it('a short request says whether the expired stock can be issued by hand', () => {
+    expect(report(5, false)).toBe('not-auto-allocated');
+    expect(report(5, true)).toBe('cannot-issue');
+  });
+});
+
 // isExpired — what the line editor's "Expired" badge asks. Its whole reason to
 // exist apart from the `expired` bar reason is that NO preference widens it: a
 // badge that says "Expired" on stock with a fortnight left would be a lie.
@@ -448,9 +518,10 @@ describe('isExpired', () => {
 
   it('is true only once the date has passed', () => {
     expect(isExpired('2026-08-12', today)).toBe(true);
-    // The whole-day comparison: expiring TODAY reads expired all day, rather
-    // than flipping partway through it.
-    expect(isExpired('2026-08-13', today)).toBe(true);
+    // The whole-day comparison: a batch is usable to the end of its expiry
+    // day (#1786), so expiring TODAY reads not-expired all day, rather than
+    // flipping partway through it.
+    expect(isExpired('2026-08-13', today)).toBe(false);
     expect(isExpired('2026-08-14', today)).toBe(false);
   });
 

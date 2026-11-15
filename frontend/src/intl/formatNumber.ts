@@ -1,7 +1,8 @@
 import { LOCALE_META, type SupportedLocale } from './locales';
 import { locale } from './intl';
+import { MAX_FRACTION_DIGITS } from './decimalPlaces';
 
-const MAX_FRACTION_DIGITS = 10;
+export { MAX_FRACTION_DIGITS };
 
 /*
  * Constructed formatters, keyed by locale + options — because `new
@@ -56,6 +57,11 @@ export const intlNumberFormat = (
  * Number formatting bound to the current locale (reactive). Returns plain
  * functions rather than a hook object, matching the app's direct-call style;
  * read `locale()` inside each so callers used within an effect stay reactive.
+ *
+ * A plain formatter: it shows what it is given (float dust capped at
+ * MAX_FRACTION_DIGITS) and appends nothing. Display rounding to the configured
+ * places, with the mark and hover reading, is numberDisplay's job — a figure
+ * shown to a user goes through displayNumber / roundedText, not a bare call.
  */
 export const formatNumber = (
   value: number | undefined | null,

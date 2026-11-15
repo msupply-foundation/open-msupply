@@ -5,7 +5,6 @@ import {
   Show,
   type Component,
 } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import {
@@ -17,6 +16,7 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { TrashIcon } from '../../../ui/icons';
@@ -58,7 +58,6 @@ export interface PrescriptionRequestSidePanelProps {
 export const PrescriptionRequestSidePanel: Component<
   PrescriptionRequestSidePanelProps
 > = props => {
-  const navigate = useNavigate();
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
   const [deleting, setDeleting] = createSignal(false);
 
@@ -166,17 +165,12 @@ export const PrescriptionRequestSidePanel: Component<
           <For each={relatedDispensations()}>
             {dispensation => (
               <FieldRow label={t('label.dispensation')}>
-                <Button
-                  variant="ghost"
-                  data-testid="related-dispensation-link"
-                  onClick={() =>
-                    navigate(
-                      `/${props.storeId}/dispensary/dispensing/${dispensation.id}`
-                    )
-                  }
+                <RecordLink
+                  testId="related-dispensation-link"
+                  href={`/${props.storeId}/dispensary/dispensing/${dispensation.id}`}
                 >
                   {`#${dispensation.invoiceNumber}`}
-                </Button>
+                </RecordLink>
               </FieldRow>
             )}
           </For>

@@ -7,7 +7,6 @@ import {
   DialogButton,
   InputWithLabelRow,
   BasicTextInput,
-  DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { DraftCampaign, defaultDraftCampaign } from '../api';
 
@@ -29,8 +28,9 @@ export const CampaignEditModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { name, startDate, endDate, id } = campaign;
-  const isValidName = name?.trim().length > 0;
+  const { name, code, id } = campaign;
+  // The code is optional — only a deployment with an integration needs one
+  const isValid = name?.trim().length > 0;
 
   return (
     <Modal
@@ -45,7 +45,7 @@ export const CampaignEditModal = ({
         />
       }
       okButton={
-        <DialogButton variant="ok" onClick={upsert} disabled={!isValidName} />
+        <DialogButton variant="ok" onClick={upsert} disabled={!isValid} />
       }
     >
       <DetailContainer>
@@ -63,24 +63,14 @@ export const CampaignEditModal = ({
             }
           />
           <InputWithLabelRow
-            key="start-date"
-            label={t('label.start-date')}
+            key="code"
+            label={t('label.code')}
             Input={
-              <DateTimePickerInput
-                width={250}
-                value={new Date(startDate ?? '')}
-                onChange={startDate => updateDraft({ startDate })}
-              />
-            }
-          />
-          <InputWithLabelRow
-            key="end-date"
-            label={t('label.end-date')}
-            Input={
-              <DateTimePickerInput
-                width={250}
-                value={new Date(endDate ?? '')}
-                onChange={endDate => updateDraft({ endDate })}
+              <BasicTextInput
+                sx={{ width: 250 }}
+                value={code ?? ''}
+                onChange={e => updateDraft({ code: e.target.value })}
+                onBlur={e => updateDraft({ code: e.target.value.trim() })}
               />
             }
           />

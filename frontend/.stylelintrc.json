@@ -37,6 +37,12 @@
       true,
       { "ignorePseudoClasses": ["global"] }
     ],
+    "selector-pseudo-class-disallowed-list": [
+      ["dir"],
+      {
+        "message": "Use [dir='rtl'] on the root, not :dir(): the production build lowers :dir() to a :lang() list that omits Dari (prs) — see #1833"
+      }
+    ],
     "color-function-notation": null,
     "color-function-alias-notation": null,
     "alpha-value-notation": null,

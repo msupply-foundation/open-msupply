@@ -1,34 +1,40 @@
-import {
-  createResource,
-  createSignal,
-  Match,
-  Show,
-  Switch,
-  type Component,
-} from 'solid-js';
+import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
-import { Select } from '../../../../ui/elements/selectors/Select';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { EditIcon } from '../../../../ui/icons';
+import { ActivitySelect, NONE_OPTION, ProgramSelect } from '@/domain/campaign';
 import {
-  InboundCampaigns,
-  InboundPrograms,
-} from '../inboundShipmentLookups.generated';
+  bulkFieldUpdates,
+  bulkFieldValue,
+  hasBulkFieldChange,
+  type BulkFieldChange,
+} from './bulkFieldChange';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import type { LineActionProps } from './DeleteLinesAction';
 
-// Bulk change campaign / program on the selected lines (spec S3 →
-// line-selection actions). Batch update using the NullableStringUpdate wrappers
-// (empty choice clears). Campaigns + programs are fetched on open.
+// Bulk change program / activity on the selected lines (spec S3 →
+// line-selection actions). Two INDEPENDENT fields, and each is applied only if
+// the user touched it: a field left alone is absent from the batch, so setting
+// one never disturbs the other (bulkFieldChange). The SAME two pickers the line
+// editor uses, asked of the selection instead of one line — Program narrows to
+// the selected items (offering only what they all share), Activity is the
+// store-wide register either way.
 type Phase = 'confirm' | 'working' | 'error';
 
+export interface ChangeCampaignProgramActionProps extends LineActionProps {
+  /**
+   * The items of the selected lines — what the program list is narrowed to,
+   * exactly as the line editor narrows to the one item it edits. Campaigns are
+   * store-wide, so the Activity field takes nothing from this.
+   */
+  selectedItemIds: () => string[];
+}
+
 export const ChangeCampaignProgramAction: Component<
-  LineActionProps
+  ChangeCampaignProgramActionProps
 > = props => {
   const [open, setOpen] = createSignal(false);
   return (
@@ -40,7 +46,7 @@ export const ChangeCampaignProgramAction: Component<
         data-testid="change-campaign-button"
         onClick={() => setOpen(true)}
       >
-        {t('label.campaign-program')}
+        {t('label.program-activity')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -49,30 +55,17 @@ export const ChangeCampaignProgramAction: Component<
   );
 };
 
-const Body = (props: LineActionProps & { onClose: () => void }) => {
+const Body = (
+  props: ChangeCampaignProgramActionProps & { onClose: () => void }
+) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [campaignId, setCampaignId] = createSignal('');
-  const [programId, setProgramId] = createSignal('');
+  // Untouched until the user picks (or picks and then clears) — see
+  // BulkFieldChange. Both start untouched, so opening the dialog and applying
+  // without choosing anything changes nothing.
+  const [campaignId, setCampaignId] = createSignal<BulkFieldChange>();
+  const [programId, setProgramId] = createSignal<BulkFieldChange>();
+  const fields = () => ({ programId: programId(), campaignId: campaignId() });
   const [errorMessage, setErrorMessage] = createSignal<string>();
-
-  const [data] = createResource(async () => {
-    const [campaigns, programs] = await Promise.all([
-      graphqlFetch(InboundCampaigns, { storeId: props.storeId }),
-      graphqlFetch(InboundPrograms, { storeId: props.storeId }),
-    ]);
-    return {
-      campaigns:
-        campaigns.kind === 'success' &&
-        campaigns.data.campaigns.__typename === 'CampaignConnector'
-          ? campaigns.data.campaigns.nodes
-          : [],
-      programs:
-        programs.kind === 'success' &&
-        programs.data.programs.__typename === 'ProgramConnector'
-          ? programs.data.programs.nodes
-          : [],
-    };
-  });
 
   const run = async () => {
     if (phase() !== 'confirm') return;
@@ -80,8 +73,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
       updateInboundShipmentLines: props.selectedIds().map(id => ({
         id,
-        campaignId: { value: campaignId() || null },
-        programId: { value: programId() || null },
+        ...bulkFieldUpdates(fields()),
       })),
     });
     if (!outcome) return setPhase('confirm'); // handled globally
@@ -102,9 +94,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<EditIcon />}
       testId="change-campaign-modal"
-      title={t('label.campaign-program')}
+      title={t('label.program-activity')}
       // Room for the two selects' open listboxes inside the dialog (#1029) —
-      // the program select is the bottom-most field.
+      // the activity select is the bottom-most field.
       minBodyHeightRem={20}
       actionsLead={
         <Show when={phase() === 'error'}>
@@ -124,6 +116,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
                 confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
+                // Nothing touched is nothing to do — rather than send every
+                // selected line an update that says to change nothing.
+                disabled={!hasBulkFieldChange(fields())}
                 onClick={() => void run()}
               >
                 {t('button.apply')}
@@ -139,32 +134,24 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         </Switch>
       }
     >
-      <Show when={!data.loading} fallback={<Spinner center />}>
-        <Select
-          label={t('label.campaign')}
-          value={campaignId()}
-          onValueChange={setCampaignId}
-          options={[
-            { value: '', label: t('label.none') },
-            ...(data()?.campaigns ?? []).map(c => ({
-              value: c.id,
-              label: c.name,
-            })),
-          ]}
-        />
-        <Select
-          label={t('label.program')}
-          value={programId()}
-          onValueChange={setProgramId}
-          options={[
-            { value: '', label: t('label.none') },
-            ...(data()?.programs ?? []).map(p => ({
-              value: p.id,
-              label: p.name,
-            })),
-          ]}
-        />
-      </Show>
+      {/* Empty is NOT "none" here — it is the field not being changed, which
+          is why each list carries None as a row of its own. */}
+      <ProgramSelect
+        noneOption
+        placeholder={t('label.leave-unchanged')}
+        storeId={props.storeId}
+        itemIds={props.selectedItemIds()}
+        programId={bulkFieldValue(programId(), NONE_OPTION)}
+        onChange={program => setProgramId({ value: program?.id ?? null })}
+        inputTestId="field-program"
+      />
+      <ActivitySelect
+        noneOption
+        placeholder={t('label.leave-unchanged')}
+        campaignId={bulkFieldValue(campaignId(), NONE_OPTION)}
+        onChange={campaign => setCampaignId({ value: campaign?.id ?? null })}
+        inputTestId="field-activity"
+      />
     </Dialog>
   );
 };

@@ -8,9 +8,9 @@ import {
 } from '../ui/elements/table/DataTable';
 import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
-  dateToIsoDate,
-  localDayToUtc,
-} from '../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+} from '../intl/calendarDate';
 import {
   resolveTableConfig,
   type Band,
@@ -149,7 +149,7 @@ const SUPPLIERS = [
 // A stored instant for the given local calendar day, via the shared
 // conversion — so the mock rows display the intended day in any timezone.
 const isoDay = (month: number, day: number, year: number): string =>
-  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
+  calendarDateToInstant(dateToCalendarDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry error tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -189,6 +189,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   return {
     id: `line-${i + 1}`,
     type: 'STOCK_IN',
+    barcode: null,
     itemId: `item-${i}`,
     itemName: item.name,
     itemCode: item.code,
@@ -240,6 +241,8 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
       isVaccine: false,
       doses: 1,
       defaultPackSize: packSize,
+      itemStoreProperties: null,
+      volumePerPack: 0,
     },
     donor: null,
     manufacturer: man ? { id: `man-${i}`, name: man } : null,
@@ -533,10 +536,18 @@ export const DetailTableShowcase = () => {
     },
     {
       c: {
-        accessor: line => line.campaign?.name ?? line.program?.name ?? '',
-        id: 'campaignProgram',
+        accessor: line => line.program?.name ?? '',
+        id: 'program',
       },
-      header: () => t('label.campaign'),
+      header: () => t('label.program'),
+      cardGroup: 'more',
+    },
+    {
+      c: {
+        accessor: line => line.campaign?.name ?? '',
+        id: 'activity',
+      },
+      header: () => t('label.activity'),
       cardGroup: 'more',
     },
     {
@@ -683,7 +694,6 @@ export const DetailTableShowcase = () => {
               <DateField
                 label={t('label.received')}
                 size="small"
-                format="dd MMM yyyy"
                 value="2026-05-19"
                 disabled
               />

@@ -41,4 +41,4 @@ export const dashboardSlots = (): DashboardSlots | undefined => {
  * and the count resources' fetches all read.
  */
 export const dashboardPanels = (): PanelVisibility =>
-  panelVisibility(dashboardGates(), hasPermission, isDispensary());
+  panelVisibility(hasPermission, isDispensary());

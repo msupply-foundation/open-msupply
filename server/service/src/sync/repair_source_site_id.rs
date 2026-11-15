@@ -110,9 +110,11 @@ mod tests {
         ChangelogRepository::new(connection)
             .query(
                 ChangelogCondition::True(),
+                // Migrations seed changelog rows of their own, a few hundred on a fresh
+                // database, so read well past them to reach the test's row.
                 CursorAndLimit {
                     cursor: 0,
-                    limit: 100,
+                    limit: 10_000,
                 },
             )
             .unwrap()

@@ -8,6 +8,7 @@ import {
   Show,
   type Component,
 } from 'solid-js';
+import { unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
@@ -43,9 +44,9 @@ import {
   locationTypeLabel,
   rejectionMessage,
   saveRejection,
-  type DraftItemVariant,
   type ItemVariantRow,
 } from './itemVariantEdit';
+import { createItemVariantDraft } from './itemVariantDraft';
 import styles from './ItemVariantEditModal.module.css';
 
 // The S3 create/edit modal (spec/items/ui-surface.md § S3). One surface for
@@ -79,7 +80,10 @@ export const ItemVariantEditModal: Component<
   const editedVariant = (): ItemVariantRow | undefined =>
     props.editor.mode === 'edit' ? props.editor.variant : undefined;
 
-  const [form, setForm] = createSignal<DraftItemVariant>(
+  // A store, written field-by-field (itemVariantDraft.ts): the packaging
+  // grid's rows have to keep their identity under <For> while the user types
+  // into them (#593, kdd/solid-reactivity-pitfalls § no remounts rule 2).
+  const { form, setForm, setPackaging } = createItemVariantDraft(
     props.editor.mode === 'edit'
       ? formFromVariant(props.editor.variant)
       : emptyForm()
@@ -131,14 +135,14 @@ export const ItemVariantEditModal: Component<
   );
 
   const save = async () => {
-    if (saving() || !isFormValid(form())) return;
+    if (saving() || !isFormValid(form)) return;
     setSaving(true);
     setRejection(undefined);
 
     const result = await graphqlFetch(UpsertItemVariant, {
       storeId: props.storeId,
       input: buildUpsertInput(
-        form(),
+        unwrap(form),
         props.itemId,
         editedVariant()?.id ?? generateUUID()
       ),
@@ -160,17 +164,6 @@ export const ItemVariantEditModal: Component<
     props.onSaved();
     props.onClose(); // success closes the dialog — closure IS the confirmation (D21)
   };
-
-  const setPackaging = (
-    id: string,
-    patch: Partial<DraftItemVariant['packaging'][number]>
-  ) =>
-    setForm({
-      ...form(),
-      packaging: form().packaging.map(row =>
-        row.id === id ? { ...row, ...patch } : row
-      ),
-    });
 
   // Name takes initial focus (spec/items S3 § variant details). Declared on the
   // Dialog: a field-level `autofocus` inside one never fires — the dialog panel
@@ -215,7 +208,7 @@ export const ItemVariantEditModal: Component<
           <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving()}
-            disabled={!isFormValid(form()) || saving()}
+            disabled={!isFormValid(form) || saving()}
             onClick={() => void save()}
           />
         </>
@@ -230,8 +223,8 @@ export const ItemVariantEditModal: Component<
               label={t('label.name')}
               required
               disabled={saving()}
-              value={form().name}
-              onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
+              value={form.name}
+              onInput={e => setForm('name', e.currentTarget.value)}
             />
             <Combobox<LocationType>
               inputTestId="item-variant-location-type-input"
@@ -241,11 +234,9 @@ export const ItemVariantEditModal: Component<
               disabled={saving()}
               itemToString={locationTypeLabel}
               itemToValue={type => type.id}
-              value={form().locationTypeId || undefined}
+              value={form.locationTypeId || undefined}
               selectedItem={editedVariant()?.locationType ?? undefined}
-              onChange={type =>
-                setForm({ ...form(), locationTypeId: type?.id ?? '' })
-              }
+              onChange={type => setForm('locationTypeId', type?.id ?? '')}
             />
             <NameSearch
               inputTestId="item-variant-manufacturer-input"
@@ -256,17 +247,15 @@ export const ItemVariantEditModal: Component<
               selected={manufacturer()}
               onSelect={name => {
                 setManufacturer(name ?? undefined);
-                setForm({ ...form(), manufacturerId: name?.id ?? '' });
+                setForm('manufacturerId', name?.id ?? '');
               }}
             />
             <Show when={props.isVaccine}>
               <TextField
                 label={t('label.vvm-type')}
                 disabled={saving()}
-                value={form().vvmType}
-                onInput={e =>
-                  setForm({ ...form(), vvmType: e.currentTarget.value })
-                }
+                value={form.vvmType}
+                onInput={e => setForm('vvmType', e.currentTarget.value)}
               />
             </Show>
           </FormSection>
@@ -280,7 +269,7 @@ export const ItemVariantEditModal: Component<
               <span class={styles.columnHeader}>
                 {t('label.volume-per-unit')}
               </span>
-              <For each={form().packaging}>
+              <For each={form.packaging}>
                 {row => (
                   <>
                     <span class={styles.level}>{row.packagingLevel}</span>

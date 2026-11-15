@@ -2,6 +2,7 @@ import { createResource, createSignal, For, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
+import { authUser } from '../../../auth/authContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
@@ -233,7 +234,7 @@ export const DisplaySettingsSection = () => {
       <FieldRow label={t('button.language')}>
         <LanguageSelector
           language={locale()}
-          onSelect={v => void changeLanguage(v)}
+          onSelect={v => void changeLanguage(v, authUser()?.username)}
           testId="settings-language"
         />
       </FieldRow>

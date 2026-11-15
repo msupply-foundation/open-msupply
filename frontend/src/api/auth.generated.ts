@@ -13,6 +13,7 @@ export type UserInfoFragment = {
   phoneNumber: string | null;
   inactivityTimeoutSeconds: number;
   tokenRefreshIntervalSeconds: number;
+  language: "ENGLISH" | "FRENCH" | "SPANISH" | "LAOS" | "KHMER" | "PORTUGUESE" | "RUSSIAN" | "TETUM";
   defaultStore: {
   id: string;
 } | null;
@@ -38,7 +39,7 @@ export type MeResult = {
 };
 
 export const Me = {
-  query: "query me {\n  me {\n    ... on UserNode {\n      __typename\n      ...UserInfo\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  email\n  jobTitle\n  phoneNumber\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      nameId\n      name\n      storeMode\n      homeCurrencyCode\n      isDisabled\n    }\n  }\n}",
+  query: "query me {\n  me {\n    ... on UserNode {\n      __typename\n      ...UserInfo\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  email\n  jobTitle\n  phoneNumber\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  language\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      nameId\n      name\n      storeMode\n      homeCurrencyCode\n      isDisabled\n    }\n  }\n}",
 } as TypedDocument<MeResult, MeVariables>;
 
 export type AuthTokenVariables = {
@@ -61,7 +62,7 @@ export type AuthTokenResult = {
 };
 
 export const AuthToken = {
-  query: "query authToken($username: String!, $password: String!) {\n  authToken(username: $username, password: $password) {\n    ... on AuthToken {\n      __typename\n      user {\n        ...UserInfo\n      }\n    }\n    ... on AuthTokenError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  email\n  jobTitle\n  phoneNumber\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      nameId\n      name\n      storeMode\n      homeCurrencyCode\n      isDisabled\n    }\n  }\n}",
+  query: "query authToken($username: String!, $password: String!) {\n  authToken(username: $username, password: $password) {\n    ... on AuthToken {\n      __typename\n      user {\n        ...UserInfo\n      }\n    }\n    ... on AuthTokenError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment UserInfo on UserNode {\n  __typename\n  userId\n  username\n  firstName\n  lastName\n  email\n  jobTitle\n  phoneNumber\n  inactivityTimeoutSeconds\n  tokenRefreshIntervalSeconds\n  language\n  defaultStore {\n    id\n  }\n  stores {\n    nodes {\n      id\n      code\n      nameId\n      name\n      storeMode\n      homeCurrencyCode\n      isDisabled\n    }\n  }\n}",
 } as TypedDocument<AuthTokenResult, AuthTokenVariables>;
 
 export type RefreshTokenVariables = Record<string, never>;
@@ -97,3 +98,13 @@ export type LogoutResult = {
 export const Logout = {
   query: "query logout {\n  logout {\n    ... on Logout {\n      __typename\n      userId\n    }\n  }\n}",
 } as TypedDocument<LogoutResult, LogoutVariables>;
+
+export type IsMaintenanceModeVariables = Record<string, never>;
+
+export type IsMaintenanceModeResult = {
+  isMaintenanceMode: boolean;
+};
+
+export const IsMaintenanceMode = {
+  query: "query isMaintenanceMode {\n  isMaintenanceMode\n}",
+} as TypedDocument<IsMaintenanceModeResult, IsMaintenanceModeVariables>;

@@ -20,10 +20,11 @@ export type LogContentsVariables = {
 
 export type LogContentsResult = {
   logContents: {
-  fileContent: Array<string> | null;
+  content: string | null;
+  truncated: boolean | null;
 };
 };
 
 export const LogContents = {
-  query: "query logContents($fileName: String) {\n  logContents(fileName: $fileName) {\n    fileContent\n  }\n}",
+  query: "query logContents($fileName: String) {\n  logContents(fileName: $fileName) {\n    content\n    truncated\n  }\n}",
 } as TypedDocument<LogContentsResult, LogContentsVariables>;

@@ -1,6 +1,6 @@
 import { t } from '@/intl';
 import {
-  PO_STATUSES,
+  PO_LADDER,
   poStatusLabel,
   type PurchaseOrderStatus,
 } from '../purchaseOrderStatus';
@@ -22,18 +22,28 @@ import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated'
 
 /**
  * The ladder in order, with the approval state present only where it exists.
+ * Cancelled is not a rung: it is a terminal branch off Sent, reached from the
+ * side panel rather than offered as the next state. On an order that holds it
+ * the branch stands IN PLACE of Finalised — the indicator reads every rung
+ * below the current one as reached, and a cancelled order never was finalised
+ * (rules § cancellation).
  */
 export const ladderFor = (
-  authorisationRequired: boolean
-): PurchaseOrderStatus[] =>
-  authorisationRequired
-    ? PO_STATUSES
-    : PO_STATUSES.filter(status => status !== 'REQUEST_APPROVAL');
+  authorisationRequired: boolean,
+  status?: PurchaseOrderStatus
+): PurchaseOrderStatus[] => {
+  const rungs = authorisationRequired
+    ? PO_LADDER
+    : PO_LADDER.filter(rung => rung !== 'REQUEST_APPROVAL');
+  return status === 'CANCELLED'
+    ? rungs.map(rung => (rung === 'FINALISED' ? 'CANCELLED' : rung))
+    : rungs;
+};
 
 /**
  * The one state the screen offers to move to: the next rung up, or none at all
- * on a Finalised order. Only the next state can be chosen — every other rung
- * is shown but unreachable (rules § the status lifecycle).
+ * on a Finalised or Cancelled order. Only the next state can be chosen — every
+ * other rung is shown but unreachable (rules § the status lifecycle).
  *
  * A status OFF the ladder (an order sitting in REQUEST_APPROVAL in a store that
  * no longer requires authorisation, which nothing prevents — the domain
@@ -44,13 +54,14 @@ export const nextStatus = (
   status: PurchaseOrderStatus,
   authorisationRequired: boolean
 ): PurchaseOrderStatus | undefined => {
+  if (status === 'CANCELLED') return undefined;
   const ladder = ladderFor(authorisationRequired);
   const index = ladder.indexOf(status);
   if (index >= 0) return ladder[index + 1];
   // Off-ladder: fall back to the full ladder's ordering and take the first
   // rung above it that this store actually offers.
-  const full = PO_STATUSES.indexOf(status);
-  return ladder.find(rung => PO_STATUSES.indexOf(rung) > full);
+  const full = PO_LADDER.indexOf(status);
+  return ladder.find(rung => PO_LADDER.indexOf(rung) > full);
 };
 
 /** Which rung the order is on, for the footer indicator's `current`. */
@@ -58,13 +69,13 @@ export const currentStep = (
   status: PurchaseOrderStatus,
   authorisationRequired: boolean
 ): number => {
-  const ladder = ladderFor(authorisationRequired);
+  const ladder = ladderFor(authorisationRequired, status);
   const index = ladder.indexOf(status);
   if (index >= 0) return index;
   // Off-ladder (see nextStatus): read as the last rung at or below it, so the
   // indicator shows progress rather than snapping back to the start.
-  const full = PO_STATUSES.indexOf(status);
-  const reached = ladder.filter(rung => PO_STATUSES.indexOf(rung) <= full);
+  const full = PO_LADDER.indexOf(status);
+  const reached = ladder.filter(rung => PO_LADDER.indexOf(rung) <= full);
   return Math.max(0, reached.length - 1);
 };
 
@@ -89,6 +100,7 @@ export const statusMoment = (
     | 'confirmedDatetime'
     | 'sentDatetime'
     | 'finalisedDatetime'
+    | 'cancelledDatetime'
   >,
   status: PurchaseOrderStatus
 ): string | undefined => {
@@ -100,17 +112,21 @@ export const statusMoment = (
     case 'CONFIRMED':
       return node.confirmedDatetime ?? undefined;
     case 'SENT':
-      return node.status === 'SENT' || node.status === 'FINALISED'
+      return node.status === 'SENT' ||
+        node.status === 'FINALISED' ||
+        node.status === 'CANCELLED'
         ? (node.sentDatetime ?? undefined)
         : undefined;
     case 'FINALISED':
       return node.finalisedDatetime ?? undefined;
+    case 'CANCELLED':
+      return node.cancelledDatetime ?? undefined;
   }
 };
 
 // ─── Editability ────────────────────────────────────────────────────────────
 
-/** New, Ready for approval or Ready for sending — the authoring window. */
+/** New, Ready for approval or Approved — the authoring window. */
 export const isOpenToChange = (status: PurchaseOrderStatus): boolean =>
   status === 'NEW' || status === 'REQUEST_APPROVAL' || status === 'CONFIRMED';
 
@@ -118,14 +134,30 @@ export const isOpenToChange = (status: PurchaseOrderStatus): boolean =>
 export const isDrafting = (status: PurchaseOrderStatus): boolean =>
   status === 'NEW' || status === 'REQUEST_APPROVAL';
 
+/** Finalised or Cancelled — the two terminal states, closed to everything but
+ *  the comment (rules § what may be changed, and when). */
+export const isClosed = (status: PurchaseOrderStatus): boolean =>
+  status === 'FINALISED' || status === 'CANCELLED';
+
 /**
  * The contract-signed and advance-paid dates record what happens AFTER
  * sending, so they stay open on a Sent order and close only once it is
- * Finalised (rules § what may be changed, and when).
+ * Finalised or Cancelled (rules § what may be changed, and when).
  */
 export const canRecordPostSendingDates = (
   status: PurchaseOrderStatus
-): boolean => status !== 'FINALISED';
+): boolean => !isClosed(status);
+
+/**
+ * The expected delivery date is our estimate of when the goods will actually
+ * arrive, and most of what moves it — the supplier confirming, a shipment
+ * slipping, freight or customs — happens AFTER the order is sent. So it stays
+ * open on a Sent order and closes only once the order is Finalised, where the
+ * domain refuses it too (rules § what may be changed, and when). The requested
+ * date, the agreed date it is measured against, keeps the authoring window.
+ */
+export const canSetExpectedDate = (status: PurchaseOrderStatus): boolean =>
+  !isClosed(status);
 
 /**
  * The sent date may be entered by hand in every state before Sent; from then
@@ -160,6 +192,15 @@ export const canDelete = isDrafting;
 
 /** Attachments may be added and removed until the order is Sent. */
 export const canAttachDocuments = isOpenToChange;
+
+/**
+ * Cancelling is offered on a Sent order and nowhere else (rules §
+ * cancellation): before Sent an order is deleted instead, and Finalised or
+ * Cancelled is final. The guard on shipments past New is the domain's, typed
+ * back, so the surface submits and reports it rather than pre-checking.
+ */
+export const canCancel = (status: PurchaseOrderStatus): boolean =>
+  status === 'SENT';
 
 // ─── The two front-end-only lifecycle gates ─────────────────────────────────
 

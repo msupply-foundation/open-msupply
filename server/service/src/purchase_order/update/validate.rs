@@ -7,8 +7,11 @@ use repository::{
 
 use crate::{
     NullableUpdate,
+    custom_field::check_custom_fields_patch,
     preference::{AuthorisePurchaseOrder, Preference},
-    purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
+    purchase_order::update::{
+        PURCHASE_ORDER_CUSTOM_FIELD_SCOPE, UpdatePurchaseOrderError, UpdatePurchaseOrderInput,
+    },
     validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 
@@ -27,10 +30,30 @@ pub fn validate(
     let current_status = &purchase_order.purchase_order_row.status;
     if matches!(
         current_status,
-        PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+        PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised | PurchaseOrderStatus::Cancelled
     ) && !input.is_allowed_on_closed_order(current_status)
     {
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
+    }
+
+    if let Some(patch) = &input.custom_fields
+        && let Some(problem) =
+            check_custom_fields_patch(connection, PURCHASE_ORDER_CUSTOM_FIELD_SCOPE, patch)?
+    {
+        return Err(problem.into());
+    }
+
+    // Cancelling is final: a cancelled order never changes state again, nor is cancelled twice
+    if *current_status == PurchaseOrderStatus::Cancelled && input.status.is_some() {
+        return Err(UpdatePurchaseOrderError::CannotReopenCancelledPurchaseOrder);
+    }
+
+    // Only a SENT order can be cancelled, and only while nothing has shipped against it
+    if input.status == Some(PurchaseOrderStatus::Cancelled) {
+        if *current_status != PurchaseOrderStatus::Sent {
+            return Err(UpdatePurchaseOrderError::CannotCancelPurchaseOrder);
+        }
+        check_no_inbound_shipments_in_progress(connection, &purchase_order.purchase_order_row.id)?;
     }
 
     // If RequestApproval is asked for but the store doesn't require authorisation,
@@ -106,6 +129,30 @@ fn check_no_open_inbound_shipments(
 
     if has_open_shipments {
         return Err(UpdatePurchaseOrderError::InboundShipmentsNotVerified);
+    }
+
+    Ok(())
+}
+
+fn check_no_inbound_shipments_in_progress(
+    connection: &StorageConnection,
+    purchase_order_id: &str,
+) -> Result<(), UpdatePurchaseOrderError> {
+    let invoices = InvoiceRepository::new(connection).query_by_filter(
+        InvoiceFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string()))
+            .r#type(EqualFilter::equal_to(InvoiceType::InboundShipment)),
+    )?;
+
+    let in_progress = invoices.iter().any(|invoice| {
+        !matches!(
+            invoice.invoice_row.status,
+            InvoiceStatus::New | InvoiceStatus::Cancelled
+        )
+    });
+
+    if in_progress {
+        return Err(UpdatePurchaseOrderError::InboundShipmentsInProgress);
     }
 
     Ok(())

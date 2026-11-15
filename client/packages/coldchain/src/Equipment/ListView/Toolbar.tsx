@@ -80,6 +80,10 @@ export const useToolbar = () => {
           value: AssetLogStatusNodeType.NotFunctioning,
         },
         {
+          label: t('status.not-installed'),
+          value: AssetLogStatusNodeType.NotInstalled,
+        },
+        {
           label: t('status.not-in-use'),
           value: AssetLogStatusNodeType.NotInUse,
         },

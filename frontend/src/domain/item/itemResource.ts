@@ -21,6 +21,8 @@ export type ItemOption = {
   isVaccine: boolean;
   /** The item's configured doses-per-unit — the doses-display multiplier. */
   doses: number;
+  /** A service item: no stock, so the row shows a Service badge instead. */
+  isService: boolean;
   /** Default pack size — a new inbound line's starting pack size (OMS-REG-REPL-09.10/.11). */
   defaultPackSize: number;
   /**
@@ -28,6 +30,11 @@ export type ItemOption = {
    * prefills a new inbound line's cost AND sell price (OMS-REG-REPL-09.10/.11).
    */
   defaultSellPricePerPack: number;
+  /**
+   * The item's volume per pack — a new inbound line's starting volume
+   * (OMS-REG-REPL-09.43).
+   */
+  volumePerPack: number;
 };
 
 type ItemNode = Extract<
@@ -60,11 +67,19 @@ export type ItemLookup =
  */
 export const lookUpItemById = async (
   storeId: string,
-  id: string
+  id: string,
+  // Scope the answer to one master list (a program's catalogue, as the item
+  // search scopes it): an item outside it answers `missing`.
+  options: { masterListId?: string } = {}
 ): Promise<ItemLookup> => {
   const result = await graphqlFetch(ItemsWithStock, {
     storeId,
-    filter: { id: { equalTo: id } },
+    filter: {
+      id: { equalTo: id },
+      ...(options.masterListId
+        ? { masterListId: { equalTo: options.masterListId } }
+        : {}),
+    },
     page: { first: 1 },
   });
   if (result.kind !== 'success') return { kind: 'failed' };
@@ -80,9 +95,11 @@ export const lookUpItemById = async (
       availableUnits: availableUnitsOf(node),
       isVaccine: node.isVaccine,
       doses: node.doses,
+      isService: node.type === 'SERVICE',
       defaultPackSize: node.defaultPackSize,
       defaultSellPricePerPack:
         node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+      volumePerPack: node.volumePerPack,
     },
   };
 };
@@ -148,7 +165,16 @@ export const itemPageFetcher =
     // The server's `ignoreForOrders` flag: `false` keeps only items the store
     // may order — the purchase-order line editor's chooser
     // (spec/purchase-orders rules › choosing the item). Omitted = no filter.
-    ignoreForOrders?: () => boolean | undefined
+    ignoreForOrders?: () => boolean | undefined,
+    // Offer service items as well as stock (purchase order line editor).
+    includeServiceItems?: () => boolean | undefined,
+    // Restrict to one item category, by name — a prescription written from a
+    // program form offers the items of the method chosen (the form library's
+    // PrescriptionInput). Omitted = every category.
+    categoryName?: () => string | undefined,
+    // Also offer hidden items that have stock on hand (isVisibleOrOnHand).
+    // Omitted = visible items only. The server then ignores hasStockOnHand.
+    includeHiddenWithStock?: () => boolean | undefined
   ) =>
   async (
     search: string,
@@ -158,17 +184,23 @@ export const itemPageFetcher =
     const stockOnHand = hasStockOnHand?.();
     const scopedList = masterListId?.();
     const barred = ignoreForOrders?.();
+    const category = categoryName?.();
     const result = await graphqlFetch(ItemsWithStock, {
       storeId,
       filter: {
-        type: { equalTo: 'STOCK' },
+        type: includeServiceItems?.()
+          ? { equalAny: ['STOCK', 'SERVICE'] }
+          : { equalTo: 'STOCK' },
         isActive: true,
-        isVisible: true,
+        ...(includeHiddenWithStock?.()
+          ? { isVisibleOrOnHand: true }
+          : { isVisible: true }),
         ...(stockOnHand !== undefined ? { hasStockOnHand: stockOnHand } : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
         ...(scopedList ? { masterListId: { equalTo: scopedList } } : {}),
         ...(barred !== undefined ? { ignoreForOrders: barred } : {}),
+        ...(category !== undefined ? { categoryName: category } : {}),
       },
       // Sort by item name ascending — stable across pages so infinite scroll
       // doesn't reshuffle rows as new pages append.
@@ -187,9 +219,11 @@ export const itemPageFetcher =
         availableUnits: availableUnitsOf(node),
         isVaccine: node.isVaccine,
         doses: node.doses,
+        isService: node.type === 'SERVICE',
         defaultPackSize: node.defaultPackSize,
         defaultSellPricePerPack:
           node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        volumePerPack: node.volumePerPack,
       })),
       totalCount: items.totalCount,
     };

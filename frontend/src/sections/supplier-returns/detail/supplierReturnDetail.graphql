@@ -78,8 +78,19 @@ fragment SupplierReturnLine on InvoiceLineNode {
   }
 }
 
+# The `type` argument does BOTH jobs, so it is the only type pin here (as the
+# outbound and prescription detail reads do). It FILTERS: the server ANDs
+# `type = SUPPLIER_RETURN` onto the id + store filter, so an inbound shipment's
+# id — or any other invoice kind's — reads as `NodeError / RecordNotFound`
+# instead of handing back that invoice to be rendered as a return with its edit
+# affordances (issue #1044; OMS-REG-REPL-06.43). Another store's return was
+# already RecordNotFound (the store filter), and stays so. It also selects the
+# PERMISSION: the read authorises against SupplierReturnQuery alone (contract §
+# preference & permission gates); omitted, it falls back to the deprecated
+# combined resource ([navigation › wire traps]). Singular `type`, not the list
+# the `invoices` query takes.
 query supplierReturnDetail($storeId: String!, $id: String!) {
-  invoice(storeId: $storeId, id: $id) {
+  invoice(storeId: $storeId, id: $id, type: SUPPLIER_RETURN) {
     __typename
     ... on InvoiceNode {
       ...SupplierReturnInfo
@@ -100,9 +111,9 @@ query supplierReturnDetail($storeId: String!, $id: String!) {
 # server-paginated PAGE. The standard is explicit that copy "MUST make its own
 # unpaginated read, not serialise the page on screen", and the nested `lines`
 # connector is that read: it takes no page argument, so it carries the complete
-# line set.
+# line set. Same `type` pin as the detail read: only a supplier return copies.
 query supplierReturnForCopy($storeId: String!, $id: String!) {
-  invoice(storeId: $storeId, id: $id) {
+  invoice(storeId: $storeId, id: $id, type: SUPPLIER_RETURN) {
     __typename
     ... on InvoiceNode {
       ...SupplierReturnInfo

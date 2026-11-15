@@ -32,9 +32,9 @@
 // Labels arrive pre-translated (OMS-REG-RPT-10.3) and are used verbatim.
 
 import {
-  localDayToUtc,
-  utcToLocalDay,
-} from '../../ui/elements/inputs/dateTimeConvert';
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../../intl/calendarDate';
 
 /** One option for an enum select: raw schema value + its display label. */
 export interface EnumOption {
@@ -96,6 +96,7 @@ export type ParsedField =
       nullable: boolean;
       readOnly: boolean;
       required: boolean;
+      default?: unknown;
       /**
        * True for `format: 'date-time'` — rendered as the date & time input;
        * the stored/submitted value is a UTC RFC3339 instant
@@ -450,6 +451,7 @@ export const parseArgumentSchema = (raw: {
             nullable,
             readOnly,
             required: isRequired,
+            default: prop.default,
             dateTime: prop.format === 'date-time',
             dateOnly: options?.dateOnly === true,
             dateAsEndOfDay: options?.dateAsEndOfDay === true,
@@ -653,7 +655,8 @@ const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
  * (OMS-REG-RPT-10.17/.31/.35; the captured client parsed bare dates at UTC
  * midnight — normalized here, see the contract).
  */
-export const dayStartInstant = (date: string): string => localDayToUtc(date);
+export const dayStartInstant = (date: string): string =>
+  calendarDateToInstant(date);
 
 /**
  * A calendar date's last instant (23:59:59.999 local) as an RFC3339 UTC
@@ -661,7 +664,7 @@ export const dayStartInstant = (date: string): string => localDayToUtc(date);
  * captured client's hour-24 overflow normalized away, see the contract).
  */
 export const dayEndInstant = (date: string): string =>
-  localDayToUtc(date, { endOfDay: true });
+  calendarDateToInstant(date, { endOfDay: true });
 
 /**
  * An RFC3339 instant → the viewer's local calendar date (`yyyy-mm-dd`), for
@@ -669,7 +672,7 @@ export const dayEndInstant = (date: string): string =>
  * from/to bounds). '' for absent or garbled values.
  */
 export const instantToLocalDate = (value: unknown): string =>
-  typeof value === 'string' ? (utcToLocalDay(value) ?? '') : '';
+  typeof value === 'string' ? (instantToCalendarDate(value) ?? '') : '';
 
 /** The date-kind slice of ParsedField the date-entry helpers below read. */
 type DateField = Extract<ParsedField, { kind: 'date' }>;
@@ -691,7 +694,7 @@ export const dateArgumentValue = (field: DateField, isoDay: string): string =>
 /**
  * A date field's stored value → the local calendar day it edits: plain
  * 'YYYY-MM-DD' values pass through, instant values read back as the local day
- * (never sliced — see `utcToLocalDay`). '' for absent/garbled values.
+ * (never sliced — see `instantToCalendarDate`). '' for absent/garbled values.
  */
 export const dateArgumentDay = (value: unknown): string => {
   if (typeof value !== 'string' || value === '') return '';
@@ -702,7 +705,7 @@ export const dateArgumentDay = (value: unknown): string => {
  * A date field's selectable day bounds (OMS-REG-RPT-10.40): the sibling values
  * its `min`/`max` scope refs point at — read live from the form's current
  * values — with the ceiling tightened to today when the element disallows
- * future days. ISO days compare lexicographically, so the tighter ceiling is a
+ * future days. Calendar dates compare lexicographically, so the tighter ceiling is a
  * string compare. `today` is passed in (this module stays clock-free / pure).
  */
 export const dateFieldBounds = (
@@ -798,7 +801,11 @@ export const scheduleCascadeWrites = {
  * back to JSON numbers (so a numeric argument never leaves as a string; an
  * unparseable leftover like a lone '.' is dropped like an empty), and widen
  * each date-range field to its `DatetimeFilterInput` wire shape (see
- * `toDatetimeFilter`).
+ * `toDatetimeFilter`). A field whose schema declares `default: null` is the
+ * exception: left empty it is sent as null, never omitted, as the React UI
+ * sends it — a report's SQL can only bind a `$param` that is present, and
+ * such a report reads null as "not chosen" (e.g. Afghanistan's Vaccine
+ * Utilisation month: blank = the current month).
  */
 export const cleanArguments = (
   fields: ParsedField[],
@@ -807,6 +814,9 @@ export const cleanArguments = (
   const numberKeys = new Set(
     fields.filter(field => field.kind === 'number').map(field => field.key)
   );
+  const nullDefaultKeys = fields
+    .filter(field => 'default' in field && field.default === null)
+    .map(field => field.key);
   const dateRangeKeys = new Set(
     fields.filter(field => field.kind === 'dateRange').map(field => field.key)
   );
@@ -824,6 +834,9 @@ export const cleanArguments = (
       continue;
     }
     cleaned[key] = value;
+  }
+  for (const key of nullDefaultKeys) {
+    if (!(key in cleaned)) cleaned[key] = null;
   }
   return cleaned;
 };

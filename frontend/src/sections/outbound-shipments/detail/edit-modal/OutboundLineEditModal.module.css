@@ -54,9 +54,12 @@
    inputs beside it use. A number, so tabular figures (ui-standards › tables ›
    data-type alignment) — it changes as the allocation does and shouldn't jitter. */
 .availableValue {
-  display: inline-flex;
-  align-items: center;
+  /* One line of text, not a flex row: a flex row drops the whitespace node
+     between the figure and its unit. line-height centres it in the input's
+     height as align-items did. */
+  display: inline-block;
   min-block-size: var(--input-height);
+  line-height: var(--input-height);
   font-variant-numeric: tabular-nums;
 }
 

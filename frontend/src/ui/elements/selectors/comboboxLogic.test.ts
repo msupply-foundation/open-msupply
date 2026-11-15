@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { typedQuery, visibleOptions } from './comboboxLogic';
+import {
+  PINNED_SECTION,
+  sectionOptions,
+  typedQuery,
+  visibleOptions,
+} from './comboboxLogic';
 
 // A location-picker-shaped list: the case the cap exists for (a whole-store
 // location list, ~5,000 rows on the tablet that prompted it).
@@ -98,5 +103,47 @@ describe('typedQuery', () => {
     // server-backed lookup whose source can't match a composed label, nothing
     // at all. It is not a search.
     expect(typedQuery('ABC - Amoxicillin', item, label)).toBe('');
+  });
+});
+
+describe('sectionOptions — grouped mode', () => {
+  type Opt = { value: string; group?: string };
+  const opt = (value: string, group?: string): Opt => ({ value, group });
+  const sections = (items: Opt[]) => sectionOptions(items, i => i.group);
+
+  it('puts the ungrouped items in one empty-headed section, first', () => {
+    const result = sections([
+      opt('none'),
+      opt('routine'),
+      opt('c1', 'Campaign'),
+    ]);
+    expect(result.map(s => s.label)).toEqual([PINNED_SECTION, 'Campaign']);
+    expect(result[0]?.options.map(o => o.value)).toEqual(['none', 'routine']);
+  });
+
+  it('never emits a bare option — Kobalte reads every node as a section', () => {
+    const result = sections([opt('none'), opt('c1', 'Campaign')]);
+    expect(result.every(s => Array.isArray(s.options))).toBe(true);
+  });
+
+  it('buckets groups in first-seen order, not alphabetically', () => {
+    const result = sections([opt('z', 'Zebra'), opt('a', 'Ant')]);
+    expect(result.map(s => s.label)).toEqual(['Zebra', 'Ant']);
+  });
+
+  it('drops the pinned section when nothing is ungrouped', () => {
+    const result = sections([opt('c1', 'Campaign')]);
+    expect(result.map(s => s.label)).toEqual(['Campaign']);
+  });
+
+  it('drops a group whose items were all filtered away, heading and all', () => {
+    // The caller filters before sectioning, so an emptied group simply never
+    // reaches here — and must not leave a heading over nothing.
+    const result = sections([opt('none')]);
+    expect(result.map(s => s.label)).toEqual([PINNED_SECTION]);
+  });
+
+  it('returns nothing at all for no items', () => {
+    expect(sections([])).toEqual([]);
   });
 });

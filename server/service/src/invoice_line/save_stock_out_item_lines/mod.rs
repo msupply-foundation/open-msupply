@@ -1,4 +1,8 @@
-use repository::{Invoice, InvoiceLineRowRepository, RepositoryError};
+use repository::{
+    Invoice, InvoiceLineRowRepository, InvoiceLineType, RepositoryError, StockLineRowRepository,
+    StorageConnection,
+};
+use util::barcode::standard_barcode;
 
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext};
 
@@ -30,6 +34,10 @@ pub struct SaveStockOutItemLines {
     pub placeholder_quantity: Option<f64>,
     pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
+    /// A barcode a user scanned to issue this item, recorded on the item's saved
+    /// lines in place of the barcode of the stock they issue, and on that stock
+    /// where it has no barcode yet. Saving never proposes a barcode.
+    pub barcode: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -173,6 +181,10 @@ pub fn save_stock_out_item_lines(
                 // TODO: Should we be able to remove the note e.g. nullable update?
             }
 
+            if let Some(value) = input.barcode.as_deref().and_then(standard_barcode) {
+                record_scanned_barcode(connection, &input.invoice_id, &input.item_id, &value)?;
+            }
+
             get_invoice(ctx, None, &input.invoice_id, None)
                 .map_err(SaveStockOutItemLinesError::DatabaseError)?
                 .ok_or(SaveStockOutItemLinesError::UpdatedShipmentDoesNotExist)
@@ -180,6 +192,40 @@ pub fn save_stock_out_item_lines(
         .map_err(|error| error.to_inner_error())?;
 
     Ok(invoice)
+}
+
+fn record_scanned_barcode(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    item_id: &str,
+    value: &str,
+) -> Result<(), RepositoryError> {
+    let repo = InvoiceLineRowRepository::new(connection);
+    let stock_repo = StockLineRowRepository::new(connection);
+    let lines = repo
+        .find_many_by_invoice_id(invoice_id)?
+        .into_iter()
+        .filter(|line| {
+            line.item_id == item_id
+                && line.r#type == InvoiceLineType::StockOut
+                && line.number_of_packs > 0.0
+        });
+    for mut line in lines {
+        // The box's barcode labels its stock, but never replaces one it has
+        if let Some(stock_line_id) = &line.stock_line_id {
+            if let Some(mut stock_line) = stock_repo.find_one_by_id(stock_line_id)? {
+                if stock_line.barcode.is_none() {
+                    stock_line.barcode = Some(value.to_string());
+                    stock_repo.upsert_one(&stock_line)?;
+                }
+            }
+        }
+        if line.barcode.as_deref() != Some(value) {
+            line.barcode = Some(value.to_string());
+            repo.upsert_one(&line)?;
+        }
+    }
+    Ok(())
 }
 
 impl From<RepositoryError> for SaveStockOutItemLinesError {
@@ -202,7 +248,7 @@ mod test {
     };
     use repository::{
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType,
+        InvoiceType, StockLineRow, StockLineRowRepository,
         mock::{
             MockData, MockDataInserts, mock_item_a, mock_name_store_b, mock_outbound_shipment_a,
             mock_shipment_variance_reason_option, mock_stock_line_a, mock_stock_line_b,
@@ -430,6 +476,7 @@ mod test {
                     ],
                     placeholder_quantity: Some(5.0),
                     prescribed_quantity: None,
+                    barcode: None,
                     note: Some("Test note".to_string()),
                 },
             )
@@ -513,6 +560,7 @@ mod test {
                     placeholder_quantity: None,
                     prescribed_quantity: None,
                     note: None,
+                    barcode: None,
                 },
             )
             .unwrap();
@@ -633,5 +681,94 @@ mod test {
             .unwrap();
 
         assert_eq!(comment_of("sc_line_a"), None);
+    }
+
+    /// The scanned barcode is recorded on the item's lines, and on the stock
+    /// they issue from that has no barcode yet; stock with a barcode keeps it.
+    #[actix_rt::test]
+    async fn test_save_outbound_item_lines_records_the_scanned_barcode() {
+        fn outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "outbound_scanned".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+        fn labelled_stock() -> StockLineRow {
+            StockLineRow {
+                id: "labelled_stock".to_string(),
+                barcode: Some("plain:OTHER".to_string()),
+                ..mock_stock_line_a()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "test_save_outbound_item_lines_records_the_scanned_barcode",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound()],
+                stock_lines: vec![labelled_stock()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        service_provider
+            .invoice_line_service
+            .save_stock_out_item_lines(
+                &context,
+                SaveStockOutItemLines {
+                    invoice_id: outbound().id,
+                    item_id: mock_item_a().id,
+                    lines: vec![
+                        SaveStockOutInvoiceLine {
+                            id: "from_unlabelled".to_string(),
+                            number_of_packs: 1.0,
+                            stock_line_id: mock_stock_line_a().id,
+                            ..Default::default()
+                        },
+                        SaveStockOutInvoiceLine {
+                            id: "from_labelled".to_string(),
+                            number_of_packs: 1.0,
+                            stock_line_id: labelled_stock().id,
+                            ..Default::default()
+                        },
+                    ],
+                    barcode: Some("9506682101352".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let scanned = Some("gtin:09506682101352".to_string());
+        let lines = InvoiceLineRowRepository::new(&connection);
+        for id in ["from_unlabelled", "from_labelled"] {
+            assert_eq!(lines.find_one_by_id(id).unwrap().unwrap().barcode, scanned);
+        }
+        let stock = StockLineRowRepository::new(&connection);
+        assert_eq!(
+            stock
+                .find_one_by_id(&mock_stock_line_a().id)
+                .unwrap()
+                .unwrap()
+                .barcode,
+            scanned
+        );
+        assert_eq!(
+            stock
+                .find_one_by_id("labelled_stock")
+                .unwrap()
+                .unwrap()
+                .barcode,
+            Some("plain:OTHER".to_string())
+        );
     }
 }

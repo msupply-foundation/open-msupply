@@ -306,6 +306,30 @@ impl LocationRow {
     }
 }
 
+impl BarcodeProposalRow {
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<BarcodeProposalRow>,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &BarcodeProposalRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::BarcodeProposal,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
 impl PrescriptionRequestRow {
     pub(crate) fn generate_changelog(
         row_or_id: RowOrId<PrescriptionRequestRow>,
@@ -679,6 +703,24 @@ impl TemperatureBreachRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::TemperatureBreach,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl TemperatureSummaryRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::TemperatureSummary,
             record_id: self.id.clone(),
             row_action: action,
             store_id: Some(self.store_id.clone()),
@@ -1121,23 +1163,6 @@ impl CurrencyRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Currency,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl BarcodeRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Barcode,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

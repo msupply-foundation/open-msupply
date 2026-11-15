@@ -28,3 +28,20 @@
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
+
+/* Compact (<600px, breakpoints.compact): the panel is held to the trigger's
+   width there (Combobox.module.css), so a one-line label would be cut to a
+   few characters of the name — wrap it instead; the name is what's picked. */
+@media (max-width: 599px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  /* A floor, so a badge (the already-on-document one) drops the badge and
+     total to a second line rather than squeezing the name to a word wide. */
+  .label {
+    flex-basis: 10rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

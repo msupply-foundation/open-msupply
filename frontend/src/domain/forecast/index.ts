@@ -1,12 +1,30 @@
-// The shared population-forecast module (kdd/domain-modules): the stored
-// per-course breakdown's type + parser, the calculation-display arithmetic,
-// and the collapsible per-course display both requisition verticals show on a
-// forecast-carrying line. Specced at internal-orders (S4, OMS-REG-REPL-11.7);
-// consumed by requisitions on transferred forecast lines (OMS-REG-DIST-05.35).
+// The shared forecast module (kdd/domain-modules): a requisition line's stored
+// forecast — method, monthly demand, breakdown — its display arithmetic, and
+// the forecast block both requisition verticals' editors show. Specced at
+// internal-orders (S4, rules › forecasting); consumed read-only by requisitions
+// on transferred lines (rules › forecast context).
 export {
-  parseVaccineCourses,
-  forecastSteps,
-  type VaccineCourse,
-  type ForecastStep,
+  FORECAST_METHODS,
+  forecastMethodLabel,
+  unavailableReasonMessage,
+  courseTitle,
+  populationSteps,
+  principalSteps,
+  ancillaryRatio,
+  principalItemLabel,
+  targetStockCaption,
+  type ForecastMethod,
+  type ForecastMethodOption,
+  type ForecastMethodUnavailableReason,
+  type ForecastBreakdown,
+  type CalculationStep,
+  type Term,
+  type Operator,
+  type PopulationCourse,
+  type AncillaryRatioPrincipal,
 } from './forecast';
-export { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
+export type {
+  ForecastLineFragment,
+  SupplyIntervalAndBufferFragment,
+} from './forecast.generated';
+export { ForecastBlock, type ForecastBlockProps } from './ForecastBlock';

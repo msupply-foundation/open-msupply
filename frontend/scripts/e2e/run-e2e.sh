@@ -343,7 +343,16 @@ if [[ "$SERVERS" -gt 1 ]]; then
   echo "Splitting the suites across $SERVERS servers"
   SPEC_GROUPS=$(node "$SCRIPT_DIR/split-specs.mjs" assign "$LIST_FILE" "$SERVERS")
   rm -f "$LIST_FILE" "$LIST_FILE.err"
-  SERVERS=$(node -p "JSON.parse(process.argv[1]).length" "$SPEC_GROUPS")
+  # String(): `node -p` colours a printed number when FORCE_COLOR is set
+  # (Claude Code sets it), and a coloured count never satisfies the slot
+  # loop's -ge test below, so it would claim every free slot.
+  SERVERS=$(node -p "String(JSON.parse(process.argv[1]).length)" "$SPEC_GROUPS")
+fi
+# Every server boots its own database and dev server — anything but a small
+# positive integer here must stop the run, not size it.
+if ! [[ "$SERVERS" =~ ^[1-9][0-9]?$ ]]; then
+  echo "Bad server count '$SERVERS' — expected a positive integer (E2E_SERVERS)" >&2
+  exit 1
 fi
 
 # Pick a free port slot per server when none was requested: slot n -> server

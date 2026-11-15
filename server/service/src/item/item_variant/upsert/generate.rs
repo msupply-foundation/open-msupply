@@ -21,12 +21,15 @@ pub fn generate(
         vvm_type,
     }: UpsertItemVariantWithPackaging,
 ) -> ItemVariantRow {
-    let (created_datetime, created_by) = match existing_variant {
+    // Editing an auto-created variant leaves it auto-created: only promoting it
+    // makes it a real one
+    let (created_datetime, created_by, is_auto_created) = match existing_variant {
         Some(ref variant) => (
             variant.item_variant_row.created_datetime,
             variant.item_variant_row.created_by.clone(),
+            variant.item_variant_row.is_auto_created,
         ),
-        None => (Utc::now().naive_utc(), Some(user_id.to_string())),
+        None => (Utc::now().naive_utc(), Some(user_id.to_string()), false),
     };
 
     ItemVariantRow {
@@ -41,6 +44,7 @@ pub fn generate(
         created_datetime,
         created_by,
         deleted_datetime: None,
+        is_auto_created,
     }
 }
 

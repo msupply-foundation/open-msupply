@@ -16,6 +16,10 @@ pub struct SaveOutboundShipmentLinesInput {
     pub item_id: String,
     pub lines: Vec<OutboundShipmentLineInput>,
     pub placeholder_quantity: Option<f64>,
+    /// The barcode scanned to issue the item, as read; recorded on the item's
+    /// saved lines, and on the stock they issue from where it has none. Doesn't
+    /// propose a barcode (see `proposeBarcode`).
+    pub barcode: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -75,12 +79,14 @@ impl SaveOutboundShipmentLinesInput {
             item_id,
             lines,
             placeholder_quantity,
+            barcode,
         } = self;
 
         SaveStockOutItemLines {
             invoice_id,
             item_id,
             placeholder_quantity,
+            barcode,
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {

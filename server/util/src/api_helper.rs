@@ -182,9 +182,9 @@ where
     }
 }
 
-/// True if the server dropped an established connection mid-response (hyper `IncompleteMessage`,
-/// reset, broken pipe) - distinct from `is_connect`/`is_timeout`, and safe to retry for idempotent
-/// requests.
+/// True if an established connection ended mid-response (hyper `IncompleteMessage`, reset, abort,
+/// broken pipe, early EOF) - distinct from `is_connect`/`is_timeout`, and safe to retry for
+/// idempotent requests.
 fn is_connection_dropped(error: &reqwest::Error) -> bool {
     // Only request-phase transport errors; never status / decode / body errors.
     error.is_request() && chain_contains_transient_drop(error)
@@ -196,7 +196,9 @@ fn is_connection_dropped(error: &reqwest::Error) -> bool {
 /// (the body is read by the caller, not here) can classify the same failure the same way -
 /// see `ParsingResponseError::from_body_read_error` in the sync api.
 pub fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) -> bool {
-    // hyper renders `IncompleteMessage` as "connection closed before message completed".
+    // hyper's own errors aren't `io::Error`s, so `IncompleteMessage` is matched by text: hyper
+    // renders it as "connection closed before message completed". The rest are kept for chains
+    // that carry only the message.
     const SIGNATURES: [&str; 6] = [
         "connection closed before message completed",
         "incompletemessage",
@@ -210,6 +212,28 @@ pub fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) 
 
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(error);
     while let Some(err) = current {
+        // An `io::Error` is matched by kind, so it doesn't depend on how the platform or
+        // library words it. Each of these was missed by the text signatures above:
+        // - `ConnectionAborted`: Android closes every socket on a network it drops (signal
+        //   lost, Wi-Fi to mobile handover) with "Software caused connection abort"
+        //   (ECONNABORTED); Windows says "An established connection was aborted by the
+        //   software in your host machine" (WSAECONNABORTED).
+        // - `ConnectionReset`: Windows says "An existing connection was forcibly closed by the
+        //   remote host" (WSAECONNRESET).
+        // - `UnexpectedEof`: over TLS, a TCP close without `close_notify` (central killed, a
+        //   proxy cutting the connection) is rustls' "peer closed connection without sending
+        //   TLS close_notify", not hyper's `IncompleteBody`.
+        if let Some(io_error) = err.downcast_ref::<std::io::Error>()
+            && matches!(
+                io_error.kind(),
+                std::io::ErrorKind::ConnectionReset
+                    | std::io::ErrorKind::ConnectionAborted
+                    | std::io::ErrorKind::BrokenPipe
+                    | std::io::ErrorKind::UnexpectedEof
+            )
+        {
+            return true;
+        }
         let message = err.to_string().to_lowercase();
         if SIGNATURES
             .iter()
@@ -227,11 +251,12 @@ mod test {
     use super::chain_contains_transient_drop;
     use std::error::Error;
     use std::fmt;
+    use std::io::{self, ErrorKind};
 
     #[derive(Debug)]
     struct ChainError {
         message: String,
-        source: Option<Box<ChainError>>,
+        source: Option<Box<dyn Error + 'static>>,
     }
 
     impl fmt::Display for ChainError {
@@ -242,23 +267,42 @@ mod test {
 
     impl Error for ChainError {
         fn source(&self) -> Option<&(dyn Error + 'static)> {
-            self.source
-                .as_ref()
-                .map(|boxed| boxed.as_ref() as &(dyn Error + 'static))
+            self.source.as_deref()
         }
     }
 
     fn chain(messages: &[&str]) -> ChainError {
+        chain_onto(messages, None)
+    }
+
+    /// As `chain`, with `innermost` as the last error in the chain - the shape reqwest gives,
+    /// where hyper's error wraps the `io::Error` the socket or TLS layer returned.
+    fn chain_ending_in(messages: &[&str], innermost: io::Error) -> ChainError {
+        chain_onto(messages, Some(Box::new(innermost)))
+    }
+
+    fn chain_onto(messages: &[&str], innermost: Option<Box<dyn Error + 'static>>) -> ChainError {
         // Build innermost-first so the outer error's source points inward.
-        let mut current: Option<Box<ChainError>> = None;
-        for message in messages.iter().rev() {
+        let (outer, inner) = messages.split_first().expect("at least one message");
+        let mut current = innermost;
+        for message in inner.iter().rev() {
             current = Some(Box::new(ChainError {
                 message: message.to_string(),
                 source: current,
             }));
         }
-        *current.unwrap()
+        ChainError {
+            message: outer.to_string(),
+            source: current,
+        }
     }
+
+    /// The body-read chain reqwest gives, above the `io::Error`.
+    const BODY_READ: [&str; 3] = [
+        "error decoding response body",
+        "request or response body error",
+        "error reading a body from connection",
+    ];
 
     #[test]
     fn detects_incomplete_message_deep_in_chain() {
@@ -320,5 +364,62 @@ mod test {
 
         let bad_request = chain(&["builder error", "invalid header value"]);
         assert!(!chain_contains_transient_drop(&bad_request));
+    }
+
+    /// Android closes every socket on a network it drops (airplane mode, Wi-Fi off with
+    /// mobile still up), reproduced on Android 12 and 13 emulators mid-body.
+    #[test]
+    fn detects_android_connection_abort() {
+        let error = chain_ending_in(
+            &BODY_READ,
+            io::Error::new(
+                ErrorKind::ConnectionAborted,
+                "Software caused connection abort (os error 103)",
+            ),
+        );
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    /// Over TLS, a TCP close without `close_notify` is rustls' error, not hyper's
+    /// `IncompleteBody` - reproduced by closing an HTTPS response mid-body.
+    #[test]
+    fn detects_tls_close_without_close_notify() {
+        let error = chain_ending_in(
+            &BODY_READ,
+            io::Error::new(
+                ErrorKind::UnexpectedEof,
+                "peer closed connection without sending TLS close_notify: \
+                 https://docs.rs/rustls/latest/rustls/manual/_03_howto/index.html#unexpected-eof",
+            ),
+        );
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    /// Windows words a reset differently, without "connection reset".
+    #[test]
+    fn detects_windows_connection_reset() {
+        let error = chain_ending_in(
+            &BODY_READ,
+            io::Error::new(
+                ErrorKind::ConnectionReset,
+                "An existing connection was forcibly closed by the remote host. (os error 10054)",
+            ),
+        );
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    /// Other `io::Error` kinds aren't a drop: refusals are `is_connect`'s, timeouts are
+    /// `is_timeout`'s, and the rest aren't transport failures.
+    #[test]
+    fn ignores_other_io_error_kinds() {
+        for kind in [
+            ErrorKind::ConnectionRefused,
+            ErrorKind::TimedOut,
+            ErrorKind::PermissionDenied,
+            ErrorKind::InvalidData,
+        ] {
+            let error = chain_ending_in(&BODY_READ, io::Error::new(kind, "some failure"));
+            assert!(!chain_contains_transient_drop(&error), "kind: {:?}", kind);
+        }
     }
 }

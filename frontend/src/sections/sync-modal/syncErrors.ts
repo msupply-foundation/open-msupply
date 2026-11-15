@@ -11,7 +11,13 @@
 import type { LocaleKey } from '../../intl';
 import type { SyncErrorVariant } from './syncStatus';
 
-export type SyncErrorSummary = { summary: LocaleKey; hint?: LocaleKey };
+export type SyncErrorSummary = {
+  summary: LocaleKey;
+  hint?: LocaleKey;
+  // How the reason is framed where it is shown. Default 'error'; 'warning' for
+  // an expected, self-clearing state the user need not act on.
+  severity?: 'warning';
+};
 
 const CONNECTION: SyncErrorSummary = {
   summary: 'error.connection-error',
@@ -67,6 +73,13 @@ const SUMMARY_BY_VARIANT: Record<SyncErrorVariant, SyncErrorSummary> = {
   SITE_IS_NOT_V7: { summary: 'error.site-is-not-v7' },
   WAITING_FOR_CENTRAL_V7_UPGRADE: {
     summary: 'error.waiting-for-central-v7-upgrade',
+  },
+  // Central paused its sync API for maintenance; this site retries on its
+  // normal interval and resumes by itself (#717).
+  SYNC_API_PAUSED: {
+    summary: 'error.sync-api-paused',
+    hint: 'error.sync-api-paused-hint',
+    severity: 'warning',
   },
   // Integration.
   INTEGRATION_TIMEOUT_REACHED: INTEGRATION_TIMEOUT,

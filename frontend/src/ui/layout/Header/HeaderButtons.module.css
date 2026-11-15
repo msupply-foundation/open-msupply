@@ -18,3 +18,23 @@
      height and the whole header jitters as buttons come and go. */
   min-block-size: var(--nav-item-height);
 }
+
+/* Narrow viewports (≤1023px, breakpoints.navOverlay): keep the buttons on one
+   line beside the breadcrumb — they shed their labels to icons when they
+   don't fit (Header measures it), rather than wrapping.
+   `> [data-variant]` = a Button or SplitButton root — a QR trigger or other
+   control inside a content block doesn't count. */
+@media (max-width: 1023px) {
+  .buttons:has(> [data-variant]) {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+  }
+
+  /* Content rather than buttons (the utility pages' Server/Version block):
+     its own full-width row under the title, not squeezed in beside it. */
+  .buttons:not(:has(> [data-variant])) {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}

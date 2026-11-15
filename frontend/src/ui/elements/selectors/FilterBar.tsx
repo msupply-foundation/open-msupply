@@ -11,6 +11,7 @@ import {
 } from '../../icons';
 import { t } from '../../../intl';
 import { createDebounced } from '../../utils/createDebounced';
+import { usePortalMount } from '../../utils/portalMount';
 import {
   createFocusTargets,
   type FocusTarget,
@@ -19,10 +20,10 @@ import { NumberField } from '../inputs/NumberField';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { DateRangeField } from '../inputs/DateRangeField';
 import {
-  localTodayIso,
-  utcBoundsFromLocalDays,
-  utcToLocalDay,
-} from '../inputs/dateTimeConvert';
+  todayCalendarDate,
+  instantBoundsFromCalendarDates,
+  instantToCalendarDate,
+} from '../../../intl/calendarDate';
 import { DateTimeField } from '../inputs/DateTimeField';
 import { Combobox } from './Combobox';
 import {
@@ -316,7 +317,9 @@ export const FilterBar = <
   };
 
   return (
-    <div class={styles.bar}>
+    // The data-filter-* hooks let a host toolbar (DataTable at phone
+    // widths) re-flow the bar's parts into its own row.
+    <div class={styles.bar} data-filter-bar="">
       <FiltersMenu available={menuItems()} focusChip={handOffToChip} />
 
       <For each={main.active()}>
@@ -365,6 +368,7 @@ export const FilterBar = <
         <button
           type="button"
           class={styles.clearAll}
+          data-filter-clear=""
           // Same id as the current app's "Remove all filters" menu entry — the
           // e2e suites locate the action, not its placement (e2e/TESTIDS.md
           // § Shared ids).
@@ -425,7 +429,7 @@ const FilterChip = (props: {
   focusTarget: FocusTarget;
   children: JSX.Element;
 }) => (
-  <div class={styles.chip}>
+  <div class={styles.chip} data-filter-chip="">
     <span class={styles.chipLabel}>{props.label}:</span>
     {/* props.children is a getter compiled from the caller's JSX, so the
         control is CONSTRUCTED here — under the provider — not at the <For>. */}
@@ -463,6 +467,7 @@ const FiltersMenu = (props: {
   // and after which nothing else re-takes focus. An Escape/outside
   // dismissal (no pick) keeps the normal restore (keyboard a11y).
   let pickedKey: string | undefined;
+  const portalMount = usePortalMount();
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       {/* The spec's dashed "Add filter" pill (ui-standards § tables →
@@ -472,13 +477,16 @@ const FiltersMenu = (props: {
           so avoid opening an empty popover. */}
       <DropdownMenu.Trigger
         class={styles.trigger}
+        data-filter-trigger=""
         data-testid="filters-menu"
         disabled={props.available.length === 0}
       >
         <FilterIcon class={styles.triggerIcon} />
-        <span>{t('label.add-filter')}</span>
+        <span class={styles.triggerLabel}>{t('label.add-filter')}</span>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      {/* Mounts into a containing dialog's top-layer box, where a <body>
+          portal would paint behind it and sit inert (ui/utils/portalMount). */}
+      <DropdownMenu.Portal mount={portalMount?.()}>
         <DropdownMenu.Content
           class={styles.content}
           onCloseAutoFocus={event => {
@@ -612,6 +620,9 @@ export const FilterTextInput = (props: FilterTextInputProps) => {
  * DEBOUNCED like the text filter: NumberField eagerly commits every valid
  * keystroke, and an exact-match filter applied at "12" while typing "1200"
  * matches nothing — the pause lets the whole number land as one change.
+ * Enter or blur applies it at once, as the text filter does: a change landing
+ * 300ms after the user moved on reaches the screen as a second, unasked-for
+ * edit (the link-purchase-order modal dropped the row picked in that gap).
  * `decimalLimit` defaults to 0 (an integer filter — stocktake number, pack
  * count); pass a limit for decimal filters.
  */
@@ -638,7 +649,10 @@ export const FilterNumberInput = (props: {
     300
   );
   return (
-    <span class={styles.bareField}>
+    // NumberField turns Enter into a blur and commits in its blur handler,
+    // which runs before focusout reaches here — so this flush carries that
+    // commit. A flush after the chip is gone is a no-op (createDebounced).
+    <span class={styles.bareField} onFocusOut={() => commit.flush()}>
       <NumberField
         label={props.label}
         hideLabel
@@ -783,6 +797,7 @@ export interface FilterSelectProps<V extends string> {
 export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
   const chipFocus = useChipFocus();
   const current = () => props.options.find(o => o.value === props.value);
+  const portalMount = usePortalMount();
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       <DropdownMenu.Trigger
@@ -794,7 +809,7 @@ export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
         <span>{current()?.label ?? ''}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      <DropdownMenu.Portal mount={portalMount?.()}>
         <DropdownMenu.Content class={styles.content}>
           <Show when={props.options.length > 0} fallback={<NoOptions />}>
             <DropdownMenu.RadioGroup
@@ -916,6 +931,7 @@ export const FilterMultiSelect = <V extends string>(props: {
     const without = props.values.filter(v => v !== value);
     props.onChange(checked ? [...without, value] : [...without]);
   };
+  const portalMount = usePortalMount();
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
       <DropdownMenu.Trigger
@@ -927,7 +943,7 @@ export const FilterMultiSelect = <V extends string>(props: {
         <span>{summary()}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      <DropdownMenu.Portal mount={portalMount?.()}>
         <DropdownMenu.Content class={styles.content}>
           <Show when={props.options.length > 0} fallback={<NoOptions />}>
             <For each={props.options}>
@@ -994,7 +1010,7 @@ export interface RangeBounds {
  * A date-range filter chip. The user picks a calendar-day range; `type` (the
  * target field's wire scalar) drives the conversion — kept here so no vertical
  * hand-rolls it (#456): `dateTime` widens each day to UTC day-start/day-end
- * bounds and reads back to the local day; `date` passes the plain ISO date
+ * bounds and reads back to the local day; `date` passes the calendar date
  * through. The value is the field's own wire bounds, so a vertical binds its
  * key directly.
  */
@@ -1015,12 +1031,13 @@ export const FilterDateRange = (props: FilterDateRangeProps) => {
   // just-added chip OPENS its calendar rather than merely focusing it.
   const chipFocus = useChipFocus();
   const toLocal = (bound: string | null | undefined): string | null =>
-    props.type === 'dateTime' ? utcToLocalDay(bound) : (bound ?? null);
+    props.type === 'dateTime' ? instantToCalendarDate(bound) : (bound ?? null);
   const toWire = (
     start: string | null,
     end: string | null
   ): RangeBounds | null => {
-    if (props.type === 'dateTime') return utcBoundsFromLocalDays(start, end);
+    if (props.type === 'dateTime')
+      return instantBoundsFromCalendarDates(start, end);
     return start || end
       ? {
           ...(start ? { afterOrEqualTo: start } : {}),
@@ -1040,7 +1057,7 @@ export const FilterDateRange = (props: FilterDateRangeProps) => {
           start: toLocal(props.value?.afterOrEqualTo),
           end: toLocal(props.value?.beforeOrEqualTo),
         }}
-        max={props.disableFuture ? localTodayIso() : undefined}
+        max={props.disableFuture ? todayCalendarDate() : undefined}
         onChange={({ start, end }) => props.onChange(toWire(start, end))}
       />
     </span>
@@ -1049,7 +1066,7 @@ export const FilterDateRange = (props: FilterDateRangeProps) => {
 
 /** A datetime range as UTC ISO instants, either side nullable — see
  * FilterDateTimeRange. */
-export interface IsoDateTimeRange {
+export interface InstantRange {
   start: string | null;
   end: string | null;
 }
@@ -1067,8 +1084,8 @@ export interface IsoDateTimeRange {
  * filter's bounds (e.g. after/beforeOrEqualTo).
  */
 export const FilterDateTimeRange = (props: {
-  value: IsoDateTimeRange;
-  onChange: (value: IsoDateTimeRange) => void;
+  value: InstantRange;
+  onChange: (value: InstantRange) => void;
   fromLabel: string;
   toLabel: string;
   disableFuture?: boolean;
@@ -1136,7 +1153,7 @@ export const FilterDate = (props: {
         data-testid={props.testId}
         ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         value={props.value}
-        max={props.disableFuture ? localTodayIso() : undefined}
+        max={props.disableFuture ? todayCalendarDate() : undefined}
         aria-label={props.label}
         onInput={e => props.onInput(e.currentTarget.value)}
       />

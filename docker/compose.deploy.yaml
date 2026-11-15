@@ -119,6 +119,14 @@ services:
       # is what the dashboard shows as "by ...".
       oms.actor: ${OMS_ACTOR:-}
 
+      # Which dataset the database was seeded from - `e2e`, `reference1`, one
+      # of the Launchpad's (publish-dataset.yaml) by name - or `none` for one
+      # that started empty. Carried forward
+      # like the owner, since only the deploy that creates the database knows.
+      # Like the owner, nothing decides anything on it: the dashboard reads it
+      # to say how to log in. Empty means a database from before the label.
+      oms.dataset: ${OMS_DATASET:-}
+
     # The image's own entrypoint, which runs initdb/pg_ctl/createdb against the
     # cluster inside the container and then execs entry.sh. Not a variable: with
     # external postgres support removed there is exactly one correct value, and

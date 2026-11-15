@@ -145,16 +145,17 @@ pub fn validate(
     }
 
     // External inbound shipments (with purchase_order_id) require a purchase_order_line_id
-    if invoice.purchase_order_id.is_some() {
-        match &input.purchase_order_line_id {
-            None => return Err(PurchaseOrderLineIdRequired),
-            Some(pol_id) => {
-                // REVIEW: is it ok to do a repository call in the validation step?
-                let pol = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(pol_id)?;
-                if pol.is_none() {
-                    return Err(PurchaseOrderLineDoesNotExist);
-                }
-            }
+    // from the linked purchase order
+    if let Some(purchase_order_id) = &invoice.purchase_order_id {
+        let pol_id = input
+            .purchase_order_line_id
+            .as_ref()
+            .ok_or(PurchaseOrderLineIdRequired)?;
+        let pol = PurchaseOrderLineRowRepository::new(connection)
+            .find_one_by_id(pol_id)?
+            .ok_or(PurchaseOrderLineDoesNotExist)?;
+        if &pol.purchase_order_id != purchase_order_id {
+            return Err(PurchaseOrderLineNotFromLinkedOrder);
         }
     }
 

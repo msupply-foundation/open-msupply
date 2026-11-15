@@ -54,6 +54,20 @@ mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
   }
 }
 
+# Makes a variant central auto-created to hold a barcode a real one, so it shows
+# on the Variants tab and in pickers (decisions/2026-09-30_barcodes.md,
+# Option 6 › Promoting). Its id stays the same, so stock already on it stays
+# linked. Every error is a top-level GraphQL error.
+mutation promoteItemVariant($storeId: String!, $id: String!) {
+  centralServer {
+    itemVariant {
+      promoteItemVariant(storeId: $storeId, id: $id) {
+        id
+      }
+    }
+  }
+}
+
 # upsertBundledItem's error interface is vestigial — its only members are
 # internal/database (DatabaseError / InternalError). Every real rejection
 # (cannot-bundle-with-itself, duplicate pair, no-nesting) is a NON-typed

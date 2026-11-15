@@ -3,6 +3,7 @@ import { MemoryRouter, Route } from '@solidjs/router';
 import { Text, type TextVariant } from '../ui/elements/typography/Text';
 import { RecordLink } from '../ui/elements/typography/RecordLink';
 import { UserLabel } from '../ui/elements/typography/UserLabel';
+import { Num } from '../ui/elements/typography/Num';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
@@ -96,6 +97,18 @@ export const typographyMetadata: PageMetadata = {
       id: 'typography-record-link',
       title: 'RecordLink',
       searchTerms: ['link', 'related', 'record', 'kind', 'tone', 'po', 'io'],
+    },
+    {
+      id: 'typography-num',
+      title: 'Num',
+      searchTerms: [
+        'number',
+        'decimal',
+        'rounding',
+        'hover',
+        'exact',
+        'volume',
+      ],
     },
     {
       id: 'typography-user-label',
@@ -340,8 +353,8 @@ export const TypographyShowcase = () => (
       >
         <Lead>
           The "Entered by" / "Edited by" row every detail side panel shows: the
-          recorded user's name, with their email behind the shared info marker
-          — hover or tap the icon. No email, no icon; no user, a dash.{' '}
+          recorded user's name, with their email behind the shared info marker —
+          hover or tap the icon. No email, no icon; no user, a dash.{' '}
           <code>label</code> names the field the icon details (its accessible
           name). Font and weight inherit from the surrounding context, like any
           value text.
@@ -362,6 +375,35 @@ export const TypographyShowcase = () => (
           <div class={styles.headingRow}>
             <UserLabel label="Entered by" />
             <span class={styles.meta}>no user → a dash</span>
+          </div>
+        </div>
+      </DashboardCard>
+
+      <DashboardCard id="typography-num" title="Num — a displayed number">
+        <Lead>
+          Every figure shown to a user: rounded to the installation's decimal
+          places (default 2), marked <code>*</code> when that dropped digits —
+          hover it for the exact value, which is also its accessible name. A
+          figure showing its whole value is bare text. <code>volume</code> keeps
+          a volume's own five places; <code>places</code> and <code>pad</code>{' '}
+          fit a headline band.
+        </Lead>
+        <div class={styles.headingStack}>
+          <div class={styles.headingRow}>
+            <Num value={1234.5678} />
+            <span class={styles.meta}>rounded → marked, exact on hover</span>
+          </div>
+          <div class={styles.headingRow}>
+            <Num value={1234.5} />
+            <span class={styles.meta}>whole value shown → bare text</span>
+          </div>
+          <div class={styles.headingRow}>
+            <Num value={0.0035} volume />
+            <span class={styles.meta}>volume → its own five places</span>
+          </div>
+          <div class={styles.headingRow}>
+            <Num value={2.5} places={0} pad />
+            <span class={styles.meta}>places=0 → a whole figure, marked</span>
           </div>
         </div>
       </DashboardCard>

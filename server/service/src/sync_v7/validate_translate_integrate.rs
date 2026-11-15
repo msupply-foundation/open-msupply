@@ -4,6 +4,7 @@ use crate::{
         sync_buffer::{
             write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
         },
+        synchroniser::INTEGRATION_BATCH_SIZE,
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
 };
@@ -97,6 +98,7 @@ fn translate_delete(
         ChangelogTableName::AssetInternalLocation => Box::new(AssetInternalLocationRowDelete(id)),
         ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
         ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
+        ChangelogTableName::BarcodeProposal => Box::new(BarcodeProposalRowDelete(id)),
         ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
         ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
         ChangelogTableName::FormSchema => Box::new(FormSchemaRowDelete(id)),
@@ -111,6 +113,7 @@ fn translate_delete(
         ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
         ChangelogTableName::NameTag => Box::new(NameTagRowDelete(id)),
         ChangelogTableName::NameTagJoin => Box::new(NameTagJoinRowDelete(id)),
+        ChangelogTableName::PluginData => Box::new(PluginDataRowDelete(id)),
         ChangelogTableName::Preference => Box::new(PreferenceRowDelete(id)),
         ChangelogTableName::ProgramRequisitionOrderType => {
             Box::new(ProgramRequisitionOrderTypeRowDelete(id))
@@ -137,6 +140,7 @@ fn translate_delete(
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
         ChangelogTableName::UserPermission => Box::new(UserPermissionRowDelete(id)),
+        ChangelogTableName::UserStoreJoin => Box::new(UserStoreJoinRowDelete(id)),
         ChangelogTableName::VVMStatus => Box::new(VVMStatusRowDelete(id)),
         ChangelogTableName::VVMStatusLog => Box::new(VVMStatusLogRowDelete(id)),
         ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
@@ -156,7 +160,6 @@ fn translate_delete(
         | ChangelogTableName::AssetLog
         | ChangelogTableName::AssetLogReason
         | ChangelogTableName::AssetProperty
-        | ChangelogTableName::Barcode
         | ChangelogTableName::BundledItem
         | ChangelogTableName::Campaign
         | ChangelogTableName::Clinician
@@ -185,7 +188,6 @@ fn translate_delete(
         | ChangelogTableName::PackagingVariant
         | ChangelogTableName::Period
         | ChangelogTableName::PeriodSchedule
-        | ChangelogTableName::PluginData
         | ChangelogTableName::Printer
         | ChangelogTableName::ProgramEnrolment
         | ChangelogTableName::ProgramEvent
@@ -202,8 +204,8 @@ fn translate_delete(
         | ChangelogTableName::SyncMessage
         | ChangelogTableName::SystemLog
         | ChangelogTableName::TemperatureBreach
+        | ChangelogTableName::TemperatureSummary
         | ChangelogTableName::TemperatureLog
-        | ChangelogTableName::UserStoreJoin
         | ChangelogTableName::Vaccination
         | ChangelogTableName::VaccineCourse
         | ChangelogTableName::VaccineCourseDose
@@ -339,25 +341,15 @@ fn validate_translate_integrate_inner<'a>(
     // stale Delete that arrived in an earlier pull batch than its re-create
     // Upsert — are marked Ignored here; the upserts-then-deletes phase split
     // below would otherwise apply them out of arrival order and a stale
-    // delete would wipe the newer record.
-    let keys = repo.pending_keys(
+    // delete would wipe the newer record. Done in SQL, so the pending keys
+    // never come into memory (#1284).
+    repo.ignore_superseded_pending(
         source_site_id,
         SyncVersion::V7,
         reference_id,
         &integration_tables,
+        "Superseded by a newer sync buffer row for the same record",
     )?;
-    let key_refs: Vec<(&str, &str, i32)> = keys
-        .iter()
-        .map(|k| (k.table_name.as_str(), k.record_id.as_str(), k.cursor))
-        .collect();
-    for cursor in superseded_cursors(&key_refs) {
-        write_sync_buffer_ignored(
-            connection,
-            cursor,
-            datetime_now(),
-            "Superseded by a newer sync buffer row for the same record",
-        )?;
-    }
 
     let mut total = repo.count_pending(
         source_site_id,
@@ -378,49 +370,70 @@ fn validate_translate_integrate_inner<'a>(
      -> Result<(), RepositoryError> {
         log::debug!("Integrating table {table} with action {action}");
 
-        let rows = repo.pending_ordered_by_cursor(PendingQuery {
-            source_site_id,
-            sync_version: SyncVersion::V7,
-            reference_id,
-            table_name: table.as_ref(),
-            action: action.clone(),
-            direction,
-            limit: i64::MAX,
-        })?;
+        let mut had_store_records = false;
 
-        log::debug!("Number of records to integrate  {}", rows.len());
+        // `INTEGRATION_BATCH_SIZE` rows at a time, so memory stays bounded however much is
+        // pending (#1284). Every row fetched is marked integrated (success, error or ignored)
+        // before the next fetch, so each fetch moves on, and the loop ends once none are left.
+        // Deletes come highest cursor first, so each batch takes the highest that remain.
+        loop {
+            let rows = repo.pending_ordered_by_cursor(PendingQuery {
+                source_site_id,
+                sync_version: SyncVersion::V7,
+                reference_id,
+                table_name: table.as_ref(),
+                action: action.clone(),
+                direction,
+                limit: INTEGRATION_BATCH_SIZE,
+            })?;
 
-        let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
+            log::debug!("Number of records to integrate  {}", rows.len());
 
-        for row in &rows {
-            let started = datetime_now();
-            let one_result = if wrap_record_in_tx {
-                connection
-                    .transaction_sync_etc(
-                        |sub| validate_translate_integrate_one(sub, row, &sync_context),
-                        false,
-                    )
-                    .map_err(|e| e.to_inner_error())
-            } else {
-                validate_translate_integrate_one(connection, row, &sync_context)
-            };
-            match one_result {
-                Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
-                Err(e @ Error::ValidationError(_)) => {
-                    write_sync_buffer_ignored(connection, row.cursor, started, &format_error(&e))?;
-                }
-                Err(e) => {
-                    write_sync_buffer_error(connection, row.cursor, started, &format_error(&e))?;
-                }
+            if rows.is_empty() {
+                break;
             }
+            had_store_records |= *table == ChangelogTableName::Store;
 
-            total -= 1;
+            for row in &rows {
+                let started = datetime_now();
+                let one_result = if wrap_record_in_tx {
+                    connection
+                        .transaction_sync_etc(
+                            |sub| validate_translate_integrate_one(sub, row, &sync_context),
+                            false,
+                        )
+                        .map_err(|e| e.to_inner_error())
+                } else {
+                    validate_translate_integrate_one(connection, row, &sync_context)
+                };
+                match one_result {
+                    Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
+                    Err(e @ Error::ValidationError(_)) => {
+                        write_sync_buffer_ignored(
+                            connection,
+                            row.cursor,
+                            started,
+                            &format_error(&e),
+                        )?;
+                    }
+                    Err(e) => {
+                        write_sync_buffer_error(
+                            connection,
+                            row.cursor,
+                            started,
+                            &format_error(&e),
+                        )?;
+                    }
+                }
 
-            if let Some(logger) = logger.as_mut()
-                && total / PROGRESS_INTERVAL <= last_progress
-            {
-                logger.progress(total)?;
-                last_progress -= 1;
+                total -= 1;
+
+                if let Some(logger) = logger.as_mut()
+                    && total / PROGRESS_INTERVAL <= last_progress
+                {
+                    logger.progress(total)?;
+                    last_progress -= 1;
+                }
             }
         }
 
@@ -579,9 +592,12 @@ mod test {
     use super::*;
     use crate::sync::ActiveStoresOnSite;
     use repository::{
-        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
+        mock::{
+            MockDataInserts, mock_store_a, mock_user_account_a, mock_user_store_join_a_store_a,
+        },
         test_db::setup_all,
     };
+    use strum::IntoEnumIterator;
 
     /// Matches `mock_store_a().site_id`, making store_a active on this site.
     const SITE_ID: i32 = 100;
@@ -686,6 +702,37 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn integrate_fetches_in_batches() {
+        // #1284: rows are fetched `INTEGRATION_BATCH_SIZE` at a time. One more than a
+        // batch must still all integrate, the extra one in a second fetch.
+        let connection = setup("integrate_fetches_in_batches", MockDataInserts::none()).await;
+
+        let rows: Vec<SyncBufferRowInsert> = (0..=INTEGRATION_BATCH_SIZE)
+            .map(|i| {
+                let id = format!("u{i}");
+                buffer_row(&id, SyncAction::Upsert, unit_data(&id))
+            })
+            .collect();
+        SyncBufferRepository::new(&connection)
+            .insert_many(&rows)
+            .unwrap();
+
+        integrate(&connection, None);
+
+        let pending = SyncBufferRepository::new(&connection)
+            .count_pending(SOURCE_SITE_ID, SyncVersion::V7, None, None)
+            .unwrap();
+        assert_eq!(pending, 0);
+        let last = format!("u{INTEGRATION_BATCH_SIZE}");
+        assert!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id(&last)
+                .unwrap()
+                .is_some()
+        );
+    }
+
+    #[actix_rt::test]
     async fn integrate_marks_stale_delete_superseded() {
         // The #12610 shape: a stale Delete arrives in an earlier batch than the
         // record's re-create Upsert. The delete must be superseded, not applied
@@ -748,6 +795,57 @@ mod test {
         assert_eq!(result, Some(IntegrationResult::Ignored));
         let (result, _) = buffer_result(&connection, 2);
         assert_eq!(result, Some(IntegrationResult::Success));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_barcode_proposal_delete_on_central() {
+        // A store withdrawing its proposal pushes a delete; central removes it.
+        let connection = setup(
+            "integrate_barcode_proposal_delete_on_central",
+            MockDataInserts::none().names().stores().units().items(),
+        )
+        .await;
+        let proposal = BarcodeProposalRow {
+            id: "proposal".to_string(),
+            value: "gtin:09506682101352".to_string(),
+            item_id: repository::mock::mock_item_a().id,
+            store_id: mock_store_a().id,
+            user_id: mock_user_account_a().id,
+            ..Default::default()
+        };
+        BarcodeProposalRowRepository::new(&connection)
+            ._upsert(&proposal)
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "barcode_proposal".to_string(),
+                store_id: Some(mock_store_a().id),
+                ..buffer_row("proposal", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        validate_translate_integrate(
+            &connection,
+            None,
+            SOURCE_SITE_ID,
+            None,
+            SyncContext::Central {
+                source_site_active_store_ids: vec![mock_store_a().id],
+                is_multi_device: false,
+            },
+            true,
+        )
+        .unwrap();
+
+        assert_eq!(
+            BarcodeProposalRowRepository::new(&connection)
+                .find_one_by_id("proposal")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
     }
 
     #[actix_rt::test]
@@ -861,6 +959,129 @@ mod test {
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Ignored));
         assert!(error.unwrap().contains("Superseded"));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_user_store_join_delete() {
+        // #1949: unticking "can log in" in legacy mSupply deletes the join on central,
+        // which must reach the store's v7 site, or the user still sees the store there.
+        let connection = setup(
+            "integrate_user_store_join_delete",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
+        )
+        .await;
+        let join = mock_user_store_join_a_store_a();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "user_store_join".to_string(),
+                store_id: Some(join.store_id.clone()),
+                ..buffer_row(&join.id, SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_one_by_id(&join.id)
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[actix_rt::test]
+    async fn integrate_plugin_data_delete() {
+        // #1949: a plugin's `deletePluginData` writes a delete changelog row, so it
+        // must be applied wherever the row was synced to.
+        let connection = setup(
+            "integrate_plugin_data_delete",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        PluginDataRowRepository::new(&connection)
+            .upsert_one(&PluginDataRow {
+                id: "plugin_data".to_string(),
+                store_id: Some(mock_store_a().id),
+                plugin_code: "plugin".to_string(),
+                related_record_id: None,
+                data_identifier: "data".to_string(),
+                data: "{}".to_string(),
+                datetime: None,
+            })
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "plugin_data".to_string(),
+                store_id: Some(mock_store_a().id),
+                ..buffer_row("plugin_data", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            PluginDataRowRepository::new(&connection)
+                .find_one_by_id("plugin_data")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[test]
+    fn every_delete_type_is_handled() {
+        // #1949: a table whose `Delete` writes a delete changelog row syncs that delete
+        // over v7, so `translate_delete` must have an arm for it. Every `impl Delete`
+        // in the repository crate is checked against the types `translate_delete`
+        // returns, so a new one can't be missed.
+        //
+        // Not deleted over v7, by design:
+        // - ReasonOptionRowDelete soft-deletes and writes an upsert changelog row.
+        const NOT_V7_DELETES: &[&str] = &["ReasonOptionRowDelete"];
+
+        let handled: HashSet<String> = ChangelogTableName::iter()
+            .filter_map(|table| translate_delete(&table, "id").ok())
+            .map(|delete| {
+                let debug = format!("{delete:?}");
+                debug
+                    .split(|c: char| !c.is_alphanumeric() && c != '_')
+                    .next()
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+
+        let impl_delete = regex::Regex::new(r"impl Delete for (\w+)").unwrap();
+        let repository_src =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../repository/src");
+        let mut unhandled: Vec<String> = walkdir::WalkDir::new(repository_src)
+            .into_iter()
+            .map(|entry| entry.unwrap())
+            .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "rs"))
+            .flat_map(|entry| {
+                let source = std::fs::read_to_string(entry.path()).unwrap();
+                impl_delete
+                    .captures_iter(&source)
+                    .map(|captures| captures[1].to_string())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|name| !handled.contains(name) && !NOT_V7_DELETES.contains(&name.as_str()))
+            .collect();
+        unhandled.sort();
+
+        assert!(
+            unhandled.is_empty(),
+            "translate_delete has no arm for {unhandled:?}: add one, or list it in NOT_V7_DELETES with the reason"
+        );
     }
 
     #[actix_rt::test]

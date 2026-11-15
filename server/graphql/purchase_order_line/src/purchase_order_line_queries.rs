@@ -35,7 +35,6 @@ pub enum PurchaseOrderLineSortFieldInput {
     PurchaseOrderNumber,
     SupplierName,
     PurchaseOrderConfirmedDatetime,
-    AdjustedNumberOfUnits,
     ReceivedNumberOfUnits,
     OutstandingNumberOfUnits,
 }
@@ -52,7 +51,7 @@ pub struct PurchaseOrderLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterPurchaseOrderLineStatusInput>,
-    pub received_less_than_adjusted: Option<bool>,
+    pub received_less_than_requested: Option<bool>,
     pub supplier_name: Option<StringFilterInput>,
     pub purchase_order_number: Option<EqualFilterBigNumberInput>,
     pub item_name: Option<StringFilterInput>,
@@ -184,7 +183,7 @@ impl PurchaseOrderLineFilterInput {
             status: self
                 .status
                 .map(|s| map_filter!(s, PurchaseOrderLineStatus::from)),
-            received_less_than_adjusted: self.received_less_than_adjusted,
+            received_less_than_requested: self.received_less_than_requested,
             store_id: None,
             requested_pack_size: None,
             item_id: None,

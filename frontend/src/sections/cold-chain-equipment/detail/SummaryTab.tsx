@@ -1,3 +1,4 @@
+import { categoryName, reasonName, typeName } from '@/domain/asset';
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { gated } from '@/api/gated';
@@ -164,10 +165,12 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
             {/* Fixed after creation — a labelled value, not a disabled box
               (OMS-REG-CCE-05.7). */}
             <LabelledValue variant="field" label={t('label.category')}>
-              {props.asset.assetCategory?.name ?? ABSENT}
+              {props.asset.assetCategory
+                ? categoryName(props.asset.assetCategory)
+                : ABSENT}
             </LabelledValue>
             <LabelledValue variant="field" label={t('label.type')}>
-              {props.asset.assetType?.name ?? ABSENT}
+              {props.asset.assetType ? typeName(props.asset.assetType) : ABSENT}
             </LabelledValue>
             <TextField
               label={t('label.serial')}
@@ -286,7 +289,9 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 : ABSENT}
             </LabelledValue>
             <LabelledValue variant="field" label={t('label.reason')}>
-              {props.asset.statusLog?.reason?.reason ?? ABSENT}
+              {props.asset.statusLog?.reason
+                ? reasonName(props.asset.statusLog.reason)
+                : ABSENT}
             </LabelledValue>
             <Checkbox
               label={t('label.needs-replacement')}

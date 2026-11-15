@@ -64,6 +64,9 @@ fragment UserInfo on UserNode {
   phoneNumber
   inactivityTimeoutSeconds
   tokenRefreshIntervalSeconds
+  # The profile's language (spec/i18n § choosing the locale): login shows it
+  # unless the user has chosen a language on this device.
+  language
   defaultStore {
     id
   }
@@ -90,4 +93,11 @@ fragment UserInfo on UserNode {
       isDisabled
     }
   }
+}
+
+# Central maintenance mode (#840): only server administrators can log in while
+# it is on. Unauthenticated, so the login screen can say so before anyone
+# tries.
+query isMaintenanceMode {
+  isMaintenanceMode
 }

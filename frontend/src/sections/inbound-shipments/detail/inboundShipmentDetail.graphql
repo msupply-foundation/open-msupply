@@ -71,6 +71,11 @@ fragment InboundInfo on InvoiceNode {
     number
     reference
     orderTotalAfterDiscount
+    supplierDiscountPercentage
+    donor {
+      id
+      name
+    }
     currency {
       id
       code
@@ -88,6 +93,11 @@ fragment InboundInfo on InvoiceNode {
   shippingMethod {
     id
     method
+  }
+  # The shipment's default campaign — new lines start with it.
+  campaign {
+    id
+    name
   }
   pricing {
     totalBeforeTax
@@ -128,6 +138,9 @@ fragment InboundLine on InvoiceLineNode {
   # rules § requested quantity and supplier comment). Per ITEM, so every batch
   # of one item carries the same value.
   transferComment
+  # The barcode the line's box carried, in its standard form (barcode-scanning
+  # rules § Receiving by scanning: it keeps two lines of one item apart).
+  barcode
   # The linked internal order's line for this line's item — the source of the
   # Requested column and the line editor's internal-order band. Null when the
   # shipment has no internal-order link, or the order has no line for the item.
@@ -162,7 +175,13 @@ fragment InboundLine on InvoiceLineNode {
     unitName
     isVaccine
     doses
+    # What "Add batch" seeds a new batch from, for an item opened from its row
+    # (spec rules › new-batch defaults).
     defaultPackSize
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
+    volumePerPack
   }
   donor(storeId: $storeId) {
     id
@@ -193,11 +212,13 @@ fragment InboundLine on InvoiceLineNode {
     lineNumber
     requestedPackSize
     requestedNumberOfUnits
-    adjustedNumberOfUnits
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits
+    pricePerPackBeforeDiscount
     pricePerPackAfterDiscount
+    # The pack price the shipment's cost was seeded from
+    pricePerPackAfterSupplierDiscount
   }
 }
 

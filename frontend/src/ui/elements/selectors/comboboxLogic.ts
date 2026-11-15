@@ -67,3 +67,46 @@ export const visibleOptions = <T>(
   }
   return { items: kept, total };
 };
+
+/**
+ * A heading plus its items — what Kobalte reads as a SECTION once
+ * `optionGroupChildren` names the `options` key.
+ */
+export type Section<T> = { label: string; options: T[] };
+
+/**
+ * The heading of the section holding the PINNED items — empty, because that
+ * tier has no name: it is simply what comes before the groups. It has to be a
+ * section at all only because Kobalte will not mix bare options with sections
+ * (see {@link sectionOptions}); `.section:empty` renders it as nothing.
+ */
+export const PINNED_SECTION = '';
+
+/*
+ * Group a flat option list into Kobalte sections (Combobox's `itemGroup`).
+ *
+ * EVERY node must be a section: Kobalte reads `optionGroupChildren` off each
+ * top-level node without checking it is there, so a bare option sitting beside
+ * a section throws on the missing array. The items the caller leaves ungrouped
+ * therefore go into one empty-headed section of their own, always first.
+ *
+ * Groups bucket IN FIRST-SEEN ORDER, so the caller's own item order decides how
+ * the headings fall rather than an alphabetical sort nobody asked for. A
+ * section with no items is never built, so a group whose items were all
+ * filtered away takes its heading with it.
+ */
+export const sectionOptions = <T>(
+  items: T[],
+  group: (item: T) => string | undefined
+): Section<T>[] => {
+  const sections = new Map<string, T[]>([[PINNED_SECTION, []]]);
+  for (const item of items) {
+    const label = group(item) ?? PINNED_SECTION;
+    const bucket = sections.get(label);
+    if (bucket) bucket.push(item);
+    else sections.set(label, [item]);
+  }
+  return [...sections]
+    .filter(([, bucket]) => bucket.length > 0)
+    .map(([label, bucket]) => ({ label, options: bucket }));
+};

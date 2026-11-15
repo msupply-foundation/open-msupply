@@ -18,13 +18,13 @@ import type {
 const ctx = vi.hoisted(() => ({
   current: {
     storeId: 'store-a',
+    storeCode: undefined,
     permissions: [],
     storeMode: undefined,
     storePreferences: {
       useConsumptionAndStockFromCustomersForInternalOrders: false,
       monthsUnderstock: undefined,
     },
-    storeCode: undefined,
     userId: undefined,
   } as SlotContext,
 }));
@@ -99,13 +99,13 @@ beforeEach(() => {
   clearPlugins();
   ctx.current = {
     storeId: 'store-a',
+    storeCode: undefined,
     permissions: [],
     storeMode: undefined,
     storePreferences: {
       useConsumptionAndStockFromCustomersForInternalOrders: false,
       monthsUnderstock: undefined,
     },
-    storeCode: undefined,
     userId: undefined,
   };
   vi.spyOn(console, 'warn').mockImplementation(() => {});

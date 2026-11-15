@@ -47,10 +47,16 @@ mutation updateNameProperties(
   }
 }
 
-# The store's 23 preference descriptions, served in the order the panel shows
+# The store's preference descriptions, served in the order the panel shows
 # them (contract § The store editor). The server fabricates a default for an
 # unset preference — there is no is-set flag — and `value` is untyped JSON
 # (the schema's own declared type loss).
+#
+# `storeOverride` is the ONE exception to the no-is-set-flag rule, and arrives
+# only for a global preference this store may override: `isOverridden` says
+# whether the store pins its own value rather than following the global one,
+# and `globalValue` is the value it follows — or would return to by clearing
+# the override (contract § The store editor).
 query storePreferences($storeId: String!) {
   preferenceDescriptions(
     storeId: $storeId
@@ -60,6 +66,10 @@ query storePreferences($storeId: String!) {
     key
     valueType
     value
+    storeOverride {
+      isOverridden
+      globalValue
+    }
   }
 }
 

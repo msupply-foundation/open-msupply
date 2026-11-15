@@ -19,3 +19,8 @@ export {
   type RecordDocument,
   type RecordDocumentsTabProps,
 } from './RecordDocumentsTab';
+export {
+  groupDocumentVersions,
+  type DocumentVersionGroup,
+  type VersionedDocument,
+} from './documentVersions';

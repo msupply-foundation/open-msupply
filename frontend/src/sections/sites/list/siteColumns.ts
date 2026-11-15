@@ -14,9 +14,9 @@ import type { SiteRow } from './siteEdit';
 // place.
 
 /**
- * The two timestamp columns are server-local wall clock (`NaiveDateTime`, no
- * offset — contract.md § sync pairing state) and each shows date AND time in ONE
- * column, which is the spec's own column set. Absent renders blank, per
+ * The two timestamp columns are UTC instants (`DateTime`, contract.md § sync
+ * pairing state), shown in the user's own zone, and each shows date AND time in
+ * ONE column, which is the spec's own column set. Absent renders blank, per
  * tables § absent values — never a placeholder.
  *
  * ⚠️ There is no date-and-time cell PRESET in the shared table helpers: the house

@@ -10,9 +10,9 @@ use crate::{
 use chrono::Utc;
 use repository::{EqualFilter, ItemType};
 use repository::{
-    ItemFilter, ItemRepository, MasterListLineFilter, MasterListLineRepository, RepositoryError,
-    RequisitionLine, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, StorageConnection,
+    ForecastMethod, ItemFilter, ItemRepository, MasterListLineFilter, MasterListLineRepository,
+    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 use util::uuid::uuid;
@@ -145,6 +145,7 @@ fn generate(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
+                campaign_id: None,
                 item_id: item.item_row.id.clone(),
                 item_name: item.item_row.name,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
@@ -176,9 +177,9 @@ fn generate(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
-                forecast_total_units: None,
-                forecast_total_doses: None,
-                vaccine_courses: None,
+                forecast_method: ForecastMethod::Amc,
+                forecast_monthly_consumption: 0.0,
+                forecast_data: None,
             }
         })
         .collect();

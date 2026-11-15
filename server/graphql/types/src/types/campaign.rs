@@ -1,12 +1,14 @@
 use async_graphql::*;
-use chrono::NaiveDate;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     simple_generic_errors::NodeError,
 };
 use repository::{
     EqualFilter, StringFilter,
-    campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+    campaign::{
+        campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+        campaign_row::CampaignKind,
+    },
 };
 
 use service::{ListResult, usize_to_u32};
@@ -27,10 +29,36 @@ pub struct CampaignSortInput {
     desc: Option<bool>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum CampaignKindNode {
+    Campaign,
+    Routine,
+}
+
+impl From<&CampaignKind> for CampaignKindNode {
+    fn from(kind: &CampaignKind) -> Self {
+        match kind {
+            CampaignKind::Campaign => CampaignKindNode::Campaign,
+            CampaignKind::Routine => CampaignKindNode::Routine,
+            CampaignKind::Other(_) => CampaignKindNode::Campaign,
+        }
+    }
+}
+
+impl From<CampaignKindNode> for CampaignKind {
+    fn from(kind: CampaignKindNode) -> Self {
+        match kind {
+            CampaignKindNode::Campaign => CampaignKind::Campaign,
+            CampaignKindNode::Routine => CampaignKind::Routine,
+        }
+    }
+}
+
 #[derive(InputObject, Clone)]
 pub struct CampaignFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
+    pub code: Option<StringFilterInput>,
 }
 
 impl From<CampaignFilterInput> for CampaignFilter {
@@ -38,6 +66,7 @@ impl From<CampaignFilterInput> for CampaignFilter {
         CampaignFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
+            code: f.code.map(StringFilter::from),
         }
     }
 }
@@ -63,12 +92,12 @@ impl CampaignNode {
         &self.campaign.name
     }
 
-    pub async fn start_date(&self) -> Option<NaiveDate> {
-        self.campaign.start_date
+    pub async fn code(&self) -> &str {
+        &self.campaign.code
     }
 
-    pub async fn end_date(&self) -> Option<NaiveDate> {
-        self.campaign.end_date
+    pub async fn kind(&self) -> CampaignKindNode {
+        CampaignKindNode::from(&self.campaign.kind)
     }
 }
 

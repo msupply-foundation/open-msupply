@@ -57,6 +57,9 @@ export const parseStatus = (
     case AssetLogStatusNodeType.NotInUse: {
       return t('status.not-in-use');
     }
+    case AssetLogStatusNodeType.NotInstalled: {
+      return t('status.not-installed');
+    }
     case AssetLogStatusNodeType.Unserviceable: {
       return t('status.unserviceable');
     }

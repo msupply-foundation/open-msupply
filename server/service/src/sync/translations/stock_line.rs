@@ -1,7 +1,7 @@
 use crate::sync::translations::{
-    barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
-    item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
-    store::StoreTranslation, vvm_status::VVMStatusTranslation,
+    campaign::CampaignTranslation, item::ItemTranslation, item_variant::ItemVariantTranslation,
+    location::LocationTranslation, name::NameTranslation, store::StoreTranslation,
+    vvm_status::VVMStatusTranslation,
 };
 
 use chrono::NaiveDate;
@@ -56,6 +56,8 @@ pub struct LegacyStockLineRow {
     #[serde(rename = "name_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub supplier_id: Option<String>,
+    /// Barcodes don't sync with legacy mSupply (decisions/2026-09-30_barcodes.md):
+    /// ignored on pull, sent empty on push.
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "barcodeID")]
     pub barcode_id: Option<String>,
     #[serde(rename = "om_item_variant_id")]
@@ -96,7 +98,6 @@ impl SyncTranslation for StockLineTranslation {
             NameTranslation.table_name(),
             StoreTranslation.table_name(),
             LocationTranslation.table_name(),
-            BarcodeTranslation.table_name(),
             VVMStatusTranslation.table_name(),
             CampaignTranslation.table_name(),
         ]
@@ -127,7 +128,7 @@ impl SyncTranslation for StockLineTranslation {
             sell_price,
             note,
             supplier_id,
-            barcode_id,
+            barcode_id: _,
             item_variant_id,
             donor_id,
             vvm_status_id,
@@ -163,7 +164,7 @@ impl SyncTranslation for StockLineTranslation {
             // supplier/donor/manufacturer are name ids resolved to name_link on upsert; name_link.id
             // == name.id by convention, so validating the name id against name_link is correct.
             supplier_id: fk_check(supplier_id, "supplier_link_id", FkField::NameLink)?,
-            barcode_id: fk_check(barcode_id, "barcode_id", FkField::Barcode)?,
+            barcode: None,
             item_variant_id: fk_check(item_variant_id, "item_variant_id", FkField::ItemVariant)?,
             donor_id: fk_check(donor_id, "donor_link_id", FkField::NameLink)?,
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
@@ -215,7 +216,7 @@ impl SyncTranslation for StockLineTranslation {
                     on_hold,
                     note,
                     supplier_id: _,
-                    barcode_id,
+                    barcode: _,
                     item_variant_id,
                     donor_id: donor_link_id,
                     manufacturer_id,
@@ -252,7 +253,7 @@ impl SyncTranslation for StockLineTranslation {
             sell_price: sell_price_per_pack,
             note,
             supplier_id: supplier_name_row.map(|supplier| supplier.id),
-            barcode_id,
+            barcode_id: None,
             item_variant_id,
             donor_id: donor_link_id,
             vvm_status_id,
@@ -419,7 +420,7 @@ mod tests {
             on_hold: false,
             note: None,
             supplier_id: None,
-            barcode_id: None,
+            barcode: None,
             item_variant_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -438,14 +439,13 @@ mod tests {
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
-        assert_eq!(fk_errors.len(), 6, "got {fk_errors:?}");
+        assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
         let messages: String = fk_errors
             .iter()
             .filter_map(|l| l.message.as_deref())
             .collect::<Vec<_>>()
             .join("\n");
         for fk_field in [
-            "barcode_id",
             "location_id",
             "item_variant_id",
             "vvm_status_id",

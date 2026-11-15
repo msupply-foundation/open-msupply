@@ -36,6 +36,7 @@ pub enum AssetLogStatusNodeType {
     NotFunctioning,
     Decommissioned,
     Unserviceable,
+    NotInstalled,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -165,8 +166,8 @@ impl AssetLogNode {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().log_datetime, Utc)
     }
 
-    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {

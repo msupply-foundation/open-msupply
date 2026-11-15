@@ -2,70 +2,193 @@
   {% include "style.css" %}
 </style>
 
-<table class="body_section">
+{# An unambiguous day month year, e.g. 28 Oct 2026, whatever the reader's date settings #}
+{% macro datetime(value) %}{% if value %}{{ value | date(format="%-d %b %Y", timezone=arguments.timezone) }}{% endif %}{% endmacro datetime %}
+{% macro date(value) %}{% if value %}{{ value | date(format="%-d %b %Y") }}{% endif %}{% endmacro date %}
+
+{% set po = data.purchaseOrder %}
+{% set store = po.store.name %}
+
+{% if po.headingMessage %}
+<div class="heading_message">{{ po.headingMessage }}</div>
+{% endif %}
+
+<table class="top">
+  <tr>
+    <td colspan="2">
+      <div class="purchaser">
+        {% if po.store.logo %}
+        <img class="logo" src="{{ po.store.logo }}" />
+        {% endif %}
+        <div>
+          <div class="purchaser_name">{{ po.store.storeName }}</div>
+          {% if store.address1 %}<div class="muted">{{ store.address1 }}</div>{% endif %}
+          {% if store.address2 %}<div class="muted">{{ store.address2 }}</div>{% endif %}
+          {% if store.country %}<div class="muted">{{ store.country }}</div>{% endif %}
+          {% if store.phone or store.email %}
+          <div class="muted">{{ store.phone | default(value="") }}{% if store.phone and store.email %} · {% endif %}{{ store.email | default(value="") }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </td>
+    <td class="side">
+      <table class="box">
+        <tr>
+          <td class="box_label">{{ t(k="label.purchase-order-number", f="PO number") }}</td>
+          <td class="box_value po_number">{{ po.number }}</td>
+        </tr>
+        <tr>
+          <td class="box_label">{{ t(k="report.po-date", f="PO date") }}</td>
+          <td class="box_value">{{ self::datetime(value=po.confirmedDatetime) }}</td>
+        </tr>
+        <tr>
+          <td class="box_label">{{ t(k="label.supplier-reference", f="Supplier reference") }}</td>
+          <td class="box_value">{{ po.reference | default(value="") }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="party">
+      <div class="label">{{ t(k="label.supplier", f="Supplier") }}</div>
+      {% if po.supplier %}
+      <div><span class="party_name">{{ po.supplier.name }}</span> <span class="muted">{{ po.supplier.code }}</span></div>
+      {% if po.supplier.address1 %}<div>{{ po.supplier.address1 }}</div>{% endif %}
+      {% if po.supplier.address2 %}<div>{{ po.supplier.address2 }}</div>{% endif %}
+      {% if po.supplier.country %}<div>{{ po.supplier.country }}</div>{% endif %}
+      {% if po.supplier.phone %}<div class="muted">{{ po.supplier.phone }}</div>{% endif %}
+      {% if po.supplier.email %}<div class="muted">{{ po.supplier.email }}</div>{% endif %}
+      {% endif %}
+    </td>
+    <td class="party">
+      <div class="label">{{ t(k="report.deliver-to", f="Deliver to") }}</div>
+      <div class="party_name">{{ po.store.storeName }}</div>
+      {% if store.address1 %}<div>{{ store.address1 }}</div>{% endif %}
+      {% if store.address2 %}<div>{{ store.address2 }}</div>{% endif %}
+      {% if store.country %}<div>{{ store.country }}</div>{% endif %}
+      {% if store.phone %}<div class="muted">{{ store.phone }}</div>{% endif %}
+    </td>
+    <td class="side">
+      <table class="box">
+        <tr>
+          <td class="box_label">{{ t(k="label.requested-delivery-date", f="Requested delivery date") }}</td>
+          <td class="box_value">{{ self::date(value=po.requestedDeliveryDate) }}</td>
+        </tr>
+        <tr>
+          <td class="box_label">{{ t(k="label.shipping-method", f="Shipping method") }}</td>
+          <td class="box_value">{{ po.shippingMethod | default(value="") }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<table class="lines">
   <thead>
-    <tr class="body_column_label">
-      <th>{{ t(k="report.line", f="Line") }}</th>
-      <th>{{ t(k="report.supplier-item-code", f="Supplier's item code") }}</th>
-      <th>{{ t(k="report.item-code",f="Item code") }}</th>
-      <th>{{ t(k="report.item-name",f="Item name") }}</th>
-      <th>{{ t(k="label.unit", f="Unit") }}</th>
-      <th>
-        {{ t(k="label.requested-packs", f="Requested number of packs")
-        }}
-      </th>
-      <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
-      <th>{{ t(k="label.adjusted-units", f="Adjusted units") }}</th>
-      <th>
-        {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}
-      </th>
-      <th>{{ t(k="label.line-cost", f="Line cost") }}</th>
-      <th>{{ t(k="label.comment", f="Comment") }}</th>
+    <tr>
+      <th>#</th>
+      <th>{{ t(k="report.item-code", f="Item code") }}</th>
+      {% if po.hasSupplierItemCodes %}
+      <th>{{ t(k="label.supplier-item-code", f="Supplier item code") }}</th>
+      {% endif %}
+      <th class="wide">{{ t(k="label.item", f="Item") }}</th>
+      <th class="number">{{ t(k="report.pack-size", f="Pack size") }}</th>
+      <th class="number">{{ t(k="report.packs", f="Packs") }}</th>
+      <th class="number">{{ t(k="label.total-quantity", f="Total quantity") }}</th>
+      <th class="number">{{ t(k="label.price-per-pack", f="Price per pack") }} ({{ po.currency.code }})</th>
+      <th class="number">{{ t(k="label.line-total", f="Line total") }} ({{ po.currency.code }})</th>
+      <th class="number">{{ t(k="label.requested-delivery-date", f="Requested delivery date") }}</th>
     </tr>
   </thead>
-  {% for line in data.purchaseOrder.lines.nodes -%}
-  <tr class="body_value">
-    <td>{{ line.lineNumber }}</td>
-    <td>{{ line.supplierItemCode | default(value="") }}</td>
-    <td>{{ line.item.code | default(value="") }}</td>
-    <td>{{ line.item.name | default(value="") }}</td>
-    <td>{{ line.item.unitName | default(value="") }}</td>
-    <td>{{ line.requestedNumberOfPacks | default(value="") }}</td>
-    <td>{{ line.requestedPackSize | default(value="") }}</td>
-    <td>{{ line.adjustedUnits | default(value="") }}</td>
-    <td>{{ line.expectedDeliveryDate | default(value="") }}</td>
-    <td>{{ line.lineCost | default(value="") }}</td>
-    <td>{{ line.comment | default(value="") }}</td>
-  </tr>
+  {% for line in po.lines.nodes -%}
+  <tbody class="line">
+    <tr>
+      <td>{{ line.lineNumber }}</td>
+      <td>{{ line.item.code | default(value="") }}</td>
+      {% if po.hasSupplierItemCodes %}
+      <td>{{ line.supplierItemCode | default(value="") }}</td>
+      {% endif %}
+      <td>
+        {{ line.item.name | default(value="") }}
+        {% if line.comment %}<div class="comment">{{ line.comment }}</div>{% endif %}
+      </td>
+      <td class="number">{{ line.packSizeText }}</td>
+      <td class="number">{{ line.numberOfPacksText }}</td>
+      <td class="number">{{ line.totalQuantityText }}</td>
+      <td class="number">{{ line.pricePerPack }}</td>
+      <td class="number">{{ line.lineCost }}</td>
+      <td class="number">{{ self::date(value=line.requestedDeliveryDate) }}</td>
+    </tr>
+  </tbody>
   {%- endfor %}
 </table>
 
-<table class="right-aligned-table">
-  <tr excel-type="total-row">
-    <td>{{ t(k="heading.total-cost", f="Total cost")}}:</td>
-    <td>{{ data.purchaseOrder.orderTotalAfterDiscount *
-    data.purchaseOrder.foreignExchangeRate | default(value="") | round(precision=2) }} {{ data.purchaseOrder.currency.code
-    }}</td>
+{% if po.charges | length > 0 %}
+<table class="charges">
+  <thead>
+    <tr>
+      <th>{{ t(k="heading.charges", f="Charges") }}</th>
+      <th class="number">{{ t(k="label.amount", f="Amount") }} ({{ po.currency.code }})</th>
+    </tr>
+  </thead>
+  {% for charge in po.charges -%}
+  <tr>
+    <td>{{ charge.description }}</td>
+    <td class="number">{{ charge.amount }}</td>
   </tr>
-  <tr excel-type="total-row">
-    <td>{{ t(k="label.exchange-rate", f="Exchange rate")}}:</td>
-    <td>{{ data.purchaseOrder.foreignExchangeRate | default(value="") }} {{ data.purchaseOrder.currency.code
-      }}
-    </td>
-  </tr>
-  <tr excel-type="total-row">
-    <td>
-      {{ t(k="label.estimated-total", f="Estimated cost") }}:
-    </td>
-    <td>
-      {{ data.purchaseOrder.orderTotalAfterDiscount  | default(value="") | round(precision=2) }} {{ data.currencies.nodes[0].code
-      }}
-    </td>
-  </tr>
+  {%- endfor %}
 </table>
+{% endif %}
+
+<div class="summary">
+  <table class="totals">
+    <tr excel-type="total-row" class="grand_total">
+      <td>{{ t(k="heading.total-cost", f="Total cost") }}</td>
+      <td>{{ po.totalCostText }} {{ po.currency.code }}</td>
+    </tr>
+    {% if po.supplierDiscountAmount > 0 %}
+    <tr excel-type="total-row" class="discount_note">
+      <td colspan="2">{{ t(k="label.includes-supplier-discount-of", f="Includes supplier discount of") }} {{ po.supplierDiscountText }} {{ po.currency.code }}</td>
+    </tr>
+    {% endif %}
+    {% if po.isForeignCurrency %}
+    <tr excel-type="total-row" class="exchange_rate">
+      <td>{{ t(k="label.exchange-rate", f="Exchange rate") }}</td>
+      <td>1 {{ po.currency.code }} = {{ po.foreignExchangeRate | default(value="") }} {{ data.currencies.nodes[0].code }}</td>
+    </tr>
+    <tr excel-type="total-row">
+      <td>{{ t(k="label.estimated-total", f="Estimated cost") }}</td>
+      <td>{{ po.estimatedCostText }} {{ data.currencies.nodes[0].code }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<div class="closing">
+  <div class="instructions">
+    <div class="label">{{ t(k="label.notes", f="Notes") }}</div>
+    <div>{{ t(k="report.confirm-delivery-date-by-email", f="Please confirm the delivery date by return email.") }}</div>
+    {% if po.additionalInstructions %}
+    <div class="instructions_text">{{ po.additionalInstructions }}</div>
+    {% endif %}
+  </div>
+
+  <div class="signatures">
+    {% set named = po.authorisingOfficer1 or po.authorisingOfficer2 %}
+    {% for officer in [po.authorisingOfficer1 | default(value=""), po.authorisingOfficer2 | default(value="")] %}
+    {% if officer or (loop.first and not named) %}
+    <div class="signature">
+      <div class="label">{{ t(k="report.authorised-by", f="Authorised by") }}</div>
+      <div class="signature_line"></div>
+      <div class="signature_name">{{ officer }}</div>
+      <div class="muted">{{ t(k="label.date", f="Date") }}:</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
 
 <div class="watermark">
-  {%if data.purchaseOrder.status == "CONFIRMED" or data.purchaseOrder.status ==
-  "SENT" or data.purchaseOrder.status ==
-  "FINALISED" %} AUTHORISED {% else %} UNAUTHORISED {% endif %}
+  {% if po.status == "CONFIRMED" or po.status == "SENT" or po.status == "FINALISED" %}
+  {{ t(k="report.authorised", f="AUTHORISED") }} {% else %} {{ t(k="report.unauthorised", f="UNAUTHORISED") }} {% endif %}
 </div>

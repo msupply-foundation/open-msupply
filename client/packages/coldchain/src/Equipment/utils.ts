@@ -26,6 +26,7 @@ const statusTranslation: Record<AssetLogStatusNodeType, LocaleKey> = {
     'status.functioning-but-needs-attention',
   [AssetLogStatusNodeType.NotFunctioning]: 'status.not-functioning',
   [AssetLogStatusNodeType.NotInUse]: 'status.not-in-use',
+  [AssetLogStatusNodeType.NotInstalled]: 'status.not-installed',
   [AssetLogStatusNodeType.Unserviceable]: 'status.unserviceable',
 };
 
@@ -36,6 +37,7 @@ const statusColorMapping: Record<AssetLogStatusNodeType, string> = {
     'cceStatus.functioningButNeedsAttention',
   [AssetLogStatusNodeType.NotFunctioning]: 'cceStatus.notFunctioning',
   [AssetLogStatusNodeType.NotInUse]: 'cceStatus.notInUse',
+  [AssetLogStatusNodeType.NotInstalled]: 'cceStatus.notInstalled',
   [AssetLogStatusNodeType.Unserviceable]: 'cceStatus.unserviceable',
 };
 
@@ -223,6 +225,8 @@ export const parseStatusFromString = (
     [t('status.not-functioning').toLowerCase()]:
       AssetLogStatusNodeType.NotFunctioning,
     [t('status.not-in-use').toLowerCase()]: AssetLogStatusNodeType.NotInUse,
+    [t('status.not-installed').toLowerCase()]:
+      AssetLogStatusNodeType.NotInstalled,
     [t('status.unserviceable').toLowerCase()]:
       AssetLogStatusNodeType.Unserviceable,
   };

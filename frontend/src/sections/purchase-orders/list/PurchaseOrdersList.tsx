@@ -8,6 +8,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Button } from '@/ui/elements/buttons/Button';
+import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import {
@@ -60,12 +61,11 @@ import {
 // vertical (stocktakes): URL-backed filter/sort/pagination, the shared
 // DataTable, a selection footer with bulk delete, and no page CSS.
 //
-// The whole DESTINATION is gated on the store's procurement functionality
+// The whole DESTINATION is gated on the purchase-order read permission
 // (rules § availability). That gate is the navigation registry's, applied by
 // the shell to the menu, the palette AND the route alike (navConfig
-// `gate: 'procurement'`), so this screen carries no gate of its own — and,
-// unlike the reference app, opening the address directly does not render it
-// (README defect 7).
+// `permission: 'PURCHASE_ORDER_QUERY'`), so this screen carries no gate of its
+// own.
 
 type Row = PurchaseOrderRowFragment;
 
@@ -209,8 +209,9 @@ const PurchaseOrdersList: Component = () => {
     clearSelection();
   };
 
-  const openRow = (row: Row) =>
-    navigate(`/${params.storeId}/replenishment/purchase-order/${row.id}`);
+  const rowHref = (row: Row) =>
+    `/${params.storeId}/replenishment/purchase-order/${row.id}`;
+  const openRow = (row: Row) => navigate(rowHref(row));
 
   // Columns and crumbs are accessors (not plain arrays): their text comes from
   // t(), which must be read in a reactive scope to re-translate on a language
@@ -289,7 +290,11 @@ const PurchaseOrdersList: Component = () => {
       cell: info =>
         info.row.original.lines.totalCount === 0
           ? '-'
-          : formatCurrencyCell(info.getValue<number>()),
+          : // In the PO's own currency, as the detail view shows it.
+            formatCurrencyCell(
+              info.getValue<number>(),
+              info.row.original.currency?.code
+            ),
       size: remToPx(8),
     },
     {
@@ -334,17 +339,13 @@ const PurchaseOrdersList: Component = () => {
             {/* The outstanding-lines list (S5) is the vertical's second
                 screen — a separate slice; this is the way in the spec gives
                 it. */}
-            <Button
+            <LinkButton
               icon={<MenuLinesIcon />}
               data-testid="outstanding-lines-button"
-              onClick={() =>
-                navigate(
-                  `/${params.storeId}/replenishment/purchase-order/outstanding`
-                )
-              }
+              href={`/${params.storeId}/replenishment/purchase-order/outstanding`}
             >
               {t('button.outstanding-lines')}
-            </Button>
+            </LinkButton>
             {/* Export the orders list (every page of the current filter, in
                 the current order) as CSV or Excel. */}
             <ExportPurchaseOrdersAction
@@ -373,6 +374,7 @@ const PurchaseOrdersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // A Sent or Finalised order is closed to change, which the row says
         // outright (OMS-FUN-PO-15.10) — a standing property of the record, so
         // the list mirrors it.

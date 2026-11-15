@@ -42,6 +42,19 @@
   text-overflow: ellipsis;
 }
 
+/* Compact (<600px): icon only — see AppShell.module.css. The username stays
+   as the trigger's accessible name (and its title). */
+@media (max-width: 599px) {
+  .triggerText {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 /* --- Menu ------------------------------------------------------------- */
 /* Sizes to its content (`max-content`) so a normal-length email sits on ONE
    line — the values never wrap; an outlier ellipsises (see .rowValue, which

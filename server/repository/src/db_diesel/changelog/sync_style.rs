@@ -52,7 +52,8 @@ impl Distribution {
                     ..
                 } = table.sync_style();
                 if let Some(sync_style_options) = &sync_style_options
-                    && sync_style_options != &transport
+                    && !((sync_style_options.is_v5 && transport.is_v5)
+                        || (sync_style_options.is_v6 && transport.is_v6))
                 {
                     return false;
                 }
@@ -91,7 +92,7 @@ impl ChangelogTableName {
             NameStoreJoin => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
             ItemStoreJoin => SyncStyle {
@@ -178,6 +179,16 @@ impl ChangelogTableName {
                 transport: V7_ONLY,
                 multi_device_site: false,
             },
+            // Barcodes a store has learned (decisions/2026-09-30_barcodes.md): authored
+            // by the store's site and pushed up to central for review. Central never
+            // edits them, so like other RemoteOwned tables they only come back to the
+            // owning site when it initialises.
+            BarcodeProposal => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             Stocktake => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
@@ -202,6 +213,14 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: true,
             },
+            // OMS-native (no legacy 4D counterpart): a sensor's own summaries (e.g. a Fridge-tag's
+            // daily history), recorded alongside its logs & breaches, so synced the same way but over v7 only.
+            TemperatureSummary => SyncStyle {
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
+                transport: V7_ONLY,
+                multi_device_site: true,
+            },
             VVMStatusLog => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
@@ -212,7 +231,7 @@ impl ChangelogTableName {
             SyncMessage => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Central, D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
 
@@ -373,19 +392,19 @@ impl ChangelogTableName {
             VaccineCourse => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseDose => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseItem => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseStoreConfig => SyncStyle {
@@ -395,12 +414,6 @@ impl ChangelogTableName {
                 multi_device_site: false,
             },
             Abbreviation => SyncStyle {
-                authoring: vec![Central],
-                distribution: vec![D::Central],
-                transport: V5,
-                multi_device_site: false,
-            },
-            Barcode => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
                 transport: V5,
@@ -442,10 +455,14 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
+            // Legacy central sends its entries to v5/v6 sites itself. The v6 tag
+            // carries the ones a form plugin owns, which open mSupply central writes
+            // on install, to those sites. Only owned entries go, see
+            // `OmDocumentRegistryTranslation`.
             DocumentRegistry => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V5,
+                transport: V6,
                 multi_device_site: false,
             },
             IndicatorColumn => SyncStyle {
@@ -678,13 +695,13 @@ impl ChangelogTableName {
             Encounter => SyncStyle {
                 authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             Vaccination => SyncStyle {
                 authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             ContactTrace => SyncStyle {

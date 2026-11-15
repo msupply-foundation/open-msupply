@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "sideEffects": false,
   "private": true,
+  "packageManager": "pnpm@10.33.4",
   "scripts": {
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom"
   },

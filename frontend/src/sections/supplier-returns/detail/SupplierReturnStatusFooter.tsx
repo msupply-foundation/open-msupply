@@ -8,8 +8,8 @@ import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFo
 import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
 import { createFlash } from '../../../ui/utils/createFlash';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, filterByStatusPreference } from '@/domain/invoice';
-import { STATUS_FLOW, statusSteps } from './returnStatus';
+import { currentStep, trackStages } from '@/domain/invoice';
+import { STATUS_FLOW, statusLabel, statusSteps } from './returnStatus';
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
 
 // The return-level footer (spec/supplier-returns/ui-surface.md S3 § layout —
@@ -24,8 +24,9 @@ import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generate
 // (D39).
 //
 // A status change that lands is reported in the bar's message slot, as a
-// flash of the save confirmation (spec/ui-standards/controls.md § action
-// feedback) — the split button is gone at Shipped.
+// flash of the status it reached, in the crumb's own word (issue #1127;
+// spec/ui-standards/controls.md § action feedback) — the split button is gone
+// at Shipped.
 
 export interface SupplierReturnStatusFooterProps {
   storeId: string;
@@ -50,14 +51,14 @@ export const SupplierReturnStatusFooter: Component<
 
   const holding = () => props.node.onHold;
   // The flow narrowed by the invoice-status-options preference (rules §
-  // preference gates); an excluded current status highlights the nearest
-  // included earlier stage.
+  // preference gates), keeping the return's own stage when the preference
+  // hides it — the current stage always has a step to mark.
   const offered = () =>
-    filterByStatusPreference(STATUS_FLOW, props.statusOptions);
+    trackStages(STATUS_FLOW, props.statusOptions, props.node.status);
 
   const onApplied = (node: SupplierReturnInfoFragment) => {
     props.onAdvanced(node);
-    saved.show(t('messages.return-saved'));
+    saved.show(statusLabel(node.status));
   };
 
   return (
@@ -77,7 +78,7 @@ export const SupplierReturnStatusFooter: Component<
       <StatusIndicator
         recordId={props.node.id}
         steps={statusSteps(offered(), props.node)}
-        current={currentStep(STATUS_FLOW, offered(), props.node.status)}
+        current={currentStep(offered(), props.node.status)}
       />
 
       <ContentFooterMessage message={saved.value()} recordId={props.node.id} />

@@ -8,8 +8,8 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated, notFound } from '@/api/gated';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -18,6 +18,7 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
+import { NotFoundNotice } from '@/ui/elements/feedback/NotFoundNotice';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
@@ -89,6 +90,7 @@ import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
 import styles from './StocktakeDetailView.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -203,13 +205,18 @@ const StocktakeDetailView: Component = () => {
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // Per-line errors from the last failed finalise/bulk action, keyed by line
   // id → the error's __typename (the shared LineErrors shape, kept raw). The
-  // Snapshot column renders it inline; cleared when a fresh page lands.
+  // Snapshot and Counted columns render it inline; cleared when a line change
+  // commits (clearLineErrors, below).
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
   // The stamped error line ids — what the "show error lines" filter (showError)
   // resolves to at query time (id.equalAny). Empty when nothing is stamped, so
   // the filter is treated as absent rather than sending an empty equalAny
   // (which the server reads as "match nothing").
   const errorLineIds = (): string[] => [...lineErrors().keys()];
+  // The line's count was refused for taking available stock below zero — the
+  // Counted cell's ring and message (table) and the card's body field.
+  const reducedBelowZero = (line: Line): boolean =>
+    lineErrors().get(line.id) === 'StockLineReducedBelowZero';
   const hasErrors = (): boolean => lineErrors().size > 0;
   // Column config (order/sizing/visibility) persists per user/store. The extra
   // editable columns start HIDDEN by default so the table isn't overwhelming —
@@ -233,7 +240,8 @@ const StocktakeDetailView: Component = () => {
           dosesPerUnit: false,
           donor: false,
           manufacturer: false,
-          campaign: false,
+          program: false,
+          activity: false,
         },
         // Code pinned to the inline-start edge, so the identifier stays put
         // while the counting columns scroll horizontally — this table is wide
@@ -293,8 +301,14 @@ const StocktakeDetailView: Component = () => {
   ];
 
   // Fetch the stocktake INFO (header/footer/side-panel fields — NOT the lines).
-  // A NodeError (e.g. bad id) is promoted to the global unexpected-error modal
-  // via mapSuccessToError. Stocktake-LEVEL saves write back with `mutate` (no
+  // A bad id — another record's id, another store's stocktake, a made-up one —
+  // comes back as a NodeError (RecordNotFound) and resolves to null: the
+  // not-found deep-link alert renders below (#1746); a failed read resolves
+  // undefined and keeps the spinner, under the global error modal. That
+  // NodeError is deliberately NOT routed to the global unexpected-error modal
+  // (no mapSuccessToError): it would offer a useless reload of the same bad id
+  // and shadow the local notice — the same call the outbound and return details
+  // make. Stocktake-LEVEL saves write back with `mutate` (no
   // refetch), but the Documents tab's upload/delete calls `refetchInfo` to
   // re-read the node's documents list — so `info` reads `.latest`
   // NON-suspending (kdd/solid-reactivity-pitfalls): a bare `data()` read would
@@ -305,25 +319,27 @@ const StocktakeDetailView: Component = () => {
   const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async variables => {
-      const result = await graphqlFetch(StocktakeDetail, variables, {
-        mapSuccessToError: d =>
-          d.stocktake.__typename === 'NodeError'
-            ? d.stocktake.error.description
-            : undefined,
-      });
+      const result = await graphqlFetch(StocktakeDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.stocktake.__typename === 'StocktakeNode'
         ? result.data.stocktake
-        : undefined;
+        : null;
     }
   );
-  const info = (): StocktakeInfoFragment | undefined => data.latest;
+  const info = (): StocktakeInfoFragment | undefined =>
+    data.latest ?? undefined;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query. Keyed on
   // the SERIALISED variables (a stable string) like the stocktakes LIST, so
   // identical query content doesn't refetch (kdd/solid-reactivity-pitfalls).
   // stripEmpty drops added-but-empty filter chips so an empty chip doesn't
   // reflash the list.
+  //
+  // Waits for the info read to find the stocktake: `stocktakeLines` answers an
+  // unknown stocktake id with a top-level BadUserInput (InvalidStocktake), not
+  // a NodeError, which would pop the global error modal over the not-found
+  // alert (#1746). `gated` so the gate itself never suspends.
+  const stocktakeFound = () => !!gated(data);
   const linesVariables = createMemo<StocktakeLinesVariables>(() => {
     const base = stripEmpty(query().filter);
     // "Show error lines": layer id.equalAny over the current wire filter from
@@ -343,7 +359,7 @@ const StocktakeDetailView: Component = () => {
     };
   });
   const [linesData, { refetch: refetchLines }] = createResource(
-    () => JSON.stringify(linesVariables()),
+    () => (stocktakeFound() ? JSON.stringify(linesVariables()) : false),
     async serialised => {
       const result = await graphqlFetch(
         StocktakeLines,
@@ -504,7 +520,7 @@ const StocktakeDetailView: Component = () => {
       ...patch,
     });
     if (saved)
-      mutate((prev: StocktakeInfoNode | undefined) =>
+      mutate((prev: StocktakeInfoNode | null | undefined) =>
         prev ? { ...prev, ...saved } : prev
       );
   };
@@ -532,7 +548,7 @@ const StocktakeDetailView: Component = () => {
   // state in place with no refetch. A finalise can change lines (it may zero
   // uncounted lines), so we also refetch the lines page.
   const onFinalised = (saved: StocktakeInfoFragment) => {
-    mutate((prev: StocktakeInfoNode | undefined) =>
+    mutate((prev: StocktakeInfoNode | null | undefined) =>
       prev ? { ...prev, ...saved } : prev
     );
     void refetchAfterSave();
@@ -540,8 +556,8 @@ const StocktakeDetailView: Component = () => {
 
   // The record was deleted from the side panel's Actions → leave for the list.
   // `replace: true` drops the deleted stocktake's detail URL from history so
-  // Back can't return to a now-missing record (it would only 404 / promote a
-  // NodeError to the global modal).
+  // Back can't return to a now-missing record (it would only show the
+  // not-found alert).
   const onDeleted = () =>
     navigate(`/${params.storeId}/inventory/stocktakes`, { replace: true });
 
@@ -552,8 +568,8 @@ const StocktakeDetailView: Component = () => {
   // inline via stampErrors so the offending rows flag their error.
 
   // Stamp the per-line errors (lineId → typename) — drives the inline
-  // Snapshot-cell message. An action/finalise calls this the moment a save
-  // partially fails.
+  // Snapshot- and Counted-cell messages and their rings. An action/finalise
+  // calls this the moment a save partially fails.
   const stampErrors = (errors: LineErrors) => setLineErrors(new Map(errors));
 
   // A line-level change committed (line-edit modal OR a selection action). We
@@ -652,7 +668,7 @@ const StocktakeDetailView: Component = () => {
   const crumbs = (node: StocktakeInfoFragment) => [
     {
       label: t('stocktakes'),
-      onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
+      to: `/${params.storeId}/inventory/stocktakes`,
     },
     { label: String(node.stocktakeNumber) },
   ];
@@ -760,8 +776,8 @@ const StocktakeDetailView: Component = () => {
       cardGroup: 'more',
       ...getCellDefinition('packSize'),
     },
-    // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
-    // vaccine rows only.
+    // Doses per unit (gated by manageVaccinesInDoses) — the item's doses per
+    // unit, whatever the pack size (see lines/doses.ts); vaccine rows only.
     ...(prefs().manageVaccinesInDoses
       ? [
           {
@@ -785,16 +801,22 @@ const StocktakeDetailView: Component = () => {
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'more',
-            ...getCellDefinition('snapshotNumberOfPacks'),
+            ...getCellDefinition('snapshotNumberOfPacks', {
+              cellTone: (line: Line) =>
+                lineErrors().get(line.id) ===
+                'SnapshotCountCurrentCountMismatchLine'
+                  ? 'error'
+                  : undefined,
+            }),
             // Snapshot cell also carries the line's error beneath the count (a
             // snapshot/current-count mismatch is a "recount this line" message
-            // about the snapshot); the count itself formats like every other
-            // number column.
+            // about the snapshot), and is ringed while it does (cellTone
+            // above); the count itself formats like every other number column.
             cell: info => {
               const value = info.getValue<number | null | undefined>();
               return (
                 <>
-                  {formatNumber(value, { maximumFractionDigits: 2 })}
+                  {value == null ? '' : <Num value={value} />}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
@@ -827,6 +849,8 @@ const StocktakeDetailView: Component = () => {
         align: 'right',
         headerPosition: 'badge',
         hideFromColumnSettings: true,
+        cellTone: (line: Line) =>
+          reducedBelowZero(line) ? 'error' : undefined,
       }),
       // An uncounted line has no counted value, and a blank cell says nothing —
       // it reads as "zero" or "still loading" as readily as "not counted yet",
@@ -840,14 +864,44 @@ const StocktakeDetailView: Component = () => {
       //
       // The accessor above keeps the raw number as the cell's VALUE, so
       // sorting, the hover-reveal and any export are unchanged.
-      cell: info =>
-        isUncounted(info.row.original) ? (
-          <AbsentValue label={t('label.not-counted')} />
-        ) : (
-          formatNumber(info.getValue<number | null | undefined>(), {
-            maximumFractionDigits: 2,
-          })
-        ),
+      //
+      // A count that would take the batch's available stock below zero (a
+      // reduce-to-zero the server refused) says so beneath the value, and the
+      // cell is ringed while it does (cellTone above). On a card this cell is
+      // the header badge, which has no room for a sentence: the badge drops
+      // the message (data-cell-message) and the card-only field below
+      // carries it.
+      cell: info => (
+        <>
+          {isUncounted(info.row.original) ? (
+            <AbsentValue label={t('label.not-counted')} />
+          ) : (
+            <Num value={info.getValue<number | null | undefined>() ?? 0} />
+          )}
+          <Show when={reducedBelowZero(info.row.original)}>
+            <span class={styles.lineError} data-cell-message>
+              {t('stocktake.line-error.stock-reserved')}
+            </span>
+          </Show>
+        </>
+      ),
+    },
+    // CARD-ONLY: the Counted badge's below-zero message, in the card body at
+    // full width, on the lines that carry it. Captioned with Counted's own
+    // label so it reads as that figure's error.
+    {
+      c: { id: 'countedNumberOfPacksError' },
+      header: () => t('label.counted-num-of-packs'),
+      meta: {
+        hideOnTable: true,
+        hideFromColumnSettings: true,
+        hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
+      },
+      cell: () => (
+        <span class={styles.lineError}>
+          {t('stocktake.line-error.stock-reserved')}
+        </span>
+      ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
     // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
@@ -923,16 +977,22 @@ const StocktakeDetailView: Component = () => {
       header: () => t('label.manufacturer'),
       cardGroup: 'more',
     },
+    // Program and Activity (ungated) — two independent fields on the line, so
+    // two columns. Unsortable (no server key; backend gap). Placed after
+    // Manufacturer, before Comment, matching OMS's columns.tsx campaign.
     {
-      // Campaign name (ungated) — campaign.name on the line. Unsortable (no
-      // server key; backend gap). Matches OMS's columns.tsx campaign, placed
-      // after Manufacturer, before Comment.
-      c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
-      header: () => t('label.campaign-only'),
+      c: { accessor: line => line.program?.name ?? '', id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'more',
-      ...getCellDefinition('campaign'),
+      ...getCellDefinition('program'),
     },
-    // Comment (spec column #18) — the line's own comment text. Distinct from
+    {
+      c: { accessor: line => line.campaign?.name ?? '', id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'more',
+      ...getCellDefinition('activity'),
+    },
+    // Comment (spec column #19) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
@@ -955,8 +1015,25 @@ const StocktakeDetailView: Component = () => {
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy — a
           keyed Show would tear down + rebuild on every stocktake-level save
-          (fresh node object), dropping focus from the field being typed. */}
-      <Show when={info()}>
+          (fresh node object), dropping focus from the field being typed. The
+          fallback is the not-found deep-link alert once the server answers the
+          id as not found; a failed read keeps the spinner, under the global
+          error modal. */}
+      <Show
+        when={info()}
+        fallback={
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="stocktake-not-found-notice"
+              title={t('error.stocktake-not-found')}
+              description={t('messages.click-to-return')}
+              onClose={() =>
+                navigate(`/${params.storeId}/inventory/stocktakes`)
+              }
+            />
+          </Show>
+        }
+      >
         {node => (
           // The <Tabs> root wraps the whole Page from outside (display:
           // contents, so it adds no layout box): the TabList lives in the

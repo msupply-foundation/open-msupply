@@ -167,7 +167,7 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
           // The permanence notice, count-pluralised. It says nothing about
           // references, because deletion is never blocked by them and never
           // changes what is tagged (rules § deleting a campaign).
-          fallback={tPlural('messages.confirm-delete-campaigns', count)}
+          fallback={tPlural('messages.confirm-delete-activities', count)}
         >
           {/* The generic could-not-delete notice — it names no campaign; the
               refused selection deleted nothing (rules § deleting a campaign). */}

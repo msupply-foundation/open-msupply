@@ -22,9 +22,9 @@
  * --- Tab bar slot -------------------------------------------------------
  * A ui/Tabs <TabList> rendered as the header's LAST child (it emits
  * data-tab-bar) claims its own full-width row and becomes the header's
- * bottom edge, as in the RnD demo: the strip's own border replaces the
- * header's, and negative inline margins undo the header's padding so the
- * border runs edge to edge. These numbers compensate the header's own
+ * bottom edge, as in the RnD demo: the strip's own bottom line replaces the
+ * header's border, and negative inline margins undo the header's padding so
+ * the line runs edge to edge. These numbers compensate the header's own
  * padding, so they live here, not in Tabs.module.css.
  */
 .header:has(> [data-tab-bar]) {
@@ -79,5 +79,32 @@
   .hamburger {
     inline-size: var(--touch-target);
     block-size: var(--touch-target);
+  }
+}
+
+/* Narrow viewports (≤1023px, breakpoints.navOverlay): one title row. Labelled
+   actions stay while they fit; when they don't, Header sheds them to icons
+   (measured — see Header.tsx), and past that the breadcrumb shrinks and
+   truncates rather than the actions wrapping onto a row of their own. The
+   padding tightens so the row fits. Only for a header whose end cluster is
+   buttons and that has no second row anyway (a toolbar or tab bar) — the
+   utility pages' Server/Version block, and headers with a row below, keep
+   wrapping. */
+@media (max-width: 1023px) {
+  .header {
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+
+  .header:has(> [data-header-buttons] > [data-variant]):not(
+      :has(> [data-tab-bar], > [data-toolbar])
+    ) {
+    flex-wrap: nowrap;
+  }
+
+  .header > [data-tab-bar] {
+    flex-basis: calc(100% + 2 * var(--space-3));
+    margin-inline: calc(-1 * var(--space-3));
   }
 }

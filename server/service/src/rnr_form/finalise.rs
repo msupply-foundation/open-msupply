@@ -5,11 +5,11 @@ use crate::{
 
 use chrono::Utc;
 use repository::{
-    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
-    RequisitionType, RnRForm, RnRFormLine, RnRFormLineFilter, RnRFormLineRepository,
-    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus, StoreFilter,
-    StoreRepository,
+    ActivityLogType, EqualFilter, ForecastMethod, NumberRowType, RepositoryError,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
+    RequisitionStatus, RequisitionType, RnRForm, RnRFormLine, RnRFormLineFilter,
+    RnRFormLineRepository, RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository,
+    RnRFormStatus, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -212,6 +212,7 @@ fn generate(
              }| {
                 let requisition_line = RequisitionLineRow {
                     id: uuid(),
+                    campaign_id: None,
                     requisition_id: requisition_row.id.clone(),
                     item_id: rnr_form_line_row.item_id.clone(),
                     item_name: item_row.name,
@@ -243,9 +244,9 @@ fn generate(
                     price_per_unit: None,
                     available_volume: None,
                     location_type_id: None,
-                    forecast_total_units: None,
-                    forecast_total_doses: None,
-                    vaccine_courses: None,
+                    forecast_method: ForecastMethod::Amc,
+                    forecast_monthly_consumption: rnr_form_line_row.average_monthly_consumption,
+                    forecast_data: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id

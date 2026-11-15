@@ -7,7 +7,7 @@ use repository::{
     LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow,
-    mock::{MockData, MockDataInserts, insert_extra_mock_data},
+    mock::{MockData, MockDataInserts, insert_extra_mock_data, mock_campaign_a},
 };
 use util::uuid::uuid;
 
@@ -121,6 +121,7 @@ async fn invoice_transfers() {
             .units()
             .currencies(),
         MockData {
+            campaigns: vec![mock_campaign_a()],
             names: vec![inbound_store_name.clone(), outbound_store_name.clone()],
             stores: vec![inbound_store.clone(), outbound_store.clone()],
             items: vec![
@@ -404,6 +405,7 @@ async fn invoice_transfers_with_merged_name() {
             .units()
             .currencies(),
         MockData {
+            campaigns: vec![mock_campaign_a()],
             names: vec![
                 inbound_store_name.clone(),
                 outbound_store_name.clone(),
@@ -641,6 +643,7 @@ impl InvoiceTransferTester {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap(),
             tax_percentage: Some(0.0),
+            campaign_id: Some(mock_campaign_a().id),
             ..Default::default()
         };
 
@@ -954,6 +957,7 @@ impl InvoiceTransferTester {
             inbound_shipment.transport_reference,
             self.outbound_shipment.transport_reference
         );
+        assert_eq!(inbound_shipment.campaign_id, Some(mock_campaign_a().id));
         assert_eq!(
             inbound_shipment.comment,
             Some("Stock transfer (some comment)".to_string())

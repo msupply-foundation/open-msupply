@@ -1,15 +1,15 @@
-use repository::{PurchaseOrderLineRow, RepositoryError};
+use repository::{ItemRow, ItemType, PurchaseOrderLineRow, RepositoryError};
 
 use crate::purchase_order_line::update::UpdatePurchaseOrderLineInput;
 
 pub fn generate(
     purchase_order_line: PurchaseOrderLineRow,
+    item: &ItemRow,
     UpdatePurchaseOrderLineInput {
         id: _,
         item_id,
         requested_pack_size,
         requested_number_of_units,
-        adjusted_number_of_units,
         requested_delivery_date,
         expected_delivery_date,
         price_per_pack_before_discount,
@@ -24,11 +24,10 @@ pub fn generate(
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let mut row = PurchaseOrderLineRow {
         item_id: item_id.clone().unwrap_or(purchase_order_line.item_id),
+        item_name: item.name.clone(),
         requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
         requested_number_of_units: requested_number_of_units
             .unwrap_or(purchase_order_line.requested_number_of_units),
-        adjusted_number_of_units: adjusted_number_of_units
-            .or(purchase_order_line.adjusted_number_of_units),
         requested_delivery_date: requested_delivery_date
             .map(|v| v.value)
             .unwrap_or(purchase_order_line.requested_delivery_date),
@@ -53,6 +52,10 @@ pub fn generate(
         status: status.unwrap_or(purchase_order_line.status),
         ..purchase_order_line
     };
+    // A service line carries no line discount
+    if item.r#type == ItemType::Service {
+        row.price_per_pack_after_discount = row.price_per_pack_before_discount;
+    }
     row.line_total = row.calculate_line_total();
 
     Ok(row)

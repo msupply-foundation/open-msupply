@@ -1,6 +1,12 @@
-import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  type GraphqlErrorItem,
+} from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
 import { t } from '../../../intl';
+import { roundedText } from '../../../intl/numberDisplay';
 import {
   AddPurchaseOrderFromMasterList,
   InsertPurchaseOrderLine,
@@ -18,9 +24,9 @@ import {
 //
 // A rejection reaches us two ways (contract § an order's own screen):
 //
-//  - a TYPED member of the response union — only ever the two LIFECYCLE
-//    refusals (`ItemsCannotBeOrdered`, `InboundShipmentsNotVerified`), neither
-//    reachable by editing a field;
+//  - a TYPED member of the response union — only ever the three LIFECYCLE
+//    refusals (`ItemsCannotBeOrdered`, `InboundShipmentsNotVerified`,
+//    `InboundShipmentsInProgress`), none reachable by editing a field;
 //  - an UNTYPED top-level `Bad user input`, which is EVERY field-level refusal
 //    this screen can provoke: a closed order, an unknown supplier or donor, a
 //    party that is not a supplier. The Rust variant name arrives in
@@ -44,6 +50,40 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
   return errors[0]?.message ?? translateServerError('UnknownError');
 };
 
+// The typed refusals are worded here, not by the server, whose descriptions
+// are untranslated English (issue #2018). A member added to the union later
+// still reports its description until it is given a key.
+const lifecycleRefusalMessage = (error: {
+  __typename: string;
+  description: string;
+}): string => {
+  switch (error.__typename) {
+    case 'ItemsCannotBeOrdered':
+      return t('error.cannot-order-items');
+    case 'InboundShipmentsNotVerified':
+      return t('error.inbound-shipments-not-verified');
+    case 'InboundShipmentsInProgress':
+      return t('error.inbound-shipments-in-progress');
+    default:
+      return error.description;
+  }
+};
+
+/** A Forbidden, naming the permissions the server said were missing. */
+export type Forbidden = { kind: 'forbidden'; permissions: string[] };
+
+// A Forbidden is kept apart from a refusal: it belongs in the app's
+// permission-denied modal, not inline. It is handed back rather than reported
+// here so a caller running several writes can stop at the first and report
+// it once — the permission is per store, so every later write would be
+// refused too.
+const untypedRejection = (
+  errors: GraphqlErrorItem[]
+): { kind: 'error'; message: string } | Forbidden =>
+  isForbidden(errors)
+    ? { kind: 'forbidden', permissions: missingPermissions(errors) }
+    : { kind: 'error', message: untypedRejectionMessage(errors) };
+
 /**
  * The outcome of an update. `blockedLines` carries the lines named by
  * `ItemsCannotBeOrdered` so the table can mark them (spec S18) — a state move
@@ -52,6 +92,7 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
 export type PurchaseOrderUpdateResult =
   | { kind: 'saved' }
   | { kind: 'error'; message: string; blockedLines?: string[] }
+  | Forbidden
   | { kind: 'failed' };
 
 export const updatePurchaseOrder = async (
@@ -63,15 +104,14 @@ export const updatePurchaseOrder = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updatePurchaseOrder;
   if (response.__typename === 'IdResponse') return { kind: 'saved' };
   const error = response.error;
   return {
     kind: 'error',
-    message: error.description,
+    message: lifecycleRefusalMessage(error),
     // `lines` is a list of error types, each wrapping the line it names.
     blockedLines:
       error.__typename === 'ItemsCannotBeOrdered'
@@ -94,8 +134,7 @@ export const updatePurchaseOrderLine = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updatePurchaseOrderLine;
   return response.__typename === 'IdResponse'
@@ -119,8 +158,7 @@ export const insertPurchaseOrderLine = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.insertPurchaseOrderLine;
   if (response.__typename === 'IdResponse') return { kind: 'saved' };
@@ -131,7 +169,7 @@ export const insertPurchaseOrderLine = async (
       error.__typename === 'PackSizeCodeCombinationExists'
         ? t('error.purchase-order-line-duplicate', {
             code: error.itemCode,
-            packSize: error.requestedPackSize,
+            packSize: roundedText(error.requestedPackSize),
           })
         : error.description,
   };
@@ -143,6 +181,8 @@ export type LinesOutcome = {
   applied: number;
   /** The first refusal, to report once rather than per line. */
   message?: string;
+  /** Set when a Forbidden stopped the run, for the caller to report. */
+  forbidden?: string[];
 };
 
 /**
@@ -161,8 +201,12 @@ export const deletePurchaseOrderLines = async (
     { storeId, ids },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { applied: 0, message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') {
+    const rejection = untypedRejection(result.errors);
+    return rejection.kind === 'forbidden'
+      ? { applied: 0, forbidden: rejection.permissions }
+      : { applied: 0, message: rejection.message };
+  }
   if (result.kind !== 'success') return { applied: 0 };
   let applied = 0;
   let message: string | undefined;
@@ -181,6 +225,8 @@ const foldLineUpdates = async (
   let message: string | undefined;
   for (const input of inputs) {
     const result = await updatePurchaseOrderLine(storeId, input);
+    if (result.kind === 'forbidden')
+      return { applied, message, forbidden: result.permissions };
     if (result.kind === 'saved') applied += 1;
     else if (result.kind === 'error') message ??= result.message;
   }
@@ -188,9 +234,10 @@ const foldLineUpdates = async (
 };
 
 /**
- * Close every line in a selection for receipt, one call each. Stops at nothing
- * — a line that refuses is counted as a refusal and the rest still run, since
- * the server offers no bulk form and a partial close is the honest outcome.
+ * Close every line in a selection for receipt, one call each. Stops only at a
+ * Forbidden — a line that refuses is counted as a refusal and the rest still
+ * run, since the server offers no bulk form and a partial close is the honest
+ * outcome.
  */
 export const closePurchaseOrderLines = (
   storeId: string,
@@ -218,15 +265,21 @@ export const deliveryDatesVary = (
  * Which line dates a change to `field` reaches: the field itself, and the
  * other date only where the lines still agree on it — per-line values already
  * set there are left alone (rules § the two delivery dates).
+ *
+ * `canSetRequestedDate` is the authoring window. The expected date outlives it,
+ * so a change made on a Sent order must not drag the agreed requested date
+ * along with it — the whole point of keeping the two apart.
  */
 export const cascadedDateFields = (
   lines: Partial<Record<DeliveryDateField, string | null>>[],
-  field: DeliveryDateField
+  field: DeliveryDateField,
+  canSetRequestedDate = true
 ): DeliveryDateField[] => {
   const other: DeliveryDateField =
     field === 'requestedDeliveryDate'
       ? 'expectedDeliveryDate'
       : 'requestedDeliveryDate';
+  if (other === 'requestedDeliveryDate' && !canSetRequestedDate) return [field];
   return deliveryDatesVary(lines, other) ? [field] : [field, other];
 };
 
@@ -252,6 +305,7 @@ export const cascadeDeliveryDates = (
 export type AddFromMasterListResult =
   | { kind: 'done'; added: number }
   | { kind: 'error'; message: string }
+  | Forbidden
   | { kind: 'failed' };
 
 /**
@@ -269,8 +323,7 @@ export const addPurchaseOrderFromMasterList = async (
     { storeId, input: { purchaseOrderId, masterListId } },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
-    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') return untypedRejection(result.errors);
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.addToPurchaseOrderFromMasterList;
   if (response.__typename === 'PurchaseOrderLineConnector')

@@ -36,8 +36,8 @@ describe("OMS-REG-CAT-02.3 — the export carries the list's seven columns in or
       assetCategoryId: 'g',
       assetTypeId: 't',
       assetClass: { name: 'Cold chain equipment' },
-      assetCategory: { name: 'Refrigerators and freezers' },
-      assetType: { name: 'Freezer' },
+      assetCategory: { id: 'g', name: 'Refrigerators and freezers' },
+      assetType: { id: 't', name: 'Freezer' },
     };
     expect(catalogueToCsv([row]).split('\r\n')).toEqual([
       'label.sub-catalogue,label.code,label.type,label.manufacturer,label.model,label.class,label.category',

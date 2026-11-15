@@ -7,7 +7,9 @@
 # cache serves all pickers. Read unpaginated (no page = the whole register, the
 # sanctioned generous read) and sorted by name — the only sort key the server
 # offers, and one it does NOT default to — so every picker lists a stable
-# order. id + name are all a picker needs to label and submit the option.
+# order. id + name label and submit the option; `kind` splits the register into
+# the Activity field's two tiers — the ROUTINE row sits beside None above the
+# divider, every CAMPAIGN row under the Campaign heading below it.
 query campaigns($storeId: String!) {
   campaigns(storeId: $storeId, sort: [{ key: name }]) {
     ... on CampaignConnector {
@@ -15,6 +17,7 @@ query campaigns($storeId: String!) {
       nodes {
         id
         name
+        kind
       }
     }
   }

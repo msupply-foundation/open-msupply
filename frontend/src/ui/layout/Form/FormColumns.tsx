@@ -20,8 +20,10 @@ export interface FormColumnsProps extends JSX.HTMLAttributes<HTMLDivElement> {
  * each section in a column explicitly, so grouping is click-traceable and the
  * single-column reading order is column-1 sections, then column-2 sections.
  *
- * Pure layout, owns only the inter-column gap (and, with `stretch`, the shared
- * height). Hand-rolled, pure CSS + tokens.
+ * Pure layout: owns the inter-column gap, each column's flex-basis (the shared
+ * width and the wrap point — set on the row's columns only, so a FormColumn on
+ * its own in a vertical Stack keeps its content height) and, with `stretch`,
+ * the shared height. Hand-rolled, pure CSS + tokens.
  */
 export const FormColumns = (props: FormColumnsProps) => {
   const [local, rest] = splitProps(props, ['class', 'children', 'stretch']);

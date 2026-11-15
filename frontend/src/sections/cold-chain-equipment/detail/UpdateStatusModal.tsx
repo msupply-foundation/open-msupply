@@ -1,3 +1,4 @@
+import { reasonName } from '@/domain/asset';
 import { createResource, createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
@@ -217,7 +218,7 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
           // Inert while the chosen status has no reasons configured (OMS-REG-CCE-06.20).
           disabled={saving() || reasons().length === 0}
           items={reasons()}
-          itemToString={reason => reason.reason}
+          itemToString={reasonName}
           itemToValue={reason => reason.id}
           value={form().reasonId || undefined}
           onChange={reason =>

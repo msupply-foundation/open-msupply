@@ -44,10 +44,11 @@ import {
 // OMS-REG-IMM-01.54  a to age below the from age is refused OMS-REG-IMM-01.56
 // ages are months on the wire, years + months on screen OMS-REG-IMM-01.58
 // removing an in-use dose is refused as such OMS-REG-IMM-01.64  a wastage rate
-// above 100 is too large The editor's rules live in pure functions, so each is
-// pinned at the cheapest layer: the draft, its defaults and checks, the draft →
-// input mapping (what the whole-course write actually sends) and the mapping of
-// the writes' rejection SHAPES onto what the dialog shows.
+// above 100 is too large OMS-REG-IMM-01.78  average doses per person per year
+// is optional, and above 0 when set The editor's rules live in pure functions,
+// so each is pinned at the cheapest layer: the draft, its defaults and checks,
+// the draft → input mapping (what the whole-course write actually sends) and
+// the mapping of the writes' rejection SHAPES onto what the dialog shows.
 
 const course: CourseNode = {
   id: 'course-1',
@@ -56,6 +57,7 @@ const course: CourseNode = {
   demographicId: 'grp-1',
   coverageRate: 95,
   wastageRate: 10,
+  annualDosesPerPerson: 1.8,
   useInGapsCalculations: true,
   canSkipDose: false,
   demographic: { id: 'grp-1', name: 'Children' },
@@ -92,7 +94,7 @@ const valid = (draft: CourseDraft): ValidCourseDraft => {
 };
 
 describe('OMS-REG-IMM-01.31 — a new course opens blank with its defaults', () => {
-  it('starts with coverage 100, wastage 0, GAPS on, skip off, nothing chosen', () => {
+  it('starts with coverage 100, wastage 0, no doses per person per year, GAPS on, skip off, nothing chosen', () => {
     const draft = newCourseDraft('new-id', 'prog-1');
     expect(draft).toMatchObject({
       id: 'new-id',
@@ -101,6 +103,7 @@ describe('OMS-REG-IMM-01.31 — a new course opens blank with its defaults', () 
       demographicId: null,
       coverageRate: 100,
       wastageRate: 0,
+      annualDosesPerPerson: null,
       useInGapsCalculations: true,
       canSkipDose: false,
     });
@@ -119,6 +122,7 @@ describe('OMS-REG-IMM-01.16 — an edit opens the course whole', () => {
       demographicId: 'grp-1',
       coverageRate: 95,
       wastageRate: 10,
+      annualDosesPerPerson: 1.8,
     });
     expect(draft.vaccineCourseItems).toHaveLength(1);
     expect(draft.vaccineCourseDoses).toHaveLength(2);
@@ -203,6 +207,28 @@ describe('OMS-REG-IMM-01.35 / OMS-REG-IMM-01.64 — the rates', () => {
     expect(
       validateDraft({ ...draftFromCourse(course), wastageRate: 100 }).ok
     ).toBe(true);
+  });
+});
+
+describe('OMS-REG-IMM-01.78 — average doses per person per year', () => {
+  it('is optional, and above 0 when set', () => {
+    const base = draftFromCourse(course);
+    const problem = (annualDosesPerPerson: number | null) => {
+      const v = validateDraft({ ...base, annualDosesPerPerson });
+      return v.ok
+        ? undefined
+        : v.items.find(
+            item =>
+              item.kind === 'field' && item.field === 'annualDosesPerPerson'
+          );
+    };
+    expect(problem(null)).toBeUndefined();
+    expect(problem(0)).toMatchObject({
+      messageKey: 'error.numeric-input-error-too-small',
+    });
+    expect(problem(0.1)).toBeUndefined();
+    // Not capped by the course's doses: it's a separate figure
+    expect(problem(12)).toBeUndefined();
   });
 });
 
@@ -452,6 +478,7 @@ describe('OMS-REG-IMM-01.42 — Save is offered only once the draft differs', ()
     const base = draftFromCourse(course);
     expect(isDirty({ ...base, name: 'Measles 2' }, base)).toBe(true);
     expect(isDirty({ ...base, canSkipDose: true }, base)).toBe(true);
+    expect(isDirty({ ...base, annualDosesPerPerson: null }, base)).toBe(true);
     expect(isDirty({ ...base, vaccineCourseItems: [] }, base)).toBe(true);
     expect(
       isDirty(
@@ -494,6 +521,7 @@ describe('the write inputs (contract § the editor)', () => {
       demographicId: 'grp-1',
       coverageRate: 95,
       wastageRate: 10,
+      annualDosesPerPerson: 1.8,
       useInGapsCalculations: true,
       canSkipDose: false,
       vaccineItems: [{ id: 'm-1', itemId: 'item-1' }],
@@ -548,6 +576,11 @@ describe('the write inputs (contract § the editor)', () => {
     });
     const input = updateInput(draft);
     expect(input).not.toHaveProperty('programId');
+    expect(input.annualDosesPerPerson).toEqual({ value: 1.8 });
+    // A cleared value is sent as a null update, not left out (which keeps it)
+    expect(
+      updateInput({ ...draft, annualDosesPerPerson: null }).annualDosesPerPerson
+    ).toEqual({ value: null });
     expect(input.demographicId).toBeNull();
     expect(input.storeConfigs?.[0]).toEqual({
       id: 'sc-1',

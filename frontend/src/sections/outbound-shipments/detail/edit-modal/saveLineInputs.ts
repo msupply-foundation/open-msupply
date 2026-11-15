@@ -5,8 +5,9 @@
 // lines / § supplier comment wire traps) — the stored values are echoed back so
 // a save never clears what the destination reported, never strips the BATCH's
 // VVM status (the update path writes lines[].vvmStatusId onto the stock line
-// unconditionally, absent id included), and never drops the item's supplier
-// comment.
+// unconditionally, absent id included), never strips the batch's campaign or
+// programme (a new line writes lines[].campaignId / programId onto the stock
+// line, absent included), and never drops the item's supplier comment.
 import type {
   DraftStockOutLinesResult,
   SaveOutboundItemLinesVariables,
@@ -24,6 +25,8 @@ export const toSaveLineInputs = (
     | 'receivedNumberOfPacks'
     | 'reasonOption'
     | 'vvmStatus'
+    | 'campaign'
+    | 'program'
   >[],
   // The item's ONE supplier comment, repeated onto every line of it
   // (OMS-REG-DIST-03.41). Empty is sent as null, which clears any stored value
@@ -37,5 +40,7 @@ export const toSaveLineInputs = (
     receivedNumberOfPacks: line.receivedNumberOfPacks,
     reasonOptionId: line.reasonOption?.id ?? null,
     vvmStatusId: line.vvmStatus?.id ?? null,
+    campaignId: line.campaign?.id ?? null,
+    programId: line.program?.id ?? null,
     transferComment: transferComment || null,
   }));

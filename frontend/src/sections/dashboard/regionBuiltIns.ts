@@ -46,17 +46,13 @@ export type PanelVisibility = Readonly<Record<DashboardPanelId, boolean>>;
  * registry does not compile until its rule is stated here.
  */
 export const panelVisibility = (
-  gates: DashboardGates | undefined,
   can: (permission: UserPermission) => boolean,
   dispensary: boolean
 ): PanelVisibility => ({
   [ids.replenishment.inbound.id]: can('INBOUND_SHIPMENT_QUERY'),
-  // The external read AND the procurement preference (OMS-REG-DB-01.36):
-  // `gates` undefined is the unresolved context, which shows the plainer
-  // surface.
-  [ids.replenishment.inboundExternal.id]:
-    can('INBOUND_SHIPMENT_EXTERNAL_QUERY') &&
-    gates?.externalInboundPanel === true,
+  [ids.replenishment.inboundExternal.id]: can(
+    'INBOUND_SHIPMENT_EXTERNAL_QUERY'
+  ),
   // Both requisition panels ride RequisitionQuery — the contract's wire trap:
   // the server's resource is named RequisitionStats, the permission it checks
   // is RequisitionQuery.

@@ -46,11 +46,20 @@ import type { AncillaryEditorState } from './AncillaryItemEditModal';
 import { ItemVariantsPanel } from './ItemVariantsPanel';
 import type { ItemVariantEditorState } from './ItemVariantEditModal';
 import { visibleTabs } from './itemDetailTabs';
+import { ItemBarcodesPanel } from './ItemBarcodesPanel';
+import type { BarcodeEditorState } from './ItemBarcodeModal';
+import { canMakeBarcodeVariant, canManageBarcodes } from './barcodeEdit';
+import { hasPermission } from '../../../store/storeContext';
 import {
   formatMonthsOfStock,
   formatUnits,
   dosesEquivalent,
+  shouldShowDoses,
 } from '../list/itemStats';
+import { ItemPreferences } from '../itemPreferences.generated';
+import { decimalPlaces } from '@/intl/numberDisplay';
+import { formatCurrency } from '@/intl/currency';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The item detail screen (spec/items S2). Read-only: the General and Store tabs
 // render each field as a read-only labelled value (label above value, no input
@@ -60,15 +69,19 @@ import {
 // the stock detail is the live reference). The Custom fields tab keeps the
 // shared custom-fields disabled controls. The only writes are the central-only
 // management flows (S3–S5), which are NOT built in this pass (flagged in
-// BUILD_REPORT). Statistics band + URL-driven tabs (a tab is deep-linkable via
-// ?tab=). The two-column section pairing (spec: "two-column, groups in order")
-// reuses the pure-layout FormColumns/FormColumn row — column 1 then column 2
-// preserves the spec's group order when the columns wrap to one.
+// BUILD_REPORT), and the Barcodes tab's add/confirm (S7) — the barcode book, not
+// the item record. Statistics band + URL-driven tabs (a tab is deep-linkable
+// via ?tab=). The two-column section pairing (spec: "two-column, groups in
+// order") reuses the pure-layout FormColumns/FormColumn row — column 1 then
+// column 2 preserves the spec's group order when the columns wrap to one.
 //
 // Built tabs: General, Store, Master lists, Ledger (ItemLedgerPanel — its own
 // query/filters/pagination, kdd/state-management), Ancillary items
 // (ItemAncillaryPanel — read-only everywhere, central-only add/edit/delete
-// via AncillaryItemEditModal, OMS-REG-CAT-08), Custom fields, Log. Flagged:
+// via AncillaryItemEditModal, OMS-REG-CAT-08), Barcodes (ItemBarcodesPanel —
+// the barcodes that mean this item, with add and confirm behind the barcode
+// permissions, barcode-scanning rules § Maintaining mappings), Custom fields,
+// Log. Flagged:
 // Variants (needs the variant card + editable packaging grid).
 // Variants' tab PRESENCE is wired (OMS-REG-CAT-05.1/.2, itemDetailTabs.ts) —
 // central-server-only, ahead of its content.
@@ -93,6 +106,20 @@ const ItemDetailView: Component = () => {
   const [variantEditor, setVariantEditor] = createSignal<
     ItemVariantEditorState | undefined
   >();
+  // The Barcodes tab's add/confirm dialog — same reasoning again ("Add
+  // barcode" is a page-header action, ui-surface S2 › Barcodes tab).
+  const [barcodeEditor, setBarcodeEditor] = createSignal<
+    BarcodeEditorState | undefined
+  >();
+  // On central, item editing lets the user confirm, add and remove barcodes;
+  // elsewhere any of the four stock-handling permissions lets them add one, as
+  // a proposal (barcode-scanning rules § Permissions). Making a barcode-only
+  // variant a real one is variant editing, central's like the Variants tab.
+  // The server is the guard; this only hides the affordances.
+  const canManageItemBarcodes = () =>
+    canManageBarcodes(hasPermission, isCentralServer());
+  const canMakeVariant = () =>
+    canMakeBarcodeVariant(hasPermission, isCentralServer());
 
   const [data] = createResource(
     () => ({ storeId: params.storeId, itemId: params.itemId }),
@@ -111,6 +138,22 @@ const ItemDetailView: Component = () => {
   // but keeping it non-suspending means NOTHING on this screen can trip the
   // boundary below: `data.loading` drives the spinner instead.
   const item = (): ItemDetailRow | undefined => gated(data);
+
+  // The doses preference gates the band's doses lines, as on the list
+  // (OMS-REG-CAT-04.35). Same non-suspending read as the item above.
+  const [prefsData] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(ItemPreferences, { storeId });
+      if (result.kind !== 'success') return undefined;
+      return result.data.preferences;
+    }
+  );
+  const showDoses = () =>
+    shouldShowDoses(
+      item()?.isVaccine ?? false,
+      gated(prefsData)?.manageVaccinesInDoses ?? false
+    );
 
   const backToList = () => {
     // Replace history so Back can't return to the missing record
@@ -198,9 +241,10 @@ const ItemDetailView: Component = () => {
                   />
                   {/* ONE page-action cluster (ui-surface S2) — the header has a
                       single inline-end region, so the per-tab actions live
-                      inside it rather than each bringing its own. Both are
-                      central-server only; only one tab is ever active, so at
-                      most one button shows. */}
+                      inside it rather than each bringing its own. Ancillary
+                      and Variants are central-server only; Add barcode is
+                      permission-gated at every site. Only one tab is ever
+                      active, so at most one button shows. */}
                   <HeaderButtons>
                     <Show
                       when={activeTab() === 'ancillary' && isCentralServer()}
@@ -225,6 +269,19 @@ const ItemDetailView: Component = () => {
                         onClick={() => setVariantEditor({ mode: 'create' })}
                       >
                         {t('label.add-variant')}
+                      </Button>
+                    </Show>
+                    <Show
+                      when={
+                        activeTab() === 'barcodes' && canManageItemBarcodes()
+                      }
+                    >
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-barcode-button"
+                        onClick={() => setBarcodeEditor({ mode: 'add' })}
+                      >
+                        {t('label.add-barcode')}
                       </Button>
                     </Show>
                   </HeaderButtons>
@@ -252,7 +309,7 @@ const ItemDetailView: Component = () => {
                         value={formatUnits(i().stats.stockOnHand)}
                         href={stockHref()}
                       />
-                      <Show when={i().isVaccine}>
+                      <Show when={showDoses()}>
                         <Statistic
                           testId="item-stat-stock-on-hand-doses"
                           label={t('label.doses')}
@@ -273,9 +330,22 @@ const ItemDetailView: Component = () => {
                         label={t('label.units')}
                         value={formatUnits(
                           i().stats.averageMonthlyConsumption,
-                          2
+                          decimalPlaces()
                         )}
                       />
+                      <Show when={showDoses()}>
+                        <Statistic
+                          testId="item-stat-amc-doses"
+                          label={t('label.doses')}
+                          value={formatUnits(
+                            dosesEquivalent(
+                              i().stats.averageMonthlyConsumption,
+                              i().doses
+                            ),
+                            decimalPlaces()
+                          )}
+                        />
+                      </Show>
                     </StatsPanel>
                     <StatsPanel
                       testId="item-stat-months-of-stock"
@@ -374,7 +444,7 @@ const ItemDetailView: Component = () => {
                               data-testid="item-field-doses"
                               label={t('label.doses')}
                             >
-                              {formatUnits(i().doses)}
+                              <Num value={formatUnits(i().doses)} />
                             </LabelledValue>
                           </Show>
                         </FormRow>
@@ -428,14 +498,14 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-default-pack-size"
                             label={t('label.default-pack-size')}
                           >
-                            {formatUnits(i().defaultPackSize)}
+                            <Num value={formatUnits(i().defaultPackSize)} />
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             data-testid="item-field-outer-pack-size"
                             label={t('label.outer-pack-size')}
                           >
-                            {formatUnits(i().outerPackSize)}
+                            <Num value={formatUnits(i().outerPackSize)} />
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -444,14 +514,14 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-volume-per-pack"
                             label={t('label.volume-per-pack')}
                           >
-                            {formatUnits(i().volumePerPack, 2)}
+                            <Num value={i().volumePerPack} volume />
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             data-testid="item-field-volume-per-outer-pack"
                             label={t('label.volume-per-outer-pack')}
                           >
-                            {formatUnits(i().volumePerOuterPack, 2)}
+                            <Num value={i().volumePerOuterPack} volume />
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -460,7 +530,9 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-weight"
                             label={t('label.weight')}
                           >
-                            {formatUnits(i().weight, 2)}
+                            <Num
+                              value={formatUnits(i().weight, decimalPlaces())}
+                            />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -471,7 +543,8 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-margin"
                             label={t('label.margin')}
                           >
-                            {formatUnits(i().margin, 2)}
+                            {/* A percentage — its own precision, not the configured places. */}
+                            <Num value={formatUnits(i().margin, 2)} />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -492,10 +565,9 @@ const ItemDetailView: Component = () => {
                             data-testid="item-field-default-sell-price-per-pack"
                             label={t('label.default-sell-price-per-pack')}
                           >
-                            {formatUnits(
+                            {formatCurrency(
                               i().itemStoreProperties
-                                ?.defaultSellPricePerPack ?? 0,
-                              2
+                                ?.defaultSellPricePerPack ?? 0
                             )}
                           </LabelledValue>
                         </FormRow>
@@ -554,6 +626,18 @@ const ItemDetailView: Component = () => {
                   isCentral={isCentralServer()}
                   editor={ancillaryEditor()}
                   onEditorChange={setAncillaryEditor}
+                />
+              </TabPanel>
+
+              <TabPanel value="barcodes">
+                <ItemBarcodesPanel
+                  storeId={params.storeId}
+                  item={{ id: i().id, code: i().code, name: i().name }}
+                  isCentral={isCentralServer()}
+                  canManage={canManageItemBarcodes()}
+                  canMakeVariant={canMakeVariant()}
+                  editor={barcodeEditor()}
+                  onEditorChange={setBarcodeEditor}
                 />
               </TabPanel>
 

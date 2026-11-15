@@ -12,7 +12,11 @@ import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { NameSearch, type NameSeed } from '@/domain/name';
 import { ShippingMethodSelect } from '@/domain/shippingMethod';
-import { DeletePurchaseOrderAction } from './actions';
+import { createDebouncedField } from '@/domain/debouncedEdit';
+import {
+  CancelPurchaseOrderAction,
+  DeletePurchaseOrderAction,
+} from './actions';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
 import {
   sentDayToWire,
@@ -22,8 +26,9 @@ import {
   type SaveFieldResult,
 } from './purchaseOrderEdit';
 import { formatCurrency } from '@/intl/currency';
-import { chargesTotal, finalCost } from './purchaseOrderPricing';
+import { orderTotals } from './purchaseOrderPricing';
 import {
+  canCancel,
   canDelete,
   canEnterSentDate,
   canRecordPostSendingDates,
@@ -35,13 +40,19 @@ export interface PurchaseOrderSidePanelProps {
   node: PurchaseOrderInfoFragment;
   /** How many lines the order has — with none, it has no totals to show. */
   lineCount: number;
-  /** True once the order is Sent or Finalised (the comment and the panel's
-   *  three dates follow their own gates). */
+  /** True once the order is Sent, Finalised or Cancelled (the comment and
+   *  the panel's three dates follow their own gates). Also true for a user
+   *  without the change permission. */
   disabled: boolean;
+  /** The user lacks the change permission: every field closes, the comment
+   *  and the three dates included. */
+  readOnly: boolean;
   edit: PurchaseOrderFieldEdit;
   /** Resolves with the verdict, so a refusal can be reported at the field. */
   onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   onDeleted: () => void;
+  /** The order was cancelled — the screen re-reads it and its lines. */
+  onCancelled: () => void;
 }
 
 // The fields whose control can carry an inline error (ui-standards/inputs.md §
@@ -52,10 +63,12 @@ type ReportingField =
 
 /*
  * The detail side panel (spec/purchase-orders S9): three sections — Pricing,
- * Other, Dates — and one action, composed per ui/docs/SIDE_PANEL.md.
+ * Other, Dates — and two actions, composed per ui/docs/SIDE_PANEL.md.
  *
  * Delete leaves for the list only once the deletion has succeeded (rules §
- * deleting from the screen; DeletePurchaseOrderAction).
+ * deleting from the screen; DeletePurchaseOrderAction). Cancel is the one
+ * state move the footer ladder never offers — a terminal branch off Sent —
+ * so it lives here (rules § cancellation; CancelPurchaseOrderAction).
  */
 export const PurchaseOrderSidePanel: Component<
   PurchaseOrderSidePanelProps
@@ -71,18 +84,31 @@ export const PurchaseOrderSidePanel: Component<
   >({});
   const save = async (field: ReportingField, patch: PurchaseOrderPatch) => {
     const result = await props.onSaveField(patch);
-    setSaveErrors(
-      field,
-      result.ok
-        ? undefined
-        : (result.message ?? t('messages.error-saving-purchase-order'))
-    );
+    // No message = already up in a global modal (permission or transport).
+    setSaveErrors(field, result.ok ? undefined : result.message);
   };
 
   const money = (value: number) => formatCurrency(value, currency());
 
+  // The two discounts save as they are typed. Each shows its own draft while
+  // it is being edited and the order's figure otherwise — so the other one
+  // follows the save, an answer to an earlier keystroke can't land over a
+  // later one, and once left an amount shows what the server made of it
+  // (createDebouncedField).
+  const discountPercentage = createDebouncedField({
+    value: () => props.node.supplierDiscountPercentage ?? undefined,
+    save: (value: number | undefined) =>
+      props.onSaveField({ supplierDiscountPercentage: value ?? 0 }),
+  });
+  const discountAmount = createDebouncedField({
+    value: () => props.node.supplierDiscountAmount,
+    save: (value: number) =>
+      props.onSaveField({ supplierDiscountAmount: value }),
+  });
+
   const status = () => props.node.status as PurchaseOrderStatus;
-  const datesDisabled = () => !canRecordPostSendingDates(status());
+  const datesDisabled = () =>
+    props.readOnly || !canRecordPostSendingDates(status());
   const moment = (value: string | null | undefined) =>
     value ? localisedDate(value) : '-';
   const sentDay = () => sentWireToDay(props.node.sentDatetime);
@@ -102,10 +128,13 @@ export const PurchaseOrderSidePanel: Component<
   // order's own screen, confirmed live). So the amount input closes at a zero
   // subtotal rather than taking an edit the server will silently drop; the
   // percentage input stays open, since it is the figure actually stored.
-  const subtotal = () => props.node.orderTotalBeforeDiscount;
+  // One source with the totals band below the lines, so the two surfaces
+  // cannot drift (rules § pricing and totals).
+  const totals = () => orderTotals(props.node);
+  const subtotal = () => totals().subtotal;
   // An order with no lines has NO totals — the server fabricates 0.0 for both
   // (contract ⚠️), so the line count decides whether a figure exists at all
-  // (rules § pricing and totals). The charges are real whatever the lines.
+  // (rules § pricing and totals).
   const total = (value: number): string =>
     props.lineCount === 0 ? '-' : money(value);
 
@@ -123,20 +152,6 @@ export const PurchaseOrderSidePanel: Component<
           {total(subtotal())}
         </FieldRow>
 
-        {/* The five charges summed. They reach NEITHER stored total, which is
-            why this row is assembled here (purchaseOrderPricing.ts). */}
-        <FieldRow
-          label={
-            <span style={{ 'white-space': 'pre-line' }}>
-              {t('label.cost-additional-fees')}
-            </span>
-          }
-          readOnly
-          valueTestId="cost-additional-fees-value"
-        >
-          {money(chargesTotal(props.node))}
-        </FieldRow>
-
         {/* The two discount inputs are two views of ONE stored figure: only
             the percentage is stored, and an amount is converted against the
             subtotal as it stands. */}
@@ -144,17 +159,19 @@ export const PurchaseOrderSidePanel: Component<
           <NumberField
             label={t('label.supplier-discount-percentage')}
             hideLabel
+            data-testid="supplier-discount-percentage-input"
             size="small"
             width="compact"
             endAdornment="%"
             min={0}
             max={100}
             decimalLimit={2}
-            value={props.node.supplierDiscountPercentage ?? undefined}
+            emptyValue={0}
+            value={discountPercentage.value()}
             disabled={props.disabled}
-            onChange={value =>
-              void props.onSaveField({ supplierDiscountPercentage: value ?? 0 })
-            }
+            onChange={value => discountPercentage.set(value ?? 0)}
+            onFocus={discountPercentage.onFocus}
+            onBlur={discountPercentage.onBlur}
           />
         </FieldRow>
 
@@ -162,28 +179,28 @@ export const PurchaseOrderSidePanel: Component<
           <CurrencyField
             label={t('label.supplier-discount-amount')}
             hideLabel
+            data-testid="supplier-discount-amount-input"
             size="small"
             width="compact"
             currency={currency()}
             min={0}
-            value={props.node.supplierDiscountAmount}
+            emptyValue={0}
+            value={discountAmount.value()}
             disabled={props.disabled || subtotal() === 0}
-            onChange={value =>
-              void props.onSaveField({ supplierDiscountAmount: value ?? 0 })
-            }
+            onChange={value => discountAmount.set(value ?? 0)}
+            onFocus={discountAmount.onFocus}
+            onBlur={discountAmount.onBlur}
           />
         </FieldRow>
 
-        {/* The discounted total PLUS the charges — the only place the figure a
-            user reads as the order's final cost appears anywhere. No field
-            carries it (contract ⚠️ the five charges reach no total on the
-            server). */}
+        {/* The discounted total — the same figure the totals band reads as
+            Order total. */}
         <FieldRow
           label={t('label.cost-final')}
           readOnly
           valueTestId="cost-final-value"
         >
-          <strong>{total(finalCost(props.node))}</strong>
+          <strong>{total(totals().total)}</strong>
         </FieldRow>
       </SidePanelSection>
 
@@ -195,6 +212,7 @@ export const PurchaseOrderSidePanel: Component<
             size="small"
             storeId={props.storeId}
             role="donor"
+            inputTestId="donor-search-input"
             selected={selectedDonor()}
             disabled={props.disabled}
             // Clearable, and clearing is a real edit: the field is nullable and
@@ -211,6 +229,7 @@ export const PurchaseOrderSidePanel: Component<
           <ShippingMethodSelect
             label={t('label.shipping-method')}
             hideLabel
+            inputTestId="shipping-method-input"
             size="small"
             // The order stores the method's NAME, not its id, so the selected
             // option is matched by what was stored.
@@ -229,6 +248,8 @@ export const PurchaseOrderSidePanel: Component<
           <TextArea
             label={t('label.comment')}
             hideLabel
+            data-testid="comment-field"
+            disabled={props.readOnly}
             value={props.edit.state.comment}
             onInput={e => props.edit.setField('comment', e.currentTarget.value)}
             onBlur={() => props.edit.flush()}
@@ -268,6 +289,7 @@ export const PurchaseOrderSidePanel: Component<
               width="compact"
               testId="po-sent-field"
               value={sentDay()}
+              disabled={props.readOnly}
               error={saveErrors.sentDatetime}
               onChange={value =>
                 void save('sentDatetime', {
@@ -326,6 +348,15 @@ export const PurchaseOrderSidePanel: Component<
             orderNumber={props.node.number}
             disabled={!canDelete(status())}
             onDeleted={props.onDeleted}
+          />
+          {/* Present on a Sent order alone: before Sent an order is deleted
+              instead, and Finalised or Cancelled is final (rules §
+              cancellation). */}
+          <CancelPurchaseOrderAction
+            storeId={props.storeId}
+            orderId={props.node.id}
+            offered={canCancel(status())}
+            onCancelled={props.onCancelled}
           />
         </SidePanelActions>
       </SidePanelSection>

@@ -574,8 +574,13 @@ const start = async (): Promise<void> => {
 
   // The new front end's scanner (./hidScanner). Events go to whatever page
   // the window is showing; a page that does not listen ignores them.
+  // HIDAsync, not HID: see HidLibrary in ./hidScanner for why. Non-exclusive
+  // so that on a Mac a device opened while pairing is not seized from the OS.
   const hidScanner = new HidScanner(
-    { devices: () => HID.devices(), open: path => new HID.HID(path) },
+    {
+      devices: () => HID.devices(),
+      open: path => HID.HIDAsync.open(path, { nonExclusive: true }),
+    },
     {
       get: () => {
         const stored = store.get(HID_SCANNER_KEY, null);
@@ -595,6 +600,8 @@ const start = async (): Promise<void> => {
       changed: () => window.webContents.send(IPC_MESSAGES.HID_SCANNER_CHANGED),
     }
   );
+  // Held from launch, so scans made before any screen listens are dropped.
+  void hidScanner.hold();
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_STATUS, () => hidScanner.status());
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_CANDIDATES, () =>
     hidScanner.candidates()
@@ -610,14 +617,15 @@ const start = async (): Promise<void> => {
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_START, () => hidScanner.start());
   ipcMain.handle(IPC_MESSAGES.HID_SCANNER_STOP, () => hidScanner.stop());
   // A page navigating away (to another server, or back to discovery) must
-  // not leave the scanner held open by a screen that no longer exists.
+  // not leave the scanner armed for a screen that no longer exists. The
+  // device itself stays held (see HidScanner § held).
   window.webContents.on('did-start-navigation', details => {
     if (details.isMainFrame && !details.isSameDocument) {
       hidScanner.cancelPair();
-      hidScanner.stop();
+      void hidScanner.stop();
     }
   });
-  window.on('closed', () => hidScanner.dispose());
+  window.on('closed', () => void hidScanner.dispose());
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
@@ -769,7 +777,9 @@ process.on('uncaughtException', error => {
   }
 
   // When running the barcode scanner discovery on windows, you can get this error which we want to ignore
-  if (error.message === 'could not read from HID device') return;
+  // node-hid 3 appends the OS's reason, e.g. ": ReadFile: (0x00000005) Access
+  // is denied."
+  if (error.message.startsWith('could not read from HID device')) return;
 
   // TODO bugsnag ?
   dialog.showErrorBox('Error', error.stack || error.message);

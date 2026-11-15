@@ -1,0 +1,15 @@
+/* The log's raw text: monospace, long lines wrap, and the block scrolls
+   rather than stretching the dialog. */
+.content {
+  margin: 0;
+  padding: var(--space-2);
+  block-size: 24rem;
+  overflow: auto;
+  background: var(--bg-white);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

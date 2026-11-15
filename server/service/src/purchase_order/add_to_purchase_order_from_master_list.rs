@@ -1,13 +1,16 @@
-use crate::activity_log::activity_log_entry;
+use std::collections::HashMap;
+
+use crate::activity_log::activity_log_entry_with_diff;
 use crate::invoice::common::check_master_list_for_store;
 use crate::purchase_order::common::get_lines_for_purchase_order;
 use crate::purchase_order::generate::generate_empty_purchase_order_lines;
-use crate::purchase_order::validate::check_purchase_order_exists;
+use crate::purchase_order::validate::{check_purchase_order_exists, purchase_order_is_editable};
+use crate::purchase_order_line::log::{LineLogDetail, line_log_detail};
 use crate::service_provider::ServiceContext;
 use repository::{
-    ActivityLogType, EqualFilter, ItemType, PurchaseOrderLine, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
-    PurchaseOrderRow, PurchaseOrderStatus,
+    ActivityLogType, EqualFilter, ItemRowRepository, ItemType, PurchaseOrderLine,
+    PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
+    PurchaseOrderLineRowRepository, PurchaseOrderRow,
 };
 use repository::{
     MasterListLineFilter, MasterListLineRepository, RepositoryError, StorageConnection,
@@ -55,15 +58,28 @@ pub fn add_from_master_list(
                 .collect::<Vec<String>>();
 
             if !new_purchase_order_line_rows.is_empty() {
+                let item_ids = new_purchase_order_line_rows
+                    .iter()
+                    .map(|line| line.item_id.clone())
+                    .collect();
+                let item_codes: HashMap<String, String> = ItemRowRepository::new(connection)
+                    .find_many_by_id(&item_ids)?
+                    .into_iter()
+                    .map(|item| (item.id, item.code))
+                    .collect();
+
                 for purchase_order_line_row in new_purchase_order_line_rows {
                     purchase_order_line_row_repository.upsert_one(&purchase_order_line_row)?;
-
-                    activity_log_entry(
+                    activity_log_entry_with_diff(
                         ctx,
                         ActivityLogType::PurchaseOrderLineCreated,
-                        Some(purchase_order_line_row.purchase_order_id),
-                        None,
-                        None,
+                        Some(purchase_order_line_row.purchase_order_id.clone()),
+                        None::<&LineLogDetail>,
+                        &line_log_detail(
+                            connection,
+                            &purchase_order_line_row,
+                            item_codes.get(&purchase_order_line_row.item_id).cloned(),
+                        )?,
                     )?;
                 }
             }
@@ -93,7 +109,7 @@ fn validate(
         return Err(InError::NotThisStorePurchaseOrder);
     }
 
-    if purchase_order_row.status == PurchaseOrderStatus::Finalised {
+    if !purchase_order_is_editable(&purchase_order_row) {
         return Err(InError::CannotEditPurchaseOrder);
     }
 

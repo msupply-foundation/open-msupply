@@ -1,0 +1,14 @@
+/*
+ * The wrapper carrying the card table's test hook (vaccination-card-table);
+ * `display: contents` keeps it out of the page's layout.
+ */
+.card {
+  display: contents;
+}
+
+/* The Age column's label: the card is read by age (ui-surface § the card
+   table). Grouping and the column's rule are the table's (meta.groupRows,
+   meta.dividerEnd). */
+.age {
+  font-weight: var(--weight-semibold);
+}

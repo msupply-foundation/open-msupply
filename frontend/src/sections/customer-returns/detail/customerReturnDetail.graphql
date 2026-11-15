@@ -77,8 +77,14 @@ fragment CustomerReturnLine on InvoiceLineNode {
   }
 }
 
+# `type: CUSTOMER_RETURN` does BOTH jobs, as on the supplier return reads. It
+# FILTERS: the server ANDs the type onto the id + store filter, so any other
+# invoice kind's id reads as `NodeError / RecordNotFound` instead of handing that
+# invoice back to be rendered as a return (#1044; OMS-REG-DIST-07.14). It also
+# selects the PERMISSION: the read authorises against CustomerReturnQuery alone
+# instead of the deprecated combined fallback.
 query customerReturnDetail($storeId: String!, $id: String!) {
-  invoice(storeId: $storeId, id: $id) {
+  invoice(storeId: $storeId, id: $id, type: CUSTOMER_RETURN) {
     __typename
     ... on InvoiceNode {
       ...CustomerReturnInfo
@@ -99,9 +105,9 @@ query customerReturnDetail($storeId: String!, $id: String!) {
 # server-paginated PAGE. The standard is explicit that copy "MUST make its own
 # unpaginated read, not serialise the page on screen", and the nested `lines`
 # connector is that read: it takes no page argument, so it carries the complete
-# line set.
+# line set. Same `type` pin as the detail read: only a customer return copies.
 query customerReturnForCopy($storeId: String!, $id: String!) {
-  invoice(storeId: $storeId, id: $id) {
+  invoice(storeId: $storeId, id: $id, type: CUSTOMER_RETURN) {
     __typename
     ... on InvoiceNode {
       ...CustomerReturnInfo

@@ -40,6 +40,9 @@ pub struct ResponseNode {
     skipped_expired_stock_lines: StockLineConnector,
     skipped_on_hold_stock_lines: StockLineConnector,
     skipped_unusable_vvm_status_lines: StockLineConnector,
+    /// Batches of a different campaign than the shipment's (or any campaign,
+    /// on a shipment with none).
+    skipped_other_campaign_stock_lines: StockLineConnector,
     issued_expiring_soon_stock_lines: StockLineConnector,
 }
 
@@ -106,6 +109,7 @@ impl ResponseNode {
             skipped_expired_stock_lines,
             skipped_on_hold_stock_lines,
             skipped_unusable_vvm_status_lines,
+            skipped_other_campaign_stock_lines,
             issued_expiring_soon_stock_lines,
         } = from;
         ResponseNode {
@@ -116,6 +120,9 @@ impl ResponseNode {
             skipped_on_hold_stock_lines: StockLineConnector::from_vec(skipped_on_hold_stock_lines),
             skipped_unusable_vvm_status_lines: StockLineConnector::from_vec(
                 skipped_unusable_vvm_status_lines,
+            ),
+            skipped_other_campaign_stock_lines: StockLineConnector::from_vec(
+                skipped_other_campaign_stock_lines,
             ),
             issued_expiring_soon_stock_lines: StockLineConnector::from_vec(
                 issued_expiring_soon_stock_lines,
@@ -296,6 +303,11 @@ mod graphql {
                             id
                         }
                     }
+                    skippedOtherCampaignStockLines {
+                        nodes {
+                            id
+                        }
+                    }
                     issuedExpiringSoonStockLines {
                         nodes {
                             id
@@ -355,6 +367,13 @@ mod graphql {
                     },
                     ..Default::default()
                 }],
+                skipped_other_campaign_stock_lines: vec![StockLine {
+                    stock_line_row: StockLineRow {
+                        id: "skipped_other_campaign".to_string(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }],
                 issued_expiring_soon_stock_lines: vec![StockLine {
                     stock_line_row: StockLineRow {
                         id: "expiring_soon".to_string(),
@@ -395,6 +414,11 @@ mod graphql {
                 "skippedUnusableVvmStatusLines": {
                     "nodes": [{
                         "id": "skipped_unusable"
+                    }]
+                },
+                "skippedOtherCampaignStockLines": {
+                    "nodes": [{
+                        "id": "skipped_other_campaign"
                     }]
                 },
                 "issuedExpiringSoonStockLines": {

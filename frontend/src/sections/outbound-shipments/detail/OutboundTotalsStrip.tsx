@@ -1,5 +1,5 @@
 import { Show, type Component } from 'solid-js';
-import { formatNumber, t } from '../../../intl';
+import { displayTotal, t, VOLUME_DECIMALS } from '../../../intl';
 import { formatCurrencyCell } from '../../../ui/elements/table/tableHelpers';
 import styles from './OutboundTotalsStrip.module.css';
 
@@ -38,10 +38,19 @@ export const OutboundTotalsStrip: Component<
         data-testid="shipment-totals"
       >
         <span class={styles.label}>{t('label.total')}</span>
-        <span class={styles.figures}>
+        {/* The volume is a server aggregate over every line, already summed at
+            full precision, so it takes the total treatment at a volume's own
+            places: the mark and the hover reading when the shown figure differs
+            (ui-standards § display rounding). The title sits on the whole
+            figures span — the translated string interleaves both totals, so
+            there is no element around the volume alone to hang it on. */}
+        <span
+          class={styles.figures}
+          title={displayTotal(totals().volume, VOLUME_DECIMALS).exact}
+        >
           {t('label.shipment-totals', {
             price: formatCurrencyCell(totals().price),
-            volume: formatNumber(totals().volume, { maximumFractionDigits: 2 }),
+            volume: displayTotal(totals().volume, VOLUME_DECIMALS).text,
           })}
         </span>
       </div>

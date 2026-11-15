@@ -1,0 +1,18 @@
+{
+  "about-oms": "درباره Open mSupply",
+  "clear-data": "پاک کردن داده‌ها",
+  "clear-data-confirm-message": "این همه داده‌های محلی را پاک کرده و برنامه را می‌بندد. آیا مطمئن هستید؟",
+  "confirmation": "تأیید",
+  "copy": "کاپی",
+  "cut": "برش",
+  "developer-tools": "ابزارهای انکشاف‌دهنده",
+  "documentation": "مستندات",
+  "file": "فایل",
+  "help": "کمک",
+  "no": "نخیر",
+  "paste": "چسباندن",
+  "quit": "خروج",
+  "reload": "بارگذاری مجدد",
+  "select-all": "انتخاب همه",
+  "yes": "بله"
+}

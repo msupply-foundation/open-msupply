@@ -19,8 +19,11 @@ pub fn validate(
 
     check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
 
-    let existing_item_variant = ItemVariantRepository::new(connection)
-        .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(input.id.to_string())))?;
+    let existing_item_variant = ItemVariantRepository::new(connection).query_one(
+        ItemVariantFilter::new()
+            .id(EqualFilter::equal_to(input.id.to_string()))
+            .include_auto_created(),
+    )?;
 
     if let Some(existing_item_variant) = existing_item_variant.clone() {
         // Query Item Link to check if the item_id is the same
@@ -71,12 +74,13 @@ pub fn validate(
         }
     };
 
-    // Check for duplicate name under the same item
+    // Check for duplicate name under the same item, auto-created variants included
     let item_variants_with_duplicate_name = ItemVariantRepository::new(connection)
         .query_by_filter(
             ItemVariantFilter::new()
                 .name(StringFilter::equal_to(input.name.trim()))
-                .item_id(EqualFilter::equal_to(input.item_id.to_string())),
+                .item_id(EqualFilter::equal_to(input.item_id.to_string()))
+                .include_auto_created(),
         )?;
 
     if item_variants_with_duplicate_name

@@ -142,6 +142,17 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
 
+// The statuses at which the server will delete the shipment — its own window
+// (delete/validate.rs → check_invoice_is_editable), wider than EDITABLE by
+// Shipped. Picked and Verified are refused whatever the shipment holds, so the
+// detail's Delete is disabled there rather than offered only to be refused
+// (issue #628). Refusals that depend on the lines (stock issued, counted,
+// transferred) are still submitted and surfaced.
+const DELETABLE: InboundStatus[] = ['NEW', 'SHIPPED', 'DELIVERED', 'RECEIVED'];
+
+export const isDeletable = (status: string): boolean =>
+  DELETABLE.includes(status as InboundStatus);
+
 // Received closes a PO-linked shipment's line-selection actions (issue #873):
 // the goods are in stock, so a bulk change is too late. Lines are still added,
 // edited and deleted one at a time through the editor, and header fields
@@ -172,13 +183,30 @@ const hasIntroducedStock = (status: string): boolean =>
 // is refused outright (server invoice/inbound_shipment/delete/validate.rs →
 // check_invoice_is_editable admits New/Shipped/Delivered/Received) — warning
 // that its stock "will be removed as well" promises an outcome that cannot
-// happen, and the user meets the finalised refusal instead. Nor is this a gate:
-// delete stays offered and submitted at every status (issue #1134); the status
-// only picks the copy. Shipped and Delivered hold no stock yet, so they get the
-// plain confirmation too — telling someone their Shipped shipment "has already
-// been received" was both false and alarming.
+// happen, and the user meets the finalised refusal instead. Nor is this a gate
+// (that is `isDeletable`); the status only picks the copy, and the list's bulk
+// delete still submits a Verified selection (issue #1134). Shipped and
+// Delivered hold no stock yet, so they get the plain confirmation too —
+// telling someone their Shipped shipment "has already been received" was
+// both false and alarming.
 export const deleteRemovesStock = (status: string): boolean =>
   hasIntroducedStock(status) && status !== 'VERIFIED';
+
+// What a TYPED delete refusal tells the user (rules → deletion). The server
+// answers `CannotEditInvoice` for two causes — the shipment is Verified, or its
+// supplier's linked store has been disabled (delete/validate.rs) — and its
+// description, "Cannot edit invoice", names neither. The finalised check runs
+// first, so a Verified shipment's refusal is always the finalised one and can
+// say so (INB-20261005-F2, issue #1140). Any other status keeps the server's
+// own text: the status the caller holds may be stale, and since status only
+// moves forward, VERIFIED is the one reading that can't be.
+export const deleteRefusalMessage = (
+  error: { __typename: string; description: string },
+  status: string
+): string =>
+  error.__typename === 'CannotEditInvoice' && status === 'VERIFIED'
+    ? t('messages.cant-delete-verified-shipment')
+    : error.description;
 
 // Whether the status footer offers an advance — a SEPARATE, deliberately looser
 // gate than `isEditable`. An advance travels through updateInboundShipment, so

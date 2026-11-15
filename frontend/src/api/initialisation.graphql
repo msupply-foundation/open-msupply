@@ -5,6 +5,15 @@ query initialisationStatus {
   }
 }
 
+# Start-up runs before every page load and only needs the status. On an
+# initialised server that's answered without touching the database; siteName
+# would need a read, so it is left to the initialisation page above.
+query initialisationStatusAtStartup {
+  initialisationStatus {
+    status
+  }
+}
+
 # Server role for the phase-visibility matrix (spec/sync-modal/rules.md
 # § phase visibility). Served without authentication on both schemas, so the
 # initialisation screen can read it pre-session.
@@ -85,6 +94,17 @@ query syncStatusAndQueue {
     ...SyncStatus
   }
   numberOfRecordsInPushQueue
+  # The admin pause (Admin > Sync settings): while true no scheduled or manual
+  # run starts. Rides on the post-login poll and the subscription frame so the
+  # chrome cell and the modal read it from the shared store.
+  isSyncPaused
+  # Central maintenance mode (#840): while on, a manual sync is forced past the
+  # pause above, and the header says so. Rides alongside the pause for the same
+  # reason.
+  isMaintenanceMode
+  # Central only: its sync API pause, refusing remote sites' sync. Carried the
+  # same way so the modal can say remotes are being refused.
+  isSyncApiPaused
 }
 
 subscription syncInfoUpdated {
@@ -93,6 +113,9 @@ subscription syncInfoUpdated {
       ...SyncStatus
     }
     numberOfRecordsInPushQueue
+    isSyncPaused
+    isMaintenanceMode
+    isSyncApiPaused
   }
 }
 

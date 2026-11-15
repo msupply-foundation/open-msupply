@@ -72,6 +72,11 @@ export const CUSTOM_FIELD_SCOPES: readonly CustomFieldScope[] = [
     offersProminent: true,
   },
   {
+    value: 'purchase_order',
+    labelKey: 'label.custom-field-scope-purchase-order',
+    offersProminent: false,
+  },
+  {
     value: 'supplier_return',
     labelKey: 'label.custom-field-scope-supplier-return',
     offersProminent: true,

@@ -2,11 +2,15 @@
   {% include "style.css" %}
 </style>
 
+{% set timezone = arguments.timezone | default(value="UTC") %}
+
 <div class="container">
   <table>
     <thead>
       <tr class="heading">
         <td>{{t(k="label.customer", f="Customer")}}</td>
+        <td>{{t(k="label.invoice-number", f="Invoice number")}}</td>
+        <td>{{t(k="report.shipped-date", f="Shipped date")}}</td>
         <td>{{t(k="label.code", f="Code")}}</td>
         <td>{{t(k="label.name", f="Name")}}</td>
         <td>{{t(k="label.batch", f="Batch")}}</td>
@@ -22,6 +26,12 @@
       {% for line in data.lines %}
       <tr>
         <td>{{line.otherPartyName}}</td>
+        <td style="text-align: right">{{line.invoiceNumber}}</td>
+        <td>
+          {% if line.shippedDatetime %}
+          {{line.shippedDatetime | date(format="%d/%m/%Y", timezone=timezone)}}
+          {% endif %}
+        </td>
         <td>{{line.itemCode}}</td>
         <td>{{line.itemName}}</td>
         <td>{{line.batch | default(value='')}}</td>

@@ -21,7 +21,7 @@ export type OutstandingLineRowFragment = {
   name: string;
 };
   expectedDeliveryDate: string | null;
-  adjustedNumberOfUnits: number | null;
+  requestedNumberOfUnits: number;
   receivedNumberOfUnits: number;
   outstandingNumberOfUnits: number;
 };
@@ -49,7 +49,7 @@ export type OutstandingLinesVariables = {
     notEqualTo?: "NEW" | "SENT" | "CLOSED" | null;
     notEqualAll?: Array<"NEW" | "SENT" | "CLOSED"> | null;
   } | null;
-    receivedLessThanAdjusted?: boolean | null;
+    receivedLessThanRequested?: boolean | null;
     supplierName?: {
     equalTo?: string | null;
     like?: string | null;
@@ -76,7 +76,7 @@ export type OutstandingLinesVariables = {
   } | null;
   } | null;
   sort?: Array<{
-    key: "itemName" | "itemCode" | "lineNumber" | "status" | "unit" | "requestedPackSize" | "requestedNumberOfUnits" | "shippedNumberOfUnits" | "requestedDeliveryDate" | "expectedDeliveryDate" | "purchaseOrderNumber" | "supplierName" | "purchaseOrderConfirmedDatetime" | "adjustedNumberOfUnits" | "receivedNumberOfUnits" | "outstandingNumberOfUnits";
+    key: "itemName" | "itemCode" | "lineNumber" | "status" | "unit" | "requestedPackSize" | "requestedNumberOfUnits" | "shippedNumberOfUnits" | "requestedDeliveryDate" | "expectedDeliveryDate" | "purchaseOrderNumber" | "supplierName" | "purchaseOrderConfirmedDatetime" | "receivedNumberOfUnits" | "outstandingNumberOfUnits";
     desc?: boolean | null;
   }> | null;
   page?: {
@@ -95,5 +95,5 @@ export type OutstandingLinesResult = {
 };
 
 export const OutstandingLines = {
-  query: "query outstandingLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...OutstandingLineRow\n      }\n    }\n  }\n}\n\nfragment OutstandingLineRow on PurchaseOrderLineNode {\n  id\n  purchaseOrder {\n    id\n    number\n    reference\n    confirmedDatetime\n    user {\n      username\n    }\n    supplier {\n      code\n      name\n    }\n  }\n  item {\n    name\n  }\n  expectedDeliveryDate\n  adjustedNumberOfUnits\n  receivedNumberOfUnits\n  outstandingNumberOfUnits\n}",
+  query: "query outstandingLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...OutstandingLineRow\n      }\n    }\n  }\n}\n\nfragment OutstandingLineRow on PurchaseOrderLineNode {\n  id\n  purchaseOrder {\n    id\n    number\n    reference\n    confirmedDatetime\n    user {\n      username\n    }\n    supplier {\n      code\n      name\n    }\n  }\n  item {\n    name\n  }\n  expectedDeliveryDate\n  requestedNumberOfUnits\n  receivedNumberOfUnits\n  outstandingNumberOfUnits\n}",
 } as TypedDocument<OutstandingLinesResult, OutstandingLinesVariables>;

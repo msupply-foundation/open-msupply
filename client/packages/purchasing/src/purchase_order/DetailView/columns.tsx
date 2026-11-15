@@ -69,11 +69,8 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
         accessorKey: 'numberOfPacks',
         header: t('label.num-packs'),
         columnType: ColumnType.Number,
-        accessorFn: row => {
-          const numUnits =
-            row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits;
-          return Math.ceil(numUnits / row.requestedPackSize);
-        },
+        accessorFn: row =>
+          Math.ceil(row.requestedNumberOfUnits / row.requestedPackSize),
       },
       {
         accessorKey: 'packSize',
@@ -92,11 +89,6 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
       {
         accessorKey: 'requestedNumberOfUnits',
         header: t('label.requested-units'),
-        columnType: ColumnType.Number,
-      },
-      {
-        accessorKey: 'adjustedNumberOfUnits',
-        header: t('label.adjusted-units'),
         columnType: ColumnType.Number,
       },
       {
@@ -122,8 +114,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
         columnType: ColumnType.Currency,
         Cell: props => <CurrencyValueCell {...props} currencyCode={currency} />,
         accessorFn: row => {
-          const units =
-            row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits ?? 0;
+          const units = row.requestedNumberOfUnits ?? 0;
           const packSize = row.requestedPackSize || 1;
           return NumUtils.round(
             (row.pricePerPackAfterDiscount ?? 0) * (units / packSize),
@@ -134,10 +125,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
           const total = NumUtils.round(
             table.getFilteredRowModel().rows.reduce((sum, row) => {
               const { original } = row;
-              const units =
-                original.adjustedNumberOfUnits ??
-                original.requestedNumberOfUnits ??
-                0;
+              const units = original.requestedNumberOfUnits ?? 0;
               const packSize = original.requestedPackSize || 1;
               return (
                 sum +

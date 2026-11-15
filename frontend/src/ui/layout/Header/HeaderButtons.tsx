@@ -18,5 +18,9 @@ export interface HeaderButtonsProps {
  * hugs the same edge when it wraps onto its own line.
  */
 export const HeaderButtons = (props: HeaderButtonsProps) => (
-  <div class={styles.buttons}>{props.children}</div>
+  // data-header-buttons: the hook Button/SplitButton CSS uses to shed labels
+  // to icons at phone widths, without every page opting each one in.
+  <div class={styles.buttons} data-header-buttons="">
+    {props.children}
+  </div>
 );

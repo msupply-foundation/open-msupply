@@ -35,7 +35,7 @@ import { StoreGpsBlock } from './StoreGpsBlock';
 import { StorePropertyField } from './StorePropertyField';
 import { StorePreferencesPanel } from './StorePreferencesPanel';
 import {
-  buildPreferencesInput,
+  buildPreferencesVariables,
   canEditAnything,
   canEditPreferences,
   coordinate,
@@ -46,6 +46,7 @@ import {
   propertyFields,
   serialiseProperties,
   setProperty,
+  stagePreference,
   type PreferenceDraft,
   type PropertyDraft,
 } from './storeEditorLogic';
@@ -70,7 +71,7 @@ import {
  * the draft intact, and Save is disabled while the session can edit nothing
  * (D79).
  *
- * The Preferences tab lists the store's 23 operational preferences —
+ * The Preferences tab lists the store's operational preferences —
  * editable only on a central server with the central-data permission
  * (rules § The store editor › Preferences, OMS-REG-SET-05.33–.39). Its edits
  * stage per-preference (the write is per-preference, unlike the wholesale
@@ -158,7 +159,7 @@ export const StoreEditorModal = (props: {
   );
   const definitions = () => gated(definitionsData) ?? [];
 
-  // The store's 23 preference descriptions — served in display order, with a
+  // The store's preference descriptions — served in display order, with a
   // fabricated default standing in for any unset preference (contract § The
   // store editor). Same interaction-opened read as the two above, so the same
   // non-suspending gate.
@@ -254,15 +255,19 @@ export const StoreEditorModal = (props: {
       );
     }
     // The per-preference write — staged preferences only, each entry naming
-    // the edited store (contract § The store editor, wire traps). Skipped
-    // entirely when nothing is staged.
-    const preferencesInput = canEditPrefs()
-      ? buildPreferencesInput(prefDraft(), props.facilityStoreId)
+    // the edited store, authorised against the signed-in one (contract § The
+    // store editor, wire traps). Skipped entirely when nothing is staged.
+    const preferencesVariables = canEditPrefs()
+      ? buildPreferencesVariables(
+          prefDraft(),
+          props.storeId,
+          props.facilityStoreId
+        )
       : undefined;
-    if (!failed && preferencesInput) {
+    if (!failed && preferencesVariables) {
       const result = await graphqlFetch(
         UpsertStorePreferences,
-        { storeId: props.facilityStoreId, input: preferencesInput },
+        preferencesVariables,
         { background: true, returnGraphqlErrors: true }
       );
       failed = !(
@@ -283,7 +288,7 @@ export const StoreEditorModal = (props: {
       // register the subject is some other store on the server: nothing live
       // changed, and refetching names a DIFFERENT store to the global context,
       // which is how a register save would silently re-point the whole app.
-      if (preferencesInput && props.facilityStoreId === props.storeId)
+      if (preferencesVariables && props.facilityStoreId === props.storeId)
         void refetchStoreContext(props.storeId);
       onDone();
     }
@@ -418,8 +423,10 @@ export const StoreEditorModal = (props: {
               draft={prefDraft()}
               disabled={!prefsEditable()}
               loading={preferencesData.loading}
-              onStage={(key, value) =>
-                setPrefDraft(current => ({ ...current, [key]: value }))
+              onStage={(preference, value) =>
+                setPrefDraft(current =>
+                  stagePreference(current, preference, value)
+                )
               }
             />
           </TabPanel>

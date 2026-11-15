@@ -15,7 +15,7 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
-import { RadioGroup } from '@/ui/elements/inputs/RadioGroup';
+import { RadioGroup, type RadioOption } from '@/ui/elements/inputs/RadioGroup';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { masterListsResource, MasterListSelect } from '@/domain/masterList';
@@ -31,7 +31,7 @@ import { t, tPlural } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
 import { userDisplayName } from '@/auth/authContext';
 import { shallowEqual } from '@/typeHelpers';
-import { dayBefore } from '@/intl/dateArithmetic';
+import { previousCalendarDate } from '@/intl/calendarDate';
 import {
   InsertStocktake,
   type InsertStocktakeVariables,
@@ -173,7 +173,7 @@ export const CreateStocktakeModal = (props: {
       locationId: locationId ? { equalTo: locationId } : undefined,
       vvmStatusId: vvmStatusId ? { equalTo: vvmStatusId } : undefined,
       expiryDate: expiryDate
-        ? { beforeOrEqualTo: dayBefore(expiryDate) }
+        ? { beforeOrEqualTo: previousCalendarDate(expiryDate) }
         : undefined,
     };
   };
@@ -296,7 +296,9 @@ export const CreateStocktakeModal = (props: {
           // only appears when the pref is on, so vvmStatusId is otherwise
           // always '').
           vvmStatusId: vvmStatusId || undefined,
-          expiresBefore: expiryDate ? dayBefore(expiryDate) : undefined,
+          expiresBefore: expiryDate
+            ? previousCalendarDate(expiryDate)
+            : undefined,
           // The EFFECTIVE value, never the raw flag: the server rejects
           // includeAllMasterListItems without a masterListId (#1199).
           includeAllMasterListItems: includeAll(),
@@ -327,16 +329,27 @@ export const CreateStocktakeModal = (props: {
   // leak in).
   const setType = (type: StocktakeType) => setForm({ ...EMPTY_FORM, type });
 
-  const includeAllOptions = () => [
+  // Built once. RadioGroup's <For> is keyed by option object, so options
+  // rebuilt on every read would remount both radios on each form change,
+  // taking focus from the one just picked (kdd/solid-reactivity-pitfalls § no
+  // remounts rule 5). `label` and `disabled` are getters, read in RadioGroup's
+  // JSX, so they still follow the language and the form.
+  const includeAllOptions: RadioOption[] = [
     {
       value: 'soh',
-      label: t('stocktake.items-with-soh'),
+      get label() {
+        return t('stocktake.items-with-soh');
+      },
       testId: 'stocktake-items-with-soh',
     },
     {
       value: 'all',
-      label: t('label.all-items'),
-      disabled: allItemsDisabled(),
+      get label() {
+        return t('label.all-items');
+      },
+      get disabled() {
+        return allItemsDisabled();
+      },
       testId: 'stocktake-all-items',
     },
   ];
@@ -442,7 +455,7 @@ export const CreateStocktakeModal = (props: {
                 panel's fields, so the two panels read the same way (#837). */}
             <FieldRow label={t('label.include')}>
               <RadioGroup
-                options={includeAllOptions()}
+                options={includeAllOptions}
                 value={includeAllValue()}
                 orientation="horizontal"
                 disabled={creating()}
@@ -473,7 +486,7 @@ export const CreateStocktakeModal = (props: {
                 rather than as an unlabelled appendage to the master list. */}
             <FieldRow label={t('label.include')}>
               <RadioGroup
-                options={includeAllOptions()}
+                options={includeAllOptions}
                 value={includeAllValue()}
                 orientation="horizontal"
                 disabled={creating()}

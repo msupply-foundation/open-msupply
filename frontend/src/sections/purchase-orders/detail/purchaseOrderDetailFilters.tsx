@@ -58,7 +58,7 @@ const FILTERS: Filter<PurchaseOrderLineFilter>[] =
     purchaseOrderNumber: null,
     // The outstanding-lines list's own vocabulary (S5), not this screen's.
     status: null,
-    receivedLessThanAdjusted: null,
+    receivedLessThanRequested: null,
     expectedDeliveryDate: null,
   });
 

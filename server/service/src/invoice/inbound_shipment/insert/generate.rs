@@ -28,12 +28,18 @@ pub fn generate(
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
 
-    // If linked to a PO, use the PO's currency; otherwise fall back to home currency
-    let (currency_id, currency_rate) = if let Some(ref po_id) = purchase_order_id {
-        let po = PurchaseOrderRowRepository::new(connection)
-            .find_one_by_id(po_id)?
-            .ok_or(RepositoryError::NotFound)?;
+    let purchase_order = match &purchase_order_id {
+        Some(po_id) => Some(
+            PurchaseOrderRowRepository::new(connection)
+                .find_one_by_id(po_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        ),
+        None => None,
+    };
+    let default_donor_id = purchase_order.as_ref().and_then(|po| po.donor_id.clone());
 
+    // If linked to a PO, use the PO's currency; otherwise fall back to home currency
+    let (currency_id, currency_rate) = if let Some(po) = purchase_order {
         if let Some(po_currency_id) = &po.currency_id {
             // Look up the latest rate from the currency table for the PO's currency
             let po_currency = CurrencyRepository::new(connection)
@@ -98,7 +104,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        default_donor_id,
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,

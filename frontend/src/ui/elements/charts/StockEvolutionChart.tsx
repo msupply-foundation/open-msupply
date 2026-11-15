@@ -1,10 +1,11 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { calendarDateOrInstantToDate } from '../../../intl/calendarDate';
+import { roundedText } from '../../../intl/numberDisplay';
 import { SvgPlot, linePath } from './svgPlot';
 
-const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+const fmt = (n: number) => roundedText(n);
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
 
@@ -45,11 +46,13 @@ export const StockEvolutionChart = (props: {
           maxValue={maxValue()}
           width={props.width}
           height={props.height}
-          xLabel={i => format(new Date(data()[i].date), 'd/M')}
+          xLabel={i =>
+            format(calendarDateOrInstantToDate(data()[i].date), 'd/M')
+          }
           tooltip={i => (
             <>
               <div class={styles.tooltipHead}>
-                {format(new Date(data()[i].date), 'd MMM')}
+                {format(calendarDateOrInstantToDate(data()[i].date), 'd MMM')}
               </div>
               <div>
                 {t('label.stock-level')}: {fmt(data()[i].stockOnHand)}
@@ -77,13 +80,19 @@ export const StockEvolutionChart = (props: {
               <path
                 class={styles.maxLine}
                 d={linePath(
-                  data().map((d, i) => [s.bandCenter(i), s.y(d.maximumStockOnHand)])
+                  data().map((d, i) => [
+                    s.bandCenter(i),
+                    s.y(d.maximumStockOnHand),
+                  ])
                 )}
               />
               <path
                 class={styles.minLine}
                 d={linePath(
-                  data().map((d, i) => [s.bandCenter(i), s.y(d.minimumStockOnHand)])
+                  data().map((d, i) => [
+                    s.bandCenter(i),
+                    s.y(d.minimumStockOnHand),
+                  ])
                 )}
               />
             </>

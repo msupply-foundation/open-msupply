@@ -2,6 +2,7 @@ import { createMemo, type JSX } from 'solid-js';
 import type { DashboardSlotId, SlotId } from '../plugin-sdk/types';
 import { t } from '../intl';
 import { PluginRegionOutlet } from '../ui/elements/plugins/PluginRegionOutlet';
+import { recordPluginDiagnostic } from './diagnostics';
 import { contributionsFor, type RegisteredContribution } from './registry';
 import { slotContext } from './slotContext';
 
@@ -17,6 +18,41 @@ import { slotContext } from './slotContext';
  * is stable across everything else the screen does.
  */
 
+// Each failing gate is named once, not on every recompute of the memo it
+// runs in.
+const reportedGateFailures = new Set<string>();
+
+/*
+ * A contribution's `when` is PLUGIN code running inside the host region's own
+ * memo, outside the error boundary each contribution renders in, so a throw
+ * here would take the host screen down with it (rules § error isolation). A
+ * throwing gate hides its contribution, like a false, and is named in
+ * diagnostics; the slot's other contributions are unaffected. Truthiness, as
+ * page gates read it (pluginPages.tsx): a JS-authored plugin's `a && b` gate
+ * legitimately returns a non-boolean.
+ */
+const gatePasses = (
+  slot: SlotId,
+  contribution: RegisteredContribution<SlotId>,
+  ctx: ReturnType<typeof slotContext>
+): boolean => {
+  if (!contribution.when) return true;
+  try {
+    return Boolean(contribution.when(ctx));
+  } catch (error) {
+    const key = `${slot}:${contributionId(contribution)}`;
+    if (!reportedGateFailures.has(key)) {
+      reportedGateFailures.add(key);
+      recordPluginDiagnostic({
+        level: 'error',
+        pluginCode: contribution.pluginCode,
+        message: `${slot} "${contributionId(contribution)}" when gate threw (${String(error)}) — hidden`,
+      });
+    }
+    return false;
+  }
+};
+
 /**
  * The visible contributions for a slot: registered, `when`-gated, in the
  * registry's deterministic order.
@@ -26,7 +62,8 @@ import { slotContext } from './slotContext';
  * stable and keeps mounted contributions alive.
  *
  * `when` sees session facts only, so a hidden contribution costs nothing: it
- * never renders, and never gets the chance to fetch (OMS-REG-PLG-02.4).
+ * never renders, and never gets the chance to fetch (OMS-REG-PLG-02.4). A
+ * gate that throws hides its contribution alone (see `gatePasses`).
  */
 export const visibleContributions = <S extends SlotId>(
   slot: S,
@@ -35,7 +72,7 @@ export const visibleContributions = <S extends SlotId>(
 ): readonly RegisteredContribution<S>[] => {
   const ctx = slotContext();
   return contributionsFor(slot)().filter(contribution => {
-    if (contribution.when && !contribution.when(ctx)) return false;
+    if (!gatePasses(slot, contribution, ctx)) return false;
     if (container === undefined) return true;
     // A panel names the widget it joins and a stat names the panel; a
     // contribution naming neither belongs to no container's region.

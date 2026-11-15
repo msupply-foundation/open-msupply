@@ -76,6 +76,24 @@ pub struct InstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
+    /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
+    /// Repeat for each key. Needed for every key on first install; a key left
+    /// out of a re-install keeps the program it is already bound to. Moving a
+    /// key to another program is refused while documents are saved under the
+    /// current one, counting only the documents this server holds.
+    #[clap(long = "program", value_parser = parse_program_choice)]
+    programs: Vec<(String, String)>,
+    /// Document type whose existing registry entry, installed by no plugin, the
+    /// plugin may take over (for example the deployment's `Patient` entry).
+    /// Repeatable.
+    #[clap(long = "take-over")]
+    take_over: Vec<String>,
+    /// Document type whose form may go blank on sites still running the old
+    /// client, because the plugin's type carries no legacy UI schema. Install
+    /// refuses to move its entry to a version with none, over one with a UI
+    /// schema, unless the type is named here. Repeatable.
+    #[clap(long = "blank-old-ui")]
+    blank_old_ui: Vec<String>,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -92,6 +110,17 @@ pub struct GenerateAndInstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
+}
+
+fn parse_program_choice(value: &str) -> Result<(String, String), String> {
+    match value.split_once('=') {
+        Some((key, id)) if !key.is_empty() && !id.is_empty() => {
+            Ok((key.to_string(), id.to_string()))
+        }
+        _ => Err(format!(
+            "expected <programKey>=<programId>, for example demo=DemoProgram, got \"{value}\""
+        )),
+    }
 }
 
 #[derive(clap::Parser, Debug)]
@@ -162,10 +191,7 @@ pub fn generate_plugin_bundle(
     ];
     let manifest_name = OsStr::new("package.json");
 
-    let mut bundle = PluginBundle {
-        backend_plugins: Vec::new(),
-        frontend_plugins: Vec::new(),
-    };
+    let mut bundle = PluginBundle::default();
 
     generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &in_dir)?;
     fs::write(
@@ -389,16 +415,29 @@ pub async fn install_plugin_bundle(
         url,
         username,
         password,
+        programs,
+        take_over,
+        blank_old_ui,
     }: InstallPluginBundle,
 ) -> Result<(), Error> {
     let api = Api::new_with_token(url.clone(), username, password).await?;
 
     let uploaded_file = api.upload_file(path).await?;
 
+    let programs: Vec<_> = programs
+        .into_iter()
+        .map(|(key, id)| json!({ "programKey": key, "programId": id }))
+        .collect();
+
     let upload_result = api
         .gql(
             INSTALL_PLUGINS,
-            json!( { "fileId": uploaded_file.file_id} ),
+            json!({
+                "fileId": uploaded_file.file_id,
+                "programs": programs,
+                "takeOver": take_over,
+                "blankOldUi": blank_old_ui,
+            }),
             Some("CentralServerMutationNode"),
         )
         .await?;
@@ -427,11 +466,17 @@ pub async fn generate_and_install_plugin_bundle(
         out_file: out_file.clone(),
     })?;
 
+    // The bundle this packs carries no form plugins (`pnpm build:plugins`
+    // packs those), so there are no program keys to choose or types to take
+    // over.
     install_plugin_bundle(InstallPluginBundle {
         path: out_file.clone(),
         url,
         username,
         password,
+        programs: Vec::new(),
+        take_over: Vec::new(),
+        blank_old_ui: Vec::new(),
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;

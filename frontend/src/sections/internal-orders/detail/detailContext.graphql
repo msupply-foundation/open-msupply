@@ -9,8 +9,6 @@
 #   annotations on unit-quantity columns.
 # - preferences.showIndicativePriceInRequisitions → the two indicative-price
 #   columns.
-# - preferences.displayPopulationBasedForecasting → the Target stock
-#   (population) column.
 # - preferences.warningForExcessRequest → the excess-request cue on Requested.
 # - storePreferences.requestRequisitionRequiresAuthorisation → the approval
 #   columns (OMS-REG-REPL-05.7/.8/.20).
@@ -18,7 +16,12 @@
 #   a program order) → the extended consumption columns + the Area-AMC header.
 # - preferences.canCreateInternalOrderFromARequisition → the side panel's
 #   "Created from requisition" related-document row (OMS-REG-REPL-04.85,
-# display-only).
+#   display-only).
+# - preferences.canChangeTargetMonthsOfStock (off, with the order's supply
+#   interval and safety buffer, on a general order) → the target select locked
+#   to the store's supply interval + safety buffer (rules › target months of
+#   stock). Read `?? true`: it is on unless
+#   set.
 # - storePreferences.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised →
 #   the empty-send guard: where the store keeps zero-requested lines, an
 #   all-zero order (with ≥1 line) is sendable (rules › Lifecycle, D20).
@@ -27,12 +30,12 @@ query internalOrderDetailContext($storeId: String!) {
     selectDestinationStoreForAnInternalOrder
     manageVaccinesInDoses
     showIndicativePriceInRequisitions
-    displayPopulationBasedForecasting
     warningForExcessRequest
     canCreateInternalOrderFromARequisition
     # The line editor's default entry mode (OMS-REG-REPL-04.73): packs where the
     # store orders in packs, else doses for a dose-managed vaccine, else units.
     orderInPacks
+    canChangeTargetMonthsOfStock
   }
   storePreferences(storeId: $storeId) {
     requestRequisitionRequiresAuthorisation

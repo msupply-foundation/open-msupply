@@ -30,6 +30,14 @@ pub enum SystemLogType {
     ServerStatus,
     SyncTranslationFkError,
     DatabaseError,
+    /// Sync paused or resumed from Admin > Sync settings; the message names the user.
+    SyncPauseChanged,
+    /// Central's sync API paused or resumed from Admin > Sync settings; the message names the user.
+    SyncApiPauseChanged,
+    /// Processors paused or resumed from Admin > Sync settings; the message names the user.
+    ProcessorsPauseChanged,
+    /// Maintenance mode turned on or off, or an integration it guards found incomplete.
+    MaintenanceModeChanged,
 }
 
 impl SystemLogType {
@@ -42,6 +50,10 @@ impl SystemLogType {
             SystemLogType::ServerStatus => false,
             SystemLogType::SyncTranslationFkError => true,
             SystemLogType::DatabaseError => true,
+            SystemLogType::SyncPauseChanged => false,
+            SystemLogType::SyncApiPauseChanged => false,
+            SystemLogType::ProcessorsPauseChanged => false,
+            SystemLogType::MaintenanceModeChanged => false,
         }
     }
 }

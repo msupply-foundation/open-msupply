@@ -8,7 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -22,6 +22,7 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import {
   Tabs,
@@ -168,28 +169,29 @@ const CustomerReturnDetailView: Component = () => {
     },
   });
 
-  // Fetch the return's HEADER (no lines — they are their own query below). A
-  // NodeError (bad id) is promoted to the global unexpected-error modal; a
-  // non-return invoice id is treated the same. The resource IS the local state
-  // for the header: every return-level save writes back with `mutate`
-  // (kdd/state-management).
+  // Fetch the return's HEADER (no lines — they are their own query below). The
+  // read pins `type: CUSTOMER_RETURN` (customerReturnDetail.graphql), so a
+  // non-return id, another store's return, and a bad id all come back as a
+  // NodeError (RecordNotFound) and resolve to null — the not-found
+  // deep-link alert renders below (#1044). That NodeError is deliberately NOT
+  // routed to the global unexpected-error modal (no mapSuccessToError): it
+  // would offer a useless reload of the same bad id and shadow the local
+  // notice — the same call the outbound and supplier return details make. The
+  // resource IS the local state for the header: every return-level save writes
+  // back with `mutate` (kdd/state-management).
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, id: params.returnId }),
     async variables => {
-      const result = await graphqlFetch(CustomerReturnDetail, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
+      const result = await graphqlFetch(CustomerReturnDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
 
-  const info = (): CustomerReturnInfoFragment | undefined => data();
+  const info = (): CustomerReturnInfoFragment | undefined =>
+    data() ?? undefined;
 
   // ONE server-sorted, server-paginated page of the return's lines. invoiceId +
   // type are pinned (a customer return's lines are STOCK_IN); sort and page
@@ -476,8 +478,7 @@ const CustomerReturnDetailView: Component = () => {
   const crumbs = (node: CustomerReturnInfoFragment) => [
     {
       label: t('customer-returns'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/customer-return`),
+      to: `/${params.storeId}/distribution/customer-return`,
     },
     { label: String(node.invoiceNumber) },
   ];
@@ -583,8 +584,25 @@ const CustomerReturnDetailView: Component = () => {
   return (
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show (kdd/solid-reactivity-pitfalls): every save sets a
-          fresh node object; keyed would remount the page and drop focus. */}
-      <Show when={info()}>
+          fresh node object; keyed would remount the page and drop focus. The
+          fallback is the not-found deep-link alert once the server answers the
+          id as not found; a failed read keeps the spinner, under the global
+          error modal. */}
+      <Show
+        when={info()}
+        fallback={
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="return-not-found-notice"
+              title={t('error.return-not-found')}
+              description={t('messages.click-to-return-to-returns')}
+              onClose={() =>
+                navigate(`/${params.storeId}/distribution/customer-return`)
+              }
+            />
+          </Show>
+        }
+      >
         {node => {
           const disabled = createMemo(() => isReturnDisabled(node()));
           return (

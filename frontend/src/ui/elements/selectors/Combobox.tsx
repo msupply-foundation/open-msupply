@@ -19,8 +19,10 @@ import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import {
+  sectionOptions,
   typedQuery,
   visibleOptions,
+  type Section,
   type VisibleOptions,
 } from './comboboxLogic';
 import { isNearScrollEnd } from '../../utils/createPaginatedSearch';
@@ -98,6 +100,20 @@ export interface ComboboxProps<T> {
    * Kobalte's optionDisabled, which exposes it as aria-disabled on the option.
    */
   itemDisabled?: (item: T) => boolean;
+  /**
+   * GROUPED mode: the heading an item belongs under, or `undefined` to PIN it
+   * above the groups. Passing it turns one flat list into two tiers — the
+   * pinned items, a divider, then each group behind its own small-caps
+   * heading — so a set with a few standing choices and a long tail stays ONE
+   * control and one click (the bulk Activity field's None above its Routine and
+   * Campaign tiers).
+   *
+   * Pinned items are never filtered: they are the choices that must always be
+   * reachable, whatever is typed. Typing narrows the GROUPED items only, and a
+   * group whose items all fail drops out with its heading. Omit for the plain
+   * flat list every other picker uses.
+   */
+  itemGroup?: (item: T) => string | undefined;
   placeholder?: string;
   helperText?: string;
   /**
@@ -404,13 +420,19 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // portal is used.
   const portalMount = usePortalMount();
 
-  const matches = (item: T, input: string) =>
-    props.filter
+  const matches = (item: T, input: string) => {
+    // Grouped mode: an item with no group is PINNED, and a pinned item is
+    // never searched for — it stays listed whatever is typed. Applied here, so
+    // the rule holds for the capped client list AND Kobalte's own filter
+    // below, which share this predicate.
+    if (props.itemGroup && props.itemGroup(item) === undefined) return true;
+    return props.filter
       ? props.filter(item, input)
       : props
           .itemToString(item)
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
+  };
 
   // What this combobox is searching for: the input text ONLY counts while it's
   // something the user typed, never when it just mirrors the committed
@@ -555,10 +577,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // options EXCEPT that pin (so the label survives a refetch). The pin is added
   // after the cap, never subject to it: it is in the collection so the current
   // selection RESOLVES to a label, and capping it out would blank the field.
-  const options = createMemo<T[]>(() => {
+  const options = createMemo<(T | Section<T>)[]>(() => {
     const base = props.loading ? [] : shown().items;
     const pin = pinned();
-    return pin ? [pin, ...base] : base;
+    const flat = pin ? [pin, ...base] : base;
+    const group = props.itemGroup;
+    if (!group) return flat;
+
+    return sectionOptions(flat, group);
   });
 
   // Server-mode infinite scroll: when the listbox is scrolled near its bottom,
@@ -592,7 +618,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   );
 
   return (
-    <KCombobox.Root<T>
+    <KCombobox.Root<T, Section<T>>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-width={props.width ?? 'full'}
       data-size={props.size ?? 'default'}
@@ -617,6 +643,17 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       onChange={handleChange}
       onInputChange={handleInputChange}
       onOpenChange={open => props.onOpenChange?.(open)}
+      // Grouped mode ONLY: the key that marks a node as a SECTION rather than
+      // an option, plus the heading it renders as. It must stay undefined for
+      // a flat list — set, Kobalte reads the key off EVERY top-level node
+      // without checking it is there, so each plain option is treated as a
+      // group and its filter throws on the missing array.
+      optionGroupChildren={props.itemGroup ? 'options' : undefined}
+      sectionComponent={sectionProps => (
+        <KCombobox.Section class={styles.section}>
+          {sectionProps.section.rawValue.label}
+        </KCombobox.Section>
+      )}
       // Popup width: match the trigger by default; opt out to size-to-content
       // (bounded by .contentGrow below). See matchTriggerWidth.
       sameWidth={props.matchTriggerWidth ?? true}

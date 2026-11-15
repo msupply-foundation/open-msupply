@@ -46,7 +46,7 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * needed; pass `title` too, since the standard asks an icon-only button to
    * carry a tooltip.
    *
-   *   true     — phone widths (≤767px).
+   *   true     — phone widths (<600px, breakpoints.compact).
    *   'narrow' — the whole narrow-viewport range (≤1023px, breakpoints
    *              .navOverlay). For a header whose action cluster would
    *              otherwise wrap onto a row of its own on a tablet: a row of

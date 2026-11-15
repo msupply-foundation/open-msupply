@@ -18,6 +18,7 @@ export type PurchaseOrderLineItemFactsResult = {
   name: string;
   unitName: string | null;
   defaultPackSize: number;
+  type: "SERVICE" | "STOCK" | "NON_STOCK";
   stats: {
   stockOnHand: number;
 };
@@ -27,5 +28,5 @@ export type PurchaseOrderLineItemFactsResult = {
 };
 
 export const PurchaseOrderLineItemFacts = {
-  query: "query purchaseOrderLineItemFacts($storeId: String!, $itemId: String!, $orderId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        unitName\n        defaultPackSize\n        stats(storeId: $storeId) {\n          stockOnHand\n        }\n      }\n    }\n  }\n  unitsOrderedInOtherPurchaseOrders(\n    storeId: $storeId\n    itemId: $itemId\n    excludePurchaseOrderId: $orderId\n  )\n}",
+  query: "query purchaseOrderLineItemFacts($storeId: String!, $itemId: String!, $orderId: String!) {\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        unitName\n        defaultPackSize\n        type\n        stats(storeId: $storeId) {\n          stockOnHand\n        }\n      }\n    }\n  }\n  unitsOrderedInOtherPurchaseOrders(\n    storeId: $storeId\n    itemId: $itemId\n    excludePurchaseOrderId: $orderId\n  )\n}",
 } as TypedDocument<PurchaseOrderLineItemFactsResult, PurchaseOrderLineItemFactsVariables>;

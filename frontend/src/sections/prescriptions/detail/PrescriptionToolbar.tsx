@@ -11,10 +11,8 @@ import {
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
-import {
-  localTodayIso,
-  utcToLocalParts,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
 import {
   prescriptionDateInstant,
@@ -34,13 +32,13 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 // "MOHAMED, DJIBRIL ABDULLAHI" is 26 characters — so they take the biggest
 // shares; the date is a fixed format that can never use more than its 9rem, so
 // it's pinned (weight 0) instead of claiming a sixth of the strip; Program sits
-// between. The 9rem is measured against the format, not guessed: 9rem leaves
-// 95px of value room, and DateField's default `dd MMM yyyy` renders 74px in
-// English, 77px in French ("30 juil. 2026") and 80px in Arabic ("٣٠ سبتمبر
-// ٢٠٢٦" — no abbreviation exists), the widest shipped locale. A caller
-// configuring a long-month format would need a wider floor. The prominent
-// custom fields carry their own narrower share (CustomFieldsToolbar's `field`
-// layout).
+// between. The 9rem is measured against the format, not guessed: it leaves
+// 95px of value room. The default numeric date ("30/07/2026") fits it in every
+// language, and so does a `dd MMM yyyy` format: 74px in English, 77px in
+// French ("30 juil. 2026"), 80px in Arabic ("٣٠ سبتمبر ٢٠٢٦" — no
+// abbreviation exists), the widest shipped locale. A caller configuring a
+// long-month format would need a wider floor. The prominent custom fields
+// carry their own narrower share (CustomFieldsToolbar's `field` layout).
 //
 // The FLOORS are chosen so this row's total is no larger than the unweighted
 // row's was (11 + 10 + 9 + 10 + 9.5 + 9.5 = 59rem against 6 × 10rem), because a
@@ -121,8 +119,8 @@ export const PrescriptionToolbar: Component<
   const shownDay = () => {
     const input = pending();
     if (input?.prescriptionDate)
-      return utcToLocalParts(input.prescriptionDate)?.date ?? null;
-    return utcToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
+      return instantToLocalParts(input.prescriptionDate)?.date ?? null;
+    return instantToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
   };
 
   // The shown program: same reasoning as shownDay — a pending pick while one
@@ -189,7 +187,7 @@ export const PrescriptionToolbar: Component<
           size="small"
           testId="date-field"
           value={shownDay()}
-          max={localTodayIso()}
+          max={todayCalendarDate()}
           disabled={props.disabled}
           onChange={day => {
             if (!day || day === shownDay()) return;

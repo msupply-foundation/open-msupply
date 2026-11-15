@@ -70,6 +70,10 @@
   gap: var(--space-1);
   padding-inline: var(--space-3) var(--space-1);
   min-block-size: 1.875rem;
+  /* Never wider than the bar: a date-range chip on a phone was, and drew over
+     its neighbours (the row count). Its inner field shrinks instead. */
+  max-inline-size: 100%;
+  min-inline-size: 0;
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--secondary-main) 10%, transparent);
   color: var(--secondary-dark);
@@ -365,5 +369,25 @@
 @media (pointer: coarse) {
   .item {
     min-height: var(--touch-target);
+  }
+}
+
+/* In a cramped table toolbar (DataTable's `table-toolbar` container — a
+   ~320px scanner screen, a narrow panel): the Add filter pill sheds its label
+   to the funnel (still its accessible name), so the toolbar's controls keep
+   one row. Measured against the bar, not the viewport; outside a table
+   toolbar the bar keeps its label. */
+@container table-toolbar (max-width: 24rem) {
+  .trigger {
+    padding-inline: 0.5rem;
+  }
+
+  .triggerLabel {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

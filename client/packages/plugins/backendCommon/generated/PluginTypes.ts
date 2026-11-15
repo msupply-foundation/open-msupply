@@ -16,6 +16,8 @@ import type { ProcessorOutput } from './ProcessorOutput';
 import type { ScheduleInput } from './ScheduleInput';
 import type { ScheduleOutput } from './ScheduleOutput';
 import type { StorePreferenceRow } from './StorePreferenceRow';
+import type { TransformItemStorePropertiesInput } from './TransformItemStorePropertiesInput';
+import type { TransformItemStorePropertiesOutput } from './TransformItemStorePropertiesOutput';
 import type { TransformRequestRequisitionLineInput } from './TransformRequestRequisitionLineInput';
 import type { TransformRequestRequisitionLineOutput } from './TransformRequestRequisitionLineOutput';
 import type { UseGraphqlInput } from './UseGraphqlInput';
@@ -23,6 +25,25 @@ import type { UseRepositoryInput } from './UseRepositoryInput';
 import type { UseRepositoryOutput } from './UseRepositoryOutput';
 import type { JsonValue } from './serde_json/JsonValue';
 
+/**
+ * The backend-plugin type surface, and the source of truth for it.
+ *
+ * `remote_server_cli generate-plugin-typescript-types` turns this struct
+ * into the TypeScript that backend plugins compile against, committed at
+ * `client/packages/plugins/backendCommon/generated/` (59 files, each
+ * carrying a ts-rs "do not edit" header).
+ *
+ * That command is run BY HAND. Nothing in CI regenerates those files or
+ * diffs them against this struct, so a type changed here without a rerun
+ * leaves the two silently out of step — and the drift is invisible until
+ * a plugin happens to touch the part that moved.
+ *
+ * So: change anything reachable from here, regenerate, and commit the
+ * result in the same change. `private/plugins/civ/backend` resolves
+ * `@common/*` to that directory (`frontend/tsconfig.backend-plugins.json`),
+ * which makes `pnpm check` in `frontend/` the thing most likely to catch
+ * a mismatch — but only for the surface that plugin actually uses.
+ */
 export type PluginTypes = {
   average_monthly_consumption: Function<
     AverageMonthlyConsumptionInput,
@@ -31,6 +52,10 @@ export type PluginTypes = {
   transform_request_requisition_lines: Function<
     TransformRequestRequisitionLineInput,
     TransformRequestRequisitionLineOutput
+  >;
+  transform_item_store_properties: Function<
+    TransformItemStorePropertiesInput,
+    TransformItemStorePropertiesOutput
   >;
   get_consumption: Function<GetConsumptionInput, { [key in string]: number }>;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;

@@ -186,6 +186,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             default_donor_id,
             legacy_goods_received_id: None,
             prescription_request_id: None,
+            campaign_id: None,
         };
 
         Ok(PullTranslateResult::upsert(invoice))

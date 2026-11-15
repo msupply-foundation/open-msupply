@@ -2,9 +2,9 @@
 mod update {
     use chrono::NaiveDate;
     use repository::{
-        ActivityLogRowRepository, ActivityLogType, PreferenceRow, PreferenceRowRepository,
-        PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
-        PurchaseOrderStatus,
+        ActivityLogRowRepository, ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+        InvoiceType, PreferenceRow, PreferenceRowRepository, PurchaseOrderLineRowRepository,
+        PurchaseOrderLineStatus, PurchaseOrderRowRepository, PurchaseOrderStatus,
         mock::{
             MockDataInserts, mock_item_a, mock_item_b, mock_name_a, mock_name_store_b,
             mock_store_a, mock_user_account_a,
@@ -23,8 +23,10 @@ mod update {
     use crate::{
         preference::{AuthorisePurchaseOrder, Preference},
         purchase_order_line::{
-            insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
+            insert::InsertPurchaseOrderLineInput,
+            update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
         },
+        sync::test_util_set_is_central_server,
     };
 
     #[actix_rt::test]
@@ -417,7 +419,6 @@ mod update {
                     status: Some(PurchaseOrderLineStatus::Closed),
                     ..Default::default()
                 },
-                Some(true),
             )
             .unwrap();
 
@@ -435,85 +436,105 @@ mod update {
             ActivityLogType::PurchaseOrderLineStatusClosed
         );
 
-        // Edit the adjusted quantity on line B
-        service_provider
-            .purchase_order_line_service
-            .update_purchase_order_line(
-                &context,
-                store_id,
-                UpdatePurchaseOrderLineInput {
-                    id: "purchase_order_line_b".to_string(),
-                    adjusted_number_of_units: Some(12.0),
-                    ..Default::default()
-                },
-                Some(true),
-            )
-            .unwrap();
-
-        // Line A remains Closed and line B will now be at New status
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
-            .unwrap();
-
-        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
-        assert_eq!(lines[1].status, PurchaseOrderLineStatus::New);
-
-        // Test activity log created
-        let edited_line_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew)
-            .collect();
-
-        assert_eq!(edited_line_logs.len(), 1);
+        // A sent line's quantity can't be edited, so the order stays Sent
         assert_eq!(
-            edited_line_logs[0].r#type,
-            ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew
+            service_provider
+                .purchase_order_line_service
+                .update_purchase_order_line(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderLineInput {
+                        id: "purchase_order_line_b".to_string(),
+                        requested_number_of_units: Some(12.0),
+                        ..Default::default()
+                    },
+                ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
 
-        // The purchase order status will now be Confirmed
+        let mut lines = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_many_by_purchase_order_ids(std::slice::from_ref(&purchase_order_id))
+            .unwrap();
+        lines.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
+        assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+
         let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
             .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
 
-        assert_eq!(purchase_order.status, PurchaseOrderStatus::Confirmed);
+        assert_eq!(purchase_order.status, PurchaseOrderStatus::Sent);
+    }
 
-        // Test activity log created
-        let po_status_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed)
-            .collect();
+    #[actix_rt::test]
+    async fn update_purchase_order_authorisation_store_override() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_authorisation_store_override",
+            MockDataInserts::all(),
+        )
+        .await;
 
-        assert_eq!(po_status_logs.len(), 1);
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        // Written through the preference itself, as the real editor does; the
+        // write path only opens on a central server.
+        test_util_set_is_central_server(true);
+        let set_pref = |value: bool, store_id: Option<&String>| {
+            AuthorisePurchaseOrder
+                .upsert(&context.connection, value, store_id.cloned())
+                .unwrap();
+        };
+        let request_approval = |purchase_order_id: &str| {
+            service
+                .insert_purchase_order(
+                    &context,
+                    store_id,
+                    InsertPurchaseOrderInput {
+                        id: purchase_order_id.to_string(),
+                        supplier_id: mock_name_a().id,
+                    },
+                )
+                .unwrap();
+            service
+                .update_purchase_order(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderInput {
+                        id: purchase_order_id.to_string(),
+                        status: Some(PurchaseOrderStatus::RequestApproval),
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            PurchaseOrderRowRepository::new(&context.connection)
+                .find_one_by_id(purchase_order_id)
+                .unwrap()
+                .unwrap()
+                .status
+        };
+
+        // Authorisation required globally, but this store opts out: asking for
+        // approval lands the order straight at Confirmed.
+        set_pref(true, None);
+        set_pref(false, Some(store_id));
         assert_eq!(
-            po_status_logs[0].r#type,
-            ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
+            request_approval("purchase_order_override_off"),
+            PurchaseOrderStatus::Confirmed
         );
 
-        // Send the purchase order again
-        service
-            .update_purchase_order(
-                &context,
-                store_id,
-                UpdatePurchaseOrderInput {
-                    id: purchase_order_id.clone(),
-                    status: Some(PurchaseOrderStatus::Sent),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // Line A is still Closed and line B is now Sent
-        let lines = PurchaseOrderLineRowRepository::new(&context.connection)
-            .find_many_by_purchase_order_ids(&[purchase_order_id.clone()])
-            .unwrap();
-
-        assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
-        assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+        // The reverse: not required globally, but this store opts in.
+        set_pref(false, None);
+        set_pref(true, Some(store_id));
+        assert_eq!(
+            request_approval("purchase_order_override_on"),
+            PurchaseOrderStatus::RequestApproval
+        );
     }
 
     #[actix_rt::test]
@@ -693,5 +714,385 @@ mod update {
             .unwrap();
 
         assert_eq!(total_logs.len(), 5);
+    }
+
+    /// Only a status change is logged: editing an order's fields, or setting the
+    /// status it already has, leaves no activity log entry (#1590)
+    #[actix_rt::test]
+    async fn update_purchase_order_logs_status_changes_only() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_logs_status_changes_only",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        let purchase_order_id = "purchase_order_logs_status_changes_only".to_string();
+        let update = |input: UpdatePurchaseOrderInput| {
+            service
+                .update_purchase_order(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderInput {
+                        id: purchase_order_id.clone(),
+                        ..input
+                    },
+                )
+                .unwrap();
+        };
+        let log_types = || {
+            let mut logs = ActivityLogRowRepository::new(&context.connection)
+                .find_many_by_record_id(&purchase_order_id)
+                .unwrap();
+            logs.sort_by_key(|l| l.datetime);
+            logs.into_iter().map(|l| l.r#type).collect::<Vec<_>>()
+        };
+
+        service
+            .insert_purchase_order(
+                &context,
+                store_id,
+                InsertPurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    supplier_id: mock_name_a().id.to_string(),
+                },
+            )
+            .unwrap();
+
+        // Field edits on a NEW order
+        update(UpdatePurchaseOrderInput {
+            supplier_discount_percentage: Some(12.5),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            reference: Some("ref".to_string()),
+            ..Default::default()
+        });
+        assert_eq!(log_types(), vec![ActivityLogType::PurchaseOrderCreated]);
+
+        // Confirming is logged; a field edit, or confirming again, is not
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Confirmed),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            shipping_method: Some("air".to_string()),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Confirmed),
+            ..Default::default()
+        });
+        assert_eq!(
+            log_types(),
+            vec![
+                ActivityLogType::PurchaseOrderCreated,
+                ActivityLogType::PurchaseOrderConfirmed,
+            ]
+        );
+
+        // Sending is logged; a comment edit on the SENT order is not; moving it
+        // back to CONFIRMED is logged as such
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Sent),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            comment: Some("comment".to_string()),
+            ..Default::default()
+        });
+        update(UpdatePurchaseOrderInput {
+            status: Some(PurchaseOrderStatus::Confirmed),
+            ..Default::default()
+        });
+        assert_eq!(
+            log_types(),
+            vec![
+                ActivityLogType::PurchaseOrderCreated,
+                ActivityLogType::PurchaseOrderConfirmed,
+                ActivityLogType::PurchaseOrderSent,
+                ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed,
+            ]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_custom_fields() {
+        use repository::{
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
+            mock::mock_purchase_order_a,
+        };
+        use serde_json::json;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_purchase_order_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
+                id: "purchase_order_user_field_1".to_string(),
+                key: "purchase_order_user_field_1".to_string(),
+                name: "User field 1".to_string(),
+                value_type: CustomFieldValueType::Text,
+                kind: CustomFieldKind::Legacy,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
+                id: "purchase_order_user_field_1__purchase_order".to_string(),
+                custom_field_id: "purchase_order_user_field_1".to_string(),
+                scope: "purchase_order".to_string(),
+                display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+
+        let id = mock_purchase_order_a().id;
+        let patch = |pairs: &[(&str, serde_json::Value)]| UpdatePurchaseOrderInput {
+            id: id.clone(),
+            custom_fields: Some(
+                pairs
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("not_a_field", json!("x"))]),
+            ),
+            Err(UpdatePurchaseOrderError::UnknownCustomFieldKey(
+                "not_a_field".to_string()
+            ))
+        );
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!(3))]),
+            ),
+            Err(UpdatePurchaseOrderError::InvalidCustomFieldValue {
+                key: "purchase_order_user_field_1".to_string(),
+                expected: CustomFieldValueType::Text,
+            })
+        );
+
+        // A key the client can't see survives a patch of a visible one
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        let mut row = repo.find_one_by_id(&id).unwrap().unwrap();
+        row.custom_fields = Some(json!({ "hidden": "keep" }));
+        repo.upsert_one(&row).unwrap();
+
+        service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!("Grant 42"))]),
+            )
+            .unwrap();
+        assert_eq!(
+            repo.find_one_by_id(&id).unwrap().unwrap().custom_fields,
+            Some(json!({ "purchase_order_user_field_1": "Grant 42", "hidden": "keep" }))
+        );
+
+        service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                patch(&[("purchase_order_user_field_1", json!(null))]),
+            )
+            .unwrap();
+        assert_eq!(
+            repo.find_one_by_id(&id).unwrap().unwrap().custom_fields,
+            Some(json!({ "hidden": "keep" }))
+        );
+    }
+
+    /// Cancelling (rules § cancellation): a SENT order alone may be cancelled;
+    /// the move stamps its moment, closes every line, deletes the NEW inbound
+    /// shipments raised against the order, and is final.
+    #[actix_rt::test]
+    async fn cancel_purchase_order() {
+        let (_, _, connection_manager, _) =
+            setup_all("cancel_purchase_order", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        let purchase_order_id = "cancel_purchase_order".to_string();
+        let order = |context: &crate::service_provider::ServiceContext| {
+            PurchaseOrderRowRepository::new(&context.connection)
+                .find_one_by_id(&purchase_order_id)
+                .unwrap()
+                .unwrap()
+        };
+        let move_to = |status: PurchaseOrderStatus| {
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(status),
+                    ..Default::default()
+                },
+            )
+        };
+
+        service
+            .insert_purchase_order(
+                &context,
+                store_id,
+                InsertPurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    supplier_id: mock_name_a().id.to_string(),
+                },
+            )
+            .unwrap();
+        service_provider
+            .purchase_order_line_service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "cancel_purchase_order_line".to_string(),
+                    purchase_order_id: purchase_order_id.clone(),
+                    item_id_or_code: mock_item_a().id,
+                    requested_pack_size: Some(1.0),
+                    requested_number_of_units: Some(10.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Only a SENT order can be cancelled
+        assert_eq!(
+            move_to(PurchaseOrderStatus::Cancelled),
+            Err(UpdatePurchaseOrderError::CannotCancelPurchaseOrder)
+        );
+        move_to(PurchaseOrderStatus::Confirmed).unwrap();
+        assert_eq!(
+            move_to(PurchaseOrderStatus::Cancelled),
+            Err(UpdatePurchaseOrderError::CannotCancelPurchaseOrder)
+        );
+        move_to(PurchaseOrderStatus::Sent).unwrap();
+
+        // A shipment that has progressed past NEW blocks cancelling
+        let invoice_repo = InvoiceRowRepository::new(&context.connection);
+        let shipment = |id: &str, status: InvoiceStatus| InvoiceRow {
+            id: id.to_string(),
+            store_id: mock_store_a().id,
+            name_id: mock_name_a().id,
+            r#type: InvoiceType::InboundShipment,
+            status,
+            purchase_order_id: Some(purchase_order_id.clone()),
+            ..Default::default()
+        };
+        invoice_repo
+            .upsert_one(&shipment("cancel_po_shipped", InvoiceStatus::Shipped))
+            .unwrap();
+        invoice_repo
+            .upsert_one(&shipment("cancel_po_new", InvoiceStatus::New))
+            .unwrap();
+        assert_eq!(
+            move_to(PurchaseOrderStatus::Cancelled),
+            Err(UpdatePurchaseOrderError::InboundShipmentsInProgress)
+        );
+        invoice_repo.delete("cancel_po_shipped").unwrap();
+
+        // Cancelling stamps the moment, closes the lines and deletes the NEW shipment
+        move_to(PurchaseOrderStatus::Cancelled).unwrap();
+        let cancelled = order(&context);
+        assert_eq!(cancelled.status, PurchaseOrderStatus::Cancelled);
+        assert!(cancelled.cancelled_datetime.is_some());
+        assert!(cancelled.sent_datetime.is_some());
+        let line = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_one_by_id("cancel_purchase_order_line")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.status, PurchaseOrderLineStatus::Closed);
+        assert_eq!(invoice_repo.find_one_by_id("cancel_po_new").unwrap(), None);
+        let cancelled_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id)
+            .unwrap()
+            .into_iter()
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderCancelled)
+            .collect();
+        assert_eq!(cancelled_logs.len(), 1);
+
+        // Cancelling is final: no state change, and no field but the comment
+        for status in [
+            PurchaseOrderStatus::New,
+            PurchaseOrderStatus::Sent,
+            PurchaseOrderStatus::Finalised,
+            PurchaseOrderStatus::Cancelled,
+        ] {
+            assert_eq!(
+                move_to(status),
+                Err(UpdatePurchaseOrderError::CannotReopenCancelledPurchaseOrder)
+            );
+        }
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    contract_signed_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2026, 1, 1),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    comment: Some("still editable".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(order(&context).comment.as_deref(), Some("still editable"));
+        assert_eq!(
+            service_provider
+                .purchase_order_line_service
+                .update_purchase_order_line(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderLineInput {
+                        id: "cancel_purchase_order_line".to_string(),
+                        comment: Some(NullableUpdate {
+                            value: Some("refused".to_string()),
+                        }),
+                        ..Default::default()
+                    },
+                ),
+            Err(crate::purchase_order_line::update::UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine)
+        );
     }
 }

@@ -124,9 +124,9 @@ mod test {
     use crate::invoice::inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError;
     use crate::service_provider::ServiceProvider;
     use repository::{
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+        InvoiceRow, InvoiceRowRepository, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         mock::{
-            MockData, MockDataInserts, common::FullMockMasterList,
+            MockData, MockDataInserts, common::FullMockMasterList, mock_campaign_a,
             mock_empty_draft_inbound_shipment, mock_inbound_shipment_a, mock_inbound_shipment_c,
             mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_store_a,
             mock_outbound_shipment_c, mock_store_a, mock_store_c,
@@ -261,7 +261,7 @@ mod test {
             }
         }
 
-        let (_, _, connection_manager, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "is_add_from_master_list_success",
             MockDataInserts::all(),
             MockData {
@@ -276,6 +276,14 @@ mod test {
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
+
+        // New lines take the shipment's default campaign
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                campaign_id: Some(mock_campaign_a().id),
+                ..mock_empty_draft_inbound_shipment()
+            })
+            .unwrap();
 
         let result: Vec<repository::InvoiceLineRow> = service
             .add_to_inbound_shipment_from_master_list(
@@ -306,6 +314,11 @@ mod test {
         test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
+        assert!(
+            result
+                .iter()
+                .all(|line| line.campaign_id == Some(mock_campaign_a().id))
+        );
         let line = result
             .iter()
             .find(|line| line.item_id == mock_item_a().id)

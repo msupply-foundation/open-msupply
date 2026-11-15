@@ -4,7 +4,7 @@ import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
+import { dateToCalendarDate } from '../../../intl/calendarDate';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import {
@@ -75,7 +75,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // The effective "as of" day: the backdated day if set, else picked, else the
   // creation day.
   const effectiveDay = () =>
-    dateToIsoDate(
+    dateToCalendarDate(
       new Date(
         props.node.backdatedDatetime ??
           props.node.pickedDatetime ??
@@ -169,9 +169,6 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           // `required`: a picked date always has an effective day — blanking
           // the text reverts rather than clearing.
           required
-          // Numeric day-first display/parse (27/07/2026) — matches the
-          // panel's localisedDate renderings (created date etc.).
-          format="dd/MM/yyyy"
           testId="picked-date-field"
           value={shown()}
           min={enabled() ? bounds().min : undefined}

@@ -201,7 +201,8 @@ mod test {
             pull_and_integrate_patient_data(&service_provider, "patient_1", "store_1", "nsj_1")
                 .await;
 
-        handle.stop(true).await;
+        // Not graceful: a graceful stop can hang (see `run_sync_v7_test` in sync_v7/test.rs).
+        handle.stop(false).await;
         assert_eq!(result.unwrap(), NSJ_ID);
 
         // Mock central received the request.

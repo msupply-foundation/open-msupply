@@ -20,7 +20,8 @@ table! {
         use_in_gaps_calculations -> Bool,
         wastage_rate -> Double,
         deleted_datetime -> Nullable<Timestamp>,
-        can_skip_dose -> Bool
+        can_skip_dose -> Bool,
+        annual_doses_per_person -> Nullable<Double>,
     }
 }
 
@@ -40,6 +41,13 @@ pub struct VaccineCourseRow {
     pub wastage_rate: f64,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     pub can_skip_dose: bool,
+    /// The average number of doses a person reached gets in a year, for population
+    /// forecasting. Distinct from the doses in the course (what full protection takes):
+    /// a group people stay in for years or re-enter gets the course spread out, e.g. 5 Td
+    /// doses over about 2.5 pregnancies is 2 a year. None counts every dose in the course,
+    /// every year (a yearly cohort, like births)
+    #[serde(default)]
+    pub annual_doses_per_person: Option<f64>,
 }
 pub struct VaccineCourseRowRepository<'a> {
     connection: &'a StorageConnection,

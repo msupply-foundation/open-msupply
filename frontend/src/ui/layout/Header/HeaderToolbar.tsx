@@ -1,6 +1,9 @@
-import type { JSX } from 'solid-js';
+import { createSignal, createUniqueId, Show, type JSX } from 'solid-js';
 import { Toolbar } from './Toolbar';
 import { FormRow } from '../Form/FormRow';
+import { DisclosureToggle } from '../../elements/buttons/DisclosureToggle';
+import { useIsCompact } from '../../utils/createMediaQuery';
+import { t } from '../../../intl';
 import styles from './HeaderToolbar.module.css';
 
 export interface HeaderToolbarProps {
@@ -41,13 +44,34 @@ export interface HeaderToolbarProps {
  * detail/header field case. Demoed on the Header showcase (the Detail-table
  * page uses it too).
  */
-export const HeaderToolbar = (props: HeaderToolbarProps) => (
-  <Toolbar>
-    <div class={styles.fields}>
-      <FormRow minItemWidth={props.minFieldWidth ?? '10rem'}>
-        {props.children}
-        {props.alert}
-      </FormRow>
-    </div>
-  </Toolbar>
-);
+export const HeaderToolbar = (props: HeaderToolbarProps) => {
+  /*
+   * Compact (breakpoints.compact — phones): the field cluster starts folded
+   * behind a disclosure, so a detail view opens on its lines rather than on a
+   * screenful of header inputs. `hidden`, not <Show>: the fields stay
+   * mounted, so folding never resets an input mid-edit (no remount on
+   * interaction).
+   */
+  const compact = useIsCompact();
+  const [open, setOpen] = createSignal(false);
+  const id = createUniqueId();
+  return (
+    <Toolbar>
+      <Show when={compact()}>
+        <DisclosureToggle
+          expanded={open()}
+          controls={id}
+          onClick={() => setOpen(!open())}
+        >
+          {t('table.more-details')}
+        </DisclosureToggle>
+      </Show>
+      <div class={styles.fields} id={id} hidden={compact() && !open()}>
+        <FormRow minItemWidth={props.minFieldWidth ?? '10rem'}>
+          {props.children}
+          {props.alert}
+        </FormRow>
+      </div>
+    </Toolbar>
+  );
+};

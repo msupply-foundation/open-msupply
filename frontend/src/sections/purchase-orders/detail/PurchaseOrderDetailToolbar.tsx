@@ -21,8 +21,19 @@ import type { DeliveryDateField } from './purchaseOrderUpdate';
 export interface PurchaseOrderDetailToolbarProps {
   storeId: string;
   node: PurchaseOrderInfoFragment;
-  /** True once the order is Sent or Finalised — every field but the comment. */
+  /** True once the order is Sent or Finalised — every field but the comment.
+   *  Also true for a user without the change permission. */
   disabled: boolean;
+  /** The user lacks the change permission: every field closes, the currency
+   *  (which follows its own rule) included. */
+  readOnly: boolean;
+  /**
+   * The expected delivery date alone outlives that window: it tracks when the
+   * goods will really arrive, so it stays open on a Sent order and closes only
+   * on a Finalised one (rules § the two delivery dates are not the order's
+   * alone).
+   */
+  expectedDateDisabled: boolean;
   edit: PurchaseOrderFieldEdit;
   /**
    * The latest expected delivery date across the order's lines, or undefined.
@@ -104,11 +115,8 @@ export const PurchaseOrderDetailToolbar: Component<
     setDateErrors(field, undefined);
     void props.onCascadeDate(field, date).then(result => {
       setDraft(undefined);
-      if (!result.ok)
-        setDateErrors(
-          field,
-          result.message ?? t('messages.error-saving-purchase-order')
-        );
+      // No message = already up in a global modal (permission or transport).
+      if (!result.ok) setDateErrors(field, result.message);
     });
   };
 
@@ -145,11 +153,12 @@ export const PurchaseOrderDetailToolbar: Component<
       <CurrencySelect
         label={t('label.currency')}
         size="small"
+        inputTestId="currency-input"
         value={props.node.currencyId ?? undefined}
         // NOT a state rule: an order carrying a confirmation moment has its
         // currency fixed whatever state it is in, and an order in a late state
         // without one can still have it changed (rules § what may be changed).
-        disabled={!canChangeCurrency(props.node)}
+        disabled={props.readOnly || !canChangeCurrency(props.node)}
         onChange={currency =>
           currency &&
           void props.onSaveField({
@@ -169,6 +178,7 @@ export const PurchaseOrderDetailToolbar: Component<
       <LabelledValue
         label={t('label.foreign-exchange-rate')}
         variant="field"
+        data-testid="exchange-rate-value"
         size="small"
       >
         {formatNumber(props.node.foreignExchangeRate, {
@@ -182,7 +192,9 @@ export const PurchaseOrderDetailToolbar: Component<
           date where the lines agree on those too — with no confirmation; once
           the lines differ on it the user has set them per line, so a change
           here is refused with a notice and writes nothing (rules § the two
-          delivery dates are not the order's alone). */}
+          delivery dates are not the order's alone). Past the authoring window
+          the expected date travels alone: the requested date is closed by
+          then, and is not dragged along. */}
       <DateField
         label={t('label.requested-delivery-date')}
         size="small"
@@ -208,7 +220,7 @@ export const PurchaseOrderDetailToolbar: Component<
         testId="expected-delivery-date-field"
         value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
         error={dateErrors.expectedDeliveryDate}
-        disabled={props.disabled || props.lineCount === 0}
+        disabled={props.expectedDateDisabled || props.lineCount === 0}
         onChange={value => value && onDateChange('expectedDeliveryDate', value)}
       />
 

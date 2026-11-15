@@ -13,7 +13,7 @@ use repository::{
 };
 use serde::Serialize;
 use service::programs::patient::main_patient_doc_name;
-use service::programs::patient::patient_updated::patient_draft_document;
+use service::programs::patient::patient_updated::patient_draft_document_json;
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
@@ -275,11 +275,8 @@ impl PatientNode {
             return Ok(None);
         };
 
-        let document_data = serde_json::from_value(document_data)
+        let draft = patient_draft_document_json(&self.patient, document_data)
             .map_err(|e| StandardGraphqlError::from_error(&e))?;
-        let draft = patient_draft_document(&self.patient, document_data);
-        let draft = serde_json::to_value(draft)
-            .map_err(|e| StandardGraphqlError::InternalError(format!("{e}")).extend())?;
         Ok(Some(draft))
     }
 

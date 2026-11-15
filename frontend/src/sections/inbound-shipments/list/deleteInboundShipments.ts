@@ -11,6 +11,7 @@ import {
   type BulkDeleteResultFragment,
 } from './inboundShipments.generated';
 import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
+import { deleteRefusalMessage } from '../detail/inboundShipmentStatus';
 
 // The list's bulk delete, run ONE BATCH PER SCOPE (issue #1213).
 //
@@ -33,8 +34,15 @@ import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 // first one's shipments deleted, which is why the outcome carries a count
 // alongside its verdict.
 
-/** A selected row, with the scope that picks which twin its delete goes to. */
-export type InboundSelection = { id: string; scope: InboundScope };
+/**
+ * A selected row, with the scope that picks which twin its delete goes to and
+ * the status that lets a refusal name its cause (deleteRefusalMessage).
+ */
+export type InboundSelection = {
+  id: string;
+  scope: InboundScope;
+  status: string;
+};
 
 export type BulkDeleteOutcome = {
   /** How many shipments the server removed, across every batch sent. */
@@ -65,11 +73,9 @@ export const deleteInboundShipments = async (
 ): Promise<BulkDeleteOutcome> => {
   let deleted = 0;
   for (const scope of SCOPE_ORDER) {
-    const ids = selection
-      .filter(s => s.scope === scope)
-      .map(({ id }) => ({ id }));
-    if (ids.length === 0) continue;
-    const outcome = await runScopeBatch(storeId, scope, ids);
+    const inScope = selection.filter(s => s.scope === scope);
+    if (inScope.length === 0) continue;
+    const outcome = await runScopeBatch(storeId, scope, inScope);
     deleted += outcome.deleted;
     // A refusal in one scope says nothing about the other, but the user asked
     // for one action: stop and report, rather than pressing on and stacking a
@@ -83,8 +89,9 @@ export const deleteInboundShipments = async (
 const runScopeBatch = async (
   storeId: string,
   scope: InboundScope,
-  ids: { id: string }[]
+  inScope: readonly InboundSelection[]
 ): Promise<BulkDeleteOutcome> => {
+  const ids = inScope.map(({ id }) => ({ id }));
   // Branch (not a document union) so graphqlFetch infers each twin's types —
   // as inboundShipmentUpdate does for the detail's twinned writes.
   const result = isExternalScope(scope)
@@ -125,7 +132,7 @@ const runScopeBatch = async (
     'batchInboundShipmentExternal' in result.data
       ? result.data.batchInboundShipmentExternal
       : result.data.batchInboundShipment;
-  return summariseScopeBatch(batch);
+  return summariseScopeBatch(batch, inScope);
 };
 
 // Fold one scope's batch response. The batch is all-or-nothing
@@ -133,7 +140,8 @@ const runScopeBatch = async (
 // removed — the count is zero however many siblings reported a DeleteResponse
 // alongside it.
 const summariseScopeBatch = (
-  batch: BulkDeleteResultFragment
+  batch: BulkDeleteResultFragment,
+  inScope: readonly InboundSelection[]
 ): BulkDeleteOutcome => {
   const items = batch.deleteInboundShipments ?? [];
   const refused = items.find(
@@ -142,7 +150,13 @@ const summariseScopeBatch = (
   if (refused && refused.response.__typename === 'DeleteInboundShipmentError')
     return {
       deleted: 0,
-      result: { kind: 'refused', message: refused.response.error.description },
+      result: {
+        kind: 'refused',
+        message: deleteRefusalMessage(
+          refused.response.error,
+          inScope.find(s => s.id === refused.id)?.status ?? ''
+        ),
+      },
     };
   return {
     deleted: items.filter(i => i.response.__typename === 'DeleteResponse')

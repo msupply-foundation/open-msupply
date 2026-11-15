@@ -146,6 +146,20 @@ pub trait SettingsServiceTrait: Sync + Send {
             .set_bool(KeyType::SettingsSyncIsDisabled, Some(true))
     }
 
+    /// Admin-set pause (Admin > Sync settings). While true the synchroniser driver skips
+    /// scheduled and manual runs on an initialised site; initialisation is unaffected. Unlike
+    /// `disable_sync` this is reversible and shown in the UI.
+    fn is_sync_paused(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+        Ok(KeyValueStoreRepository::new(&ctx.connection)
+            .get_bool(KeyType::SettingsSyncIsPaused)?
+            .unwrap_or(false))
+    }
+
+    fn set_sync_paused(&self, ctx: &ServiceContext, paused: bool) -> Result<(), RepositoryError> {
+        KeyValueStoreRepository::new(&ctx.connection)
+            .set_bool(KeyType::SettingsSyncIsPaused, Some(paused))
+    }
+
     fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError>;
 
     fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;

@@ -79,6 +79,37 @@ impl<'a> StockOnHandRepository<'a> {
 
         Ok(result)
     }
+
+    /// Available stock on hand for one item in a store, counting ONLY the stock tagged
+    /// with `campaign_id`.
+    ///
+    /// Deliberately mirrors the `store_stock_on_hand` view's arithmetic — the same
+    /// `pack_size × available_number_of_packs` sum over the same rows — so a
+    /// campaign-scoped figure and the unscoped one above are the SAME measure, just over
+    /// a narrower set. It reads `stock_line` directly rather than the view because the
+    /// view is already aggregated per item and store, with no campaign to filter on. A
+    /// campaign with no stock of the item sums to 0, which is the honest answer: none of
+    /// this item is held for that campaign.
+    pub fn campaign_query_one(
+        &self,
+        store_id: &str,
+        item_id: &str,
+        campaign_id: &str,
+    ) -> Result<f64, RepositoryError> {
+        use crate::db_diesel::stock_line_row::stock_line;
+        use diesel::dsl::sum;
+
+        let total: Option<f64> = stock_line::table
+            .filter(stock_line::store_id.eq(store_id))
+            .filter(stock_line::item_id.eq(item_id))
+            .filter(stock_line::campaign_id.eq(campaign_id))
+            .select(sum(
+                stock_line::pack_size * stock_line::available_number_of_packs
+            ))
+            .first(self.connection.lock().connection())?;
+
+        Ok(total.unwrap_or(0.0))
+    }
 }
 
 impl StockOnHandFilter {

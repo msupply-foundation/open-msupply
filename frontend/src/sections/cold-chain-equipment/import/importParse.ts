@@ -468,10 +468,10 @@ export const rowToInsertInput = (
 });
 
 /**
- * A stored ISO day (`YYYY-MM-DD`) back to the `DD/MM/YYYY` the import reads.
+ * A stored calendar date (`YYYY-MM-DD`) back to the `DD/MM/YYYY` the import reads.
  *
  * The failed-rows file is meant to be FIXED and re-uploaded, so every cell it
- * writes must be one {@link parseImportDate} accepts — an ISO day would come
+ * writes must be one {@link parseImportDate} accepts — a calendar date would come
  * back as a warning and an empty date, quietly losing what the user got right.
  */
 const toImportDate = (iso: string | null): string => {
@@ -561,7 +561,7 @@ export const reviewRowText = (row: ImportRow): string =>
 /**
  * Order two review rows by one key.
  *
- * Dates are held as ISO days, which sort correctly as text; the flag sorts
+ * Dates are held as calendar dates, which sort correctly as text; the flag sorts
  * set-last so "which of these will be replaced" reads as a block; everything
  * else compares as text, case-insensitively, the way a user reads it.
  */

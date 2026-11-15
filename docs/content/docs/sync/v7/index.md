@@ -557,7 +557,25 @@ Initialisation is a separate endpoint that allocates the token. It does **not** 
 
 #### **Site Status** {#site-status}
 
-This endpoint can be used to query for a number of records to be pulled, but mainly used to see if the site is ready for the next operation. Since there is already a check for site status in the common functionality, which will result in an early return. Successful response would have **siteId** and **centralSiteId**
+This endpoint can be used to query for a number of records to be pulled, but mainly used to see if the site is ready for the next operation. Since there is already a check for site status in the common functionality, which will result in an early return. Successful response would have **siteId** and **centralSiteId**, plus **isSyncApiPaused**.
+
+#### **Pausing the sync API on central** {#pausing-sync-api}
+
+A server admin can pause the sync API on central (Admin > Sync settings, stored as the `SETTINGS_SYNC_API_IS_PAUSED` key-value entry), for example while reintegrating the sync buffer or repairing partitions. While paused, every endpoint that moves records or files (**pull**, **push**, **patient\_data\_for\_site**, **patient\_search**, **download\_file**, and the tus upload) returns the typed `SyncApiPaused` error. The v6 endpoints behave the same way. **get\_token** and **site\_status** keep working, so a remote can still initialise its token and report the state. The exception is a site that isn't on v7 on central yet, such as a new remote initialising: **get\_token** refuses it with `SyncApiPaused` before asking legacy mSupply to move the site to v7, because it couldn't pull anyway. **site\_status** returns `isSyncApiPaused: true`.
+
+A remote checks **site\_status** before pushing (v6 remotes too), so a paused central stops the run before anything is sent. The run is logged with `SyncApiPaused`, which the UI shows as a warning ("Central server sync is paused") rather than a failure. The remote retries on its normal interval and resumes by itself once central is unpaused. A file upload refused this way does not use up one of the file's upload attempts. Work already running on central when it is paused, such as an integration a push has already started, carries on to the end. Each change to the pause is written to the system log (`SYNC_API_PAUSE_CHANGED`) with the user who made it.
+
+A remote older than 3.03 cannot read `SyncApiPaused` and would report a parse error, so central sends it a `ConnectionError` (v7) or `OtherServerError` (v6) reading "Central server sync is paused for maintenance" instead. The remote shows that as an ordinary connection error and retries as normal. The fallback goes once the fleet has upgraded. On central, the sync modal says the sync API is paused for as long as it is.
+
+#### **Maintenance mode on central** {#maintenance-mode}
+
+Maintenance mode (Admin > Sync settings, central only, `SETTINGS_MAINTENANCE_MODE_IS_ON`) is the supported way to integrate a large sync from legacy mSupply central without the outer integration transaction. That transaction only exists so changelog readers never see a half-integrated batch, so the mode first pauses every reader: turning it on sets this server's sync pause, the sync API pause above and the processor pause (`SETTINGS_PROCESSORS_ARE_PAUSED`, which drops transfer and general processor triggers) together, and the ledger fix skips its runs. It also signs out every user without the `ServerAdmin` permission, and login refuses them with a `MaintenanceMode` error until it is off.
+
+While it is on, a manual sync from the sync modal runs despite the pause (scheduled syncs stay paused), and it integrates OMS central's own buffer without the outer transaction. Instead every 500 buffer rows commit in their own transaction, and a failing write does not abort the chunk: its record is marked errored and integration carries on (rows are still fetched 10,000 at a time). On Postgres that is because each write (a row and its changelog row) has its own savepoint; SQLite only ever undoes the failing statement. A record that makes several writes is not undone as a whole on either, so its writes before the failing one stay saved (see [Transaction](#transaction), #847). Committing in chunks rather than per record matters on Postgres: a commit per record waits on a WAL flush for every record and every buffer mark, which made integration slower than inside the outer transaction. A restart mid-integration loses at most the 500 rows in progress, which roll back to pending: the flags persist, and the next forced sync carries on from the rows still pending. Buffers remote sites push to central always keep their transaction; they are refused anyway while the sync API is paused.
+
+The mode cannot be turned off while OMS central's own buffer (V5/V6 rows from the legacy central's site id, in tables a translator integrates) has pending rows. Rows that failed are marked integrated with an error and do not block it. Turning it off clears all four flags together and triggers the processors, which then work through their backlog. Every change is written to the system log (`MAINTENANCE_MODE_CHANGED`) with the user, and a server that starts in maintenance mode with pending rows logs that integration is incomplete.
+
+Support can leave the mode with rows still pending, for example when they are known to be unwanted, with `remote_server_cli exit-maintenance-mode --by <name>`. The override is written to the system log with the name and the pending count. Run it with the server stopped, as with the other CLI commands.
 
 #### **Pull** {#pull}
 
@@ -704,6 +722,13 @@ Integration should ensure that transactional integrity is maintained, for this i
 
 * For postgres, the whole transaction is discarded if there is an error, therefore an inner transaction should be created, however this becomes very very slow if there are lots of errors, but we don’t envision this.  
 * For sqlite, we don’t need an inner transaction, but a transaction is needed because it’s much faster than starting one on every record upsert. In fact inner transactions are very slow.
+
+What a failing write leaves behind differs in mechanism but not in outcome. A write here is one row saved or deleted along with its changelog row, and one sync record can make several (a name merge repoints every name link, then deletes the merged name).
+
+* On postgres the inner transaction is a savepoint around each write, not around the record. When a write fails, only that write is rolled back.
+* On sqlite there is no savepoint. SQLite undoes only the statement that failed and the transaction carries on, so the error does not need catching. The speed claim above comes from `bench_error_performance`, which is commented out and has no recorded numbers.
+
+On both, the record is marked errored and integration moves on, but its writes before the failing one stay saved and commit with the rest. The buffer row is not retried, so a record that fails part way stays half applied. #847 tracks making each record's writes all or nothing.
 
 During initialisation, only initialisation graphql endpoints are available, so it’s safe to reduce transactions (no transactions at all for postgres).
 

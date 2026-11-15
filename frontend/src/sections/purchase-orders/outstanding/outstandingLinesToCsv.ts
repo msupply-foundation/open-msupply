@@ -18,7 +18,7 @@ export const outstandingLinesToCsv = (
     t('label.item-name'),
     t('label.purchase-order-confirmed'),
     t('label.expected-delivery-date'),
-    t('label.adjusted-units-expected'),
+    t('label.requested-units'),
     t('label.total-received'),
     t('label.outstanding-units'),
   ];
@@ -33,7 +33,7 @@ export const outstandingLinesToCsv = (
       ? exportDate(row.purchaseOrder.confirmedDatetime)
       : '',
     row.expectedDeliveryDate ? exportDate(row.expectedDeliveryDate) : '',
-    row.adjustedNumberOfUnits ?? '',
+    row.requestedNumberOfUnits,
     row.receivedNumberOfUnits,
     row.outstandingNumberOfUnits,
   ]);

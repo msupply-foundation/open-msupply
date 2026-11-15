@@ -1,6 +1,7 @@
+import { categoryName, typeName } from '@/domain/asset';
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t, tPlural } from '@/intl';
@@ -11,6 +12,7 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
+import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import {
   DataTable,
   type Column,
@@ -69,7 +71,6 @@ const DEFAULT_STATE: CatalogueListState = {
 
 const CatalogueList: Component = () => {
   const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const { query, setQuery } = useUrlQueryState<CatalogueListState>({
     ...DEFAULT_STATE,
     first: initialPageSize(),
@@ -171,7 +172,10 @@ const CatalogueList: Component = () => {
       ...getCellDefinition('code', { headerPosition: 'primary' }),
     },
     {
-      c: { accessor: row => row.assetType?.name ?? '', id: 'typeId' },
+      c: {
+        accessor: row => (row.assetType ? typeName(row.assetType) : ''),
+        id: 'typeId',
+      },
       header: () => t('label.type'),
     },
     {
@@ -190,7 +194,11 @@ const CatalogueList: Component = () => {
       header: () => t('label.class'),
     },
     {
-      c: { accessor: row => row.assetCategory?.name ?? '', id: 'categoryId' },
+      c: {
+        accessor: row =>
+          row.assetCategory ? categoryName(row.assetCategory) : '',
+        id: 'categoryId',
+      },
       header: () => t('label.category'),
     },
   ];
@@ -217,16 +225,14 @@ const CatalogueList: Component = () => {
               sort={() => query().sort}
             />
             <Show when={writesOffered()}>
-              <Button
+              <LinkButton
                 variant="secondary"
                 icon={<EditIcon />}
                 data-testid="manage-log-reasons-button"
-                onClick={() =>
-                  navigate(`/${params.storeId}/catalogue/assets/log-reasons`)
-                }
+                href={`/${params.storeId}/catalogue/assets/log-reasons`}
               >
                 {t('button.manage-asset-log-reasons')}
-              </Button>
+              </LinkButton>
             </Show>
           </HeaderButtons>
         </Header>

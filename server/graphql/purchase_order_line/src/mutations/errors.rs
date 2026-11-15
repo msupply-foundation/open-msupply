@@ -64,18 +64,3 @@ impl CannotEditRequestedQuantity {
         "Cannot edit requested quantity"
     }
 }
-pub struct CannotEditAdjustedQuantity;
-#[Object]
-impl CannotEditAdjustedQuantity {
-    pub async fn description(&self) -> &str {
-        "Cannot edit adjusted quantity"
-    }
-}
-
-pub struct CannotEditQuantityBelowReceived;
-#[Object]
-impl CannotEditQuantityBelowReceived {
-    pub async fn description(&self) -> &str {
-        "Cannot edit adjusted quantity to less than received quantity"
-    }
-}

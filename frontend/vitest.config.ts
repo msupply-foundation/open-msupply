@@ -11,6 +11,17 @@ import { defineConfig } from 'vitest/config';
  */
 export const PLUGIN_SHARED_DEPS = ['solid-js', 'graphql'];
 
+// Run west of UTC unless told otherwise. A date bug that reads a calendar day
+// as UTC midnight shows the day BEFORE west of Greenwich and nothing at all
+// east of it, so a suite run in New Zealand or Timor-Leste would pass with the
+// bug in place (#1500). Set here, before the test workers start, so they all
+// inherit it; a `TZ` already in the environment wins. East of UTC the same
+// mistakes show differently (a day saved as the UTC day of local midnight lands
+// on the day before), so after changing date code also run
+// `TZ=Pacific/Auckland pnpm test`. An empty `TZ` counts as unset: Node reads
+// it as UTC.
+process.env.TZ ||= 'America/Los_Angeles';
+
 // Unit tests (intl, codegen helpers) run in node. The deterministic e2e
 // suites that need the real backend live under e2e/ (Playwright, not vitest).
 export default defineConfig({
@@ -53,6 +64,14 @@ export default defineConfig({
       'scripts/**/*.test.mjs',
       '../plugins/*/src/**/*.test.ts',
       '../private/plugins/*/src/**/*.test.ts',
+      // A form plugin's own tests sit beside its document types under
+      // `forms/`, which the `src` glob above does not reach.
+      '../plugins/examples/*/forms/**/*.test.ts',
+      '../plugins/*/forms/**/*.test.ts',
+      '../private/plugins/*/forms/**/*.test.ts',
+      // A plugin's data repairs, plain Node scripts beside the plugin.
+      '../plugins/*/repair/**/*.test.mjs',
+      '../private/plugins/*/repair/**/*.test.mjs',
       // cook_islands' backend half and shared domain core, named rather than
       // globbed: civ's backend tests are jest-style and import `@common/*`,
       // so they would fail the run on sight. `shared/` sits OUTSIDE the

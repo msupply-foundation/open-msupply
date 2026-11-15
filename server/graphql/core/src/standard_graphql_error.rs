@@ -112,6 +112,11 @@ pub fn validate_auth(
                     "{}, Required permissions: {:?}, Store: {:?}",
                     msg, required_permissions, access_request.store_id
                 )),
+                AuthDeniedKind::StoreNotActiveOnSite { store_id } => {
+                    StandardGraphqlError::Forbidden(format!(
+                        "Store is not active on this site, Store: {store_id}"
+                    ))
+                }
             },
             AuthError::InternalError(err) => StandardGraphqlError::InternalError(err),
         };

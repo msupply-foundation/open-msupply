@@ -13,7 +13,7 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime: string | null;
   sentDatetime: string | null;
   requestedDeliveryDate: string | null;
-  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED";
+  status: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED";
   targetMonths: number | null;
   orderTotalAfterDiscount: number;
   currency: {
@@ -41,10 +41,10 @@ export type PurchaseOrdersVariables = {
     afterOrEqualTo?: string | null;
   } | null;
     status?: {
-    equalTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | null;
-    equalAny?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED"> | null;
-    notEqualTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | null;
-    notEqualAll?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED"> | null;
+    equalTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED" | null;
+    equalAny?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED"> | null;
+    notEqualTo?: "NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED" | null;
+    notEqualAll?: Array<"NEW" | "REQUEST_APPROVAL" | "CONFIRMED" | "SENT" | "FINALISED" | "CANCELLED"> | null;
   } | null;
     supplier?: {
     equalTo?: string | null;

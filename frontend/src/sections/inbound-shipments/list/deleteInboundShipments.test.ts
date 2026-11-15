@@ -35,10 +35,15 @@ const fetchMock = vi.mocked(graphqlFetch);
 const forbiddenMock = vi.mocked(isForbidden);
 const deniedMock = vi.mocked(reportPermissionDenied);
 
-const plain = (id: string) => ({ id, scope: 'INBOUND_SHIPMENT' as const });
-const external = (id: string) => ({
+const plain = (id: string, status = 'NEW') => ({
+  id,
+  scope: 'INBOUND_SHIPMENT' as const,
+  status,
+});
+const external = (id: string, status = 'NEW') => ({
   id,
   scope: 'INBOUND_SHIPMENT_EXTERNAL' as const,
+  status,
 });
 
 // Minimal wire payloads: only what the fold reads. The cast is the test's
@@ -71,7 +76,10 @@ const deletedExternal = (...ids: string[]) =>
 
 // One typed refusal alongside a sibling that reported success: the batch is
 // all-or-nothing, so NOTHING in it went.
-const refusedExternal = (description: string) =>
+const refusedExternal = (
+  description: string,
+  typename = 'CannotDeleteInvoice'
+) =>
   ({
     kind: 'success',
     data: {
@@ -82,7 +90,7 @@ const refusedExternal = (description: string) =>
             id: 'b',
             response: {
               __typename: 'DeleteInboundShipmentError',
-              error: { __typename: 'CannotDeleteInvoice', description },
+              error: { __typename: typename, description },
             },
           },
         ],
@@ -166,6 +174,41 @@ describe('deleteInboundShipments', () => {
     expect(outcome).toEqual({
       deleted: 0,
       result: { kind: 'refused', message: 'Cannot delete invoice' },
+    });
+  });
+
+  // INB-20261005-F2 (issue #1140): CannotEditInvoice's description, "Cannot
+  // edit invoice", names no cause. The refused row's status says which one it
+  // was — Verified is the finalised refusal; anything else is the
+  // disabled-store one, which keeps the server's text. No dictionary is loaded
+  // here, so t() falls back to its key.
+  it('names a Verified row as the cause of a CannotEditInvoice refusal', async () => {
+    fetchMock.mockResolvedValue(
+      refusedExternal('Cannot edit invoice', 'CannotEditInvoice')
+    );
+    const outcome = await deleteInboundShipments('s1', [
+      external('a'),
+      external('b', 'VERIFIED'),
+    ]);
+    expect(outcome).toEqual({
+      deleted: 0,
+      result: {
+        kind: 'refused',
+        message: 'messages.cant-delete-verified-shipment',
+      },
+    });
+  });
+
+  it("keeps the server's text for a CannotEditInvoice refusal on a row that isn't Verified", async () => {
+    fetchMock.mockResolvedValue(
+      refusedExternal('Cannot edit invoice', 'CannotEditInvoice')
+    );
+    const outcome = await deleteInboundShipments('s1', [
+      external('b', 'RECEIVED'),
+    ]);
+    expect(outcome).toEqual({
+      deleted: 0,
+      result: { kind: 'refused', message: 'Cannot edit invoice' },
     });
   });
 

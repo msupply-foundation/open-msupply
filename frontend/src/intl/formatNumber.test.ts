@@ -111,3 +111,13 @@ describe('parseNumber', () => {
     expect(Number.isNaN(parseNumber(''))).toBe(true);
   });
 });
+
+describe('formatNumber is a plain formatter', () => {
+  // Display rounding and its mark live in numberDisplay; a bare call shows the
+  // value in full (float dust capped) and appends nothing.
+  it('shows a bare call in full, unmarked', () => {
+    expect(formatNumber(23.333333, { locale: 'en' })).toBe('23.333333');
+    expect(formatNumber(0.1 + 0.2, { locale: 'en' })).toBe('0.3');
+    expect(formatNumber(1234, { locale: 'en' })).toBe('1,234');
+  });
+});

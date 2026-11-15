@@ -27,44 +27,6 @@ export type LinkInternalOrderRowFragment = {
 } | null;
 };
 
-export type InboundCampaignsVariables = {
-  storeId: string;
-};
-
-export type InboundCampaignsResult = {
-  campaigns: ({
-  __typename: "CampaignConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  name: string;
-}>;
-});
-};
-
-export const InboundCampaigns = {
-  query: "query inboundCampaigns($storeId: String!) {\n  campaigns(storeId: $storeId) {\n    ... on CampaignConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
-} as TypedDocument<InboundCampaignsResult, InboundCampaignsVariables>;
-
-export type InboundProgramsVariables = {
-  storeId: string;
-};
-
-export type InboundProgramsResult = {
-  programs: ({
-  __typename: "ProgramConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  name: string;
-}>;
-});
-};
-
-export const InboundPrograms = {
-  query: "query inboundPrograms($storeId: String!) {\n  programs(storeId: $storeId) {\n    ... on ProgramConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
-} as TypedDocument<InboundProgramsResult, InboundProgramsVariables>;
-
 export type InternalOrderLinesVariables = {
   storeId: string;
   requisitionId: string;
@@ -101,10 +63,14 @@ export type PurchaseOrderLinesResult = {
   id: string;
   lineNumber: number;
   requestedPackSize: number;
+  pricePerPackAfterSupplierDiscount: number;
   item: {
   id: string;
   code: string;
   name: string;
+  type: "SERVICE" | "STOCK" | "NON_STOCK";
+  defaultPackSize: number;
+  volumePerPack: number;
 };
 }>;
 };
@@ -112,7 +78,7 @@ export type PurchaseOrderLinesResult = {
 };
 
 export const PurchaseOrderLines = {
-  query: "query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {\n  purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {\n    __typename\n    ... on PurchaseOrderNode {\n      id\n      lines {\n        nodes {\n          id\n          lineNumber\n          requestedPackSize\n          item {\n            id\n            code\n            name\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {\n  purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {\n    __typename\n    ... on PurchaseOrderNode {\n      id\n      lines {\n        nodes {\n          id\n          lineNumber\n          requestedPackSize\n          pricePerPackAfterSupplierDiscount\n          item {\n            id\n            code\n            name\n            type\n            defaultPackSize\n            volumePerPack\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderLinesResult, PurchaseOrderLinesVariables>;
 
 export type SupplierInternalOrdersVariables = {

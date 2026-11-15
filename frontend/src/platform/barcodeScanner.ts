@@ -164,9 +164,9 @@ export const activeSource = (): ScanSourceId | undefined => active()?.id;
 // --- Scan routing: one owner at a time --------------------------------------
 //
 // spec/barcode-scanning/rules.md § Triggering a scan:
-//   "One screen owns the scan at a time. Registering to receive scans
-//    replaces whoever was registered before; a scan arriving with nobody
-//    registered is dropped silently."
+//   "One screen owns the scan at a time. A screen that starts listening
+//    replaces whoever was listening before; […] A scan arriving with nobody
+//    listening is dropped silently."
 //   "Leaving a screen stops its scanning."
 //
 // Both halves are specified behaviour: the silent replacement and the silent
@@ -344,8 +344,11 @@ const releaseActive = async (): Promise<void> => {
 let cancelPending: (() => void) | undefined;
 
 /**
- * Ask for exactly one scan. Used by the field-level affordance, and by every
- * affordance on a source that cannot stay armed.
+ * Ask for exactly one scan. Used by the camera's Scan button and the Devices
+ * test screen. A scanning screen never asks a hardware scanner for one: it is
+ * always listening instead (spec/barcode-scanning/rules.md § Triggering a
+ * scan), and a one-shot on a streaming source waits for a scan that may
+ * never come.
  *
  * Always cancellable: `cancelScanOnce()` (and `stopListening()`) settle it as
  * cancelled whatever the source does, so a caller is never left waiting on a

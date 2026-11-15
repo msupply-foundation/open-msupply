@@ -53,6 +53,7 @@ pub enum AssetLogStatus {
     NotFunctioning,
     Decommissioned,
     Unserviceable,
+    NotInstalled,
 }
 
 #[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]

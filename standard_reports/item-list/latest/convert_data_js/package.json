@@ -7,7 +7,7 @@
     "generate-argument-types": "json2ts ../argument_schemas/arguments.json src/generated-types/arguments.ts",
     "generate-graphql-types": "graphql-codegen",
     "//": "Need to manually run below command, from this directory to generate argument types and graphql types",
-    "generate-types": "yarn generate-argument-types && yarn generate-graphql-types",
+    "generate-types": "pnpm generate-argument-types && pnpm generate-graphql-types",
     "test": "jest"
   },
   "keywords": [],

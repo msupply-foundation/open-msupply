@@ -10,7 +10,7 @@
 
 /**
  * How far down a control collapses:
- *   true     — phone widths (≤767px).
+ *   true     — phone widths (<600px, breakpoints.compact).
  *   'narrow' — the whole narrow-viewport range (≤1023px, breakpoints
  *              .navOverlay). For a page header whose action cluster would
  *              otherwise wrap onto a row of its own on a tablet.

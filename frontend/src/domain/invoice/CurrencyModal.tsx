@@ -103,6 +103,7 @@ const Body: Component<CurrencyModalProps> = props => {
           value={rate()}
           min={0}
           decimalLimit={6}
+          emptyValue={0}
           onChange={v => setRate(v ?? 0)}
         />
       </Show>

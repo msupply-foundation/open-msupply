@@ -12,7 +12,7 @@ import {
 import { resolveStoreToEnter } from './resolveStoreToEnter';
 import { createStorePicker } from './storePicker';
 import { StoreSelectionScreen } from './StoreSelectionScreen';
-import { setHomeCurrency, t } from '../intl';
+import { setDecimalPlaces, setHomeCurrency, t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
 // Reserved path for "no store in the URL": the segment never names a store, so
@@ -83,6 +83,17 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     if (params.storeId !== store.id)
       navigate(`/${store.id}`, { replace: true });
     if (!contextLoaded(store.id)) void refetchStoreContext(store.id);
+  });
+
+  // Display rounding for numbers is a GLOBAL preference, so it arrives with
+  // the store context rather than with the store itself (unlike the home
+  // currency above). Its own effect, tracking the context, so a preference
+  // changed centrally re-formats every figure in the app in place on the next
+  // refetch. The post-sync refetch runs every couple of seconds; it costs
+  // nothing here — the memo stops reference-identical payloads, and setting the
+  // same number is a no-op under the signal's equality check.
+  createEffect(() => {
+    setDecimalPlaces(storeContext()?.preferences.decimalPlacesForNumbers);
   });
 
   // The panel's ordering + confirm wiring is shared with the store-switch

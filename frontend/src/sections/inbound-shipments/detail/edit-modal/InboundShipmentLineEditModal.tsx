@@ -7,13 +7,18 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { formatNumber, t } from '../../../../intl';
+import { t, tPlural, type LocaleKey } from '../../../../intl';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
+import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
+import { scrollCellIntoView } from '@/ui/elements/table/scrollCellIntoView';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import {
   CancelButton,
+  DialogCloseButton,
   DialogSaveButton,
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
@@ -22,7 +27,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../../intl/calendarDate';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
@@ -36,8 +41,26 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { packDifference } from '../inboundShipmentLine';
-import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
+import {
+  batchIsBlank,
+  expiryIsBlank,
+  lacksBatchOrExpiry,
+  missingBatchField,
+  newBatchDefaultsFromLine,
+  orderLinePrice,
+  packDifference,
+  perUnitAtPackSize,
+  figuresAtPackSize,
+  type MissingBatchField,
+  type NewBatchDefaults,
+  type PackSizeBase,
+} from '../inboundShipmentLine';
+import {
+  AlertTriangleIcon,
+  CopyIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
   createFocusTarget,
@@ -49,7 +72,7 @@ import {
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch } from '../../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
   InboundShipmentLines,
@@ -65,6 +88,7 @@ import {
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
 // from the generated result, not restated).
@@ -82,6 +106,11 @@ export interface LineEditPrefs {
    * (spec ui-surface col 16 / rules → authorisation is external-scope-only).
    */
   authorisation: boolean;
+  /**
+   * Prompt-for-batch-and-expiry preference (issue #992) — a save with any
+   * batch's batch or expiry left blank asks first. A prompt, never a block.
+   */
+  promptBatchExpiry: boolean;
 }
 
 export interface InboundShipmentLineEditModalProps {
@@ -112,6 +141,18 @@ export interface InboundShipmentLineEditModalProps {
    */
   purchaseOrderId?: string;
   /**
+   * The donor a new batch starts with — the shipment's default donor, else the
+   * linked purchase order's (spec rules → default donor, OMS-REG-REPL-09.26).
+   * The user may still change or clear it before saving.
+   */
+  defaultDonor?: { id: string; name: string };
+  /**
+   * The shipment's default campaign (null = none): every NEW batch starts
+   * with it, and the user can change or clear it per batch. Existing lines
+   * keep their own.
+   */
+  campaign: { id: string; name: string } | null;
+  /**
    * The shipment's linked internal order. Presence alone gates the
    * internal-order banner (spec S4); undefined where there is no such link, or
    * where ./internalOrderContext rules the context out.
@@ -119,6 +160,11 @@ export interface InboundShipmentLineEditModalProps {
   requisitionId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
+  /**
+   * The shipment's currency when it isn't the home currency, with its rate
+   * (home units per one foreign unit) — adds the foreign-currency cost columns.
+   */
+  foreignCurrency?: { code: string; rate: number };
   /**
    * The supplier-declared figures (Packs shipped / Shipped pack size) are
    * read-only, because something outside this store declared them: the
@@ -133,6 +179,8 @@ export interface InboundShipmentLineEditModalProps {
    * warns against leaning on "manual" alone to carry a gate).
    */
   shippedLocked: boolean;
+  /** The shipment isn't editable: show the item's batches, take no input. */
+  readOnly?: boolean;
   locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
@@ -148,6 +196,11 @@ export interface InboundShipmentLineEditModalProps {
     currentItemId: string,
     covered: Set<string>
   ) => Promise<string | undefined>;
+  /**
+   * A scan arrived while this editor was open and was discarded — say so
+   * here, where the user is looking, rather than behind the dialog (.41).
+   */
+  scanDiscarded?: boolean;
 }
 
 // The inbound-shipment line editor (spec S4): the single surface for entering a
@@ -185,15 +238,30 @@ type DraftBatch = {
   manufacturerId: string | null;
   manufacturerName: string | null;
   campaignId: string | null;
+  // The campaign's NAME travels with its id (as donor / manufacturer do) so a
+  // soft-deleted campaign the line still carries can label itself — the
+  // register read excludes it (spec/campaigns contract › wire trap).
+  campaignName: string | null;
   programId: string | null;
   /**
    * Whether the user has hand-edited the cost / sell price
-   * (OMS-REG-REPL-09.10/.11): a prefilled price the user hasn't touched clears
-   * to zero when the pack size moves off the item default; an overridden one is
-   * left alone.
+   * (OMS-REG-REPL-09.10/.11/.44): a prefilled price the user hasn't touched
+   * moves with a pack-size change (spec rules › new-batch defaults); an
+   * overridden one is left alone.
    */
   costOverridden: boolean;
   sellOverridden: boolean;
+  /**
+   * Whether the user has typed the volume per pack: one they haven't follows
+   * every pack-size change at the item's volume per unit (OMS-REG-REPL-09.45).
+   */
+  volumeOverridden: boolean;
+  /**
+   * A duplicated batch's source figures, which its pack-size changes scale
+   * from in place of the item's defaults (OMS-REG-REPL-09.46). Absent on
+   * every other batch.
+   */
+  duplicatedFrom?: PackSizeBase;
 };
 
 // The three authorisation states a line can hold (the fragment's non-null set).
@@ -205,6 +273,36 @@ const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
   PENDING: styles.statusPending,
   PASSED: styles.statusPassed,
   REJECTED: styles.statusRejected,
+};
+const AUTH_STATUSES: AuthStatus[] = ['PENDING', 'PASSED', 'REJECTED'];
+const AUTH_STATUS_LABEL: Record<AuthStatus, () => string> = {
+  PENDING: () => t('label.pending'),
+  PASSED: () => t('label.passed'),
+  REJECTED: () => t('label.rejected'),
+};
+
+// The batch/expiry prompt's words (issue #992), by what the batches are
+// missing between them: a prompt about a blank batch alone never names the
+// expiry too. The prompt, its "enter" button and the footer count all follow.
+const MISSING_WORDS: Record<
+  MissingBatchField,
+  { prompt: LocaleKey; summary: LocaleKey; enter: LocaleKey }
+> = {
+  batch: {
+    prompt: 'messages.confirm-missing-batch',
+    summary: 'messages.batches-without-batch',
+    enter: 'button.enter-batch',
+  },
+  expiry: {
+    prompt: 'messages.confirm-missing-expiry',
+    summary: 'messages.batches-without-expiry',
+    enter: 'button.enter-expiry-date',
+  },
+  either: {
+    prompt: 'messages.confirm-missing-batch-or-expiry',
+    summary: 'messages.batches-without-batch-or-expiry',
+    enter: 'button.enter-batch-and-expiry',
+  },
 };
 
 // A small coloured status dot for a Select option adornment. Decorative — the
@@ -241,9 +339,11 @@ const emptyBatch = (): DraftBatch => ({
   manufacturerId: null,
   manufacturerName: null,
   campaignId: null,
+  campaignName: null,
   programId: null,
   costOverridden: false,
   sellOverridden: false,
+  volumeOverridden: false,
 });
 
 const fromLine = (line: InboundLineFragment): DraftBatch => ({
@@ -269,12 +369,14 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   manufacturerId: line.manufacturer?.id ?? null,
   manufacturerName: line.manufacturer?.name ?? null,
   campaignId: line.campaign?.id ?? null,
+  campaignName: line.campaign?.name ?? null,
   programId: line.program?.id ?? null,
   // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
   // is about adding); mark both overridden so a pack-size edit never wipes a
   // saved price.
   costOverridden: true,
   sellOverridden: true,
+  volumeOverridden: true,
 });
 
 // The card body groups. This modal is card-only (no table view — see the
@@ -346,16 +448,7 @@ type ChosenItem = {
   unitName: string | null;
   isVaccine: boolean;
   doses: number;
-  /**
-   * Item default pack size + store default sell price — the new-line price
-   * prefill (OMS-REG-REPL-09.10/.11). defaultSellPricePerPack is 0 where
-   * unknown (the PO-line picker and edit-mode line-load don't fetch it), so no
-   * price prefill there — correct, since OMS-REG-REPL-09.10/.11 targets the
-   * manual add-item case.
-   */
-  defaultPackSize: number;
-  defaultSellPricePerPack: number;
-};
+} & NewBatchDefaults;
 
 const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [item, setItem] = createSignal<ChosenItem | null>(null);
@@ -395,6 +488,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // row id — where a row-click open, an advance, or a new batch lands focus.
   // The handle waits for the row to attach, so no load gate is needed here.
   const batchFields = createFocusTargets();
+  // Each batch's Batch and Expiry inputs — where "Enter batch and expiry"
+  // lands, on the first one left blank (OMS-REG-REPL-09.36).
+  const batchNumberFields = createFocusTargets();
+  const expiryFields = createFocusTargets();
 
   // The dialog-header slot the DataTable portals its toolbar controls into
   // (DataTable.controlsMount). A ref SIGNAL, not a plain variable: the header
@@ -484,31 +581,39 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       unitName: first.item?.unitName ?? null,
       isVaccine: first.item?.isVaccine ?? false,
       doses: first.item?.doses ?? 0,
-      defaultPackSize: first.item?.defaultPackSize ?? 1,
-      defaultSellPricePerPack: 0,
+      // What "Add batch" seeds from here (OMS-REG-REPL-09.40/.42). Read off the
+      // first line, the same line seedFromLines takes the order-line link
+      // from, so a new batch's price and pack size always come from the order
+      // line it will cite — even where the item's batches cite several.
+      ...newBatchDefaultsFromLine(first, props.foreignCurrency?.rate),
     });
     // Focus the requested batch, else the first row.
     batchFields.focus(focusLineId ?? first.id);
     setLoadingLines(false);
   };
 
-  // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
-  // starts at the item's default pack size, with cost AND sell price seeded
-  // from the store default sell price — but only when cost is editable (a
-  // manual shipment); on a PO/transfer shipment cost derives from the source,
-  // so leave prices at zero.
-  const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
-    const base = emptyBatch();
-    const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
-    if (props.costLocked) return { ...base, packSize };
-    const price = chosen.defaultSellPricePerPack;
-    return {
-      ...base,
-      packSize,
-      costPricePerPack: price,
-      sellPricePerPack: price,
-    };
-  };
+  // Every new batch starts with the inherited donor (OMS-REG-REPL-09.13/.26)
+  // and the shipment's default campaign (issue #996), shown before save
+  // rather than only once the server has applied them.
+  const newBatch = (): DraftBatch => ({
+    ...emptyBatch(),
+    donorId: props.defaultDonor?.id ?? null,
+    donorName: props.defaultDonor?.name ?? null,
+    campaignId: props.campaign?.id ?? null,
+    campaignName: props.campaign?.name ?? null,
+  });
+
+  // A fresh batch for `chosen` (spec rules › new-batch defaults): its starting
+  // pack size, cost AND sell price, and volume per pack. On a source-linked
+  // shipment too — cost can't be typed there, so the prefilled cost is the
+  // one the line is saved with (OMS-REG-REPL-09.41/.42).
+  const prefillFromItem = (chosen: ChosenItem): DraftBatch => ({
+    ...newBatch(),
+    packSize: chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1,
+    costPricePerPack: chosen.prefillPricePerPack,
+    sellPricePerPack: chosen.prefillPricePerPack,
+    volumePerPack: chosen.volumePerPack,
+  });
 
   // Picking from the item search is an ADD-flow action (update mode is entered
   // only by clicking a row, and locks the selector), so it keeps mode 'add'.
@@ -533,11 +638,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     void loadChosenItem(option);
   };
 
-  // Seed the editor for a search-picked item. The item descriptor comes from
-  // the SEARCH option, not from any loaded line: only the option carries the
-  // store default sell price, so keeping it is what lets a later "Add batch"
-  // prefill its price (OMS-REG-REPL-09.10/.11) even on an item loaded from its
-  // existing lines.
+  // Seed the editor for a search-picked item, its new-batch defaults taken
+  // from the SEARCH option (OMS-REG-REPL-09.10/.11/.43).
   const loadChosenItem = async (option: ItemOption) => {
     setLoadingLines(true);
     setErrorMessage(undefined);
@@ -551,7 +653,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       isVaccine: option.isVaccine,
       doses: option.doses,
       defaultPackSize: option.defaultPackSize,
-      defaultSellPricePerPack: option.defaultSellPricePerPack,
+      prefillPricePerPack: option.defaultSellPricePerPack,
+      volumePerPack: option.volumePerPack,
     };
     const existing = await fetchItemLines(option.id);
     if (ticket !== loadTicket) return;
@@ -615,7 +718,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       result.kind === 'success' &&
       result.data.purchaseOrder.__typename === 'PurchaseOrderNode'
     )
-      setPoLines(result.data.purchaseOrder.lines.nodes);
+      setPoLines(
+        result.data.purchaseOrder.lines.nodes.filter(
+          l => l.item.type !== 'SERVICE'
+        )
+      );
   };
   const choosePoLine = (id: string) => {
     const line = poLines().find(l => l.id === id);
@@ -626,7 +733,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
     // attributes fill in once the line is saved and reloaded via the full line
     // fragment (edit mode). Default them for the pre-save PO-add view.
-    setItem({
+    const chosen: ChosenItem = {
       id: line.item.id,
       code: line.item.code,
       name: line.item.name,
@@ -634,9 +741,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       isVaccine: false,
       doses: 0,
       defaultPackSize: line.requestedPackSize || 1,
-      defaultSellPricePerPack: 0,
-    });
-    const batch = { ...emptyBatch(), packSize: line.requestedPackSize || 1 };
+      prefillPricePerPack: orderLinePrice(
+        line.pricePerPackAfterSupplierDiscount,
+        props.foreignCurrency?.rate
+      ),
+      volumePerPack: perUnitAtPackSize(
+        line.item.volumePerPack,
+        line.item.defaultPackSize,
+        line.requestedPackSize || 1
+      ),
+    };
+    setItem(chosen);
+    const batch = prefillFromItem(chosen);
     setBatches([batch]);
     batchFields.focus(batch.id);
   };
@@ -657,15 +773,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // like the first one.
   const addBatch = () => {
     const chosen = item();
-    const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
+    const batch = chosen ? prefillFromItem(chosen) : newBatch();
     setBatches(produce(d => d.push(batch)));
     batchFields.focus(batch.id);
   };
 
-  // Pack-size / price edits (OMS-REG-REPL-09.10/.11): moving the pack size off
-  // the item default clears a still-prefilled (non-overridden) price to zero;
-  // editing a price marks it overridden so a later pack-size change leaves it
-  // alone.
+  // Pack-size / price edits (spec rules › new-batch defaults): a pack-size
+  // change moves the volume and each price the user hasn't typed, from the
+  // item's defaults or, on a duplicate, from its source's figures
+  // (figuresAtPackSize has the rules, OMS-REG-REPL-09.11/.42/.44–.46). Editing
+  // a price or the volume marks it overridden so a later pack-size change
+  // leaves it alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -673,10 +791,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = d.find(x => x.id === id);
         if (!b) return;
         b.packSize = value;
-        if (chosen && !props.costLocked && value !== chosen.defaultPackSize) {
-          if (!b.costOverridden) b.costPricePerPack = 0;
-          if (!b.sellOverridden) b.sellPricePerPack = 0;
-        }
+        const base: PackSizeBase | undefined =
+          b.duplicatedFrom ??
+          (chosen
+            ? {
+                packSize: chosen.defaultPackSize,
+                costPricePerPack: chosen.prefillPricePerPack,
+                sellPricePerPack: chosen.prefillPricePerPack,
+                volumePerPack: chosen.volumePerPack,
+              }
+            : undefined);
+        if (!base) return;
+        const next = figuresAtPackSize(base, value, {
+          purchaseOrderLinked: !!props.purchaseOrderId,
+          costLocked: props.costLocked,
+        });
+        if (!b.volumeOverridden) b.volumePerPack = next.volumePerPack;
+        if (next.costPricePerPack !== undefined && !b.costOverridden)
+          b.costPricePerPack = next.costPricePerPack;
+        if (next.sellPricePerPack !== undefined && !b.sellOverridden)
+          b.sellPricePerPack = next.sellPricePerPack;
       })
     );
   };
@@ -700,13 +834,41 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         }
       })
     );
+  const changeVolume = (id: string, value: number) =>
+    setBatches(
+      produce(d => {
+        const b = d.find(x => x.id === id);
+        if (b) {
+          b.volumePerPack = value;
+          b.volumeOverridden = true;
+        }
+      })
+    );
+  // A duplicate starts with its source's figures, and nothing on it counts as
+  // typed yet: a saved source marks every figure overridden, and a copy of
+  // those flags would leave a transfer's read-only cost at the source's pack
+  // size for good (OMS-REG-REPL-09.46).
   const duplicateBatch = (id: string) => {
     const newId = generateUUID();
     setBatches(
       produce(d => {
         const index = d.findIndex(b => b.id === id);
-        if (index >= 0)
-          d.splice(index + 1, 0, { ...d[index], id: newId, isNew: true });
+        if (index < 0) return;
+        const source = d[index];
+        d.splice(index + 1, 0, {
+          ...source,
+          id: newId,
+          isNew: true,
+          costOverridden: false,
+          sellOverridden: false,
+          volumeOverridden: false,
+          duplicatedFrom: {
+            packSize: source.packSize,
+            costPricePerPack: source.costPricePerPack,
+            sellPricePerPack: source.sellPricePerPack,
+            volumePerPack: source.volumePerPack,
+          },
+        });
       })
     );
     batchFields.focus(newId);
@@ -729,9 +891,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const units = b.numberOfPacks * b.packSize;
     if (!units) return '';
     const unit = item()?.unitName;
-    return unit
-      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${unit}`
-      : formatNumber(units, { maximumFractionDigits: 2 });
+    return unit ? `${roundedText(units)} ${unit}` : roundedText(units);
   };
 
   // Seed on mount: a row open (update mode) loads its item — focusing the
@@ -864,11 +1024,70 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       return false;
     }
     if (outcome.applied) props.onSaved();
+    setMarkedItemId(undefined); // a save that went through ends the marking
     return true;
   };
 
   const onOk = async () => {
     if (await save()) props.onClose();
+  };
+
+  // Batch/expiry prompt (issue #992): with the store preference on, a save
+  // with any batch's batch or expiry left blank asks first — back to enter
+  // them, or continue with none. Holds the save the user asked for (Save or
+  // Save & next) so Continue runs exactly that one.
+  const [pendingSave, setPendingSave] = createSignal<() => Promise<void>>();
+  const missingCount = () => rows().filter(lacksBatchOrExpiry).length;
+  // The prompt's words — 'either' until something is missing, which is only
+  // ever read while the prompt is open.
+  const missingWords = () =>
+    MISSING_WORDS[missingBatchField(rows()) ?? 'either'];
+  const guardSave = (action: () => Promise<void>) => {
+    if (props.prefs.promptBatchExpiry && missingCount() > 0)
+      setPendingSave(() => action);
+    else void action();
+  };
+  const continueSave = () => {
+    const action = pendingSave();
+    setPendingSave(undefined); // so the prompt's close isn't read as "enter"
+    void action?.();
+  };
+
+  // "Enter batch and expiry" (OMS-REG-REPL-09.36–.39): the stocktake editor's
+  // awaiting-a-reason treatment, applied to batch and expiry. The batches
+  // still missing either are marked — badge, row tint, a warning under each
+  // blank field — until filled; a warning, never a block. Held as the item it
+  // was raised on, so moving to another item drops it with no reset of its own.
+  const [markedItemId, setMarkedItemId] = createSignal<string>();
+  const batchMarked = (b: DraftBatch) =>
+    markedItemId() !== undefined &&
+    markedItemId() === item()?.id &&
+    lacksBatchOrExpiry(b);
+  const markedCount = () => rows().filter(batchMarked).length;
+  // The footer count's words, by what the marked batches are missing.
+  const markedWords = () =>
+    MISSING_WORDS[missingBatchField(rows().filter(batchMarked)) ?? 'either'];
+  // What a marked batch's badge says it has no value for.
+  const missingLabel = (b: DraftBatch) =>
+    batchIsBlank(b) && expiryIsBlank(b)
+      ? t('label.no-batch-or-expiry-date')
+      : batchIsBlank(b)
+        ? t('label.no-batch')
+        : t('label.no-expiry-date');
+  const enterMissing = () => {
+    if (!pendingSave()) return; // closed by Continue, not by "enter"
+    setPendingSave(undefined);
+    setMarkedItemId(item()?.id);
+    const first = rows().find(lacksBatchOrExpiry);
+    if (!first) return;
+    // Centred, by its cell in table view, as the stocktake editor lands a
+    // missing reason — the warning beneath the field is the reason it's there.
+    const landing = {
+      scroll: (el: HTMLElement) =>
+        scrollCellIntoView(el, { block: 'center', inline: 'nearest' }),
+    };
+    if (batchIsBlank(first)) batchNumberFields.focus(first.id, landing);
+    else expiryFields.focus(first.id, landing);
   };
   // Back to the add-mode item-search state — no item picked. Reached when an
   // update walk exhausts, or by "OK & next" in add mode (add another). Always
@@ -879,6 +1098,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setPoLineId(undefined);
     setBatches([]);
     setErrorMessage(undefined);
+    setMarkedItemId(undefined);
     // Focus the selector so the next item can be typed / picked.
     topSelector.focus();
   };
@@ -940,11 +1160,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (kdd/solid-reactivity-pitfalls).
   const declaredValue = (value: () => number | undefined) => (
     <span class={styles.statValue}>
-      {value() === undefined
-        ? '—'
-        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+      {value() === undefined ? '—' : <Num value={value()!} />}
     </span>
   );
+
+  // Local → shipment currency, as the server stores it; zero rate counts as 1.
+  const toForeign = (local: number) =>
+    local / (props.foreignCurrency?.rate || 1);
 
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
@@ -963,10 +1185,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <TextField
+            ref={batchNumberFields.ref(b.id)}
             label={t('label.batch')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.batch}
+            warning={
+              batchMarked(b) && batchIsBlank(b)
+                ? t('messages.no-batch-entered')
+                : undefined
+            }
+            warningTestId="batch-warning"
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
         );
@@ -985,6 +1215,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               ref={batchFields.ref(b.id)}
               label={t('label.packs-received')}
               hideLabel
+              disabled={props.readOnly}
               size="small"
               value={b.numberOfPacks}
               min={0}
@@ -992,6 +1223,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               // numberOfPacks is Float on the wire; match the reference 2-dp
               // room (spec S4).
               decimalLimit={2}
+              emptyValue={0}
               onChange={v => updateBatch(b.id, 'numberOfPacks', v ?? 0)}
             />
             {/* Units received, as a HINT under the packs figure rather than a
@@ -1037,6 +1269,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     <NumberField
                       label={t('label.shipped-number-of-packs')}
                       hideLabel
+                      disabled={props.readOnly}
                       size="small"
                       value={b.shippedNumberOfPacks}
                       min={0}
@@ -1091,16 +1324,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                       against. An em dash rather than blank, matching every
                       other read-only "no value" in the vertical (the side
                       panel's Currency / Shipping method / Transport ref). */}
-                  {diff() === undefined
-                    ? '—'
-                    : // An explicit + on an over-receipt (a negative
-                      // already carries its own sign), so the direction of the
-                      // discrepancy reads without any colour doing the work.
-                      // The mismatch Alert above the cards carries the alarm;
-                      // this stays a figure among figures.
-                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
-                        maximumFractionDigits: 2,
-                      })}`}
+                  <Show when={diff() !== undefined} fallback="—">
+                    {/* An explicit + on an over-receipt (a negative already
+                        carries its own sign), so the direction of the
+                        discrepancy reads without any colour doing the work.
+                        The mismatch Alert above the cards carries the alarm;
+                        this stays a figure among figures. */}
+                    {diff()! > 0 ? '+' : ''}
+                    <Num value={diff()!} />
+                  </Show>
                 </span>
               );
             },
@@ -1118,6 +1350,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.received-pack-size')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
@@ -1128,6 +1361,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // Pack size is Float on the wire and may be fractional; 2-dp room
             // matches the reference (spec S4).
             decimalLimit={2}
+            emptyValue={1}
             onChange={v => changePackSize(b.id, v ?? 1)}
           />
         );
@@ -1153,6 +1387,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     <NumberField
                       label={t('label.shipped-pack-size')}
                       hideLabel
+                      disabled={props.readOnly}
                       size="small"
                       value={b.shippedPackSize}
                       min={0}
@@ -1184,7 +1419,20 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // hideOnCard rides INSIDE getNumberCell's meta argument — a `meta:` field
       // of our own would be overwritten by the spread that follows it, which is
       // exactly what put a stray "Tab received" above the card's panel.
-      ...getNumberCell({ hideOnCard: true }),
+      // controlLine: plain text, so in the top-aligned table it would ride the
+      // top of its cell rather than sit on the inputs' line.
+      ...getNumberCell({ hideOnCard: true, controlLine: true }),
+      // Read from the row, not info.getValue(): TanStack caches each row's
+      // accessor value until the row model is rebuilt, and packs / pack size
+      // are edited in place on the same draft row — a cached value would keep
+      // the figure from when the row was first drawn.
+      cell: info => (
+        <Num
+          value={displayNumber(
+            info.row.original.numberOfPacks * info.row.original.packSize
+          )}
+        />
+      ),
     },
     {
       c: { key: 'expiryDate' },
@@ -1195,10 +1443,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <DateField
+            ref={expiryFields.ref(b.id)}
             label={t('label.expiry')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.expiryDate}
+            warning={
+              batchMarked(b) && expiryIsBlank(b)
+                ? t('messages.no-expiry-date-entered')
+                : undefined
+            }
+            warningTestId="expiry-warning"
             onChange={v => updateBatch(b.id, 'expiryDate', v)}
           />
         );
@@ -1231,6 +1487,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             locations={props.locations}
             value={b.locationId ?? undefined}
@@ -1273,24 +1530,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   hideLabel
                   size="small"
                   value={b.status ?? 'PENDING'}
-                  disabled={b.isNew}
-                  options={[
-                    {
-                      value: 'PENDING',
-                      label: t('label.pending'),
-                      adornment: <StatusDot status="PENDING" />,
-                    },
-                    {
-                      value: 'PASSED',
-                      label: t('label.passed'),
-                      adornment: <StatusDot status="PASSED" />,
-                    },
-                    {
-                      value: 'REJECTED',
-                      label: t('label.rejected'),
-                      adornment: <StatusDot status="REJECTED" />,
-                    },
-                  ]}
+                  disabled={b.isNew || props.readOnly}
+                  options={AUTH_STATUSES.map(status => ({
+                    value: status,
+                    label: AUTH_STATUS_LABEL[status](),
+                    adornment: <StatusDot status={status} />,
+                  }))}
                   // Fixed 3-option list ⇒ the string out is one of the union.
                   onValueChange={v =>
                     updateBatch(b.id, 'status', v as AuthStatus)
@@ -1320,6 +1565,29 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               />
             ),
           } satisfies Column<DraftBatch, never, GroupKey>,
+          // Doses received (computed) — units received × doses per unit, so an
+          // EPI receiver reads the doses arriving without doing the sum (H5,
+          // #2071). A read-only value like Difference: derived, never typed.
+          {
+            c: { id: 'dosesReceived' },
+            header: () => t('label.doses-received'),
+            cardGroup: 'batch',
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
+            // Read from the row and the item getter, not info.getValue(), so
+            // the figure follows the draft as packs / pack size are typed
+            // (see Units received).
+            cell: info => (
+              <span class={styles.statValue}>
+                <Num
+                  value={displayNumber(
+                    info.row.original.numberOfPacks *
+                      info.row.original.packSize *
+                      (item()?.doses ?? 0)
+                  )}
+                />
+              </span>
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
     // VVM status — gated by the manage-VVM preference AND a vaccine
@@ -1341,6 +1609,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 <VvmStatusSelect
                   label={t('label.vvm-status')}
                   hideLabel
+                  disabled={props.readOnly}
                   size="small"
                   value={b.vvmStatusId ?? undefined}
                   onChange={s =>
@@ -1365,12 +1634,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             size="small"
             value={b.costPricePerPack}
-            disabled={props.costLocked}
+            disabled={props.costLocked || props.readOnly}
+            emptyValue={0}
             onChange={v => changeCost(b.id, v ?? 0)}
           />
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignCostPricePerPack' },
+            header: () =>
+              `${t('label.pack-cost-price')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
+            cell: info => (
+              <span class={styles.statValue}>
+                {formatCurrencyCell(
+                  toForeign(info.row.original.costPricePerPack),
+                  props.foreignCurrency?.code
+                )}
+              </span>
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
@@ -1382,8 +1671,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <CurrencyField
             label={t('label.pack-sell-price')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.sellPricePerPack}
+            emptyValue={0}
             onChange={v => changeSell(b.id, v ?? 0)}
           />
         );
@@ -1412,6 +1703,28 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    ...(props.foreignCurrency
+      ? [
+          {
+            c: { id: 'foreignLineTotal' },
+            header: () =>
+              `${t('label.line-total')} (${props.foreignCurrency?.code})`,
+            cardGroup: 'pricing',
+            ...getNumberCell({ cardWidth: { min: 8, max: 10, weight: 1 } }),
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <span class={styles.statValue}>
+                  {formatCurrencyCell(
+                    toForeign(b.numberOfPacks * b.costPricePerPack),
+                    props.foreignCurrency?.code
+                  )}
+                </span>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
     // Donor — gated by the donor-tracking preference.
     ...(props.prefs.donor
       ? [
@@ -1426,6 +1739,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 <NameSearch
                   label={t('label.donor')}
                   hideLabel
+                  disabled={props.readOnly}
                   size="small"
                   storeId={props.storeId}
                   role="donor"
@@ -1447,28 +1761,48 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
       : []),
-    // Campaign/program (spec S4) — a single picker; a campaign and a
-    // program are mutually exclusive on the line, so choosing one clears the
-    // other (the select routes the choice to the right wire field).
+    // Program and Campaign (spec S4) — two independent pickers, each written to
+    // its own wire field.
     {
-      c: { id: 'campaignOrProgram' },
-      header: () => t('label.campaign'),
+      c: { id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'pricing',
       meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
       cell: info => {
         const b = info.row.original;
         return (
-          <CampaignOrProgramSelect
-            label={t('label.campaign')}
+          <ProgramSelect
             hideLabel
+            disabled={props.readOnly}
             size="small"
             storeId={props.storeId}
-            itemId={item()?.id ?? ''}
-            campaignId={b.campaignId ?? undefined}
+            itemIds={[item()?.id].filter(id => id !== undefined)}
             programId={b.programId ?? undefined}
-            onChange={choice => {
-              updateBatch(b.id, 'campaignId', choice?.campaign?.id ?? null);
-              updateBatch(b.id, 'programId', choice?.program?.id ?? null);
+            onChange={p => updateBatch(b.id, 'programId', p?.id ?? null)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <ActivitySelect
+            hideLabel
+            size="small"
+            campaignId={b.campaignId ?? undefined}
+            campaign={
+              b.campaignId
+                ? { id: b.campaignId, name: b.campaignName ?? '' }
+                : null
+            }
+            onChange={c => {
+              updateBatch(b.id, 'campaignId', c?.id ?? null);
+              updateBatch(b.id, 'campaignName', c?.name ?? null);
             }}
           />
         );
@@ -1485,9 +1819,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <DateField
             label={t('label.manufacture-date')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.manufactureDate}
-            max={localTodayIso()}
+            max={todayCalendarDate()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );
@@ -1524,6 +1859,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NameSearch
             label={t('label.manufacturer')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             storeId={props.storeId}
             role="manufacturer"
@@ -1555,11 +1891,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.volume-per-pack')}
             hideLabel
+            disabled={props.readOnly}
             decimalLimit={10}
             size="small"
             value={b.volumePerPack}
             min={0}
-            onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
+            emptyValue={0}
+            onChange={v => changeVolume(b.id, v ?? 0)}
           />
         );
       },
@@ -1575,6 +1913,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <TextField
             label={t('label.note')}
             hideLabel
+            disabled={props.readOnly}
             size="small"
             value={b.note}
             onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}
@@ -1582,44 +1921,81 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    // The card's badge naming what the batch has no value for — "No batch",
+    // "No expiry date" or both (OMS-REG-REPL-09.36). Stated as a fact rather
+    // than asked for, since neither is required. The row layout says it with
+    // the row tint and accent instead. Built by hand, as the stocktake
+    // editor's "Needs a reason" badge and for its reasons: the state follows
+    // the editable draft store, which a cached accessor value would miss, and
+    // getFlagCell's marker would shift the row actions sharing this badge
+    // slot every time a batch was marked or cleared.
     {
-      c: { id: 'actions' },
-      header: () => t('label.actions'),
-      // Structural row-actions column — not user-configurable, so keep it out
-      // of the Columns popover.
+      c: { id: 'missingBatchOrExpiry' },
+      header: () => t('label.no-batch-or-expiry-date'),
       meta: {
         headerPosition: 'badge',
-        align: 'right',
+        hideOnTable: true,
         hideFromColumnSettings: true,
       },
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <>
-            <IconButton
-              bordered
-              size="small"
-              icon={<CopyIcon />}
-              label={t('label.duplicate-batch')}
-              disabled={saving()}
-              onClick={() => duplicateBatch(b.id)}
-            />
-            <IconButton
-              bordered
-              size="small"
-              variant="danger"
-              icon={<TrashIcon />}
-              label={t('label.delete-batch')}
-              disabled={saving()}
-              onClick={() => removeBatch(b.id)}
-            />
-          </>
-        );
-      },
+      cell: info => (
+        <Show when={batchMarked(info.row.original)}>
+          <StatusBadge
+            label={missingLabel(info.row.original)}
+            tone="warning"
+            icon={<AlertTriangleIcon />}
+            testId="missing-batch-or-expiry-badge"
+          />
+        </Show>
+      ),
     },
+    ...(props.readOnly
+      ? []
+      : [
+          {
+            c: { id: 'actions' },
+            header: () => t('label.actions'),
+            // Structural row-actions column — not user-configurable, so keep
+            // it out of the Columns popover.
+            meta: {
+              headerPosition: 'badge',
+              align: 'right',
+              hideFromColumnSettings: true,
+              // Icon buttons shorter than the inputs: centred on their line in
+              // the top-aligned table.
+              controlLine: true,
+            },
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <>
+                  <IconButton
+                    bordered
+                    size="small"
+                    icon={<CopyIcon />}
+                    label={t('label.duplicate-batch')}
+                    data-testid="duplicate-batch-button"
+                    disabled={saving()}
+                    onClick={() => duplicateBatch(b.id)}
+                  />
+                  <IconButton
+                    bordered
+                    size="small"
+                    variant="danger"
+                    icon={<TrashIcon />}
+                    label={t('label.delete-batch')}
+                    disabled={saving()}
+                    onClick={() => removeBatch(b.id)}
+                  />
+                </>
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]),
   ];
 
-  return (
+  // Held in a const so the batch/expiry prompt can sit beside it (a sibling
+  // dialog, not nested) without re-indenting the whole editor.
+  const editor = (
     <Dialog
       open
       dismissable={!saving()}
@@ -1674,7 +2050,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   value: l.id,
                   label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
                     'label.pack-size'
-                  ).toLowerCase()} ${l.requestedPackSize}`,
+                  ).toLowerCase()} ${roundedText(l.requestedPackSize)}`,
                 }))}
               />
             ) : (
@@ -1716,7 +2092,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </HStack>
       }
       ariaLabel={
-        mode() === 'update' ? t('label.edit-line') : t('button.add-item')
+        props.readOnly
+          ? t('heading.view-line')
+          : mode() === 'update'
+            ? t('label.edit-line')
+            : t('button.add-item')
       }
       headerActions={
         <>
@@ -1728,7 +2108,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               that changes the data. Empty (and invisible) until an item is
               picked, since the table only exists then. */}
           <div ref={setTableControls} class={styles.headerTableControls} />
-          <Show when={!noItemYet()}>
+          <Show when={!noItemYet() && !props.readOnly}>
             <Button
               icon={<PlusCircleIcon />}
               data-testid="add-batch-button"
@@ -1740,14 +2120,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         </>
       }
       actionsLead={
-        <Show when={errorMessage()}>
+        <Show
+          when={errorMessage()}
+          fallback={
+            <Show when={markedCount() > 0}>
+              <Alert severity="warning" testId="batch-expiry-summary">
+                {tPlural(markedWords().summary, markedCount())}
+              </Alert>
+            </Show>
+          }
+        >
           <Alert severity="error">{errorMessage()}</Alert>
         </Show>
       }
       actions={
         // The standard dialog three, in spec S4's order: Cancel · Save ·
-        // Save & next. Icon-less verbs (D55) — never OK / OK & next.
-        <>
+        // Save & next. Icon-less verbs (D55) — never OK / OK & next. The
+        // read-only view has only Close.
+        <Show
+          when={!props.readOnly}
+          fallback={
+            <DialogCloseButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
+          }
+        >
           <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
@@ -1756,17 +2154,22 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             <DialogSaveButton
               data-testid="dialog-button-ok"
               loading={saving()}
-              onClick={() => void onOk()}
+              onClick={() => guardSave(onOk)}
             />
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
               loading={saving()}
-              onClick={() => void onOkNext()}
+              onClick={() => guardSave(onOkNext)}
             />
           </Show>
-        </>
+        </Show>
       }
     >
+      <Show when={props.scanDiscarded}>
+        <Alert severity="warning" testId="scan-discarded">
+          {t('messages.close-line-editor-to-scan')}
+        </Alert>
+      </Show>
       <Show when={!loadingLines()} fallback={<Spinner center />}>
         <Show
           when={!noItemYet()}
@@ -1808,8 +2211,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${formatNumber(requested)} ${unit}`
-                              : formatNumber(requested);
+                              ? `${roundedText(requested)} ${unit}`
+                              : roundedText(requested);
                           })()}
                         </LabelledValue>
                       )}
@@ -1836,9 +2239,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             </Show>
             <div class={styles.cards}>
               <DataTable
+                dialogTable
                 columns={columns()}
                 rows={rows()}
                 rowKey={b => b.id}
+                rowTint={b => (batchMarked(b) ? 'warning' : undefined)}
+                rowAccent={b => (batchMarked(b) ? 'warning' : undefined)}
                 cardGroups={CARD_GROUPS}
                 showCardToggle
                 showFullScreen={false}
@@ -1852,11 +2258,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 }
                 controlsMount={tableControls()}
                 emptyMessage={t('label.add-batch')}
+                // Controls hold their line when a cell grows a message beneath
+                // it — the warning under a blank batch or expiry — rather than
+                // that cell's input rising above the rest of the row, as the
+                // stocktake editor does. The read-only figures are already an
+                // input tall (statValue); Units received and the row actions
+                // take meta.controlLine.
+                cellAlign="start"
               />
             </div>
           </>
         </Show>
       </Show>
     </Dialog>
+  );
+
+  return (
+    <>
+      {editor}
+      <ConfirmDialog
+        open={!!pendingSave()}
+        onClose={enterMissing}
+        message={tPlural(missingWords().prompt, missingCount())}
+        cancelLabel={t(missingWords().enter)}
+        confirmLabel={t('button.continue')}
+        onConfirm={continueSave}
+      />
+    </>
   );
 };
