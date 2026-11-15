@@ -69,7 +69,7 @@ const mount = (initial: Partial<DuplicateTerms>) => {
     firstName: '',
     lastName: '',
     dateOfBirth: null,
-    nationalId: '',
+    code2: '',
     ...initial,
   };
   const check = createRoot(d => {
@@ -154,7 +154,7 @@ describe('OMS-REG-DIS-01.62 — leaving a field re-checks only when what it chec
     expect(findPatients).toHaveBeenCalledOnce();
   });
 
-  it('runs again when the birth year or National ID changes', async () => {
+  it('runs again when the birth year or Code 2 changes', async () => {
     findPatients.mockResolvedValue(here([]));
     findCentralPatients.mockResolvedValue(ok([]));
     const { check, setTerms } = mount({
@@ -165,10 +165,10 @@ describe('OMS-REG-DIS-01.62 — leaving a field re-checks only when what it chec
     await check.run();
     setTerms({ dateOfBirth: '1985-03-14' });
     await check.run();
-    setTerms({ nationalId: 'N-1' });
+    setTerms({ code2: 'N-1' });
     await check.run();
-    // The National ID is folded: only its case changed.
-    setTerms({ nationalId: 'n-1' });
+    // The Code 2 is folded: only its case changed.
+    setTerms({ code2: 'n-1' });
     await check.run();
     expect(findPatients).toHaveBeenCalledTimes(3);
   });
@@ -229,16 +229,57 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
     expect(done(check)).toEqual({
       status: 'done',
       matches: [],
+      more: false,
       central: 'failed',
     });
   });
 
-  it('shows no matches when this store’s request fails', async () => {
+  it('fails, rather than finding no one, when this store’s request fails', async () => {
     findPatients.mockResolvedValue(undefined);
     findCentralPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
-    expect(done(check)?.matches).toEqual([]);
+    expect(check.state()).toEqual({ status: 'failed' });
+  });
+
+  it('fails on the central server too, where this store is the only place asked', async () => {
+    central = true;
+    findPatients.mockResolvedValue(undefined);
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    expect(check.state()).toEqual({ status: 'failed' });
+  });
+
+  it('checks again on Retry after this store failed', async () => {
+    findPatients.mockResolvedValueOnce(undefined);
+    findCentralPatients.mockResolvedValue(ok([]));
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    findPatients.mockResolvedValueOnce(here([row('a')]));
+    await check.retry();
+    expect(done(check)?.matches.map(m => m.id)).toEqual(['a']);
+  });
+});
+
+describe('the count past the first page', () => {
+  it('says there are more when this store has more than a page', async () => {
+    findPatients.mockResolvedValue({ rows: [row('a')], more: true });
+    findCentralPatients.mockResolvedValue(ok([]));
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    expect(done(check)?.more).toBe(true);
+  });
+
+  it('says there are more when other facilities have more than a page', async () => {
+    findPatients.mockResolvedValue(here([]));
+    findCentralPatients.mockResolvedValue({
+      kind: 'ok',
+      rows: [row('c1')],
+      more: true,
+    });
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    expect(done(check)?.more).toBe(true);
   });
 });
 
@@ -254,8 +295,8 @@ describe('OMS-REG-DIS-01.57 — on the central server, other facilities are neve
   });
 });
 
-describe('OMS-REG-DIS-01.64 / .76 — likely matches first and marked (the National ID still counts)', () => {
-  it('marks a same birth year and a same National ID, and lists likely ones first', async () => {
+describe('OMS-REG-DIS-01.64 / .76 — likely matches first and marked (Code 2 still counts)', () => {
+  it('marks a same birth year and a same Code 2, and lists likely ones first', async () => {
     findPatients.mockResolvedValue(
       here([
         row('name-only', { dateOfBirth: '1990-01-01' }),
@@ -270,18 +311,18 @@ describe('OMS-REG-DIS-01.64 / .76 — likely matches first and marked (the Natio
       firstName: 'Jo',
       lastName: 'Smith',
       dateOfBirth: '1984-03-14',
-      nationalId: 'N-1',
+      code2: 'N-1',
     });
     await check.run();
     expect(done(check)?.matches.map(m => [m.id, m.likely])).toEqual([
-      ['both', ['birth-year', 'national-id']],
+      ['both', ['birth-year', 'code2']],
       ['year', ['birth-year']],
-      ['id-elsewhere', ['national-id']],
+      ['id-elsewhere', ['code2']],
       ['name-only', []],
     ]);
   });
 
-  it('marks nothing likely when no birth date or National ID is entered', async () => {
+  it('marks nothing likely when no birth date or Code 2 is entered', async () => {
     findPatients.mockResolvedValue(
       here([row('a', { dateOfBirth: '1984-01-01', code2: '' })])
     );

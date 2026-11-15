@@ -17,11 +17,11 @@ export type DuplicateTerms = {
   firstName: string;
   lastName: string;
   dateOfBirth: string | null;
-  /** The National ID (code2). */
-  nationalId: string;
+  /** The secondary code, shown as Code 2. */
+  code2: string;
 };
 
-export type LikelyReason = 'birth-year' | 'national-id';
+export type LikelyReason = 'birth-year' | 'code2';
 
 export type DuplicateMatch = PatientFindRow & {
   where: 'here' | 'elsewhere';
@@ -31,12 +31,16 @@ export type DuplicateMatch = PatientFindRow & {
 
 // `done` comes as soon as this store answers; other facilities (the central
 // server, which can take seconds to answer or fail) follow in `central`.
+// `more`: there are more matches than were fetched. `failed`: this store
+// didn't answer, so nothing is known — it never reads as none found.
 export type DuplicateState =
   | { status: 'off' }
   | { status: 'checking' }
+  | { status: 'failed' }
   | {
       status: 'done';
       matches: DuplicateMatch[];
+      more: boolean;
       central: 'pending' | 'done' | 'failed';
     };
 
@@ -47,14 +51,12 @@ const likelyReasons = (
   terms: DuplicateTerms
 ): LikelyReason[] => {
   const year = terms.dateOfBirth?.slice(0, 4);
-  const id = fold(terms.nationalId);
+  const id = fold(terms.code2);
   return [
     ...(year && row.dateOfBirth?.startsWith(year)
       ? (['birth-year'] as const)
       : []),
-    ...(id && row.code2 && fold(row.code2) === id
-      ? (['national-id'] as const)
-      : []),
+    ...(id && row.code2 && fold(row.code2) === id ? (['code2'] as const) : []),
   ];
 };
 
@@ -64,7 +66,7 @@ export const createDuplicateCheck = (options: {
 }) => {
   const [state, setState] = createSignal<DuplicateState>({ status: 'off' });
   // What was last checked: the names without case or accents, the birth year
-  // and the National ID. Leaving a field re-checks only when one changed.
+  // and Code 2. Leaving a field re-checks only when one changed.
   let lastKey = '';
   let token = 0;
 
@@ -83,7 +85,7 @@ export const createDuplicateCheck = (options: {
     const key = [
       names,
       terms.dateOfBirth?.slice(0, 4) ?? '',
-      fold(terms.nationalId),
+      fold(terms.code2),
     ].join('|');
     if (key === lastKey && !force) return;
     lastKey = key;
@@ -101,7 +103,8 @@ export const createDuplicateCheck = (options: {
 
     const local = await findPatients(options.storeId(), nameTerms);
     if (mine !== token) return;
-    const here = (local?.rows ?? []).map((row): DuplicateMatch => ({
+    if (!local) return setState({ status: 'failed' });
+    const here = local.rows.map((row): DuplicateMatch => ({
       ...row,
       where: 'here',
       likely: likelyReasons(row, terms),
@@ -109,7 +112,8 @@ export const createDuplicateCheck = (options: {
 
     const show = (
       centralRows: PatientFindRow[],
-      central: 'pending' | 'done' | 'failed'
+      central: 'pending' | 'done' | 'failed',
+      centralMore = false
     ) => {
       const hereIds = new Set(here.map(m => m.id));
       const elsewhere = centralRows
@@ -123,7 +127,12 @@ export const createDuplicateCheck = (options: {
       const matches = [...here, ...elsewhere].sort(
         (a, b) => b.likely.length - a.likely.length
       );
-      setState({ status: 'done', matches, central });
+      setState({
+        status: 'done',
+        matches,
+        more: local.more || centralMore,
+        central,
+      });
     };
 
     if (!centralRequest) return show([], 'done');
@@ -132,7 +141,7 @@ export const createDuplicateCheck = (options: {
     if (mine !== token) return;
     // Anything but an answer means other facilities weren't checked, so it
     // never reads as "no existing patients".
-    if (central.kind === 'ok') show(central.rows, 'done');
+    if (central.kind === 'ok') show(central.rows, 'done', central.more);
     else show([], 'failed');
   };
 

@@ -142,10 +142,14 @@ export const recentPatients = async (
   storeId: string,
   count: number
 ): Promise<PatientFindRow[]> => {
-  const result = await graphqlFetch(RecentPrescriptionPatients, {
-    storeId,
-    first: count * 4,
-  });
+  // A list to save looking someone up, so a failure leaves it empty rather
+  // than raising the error dialog — e.g. a patient soft-deleted in legacy
+  // mSupply, which the invoice's patient refuses to resolve (#659).
+  const result = await graphqlFetch(
+    RecentPrescriptionPatients,
+    { storeId, first: count * 4 },
+    { returnGraphqlErrors: true }
+  );
   if (result.kind !== 'success') return [];
   const invoices = result.data.invoices;
   if (invoices.__typename !== 'InvoiceConnector') return [];

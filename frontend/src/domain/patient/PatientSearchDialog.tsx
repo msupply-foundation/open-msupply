@@ -69,9 +69,7 @@ type LocalState =
 type CentralState =
   | { kind: 'idle' }
   | { kind: 'searching'; previous?: Page }
-  // `terms`: what this page was searched for — a new search keeps it on
-  // screen until this store's results decide whether it goes.
-  | ({ kind: 'done'; terms: FindTerms } & Page)
+  | ({ kind: 'done' } & Page)
   | { kind: 'unreachable'; previous?: Page; skipped?: boolean; slow?: boolean };
 
 // After central is out of reach, searches stop asking it by themselves for this
@@ -145,6 +143,9 @@ export const PatientSearchDialog = (
   const [searched, setSearched] = createSignal<FindTerms>();
   let searchToken = 0;
   let centralToken = 0;
+  // A link to this store is answered after the dialog may have been
+  // cancelled or reopened; choosing goes ahead only if it's still the same.
+  let chooseToken = 0;
   // When central was last found out of reach; 0 once it answers.
   let centralDownAt = 0;
   // Whether that was central answering too slowly rather than out of reach.
@@ -164,6 +165,9 @@ export const PatientSearchDialog = (
   };
 
   const busy = () => !!props.busy || choosing() || link().kind === 'linking';
+  // Closing is held only while the caller acts: what it sent can't be called
+  // back. A link can be abandoned — the patient stays linked, unchosen.
+  const holdsClose = () => !!props.busy || choosing();
 
   const searchOtherFacilities = async (forTerms: FindTerms, offset = 0) => {
     const token = ++centralToken;
@@ -176,7 +180,6 @@ export const PatientSearchDialog = (
     if (outcome.kind === 'ok')
       setCentral({
         kind: 'done',
-        terms: forTerms,
         rows: outcome.rows,
         offset,
         more: outcome.more,
@@ -262,8 +265,9 @@ export const PatientSearchDialog = (
     void runSearch(true);
   };
 
-  const choose = async (patient: PatientFindRow) => {
-    if (busy()) return;
+  // Hands the patient to the caller (e.g. creating the dispensing record).
+  // Cancel is held while it runs: what's been sent can't be called back.
+  const act = async (patient: PatientFindRow) => {
     setChoosing(true);
     setChooseError(undefined);
     const message = await props.onChoose(patient);
@@ -271,13 +275,26 @@ export const PatientSearchDialog = (
     if (message) setChooseError(message);
   };
 
+  const choose = async (patient: PatientFindRow) => {
+    if (busy()) return;
+    // Choosing someone here instead of retrying a failed link drops it.
+    setLink({ kind: 'idle' });
+    await act(patient);
+  };
+
   const chooseCentral = async (patient: PatientFindRow) => {
     if (busy()) return;
+    const token = ++chooseToken;
     setLink({ kind: 'linking', patient });
     const outcome = await linkPatientToStore(props.storeId, patient.id);
+    // Cancelled while linking: the patient stays linked to this store, which
+    // is harmless, but choosing them doesn't go ahead.
+    if (token !== chooseToken) return;
     if (outcome.kind === 'ok') {
+      // "Getting patient…" stays up while the caller acts on them.
+      await act(patient);
       setLink({ kind: 'idle' });
-      return void choose(patient);
+      return;
     }
     setLink(
       outcome.kind === 'unreachable'
@@ -298,6 +315,7 @@ export const PatientSearchDialog = (
         if (!open) return;
         searchToken++;
         centralToken++;
+        chooseToken++;
         centralDownAt = 0;
         setFields({ ...EMPTY_FIELDS });
         setSearched(undefined);
@@ -317,6 +335,11 @@ export const PatientSearchDialog = (
 
   const close = () => {
     search.cancel();
+    // A search still answering (an Enter on a scanned ID would choose from
+    // it) or a link still running is dropped.
+    searchToken++;
+    centralToken++;
+    chooseToken++;
     props.onClose();
   };
 
@@ -331,6 +354,13 @@ export const PatientSearchDialog = (
   };
 
   const localRows = () => pageOf(local())?.rows ?? [];
+  // A patient from this store or the recent list is being acted on (one from
+  // another facility shows "Getting patient…" instead).
+  const choosingHere = () => choosing() && link().kind === 'idle';
+  const failedLink = () => {
+    const l = link();
+    return l.kind === 'failed' ? l : undefined;
+  };
   const centralMessage = () => {
     const c = central();
     if (c.kind !== 'unreachable') return '';
@@ -414,7 +444,7 @@ export const PatientSearchDialog = (
   return (
     <Dialog
       open={props.open}
-      dismissable={!busy()}
+      dismissable={!holdsClose()}
       onClose={close}
       size="large"
       title={props.title}
@@ -433,7 +463,11 @@ export const PatientSearchDialog = (
         </Show>
       }
       actions={
-        <CancelButton data-testid="dialog-button-cancel" onClick={close} />
+        <CancelButton
+          data-testid="dialog-button-cancel"
+          disabled={holdsClose()}
+          onClick={close}
+        />
       }
     >
       <Stack gap="md">
@@ -481,7 +515,7 @@ export const PatientSearchDialog = (
 
         <Show when={link().kind !== 'idle'}>
           <Show
-            when={link().kind === 'failed' && (link() as { message: string })}
+            when={failedLink()}
             fallback={
               <Alert severity="info" testId="patient-search-linking">
                 <HStack gap="sm" align="center">
@@ -501,8 +535,8 @@ export const PatientSearchDialog = (
                     icon={<RefreshIcon />}
                     data-testid="patient-search-link-retry"
                     onClick={() => {
-                      const l = link();
-                      if (l.kind === 'failed') void chooseCentral(l.patient);
+                      const l = failedLink();
+                      if (l) void chooseCentral(l.patient);
                     }}
                   >
                     {t('button.retry')}
@@ -542,6 +576,7 @@ export const PatientSearchDialog = (
                   columns={columns}
                   rows={recent()}
                   rowKey={r => r.id}
+                  loading={choosingHere()}
                   onRowClick={row => void choose(row)}
                   showFullScreen={false}
                   emptyMessage={t('messages.no-matching-patients')}
@@ -556,7 +591,7 @@ export const PatientSearchDialog = (
               columns={columns}
               rows={localRows()}
               rowKey={r => r.id}
-              loading={local().kind === 'searching'}
+              loading={local().kind === 'searching' || choosingHere()}
               pagination={localPagination()}
               onRowClick={row => void choose(row)}
               showFullScreen={false}
