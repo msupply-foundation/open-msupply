@@ -342,7 +342,9 @@ mod test {
         // assertion below has something to bite on: a date equal to the
         // creation moment would still backdate (it precedes the dispensation's
         // own creation), but only by milliseconds.
-        let prescribed_three_days_ago = Utc::now().naive_utc() - chrono::Duration::days(3);
+        use chrono::SubsecRound;
+        let prescribed_three_days_ago =
+            Utc::now().naive_utc().trunc_subsecs(6) - chrono::Duration::days(3);
         service_provider
             .prescription_request_service
             .update_prescription_request(

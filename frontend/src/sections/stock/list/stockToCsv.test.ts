@@ -50,8 +50,8 @@ describe('OMS-REG-INV-02.8 — stockToCsv', () => {
   it('produces a header row + one row per line', () => {
     expect(rows).toHaveLength(2);
   });
-  it('has the full spec/stock S1 column set (20 columns)', () => {
-    expect(rows[0].split(',')).toHaveLength(20);
+  it('has the full spec/stock S1 column set (21 columns)', () => {
+    expect(rows[0].split(',')).toHaveLength(21);
   });
   it("carries the line's activity between Manufacturer and Supplier", () => {
     const header = rows[0].split(',');

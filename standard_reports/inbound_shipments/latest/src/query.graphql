@@ -17,6 +17,8 @@ query InboundShipments(
       nodes {
         id
         otherPartyName
+        invoiceNumber
+        receivedDatetime
         lines {
           nodes {
             id

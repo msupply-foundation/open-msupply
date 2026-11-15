@@ -1,0 +1,12 @@
+query Names($storeId: String!, $filter: NameFilterInput) {
+  names(storeId: $storeId, filter: $filter) {
+    __typename
+    ... on NameConnector {
+      nodes {
+        id
+        name
+        isCustomer
+      }
+    }
+  }
+}

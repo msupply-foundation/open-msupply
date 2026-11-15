@@ -1,5 +1,6 @@
 import { t, tPlural } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
+import { storeTargetMonths } from '../../../domain/forecast/forecast';
 import type { SelectOption } from '../../../ui/elements/selectors/Select';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
@@ -95,17 +96,12 @@ export const intervalAndBufferBehindTarget = (
 ): SupplyIntervalAndBuffer | undefined => {
   const intervalAndBuffer = node.supplyIntervalAndBuffer;
   if (!intervalAndBuffer || node.program) return undefined;
-  return sameMonths(
-    node.maxMonthsOfStock,
-    intervalAndBuffer.supplyIntervalMonths +
-      intervalAndBuffer.safetyBufferMonths
-  )
+  return sameMonths(node.maxMonthsOfStock, storeTargetMonths(intervalAndBuffer))
     ? intervalAndBuffer
     : undefined;
 };
 
-const totalMonths = (intervalAndBuffer: SupplyIntervalAndBuffer): number =>
-  intervalAndBuffer.supplyIntervalMonths + intervalAndBuffer.safetyBufferMonths;
+const totalMonths = storeTargetMonths;
 
 /**
  * Whether an order's target differs from the supply interval + safety buffer
@@ -145,14 +141,23 @@ const intervalAndBufferParams = (
   safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths, {
     maximumFractionDigits: 2,
   }),
+  leadTime: formatNumber(intervalAndBuffer.deliveryLeadTimeMonths, {
+    maximumFractionDigits: 2,
+  }),
 });
+
+// The messages name the delivery lead time only where the store has one.
+const hasLeadTime = (intervalAndBuffer: SupplyIntervalAndBuffer): boolean =>
+  intervalAndBuffer.deliveryLeadTimeMonths > 0;
 
 /** The locked target's tooltip, naming the interval and buffer that set it. */
 export const targetSetByStoreMessage = (
   intervalAndBuffer: SupplyIntervalAndBuffer
 ): string =>
   t(
-    'messages.target-mos-set-by-store',
+    hasLeadTime(intervalAndBuffer)
+      ? 'messages.target-mos-set-by-store-with-lead-time'
+      : 'messages.target-mos-set-by-store',
     intervalAndBufferParams(intervalAndBuffer)
   );
 
@@ -163,9 +168,14 @@ export const targetSetByStoreMessage = (
 export const targetDiffersFromStoreMessage = (
   intervalAndBuffer: SupplyIntervalAndBuffer
 ): string =>
-  t('messages.target-mos-differs-from-store', {
-    ...intervalAndBufferParams(intervalAndBuffer),
-    total: formatNumber(totalMonths(intervalAndBuffer), {
-      maximumFractionDigits: 2,
-    }),
-  });
+  t(
+    hasLeadTime(intervalAndBuffer)
+      ? 'messages.target-mos-differs-from-store-with-lead-time'
+      : 'messages.target-mos-differs-from-store',
+    {
+      ...intervalAndBufferParams(intervalAndBuffer),
+      total: formatNumber(totalMonths(intervalAndBuffer), {
+        maximumFractionDigits: 2,
+      }),
+    }
+  );

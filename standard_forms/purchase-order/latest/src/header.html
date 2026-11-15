@@ -2,15 +2,10 @@
   <tr>
     <td class="header_title">
       {{ t(k="label.purchase-order", f="Purchase Order") }}
-      <div class="header_number">
-        {{ t(k="label.purchase-order-number", f="Purchase Order Number") }}:
-        {{ data.purchaseOrder.number }}
-      </div>
     </td>
-    {% if data.purchaseOrder.store.logo %}
-    <td class="header_logo">
-      <img class="logo" src="{{ data.purchaseOrder.store.logo }}" />
+    <td class="header_number">
+      {{ t(k="label.purchase-order-number", f="PO number") }}
+      <b>{{ data.purchaseOrder.number }}</b>
     </td>
-    {% endif %}
   </tr>
 </table>

@@ -131,6 +131,59 @@ const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
       />
     ),
   },
+  // Expiry status — All / Not expired / Expired over the plain Boolean filter
+  // field (#1820). Expired = expiry before today, the dashboard's definition
+  // (#1786); a line with no expiry is never expired. The list opens on
+  // "Not expired" (its DEFAULT_STATE); removing the chip shows all stock.
+  isExpired: {
+    label: () => t('label.expiry-status'),
+    render: props => (
+      <FilterSelect
+        label={t('label.expiry-status')}
+        testId={props.testId}
+        value={
+          props.filter().isExpired == null
+            ? ''
+            : String(props.filter().isExpired)
+        }
+        options={[
+          { value: '', label: t('label.all') },
+          { value: 'false', label: t('label.not-expired') },
+          { value: 'true', label: t('label.expired') },
+        ]}
+        onChange={value =>
+          props.setPartialFilter({
+            isExpired: value === '' ? null : value === 'true',
+          })
+        }
+      />
+    ),
+  },
+  // On hold — Any / Yes / No over the plain Boolean filter field (#1787); the
+  // wire value is the boolean itself, carried as its string form in the
+  // select.
+  onHold: {
+    label: () => t('label.on-hold'),
+    render: props => (
+      <FilterSelect
+        label={t('label.on-hold')}
+        testId={props.testId}
+        value={
+          props.filter().onHold == null ? '' : String(props.filter().onHold)
+        }
+        options={[
+          { value: '', label: t('label.any') },
+          { value: 'true', label: t('messages.yes') },
+          { value: 'false', label: t('messages.no') },
+        ]}
+        onChange={value =>
+          props.setPartialFilter({
+            onHold: value === '' ? null : value === 'true',
+          })
+        }
+      />
+    ),
+  },
   // VVM status — single-select of active VVM statuses. Offered only when
   // manageVvmStatusForStock is on (gated in filterFields below).
   vvmStatusId: {

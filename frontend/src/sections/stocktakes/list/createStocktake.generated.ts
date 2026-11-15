@@ -185,6 +185,8 @@ export type StockLineCountVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    onHold?: boolean | null;
+    isExpired?: boolean | null;
   } | null;
 };
 
@@ -251,6 +253,10 @@ export type NoStockItemCountVariables = {
     universalCode?: {
     equalTo?: string | null;
     like?: string | null;
+  } | null;
+    notInRecord?: {
+    record: "stocktake" | "requisition" | "invoice";
+    id: string;
   } | null;
     dynamicFilter?: unknown | null;
   } | null;

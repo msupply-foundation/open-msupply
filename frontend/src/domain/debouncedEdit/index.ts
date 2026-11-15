@@ -8,3 +8,8 @@ export {
   type DebouncedEdit,
   type DebouncedEditOptions,
 } from './createDebouncedEdit';
+export {
+  createDebouncedField,
+  type DebouncedField,
+  type DebouncedFieldOptions,
+} from './createDebouncedField';

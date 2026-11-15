@@ -238,14 +238,20 @@ export type LineGates = {
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
  * fields, the quantity among them, close from Approved; the
- * requested date closes once Sent while the expected date stays open.
+ * requested date closes once Sent while the expected date stays open. An
+ * existing line also closes for a user without the change permission; adding
+ * stays an action the server refuses on save (rules § availability).
  */
 export const lineGates = (options: {
   status: PurchaseOrderStatus;
   lineStatus: LineStatus;
   addMode: boolean;
+  canMutate: boolean;
 }): LineGates => {
-  const open = options.lineStatus !== 'CLOSED' && !isClosed(options.status);
+  const open =
+    (options.addMode || options.canMutate) &&
+    options.lineStatus !== 'CLOSED' &&
+    !isClosed(options.status);
   const drafting = open && isDrafting(options.status);
   return {
     item: options.addMode,

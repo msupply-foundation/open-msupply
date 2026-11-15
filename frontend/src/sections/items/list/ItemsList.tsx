@@ -121,6 +121,8 @@ const ItemsList: Component = () => {
   // treatment (issues #160/#196).
   const page = () => gated(data);
   const rows = (): ItemRow[] => page()?.nodes ?? [];
+  const itemHref = (row: ItemRow) =>
+    `/${params.storeId}/catalogue/items/${row.id}`;
   const totalCount = () => page()?.totalCount ?? 0;
 
   // Preferences gate the doses display + the at-risk filter (spec/items).
@@ -232,9 +234,8 @@ const ItemsList: Component = () => {
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
-        onRowClick={row =>
-          navigate(`/${params.storeId}/catalogue/items/${row.id}`)
-        }
+        onRowClick={row => navigate(itemHref(row))}
+        rowHref={itemHref}
         emptyMessage={t('error.no-items-to-display')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}

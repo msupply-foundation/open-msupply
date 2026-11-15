@@ -9,6 +9,7 @@ import {
   ErrorDialog,
   type ErrorDialogCondition,
 } from '../ui/elements/feedback/ErrorDialog';
+import { NotFoundNotice } from '../ui/elements/feedback/NotFoundNotice';
 import { Button } from '../ui/elements/buttons/Button';
 import { FormColumns } from '../ui/layout/Form/FormColumns';
 import { FormColumn } from '../ui/layout/Form/FormColumn';
@@ -122,6 +123,11 @@ export const dialogMetadata: PageMetadata = {
         'oops',
       ],
     },
+    {
+      id: 'dialog-not-found',
+      title: 'Not-found notice',
+      searchTerms: ['not found', 'missing', 'bad id', 'deep link', 'notice'],
+    },
   ],
 };
 
@@ -151,6 +157,8 @@ export const DialogShowcase = () => {
     setErrorOutcome(outcome);
     setErrorDemo(undefined);
   };
+  const [notFoundOpen, setNotFoundOpen] = createSignal(false);
+  const [notFoundOutcome, setNotFoundOutcome] = createSignal('');
   // The demo's condition: 'edit' shows the modifier on the unreachable
   // condition (the standard's own pairing); 'unknown' while closed is inert.
   const errorCondition = (): ErrorDialogCondition => {
@@ -622,6 +630,42 @@ export const DialogShowcase = () => {
               closeErrorDemo('Home — the app would go to the root.')
             }
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="dialog-not-found"
+          title="Not-found notice — a detail link to no record"
+        >
+          <Lead>
+            <code>NotFoundNotice</code> is what a detail screen shows when the
+            id in its URL is no record of its kind — a made-up id, or another
+            record's pasted in. An acknowledgement, so OK stands alone: there is
+            nothing to cancel. OK and Escape both call <code>onClose</code>,
+            which the screen points at its list. It is open while mounted, so
+            the screen mounts it as the read's settled-empty fallback, behind{' '}
+            <code>!loading</code>.
+          </Lead>
+          <Row>
+            <Button variant="secondary" onClick={() => setNotFoundOpen(true)}>
+              Open a stocktake that isn't there
+            </Button>
+            <span class={styles.outcome} role="status">
+              {notFoundOutcome()}
+            </span>
+          </Row>
+          <Show when={notFoundOpen()}>
+            <NotFoundNotice
+              testId="showcase-not-found-notice"
+              title="Stocktake not found"
+              description="Unable to find a stocktake with that ID. Click OK to return to the stocktake list"
+              onClose={() => {
+                setNotFoundOpen(false);
+                setNotFoundOutcome(
+                  'OK — the screen would go back to its list.'
+                );
+              }}
+            />
+          </Show>
         </DashboardCard>
 
         <DashboardCard

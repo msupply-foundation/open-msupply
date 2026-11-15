@@ -201,8 +201,9 @@ const PrescriptionsList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: PrescriptionRow) =>
-    navigate(`/${params.storeId}/dispensary/dispensing/${row.id}`);
+  const rowHref = (row: PrescriptionRow) =>
+    `/${params.storeId}/dispensary/dispensing/${row.id}`;
+  const openRow = (row: PrescriptionRow) => navigate(rowHref(row));
 
   const rowStatus = (row: Pick<PrescriptionRow, 'status'>) =>
     asPrescriptionStatus(row.status);
@@ -347,6 +348,7 @@ const PrescriptionsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         filters={
           <FilterBar
             filters={filterFields()}

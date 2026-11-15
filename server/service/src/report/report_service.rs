@@ -401,6 +401,9 @@ impl ReportServiceTrait for ReportService {}
 
 #[derive(Debug)]
 pub enum GetReportError {
+    /// No report has this id — an ordinary outcome for a stale or mistyped
+    /// link, not a repository failure.
+    ReportNotFound,
     TranslationError(TranslationError),
     RepositoryError(RepositoryError),
 }
@@ -415,7 +418,7 @@ fn get_report(
         .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id.to_string())))
         .map_err(GetReportError::RepositoryError)?
         .pop()
-        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+        .ok_or(GetReportError::ReportNotFound)?;
 
     let report = translate_report_arugment_schema(report, localisations, &user_language)
         .map_err(GetReportError::TranslationError)?;
@@ -1426,5 +1429,37 @@ mod report_filter_test {
             .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
+    }
+}
+
+#[cfg(test)]
+mod get_report_test {
+    use crate::{report::report_service::GetReportError, service_provider::ServiceProvider};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    // An unknown id is its own typed outcome, not a repository failure, so a
+    // detail screen can say "not found" instead of raising an error (#1746).
+    #[actix_rt::test]
+    async fn get_report_unknown_id_is_report_not_found() {
+        let (_, _, connection_manager, _) = setup_all(
+            "get_report_unknown_id_is_report_not_found",
+            MockDataInserts::none().reports(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let localisations = service_provider
+            .localisations_service
+            .get_localisations(&ctx.connection)
+            .unwrap();
+
+        let result = service_provider.report_service.get_report(
+            &ctx,
+            &localisations,
+            "en".to_string(),
+            "not_a_report_id",
+        );
+        assert!(matches!(result, Err(GetReportError::ReportNotFound)));
     }
 }

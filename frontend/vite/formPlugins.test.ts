@@ -21,7 +21,7 @@ import {
 } from './formPlugins.ts';
 
 const demoDir = fileURLToPath(
-  new URL('../plugins/examples/demo_program', import.meta.url)
+  new URL('../../plugins/examples/demo_program', import.meta.url)
 );
 
 // A throwaway plugin directory holding the given files.

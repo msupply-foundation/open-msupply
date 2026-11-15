@@ -26,8 +26,8 @@ use super::{
 };
 use crate::types::SyncFileReferenceConnector;
 
-/// A store's supply interval and safety buffer: their sum is its general orders' default
-/// target months of stock
+/// A store's supply interval, safety buffer and delivery lead time: their sum is its general
+/// orders' default target months of stock
 pub struct SupplyIntervalAndBufferNode {
     interval: SupplyIntervalAndBuffer,
 }
@@ -40,6 +40,10 @@ impl SupplyIntervalAndBufferNode {
     /// Zero when the facility record carries none
     pub async fn safety_buffer_months(&self) -> f64 {
         self.interval.safety_buffer_months
+    }
+    /// How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset
+    pub async fn delivery_lead_time_months(&self) -> f64 {
+        self.interval.delivery_lead_time_months
     }
 }
 
@@ -349,9 +353,10 @@ impl RequisitionNode {
         &self.row().min_months_of_stock
     }
 
-    /// The ordering store's supply interval and safety buffer (from its facility record) as
-    /// they stand now, null when it carries no supply interval. A general
-    /// order's default target months of stock.
+    /// The ordering store's supply interval and safety buffer (from its facility record) and
+    /// delivery lead time (from its store preferences) as they stand now, null when its
+    /// facility record carries no supply interval. Their sum is a general order's default
+    /// target months of stock.
     pub async fn supply_interval_and_buffer(
         &self,
         ctx: &Context<'_>,

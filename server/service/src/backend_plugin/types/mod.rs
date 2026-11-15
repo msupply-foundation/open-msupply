@@ -3,6 +3,7 @@ pub mod get_consumption;
 pub mod graphql_query;
 pub mod processor;
 pub mod schedule;
+pub mod transform_item_store_properties;
 pub mod transform_request_requisition_lines;
 
 pub mod generate_typescript_types {
@@ -41,7 +42,7 @@ pub mod generate_typescript_types {
     /// a plugin happens to touch the part that moved.
     ///
     /// So: change anything reachable from here, regenerate, and commit the
-    /// result in the same change. `frontend/plugins/civ/backend` resolves
+    /// result in the same change. `private/plugins/civ/backend` resolves
     /// `@common/*` to that directory (`frontend/tsconfig.backend-plugins.json`),
     /// which makes `pnpm check` in `frontend/` the thing most likely to catch
     /// a mismatch — but only for the surface that plugin actually uses.
@@ -53,6 +54,10 @@ pub mod generate_typescript_types {
         transform_request_requisition_lines: Function<
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,
+        >,
+        transform_item_store_properties: Function<
+            transform_item_store_properties::Input,
+            transform_item_store_properties::Output,
         >,
         get_consumption: Function<get_consumption::Input, get_consumption::Output>,
         graphql_query: Function<graphql_query::Input, graphql_query::Output>,

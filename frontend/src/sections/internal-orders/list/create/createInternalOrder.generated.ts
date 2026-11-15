@@ -67,6 +67,7 @@ export type InsertInternalOrderVariables = {
     maxMonthsOfStock?: number | null;
     minMonthsOfStock: number;
     expectedDeliveryDate?: string | null;
+    masterListId?: string | null;
   };
 };
 

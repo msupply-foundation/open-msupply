@@ -21,8 +21,12 @@ import type { DeliveryDateField } from './purchaseOrderUpdate';
 export interface PurchaseOrderDetailToolbarProps {
   storeId: string;
   node: PurchaseOrderInfoFragment;
-  /** True once the order is Sent or Finalised — every field but the comment. */
+  /** True once the order is Sent or Finalised — every field but the comment.
+   *  Also true for a user without the change permission. */
   disabled: boolean;
+  /** The user lacks the change permission: every field closes, the currency
+   *  (which follows its own rule) included. */
+  readOnly: boolean;
   /**
    * The expected delivery date alone outlives that window: it tracks when the
    * goods will really arrive, so it stays open on a Sent order and closes only
@@ -154,7 +158,7 @@ export const PurchaseOrderDetailToolbar: Component<
         // NOT a state rule: an order carrying a confirmation moment has its
         // currency fixed whatever state it is in, and an order in a late state
         // without one can still have it changed (rules § what may be changed).
-        disabled={!canChangeCurrency(props.node)}
+        disabled={props.readOnly || !canChangeCurrency(props.node)}
         onChange={currency =>
           currency &&
           void props.onSaveField({

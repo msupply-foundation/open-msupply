@@ -1,0 +1,28 @@
+query Items($storeId: String!, $filter: ItemFilterInput) {
+  items(storeId: $storeId, filter: $filter) {
+    __typename
+    ... on ItemConnector {
+      totalCount
+      nodes {
+        id
+        code
+        msupplyUniversalCode
+        name
+        availableStockOnHand(storeId: $storeId)
+        availableBatches(storeId: $storeId) {
+          nodes {
+            id
+            expiryDate
+            batch
+            availableNumberOfPacks
+            packSize
+            onHold
+            location {
+              onHold
+            }
+          }
+        }
+      }
+    }
+  }
+}
