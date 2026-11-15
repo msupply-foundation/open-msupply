@@ -247,15 +247,32 @@ ARG CARGO_BUILD_JOBS
 # version. Also covers the files build scripts watch outside server/ (locales,
 # generated reports).
 #
-# The registry mount is sharing=shared: it is append-mostly downloaded .crate
-# files and cargo does its own locking, exactly as it does on a dev machine
-# running two projects at once. Leaving it `locked` would serialise EVERY pair
-# of concurrent builds on the registry even when their target dirs differ,
-# which defeats the per-db and per-arch ids entirely.
+# The registry mount is sharing=shared for the build: it is append-mostly
+# downloaded .crate files, and `locked` would serialise EVERY pair of
+# concurrent builds on the registry even when their target dirs differ, which
+# defeats the per-db and per-arch ids entirely.
+#
+# But cargo's own locking does NOT cover it. The lock is
+# $CARGO_HOME/.package-cache, outside the mount, so each container has its own
+# and two builds unpacking the same crate into registry/src collide: "failed to
+# unpack package ... File exists". A warm registry hides it - there is nothing
+# to unpack - so it shows when the cache is cold, as after a GC under disk
+# pressure. Hence the `cargo fetch` before each build, under a flock on a file
+# IN the mount: every shared user mounts the same directory, so fetches take
+# turns, and the build that follows has nothing left to unpack. Seconds when
+# warm, and the lock is gone before the compile starts.
+#
+# Not a separate RUN with the mount `sharing=locked`. BuildKit's modes don't
+# exclude each other both ways: a `shared` request that finds the cache locked
+# doesn't wait, it is handed a NEW, empty cache under the same id - so a build
+# starting during another's fetch would compile against an empty registry, and
+# race on every crate. .github/ci/server.Dockerfile does the same, on the debug
+# mount it shares with these builds.
 RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
     --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
+    flock /usr/local/cargo/registry/.fetch-lock cargo fetch --manifest-path server/Cargo.toml; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -278,6 +295,7 @@ RUN --mount=type=cache,id=cargo-target-postgres-$CARGO_PROFILE-$TARGETARCH,targe
     --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
+    flock /usr/local/cargo/registry/.fetch-lock cargo fetch --manifest-path server/Cargo.toml; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
