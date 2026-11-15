@@ -20,7 +20,16 @@ import { join, resolve } from 'node:path';
 const PLUGIN_ROOTS = ['../plugins', '../private/plugins'];
 const EXAMPLES_DIR = '../plugins/examples';
 
-export const inRepoPluginDirs = () => {
+/*
+ * A plugin directory holding `ARCHIVED.md` is retired: kept for its history
+ * and for the sites still running its last release, never built, packed or
+ * installed again. The file says why and what replaced it. Archiving is how a
+ * plugin leaves the Launchpad without being deleted; nothing in it is kept
+ * building against today's client/ or server.
+ */
+export const ARCHIVE_MARKER = 'ARCHIVED.md';
+
+const allInRepoPluginDirs = () => {
   const dirs = [];
   const walk = root => {
     if (!existsSync(root)) return;
@@ -34,6 +43,15 @@ export const inRepoPluginDirs = () => {
   PLUGIN_ROOTS.forEach(walk);
   return dirs;
 };
+
+const isArchived = dir => existsSync(join(dir, ARCHIVE_MARKER));
+
+export const inRepoPluginDirs = () =>
+  allInRepoPluginDirs().filter(dir => !isArchived(dir));
+
+/** The archived plugin directories, which the build names and skips. */
+export const archivedPluginDirs = () =>
+  allInRepoPluginDirs().filter(isArchived);
 
 // Out-of-tree plugin checkouts (the civ-plugins dev loop), comma- or
 // colon-separated, relative to the repo root as in the dev loop.

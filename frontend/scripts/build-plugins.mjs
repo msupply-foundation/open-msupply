@@ -76,7 +76,11 @@ import {
   readFormsDeclaration,
 } from '../vite/formPlugins.ts';
 import { checkFormVersions } from '../vite/formVersionChecks.ts';
-import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
+import {
+  archivedPluginDirs,
+  envPluginDirs,
+  inRepoPluginDirs,
+} from './pluginDirs.mjs';
 import {
   buildReactPart,
   checkReactParts,
@@ -361,6 +365,9 @@ const verifyRoundTrip = (rows, dirOf = row => join(OUT_DIR, row.code)) => {
 };
 
 const plugins = discoverPlugins();
+for (const dir of archivedPluginDirs()) {
+  console.log(`[build-plugins] ${dir}: archived (ARCHIVED.md), not built`);
+}
 const backendPlugins = discoverBackendPlugins();
 
 /*
