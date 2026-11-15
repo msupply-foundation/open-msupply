@@ -118,17 +118,20 @@ fn insert_header<K: IntoHeaderName>(
 
 pub type ApiResponse<O> = Result<O, SyncError>;
 
-/// The longest a request from `request_interactive` may take.
-const INTERACTIVE_LIMIT: std::time::Duration = std::time::Duration::from_secs(15);
+/// The longest a request from `request_interactive` may take. Longer than the
+/// connect attempts (2 + 5 + 10s), so a central that can't be reached fails as
+/// `Sync` first, and a slow link that connects on the last attempt still has
+/// about 13s for the answer.
+const INTERACTIVE_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
 
 /// Why a request from `request_interactive` failed.
 #[derive(Error, Debug)]
 pub enum InteractiveError {
     #[error(transparent)]
     Sync(#[from] SyncError),
-    /// Connected, but no answer inside `INTERACTIVE_LIMIT`. Each attempt gives up
-    /// connecting after a few seconds, so a central that can't be reached fails as
-    /// `Sync` well before this: reaching the limit means central is slow to answer.
+    /// Connected, but no answer inside `INTERACTIVE_LIMIT`. Connecting gives up
+    /// as sync does, before the limit, so a central that can't be reached fails as
+    /// `Sync`: reaching the limit means central is slow to answer.
     #[error("No answer from the central server {url} in {seconds}s")]
     NoAnswer { url: String, seconds: u64 },
 }
@@ -175,16 +178,17 @@ impl SyncApiV7 {
         }
     }
 
-    /// POST `input` to `route` for someone waiting on screen (a patient search): one retry
-    /// if the connection fails, with short connect timeouts, and the whole request given up
-    /// after `INTERACTIVE_LIMIT`. The sync defaults wait about 17s for a central that can't
-    /// be reached, and up to 5 minutes for one that accepts but never answers.
+    /// POST `input` to `route` for someone waiting on screen (a patient search): connects
+    /// as sync does (about 17s before a central that can't be reached fails), but the whole
+    /// request is given up after `INTERACTIVE_LIMIT`. Without it, a central that accepts but
+    /// never answers is waited on for 5 minutes per attempt, about 15 minutes in all, and
+    /// each retry starts the search again on central.
     pub(crate) async fn request_interactive<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: I,
     ) -> Result<O, InteractiveError> {
-        let request = self.attempt_with(RetrySeconds::new(vec![3, 3]), route, &input);
+        let request = self.attempt_with(RetrySeconds::default(), route, &input);
         match tokio::time::timeout(INTERACTIVE_LIMIT, request).await {
             Ok(result) => Ok(result.map_err(SyncError::from)?),
             Err(_) => Err(InteractiveError::NoAnswer {
