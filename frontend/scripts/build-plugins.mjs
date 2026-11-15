@@ -77,9 +77,9 @@ import {
 } from '../vite/formPlugins.ts';
 import { checkFormVersions } from '../vite/formVersionChecks.ts';
 import {
-  archivedPluginDirs,
   envPluginDirs,
   inRepoPluginDirs,
+  skippedPluginDirs,
 } from './pluginDirs.mjs';
 import {
   buildReactPart,
@@ -365,8 +365,8 @@ const verifyRoundTrip = (rows, dirOf = row => join(OUT_DIR, row.code)) => {
 };
 
 const plugins = discoverPlugins();
-for (const dir of archivedPluginDirs()) {
-  console.log(`[build-plugins] ${dir}: archived (ARCHIVED.md), not built`);
+for (const { dir, marker, why } of skippedPluginDirs()) {
+  console.log(`[build-plugins] ${dir}: ${why} (${marker}), not built`);
 }
 const backendPlugins = discoverBackendPlugins();
 
