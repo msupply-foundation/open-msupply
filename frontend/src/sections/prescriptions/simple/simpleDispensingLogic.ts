@@ -174,17 +174,28 @@ export const allocate = (
 
 /**
  * What those units cost: each batch's packs at that batch's sell price
- * (spec/prescriptions rules › who it's for and the list).
+ * (spec/prescriptions rules › who it's for and the list). Units beyond what
+ * the batches hold — a line left short when Dispense found less stock — cost
+ * the last batch's price per unit, so the line and the total don't drop while
+ * the line still holds them.
  */
 export const priceOf = (
   batches: readonly FillableBatch[],
   units: number
 ): number => {
   const packs = allocate(batches, units);
-  return batches.reduce(
-    (sum, batch) => sum + (packs.get(batch.id) ?? 0) * batch.sellPricePerPack,
-    0
-  );
+  let covered = 0;
+  let price = 0;
+  for (const batch of batches) {
+    const taken = packs.get(batch.id) ?? 0;
+    covered += taken * batch.packSize;
+    price += taken * batch.sellPricePerPack;
+  }
+  const last = batches[batches.length - 1];
+  const beyond = units - covered;
+  return last && beyond > 0
+    ? price + (beyond * last.sellPricePerPack) / last.packSize
+    : price;
 };
 
 /** One medicine on the list: its total, in the medicine's unit. */

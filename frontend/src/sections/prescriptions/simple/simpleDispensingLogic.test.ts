@@ -296,20 +296,28 @@ describe('priceOf', () => {
     // 10 at 1 + 10 at 2 + half a pack at 4.
     expect(priceOf(batches, 25)).toBeCloseTo(5);
   });
+});
 
-  it('prices no more than the batches hold', () => {
+describe('priceOf, for a line left short', () => {
+  it("OMS-REG-DIS-12.106: units beyond what the batches hold cost the last batch's price per unit", () => {
     const batches = fillableBatches(
       item('a', [
         batch('only', {
           availableNumberOfPacks: 1,
-          packSize: 10,
-          sellPricePerPack: 3,
+          packSize: 5,
+          sellPricePerPack: 10,
+          expiryDate: '2030-01-01',
         }),
       ]),
       PREFS,
       TODAY
     );
-    expect(priceOf(batches, 50)).toBeCloseTo(3);
+    // 5 units from the batch (one pack, 10), and 1 more at 10 / 5 = 2.
+    expect(priceOf(batches, 6)).toBeCloseTo(12);
+  });
+
+  it('with no batches left, a line costs nothing', () => {
+    expect(priceOf([], 6)).toBe(0);
   });
 });
 
