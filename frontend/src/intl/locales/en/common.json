@@ -4257,6 +4257,9 @@
   "messages.existing-patients-with-name_one": "1 existing patient with this name",
   "messages.existing-patients-with-name_other": "{{count}} existing patients with this name",
   "messages.existing-patients-likely": "{{count}} likely",
+  "messages.existing-patients-with-name-more_other": "{{count}}+ existing patients with this name",
+  "messages.existing-patients-not-checked": "Couldn't check for existing patients",
+  "messages.patient-arrives-next-sync": "This patient's record hasn't reached this site yet. Try again after the next sync.",
   "messages.other-facilities-skipped": "Other facilities weren't searched: the central server couldn't be reached a moment ago.",
   "messages.other-facilities-skipped-slow": "Other facilities weren't searched: the central server was too slow to answer a moment ago.",
   "messages.central-slow": "The central server is taking too long to answer.",
@@ -4270,7 +4273,7 @@
   "label.where": "Where",
   "label.likely-match": "Likely",
   "label.same-birth-year": "Same birth year",
-  "label.same-national-id": "Same Code 2",
+  "label.same-code2": "Same Code 2",
   "button.save-and-dispense": "Save & dispense",
   "heading.identifiers": "Identifiers"
 }

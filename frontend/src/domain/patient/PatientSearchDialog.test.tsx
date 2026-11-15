@@ -70,6 +70,7 @@ const keep = <T,>(set: Set<T>, value: T) => {
 
 vi.mock('../../ui/elements/feedback/Dialog', () => ({
   Dialog: (p: Props) => {
+    dialogProps = p;
     const r = resolve(p, [
       'children',
       'headerActions',
@@ -150,6 +151,9 @@ vi.mock('../../intl', () => ({
   t: (key: string) => key,
   localeDateFormat: () => 'dd/MM/yyyy',
 }));
+
+// The props the dialog stand-in was last given (dismissable, …).
+let dialogProps: Props = {};
 
 let central = false;
 vi.mock('../../api/serverInfo', () => ({ isCentralServer: () => central }));
@@ -311,7 +315,8 @@ const buttonLabelled = (label: string) =>
 const tables = () => [...rendered.tables];
 const localTable = () => tables().find(t => 'empty' in t.props);
 const centralTable = () =>
-  tables().find(t => 'loading' in t.props && !('empty' in t.props));
+  tables().find(t => 'pagination' in t.props && !('empty' in t.props));
+const recentTable = () => tables().find(t => !('pagination' in t.props));
 const localRows = () =>
   (localTable()?.props.rows as PatientFindRow[] | undefined)?.map(r => r.id);
 const centralRows = () =>
@@ -705,7 +710,7 @@ describe('the search — each opening starts blank', () => {
     mount({ showRecent: true });
     await settle();
     expect(recentPatients).toHaveBeenCalledWith('store', 10);
-    const recent = tables().find(t => !('loading' in t.props));
+    const recent = recentTable();
     expect((recent?.props.rows as PatientFindRow[]).map(r => r.id)).toEqual([
       'r1',
     ]);
@@ -720,5 +725,161 @@ describe('the search — each opening starts blank', () => {
     } finally {
       canReadDispensing = true;
     }
+  });
+});
+
+describe('Cancel while a patient is being chosen', () => {
+  const findAtOtherFacilities = async () => {
+    findPatients.mockResolvedValue(here([]));
+    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    const mounted = mount();
+    type('lastName', 'Smith');
+    await pause();
+    return mounted;
+  };
+  const chooseFromCentral = () =>
+    (centralTable()?.props.onRowClick as (r: PatientFindRow) => void)(
+      row('c1')
+    );
+
+  it('drops the choice when Cancel is pressed while linking', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    const link = deferred<{ kind: 'ok' }>();
+    linkPatientToStore.mockReturnValue(link.promise);
+    chooseFromCentral();
+    const cancel = button('dialog-button-cancel');
+    expect(cancel?.disabled).toBe(false);
+    cancel?.onClick();
+    link.resolve({ kind: 'ok' });
+    await settle();
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('drops the choice when the dialog is reopened while linking', async () => {
+    const { onChoose, setOpen } = await findAtOtherFacilities();
+    const link = deferred<{ kind: 'ok' }>();
+    linkPatientToStore.mockReturnValue(link.promise);
+    chooseFromCentral();
+    setOpen(false);
+    setOpen(true);
+    link.resolve({ kind: 'ok' });
+    await settle();
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('chooses once linked when nothing was cancelled', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    linkPatientToStore.mockResolvedValue({ kind: 'ok' });
+    chooseFromCentral();
+    await settle();
+    expect(onChoose).toHaveBeenCalledWith(row('c1'));
+  });
+
+  it('holds Cancel, and shows the table loading, while the caller acts', async () => {
+    findPatients.mockResolvedValue(here([row('a')]));
+    const { onChoose } = mount();
+    const acting = deferred<undefined>();
+    onChoose.mockReturnValue(acting.promise);
+    type('lastName', 'Smith');
+    await pause();
+    (localTable()?.props.onRowClick as (r: PatientFindRow) => void)(row('a'));
+    expect(button('dialog-button-cancel')?.disabled).toBe(true);
+    expect(localTable()?.props.loading).toBe(true);
+    acting.resolve(undefined);
+    await settle();
+    expect(button('dialog-button-cancel')?.disabled).toBe(false);
+    expect(localTable()?.props.loading).toBe(false);
+  });
+
+  it('keeps "Getting patient…" up, not this store’s table loading, while the caller acts on a linked patient', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    linkPatientToStore.mockResolvedValue({ kind: 'ok' });
+    const acting = deferred<undefined>();
+    onChoose.mockReturnValue(acting.promise);
+    chooseFromCentral();
+    await settle();
+    const linking = () =>
+      [...rendered.alerts].some(a => a.testId === 'patient-search-linking');
+    expect(linking()).toBe(true);
+    expect(localTable()?.props.loading).toBe(false);
+    expect(button('dialog-button-cancel')?.disabled).toBe(true);
+    acting.resolve(undefined);
+    await settle();
+    expect(linking()).toBe(false);
+  });
+
+  it('offers Retry and Cancel when linking fails, and Retry links again', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    linkPatientToStore.mockResolvedValueOnce({
+      kind: 'unreachable',
+      message: '',
+    });
+    chooseFromCentral();
+    await settle();
+    expect(
+      [...rendered.alerts].some(a => a.testId === 'patient-search-link-failed')
+    ).toBe(true);
+    linkPatientToStore.mockResolvedValueOnce({ kind: 'ok' });
+    button('patient-search-link-retry')?.onClick();
+    await settle();
+    expect(linkPatientToStore).toHaveBeenCalledTimes(2);
+    expect(onChoose).toHaveBeenCalledWith(row('c1'));
+  });
+
+  it('lets Escape and × abandon a link, as Cancel does, but not the caller’s action', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    linkPatientToStore.mockReturnValue(new Promise(() => {}));
+    chooseFromCentral();
+    expect(dialogProps.dismissable).toBe(true);
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('drops an Enter’s exact-ID choice when Cancel is pressed before the search answers', async () => {
+    const reply = deferred<FindResult>();
+    findPatients.mockReturnValue(reply.promise);
+    const { onChoose } = mount();
+    type('id', 'AB12');
+    pressEnter('id');
+    button('dialog-button-cancel')?.onClick();
+    reply.resolve(here([row('ab12')]));
+    await settle();
+    expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('clears a failed link, and shows the table loading, when someone here is chosen instead', async () => {
+    findPatients.mockResolvedValue(here([row('a')]));
+    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    const { onChoose } = mount();
+    type('lastName', 'Smith');
+    await pause();
+    button('search-other-facilities-button')?.onClick();
+    await settle();
+    linkPatientToStore.mockResolvedValue({ kind: 'unreachable', message: '' });
+    chooseFromCentral();
+    await settle();
+    const failed = () =>
+      [...rendered.alerts].some(a => a.testId === 'patient-search-link-failed');
+    expect(failed()).toBe(true);
+    const acting = deferred<undefined>();
+    onChoose.mockReturnValue(acting.promise);
+    (localTable()?.props.onRowClick as (r: PatientFindRow) => void)(row('a'));
+    expect(failed()).toBe(false);
+    expect(localTable()?.props.loading).toBe(true);
+    acting.resolve(undefined);
+    await settle();
+  });
+
+  it('returns to the results on the failed link’s Cancel, choosing no one', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    linkPatientToStore.mockResolvedValue({ kind: 'unreachable', message: '' });
+    chooseFromCentral();
+    await settle();
+    button('patient-search-link-cancel')?.onClick();
+    await settle();
+    expect(
+      [...rendered.alerts].some(a => a.testId === 'patient-search-link-failed')
+    ).toBe(false);
+    expect(centralRows()).toEqual(['c1']);
+    expect(onChoose).not.toHaveBeenCalled();
   });
 });

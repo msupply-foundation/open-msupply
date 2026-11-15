@@ -262,7 +262,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         firstName: data?.firstName ?? '',
         lastName: data?.lastName ?? '',
         dateOfBirth: data?.dateOfBirth ?? null,
-        nationalId: data?.code2 ?? '',
+        code2: data?.code2 ?? '',
       };
     },
   });
@@ -410,6 +410,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           variant="secondary"
           icon={<ChevronLeftIcon />}
           data-testid="duplicate-check-back"
+          // Held while a match is being linked or used: leaving review and
+          // cancelling wouldn't stop it.
+          disabled={busy()}
           onClick={() => setReviewing(false)}
         >
           {t('button.back-to-form')}
@@ -421,6 +424,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         icon={<XCircleIcon />}
         confirms="cancel"
         data-testid="dialog-button-cancel"
+        disabled={busy()}
         onClick={props.onClose}
       >
         {t('button.cancel')}
@@ -462,6 +466,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   {t('messages.checking-existing-patients')}
                 </Text>
               </HStack>
+            </Match>
+            <Match when={duplicates.state().status === 'failed'}>
+              <Text variant="bodySmall" data-testid="duplicate-check-failed">
+                {t('messages.existing-patients-not-checked')}
+              </Text>
             </Match>
             <Match when={doneState()}>
               {done => (
@@ -521,10 +530,17 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                     >
                       <HStack gap="sm" align="center">
                         <span>
-                          {tPlural(
-                            'messages.existing-patients-with-name',
-                            done().matches.length
-                          )}
+                          {/* Only the first page is fetched: past it, the
+                              count is a floor. */}
+                          {done().more
+                            ? tPlural(
+                                'messages.existing-patients-with-name-more',
+                                done().matches.length
+                              )
+                            : tPlural(
+                                'messages.existing-patients-with-name',
+                                done().matches.length
+                              )}
                           <Show when={likelyCount(done().matches) > 0}>
                             {', '}
                             {t('messages.existing-patients-likely', {
@@ -561,6 +577,17 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             </Match>
           </Switch>
         </span>
+        <Show when={duplicates.state().status === 'failed'}>
+          <Button
+            variant="ghost"
+            size="small"
+            icon={<RefreshIcon />}
+            data-testid="duplicate-check-retry"
+            onClick={() => void duplicates.retry()}
+          >
+            {t('button.retry')}
+          </Button>
+        </Show>
         <Show when={doneState()?.central === 'failed'}>
           <HStack
             gap="sm"
@@ -615,7 +642,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 .map(reason =>
                   reason === 'birth-year'
                     ? t('label.same-birth-year')
-                    : t('label.same-national-id')
+                    : t('label.same-code2')
                 )
                 .join(', ')}
             />

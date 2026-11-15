@@ -43,9 +43,15 @@ export const CreatePrescriptionModal: Component<
       navigate(`/${params.storeId}/dispensary/dispensing/${id}`);
       return undefined;
     }
-    return result.kind === 'graphqlError'
-      ? result.message
-      : t('error.something-wrong');
+    if (result.kind !== 'graphqlError') return t('error.something-wrong');
+    // A patient just linked from another facility, on a site still syncing
+    // over v5/v6: the link gives this store access straight away, but the
+    // patient's record only arrives with the next sync.
+    if (
+      result.errors.some(e => e.extensions?.details === 'PatientDoesNotExist')
+    )
+      return t('messages.patient-arrives-next-sync');
+    return result.message;
   };
 
   return (
