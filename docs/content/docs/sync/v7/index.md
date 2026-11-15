@@ -903,7 +903,7 @@ Remote patient lookup is two separate operations against the central server, bot
 
 When a patient is not found locally, the remote calls the central server's v7 sync **`patient_search`** endpoint. The body is the patient filter, with optional `limit` and `offset` flattened beside its fields. With `limit`, central returns that many candidates in name order from `offset`, without counting them; the remote asks for one more than it shows, to know whether there is a next page. A remote from before the page was added sends the bare filter and gets every match, unsorted. Central runs the search against its full name table and returns matching patient candidates. Because this goes over the v7 sync API it uses sync-site authentication (the remote authenticates as a site), and the central search is not limited to stores active on the requesting site.
 
-Someone is waiting on the answer, so the request gives up quickly rather than retrying as sync does: two attempts with a 3-second connect timeout each, and 15 seconds overall, after which it fails as a connection error (`SyncApiV7::request_interactive`). The link below keeps sync's own timings.
+Someone is waiting on the answer, so the request gives up quickly rather than retrying as sync does: two attempts with a 3-second connect timeout each, and 15 seconds overall (`SyncApiV7::request_interactive`). The link below keeps sync's own timings.
 
 Code: `patient_search_central_v7` in `service/src/programs/patient/search_central.rs` → `SyncApiV7::patient_search`. (On a v6 remote the legacy v4/COGS path is used instead — see [What happens in v5?](#what-happens-in-v5?).)
 
