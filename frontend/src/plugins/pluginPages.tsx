@@ -405,18 +405,7 @@ export const mergeUpperNav = (
   const withInjections = (host: NavItem): NavItem => {
     const placed = pagesInHostSection(host.id);
     if (placed.length === 0) return host;
-    // A section that is a single destination (Home, Reports) becomes a group
-    // once a page is placed in it, and a group only expands: it keeps its own
-    // screen as its first entry, or nothing in the menu reaches it any more.
-    const hostChildren: NavLeaf[] = host.children ?? [
-      {
-        id: host.id,
-        labelKey: host.labelKey,
-        to: host.to,
-        ...(host.gate ? { gate: host.gate } : {}),
-        ...(host.permission ? { permission: host.permission } : {}),
-      },
-    ];
+    const hostChildren = host.children ?? [];
     const merge = anchorMerge(
       hostChildren.map(child => ({ id: child.id })),
       placed.map(registered => ({
