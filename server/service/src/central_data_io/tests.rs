@@ -2087,7 +2087,7 @@ async fn item_references_are_found_by_code_or_id() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.39, .51, .85
+// covers: OMS-REG-CDIO-01.39, .51, .73, .85
 
 #[actix_rt::test]
 async fn an_item_code_is_not_changed_or_taken_by_import() {
