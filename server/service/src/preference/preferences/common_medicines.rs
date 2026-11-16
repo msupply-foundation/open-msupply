@@ -119,6 +119,16 @@ fn checked_common_medicines(
                 "item {item_id} has amount {amount}, amounts must be above zero"
             )));
         }
+        // Two buttons for the same amount would be one button twice
+        if let Some((_, amount)) = amounts
+            .iter()
+            .enumerate()
+            .find(|(i, a)| amounts[..*i].contains(a))
+        {
+            return Err(invalid(format!(
+                "item {item_id} has amount {amount} more than once"
+            )));
+        }
     }
 
     // One query for the merges and one for the items, for the whole list
@@ -264,9 +274,11 @@ mod tests {
         assert!(is_invalid(vec![medicine(&item_a, &[0.0])]));
         assert!(is_invalid(vec![medicine(&item_b, &[-5.0])]));
         assert!(is_invalid(vec![medicine(&item_b, &[f64::NAN])]));
+        // The same amount twice for one medicine (OMS-REG-DIS-12.130)
+        assert!(is_invalid(vec![medicine(&item_a, &[10.0, 20.0, 10.0])]));
         // An item that doesn't exist
         assert!(is_invalid(vec![medicine("no_such_item", &[10.0])]));
-        // A service item: the cards only show stock items
+        // A service item: the cards only show stock items (OMS-REG-DIS-12.131)
         assert!(is_invalid(vec![medicine(
             &mock_item_service_item().id,
             &[1.0]
@@ -323,13 +335,14 @@ mod tests {
             .unwrap();
 
         // Read after the merge, A shows as B, in A's place and with A's
-        // amounts, and the later B is dropped.
+        // amounts, and the later B is dropped (OMS-REG-DIS-12.133).
         assert_eq!(
             CommonMedicines.load(&connection, store_b),
             Ok(vec![medicine(&item_b, &[1.0]), medicine(&item_c, &[])])
         );
 
-        // A list naming the merged-away item is saved as the kept one.
+        // A list naming the merged-away item is saved as the kept one
+        // (OMS-REG-DIS-12.134).
         CommonMedicines
             .upsert(
                 &connection,
@@ -378,7 +391,8 @@ mod tests {
         let store_a = mock_store_a().id;
         let store_b = mock_store_b().id;
 
-        // Store A's list is fine, store B's names an item that doesn't exist.
+        // Store A's list is fine, store B's names an item that doesn't exist
+        // (OMS-REG-DIS-12.132).
         let result = upsert_preferences(
             &ctx,
             UpsertPreferences {
