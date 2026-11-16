@@ -2,7 +2,8 @@ import { ItemFilterInput, useInfiniteQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
 
 type UseItemStockOnHandParams = {
-  filter?: ItemFilterInput;
+  // notInRecord is a nested object, which FilterBy (used for query keys) can't hold
+  filter?: Omit<ItemFilterInput, 'notInRecord'>;
   rowsPerPage: number;
 };
 

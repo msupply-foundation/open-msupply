@@ -36,6 +36,9 @@ export const useReport = (id: string) => {
               key: report.error.description,
             });
             break;
+          case 'RecordNotFound':
+            errorMessage = t('error.report-does-not-exist');
+            break;
           // TODO add never exhaustive error handling if adding more error types to QueryReportError
           // default:
           //   noOtherVariants(report.error);

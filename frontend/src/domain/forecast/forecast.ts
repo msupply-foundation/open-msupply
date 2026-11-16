@@ -1,4 +1,4 @@
-import { t, tPlural, type LocaleKey } from '../../intl';
+import { measureWord, t, tPlural } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
 import { roundedText } from '../../intl/numberDisplay';
 import type {
@@ -78,73 +78,228 @@ export const courseTitle = (course: PopulationCourse): string =>
     ? `${course.courseName} (${course.demographicName})`
     : course.courseName;
 
-// One arithmetic step of a Population course: its figures substituted into the
-// formula, then the emphasised result. The step's title and formula wording are
-// static locale keys held by the component; this pure function owns only the
-// arithmetic. Rounding: the loss factor keeps 3 dp — a rate, not a count of
-// things; the annual doses and the monthly units follow the configured decimal
-// places — monthly demand keeps its fraction.
-export type ForecastStep = { substitution: string; result: string };
+// A breakdown as named calculation steps. Each step works one quantity out of
+// its terms — every term a value under the name of what it is ("Coverage rate"
+// over "81%"), the operators between them — to its result. A later step uses
+// an earlier one's result as a term under that step's name (`ref`), so a
+// breakdown reads as a chain of named quantities however they combine, not as
+// one long column. The names are words, so a step reads the same in every
+// locale; the values carry their measure where they are quantities.
+export type Operator = '×' | '÷' | '+' | '−';
+export type Term = { label: string; value: string; ref?: boolean };
+export type CalculationStep = {
+  name: string;
+  terms: (Term | Operator)[];
+  result: string;
+};
 
-// Whether step 1 counts the course's average doses per person per year in place
-// of its number of doses: only for a course that sets one, so a course counting
-// every dose (births) reads as it always has.
-const countsDosesPerPerson = (course: PopulationCourse): boolean =>
-  course.annualDosesPerPerson != null;
+export const isOperator = (term: Term | Operator): term is Operator =>
+  typeof term === 'string';
 
-/** Step 1's formula wording, matching its substitution's factors. */
-export const annualTargetFormulaKey = (course: PopulationCourse): LocaleKey =>
-  countsDosesPerPerson(course)
-    ? 'description.annual-target-doses-calculation-with-doses-per-person'
-    : 'description.annual-target-doses-calculation';
+// A wastage rate's loss factor — 1 ÷ (1 − wastage) — to the 3 dp a rate keeps.
+const lossFactor = (factor: number): string => round(factor, 3);
 
+const doses = (count: number): string =>
+  `${roundedText(count)} ${measureWord('doses', null, count)}`;
+
+const units = (count: number, unitName: string | null): string =>
+  `${roundedText(count)} ${measureWord('units', unitName, count)}`;
+
+/**
+ * A Population course group's steps: annual target doses = target population
+ * × doses × coverage × loss factor; monthly demand = annual target doses ÷ 12
+ * ÷ doses per unit, in the item's units. The loss factor is left out where
+ * there is no wastage to make up (a factor of 1). Rounding: the loss factor
+ * keeps 3 dp — a rate, not a count of things; the annual doses and the
+ * monthly units follow the configured decimal places — monthly demand keeps
+ * its fraction.
+ */
 export const populationSteps = (
-  course: PopulationCourse
-): [ForecastStep, ForecastStep] => [
-  {
-    // 1. Annual target doses = target population × (doses per person per year
-    // ?? doses) × (coverage/100) × loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.annualDosesPerPerson ?? course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
-    result: `= ${roundedText(course.annualTargetDoses)} ${t('label.doses-per-year')}`,
-  },
-  {
-    // 2. Monthly units = annual target doses / 12 / doses per unit.
-    substitution: `${roundedText(course.annualTargetDoses)} / 12 / ${formatNumber(course.dosesPerUnit)}`,
-    result: `= ${roundedText(course.monthlyUnits)} ${t('label.units-per-month')}`,
-  },
-];
+  course: PopulationCourse,
+  unitName: string | null
+): [CalculationStep, CalculationStep] => {
+  const annualTargetDoses = doses(course.annualTargetDoses);
+  return [
+    {
+      name: t('label.annual-target-doses'),
+      terms: [
+        {
+          label: t('label.target-population'),
+          value: formatNumber(course.targetPopulation),
+        },
+        '×',
+        // A course with an average doses per person per year counts that in
+        // place of its number of doses, so a course counting every dose
+        // (births) reads as it always has.
+        course.annualDosesPerPerson != null
+          ? {
+              label: t('label.annual-doses-per-person'),
+              value: formatNumber(course.annualDosesPerPerson),
+            }
+          : {
+              label: t('label.number-of-doses'),
+              value: formatNumber(course.numberOfDoses),
+            },
+        '×',
+        {
+          label: t('label.coverage-rate'),
+          value: `${formatNumber(course.coverageRate)}%`,
+        },
+        ...(course.lossFactor !== 1
+          ? [
+              '×' as const,
+              {
+                label: t('label.loss-factor-wastage', {
+                  rate: formatNumber(course.wastageRate),
+                }),
+                value: lossFactor(course.lossFactor),
+              },
+            ]
+          : []),
+      ],
+      result: annualTargetDoses,
+    },
+    {
+      name: t('label.course-monthly-demand'),
+      terms: [
+        {
+          label: t('label.annual-target-doses'),
+          value: annualTargetDoses,
+          ref: true,
+        },
+        '÷',
+        { label: t('label.months-in-a-year'), value: formatNumber(12) },
+        '÷',
+        {
+          label: t('label.doses-per-unit'),
+          value: formatNumber(course.dosesPerUnit),
+        },
+      ],
+      result: units(course.monthlyUnits, unitName),
+    },
+  ];
+};
 
 /**
- * The deduction a principal's wastage makes before the ratio applies — "− 50%
- * wastage" — or undefined when the link orders for the wasted units too
- * (spec/internal-orders › the Ancillary ratio method).
+ * A principal's configured ratio in words, each side in its own item's units —
+ * "1.1 Syringe per 100 Vial" — so it reads the one way round whichever screen
+ * shows it. Where both sides would carry the same word ("1 Each per 100
+ * Each", or "units" when neither item names a unit), both sides name their
+ * item, so the numbers can't swap.
  */
-export const principalWastageDeduction = (
-  principal: AncillaryRatioPrincipal
-): string | undefined =>
-  principal.wastageRate > 0
-    ? t('description.less-principal-wastage', {
-        rate: formatNumber(principal.wastageRate),
-      })
-    : undefined;
+export const ancillaryRatio = (
+  principal: AncillaryRatioPrincipal,
+  unitName: string | null,
+  itemName: string
+): string => {
+  const ancillaryWord = measureWord(
+    'units',
+    unitName,
+    principal.ancillaryQuantity
+  );
+  const principalWord = measureWord(
+    'units',
+    principal.item?.unitName ?? null,
+    principal.itemQuantity
+  );
+  const values = {
+    ancillary: `${formatNumber(principal.ancillaryQuantity)} ${ancillaryWord}`,
+    principal: `${formatNumber(principal.itemQuantity)} ${principalWord}`,
+  };
+  if (ancillaryWord !== principalWord) {
+    return t('label.ancillary-per-principal', values);
+  }
+  return t('label.ancillary-per-principal-items', {
+    ...values,
+    ancillaryItem: itemName,
+    principalItem: principal.item?.name ?? principal.itemId,
+  });
+};
 
 /**
- * The ancillary's own wastage as a supply, added on top of the ratio — "÷ (1 −
- * 20% own wastage)" — or undefined when it has none (spec/internal-orders › the
- * Ancillary ratio method).
+ * A principal's steps (spec/internal-orders › the Ancillary ratio method):
+ * where the link excludes the principal's wastage, demand excluding wastage =
+ * the principal's monthly demand − its wasted units; then the monthly
+ * contribution = that demand × the ratio × the loss factor of the ancillary's
+ * own wastage, in the ancillary's units. The principal's quantities stay in
+ * its own units — the entry mode's packs and doses are the ancillary's. The
+ * wastage shows only where there is some. A ratio over 0 principal units, or
+ * an own wastage outside [0, 100), contributes nothing on the server
+ * (monthly_consumption); the contribution then shows without working that
+ * wouldn't multiply out.
  */
-export const supplyWastageAddition = (
-  principal: AncillaryRatioPrincipal
-): string | undefined =>
-  principal.ownWastageRate > 0
-    ? t('description.plus-supply-wastage', {
-        rate: formatNumber(principal.ownWastageRate),
-      })
-    : undefined;
-
-/** A principal's configured ratio, as ancillary : principal. */
-export const ancillaryRatio = (principal: AncillaryRatioPrincipal): string =>
-  `${formatNumber(principal.ancillaryQuantity)} : ${formatNumber(principal.itemQuantity)}`;
+export const principalSteps = (
+  principal: AncillaryRatioPrincipal,
+  unitName: string | null,
+  itemName: string
+): CalculationStep[] => {
+  const principalUnitName = principal.item?.unitName ?? null;
+  const monthlyDemand: Term = {
+    label: t('label.principal-monthly-demand'),
+    value: units(principal.principalMonthlyConsumption, principalUnitName),
+  };
+  const steps: CalculationStep[] = [];
+  let demand = monthlyDemand;
+  if (principal.wastageRate > 0) {
+    const lessWastage = units(
+      principal.principalUsableConsumption,
+      principalUnitName
+    );
+    steps.push({
+      name: t('label.demand-excluding-wastage'),
+      terms: [
+        monthlyDemand,
+        '−',
+        {
+          label: t('label.wastage-percent', {
+            rate: formatNumber(principal.wastageRate),
+          }),
+          value: units(
+            principal.principalMonthlyConsumption -
+              principal.principalUsableConsumption,
+            principalUnitName
+          ),
+        },
+      ],
+      result: lessWastage,
+    });
+    demand = {
+      label: t('label.demand-excluding-wastage'),
+      value: lessWastage,
+      ref: true,
+    };
+  }
+  const contributes =
+    principal.itemQuantity !== 0 &&
+    principal.ownWastageRate >= 0 &&
+    principal.ownWastageRate < 100;
+  steps.push({
+    name: t('label.monthly-contribution'),
+    terms: !contributes
+      ? []
+      : [
+          demand,
+          '×',
+          {
+            label: t('label.ratio'),
+            value: ancillaryRatio(principal, unitName, itemName),
+          },
+          ...(principal.ownWastageRate > 0
+            ? [
+                '×' as const,
+                {
+                  label: t('label.loss-factor-own-wastage', {
+                    rate: formatNumber(principal.ownWastageRate),
+                  }),
+                  value: lossFactor(1 / (1 - principal.ownWastageRate / 100)),
+                },
+              ]
+            : []),
+        ],
+    result: units(principal.monthlyConsumption, unitName),
+  });
+  return steps;
+};
 
 /**
  * A principal's item as "CODE Name", falling back to its id when unresolved.
@@ -157,11 +312,22 @@ export const principalItemLabel = (
     : principal.itemId;
 
 /**
+ * The target months a store sets a general order: its supply interval + safety
+ * buffer + delivery lead time (spec/internal-orders › target months of stock).
+ */
+export const storeTargetMonths = (
+  intervalAndBuffer: SupplyIntervalAndBufferFragment
+): number =>
+  intervalAndBuffer.supplyIntervalMonths +
+  intervalAndBuffer.safetyBufferMonths +
+  intervalAndBuffer.deliveryLeadTimeMonths;
+
+/**
  * The target-stock step's caption: monthly demand × target months. Where the
  * target came from the store's supply interval + safety buffer, the months
  * show the supply interval and safety buffer that make them up (spec S4 › the
  * forecast, OMS-REG-REPL-17.17) — "120 units × 3.5 months (supply interval 3
- * + safety buffer 0.5)".
+ * + safety buffer 0.5)" — and its delivery lead time where it has one.
  */
 export const targetStockCaption = (
   monthlyDemand: string,
@@ -174,9 +340,14 @@ export const targetStockCaption = (
   });
   const step = `${monthlyDemand} × ${months}`;
   if (!intervalAndBuffer) return step;
-  const makeup = t('label.supply-interval-plus-buffer', {
+  const params = {
     supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths),
     safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths),
-  });
+    leadTime: formatNumber(intervalAndBuffer.deliveryLeadTimeMonths),
+  };
+  const makeup =
+    intervalAndBuffer.deliveryLeadTimeMonths > 0
+      ? t('label.supply-interval-plus-buffer-plus-lead-time', params)
+      : t('label.supply-interval-plus-buffer', params);
   return `${step} (${makeup})`;
 };

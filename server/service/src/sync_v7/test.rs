@@ -341,7 +341,12 @@ mod test_sync_v7_client_api {
         )
         .await;
         assert_eq!(result.err(), expected_error, "unexpected sync_v7 result");
-        handle.stop(true).await;
+        // Not graceful: every request has been answered by now, so there's nothing to drain,
+        // and a graceful stop can hang forever. It stops the accept thread before the
+        // workers; a worker that sees its connection channel close exits without replying,
+        // and the stop message sent to it at that moment can be stranded in its channel,
+        // so the stop waits on a reply that never comes (actix-server 2.6, tokio 1.50).
+        handle.stop(false).await;
         let push_response = captured_requests.lock().await.clone();
         (connection, json!(push_response))
     }

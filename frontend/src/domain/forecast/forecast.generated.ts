@@ -57,4 +57,5 @@ export type ForecastMethodOptionFragment = {
 export type SupplyIntervalAndBufferFragment = {
   supplyIntervalMonths: number;
   safetyBufferMonths: number;
+  deliveryLeadTimeMonths: number;
 };

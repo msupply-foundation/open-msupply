@@ -1,4 +1,8 @@
-import { canConfirmNewStock, packSizeValid } from './newStockEntry';
+import {
+  canConfirmNewStock,
+  followingSellPrice,
+  packSizeValid,
+} from './newStockEntry';
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
@@ -38,7 +42,7 @@ import {
 } from '../../../domain/barcode';
 import { stockPreferences } from '../../../store/storeContext';
 import { runInsertStockLine } from '../stockApi';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import {
   NewStockItem,
@@ -62,11 +66,21 @@ type ItemNode = Extract<
 type ItemVariant = ItemNode['variants'][number];
 type Reason = { id: string; type: string; reason: string };
 
+// What the item's default sell price is read from.
+const sellPriceDefaults = (node: ItemNode) => ({
+  defaultPackSize: node.defaultPackSize,
+  defaultSellPricePerPack: node.itemStoreProperties?.defaultSellPricePerPack,
+});
+
 interface Draft {
   numberOfPacks?: number;
   packSize?: number;
   costPricePerPack?: number;
   sellPricePerPack?: number;
+  // Whether the user has typed the sell price: until they do, it follows the
+  // pack size at the store's default (spec/stock rules › Default sell price
+  // for new stock).
+  sellTyped: boolean;
   batch: string;
   barcode: string;
   expiryDate: string | null;
@@ -87,6 +101,7 @@ interface Draft {
 }
 
 const EMPTY_DRAFT: Draft = {
+  sellTyped: false,
   batch: '',
   barcode: '',
   expiryDate: null,
@@ -147,7 +162,7 @@ const NewStockContent = (props: {
   });
 
   const prefs = () => stockPreferences();
-  const today = localTodayIso();
+  const today = todayCalendarDate();
 
   // The chosen item's defaults + variants (spec S3: seed pack size + sell
   // price; offer variants). Keyed on the item id; undefined until an item is
@@ -168,15 +183,22 @@ const NewStockContent = (props: {
       // is still the chosen item (guards a slow fetch for a previous item
       // resolving after the user has already switched: Solid discards the stale
       // RETURN, but the in-fetcher side-effect would otherwise still run) and
-      // only when the user hasn't already typed a value.
+      // only when the user hasn't already typed a value. The sell price is the
+      // default at the pack size the form holds (followingSellPrice).
       if (node && item()?.id === itemId) {
-        setDraft(d => ({
-          ...d,
-          packSize: d.packSize ?? node.defaultPackSize,
-          sellPricePerPack:
-            d.sellPricePerPack ??
-            node.itemStoreProperties?.defaultSellPricePerPack,
-        }));
+        setDraft(d => {
+          const packSize = d.packSize ?? node.defaultPackSize;
+          return {
+            ...d,
+            packSize,
+            sellPricePerPack: followingSellPrice({
+              sellPricePerPack: d.sellPricePerPack,
+              sellTyped: d.sellTyped,
+              item: sellPriceDefaults(node),
+              packSize,
+            }),
+          };
+        });
       }
       return node;
     }
@@ -205,6 +227,22 @@ const NewStockContent = (props: {
     );
 
   const variants = (): ItemVariant[] => detail()?.variants ?? [];
+
+  // A pack-size change moves a sell price the user hasn't typed to the
+  // default at the new pack size (followingSellPrice).
+  const changePackSize = (packSize: number | undefined) => {
+    const node = detail();
+    setDraft(d => ({
+      ...d,
+      packSize,
+      sellPricePerPack: followingSellPrice({
+        sellPricePerPack: d.sellPricePerPack,
+        sellTyped: d.sellTyped,
+        item: node && sellPriceDefaults(node),
+        packSize,
+      }),
+    }));
+  };
 
   // Choosing a variant fills the variant id, manufacturer, and volume per pack
   // (from its packaging).
@@ -405,7 +443,7 @@ const NewStockContent = (props: {
                           ? t('error.pack-size-min')
                           : undefined
                       }
-                      onChange={v => setDraft('packSize', v)}
+                      onChange={changePackSize}
                     />
                   </FormRow>
                 </FormSection>
@@ -487,7 +525,9 @@ const NewStockContent = (props: {
                       label={t('label.sell-price')}
                       data-testid="field-sell-price"
                       value={draft.sellPricePerPack}
-                      onChange={v => setDraft('sellPricePerPack', v)}
+                      onChange={v =>
+                        setDraft({ sellPricePerPack: v, sellTyped: true })
+                      }
                     />
                   </FormRow>
                   {/* Required iff active positive reasons are configured (spec

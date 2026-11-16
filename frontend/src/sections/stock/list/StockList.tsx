@@ -85,8 +85,10 @@ const DEFAULT_STATE: StockListState = {
   // The search (batch or item code/name) is the list's default filter
   // (ui-standards § tables → filtering): seeded present-as-null so its chip is
   // on the bar from the start; stripEmpty keeps it out of the query until
-  // typed.
-  filter: { search: null },
+  // typed. Expired stock is hidden on open (#1820) — a removable chip, not a
+  // gate. A link that carries its own filter (the dashboard's expiry stats)
+  // replaces this whole default, so it lands on exactly the lines it counts.
+  filter: { search: null, isExpired: false },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -164,8 +166,8 @@ const StockList: Component = () => {
   const onFilterChange = (filter: StockFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
 
-  const openLine = (id: string) =>
-    navigate(`/${params.storeId}/inventory/stock/${id}`);
+  const lineHref = (id: string) => `/${params.storeId}/inventory/stock/${id}`;
+  const openLine = (id: string) => navigate(lineHref(id));
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
   // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
@@ -479,6 +481,7 @@ const StockList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={row => openLine(row.id)}
+        rowHref={row => lineHref(row.id)}
         showCardToggle
         cardGroups={CARD_GROUPS}
         emptyMessage={t('error.no-stock')}

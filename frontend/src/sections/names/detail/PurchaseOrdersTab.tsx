@@ -123,6 +123,7 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
       onRowClick={row =>
         navigate(purchaseOrderDetailPath(params.storeId, row.id))
       }
+      rowHref={row => purchaseOrderDetailPath(params.storeId, row.id)}
     />
   );
 };

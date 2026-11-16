@@ -1,6 +1,6 @@
 # Requisition DETAIL screen (spec/requisitions S2).
 #
-# The header read is `requisition(storeId, id)` → RecordNotFound |
+# The header read is `requisition(storeId, id, type)` → RecordNotFound |
 # RequisitionNode. Another store's requisition answers RecordNotFound too —
 # indistinguishable from a missing one on the wire (contract › the detail
 # screen).
@@ -211,8 +211,12 @@ fragment RequisitionInfo on RequisitionNode {
   }
 }
 
+# `type: RESPONSE` filters: the server ANDs the type onto the id + store
+# filter, so the id of an internal order (REQUEST) reads as RecordNotFound — the
+# not-found alert — instead of being handed back and rendered as this kind
+# (#1746).
 query requisitionDetail($storeId: String!, $id: String!) {
-  requisition(storeId: $storeId, id: $id) {
+  requisition(storeId: $storeId, id: $id, type: RESPONSE) {
     __typename
     ... on RequisitionNode {
       ...RequisitionInfo

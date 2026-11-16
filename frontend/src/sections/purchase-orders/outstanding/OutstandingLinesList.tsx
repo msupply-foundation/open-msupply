@@ -178,9 +178,15 @@ const OutstandingLinesList: Component = () => {
 
   // Opening a row opens that line's ORDER, not the line — the line has no
   // screen of its own (OMS-FUN-PO-14.9).
-  const openRow = (row: Row) => {
+  const rowHref = (row: Row) => {
     const id = row.purchaseOrder?.id;
-    if (id) navigate(`/${params.storeId}/replenishment/purchase-order/${id}`);
+    return id
+      ? `/${params.storeId}/replenishment/purchase-order/${id}`
+      : undefined;
+  };
+  const openRow = (row: Row) => {
+    const href = rowHref(row);
+    if (href) navigate(href);
   };
 
   // Columns and crumbs are accessors (not plain arrays): their text comes from
@@ -345,6 +351,7 @@ const OutstandingLinesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // With nothing outstanding the list says so below its still-visible
         // headers (OMS-FUN-PO-14.4). No call to action: nothing is created
         // here.

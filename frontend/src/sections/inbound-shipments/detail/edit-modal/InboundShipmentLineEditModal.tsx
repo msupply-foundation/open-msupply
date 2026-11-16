@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t, tPlural, type LocaleKey } from '../../../../intl';
-import { roundedText } from '../../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
@@ -27,7 +27,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../../intl/calendarDate';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
@@ -49,8 +49,8 @@ import {
   newBatchDefaultsFromLine,
   orderLinePrice,
   packDifference,
-  perUnitAtPackSize,
   figuresAtPackSize,
+  savedSellOverridden,
   type MissingBatchField,
   type NewBatchDefaults,
   type PackSizeBase,
@@ -62,6 +62,7 @@ import {
   TrashIcon,
 } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
+import { perUnitAtPackSize } from '../../../../domain/item/defaultSellPrice';
 import {
   createFocusTarget,
   createFocusTargets,
@@ -346,7 +347,12 @@ const emptyBatch = (): DraftBatch => ({
   volumeOverridden: false,
 });
 
-const fromLine = (line: InboundLineFragment): DraftBatch => ({
+// `shipment`: what the shipment is linked to, which decides whether a saved
+// sell price follows a pack-size change (savedSellOverridden).
+const fromLine = (
+  line: InboundLineFragment,
+  shipment: { purchaseOrderLinked: boolean; costLocked: boolean }
+): DraftBatch => ({
   id: line.id,
   isNew: false,
   deleted: false,
@@ -372,10 +378,13 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   campaignName: line.campaign?.name ?? null,
   programId: line.program?.id ?? null,
   // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
-  // is about adding); mark both overridden so a pack-size edit never wipes a
-  // saved price.
+  // is about adding); the cost is marked overridden so a pack-size edit never
+  // wipes a saved one. A saved sell price still at the default for its pack
+  // size follows a pack-size change like a new batch's (spec/stock rules ›
+  // Default sell price for new stock) — a line made from a master list or an
+  // internal order arrives at it; one the user typed is kept.
   costOverridden: true,
-  sellOverridden: true,
+  sellOverridden: savedSellOverridden(line, shipment),
   volumeOverridden: true,
 });
 
@@ -546,7 +555,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const seedFromLines = (lines: InboundLineFragment[]) => {
     const first = lines[0];
     if (!first) return;
-    setBatches(lines.map(fromLine));
+    const shipment = {
+      purchaseOrderLinked: !!props.purchaseOrderId,
+      costLocked: props.costLocked,
+    };
+    setBatches(lines.map(line => fromLine(line, shipment)));
     setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
     setTransferComment(first.transferComment);
     // A PO-linked shipment's existing lines already cite the order line they
@@ -1422,6 +1435,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // controlLine: plain text, so in the top-aligned table it would ride the
       // top of its cell rather than sit on the inputs' line.
       ...getNumberCell({ hideOnCard: true, controlLine: true }),
+      // Read from the row, not info.getValue(): TanStack caches each row's
+      // accessor value until the row model is rebuilt, and packs / pack size
+      // are edited in place on the same draft row — a cached value would keep
+      // the figure from when the row was first drawn.
+      cell: info => (
+        <Num
+          value={displayNumber(
+            info.row.original.numberOfPacks * info.row.original.packSize
+          )}
+        />
+      ),
     },
     {
       c: { key: 'expiryDate' },
@@ -1552,6 +1576,29 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 value={item()?.doses ?? 0}
                 disabled
               />
+            ),
+          } satisfies Column<DraftBatch, never, GroupKey>,
+          // Doses received (computed) — units received × doses per unit, so an
+          // EPI receiver reads the doses arriving without doing the sum (H5,
+          // #2071). A read-only value like Difference: derived, never typed.
+          {
+            c: { id: 'dosesReceived' },
+            header: () => t('label.doses-received'),
+            cardGroup: 'batch',
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
+            // Read from the row and the item getter, not info.getValue(), so
+            // the figure follows the draft as packs / pack size are typed
+            // (see Units received).
+            cell: info => (
+              <span class={styles.statValue}>
+                <Num
+                  value={displayNumber(
+                    info.row.original.numberOfPacks *
+                      info.row.original.packSize *
+                      (item()?.doses ?? 0)
+                  )}
+                />
+              </span>
             ),
           } satisfies Column<DraftBatch, never, GroupKey>,
         ]
@@ -1788,7 +1835,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             disabled={props.readOnly}
             size="small"
             value={b.manufactureDate}
-            max={localTodayIso()}
+            max={todayCalendarDate()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
           />
         );

@@ -134,8 +134,9 @@ const ProgramsList: Component = () => {
   const crumbs = () => [{ label: t('label.programs-immunisations') }];
 
   // A row opens the program's detail (S2) — its course list.
-  const openRow = (row: ProgramRow) =>
-    navigate(`/${params.storeId}/programs/immunisations/${row.id}`);
+  const rowHref = (row: ProgramRow) =>
+    `/${params.storeId}/programs/immunisations/${row.id}`;
+  const openRow = (row: ProgramRow) => navigate(rowHref(row));
 
   return (
     <Page
@@ -166,6 +167,7 @@ const ProgramsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // Empty: "Nothing here" + this message, and NO create action —
         // programs are not created here (S1 § states).
         emptyMessage={t('error.no-immunisation-programs')}

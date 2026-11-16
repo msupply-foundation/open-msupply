@@ -49,6 +49,7 @@ import {
   type PatientDetails,
   type PatientNode,
 } from './patientDetails';
+import { notFound } from '../../../api/gated';
 import { Patient, PatientWithDocument } from './patient.generated';
 import { UpdatePatient } from './updatePatient.generated';
 
@@ -272,6 +273,37 @@ describe('createPatientDetails', () => {
       expect(details.node()).toBe(record);
       expect(patientReads()).toEqual([Patient, PatientWithDocument]);
       expect(details.documentEditor.form.status()).toBe('idle');
+    });
+  });
+
+  // The patient screen shows its not-found notice only for the server's own
+  // "no such patient", never for a read that failed (#1746): that one has the
+  // global error modal up, whose Retry reloads, and must not be told the
+  // patient is gone.
+  describe('a patient read that finds no patient', () => {
+    const openMissing = async (answer: unknown) => {
+      fetchPatientRegistry.mockResolvedValue({ entry: undefined });
+      graphqlFetch.mockImplementation(async () => answer);
+      const details = create();
+      await vi.waitFor(() => expect(details.patient.state).toBe('ready'));
+      return details;
+    };
+
+    it('settles null when the server has no such patient', async () => {
+      const details = await openMissing({
+        kind: 'success',
+        data: { patient: null },
+      });
+      expect(details.patient.latest).toBeNull();
+      expect(notFound(details.patient)).toBe(true);
+      expect(details.node()).toBeUndefined();
+    });
+
+    it('settles undefined when the read failed', async () => {
+      const details = await openMissing({ kind: 'unexpectedError' });
+      expect(details.patient.latest).toBeUndefined();
+      expect(notFound(details.patient)).toBe(false);
+      expect(details.node()).toBeUndefined();
     });
   });
 

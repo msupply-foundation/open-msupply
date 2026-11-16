@@ -17,7 +17,7 @@ import {
   type ReadScan,
 } from '@/domain/barcode';
 import type { ItemOption } from '@/domain/item';
-import { perUnitAtPackSize } from '../inboundShipmentLine';
+import { figuresAtPackSize, type PackSizeBase } from '../inboundShipmentLine';
 import type { BatchInboundShipmentVariables } from '../inboundShipmentDetail.generated';
 
 /** A scan as the window receives it — never an unreadable one. */
@@ -356,15 +356,20 @@ export const captureBatch = (
       ],
     };
   }
-  const price = context.costLocked
-    ? perUnitAtPackSize(
-        item.defaultSellPricePerPack,
-        item.defaultPackSize,
-        draft.packSize
-      )
-    : draft.packSize === item.defaultPackSize
-      ? item.defaultSellPricePerPack
-      : 0;
+  // A new line's figures are the item's defaults carried to the scanned pack
+  // size by the line editor's own rules (figuresAtPackSize): volume and sell
+  // price per unit, and cost per unit where a source link locks it, else
+  // cleared away from the default pack size for the receiver to enter.
+  const base: PackSizeBase = {
+    packSize: item.defaultPackSize,
+    costPricePerPack: item.defaultSellPricePerPack,
+    sellPricePerPack: item.defaultSellPricePerPack,
+    volumePerPack: item.volumePerPack,
+  };
+  const figures = figuresAtPackSize(base, draft.packSize, {
+    purchaseOrderLinked: false,
+    costLocked: context.costLocked,
+  });
   return {
     insertInboundShipmentLines: [
       {
@@ -376,13 +381,9 @@ export const captureBatch = (
         batch: batch || undefined,
         expiryDate: draft.expiryDate ?? undefined,
         manufactureDate: draft.manufactureDate ?? undefined,
-        costPricePerPack: price,
-        sellPricePerPack: price,
-        volumePerPack: perUnitAtPackSize(
-          item.volumePerPack,
-          item.defaultPackSize,
-          draft.packSize
-        ),
+        costPricePerPack: figures.costPricePerPack ?? base.costPricePerPack,
+        sellPricePerPack: figures.sellPricePerPack ?? base.sellPricePerPack,
+        volumePerPack: figures.volumePerPack,
         ...(draft.barcode ? { barcode: draft.barcode } : {}),
       },
     ],

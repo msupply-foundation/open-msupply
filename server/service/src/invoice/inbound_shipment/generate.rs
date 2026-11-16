@@ -2,6 +2,8 @@ use repository::db_diesel::InvoiceLineType;
 use repository::{InvoiceLineRow, InvoiceRow, ItemRowRepository, RepositoryError};
 use util::uuid::uuid;
 
+use crate::backend_plugin::types::transform_item_store_properties::Context;
+use crate::pricing::default_sell_price::DefaultSellPrices;
 use crate::service_provider::ServiceContext;
 use crate::store_preference::get_store_preferences;
 
@@ -12,6 +14,14 @@ pub fn generate_empty_invoice_lines(
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let mut result: Vec<InvoiceLineRow> = Vec::new();
     let store_preferences = get_store_preferences(&ctx.connection, &invoice_row.store_id)?;
+    // Nobody may open these lines before receiving them, so they start at the
+    // store's default sell price rather than relying on the line edit to fill it in
+    let default_sell_prices = DefaultSellPrices::load(
+        &ctx.connection,
+        Context::NewStock,
+        &invoice_row.store_id,
+        item_ids.clone(),
+    )?;
 
     item_ids.into_iter().for_each(|item_id| {
         match ItemRowRepository::new(&ctx.connection).find_active_by_id(&item_id) {
@@ -20,6 +30,9 @@ pub fn generate_empty_invoice_lines(
                     true => 1.0,
                     false => item.default_pack_size,
                 };
+                let sell_price_per_pack = default_sell_prices
+                    .for_pack(&item, default_pack_size)
+                    .unwrap_or(0.0);
                 result.push(InvoiceLineRow {
                     id: uuid(),
                     invoice_id: invoice_row.id.clone(),
@@ -34,7 +47,7 @@ pub fn generate_empty_invoice_lines(
                     purchase_order_line_id: None,
                     pack_size: default_pack_size,
                     cost_price_per_pack: 0.0,
-                    sell_price_per_pack: 0.0,
+                    sell_price_per_pack,
                     total_before_tax: 0.0,
                     total_after_tax: 0.0,
                     tax_percentage: None,

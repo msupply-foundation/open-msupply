@@ -1369,7 +1369,8 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_activity_log_row_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-activity-log-row-repository");
         let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 

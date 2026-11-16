@@ -1,5 +1,5 @@
 import { createResource, Show, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { gated } from '@/api/gated';
 import { getDisplayAge, t } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
@@ -30,7 +30,6 @@ const VaccinationCardView: Component = () => {
     patientId: string;
     programEnrolmentId: string;
   }>();
-  const navigate = useNavigate();
 
   const [cardData] = createResource(
     () => ({
@@ -66,15 +65,15 @@ const VaccinationCardView: Component = () => {
     [
       {
         label: t('label.patients'),
-        onClick: () => navigate(`/${params.storeId}/dispensary/patients`),
+        to: `/${params.storeId}/dispensary/patients`,
       },
       {
         label: patient()?.name ?? '',
-        onClick: () => navigate(patientPath()),
+        to: patientPath(),
       },
       {
         label: t('label.vaccination-card'),
-        onClick: () => navigate(`${patientPath()}?tab=vaccinations`),
+        to: `${patientPath()}?tab=vaccinations`,
       },
       { label: card()?.programName ?? '' },
     ].filter(crumb => crumb.label !== '');

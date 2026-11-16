@@ -117,11 +117,7 @@ export const OutboundLineEditTable = ({
       // Prevent issuing expired stock if preference is set, up to threshold
       if (prefs.expiredStockPreventIssue && !!row.expiryDate) {
         const threshold = prefs.expiredStockIssueThreshold ?? 0;
-        const daysBeforeExpiry = DateUtils.differenceInDays(
-          row.expiryDate,
-          Date.now()
-        );
-        if (daysBeforeExpiry <= threshold) return true;
+        if (DateUtils.isExpired(row.expiryDate, threshold)) return true;
       }
 
       return false;

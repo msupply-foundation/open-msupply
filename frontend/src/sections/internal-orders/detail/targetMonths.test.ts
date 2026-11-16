@@ -22,7 +22,11 @@ beforeAll(() => {
 });
 afterAll(() => setDictionaries({}));
 
-const intervalAndBuffer = { supplyIntervalMonths: 3, safetyBufferMonths: 0.5 };
+const intervalAndBuffer = {
+  supplyIntervalMonths: 3,
+  safetyBufferMonths: 0.5,
+  deliveryLeadTimeMonths: 0,
+};
 
 describe('targetMonthOptions', () => {
   it('offers 1…6 months when the target is one of them', () => {
@@ -181,5 +185,36 @@ describe('a target that differs from the one the store fixes (OMS-REG-REPL-17.18
     expect(message).toContain('3 months');
     expect(message).toContain('0.5 months');
     expect(message).toContain('3.5 months');
+  });
+});
+
+describe('a store with a delivery lead time (OMS-REG-REPL-17.30)', () => {
+  const withLeadTime = { ...intervalAndBuffer, deliveryLeadTimeMonths: 1 };
+
+  it('adds the lead time to the target the store sets', () => {
+    expect(
+      intervalAndBufferBehindTarget({
+        maxMonthsOfStock: 4.5,
+        supplyIntervalAndBuffer: withLeadTime,
+        program: null,
+      })
+    ).toEqual(withLeadTime);
+    expect(targetDiffersFromFixed(4.5, withLeadTime)).toBe(false);
+    expect(targetDiffersFromFixed(3.5, withLeadTime)).toBe(true);
+  });
+
+  it('names the lead time in the tooltips', () => {
+    expect(targetSetByStoreMessage(withLeadTime)).toContain(
+      'delivery lead time of 1 months'
+    );
+    const message = targetDiffersFromStoreMessage(withLeadTime);
+    expect(message).toContain('delivery lead time of 1 months');
+    expect(message).toContain('4.5 months');
+  });
+
+  it("doesn't mention a lead time of 0", () => {
+    expect(targetSetByStoreMessage(intervalAndBuffer)).not.toContain(
+      'lead time'
+    );
   });
 });

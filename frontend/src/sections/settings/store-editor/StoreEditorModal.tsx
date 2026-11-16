@@ -34,6 +34,7 @@ import {
 import { StoreGpsBlock } from './StoreGpsBlock';
 import { StorePropertyField } from './StorePropertyField';
 import { StorePreferencesPanel } from './StorePreferencesPanel';
+import { ConsumptionEstimatesPanel } from './ConsumptionEstimatesPanel';
 import {
   buildPreferencesVariables,
   canEditAnything,
@@ -201,6 +202,20 @@ export const StoreEditorModal = (props: {
       setPrefDraft({});
     }
   });
+
+  // So does moving to another store with the editor still open (the
+  // register's save-and-move-on): staged preferences belong to the store they
+  // were made on, and a later Save would otherwise write them to this one.
+  createEffect(
+    on(
+      () => props.facilityStoreId,
+      () => {
+        setSaveFailed(false);
+        setPrefDraft({});
+      },
+      { defer: true }
+    )
+  );
 
   const session = () => ({
     canMutate: hasPermission('NAME_PROPERTIES_MUTATE'),
@@ -385,6 +400,14 @@ export const StoreEditorModal = (props: {
             tabs={[
               { value: 'properties', label: t('label.properties') },
               { value: 'preferences', label: t('label.preferences') },
+              ...(props.facilityStoreId
+                ? [
+                    {
+                      value: 'consumption-estimates',
+                      label: t('label.consumption-estimates'),
+                    },
+                  ]
+                : []),
             ]}
           />
           <TabPanel value="properties">
@@ -430,6 +453,26 @@ export const StoreEditorModal = (props: {
               }
             />
           </TabPanel>
+          {/* Saved by its own action after a review, not by the editor's
+              Save (rules § The store editor › Consumption estimates). */}
+          <Show when={props.facilityStoreId}>
+            {forStoreId => (
+              <TabPanel value="consumption-estimates">
+                {/* Keyed: a new panel for each store, so an upload under
+                    review for one store can't be saved to the next when the
+                    register moves on with the editor still open. */}
+                <Show when={forStoreId()} keyed>
+                  {id => (
+                    <ConsumptionEstimatesPanel
+                      storeId={props.storeId}
+                      forStoreId={id}
+                      editable={prefsEditable()}
+                    />
+                  )}
+                </Show>
+              </TabPanel>
+            )}
+          </Show>
         </Tabs>
 
         <Show when={saveFailed()}>

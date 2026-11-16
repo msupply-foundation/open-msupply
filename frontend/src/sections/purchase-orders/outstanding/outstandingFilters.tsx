@@ -80,7 +80,7 @@ const FILTERS: Filter<OutstandingLineFilter>[] =
       ),
     },
     // The line's own expected delivery date — a NaiveDate, so type="date"
-    // passes the plain ISO date through, and the future is NOT disabled: an
+    // passes the calendar date through, and the future is NOT disabled: an
     // expected delivery date is normally ahead of today. A line with no date
     // is outside every range, so applying this filter HIDES undated lines
     // (OMS-FUN-PO-14.12) — the server's own behaviour, not something the

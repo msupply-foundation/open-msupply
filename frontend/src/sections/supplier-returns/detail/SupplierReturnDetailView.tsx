@@ -8,7 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -16,9 +16,8 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import {
   Tabs,
   TabList,
@@ -31,7 +30,6 @@ import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
-  InfoIcon,
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
@@ -152,7 +150,7 @@ const SupplierReturnDetailView: Component = () => {
   // Fetch the return's HEADER (the lines are their own query below). The read
   // pins `type: SUPPLIER_RETURN` (supplierReturnDetail.graphql), so a
   // non-return id, another store's return, and a bad id all come back as a
-  // NodeError (RecordNotFound) and resolve to undefined — the not-found
+  // NodeError (RecordNotFound) and resolve to null — the not-found
   // deep-link alert renders below (ui-surface S3 § tabs; #1044). That NodeError
   // is deliberately NOT routed to the global unexpected-error modal (no
   // mapSuccessToError): it would offer a useless reload of the same bad id and
@@ -166,11 +164,12 @@ const SupplierReturnDetailView: Component = () => {
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
 
-  const info = (): SupplierReturnInfoFragment | undefined => data();
+  const info = (): SupplierReturnInfoFragment | undefined =>
+    data() ?? undefined;
 
   // ONE server-sorted, server-paginated page of the return's lines. invoiceId +
   // type are pinned (a supplier return's lines are STOCK_OUT); sort and page
@@ -406,8 +405,7 @@ const SupplierReturnDetailView: Component = () => {
   const crumbs = (node: SupplierReturnInfoFragment) => [
     {
       label: t('supplier-return'),
-      onClick: () =>
-        navigate(`/${params.storeId}/replenishment/supplier-return`),
+      to: `/${params.storeId}/replenishment/supplier-return`,
     },
     { label: String(node.invoiceNumber) },
   ];
@@ -502,28 +500,22 @@ const SupplierReturnDetailView: Component = () => {
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show (kdd/solid-reactivity-pitfalls): every save sets a
           fresh node object; keyed would remount the page and drop focus. The
-          resolved-undefined fallback is the not-found deep-link alert. */}
+          fallback is the not-found deep-link alert once the server answers the
+          id as not found; a failed read keeps the spinner, under the global
+          error modal. */}
       <Show
         when={info()}
         fallback={
-          <Dialog
-            open
-            testId="return-not-found-notice"
-            icon={<InfoIcon />}
-            title={t('error.return-not-found')}
-            description={t('messages.click-to-return-to-returns')}
-            onClose={() =>
-              navigate(`/${params.storeId}/replenishment/supplier-return`)
-            }
-            actions={
-              <OkButton
-                data-testid="dialog-button-ok"
-                onClick={() =>
-                  navigate(`/${params.storeId}/replenishment/supplier-return`)
-                }
-              />
-            }
-          />
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="return-not-found-notice"
+              title={t('error.return-not-found')}
+              description={t('messages.click-to-return-to-returns')}
+              onClose={() =>
+                navigate(`/${params.storeId}/replenishment/supplier-return`)
+              }
+            />
+          </Show>
         }
       >
         {node => {
