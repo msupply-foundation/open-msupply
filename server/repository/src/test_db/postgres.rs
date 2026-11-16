@@ -84,11 +84,15 @@ struct PgDatabaseRow {
 // test is done - failed tests included, since libtest catches the panic and
 // exits normally. A test killed outright (a nextest timeout) keeps its
 // database. Templates are shared between processes and never dropped here.
+//
+// Registered by setup_test (and so setup_all), never by `setup`: the CLI uses
+// `setup` to initialise real databases, which must outlive it whatever the
+// environment says. The few tests that call `setup` directly keep theirs.
 static DBS_TO_DROP: Mutex<Vec<String>> = Mutex::new(Vec::new());
 static SERVER_URL: OnceLock<String> = OnceLock::new();
 static REGISTER_DROP: Once = Once::new();
 
-fn drop_at_exit(db_settings: &DatabaseSettings) {
+pub(crate) fn drop_at_exit(db_settings: &DatabaseSettings) {
     if !env_msupply_drop_test_dbs() {
         return;
     }
@@ -149,7 +153,6 @@ async fn setup_with_version_no_template(
     ))
     .execute(&mut connection)
     .unwrap();
-    drop_at_exit(db_settings);
 
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
@@ -255,7 +258,6 @@ pub(crate) async fn setup_with_version(
     ))
     .execute(&mut root_connection)
     .unwrap();
-    drop_at_exit(db_settings);
 
     let connection_manager = get_storage_connection_manager(db_settings);
     let collection = if !cache_all_mock_data {

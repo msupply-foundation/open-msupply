@@ -14,7 +14,7 @@ clap = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
 # atexit, for test_db's dropping of postgres test databases
-libc = "0.2"
+libc = { version = "0.2", optional = true }
 diesel = { version = "2.3.7", default-features = false, features = [
     "r2d2",
     "numeric",
@@ -56,6 +56,7 @@ postgres = [
     "diesel/postgres",
     "diesel/postgres_backend",
     "diesel-derive-enum/postgres",
+    "libc",
 ]
 integration_test = []
 
