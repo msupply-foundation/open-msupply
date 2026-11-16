@@ -22,7 +22,7 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
-import { MenuLinesIcon } from '@/ui/icons';
+import { ClockIcon } from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
@@ -461,7 +461,7 @@ const SimpleDispensingPage: Component = () => {
             <LinkButton
               href={recordsHref()}
               variant="secondary"
-              icon={<MenuLinesIcon />}
+              icon={<ClockIcon />}
               data-testid="dispensing-records-button"
             >
               {t('button.dispensing-records')}
