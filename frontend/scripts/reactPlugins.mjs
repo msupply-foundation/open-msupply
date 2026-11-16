@@ -20,7 +20,8 @@
  * `@openmsupply-client/*` from the repo root's node_modules — so a build
  * needs the root `yarn install` as well as this front end's `pnpm install`.
  *
- * A plugin whose React parts fail — disagree with its other parts, or don't
+ * A plugin whose React parts fail — disagree with its other parts on code,
+ * runtime or which backend answers, or don't
  * build against today's client/ — gets no bundle and is reported, and the run
  * goes on (build-plugins.mjs). It fails again every run until it is fixed,
  * which is the reminder.
@@ -82,10 +83,6 @@ export const checkReactParts = (solid, parts, hostRuntime) => {
     why =
       `its parts declare different plugin codes — ${all.map(named).join(', ')}. ` +
       'One plugin, one code.';
-  } else if (new Set(all.map(part => part.version)).size > 1) {
-    why =
-      `its parts declare different versions — ${all.map(named).join(', ')}. ` +
-      'A plugin has one version; bump them together.';
   } else if (solid[1] && reactBackend) {
     why =
       `two backends — backend/ and ${reactBackend.dir}. Delete the React ` +

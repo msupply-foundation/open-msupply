@@ -57,6 +57,7 @@ Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s
 - **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 50 GB holds the ones pull requests and develop merges use; a rarely built one (an arm64 release, say) is evicted and builds cold. `docker buildx du --verbose` shows what they actually take.
 - **The second bounds the whole build cache** at 70 GB and keeps 50 GB of the disk free, for images, deployments' databases and what a CI job writes while it runs: its test archive, postgres's test databases, sqlite's `test_output`. GC runs only when a build finishes, so the free space has to last a whole test run — at 30 GB, a postgres run filled the disk.
 - `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
+- **A server CI job killed before its clean-up** (the runner lost, a reboot, a full disk) leaves its postgres container, with its test databases, and its 2.4 GB CI image. The first step of every server CI job removes those of any run that has finished, using [`.github/scripts/server-ci-cleanup.sh`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/scripts/server-ci-cleanup.sh). It only finds what is named for a run. Volumes left with no container have no name to go by, so remove those by hand while nothing is running: `docker volume prune -f` removes only unnamed volumes no container uses, never a deployment's.
 
 ## Sizing
 

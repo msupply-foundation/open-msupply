@@ -12,7 +12,7 @@
         ],
         "variant_type": "BOA_JS"
     },
-    "version": "1.0.0",
+    "version": "3.5.0",
     "main": "plugin.js",
     "scripts": {
         "build-plugin": "webpack"
