@@ -310,7 +310,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git make gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/
-RUN git clone https://github.com/wolfcw/libfaketime.git
+# Pinned to a release. It is preloaded into every process in the image, apt
+# included, so an unpinned master breaks the build whenever master breaks - as
+# it did in November 2026, with apt's `sqv` dying mid-install.
+ARG LIBFAKETIME_VERSION=v0.9.13
+RUN git clone --depth 1 --branch ${LIBFAKETIME_VERSION} https://github.com/wolfcw/libfaketime.git
 WORKDIR /usr/src/libfaketime/src
 RUN make install
 
@@ -346,6 +350,15 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 # This keeps the monotonic clock real while FAKETIME still moves the date.
 # See issue #12289.
 ENV FAKETIME_DONT_FAKE_MONOTONIC=1
+# libfaketime keeps shared memory in /dev/shm, which is only for handing a faked
+# time between processes started by the `faketime` wrapper. The image does not
+# use the wrapper - FAKETIME is set in the environment - so turn it off. Built
+# from an unpinned master, it left a faketime_shm_<pid> and faketime_lock_<pid>
+# behind for every process: the healthcheck every 10s filled the container's
+# 64MB /dev/shm in a couple of days, and from then on every new process (the
+# healthcheck, `docker exec`) died with SIGBUS, exit 135, while the server
+# itself kept running.
+ENV FAKETIME_DISABLE_SHM=1
 
 # PDF report export renders HTML through headless Chromium. Install the headless
 # shell (chromium-headless-shell) — the GUI-less build, roughly half the installed
