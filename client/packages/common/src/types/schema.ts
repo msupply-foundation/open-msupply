@@ -6201,6 +6201,13 @@ export type ItemNode = {
   customFields?: Maybe<Scalars['JSON']['output']>;
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
+  /**
+   * The item's price per unit on the default price list, null when it is on none.
+   * The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+   * charges a patient for each unit of a stock-out line. Not store-specific: the
+   * default price list is the same in every store.
+   */
+  defaultPricePerUnit?: Maybe<Scalars['Float']['output']>;
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
