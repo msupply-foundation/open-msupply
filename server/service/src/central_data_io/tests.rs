@@ -678,6 +678,52 @@ async fn a_repeated_row_that_changes_nothing_is_not_an_error() {
     assert_eq!(summary.tables, unit_changes(0, 1, 3));
 }
 
+// covers: OMS-REG-CDIO-01.73
+
+#[actix_rt::test]
+async fn a_name_finds_a_unit_an_earlier_row_adds() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_unit_added_earlier_in_file",
+        MockDataInserts::none().units(),
+    )
+    .await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let row =
+        |id: Value, index: i32| vec![id, "Vial".to_string().into(), index.into(), true.into()];
+    let path = write_file(
+        dir.path(),
+        unit_sheet(
+            vec!["id", "name", "index", "is_active"],
+            vec![
+                row(Value::Empty, 1),
+                // Finds row 2's unit and repeats it.
+                row(Value::Empty, 1),
+                // Finds row 2's unit and changes it.
+                row(Value::Empty, 2),
+                // A second active Vial.
+                row("new_vial".to_string().into(), 1),
+            ],
+        ),
+    );
+
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|e| (e.row, e.message.as_str()))
+        .collect();
+    assert_eq!(errors[0], (Some(4), "Row 2 already changes this record"));
+    assert_eq!(errors[1].0, Some(5));
+    assert!(errors[1].1.ends_with(
+        "is already named Vial. Give this unit another name, or make one of them inactive"
+    ));
+    assert_eq!(errors.len(), 2);
+    assert_eq!(units_named(&connection, "Vial"), vec![]);
+}
+
 // covers: OMS-REG-CDIO-01.41
 
 #[actix_rt::test]
