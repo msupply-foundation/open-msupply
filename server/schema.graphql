@@ -1436,9 +1436,9 @@ type CentralDataRowChangeNode {
 type CentralDataRowErrorNode {
 	sheet: String!
 	"""
-	As Excel shows it.
+	As Excel shows it. Null on a sheet name, which has no row.
 	"""
-	row: Int!
+	row: Int
 	column: String
 	message: String!
 }

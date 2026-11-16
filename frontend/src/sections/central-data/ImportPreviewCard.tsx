@@ -60,8 +60,9 @@ const sheetColumn = <T extends { sheet: string }>(): Column<T, never> => ({
   header: () => t('label.sheet'),
   size: remToPx(8),
 });
-const rowColumn = <T extends { row: number }>(): Column<T, never> => ({
-  c: { id: 'row', accessor: row => row.row },
+// An error on a sheet name has no row.
+const rowColumn = <T extends { row?: number | null }>(): Column<T, never> => ({
+  c: { id: 'row', accessor: row => row.row ?? '' },
   header: () => t('label.row'),
   meta: { align: 'right' },
   size: remToPx(5),

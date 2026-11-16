@@ -174,7 +174,7 @@ async fn heading_errors_are_listed_before_row_errors() {
     assert_eq!(summary.error_count as usize, MAX_ROWS_LISTED + 51);
     assert_eq!(
         (summary.errors[0].row, summary.errors[0].column.as_deref()),
-        (1, Some("nmae"))
+        (Some(1), Some("nmae"))
     );
 }
 
@@ -417,7 +417,7 @@ async fn one_bad_row_means_nothing_is_applied() {
         .collect();
     assert_eq!(
         errors,
-        vec![(4, Some("index"), "\"abc\" must be a whole number")]
+        vec![(Some(4), Some("index"), "\"abc\" must be a whole number")]
     );
 
     let repo = UnitRowRepository::new(&connection);
@@ -502,9 +502,9 @@ async fn misspelt_columns_unknown_sheets_and_repeated_records_are_errors() {
     assert_eq!(
         errors,
         vec![
-            ("units", 1, None),
-            ("unit", 1, Some("nmae")),
-            ("unit", 3, None),
+            ("units", None, None),
+            ("unit", Some(1), Some("nmae")),
+            ("unit", Some(3), None),
         ]
     );
     assert_eq!(
@@ -553,8 +553,8 @@ async fn a_repeated_heading_and_values_without_a_heading_are_errors() {
     assert_eq!(
         errors,
         vec![
-            (1, Some("name"), "This column appears twice"),
-            (1, None, "Column E has values but no heading"),
+            (Some(1), Some("name"), "This column appears twice"),
+            (Some(1), None, "Column E has values but no heading"),
         ]
     );
 }
@@ -707,7 +707,10 @@ async fn a_unit_row_cannot_give_an_active_unit_another_active_units_name() {
 
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     let error = &summary.errors[0];
-    assert_eq!((error.row, error.column.as_deref()), (2, Some("name")));
+    assert_eq!(
+        (error.row, error.column.as_deref()),
+        (Some(2), Some("name"))
+    );
     assert_eq!(
         error.message,
         format!(
@@ -888,7 +891,7 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
     assert_eq!(
         errors,
         vec![(
-            2,
+            Some(2),
             Some("name"),
             "ambiguous reference, please provide id instead"
         )]
@@ -959,7 +962,7 @@ async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
         .iter()
         .map(|e| (e.row, e.column.as_deref()))
         .collect();
-    assert_eq!(errors, vec![(2, Some("name"))]);
+    assert_eq!(errors, vec![(Some(2), Some("name"))]);
     assert_eq!(repo.find_one_by_id("new_unit").unwrap(), None);
 
     let path = write_file(dir.path(), unit_sheet(headers, vec![new_unit("Bottle")]));
@@ -1026,7 +1029,7 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
         .collect();
     assert_eq!(
         errors,
-        vec![(4, Some("index"), "index is required for a new unit")]
+        vec![(Some(4), Some("index"), "index is required for a new unit")]
     );
     assert_eq!(
         summary.tables,
@@ -1096,5 +1099,5 @@ async fn errors_past_the_listed_rows_are_counted_not_listed() {
     assert_eq!(summary.errors.len(), MAX_ROWS_LISTED);
     assert_eq!(summary.error_count, bad_rows as u32);
     assert_eq!(summary.tables[0].error_count, bad_rows as u32);
-    assert_eq!(summary.errors[0].row, 2);
+    assert_eq!(summary.errors[0].row, Some(2));
 }

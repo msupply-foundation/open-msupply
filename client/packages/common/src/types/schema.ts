@@ -1776,8 +1776,8 @@ export type CentralDataRowErrorNode = {
   __typename: 'CentralDataRowErrorNode';
   column?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
-  /** As Excel shows it. */
-  row: Scalars['Int']['output'];
+  /** As Excel shows it. Null on a sheet name, which has no row. */
+  row?: Maybe<Scalars['Int']['output']>;
   sheet: Scalars['String']['output'];
 };
 
@@ -1795,6 +1795,13 @@ export type CentralDataTableChangesNode = {
 export enum CentralDataTableNode {
   Unit = 'UNIT',
 }
+
+export type CentralDataTooManyCells = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataTooManyCells';
+  cellCount: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  maxCells: Scalars['Int']['output'];
+};
 
 export type CentralDataTooManyRows = CentralDataExportErrorInterface &
   CentralDataImportErrorInterface & {
