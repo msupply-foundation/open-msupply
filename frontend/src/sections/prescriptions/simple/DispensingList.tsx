@@ -59,8 +59,12 @@ export const DispensingList = (props: {
   onDispense: () => void;
   /** Someone is chosen, so there is someone to dispense to. */
   canDispense: boolean;
-  /** A save is in flight. */
-  dispensing: boolean;
+  /**
+   * A save is in flight, or Clear is looking for one whose reply was lost:
+   * Dispense shows busy and can't be pressed, so it never saves a list Clear
+   * is about to empty (rules › dispensing the visit).
+   */
+  busy: boolean;
   /**
    * A save is in flight or its reply was lost: the lines can't change, and
    * only Dispense is offered (rules › dispensing the visit).
@@ -107,7 +111,7 @@ export const DispensingList = (props: {
       class={cls}
       icon={<CheckCircleIcon />}
       disabled={!hasLines() || !props.canDispense}
-      loading={props.dispensing}
+      loading={props.busy}
       data-testid={testId}
       onClick={() => props.onDispense()}
     >
