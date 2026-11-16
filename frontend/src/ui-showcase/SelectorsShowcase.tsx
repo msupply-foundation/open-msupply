@@ -9,7 +9,7 @@ import {
   ColourTagPicker,
   TAG_COLOURS,
 } from '../ui/elements/selectors/ColourTag';
-import { t } from '../intl';
+import { formatNumber, t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { Button } from '../ui/elements/buttons/Button';
@@ -56,7 +56,7 @@ const renderItem = (item: DemoItem) => (
       {item.code}
       {' · '}
       {item.availableStock > 0 ? (
-        `${item.availableStock.toLocaleString()} in stock`
+        `${formatNumber(item.availableStock)} in stock`
       ) : (
         <span class={styles.outOfStock}>Out of stock</span>
       )}
