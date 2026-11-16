@@ -68,8 +68,11 @@ export const formatMonth = (
 ): string => {
   const ym = parseMonthValue(value);
   if (!ym) return '';
+  // Gregorian, the calendar the value is in: left to the browser, Dari and
+  // Pashto would name a Solar Hijri month and year
   return new Date(ym.year, ym.month, 1).toLocaleDateString(localeCode, {
     month: 'long',
     year: 'numeric',
+    calendar: 'gregory',
   });
 };

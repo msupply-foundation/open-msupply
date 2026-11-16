@@ -1,4 +1,5 @@
 use std::fs;
+use std::sync::{Mutex, Once, OnceLock};
 
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -12,8 +13,8 @@ use crate::{
     migrations::{MigrationConfig, Version, migrate},
     mock::{MockDataCollection, MockDataInserts, all_mock_data, insert_all_mock_data},
     test_db::constants::{
-        TEMPLATE_MARKER_FILE_POSTGRES, TEST_OUTPUT_DIR, env_msupply_no_test_db_template,
-        find_workspace_root,
+        TEMPLATE_MARKER_FILE_POSTGRES, TEST_OUTPUT_DIR, env_msupply_drop_test_dbs,
+        env_msupply_no_test_db_template, find_workspace_root,
     },
 };
 
@@ -74,6 +75,53 @@ struct PgDatabaseRow {
     oid: i64,
     #[allow(dead_code)]
     datname: String,
+}
+
+// Each test makes its own database and nothing dropped it after: a full CI run
+// left ~30 GB of them, enough to fill the build box's disk. With
+// MSUPPLY_DROP_TEST_DBS set, the databases a process made are dropped when it
+// exits. nextest runs each test in a process of its own, so that is when the
+// test is done - failed tests included, since libtest catches the panic and
+// exits normally. A test killed outright (a nextest timeout) keeps its
+// database. Templates are shared between processes and never dropped here.
+//
+// Registered by setup_test (and so setup_all), never by `setup`: the CLI uses
+// `setup` to initialise real databases, which must outlive it whatever the
+// environment says. The few tests that call `setup` directly keep theirs.
+static DBS_TO_DROP: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static SERVER_URL: OnceLock<String> = OnceLock::new();
+static REGISTER_DROP: Once = Once::new();
+
+pub(crate) fn drop_at_exit(db_settings: &DatabaseSettings) {
+    if !env_msupply_drop_test_dbs() {
+        return;
+    }
+    SERVER_URL.get_or_init(|| db_settings.connection_string_without_db());
+    let mut dbs = DBS_TO_DROP.lock().unwrap_or_else(|e| e.into_inner());
+    if !dbs.contains(&db_settings.database_name) {
+        dbs.push(db_settings.database_name.clone());
+    }
+    // SAFETY: registers a plain function, which neither panics nor unwinds.
+    REGISTER_DROP.call_once(|| unsafe {
+        libc::atexit(drop_test_dbs);
+    });
+}
+
+// Runs as the process exits: must not panic, so every failure is ignored - the
+// worst case is the database staying, as it always did.
+extern "C" fn drop_test_dbs() {
+    let dbs = DBS_TO_DROP.lock().unwrap_or_else(|e| e.into_inner());
+    let Some(url) = SERVER_URL.get() else {
+        return;
+    };
+    let Ok(mut connection) = PgConnection::establish(url) else {
+        return;
+    };
+    for db in dbs.iter() {
+        // FORCE: the test's own pool may still hold connections to it.
+        let _ = diesel::sql_query(format!("DROP DATABASE IF EXISTS \"{}\" WITH (FORCE);", db))
+            .execute(&mut connection);
+    }
 }
 
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {

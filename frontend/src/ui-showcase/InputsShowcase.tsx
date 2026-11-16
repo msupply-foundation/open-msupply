@@ -177,6 +177,7 @@ export const InputsShowcase = () => {
   const [expiringBefore, setExpiringBefore] = createSignal<string | null>(null);
   const [manufacture, setManufacture] = createSignal<string | null>(null);
   const [countDate, setCountDate] = createSignal<string | null>(null);
+  const [reportMonth, setReportMonth] = createSignal<string | null>(null);
   const [cutoff, setCutoff] = createSignal<string | null>('17:30');
   const [appointment, setAppointment] = createSignal<string | null>(
     '2026-07-17T02:30:00.000Z'
@@ -185,7 +186,7 @@ export const InputsShowcase = () => {
     start: '2026-07-01',
     end: '2026-07-31',
   });
-  const [reportMonth, setReportMonth] = createSignal<string | null>('2026-08');
+  const [pickedMonth, setPickedMonth] = createSignal<string | null>('2026-08');
   // NumberField demos: the parent-owned numbers each ValueReadout displays.
   const [qty, setQty] = createSignal<number | undefined>(1000);
   const [cost, setCost] = createSignal<number | undefined>(12.5);
@@ -732,6 +733,17 @@ export const InputsShowcase = () => {
                 }`}
               />
             </Field>
+            <Field caption="Month — pick a whole month">
+              <DateField
+                label="Report month"
+                monthOnly
+                value={reportMonth()}
+                onChange={setReportMonth}
+                helperText={`Type e.g. Oct 2026. Stored: ${
+                  reportMonth() ?? '(empty)'
+                }`}
+              />
+            </Field>
             <Field caption="Time — 12h am/pm (Kobalte)">
               <TimeField
                 label="Cut-off time"
@@ -752,10 +764,10 @@ export const InputsShowcase = () => {
             <Field caption="Month">
               <MonthField
                 label="Report month"
-                value={reportMonth()}
-                onChange={setReportMonth}
+                value={pickedMonth()}
+                onChange={setPickedMonth}
                 max="2026-12"
-                helperText={`Stored: ${reportMonth() ?? '—'}. Months after Dec 2026 can't be picked.`}
+                helperText={`Stored: ${pickedMonth() ?? '—'}. Months after Dec 2026 can't be picked.`}
               />
             </Field>
             <Field caption="Required">

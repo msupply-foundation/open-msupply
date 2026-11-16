@@ -66,8 +66,13 @@ export interface MonthGridProps {
  * month view and MonthField's whole panel.
  */
 export const MonthGrid = (props: MonthGridProps) => {
+  // Month names are always Gregorian, the calendar the grid lays out: left
+  // to the browser, Dari and Pashto would name Solar Hijri months.
   const monthShort = (i: number) =>
-    new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'short' });
+    new Date(2000, i, 1).toLocaleDateString(locale(), {
+      month: 'short',
+      calendar: 'gregory',
+    });
   return (
     <div class={styles.pickGrid} onKeyDown={moveFocus}>
       <Index each={Array.from({ length: 12 }, (_, i) => i)}>
