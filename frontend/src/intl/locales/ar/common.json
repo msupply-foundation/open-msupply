@@ -1962,6 +1962,7 @@
   "shell.footer.general": "عام",
   "shell.main-navigation": "التنقل الرئيسي",
   "shell.open-navigation": "فتح التنقل",
+  "status.confirmed": "مؤكد",
   "status.decommissioned": "تم إيقاف التشغيل",
   "status.finalised": "تم الانتهاء",
   "status.functioning": "في الخدمة",

@@ -3883,6 +3883,7 @@
   "status.authorised": "مجاز",
   "status.cancelled": "لغوه شو",
   "status.closed": "تړل شوی",
+  "status.confirmed": "تایید شوی",
   "status.decommissioned": "لغوه شو",
   "status.delivered": "سپارل شوی",
   "status.dispensed": "توزیع شوی",

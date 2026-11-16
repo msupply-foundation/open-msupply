@@ -1734,6 +1734,7 @@
   "settings.printer-label-width": "Ancho de etiqueta",
   "settings.printer-port": "Número de puerto",
   "settings.scanner-type": "Tipo de escáner",
+  "status.confirmed": "Confirmado",
   "status.decommissioned": "Dado de baja",
   "status.finalised": "Finalizado",
   "status.functioning": "Funcionando",

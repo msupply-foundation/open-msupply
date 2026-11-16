@@ -2325,6 +2325,7 @@
   "settings.printer-port": "Номер порта",
   "settings.scanner-type": "Тип Сканера",
   "status.closed": "Закрыто",
+  "status.confirmed": "Подтверждено",
   "status.decommissioned": "Выведен из эксплуатации",
   "status.finalised": "Завершена",
   "status.functioning": "Функционирующий",

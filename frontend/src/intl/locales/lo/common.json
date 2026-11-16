@@ -3725,6 +3725,7 @@
   "status.authorised": "ອະນຸຍາດແລ້ວ",
   "status.cancelled": "ຍົກເລີກແລ້ວ",
   "status.closed": "ປິດແລ້ວ",
+  "status.confirmed": "ຢືນຢັນແລ້ວ",
   "status.decommissioned": "ປົດລະວາງແລ້ວ",
   "status.delivered": "ຈັດສົ່ງແລ້ວ",
   "status.dispensed": "ຈ່າຍຢາແລ້ວ",

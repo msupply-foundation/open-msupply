@@ -4045,6 +4045,7 @@
   "status.authorised": "Autorisé",
   "status.cancelled": "Annulé",
   "status.closed": "Clôturé",
+  "status.confirmed": "Confirmé",
   "status.decommissioned": "Au rebut",
   "status.delivered": "Livré",
   "status.dispensed": "Délivré",

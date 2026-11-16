@@ -3923,6 +3923,7 @@
   "status.authorised": "Authorised",
   "status.cancelled": "Cancelled",
   "status.closed": "Closed",
+  "status.confirmed": "Confirmed",
   "status.decommissioned": "Decommissioned",
   "status.delivered": "Delivered",
   "status.dispensed": "Dispensed",

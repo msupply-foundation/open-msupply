@@ -2903,6 +2903,7 @@
   "status.authorised": "Autorizada(o)",
   "status.cancelled": "Cancelada(o)",
   "status.closed": "Fechada(o)",
+  "status.confirmed": "Confirmado",
   "status.decommissioned": "Desativado",
   "status.delivered": "Entregue",
   "status.draft": "Rascunho",
