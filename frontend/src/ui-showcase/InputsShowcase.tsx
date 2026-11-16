@@ -176,6 +176,7 @@ export const InputsShowcase = () => {
   const [expiringBefore, setExpiringBefore] = createSignal<string | null>(null);
   const [manufacture, setManufacture] = createSignal<string | null>(null);
   const [countDate, setCountDate] = createSignal<string | null>(null);
+  const [reportMonth, setReportMonth] = createSignal<string | null>(null);
   const [cutoff, setCutoff] = createSignal<string | null>('17:30');
   const [appointment, setAppointment] = createSignal<string | null>(
     '2026-07-17T02:30:00.000Z'
@@ -726,6 +727,17 @@ export const InputsShowcase = () => {
                 onChange={setManufacture}
                 helperText={`max = today; later dates greyed out. Stored: ${
                   manufacture() ?? '(empty)'
+                }`}
+              />
+            </Field>
+            <Field caption="Month — pick a whole month">
+              <DateField
+                label="Report month"
+                monthOnly
+                value={reportMonth()}
+                onChange={setReportMonth}
+                helperText={`Type e.g. Oct 2026. Stored: ${
+                  reportMonth() ?? '(empty)'
                 }`}
               />
             </Field>
