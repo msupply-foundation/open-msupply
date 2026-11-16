@@ -5,6 +5,7 @@ import {
   type StoreContextResult,
 } from './storeContext.generated';
 import { authUser, type AuthUser } from '../auth/authContext';
+import { asDispensingScreen } from '../domain/preferences/dispensingScreen';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
 // Callers invoke refetchStoreContext directly — on store entry, and from
@@ -222,6 +223,13 @@ const prescriptionPreferences = () => {
     // Undefined while the store context is unresolved, so the screen can tell
     // "still loading" from "none set up".
     commonMedicines: prefs?.commonMedicines,
+    // Which screen dispensing opens on (spec/prescriptions › dispensing
+    // preferences). Undefined while unresolved, so dispensing waits rather
+    // than opening the wrong screen and then moving.
+    dispensingScreen: prefs ? asDispensingScreen(prefs.dispensingScreen) : undefined,
+    useUnnamedPatient: prefs?.useUnnamedPatient ?? false,
+    startWithUnnamedPatient: prefs?.startWithUnnamedPatient ?? false,
+    askForPatientType: prefs?.askForPatientType ?? false,
   };
 };
 

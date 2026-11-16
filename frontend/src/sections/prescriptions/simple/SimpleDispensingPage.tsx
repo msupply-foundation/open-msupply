@@ -1,12 +1,4 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-  For,
-  Match,
-  Show,
-  Switch,
-} from 'solid-js';
+import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { useParams } from '@solidjs/router';
@@ -34,7 +26,6 @@ import { MenuLinesIcon } from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
-import { newRecordHref } from '../newRecordLink';
 import {
   SimpleDispensingItemPrice,
   SimpleDispensingItems,
@@ -77,7 +68,7 @@ import styles from './SimpleDispensing.module.css';
  */
 const SimpleDispensingPage: Component = () => {
   const params = useParams<{ storeId: string }>();
-  const listHref = () => `/${params.storeId}/dispensary/dispensing`;
+  const recordsHref = () => `/${params.storeId}/dispensary/dispensing/records`;
 
   // Undefined until the store context resolves, so "loading" is never shown
   // as "none set up".
@@ -416,30 +407,6 @@ const SimpleDispensingPage: Component = () => {
     };
   };
 
-  // The header's Standard view carries on with the visit's person: the list
-  // opens its New dispensing record dialog for them, or for nobody yet (rules
-  // › the Simple screen). The empty state's opens the list alone, to dispense
-  // from it meanwhile. Nothing on the list goes with either: it was never
-  // saved.
-  const standardView = (variant: 'secondary' | 'ghost') => (
-    <LinkButton
-      href={
-        variant === 'ghost'
-          ? listHref()
-          : newRecordHref(listHref(), patient()?.id)
-      }
-      variant={variant}
-      icon={variant === 'ghost' ? undefined : <MenuLinesIcon />}
-      data-testid={
-        variant === 'ghost'
-          ? 'nothing-here-standard-view-button'
-          : 'standard-view-button'
-      }
-    >
-      {t('button.standard-view')}
-    </LinkButton>
-  );
-
   return (
     <Page
       // The cards and the list fill the body and own its scroll, so the list
@@ -458,110 +425,124 @@ const SimpleDispensingPage: Component = () => {
             }}
             onCreatePatient={() => setCreatePatientOpen(true)}
           />
-          <HeaderButtons>{standardView('secondary')}</HeaderButtons>
+          {/* Staff can't switch screens (rules › the Simple screen): the list
+              is where past records are found. Nothing on this screen's list
+              goes with it: none of it was saved. */}
+          <HeaderButtons>
+            <LinkButton
+              href={recordsHref()}
+              variant="secondary"
+              icon={<MenuLinesIcon />}
+              data-testid="dispensing-records-button"
+            >
+              {t('button.dispensing-records')}
+            </LinkButton>
+          </HeaderButtons>
         </Header>
       }
     >
-      <Switch>
-        <Match when={medicines()?.length === 0 || cards()?.length === 0}>
-          <EmptyState
-            // Set up but none of them dispensable here any more is a
-            // different fix from none set up, so it says which.
-            message={t(
-              medicines()?.length === 0
-                ? 'messages.no-common-medicines'
-                : 'messages.no-common-medicines-dispensable'
-            )}
-            data-testid="nothing-here"
-          >
-            {standardView('ghost')}
-          </EmptyState>
-        </Match>
-        <Match when={cards()}>
-          {list => (
-            <div class={styles.columns}>
-              <div class={styles.cardsColumn}>
-                <StepHeading
-                  n={2}
-                  heading
-                  label={t('heading.choose-medicines')}
-                  hint={
-                    patient() === null
-                      ? t('messages.choose-who-first')
-                      : t('messages.press-an-amount')
-                  }
-                  testId="choose-medicines-hint"
-                />
-                <div class={styles.search}>
-                  <ItemSearch
-                    label={t('label.search-all-medicines')}
-                    hideLabel
-                    placeholder={t('label.search-all-medicines')}
-                    storeId={params.storeId}
-                    // The same medicines as the line editor's search.
-                    includeHiddenWithStock
-                    width="full"
-                    clearable={false}
-                    disabled={patient() === null || locked()}
-                    value={searchValue()}
-                    onSelect={item => {
-                      if (!item) return;
-                      setSearchValue(item.id);
-                      askAmount(item.id);
-                    }}
-                  />
-                </div>
-                {/* At most three columns, never narrower than three amount
+      {/* Loaded once the store has no common medicines, or their cards are
+          in. Without cards the screen is otherwise as usual, so the search
+          can still add a medicine (rules › the Simple screen). */}
+      <Show
+        when={medicines()?.length === 0 || cards() !== undefined}
+        fallback={<EmptyState graphic={false} message={t('loading')} />}
+      >
+        <div class={styles.columns}>
+          <div class={styles.cardsColumn}>
+            <StepHeading
+              n={2}
+              heading
+              label={t('heading.choose-medicines')}
+              hint={
+                patient() === null
+                  ? t('messages.choose-who-first')
+                  : t('messages.press-an-amount')
+              }
+              testId="choose-medicines-hint"
+            />
+            <div class={styles.search}>
+              <ItemSearch
+                label={t('label.search-all-medicines')}
+                hideLabel
+                placeholder={t('label.search-all-medicines')}
+                storeId={params.storeId}
+                // The same medicines as the line editor's search.
+                includeHiddenWithStock
+                width="full"
+                clearable={false}
+                disabled={patient() === null || locked()}
+                value={searchValue()}
+                onSelect={item => {
+                  if (!item) return;
+                  setSearchValue(item.id);
+                  askAmount(item.id);
+                }}
+              />
+            </div>
+            {/* At most three columns, never narrower than three amount
                     buttons and the another-amount button need. */}
-                {/* Until someone is chosen the cards' buttons are disabled,
+            {/* Until someone is chosen the cards' buttons are disabled,
                     so they dim as every disabled control does. The names and
                     stock stay full strength: staff read them while choosing. */}
-                <CardGrid
-                  equalHeight
-                  minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
-                >
-                  <For each={list()}>
-                    {card => (
-                      <MedicineCardView
-                        card={card}
-                        available={available(card)}
-                        listed={unitsListed(lines, card.item.id)}
-                        oneRow={isPhone()}
-                        canAdd={patient() !== null && !locked()}
-                        onAmount={(_, amount) => addToList(card, amount)}
-                        onAskAmount={() => askAmount(card.item.id)}
-                      />
-                    )}
-                  </For>
-                </CardGrid>
-              </div>
-              {/* Docked at the columns' inline end, or a bar at the bottom
+            <Show
+              when={(cards() ?? []).length > 0}
+              fallback={
+                <EmptyState
+                  graphic={false}
+                  // Set up but none of them dispensable here any more is
+                  // a different fix from none set up, so it says which.
+                  message={t(
+                    medicines()?.length === 0
+                      ? 'messages.no-common-medicines'
+                      : 'messages.no-common-medicines-dispensable'
+                  )}
+                  data-testid="nothing-here"
+                />
+              }
+            >
+              <CardGrid
+                equalHeight
+                minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
+              >
+                <For each={cards()}>
+                  {card => (
+                    <MedicineCardView
+                      card={card}
+                      available={available(card)}
+                      listed={unitsListed(lines, card.item.id)}
+                      oneRow={isPhone()}
+                      canAdd={patient() !== null && !locked()}
+                      onAmount={(_, amount) => addToList(card, amount)}
+                      onAskAmount={() => askAmount(card.item.id)}
+                    />
+                  )}
+                </For>
+              </CardGrid>
+            </Show>
+          </div>
+          {/* Docked at the columns' inline end, or a bar at the bottom
                   of the screen on a phone (its own CSS). One instance at
                   every width: crossing the line restyles it, never rebuilds
                   its lines. */}
-              <DispensingList
-                isPhone={isPhone()}
-                forName={patient()?.name}
-                lines={lines}
-                cardOf={cardOf}
-                onAmount={(itemId, units) =>
-                  update(setAmount(lines, itemId, units, stockOf(itemId)))
-                }
-                onRemove={itemId => update(removeLine(lines, itemId))}
-                onClear={() => void clear()}
-                onDispense={() => void dispense()}
-                canDispense={patient() !== null}
-                dispensing={dispensing()}
-                locked={locked()}
-                notice={shownNotice()}
-              />
-            </div>
-          )}
-        </Match>
-        <Match when={true}>
-          <EmptyState graphic={false} message={t('loading')} />
-        </Match>
-      </Switch>
+          <DispensingList
+            isPhone={isPhone()}
+            forName={patient()?.name}
+            lines={lines}
+            cardOf={cardOf}
+            onAmount={(itemId, units) =>
+              update(setAmount(lines, itemId, units, stockOf(itemId)))
+            }
+            onRemove={itemId => update(removeLine(lines, itemId))}
+            onClear={() => void clear()}
+            onDispense={() => void dispense()}
+            canDispense={patient() !== null}
+            dispensing={dispensing()}
+            locked={locked()}
+            notice={shownNotice()}
+          />
+        </div>
+      </Show>
       {/* Opens once its medicine's batches are in: at once from a card, a
           moment after the search for a medicine with no card. */}
       <Show when={asking() ? cardOf(asking()!) : undefined}>

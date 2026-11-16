@@ -281,6 +281,11 @@ export const EditPreference = ({
       // The server leaves it out of the preferences listed for editing, so
       // this case is only for the exhaustive check.
       return null;
+    case PreferenceValueNodeType.DispensingScreen:
+      // Which screen the new front end's dispensing opens on (#2188). Only
+      // the new front end has the Simple screen, so it is set there, on its
+      // Global preferences page and store editor, and not shown here.
+      return null;
     default:
       try {
         noOtherVariants(preference.valueType);

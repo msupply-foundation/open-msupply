@@ -6,6 +6,8 @@ import {
   buildPreferencesInput,
   buildPreferencesVariables,
   canEditPreferences,
+  dispensingScreenChoice,
+  dispensingScreenSelection,
   filterStoreCatalogue,
   groupStorePreferences,
   isOverridable,
@@ -306,6 +308,89 @@ describe('the three states of an overridable preference (SET-05.59)', () => {
     expect(
       overrideGlobalValue(preference('blindStocktake', 'BOOLEAN', true))
     ).toBe(false);
+  });
+});
+
+describe('the dispensing preferences (SET-05.78–.80)', () => {
+  const screen = (
+    value: string,
+    isOverridden: boolean,
+    globalValue: string
+  ): StorePreference => ({
+    key: 'dispensingScreen',
+    valueType: 'DISPENSING_SCREEN',
+    value,
+    storeOverride: { isOverridden, globalValue },
+  });
+
+  it('.79: the dispensing screen offers the global value, then Standard and Simple', () => {
+    expect(
+      dispensingScreenChoice(
+        preferenceValue(screen('SIMPLE', false, 'SIMPLE'), {})
+      )
+    ).toBe('global');
+    expect(
+      dispensingScreenChoice(
+        preferenceValue(screen('SIMPLE', true, 'STANDARD'), {})
+      )
+    ).toBe('SIMPLE');
+    expect(
+      dispensingScreenChoice(
+        preferenceValue(screen('STANDARD', true, 'SIMPLE'), {})
+      )
+    ).toBe('STANDARD');
+    expect(dispensingScreenSelection('global')).toBeNull();
+    expect(dispensingScreenSelection('SIMPLE')).toBe('SIMPLE');
+    expect(dispensingScreenSelection('STANDARD')).toBe('STANDARD');
+  });
+
+  it(".79: saves a pinned screen, or removes the store's own value, through its override field", () => {
+    expect(
+      buildPreferencesInput({ dispensingScreen: 'SIMPLE' }, 'store-a')
+    ).toEqual({
+      dispensingScreenStoreOverride: [{ storeId: 'store-a', value: 'SIMPLE' }],
+    });
+    expect(
+      buildPreferencesInput({ dispensingScreen: null }, 'store-a')
+    ).toEqual({
+      dispensingScreenStoreOverride: [{ storeId: 'store-a', value: null }],
+    });
+  });
+
+  it('.78: the three on/off dispensing preferences save through their override fields, never the global one', () => {
+    expect(
+      buildPreferencesInput(
+        {
+          useUnnamedPatient: true,
+          startWithUnnamedPatient: null,
+          askForPatientType: false,
+        },
+        'store-a'
+      )
+    ).toEqual({
+      useUnnamedPatientStoreOverride: [{ storeId: 'store-a', value: true }],
+      startWithUnnamedPatientStoreOverride: [
+        { storeId: 'store-a', value: null },
+      ],
+      askForPatientTypeStoreOverride: [{ storeId: 'store-a', value: false }],
+    });
+  });
+
+  it('.78: the four sit in the Dispensing group, after Procurement', () => {
+    const { groups } = groupStorePreferences([
+      overridable(false, false, false),
+      screen('STANDARD', false, 'STANDARD'),
+      { ...overridable(false, false, false), key: 'useUnnamedPatient' },
+      { ...overridable(false, false, false), key: 'startWithUnnamedPatient' },
+      { ...overridable(false, false, false), key: 'askForPatientType' },
+    ]);
+    expect(groups.map(g => g.id)).toEqual(['procurement', 'dispensing']);
+    expect(groups[1]?.members.map(m => m.key)).toEqual([
+      'dispensingScreen',
+      'useUnnamedPatient',
+      'startWithUnnamedPatient',
+      'askForPatientType',
+    ]);
   });
 });
 

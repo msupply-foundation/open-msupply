@@ -22,6 +22,7 @@ import { Stack } from '../../ui/layout/Stack/Stack';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { ToggleSwitch } from '../../ui/elements/inputs/ToggleSwitch';
+import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -36,7 +37,12 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { Text } from '../../ui/elements/typography/Text';
 import { CloseIcon, EditIcon } from '../../ui/icons';
-import { createCatalogueView } from '@/domain/preferences';
+import {
+  asDispensingScreen,
+  createCatalogueView,
+  dispensingScreenLabelKey,
+  DISPENSING_SCREENS,
+} from '@/domain/preferences';
 import {
   GlobalPreferences,
   UpsertGlobalPreferences,
@@ -344,7 +350,8 @@ const GlobalPreferencesPage: Component = () => {
   };
 
   /* One catalogue row, dispatched by kind. The GLOBAL read serves BOOLEAN /
-     INTEGER / FLOAT / MULTI_CHOICE (genders) / CUSTOM_TRANSLATIONS_V2 /
+     INTEGER / FLOAT / DISPENSING_SCREEN / MULTI_CHOICE (genders) /
+     CUSTOM_TRANSLATIONS_V2 /
      BACKDATING_DATA / IMAGE (the global logo) only — other kinds are
      store-scoped and never arrive. */
   const PreferenceRow = (props: { preference: GlobalPreference }) => (
@@ -391,6 +398,28 @@ const GlobalPreferencesPage: Component = () => {
               }
               disabled={disabled()}
               data-testid={`global-preference-${props.preference.key}`}
+              onChange={next => stage(props.preference, next)}
+            />
+          </Row>
+          <RowError preference={props.preference} />
+        </Match>
+        {/* Which screen dispensing opens on (OMS-REG-GPREF-01.37): both
+            values on the surface, so a single choice reads at a glance and
+            saves on one press, like a switch. The row names it, so the
+            group's own label is hidden. */}
+        <Match when={props.preference.valueType === 'DISPENSING_SCREEN'}>
+          <Row label={label(props.preference)}>
+            <RadioGroup
+              label={label(props.preference)}
+              hideLabel
+              appearance="segmented"
+              value={asDispensingScreen(current(props.preference))}
+              disabled={disabled()}
+              options={DISPENSING_SCREENS.map(screen => ({
+                value: screen,
+                label: t(dispensingScreenLabelKey(screen)),
+                testId: `global-preference-${props.preference.key}-${screen.toLowerCase()}`,
+              }))}
               onChange={next => stage(props.preference, next)}
             />
           </Row>
