@@ -77,7 +77,9 @@ export const DispensingList = (props: {
 }) => {
   const priceOfLine = (line: ListLine): number => {
     const card = props.cardOf(line.itemId);
-    return card ? priceOf(card.batches, line.units) : 0;
+    return card
+      ? priceOf(card.batches, line.units, card.defaultPricePerUnit)
+      : 0;
   };
   const total = () => {
     let sum = 0;

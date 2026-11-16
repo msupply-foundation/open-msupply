@@ -45,3 +45,20 @@ export type SimpleDispensingItemsResult = {
 export const SimpleDispensingItems = {
   query: "query simpleDispensingItems($storeId: String!, $ids: [String!]!, $page: PaginationInput) {\n  items(\n    storeId: $storeId\n    filter: {id: {equalAny: $ids}, type: {equalTo: STOCK}, isActive: true, isVisibleOrOnHand: true}\n    page: $page\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        unitName\n        availableBatches(storeId: $storeId) {\n          ... on StockLineConnector {\n            __typename\n            nodes {\n              id\n              availableNumberOfPacks\n              packSize\n              sellPricePerPack\n              expiryDate\n              onHold\n              location {\n                onHold\n              }\n              vvmStatus {\n                unusable\n                priority\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SimpleDispensingItemsResult, SimpleDispensingItemsVariables>;
+
+export type SimpleDispensingItemPriceVariables = {
+  storeId: string;
+  itemId: string;
+};
+
+export type SimpleDispensingItemPriceResult = {
+  itemPrice: ({
+  __typename: "ItemPriceNode";
+} & {
+  defaultPricePerUnit: number | null;
+});
+};
+
+export const SimpleDispensingItemPrice = {
+  query: "query simpleDispensingItemPrice($storeId: String!, $itemId: String!) {\n  itemPrice(storeId: $storeId, input: {itemId: $itemId}) {\n    ... on ItemPriceNode {\n      __typename\n      defaultPricePerUnit\n    }\n  }\n}",
+} as TypedDocument<SimpleDispensingItemPriceResult, SimpleDispensingItemPriceVariables>;

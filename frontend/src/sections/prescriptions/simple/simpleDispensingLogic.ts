@@ -32,10 +32,21 @@ export interface FillableBatch {
   sellPricePerPack: number;
 }
 
+/**
+ * Each item's default price list price per unit, by item id: null for an
+ * item on none (spec/prescriptions contract › the Simple screen).
+ */
+export type DefaultPrices = Readonly<Record<string, number | null>>;
+
 /** One card on the Simple screen. */
 export interface MedicineCard {
   medicine: CommonMedicine;
   item: CardItem;
+  /**
+   * The item's default price list price per unit, which every unit of its
+   * line costs; null when it is on none, and its batches set the price.
+   */
+  defaultPricePerUnit: number | null;
   /** The batches dispensing may take on its own, in fill order. */
   batches: FillableBatch[];
   /** Units in those batches: what the card offers before the list. */
@@ -127,6 +138,7 @@ export const stockLine = (
 export const buildCards = (
   medicines: CommonMedicine[],
   items: CardItem[],
+  prices: DefaultPrices,
   prefs: AllocationPreferences,
   today: Date = new Date()
 ): MedicineCard[] => {
@@ -135,7 +147,15 @@ export const buildCards = (
     const item = byId.get(medicine.itemId);
     if (!item) return [];
     const batches = fillableBatches(item, prefs, today);
-    return [{ medicine, item, batches, stock: unitsIn(batches) }];
+    return [
+      {
+        medicine,
+        item,
+        defaultPricePerUnit: prices[item.id] ?? null,
+        batches,
+        stock: unitsIn(batches),
+      },
+    ];
   });
 };
 
@@ -173,16 +193,20 @@ export const allocate = (
   ).packsById;
 
 /**
- * What those units cost: each batch's packs at that batch's sell price
- * (spec/prescriptions rules › who it's for and the list). Units beyond what
- * the batches hold — a line left short when Dispense found less stock — cost
- * the last batch's price per unit, so the line and the total don't drop while
- * the line still holds them.
+ * What those units cost, as the saved record charges them (spec/prescriptions
+ * rules › who it's for and the list). An item on the default price list costs
+ * its default price for every unit, whichever batches are taken: the server
+ * prices each pack at that price × its pack size. Otherwise each batch's packs
+ * cost that batch's sell price. Units beyond what the batches hold — a line
+ * left short when Dispense found less stock — cost the last batch's price per
+ * unit, so the line and the total don't drop while the line still holds them.
  */
 export const priceOf = (
   batches: readonly FillableBatch[],
-  units: number
+  units: number,
+  defaultPricePerUnit: number | null = null
 ): number => {
+  if (defaultPricePerUnit !== null) return units * defaultPricePerUnit;
   const packs = allocate(batches, units);
   let covered = 0;
   let price = 0;

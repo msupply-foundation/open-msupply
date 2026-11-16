@@ -35,7 +35,10 @@ import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
 import { newRecordHref } from '../newRecordLink';
-import { SimpleDispensingItems } from './simpleDispensing.generated';
+import {
+  SimpleDispensingItemPrice,
+  SimpleDispensingItems,
+} from './simpleDispensing.generated';
 import {
   SimpleDispense,
   SimpleDispensedVisit,
@@ -54,6 +57,7 @@ import {
   unitsListed,
   visitWasSaved,
   type CardItem,
+  type DefaultPrices,
   type ListLine,
   type MedicineCard,
 } from './simpleDispensingLogic';
@@ -77,20 +81,33 @@ const SimpleDispensingPage: Component = () => {
   // as "none set up".
   const medicines = () => prescriptionPreferences().commonMedicines;
 
-  // The cards' items: on load, and again when Dispense checks the stock.
+  // The cards' items and their default prices: on load, and again when
+  // Dispense checks the stock. A price that couldn't be read fails the whole
+  // read, so a line never shows a price the save won't charge (contract › the
+  // Simple screen).
   const fetchItems = async (
     storeId: string,
     ids: string[]
-  ): Promise<CardItem[] | undefined> => {
-    const result = await graphqlFetch(SimpleDispensingItems, {
-      storeId,
-      ids,
-      page: { first: ids.length },
-    });
+  ): Promise<{ nodes: CardItem[]; prices: DefaultPrices } | undefined> => {
+    const [result, ...priced] = await Promise.all([
+      graphqlFetch(SimpleDispensingItems, {
+        storeId,
+        ids,
+        page: { first: ids.length },
+      }),
+      ...ids.map(itemId =>
+        graphqlFetch(SimpleDispensingItemPrice, { storeId, itemId })
+      ),
+    ]);
     if (result.kind !== 'success') return undefined;
-    return result.data.items.__typename === 'ItemConnector'
-      ? result.data.items.nodes
-      : undefined;
+    if (result.data.items.__typename !== 'ItemConnector') return undefined;
+    const prices: Record<string, number | null> = {};
+    for (const [i, itemId] of ids.entries()) {
+      const price = priced[i];
+      if (price?.kind !== 'success') return undefined;
+      prices[itemId] = price.data.itemPrice.defaultPricePerUnit;
+    }
+    return { nodes: result.data.items.nodes, prices };
   };
 
   const [items, { refetch: refetchItems }] = createResource(
@@ -109,7 +126,12 @@ const SimpleDispensingPage: Component = () => {
       const list = medicines();
       const fetched = gated(items);
       if (!list || fetched === undefined) return undefined;
-      return buildCards(list, fetched, prescriptionPreferences());
+      return buildCards(
+        list,
+        fetched.nodes,
+        fetched.prices,
+        prescriptionPreferences()
+      );
     },
     undefined,
     { equals: sameFetchedValue }
@@ -128,12 +150,15 @@ const SimpleDispensingPage: Component = () => {
     ({ storeId, ids }) => fetchItems(storeId, ids)
   );
   const searched = createMemo<MedicineCard[]>(
-    () =>
-      buildCards(
+    () => {
+      const fetched = gated(searchedItems);
+      return buildCards(
         medicinesFor(searchedIds(), []),
-        gated(searchedItems) ?? [],
+        fetched?.nodes ?? [],
+        fetched?.prices ?? {},
         prescriptionPreferences()
-      ),
+      );
+    },
     [],
     { equals: sameFetchedValue }
   );
@@ -222,7 +247,8 @@ const SimpleDispensingPage: Component = () => {
     if (!fetched) return undefined;
     return buildCards(
       medicinesFor(ids, medicines() ?? []),
-      fetched,
+      fetched.nodes,
+      fetched.prices,
       prescriptionPreferences()
     );
   };

@@ -61,6 +61,7 @@ describe('buildCards', () => {
       ],
       // The query returns items in its own order, not the store's.
       [item('a'), item('b')],
+      {},
       PREFS,
       TODAY
     );
@@ -74,6 +75,7 @@ describe('buildCards', () => {
         { itemId: 'a', amounts: [5] },
       ],
       [item('a')],
+      {},
       PREFS,
       TODAY
     );
@@ -90,10 +92,25 @@ describe('buildCards', () => {
           batch('held', { onHold: true }),
         ]),
       ],
+      {},
       PREFS,
       TODAY
     );
     expect(card?.stock).toBe(205);
+  });
+
+  it("carries each item's default price list price, and null for an item on none", () => {
+    const cards = buildCards(
+      [
+        { itemId: 'listed', amounts: [] },
+        { itemId: 'plain', amounts: [] },
+      ],
+      [item('listed'), item('plain')],
+      { listed: 2.5, plain: null },
+      PREFS,
+      TODAY
+    );
+    expect(cards.map(card => card.defaultPricePerUnit)).toEqual([2.5, null]);
   });
 });
 
@@ -296,6 +313,98 @@ describe('priceOf', () => {
     // 10 at 1 + 10 at 2 + half a pack at 4.
     expect(priceOf(batches, 25)).toBeCloseTo(5);
   });
+
+  it("prices part of a pack when the pack size doesn't divide the amount", () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('fours', {
+          availableNumberOfPacks: 5,
+          packSize: 4,
+          sellPricePerPack: 3,
+        }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    // 6 units is one and a half packs of 4, at 3 a pack.
+    expect(priceOf(batches, 6)).toBeCloseTo(4.5);
+  });
+
+  it('OMS-REG-DIS-12.140: an item on the default price list costs its default price for every unit, whatever its batches cost', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('later', {
+          availableNumberOfPacks: 1,
+          packSize: 10,
+          sellPricePerPack: 2,
+          expiryDate: '2029-01-01',
+        }),
+        batch('sooner', {
+          availableNumberOfPacks: 1,
+          packSize: 5,
+          sellPricePerPack: 3,
+          expiryDate: '2027-01-01',
+        }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    // 12 units at 2.5, not the batches' 3 + 1.4.
+    expect(priceOf(batches, 12, 2.5)).toBeCloseTo(30);
+    // A default price of zero is a price: the line is free.
+    expect(priceOf(batches, 12, 0)).toBe(0);
+  });
+
+  it("OMS-REG-DIS-12.141: matches what the server charges for the lines Dispense saves, a pack size that doesn't divide the amount among them", () => {
+    const [card] = buildCards(
+      [{ itemId: 'a', amounts: [] }],
+      [
+        item('a', [
+          batch('fours', {
+            availableNumberOfPacks: 1,
+            packSize: 4,
+            sellPricePerPack: 3,
+            expiryDate: '2027-01-01',
+          }),
+          batch('tens', {
+            availableNumberOfPacks: 2,
+            packSize: 10,
+            sellPricePerPack: 7,
+            expiryDate: '2028-01-01',
+          }),
+        ]),
+      ],
+      { a: 0.35 },
+      PREFS,
+      TODAY
+    );
+    if (!card) throw new Error('no card');
+    const units = 9;
+    const input = dispenseInput(
+      'rx',
+      'pat',
+      [{ itemId: 'a', units }],
+      [card],
+      () => 'line'
+    );
+    // The server prices a pack at the default price x the batch's pack size
+    // (calculate_sell_price), and a line at that x its packs: 4 units from
+    // the fours (one pack) and 5 from the tens (half a pack).
+    const packSizeOf = (id: string) =>
+      card.batches.find(b => b.id === id)?.packSize ?? 0;
+    const charged = input.insertPrescriptionLines.reduce(
+      (sum, line) =>
+        sum + 0.35 * packSizeOf(line.stockLineId) * line.numberOfPacks,
+      0
+    );
+    expect(input.insertPrescriptionLines.map(l => l.numberOfPacks)).toEqual([
+      1, 0.5,
+    ]);
+    expect(priceOf(card.batches, units, card.defaultPricePerUnit)).toBeCloseTo(
+      charged,
+      9
+    );
+  });
 });
 
 describe('priceOf, for a line left short', () => {
@@ -316,7 +425,26 @@ describe('priceOf, for a line left short', () => {
     expect(priceOf(batches, 6)).toBeCloseTo(12);
   });
 
-  it('with no batches left, a line costs nothing', () => {
+  it('OMS-REG-DIS-12.106: with a default price, the units beyond the batches cost the default price too', () => {
+    const batches = fillableBatches(
+      item('a', [
+        batch('only', {
+          availableNumberOfPacks: 1,
+          packSize: 5,
+          sellPricePerPack: 10,
+          expiryDate: '2030-01-01',
+        }),
+      ]),
+      PREFS,
+      TODAY
+    );
+    // 5 units from the batch and 1 beyond it, every one at 0.5.
+    expect(priceOf(batches, 6, 0.5)).toBeCloseTo(3);
+    // None left at all: the line still costs its units at the default.
+    expect(priceOf([], 6, 0.5)).toBeCloseTo(3);
+  });
+
+  it('with no batches left and no default price, a line costs nothing', () => {
     expect(priceOf([], 6)).toBe(0);
   });
 });
@@ -479,6 +607,7 @@ describe('dispensing the visit', () => {
     buildCards(
       items.map(i => ({ itemId: i.id, amounts: [] })),
       items,
+      {},
       PREFS,
       TODAY
     );
