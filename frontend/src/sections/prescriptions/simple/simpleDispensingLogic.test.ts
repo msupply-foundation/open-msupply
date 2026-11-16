@@ -29,7 +29,8 @@ const PREFS: AllocationPreferences = {
   manageVvmStatusForStock: false,
   sortByVvmStatusThenExpiry: false,
 };
-const TODAY = new Date('2026-11-10T00:00:00Z');
+// Local midnight, so "today" is the 10th in whatever time zone the tests run.
+const TODAY = new Date(2026, 10, 10);
 
 type Batch = CardItem['availableBatches']['nodes'][number];
 const batch = (id: string, over: Partial<Batch> = {}): Batch => ({
