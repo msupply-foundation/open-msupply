@@ -105,8 +105,20 @@ export const Header = (props: HeaderProps) => {
     if (header.parentElement) resize.observe(header.parentElement);
     // Content changes move the line too: an action appearing, a status
     // relabelling one, the record's name loading into the trail. Attributes
-    // aren't observed, so fit's own flag never re-triggers it.
-    const content = new MutationObserver(fit);
+    // aren't observed, so fit's own flag never re-triggers it. Changes inside
+    // a dialog opened from the header (typing in it, a menu or spinner
+    // mounting in it) are skipped: fits() ignores the dialog, so they can't
+    // change the result. A characterData target is a Text node, so check
+    // its parent element. Opening or closing the dialog changes the button
+    // group itself, so that still runs fit.
+    const outsideDialog = (record: MutationRecord) => {
+      const { target } = record;
+      const element = target instanceof Element ? target : target.parentElement;
+      return !element?.closest('dialog');
+    };
+    const content = new MutationObserver(records => {
+      if (records.some(outsideDialog)) fit();
+    });
     content.observe(header, {
       childList: true,
       subtree: true,
