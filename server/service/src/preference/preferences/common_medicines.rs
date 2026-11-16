@@ -28,6 +28,9 @@ pub const MAX_COMMON_MEDICINE_AMOUNTS: usize = 3;
 #[serde(rename_all = "camelCase")]
 pub struct CommonMedicine {
     pub item_id: String,
+    /// A stored medicine with no amounts reads as one whose card asks for the
+    /// amount.
+    #[serde(default)]
     pub amounts: Vec<f64>,
 }
 
@@ -48,6 +51,27 @@ impl Preference for CommonMedicines {
 
     fn value_type(&self) -> PreferenceValueType {
         PreferenceValueType::CommonMedicines
+    }
+
+    // Lenient: the store's preferences are read on the way into the store, so
+    // a value this server can't read would keep everyone out. What can't be
+    // read gets no card instead.
+    fn deserialize(&self, data: &str) -> Result<Self::Value, serde_json::Error> {
+        let Ok(entries) = serde_json::from_str::<Vec<serde_json::Value>>(data) else {
+            log::warn!("Ignoring common medicines that aren't a list: {data}");
+            return Ok(Vec::new());
+        };
+
+        Ok(entries
+            .into_iter()
+            .filter_map(|entry| match serde_json::from_value(entry.clone()) {
+                Ok(medicine) => Some(medicine),
+                Err(e) => {
+                    log::warn!("Ignoring a common medicine that can't be read ({e}): {entry}");
+                    None
+                }
+            })
+            .collect())
     }
 
     // Custom load so a list saved before an item merge shows the kept item.
@@ -200,7 +224,7 @@ mod tests {
         sync::test_util_set_is_central_server,
     };
     use repository::{
-        PreferenceRowRepository,
+        PreferenceRow, PreferenceRowRepository,
         mock::{
             MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_service_item,
             mock_store_a, mock_store_b,
@@ -361,6 +385,54 @@ mod tests {
         assert_eq!(
             serde_json::from_str::<Vec<CommonMedicine>>(&saved.value).unwrap(),
             vec![medicine(&item_b, &[5.0])]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn common_medicines_that_cant_be_read_are_left_out() {
+        let (_, connection, _, _) =
+            setup_all("common_medicines_cant_be_read", MockDataInserts::all()).await;
+        let store_a = mock_store_a().id;
+        let store_b = mock_store_b().id;
+        let save_raw = |store_id: &str, value: &str| {
+            PreferenceRowRepository::new(&connection)
+                .upsert_one(&PreferenceRow {
+                    id: format!("{}_{store_id}", PrefKey::CommonMedicines),
+                    key: PrefKey::CommonMedicines.to_string(),
+                    value: value.to_string(),
+                    store_id: Some(store_id.to_string()),
+                })
+                .unwrap();
+        };
+
+        // Not a list at all: no cards, and no error (OMS-REG-DIS-12.135).
+        save_raw(&store_a, "not json");
+        assert_eq!(
+            CommonMedicines.load(&connection, Some(store_a.clone())),
+            Ok(vec![])
+        );
+        assert!(
+            CommonMedicines
+                .as_description(&connection, Some(store_a))
+                .is_ok()
+        );
+
+        // A list with some entries it can't read keeps the rest, and a
+        // medicine with no amounts reads as one that asks for the amount.
+        save_raw(
+            &store_b,
+            &format!(
+                r#"[{{"itemId":"{}","amounts":[1]}},{{"itemId":5}},"x",{{"itemId":"{}"}}]"#,
+                mock_item_a().id,
+                mock_item_b().id
+            ),
+        );
+        assert_eq!(
+            CommonMedicines.load(&connection, Some(store_b)),
+            Ok(vec![
+                medicine(&mock_item_a().id, &[1.0]),
+                medicine(&mock_item_b().id, &[]),
+            ])
         );
     }
 
