@@ -99,9 +99,9 @@ const jsxDownloadRestriction = {
  * to Gregorian, have their own block below.
  */
 const localeFormatMessage =
-  'Follows the device, not the app language, and picks the Solar Hijri ' +
-  'calendar for Dari (#1326, #1838). Use formatNumber / formatDateTime ' +
-  'from src/intl.';
+  'Follows the device, not the app language (#1326, #1838). From src/intl: ' +
+  'localisedDate / localisedDateTime / localisedTime for a date, ' +
+  'displayNumber or roundedText for a figure, the currency helpers for money.';
 const localeFormatRestrictions = [
   'toLocaleString',
   'toLocaleDateString',
