@@ -37,13 +37,17 @@ export interface PatientDetailsParams {
 export interface PatientDetails {
   /**
    * The patient read, for the screen's own read of it: suspending for a
-   * first load, gated under an open surface.
+   * first load, gated under an open surface. `null` when the server has no
+   * such patient (the not-found notice), `undefined` when the read failed.
    */
-  patient: Resource<PatientNode | undefined>;
+  patient: Resource<PatientNode | null | undefined>;
   /** The patient as last read, undefined while unresolved; never suspends. */
   node: Accessor<PatientNode | undefined>;
-  /** Re-reads the patient (after a save, which makes a new version). */
-  refetch: () => void;
+  /**
+   * Re-reads the patient (after a save, which makes a new version). Resolves
+   * with the re-read once it lands, so a save can await it.
+   */
+  refetch: () => Promise<PatientNode | null | undefined>;
   /** The plain path's editor: the patient record's own fields. */
   editor: PatientEditor;
   /** The document path's editor: the patient document, on the store's form. */
@@ -102,7 +106,7 @@ export const createPatientDetails = (
         patientId: params.patientId(),
         withDocument: withDocument(),
       }),
-    async (serialised, { value }): Promise<PatientNode | undefined> => {
+    async (serialised, { value }): Promise<PatientNode | null | undefined> => {
       const { withDocument, ...variables } = JSON.parse(serialised) as {
         storeId: string;
         patientId: string;
@@ -112,7 +116,7 @@ export const createPatientDetails = (
         withDocument ? PatientWithDocument : Patient,
         variables
       );
-      if (result.kind === 'success') return result.data.patient ?? undefined;
+      if (result.kind === 'success') return result.data.patient ?? null;
       if (!withDocument) return undefined;
       // The read with the document failed (a stored document the server
       // could not read, reported above): the patient opens on its record,
@@ -124,7 +128,7 @@ export const createPatientDetails = (
       if (value?.id === variables.patientId) return value;
       const record = await graphqlFetch(Patient, variables);
       return record.kind === 'success'
-        ? (record.data.patient ?? undefined)
+        ? (record.data.patient ?? null)
         : undefined;
     }
   );
@@ -133,7 +137,7 @@ export const createPatientDetails = (
   // open screen), where a first load must not suspend (kdd/solid-reactivity-
   // pitfalls › no remounts on interaction). The patient screen reads `patient`
   // itself for its own first load.
-  const node = () => gated(patient);
+  const node = () => gated(patient) ?? undefined;
 
   const editor = createPatientEditor({ storeId: params.storeId, node });
 
@@ -154,7 +158,7 @@ export const createPatientDetails = (
   return {
     patient,
     node,
-    refetch: () => void refetch(),
+    refetch: () => Promise.resolve(refetch()).then(n => n ?? undefined),
     editor,
     documentEditor,
     registry,

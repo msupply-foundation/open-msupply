@@ -1,6 +1,6 @@
 # Inbound shipments — UI migration report
 
-Audit of the whole `inbound-shipments` vertical against the eleven dimensions in [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md). Judged against the rules, the [component registry](../../../spec/ui-standards/components.md), the reference vertical (`src/sections/stocktakes/`), and the sibling verticals that fill the roles stocktakes lacks (outbound shipments, internal orders, supplier/customer returns, names).
+Audit of the whole `inbound-shipments` vertical against the eleven dimensions in [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md). Judged against the rules, the [component registry](../../../../spec/ui-standards/components.md), the reference vertical (`src/sections/stocktakes/`), and the sibling verticals that fill the roles stocktakes lacks (outbound shipments, internal orders, supplier/customer returns, names).
 
 **Status: migrated and verified — `pnpm check` green, `pnpm test` green (886 tests). The operator's visual pass is outstanding.**
 
@@ -41,7 +41,7 @@ Rows are the vertical's screens and composed pieces; each cell is `✅` or the f
 
 ### F1 — Hand-rolled flex rows and inline `style` (dim 1 C3, dim 6) · 10 sites
 
-**Rule:** the [reach-for order](../../ui/docs/MIGRATING_A_VERTICAL.md#the-reach-for-order) step 5 — an inline `style` is always a finding; registry [Layout › horizontal stack](../../../spec/ui-standards/components.md#layout): "A hand-rolled flex row here is a bespoke look-alike (C3)".
+**Rule:** the [reach-for order](../../ui/docs/MIGRATING_A_VERTICAL.md#the-reach-for-order) step 5 — an inline `style` is always a finding; registry [Layout › horizontal stack](../../../../spec/ui-standards/components.md#layout): "A hand-rolled flex row here is a bespoke look-alike (C3)".
 
 | Site                                                                                            | Now                                                                                                            | Fix                                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -73,7 +73,7 @@ Rows are the vertical's screens and composed pieces; each cell is `✅` or the f
 
 ### F4 — Dialog footers ignore `StandardButtons` and D55 (dim 5, dim 1) · 11 dialogs
 
-**Rule:** registry [Modal footer button](../../../spec/ui-standards/components.md#buttons--status) → `CancelButton` / `DialogSaveButton` / `SaveAndNextButton`, "**never** OK/OK & next, never an icon". [D55](../../../spec/DIVERGENCES.md) is binding and "applied app-wide". Reference: [`stocktakes/detail/actions/DeleteLinesAction.tsx`](../stocktakes/detail/actions/DeleteLinesAction.tsx) and [`StocktakeLineEditModal.tsx:1419`](../stocktakes/detail/edit-modal/StocktakeLineEditModal.tsx#L1419).
+**Rule:** registry [Modal footer button](../../../../spec/ui-standards/components.md#buttons--status) → `CancelButton` / `DialogSaveButton` / `SaveAndNextButton`, "**never** OK/OK & next, never an icon". [D55](../../../../spec/DIVERGENCES.md) is binding and "applied app-wide". Reference: [`stocktakes/detail/actions/DeleteLinesAction.tsx`](../stocktakes/detail/actions/DeleteLinesAction.tsx) and [`StocktakeLineEditModal.tsx:1419`](../stocktakes/detail/edit-modal/StocktakeLineEditModal.tsx#L1419).
 
 Every dialog in the vertical hand-rolls `<Button variant="secondary" icon={<XCircleIcon/>}>Cancel</Button>` plus a `t('button.ok')` confirm, most with an icon:
 
@@ -133,7 +133,7 @@ Spec S3's line table puts **Comment** at column **1**, hidden by default, using 
 
 [InboundShipmentsList.tsx:240-245](list/InboundShipmentsList.tsx#L240).
 
-- Registry [Colour tag](../../../spec/ui-standards/components.md#buttons--status): "`variant` = **`row` (list cell)** / `field`". Inbound omits `variant`, so the cell gets the field treatment. Outbound and prescriptions both pass `variant="row"`.
+- Registry [Colour tag](../../../../spec/ui-standards/components.md#buttons--status): "`variant` = **`row` (list cell)** / `field`". Inbound omits `variant`, so the cell gets the field treatment. Outbound and prescriptions both pass `variant="row"`.
 - Registry: "`ColourTagDot` is the **read-only dot** (render it when tagging isn't allowed, e.g. a non-editable row)". Inbound always renders the editable picker, even on a Verified shipment. Outbound (`isEditable(row.status)`) and supplier-returns (`!isReturnDisabled(row)`) both gate it — two siblings agree, so this is settled.
 - The `<span onClick={e => e.stopPropagation()}>` wrapper is **redundant**: `ColourTagPicker` already wraps itself in exactly that ([ColourTag.tsx:50](../../ui/elements/selectors/ColourTag.tsx#L50)). Delete it — that also removes a click handler from a non-interactive element (dim 9).
 
@@ -141,13 +141,13 @@ Spec S3's line table puts **Comment** at column **1**, hidden by default, using 
 
 [InboundShipmentsList.tsx:428-461](list/InboundShipmentsList.tsx#L428) wraps `DeleteInboundShipmentsAction` and `DuplicateInboundShipmentAction` in `<span title={reason}>` to carry the disabled reason.
 
-The **visible-disabled** treatment itself is correct and deliberate — [`controls.md` § blocked affordances](../../../spec/ui-standards/controls.md) "actionable block", and `internal-orders`' delete action explicitly cites inbound as the visible-disabled case. It is the _wrapper_ that's bespoke: `Button` spreads rest props, so the house pattern puts `disabled` + `title` **on the button** — [`outbound-shipments/list/actions/DuplicateShipmentAction.tsx:98-99`](../outbound-shipments/list/actions/DuplicateShipmentAction.tsx#L98).
+The **visible-disabled** treatment itself is correct and deliberate — [`controls.md` § blocked affordances](../../../../spec/ui-standards/controls.md) "actionable block", and `internal-orders`' delete action explicitly cites inbound as the visible-disabled case. It is the _wrapper_ that's bespoke: `Button` spreads rest props, so the house pattern puts `disabled` + `title` **on the button** — [`outbound-shipments/list/actions/DuplicateShipmentAction.tsx:98-99`](../outbound-shipments/list/actions/DuplicateShipmentAction.tsx#L98).
 
 **Fix:** add a `title?: string` prop to both action components and forward it to their trigger `Button`; drop the wrapper spans. (Caveat that motivates **LIB-5**: a native `title` on a `disabled` button doesn't render a tooltip in Chromium, so the reason is weakly perceivable either way — that is a library-level gap, not something to solve by keeping the wrapper.)
 
 ### F11 — The toolbar's PO-number link is a bare `<A>` (dim 1)
 
-[InboundShipmentDetailToolbar.tsx:164-168](detail/InboundShipmentDetailToolbar.tsx#L164) renders `<A href=…>#{po().number}</A>`. Registry [`RecordLink`](../../../spec/ui-standards/components.md#typography): "A hand-rolled toned `<A>` for a related record is a bespoke look-alike (C3)". The vertical's **own side panel** does it correctly 70 lines away ([InboundShipmentSidePanel.tsx:235](detail/InboundShipmentSidePanel.tsx#L235)): `<RecordLink kind="po">{poLabel(po().number)}</RecordLink>`.
+[InboundShipmentDetailToolbar.tsx:164-168](detail/InboundShipmentDetailToolbar.tsx#L164) renders `<A href=…>#{po().number}</A>`. Registry [`RecordLink`](../../../../spec/ui-standards/components.md#typography): "A hand-rolled toned `<A>` for a related record is a bespoke look-alike (C3)". The vertical's **own side panel** does it correctly 70 lines away ([InboundShipmentSidePanel.tsx:235](detail/InboundShipmentSidePanel.tsx#L235)): `<RecordLink kind="po">{poLabel(po().number)}</RecordLink>`.
 
 **Fix:** `RecordLink kind="po"` + `poLabel()`, matching the side panel and the list cell.
 
@@ -226,7 +226,7 @@ Re-checked over the finished diff via the `check-reactivity` skill: **no reactiv
 
 ## Spec edits — signed off and made
 
-Pure-UI drift in [`spec/inbound-shipments/ui-surface.md`](../../../spec/inbound-shipments/ui-surface.md); the standards + registry win, so the **spec** moved. Both landed on line 187, approved by the spec owner (2026-07-30):
+Pure-UI drift in [`spec/inbound-shipments/ui-surface.md`](../../../../spec/inbound-shipments/ui-surface.md); the standards + registry win, so the **spec** moved. Both landed on line 187, approved by the spec owner (2026-07-30):
 
 1. ✅ **modal-level tabs → page-level tabs.** These are the page's own tabs in the app-bar header; `modal-level tabs` is the registry's dialog-hosted role.
 2. ✅ **Custom fields added to the tab list.** The bullet omitted it where line 106's Tabs section lists it and the implementation renders it.
@@ -237,7 +237,7 @@ Neither changes behaviour; both are the spec contradicting itself or naming the 
 
 Found by the dimension-11 durability check; the **spec wins**, so these are implementation gaps, but they are behaviour/content, and migration "changes UI composition only":
 
-- ✅ **Scan** — spec S3 lists a barcode-assisted line-entry page action, in the header cluster between Add item and Report/print. Implemented as the shared page-action scan button opening the capture window ([barcode-scanning › S2](../../../spec/barcode-scanning/ui-surface.md#s2--capture-window)).
+- ✅ **Scan** — spec S3 lists a barcode-assisted line-entry page action, in the header cluster between Add item and Report/print. Implemented as the shared page-action scan button opening the capture window ([barcode-scanning › S2](../../../../spec/barcode-scanning/ui-surface.md#s2--capture-window)).
 - **Upload document** — spec S3 (and TESTIDS:241) list it as the Add-item split button's fourth option. Not offered.
 - **Line table columns 17/18** — spec says **Cost per unit** (weighted-average, summed) and **Price per pack**; the implementation shows **Pack cost price** / **Pack sell price**. A derivation difference, not a composition one.
 - **Line-table row grouping** — spec S3: "a manual/external shipment groups rows by item code; a PO-linked shipment groups by PO line number", and the Financial tab groups by PO line. Blocked on **LIB-1**.

@@ -21,6 +21,7 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
@@ -99,6 +100,10 @@ const ReportDetailView: Component = () => {
 
   // Fetch the report version by id (name + schema). Read via `.latest` so the
   // fetch never suspends the router boundary (kdd/solid-reactivity-pitfalls).
+  // The resource holds the typed answer: an unknown id is the RecordNotFound
+  // member, kept so the view can say so (the not-found alert below, #1746). A
+  // translation failure is not something this screen can act on, so it goes
+  // to the global unexpected-error modal.
   const [reportRes] = createResource(
     () =>
       JSON.stringify({
@@ -109,15 +114,31 @@ const ReportDetailView: Component = () => {
     async serialised => {
       const result = await graphqlFetch(
         ReportDocument,
-        JSON.parse(serialised) as ReportVariables
+        JSON.parse(serialised) as ReportVariables,
+        {
+          mapSuccessToError: d =>
+            d.report.__typename === 'QueryReportError' &&
+            d.report.error.__typename !== 'RecordNotFound'
+              ? d.report.error.description
+              : undefined,
+        }
       );
       if (result.kind !== 'success') return undefined;
-      return result.data.report.__typename === 'ReportNode'
-        ? result.data.report
-        : undefined;
+      return result.data.report;
     }
   );
-  const report = (): ReportNode | undefined => reportRes.latest;
+  const report = (): ReportNode | undefined => {
+    const r = reportRes.latest;
+    return r?.__typename === 'ReportNode' ? r : undefined;
+  };
+  const notFound = (): boolean => {
+    const r = reportRes.latest;
+    return (
+      r?.__typename === 'QueryReportError' &&
+      r.error.__typename === 'RecordNotFound'
+    );
+  };
+  const backToList = () => navigate(`/${params.storeId}/reports`);
   const displayName = (): string => {
     const r = report();
     return r ? reportLabel(r) : '';
@@ -346,7 +367,7 @@ const ReportDetailView: Component = () => {
   const crumbs = () => [
     {
       label: t('reports'),
-      onClick: () => navigate(`/${params.storeId}/reports`),
+      to: `/${params.storeId}/reports`,
     },
     { label: displayName() },
   ];
@@ -408,6 +429,16 @@ const ReportDetailView: Component = () => {
             <GenerationAlert message={t(shown().key)} detail={shown().detail} />
           </div>
         )}
+      </Show>
+      {/* The typed not-found miss — a blocking alert whose OK returns to the
+          list, over the region's spinner. */}
+      <Show when={notFound()}>
+        <NotFoundNotice
+          testId="report-not-found-notice"
+          title={t('error.report-does-not-exist')}
+          description={t('messages.click-to-return-to-reports')}
+          onClose={backToList}
+        />
       </Show>
       <Switch fallback={<></>}>
         <Match when={isLoading()}>

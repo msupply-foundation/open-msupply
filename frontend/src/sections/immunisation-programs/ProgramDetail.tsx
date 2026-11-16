@@ -1,14 +1,16 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
-import { gated } from '@/api/gated';
+import { gated, notFound } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Button } from '@/ui/elements/buttons/Button';
+import { NotFoundNotice } from '@/ui/elements/feedback/NotFoundNotice';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import {
@@ -53,6 +55,7 @@ import { DeleteCoursesAction } from './DeleteCoursesAction';
 
 const ProgramDetail: Component = () => {
   const params = useParams<{ storeId: string; programId: string }>();
+  const navigate = useNavigate();
   const { query, setQuery } = useUrlQueryState<CourseListState>({
     ...DEFAULT_COURSE_LIST_STATE,
     first: initialPageSize(),
@@ -84,9 +87,13 @@ const ProgramDetail: Component = () => {
 
   const tableConfig = createTableConfig({ tableId: 'vaccine-courses' });
 
-  // The program's name for the breadcrumb (contract § the program detail) —
-  // one read per program id. Read NON-SUSPENDING: the breadcrumb sits on a
-  // screen that stays open while the editor dialog is up.
+  // The program (contract § the program detail) — one read per program id,
+  // for the breadcrumb's name and to know the program exists: an id that is
+  // not an immunisation program (another record's, a made-up one) reads as no
+  // node, and the screen shows the not-found alert instead of an empty course
+  // list whose New vaccine course would write against that id (#1746). Read
+  // NON-SUSPENDING: the breadcrumb sits on a screen that stays open while the
+  // editor dialog is up.
   const [program] = createResource(
     () => ({ storeId: params.storeId, id: params.programId }),
     async variables => {
@@ -95,7 +102,10 @@ const ProgramDetail: Component = () => {
       return result.data.programs.nodes[0] ?? null;
     }
   );
-  const programName = () => gated(program)?.name ?? '';
+  const found = () => gated(program);
+  const programName = () => found()?.name ?? '';
+  const backToList = () =>
+    navigate(`/${params.storeId}/programs/immunisations`);
 
   const variables = createMemo(() =>
     courseListVariables(params.programId, query())
@@ -185,90 +195,108 @@ const ProgramDetail: Component = () => {
   ];
 
   return (
-    <Page
-      fillBody
-      header={
-        <Header>
-          <Breadcrumb crumbs={crumbs()} />
-          <HeaderButtons>
-            <Button
-              icon={<PlusCircleIcon />}
-              shortcut={ALT_N}
-              data-testid="new-vaccine-course-button"
-              onClick={openCreate}
-            >
-              {t('button.new-vaccine-course')}
-            </Button>
-          </HeaderButtons>
-        </Header>
+    <Show
+      when={found()}
+      fallback={
+        // Spinner while the program read is in flight, or under the global
+        // error modal when it failed; one the server answers with no program
+        // is the not-found alert, OK back to the list.
+        <Show when={notFound(program)} fallback={<Spinner center />}>
+          <NotFoundNotice
+            testId="immunisation-program-not-found-notice"
+            title={t('error.immunisation-program-not-found')}
+            description={t('messages.click-to-return-to-immunisation-programs')}
+            onClose={backToList}
+          />
+        </Show>
       }
     >
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={r => r.id}
-        loading={data.loading}
-        sort={currentSort()}
-        onSort={onSort}
-        // A row opens the editor on that course — a read, offered to everyone.
-        onRowClick={openEdit}
-        emptyMessage={t('error.no-vaccine-courses')}
-        empty={
-          <Button
-            variant="ghost"
-            shortcut={ALT_N}
-            data-testid="nothing-here-create-button"
-            onClick={openCreate}
-          >
-            {t('button.create-a-new-one')}
-          </Button>
+      <Page
+        fillBody
+        header={
+          <Header>
+            <Breadcrumb crumbs={crumbs()} />
+            <HeaderButtons>
+              <Button
+                icon={<PlusCircleIcon />}
+                shortcut={ALT_N}
+                data-testid="new-vaccine-course-button"
+                onClick={openCreate}
+              >
+                {t('button.new-vaccine-course')}
+              </Button>
+            </HeaderButtons>
+          </Header>
         }
-        enableSelection
-        selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
-        // The table's own footer swaps the pager for the selection bar (count +
-        // Delete + Clear) while rows are selected.
-        selectionActions={
-          <DeleteCoursesAction
-            // In list order: a run deletes in the order the rows are shown
-            // (rules § deleting courses).
-            orderedIds={() => inListOrder(selectedIds(), rows())}
-            guardEdit={guardEdit}
-            onRun={onDeleteRun}
-            onClosed={onDeleteClosed}
-          />
-        }
-        config={tableConfig.config()}
-        setConfig={tableConfig.setConfig}
-        onSaveGlobalDefault={
-          tableConfig.canSaveGlobalDefault()
-            ? tableConfig.saveGlobalTableConfig
-            : undefined
-        }
-        pagination={{
-          offset: query().offset,
-          pageSize: query().first,
-          total: totalCount(),
-          onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => {
-            rememberPageSize(first);
-            setQuery({ ...query(), first, offset: 0 });
-          },
-        }}
-      />
-      {/* Mounted only while open, so the dialog's ids exist exactly while it
-          applies (e2e/TESTIDS.md) and a fresh draft is built per open. */}
-      <Show when={editing() !== undefined}>
-        <CourseEditModal
-          storeId={params.storeId}
-          programId={params.programId}
-          courseId={editing() ?? undefined}
-          guardEdit={guardEdit}
-          onClose={() => setEditing(undefined)}
-          onSaved={onSaved}
+      >
+        <DataTable
+          columns={columns()}
+          rows={rows()}
+          rowKey={r => r.id}
+          loading={data.loading}
+          sort={currentSort()}
+          onSort={onSort}
+          // A row opens the editor on that course — a read, offered to
+          // everyone.
+          onRowClick={openEdit}
+          emptyMessage={t('error.no-vaccine-courses')}
+          empty={
+            <Button
+              variant="ghost"
+              shortcut={ALT_N}
+              data-testid="nothing-here-create-button"
+              onClick={openCreate}
+            >
+              {t('button.create-a-new-one')}
+            </Button>
+          }
+          enableSelection
+          selectedIds={selectedIds()}
+          onSelectionChange={setSelectedIds}
+          // The table's own footer swaps the pager for the selection bar
+          // (count + Delete + Clear) while rows are selected.
+          selectionActions={
+            <DeleteCoursesAction
+              // In list order: a run deletes in the order the rows are shown
+              // (rules § deleting courses).
+              orderedIds={() => inListOrder(selectedIds(), rows())}
+              guardEdit={guardEdit}
+              onRun={onDeleteRun}
+              onClosed={onDeleteClosed}
+            />
+          }
+          config={tableConfig.config()}
+          setConfig={tableConfig.setConfig}
+          onSaveGlobalDefault={
+            tableConfig.canSaveGlobalDefault()
+              ? tableConfig.saveGlobalTableConfig
+              : undefined
+          }
+          pagination={{
+            offset: query().offset,
+            pageSize: query().first,
+            total: totalCount(),
+            onOffsetChange: offset => setQuery({ ...query(), offset }),
+            onPageSizeChange: first => {
+              rememberPageSize(first);
+              setQuery({ ...query(), first, offset: 0 });
+            },
+          }}
         />
-      </Show>
-    </Page>
+        {/* Mounted only while open, so the dialog's ids exist exactly while it
+          applies (e2e/TESTIDS.md) and a fresh draft is built per open. */}
+        <Show when={editing() !== undefined}>
+          <CourseEditModal
+            storeId={params.storeId}
+            programId={params.programId}
+            courseId={editing() ?? undefined}
+            guardEdit={guardEdit}
+            onClose={() => setEditing(undefined)}
+            onSaved={onSaved}
+          />
+        </Show>
+      </Page>
+    </Show>
   );
 };
 

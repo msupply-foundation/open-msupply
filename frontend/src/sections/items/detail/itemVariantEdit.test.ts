@@ -65,20 +65,81 @@ describe('emptyForm', () => {
 describe('formFromVariant', () => {
   it('seeds every field from the row, including its existing packaging', () => {
     const row = variantRow();
-    expect(formFromVariant(row)).toEqual({
+    const form = formFromVariant(row);
+    expect(form).toMatchObject({
       name: 'Bottle of 100',
       locationTypeId: 'loc-type-1',
       manufacturerId: 'manufacturer-1',
       vvmType: 'VVM30',
-      packaging: [
-        {
-          id: 'pv-1',
-          name: 'Primary',
-          packagingLevel: 1,
-          packSize: 1,
-          volumePerUnit: 0.5,
-        },
-      ],
+    });
+    expect(form.packaging[0]).toEqual({
+      id: 'pv-1',
+      name: 'Primary',
+      packagingLevel: 1,
+      packSize: 1,
+      volumePerUnit: 0.5,
+      barcode: '5012345678900',
+    });
+  });
+
+  it('fills in a blank row for each seeded level the variant lacks', () => {
+    const form = formFromVariant(
+      variantRow({
+        packagingVariants: [
+          {
+            id: 'pv-2',
+            name: 'Box',
+            packagingLevel: 2,
+            packSize: 10,
+            volumePerUnit: 2,
+            barcode: null,
+          },
+        ],
+      })
+    );
+    expect(form.packaging.map(row => row.packagingLevel)).toEqual([1, 2, 3]);
+    expect(form.packaging[1]).toMatchObject({ id: 'pv-2', packSize: 10 });
+    expect(form.packaging[0].packSize).toBeUndefined();
+    expect(form.packaging[2].volumePerUnit).toBeUndefined();
+    // Blank rows still aren't saved: re-saving sends only the stored level.
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants?.map(row => row.id)).toEqual(['pv-2']);
+  });
+
+  // A barcode added on the Barcodes tab as a new packaging level, with no
+  // pack size given: no pack size, no volume. Leaving it out of a save would
+  // delete the barcode everywhere.
+  it('keeps a packaging row that holds a barcode but no values', () => {
+    const form = formFromVariant(
+      variantRow({
+        packagingVariants: [
+          {
+            id: 'pv-1',
+            name: 'Primary',
+            packagingLevel: 1,
+            packSize: 1,
+            volumePerUnit: 0.5,
+            barcode: null,
+          },
+          {
+            id: 'pv-barcode',
+            name: '5012345678900',
+            packagingLevel: 1,
+            packSize: null,
+            volumePerUnit: null,
+            barcode: 'gtin:05012345678900',
+          },
+        ],
+      })
+    );
+    expect(isFormValid(form)).toBe(true);
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants).toContainEqual({
+      id: 'pv-barcode',
+      name: '5012345678900',
+      packagingLevel: 1,
+      packSize: null,
+      volumePerUnit: null,
     });
   });
 
@@ -122,7 +183,7 @@ describe('isFormValid', () => {
     expect(isFormValid({ ...validForm(), name: '   ' })).toBe(false);
   });
 
-  it('is invalid when a packaging row has a blank or zero pack size', () => {
+  it('is invalid when an entered packaging row has a blank or zero pack size', () => {
     const form = validForm();
     form.packaging[0].packSize = undefined;
     expect(isFormValid(form)).toBe(false);
@@ -130,9 +191,36 @@ describe('isFormValid', () => {
     expect(isFormValid(form)).toBe(false);
   });
 
+  // OMS-REG-CAT-05.21 — the seeded rows are a starting point, not a rule.
+  it('skips fully blank packaging rows', () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    expect(isFormValid(form)).toBe(true);
+  });
+
   it('is invalid when a packaging row has a blank or zero volume per unit', () => {
     const form = validForm();
     form.packaging[0].volumePerUnit = 0;
+    expect(isFormValid(form)).toBe(false);
+  });
+
+  // The Barcodes tab sets no volume and only sometimes a pack size, so a row
+  // holding a barcode mustn't lock the variant's Save.
+  it('lets a packaging row that holds a barcode leave pack size and volume blank', () => {
+    const form = validForm();
+    form.packaging[0].barcode = 'gtin:05012345678900';
+    form.packaging[0].volumePerUnit = undefined;
+    expect(isFormValid(form)).toBe(true);
+    form.packaging[0].packSize = undefined;
+    expect(isFormValid(form)).toBe(true);
+  });
+
+  it('is invalid when a packaging row that holds a barcode has a zero value', () => {
+    const form = validForm();
+    form.packaging[0].barcode = 'gtin:05012345678900';
+    form.packaging[0].packSize = 0;
     expect(isFormValid(form)).toBe(false);
   });
 
@@ -175,6 +263,33 @@ describe('buildUpsertInput', () => {
         },
       ],
     });
+  });
+
+  it('leaves fully blank packaging rows out of the save', () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants?.map(row => row.packagingLevel)).toEqual([
+      1,
+    ]);
+  });
+
+  it('sends a blank value on a row that holds a barcode as null, not 0', () => {
+    const form = validForm();
+    form.packaging[0].barcode = 'gtin:05012345678900';
+    form.packaging[0].volumePerUnit = undefined;
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants).toEqual([
+      {
+        id: 'pv-1',
+        name: 'Primary',
+        packagingLevel: 1,
+        packSize: 1,
+        volumePerUnit: null,
+      },
+    ]);
   });
 
   it('sends null (not omitted) to clear an unset location type/manufacturer/vvm', () => {

@@ -65,7 +65,7 @@ Every cell is clean, fixed, or a recorded benign exception. Implementation and s
 
 ## Spec edits — signed off and applied
 
-All in [`spec/cold-chain-monitoring/ui-surface.md`](../../../spec/cold-chain-monitoring/ui-surface.md), roles never component names.
+All in [`spec/cold-chain-monitoring/ui-surface.md`](../../../../spec/cold-chain-monitoring/ui-surface.md), roles never component names.
 
 - **SE1** — S1 § Filters no longer restates the shared filter bar's menu ("labelled Filters", "Remove all filters"); § Layout no longer places the bar in the app-bar page-content region, and says every tab carries the shared bar (the tables in their toolbar, the Chart tab above the plot). The stale "a role the charts registry does not yet carry; see the known gap" clause on the chart went with it — the registry row exists. The import outcome's in-place notice is named in the App bar line.
 - **SE2** — the two From/To filter rows are one **Date/time range** row of type _date & time range_, both bounds named, either side clearable, shown by default.
@@ -98,8 +98,8 @@ Flagged, not fixed — the migration does not change shared components (the one 
 
 ## Noticed during the work (not fixed)
 
-- **Two stale sentences remain in the spec**, outside the signed-off edits: [`README.md` § Known gaps](../../../spec/cold-chain-monitoring/README.md) still lists "No registry role for the temperature chart" and "The notification band's registry role is not built", and S5 § Layout still says the standing-banner role is "not-yet-built pending exactly that". Both roles have registry rows and components since the build. A one-line spec tidy each.
-- **The registry's `Toolbar` row** ([`components.md` § screen structure](../../../spec/ui-standards/components.md#screen-structure-regions)) still says "`Toolbar` stays for other content (a list's filter bar)". `tables.md` forbids exactly that placement, and every list now complies. The note should name something else (the items statistics band, an import outcome notice) or nothing.
+- **Two stale sentences remain in the spec**, outside the signed-off edits: [`README.md` § Known gaps](../../../../spec/cold-chain-monitoring/README.md) still lists "No registry role for the temperature chart" and "The notification band's registry role is not built", and S5 § Layout still says the standing-banner role is "not-yet-built pending exactly that". Both roles have registry rows and components since the build. A one-line spec tidy each.
+- **The registry's `Toolbar` row** ([`components.md` § screen structure](../../../../spec/ui-standards/components.md#screen-structure-regions)) still says "`Toolbar` stays for other content (a list's filter bar)". `tables.md` forbids exactly that placement, and every list now complies. The note should name something else (the items statistics band, an import outcome notice) or nothing.
 - **The stocktakes list and `SensorsList` build their `columns` as plain accessors**, the same §14 miss this vertical had (R3). Out of scope here; two one-line fixes in their own verticals.
 - **`TabPanel` unmounts inactive panels** ([`Tabs.tsx:54`](../../ui/elements/tabs/Tabs.tsx#L54)), so switching tabs re-creates the tab's resource and refetches. Pre-existing and shared by every tabbed screen; noted only because a reviewer may wonder why the tables spin on each switch.
 - **The bookmarked-URL break.** A `?query=` address from the pre-migration build carries `fromStart`/`toStart`, which the new state ignores; the arrival-window rule does not re-seed a window into an address that already names a filter, so such a bookmark opens with no date bounds. Accepted for an unreleased screen (your ruling under R2).
@@ -138,7 +138,7 @@ The detail behind each fix, kept as the record. `file:line` references are to th
 
 ### R1 — The filter bar rendered in the page header (dims 3, 2) — binding
 
-`MonitoringScreen.tsx:148-154` put the `FilterBar` in a `<Toolbar>` inside the `<Header>`. [`tables.md` § Toolbar](../../../spec/ui-standards/tables.md#toolbar) is binding: the filter bar MUST render in the table toolbar, never in the page header or app bar, overriding any vertical spec that places filters elsewhere. The screen's comment gave the reason — one filter set serves the chart as well as the two tables — a real tension the rule does not address, but not a licence for the header. Only one tab panel is mounted at a time ([`Tabs.tsx:54`](../../ui/elements/tabs/Tabs.tsx#L54)), so there is never more than one bar instance.
+`MonitoringScreen.tsx:148-154` put the `FilterBar` in a `<Toolbar>` inside the `<Header>`. [`tables.md` § Toolbar](../../../../spec/ui-standards/tables.md#toolbar) is binding: the filter bar MUST render in the table toolbar, never in the page header or app bar, overriding any vertical spec that places filters elsewhere. The screen's comment gave the reason — one filter set serves the chart as well as the two tables — a real tension the rule does not address, but not a licence for the header. Only one tab panel is mounted at a time ([`Tabs.tsx:54`](../../ui/elements/tabs/Tabs.tsx#L54)), so there is never more than one bar instance.
 
 ### R2 — Two single-bound chips where the house pattern is one date-time range chip (dims 3, 4, 10, 11)
 
@@ -182,7 +182,7 @@ The detail behind each fix, kept as the record. `file:line` references are to th
 - `stroke-width: 1px / 2px` and the tooltip's `1px` border — hairlines, the sanctioned px.
 - The import-outcome `Alert` in a `<Show>`-gated `<Toolbar>` — the facility register does exactly this ([`FacilityRegister.tsx:233-262`](../names/register/FacilityRegister.tsx#L233-L262)); not a `StandingBanner` (no controls).
 - `title={t('tooltip.import-fridge-tag')}` on the page action — settings does the same.
-- `OkButton` as the acknowledge confirm — [`controls.md`](../../../spec/ui-standards/controls.md#footer-button-identity) reserves OK for a confirm that "genuinely isn't a save"; acknowledging is a confirmation with a required comment, the spec and reference app label it OK, and the e2e suite locates `dialog-button-ok`.
+- `OkButton` as the acknowledge confirm — [`controls.md`](../../../../spec/ui-standards/controls.md#footer-button-identity) reserves OK for a confirm that "genuinely isn't a save"; acknowledging is a confirmation with a required comment, the spec and reference app label it OK, and the e2e suite locates `dialog-button-ok`.
 - Status, Breach start/end, Duration, Type and Max/Min columns use an explicit helper plus a `size` — `CELL_TYPES.md`'s rule for a type with no preset key; `sensorName` and `location` use the presets.
 - The card model (`compact: { viewMode: 'card' }`, one primary header column) matches the family sibling `SensorsList`.
 - The Chart tab carries no empty-state placeholder: a window with no reading draws a blank chart (rules › the chart), and the shared `nothing-here` empty state belongs to the two tables alone.

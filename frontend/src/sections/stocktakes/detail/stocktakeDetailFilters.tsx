@@ -112,10 +112,16 @@ export const stocktakeDetailFilters = (
     },
 
     // ─ dismissed (not addable chips) ─────────────────────────────────────────
-    // TODO: batch filter. The old client filter offered it, but
-    // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
+    // TODO: batch filter. The old client filter offered it; the server now has
+    // `batch`, so it only needs a chip.
+    batch: null,
     // TODO: expiry-before filter. No expiry field on the server filter — needs
     // a backend addition.
+    // Server-supported, no chip yet.
+    manufactureDate: null,
+    donorId: null,
+    // `campaignId` above already narrows by Activity.
+    campaignName: null,
     // `id` is dismissed HERE (it's not a user-typed chip), but it IS used by
     // the "show error lines" filter — driven from the view's error id-set as
     // `id.equalAny`, wired through FilterBar's `extra` group in

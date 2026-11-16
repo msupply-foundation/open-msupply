@@ -1,8 +1,8 @@
 # Sync message — build report
 
-Built from [`spec/sync-message/`](../../../spec/sync-message/) by `/spec-build sync-message`, stacked on the spec branch `spec/sync-message`.
+Built from [`spec/sync-message/`](../../../../spec/sync-message/) by `/spec-build sync-message`, stacked on the spec branch `spec/sync-message`.
 
-**Target stack:** SolidJS + Vite, composing the shared component library in [`src/ui/`](../../ui/), every slot resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md). Pattern source: the reference vertical `src/sections/stocktakes/` (list screen + modal-over-list shape taken from it and from `locations`, the closest existing "list with no detail route" vertical).
+**Target stack:** SolidJS + Vite, composing the shared component library in [`src/ui/`](../../ui/), every slot resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md). Pattern source: the reference vertical `src/sections/stocktakes/` (list screen + modal-over-list shape taken from it and from `locations`, the closest existing "list with no detail route" vertical).
 
 ## What was built
 

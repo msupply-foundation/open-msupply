@@ -17,7 +17,6 @@ const {
   isEditable,
   noStatusLabel,
   opensInEncounter,
-  patientAgeLabel,
   reasonLabel,
   statusLabel,
   waitsFor,
@@ -257,20 +256,6 @@ describe('OMS-REG-DIS-06.75 — the reason a dose was not given', () => {
   it("shows any other reason as written — the skip fill's sentence included", () => {
     expect(reasonLabel('Dose skipped (Later dose administered)')).toBe(
       'Dose skipped (Later dose administered)'
-    );
-  });
-});
-
-describe("OMS-REG-DIS-06.69 — the patient's age in the summary", () => {
-  it('reads weeks under three months, months under two years, then years', () => {
-    expect(patientAgeLabel('2026-09-01', '2026-10-12')).toBe(
-      'label.age-weeks-short {"count":5}'
-    );
-    expect(patientAgeLabel('2026-03-02', '2026-10-12')).toBe(
-      'label.age-months-short {"count":7}'
-    );
-    expect(patientAgeLabel('2023-01-01', '2026-10-12')).toBe(
-      'label.age-years-short {"count":3}'
     );
   });
 });

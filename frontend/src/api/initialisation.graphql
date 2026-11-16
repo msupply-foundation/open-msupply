@@ -5,6 +5,15 @@ query initialisationStatus {
   }
 }
 
+# Start-up runs before every page load and only needs the status. On an
+# initialised server that's answered without touching the database; siteName
+# would need a read, so it is left to the initialisation page above.
+query initialisationStatusAtStartup {
+  initialisationStatus {
+    status
+  }
+}
+
 # Server role for the phase-visibility matrix (spec/sync-modal/rules.md
 # § phase visibility). Served without authentication on both schemas, so the
 # initialisation screen can read it pre-session.

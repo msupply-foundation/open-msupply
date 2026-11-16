@@ -262,9 +262,9 @@ const EncounterDetailView: Component = () => {
     return [
       {
         label: t('label.patients'),
-        onClick: () => navigate(`/${params.storeId}/dispensary/patients`),
+        to: `/${params.storeId}/dispensary/patients`,
       },
-      { label: record()?.patient.name ?? '', onClick: leave },
+      { label: record()?.patient.name ?? '', to: patientHref() },
       { label: leaf },
     ];
   };

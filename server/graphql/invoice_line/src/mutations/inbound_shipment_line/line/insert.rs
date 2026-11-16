@@ -212,6 +212,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
         | ServiceError::PurchaseOrderLineDoesNotExist
+        | ServiceError::PurchaseOrderLineNotFromLinkedOrder
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)

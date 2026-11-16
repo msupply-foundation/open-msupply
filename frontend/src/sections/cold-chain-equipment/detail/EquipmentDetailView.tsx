@@ -260,7 +260,12 @@ const EquipmentDetailView: Component = () => {
             title={t('error.asset-not-found')}
             onClose={() => navigate(listPath())}
             actions={
-              <Button variant="primary" onClick={() => navigate(listPath())}>
+              <Button
+                variant="primary"
+                // not-a-link: acknowledges the alert; the list is just where
+                // that leaves you.
+                onClick={() => navigate(listPath())}
+              >
                 {t('button.ok')}
               </Button>
             }
@@ -352,6 +357,8 @@ const EquipmentDetailView: Component = () => {
                       variant="secondary"
                       icon={<XCircleIcon />}
                       data-testid="close-button"
+                      // not-a-link: Close is an action on this screen, not a
+                      // destination to open in a new tab.
                       onClick={() => navigate(listPath())}
                     >
                       {t('button.close')}

@@ -1,0 +1,21 @@
+{
+  "//": "As a backend plugins, unlike frontend plugins 'types' here is important, it indicates to backend where this plugin should be called",
+  "name": "forecasting_plugins",
+  "omSupplyPlugin": {
+    "target": "backend",
+    "//": "Fields here must match PluginTypes in backend_plugin_row repository",
+    "types": [
+      "transform_request_requisition_lines"
+    ],
+    "variant_type": "BOA_JS"
+  },
+  "version": "1.0.1",
+  "main": "plugin.js",
+  "scripts": {
+    "build-plugin": "npx webpack"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/lodash": "^4.17.15"
+  }
+}
