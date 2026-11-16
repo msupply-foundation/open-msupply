@@ -1295,6 +1295,44 @@ async fn a_location_type_export_searches_name_and_code() {
     assert_eq!(counts[0].count.matching, 2);
 }
 
+// covers: OMS-REG-CDIO-01.73
+
+#[actix_rt::test]
+async fn a_code_finds_a_location_type_an_earlier_row_adds() {
+    let (connection, service_provider, dir) =
+        location_type_setup("central_data_location_type_added_earlier_in_file").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            location_type_row(["cold_a", "COLD", "Cold", "2", "8", ""]),
+            // A new id beside the code row 2 adds.
+            location_type_row(["cold_b", "COLD", "Cold", "2", "8", ""]),
+            // No id: finds row 2's location type and changes it.
+            location_type_row(["", "COLD", "Colder", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                3,
+                Some("code"),
+                "code and id conflict: Cold has code COLD and id cold_a, but this row has code COLD and id cold_b"
+            ),
+            (4, None, "Row 2 already changes this record"),
+        ]
+    );
+    assert_eq!(
+        LocationTypeRowRepository::new(&connection)
+            .find_one_by_id("cold_a")
+            .unwrap(),
+        None
+    );
+}
+
 // covers: OMS-REG-CDIO-01.12, .35, .63, .75, .77
 
 #[actix_rt::test]
