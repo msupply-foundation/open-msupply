@@ -49,8 +49,19 @@
   color: var(--text-disabled);
 }
 
-.button:hover:not([data-disabled]) {
-  border-color: var(--primary-main);
+/* Hover only where the pointer can hover: a touch screen keeps the last
+   control tapped in :hover, so it would stay highlighted. On touch the look
+   shows only while pressed (:active), as on Button. */
+@media (hover: hover) {
+  .button:hover:not([data-disabled]) {
+    border-color: var(--primary-main);
+  }
+}
+
+@media (hover: none) {
+  .button:active:not([data-disabled]) {
+    border-color: var(--primary-main);
+  }
 }
 
 /* The checkbox indicator — an outlined square; fills with the accent + reveals the check when

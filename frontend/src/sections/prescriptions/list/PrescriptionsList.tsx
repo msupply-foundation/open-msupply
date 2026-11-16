@@ -1,6 +1,13 @@
-import { createMemo, createResource, createSignal, Show } from 'solid-js';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -31,7 +38,8 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { CardViewIcon, CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { LinkButton } from '../../../ui/elements/buttons/LinkButton';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
   DEFAULT_PAGE_SIZE,
@@ -62,6 +70,16 @@ import {
 } from '../../../domain/customFields';
 import { filterFields, type PrescriptionFilter } from './listFilters';
 import { CreatePrescriptionModal } from './CreatePrescriptionModal';
+import {
+  fetchPatientOptionById,
+  type PatientOption,
+} from '../../../domain/patient';
+import {
+  NEW_RECORD_PARAM,
+  NEW_RECORD_PATIENT_PARAM,
+  newRecordRequest,
+  type NewRecordParams,
+} from '../newRecordLink';
 import {
   DeletePrescriptionsAction,
   ExportPrescriptionsAction,
@@ -108,6 +126,40 @@ const PrescriptionsList: Component = () => {
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
+  // The patient the create dialog opens with: the Simple screen's chosen
+  // patient, handed over by its Standard view (S2).
+  const [createFor, setCreateFor] = createSignal<PatientOption | null>(null);
+  const closeCreate = () => {
+    setCreateOpen(false);
+    setCreateFor(null);
+  };
+
+  /*
+   * The Simple screen's Standard view (rules › the Simple screen): open the
+   * create dialog, for its patient if it named one. Read once, as the list
+   * opens, and cleared from the address straight away, so a reload or coming
+   * back to the list shows the list alone. The patient's record is read first,
+   * so the dialog opens with them in it; one that can't be read opens it
+   * empty.
+   */
+  const [searchParams, setSearchParams] = useSearchParams<NewRecordParams>();
+  let live = true;
+  onCleanup(() => (live = false));
+  onMount(() => {
+    const asked = newRecordRequest(searchParams);
+    if (!asked) return;
+    setSearchParams(
+      { [NEW_RECORD_PARAM]: undefined, [NEW_RECORD_PATIENT_PARAM]: undefined },
+      { replace: true }
+    );
+    if (!asked.patientId) return setCreateOpen(true);
+    void fetchPatientOptionById(params.storeId, asked.patientId).then(found => {
+      // Left the list meanwhile: nothing to open.
+      if (!live) return;
+      setCreateFor(found ?? null);
+      setCreateOpen(true);
+    });
+  });
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2,
   // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
@@ -312,6 +364,16 @@ const PrescriptionsList: Component = () => {
               customFieldFilter={() => query().cf}
               customFields={cfDefs}
             />
+            {/* Last in the cluster: the Simple screen's Standard view takes
+                the same slot, so the switch stays under the pointer. */}
+            <LinkButton
+              href={`/${params.storeId}/dispensary/dispensing/simple`}
+              variant="secondary"
+              icon={<CardViewIcon />}
+              data-testid="simple-view-button"
+            >
+              {t('button.simple-view')}
+            </LinkButton>
           </HeaderButtons>
         </Header>
       }
@@ -399,7 +461,8 @@ const PrescriptionsList: Component = () => {
       />
       <CreatePrescriptionModal
         open={createOpen()}
-        onClose={() => setCreateOpen(false)}
+        onClose={closeCreate}
+        patient={createFor()}
       />
     </Page>
   );

@@ -638,6 +638,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               <DateField
                 label={t('label.date-of-birth')}
                 max={todayCalendarDate()}
+                testId="input-dateOfBirth"
                 value={search.dateOfBirth}
                 onChange={value => setSearch('dateOfBirth', value)}
               />

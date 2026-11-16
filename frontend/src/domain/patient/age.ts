@@ -1,4 +1,4 @@
-import { getDisplayAge } from '../../intl';
+import { getDisplayAge, localisedDate } from '../../intl';
 import { calendarDateToDate } from '../../intl/calendarDate';
 
 // A patient's age and date of birth (spec/patients rules › age), shared by
@@ -57,3 +57,15 @@ export const ageMonthsAndDays = (dob: string | null): string | undefined => {
  */
 export const dobFromAge = (age: number): string =>
   `${new Date().getFullYear() - age}-01-01`;
+
+/**
+ * A date of birth with the age it gives in brackets — "15/06/1988 (37
+ * years)", "08/07/2026 (3 months, 13 days)" — as the encounter header states
+ * a patient (spec/patients rules › what a patient is). The date alone where
+ * no age can be given (a future date of birth).
+ */
+export const dateOfBirthWithAge = (dob: string): string => {
+  const age = getDisplayAge(dob);
+  const date = localisedDate(dob);
+  return age ? `${date} (${age})` : date;
+};
