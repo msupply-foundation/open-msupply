@@ -62,8 +62,19 @@
   cursor: pointer;
 }
 
-.hamburger:hover {
-  background: var(--bg-group-main);
+/* Hover only where the pointer can hover: a touch screen keeps the last
+   control tapped in :hover, so it would stay highlighted. On touch the look
+   shows only while pressed (:active), as on Button. */
+@media (hover: hover) {
+  .hamburger:hover {
+    background: var(--bg-group-main);
+  }
+}
+
+@media (hover: none) {
+  .hamburger:active {
+    background: var(--bg-group-main);
+  }
 }
 
 .hamburger:focus-visible {

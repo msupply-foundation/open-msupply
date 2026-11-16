@@ -12,9 +12,21 @@
   cursor: pointer;
 }
 
-.toggle:hover {
-  border-color: var(--gray-main);
-  color: var(--text-body);
+/* Hover only where the pointer can hover: a touch screen keeps the last
+   control tapped in :hover, so it would stay highlighted. On touch the look
+   shows only while pressed (:active), as on Button. */
+@media (hover: hover) {
+  .toggle:hover {
+    border-color: var(--gray-main);
+    color: var(--text-body);
+  }
+}
+
+@media (hover: none) {
+  .toggle:active {
+    border-color: var(--gray-main);
+    color: var(--text-body);
+  }
 }
 
 .toggle:focus-visible {
