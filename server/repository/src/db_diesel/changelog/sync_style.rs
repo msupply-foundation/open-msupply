@@ -11,13 +11,14 @@ pub struct SyncVersions {
 // Authoring axis — what central accepts when validating an incoming push; a sanity check, not routing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Authoring {
-    Central,     // reject any remote push — central manages it
-    Remote,      // store-scoped; owning store and central may edit
-    RemoteOwned, // accept if store_id is active on the source site
-    Transfer,    // cross-store; accept via the transfer-store id
-    Patient,     // accept if patient_id present (store_id, if set, active on source)
-    Anyone,      // accept as-is, no checks
-    LegacyOnly,  // not a v7 record; reject
+    Central,         // reject any remote push — central manages it
+    CentralForStore, // store-scoped, but only central may edit; reject any remote push
+    Remote,          // store-scoped; owning store and central may edit
+    RemoteOwned,     // accept if store_id is active on the source site
+    Transfer,        // cross-store; accept via the transfer-store id
+    Patient,         // accept if patient_id present (store_id, if set, active on source)
+    Anyone,          // accept as-is, no checks
+    LegacyOnly,      // not a v7 record; reject
 }
 
 // Distribution axis — which sites central sends each row to; drives the changelog filters.
@@ -52,7 +53,8 @@ impl Distribution {
                     ..
                 } = table.sync_style();
                 if let Some(sync_style_options) = &sync_style_options
-                    && sync_style_options != &transport
+                    && !((sync_style_options.is_v5 && transport.is_v5)
+                        || (sync_style_options.is_v6 && transport.is_v6))
                 {
                     return false;
                 }
@@ -91,7 +93,7 @@ impl ChangelogTableName {
             NameStoreJoin => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
             ItemStoreJoin => SyncStyle {
@@ -220,6 +222,14 @@ impl ChangelogTableName {
                 transport: V7_ONLY,
                 multi_device_site: true,
             },
+            // OMS-native: estimated consumption for a store with no history yet, entered
+            // on central and sent to the store's site so its AMC uses it, over v7 only.
+            ConsumptionEstimate => SyncStyle {
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             VVMStatusLog => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
@@ -230,7 +240,7 @@ impl ChangelogTableName {
             SyncMessage => SyncStyle {
                 authoring: vec![Anyone],
                 distribution: vec![D::Central, D::Remote],
-                transport: V5,
+                transport: V5_V6,
                 multi_device_site: true,
             },
 
@@ -391,19 +401,19 @@ impl ChangelogTableName {
             VaccineCourse => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseDose => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseItem => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             VaccineCourseStoreConfig => SyncStyle {
@@ -456,8 +466,8 @@ impl ChangelogTableName {
             },
             // Legacy central sends its entries to v5/v6 sites itself. The v6 tag
             // carries the ones a form plugin owns, which open mSupply central writes
-            // on install, to those sites; tagging both would take it out of the v6
-            // pull. Only owned entries go, see `OmDocumentRegistryTranslation`.
+            // on install, to those sites. Only owned entries go, see
+            // `OmDocumentRegistryTranslation`.
             DocumentRegistry => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
@@ -620,14 +630,15 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: true,
             },
+            // User access is managed on central; sites only receive it (#1639)
             UserPermission => SyncStyle {
-                authoring: vec![Remote],
+                authoring: vec![CentralForStore],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
             },
             UserStoreJoin => SyncStyle {
-                authoring: vec![Remote],
+                authoring: vec![CentralForStore],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
@@ -694,13 +705,13 @@ impl ChangelogTableName {
             Encounter => SyncStyle {
                 authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             Vaccination => SyncStyle {
                 authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
-                transport: V6,
+                transport: V5_V6,
                 multi_device_site: false,
             },
             ContactTrace => SyncStyle {

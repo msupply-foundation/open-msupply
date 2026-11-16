@@ -1,6 +1,6 @@
 use super::update::update_sensor_logs_for_breach;
 use anyhow::Context;
-use chrono::{Local, LocalResult, NaiveDateTime, NaiveTime, TimeZone};
+use chrono::{DateTime, Local, LocalResult, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use repository::{DatetimeFilter, EqualFilter, StringFilter};
 use repository::{
     RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
@@ -355,8 +355,8 @@ pub struct ReadSensor {
     new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
-    start_datetime: Option<NaiveDateTime>,
-    end_datetime: Option<NaiveDateTime>,
+    start_datetime: Option<DateTime<Utc>>,
+    end_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Error)]
@@ -520,8 +520,10 @@ fn integrate_sensor_data(
         new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
-        start_datetime: earliest_event_timestamp,
-        end_datetime: latest_event_timestamp,
+        start_datetime: earliest_event_timestamp
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc)),
+        end_datetime: latest_event_timestamp
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc)),
     };
 
     for temperature_sensor_log in temperature_sensor_logs {
@@ -773,7 +775,13 @@ mod test {
         };
 
         // INTERGRATE MOCK DATA
-        integrate_sensor_data(&connection, &mock_store_a().id, data.clone()).unwrap();
+        let read_sensor =
+            integrate_sensor_data(&connection, &mock_store_a().id, data.clone()).unwrap();
+
+        // The range is sent as UTC, so it can go straight into a DateTime filter
+        let read_sensor = serde_json::to_value(&read_sensor).unwrap();
+        assert_eq!(read_sensor["startDatetime"], "2024-01-01T09:01:01Z");
+        assert_eq!(read_sensor["endDatetime"], "2024-01-01T14:01:01Z");
 
         // CHECK BREACHES
         let mut breaches = TemperatureBreachRepository::new(&connection)

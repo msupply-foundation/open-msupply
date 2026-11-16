@@ -1,5 +1,5 @@
 import { generateUUID } from '../../../uuid';
-import { createSignal, Show, type Component } from 'solid-js';
+import { createEffect, createSignal, on, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { graphqlFetch } from '../../../api/graphql';
@@ -10,7 +10,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
@@ -29,6 +29,11 @@ import { InsertPrescription } from './createPrescription.generated';
 export interface CreatePrescriptionModalProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * The patient already in the Patient field as the dialog opens: the one
+   * chosen on the Simple screen, when its Standard view opened this (S2).
+   */
+  patient?: PatientOption | null;
 }
 
 export const CreatePrescriptionModal: Component<
@@ -38,7 +43,7 @@ export const CreatePrescriptionModal: Component<
   const navigate = useNavigate();
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
-  const [date, setDate] = createSignal<string>(localTodayIso());
+  const [date, setDate] = createSignal<string>(todayCalendarDate());
   const [reference, setReference] = createSignal('');
   const [clinicianId, setClinicianId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
@@ -49,9 +54,20 @@ export const CreatePrescriptionModal: Component<
   // patient is selected here (modal-in-place — D54).
   const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
 
+  // Filled in as the dialog opens, and only then: the field is the user's
+  // from there on. Closing resets it, as below.
+  createEffect(
+    on(
+      () => props.open,
+      open => {
+        if (open && props.patient) setPatient(props.patient);
+      }
+    )
+  );
+
   const reset = () => {
     setPatient(null);
-    setDate(localTodayIso());
+    setDate(todayCalendarDate());
     setReference('');
     setClinicianId(undefined);
     setProgramId(undefined);
@@ -158,8 +174,8 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           testId="date-field"
           value={date()}
-          max={localTodayIso()}
-          onChange={value => setDate(value ?? localTodayIso())}
+          max={todayCalendarDate()}
+          onChange={value => setDate(value ?? todayCalendarDate())}
         />
       </FieldRow>
       <FieldRow label={t('label.reference')}>

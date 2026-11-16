@@ -10,34 +10,25 @@
  */
 
 import { locale, localeDateFormat } from '../../../intl';
+import {
+  dateToCalendarDate,
+  calendarDateToDate,
+} from '../../../intl/calendarDate';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
-
-/** ISO calendar date `YYYY-MM-DD` → a local Date at midnight, or null. */
-export const isoDateToDate = (iso: string | null | undefined): Date | null => {
-  if (!iso) return null;
-  const [y, m, d] = iso.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  const date = new Date(y, m - 1, d);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
-
-/** A local Date → ISO calendar date `YYYY-MM-DD` (device tz). */
-export const dateToIsoDate = (d: Date): string =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /**
  * A stored UTC instant → the local `{ date: 'YYYY-MM-DD', time: 'HH:mm' }` the
  * combined field edits (device tz). Empty/invalid → null.
  */
-export const utcToLocalParts = (
+export const instantToLocalParts = (
   utc: string | null | undefined
 ): { date: string; time: string } | null => {
   if (!utc) return null;
   const d = new Date(utc);
   if (Number.isNaN(d.getTime())) return null;
   return {
-    date: dateToIsoDate(d),
+    date: dateToCalendarDate(d),
     time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
   };
 };
@@ -48,99 +39,13 @@ export const utcToLocalParts = (
  * gives the right UTC instant. No date → null (an instant needs a day); a blank
  * time defaults to midnight.
  */
-export const localPartsToUtc = (
+export const localPartsToInstant = (
   dateIso: string,
   timeHHmm: string
 ): string | null => {
   if (!dateIso) return null;
   const d = new Date(`${dateIso}T${timeHHmm || '00:00'}`);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
-};
-
-/**
- * A local calendar day `YYYY-MM-DD` → its first instant (or inclusive last,
- * 23:59:59.999, with `{ endOfDay: true }`) as a UTC ISO instant, in the device
- * timezone (#456; ui-standards/list-views.md § Filters). The zoneless string
- * parses as local, so `toISOString()` gives the right instant — appending `Z`
- * to a bare day would read it in UTC, a day off for any device off UTC.
- */
-export const localDayToUtc = (
-  isoDate: string,
-  opts?: { endOfDay?: boolean }
-): string =>
-  new Date(
-    `${isoDate}T${opts?.endOfDay ? '23:59:59.999' : '00:00:00'}`
-  ).toISOString();
-
-/**
- * The inverse read-back: a stored UTC instant → the LOCAL calendar day it fell
- * on (device tz), so pick → store → display round-trips to the same day.
- * Never `.slice(0, 10)`: that reads the UTC day, off by one once the widened
- * instant crosses the date line. Empty/invalid → null.
- */
-export const utcToLocalDay = (utc: string | null | undefined): string | null =>
-  utcToLocalParts(utc)?.date ?? null;
-
-/**
- * The day-range slice of a GraphQL `DatetimeFilterInput` — inclusive UTC
- * bounds.
- */
-export interface UtcDayBounds {
-  afterOrEqualTo?: string | null;
-  beforeOrEqualTo?: string | null;
-}
-
-/**
- * A picked local-day range → inclusive wire bounds (from = day start, to = day
- * end), either side optional; both empty → null (the "added but empty" marker).
- */
-export const utcBoundsFromLocalDays = (
-  start: string | null,
-  end: string | null
-): UtcDayBounds | null =>
-  start || end
-    ? {
-        ...(start ? { afterOrEqualTo: localDayToUtc(start) } : {}),
-        ...(end
-          ? { beforeOrEqualTo: localDayToUtc(end, { endOfDay: true }) }
-          : {}),
-      }
-    : null;
-
-/**
- * A `Date` → an RFC3339 instant keeping the device's local offset (e.g.
- * `…09:30:15+13:00`) instead of `Z`, at SECONDS precision (no milliseconds) —
- * byte-for-byte the current app's `Formatter.localIsoString`. Same instant as
- * `localDayToUtc`, but the wire string shows the local calendar day on its
- * face. Use for a wire field whose input preserves the offset AND whose server
- * records the wire-local date — the inbound received-date write (input
- * `DateTime<FixedOffset>`; its `INVOICE_DATE_BACKDATED` log formats in the wire
- * offset, so a `Z` value logs the day before off UTC — server-verified).
- * Elsewhere (filters, `DateTime<Utc>` inputs) only the instant matters, so use
- * `localDayToUtc`.
- */
-export const dateToOffsetIso = (d: Date): string => {
-  const offsetMinutes = -d.getTimezoneOffset(); // minutes east of UTC
-  const sign = offsetMinutes >= 0 ? '+' : '-';
-  const abs = Math.abs(offsetMinutes);
-  return (
-    `${dateToIsoDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
-    `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
-  );
-};
-
-/**
- * The user's LOCAL calendar day right now, ISO `YYYY-MM-DD` (device tz) — the
- * "today" day-comparisons and date-input bounds measure against, so a store
- * off UTC never misclassifies its own today. Impure (reads the clock).
- */
-export const localTodayIso = (): string => dateToIsoDate(new Date());
-
-/** The LOCAL calendar day `days` before today, ISO `YYYY-MM-DD` (device tz). */
-export const localIsoDaysAgo = (days: number): string => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return dateToIsoDate(d);
 };
 
 /** A new `Date` `days` after `d` (negative goes back); device-local. */
@@ -165,13 +70,22 @@ export const defaultDateFormat = (): string => localeDateFormat();
 
 const TOKEN = /yyyy|yy|MMMM|MMM|MM|M|dd|d/g;
 
-/** Localised month names for the app language, `[short, long]` per month. */
+/**
+ * Localised month names for the app language, `[short, long]` per month.
+ * Always the Gregorian months the value is stored in: left to the browser,
+ * Dari and Pashto would name the Solar Hijri month instead (Mizan for most
+ * of October).
+ */
 const monthNames = (): { short: string; long: string }[] =>
   Array.from({ length: 12 }, (_, i) => ({
     short: new Date(2000, i, 1).toLocaleDateString(locale(), {
       month: 'short',
+      calendar: 'gregory',
     }),
-    long: new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'long' }),
+    long: new Date(2000, i, 1).toLocaleDateString(locale(), {
+      month: 'long',
+      calendar: 'gregory',
+    }),
   }));
 
 // Placeholder token letters per language — only the letters that differ from
@@ -199,15 +113,15 @@ export const formatPlaceholder = (format: string): string => {
 };
 
 /**
- * An ISO date `YYYY-MM-DD` → a display string per a token `format` (`d`, `dd`,
+ * A calendar date `YYYY-MM-DD` → a display string per a token `format` (`d`, `dd`,
  * `M`, `MM`, `MMM`, `MMMM`, `yy`, `yyyy`; anything else is a literal). Month
  * names are in the app language. Empty/invalid → ''.
  */
-export const formatIsoDate = (
+export const formatCalendarDate = (
   iso: string | null | undefined,
   format = defaultDateFormat()
 ): string => {
-  const d = isoDateToDate(iso);
+  const d = calendarDateToDate(iso);
   if (!d) return '';
   const names = monthNames();
   return format.replace(TOKEN, tok => {
@@ -237,8 +151,10 @@ export const formatIsoDate = (
 /**
  * Typed date text → ISO `YYYY-MM-DD`, interpreting the day/month/year ORDER
  * from `format`. Lenient about separators (`/ - .`, spaces) and month form
- * (numeric or a localised name). '' → null (cleared); anything unparseable or
- * out-of-range → undefined (invalid — the caller keeps the text for a fix).
+ * (numeric or a localised name). A format with no day token (`MMM yyyy`, a
+ * month-only field) reads a month and year as that month's 1st. '' → null
+ * (cleared); anything unparseable or out-of-range → undefined (invalid — the
+ * caller keeps the text for a fix).
  */
 export const parseDateInput = (
   text: string,
@@ -254,17 +170,35 @@ export const parseDateInput = (
     if (!order.includes(kind)) order.push(kind);
     return tok;
   });
-  if (order.length !== 3) return undefined;
+  const monthOnly = order.length === 2 && !order.includes('d');
+  if (order.length !== 3 && !monthOnly) return undefined;
 
   // Parts: runs of digits or letters, in order (month names have letters).
-  const parts = s.match(/\p{L}+|\d+/gu);
-  if (!parts || parts.length !== 3) return undefined;
+  // "Letters" include combining marks: Lao vowel signs (the `ິ` in `ມິ.ຖ.`,
+  // the `ຸ` in `ຕຸລາ`) are marks, not letters, and a name must stay one run.
+  // Some languages abbreviate a month with INTERNAL dots (Lao `ຕ.ລ.`), which
+  // this split would cut into two letter runs — drop a separator that sits
+  // between two LETTERS, in the text, so both sides see the same token; the
+  // names additionally lose a TRAILING dot (`oct.`, `ຕລ.`, the abbreviation
+  // mark). A separator between digits stands (`23.04.2023` must stay three
+  // parts).
+  const parts = s
+    .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+    .match(/[\p{L}\p{M}]+|\d+/gu);
+  if (!parts || parts.length !== order.length) return undefined;
 
-  const names = monthNames();
-  let day = 0;
+  const names = monthNames().map(n => ({
+    short: n.short
+      .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+      .replace(/(?<=[\p{L}\p{M}])[.,'’]+$/u, ''),
+    long: n.long
+      .replace(/(?<=[\p{L}\p{M}])[.,'’](?=[\p{L}\p{M}])/gu, '')
+      .replace(/(?<=[\p{L}\p{M}])[.,'’]+$/u, ''),
+  }));
+  let day = monthOnly ? 1 : 0;
   let month = 0;
   let year = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < order.length; i++) {
     const part = parts[i];
     const kind = order[i];
     if (kind === 'M' && /\D/.test(part)) {
@@ -296,7 +230,7 @@ export const parseDateInput = (
     date.getDate() !== day
   )
     return undefined;
-  return dateToIsoDate(date);
+  return dateToCalendarDate(date);
 };
 
 /** A `{ hour, minute }` time value (Kobalte TimeField's shape). */

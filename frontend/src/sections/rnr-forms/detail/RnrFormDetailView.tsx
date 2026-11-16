@@ -356,7 +356,7 @@ const RnrFormDetailView: Component = () => {
   const crumbs = (n: RnrFormNode) => [
     {
       label: t('r-and-r-forms'),
-      onClick: () => navigate(`/${params.storeId}/replenishment/r-and-r-forms`),
+      to: `/${params.storeId}/replenishment/r-and-r-forms`,
     },
     { label: n.period.name },
   ];

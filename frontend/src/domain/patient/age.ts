@@ -1,5 +1,5 @@
-import { getDisplayAge } from '../../intl';
-import { isoDateToDate } from '../../ui/elements/inputs/dateTimeConvert';
+import { getDisplayAge, localisedDate } from '../../intl';
+import { calendarDateToDate } from '../../intl/calendarDate';
 
 // A patient's age and date of birth (spec/patients rules › age), shared by
 // the plain-path patient form and the document-path patient fields.
@@ -17,7 +17,7 @@ import { isoDateToDate } from '../../ui/elements/inputs/dateTimeConvert';
 // low. Integer comparison on local y/m/d has neither failure mode.
 export const ageFromDob = (dob: string | null): number | undefined => {
   if (!dob) return undefined;
-  const birth = isoDateToDate(dob);
+  const birth = calendarDateToDate(dob);
   if (!birth) return undefined;
   const now = new Date();
   const years = now.getFullYear() - birth.getFullYear();
@@ -57,3 +57,15 @@ export const ageMonthsAndDays = (dob: string | null): string | undefined => {
  */
 export const dobFromAge = (age: number): string =>
   `${new Date().getFullYear() - age}-01-01`;
+
+/**
+ * A date of birth with the age it gives in brackets — "15/06/1988 (37
+ * years)", "08/07/2026 (3 months, 13 days)" — as the encounter header states
+ * a patient (spec/patients rules › what a patient is). The date alone where
+ * no age can be given (a future date of birth).
+ */
+export const dateOfBirthWithAge = (dob: string): string => {
+  const age = getDisplayAge(dob);
+  const date = localisedDate(dob);
+  return age ? `${date} (${age})` : date;
+};

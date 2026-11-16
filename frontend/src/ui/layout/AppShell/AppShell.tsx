@@ -37,6 +37,11 @@ export interface AppShellProps {
   /** The user picked a menu item. */
   onNavigate: (leaf: NavLeaf) => void;
   /**
+   * A destination's URL, from its store-relative `to` — makes the menu's
+   * destinations real links that open in a new tab (MenuBar's prop, #271).
+   */
+  hrefFor?: (to: string) => string;
+  /**
    * The menu-bar nav model. Defaults to the app's own navModel (upper list +
    * pinned lower cluster). A host with a different menu supplies its own — the
    * showcase passes its section registry (MenuBar's contract). Overriding
@@ -298,6 +303,7 @@ export const AppShell = (props: AppShellProps) => {
                 selectedId={props.selected.id}
                 onHome={props.onHome}
                 onSelect={props.onNavigate}
+                hrefFor={props.hrefFor}
               />
             </Show>
             <div class={styles.main}>

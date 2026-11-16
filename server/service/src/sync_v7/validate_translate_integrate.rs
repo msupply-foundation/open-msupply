@@ -4,7 +4,7 @@ use crate::{
         sync_buffer::{
             write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
         },
-        synchroniser::INTEGRATION_BATCH_SIZE,
+        synchroniser::{INTEGRATION_BATCH_SIZE, INTEGRATION_COMMIT_SIZE},
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
 };
@@ -99,6 +99,7 @@ fn translate_delete(
         ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
         ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
         ChangelogTableName::BarcodeProposal => Box::new(BarcodeProposalRowDelete(id)),
+        ChangelogTableName::ConsumptionEstimate => Box::new(ConsumptionEstimateRowDelete(id)),
         ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
         ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
         ChangelogTableName::FormSchema => Box::new(FormSchemaRowDelete(id)),
@@ -113,6 +114,7 @@ fn translate_delete(
         ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
         ChangelogTableName::NameTag => Box::new(NameTagRowDelete(id)),
         ChangelogTableName::NameTagJoin => Box::new(NameTagJoinRowDelete(id)),
+        ChangelogTableName::PluginData => Box::new(PluginDataRowDelete(id)),
         ChangelogTableName::Preference => Box::new(PreferenceRowDelete(id)),
         ChangelogTableName::ProgramRequisitionOrderType => {
             Box::new(ProgramRequisitionOrderTypeRowDelete(id))
@@ -139,6 +141,7 @@ fn translate_delete(
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
         ChangelogTableName::UserPermission => Box::new(UserPermissionRowDelete(id)),
+        ChangelogTableName::UserStoreJoin => Box::new(UserStoreJoinRowDelete(id)),
         ChangelogTableName::VVMStatus => Box::new(VVMStatusRowDelete(id)),
         ChangelogTableName::VVMStatusLog => Box::new(VVMStatusLogRowDelete(id)),
         ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
@@ -186,7 +189,6 @@ fn translate_delete(
         | ChangelogTableName::PackagingVariant
         | ChangelogTableName::Period
         | ChangelogTableName::PeriodSchedule
-        | ChangelogTableName::PluginData
         | ChangelogTableName::Printer
         | ChangelogTableName::ProgramEnrolment
         | ChangelogTableName::ProgramEvent
@@ -205,7 +207,6 @@ fn translate_delete(
         | ChangelogTableName::TemperatureBreach
         | ChangelogTableName::TemperatureSummary
         | ChangelogTableName::TemperatureLog
-        | ChangelogTableName::UserStoreJoin
         | ChangelogTableName::Vaccination
         | ChangelogTableName::VaccineCourse
         | ChangelogTableName::VaccineCourseDose
@@ -285,17 +286,13 @@ pub(crate) fn validate_translate_integrate<'a>(
     sync_context: SyncContext,
     is_initialising: bool,
 ) -> Result<(), RepositoryError> {
-    // During initialisation we don't need transaction as user can't access database
-    // and processors are not running, however we still want it for sqlite as it speeds it up
-    let dont_wrap_in_tx = is_initialising && cfg!(not(feature = "postgres"));
-    let wrap_in_outer_tx = !dont_wrap_in_tx;
+    // A site's first sync has no readers to protect (only the initialisation endpoints are up and processors
+    // aren't running), so it runs without the outer transaction and each `INTEGRATION_COMMIT_SIZE` chunk
+    // commits on its own (#845): no huge transaction on Postgres, no commit per write on SQLite, and a restart
+    // keeps what was committed. Everything else keeps the outer transaction, including auxiliary syncs: they
+    // set `is_initialising` for the initialisation pull rules, but carry a `reference_id` and run on a live site.
+    let wrap_in_outer_tx = !(is_initialising && reference_id.is_none());
 
-    // When not initialising, isolate each record + changelog write in its own
-    // nested transaction so a single failure doesn't roll back the whole batch.
-    // This is not needed for sqlite as it doesn't poison transaction on failure
-    let wrap_record_in_tx = wrap_in_outer_tx && cfg!(feature = "postgres");
-
-    // Even when initialising
     if wrap_in_outer_tx {
         return connection
             .transaction_sync(move |t_con| {
@@ -305,7 +302,6 @@ pub(crate) fn validate_translate_integrate<'a>(
                     source_site_id,
                     reference_id,
                     sync_context,
-                    wrap_record_in_tx,
                 )
             })
             .map_err(|e| e.to_inner_error());
@@ -317,9 +313,13 @@ pub(crate) fn validate_translate_integrate<'a>(
         source_site_id,
         reference_id,
         sync_context,
-        wrap_record_in_tx,
     )
 }
+
+/// Isolate each record + changelog write in its own nested transaction (a savepoint) so a single failure
+/// doesn't roll back the whole outer transaction or chunk. Not needed for sqlite, which doesn't poison a
+/// transaction on failure, and where a savepoint per record is slow (open-msupply#3932).
+const WRAP_RECORD_IN_TX: bool = cfg!(feature = "postgres");
 
 fn validate_translate_integrate_inner<'a>(
     connection: &StorageConnection,
@@ -327,7 +327,6 @@ fn validate_translate_integrate_inner<'a>(
     source_site_id: i32,
     reference_id: Option<&str>,
     sync_context: SyncContext,
-    wrap_record_in_tx: bool,
 ) -> Result<(), RepositoryError> {
     // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
@@ -394,46 +393,59 @@ fn validate_translate_integrate_inner<'a>(
             }
             had_store_records |= *table == ChangelogTableName::Store;
 
-            for row in &rows {
-                let started = datetime_now();
-                let one_result = if wrap_record_in_tx {
-                    connection
-                        .transaction_sync_etc(
-                            |sub| validate_translate_integrate_one(sub, row, &sync_context),
-                            false,
-                        )
-                        .map_err(|e| e.to_inner_error())
-                } else {
-                    validate_translate_integrate_one(connection, row, &sync_context)
-                };
-                match one_result {
-                    Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
-                    Err(e @ Error::ValidationError(_)) => {
-                        write_sync_buffer_ignored(
-                            connection,
-                            row.cursor,
-                            started,
-                            &format_error(&e),
-                        )?;
+            let mut integrate_rows = |rows: &[SyncBufferRow]| -> Result<(), RepositoryError> {
+                for row in rows {
+                    let started = datetime_now();
+                    let one_result = if WRAP_RECORD_IN_TX {
+                        connection
+                            .transaction_sync_etc(
+                                |sub| validate_translate_integrate_one(sub, row, &sync_context),
+                                false,
+                            )
+                            .map_err(|e| e.to_inner_error())
+                    } else {
+                        validate_translate_integrate_one(connection, row, &sync_context)
+                    };
+                    match one_result {
+                        Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
+                        Err(e @ Error::ValidationError(_)) => {
+                            write_sync_buffer_ignored(
+                                connection,
+                                row.cursor,
+                                started,
+                                &format_error(&e),
+                            )?;
+                        }
+                        Err(e) => {
+                            write_sync_buffer_error(
+                                connection,
+                                row.cursor,
+                                started,
+                                &format_error(&e),
+                            )?;
+                        }
                     }
-                    Err(e) => {
-                        write_sync_buffer_error(
-                            connection,
-                            row.cursor,
-                            started,
-                            &format_error(&e),
-                        )?;
+
+                    total -= 1;
+
+                    if let Some(logger) = logger.as_mut()
+                        && total / PROGRESS_INTERVAL <= last_progress
+                    {
+                        logger.progress(total)?;
+                        last_progress -= 1;
                     }
                 }
+                Ok(())
+            };
 
-                total -= 1;
-
-                if let Some(logger) = logger.as_mut()
-                    && total / PROGRESS_INTERVAL <= last_progress
-                {
-                    logger.progress(total)?;
-                    last_progress -= 1;
-                }
+            // One transaction per `INTEGRATION_COMMIT_SIZE` chunk. Inside the outer transaction this reuses it and
+            // changes nothing (`transaction_sync` doesn't nest). Without it each chunk commits on its own, with
+            // each row's buffer mark in the same chunk, so a crash leaves the chunk in progress pending again
+            // rather than half integrated. Same shape as v5/v6's `process_action`.
+            for chunk in rows.chunks(INTEGRATION_COMMIT_SIZE) {
+                connection
+                    .transaction_sync(|_| integrate_rows(chunk))
+                    .map_err(|e| e.to_inner_error())?;
             }
         }
 
@@ -592,9 +604,12 @@ mod test {
     use super::*;
     use crate::sync::ActiveStoresOnSite;
     use repository::{
-        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
+        mock::{
+            MockDataInserts, mock_store_a, mock_user_account_a, mock_user_store_join_a_store_a,
+        },
         test_db::setup_all,
     };
+    use strum::IntoEnumIterator;
 
     /// Matches `mock_store_a().site_id`, making store_a active on this site.
     const SITE_ID: i32 = 100;
@@ -727,6 +742,148 @@ mod test {
                 .unwrap()
                 .is_some()
         );
+    }
+
+    /// A crash part way through integration. In a site's first sync each `INTEGRATION_COMMIT_SIZE` chunk commits
+    /// on its own (#845), so the chunks before the crash stay committed and the next run integrates only the rest.
+    /// A live sync and an auxiliary sync (initialising pull rules, but a `reference_id` on a live site) keep the
+    /// outer transaction, so there the crash rolls back everything, on either backend.
+    #[actix_rt::test]
+    async fn integrate_resumes_after_a_crash_only_while_initialising() {
+        // Fails marking this row integrated, which aborts the run like a crash would.
+        const CRASH_RECORD_ID: &str = "crash_here";
+        let (create_crash_trigger, drop_crash_trigger) = if cfg!(feature = "postgres") {
+            (
+                format!(
+                    r#"
+                    CREATE FUNCTION simulated_crash() RETURNS trigger AS $$
+                    BEGIN RAISE EXCEPTION 'simulated crash'; END $$ LANGUAGE plpgsql;
+                    CREATE TRIGGER simulated_crash BEFORE UPDATE ON sync_buffer FOR EACH ROW
+                    WHEN (NEW.record_id = '{CRASH_RECORD_ID}' AND NEW.is_integrated)
+                    EXECUTE FUNCTION simulated_crash();
+                    "#
+                ),
+                "DROP TRIGGER simulated_crash ON sync_buffer;",
+            )
+        } else {
+            (
+                format!(
+                    r#"
+                    CREATE TRIGGER simulated_crash BEFORE UPDATE ON sync_buffer
+                    WHEN NEW.record_id = '{CRASH_RECORD_ID}' AND NEW.is_integrated
+                    BEGIN SELECT RAISE(ABORT, 'simulated crash'); END;
+                    "#
+                ),
+                "DROP TRIGGER simulated_crash;",
+            )
+        };
+        let run =
+            |connection: &StorageConnection, is_initialising: bool, reference_id: Option<&str>| {
+                validate_translate_integrate(
+                    connection,
+                    None,
+                    SOURCE_SITE_ID,
+                    reference_id,
+                    SyncContext::Remote {
+                        is_initialising,
+                        active_stores: ActiveStoresOnSite::get(connection).unwrap(),
+                        is_multi_device: false,
+                    },
+                    is_initialising,
+                )
+            };
+
+        for (case, is_initialising, reference_id) in [
+            ("first_sync", true, None),
+            ("live_sync", false, None),
+            ("auxiliary_sync", true, Some("ref-1")),
+        ] {
+            let connection = setup(
+                &format!("integrate_resumes_after_a_crash_{case}"),
+                MockDataInserts::none(),
+            )
+            .await;
+
+            // Two full chunks, then one more row. The crash is in the second chunk.
+            let crash_index = INTEGRATION_COMMIT_SIZE + 10;
+            let ids: Vec<String> = (0..INTEGRATION_COMMIT_SIZE * 2 + 1)
+                .map(|i| match i == crash_index {
+                    true => CRASH_RECORD_ID.to_string(),
+                    false => format!("u{i:04}"),
+                })
+                .collect();
+            let rows: Vec<SyncBufferRowInsert> = ids
+                .iter()
+                .map(|id| SyncBufferRowInsert {
+                    reference_id: reference_id.map(str::to_string),
+                    ..buffer_row(id, SyncAction::Upsert, unit_data(id))
+                })
+                .collect();
+            SyncBufferRepository::new(&connection)
+                .insert_many(&rows)
+                .unwrap();
+            connection.batch_execute(&create_crash_trigger).unwrap();
+
+            // The trigger's error, not some earlier failure, so the rollback below is really tested.
+            let error = run(&connection, is_initialising, reference_id).unwrap_err();
+            assert!(
+                format!("{error:?}").contains("simulated crash"),
+                "{case}: {error:?}"
+            );
+
+            let integrated: Vec<SyncBufferRow> = SyncBufferRepository::new(&connection)
+                .get_all()
+                .unwrap()
+                .into_iter()
+                .filter(|row| row.is_integrated)
+                .collect();
+            let unit_count = UnitRowRepository::new(&connection)
+                .find_many_by_id(&ids)
+                .unwrap()
+                .len();
+            if case != "first_sync" {
+                assert!(
+                    integrated.is_empty(),
+                    "{case}: the crash rolls back every row"
+                );
+                assert_eq!(unit_count, 0, "{case}");
+                continue;
+            }
+            // Exactly the first chunk committed, with its rows and their buffer marks.
+            assert_eq!(
+                integrated
+                    .iter()
+                    .map(|row| row.record_id.as_str())
+                    .collect::<Vec<_>>(),
+                ids[..INTEGRATION_COMMIT_SIZE]
+                    .iter()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(unit_count, INTEGRATION_COMMIT_SIZE);
+
+            // Restart: only the pending rows are integrated, the first chunk isn't touched again.
+            connection.batch_execute(drop_crash_trigger).unwrap();
+            run(&connection, is_initialising, reference_id).unwrap();
+
+            let pending = SyncBufferRepository::new(&connection)
+                .count_pending(SOURCE_SITE_ID, SyncVersion::V7, None, None)
+                .unwrap();
+            assert_eq!(pending, 0);
+            for before in integrated {
+                assert_eq!(
+                    buffer_at_cursor(&connection, before.cursor).integration_datetime,
+                    before.integration_datetime
+                );
+            }
+            assert_eq!(
+                UnitRowRepository::new(&connection)
+                    .find_many_by_id(&ids)
+                    .unwrap()
+                    .len(),
+                ids.len()
+            );
+        }
     }
 
     #[actix_rt::test]
@@ -916,7 +1073,8 @@ mod test {
     #[actix_rt::test]
     async fn integrate_user_permission_delete_recreate() {
         // High-fidelity #12610 reproduction: user_permission is hard-deleted,
-        // uses deterministic ids, and is Remote-authored (store-scoped).
+        // uses deterministic ids, and is CentralForStore-authored (store-scoped,
+        // so this remote accepts it for its own store).
         let connection = setup(
             "integrate_user_permission_delete_recreate",
             MockDataInserts::none().names().stores().user_accounts(),
@@ -956,6 +1114,129 @@ mod test {
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Ignored));
         assert!(error.unwrap().contains("Superseded"));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_user_store_join_delete() {
+        // #1949: unticking "can log in" in legacy mSupply deletes the join on central,
+        // which must reach the store's v7 site, or the user still sees the store there.
+        let connection = setup(
+            "integrate_user_store_join_delete",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
+        )
+        .await;
+        let join = mock_user_store_join_a_store_a();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "user_store_join".to_string(),
+                store_id: Some(join.store_id.clone()),
+                ..buffer_row(&join.id, SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_one_by_id(&join.id)
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[actix_rt::test]
+    async fn integrate_plugin_data_delete() {
+        // #1949: a plugin's `deletePluginData` writes a delete changelog row, so it
+        // must be applied wherever the row was synced to.
+        let connection = setup(
+            "integrate_plugin_data_delete",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        PluginDataRowRepository::new(&connection)
+            .upsert_one(&PluginDataRow {
+                id: "plugin_data".to_string(),
+                store_id: Some(mock_store_a().id),
+                plugin_code: "plugin".to_string(),
+                related_record_id: None,
+                data_identifier: "data".to_string(),
+                data: "{}".to_string(),
+                datetime: None,
+            })
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "plugin_data".to_string(),
+                store_id: Some(mock_store_a().id),
+                ..buffer_row("plugin_data", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            PluginDataRowRepository::new(&connection)
+                .find_one_by_id("plugin_data")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[test]
+    fn every_delete_type_is_handled() {
+        // #1949: a table whose `Delete` writes a delete changelog row syncs that delete
+        // over v7, so `translate_delete` must have an arm for it. Every `impl Delete`
+        // in the repository crate is checked against the types `translate_delete`
+        // returns, so a new one can't be missed.
+        //
+        // Not deleted over v7, by design:
+        // - ReasonOptionRowDelete soft-deletes and writes an upsert changelog row.
+        const NOT_V7_DELETES: &[&str] = &["ReasonOptionRowDelete"];
+
+        let handled: HashSet<String> = ChangelogTableName::iter()
+            .filter_map(|table| translate_delete(&table, "id").ok())
+            .map(|delete| {
+                let debug = format!("{delete:?}");
+                debug
+                    .split(|c: char| !c.is_alphanumeric() && c != '_')
+                    .next()
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+
+        let impl_delete = regex::Regex::new(r"impl Delete for (\w+)").unwrap();
+        let repository_src =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../repository/src");
+        let mut unhandled: Vec<String> = walkdir::WalkDir::new(repository_src)
+            .into_iter()
+            .map(|entry| entry.unwrap())
+            .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "rs"))
+            .flat_map(|entry| {
+                let source = std::fs::read_to_string(entry.path()).unwrap();
+                impl_delete
+                    .captures_iter(&source)
+                    .map(|captures| captures[1].to_string())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|name| !handled.contains(name) && !NOT_V7_DELETES.contains(&name.as_str()))
+            .collect();
+        unhandled.sort();
+
+        assert!(
+            unhandled.is_empty(),
+            "translate_delete has no arm for {unhandled:?}: add one, or list it in NOT_V7_DELETES with the reason"
+        );
     }
 
     #[actix_rt::test]

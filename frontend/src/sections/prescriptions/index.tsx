@@ -5,8 +5,12 @@ import { isDispensary } from '../../store/storeContext';
 
 // The prescriptions vertical routes (spec/prescriptions), mounted under the
 // navConfig path 'dispensary/dispensing' in App.tsx. Views are lazy so the
-// section is its own bundle: '/' = the list, '/:prescriptionId' = the detail.
+// section is its own bundle: '/' = the list, '/simple' = the Simple screen,
+// '/:prescriptionId' = the detail.
 const PrescriptionsList = lazy(() => import('./list/PrescriptionsList'));
+const SimpleDispensingPage = lazy(
+  () => import('./simple/SimpleDispensingPage')
+);
 const PrescriptionDetailView = lazy(
   () => import('./detail/PrescriptionDetailView')
 );
@@ -29,6 +33,9 @@ const DispensaryOnly = (props: RouteSectionProps) => {
 export const prescriptionsRoutes = () => (
   <Route path="/" component={DispensaryOnly}>
     <Route path="/" component={PrescriptionsList} />
+    {/* A static segment outranks the :prescriptionId param, so "simple" is
+        never read as a record id. */}
+    <Route path="/simple" component={SimpleDispensingPage} />
     <Route path="/:prescriptionId" component={PrescriptionDetailView} />
   </Route>
 );

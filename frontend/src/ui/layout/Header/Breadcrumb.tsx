@@ -1,9 +1,10 @@
 import { children, For, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
+import { documentHref } from '../../../nav/storeRelativePath';
 import { useShellSection } from '../AppShell/shellContext';
 import styles from './Breadcrumb.module.css';
 
-export interface Crumb {
+interface CrumbBase {
   label: string;
   /**
    * A marker for THIS crumb, rendered immediately before its label — the
@@ -14,21 +15,43 @@ export interface Crumb {
    * `aria-hidden` and the leaf's <h1> keeps the label as its accessible name.
    */
   icon?: JSX.Element;
+}
+
+/**
+ * A crumb that goes somewhere — every ancestor crumb in the app. Rendered as a
+ * real link, so right-click → "Open link in new tab", Cmd/Ctrl-click and
+ * middle-click do what the browser does with any link, and a plain click is
+ * the router's (it intercepts anchors under its base, leave guards included).
+ */
+interface LinkCrumb extends CrumbBase {
   /**
-   * Link target for ancestor crumbs (navigate back up the trail). The last
-   * crumb is the current page and always renders as plain text, so its `to`
-   * is ignored. Until routing is decided these are plain hrefs (the
-   * showcase uses hash links); a router makes them real routes later.
+   * Where the crumb goes, router-space — the same string `navigate()` takes;
+   * the crumb puts the mount in front (crumbHref). A `#` fragment is the one
+   * exception, used as it is, for a hash-routed host (the showcase). Ignored on
+   * the last crumb, which is the current page and always plain text.
    */
   to?: string;
-  /**
-   * Interim navigation for pages that swap views with local state (list ↔
-   * detail) while routing is undecided: renders the crumb as a link and runs
-   * the callback instead of following `to`. A router replaces these with
-   * real routed hrefs later.
-   */
-  onClick?: () => void;
+  onClick?: never;
 }
+
+/**
+ * A crumb for a host with no routes to link to (a prototype swapping views in
+ * local state): rendered as a button, since there is no address for a link to
+ * carry. Anywhere there is a route, give the crumb its `to` instead.
+ */
+interface ActionCrumb extends CrumbBase {
+  onClick: () => void;
+  to?: never;
+}
+
+export type Crumb = LinkCrumb | ActionCrumb;
+
+/**
+ * A crumb's document href (#271): a `#` fragment as it is, anything else
+ * router-space with the mount in front.
+ */
+export const crumbHref = (to: string): string =>
+  to.startsWith('#') ? to : documentHref(to);
 
 export interface BreadcrumbProps {
   /**
@@ -111,19 +134,24 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                     </Show>
                   }
                 >
-                  <a
-                    class={styles.link}
-                    href={crumb.to ?? '#'}
-                    onClick={
-                      crumb.onClick &&
-                      (e => {
-                        e.preventDefault();
-                        crumb.onClick!();
-                      })
+                  <Show
+                    when={crumb.to}
+                    fallback={
+                      <button
+                        type="button"
+                        class={`${styles.link} ${styles.action}`}
+                        onClick={() => crumb.onClick?.()}
+                      >
+                        {crumb.label}
+                      </button>
                     }
                   >
-                    {crumb.label}
-                  </a>
+                    {to => (
+                      <a class={styles.link} href={crumbHref(to())}>
+                        {crumb.label}
+                      </a>
+                    )}
+                  </Show>
                 </Show>
               </li>
             </>

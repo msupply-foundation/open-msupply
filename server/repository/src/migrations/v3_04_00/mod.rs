@@ -29,9 +29,11 @@ mod inactivate_pulled_name_store_joins;
 mod prescription_request_occupation_prominent;
 mod recreate_joins_for_deleted_patients;
 mod refresh_who_pqs_catalogue;
+mod relog_central_records_for_legacy_central;
 mod remove_charges_from_purchase_order;
 mod requeue_plugin_rows_for_upgraded_sites;
 mod seed_barcode_auto_confirm_processor_cursor;
+mod stamp_central_support_uploads_before_v3;
 mod update_default_asset_log_reasons;
 
 pub(crate) struct V3_04_00;
@@ -81,6 +83,8 @@ impl Migration for V3_04_00 {
             Box::new(inactivate_kept_name_store_joins::Migrate),
             Box::new(recreate_joins_for_deleted_patients::Migrate),
             Box::new(inactivate_pulled_name_store_joins::Migrate),
+            Box::new(relog_central_records_for_legacy_central::Migrate),
+            Box::new(stamp_central_support_uploads_before_v3::Migrate),
         ]
     }
 }

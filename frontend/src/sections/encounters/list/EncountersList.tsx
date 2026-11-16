@@ -106,8 +106,9 @@ const EncountersList: Component = () => {
   const onFilterChange = (filter: EncounterFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
 
-  const openRow = (row: EncounterRow) =>
-    navigate(`/${params.storeId}/dispensary/encounter/${row.id}`);
+  const rowHref = (row: EncounterRow) =>
+    `/${params.storeId}/dispensary/encounter/${row.id}`;
+  const openRow = (row: EncounterRow) => navigate(rowHref(row));
 
   // The enrolment names the Program column shows, by context. Read through
   // the non-suspending gate; the columns rebuild once they arrive.
@@ -145,6 +146,7 @@ const EncountersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         filters={
           <FilterBar
             filters={filterFields()}

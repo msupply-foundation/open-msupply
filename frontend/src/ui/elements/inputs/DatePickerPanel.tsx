@@ -9,7 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
-import { dateToIsoDate } from './dateTimeConvert';
+import { dateToCalendarDate } from '../../../intl/calendarDate';
 import { locale } from '../../../intl';
 import styles from './DatePickerPanel.module.css';
 
@@ -30,12 +30,24 @@ export type DatePickerPanelProps = {
    * can't; a calendar pick bypasses the text commit).
    */
   required?: boolean;
+  /**
+   * Bumped by the host popover each time it re-opens (Popover's `onOpen`):
+   * the panel stays mounted after its first open, so a month-only field's
+   * picker would otherwise resume on whatever grid the user left (the year
+   * grid, say) instead of opening on the month grid (OMS-REG-RPT-10.44).
+   */
+  openCount?: number;
 } & (
   | {
       mode?: 'single';
       value: Date | null;
       /** Picked local date, or null when deselected. */
       onSelect: (date: Date | null) => void;
+      /**
+       * Pick a whole month: the panel opens on the month grid and a month
+       * pick selects its 1st (the year grid still navigates). No day grid.
+       */
+      monthOnly?: boolean;
     }
   | {
       mode: 'range';
@@ -73,7 +85,23 @@ const YEARS_PER_PAGE = 16;
  * `data-outside` flag we compute (corvu exposes no such attribute).
  */
 export const DatePickerPanel = (props: DatePickerPanelProps) => {
-  const [view, setView] = createSignal<'day' | 'month' | 'year'>('day');
+  const monthOnly = () => props.mode !== 'range' && !!props.monthOnly;
+  const [view, setView] = createSignal<'day' | 'month' | 'year'>(
+    monthOnly() ? 'month' : 'day'
+  );
+  // Re-open → straight back to the field's default view. Deferred: the bump
+  // for the FIRST open fires before this panel mounts, and the initial state
+  // already is that default, so only a later re-open resets. Month-only
+  // fields are the ones a spec case pins (see `openCount`).
+  createEffect(
+    on(
+      () => props.openCount,
+      () => {
+        if (monthOnly()) setView('month');
+      },
+      { defer: true }
+    )
+  );
   const [yearBase, setYearBase] = createSignal(0);
 
   // The date the calendar should focus on (single value, or a range's start).
@@ -88,7 +116,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     on(
       () => {
         const d = focusDate();
-        return d ? dateToIsoDate(d) : '';
+        return d ? dateToCalendarDate(d) : '';
       },
       () => {
         const d = focusDate();
@@ -97,13 +125,42 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     )
   );
 
+  // Month names are always Gregorian, the calendar the grid lays out: left
+  // to the browser, Dari and Pashto would name Solar Hijri months.
   const monthShort = (i: number) =>
-    new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'short' });
+    new Date(2000, i, 1).toLocaleDateString(locale(), {
+      month: 'short',
+      calendar: 'gregory',
+    });
 
   const disabled = (day: Date): boolean => {
-    if (props.min && dateToIsoDate(day) < dateToIsoDate(props.min)) return true;
-    if (props.max && dateToIsoDate(day) > dateToIsoDate(props.max)) return true;
+    if (props.min && dateToCalendarDate(day) < dateToCalendarDate(props.min))
+      return true;
+    if (props.max && dateToCalendarDate(day) > dateToCalendarDate(props.max))
+      return true;
     return false;
+  };
+
+  // Month-only: a month is out of range only when NO day of it is in range —
+  // its last day before `min`, or its first day after `max`. Comparing the
+  // month's two ends (not its 1st and its last) keeps a month holding both
+  // bounds inside it selectable — e.g. min = the 2nd and max = today leaves
+  // the intervening days valid (OMS-REG-RPT-10.44).
+  const monthDisabled = (year: number, monthIndex: number): boolean =>
+    (props.min !== undefined &&
+      dateToCalendarDate(new Date(year, monthIndex + 1, 0)) <
+        dateToCalendarDate(props.min)) ||
+    (props.max !== undefined &&
+      dateToCalendarDate(new Date(year, monthIndex, 1)) >
+        dateToCalendarDate(props.max));
+
+  const monthSelected = (ctx: CalendarCtx, monthIndex: number): boolean => {
+    if (props.mode === 'range' || !props.monthOnly)
+      return ctx.month.getMonth() === monthIndex;
+    return (
+      props.value?.getFullYear() === ctx.month.getFullYear() &&
+      props.value.getMonth() === monthIndex
+    );
   };
 
   const navBtn = (label: string, onClick: () => void, icon: JSX.Element) => (
@@ -134,7 +191,10 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               class={styles.headingBtn}
               onClick={() => setView('month')}
             >
-              {ctx.month.toLocaleDateString(locale(), { month: 'long' })}
+              {ctx.month.toLocaleDateString(locale(), {
+                month: 'long',
+                calendar: 'gregory',
+              })}
             </button>
             <button
               type="button"
@@ -253,10 +313,22 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               <button
                 type="button"
                 class={styles.pickCell}
-                data-selected={ctx.month.getMonth() === i() ? '' : undefined}
+                data-selected={monthSelected(ctx, i()) ? '' : undefined}
+                // In monthOnly mode the grid holds the field's VALUE, not just
+                // navigation — the pick is announced as pressed, so the chosen
+                // month isn't signalled by colour alone (ui/CLAUDE.md 9).
+                aria-pressed={
+                  monthOnly() && monthSelected(ctx, i()) ? 'true' : undefined
+                }
+                disabled={
+                  monthOnly() && monthDisabled(ctx.month.getFullYear(), i())
+                }
                 onClick={() => {
-                  ctx.setMonth(new Date(ctx.month.getFullYear(), i()));
-                  setView('day');
+                  const picked = new Date(ctx.month.getFullYear(), i(), 1);
+                  ctx.setMonth(picked);
+                  if (props.mode !== 'range' && props.monthOnly)
+                    props.onSelect(picked);
+                  else setView('day');
                 }}
               >
                 {monthShort(i())}

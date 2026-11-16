@@ -9,6 +9,7 @@ import {
   compileGlob,
   diffSnapshots,
   effectiveConfig,
+  hookRunCommand,
   isGitPush,
   nextGreen,
   planRun,
@@ -669,5 +670,16 @@ describe('isGitPush', () => {
       'pnpm e2e:affected --run',
     ])
       expect(isGitPush(c), c).toBe(false);
+  });
+});
+
+describe('hookRunCommand', () => {
+  it('asks for a run against the base the hook measured, spelled out unless it is develop', () => {
+    expect(hookRunCommand('origin/develop')).toBe(
+      'cd frontend && pnpm e2e:affected --run'
+    );
+    expect(hookRunCommand('origin/v3.4.1-RC')).toBe(
+      'cd frontend && pnpm e2e:affected --base origin/v3.4.1-RC --run'
+    );
   });
 });

@@ -12,7 +12,7 @@
  *                                        # the same, as a warn-only PreToolUse
  *                                        # hook (.claude/settings.json) — only
  *                                        # on `git push` from a branch with an
- *                                        # open PR
+ *                                        # open PR, against that PR's base
  *   pnpm e2e:affected --json             # machine-readable (CI)
  *   pnpm e2e:affected --list             # suite names only, one per line
  *   pnpm e2e:affected --check            # lint the config (in `pnpm check`)
@@ -1023,27 +1023,39 @@ export const isGitPush = command =>
 // The hook warns only on a push to a branch that already has an open PR:
 // before the PR, pr-create runs the suites itself, so a warning mid-
 // implementation is noise. Anything that can't be confirmed (no hook input,
-// another command, no `gh`, offline, no PR) stays silent.
-const pushHookApplies = () => {
-  if (process.stdin.isTTY) return false;
+// another command, no `gh`, offline, no PR) stays silent. Returns the PR's
+// base branch, so the warning measures what the PR changes: a PR into a
+// release branch diffed against develop would charge it with everything
+// develop and the release differ by.
+const pushHookPrBase = () => {
+  if (process.stdin.isTTY) return null;
   let command;
   try {
     command = JSON.parse(readFileSync(0, 'utf8'))?.tool_input?.command;
   } catch {
-    return false;
+    return null;
   }
-  if (typeof command !== 'string' || !isGitPush(command)) return false;
-  const pr = spawnSync(
-    'gh',
-    ['pr', 'view', '--json', 'state', '-q', '.state'],
-    {
-      cwd: FE_DIR,
-      encoding: 'utf8',
-      timeout: 10_000,
-    }
-  );
-  return pr.status === 0 && pr.stdout.trim() === 'OPEN';
+  if (typeof command !== 'string' || !isGitPush(command)) return null;
+  const pr = spawnSync('gh', ['pr', 'view', '--json', 'state,baseRefName'], {
+    cwd: FE_DIR,
+    encoding: 'utf8',
+    timeout: 10_000,
+  });
+  if (pr.status !== 0) return null;
+  try {
+    const { state, baseRefName } = JSON.parse(pr.stdout);
+    return state === 'OPEN' && baseRefName ? baseRefName : null;
+  } catch {
+    return null;
+  }
 };
+
+// The run the hook's warning asks for: against the same base it measured,
+// spelled out unless that is the default.
+export const hookRunCommand = baseRef =>
+  baseRef === 'origin/develop'
+    ? 'cd frontend && pnpm e2e:affected --run'
+    : `cd frontend && pnpm e2e:affected --base ${baseRef} --run`;
 
 // --- CLI --------------------------------------------------------------------
 
@@ -1270,7 +1282,13 @@ const report = (sel, meta) => {
 
 const main = async () => {
   const opts = parseArgs(process.argv.slice(2));
-  if (opts.pushHook && !pushHookApplies()) return;
+  if (opts.pushHook) {
+    // An unfetched base has no merge-base: resolveBase throws and the hook
+    // stays silent, rather than falling back to develop and over-warning.
+    const prBase = pushHookPrBase();
+    if (!prBase) return;
+    opts.base ??= `origin/${prBase}`;
+  }
   const root = git(['rev-parse', '--show-toplevel'], FE_DIR).trim();
   const configPath = path.join(FE_DIR, 'e2e/affected.config.mjs');
   // e2e/ is kept out of the public mirror (.github/mirror/rules.txt); there
@@ -1298,7 +1316,7 @@ const main = async () => {
     return;
   }
 
-  let changed, against;
+  let changed, against, baseRef;
   let scriptsOnly = new Set();
   if (opts.files) {
     const cwd = process.env.INIT_CWD ?? process.cwd();
@@ -1306,6 +1324,7 @@ const main = async () => {
     against = '(given with --files)';
   } else {
     const base = resolveBase(root, opts.base);
+    baseRef = base.ref;
     changed = changedFiles(root, base.sha);
     scriptsOnly = scriptsOnlyPackageJsons(root, base.sha, changed);
     against = `vs ${base.ref} (merge-base ${base.sha.slice(0, 10)}), including uncommitted`;
@@ -1371,12 +1390,12 @@ const main = async () => {
     if (opts.pushHook) {
       console.log(
         JSON.stringify({
-          systemMessage: `⚠ e2e:affected — ${line}. Pushing anyway (warning only).`,
+          systemMessage: `⚠ e2e:affected (vs ${baseRef}) — ${line}. Pushing anyway (warning only).`,
           hookSpecificOutput: {
             hookEventName: 'PreToolUse',
             additionalContext:
-              `e2e:affected: ${line}. This push is not blocked. Unless the user ` +
-              'said to skip e2e, run `cd frontend && pnpm e2e:affected --run` ' +
+              `e2e:affected (vs ${baseRef}): ${line}. This push is not blocked. ` +
+              `Unless the user said to skip e2e, run \`${hookRunCommand(baseRef)}\` ` +
               '(it skips suites already green) and, if this branch has a PR, ' +
               're-fetch its body and update only the 🤖 e2e line with the result.',
           },

@@ -64,6 +64,7 @@ pub enum PrefKey {
     ShowIndicativePriceInRequisitions,
     DoNotPrintPlaceholderLineLabels,
     PromptForBatchAndExpiryOnInboundShipments,
+    CommonMedicines,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -95,6 +96,8 @@ pub enum PreferenceValueType {
     String,
     Colour,
     Image,
+    // Specific type for the CommonMedicines preference
+    CommonMedicines,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }

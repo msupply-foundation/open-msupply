@@ -6,9 +6,10 @@ import styles from './Header.module.css';
 
 export interface HeaderProps {
   /**
-   * The header's parts: Breadcrumb (inline-start), HeaderButtons
-   * (inline-end), Toolbar (its own full-width row below) and optionally a
-   * TabList as the last child (the header's bottom edge). Each part is
+   * The header's parts: Breadcrumb (inline-start), optionally a HeaderField
+   * after it (one control on the main row), HeaderButtons (inline-end),
+   * Toolbar (its own full-width row below) and optionally a TabList as the
+   * last child (the header's bottom edge). Each part is
    * optional; they pin themselves into place via their own CSS, so the
    * header stays a flat flex-wrap container with no nested row markup.
    */

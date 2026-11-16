@@ -176,6 +176,18 @@ input ActivityLogSortInput {
 	desc: Boolean
 }
 
+"""
+A line whose month already has real consumption for its item: the estimate is
+added on top of it
+"""
+type ActualConsumptionOverlapNode {
+	"""
+	Index into the input lines
+	"""
+	line: Int!
+	actualQuantity: Float!
+}
+
 type AddFromMasterListError {
 	error: AddFromMasterListErrorInterface!
 }
@@ -594,7 +606,7 @@ type AssetLogNode {
 	type: AssetLogTypeNodeType!
 	reason: AssetLogReasonNode
 	logDatetime: DateTime!
-	createdDatetime: NaiveDateTime!
+	createdDatetime: DateTime!
 	documents: SyncFileReferenceConnector!
 }
 
@@ -1502,6 +1514,25 @@ type CodeRequired implements UpsertSiteErrorInterface {
 	description: String!
 }
 
+input CommonMedicineInput {
+	itemId: String!
+	amounts: [Float!]!
+}
+
+type CommonMedicineNode {
+	itemId: String!
+	"""
+	The one-press amounts, in the item's own unit. Empty when the card asks
+	for the amount instead.
+	"""
+	amounts: [Float!]!
+}
+
+input CommonMedicinesInput {
+	storeId: String!
+	value: [CommonMedicineInput!]!
+}
+
 union ConfigureNamePropertiesResponse = Success
 
 input ConfigureNamePropertyInput {
@@ -1516,6 +1547,91 @@ input ConfigureNamePropertyInput {
 
 type ConnectionError implements CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface {
 	description: String!
+}
+
+type ConsumptionEstimateLineErrorNode {
+	"""
+	Index into the input lines
+	"""
+	line: Int!
+	problem: ConsumptionEstimateLineProblem!
+	"""
+	For `REPEATED_MONTH`: the earlier line with the same item and month
+	"""
+	otherLine: Int
+}
+
+input ConsumptionEstimateLineInput {
+	itemIdOrCode: String!
+	"""
+	Any day in the month: the estimate is for the whole calendar month
+	"""
+	month: NaiveDate!
+	"""
+	In units
+	"""
+	quantity: Float!
+}
+
+enum ConsumptionEstimateLineProblem {
+	ITEM_NOT_FOUND
+	"""
+	This month or later: only finished months can have an estimate
+	"""
+	MONTH_NOT_FINISHED
+	INVALID_QUANTITY
+	"""
+	The same item and month as an earlier line
+	"""
+	REPEATED_MONTH
+}
+
+"""
+Nothing is saved when any line has a problem
+"""
+type ConsumptionEstimateLinesError {
+	errors: [ConsumptionEstimateLineErrorNode!]!
+	"""
+	As on a successful response: the cleared items whose estimates would be
+	removed once the lines are fixed
+	"""
+	removedItems: [Int!]!
+}
+
+type ConsumptionEstimateNode {
+	itemId: String!
+	item: ItemNode!
+	"""
+	The first day of the month the estimate is for
+	"""
+	month: NaiveDate!
+	"""
+	In units
+	"""
+	quantity: Float!
+}
+
+type ConsumptionEstimateTemplateItemNode {
+	code: String!
+	name: String!
+}
+
+type ConsumptionEstimatesNode {
+	estimates: [ConsumptionEstimateNode!]!
+	"""
+	The store's AMC look-back period: how many months of estimates count
+	"""
+	amcLookBackMonths: Float!
+	"""
+	The active stock items visible in the store, by name: the rows of a blank
+	upload template. Only resolved when asked for, as there can be thousands.
+	"""
+	templateItems: [ConsumptionEstimateTemplateItemNode!]!
+	"""
+	The store is on another site that has been set up and syncs over v5/v6,
+	which estimates (synced over v7 only) don't reach
+	"""
+	siteSyncsOverV5V6: Boolean!
 }
 
 type ConsumptionHistoryConnector {
@@ -1843,7 +1959,7 @@ type CustomFieldOptionNode {
 	this field when building a picker, so a deleted option can be read but
 	not newly selected.
 	"""
-	deletedDatetime: NaiveDateTime
+	deletedDatetime: DateTime
 }
 
 union CustomFieldsResponse = CustomFieldConnector
@@ -3146,6 +3262,20 @@ type FinalisedRequisition implements DeleteResponseRequisitionErrorInterface {
 	description: String!
 }
 
+input FloatFilterInput {
+	equalTo: Float
+	belowOrEqualTo: Float
+	aboveOrEqualTo: Float
+	"""
+	Strict less-than (exclusive)
+	"""
+	lessThan: Float
+	"""
+	Strict greater-than (exclusive)
+	"""
+	greaterThan: Float
+}
+
 input FloatStorePrefInput {
 	storeId: String!
 	value: Float!
@@ -4368,6 +4498,11 @@ input InsertRequestRequisitionInput {
 	Defaults to 2 weeks from now
 	"""
 	expectedDeliveryDate: NaiveDate
+	"""
+	Starts the order with a line for every item on this master list, each requesting its
+	suggested quantity. Created in one step: if the lines can't be added, no order is created
+	"""
+	masterListId: String
 }
 
 type InsertRequestRequisitionLineError {
@@ -4902,6 +5037,10 @@ input InvoiceLineFilterInput {
 	verifiedDatetime: DatetimeFilterInput
 	programId: EqualFilterStringInput
 	isProgramInvoice: Boolean
+	batch: StringFilterInput
+	expiryDate: DateFilterInput
+	locationCode: StringFilterInput
+	manufactureDate: DateFilterInput
 }
 
 type InvoiceLineNode {
@@ -5001,6 +5140,10 @@ enum InvoiceLineSortFieldInput {
 	Invoice line item stock location name
 	"""
 	locationName
+	"""
+	Invoice line manufacture date
+	"""
+	manufactureDate
 	"""
 	Units requested for the line's item on the invoice's linked requisition
 	"""
@@ -5303,6 +5446,15 @@ input ItemFilterInput {
 	productsAtRiskOfBeingOutOfStock: Boolean
 	universalCode: StringFilterInput
 	"""
+	Excludes items already present as a line on the given record
+	"""
+	notInRecord: ItemNotInRecordFilterInput
+	"""
+	Items with no counted line in a finalised stocktake of this store since the given
+	datetime, including items never counted in this store
+	"""
+	notCountedSince: DateTime
+	"""
 	Dynamic filter condition AST, currently supporting property conditions
 	on keys visible for the "item" table scope, e.g.
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
@@ -5434,6 +5586,17 @@ enum ItemNodeType {
 	SERVICE
 	STOCK
 	NON_STOCK
+}
+
+input ItemNotInRecordFilterInput {
+	record: ItemNotInRecordTypeInput!
+	id: String!
+}
+
+enum ItemNotInRecordTypeInput {
+	stocktake
+	requisition
+	invoice
 }
 
 input ItemPriceInput {
@@ -6949,10 +7112,22 @@ enum PreferenceKey {
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
+	commonMedicines
 }
 
 type PreferenceMutations {
 	upsertPreferences(storeId: String!, input: UpsertPreferencesInput!): OkResponse!
+	"""
+	Replaces the estimated consumption of the items named: each ends up with
+	exactly the months given, and unchanged months aren't rewritten. Items not
+	named are left alone. Nothing is saved if any line has a problem; `dryRun`
+	checks the lines without saving.
+	"""
+	replaceConsumptionEstimates(storeId: String!, input: ReplaceConsumptionEstimatesInput!): ReplaceConsumptionEstimatesResponse!
+	"""
+	Removes all of a store's estimated consumption
+	"""
+	clearConsumptionEstimates(storeId: String!, forStoreId: String!): OkResponse!
 }
 
 enum PreferenceNodeType {
@@ -6972,6 +7147,7 @@ enum PreferenceValueNodeType {
 	STRING
 	COLOUR
 	IMAGE
+	COMMON_MEDICINES
 }
 
 type PreferencesNode {
@@ -7025,6 +7201,10 @@ type PreferencesNode {
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
 	promptForBatchAndExpiryOnInboundShipments: Boolean!
+	"""
+	The medicines shown as cards on the Simple dispensing screen, in order.
+	"""
+	commonMedicines: [CommonMedicineNode!]!
 }
 
 input PrescriptionLineInput {
@@ -7992,6 +8172,10 @@ type Queries {
 		"""
 		daysTillExpired: Int
 	): StockCounts!
+	"""
+	A request requisition line's consumption history and stock evolution. Only the series
+	the query selects are read; the others are null
+	"""
 	requisitionLineChart(storeId: String!, requestRequisitionLineId: String!, consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): RequisitionLineChartResponse!
 	"""
 	An item's request line as the line editor's draft would save it, under a chosen
@@ -8185,13 +8369,19 @@ type Queries {
 	insurancePolicy(storeId: String!, id: String!): InsuranceResponse!
 	insuranceProviders(storeId: String!): InsuranceProvidersResponse!
 	shippingMethods(storeId: String!, filter: ShippingMethodFilterInput): ShippingMethodsResponse!
-	requisition(storeId: String!, id: String!): RequisitionResponse!
+	requisition(		storeId: String!,		id: String!,
+		"""
+		Only a requisition of this type resolves; any other is RecordNotFound
+		"""
+		type: RequisitionNodeType
+	): RequisitionResponse!
 	requisitions(storeId: String!, page: PaginationInput, filter: RequisitionFilterInput, sort: [RequisitionSortInput!]): RequisitionsResponse!
 	requisitionByNumber(storeId: String!, requisitionNumber: Int!, type: RequisitionNodeType!): RequisitionResponse!
 	supplierProgramRequisitionSettings(storeId: String!): [SupplierProgramRequisitionSettingNode!]!
 	programRequisitionSettingsByCustomer(storeId: String!, customerNameId: String!): CustomerProgramRequisitionSettingNode!
 	hasCustomerProgramRequisitionSettings(storeId: String!, customerNameIds: [String!]!): Boolean!
 	programIndicators(storeId: String!, sort: ProgramIndicatorSortInput, filter: ProgramIndicatorFilterInput): ProgramIndicatorResponse!
+	requisitionLines(storeId: String!, page: PaginationInput, filter: RequisitionLineFilterInput, sort: [RequisitionLineSortInput!]): RequisitionLinesResponse!
 	report(storeId: String!, userLanguage: String!, id: String!): ReportResponse!
 	"""
 	Queries a list of available reports
@@ -8244,7 +8434,11 @@ type Queries {
 		"""
 		Sort options (only first sort input is evaluated for this endpoint)
 		"""
-		sort: [StockLineSortInput!]
+		sort: [StockLineSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): StockLinesResponse!
 	"""
 	Query for items that have at least one stock_line matching `filter`
@@ -8266,7 +8460,11 @@ type Queries {
 		"""
 		Item-level sort (only first sort input is evaluated)
 		"""
-		sort: [ItemSortInput!]
+		sort: [ItemSortInput!],
+		"""
+		Timezone offset
+		"""
+		timezoneOffset: Int
 	): ItemsResponse!
 	"""
 	Query for "historical_stock_line" entries
@@ -8461,6 +8659,11 @@ type Queries {
 	The list of preferences and their current values (used for the admin/edit page)
 	"""
 	preferenceDescriptions(storeId: String!, prefType: PreferenceNodeType!, prefContext: PreferenceDescriptionContext!): [PreferenceDescriptionNode!]!
+	"""
+	The store's estimated consumption, entered for a store without consumption
+	history of its own and added on top of real consumption when calculating AMC
+	"""
+	consumptionEstimates(storeId: String!, forStoreId: String!): ConsumptionEstimatesNode!
 	centralServer: CentralServerQueryNode!
 	activeVvmStatuses(storeId: String!): VvmstatusesResponse!
 	getVvmStatusLogByStockLine(storeId: String!, stockLineId: String!): VvmstatusLogResponse!
@@ -8544,7 +8747,7 @@ type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & Delet
 	description: String!
 }
 
-type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
+type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & QueryReportErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
 	description: String!
 }
 
@@ -8644,6 +8847,39 @@ type RepackStockLineNode {
 	location: LocationNode
 	stockLine: StockLineNode
 }
+
+input ReplaceConsumptionEstimatesInput {
+	"""
+	The store whose estimates these are
+	"""
+	forStoreId: String!
+	"""
+	Each item named ends up with exactly these months; items not named are
+	left alone
+	"""
+	lines: [ConsumptionEstimateLineInput!]!
+	"""
+	Items (by id or code) named with no months, e.g. a blank row in the
+	file: their estimates are removed. One with no estimates, or that matches
+	no item, is ignored.
+	"""
+	clearedItems: [String!]
+	"""
+	Check the lines and report what would be saved, without saving
+	"""
+	dryRun: Boolean
+}
+
+type ReplaceConsumptionEstimatesNode {
+	estimates: [ConsumptionEstimateNode!]!
+	overlaps: [ActualConsumptionOverlapNode!]!
+	"""
+	Indexes into `clearedItems` of the items whose estimates are removed
+	"""
+	removedItems: [Int!]!
+}
+
+union ReplaceConsumptionEstimatesResponse = ReplaceConsumptionEstimatesNode | ConsumptionEstimateLinesError
 
 type ReportConnector {
 	totalCount: Int!
@@ -8787,6 +9023,21 @@ type RequisitionLineConnector {
 	nodes: [RequisitionLineNode!]!
 }
 
+input RequisitionLineFilterInput {
+	id: EqualFilterStringInput
+	requisitionId: EqualFilterStringInput
+	itemId: EqualFilterStringInput
+	itemCodeOrName: StringFilterInput
+	requestedQuantity: EqualFilterBigFloatingNumberInput
+	comment: StringFilterInput
+	"""
+	Filter by months of stock (available_stock_on_hand / average_monthly_consumption).
+	No stock and no consumption is 0; stock but no consumption has no value and
+	never matches.
+	"""
+	monthsOfStock: FloatFilterInput
+}
+
 type RequisitionLineForecastPreviewError {
 	error: RequisitionLineForecastPreviewErrorInterface!
 }
@@ -8820,6 +9071,15 @@ type RequisitionLineForecastPreviewNode {
 	The requisition's target months × the monthly demand
 	"""
 	targetStock: Float!
+	"""
+	The consumption history and stock evolution for the previewed line, as
+	`requisitionLineChart` gives them for a saved one — so an item being added charts
+	before its line exists. The draft's requested quantity isn't part of the preview, so
+	the stock projection adds nothing at delivery. Only the series the query selects are
+	read; the others are null. Null if the chart can't be read: the chart is context, so
+	failing to read it doesn't fail the preview
+	"""
+	chart(consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): ItemChartNode
 	suggestedQuantity: Float!
 	averageMonthlyConsumption: Float!
 	availableStockOnHand: Float!
@@ -8925,6 +9185,30 @@ type RequisitionLineNode {
 	targetStock: Float!
 }
 
+enum RequisitionLineSortFieldInput {
+	itemCode
+	itemName
+	requestedQuantity
+	suggestedQuantity
+	supplyQuantity
+	approvedQuantity
+	comment
+	defaultPackSize
+	monthsOfStock
+}
+
+input RequisitionLineSortInput {
+	"""
+	Sort query result by `key`
+	"""
+	key: RequisitionLineSortFieldInput!
+	"""
+	Sort query result is sorted descending or ascending (if not provided the default is
+	ascending)
+	"""
+	desc: Boolean
+}
+
 type RequisitionLineStatsError {
 	error: RequisitionLineStatsErrorInterface!
 }
@@ -8938,6 +9222,8 @@ union RequisitionLineStatsResponse = ResponseRequisitionStatsNode | RequisitionL
 type RequisitionLineWithItemIdExists implements InsertRequestRequisitionLineErrorInterface & InsertResponseRequisitionLineErrorInterface {
 	description: String!
 }
+
+union RequisitionLinesResponse = RequisitionLineConnector
 
 type RequisitionNode {
 	id: String!
@@ -8983,9 +9269,10 @@ type RequisitionNode {
 	"""
 	minMonthsOfStock: Float!
 	"""
-	The ordering store's supply interval and safety buffer (from its facility record) as
-	they stand now, null when it carries no supply interval. A general
-	order's default target months of stock.
+	The ordering store's supply interval and safety buffer (from its facility record) and
+	delivery lead time (from its store preferences) as they stand now, null when its
+	facility record carries no supply interval. Their sum is a general order's default
+	target months of stock.
 	"""
 	supplyIntervalAndBuffer: SupplyIntervalAndBufferNode
 	documents: SyncFileReferenceConnector!
@@ -9477,15 +9764,15 @@ type SiteNode {
 	"""
 	Last time the remote made any authenticated v7 request.
 	"""
-	lastConnectionDatetime: NaiveDateTime
+	lastConnectionDatetime: DateTime
 	"""
 	Last time the remote fully pulled from this central server.
 	"""
-	lastSyncDatetime: NaiveDateTime
+	lastSyncDatetime: DateTime
 	"""
 	First time the remote completed an initialising pull.
 	"""
-	firstSyncDatetime: NaiveDateTime
+	firstSyncDatetime: DateTime
 	isMultiDevice: Boolean!
 }
 
@@ -9577,6 +9864,11 @@ input StockLineFilterInput {
 	isProgramStockLine: Boolean
 	campaignId: EqualFilterStringInput
 	onHold: Boolean
+	"""
+	true: expiry date before today. false: expiry date today or later, or no expiry date.
+	Today is in the query's `timezoneOffset`, or the server's timezone without one
+	"""
+	isExpired: Boolean
 }
 
 type StockLineIsOnHold implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface {
@@ -9780,7 +10072,11 @@ input StocktakeLineFilterInput {
 	itemCodeOrName: StringFilterInput
 	itemId: EqualFilterStringInput
 	stockLineId: EqualFilterStringInput
+	donorId: EqualFilterStringInput
 	campaignId: EqualFilterStringInput
+	batch: StringFilterInput
+	manufactureDate: DateFilterInput
+	campaignName: StringFilterInput
 }
 
 type StocktakeLineNode {
@@ -9825,6 +10121,9 @@ enum StocktakeLineSortFieldInput {
 	snapshotNumberOfPacks
 	countedNumberOfPacks
 	reasonOption
+	manufactureDate
+	donor
+	campaign
 }
 
 input StocktakeLineSortInput {
@@ -10098,6 +10397,10 @@ type SupplyIntervalAndBufferNode {
 	Zero when the facility record carries none
 	"""
 	safetyBufferMonths: Float!
+	"""
+	How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset
+	"""
+	deliveryLeadTimeMonths: Float!
 }
 
 type SupplyRequestedQuantityError {
@@ -11875,6 +12178,7 @@ input UpsertPreferencesInput {
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
+	commonMedicines: [CommonMedicinesInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

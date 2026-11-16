@@ -30,8 +30,8 @@ pub struct RequisitionLineNode {
 
 #[derive(SimpleObject)]
 pub struct RequisitionLineConnector {
-    total_count: u32,
-    nodes: Vec<RequisitionLineNode>,
+    pub total_count: u32,
+    pub nodes: Vec<RequisitionLineNode>,
 }
 
 #[derive(PartialEq, Debug, SimpleObject)]

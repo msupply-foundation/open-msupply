@@ -2,9 +2,13 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists,
+        common::{check_master_list_for_store, check_requisition_row_exists},
         query::get_requisition,
-        request_requisition::{default_target_months_of_stock, fixed_target_months_of_stock},
+        request_requisition::{
+            AddFromMasterList, AddFromMasterListError, UseSuggestedQuantity,
+            UseSuggestedQuantityError, add_from_master_list, default_target_months_of_stock,
+            fixed_target_months_of_stock, use_suggested_quantity,
+        },
     },
     service_provider::ServiceContext,
     validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
@@ -29,6 +33,10 @@ pub struct InsertRequestRequisition {
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: f64,
     pub expected_delivery_date: Option<NaiveDate>,
+    /// Starts the order from this master list: a line for every item on it, with the
+    /// requested quantity set to the suggested quantity. Done in the same transaction, so
+    /// the order is never created without its lines
+    pub master_list_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -40,8 +48,11 @@ pub enum InsertRequestRequisitionError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyIsNotAStore,
+    MasterListNotFoundForThisStore,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
+    AddFromMasterList(AddFromMasterListError),
+    UseSuggestedQuantity(UseSuggestedQuantityError),
     DatabaseError(RepositoryError),
     // Cannot be an error, names are filtered so that name linked to current store is not shown
     // OtherPartyIsThisStore
@@ -57,8 +68,28 @@ pub fn insert_request_requisition(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
+            let master_list_id = input.master_list_id.clone();
             let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
+
+            // Both reuse this transaction, so a failure rolls back the new order too
+            if let Some(master_list_id) = master_list_id {
+                add_from_master_list(
+                    ctx,
+                    AddFromMasterList {
+                        request_requisition_id: new_requisition.id.clone(),
+                        master_list_id,
+                    },
+                )
+                .map_err(OutError::AddFromMasterList)?;
+                use_suggested_quantity(
+                    ctx,
+                    UseSuggestedQuantity {
+                        request_requisition_id: new_requisition.id.clone(),
+                    },
+                )
+                .map_err(OutError::UseSuggestedQuantity)?;
+            }
 
             activity_log_entry(
                 ctx,
@@ -68,7 +99,7 @@ pub fn insert_request_requisition(
                 None,
             )?;
 
-            get_requisition(ctx, None, &new_requisition.id)
+            get_requisition(ctx, None, &new_requisition.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
@@ -105,6 +136,11 @@ fn validate(
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
+    if let Some(master_list_id) = &input.master_list_id {
+        check_master_list_for_store(connection, store_id, master_list_id)?
+            .ok_or(OutError::MasterListNotFoundForThisStore)?;
+    }
+
     Ok(())
 }
 
@@ -121,6 +157,7 @@ fn generate(
         max_months_of_stock,
         min_months_of_stock,
         expected_delivery_date,
+        master_list_id: _,
     }: InsertRequestRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
     let other_party_store = StoreRepository::new(connection)
@@ -176,17 +213,22 @@ impl From<RepositoryError> for InsertRequestRequisitionError {
 #[cfg(test)]
 mod test_insert {
     use crate::{
-        requisition::request_requisition::{
-            InsertRequestRequisition, InsertRequestRequisitionError as ServiceError,
+        requisition::{
+            common::get_lines_for_requisition,
+            request_requisition::{
+                InsertRequestRequisition, InsertRequestRequisitionError as ServiceError,
+            },
         },
         service_provider::ServiceProvider,
     };
     use chrono::{NaiveDate, Utc};
     use repository::{
-        NameRow, RequisitionRowRepository,
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameRow, RequisitionRowRepository,
         mock::{
-            MockData, MockDataInserts, mock_name_a, mock_name_store_b, mock_name_store_c,
-            mock_request_draft_requisition, mock_store_a, mock_user_account_a,
+            MockData, MockDataInserts, common::FullMockMasterList, mock_item_a, mock_name_a,
+            mock_name_store_a, mock_name_store_b, mock_name_store_c,
+            mock_request_draft_requisition, mock_store_a, mock_test_not_store_a_master_list,
+            mock_user_account_a, test_item_stats,
         },
         test_db::{setup_all, setup_all_with_data},
     };
@@ -307,6 +349,7 @@ mod test_insert {
                     max_months_of_stock: Some(1.0),
                     min_months_of_stock: 0.5,
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
+                    master_list_id: None,
                 },
             )
             .unwrap();
@@ -333,6 +376,120 @@ mod test_insert {
 
         assert!(
             new_row.created_datetime > before_insert && new_row.created_datetime < after_insert
+        );
+    }
+
+    #[actix_rt::test]
+    async fn insert_request_requisition_from_master_list() {
+        fn master_list() -> FullMockMasterList {
+            let id = "insert_master_list".to_string();
+            FullMockMasterList {
+                master_list: MasterListRow {
+                    id: id.clone(),
+                    name: id.clone(),
+                    code: id.clone(),
+                    description: id.clone(),
+                    is_active: true,
+                    ..Default::default()
+                },
+                joins: vec![MasterListNameJoinRow {
+                    id: format!("{id}_join"),
+                    master_list_id: id.clone(),
+                    name_id: mock_name_store_a().id,
+                }],
+                lines: vec![
+                    MasterListLineRow {
+                        id: format!("{id}1"),
+                        item_id: mock_item_a().id,
+                        master_list_id: id.clone(),
+                        ..Default::default()
+                    },
+                    MasterListLineRow {
+                        id: format!("{id}2"),
+                        item_id: test_item_stats::item().id,
+                        master_list_id: id.clone(),
+                        ..Default::default()
+                    },
+                    MasterListLineRow {
+                        id: format!("{id}3"),
+                        item_id: test_item_stats::item2().id,
+                        master_list_id: id.clone(),
+                        ..Default::default()
+                    },
+                ],
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_request_requisition_from_master_list",
+            MockDataInserts::all(),
+            test_item_stats::mock_item_stats().join(MockData {
+                full_master_lists: vec![master_list()],
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        // MasterListNotFoundForThisStore: nothing is created
+        assert_eq!(
+            service.insert_request_requisition(
+                &context,
+                InsertRequestRequisition {
+                    id: "not_created".to_string(),
+                    other_party_id: mock_name_store_c().id,
+                    master_list_id: Some(mock_test_not_store_a_master_list().master_list.id),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::MasterListNotFoundForThisStore)
+        );
+        assert_eq!(
+            RequisitionRowRepository::new(&connection)
+                .find_one_by_id("not_created")
+                .unwrap(),
+            None
+        );
+
+        service
+            .insert_request_requisition(
+                &context,
+                InsertRequestRequisition {
+                    id: "from_master_list".to_string(),
+                    other_party_id: mock_name_store_c().id,
+                    master_list_id: Some(master_list().master_list.id),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let lines = get_lines_for_requisition(&connection, "from_master_list").unwrap();
+        let mut item_ids: Vec<String> = lines.iter().map(|line| line.item_row.id.clone()).collect();
+        item_ids.sort();
+        let mut expected_item_ids = vec![
+            mock_item_a().id,
+            test_item_stats::item().id,
+            test_item_stats::item2().id,
+        ];
+        expected_item_ids.sort();
+        assert_eq!(item_ids, expected_item_ids);
+
+        // Every line requests its suggested quantity
+        for line in &lines {
+            assert_eq!(
+                line.requisition_line_row.requested_quantity,
+                line.requisition_line_row.suggested_quantity
+            );
+        }
+        assert!(
+            lines
+                .iter()
+                .any(|line| line.requisition_line_row.requested_quantity > 0.0)
         );
     }
 }

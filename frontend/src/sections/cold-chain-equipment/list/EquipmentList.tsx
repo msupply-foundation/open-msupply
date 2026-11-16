@@ -239,7 +239,11 @@ const EquipmentList: Component = () => {
       setQuery({ ...query(), filter: cleared, offset: 0 });
   });
 
-  const openRow = (row: AssetRow) => navigate(row.id);
+  // Absolute, under whichever destination is mounted (navConfig: cold-chain/
+  // equipment or manage/equipment) — a link can't resolve a relative path.
+  const rowHref = (row: AssetRow) =>
+    `/${params.storeId}/${destination() === 'all-stores' ? 'manage' : 'cold-chain'}/equipment/${row.id}`;
+  const openRow = (row: AssetRow) => navigate(rowHref(row));
 
   const afterWrite = () => {
     setSelectedIds([]);
@@ -433,6 +437,7 @@ const EquipmentList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         emptyMessage={t('error.no-items-to-display')}
         enableSelection
         selectedIds={selectedIds()}

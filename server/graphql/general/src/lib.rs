@@ -23,10 +23,10 @@ use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, CurrenciesResponse,
-    CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse, DeleteResponse, DiagnosisNode,
-    MasterListFilterInput, PeriodScheduleFilterInput, PeriodScheduleRowResponse,
-    StorePreferenceNode,
+    AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, ConsumptionOptionsInput,
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse,
+    DeleteResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
+    PeriodScheduleRowResponse, StockEvolutionOptionsInput, StorePreferenceNode,
 };
 use mutations::{
     barcode::{
@@ -75,7 +75,6 @@ use queries::{
     },
     insurance_providers::{InsuranceProvidersResponse, insurance_providers},
     migration_status::{MigrationStatusNode, migration_status},
-    requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     requisition_line_forecast_preview::RequisitionLineForecastPreviewInput,
     shipping_method::{ShippingMethodFilterInput, ShippingMethodsResponse, get_shipping_methods},
     sync_settings::{SyncSettingsNode, sync_settings},
@@ -295,6 +294,8 @@ impl GeneralQueries {
         stock_counts(ctx, store_id, timezone_offset, days_till_expired)
     }
 
+    /// A request requisition line's consumption history and stock evolution. Only the series
+    /// the query selects are read; the others are null
     pub async fn requisition_line_chart(
         &self,
         ctx: &Context<'_>,

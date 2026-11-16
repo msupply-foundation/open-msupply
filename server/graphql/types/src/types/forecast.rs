@@ -1,4 +1,4 @@
-use super::ItemNode;
+use super::{ConsumptionOptionsInput, ItemChartNode, ItemNode, StockEvolutionOptionsInput};
 use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::{ContextExt, loader::ItemLoader};
@@ -8,7 +8,11 @@ use repository::{
 };
 use service::{
     requisition::request_requisition::{ForecastMethodOption, ForecastMethodUnavailableReason},
-    requisition_line::request_requisition_line::RequisitionLineForecastPreview,
+    requisition_line::{
+        chart::{ItemChart, get_forecast_preview_chart},
+        request_requisition_line::RequisitionLineForecastPreview,
+    },
+    store_preference::get_store_preferences,
 };
 
 /// Where a requisition line's monthly demand comes from.
@@ -132,7 +136,61 @@ impl RequisitionLineForecastPreviewNode {
 
     /// The requisition's target months × the monthly demand
     pub async fn target_stock(&self) -> f64 {
-        self.preview.max_months_of_stock * self.preview.line.forecast_monthly_consumption
+        self.preview.requisition.max_months_of_stock
+            * self.preview.line.forecast_monthly_consumption
+    }
+
+    /// The consumption history and stock evolution for the previewed line, as
+    /// `requisitionLineChart` gives them for a saved one — so an item being added charts
+    /// before its line exists. The draft's requested quantity isn't part of the preview, so
+    /// the stock projection adds nothing at delivery. Only the series the query selects are
+    /// read; the others are null. Null if the chart can't be read: the chart is context, so
+    /// failing to read it doesn't fail the preview
+    pub async fn chart(
+        &self,
+        ctx: &Context<'_>,
+        consumption_options_input: Option<ConsumptionOptionsInput>,
+        stock_evolution_options_input: Option<StockEvolutionOptionsInput>,
+    ) -> Option<ItemChartNode> {
+        let chart = || -> Result<ItemChart, String> {
+            let connection = ctx
+                .get_connection_manager()
+                .connection()
+                .map_err(|e| format!("{e:?}"))?;
+            let store_id = &self.preview.requisition.store_id;
+            let amc_lookback_months = get_store_preferences(&connection, store_id)
+                .map_err(|e| format!("{e:?}"))?
+                .monthly_consumption_look_back_period;
+            // Only the series the query selects are read
+            let look_ahead = ctx.look_ahead();
+            get_forecast_preview_chart(
+                &connection,
+                store_id,
+                &self.preview,
+                look_ahead.field("consumptionHistory").exists().then(|| {
+                    ConsumptionOptionsInput::to_domain(
+                        amc_lookback_months,
+                        consumption_options_input,
+                    )
+                }),
+                look_ahead.field("stockEvolution").exists().then(|| {
+                    stock_evolution_options_input
+                        .map(|i| i.to_domain())
+                        .unwrap_or_default()
+                }),
+            )
+            .map_err(|e| format!("{e:?}"))
+        };
+        match chart() {
+            Ok(chart) => Some(ItemChartNode::from_domain(chart)),
+            Err(error) => {
+                log::error!(
+                    "Forecast preview chart for item {}: {error}",
+                    self.preview.line.item_id
+                );
+                None
+            }
+        }
     }
 
     pub async fn suggested_quantity(&self) -> f64 {

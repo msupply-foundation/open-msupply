@@ -29,14 +29,21 @@ describe('checkReactParts', () => {
     ).toBeNull();
   });
 
-  it('blocks a SolidJS and React frontend on different versions', () => {
-    const failure = checkReactParts(
-      [solidFrontend, undefined],
-      [{ ...reactFrontend, version: '3.0.0' }],
-      'solid'
-    );
-    expect(failure.blocking).toBe(true);
-    expect(failure.why).toContain('different versions');
+  it('passes parts on different versions', () => {
+    expect(
+      checkReactParts(
+        [solidFrontend, undefined],
+        [{ ...reactFrontend, version: '2.20.0' }],
+        'solid'
+      )
+    ).toBeNull();
+    expect(
+      checkReactParts(
+        [undefined, undefined],
+        [reactFrontend, { ...reactBackend, version: '3.5.0' }],
+        'solid'
+      )
+    ).toBeNull();
   });
 
   it('blocks a SolidJS and React frontend with different codes', () => {
@@ -72,10 +79,10 @@ describe('checkReactParts', () => {
   it("reports a React-only plugin's mismatch without blocking", () => {
     const failure = checkReactParts(
       [undefined, undefined],
-      [reactFrontend, { ...reactBackend, version: '1.0.1' }],
+      [reactFrontend, { ...reactBackend, code: 'civ_backend' }],
       'solid'
     );
     expect(failure.blocking).toBe(false);
-    expect(failure.why).toContain('different versions');
+    expect(failure.why).toContain('different plugin codes');
   });
 });

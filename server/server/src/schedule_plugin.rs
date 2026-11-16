@@ -1,7 +1,11 @@
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::PluginType;
-use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
-use std::collections::HashMap;
+use service::{
+    backend_plugin::{plugin_provider::PluginInstance, types::schedule},
+    service_provider::ServiceProvider,
+    sync::is_initialised_or_log,
+};
+use std::{collections::HashMap, sync::Arc};
 use tokio::task::JoinHandle;
 use util::format_error;
 
@@ -50,13 +54,19 @@ impl SchedulePluginRunner {
     }
 }
 
-pub fn spawn() -> JoinHandle<()> {
-    tokio::spawn(async {
+pub fn spawn(service_provider: Arc<ServiceProvider>) -> JoinHandle<()> {
+    tokio::spawn(async move {
         let mut runner = SchedulePluginRunner::new();
         let mut interval =
             tokio::time::interval(std::time::Duration::from_secs(SCHEDULE_PLUGIN_POLL_SECS));
         loop {
             interval.tick().await;
+            // Plugins are bound at startup from whatever `backend_plugin` rows exist, which after a
+            // restart mid-initialisation are the ones the batches committed so far (#845). Don't
+            // let them read or write the partial data.
+            if !is_initialised_or_log(&service_provider) {
+                continue;
+            }
             runner.run().await;
             log::info!("Schedule plugin runner complete");
         }

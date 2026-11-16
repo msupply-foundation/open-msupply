@@ -10,14 +10,20 @@
  * other derived files honest.
  *
  * The derivation is PROGRESS.md's own "What each column means" table:
- *   Spec      spec/<vertical>/ exists — README, rules, contract, ui-surface
+ *   Spec      spec/<vertical>/ exists — README, rules, ui-surface, and
+ *             contract (front end) or data (full stack)
  *   Cases     spec/<vertical>/cases/ holds at least one file
- *   Build     src/sections/<vertical>/ exists
- *   e2e       e2e/specs/<vertical>-regression.spec.ts exists (the stem may
+ *   Build     src/sections/<stem>/ exists
+ *   e2e       e2e/specs/<stem>-regression.spec.ts exists (the stem may
  *             differ from the folder by a trailing 's': spec/stocktakes is
  *             driven by stocktake-regression.spec.ts)
- *   Workflow  exploratory/workflows/<vertical>.md exists
- *   Run       exploratory/reports/<date>/<vertical>-findings.md exists
+ *   Workflow  exploratory/workflows/<stem>.md exists
+ *   Run       exploratory/reports/<date>/<stem>-findings.md exists
+ *
+ * A vertical sits at any depth under spec/ and is named by its path there
+ * (`procurement/plan`); its stem is that name with `-` for `/`
+ * (spec-verticals.mjs). Each column reads the vertical's own folder, so a
+ * nested vertical's files and cases never count for its parent.
  *
  * The Run column carries a DATE, not a tick, so the script only checks that a
  * date is present exactly when a report is (which date is the author's).
@@ -25,13 +31,21 @@
  * Both lists this compares are read from PROGRESS.md itself — the cross-cutting
  * folders it says are "Not listed", and the rows it has — so adding a vertical
  * means editing one file, not two.
+ *
+ * It also checks that every top-level spec folder, listed or not, and every
+ * nested folder with a README opens its README with a scope line
+ * (`> **Scope: front end.**` or `> **Scope: full stack.**`) as the first line
+ * under the heading — AUTHORING.md → Scope. Tools read it to decide whether a
+ * vertical has a server leg. And no two verticals may share a stem, since
+ * they would share every file named for it outside spec/.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { specFolders, stem, stemClashes } from './spec-verticals.mjs';
 
 const FILE = '../spec/PROGRESS.md';
 const SPEC_DIR = '../spec';
-const SPEC_FILES = ['README.md', 'rules.md', 'contract.md', 'ui-surface.md'];
+const SPEC_FILES = ['README.md', 'rules.md', 'ui-surface.md'];
 
 // spec/ is not published to the public mirror (.github/mirror/rules.txt), and
 // this file lives inside it, so there is nothing to check there — skip rather
@@ -48,7 +62,7 @@ const text = readFileSync(FILE, 'utf8');
 const notListed = new Set(
   (text.split('## Not listed')[1] ?? '')
     .split('##')[0]
-    .match(/`([a-z0-9-]+)`/g)
+    .match(/`([a-z0-9/-]+)`/g)
     ?.map(name => name.replaceAll('`', '')) ?? []
 );
 if (notListed.size === 0) {
@@ -68,35 +82,39 @@ const reports = dirs('exploratory/reports').flatMap(date =>
   readdirSync(join('exploratory/reports', date)).map(name => `${date}/${name}`)
 );
 
-const derive = vertical => {
+const derive = ({ name, dir, scope }) => {
+  const named = stem(name);
   // The suite is named for the vertical, give or take a plural.
-  const suiteStems = [vertical, vertical.replace(/s$/, ''), `${vertical}s`];
+  const suiteStems = [named, named.replace(/s$/, ''), `${named}s`];
+  // A full-stack vertical decides its tables in data.md and has no contract.md.
+  const contract = scope === 'full stack' ? 'data.md' : 'contract.md';
   return {
-    spec: SPEC_FILES.every(f => existsSync(join(SPEC_DIR, vertical, f)))
+    spec: [...SPEC_FILES, contract].every(f => existsSync(join(dir, f)))
       ? '✅'
       : '—',
     cases:
-      existsSync(join(SPEC_DIR, vertical, 'cases')) &&
-      readdirSync(join(SPEC_DIR, vertical, 'cases')).length > 0
+      existsSync(join(dir, 'cases')) &&
+      readdirSync(join(dir, 'cases')).length > 0
         ? '✅'
         : '—',
-    build: has(join('src/sections', vertical)),
-    e2e: suiteStems.some(stem =>
-      existsSync(join('e2e/specs', `${stem}-regression.spec.ts`))
+    build: has(join('src/sections', named)),
+    e2e: suiteStems.some(suite =>
+      existsSync(join('e2e/specs', `${suite}-regression.spec.ts`))
     )
       ? '✅'
       : '—',
-    workflow: has(join('exploratory/workflows', `${vertical}.md`)),
+    workflow: has(join('exploratory/workflows', `${named}.md`)),
     // The report's exact name, not a substring: `reports` would otherwise
     // claim manage-reports-findings.md.
-    run: reports.some(r => r.endsWith(`/${vertical}-findings.md`)),
+    run: reports.some(r => r.endsWith(`/${named}-findings.md`)),
   };
 };
 
-// The table's rows: | [`name`](./name/) | ✅ | … | <run> |
+// The table's rows: | [`name`](./name/) | ✅ | … | <run> |, a nested
+// vertical's name holding its path (`procurement/plan`).
 const rows = new Map();
 for (const line of text.split('\n')) {
-  const match = /^\|\s*\[`([a-z0-9-]+)`\]\([^)]*\)\s*\|(.+)\|\s*$/.exec(line);
+  const match = /^\|\s*\[`([a-z0-9/-]+)`\]\([^)]*\)\s*\|(.+)\|\s*$/.exec(line);
   if (!match) continue;
   const cells = match[2].split('|').map(c => c.trim());
   if (cells.length !== 6) continue;
@@ -110,21 +128,21 @@ for (const line of text.split('\n')) {
   });
 }
 
-// Folders of the spec framework itself, not spec areas.
-const FRAMEWORK_DIRS = new Set(['templates']);
-
-const verticals = dirs(SPEC_DIR).filter(
-  name => !notListed.has(name) && !FRAMEWORK_DIRS.has(name)
+const folders = specFolders(SPEC_DIR);
+const listed = folders.filter(
+  ({ name, scope }) => scope !== null && !notListed.has(name)
 );
+const verticals = listed.map(({ name }) => name);
 const problems = [];
 
-for (const vertical of verticals.sort()) {
+for (const folder of listed) {
+  const vertical = folder.name;
   const row = rows.get(vertical);
   if (!row) {
     problems.push(`${vertical}: in spec/ but has no row`);
     continue;
   }
-  const want = derive(vertical);
+  const want = derive(folder);
   for (const column of ['spec', 'cases', 'build', 'e2e', 'workflow']) {
     if (row[column] !== want[column])
       problems.push(
@@ -140,20 +158,41 @@ for (const vertical of verticals.sort()) {
     );
 }
 
-for (const listed of rows.keys())
-  if (!verticals.includes(listed))
+for (const row of rows.keys())
+  if (!verticals.includes(row))
     problems.push(
-      `${listed}: has a row but no spec/${listed}/ (or it is "Not listed")`
+      `${row}: has a row but no spec/${row}/ (or it is "Not listed")`
     );
+
+const scopeProblems = folders
+  .filter(({ scope }) => scope === null)
+  .map(({ name, readme }) =>
+    readme
+      ? `${name}: README.md has no scope line under its heading`
+      : `${name}: no README.md`
+  );
+
+const clashes = stemClashes(folders.filter(({ scope }) => scope !== null));
 
 if (problems.length > 0) {
   console.error(`${FILE} does not match the tree:\n  ${problems.join('\n  ')}`);
   console.error(
     `\nTick the cell in the PR that delivers the step (see "Keeping it true").`
   );
-  process.exit(1);
 }
+if (scopeProblems.length > 0)
+  console.error(
+    `Spec folders without a scope line:\n  ${scopeProblems.join('\n  ')}\n\n` +
+      'Open the README with `> **Scope: front end.**` or `> **Scope: full stack.**` (see spec/AUTHORING.md → Scope).'
+  );
+if (clashes.length > 0)
+  console.error(
+    `Verticals sharing a stem:\n  ${clashes.join('\n  ')}\n\n` +
+      'Rename one of them (see spec/AUTHORING.md → Nested verticals).'
+  );
+if (problems.length > 0 || scopeProblems.length > 0 || clashes.length > 0)
+  process.exit(1);
 
 console.log(
-  `PROGRESS OK — ${verticals.length} vertical(s), every cell matches the tree`
+  `PROGRESS OK — ${verticals.length} vertical(s), every cell matches the tree; every spec folder declares its scope`
 );

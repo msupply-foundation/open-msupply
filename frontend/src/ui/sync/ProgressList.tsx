@@ -10,7 +10,7 @@ import {
 import { Dynamic } from 'solid-js/web';
 import { AlertTriangleIcon, type IconProps } from '../icons';
 import { Popover } from '../elements/feedback/Popover';
-import { t } from '../../intl';
+import { formatNumber, t } from '../../intl';
 import styles from './ProgressList.module.css';
 
 // One step of a multi-phase operation. `label` arrives pre-translated; the
@@ -228,8 +228,11 @@ export const ProgressList = (props: {
                     when={errored()}
                     fallback={
                       // No icon: the marker shows the step's number (the
-                      // current app's prepare step).
-                      <span class={styles.number}>{index + 1}</span>
+                      // current app's prepare step), in the language's own
+                      // digits like every other figure (#1835).
+                      <span class={styles.number}>
+                        {formatNumber(index + 1)}
+                      </span>
                     }
                   >
                     <AlertTriangleIcon />

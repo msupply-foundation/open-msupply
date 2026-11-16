@@ -17,6 +17,7 @@ import type { Component, JSX } from 'solid-js';
 import type { DataTableProps } from '../ui/elements/table/DataTable';
 import type { DialogProps } from '../ui/elements/feedback/Dialog';
 import type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
+import type { UploadZoneProps } from '../ui/elements/inputs/UploadZone';
 import type { RecordLinkProps } from './recordLink';
 import type {
   FilterBarProps,
@@ -131,7 +132,7 @@ export const FilterSelect = LazyFilterSelect as unknown as <V extends string>(
 ) => JSX.Element;
 
 /** A chip's calendar-day range control (pick-only corvu range; `type: 'date'`
- * passes plain ISO days through as inclusive bounds). */
+ * passes calendar dates through as inclusive bounds). */
 export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
   import('../ui/elements/selectors/FilterBar').then(m => ({
     default: m.FilterDateRange,
@@ -470,6 +471,21 @@ export const EnrolmentIdField = LazyEnrolmentIdField as unknown as <
 >(
   props: EnrolmentIdFieldProps<T>
 ) => JSX.Element;
+
+/*
+ * The drag-and-drop file target with a Browse button, the one every host
+ * import screen uses (purchase order lines, asset catalogue, name
+ * properties) — for a plugin page that takes a file in, such as the Laos
+ * Store prices upload (private/plugins/laos). Lazy like the dialogs: a
+ * CSS-bearing control a plugin-free deployment never draws from the SDK.
+ * Render it from the page's first paint, not on an interaction, so it is
+ * never the first render of an already-open screen's Suspense boundary.
+ */
+export const UploadZone: Component<UploadZoneProps> = lazy(() =>
+  import('../ui/elements/inputs/UploadZone').then(m => ({
+    default: m.UploadZone,
+  }))
+);
 
 /*
  * The modal dialogs (ui-standards § menus, popovers & modals) — the

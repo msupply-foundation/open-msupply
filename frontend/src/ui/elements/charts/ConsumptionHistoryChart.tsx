@@ -1,6 +1,7 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
+import { calendarDateOrInstantToDate } from '../../../intl/calendarDate';
 import { roundedText } from '../../../intl/numberDisplay';
 import { SvgPlot, linePath } from './svgPlot';
 
@@ -52,11 +53,16 @@ export const ConsumptionHistoryChart = (props: {
           maxValue={maxValue()}
           width={props.width}
           height={props.height}
-          xLabel={i => format(new Date(data()[i].date), 'MMM')}
+          xLabel={i =>
+            format(calendarDateOrInstantToDate(data()[i].date), 'MMM')
+          }
           tooltip={i => (
             <>
               <div class={styles.tooltipHead}>
-                {format(new Date(data()[i].date), 'MMM yyyy')}
+                {format(
+                  calendarDateOrInstantToDate(data()[i].date),
+                  'MMM yyyy'
+                )}
               </div>
               <div>
                 {t('label.consumption')}: {fmt(data()[i].consumption)}
