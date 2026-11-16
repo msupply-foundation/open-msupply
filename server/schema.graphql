@@ -5450,6 +5450,11 @@ input ItemFilterInput {
 	"""
 	notInRecord: ItemNotInRecordFilterInput
 	"""
+	Items with no counted line in a finalised stocktake of this store since the given
+	datetime, including items never counted in this store
+	"""
+	notCountedSince: DateTime
+	"""
 	Dynamic filter condition AST, currently supporting property conditions
 	on keys visible for the "item" table scope, e.g.
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`

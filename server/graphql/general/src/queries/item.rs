@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     ContextExt,
     dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
@@ -94,6 +95,9 @@ pub struct ItemFilterInput {
     pub universal_code: Option<StringFilterInput>,
     /// Excludes items already present as a line on the given record
     pub not_in_record: Option<ItemNotInRecordFilterInput>,
+    /// Items with no counted line in a finalised stocktake of this store since the given
+    /// datetime, including items never counted in this store
+    pub not_counted_since: Option<DateTime<Utc>>,
 
     /// Dynamic filter condition AST, currently supporting property conditions
     /// on keys visible for the "item" table scope, e.g.
@@ -182,6 +186,7 @@ impl ItemFilterInput {
             products_at_risk_of_being_out_of_stock,
             universal_code,
             not_in_record,
+            not_counted_since,
             // Parsed and validated in the resolver, not here (to_domain is infallible)
             dynamic_filter: _,
         } = self;
@@ -208,6 +213,7 @@ impl ItemFilterInput {
             products_at_risk_of_being_out_of_stock,
             universal_code: universal_code.map(StringFilter::from),
             not_in_record: not_in_record.map(ItemNotInRecordFilter::from),
+            not_counted_since: not_counted_since.map(|since| since.naive_utc()),
             // Parsed from the JSON `dynamicFilter` input in the resolver (a
             // serde error there must surface as BadUserInput, so the infallible
             // to_domain can't do it)
