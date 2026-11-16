@@ -304,7 +304,6 @@ mod query {
                     master_list_id: master_list_id.to_string(),
                     item_id,
                     price_per_unit: price,
-                    ..Default::default()
                 })
                 .unwrap();
         };
