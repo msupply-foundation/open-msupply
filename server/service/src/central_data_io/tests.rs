@@ -1197,7 +1197,10 @@ fn row_errors(summary: &super::ImportSummary) -> Vec<(u32, Option<&str>, &str)> 
     summary
         .errors
         .iter()
-        .map(|e| (e.row, e.column.as_deref(), e.message.as_str()))
+        .map(|e| {
+            let row = e.row.expect("every error here is on a row");
+            (row, e.column.as_deref(), e.message.as_str())
+        })
         .collect()
 }
 
@@ -1506,7 +1509,6 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
                 Some("delete"),
                 "freezer_location_type (freezer_location_type) is used by an item, so it can't be deleted"
             ),
-            (4, Some("code"), "referenced record not found"),
             (
                 5,
                 Some("delete"),
@@ -1521,21 +1523,21 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
     );
     assert_eq!(repo.find_all().unwrap().len(), 3);
 
-    // As exported: every saved value kept.
+    // As exported: every saved value kept. A row for a location type already gone changes nothing.
     let path = write_file(
         dir.path(),
-        location_type_sheet(vec![location_type_row([
-            "unused_type",
-            "UNUSED",
-            "Unused",
-            "15",
-            "25",
-            "DELETE",
-        ])]),
+        location_type_sheet(vec![
+            location_type_row(["unused_type", "UNUSED", "Unused", "15", "25", "DELETE"]),
+            location_type_row(["", "MISSING", "", "", "", "DELETE"]),
+            location_type_row(["missing_id", "", "", "", "", "DELETE"]),
+        ]),
     );
     let summary = CentralDataService.import(&ctx, &path).unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        (summary.tables[0].deleted, summary.tables[0].unchanged),
+        (1, 2)
+    );
     assert_eq!(
         summary.changes,
         vec![RowChange {
@@ -1601,13 +1603,13 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
             .collect::<Vec<_>>(),
         vec![
             (
-                2,
+                Some(2),
                 Some("delete".to_string()),
                 "REQUESTED (REQUESTED) is used by a requisition line, so it can't be deleted"
                     .to_string()
             ),
             (
-                3,
+                Some(3),
                 Some("delete".to_string()),
                 "VARIANT (VARIANT) is used by an item variant, so it can't be deleted".to_string()
             ),
