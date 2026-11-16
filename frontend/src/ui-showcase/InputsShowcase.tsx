@@ -21,6 +21,7 @@ import {
   DateRangeField,
   type CalendarDateRange,
 } from '../ui/elements/inputs/DateRangeField';
+import { MonthField } from '../ui/elements/inputs/MonthField';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { SaveButton } from '../ui/elements/buttons/StandardButtons';
 import { Select } from '../ui/elements/selectors/Select';
@@ -184,6 +185,7 @@ export const InputsShowcase = () => {
     start: '2026-07-01',
     end: '2026-07-31',
   });
+  const [reportMonth, setReportMonth] = createSignal<string | null>('2026-08');
   // NumberField demos: the parent-owned numbers each ValueReadout displays.
   const [qty, setQty] = createSignal<number | undefined>(1000);
   const [cost, setCost] = createSignal<number | undefined>(12.5);
@@ -678,9 +680,10 @@ export const InputsShowcase = () => {
         >
           <Lead>
             <code>DateField</code>, <code>DateRangeField</code>,{' '}
-            <code>DateTimeField</code> and <code>TimeField</code>: a popover
-            date picker on <strong>corvu</strong>'s headless calendar (our own
-            markup + tokens, same bargain as Kobalte), so it renders{' '}
+            <code>MonthField</code>, <code>DateTimeField</code> and{' '}
+            <code>TimeField</code>: a popover date picker on{' '}
+            <strong>corvu</strong>'s headless calendar (our own markup + tokens,
+            same bargain as Kobalte), so it renders{' '}
             <strong>identically in every browser</strong>. You can{' '}
             <strong>type the date</strong> (e.g. <code>23/04/2023</code>) or
             pick it; the calendar header opens{' '}
@@ -744,6 +747,15 @@ export const InputsShowcase = () => {
                 value={period()}
                 onChange={setPeriod}
                 helperText={`${period().start ?? '…'} → ${period().end ?? '…'}`}
+              />
+            </Field>
+            <Field caption="Month">
+              <MonthField
+                label="Report month"
+                value={reportMonth()}
+                onChange={setReportMonth}
+                max="2026-12"
+                helperText={`Stored: ${reportMonth() ?? '—'}. Months after Dec 2026 can't be picked.`}
               />
             </Field>
             <Field caption="Required">

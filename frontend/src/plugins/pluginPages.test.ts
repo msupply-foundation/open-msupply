@@ -473,6 +473,24 @@ describe('menu placement (anchors)', () => {
     expect(item?.to).toBe('stock-count/count');
   });
 
+  it('keeps a single-destination section reachable when a page is placed in it', () => {
+    const reports = upperNav.find(item => item.id === 'reports');
+    // Reports is a leaf in the host menu…
+    expect(reports?.children).toBeUndefined();
+    register('laos', [page({ nav: { in: 'reports' } })], []);
+    const merged = mergeUpperNav(allHosts()).items.find(
+      item => item.id === 'reports'
+    );
+    // …so as a group it keeps its own screen first, with its permission, and
+    // the page after it.
+    expect(merged?.children?.map(child => child.to)).toEqual([
+      reports?.to,
+      'stock-count/count',
+    ]);
+    expect(merged?.children?.[0]?.labelKey).toBe(reports?.labelKey);
+    expect(merged?.children?.[0]?.permission).toBe(reports?.permission);
+  });
+
   it('folds a page placed in a HOST section into its children, anchored against them', () => {
     const inventory = upperNav.find(item => item.id === 'inventory');
     const firstChild = inventory?.children?.[0]?.id;

@@ -2,7 +2,6 @@ import Calendar from '@corvu/calendar';
 import {
   createEffect,
   createSignal,
-  For,
   Index,
   on,
   Show,
@@ -11,6 +10,12 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
 import { dateToCalendarDate } from '../../../intl/calendarDate';
 import { locale } from '../../../intl';
+import {
+  MonthGrid,
+  YearGrid,
+  YEARS_PER_PAGE,
+  yearPageStart,
+} from './MonthYearGrids';
 import styles from './DatePickerPanel.module.css';
 
 export interface DateRange {
@@ -55,8 +60,6 @@ interface CalendarCtx {
   weeks: Date[][];
 }
 
-const YEARS_PER_PAGE = 16;
-
 /*
  * The calendar grid inside a date picker's popover — corvu's headless Calendar
  * (@corvu/calendar) with our own markup + tokens (the "buy the behaviour, own
@@ -96,9 +99,6 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       }
     )
   );
-
-  const monthShort = (i: number) =>
-    new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'short' });
 
   const disabled = (day: Date): boolean => {
     if (props.min && dateToCalendarDate(day) < dateToCalendarDate(props.min))
@@ -142,7 +142,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               type="button"
               class={styles.headingBtn}
               onClick={() => {
-                setYearBase(y() - (y() % YEARS_PER_PAGE));
+                setYearBase(yearPageStart(y()));
                 setView('year');
               }}
             >
@@ -165,7 +165,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
             type="button"
             class={styles.headingBtn}
             onClick={() => {
-              setYearBase(y() - (y() % YEARS_PER_PAGE));
+              setYearBase(yearPageStart(y()));
               setView('year');
             }}
           >
@@ -249,48 +249,24 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       </Show>
 
       <Show when={view() === 'month'}>
-        <div class={styles.pickGrid}>
-          <Index each={Array.from({ length: 12 }, (_, i) => i)}>
-            {i => (
-              <button
-                type="button"
-                class={styles.pickCell}
-                data-selected={ctx.month.getMonth() === i() ? '' : undefined}
-                onClick={() => {
-                  ctx.setMonth(new Date(ctx.month.getFullYear(), i()));
-                  setView('day');
-                }}
-              >
-                {monthShort(i())}
-              </button>
-            )}
-          </Index>
-        </div>
+        <MonthGrid
+          selected={ctx.month.getMonth()}
+          onPick={i => {
+            ctx.setMonth(new Date(ctx.month.getFullYear(), i));
+            setView('day');
+          }}
+        />
       </Show>
 
       <Show when={view() === 'year'}>
-        <div class={styles.pickGrid}>
-          <For
-            each={Array.from(
-              { length: YEARS_PER_PAGE },
-              (_, i) => yearBase() + i
-            )}
-          >
-            {yr => (
-              <button
-                type="button"
-                class={styles.pickCell}
-                data-selected={ctx.month.getFullYear() === yr ? '' : undefined}
-                onClick={() => {
-                  ctx.setMonth(new Date(yr, ctx.month.getMonth()));
-                  setView('month');
-                }}
-              >
-                {yr}
-              </button>
-            )}
-          </For>
-        </div>
+        <YearGrid
+          pageStart={yearBase()}
+          selected={ctx.month.getFullYear()}
+          onPick={yr => {
+            ctx.setMonth(new Date(yr, ctx.month.getMonth()));
+            setView('month');
+          }}
+        />
       </Show>
     </div>
   );

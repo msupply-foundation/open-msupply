@@ -270,6 +270,17 @@ export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 // CSS-bearing modules in the SDK chunk — the field, its DatePickerPanel and
 // their shared styles (measured: kdd/bundle-size-by-pr).
 export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
+// The month picker — the Laos DHIS2 stock report's period (#2231), since DHIS2
+// keeps those figures per month. Shares DatePickerPanel's month/year grids and
+// its stylesheet, both already in this chunk through DateRangeField above.
+export { MonthField } from '../ui/elements/inputs/MonthField';
+export type { MonthFieldProps } from '../ui/elements/inputs/MonthField';
+export {
+  addMonths,
+  formatMonth,
+  monthDateRange,
+  monthOfDate,
+} from '../ui/elements/inputs/monthValue';
 export type {
   DateRangeFieldProps,
   CalendarDateRange,
@@ -787,6 +798,10 @@ export { generateUUID } from '../uuid';
  * hand-roll it).
  */
 export { saveFile } from './files';
+// Printing a document the plugin builds (the Laos DHIS2 stock report, #2231):
+// the host's report Print path, lazy like saveFile, for the same Android reason.
+export { printHtml } from './files';
+export type { PrintResult } from './files';
 // Files into the app, as CSV: the host's own reader, so a plugin's import reads
 // a spreadsheet's CSV exactly as the host import screens do — a file saved in
 // a legacy Windows code page decodes, and the separator Excel used for the
