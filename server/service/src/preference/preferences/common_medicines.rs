@@ -1,11 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
-use repository::{ItemRow, ItemRowRepository, ItemType, StorageConnection};
+use repository::{
+    ItemLinkRow, ItemLinkRowRepository, ItemRow, ItemRowRepository, ItemType, RepositoryError,
+    StorageConnection,
+};
 
 use crate::{
     preference::{
-        PrefKey, Preference, PreferenceType, PreferenceValueType, UpsertPreferenceError,
-        upsert_helpers::upsert_store,
+        PrefKey, Preference, PreferenceError, PreferenceType, PreferenceValueType,
+        UpsertPreferenceError, upsert_helpers::upsert_store,
     },
     sync::CentralServerConfig,
 };
@@ -17,11 +20,10 @@ pub const MAX_COMMON_MEDICINE_AMOUNTS: usize = 3;
 /// most often. Amounts are in the item's own unit (e.g. tablets), and an empty
 /// list means the card asks for the amount instead.
 ///
-/// `item_id` is the id as it was set, held in the preference's JSON, so it
-/// can't follow an item merge the way an `item_link_id` column does. Once an
-/// item is merged into another, the screen still reads the merged-away id,
-/// whose stock now belongs to the item it was kept as: its card shows no
-/// stock, or none at all, until the list is set again with the kept item.
+/// The preference's JSON holds item ids, not item link ids, so they follow an
+/// item merge by being looked up through `item_link` on every save and load:
+/// `item_id` is always the item a merge kept. Two medicines that a merge makes
+/// the same item become one, the first in the list.
 #[derive(Default, Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommonMedicine {
@@ -48,6 +50,23 @@ impl Preference for CommonMedicines {
         PreferenceValueType::CommonMedicines
     }
 
+    // Custom load so a list saved before an item merge shows the kept item.
+    fn load(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+    ) -> Result<Self::Value, PreferenceError> {
+        let Some(pref) = self.query(connection, store_id)? else {
+            return Ok(self.default_value());
+        };
+        let medicines = self
+            .deserialize(&pref.value)
+            .map_err(|e| PreferenceError::DeserializeError(pref.key, pref.value, e.to_string()))?;
+        let kept_as = kept_item_ids(connection, &medicines)?;
+
+        Ok(as_kept_items(medicines, &kept_as))
+    }
+
     // Custom upsert to validate the list. Until the settings editor exists the
     // list is set through the API, so this is the only check.
     fn upsert(
@@ -63,7 +82,7 @@ impl Preference for CommonMedicines {
             return Err(UpsertPreferenceError::NotACentralServer);
         }
 
-        validate_common_medicines(connection, &value)?;
+        let value = checked_common_medicines(connection, value)?;
 
         let serialised_value = serde_json::to_string(&value)
             .map_err(|e| UpsertPreferenceError::SerializeError(self.key_str(), e.to_string()))?;
@@ -72,19 +91,20 @@ impl Preference for CommonMedicines {
     }
 }
 
-/// Refuses a list the cards can't show. Each medicine has to be an active
-/// stock item, because the cards only read those. A database error stays a
-/// database error, not a fault in the list.
-fn validate_common_medicines(
+/// Refuses a list the cards can't show, and returns it with each medicine as
+/// the item a merge kept. Each medicine has to be an active stock item,
+/// because the cards only read those. A database error stays a database
+/// error, not a fault in the list.
+fn checked_common_medicines(
     connection: &StorageConnection,
-    medicines: &[CommonMedicine],
-) -> Result<(), UpsertPreferenceError> {
+    medicines: Vec<CommonMedicine>,
+) -> Result<Vec<CommonMedicine>, UpsertPreferenceError> {
     let invalid = |reason: String| {
         UpsertPreferenceError::InvalidValue(PrefKey::CommonMedicines.to_string(), reason)
     };
     let mut seen = HashSet::new();
 
-    for CommonMedicine { item_id, amounts } in medicines {
+    for CommonMedicine { item_id, amounts } in &medicines {
         if !seen.insert(item_id.as_str()) {
             return Err(invalid(format!("item {item_id} is listed more than once")));
         }
@@ -101,16 +121,17 @@ fn validate_common_medicines(
         }
     }
 
-    // One query for the whole list
-    let ids: Vec<String> = medicines.iter().map(|m| m.item_id.clone()).collect();
+    // One query for the merges and one for the items, for the whole list
+    let kept_as = kept_item_ids(connection, &medicines)?;
+    let kept_ids: Vec<String> = kept_as.values().cloned().collect();
     let items: HashMap<String, ItemRow> = ItemRowRepository::new(connection)
-        .find_many_by_id(&ids)?
+        .find_many_by_id(&kept_ids)?
         .into_iter()
         .map(|item| (item.id.clone(), item))
         .collect();
 
-    for CommonMedicine { item_id, .. } in medicines {
-        let Some(item) = items.get(item_id) else {
+    for CommonMedicine { item_id, .. } in &medicines {
+        let Some(item) = kept_as.get(item_id).and_then(|kept| items.get(kept)) else {
             return Err(invalid(format!("item {item_id} does not exist")));
         };
         // Deleting an item only marks it inactive
@@ -122,7 +143,40 @@ fn validate_common_medicines(
         }
     }
 
-    Ok(())
+    Ok(as_kept_items(medicines, &kept_as))
+}
+
+/// The item each medicine's id is kept as since any merge, keyed by that id.
+/// An id with no item link isn't in the map.
+fn kept_item_ids(
+    connection: &StorageConnection,
+    medicines: &[CommonMedicine],
+) -> Result<HashMap<String, String>, RepositoryError> {
+    let ids: Vec<String> = medicines.iter().map(|m| m.item_id.clone()).collect();
+    let links = ItemLinkRowRepository::new(connection).find_many_by_id(&ids)?;
+
+    Ok(links
+        .into_iter()
+        .map(|ItemLinkRow { id, item_id }| (id, item_id))
+        .collect())
+}
+
+/// Each medicine as the item a merge kept. When two become the same item the
+/// first keeps its place and amounts, and the later one is dropped.
+fn as_kept_items(
+    medicines: Vec<CommonMedicine>,
+    kept_as: &HashMap<String, String>,
+) -> Vec<CommonMedicine> {
+    let mut seen = HashSet::new();
+
+    medicines
+        .into_iter()
+        .filter_map(|CommonMedicine { item_id, amounts }| {
+            let item_id = kept_as.get(&item_id).cloned().unwrap_or(item_id);
+            seen.insert(item_id.clone())
+                .then_some(CommonMedicine { item_id, amounts })
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -136,9 +190,10 @@ mod tests {
         sync::test_util_set_is_central_server,
     };
     use repository::{
+        PreferenceRowRepository,
         mock::{
-            MockDataInserts, mock_item_a, mock_item_b, mock_item_service_item, mock_store_a,
-            mock_store_b,
+            MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_service_item,
+            mock_store_a, mock_store_b,
         },
         test_db::setup_all,
     };
@@ -235,6 +290,64 @@ mod tests {
         assert_eq!(
             CommonMedicines.upsert(&connection, vec![], None),
             Err(UpsertPreferenceError::StoreIdNotProvided)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn common_medicines_follow_an_item_merge() {
+        let (_, connection, _, _) =
+            setup_all("common_medicines_item_merge", MockDataInserts::all()).await;
+        test_util_set_is_central_server(true);
+        let store_a = Some(mock_store_a().id);
+        let store_b = Some(mock_store_b().id);
+        let item_a = mock_item_a().id;
+        let item_b = mock_item_b().id;
+        let item_c = mock_item_c().id;
+
+        // Store B's list is saved before any merge.
+        let before_merge = vec![
+            medicine(&item_a, &[1.0]),
+            medicine(&item_c, &[]),
+            medicine(&item_b, &[2.0]),
+        ];
+        CommonMedicines
+            .upsert(&connection, before_merge, store_b.clone())
+            .unwrap();
+
+        // Item A is merged into item B: A's link now points at B.
+        ItemLinkRowRepository::new(&connection)
+            .upsert_one(&ItemLinkRow {
+                id: item_a.clone(),
+                item_id: item_b.clone(),
+            })
+            .unwrap();
+
+        // Read after the merge, A shows as B, in A's place and with A's
+        // amounts, and the later B is dropped.
+        assert_eq!(
+            CommonMedicines.load(&connection, store_b),
+            Ok(vec![medicine(&item_b, &[1.0]), medicine(&item_c, &[])])
+        );
+
+        // A list naming the merged-away item is saved as the kept one.
+        CommonMedicines
+            .upsert(
+                &connection,
+                vec![medicine(&item_a, &[5.0])],
+                store_a.clone(),
+            )
+            .unwrap();
+        let saved = PreferenceRowRepository::new(&connection)
+            .find_one_by_id(&format!(
+                "{}_{}",
+                PrefKey::CommonMedicines,
+                mock_store_a().id
+            ))
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            serde_json::from_str::<Vec<CommonMedicine>>(&saved.value).unwrap(),
+            vec![medicine(&item_b, &[5.0])]
         );
     }
 
