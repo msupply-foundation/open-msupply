@@ -140,12 +140,6 @@
   color: var(--text-secondary);
 }
 
-/* The medicines before anyone is chosen: dimmed, since nothing can be
-   pressed yet. Disabled controls are exempt from contrast minimums. */
-.waiting {
-  opacity: 0.55;
-}
-
 /* The search for any medicine, between step 2's heading and the cards. */
 .search {
   margin-block-end: var(--space-4);

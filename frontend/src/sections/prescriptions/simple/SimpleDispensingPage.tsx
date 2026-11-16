@@ -458,11 +458,11 @@ const SimpleDispensingPage: Component = () => {
                 </div>
                 {/* At most three columns, never narrower than three amount
                     buttons and the another-amount button need. */}
+                {/* Until someone is chosen the cards' buttons are disabled,
+                    so they dim as every disabled control does. The names and
+                    stock stay full strength: staff read them while choosing. */}
                 <CardGrid
                   equalHeight
-                  // Dimmed until someone is chosen: nothing here can be
-                  // pressed yet (the buttons are disabled too).
-                  class={patient() === null ? styles.waiting : undefined}
                   minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
                 >
                   <For each={list()}>
