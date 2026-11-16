@@ -93,7 +93,8 @@
   flex: none;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-2) var(--space-3);
 }
 
 /* The toggle: the whole bar's width but Dispense, a thumb-sized target. */
@@ -241,7 +242,8 @@
 }
 
 .lines th {
-  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  padding-block: var(--space-1);
+  padding-inline: 0 var(--space-2);
   color: var(--text-body);
   font-weight: var(--weight-medium);
   text-align: start;
@@ -249,7 +251,8 @@
 }
 
 .lines tbody td {
-  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  padding-block: var(--space-2);
+  padding-inline: 0 var(--space-2);
   border-block-start: 1px solid var(--color-divider);
   vertical-align: middle;
 }
