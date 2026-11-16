@@ -222,6 +222,27 @@ export const priceOf = (
     : price;
 };
 
+/** A line's price on a card: zero with no card to price it from. */
+export const linePrice = (
+  card: MedicineCard | undefined,
+  units: number
+): number =>
+  card ? priceOf(card.batches, units, card.defaultPricePerUnit) : 0;
+
+/**
+ * Whether two prices read differently to the currency's smallest unit
+ * (`decimals` places): a difference rounding alone makes doesn't count
+ * (spec/prescriptions rules › dispensing the visit).
+ */
+export const priceDiffers = (
+  shown: number,
+  now: number,
+  decimals: number
+): boolean => {
+  const scale = 10 ** decimals;
+  return Math.round(round9(shown * scale)) !== Math.round(round9(now * scale));
+};
+
 /** One medicine on the list: its total, in the medicine's unit. */
 export interface ListLine {
   itemId: string;
@@ -232,6 +253,12 @@ export interface ListLine {
    * once the amount changes again.
    */
   capped?: true;
+  /**
+   * Dispense stopped because the line's price changed since it was added, so
+   * the line says what it is now (rules › dispensing the visit). Gone once
+   * the amount changes or Dispense is pressed again.
+   */
+  repriced?: true;
 }
 
 /** What the list holds of a medicine. */
@@ -334,6 +361,26 @@ export const shortLines = (
   lines: readonly ListLine[],
   stockOf: (itemId: string) => number
 ): ListLine[] => lines.filter(line => line.units > stockOf(line.itemId));
+
+/**
+ * The lines whose price at Dispense's check differs from the price the screen
+ * showed (spec/prescriptions rules › dispensing the visit), in list order.
+ * `shown` is each line's price before the check, by item id; a line with none
+ * can't be compared. A short line is left out: its short warning takes
+ * precedence, and its price follows once its amount changes.
+ */
+export const repricedLines = (
+  lines: readonly ListLine[],
+  shown: ReadonlyMap<string, number>,
+  checked: readonly MedicineCard[],
+  decimals: number
+): ListLine[] =>
+  lines.filter(line => {
+    const was = shown.get(line.itemId);
+    const now = checked.find(card => card.item.id === line.itemId);
+    if (was === undefined || !now || line.units > now.stock) return false;
+    return priceDiffers(was, linePrice(now, line.units), decimals);
+  });
 
 /**
  * The batch save for a visit: the record, one line per batch taken (packs
@@ -457,19 +504,25 @@ export interface DispenseCalls {
    */
   before: (itemId: string) => MedicineCard | undefined;
   newId: () => string;
+  /**
+   * The currency's smallest unit, as decimal places: prices are compared to
+   * it. Two when not given.
+   */
+  priceDecimals?: number;
 }
 
 /**
  * How Dispense ended (rules › dispensing the visit):
  * - `saved`: the visit is saved, now or by an earlier save, for `patient`;
- * - `short`: nothing saved; `checked` is the stock now, with a line short;
+ * - `stopped`: nothing saved; `checked` is the stock now, with a line short
+ *   or a line's price changed — `repriced` names those, by item id;
  * - `failed`: nothing saved; `checked` is the stock now when it was read,
  *   and `missing` the permissions a refusal named;
  * - `unsure`: a save may have gone through and the screen can't tell.
  */
 export type DispenseEnd =
   | { kind: 'saved'; patient: { id: string; name: string } }
-  | { kind: 'short'; checked: MedicineCard[] }
+  | { kind: 'stopped'; checked: MedicineCard[]; repriced: string[] }
   | { kind: 'failed'; checked?: MedicineCard[]; missing?: string[] }
   | { kind: 'unsure' };
 
@@ -489,11 +542,12 @@ const lookFirst = async (
 
 /**
  * Dispense (rules › dispensing the visit): check the list against the stock
- * now and save it if it is all there. While an earlier save may have gone
- * through, every way out but a save looks for it first, so a visit saved by a
- * reply that was lost is finished, never saved again, and never reported as
- * short or failed. `visit` is updated in place: its id is made on the first
- * save, and `sentFor` set by a save whose reply is lost.
+ * now and save it if it is all there, at the prices the screen showed. While
+ * an earlier save may have gone through, every way out but a save looks for
+ * it first, so a visit saved by a reply that was lost is finished, never
+ * saved again, and never reported as short, repriced or failed. `visit` is
+ * updated in place: its id is made on the first save, and `sentFor` set by a
+ * save whose reply is lost.
  */
 export const dispenseVisit = async (
   visit: { current?: VisitRecord },
@@ -502,6 +556,13 @@ export const dispenseVisit = async (
   calls: DispenseCalls,
   retried = false
 ): Promise<DispenseEnd> => {
+  // Each line's price as the screen shows it, before the check replaces the
+  // stock it is priced from.
+  const shown = new Map<string, number>();
+  for (const line of listed) {
+    const card = calls.before(line.itemId);
+    if (card) shown.set(line.itemId, linePrice(card, line.units));
+  }
   const earlier = await lookFirst(visit.current, calls);
   if (earlier) return earlier;
   const fresh = await calls.check(listed);
@@ -510,9 +571,19 @@ export const dispenseVisit = async (
   const checked = stockAtCheck(listed, fresh, calls.before);
   const stockNow = (itemId: string) =>
     checked.find(card => card.item.id === itemId)?.stock ?? 0;
-  if (shortLines(listed, stockNow).length > 0)
+  const repriced = repricedLines(
+    listed,
+    shown,
+    checked,
+    calls.priceDecimals ?? 2
+  ).map(line => line.itemId);
+  if (shortLines(listed, stockNow).length > 0 || repriced.length > 0)
     return (
-      (await lookFirst(visit.current, calls)) ?? { kind: 'short', checked }
+      (await lookFirst(visit.current, calls)) ?? {
+        kind: 'stopped',
+        checked,
+        repriced,
+      }
     );
   const record = (visit.current ??= { id: calls.newId() });
   const input = dispenseInput(

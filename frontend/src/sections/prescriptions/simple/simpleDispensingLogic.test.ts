@@ -9,8 +9,11 @@ import {
   dispenseOutcome,
   dispenseVisit,
   fillableBatches,
+  linePrice,
   medicinesFor,
+  priceDiffers,
   priceOf,
+  repricedLines,
   removeLine,
   setAmount,
   stockLine,
@@ -946,7 +949,9 @@ describe('dispenseVisit', () => {
     await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }));
     // Someone else takes 2 before Dispense again: genuinely short.
     state.stock = 3;
-    expect((await dispenseVisit(visit, WHO, LIST, calls())).kind).toBe('short');
+    expect((await dispenseVisit(visit, WHO, LIST, calls())).kind).toBe(
+      'stopped'
+    );
     // Staff give what there is. More stock arrives, and the lost save lands
     // just before this save, which the server refuses as a second record.
     state.stock = 8;
@@ -1083,5 +1088,238 @@ describe('visitWasSaved', () => {
         error: { __typename: 'RecordNotFound' },
       })
     ).toBe(false);
+  });
+});
+
+describe('the price check', () => {
+  // Whole-unit batches, so a batch's sell price per pack is its price per
+  // unit.
+  const unitBatch = (
+    id: string,
+    units: number,
+    perUnit: number,
+    expiryDate = '2030-01-01'
+  ) =>
+    batch(id, {
+      availableNumberOfPacks: units,
+      packSize: 1,
+      sellPricePerPack: perUnit,
+      expiryDate,
+    });
+  const cardsFor = (items: CardItem[], prices: Record<string, number> = {}) =>
+    buildCards(
+      items.map(i => ({ itemId: i.id, amounts: [] })),
+      items,
+      prices,
+      PREFS,
+      TODAY
+    );
+  const shownFor = (lines: ListLine[], cards: ReturnType<typeof cardsFor>) =>
+    new Map(
+      lines.map(line => [
+        line.itemId,
+        linePrice(
+          cards.find(card => card.item.id === line.itemId),
+          line.units
+        ),
+      ])
+    );
+  const LINE: ListLine[] = [{ itemId: 'a', units: 3 }];
+  // What the screen showed: 3 units of a batch at 2 each.
+  const BEFORE = cardsFor([item('a', [unitBatch('a1', 5, 2)])]);
+  // Since then, a batch expiring sooner at 4 a unit, which dispensing takes
+  // first.
+  const SOONER = cardsFor([
+    item('a', [unitBatch('a1', 5, 2), unitBatch('a0', 5, 4, '2029-01-01')]),
+  ]);
+
+  it("OMS-REG-DIS-12.170: a batch expiring sooner at another sell price changes the line's price", () => {
+    expect(linePrice(BEFORE[0], 3)).toBe(6);
+    expect(linePrice(SOONER[0], 3)).toBe(12);
+    expect(repricedLines(LINE, shownFor(LINE, BEFORE), SOONER, 2)).toEqual(
+      LINE
+    );
+  });
+
+  it("OMS-REG-DIS-12.175: a changed default price changes the line's price, whatever the batches", () => {
+    const was = cardsFor([item('a', [unitBatch('a1', 5, 2)])], { a: 5 });
+    const now = cardsFor([item('a', [unitBatch('a1', 5, 2)])], { a: 6 });
+    expect(repricedLines(LINE, shownFor(LINE, was), now, 2)).toEqual(LINE);
+  });
+
+  it('OMS-REG-DIS-12.173: equal prices change nothing, from other batches too', () => {
+    expect(repricedLines(LINE, shownFor(LINE, BEFORE), BEFORE, 2)).toEqual([]);
+    // A sooner batch at the same price: other stock, the same price.
+    const samePrice = cardsFor([
+      item('a', [unitBatch('a1', 5, 2), unitBatch('a0', 5, 2, '2029-01-01')]),
+    ]);
+    expect(repricedLines(LINE, shownFor(LINE, BEFORE), samePrice, 2)).toEqual(
+      []
+    );
+    // On the default price list, sooner batches at their own prices cost the
+    // default price all the same.
+    const listed = cardsFor([item('a', [unitBatch('a1', 5, 2)])], { a: 5 });
+    const soonerListed = cardsFor(
+      [item('a', [unitBatch('a1', 5, 2), unitBatch('a0', 5, 4, '2029-01-01')])],
+      { a: 5 }
+    );
+    expect(
+      repricedLines(LINE, shownFor(LINE, listed), soonerListed, 2)
+    ).toEqual([]);
+  });
+
+  it("OMS-REG-DIS-12.178: a difference smaller than the currency's smallest unit is not a change", () => {
+    expect(priceDiffers(6.001, 6.004, 2)).toBe(false);
+    expect(priceDiffers(0.1 + 0.2, 0.3, 2)).toBe(false);
+    expect(priceDiffers(6, 6.01, 2)).toBe(true);
+    // A currency with no minor unit (kip): whole units only.
+    expect(priceDiffers(4000.2, 4000.4, 0)).toBe(false);
+    expect(priceDiffers(4000, 4001, 0)).toBe(true);
+    const tiny = cardsFor([item('a', [unitBatch('a1', 5, 2.0001)])]);
+    expect(repricedLines(LINE, shownFor(LINE, BEFORE), tiny, 2)).toEqual([]);
+  });
+
+  it('OMS-REG-DIS-12.176: a short line is not repriced: its short warning takes precedence', () => {
+    const six: ListLine[] = [{ itemId: 'a', units: 6 }];
+    const was = cardsFor([item('a', [unitBatch('a1', 6, 2)])]);
+    // 4 left, now at 4 a unit: short, and dearer.
+    const now = cardsFor([item('a', [unitBatch('a1', 4, 4)])]);
+    expect(repricedLines(six, shownFor(six, was), now, 2)).toEqual([]);
+    expect(shortLines(six, () => 4)).toEqual(six);
+  });
+
+  it('a line the screen had no price for is not compared', () => {
+    expect(repricedLines(LINE, new Map(), SOONER, 2)).toEqual([]);
+  });
+
+  it("OMS-REG-DIS-12.174: a repriced line's mark goes once its amount changes", () => {
+    const marked: ListLine[] = [{ itemId: 'a', units: 3, repriced: true }];
+    expect(setAmount(marked, 'a', 2, 10)).toEqual([{ itemId: 'a', units: 2 }]);
+    expect(addAmount(marked, 'a', 1, 10)).toEqual([{ itemId: 'a', units: 4 }]);
+  });
+
+  describe('Dispense', () => {
+    const WHO = { id: 'p1', name: 'First' };
+    const calls = (
+      over: Partial<DispenseCalls> & { saves?: string[] } = {}
+    ): DispenseCalls => {
+      let n = 0;
+      return {
+        look: async () => false,
+        check: async () => SOONER,
+        save: async input => {
+          over.saves?.push(input.insertPrescriptions[0]?.id ?? '');
+          return { kind: 'reply', outcome: 'saved' };
+        },
+        before: id => BEFORE.find(card => card.item.id === id),
+        newId: () => `id-${++n}`,
+        ...over,
+      };
+    };
+
+    it('OMS-REG-DIS-12.170, .171: a changed price saves nothing, and the check is the stock the screen then shows', async () => {
+      const saves: string[] = [];
+      expect(await dispenseVisit({}, WHO, LINE, calls({ saves }))).toEqual({
+        kind: 'stopped',
+        checked: SOONER,
+        repriced: ['a'],
+      });
+      expect(saves).toEqual([]);
+    });
+
+    it('OMS-REG-DIS-12.173: pressed again with the price the screen now shows, the visit is saved', async () => {
+      const saves: string[] = [];
+      const visit: { current?: VisitRecord } = {};
+      const end = await dispenseVisit(
+        visit,
+        WHO,
+        LINE,
+        calls({ saves, before: id => SOONER.find(c => c.item.id === id) })
+      );
+      expect(end).toEqual({ kind: 'saved', patient: WHO });
+      expect(saves).toEqual(['id-1']);
+    });
+
+    it('OMS-REG-DIS-12.175: a default price changed by sync stops Dispense the same way', async () => {
+      const was = cardsFor([item('a', [unitBatch('a1', 5, 2)])], { a: 5 });
+      const now = cardsFor([item('a', [unitBatch('a1', 5, 2)])], { a: 6 });
+      const saves: string[] = [];
+      expect(
+        await dispenseVisit(
+          {},
+          WHO,
+          LINE,
+          calls({
+            saves,
+            before: id => was.find(c => c.item.id === id),
+            check: async () => now,
+          })
+        )
+      ).toMatchObject({ kind: 'stopped', repriced: ['a'] });
+      expect(saves).toEqual([]);
+    });
+
+    it('OMS-REG-DIS-12.177: one line short and another repriced stop together, the short one named only as short', async () => {
+      const lines: ListLine[] = [
+        { itemId: 'a', units: 3 },
+        { itemId: 'b', units: 6 },
+      ];
+      const was = cardsFor([
+        item('a', [unitBatch('a1', 5, 2)]),
+        item('b', [unitBatch('b1', 6, 2)]),
+      ]);
+      const now = cardsFor([
+        item('a', [unitBatch('a1', 5, 2), unitBatch('a0', 5, 4, '2029-01-01')]),
+        item('b', [unitBatch('b1', 4, 3)]),
+      ]);
+      const end = await dispenseVisit(
+        {},
+        WHO,
+        lines,
+        calls({
+          before: id => was.find(c => c.item.id === id),
+          check: async () => now,
+        })
+      );
+      expect(end).toMatchObject({ kind: 'stopped', repriced: ['a'] });
+      if (end.kind !== 'stopped') return;
+      const stockOf = (id: string) =>
+        end.checked.find(c => c.item.id === id)?.stock ?? 0;
+      expect(shortLines(lines, stockOf)).toEqual([lines[1]]);
+    });
+
+    it('OMS-REG-DIS-12.179: after a lost reply, a visit found saved is not shown as repriced', async () => {
+      let landed = false;
+      const visit: { current?: VisitRecord } = {};
+      const lost = await dispenseVisit(
+        visit,
+        WHO,
+        LINE,
+        calls({
+          before: id => SOONER.find(c => c.item.id === id),
+          save: async () => ({ kind: 'lost' }),
+        })
+      );
+      expect(lost).toEqual({ kind: 'unsure' });
+      // Dispense again: the look finds nothing, then the lost save lands and
+      // the check reads a price the screen didn't show.
+      const saves: string[] = [];
+      const end = await dispenseVisit(
+        visit,
+        WHO,
+        LINE,
+        calls({
+          saves,
+          look: async () => landed,
+          check: async () => {
+            landed = true;
+            return cardsFor([item('a', [unitBatch('a1', 5, 9)])]);
+          },
+          before: id => SOONER.find(c => c.item.id === id),
+        })
+      );
+      expect(end).toEqual({ kind: 'saved', patient: WHO });
+      expect(saves).toEqual([]);
+    });
   });
 });

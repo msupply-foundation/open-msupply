@@ -19,7 +19,7 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { CheckCircleIcon, ChevronDownIcon, TrashIcon } from '@/ui/icons';
 import { createMediaQuery } from '@/ui/utils/createMediaQuery';
 import {
-  priceOf,
+  linePrice,
   type ListLine,
   type MedicineCard,
 } from './simpleDispensingLogic';
@@ -68,19 +68,15 @@ export const DispensingList = (props: {
   locked: boolean;
   /**
    * What the last Dispense did: who it went to, why it failed, or that it
-   * stopped on short stock. Shown in the list itself — never a toast
-   * (ui-standards › action feedback).
+   * stopped on short stock or a changed price. Shown in the list itself —
+   * never a toast (ui-standards › action feedback).
    */
   notice?: { severity: 'success' | 'warning' | 'error'; text: string };
   /** A phone: the list is the bottom bar and its sheet. */
   isPhone: boolean;
 }) => {
-  const priceOfLine = (line: ListLine): number => {
-    const card = props.cardOf(line.itemId);
-    return card
-      ? priceOf(card.batches, line.units, card.defaultPricePerUnit)
-      : 0;
-  };
+  const priceOfLine = (line: ListLine): number =>
+    linePrice(props.cardOf(line.itemId), line.units);
   const total = () => {
     let sum = 0;
     for (const line of props.lines) sum += priceOfLine(line);
@@ -322,7 +318,7 @@ export const DispensingList = (props: {
                           <tr class={styles.note}>
                             <td colSpan={4}>
                               <div
-                                class={styles.shortWarning}
+                                class={styles.lineWarning}
                                 data-testid="line-stock-warning"
                               >
                                 <p>
@@ -366,6 +362,26 @@ export const DispensingList = (props: {
                                     })}
                                   </Button>
                                 </Show>
+                              </div>
+                            </td>
+                          </tr>
+                        </Show>
+                        {/* Dispense found the line's price changed: nothing
+                            was saved, and staff check the total. A short
+                            line says it is short instead. */}
+                        <Show when={line.repriced && line.units <= stock()}>
+                          <tr class={styles.note}>
+                            <td colSpan={4}>
+                              <div
+                                class={styles.lineWarning}
+                                data-testid="line-price-warning"
+                              >
+                                <p>
+                                  <strong>{t('messages.price-changed')}</strong>{' '}
+                                  {t('messages.price-now', {
+                                    price: formatCurrency(priceOfLine(line)),
+                                  })}
+                                </p>
                               </div>
                             </td>
                           </tr>

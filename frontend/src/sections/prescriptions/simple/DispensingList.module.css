@@ -296,10 +296,10 @@
   font-size: var(--text-xs);
 }
 
-/* Dispense found less stock than the line holds: a warning block with a
-   warning-coloured edge (the Alert's tint recipe), its action under the
-   words. */
-.shortWarning {
+/* Dispense found less stock than the line holds, or the line's price
+   changed: a warning block with a warning-coloured edge (the Alert's tint
+   recipe), any action under the words. */
+.lineWarning {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -311,7 +311,7 @@
   color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
 }
 
-.shortWarning p {
+.lineWarning p {
   margin: 0;
 }
 

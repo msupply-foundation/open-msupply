@@ -1,6 +1,6 @@
 import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { createStore, reconcile } from 'solid-js/store';
+import { createStore, produce, reconcile } from 'solid-js/store';
 import { useParams } from '@solidjs/router';
 import {
   graphqlFetch,
@@ -10,7 +10,7 @@ import {
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { sameFetchedValue } from '@/typeHelpers';
-import { locale, t } from '@/intl';
+import { getCurrencyInfo, homeCurrency, locale, t } from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
 import { fetchPatientOptionById, type PatientOption } from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
@@ -350,13 +350,17 @@ const SimpleDispensingPage: Component = () => {
       save,
       before: cardOf,
       newId: generateUUID,
+      // Prices compare to the store's currency's smallest unit, as shown.
+      priceDecimals: getCurrencyInfo(homeCurrency(), locale()).decimals,
     });
     if (end.kind === 'saved') return finished(end.patient);
     if (end.kind === 'unsure') return unsure();
-    // The stock as it now is becomes the screen's. A short line is left as it
-    // is, and says so: staff choose, then press Dispense again.
+    // The stock as it now is becomes the screen's, so the lines' prices and
+    // the total show what it costs now. A short line is left as it is, and
+    // says so; a line whose price changed says so too: staff choose, or
+    // check the total, then press Dispense again.
     if (end.checked) setChecked(end.checked);
-    if (end.kind === 'short') return;
+    if (end.kind === 'stopped') return markRepriced(end.repriced);
     // Refused, so nothing was saved. Missing permission gets the app's own
     // permission-denied message as well.
     if (end.missing) reportPermissionDenied(end.missing);
@@ -380,8 +384,22 @@ const SimpleDispensingPage: Component = () => {
     update([]);
   };
 
+  // Marks the lines whose price changed (rules › dispensing the visit): in
+  // place, so no line's amount field is rebuilt. Each mark goes once
+  // Dispense is pressed again, or its amount changes (a new line object).
+  const markRepriced = (itemIds: readonly string[]): void =>
+    setLines(
+      produce(draft => {
+        for (const line of draft) {
+          if (itemIds.includes(line.itemId)) line.repriced = true;
+          else delete line.repriced;
+        }
+      })
+    );
+
   const dispense = async () => {
     setNotice(undefined);
+    markRepriced([]);
     setDispensing(true);
     try {
       await checkAndSave();
@@ -390,20 +408,31 @@ const SimpleDispensingPage: Component = () => {
     }
   };
 
-  // Lines holding more than the stock now shows, and while there are any (and
-  // Dispense isn't checking again), the notice that the visit wasn't
-  // dispensed, naming each of them.
+  // Lines holding more than the stock now shows, and lines whose price
+  // changed. While there are any (and Dispense isn't checking again), the
+  // notice that the visit wasn't dispensed, naming each of them.
   const short = () => shortLines(lines, stockOf);
+  const repriced = () => lines.filter(line => line.repriced);
+  const named = (listed: readonly ListLine[]) =>
+    new Intl.ListFormat(locale(), { type: 'conjunction' }).format(
+      listed.map(line => cardOf(line.itemId)?.item.name ?? '')
+    );
   const shownNotice = () => {
-    const names = short().map(line => cardOf(line.itemId)?.item.name ?? '');
-    if (names.length === 0 || dispensing()) return notice();
+    if (dispensing()) return notice();
+    const shortNow = short();
+    const repricedNow = repriced();
+    if (shortNow.length === 0 && repricedNow.length === 0) return notice();
     return {
       severity: 'warning' as const,
-      text: t('messages.not-dispensed-short', {
-        items: new Intl.ListFormat(locale(), { type: 'conjunction' }).format(
-          names
-        ),
-      }),
+      text:
+        repricedNow.length === 0
+          ? t('messages.not-dispensed-short', { items: named(shortNow) })
+          : shortNow.length === 0
+            ? t('messages.not-dispensed-price', { items: named(repricedNow) })
+            : t('messages.not-dispensed-short-and-price', {
+                short: named(shortNow),
+                repriced: named(repricedNow),
+              }),
     };
   };
 
