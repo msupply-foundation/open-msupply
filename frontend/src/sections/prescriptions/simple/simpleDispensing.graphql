@@ -5,7 +5,8 @@
 # has none on hand, so it gets no card — the same items the search offers.
 # Each batch carries what the shared allocation policy needs to choose batches
 # the way the line editor does — hold, expiry and VVM for the bars, expiry
-# (and VVM priority) for the fill order, the sell price for a line's price — so
+# (and VVM priority) for the fill order, the sell price for a line's price
+# where the item has no default price (below) — so
 # available stock and prices are worked out client-side (see
 # domain/item/item.graphql for why not the stats field).
 query simpleDispensingItems(
@@ -52,6 +53,19 @@ query simpleDispensingItems(
           }
         }
       }
+    }
+  }
+}
+
+# A medicine's default price list price per unit, null when it is on none
+# (spec/prescriptions contract › the Simple screen): the price the server
+# charges every unit of a saved line, whatever the batch. Read alongside each
+# items read. The discount fields are a non-patient's: a patient gets none.
+query simpleDispensingItemPrice($storeId: String!, $itemId: String!) {
+  itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+    ... on ItemPriceNode {
+      __typename
+      defaultPricePerUnit
     }
   }
 }
