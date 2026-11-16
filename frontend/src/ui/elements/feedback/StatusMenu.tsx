@@ -33,7 +33,10 @@ export interface StatusMenuProps<V extends string = string> {
   /**
    * Accessible name for the trigger, which has no text of its own beyond the
    * chip — say what it is and what it does ("Status: Scheduled. Change
-   * status").
+   * status"). It MUST contain the chip's `label` word for word: the visible
+   * text of a control has to be part of its accessible name (WCAG 2.5.3 Label
+   * in Name, axe `label-content-name-mismatch`), so a voice-control user can
+   * say what they see. Rebuild it whenever `label` changes.
    */
   triggerLabel: string;
   /**
