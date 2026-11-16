@@ -41,7 +41,12 @@
  */
 import { type JSX } from 'solid-js';
 import { hostNavigate } from '../nav/hostNavigate';
-import { pageActions, pageFooter, pageTrail } from '../plugins/pageSlots';
+import {
+  pageActions,
+  pageFooter,
+  pageToolbar,
+  pageTrail,
+} from '../plugins/pageSlots';
 import { hostPathname } from '../nav/hostLocation';
 import {
   documentHref,
@@ -161,6 +166,19 @@ export const usePageTrail = (
  */
 export const usePageActions = (actions: () => JSX.Element): void =>
   pageActions.use(() => actions);
+
+/**
+ * A plugin page's header field row (sdk-contract § the page contribution ›
+ * rendering): the host frame renders it in the header below the breadcrumb
+ * and actions, laid out as a host detail screen's (HeaderToolbar), so a page
+ * shows its facts and scoping inputs where the host's screens do rather than
+ * as a strip at the top of its body. Pass a render function of LabelledValues
+ * and inputs; it is evaluated in the frame, so signals it reads stay live.
+ * Given up when the calling component is disposed. Must be called under an
+ * owner (a component body).
+ */
+export const usePageToolbar = (toolbar: () => JSX.Element): void =>
+  pageToolbar.use(() => toolbar);
 
 /**
  * A plugin page's pinned action footer (sdk-contract § the page contribution

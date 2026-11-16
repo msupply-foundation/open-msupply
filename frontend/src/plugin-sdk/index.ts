@@ -686,6 +686,7 @@ export {
   onBeforeLeave,
   usePageTrail,
   usePageActions,
+  usePageToolbar,
   usePageFooter,
 } from './navigation';
 export type { NavigateOptions, BeforeLeaveEvent } from './navigation';
