@@ -79,8 +79,11 @@ const plugins: BackendPlugins = {
 
     return {
       transformed_lines: lines.map(line => {
+        // forecast_monthly_consumption is the line's monthly demand from its forecast
+        // method (AMC, population or ancillary ratio). Suggesting from it, not the
+        // AMC, keeps the suggestion in line with core's MOS and target stock
         const max_quantity =
-          line.average_monthly_consumption *
+          line.forecast_monthly_consumption *
           (requisition.max_months_of_stock + months_lead_time);
         const difference = max_quantity - line.available_stock_on_hand;
         const suggested_quantity = difference < 0 ? 0 : difference;

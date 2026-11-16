@@ -4,9 +4,9 @@ use repository::{
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
     InvoiceStatus, InvoiceType, ItemRow, ItemRowRepository, ItemStoreJoinRow,
     ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, KeyType, KeyValueStoreRow,
-    LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
-    StoreRow,
+    LocationRow, NameLinkRow, NameRow, RepositoryError, RequisitionFilter, RequisitionRepository,
+    RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow,
+    StorageConnection, StoreRow,
     mock::{MockData, MockDataInserts, insert_extra_mock_data, mock_campaign_a},
 };
 use util::uuid::uuid;
@@ -294,6 +294,204 @@ async fn invoice_transfers() {
             tester.check_customer_return_deleted(&ctx.connection);
         },
     );
+
+    tokio::select! {
+         Err(err) = processors_task => unreachable!("{}", err),
+        _ = test_handle => (),
+    };
+}
+
+/// Legacy mSupply cancels a finalised invoice by saving a copy of it with is_cancellation set,
+/// keeping its name, its link to the other half of the transfer and its lines' links. Those
+/// copies must not be processed as transfers (open-msupply-internal#2128):
+/// - a cancelled outbound shipment (mSupply customer invoice) must not create a second inbound shipment
+/// - a cancelled inbound shipment (mSupply supplier invoice) must not change the outbound shipment
+#[tokio::test(flavor = "multi_thread", worker_threads = 3)]
+async fn invoice_transfers_ignore_cancellations() {
+    let site_id = 25;
+    let outbound_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
+    let outbound_store = StoreRow {
+        id: uuid(),
+        name_id: outbound_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
+    let inbound_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
+    let inbound_store = StoreRow {
+        id: uuid(),
+        name_id: inbound_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
+    let item1 = ItemRow {
+        id: uuid(),
+        default_pack_size: 10.0,
+        ..Default::default()
+    };
+    let item2 = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let item3 = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let service_item = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
+
+    let ServiceTestContext {
+        service_provider,
+        processors_task,
+        ..
+    } = setup_all_with_data_and_service_provider(
+        "invoice_transfers_ignore_cancellations",
+        MockDataInserts::none()
+            .stores()
+            .names()
+            .items()
+            .units()
+            .currencies(),
+        MockData {
+            campaigns: vec![mock_campaign_a()],
+            names: vec![inbound_store_name.clone(), outbound_store_name.clone()],
+            stores: vec![inbound_store.clone(), outbound_store.clone()],
+            items: vec![
+                item1.clone(),
+                item2.clone(),
+                item3.clone(),
+                service_item.clone(),
+            ],
+            key_value_store_rows: vec![site_id_settings],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let test_input = (
+        service_provider,
+        inbound_store,
+        inbound_store_name,
+        outbound_store,
+        outbound_store_name,
+        item1,
+        item2,
+        item3,
+        service_item,
+    );
+
+    let test_handle = exec_concurrent(test_input, 3, |_, test_input| async move {
+        let (
+            service_provider,
+            inbound_store,
+            inbound_store_name,
+            outbound_store,
+            outbound_store_name,
+            item1,
+            item2,
+            item3,
+            service_item,
+        ) = test_input;
+
+        let ctx = service_provider.basic_context().unwrap();
+
+        let mut tester = InvoiceTransferTester::new(
+            &outbound_store,
+            &inbound_store,
+            Some(&outbound_store_name),
+            Some(&inbound_store_name),
+            &item1,
+            &item2,
+            &item3,
+            &service_item,
+        );
+
+        tester.insert_outbound_shipment(&ctx.connection);
+        tester.update_outbound_shipment_to_picked(&service_provider);
+        ctx.processors_trigger.await_events_processed().await;
+        tester.check_inbound_shipment_created(&ctx.connection);
+        ctx.processors_trigger.await_events_processed().await;
+        tester.check_outbound_shipment_was_linked(&ctx.connection);
+        tester.update_outbound_shipment_lines(&service_provider);
+        tester.update_outbound_shipment_to_shipped(&service_provider);
+        ctx.processors_trigger.await_events_processed().await;
+        tester.check_inbound_shipment_was_updated(&ctx.connection);
+
+        // Cancelled customer invoice, as mSupply sends it: no link to the inbound shipment.
+        // Must not become a second inbound shipment
+        let outbound_shipment_id = tester.outbound_shipment.id.clone();
+        let cancellation_id =
+            tester.insert_cancellation(&ctx.connection, &outbound_shipment_id, false, None);
+        ctx.processors_trigger
+            .invoice_transfer
+            .try_send(())
+            .unwrap();
+        ctx.processors_trigger.await_events_processed().await;
+        tester.check_no_transfer_of_cancellation(&ctx.connection, &cancellation_id);
+
+        // An inbound shipment older versions made from that cancellation, received now.
+        // Must not copy its status to the cancellation
+        let duplicate_id =
+            tester.insert_inbound_made_from_cancellation(&ctx.connection, &cancellation_id);
+        let inbound_ctx = service_provider
+            .context(inbound_store.id.clone(), "".to_string())
+            .unwrap();
+        service_provider
+            .invoice_service
+            .update_inbound_shipment(
+                &inbound_ctx,
+                UpdateInboundShipment {
+                    id: duplicate_id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        ctx.processors_trigger.await_events_processed().await;
+        let cancellation = InvoiceRowRepository::new(&ctx.connection)
+            .find_one_by_id(&cancellation_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(cancellation.status, InvoiceStatus::Shipped);
+        assert_eq!(cancellation.received_datetime, None);
+
+        tester.update_inbound_shipment_to_delivered(&service_provider);
+        ctx.processors_trigger.await_events_processed().await;
+        tester.update_inbound_shipment_to_verified(&service_provider);
+        ctx.processors_trigger.await_events_processed().await;
+        tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+        tester.check_outbound_lines_have_received_qty(&ctx.connection);
+
+        // Cancelled supplier invoice: mSupply's copy keeps the links to the outbound shipment and
+        // its lines. Give it different quantities, so copying them as received would show
+        let inbound_shipment_id = tester.inbound_shipment.clone().unwrap().id;
+        let inbound_cancellation_id =
+            tester.insert_cancellation(&ctx.connection, &inbound_shipment_id, true, Some(1.0));
+        ctx.processors_trigger
+            .invoice_transfer
+            .try_send(())
+            .unwrap();
+        ctx.processors_trigger.await_events_processed().await;
+        tester.check_no_transfer_of_cancellation(&ctx.connection, &inbound_cancellation_id);
+        tester.check_outbound_shipment_was_linked(&ctx.connection);
+        tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+        tester.check_outbound_lines_have_received_qty(&ctx.connection);
+    });
 
     tokio::select! {
          Err(err) = processors_task => unreachable!("{}", err),
@@ -1249,6 +1447,99 @@ impl InvoiceTransferTester {
                 line.invoice_line_row.id,
             );
         }
+    }
+
+    /// Saves a copy of an invoice the way legacy mSupply cancels one: same store, name, status and
+    /// line links, with is_cancellation set. Quantities as they arrive after v5 translation, which
+    /// makes mSupply's negated quantities positive again, or `number_of_packs` when given.
+    /// `keep_link: false` drops the link to the other half, as for a customer invoice: mSupply never
+    /// learns the id of the inbound shipment Open mSupply made from it
+    pub(crate) fn insert_cancellation(
+        &self,
+        connection: &StorageConnection,
+        invoice_id: &str,
+        keep_link: bool,
+        number_of_packs: Option<f64>,
+    ) -> String {
+        let invoice = InvoiceRowRepository::new(connection)
+            .find_one_by_id(invoice_id)
+            .unwrap()
+            .unwrap();
+        let cancellation = InvoiceRow {
+            id: uuid(),
+            is_cancellation: true,
+            linked_invoice_id: invoice.linked_invoice_id.clone().filter(|_| keep_link),
+            ..invoice
+        };
+
+        // In one transaction, so the processors never see the invoice without its lines
+        connection
+            .transaction_sync(|connection| {
+                InvoiceRowRepository::new(connection).upsert_one(&cancellation)?;
+                let line_repo = InvoiceLineRowRepository::new(connection);
+                for line in line_repo.find_many_by_invoice_id(invoice_id)? {
+                    line_repo.upsert_one(&InvoiceLineRow {
+                        id: uuid(),
+                        invoice_id: cancellation.id.clone(),
+                        number_of_packs: number_of_packs.unwrap_or(line.number_of_packs),
+                        ..line
+                    })?;
+                }
+                Ok(()) as Result<(), RepositoryError>
+            })
+            .unwrap();
+
+        cancellation.id
+    }
+
+    /// Saves the inbound shipment older versions made from a cancelled outbound shipment: a copy
+    /// of the real inbound shipment, linked to the cancellation
+    pub(crate) fn insert_inbound_made_from_cancellation(
+        &self,
+        connection: &StorageConnection,
+        cancellation_id: &str,
+    ) -> String {
+        let inbound_shipment_id = self.inbound_shipment.clone().unwrap().id;
+        let inbound = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&inbound_shipment_id)
+            .unwrap()
+            .unwrap();
+        let duplicate = InvoiceRow {
+            id: uuid(),
+            invoice_number: inbound.invoice_number + 1000,
+            linked_invoice_id: Some(cancellation_id.to_string()),
+            ..inbound
+        };
+
+        connection
+            .transaction_sync(|connection| {
+                InvoiceRowRepository::new(connection).upsert_one(&duplicate)?;
+                let line_repo = InvoiceLineRowRepository::new(connection);
+                for line in line_repo.find_many_by_invoice_id(&inbound_shipment_id)? {
+                    line_repo.upsert_one(&InvoiceLineRow {
+                        id: uuid(),
+                        invoice_id: duplicate.id.clone(),
+                        ..line
+                    })?;
+                }
+                Ok(()) as Result<(), RepositoryError>
+            })
+            .unwrap();
+
+        duplicate.id
+    }
+
+    pub(crate) fn check_no_transfer_of_cancellation(
+        &self,
+        connection: &StorageConnection,
+        cancellation_id: &str,
+    ) {
+        assert_eq!(
+            InvoiceRepository::new(connection)
+                .query_one(InvoiceFilter::new_match_linked_invoice_id(cancellation_id)),
+            Ok(None),
+            "no invoice should be made from or linked to cancellation {cancellation_id}"
+        );
     }
 
     pub(crate) fn insert_supplier_return(&self, connection: &StorageConnection) {

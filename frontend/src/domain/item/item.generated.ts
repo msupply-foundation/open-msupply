@@ -58,6 +58,7 @@ export type ItemsWithStockVariables = {
     record: "stocktake" | "requisition" | "invoice";
     id: string;
   } | null;
+    notCountedSince?: string | null;
     dynamicFilter?: unknown | null;
   } | null;
   page?: {
