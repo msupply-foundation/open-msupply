@@ -43,16 +43,6 @@
   box-shadow: var(--focus-ring);
 }
 
-/* MonthField's year arrows, at its min/max year. */
-.navBtn:disabled {
-  color: var(--text-disabled);
-  cursor: not-allowed;
-}
-
-.navBtn:disabled:hover {
-  background: none;
-}
-
 .monthYear {
   display: flex;
   align-items: center;
@@ -123,7 +113,7 @@
   font-weight: var(--weight-semibold);
 }
 
-/* Outside the field's min/max: MonthField, or a month-only DateField. */
+/* Outside a month-only DateField's min/max. */
 .pickCell:disabled {
   color: var(--text-disabled);
   cursor: not-allowed;

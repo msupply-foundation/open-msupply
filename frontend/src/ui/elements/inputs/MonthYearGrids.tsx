@@ -63,7 +63,7 @@ export interface MonthGridProps {
 
 /**
  * The twelve months of a year, as a 4 × 3 grid of buttons — the date picker's
- * month view and MonthField's whole panel.
+ * month view, and a month-only DateField's whole panel.
  */
 export const MonthGrid = (props: MonthGridProps) => {
   // Month names are always Gregorian, the calendar the grid lays out: left
