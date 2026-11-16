@@ -2662,6 +2662,29 @@ type DiagnosisNode {
 	description: String!
 }
 
+"""
+Which screen dispensing opens on (the `dispensingScreen` preference).
+"""
+enum DispensingScreenNode {
+	"""
+	The dispensing list
+	"""
+	STANDARD
+	"""
+	The Simple dispensing screen
+	"""
+	SIMPLE
+}
+
+"""
+One store's edit of the dispensing screen. A null `value` CLEARS the
+store's own value, returning the store to the global value.
+"""
+input DispensingScreenStoreOverrideInput {
+	storeId: String!
+	value: DispensingScreenNode
+}
+
 type DisplaySettingNode {
 	value: String!
 	hash: String!
@@ -7108,6 +7131,10 @@ enum PreferenceKey {
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
 	commonMedicines
+	dispensingScreen
+	useUnnamedPatient
+	startWithUnnamedPatient
+	askForPatientType
 }
 
 type PreferenceMutations {
@@ -7143,6 +7170,7 @@ enum PreferenceValueNodeType {
 	COLOUR
 	IMAGE
 	COMMON_MEDICINES
+	DISPENSING_SCREEN
 }
 
 type PreferencesNode {
@@ -7200,6 +7228,10 @@ type PreferencesNode {
 	The medicines shown as cards on the Simple dispensing screen, in order.
 	"""
 	commonMedicines: [CommonMedicineNode!]!
+	dispensingScreen: DispensingScreenNode!
+	useUnnamedPatient: Boolean!
+	startWithUnnamedPatient: Boolean!
+	askForPatientType: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -12174,6 +12206,14 @@ input UpsertPreferencesInput {
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 	commonMedicines: [CommonMedicinesInput!]
+	dispensingScreen: DispensingScreenNode
+	dispensingScreenStoreOverride: [DispensingScreenStoreOverrideInput!]
+	useUnnamedPatient: Boolean
+	useUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	startWithUnnamedPatient: Boolean
+	startWithUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	askForPatientType: Boolean
+	askForPatientTypeStoreOverride: [BoolStoreOverrideInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {
