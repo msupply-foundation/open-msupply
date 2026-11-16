@@ -4,7 +4,7 @@ use super::{
     cells::{Row, RowError, collect, keep_or_saved},
     delete::{DELETE_COLUMN, check_unchanged, is_delete},
     field_changes,
-    lookup::{NOT_FOUND, find_record},
+    lookup::find_record,
     name_with_code,
     sheet::Value,
 };
@@ -180,10 +180,17 @@ impl LocationTypeSheet {
         existing: Option<LocationTypeRow>,
         mut errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
+        // Already gone: nothing to delete, so the row changes nothing.
         let Some(saved) = existing else {
-            let column = if row.text(ID).is_some() { ID } else { CODE };
-            errors.push(row.error(column, NOT_FOUND));
-            return Err(RowFailure::Invalid(errors));
+            if !errors.is_empty() {
+                return Err(RowFailure::Invalid(errors));
+            }
+            return Ok(RowOutcome {
+                record: row.text(CODE).or(row.text(ID)).unwrap_or_default(),
+                record_id: String::new(),
+                change: Change::Unchanged,
+                fields: Vec::new(),
+            });
         };
         let saved_cells: Vec<_> = COLUMNS
             .iter()

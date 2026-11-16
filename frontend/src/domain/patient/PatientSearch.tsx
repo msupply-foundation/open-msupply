@@ -2,8 +2,11 @@ import { Show, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
+import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';
+import { HStack } from '../../ui/layout/Stack/HStack';
 import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
+import { hasPermission } from '../../store/storeContext';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   patientSearchPageFetcher,
@@ -49,7 +52,12 @@ export interface PatientSearchProps {
    * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
    * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
    * patient-create flow from this callback and selects the result via
-   * `onSelect`.
+   * `onSelect`. For a user without patient-mutate permission it is disabled,
+   * with the reason in an `InfoTooltip` beside it, because the server refuses
+   * the save at the end of the flow (spec/patients § configuration gates).
+   * That permission check reads the store the user is logged into, not
+   * `props.storeId` — every caller passes the current store, so the two agree
+   * today.
    */
   onCreatePatient?: () => void;
   /**
@@ -161,17 +169,34 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     // it's for (spec/patients S4). It lives in the popup rather than beside the
     // input because the field is often in a dialog, where a sibling button has
     // no room: the picker's own min-content already fills the column.
+    // Without patient-mutate permission the entry is disabled and an
+    // InfoTooltip beside it gives the reason (OMS-REG-DIS-03.18/.78). The
+    // tooltip opens on tap and focus as well as hover, so the reason is
+    // readable on touch (ui-standards/controls § blocked affordances). When the
+    // whole picker is `disabled` the entry is disabled with no permission note:
+    // that block belongs to the record, not to this control.
     listboxFooter={query => (
       <Show when={props.onCreatePatient && query().trim() !== ''}>
-        <Button
-          variant="secondary"
-          icon={<PlusCircleIcon />}
-          disabled={props.disabled}
-          data-testid="create-patient-button"
-          onClick={() => props.onCreatePatient?.()}
-        >
-          {t('label.create-patient')}
-        </Button>
+        {/* A row so the reason's icon centres on the button: the footer is a
+            block, where the two inline boxes didn't line up. */}
+        <HStack gap="sm">
+          <Button
+            variant="secondary"
+            icon={<PlusCircleIcon />}
+            disabled={props.disabled || !hasPermission('PATIENT_MUTATE')}
+            data-testid="create-patient-button"
+            onClick={() => props.onCreatePatient?.()}
+          >
+            {t('label.create-patient')}
+          </Button>
+          <Show when={!props.disabled && !hasPermission('PATIENT_MUTATE')}>
+            <InfoTooltip
+              text={t('messages.create-patient-not-allowed')}
+              label={t('messages.create-patient-not-allowed')}
+              triggerTestId="create-patient-disabled-reason"
+            />
+          </Show>
+        </HStack>
       </Show>
     )}
   />

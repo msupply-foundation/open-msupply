@@ -417,7 +417,13 @@ export {
   FilterTextInput,
   RecordLink,
   UnsavedChangesGuard,
+  UploadZone,
 } from './lazyComponents';
+export type { UploadZoneProps } from '../ui/elements/inputs/UploadZone';
+export type {
+  FileRejection,
+  RejectionReason,
+} from '../ui/elements/inputs/uploadFiles';
 export type { DialogProps } from '../ui/elements/feedback/Dialog';
 export type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
@@ -781,6 +787,12 @@ export { generateUUID } from '../uuid';
  * hand-roll it).
  */
 export { saveFile } from './files';
+// Files into the app, as CSV: the host's own reader, so a plugin's import reads
+// a spreadsheet's CSV exactly as the host import screens do — a file saved in
+// a legacy Windows code page decodes, and the separator Excel used for the
+// user's locale (`,`, `;` or tab) is sniffed. From the module, not the
+// reportFiles barrel, which also carries the server-side Excel conversion.
+export { parseCsv, readCsvFile, toCsv } from '../domain/reportFiles/csv';
 export type { SaveFileResult } from './files';
 
 // ── Focus ───────────────────────────────────────────────────────────────────

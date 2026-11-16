@@ -1,6 +1,7 @@
 use crate::db_diesel::{
     item_row::item, item_variant::item_variant_row::item_variant, location_row::location,
-    name_row::name, stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    vvm_status::vvm_status_row::vvm_status,
 };
 use crate::diesel_macros::diesel_string_enum;
 use crate::{
@@ -39,6 +40,7 @@ allow_tables_to_appear_in_same_query!(campaign, item_variant);
 allow_tables_to_appear_in_same_query!(campaign, location);
 allow_tables_to_appear_in_same_query!(campaign, name);
 allow_tables_to_appear_in_same_query!(campaign, vvm_status);
+allow_tables_to_appear_in_same_query!(campaign, reason_option);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,

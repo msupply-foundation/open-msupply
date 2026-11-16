@@ -45,10 +45,6 @@
   transition: color var(--motion-fast) ease;
 }
 
-.trigger:hover {
-  color: var(--text-body);
-}
-
 /* Kobalte marks a disabled trigger with data-disabled (and disables the
    button); mirror every other disabled control — dimmed, no pointer. */
 .trigger[data-disabled] {
@@ -56,8 +52,28 @@
   cursor: default;
 }
 
-.trigger[data-disabled]:hover {
-  color: var(--text-disabled);
+/* Hover only where the pointer can hover: a touch screen keeps the last tab
+   tapped in :hover, so it would stay highlighted. On touch the look shows
+   only while pressed (:active), as on Button. Before the selected rule, which
+   wins at equal specificity. */
+@media (hover: hover) {
+  .trigger:hover {
+    color: var(--text-body);
+  }
+
+  .trigger[data-disabled]:hover {
+    color: var(--text-disabled);
+  }
+}
+
+@media (hover: none) {
+  .trigger:active {
+    color: var(--text-body);
+  }
+
+  .trigger[data-disabled]:active {
+    color: var(--text-disabled);
+  }
 }
 
 .trigger[data-selected] {

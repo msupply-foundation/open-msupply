@@ -5,6 +5,7 @@ use item_price::{ItemPrice, ItemPriceLookup, get_pricing_for_items};
 use repository::RepositoryError;
 
 pub mod calculate_sell_price;
+pub mod default_sell_price;
 pub mod item_price;
 
 pub trait PricingServiceTrait: Sync + Send {

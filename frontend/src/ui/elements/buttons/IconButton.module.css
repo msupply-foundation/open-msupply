@@ -64,23 +64,44 @@
   background: var(--bg-white);
 }
 
-.iconButton:hover {
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
-  color: var(--text-body);
-}
-
-.iconButton[data-bordered]:hover {
-  border-color: var(--gray-main);
-}
-
 /* Danger tone — destructive action (delete). Icon reads error-toned; hover deepens the tint. */
 .iconButton[data-variant='danger'] {
   color: var(--error-main);
 }
 
-.iconButton[data-variant='danger']:hover {
-  background: color-mix(in srgb, var(--error-main) 12%, transparent);
-  color: var(--error-main);
+/* Hover only where the pointer can hover; on touch the same tint shows while
+   the finger is down and goes with it, so the last button tapped doesn't stay
+   tinted (Button.module.css § hover and press, the same latch). */
+@media (hover: hover) {
+  .iconButton:hover {
+    background: color-mix(in srgb, var(--text-body) 8%, transparent);
+    color: var(--text-body);
+  }
+
+  .iconButton[data-bordered]:hover {
+    border-color: var(--gray-main);
+  }
+
+  .iconButton[data-variant='danger']:hover {
+    background: color-mix(in srgb, var(--error-main) 12%, transparent);
+    color: var(--error-main);
+  }
+}
+
+@media (hover: none) {
+  .iconButton:active {
+    background: color-mix(in srgb, var(--text-body) 8%, transparent);
+    color: var(--text-body);
+  }
+
+  .iconButton[data-bordered]:active {
+    border-color: var(--gray-main);
+  }
+
+  .iconButton[data-variant='danger']:active {
+    background: color-mix(in srgb, var(--error-main) 12%, transparent);
+    color: var(--error-main);
+  }
 }
 
 .iconButton:focus-visible {

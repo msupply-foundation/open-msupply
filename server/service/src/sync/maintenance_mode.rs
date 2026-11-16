@@ -102,19 +102,22 @@ pub fn is_locked_out(
     Ok(is_maintenance_mode(connection)? && !is_server_admin(connection, user_id)?)
 }
 
-/// Whether OMS central's own integration should run inside the outer transaction. Without it,
-/// every 500 buffer rows commit in their own transaction (`INTEGRATION_COMMIT_SIZE`).
+/// Whether this site's own v5/v6 integration (`SynchroniserV5V6`) should run inside the outer
+/// transaction. Without it, every 500 buffer rows commit in their own transaction
+/// (`INTEGRATION_COMMIT_SIZE`). v7 decides for itself in `validate_translate_integrate`.
 ///
 /// The outer transaction only exists to hide a half-integrated batch from changelog readers.
 /// - Maintenance mode on: every reader is paused, so it has no job. Run without it.
-/// - Site not yet initialised: nobody can use the site yet, so the yaml escape hatch
-///   `disable_integration_transaction` (for large initial syncs) is still honoured.
-/// - Otherwise the transaction is kept. The yaml setting is ignored with a warning, since
-///   running without it on a live site lets readers advance through partial state.
+/// - Site not yet initialised: every reader waits for initialisation (`is_initialised_or_log`
+///   gates the `/central` and cold chain APIs, schedule plugins and the timed ledger fix
+///   check; GraphQL only serves initialisation), so it has no job either (#845). Run without it,
+///   which also means a restart resumes from the last committed batch instead of starting over.
+///   The ledger fix triggered as initialisation completes isn't gated: integration has already
+///   finished by then.
+/// - Otherwise the transaction is kept.
 pub fn integration_uses_transaction(
     connection: &StorageConnection,
     is_initialised: bool,
-    disable_integration_transaction: bool,
 ) -> Result<bool, RepositoryError> {
     if is_maintenance_mode(connection)? {
         log::info!(
@@ -124,22 +127,14 @@ pub fn integration_uses_transaction(
         return Ok(false);
     }
 
-    if !disable_integration_transaction {
-        return Ok(true);
-    }
-
     if !is_initialised {
         log::info!(
             "Site is not initialised, integrating without the outer transaction, 500 records per \
-             commit (disable_integration_transaction)"
+             commit"
         );
         return Ok(false);
     }
 
-    log::warn!(
-        "disable_integration_transaction is ignored on an initialised site unless maintenance \
-         mode is on; integrating inside the outer transaction"
-    );
     Ok(true)
 }
 
@@ -598,17 +593,14 @@ mod test {
             .unwrap();
         let connection = &ctx.connection;
 
-        // Default: always the transaction.
-        assert!(integration_uses_transaction(connection, true, false).unwrap());
-        assert!(integration_uses_transaction(connection, false, false).unwrap());
-        // The yaml escape hatch still works while initialising, but not on a live site.
-        assert!(!integration_uses_transaction(connection, false, true).unwrap());
-        assert!(integration_uses_transaction(connection, true, true).unwrap());
+        // A live site keeps the transaction; an initialising one has no readers to hide from.
+        assert!(integration_uses_transaction(connection, true).unwrap());
+        assert!(!integration_uses_transaction(connection, false).unwrap());
 
         // Maintenance mode: never the transaction.
         test_util_set_is_central_server(true);
         set_maintenance_mode(&test.service_provider, &ctx, &auth_data(), true).unwrap();
-        assert!(!integration_uses_transaction(connection, true, false).unwrap());
-        assert!(!integration_uses_transaction(connection, true, true).unwrap());
+        assert!(!integration_uses_transaction(connection, true).unwrap());
+        assert!(!integration_uses_transaction(connection, false).unwrap());
     }
 }

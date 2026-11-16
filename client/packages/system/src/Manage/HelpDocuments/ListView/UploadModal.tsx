@@ -75,7 +75,10 @@ export const UploadModal = ({ isOpen, onClose }: UploadModalProps) => {
         await refetch();
         handleClose();
       } else {
-        error(t('error.an-error-occurred', { message: response.statusText }))();
+        // The server's body names the reason (the file type it refused, the size
+        // cap) — statusText alone hides it
+        const body = await response.text().catch(() => '');
+        error(t('error.an-error-occurred', { message: body || response.statusText }))();
       }
     } catch (e) {
       console.error(e);

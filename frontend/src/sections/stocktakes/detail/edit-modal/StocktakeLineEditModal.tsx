@@ -59,7 +59,9 @@ import {
   defaultedPackSize,
   differenceSize,
   lineDifference,
+  newBatchSellPrice,
   packSizeEditable,
+  savedSellFollowsDefault,
   type CountLine,
   type ReasonRequirement,
 } from '../lines/stocktakeLine';
@@ -134,6 +136,12 @@ export type StocktakeLineEditItem = {
    * size is prefilled with it on load (defaultedPackSize).
    */
   defaultPackSize: number;
+  /**
+   * The store's default sell price for one pack of `defaultPackSize` (0 for
+   * none): a fresh batch's sell price starts from it, carried to the batch's
+   * pack size (newBatchSellPrice).
+   */
+  defaultSellPricePerPack: number;
 };
 
 // One of the item's stock lines (from stockLinesByItem).
@@ -165,6 +173,12 @@ type DraftLine = Omit<StocktakeLineFragment, 'volumePerPack'> & {
   // but the editor lets the user CLEAR it — an empty input persists no volume.
   // So the draft widens it to nullable; the input types accept null too.
   volumePerPack: number | null;
+  // Whether the sell price still follows the pack size at the store's default
+  // sell price (spec/stock rules › Default sell price for new stock): set on a
+  // fresh batch, and on a saved one with no stock behind it whose price is
+  // still the default; cleared once the user types a sell price. A copy
+  // carries its source's.
+  sellFollowsDefault?: boolean;
 };
 
 // The adjustment DIRECTION of a line's count: counted MORE than snapshot is a
@@ -280,18 +294,22 @@ const buildDraft = async (
       ? result.data.stockLines.nodes
       : [];
 
-  const fromExisting: DraftLine[] = existing.map(line => ({
-    ...line,
-    countThisLine: true,
+  const fromExisting: DraftLine[] = existing.map(line => {
     // A line with no stock behind it and no pack size yet — a zero-stock
     // item's generated line — is prefilled with the item's default pack size
     // (OMS-REG-INV-03.80), so an ordinary count-and-save persists a usable
     // pack size instead of the empty one finalise chokes on (issue #1173).
     // Stock-backed lines keep their stock's pack size untouched.
-    packSize: packSizeEditable(line)
+    const packSize = packSizeEditable(line)
       ? defaultedPackSize(item, line.packSize)
-      : line.packSize,
-  }));
+      : line.packSize;
+    return {
+      ...line,
+      countThisLine: true,
+      packSize,
+      sellFollowsDefault: savedSellFollowsDefault({ ...line, packSize }, item),
+    };
+  });
   const fromStock: DraftLine[] = stockLines.map(sl => ({
     id: generateUUID(),
     isNew: true,
@@ -308,6 +326,9 @@ const buildDraft = async (
       isVaccine: item.isVaccine,
       doses: item.doses,
       defaultPackSize: item.defaultPackSize,
+      itemStoreProperties: {
+        defaultSellPricePerPack: item.defaultSellPricePerPack,
+      },
     },
     batch: sl.batch,
     expiryDate: sl.expiryDate,
@@ -770,6 +791,8 @@ const StocktakeLineEditContent = (
         doses: first.item.doses,
         unitName: first.item.unitName,
         defaultPackSize: first.item.defaultPackSize,
+        defaultSellPricePerPack:
+          first.item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
@@ -854,10 +877,23 @@ const StocktakeLineEditContent = (
   // volume would stay the one worked out for the pack size at the moment the
   // variant was picked. Only the volume stays as-is when no level matches the
   // new pack size (variantVolumeForLine returns undefined).
+  //
+  // A batch whose sell price still follows the default moves it to the
+  // default at the new pack size (spec/stock rules › Default sell price for
+  // new stock); a sell price the user typed stays.
   const setPackSize = (line: DraftLine, value: number | null) => {
     update(line.id, 'packSize', value);
     const volume = variantVolumeForLine(variants(), line.itemVariantId, value);
     if (volume !== undefined) update(line.id, 'volumePerPack', volume);
+    const item = currentItem();
+    if (line.sellFollowsDefault && item && value != null)
+      update(line.id, 'sellPricePerPack', newBatchSellPrice(item, value));
+  };
+
+  // A sell price the user types is theirs: a later pack-size change keeps it.
+  const setSellPrice = (line: DraftLine, value: number | null) => {
+    update(line.id, 'sellPricePerPack', value);
+    update(line.id, 'sellFollowsDefault', false);
   };
 
   // Update a line's counted packs AND drop a now-mismatched reason: recounting
@@ -933,6 +969,9 @@ const StocktakeLineEditContent = (
             isVaccine: item.isVaccine,
             doses: item.doses,
             defaultPackSize: item.defaultPackSize,
+            itemStoreProperties: {
+              defaultSellPricePerPack: item.defaultSellPricePerPack,
+            },
           },
           batch: null,
           expiryDate: null,
@@ -942,7 +981,11 @@ const StocktakeLineEditContent = (
           // Starts at the item's default pack size, not empty
           // (OMS-REG-INV-03.79) — see defaultedPackSize.
           packSize: defaultedPackSize(item),
-          sellPricePerPack: null,
+          // The store's default sell price at that pack size, which follows
+          // the pack size until the user types one (spec/stock rules ›
+          // Default sell price for new stock).
+          sellPricePerPack: newBatchSellPrice(item, defaultedPackSize(item)),
+          sellFollowsDefault: true,
           costPricePerPack: null,
           comment: null,
           note: null,
@@ -1659,9 +1702,7 @@ const StocktakeLineEditContent = (
             size="small"
             disabled={!line.countThisLine}
             value={line.sellPricePerPack ?? undefined}
-            onChange={value =>
-              update(line.id, 'sellPricePerPack', value ?? null)
-            }
+            onChange={value => setSellPrice(line, value ?? null)}
           />
         );
       },

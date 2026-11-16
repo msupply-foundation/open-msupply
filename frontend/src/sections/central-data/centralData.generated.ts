@@ -56,7 +56,7 @@ export type CentralDataImportResultFragment = ({
 }>;
   errors: Array<{
   sheet: string;
-  row: number;
+  row: number | null;
   column: string | null;
   message: string;
 }>;

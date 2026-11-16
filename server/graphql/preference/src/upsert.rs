@@ -10,8 +10,8 @@ use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StoreOverrideUpdate, StorePrefUpdate, UpsertPreferenceError,
-        UpsertPreferences, WarnWhenMissingRecentStocktakeData,
+        BackdatingData, CommonMedicine, StoreOverrideUpdate, StorePrefUpdate,
+        UpsertPreferenceError, UpsertPreferences, WarnWhenMissingRecentStocktakeData,
     },
 };
 
@@ -66,6 +66,18 @@ pub struct WarnWhenMissingRecentStocktakeDataInput {
 pub struct WarnWhenMissingRecentStocktakeInput {
     pub store_id: String,
     pub value: WarnWhenMissingRecentStocktakeDataInput,
+}
+
+#[derive(InputObject)]
+pub struct CommonMedicineInput {
+    pub item_id: String,
+    pub amounts: Vec<f64>,
+}
+
+#[derive(InputObject)]
+pub struct CommonMedicinesInput {
+    pub store_id: String,
+    pub value: Vec<CommonMedicineInput>,
 }
 
 #[derive(InputObject)]
@@ -131,6 +143,7 @@ pub struct UpsertPreferencesInput {
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<BoolStorePrefInput>>,
+    pub common_medicines: Option<Vec<CommonMedicinesInput>>,
 }
 
 pub fn upsert_preferences(
@@ -215,6 +228,7 @@ impl UpsertPreferencesInput {
             show_indicative_price_in_requisitions,
             do_not_print_placeholder_line_labels,
             prompt_for_batch_and_expiry_on_inbound_shipments,
+            common_medicines,
         } = self;
 
         UpsertPreferences {
@@ -335,6 +349,9 @@ impl UpsertPreferencesInput {
                 prompt_for_batch_and_expiry_on_inbound_shipments
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            common_medicines: common_medicines
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
@@ -408,6 +425,22 @@ impl InvoiceStatusOptionsInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.iter().map(|s| (*s).into()).collect(),
+        }
+    }
+}
+
+impl CommonMedicinesInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<Vec<CommonMedicine>> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self
+                .value
+                .iter()
+                .map(|medicine| CommonMedicine {
+                    item_id: medicine.item_id.clone(),
+                    amounts: medicine.amounts.clone(),
+                })
+                .collect(),
         }
     }
 }
