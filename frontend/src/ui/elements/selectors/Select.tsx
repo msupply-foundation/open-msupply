@@ -69,7 +69,10 @@ export interface SelectProps {
    * a select and a text field read alike). Indication only — the gating stays
    * with the form's own confirm rule. No `aria-required`: the trigger is a
    * `<button>` (Kobalte gives it `aria-haspopup`, not a combobox role), and
-   * ARIA does not allow the attribute there (axe `aria-allowed-attr`).
+   * ARIA does not allow the attribute there (axe `aria-allowed-attr`). The
+   * asterisk is `aria-hidden`, so the label also carries a visually hidden
+   * "Required"; the trigger takes its name from the label, so a screen reader
+   * hears "Reason, Required" (WCAG 1.3.1, 3.3.2).
    */
   required?: boolean;
   /**
@@ -192,6 +195,7 @@ export const Select = (props: SelectProps) => {
         <span class={styles.required} aria-hidden="true">
           *
         </span>
+        <span class={styles.srOnly}>, {t('messages.required-field')}</span>
       </Show>
     </KSelect.Label>
   );
