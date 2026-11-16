@@ -409,7 +409,8 @@ const SimpleDispensingPage: Component = () => {
   const dispense = async () => {
     // Clear may be about to empty the list, or finish the visit its look
     // finds saved: a save now would be of a list that is gone, with a new id
-    // (rules › dispensing the visit). Dispense is disabled then too.
+    // (rules › dispensing the visit). Dispense is disabled then, so this is a
+    // backstop.
     if (looking()) return;
     setNotice(undefined);
     markRepriced([]);
@@ -584,7 +585,8 @@ const SimpleDispensingPage: Component = () => {
                 onClear={() => void clear()}
                 onDispense={() => void dispense()}
                 canDispense={patient() !== null}
-                busy={dispensing() || looking()}
+                dispensing={dispensing()}
+                looking={looking()}
                 locked={locked()}
                 notice={shownNotice()}
               />
