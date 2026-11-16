@@ -304,6 +304,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       <Show when={view() === 'month'}>
         <MonthGrid
           selected={selectedMonth(ctx)}
+          holdsValue={monthOnly()}
           disabled={
             monthOnly()
               ? i => monthDisabled(ctx.month.getFullYear(), i)

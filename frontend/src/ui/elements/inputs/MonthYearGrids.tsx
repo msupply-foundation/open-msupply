@@ -17,41 +17,69 @@ const COLUMNS = 4;
  * nearest enabled one in that direction, or stays put at the edge. Left and
  * right follow the reading direction, so in RTL (Arabic) the arrow pointing
  * to the next cell is ←.
+ *
+ * The cell `key` moves focus to from cell `from`, given which cells are
+ * disabled: its index, `null` for a navigation key that has nowhere to go
+ * (focus stays put), or `undefined` for a key the grid doesn't handle.
  */
-const moveFocus = (e: KeyboardEvent) => {
-  const grid = e.currentTarget as HTMLElement;
-  const forward =
-    getComputedStyle(grid).direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
-  const back = forward === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight';
+export const pickGridTarget = (
+  key: string,
+  from: number,
+  disabled: readonly boolean[],
+  rtl: boolean
+): number | null | undefined => {
+  const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+  const back = rtl ? 'ArrowRight' : 'ArrowLeft';
+  if (key === 'Home') {
+    const to = disabled.findIndex(d => !d);
+    return to === -1 ? null : to;
+  }
+  if (key === 'End') {
+    const to = disabled.findLastIndex(d => !d);
+    return to === -1 ? null : to;
+  }
   const step =
-    e.key === forward
+    key === forward
       ? 1
-      : e.key === back
+      : key === back
         ? -1
-        : e.key === 'ArrowDown'
+        : key === 'ArrowDown'
           ? COLUMNS
-          : e.key === 'ArrowUp'
+          : key === 'ArrowUp'
             ? -COLUMNS
             : undefined;
+  if (step === undefined) return undefined;
+  for (let i = from + step; i >= 0 && i < disabled.length; i += step) {
+    if (!disabled[i]) return i;
+  }
+  return null;
+};
+
+const moveFocus = (e: KeyboardEvent) => {
+  const grid = e.currentTarget as HTMLElement;
   const cells = Array.from(grid.querySelectorAll('button'));
   const from = cells.indexOf(document.activeElement as HTMLButtonElement);
   if (from === -1) return;
-  let to: number | undefined;
-  if (e.key === 'Home') to = cells.findIndex(c => !c.disabled);
-  else if (e.key === 'End')
-    to = cells.length - 1 - [...cells].reverse().findIndex(c => !c.disabled);
-  else if (step !== undefined) {
-    for (let i = from + step; i >= 0 && i < cells.length; i += step) {
-      if (!cells[i]!.disabled) {
-        to = i;
-        break;
-      }
-    }
-  }
-  if (to === undefined && step === undefined) return;
+  const to = pickGridTarget(
+    e.key,
+    from,
+    cells.map(c => c.disabled),
+    getComputedStyle(grid).direction === 'rtl'
+  );
+  if (to === undefined) return;
   e.preventDefault();
-  if (to !== undefined && to >= 0) cells[to]!.focus();
+  if (to !== null) cells[to]!.focus();
 };
+
+/**
+ * A month cell's aria-pressed: "true" on the picked month when the grid holds
+ * the field's value, and absent otherwise — a navigation grid's cells are
+ * plain buttons, not toggles.
+ */
+export const monthCellPressed = (
+  holdsValue: boolean | undefined,
+  isSelected: boolean
+): 'true' | undefined => (holdsValue && isSelected ? 'true' : undefined);
 
 export interface MonthGridProps {
   /** The highlighted month, 0–11, or undefined for none. */
@@ -59,6 +87,12 @@ export interface MonthGridProps {
   onPick: (month: number) => void;
   /** A month that can't be picked (outside the field's bounds). */
   disabled?: (month: number) => boolean;
+  /**
+   * The grid holds the field's value (a month-only field), not just
+   * navigation: the picked month is then announced as pressed, so it isn't
+   * signalled by colour alone (ui/CLAUDE.md 9).
+   */
+  holdsValue?: boolean;
 }
 
 /**
@@ -81,7 +115,10 @@ export const MonthGrid = (props: MonthGridProps) => {
             type="button"
             class={styles.pickCell}
             data-selected={props.selected === i() ? '' : undefined}
-            aria-pressed={props.selected === i()}
+            aria-pressed={monthCellPressed(
+              props.holdsValue,
+              props.selected === i()
+            )}
             disabled={props.disabled?.(i())}
             onClick={() => props.onPick(i())}
           >
@@ -117,7 +154,6 @@ export const YearGrid = (props: YearGridProps) => (
           type="button"
           class={styles.pickCell}
           data-selected={props.selected === yr ? '' : undefined}
-          aria-pressed={props.selected === yr}
           disabled={props.disabled?.(yr)}
           onClick={() => props.onPick(yr)}
         >
