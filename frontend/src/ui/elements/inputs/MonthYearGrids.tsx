@@ -14,20 +14,25 @@ const COLUMNS = 4;
 /*
  * Arrow keys move focus around a 4-column pick grid (Home/End to its ends),
  * skipping nothing: a disabled cell can't take focus, so focus stops on the
- * nearest enabled one in that direction, or stays put at the edge.
+ * nearest enabled one in that direction, or stays put at the edge. Left and
+ * right follow the reading direction, so in RTL (Arabic) the arrow pointing
+ * to the next cell is ←.
  */
 const moveFocus = (e: KeyboardEvent) => {
+  const grid = e.currentTarget as HTMLElement;
+  const forward =
+    getComputedStyle(grid).direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+  const back = forward === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight';
   const step =
-    e.key === 'ArrowRight'
+    e.key === forward
       ? 1
-      : e.key === 'ArrowLeft'
+      : e.key === back
         ? -1
         : e.key === 'ArrowDown'
           ? COLUMNS
           : e.key === 'ArrowUp'
             ? -COLUMNS
             : undefined;
-  const grid = e.currentTarget as HTMLElement;
   const cells = Array.from(grid.querySelectorAll('button'));
   const from = cells.indexOf(document.activeElement as HTMLButtonElement);
   if (from === -1) return;

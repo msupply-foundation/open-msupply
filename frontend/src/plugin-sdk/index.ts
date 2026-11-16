@@ -278,7 +278,6 @@ export type { MonthFieldProps } from '../ui/elements/inputs/MonthField';
 export {
   addMonths,
   formatMonth,
-  monthDateRange,
   monthOfDate,
 } from '../ui/elements/inputs/monthValue';
 export type {

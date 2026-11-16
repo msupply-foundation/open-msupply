@@ -255,8 +255,15 @@ const NavSection = (props: {
                     href={href()}
                     class={styles.navButton}
                     // Keyed by its route, as the flyout's rows are
-                    // (e2e/TESTIDS.md › nav-<destination>).
-                    data-testid={`nav-${leaf.id}`}
+                    // (e2e/TESTIDS.md › nav-<destination>) — except a
+                    // section's own screen, listed first once a plugin page
+                    // turns a single-destination section into a group, which
+                    // shares its route with the section's button.
+                    data-testid={
+                      leaf.id === props.item.id
+                        ? `nav-${leaf.id}-self`
+                        : `nav-${leaf.id}`
+                    }
                     data-selected={selected() ? 'true' : undefined}
                     aria-current={href() && selected() ? 'page' : undefined}
                     title={t(leaf.labelKey)}
