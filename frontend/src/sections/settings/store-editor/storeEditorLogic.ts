@@ -504,7 +504,7 @@ export type EveryStorePreferenceHandled<
     | 'invoiceStatusOptions'
     | 'authorisePurchaseOrderStoreOverride'
     // Not in the server's preference list, so the panel never renders it:
-    // it gets its own editor under Dispensing › Common medicines (#2188).
+    // its own editor opens from the Simple dispensing screen (#2188).
     | 'commonMedicines'
   >,
 > = Unhandled;

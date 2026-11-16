@@ -276,9 +276,10 @@ export const EditPreference = ({
         />
       );
     case PreferenceValueNodeType.CommonMedicines:
-      // The new front end's Simple dispensing screen owns this setting; it is
-      // never edited here. The server leaves it out of the preferences listed
-      // for editing, so this case is only for the exhaustive check.
+      // Edited only in the new front end, from an editor that opens from its
+      // Simple dispensing screen (#2188), never here or in the store settings.
+      // The server leaves it out of the preferences listed for editing, so
+      // this case is only for the exhaustive check.
       return null;
     default:
       try {
