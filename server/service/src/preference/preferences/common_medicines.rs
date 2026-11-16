@@ -2,9 +2,12 @@ use std::collections::HashSet;
 
 use repository::{ItemRowRepository, StorageConnection};
 
-use crate::preference::{
-    PrefKey, Preference, PreferenceType, PreferenceValueType, UpsertPreferenceError,
-    upsert_helpers::upsert_store,
+use crate::{
+    preference::{
+        PrefKey, Preference, PreferenceType, PreferenceValueType, UpsertPreferenceError,
+        upsert_helpers::upsert_store,
+    },
+    sync::CentralServerConfig,
 };
 
 /// A medicine card has room for this many one-press amounts.
@@ -54,6 +57,11 @@ impl Preference for CommonMedicines {
         store_id: Option<String>,
     ) -> Result<(), UpsertPreferenceError> {
         let store_id = store_id.ok_or(UpsertPreferenceError::StoreIdNotProvided)?;
+        // A remote site can't save preferences at all, so say that rather
+        // than what is wrong with the list.
+        if !CentralServerConfig::is_central_server() {
+            return Err(UpsertPreferenceError::NotACentralServer);
+        }
 
         validate_common_medicines(connection, &value)
             .map_err(|reason| UpsertPreferenceError::InvalidValue(self.key_str(), reason))?;
@@ -186,6 +194,23 @@ mod tests {
         assert_eq!(
             CommonMedicines.upsert(&connection, vec![], None),
             Err(UpsertPreferenceError::StoreIdNotProvided)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn common_medicines_on_a_remote_site_are_refused_before_the_list_is_checked() {
+        let (_, connection, _, _) =
+            setup_all("common_medicines_remote_site", MockDataInserts::all()).await;
+        test_util_set_is_central_server(false);
+
+        // A list that breaks the rules still gets the remote-site refusal.
+        assert_eq!(
+            CommonMedicines.upsert(
+                &connection,
+                vec![medicine("no_such_item", &[0.0])],
+                Some(mock_store_a().id)
+            ),
+            Err(UpsertPreferenceError::NotACentralServer)
         );
     }
 }
