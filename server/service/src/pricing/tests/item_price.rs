@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_store_a};
+    use repository::mock::{
+        mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_store_a, mock_patient,
+    };
     use repository::{
         MasterListLineRow, MasterListLineRowRepository, MasterListRow, MasterListRowRepository,
     };
@@ -341,5 +343,91 @@ mod query {
                 prices.get(item_id).copied().flatten()
             );
         }
+
+        // Prices are looked up 500 items at a time. Pricing a whole master
+        // list or program can pass more: an item in the first 500 and one
+        // after them both keep their price
+        let mut many_item_ids = vec![mock_item_b().id];
+        many_item_ids.extend((0..500).map(|i| format!("no_such_item_{i}")));
+        many_item_ids.push(mock_item_a().id);
+        let prices = get_default_prices_for_items(&connection, &many_item_ids).unwrap();
+
+        assert_eq!(prices.get(&mock_item_b().id), Some(&Some(1.25)));
+        assert_eq!(prices.get(&mock_item_a().id), Some(&Some(0.5)));
+    }
+
+    // A patient pays the default price: discount lists are for other
+    // customers, so an item on both lists gets no discount
+    #[actix_rt::test]
+    async fn patient_gets_default_price_without_discount() {
+        let (_, connection, _, _) = setup_all(
+            "patient_gets_default_price_without_discount",
+            MockDataInserts::none().items().names().stores(),
+        )
+        .await;
+
+        let default_price_per_unit = 2.0;
+        let discount = 25.0;
+
+        MasterListRowRepository::new(&connection)
+            .upsert_one(&MasterListRow {
+                id: "default_price_list".to_string(),
+                name: "default_price_list".to_string(),
+                is_default_price_list: true,
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+        MasterListRowRepository::new(&connection)
+            .upsert_one(&MasterListRow {
+                id: "discount_list".to_string(),
+                name: "discount_list".to_string(),
+                discount_percentage: Some(discount),
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+        MasterListLineRowRepository::new(&connection)
+            .upsert_one(&MasterListLineRow {
+                id: "default_price_line".to_string(),
+                master_list_id: "default_price_list".to_string(),
+                item_id: mock_item_a().id,
+                price_per_unit: Some(default_price_per_unit),
+            })
+            .unwrap();
+        MasterListLineRowRepository::new(&connection)
+            .upsert_one(&MasterListLineRow {
+                id: "discount_line".to_string(),
+                master_list_id: "discount_list".to_string(),
+                item_id: mock_item_a().id,
+                price_per_unit: None,
+            })
+            .unwrap();
+
+        let price_for = |customer_name_id: String| {
+            get_pricing_for_items(
+                &connection,
+                ItemPriceLookup {
+                    item_ids: vec![mock_item_a().id],
+                    customer_name_id: Some(customer_name_id),
+                },
+            )
+            .unwrap()
+            .remove(&mock_item_a().id)
+            .unwrap()
+        };
+
+        let pricing = price_for(mock_patient().id);
+        assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
+        assert_eq!(pricing.discount_percentage, None);
+        assert_eq!(
+            pricing.calculated_price_per_unit,
+            Some(default_price_per_unit)
+        );
+
+        // A customer that isn't a patient gets the discount on the same item
+        let pricing = price_for(mock_name_store_a().id);
+        assert_eq!(pricing.discount_percentage, Some(discount));
+        assert_eq!(pricing.calculated_price_per_unit, Some(1.5));
     }
 }
