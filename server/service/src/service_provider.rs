@@ -233,7 +233,6 @@ pub struct ServiceProvider {
     pub subscription_trigger: SubscriptionTriggerHandle,
     // Yaml only fields ----- Not stored in KV store
     pub(crate) batch_size: BatchSize,
-    pub(crate) disable_integration_transaction: bool,
     pub(crate) relax_hardware_id_token_checks: bool,
 }
 
@@ -244,7 +243,6 @@ pub struct ServiceContext {
     pub user_id: String,
     pub store_id: String,
     pub batch_size: BatchSize,
-    pub disable_integration_transaction: bool,
     pub relax_hardware_id_token_checks: bool,
 }
 
@@ -266,7 +264,6 @@ impl ServiceProvider {
             SubscriptionTriggerHandle::new_void(),
             BatchSize::default(),
             false,
-            false,
         )
     }
 
@@ -280,7 +277,6 @@ impl ServiceProvider {
         settings: Option<Settings>,
         subscription_trigger: SubscriptionTriggerHandle,
         batch_size: BatchSize,
-        disable_integration_transaction: bool,
         relax_hardware_id_token_checks: bool,
     ) -> Self {
         ServiceProvider {
@@ -370,7 +366,6 @@ impl ServiceProvider {
             shipping_method_service: Box::new(ShippingMethodService {}),
             stock_relocation_service: Box::new(StockRelocationService),
             subscription_trigger,
-            disable_integration_transaction,
             relax_hardware_id_token_checks,
         }
     }
@@ -384,7 +379,6 @@ impl ServiceProvider {
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
-            disable_integration_transaction: self.disable_integration_transaction,
             relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
@@ -400,7 +394,6 @@ impl ServiceProvider {
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
-            disable_integration_transaction: self.disable_integration_transaction,
             relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
@@ -417,7 +410,6 @@ impl ServiceProvider {
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
-            disable_integration_transaction: self.disable_integration_transaction,
             relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
@@ -438,7 +430,6 @@ impl ServiceContext {
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
             batch_size: BatchSize::default(),
-            disable_integration_transaction: false,
             relax_hardware_id_token_checks: false,
         }
     }

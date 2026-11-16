@@ -175,7 +175,7 @@ We create the release candidate branch after PR merge deadline.
 
 Public documentation for new features should be written by the team that built the feature. However, PRs for bug fixes/small enhancements throughout the cycle which have UI changes will be assigned a `docs: external` label.
 
-Once in the testing sprint, filter `Done` PRs by `docs: external`, and update any relevant screenshots/descriptions. The `docs: external` label can then be replaced with `docs: done`.
+Once in the testing sprint, filter `Done` PRs by `docs: external`, and update any relevant screenshots/descriptions. Then remove the `docs: external` label. PRs whose docs PR product has already merged have had the label removed, so they don't show up here.
 
 Where possible, teams should write docs as they go, rather than leaving this to the end :)
 

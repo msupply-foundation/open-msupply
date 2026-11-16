@@ -1,3 +1,4 @@
+use log::warn;
 use repository::{Authoring, ChangelogTableName, SyncBufferRow};
 use thiserror::Error;
 
@@ -51,8 +52,8 @@ pub(crate) fn validate_on_remote(
                 (None, None) => return Ok(()),
                 _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
             },
-            // Central stores may also edit these, so accept post-initialisation pushes.
-            Remote => match &sync_buffer_row.store_id {
+            // Central sends edits to these after initialisation, so accept them then too.
+            Remote | CentralForStore => match &sync_buffer_row.store_id {
                 None => last_err = ValidationError::NoStoreId,
                 Some(id) if !active_store_ids.iter().any(|s| s == id) => {
                     last_err = ValidationError::InactiveStore
@@ -108,6 +109,19 @@ pub(crate) fn validate_on_central(
     for style in &sync_style.authoring {
         match style {
             Central => last_err = ValidationError::CentralOnlyEditableByCentral,
+            // Refused whatever store the row names: the store check below reads only the
+            // outer store_id, not the one inside the row, so it can't stop a site writing
+            // rows for another site's store (#1639). Logged so repeat attempts show up.
+            CentralForStore => {
+                warn!(
+                    "Site {} pushed a {} record over v7 ({} '{}'), which only central may write, so it was ignored",
+                    sync_buffer_row.source_site_id,
+                    table_name,
+                    sync_buffer_row.action,
+                    sync_buffer_row.record_id
+                );
+                last_err = ValidationError::CentralOnlyEditableByCentral
+            }
             // Accept only if the row's store belongs to the source site —
             // this also rejects rows referencing central's own stores.
             Remote | RemoteOwned | Transfer => match &sync_buffer_row.store_id {
@@ -133,7 +147,7 @@ pub(crate) fn validate_on_central(
 mod tests {
     use super::*;
     use ChangelogTableName::*;
-    use repository::{NameRow, Store, StoreRow};
+    use repository::{NameRow, Store, StoreRow, SyncAction};
 
     // Site 1 is "this site" with one active store, "store_a".
     // Site 2 is some other site.
@@ -262,6 +276,24 @@ mod tests {
                     ..Default::default()
                 },
                 &Preference,
+                &site(),
+                false,
+                false,
+            ),
+            Ok(())
+        );
+
+        // Sync style: CentralForStore — as Remote: rows central sends for our own store are
+        // accepted, even post-initialisation (central refuses them from a site, see
+        // `on_central_refuses_user_permissions`).
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &UserPermission,
                 &site(),
                 false,
                 false,
@@ -519,6 +551,38 @@ mod tests {
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
         );
+    }
+
+    #[test]
+    fn on_central_refuses_user_permissions() {
+        // #1639: user permissions are managed on central (`CentralForStore`), so a site
+        // may not push them — not for its own store, not for another site's store, and
+        // not as a delete.
+        let source_site_stores = vec!["remote_store_a".to_string()];
+
+        for table in [UserPermission, UserStoreJoin] {
+            for store_id in [Some("remote_store_a"), Some("store_a"), None] {
+                for action in [SyncAction::Upsert, SyncAction::Delete] {
+                    for is_multi_device in [false, true] {
+                        assert_eq!(
+                            validate_on_central(
+                                &SyncBufferRow {
+                                    store_id: store_id.map(Into::into),
+                                    action: action.clone(),
+                                    source_site_id: 2,
+                                    ..Default::default()
+                                },
+                                &table,
+                                &source_site_stores,
+                                is_multi_device,
+                            ),
+                            Err(ValidationError::CentralOnlyEditableByCentral),
+                            "{table} {action} for store {store_id:?}, multi-device {is_multi_device}"
+                        );
+                    }
+                }
+            }
+        }
     }
 
     // On a multi-device site, non-multi-device tables are rejected by the gate; multi-device

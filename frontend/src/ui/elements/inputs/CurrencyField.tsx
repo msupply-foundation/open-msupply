@@ -38,14 +38,8 @@ export interface CurrencyFieldProps extends Omit<
  * a real OMS need: decimalLimit={4} keeps blur padding at the currency's 2).
  * The symbol side follows the locale ("$1,234.56" vs "1 234,56 €") and flips
  * logically under RTL; the amount's digits/separators follow the app locale
- * like every NumberField.
- *
- * TODO(home-currency): `currency` defaults to homeCurrency(), which is still
- * a USD-seeded signal — the real source is the entered store's
- * `UserStoreNode.homeCurrencyCode` (already in the schema, not yet fetched).
- * Wiring: add the field to the auth UserInfo fragment (src/api/auth.graphql +
- * pnpm codegen) and call setHomeCurrency(...) from StoreGuardLayout's entry
- * effect. See the matching TODO in src/intl/currency.ts.
+ * like every NumberField. With no `currency`, it follows the store's home
+ * currency (homeCurrency, src/intl/currency.ts).
  */
 export const CurrencyField = (props: CurrencyFieldProps) => {
   const [local, rest] = splitProps(props, [

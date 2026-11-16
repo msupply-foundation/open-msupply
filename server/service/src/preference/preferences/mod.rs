@@ -82,6 +82,8 @@ pub mod do_not_print_placeholder_line_labels;
 pub use do_not_print_placeholder_line_labels::*;
 pub mod prompt_for_batch_and_expiry_on_inbound_shipments;
 pub use prompt_for_batch_and_expiry_on_inbound_shipments::*;
+pub mod common_medicines;
+pub use common_medicines::*;
 pub mod blind_stocktake;
 pub use blind_stocktake::*;
 pub mod global_logo;
@@ -144,6 +146,7 @@ pub struct PreferenceProvider {
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
+    pub common_medicines: CommonMedicines,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -202,5 +205,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
         prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
+        common_medicines: CommonMedicines,
     }
 }

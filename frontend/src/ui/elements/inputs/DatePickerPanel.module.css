@@ -113,6 +113,15 @@
   font-weight: var(--weight-semibold);
 }
 
+.pickCell:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.pickCell:disabled:hover {
+  background: none;
+}
+
 .grid {
   border-collapse: collapse;
   table-layout: fixed;

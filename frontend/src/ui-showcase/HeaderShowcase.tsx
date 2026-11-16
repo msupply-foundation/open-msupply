@@ -7,6 +7,7 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
+import { HeaderField } from '../ui/layout/Header/HeaderField';
 import { StandingBanner } from '../ui/layout/Header/StandingBanner';
 import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { Select } from '../ui/elements/selectors/Select';
@@ -104,6 +105,11 @@ export const headerMetadata: PageMetadata = {
       searchTerms: ['title', 'actions', 'outbound'],
     },
     {
+      id: 'header-field',
+      title: 'Field on the title row',
+      searchTerms: ['field', 'picker', 'main row', 'step', 'who', 'patient'],
+    },
+    {
       id: 'header-toolbar',
       title: 'Toolbar fields',
       searchTerms: ['toolbar', 'fields', 'filters', 'alert', 'form row'],
@@ -167,6 +173,10 @@ export const headerMetadata: PageMetadata = {
 };
 
 export const HeaderShowcase = () => {
+  // The title-row field demo's picker.
+  const [fieldPatient, setFieldPatient] = createSignal<string | undefined>(
+    PATIENTS[1]
+  );
   // Interactive fields for the Toolbar field-cluster demo below.
   const [supplier, setSupplier] = createSignal('acme');
   const [reference, setReference] = createSignal('DEL-2231');
@@ -238,6 +248,56 @@ export const HeaderShowcase = () => {
               <Toolbar>
                 <ToolbarStub>Toolbar</ToolbarStub>
               </Toolbar>
+            </Header>
+            <PageBody />
+          </PageFrame>
+        </DashboardCard>
+
+        <DashboardCard
+          id="header-field"
+          title="Field on the title row — one choice before anything else"
+        >
+          <Lead>
+            <code>&lt;HeaderField&gt;</code> puts one labelled control on the
+            header's main row, between the breadcrumb and the page actions, for
+            a screen whose first job is that one choice (the Simple dispensing
+            screen's "Who is it for?"). It takes the room the breadcrumb and the
+            actions leave, the control capped at a short input's width. When the
+            row runs short the actions give way first — they shed their labels,
+            then wrap under the breadcrumb — and the field wraps onto a line of
+            its own only once the breadcrumb and its usable floor don't fit; in
+            the header's narrow tier it takes a row of its own under the title
+            row. <code>detail</code> is a quieter read-out of the chosen value
+            beside the control, wrapping under it when the row can't hold both.
+            Several fields are a <code>&lt;HeaderToolbar&gt;</code>'s job.
+          </Lead>
+          <PageFrame>
+            <Header>
+              <Breadcrumb
+                icon={<UserIcon />}
+                crumbs={[{ label: 'Dispensing' }]}
+              />
+              <HeaderField
+                label={<strong>Who is it for?</strong>}
+                detail={
+                  fieldPatient()
+                    ? 'P-0042 · 15/06/1988 (37 years) · Female'
+                    : undefined
+                }
+              >
+                <Combobox<string>
+                  label="Who is it for?"
+                  hideLabel
+                  width="full"
+                  items={PATIENTS}
+                  itemToString={name => name}
+                  value={fieldPatient()}
+                  onChange={name => setFieldPatient(name ?? undefined)}
+                />
+              </HeaderField>
+              <HeaderButtons>
+                <Button variant="secondary">Standard view</Button>
+              </HeaderButtons>
             </Header>
             <PageBody />
           </PageFrame>
