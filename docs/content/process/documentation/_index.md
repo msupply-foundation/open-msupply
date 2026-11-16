@@ -18,7 +18,7 @@ Any Pull Request (PR) that has changes to the functionality or User Interface (U
 
 Any updates to the public docs should be done in a PR branched off the current `staging` branch in the [mSupply_docs](https://github.com/msupply-foundation/msupply_docs) repository and will be merged on release cycle's PR merged date.
 
-Open the docs PR as a draft alongside your PR, with a link to your PR in its description, and link it from the 📃 Documentation section of your PR. Your part ends there: product reviews the draft, updates it, marks it ready and merges it. `/update-user-docs` drafts one following this page.
+Open the docs PR as a draft alongside your PR, with a link to your PR in its description, and link it from the 📃 Documentation section of your PR. Your part ends there: product reviews the draft, updates it, marks it ready and merges it. When product merges it, they remove the `docs: external` label from your PR, so the label only marks docs still to do. `/update-user-docs` drafts one following this page.
 
 If your PR is part of an epic whose docs will be written for the feature as a whole, tick "Part of an epic" instead and link the epic (or the docs PR that will cover it). If nothing a user sees or does changes, tick "No user docs needed".
 
@@ -62,4 +62,4 @@ In the below example, there is the picture of a cat
 
 Any part of the code base that needs internal documentation needs to be labelled with `docs: internal`.
 
-**Once you have done the docs whether they be external or internal, please change the label from `docs: external` or `docs: internal` to `doc: done`**
+**Once you have written the internal docs, remove the `docs: internal` label.** For public docs, product removes `docs: external` when it merges the docs PR.
