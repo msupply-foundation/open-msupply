@@ -44,18 +44,20 @@ import { AmountDialog } from './AmountDialog';
 import {
   addAmount,
   buildCards,
-  dispenseInput,
   dispenseOutcome,
+  dispenseVisit,
   medicinesFor,
   removeLine,
   setAmount,
   shortLines,
-  stockAtCheck,
   unitsListed,
   visitWasSaved,
   type CardItem,
   type ListLine,
   type MedicineCard,
+  type DispenseInput,
+  type SaveReply,
+  type VisitRecord,
 } from './simpleDispensingLogic';
 import { MedicineCardView } from './MedicineCard';
 import { DispensingList } from './DispensingList';
@@ -78,28 +80,38 @@ const SimpleDispensingPage: Component = () => {
   const medicines = () => prescriptionPreferences().commonMedicines;
 
   // The cards' items: on load, and again when Dispense checks the stock.
+  // `background` keeps a failure from the app's error dialog, whose reload
+  // would lose the visit: the caller says what a failure means.
   const fetchItems = async (
     storeId: string,
-    ids: string[]
+    ids: string[],
+    background = false
   ): Promise<CardItem[] | undefined> => {
-    const result = await graphqlFetch(SimpleDispensingItems, {
-      storeId,
-      ids,
-      page: { first: ids.length },
-    });
+    const result = await graphqlFetch(
+      SimpleDispensingItems,
+      { storeId, ids, page: { first: ids.length } },
+      { background }
+    );
     if (result.kind !== 'success') return undefined;
     return result.data.items.__typename === 'ItemConnector'
       ? result.data.items.nodes
       : undefined;
   };
 
-  const [items, { refetch: refetchItems }] = createResource(
+  // Read again once a visit is dispensed (rules › dispensing the visit): in
+  // the background, and a read that fails keeps the cards as they were, so
+  // the screen never drops back to loading with a visit on it.
+  const [items, { refetch: refetchItems }] = createResource<
+    CardItem[] | undefined,
+    { storeId: string; ids: string[] }
+  >(
     () => {
       const list = medicines();
       if (!list || list.length === 0) return false;
       return { storeId: params.storeId, ids: list.map(m => m.itemId) };
     },
-    ({ storeId, ids }) => fetchItems(storeId, ids)
+    async ({ storeId, ids }, { value }) =>
+      (await fetchItems(storeId, ids, value !== undefined)) ?? value
   );
 
   // Rebuilt per load, so compared by value: a refresh that returns the same
@@ -169,7 +181,11 @@ const SimpleDispensingPage: Component = () => {
   // then says how much it is short.
   const available = (card: MedicineCard) =>
     round9(stockOf(card.item.id) - unitsListed(lines, card.item.id));
+  // Nothing is added while the visit is locked (rules › dispensing the
+  // visit): an amount box can open mid-save, once its medicine's batches
+  // load.
   const addToList = (card: MedicineCard, units: number) => {
+    if (locked()) return;
     setNotice(undefined);
     update(addAmount(lines, card.item.id, units, stockOf(card.item.id)));
   };
@@ -201,24 +217,30 @@ const SimpleDispensingPage: Component = () => {
   const [notice, setNotice] = createSignal<
     { severity: 'success' | 'error'; text: string } | undefined
   >();
-  // The visit's record id, from its first save until it is saved or the list
-  // is cleared: a save repeated after a lost reply reuses it, so the visit
-  // can never be saved twice.
-  let visitId: string | undefined;
+  // The visit's record (rules › dispensing the visit): its id, from its first
+  // save until it is finished or the list is cleared, so a save repeated after
+  // a lost reply can never make a second record; and, once a save's reply was
+  // lost, who it was for, until the visit is finished. Read only by Dispense
+  // and Clear, so not a signal.
+  const visit: { current?: VisitRecord } = {};
   // A save whose reply never came may have gone through. Until Dispense finds
   // out, the visit can't be changed: only Dispense is offered.
   const [unconfirmed, setUnconfirmed] = createSignal(false);
+  // Clear looking for a save whose reply was lost.
+  const [looking, setLooking] = createSignal(false);
   // While a save is in flight or unconfirmed, nothing about the visit can
   // change: a press or an edit then would miss the save, or be cleared with
   // the list once it lands.
-  const locked = () => dispensing() || unconfirmed();
+  const locked = () => dispensing() || unconfirmed() || looking();
 
   /** The list's medicines as the stock stands now. */
   const freshCards = async (
     listed: readonly ListLine[]
   ): Promise<MedicineCard[] | undefined> => {
     const ids = listed.map(line => line.itemId);
-    const fetched = await fetchItems(params.storeId, ids);
+    // Background: a failed check is the screen's to report, and the app's
+    // error dialog would offer a reload that loses the visit.
+    const fetched = await fetchItems(params.storeId, ids, true);
     if (!fetched) return undefined;
     return buildCards(
       medicinesFor(ids, medicines() ?? []),
@@ -227,17 +249,14 @@ const SimpleDispensingPage: Component = () => {
     );
   };
 
-  const failed = (): void => {
-    setNotice({ severity: 'error', text: t('error.dispense-failed') });
-  };
   const unsure = (): void => {
     setUnconfirmed(true);
     setNotice({ severity: 'error', text: t('error.dispense-unconfirmed') });
   };
 
   /** The visit is saved: ready the screen for the next person. */
-  const finished = (who: PatientOption): void => {
-    visitId = undefined;
+  const finished = (who: { name: string }): void => {
+    visit.current = undefined;
     setUnconfirmed(false);
     setChecked([]);
     update([]);
@@ -256,82 +275,89 @@ const SimpleDispensingPage: Component = () => {
    * says what a failed look means.
    */
   const savedEarlier = async (id: string): Promise<boolean | undefined> => {
-    const visit = await graphqlFetch(
+    const found = await graphqlFetch(
       SimpleDispensedVisit,
       { storeId: params.storeId, id },
       { background: true }
     );
-    return visit.kind === 'success'
-      ? visitWasSaved(visit.data.invoice)
+    return found.kind === 'success'
+      ? visitWasSaved(found.data.invoice)
       : undefined;
   };
 
-  /** Check the list against the stock now; save it if it is all there. */
-  const checkAndSave = async (retried = false): Promise<void> => {
-    const who = patient();
-    if (!who) return;
-    // A save whose reply was lost: find out whether it went through before
-    // saving anything again.
-    const resending = unconfirmed() && visitId !== undefined;
-    if (resending) {
-      const saved = await savedEarlier(visitId!);
-      if (saved === undefined) return unsure();
-      if (saved) return finished(who);
-      setUnconfirmed(false);
-    }
-    // The list as it stands now, so the check and the save are of the same
-    // lines.
-    const listed = lines.map(line => ({ ...line }));
-    const fresh = await freshCards(listed);
-    if (!fresh) return failed();
-    // The stock as it now is becomes the screen's. A short line is left as it
-    // is, and says so: staff choose, then press Dispense again.
-    const now = stockAtCheck(listed, fresh, cardOf);
-    setChecked(now);
-    const stockNow = (itemId: string) =>
-      now.find(card => card.item.id === itemId)?.stock ?? 0;
-    if (shortLines(listed, stockNow).length > 0) return;
-    const id = (visitId ??= generateUUID());
-    const input = dispenseInput(id, who.id, listed, fresh, generateUUID);
+  /** One save of the visit. */
+  const save = async (input: DispenseInput): Promise<SaveReply> => {
     // Background: a lost reply is this screen's to explain (its notice, and
     // the hold on the visit), not the app's error dialog, which would say the
-    // connection failed over a visit the look below finds dispensed.
+    // connection failed over a visit the look finds dispensed.
     const result = await graphqlFetch(
       SimpleDispense,
       { storeId: params.storeId, input },
       { returnGraphqlErrors: true, background: true }
     );
-    // The reply never came, or couldn't be read: the save may have gone
-    // through. Look once straight away, so a visit that was saved is finished
-    // without Dispense being pressed again.
-    if (result.kind === 'unexpectedError')
-      return (await savedEarlier(id)) ? finished(who) : unsure();
-    const outcome =
-      result.kind === 'success'
-        ? dispenseOutcome(
-            result.data.batchPrescription,
-            input.insertPrescriptionLines.length
-          )
-        : 'refused';
-    if (outcome === 'saved') return finished(who);
-    // Saving again after a lost reply: the first save may have landed while
-    // this one was on its way, and this one was then refused as a second
-    // record with the same id (a plain GraphQL error, not a typed one). Look
-    // before saying it failed.
-    if (resending) {
-      const saved = await savedEarlier(id);
-      if (saved === undefined) return unsure();
-      if (saved) return finished(who);
-    }
-    // The stock moved between the check and the save: nothing was saved, so
-    // check again (once), which marks the short lines.
-    if (outcome === 'line-refused')
-      return retried ? failed() : checkAndSave(true);
+    if (result.kind === 'unexpectedError') return { kind: 'lost' };
+    if (result.kind === 'success')
+      return {
+        kind: 'reply',
+        outcome: dispenseOutcome(
+          result.data.batchPrescription,
+          input.insertPrescriptionLines.length
+        ),
+      };
+    // A GraphQL error (a refusal, nothing saved); missing permission names
+    // what is missing.
+    return {
+      kind: 'reply',
+      outcome: 'refused',
+      missing:
+        result.kind === 'graphqlError' && isForbidden(result.errors)
+          ? missingPermissions(result.errors)
+          : undefined,
+    };
+  };
+
+  /** Check the list against the stock now; save it if it is all there. */
+  const checkAndSave = async (): Promise<void> => {
+    const who = patient();
+    if (!who) return;
+    setUnconfirmed(false);
+    // The list as it stands now, so the check and the save are of the same
+    // lines.
+    const listed = lines.map(line => ({ ...line }));
+    const end = await dispenseVisit(visit, who, listed, {
+      look: savedEarlier,
+      check: freshCards,
+      save,
+      before: cardOf,
+      newId: generateUUID,
+    });
+    if (end.kind === 'saved') return finished(end.patient);
+    if (end.kind === 'unsure') return unsure();
+    // The stock as it now is becomes the screen's. A short line is left as it
+    // is, and says so: staff choose, then press Dispense again.
+    if (end.checked) setChecked(end.checked);
+    if (end.kind === 'short') return;
     // Refused, so nothing was saved. Missing permission gets the app's own
     // permission-denied message as well.
-    if (result.kind === 'graphqlError' && isForbidden(result.errors))
-      reportPermissionDenied(missingPermissions(result.errors));
-    failed();
+    if (end.missing) reportPermissionDenied(end.missing);
+    setNotice({ severity: 'error', text: t('error.dispense-failed') });
+  };
+
+  // Clear (rules › who it's for and the list): at once, unless a save of
+  // this visit lost its reply and may yet have landed: then it looks first,
+  // and a visit it finds saved is finished rather than cleared.
+  const clear = async (): Promise<void> => {
+    const sentFor = visit.current?.sentFor;
+    if (sentFor) {
+      setLooking(true);
+      const saved = await savedEarlier(visit.current!.id).finally(() =>
+        setLooking(false)
+      );
+      if (saved === undefined) return unsure();
+      if (saved) return finished(sentFor);
+    }
+    visit.current = undefined;
+    update([]);
   };
 
   const dispense = async () => {
@@ -493,10 +519,7 @@ const SimpleDispensingPage: Component = () => {
                   update(setAmount(lines, itemId, units, stockOf(itemId)))
                 }
                 onRemove={itemId => update(removeLine(lines, itemId))}
-                onClear={() => {
-                  visitId = undefined;
-                  update([]);
-                }}
+                onClear={() => void clear()}
                 onDispense={() => void dispense()}
                 canDispense={patient() !== null}
                 dispensing={dispensing()}
@@ -517,6 +540,7 @@ const SimpleDispensingPage: Component = () => {
           <AmountDialog
             card={card()}
             available={available(card())}
+            locked={locked()}
             onAdd={units => {
               addToList(card(), units);
               closeAmount();

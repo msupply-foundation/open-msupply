@@ -7,6 +7,7 @@ import {
   canAddTyped,
   dispenseInput,
   dispenseOutcome,
+  dispenseVisit,
   fillableBatches,
   medicinesFor,
   priceOf,
@@ -19,7 +20,11 @@ import {
   unitsIn,
   visitWasSaved,
   type CardItem,
+  type DispenseCalls,
+  type DispenseInput,
   type ListLine,
+  type SaveReply,
+  type VisitRecord,
 } from './simpleDispensingLogic';
 import type { SimpleDispenseResult } from './simpleDispense.generated';
 
@@ -663,6 +668,270 @@ describe('dispenseOutcome', () => {
       'refused'
     );
     expect(dispenseOutcome(saved(1), 2)).toBe('refused');
+  });
+
+  it('a save with no lines is never saved', () => {
+    expect(dispenseOutcome(saved(0), 0)).toBe('refused');
+  });
+});
+
+describe('dispenseVisit', () => {
+  const WHO = { id: 'p1', name: 'First' };
+  const OTHER = { id: 'p2', name: 'Second' };
+  const LIST: ListLine[] = [{ itemId: 'a', units: 5 }];
+  const cardWith = (units: number) =>
+    buildCards(
+      [{ itemId: 'a', amounts: [] }],
+      [
+        item('a', [
+          batch('a1', { availableNumberOfPacks: units, packSize: 1 }),
+        ]),
+      ],
+      PREFS,
+      TODAY
+    );
+
+  /**
+   * A server holding `stock` units of one medicine. A save can be held back
+   * on the way: its reply is lost, and it lands when `land()` is called.
+   */
+  const server = (stock = 10) => {
+    const state = {
+      stock,
+      saved: new Set<string>(),
+      saves: [] as string[],
+      looks: 0,
+      land: () => {},
+    };
+    const arrive = (input: DispenseInput): SaveReply => {
+      const id = input.insertPrescriptions[0]?.id ?? '';
+      // A second record with the same id is a plain GraphQL error.
+      if (state.saved.has(id)) return { kind: 'reply', outcome: 'refused' };
+      const units = input.insertPrescriptionLines.reduce(
+        (sum, l) => sum + l.numberOfPacks,
+        0
+      );
+      if (units > state.stock)
+        return { kind: 'reply', outcome: 'line-refused' };
+      state.stock -= units;
+      state.saved.add(id);
+      return { kind: 'reply', outcome: 'saved' };
+    };
+    const send = (input: DispenseInput): SaveReply => {
+      state.saves.push(input.insertPrescriptions[0]?.id ?? '');
+      return arrive(input);
+    };
+    let n = 0;
+    const calls = (over: Partial<DispenseCalls> = {}): DispenseCalls => ({
+      look: async id => {
+        state.looks++;
+        return state.saved.has(id);
+      },
+      check: async () => cardWith(state.stock),
+      save: async input => send(input),
+      before: () => undefined,
+      newId: () => `id-${++n}`,
+      ...over,
+    });
+    const heldBack: DispenseCalls['save'] = async input => {
+      state.saves.push(input.insertPrescriptions[0]?.id ?? '');
+      state.land = () => void arrive(input);
+      return { kind: 'lost' };
+    };
+    return { state, calls, send, heldBack };
+  };
+
+  it('OMS-REG-DIS-12.51: saves the visit once when everything is there', async () => {
+    const { state, calls } = server();
+    expect(await dispenseVisit({}, WHO, LIST, calls())).toEqual({
+      kind: 'saved',
+      patient: WHO,
+    });
+    expect(state.saves).toEqual(['id-1']);
+    expect(state.looks).toBe(0);
+  });
+
+  it('OMS-REG-DIS-12.92: a lost reply with nothing saved is unsure, and marks the id as possibly saved', async () => {
+    const { state, calls, heldBack } = server();
+    const visit: { current?: VisitRecord } = {};
+    expect(
+      await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }))
+    ).toEqual({ kind: 'unsure' });
+    expect(visit.current).toEqual({ id: 'id-1', sentFor: WHO });
+    expect(state.looks).toBe(1);
+  });
+
+  it('OMS-REG-DIS-12.97: a lost reply whose save went through is saved, without saving again', async () => {
+    const { state, calls, send } = server();
+    const lostReply: DispenseCalls['save'] = async input => {
+      send(input);
+      return { kind: 'lost' };
+    };
+    expect(
+      await dispenseVisit({}, WHO, LIST, calls({ save: lostReply }))
+    ).toEqual({ kind: 'saved', patient: WHO });
+    expect(state.saves).toEqual(['id-1']);
+  });
+
+  it('OMS-REG-DIS-12.150: a lost save landing between the look and the check is finished, not shown short', async () => {
+    const { state, calls, heldBack } = server(5);
+    const visit: { current?: VisitRecord } = {};
+    await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }));
+    // Dispense again: the look finds nothing, then the lost save lands, so
+    // the check finds the visit's own stock gone.
+    const landsFirst = calls({
+      check: async listed => {
+        state.land();
+        return calls().check(listed);
+      },
+    });
+    expect(await dispenseVisit(visit, WHO, LIST, landsFirst)).toEqual({
+      kind: 'saved',
+      patient: WHO,
+    });
+    expect(state.saves).toEqual(['id-1']);
+    expect([...state.saved]).toEqual(['id-1']);
+  });
+
+  it('OMS-REG-DIS-12.98: a lost save landing while saving again is found after the refusal', async () => {
+    const { state, calls, heldBack } = server();
+    const visit: { current?: VisitRecord } = {};
+    await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }));
+    const landsFirst = calls({
+      save: async input => {
+        state.land();
+        return calls().save(input);
+      },
+    });
+    expect(await dispenseVisit(visit, WHO, LIST, landsFirst)).toEqual({
+      kind: 'saved',
+      patient: WHO,
+    });
+    expect([...state.saved]).toEqual(['id-1']);
+  });
+
+  it('OMS-REG-DIS-12.150: after a lost reply, a short line then a refused save still look, so the visit is neither failed nor saved twice', async () => {
+    const { state, calls, heldBack } = server(5);
+    const visit: { current?: VisitRecord } = {};
+    await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }));
+    // Someone else takes 2 before Dispense again: genuinely short.
+    state.stock = 3;
+    expect((await dispenseVisit(visit, WHO, LIST, calls())).kind).toBe('short');
+    // Staff give what there is. More stock arrives, and the lost save lands
+    // just before this save, which the server refuses as a second record.
+    state.stock = 8;
+    const landsFirst = calls({
+      save: async input => {
+        state.land();
+        return calls().save(input);
+      },
+    });
+    expect(
+      await dispenseVisit(visit, WHO, [{ itemId: 'a', units: 3 }], landsFirst)
+    ).toEqual({ kind: 'saved', patient: WHO });
+    expect([...state.saved]).toEqual(['id-1']);
+  });
+
+  it('OMS-REG-DIS-12.155: a visit found saved after someone else was chosen is saved for the person it was sent for', async () => {
+    const { state, calls, heldBack } = server();
+    const visit: { current?: VisitRecord } = {};
+    await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }));
+    state.land();
+    expect(await dispenseVisit(visit, OTHER, LIST, calls())).toEqual({
+      kind: 'saved',
+      patient: WHO,
+    });
+  });
+
+  it('OMS-REG-DIS-12.153: a check that fails after a lost reply looks again, and holds the visit when it cannot', async () => {
+    const { calls, heldBack } = server();
+    const visit: { current?: VisitRecord } = {};
+    await dispenseVisit(visit, WHO, LIST, calls({ save: heldBack }));
+    // Nothing can be read: unsure.
+    expect(
+      await dispenseVisit(
+        visit,
+        WHO,
+        LIST,
+        calls({ check: async () => undefined, look: async () => undefined })
+      )
+    ).toEqual({ kind: 'unsure' });
+    // The look works but the check doesn't: nothing saved yet, and the id
+    // stays marked for the next try.
+    expect(
+      await dispenseVisit(
+        visit,
+        WHO,
+        LIST,
+        calls({ check: async () => undefined })
+      )
+    ).toEqual({ kind: 'failed' });
+    expect(visit.current?.sentFor).toEqual(WHO);
+  });
+
+  it('OMS-REG-DIS-12.153: a check that fails with no save sent fails without looking', async () => {
+    const { state, calls } = server();
+    expect(
+      await dispenseVisit(
+        {},
+        WHO,
+        LIST,
+        calls({ check: async () => undefined })
+      )
+    ).toEqual({ kind: 'failed' });
+    expect(state.looks).toBe(0);
+    expect(state.saves).toEqual([]);
+  });
+
+  it('OMS-REG-DIS-12.93, .96: a definite refusal of the only save fails without looking, and leaves the id unmarked', async () => {
+    const { state, calls } = server();
+    const visit: { current?: VisitRecord } = {};
+    const refused = await dispenseVisit(
+      visit,
+      WHO,
+      LIST,
+      calls({
+        save: async () => ({ kind: 'reply', outcome: 'refused', missing: [] }),
+      })
+    );
+    expect(refused).toMatchObject({ kind: 'failed', missing: [] });
+    expect(state.looks).toBe(0);
+    expect(visit.current).toEqual({ id: 'id-1' });
+  });
+
+  it('OMS-REG-DIS-12.89: a line refused at the save checks again once, with the same id, then fails', async () => {
+    const { state, calls } = server();
+    let checks = 0;
+    const end = await dispenseVisit(
+      {},
+      WHO,
+      LIST,
+      calls({
+        check: async listed => {
+          checks++;
+          return calls().check(listed);
+        },
+        save: async input => {
+          state.saves.push(input.insertPrescriptions[0]?.id ?? '');
+          return { kind: 'reply', outcome: 'line-refused' };
+        },
+      })
+    );
+    expect(end.kind).toBe('failed');
+    expect(checks).toBe(2);
+    expect(state.saves).toEqual(['id-1', 'id-1']);
+  });
+
+  it('never sends a save with no lines', async () => {
+    const { state, calls } = server();
+    const end = await dispenseVisit(
+      {},
+      WHO,
+      [{ itemId: 'a', units: 0 }],
+      calls()
+    );
+    expect(end.kind).toBe('failed');
+    expect(state.saves).toEqual([]);
   });
 });
 

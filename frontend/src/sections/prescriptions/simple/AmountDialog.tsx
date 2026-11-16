@@ -23,6 +23,11 @@ export const AmountDialog = (props: {
   card: MedicineCard;
   /** Units still available: the medicine's stock less what the list holds. */
   available: number;
+  /**
+   * While the visit is being dispensed nothing can be added (rules ›
+   * dispensing the visit).
+   */
+  locked: boolean;
   onAdd: (units: number) => void;
   onClose: () => void;
 }) => {
@@ -35,7 +40,7 @@ export const AmountDialog = (props: {
   const amounts = () => props.card.medicine.amounts;
   const none = () => props.available <= 0;
   const tooMany = () => (typed() ?? 0) > props.available;
-  const canAdd = () => canAddTyped(typed(), props.available);
+  const canAdd = () => !props.locked && canAddTyped(typed(), props.available);
 
   const add = () => {
     const units = typed();
@@ -124,7 +129,7 @@ export const AmountDialog = (props: {
                       variant="secondary"
                       class={styles.key}
                       data-testid="amount-modal-amount-button"
-                      disabled={amount > props.available}
+                      disabled={props.locked || amount > props.available}
                       aria-label={t('label.give-amount-of', {
                         quantity: roundedText(amount),
                         unit: unit(),
