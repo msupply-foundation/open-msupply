@@ -2,6 +2,7 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_consumption_estimate_table;
+mod add_location_type_fk_indexes;
 
 pub(crate) struct V3_05_00;
 
@@ -15,7 +16,10 @@ impl Migration for V3_05_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_consumption_estimate_table::Migrate)]
+        vec![
+            Box::new(add_consumption_estimate_table::Migrate),
+            Box::new(add_location_type_fk_indexes::Migrate),
+        ]
     }
 }
 
