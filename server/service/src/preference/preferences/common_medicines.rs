@@ -1,6 +1,6 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-use repository::{ItemRowRepository, StorageConnection};
+use repository::{ItemRow, ItemRowRepository, ItemType, StorageConnection};
 
 use crate::{
     preference::{
@@ -63,8 +63,7 @@ impl Preference for CommonMedicines {
             return Err(UpsertPreferenceError::NotACentralServer);
         }
 
-        validate_common_medicines(connection, &value)
-            .map_err(|reason| UpsertPreferenceError::InvalidValue(self.key_str(), reason))?;
+        validate_common_medicines(connection, &value)?;
 
         let serialised_value = serde_json::to_string(&value)
             .map_err(|e| UpsertPreferenceError::SerializeError(self.key_str(), e.to_string()))?;
@@ -73,33 +72,53 @@ impl Preference for CommonMedicines {
     }
 }
 
+/// Refuses a list the cards can't show. Each medicine has to be an active
+/// stock item, because the cards only read those. A database error stays a
+/// database error, not a fault in the list.
 fn validate_common_medicines(
     connection: &StorageConnection,
     medicines: &[CommonMedicine],
-) -> Result<(), String> {
-    let item_repo = ItemRowRepository::new(connection);
+) -> Result<(), UpsertPreferenceError> {
+    let invalid = |reason: String| {
+        UpsertPreferenceError::InvalidValue(PrefKey::CommonMedicines.to_string(), reason)
+    };
     let mut seen = HashSet::new();
 
     for CommonMedicine { item_id, amounts } in medicines {
         if !seen.insert(item_id.as_str()) {
-            return Err(format!("item {item_id} is listed more than once"));
+            return Err(invalid(format!("item {item_id} is listed more than once")));
         }
         if amounts.len() > MAX_COMMON_MEDICINE_AMOUNTS {
-            return Err(format!(
+            return Err(invalid(format!(
                 "item {item_id} has {} amounts, at most {MAX_COMMON_MEDICINE_AMOUNTS} are allowed",
                 amounts.len()
-            ));
+            )));
         }
         if let Some(amount) = amounts.iter().find(|a| !(a.is_finite() && **a > 0.0)) {
-            return Err(format!(
+            return Err(invalid(format!(
                 "item {item_id} has amount {amount}, amounts must be above zero"
-            ));
+            )));
         }
-        let exists = item_repo
-            .check_exists_by_id(item_id)
-            .map_err(|e| e.to_string())?;
-        if !exists {
-            return Err(format!("item {item_id} does not exist"));
+    }
+
+    // One query for the whole list
+    let ids: Vec<String> = medicines.iter().map(|m| m.item_id.clone()).collect();
+    let items: HashMap<String, ItemRow> = ItemRowRepository::new(connection)
+        .find_many_by_id(&ids)?
+        .into_iter()
+        .map(|item| (item.id.clone(), item))
+        .collect();
+
+    for CommonMedicine { item_id, .. } in medicines {
+        let Some(item) = items.get(item_id) else {
+            return Err(invalid(format!("item {item_id} does not exist")));
+        };
+        // Deleting an item only marks it inactive
+        if !item.is_active {
+            return Err(invalid(format!("item {item_id} is inactive")));
+        }
+        if item.r#type != ItemType::Stock {
+            return Err(invalid(format!("item {item_id} is not a stock item")));
         }
     }
 
@@ -109,9 +128,18 @@ fn validate_common_medicines(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{preference::UpsertPreferenceError, sync::test_util_set_is_central_server};
+    use crate::{
+        preference::{
+            StorePrefUpdate, UpsertPreferenceError, UpsertPreferences, upsert_preferences,
+        },
+        service_provider::ServiceProvider,
+        sync::test_util_set_is_central_server,
+    };
     use repository::{
-        mock::{MockDataInserts, mock_item_a, mock_item_b, mock_store_a, mock_store_b},
+        mock::{
+            MockDataInserts, mock_item_a, mock_item_b, mock_item_service_item, mock_store_a,
+            mock_store_b,
+        },
         test_db::setup_all,
     };
 
@@ -183,6 +211,19 @@ mod tests {
         assert!(is_invalid(vec![medicine(&item_b, &[f64::NAN])]));
         // An item that doesn't exist
         assert!(is_invalid(vec![medicine("no_such_item", &[10.0])]));
+        // A service item: the cards only show stock items
+        assert!(is_invalid(vec![medicine(
+            &mock_item_service_item().id,
+            &[1.0]
+        )]));
+        // A deleted item, which is kept but marked inactive
+        ItemRowRepository::new(&connection)
+            .mark_deleted(&item_b)
+            .unwrap();
+        assert!(is_invalid(vec![
+            medicine(&item_a, &[1.0]),
+            medicine(&item_b, &[1.0]),
+        ]));
 
         // Nothing was saved by any of the refused lists.
         assert_eq!(
@@ -212,5 +253,73 @@ mod tests {
             ),
             Err(UpsertPreferenceError::NotACentralServer)
         );
+    }
+
+    #[actix_rt::test]
+    async fn common_medicines_for_several_stores_save_nothing_when_one_is_refused() {
+        let (_, _, connection_manager, _) =
+            setup_all("common_medicines_several_stores", MockDataInserts::all()).await;
+        test_util_set_is_central_server(true);
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let store_a = mock_store_a().id;
+        let store_b = mock_store_b().id;
+
+        // Store A's list is fine, store B's names an item that doesn't exist.
+        let result = upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                common_medicines: Some(vec![
+                    StorePrefUpdate {
+                        store_id: store_a.clone(),
+                        value: vec![medicine(&mock_item_a().id, &[10.0])],
+                    },
+                    StorePrefUpdate {
+                        store_id: store_b.clone(),
+                        value: vec![medicine("no_such_item", &[10.0])],
+                    },
+                ]),
+                ..Default::default()
+            },
+        );
+        assert!(matches!(
+            result,
+            Err(UpsertPreferenceError::InvalidValue(_, _))
+        ));
+
+        // Neither store's list was saved.
+        assert_eq!(
+            CommonMedicines.load(&ctx.connection, Some(store_a)),
+            Ok(vec![])
+        );
+        assert_eq!(
+            CommonMedicines.load(&ctx.connection, Some(store_b)),
+            Ok(vec![])
+        );
+    }
+
+    #[actix_rt::test]
+    async fn common_medicines_report_a_database_error_as_one() {
+        let (_, connection, _, _) =
+            setup_all("common_medicines_database_error", MockDataInserts::all()).await;
+        test_util_set_is_central_server(true);
+
+        // Shadow the tables the check reads with temporary ones that lack
+        // their columns, so its query fails (on this connection only).
+        connection
+            .batch_execute(
+                "CREATE TEMPORARY TABLE item (unrelated TEXT); \
+                 CREATE TEMPORARY TABLE item_link (unrelated TEXT);",
+            )
+            .unwrap();
+
+        assert!(matches!(
+            CommonMedicines.upsert(
+                &connection,
+                vec![medicine(&mock_item_a().id, &[10.0])],
+                Some(mock_store_a().id)
+            ),
+            Err(UpsertPreferenceError::DatabaseError(_))
+        ));
     }
 }
