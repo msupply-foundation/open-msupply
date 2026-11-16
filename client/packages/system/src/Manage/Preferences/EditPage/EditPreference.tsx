@@ -284,7 +284,8 @@ export const EditPreference = ({
     case PreferenceValueNodeType.DispensingScreen:
       // Which screen the new front end's dispensing opens on (#2188). Only
       // the new front end has the Simple screen, so it is set there, on its
-      // Global preferences page and store editor, and not shown here.
+      // Global preferences page and store editor. Left out of the list here
+      // (withoutNewFrontEndOnly), so this case is only for the exhaustive check.
       return null;
     default:
       try {
