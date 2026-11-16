@@ -53,11 +53,16 @@ const batch = (id: string, over: Partial<Batch> = {}): Batch => ({
   ...over,
 });
 
-const item = (id: string, batches: Batch[] = []): CardItem => ({
+const item = (
+  id: string,
+  batches: Batch[] = [],
+  defaultPricePerUnit: number | null = null
+): CardItem => ({
   id,
   code: id.toUpperCase(),
   name: `Item ${id}`,
   unitName: 'Tablet',
+  defaultPricePerUnit,
   availableBatches: { __typename: 'StockLineConnector', nodes: batches },
 });
 
@@ -70,7 +75,6 @@ describe('buildCards', () => {
       ],
       // The query returns items in its own order, not the store's.
       [item('a'), item('b')],
-      {},
       PREFS,
       TODAY
     );
@@ -84,7 +88,6 @@ describe('buildCards', () => {
         { itemId: 'a', amounts: [5] },
       ],
       [item('a')],
-      {},
       PREFS,
       TODAY
     );
@@ -101,7 +104,6 @@ describe('buildCards', () => {
           batch('held', { onHold: true }),
         ]),
       ],
-      {},
       PREFS,
       TODAY
     );
@@ -114,8 +116,7 @@ describe('buildCards', () => {
         { itemId: 'listed', amounts: [] },
         { itemId: 'plain', amounts: [] },
       ],
-      [item('listed'), item('plain')],
-      { listed: 2.5, plain: null },
+      [item('listed', [], 2.5), item('plain')],
       PREFS,
       TODAY
     );
@@ -368,22 +369,25 @@ describe('priceOf', () => {
     const [card] = buildCards(
       [{ itemId: 'a', amounts: [] }],
       [
-        item('a', [
-          batch('fours', {
-            availableNumberOfPacks: 1,
-            packSize: 4,
-            sellPricePerPack: 3,
-            expiryDate: '2027-01-01',
-          }),
-          batch('tens', {
-            availableNumberOfPacks: 2,
-            packSize: 10,
-            sellPricePerPack: 7,
-            expiryDate: '2028-01-01',
-          }),
-        ]),
+        item(
+          'a',
+          [
+            batch('fours', {
+              availableNumberOfPacks: 1,
+              packSize: 4,
+              sellPricePerPack: 3,
+              expiryDate: '2027-01-01',
+            }),
+            batch('tens', {
+              availableNumberOfPacks: 2,
+              packSize: 10,
+              sellPricePerPack: 7,
+              expiryDate: '2028-01-01',
+            }),
+          ],
+          0.35
+        ),
       ],
-      { a: 0.35 },
       PREFS,
       TODAY
     );
@@ -616,7 +620,6 @@ describe('dispensing the visit', () => {
     buildCards(
       items.map(i => ({ itemId: i.id, amounts: [] })),
       items,
-      {},
       PREFS,
       TODAY
     );
@@ -819,7 +822,6 @@ describe('dispenseVisit', () => {
           batch('a1', { availableNumberOfPacks: units, packSize: 1 }),
         ]),
       ],
-      {},
       PREFS,
       TODAY
     );
@@ -1109,8 +1111,7 @@ describe('the price check', () => {
   const cardsFor = (items: CardItem[], prices: Record<string, number> = {}) =>
     buildCards(
       items.map(i => ({ itemId: i.id, amounts: [] })),
-      items,
-      prices,
+      items.map(i => ({ ...i, defaultPricePerUnit: prices[i.id] ?? null })),
       PREFS,
       TODAY
     );
