@@ -2,7 +2,10 @@ use std::collections::BTreeMap;
 
 use super::{Preference, PreferenceProvider, UpsertPreferenceError, get_preference_provider};
 use crate::{
-    preference::{BackdatingData, CustomTranslationsV2Value, WarnWhenMissingRecentStocktakeData},
+    preference::{
+        BackdatingData, CommonMedicine, CustomTranslationsV2Value,
+        WarnWhenMissingRecentStocktakeData,
+    },
     service_provider::ServiceContext,
 };
 use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
@@ -79,6 +82,7 @@ pub struct UpsertPreferences {
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<StorePrefUpdate<bool>>>,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<StorePrefUpdate<bool>>>,
+    pub common_medicines: Option<Vec<StorePrefUpdate<Vec<CommonMedicine>>>>,
 }
 
 pub fn upsert_preferences(
@@ -143,6 +147,7 @@ pub fn upsert_preferences(
         do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels_input,
         prompt_for_batch_and_expiry_on_inbound_shipments:
             prompt_for_batch_and_expiry_on_inbound_shipments_input,
+        common_medicines: common_medicines_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -195,6 +200,7 @@ pub fn upsert_preferences(
         show_indicative_price_in_requisitions,
         do_not_print_placeholder_line_labels,
         prompt_for_batch_and_expiry_on_inbound_shipments,
+        common_medicines,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -421,6 +427,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = prompt_for_batch_and_expiry_on_inbound_shipments_input {
                 upsert_store_input(connection, prompt_for_batch_and_expiry_on_inbound_shipments, input)?;
+            }
+
+            if let Some(input) = common_medicines_input {
+                upsert_store_input(connection, common_medicines, input)?;
             }
 
             Ok(())

@@ -53,6 +53,7 @@ export const RequisitionLineStats: Component<{
   entryMode: EntryMode;
   packSize: number;
   unitName: string | null;
+  itemName: string;
   /** Withholds the other-stores legend row (spec S4 § stats tabs). */
   finalised: boolean;
   /**
@@ -396,6 +397,8 @@ export const RequisitionLineStats: Component<{
                   // the line's requisition). Undefined while the stats load:
                   // the caption waits rather than reading "× 0 months".
                   targetMonths={props.stats?.requestStoreStats.maxMonthsOfStock}
+                  unitName={props.unitName}
+                  itemName={props.itemName}
                   formatQuantity={units => {
                     const figure = unitsToMode(
                       units,

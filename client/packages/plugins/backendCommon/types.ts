@@ -9,6 +9,9 @@ export type BackendPlugins = {
   transform_request_requisition_lines?: (
     _: PluginTypes['transform_request_requisition_lines']['input']
   ) => PluginTypes['transform_request_requisition_lines']['output'];
+  transform_item_store_properties?: (
+    _: PluginTypes['transform_item_store_properties']['input']
+  ) => PluginTypes['transform_item_store_properties']['output'];
   get_consumption?: (
     _: PluginTypes['get_consumption']['input']
   ) => PluginTypes['get_consumption']['output'];

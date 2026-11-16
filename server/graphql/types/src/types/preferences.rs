@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    backdating::BackdatingNode, invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
+    backdating::BackdatingNode, common_medicine::CommonMedicineNode,
+    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -265,6 +266,15 @@ impl PreferencesNode {
                 .prompt_for_batch_and_expiry_on_inbound_shipments,
         )
     }
+
+    /// The medicines shown as cards on the Simple dispensing screen, in order.
+    pub async fn common_medicines(&self) -> Result<Vec<CommonMedicineNode>> {
+        let medicines = self.load_preference(&self.preferences.common_medicines)?;
+        Ok(medicines
+            .into_iter()
+            .map(CommonMedicineNode::from_domain)
+            .collect())
+    }
 }
 
 impl PreferencesNode {
@@ -416,6 +426,7 @@ pub enum PreferenceKey {
     ShowIndicativePriceInRequisitions,
     DoNotPrintPlaceholderLineLabels,
     PromptForBatchAndExpiryOnInboundShipments,
+    CommonMedicines,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -439,4 +450,5 @@ pub enum PreferenceValueNodeType {
     String,
     Colour,
     Image,
+    CommonMedicines,
 }

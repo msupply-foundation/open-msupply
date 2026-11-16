@@ -109,9 +109,20 @@
   cursor: default;
 }
 
-.pageButton:hover:not(:disabled) {
-  /* Spec hover: rgba(0,0,0,0.06) — a 6% body-tone wash via tokens. */
-  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+/* Hover only where the pointer can hover: a touch screen keeps the last
+   control tapped in :hover, so it would stay highlighted. On touch the look
+   shows only while pressed (:active), as on Button. */
+@media (hover: hover) {
+  .pageButton:hover:not(:disabled) {
+    /* Spec hover: rgba(0,0,0,0.06) — a 6% body-tone wash via tokens. */
+    background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  }
+}
+
+@media (hover: none) {
+  .pageButton:active:not(:disabled) {
+    background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  }
 }
 
 /* The current page — a plain display (not editable). The spec's active pill:
@@ -150,8 +161,16 @@
   cursor: pointer;
 }
 
-.pageEllipsis:hover {
-  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+@media (hover: hover) {
+  .pageEllipsis:hover {
+    background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  }
+}
+
+@media (hover: none) {
+  .pageEllipsis:active {
+    background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  }
 }
 
 /* The page box the ellipsis becomes. Sized to the slot it replaces so the

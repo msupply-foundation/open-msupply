@@ -1,11 +1,11 @@
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository,
-    ItemStoreJoinRowRepositoryTrait, NameFilter, NameRepository, Pagination,
+    InvoiceType, ItemRow, ItemStoreJoinRow, NameFilter, NameRepository, Pagination,
 };
 use repository::{InvoiceLineRow, RepositoryError, StockLineRow, StorageConnection};
 use util::uuid::uuid;
 
+use crate::backend_plugin::types::transform_item_store_properties::Context;
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
     InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError,
@@ -13,6 +13,7 @@ use crate::invoice::inbound_shipment::{
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::pricing::calculate_sell_price::issue_at_cost_price;
+use crate::pricing::default_sell_price::{DefaultSellPrices, default_price_for_pack};
 use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
@@ -30,7 +31,15 @@ pub(crate) fn generate_inbound_lines(
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
     )?;
-    let item_properties_repo = ItemStoreJoinRowRepository::new(connection);
+    let item_properties_by_item = DefaultSellPrices::load(
+        connection,
+        Context::InboundShipmentTransfer,
+        inbound_store_id,
+        outbound_lines
+            .iter()
+            .map(|l| l.item_row.id.clone())
+            .collect(),
+    )?;
 
     // When the source outbound shipment was issued at cost, its sell price is the
     // supplying store's cost price, so it can't also carry a sell price to base the
@@ -91,9 +100,7 @@ pub(crate) fn generate_inbound_lines(
                 },
                 source_stock_line,
             )| {
-                let item_properties = item_properties_repo
-                    .find_one_by_item_and_store_id(&item_id, inbound_store_id)
-                    .unwrap_or(None);
+                let item_properties = item_properties_by_item.item_properties(&item_id).cloned();
 
                 // Legacy customer invoice lines sync with `sentQuantity` and `sent_pack_size`
                 // of 0, so when the outbound hasn't recorded what it shipped, fall back to the
@@ -124,7 +131,7 @@ pub(crate) fn generate_inbound_lines(
                     .as_ref()
                     .map_or(0.0, |i| i.default_sell_price_per_pack);
 
-                let default_price_for_inbound_pack = get_default_price_for_pack(
+                let default_price_for_inbound_pack = default_price_for_pack(
                     default_price_per_default_pack,
                     default_pack_size,
                     pack_size,
@@ -311,18 +318,6 @@ fn get_supplying_store_sell_price(
     source_stock_line.map(|stock_line| stock_line.sell_price_per_pack)
 }
 
-pub(super) fn get_default_price_for_pack(
-    default_sell_price_per_pack: f64,
-    default_pack_size: f64,
-    inbound_pack_size: f64,
-) -> f64 {
-    if default_pack_size == 0.0 {
-        return 0.0;
-    }
-    let price_per_unit = default_sell_price_per_pack / default_pack_size;
-    price_per_unit * inbound_pack_size
-}
-
 pub(super) fn get_cost_plus_margin(
     connection: &StorageConnection,
     cost_price_per_pack: f64,
@@ -347,6 +342,8 @@ pub(super) fn get_cost_plus_margin(
     Ok(cost_price_per_pack + (cost_price_per_pack * margin) / 100.0)
 }
 
+/// The inbound store's item properties, after any transform_item_store_properties
+/// plugin, keyed by item id
 fn get_item_margin(item_properties: Option<ItemStoreJoinRow>) -> Option<f64> {
     item_properties.as_ref().map(|i| i.margin)
 }
@@ -369,7 +366,7 @@ fn get_supplier_margin(connection: &StorageConnection, supplier_id: &String) -> 
 
 #[cfg(test)]
 mod test {
-    use super::{generate_inbound_lines, get_cost_plus_margin, get_default_price_for_pack};
+    use super::{generate_inbound_lines, get_cost_plus_margin};
 
     use repository::{
         Invoice, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
@@ -382,7 +379,13 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
     };
 
+    use base64::{Engine, prelude::BASE64_STANDARD};
+    use repository::{
+        BackendPluginRow, PluginType, PluginTypes, PluginVariantType, migrations::Version,
+    };
+
     use crate::{
+        backend_plugin::plugin_provider::PluginInstance,
         preference::{
             ItemMarginOverridesSupplierMargin, Preference,
             TransferStockToInternalCustomersAtCostPrice,
@@ -477,49 +480,6 @@ mod test {
                 &supplier_no_margin_id
             ),
             Ok(cost_price_per_pack)
-        );
-    }
-
-    #[test]
-    fn test_get_default_price_for_pack_conversion() {
-        let default_price = 5.0;
-        let default_pack_size = 10.0;
-
-        // Exact pack
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            5.0
-        );
-
-        // Pack of one
-        let inbound_pack_size = 1.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.5
-        );
-
-        // Larger pack
-        let inbound_pack_size = 100.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            50.0
-        );
-
-        // Zero default pack size
-        let default_pack_size = 0.0;
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.0
-        );
-
-        // Zero default price
-        let default_price = 0.0;
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.0
         );
     }
 
@@ -674,6 +634,104 @@ mod test {
         )
         .unwrap();
 
+        assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
+    }
+
+    // Sets every requested item's default price, and returns a row for another store
+    // first, which core should drop rather than let it win
+    const PLUGIN_SELL_PRICE_PER_PACK: f64 = 42.0;
+    const TRANSFORM_ITEM_STORE_PROPERTIES_PLUGIN: &str = r#"
+export const plugins = {
+  transform_item_store_properties: ({ store_id, item_ids, rows }) => ({
+    transformed_rows: [
+      { ...rows[0], id: "other_store_row", store_id: "other_store", default_sell_price_per_pack: 1 },
+      ...item_ids.map((item_id) => ({
+        ...rows.find((row) => row.item_id === item_id),
+        item_id,
+        store_id,
+        default_sell_price_per_pack: 42,
+      })),
+    ],
+  }),
+};
+"#;
+
+    #[actix_rt::test]
+    async fn generate_inbound_lines_uses_transform_item_store_properties_plugin() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "generate_inbound_lines_uses_transform_item_store_properties_plugin",
+            MockDataInserts::all(),
+            transfer_at_cost_mock_data(),
+        )
+        .await;
+
+        PluginInstance::bind(BackendPluginRow {
+            id: "transform_item_store_properties".to_string(),
+            code: "transform_item_store_properties".to_string(),
+            version: Version::from_package_json().to_string(),
+            bundle_base64: BASE64_STANDARD.encode(TRANSFORM_ITEM_STORE_PROPERTIES_PLUGIN),
+            types: PluginTypes(vec![PluginType::TransformItemStoreProperties]),
+            variant_type: PluginVariantType::BoaJs,
+        });
+
+        let source_invoice = Invoice {
+            invoice_row: transfer_at_cost_invoice(),
+            name_row: mock_name_store_a(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].sell_price_per_pack, PLUGIN_SELL_PRICE_PER_PACK);
+    }
+
+    #[actix_rt::test]
+    async fn generate_inbound_lines_falls_back_when_transform_item_store_properties_plugin_fails() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "generate_inbound_lines_falls_back_when_transform_item_store_properties_plugin_fails",
+            MockDataInserts::all(),
+            transfer_at_cost_mock_data(),
+        )
+        .await;
+
+        PluginInstance::bind(BackendPluginRow {
+            id: "transform_item_store_properties".to_string(),
+            code: "transform_item_store_properties".to_string(),
+            version: Version::from_package_json().to_string(),
+            bundle_base64: BASE64_STANDARD.encode(
+                r#"export const plugins = {
+  transform_item_store_properties: () => { throw new Error("broken plugin"); },
+};"#,
+            ),
+            types: PluginTypes(vec![PluginType::TransformItemStoreProperties]),
+            variant_type: PluginVariantType::BoaJs,
+        });
+
+        let source_invoice = Invoice {
+            invoice_row: transfer_at_cost_invoice(),
+            name_row: mock_name_store_a(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+
+        // The shipment is still made, at the store's own default price
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &mock_store_a().id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
         assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
     }
 

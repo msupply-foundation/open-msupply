@@ -1,8 +1,8 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct RowError {
     pub sheet: String,
-    /// As Excel shows it.
-    pub row: u32,
+    /// As Excel shows it. `None` on a sheet name, which has no row.
+    pub row: Option<u32>,
     pub column: Option<String>,
     pub message: String,
 }
@@ -61,7 +61,7 @@ impl Row<'_> {
     pub fn error(&self, column: &str, message: impl Into<String>) -> RowError {
         RowError {
             sheet: self.sheet.to_string(),
-            row: self.number,
+            row: Some(self.number),
             column: Some(column.to_string()),
             message: message.into(),
         }
@@ -106,7 +106,10 @@ mod tests {
         }
         with_row(&["", "yes"], |row| {
             let error = row.bool("flag").unwrap_err();
-            assert_eq!((error.row, error.column.as_deref()), (7, Some("flag")));
+            assert_eq!(
+                (error.row, error.column.as_deref()),
+                (Some(7), Some("flag"))
+            );
             assert_eq!(error.message, "\"yes\" must be TRUE or FALSE");
         });
     }

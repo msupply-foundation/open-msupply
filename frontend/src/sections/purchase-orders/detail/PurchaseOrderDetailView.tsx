@@ -908,6 +908,9 @@ const PurchaseOrderDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // The code-or-name filter lives in the table's own toolbar
                   // (ui-standards › tables › toolbar), never the page header.
                   filters={

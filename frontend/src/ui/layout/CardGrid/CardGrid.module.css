@@ -19,3 +19,10 @@
 .grid > * {
   max-inline-size: var(--card-grid-item-max, none);
 }
+
+/* `equalHeight`: every card in a row takes the row's height, so a card can
+   push its last content (a row of controls) to its bottom edge and line it
+   up with its neighbours'. */
+.grid[data-equal-height] {
+  align-items: stretch;
+}

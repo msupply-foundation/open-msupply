@@ -1,0 +1,392 @@
+/*
+ * Step 3, the list for the person at the counter (DispensingList.tsx;
+ * spec/prescriptions ui-surface S9).
+ *
+ * A PANEL DOCKED AT THE BODY'S INLINE END, not a card floating on it. It is a
+ * flex item of the page's columns (SimpleDispensing.module.css `.columns`,
+ * the body's one scroller): beside the cards it takes the scroller's full
+ * height and stays put while the cards scroll under the page's own
+ * scrollbar; where the body is too narrow for both it wraps under the cards
+ * and grows to the full width. Intrinsic — the wrap decides, no breakpoint.
+ */
+.panel {
+  position: sticky;
+  inset-block-start: 0;
+  display: flex;
+  flex: 1 1 var(--side-panel-width);
+  flex-direction: column;
+  align-self: flex-start;
+  min-inline-size: 0;
+  /* The scroller's height: a docked panel is the body's full height, its foot
+     on the body's bottom edge. */
+  block-size: 100%;
+  border-inline-start: 1px solid var(--color-divider);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-2);
+}
+
+/*
+ * PHONE (< compact, as the Page frame's own rule): A BAR PINNED TO THE BOTTOM
+ * OF THE SCREEN. The whole main column scrolls there, and the cards' box is no
+ * scroller (SimpleDispensing.module.css), so a sticky panel rides the bottom
+ * of the screen however far the cards are scrolled, and comes to rest after
+ * the last card — never covering it. Closed, it is the bar alone; open, the
+ * list grows up over the cards as a sheet, its lines scrolling inside it.
+ */
+@media (max-width: 599px) {
+  .panel {
+    z-index: 3;
+    inset-block: auto 0;
+    flex-basis: 100%;
+    align-self: flex-end;
+    block-size: auto;
+    max-block-size: 80dvh;
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--color-border-value);
+    border-start-start-radius: var(--radius-lg);
+    border-start-end-radius: var(--radius-lg);
+    box-shadow: var(--shadow-4);
+  }
+
+  .panel:not([data-open]) > .sheet {
+    display: none;
+  }
+
+  .panel[data-open] > .bar {
+    border-block-end: 1px solid var(--color-border-value);
+  }
+
+  /* Open, the bar holds the toggle alone: the foot has the total and
+     Dispense. */
+  .panel[data-open] :is(.barTotal, .barAction) {
+    display: none;
+  }
+
+  /* Points up while closed — the sheet opens upward — and down once open. */
+  .panel:not([data-open]) .chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Above the bar, so it shows with the sheet closed. */
+  .notice {
+    order: -1;
+  }
+}
+
+/* The cards behind the open sheet, dimmed. A phone only (the sheet is). */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  background: var(--overlay-scrim);
+}
+
+@media (min-width: 600px) {
+  .scrim {
+    display: none;
+  }
+}
+
+/* The bar: the toggle taking the room, then Dispense. */
+.bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-2) var(--space-3);
+}
+
+/* The toggle: the whole bar's width but Dispense, a thumb-sized target. */
+.toggle {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  min-block-size: var(--touch-target);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-body);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.toggle:focus-visible {
+  outline: 3px solid var(--secondary-main);
+  outline-offset: 0.125rem;
+}
+
+.chevron {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--text-secondary);
+  transition: transform var(--motion-fast) ease;
+}
+
+.barCount {
+  overflow: hidden;
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The total at the toggle's inline end, by Dispense. */
+.barTotal {
+  margin-inline-start: auto;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.barAction {
+  flex: none;
+}
+
+/* Read by a screen reader, not shown: the step the toggle opens. */
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The list's notice (who the visit went to, or why it failed). */
+.notice {
+  flex: none;
+  padding: var(--space-2) var(--space-4) 0;
+}
+
+/* The list itself — on a phone, the sheet's content, a column whose lines
+   scroll inside it (above a phone it steps aside: display: contents). */
+.sheet {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+/* The head: a band ruled off from the lines, in the table-header surface. */
+.head {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--color-border-value);
+  background: var(--bg-toolbar);
+}
+
+/* The step's heading with the count beside it, the count at the inline end. */
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+
+.count {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.for {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* The lines: the room between head and foot, scrolling on their own when a
+   docked panel's list outgrows it. */
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+  padding: var(--space-2) var(--space-4);
+  overflow: auto;
+}
+
+/* Nothing on the list yet: the message in the middle of the panel. */
+.empty {
+  margin: auto;
+  padding-block: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+/*
+ * An invoice's lines: Item · Qty · Price · the bin. The name takes every bit
+ * of width the figures don't need and wraps; the quantity column is narrow on
+ * purpose (doses, a few digits), and the price never wraps, so the prices
+ * line up down the column above the total.
+ */
+.lines {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.lines th {
+  padding-block: var(--space-1);
+  padding-inline: 0 var(--space-2);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.lines tbody td {
+  padding-block: var(--space-2);
+  padding-inline: 0 var(--space-2);
+  border-block-start: 1px solid var(--color-divider);
+  vertical-align: middle;
+}
+
+.lines :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.lines [data-numeric] {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.name {
+  display: block;
+  font-weight: var(--weight-medium);
+  line-height: var(--line-tight);
+  overflow-wrap: anywhere;
+}
+
+/* The unit under the name, quiet — the Qty field is a bare number. */
+.unit {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* What a line has to say, under it and across its width: no rule between
+   the line and its note. */
+.lines .note td {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+/* The amount typed stopped at the stock: a quiet, warning-toned note. */
+.limit {
+  margin: 0;
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+  font-size: var(--text-xs);
+}
+
+/* Dispense found less stock than the line holds, or the line's price
+   changed: a warning block with a warning-coloured edge (the Alert's tint
+   recipe), any action under the words. */
+.lineWarning {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 3px solid var(--warning-main);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warning-main) 10%, var(--bg-white));
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+}
+
+.lineWarning p {
+  margin: 0;
+}
+
+/* Room for a few digits and the field's own padding; the field fills it. */
+.qty {
+  inline-size: 5rem;
+}
+
+/* As wide as its button. */
+.remove {
+  inline-size: 1%;
+}
+
+/* The foot, on the panel's bottom edge: the total, then the actions. */
+.foot {
+  flex: none;
+  border-block-start: 1px solid var(--color-border-value);
+}
+
+/* The one figure the person at the counter is asked for. */
+.total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4) 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.totalValue {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Clear, and Dispense after it once it comes, at the inline end. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+/*
+ * Above a phone the panel is all list (last in the file, so it outranks the
+ * base rules for the bar and the sheet below): no bar, and the sheet's wrapper steps
+ * out of the way so the head, lines and foot are the panel's own rows. The
+ * head goes first, then the notice (a sibling of the wrapper, for the phone's
+ * sake), then the lines and the foot.
+ */
+@media (min-width: 600px) {
+  .bar {
+    display: none;
+  }
+
+  .sheet {
+    display: contents;
+  }
+
+  .head {
+    order: -1;
+  }
+}
+
+/* Touch: the remove button a 48px square, to match the line's amount field
+   (the standard size's touch height, --input-height-touch) and the keys on
+   the cards.
+   `button.removeButton` outranks the library icon button's own size rule
+   whichever stylesheet loads first. */
+@media (pointer: coarse) {
+  .remove > button.removeButton {
+    inline-size: var(--input-height-touch);
+    block-size: var(--input-height-touch);
+  }
+}

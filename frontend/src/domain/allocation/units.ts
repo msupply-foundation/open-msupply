@@ -126,6 +126,38 @@ export const availableUnits = (
 export const issuedUnits = (batches: readonly UnitCountableBatch[]): number =>
   batches.reduce((sum, line) => sum + line.numberOfPacks * line.packSize, 0);
 
+/** A batch the dose sums can read, carrying its doses per unit. The server
+ * sends the item's rate on every line (item variants lost their own in
+ * v2.9), so all batches of an item share it today. */
+export interface DoseCountableBatch extends UnitCountableBatch {
+  dosesPerUnit: number;
+}
+
+/**
+ * The doses-lens faces of availableUnits / issuedUnits (old-app parity — its
+ * sumAvailableDoses / getAllocatedDoses): each batch converts through its own
+ * doses per unit, whole doses per batch (packsToDoses), on-hold stock excluded
+ * from the available total as above.
+ */
+export const availableDoses = (
+  batches: readonly DoseCountableBatch[]
+): number =>
+  batches.reduce(
+    (sum, line) =>
+      line.stockLineOnHold || line.location?.onHold
+        ? sum
+        : sum +
+          packsToDoses(line.availablePacks, line.packSize, line.dosesPerUnit),
+    0
+  );
+
+export const issuedDoses = (batches: readonly DoseCountableBatch[]): number =>
+  batches.reduce(
+    (sum, line) =>
+      sum + packsToDoses(line.numberOfPacks, line.packSize, line.dosesPerUnit),
+    0
+  );
+
 /** The pack sizes present — the packs-of-‹size› lens options. */
 export const distinctPackSizes = (
   batches: readonly { packSize: number }[]

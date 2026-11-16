@@ -54,6 +54,11 @@ export type ItemsVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    notInRecord?: {
+    record: "stocktake" | "requisition" | "invoice";
+    id: string;
+  } | null;
+    notCountedSince?: string | null;
     dynamicFilter?: unknown | null;
   } | null;
   sort?: Array<{

@@ -9,7 +9,10 @@ import { DetailCard } from '../ui/layout/Detail/DetailCard';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { FormSection } from '../ui/layout/Form/FormSection';
 import { Table } from '../ui/elements/table/Table';
+import { For } from 'solid-js';
 import { IconButton } from '../ui/elements/buttons/IconButton';
+import { Button } from '../ui/elements/buttons/Button';
+import { StatusBadge } from '../ui/elements/feedback/StatusBadge';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { EditIcon, TrashIcon } from '../ui/icons';
 import { FormPreview, Lead, SectionTOC } from './common';
@@ -252,6 +255,39 @@ export const DetailViewsShowcase = () => (
             </tr>
           </tbody>
         </Table>
+        <Lead>
+          A <code>meta</code> line sits under the title — what belongs with the
+          name (a unit, a state badge) rather than with the body. With{' '}
+          <code>layout="inline"</code> the card is one row: the title and meta
+          at the inline start, wrapping, and the body at the inline end at its
+          content's width — for a dense grid of cards whose body is a short row
+          of controls, on a phone, where a card should cost one row of the
+          screen. The caller picks the layout (the Simple dispensing screen does
+          it by viewport). Below, the same compact card stacked, then inline.
+        </Lead>
+        <CardGrid minColumnWidth="18rem">
+          <For each={['stacked', 'inline'] as const}>
+            {layout => (
+              <DetailCard
+                title="Paracetamol 500mg tabs"
+                surface="bordered"
+                density="compact"
+                layout={layout}
+                meta={
+                  <>
+                    <span>Tablet</span>
+                    <StatusBadge label="20 Tablet on the list" tone="info" />
+                  </>
+                }
+              >
+                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                  <Button variant="secondary">10</Button>
+                  <Button variant="secondary">20</Button>
+                </div>
+              </DetailCard>
+            )}
+          </For>
+        </CardGrid>
       </DashboardCard>
     </Stack>
   </ContentContainer>

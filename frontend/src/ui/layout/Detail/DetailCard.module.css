@@ -26,6 +26,28 @@
   gap: var(--space-3);
 }
 
+/* The title and the meta line under it. Shrinks before the actions do. */
+.heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  /* Shrink-to-fit children: a title in another script keeps its own
+     direction without re-aligning the card (DetailCard.tsx, `dir="auto"`). */
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+/* The meta line: quiet, wrapping, its items centred on one another. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
 .title {
   margin: 0;
   font-size: var(--text-md);
@@ -41,8 +63,45 @@
   flex-shrink: 0;
 }
 
+/* Grows into any height the card is given (a CardGrid with equalHeight), so
+   the caller can push its last content to the card's bottom edge. With no
+   extra height it changes nothing. */
 .body {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* `compact`: tighter padding, gaps and title, for a dense grid of many small
+   cards where fitting them on one screen matters more than room per card. */
+.card[data-density='compact'] {
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.card[data-density='compact'] .title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.card[data-density='compact'] .body {
+  gap: var(--space-2);
+}
+
+/* `inline`: one row — the header (title + meta) takes the room and wraps, the
+   body sits at the inline end at its content's width, centred on the header.
+   Spacing is the density's own gap, turned to run along the row. */
+.card[data-layout='inline'] {
+  flex-direction: row;
+  align-items: center;
+}
+
+.card[data-layout='inline'] > .header {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.card[data-layout='inline'] > .body {
+  flex: none;
 }

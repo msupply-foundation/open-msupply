@@ -15,6 +15,7 @@ mod generate_rnr_form_lines {
     use repository::mock::{MockDataInserts, mock_store_a};
     use repository::test_db::setup_all_with_data;
     use repository::{
+        ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateType,
         EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         RnRFormFilter, RnRFormLineRow, RnRFormLowStock, RnRFormRow, StockLineRow,
         StorePreferenceRow, StorePreferenceRowRepository,
@@ -171,6 +172,19 @@ mod generate_rnr_form_lines {
             },
         )
         .await;
+
+        // An estimate in the period isn't stock that left the store, so it
+        // isn't counted as consumed
+        ConsumptionEstimateRowRepository::new(&connection)
+            .upsert_one(&ConsumptionEstimateRow {
+                id: "estimate_in_period".to_string(),
+                store_id: mock_store_a().id,
+                r#type: ConsumptionEstimateType::Monthly,
+                date: NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+                quantity: 70.0,
+                item_id: item_query_test1().id,
+            })
+            .unwrap();
 
         let result = get_usage_map(
             &connection,

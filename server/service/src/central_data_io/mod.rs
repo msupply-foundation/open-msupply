@@ -424,7 +424,7 @@ fn import_sheets(
             let names: Vec<_> = TABLES.iter().map(|t| t.table().sheet_name()).collect();
             summary.add_errors([RowError {
                 sheet: sheet.name.clone(),
-                row: sheet.header_row,
+                row: None,
                 column: None,
                 message: format!(
                     "Unknown sheet. Name each sheet after the table it holds: {}",
@@ -491,7 +491,7 @@ fn import_sheets(
             if first != row.number {
                 summary.add_errors([RowError {
                     sheet: sheet.name.clone(),
-                    row: row.number,
+                    row: Some(row.number),
                     column: None,
                     message: format!("Row {first} already changes this record"),
                 }]);
@@ -518,7 +518,7 @@ fn import_sheets(
 fn check_headers(table: &dyn ImportTable, sheet: &sheet::Sheet) -> Vec<RowError> {
     let header_error = |column: &str, message: String| RowError {
         sheet: sheet.name.clone(),
-        row: sheet.header_row,
+        row: Some(sheet.header_row),
         column: (!column.is_empty()).then(|| column.to_string()),
         message,
     };
@@ -571,12 +571,15 @@ fn errors_file(connection: &StorageConnection, path: &Path) -> Result<Vec<u8>, I
 fn errors_file_sheets(sheets: &[sheet::Sheet], errors: &[RowError]) -> Vec<sheet::SheetData> {
     let mut by_row: HashMap<(&str, u32), Vec<String>> = HashMap::new();
     for error in errors {
+        let Some(row) = error.row else {
+            continue;
+        };
         let text = match &error.column {
             Some(column) => format!("{column}: {}", error.message),
             None => error.message.clone(),
         };
         by_row
-            .entry((error.sheet.as_str(), error.row))
+            .entry((error.sheet.as_str(), row))
             .or_default()
             .push(text);
     }
@@ -740,20 +743,44 @@ mod no_table_tests {
             errors,
             [
                 (
-                    2,
+                    Some(2),
                     Some("nmae".to_string()),
                     "Unknown column. The notes sheet can have: code, name, created_date"
                         .to_string()
                 ),
                 // Excel's letter: the sheet starts in column C.
-                (2, None, "Column E has values but no heading".to_string()),
                 (
-                    2,
+                    Some(2),
+                    None,
+                    "Column E has values but no heading".to_string()
+                ),
+                (
+                    Some(2),
                     Some("code".to_string()),
                     "This column appears twice".to_string()
                 ),
             ]
         );
+    }
+
+    // covers: OMS-REG-CDIO-01.20
+
+    #[actix_rt::test]
+    async fn an_unknown_sheet_is_an_error_with_no_row() {
+        let (_, connection, _, _) = repository::test_db::setup_all(
+            "an_unknown_sheet_is_an_error_with_no_row",
+            repository::mock::MockDataInserts::none(),
+        )
+        .await;
+        let notes = sheet(&["note"], &[(3, &["a"])]);
+        let summary = import_sheets(&connection, &[notes], usize::MAX).unwrap();
+
+        let errors: Vec<_> = summary
+            .errors
+            .iter()
+            .map(|error| (error.sheet.as_str(), error.row))
+            .collect();
+        assert_eq!(errors, [("notes", None)]);
     }
 
     #[test]

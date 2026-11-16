@@ -7,10 +7,11 @@ use super::{
 };
 
 use crate::{
-    EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow, StringFilter,
+    DateFilter, EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow,
+    StringFilter,
     diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
-        apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+        apply_sort_asc_nulls_last, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     repository_error::RepositoryError,
 };
@@ -71,6 +72,8 @@ pub enum InvoiceLineSortField {
     PackSize,
     /// Invoice line item stock location name
     LocationName,
+    /// Invoice line manufacture date
+    ManufactureDate,
     /// Units requested for the line's item on the invoice's linked requisition
     RequestedQuantity,
 }
@@ -100,6 +103,10 @@ pub struct InvoiceLineFilter {
     pub has_note: Option<bool>,
     pub program_id: Option<EqualFilter<String>>,
     pub is_program_invoice: Option<bool>,
+    pub batch: Option<StringFilter>,
+    pub expiry_date: Option<DateFilter>,
+    pub location_code: Option<StringFilter>,
+    pub manufacture_date: Option<DateFilter>,
 }
 
 impl InvoiceLineFilter {
@@ -211,6 +218,26 @@ impl InvoiceLineFilter {
         self.is_program_invoice = Some(filter);
         self
     }
+
+    pub fn batch(mut self, filter: StringFilter) -> Self {
+        self.batch = Some(filter);
+        self
+    }
+
+    pub fn expiry_date(mut self, filter: DateFilter) -> Self {
+        self.expiry_date = Some(filter);
+        self
+    }
+
+    pub fn location_code(mut self, filter: StringFilter) -> Self {
+        self.location_code = Some(filter);
+        self
+    }
+
+    pub fn manufacture_date(mut self, filter: DateFilter) -> Self {
+        self.manufacture_date = Some(filter);
+        self
+    }
 }
 
 type InvoiceLineJoin = (
@@ -282,6 +309,9 @@ impl<'a> InvoiceLineRepository<'a> {
                 }
                 InvoiceLineSortField::LocationName => {
                     apply_sort_no_case!(query, sort, location::name);
+                }
+                InvoiceLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, invoice_line::manufacture_date);
                 }
                 InvoiceLineSortField::RequestedQuantity => {
                     // Mirrors `InvoiceLineNode::requisition_line`: the figure
@@ -374,6 +404,10 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             has_note,
             program_id,
             is_program_invoice,
+            batch,
+            expiry_date,
+            location_code,
+            manufacture_date,
         } = f;
 
         // Matches on item code OR name (the item table is already inner-joined
@@ -433,6 +467,11 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         if is_program_invoice.is_some() {
             query = query.filter(invoice::program_id.is_not_null());
         }
+
+        apply_string_filter!(query, batch, invoice_line::batch);
+        apply_date_filter!(query, expiry_date, invoice_line::expiry_date);
+        apply_string_filter!(query, location_code, location::code);
+        apply_date_filter!(query, manufacture_date, invoice_line::manufacture_date);
     }
 
     query
