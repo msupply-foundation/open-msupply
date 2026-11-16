@@ -510,10 +510,10 @@ const SimpleDispensingPage: Component = () => {
               />
             </div>
             {/* At most three columns, never narrower than three amount
-                    buttons and the another-amount button need. */}
+                buttons and the another-amount button need. */}
             {/* Until someone is chosen the cards' buttons are disabled,
-                    so they dim as every disabled control does. The names and
-                    stock stay full strength: staff read them while choosing. */}
+                so they dim as every disabled control does. The names and
+                stock stay full strength: staff read them while choosing. */}
             <Show
               when={(cards() ?? []).length > 0}
               fallback={
@@ -551,9 +551,9 @@ const SimpleDispensingPage: Component = () => {
             </Show>
           </div>
           {/* Docked at the columns' inline end, or a bar at the bottom
-                  of the screen on a phone (its own CSS). One instance at
-                  every width: crossing the line restyles it, never rebuilds
-                  its lines. */}
+              of the screen on a phone (its own CSS). One instance at
+              every width: crossing the line restyles it, never rebuilds
+              its lines. */}
           <DispensingList
             isPhone={isPhone()}
             forName={patient()?.name}

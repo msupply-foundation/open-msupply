@@ -226,7 +226,9 @@ const prescriptionPreferences = () => {
     // Which screen dispensing opens on (spec/prescriptions › dispensing
     // preferences). Undefined while unresolved, so dispensing waits rather
     // than opening the wrong screen and then moving.
-    dispensingScreen: prefs ? asDispensingScreen(prefs.dispensingScreen) : undefined,
+    dispensingScreen: prefs
+      ? asDispensingScreen(prefs.dispensingScreen)
+      : undefined,
     useUnnamedPatient: prefs?.useUnnamedPatient ?? false,
     startWithUnnamedPatient: prefs?.startWithUnnamedPatient ?? false,
     askForPatientType: prefs?.askForPatientType ?? false,

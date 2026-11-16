@@ -1,11 +1,4 @@
-import {
-  createSignal,
-  For,
-  Match,
-  Show,
-  Switch,
-  type JSX,
-} from 'solid-js';
+import { createSignal, For, Match, Show, Switch, type JSX } from 'solid-js';
 import { t, type LocaleKey } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
