@@ -345,6 +345,9 @@ export const dispenseInput = (
   continueOnError: false,
 });
 
+/** The batch save for a visit, as `dispenseInput` builds it. */
+export type DispenseInput = ReturnType<typeof dispenseInput>;
+
 /**
  * What a Dispense save did (rules › dispensing the visit). The save is one
  * transaction, so a refusal anywhere means nothing was saved:
@@ -367,6 +370,8 @@ export const dispenseOutcome = (
     )
   )
     return 'line-refused';
+  // A save with no lines dispenses nothing, whatever came back.
+  if (expectedLines <= 0) return 'refused';
   const records = result.insertPrescriptions ?? [];
   const updates = result.updatePrescriptions ?? [];
   const saved =
@@ -388,3 +393,127 @@ export const dispenseOutcome = (
 export const visitWasSaved = (
   invoice: SimpleDispensedVisitResult['invoice']
 ): boolean => invoice.__typename === 'InvoiceNode' && invoice.status !== 'NEW';
+
+/**
+ * The visit's record while it is being dispensed (rules › dispensing the
+ * visit): its id, made once and kept until the visit is finished or the list
+ * cleared, so a repeated save can't make a second record. `sentFor` is set
+ * once a save went without a definite reply: that save may land at any
+ * moment until the visit is finished, so it stays set until then, naming who
+ * it was saved for.
+ */
+export interface VisitRecord {
+  id: string;
+  sentFor?: { id: string; name: string };
+}
+
+/** What became of a save, as far as the screen can tell. */
+export type SaveReply =
+  /** No reply, or none that could be read: it may have gone through. */
+  | { kind: 'lost' }
+  /** A definite reply: the transaction ran, or was refused whole. */
+  | { kind: 'reply'; outcome: DispenseOutcome; missing?: string[] };
+
+/** The calls Dispense makes, so its steps can be followed without a server. */
+export interface DispenseCalls {
+  /**
+   * Whether the visit's record was saved; undefined when the server couldn't
+   * be asked.
+   */
+  look: (id: string) => Promise<boolean | undefined>;
+  /**
+   * The list's medicines as the stock stands now; undefined when it couldn't
+   * be read.
+   */
+  check: (listed: readonly ListLine[]) => Promise<MedicineCard[] | undefined>;
+  save: (input: DispenseInput) => Promise<SaveReply>;
+  /**
+   * The list's medicines as the screen knew them, for one the check no longer
+   * returns.
+   */
+  before: (itemId: string) => MedicineCard | undefined;
+  newId: () => string;
+}
+
+/**
+ * How Dispense ended (rules › dispensing the visit):
+ * - `saved`: the visit is saved, now or by an earlier save, for `patient`;
+ * - `short`: nothing saved; `checked` is the stock now, with a line short;
+ * - `failed`: nothing saved; `checked` is the stock now when it was read,
+ *   and `missing` the permissions a refusal named;
+ * - `unsure`: a save may have gone through and the screen can't tell.
+ */
+export type DispenseEnd =
+  | { kind: 'saved'; patient: { id: string; name: string } }
+  | { kind: 'short'; checked: MedicineCard[] }
+  | { kind: 'failed'; checked?: MedicineCard[]; missing?: string[] }
+  | { kind: 'unsure' };
+
+/**
+ * Whether an earlier save of the visit went through, when one may have:
+ * `saved` or `unsure` end Dispense; undefined carries on.
+ */
+const lookFirst = async (
+  visit: VisitRecord | undefined,
+  calls: DispenseCalls
+): Promise<DispenseEnd | undefined> => {
+  if (!visit?.sentFor) return undefined;
+  const saved = await calls.look(visit.id);
+  if (saved === undefined) return { kind: 'unsure' };
+  return saved ? { kind: 'saved', patient: visit.sentFor } : undefined;
+};
+
+/**
+ * Dispense (rules › dispensing the visit): check the list against the stock
+ * now and save it if it is all there. While an earlier save may have gone
+ * through, every way out but a save looks for it first, so a visit saved by a
+ * reply that was lost is finished, never saved again, and never reported as
+ * short or failed. `visit` is updated in place: its id is made on the first
+ * save, and `sentFor` set by a save whose reply is lost.
+ */
+export const dispenseVisit = async (
+  visit: { current?: VisitRecord },
+  patient: { id: string; name: string },
+  listed: readonly ListLine[],
+  calls: DispenseCalls,
+  retried = false
+): Promise<DispenseEnd> => {
+  const earlier = await lookFirst(visit.current, calls);
+  if (earlier) return earlier;
+  const fresh = await calls.check(listed);
+  if (!fresh)
+    return (await lookFirst(visit.current, calls)) ?? { kind: 'failed' };
+  const checked = stockAtCheck(listed, fresh, calls.before);
+  const stockNow = (itemId: string) =>
+    checked.find(card => card.item.id === itemId)?.stock ?? 0;
+  if (shortLines(listed, stockNow).length > 0)
+    return (
+      (await lookFirst(visit.current, calls)) ?? { kind: 'short', checked }
+    );
+  const record = (visit.current ??= { id: calls.newId() });
+  const input = dispenseInput(
+    record.id,
+    patient.id,
+    listed,
+    fresh,
+    calls.newId
+  );
+  if (input.insertPrescriptionLines.length === 0)
+    return { kind: 'failed', checked };
+  const reply = await calls.save(input);
+  if (reply.kind === 'lost') {
+    record.sentFor ??= patient;
+    const saved = await calls.look(record.id);
+    return saved
+      ? { kind: 'saved', patient: record.sentFor }
+      : { kind: 'unsure' };
+  }
+  if (reply.outcome === 'saved') return { kind: 'saved', patient };
+  // Refused, so this save rolled back; an earlier one may still have landed,
+  // and the refusal may be the server saying the visit is already there.
+  const landed = await lookFirst(record, calls);
+  if (landed) return landed;
+  if (reply.outcome === 'line-refused' && !retried)
+    return dispenseVisit(visit, patient, listed, calls, true);
+  return { kind: 'failed', checked, missing: reply.missing };
+};
