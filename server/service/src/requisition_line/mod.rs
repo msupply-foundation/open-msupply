@@ -31,7 +31,10 @@ use ancillary_items::{
     AncillaryPlan, GetAncillaryPlanError, RefreshAncillaryItems, RefreshAncillaryItemsError,
     get_ancillary_plan, refresh_ancillary_items,
 };
-use repository::{RequisitionLine, RequisitionLineFilter, RequisitionLineRow};
+use repository::{
+    PaginationOption, RequisitionLine, RequisitionLineFilter, RequisitionLineRow,
+    RequisitionLineSort,
+};
 use response_requisition_line::{
     DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError,
     delete_response_requisition_line,
@@ -49,9 +52,11 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
     fn get_requisition_lines(
         &self,
         ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
         filter: Option<RequisitionLineFilter>,
+        sort: Option<RequisitionLineSort>,
     ) -> Result<ListResult<RequisitionLine>, ListError> {
-        get_requisition_lines(ctx, filter)
+        get_requisition_lines(ctx, pagination, filter, sort)
     }
 
     fn insert_request_requisition_line(

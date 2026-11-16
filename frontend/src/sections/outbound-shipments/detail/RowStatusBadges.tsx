@@ -78,7 +78,7 @@ export const RowStatusBadges = (props: {
       {tooltip => (
         <span title={tooltip()}>
           <StatusBadge
-            label={t('label.not-for-this-campaign')}
+            label={t('label.not-for-this-activity')}
             testId="row-badge-other-campaign"
             icon={<InfoIcon />}
           />

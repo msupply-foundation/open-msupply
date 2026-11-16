@@ -70,13 +70,11 @@ _Author to complete._
 # 📃 Documentation
 
 <!--
-Pick what applies. If docs are needed, add the matching label (`docs: external` / `docs: internal`)
-and change it to `doc: done` once written. See docs/content/process/documentation for the full process.
+Tick one. A change users can see or do differently needs the user docs updated in msupply_docs:
+open a draft docs PR against `staging` (`/update-user-docs` can draft it) and label this PR `docs: external`.
+Product reviews, finishes and merges the docs PR. See docs/content/process/documentation.
 -->
 
-- [ ] **No documentation required** — no user-facing change (e.g. a refactor, or a bug fix that doesn't change behaviour)
-- [ ] **Part of an epic** — documentation will be completed for the feature as a whole
-- [ ] **Public docs needed** (`docs: external`) — user-facing / UI change, written up in the [msupply_docs](https://github.com/msupply-foundation/msupply_docs) repo. Note what changed / how it works (bullets or screenshots):
-<!-- - _(e.g.)_ New `issued` column in `Requisitions` indicates stock quantity already in shipments -->
-- [ ] **Developer docs needed** (`docs: internal`) — code or process worth documenting in `./docs`:
-<!-- - -->
+- [ ] **Docs PR:** <!-- link to the msupply_docs PR -->
+- [ ] **Part of an epic**, docs covered there: <!-- link the epic, or the docs PR that will cover it -->
+- [ ] **No user docs needed**: nothing a user sees or does changes

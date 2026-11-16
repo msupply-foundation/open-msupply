@@ -36,6 +36,28 @@ query patientSearch($storeId: String!, $input: PatientSearchInput!) {
   }
 }
 
+# One patient by its id, with the picker option's fields (PatientSearch's
+# patient): patientSearch can't find a patient by id — its identifier matches
+# code, national health number, name and enrolment id, never the record id.
+query patientOptionById($storeId: String!, $id: String!) {
+  patients(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on PatientConnector {
+      __typename
+      nodes {
+        id
+        code
+        code2
+        name
+        firstName
+        lastName
+        gender
+        dateOfBirth
+        isDeceased
+      }
+    }
+  }
+}
+
 query centralPatientSearch(
   $storeId: String!
   $input: CentralPatientSearchInput!

@@ -1,9 +1,14 @@
+use super::stocktake_row::{StocktakeStatus, stocktake};
 use super::{
-    DBType, ItemRow, ItemType, StorageConnection, UnitRow, item_category_row::item_category_join,
-    item_row::item, master_list_line_row::master_list_line,
+    DBType, ItemRow, ItemType, StorageConnection, UnitRow, invoice_line_row::invoice_line,
+    item_category_row::item_category_join, item_row::item, master_list_line_row::master_list_line,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
-    program_row::program, stock_on_hand::store_stock_on_hand, store_row::store, unit_row::unit,
+    program_row::program, requisition_line_row::requisition_line,
+    stock_on_hand::store_stock_on_hand, stocktake_line_row::stocktake_line, store_row::store,
+    unit_row::unit,
 };
+
+use chrono::NaiveDateTime;
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
@@ -82,12 +87,32 @@ pub struct ItemFilter {
     #[ts(optional)]
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
     pub universal_code: Option<StringFilter>,
+    #[ts(optional)]
+    pub not_in_record: Option<ItemNotInRecordFilter>,
+    /// Items with no counted line in a finalised stocktake of this store since the given
+    /// datetime, including items never counted in this store
+    #[ts(optional)]
+    pub not_counted_since: Option<NaiveDateTime>,
 
     /// Client-provided dynamic filter AST (currently property conditions only).
     /// ANDs with the other filters. Keys must be validated against the "item"
     /// table scope's allowed property keys in the service layer.
     #[ts(skip)]
     pub dynamic_filter: Option<ItemCondition::Inner>,
+}
+
+/// Excludes items already present as a line on the given record.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+pub struct ItemNotInRecordFilter {
+    pub record: ItemNotInRecordType,
+    pub id: String,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+pub enum ItemNotInRecordType {
+    Stocktake,
+    Requisition,
+    Invoice,
 }
 
 // Dynamic query filter for the item table, applied to joined queries via an
@@ -180,6 +205,16 @@ impl ItemFilter {
 
     pub fn dynamic_filter(mut self, condition: ItemCondition::Inner) -> Self {
         self.dynamic_filter = Some(condition);
+        self
+    }
+
+    pub fn not_counted_since(mut self, value: NaiveDateTime) -> Self {
+        self.not_counted_since = Some(value);
+        self
+    }
+
+    pub fn not_in_record(mut self, filter: ItemNotInRecordFilter) -> Self {
+        self.not_in_record = Some(filter);
         self
     }
 }
@@ -285,6 +320,8 @@ impl<'a> ItemRepository<'a> {
                 is_program_item,
                 ignore_for_orders,
                 universal_code,
+                not_in_record,
+                not_counted_since,
                 dynamic_filter,
                 // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
                 max_months_of_stock: _,
@@ -460,6 +497,58 @@ impl<'a> ItemRepository<'a> {
                     query.filter(item::id.ne_all(ignored_item_ids))
                 };
             }
+
+            if let Some(ItemNotInRecordFilter {
+                record,
+                id: record_id,
+            }) = not_in_record
+            {
+                query = match record {
+                    ItemNotInRecordType::Stocktake => {
+                        let item_ids_in_stocktake = stocktake_line::table
+                            .select(stocktake_line::item_id)
+                            .filter(stocktake_line::stocktake_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_stocktake))
+                    }
+                    ItemNotInRecordType::Requisition => {
+                        let item_ids_in_requisition = requisition_line::table
+                            .select(requisition_line::item_id)
+                            .filter(requisition_line::requisition_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_requisition))
+                    }
+                    ItemNotInRecordType::Invoice => {
+                        let item_ids_in_invoice = invoice_line::table
+                            .select(invoice_line::item_id)
+                            .filter(invoice_line::invoice_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_invoice))
+                    }
+                };
+            }
+
+            if let Some(since) = not_counted_since {
+                // A synced stocktake can be finalised without a finalised datetime, so
+                // fall back to when it was created rather than read its items as never
+                // counted. A line with no counted packs (left in by a stocktake
+                // finalised in legacy mSupply) isn't a count.
+                let item_ids_counted_since = stocktake_line::table
+                    .inner_join(stocktake::table)
+                    .select(stocktake_line::item_id)
+                    .filter(stocktake::store_id.eq(store_id.clone()))
+                    .filter(stocktake::status.eq(StocktakeStatus::Finalised))
+                    .filter(stocktake_line::counted_number_of_packs.is_not_null())
+                    .filter(
+                        stocktake::finalised_datetime
+                            .ge(since)
+                            .or(stocktake::finalised_datetime
+                                .is_null()
+                                .and(stocktake::created_datetime.ge(since))),
+                    )
+                    .into_boxed();
+                query = query.filter(item::id.ne_all(item_ids_counted_since));
+            }
         }
         query
     }
@@ -499,21 +588,25 @@ impl ItemType {
 mod tests {
     use std::convert::TryFrom;
 
+    use chrono::{Duration, NaiveDate};
+
     use crate::{
-        EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow, ItemRowRepository,
-        ItemStoreJoinRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, ItemType,
-        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, StockLineRow, StockLineRowRepository, StoreRow, StoreRowRepository,
-        StringFilter,
+        EqualFilter, InvoiceLineRow, InvoiceRow, ItemFilter, ItemLinkRowRepository, ItemRepository,
+        ItemRow, ItemRowRepository, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+        ItemStoreJoinRowRepositoryTrait, ItemType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, RequisitionLineRow,
+        RequisitionRow, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
+        StocktakeStatus, StoreRow, StoreRowRepository, StringFilter,
         mock::{
-            MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_link_from_item,
-            mock_item_universal_code, mock_store_a,
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_d,
+            mock_item_e, mock_item_f, mock_item_g, mock_item_link_from_item,
+            mock_item_universal_code, mock_name_a, mock_store_a, mock_store_b,
         },
         test_db,
     };
 
-    use super::{Item, ItemSort, ItemSortField};
+    use super::{Item, ItemNotInRecordFilter, ItemNotInRecordType, ItemSort, ItemSortField};
 
     impl PartialEq<ItemRow> for Item {
         fn eq(&self, other: &ItemRow) -> bool {
@@ -1005,6 +1098,226 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_filter_not_in_record() {
+        let stocktake = StocktakeRow {
+            id: "not_in_record_stocktake".to_string(),
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let other_stocktake = StocktakeRow {
+            id: "not_in_record_other_stocktake".to_string(),
+            ..stocktake.clone()
+        };
+        let requisition = RequisitionRow {
+            id: "not_in_record_requisition".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let invoice = InvoiceRow {
+            id: "not_in_record_invoice".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        let stocktake_line = |id: &str, stocktake_id: &str, item_id: String| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: stocktake_id.to_string(),
+            item_id,
+            ..Default::default()
+        };
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_item_query_filter_not_in_record",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                stocktakes: vec![stocktake.clone(), other_stocktake.clone()],
+                stocktake_lines: vec![
+                    stocktake_line("stocktake_line_a", &stocktake.id, mock_item_a().id),
+                    // Only the given record's lines exclude an item
+                    stocktake_line(
+                        "other_stocktake_line_b",
+                        &other_stocktake.id,
+                        mock_item_b().id,
+                    ),
+                ],
+                requisitions: vec![requisition.clone()],
+                requisition_lines: vec![RequisitionLineRow {
+                    id: "requisition_line_b".to_string(),
+                    requisition_id: requisition.id.clone(),
+                    item_id: mock_item_b().id,
+                    ..Default::default()
+                }],
+                invoices: vec![invoice.clone()],
+                invoice_lines: vec![InvoiceLineRow {
+                    id: "invoice_line_c".to_string(),
+                    invoice_id: invoice.id.clone(),
+                    item_id: mock_item_c().id,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repository = ItemRepository::new(&connection);
+        let ids = |record: ItemNotInRecordType, id: &str| -> Vec<String> {
+            let mut ids: Vec<String> = repository
+                .query(
+                    Pagination::new(),
+                    Some(
+                        ItemFilter::new()
+                            .id(EqualFilter::equal_any(vec![
+                                mock_item_a().id,
+                                mock_item_b().id,
+                                mock_item_c().id,
+                            ]))
+                            .is_visible(false)
+                            .not_in_record(ItemNotInRecordFilter {
+                                record,
+                                id: id.to_string(),
+                            }),
+                    ),
+                    None,
+                    Some(mock_store_a().id),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|item| item.item_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        assert_eq!(
+            ids(ItemNotInRecordType::Stocktake, &stocktake.id),
+            vec![mock_item_b().id, mock_item_c().id]
+        );
+        assert_eq!(
+            ids(ItemNotInRecordType::Requisition, &requisition.id),
+            vec![mock_item_a().id, mock_item_c().id]
+        );
+        assert_eq!(
+            ids(ItemNotInRecordType::Invoice, &invoice.id),
+            vec![mock_item_a().id, mock_item_b().id]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_filter_not_counted_since() {
+        let since = NaiveDate::from_ymd_opt(2026, 6, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let before = since - Duration::days(1);
+        let after = since + Duration::days(1);
+
+        let finalised = |id: &str, store_id: String, finalised_datetime| StocktakeRow {
+            id: id.to_string(),
+            store_id,
+            status: StocktakeStatus::Finalised,
+            created_datetime: before,
+            finalised_datetime,
+            ..Default::default()
+        };
+        let recent = finalised("recent", mock_store_a().id, Some(after));
+        let old = finalised("old", mock_store_a().id, Some(before));
+        // Synced finalised without a finalised datetime: created after `since`
+        let no_finalised_datetime = StocktakeRow {
+            created_datetime: after,
+            ..finalised("no_finalised_datetime", mock_store_a().id, None)
+        };
+        let not_finalised = StocktakeRow {
+            id: "not_finalised".to_string(),
+            store_id: mock_store_a().id,
+            created_datetime: after,
+            ..Default::default()
+        };
+        let other_store = finalised("other_store", mock_store_b().id, Some(after));
+
+        let line = |id: &str, stocktake_id: &str, item_id: String, counted: Option<f64>| {
+            StocktakeLineRow {
+                id: id.to_string(),
+                stocktake_id: stocktake_id.to_string(),
+                item_id,
+                counted_number_of_packs: counted,
+                ..Default::default()
+            }
+        };
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_item_query_filter_not_counted_since",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                stocktakes: vec![
+                    recent.clone(),
+                    old.clone(),
+                    no_finalised_datetime.clone(),
+                    not_finalised.clone(),
+                    other_store.clone(),
+                ],
+                stocktake_lines: vec![
+                    // a: counted since -> excluded
+                    line("line_a", &recent.id, mock_item_a().id, Some(1.0)),
+                    // b: last counted before -> included
+                    line("line_b", &old.id, mock_item_b().id, Some(1.0)),
+                    // c: only in a stocktake that isn't finalised -> included
+                    line("line_c", &not_finalised.id, mock_item_c().id, Some(1.0)),
+                    // d: finalised with no finalised datetime, created since -> excluded
+                    line(
+                        "line_d",
+                        &no_finalised_datetime.id,
+                        mock_item_d().id,
+                        Some(1.0),
+                    ),
+                    // e: on a finalised stocktake but never counted -> included
+                    line("line_e", &recent.id, mock_item_e().id, None),
+                    // f: counted since, but in another store -> included
+                    line("line_f", &other_store.id, mock_item_f().id, Some(1.0)),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let mut ids: Vec<String> = ItemRepository::new(&connection)
+            .query(
+                Pagination::new(),
+                Some(
+                    ItemFilter::new()
+                        .id(EqualFilter::equal_any(vec![
+                            mock_item_a().id,
+                            mock_item_b().id,
+                            mock_item_c().id,
+                            mock_item_d().id,
+                            mock_item_e().id,
+                            mock_item_f().id,
+                            mock_item_g().id,
+                        ]))
+                        .not_counted_since(since),
+                ),
+                None,
+                Some(mock_store_a().id),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|item| item.item_row.id)
+            .collect();
+        ids.sort();
+
+        let mut expected = vec![
+            mock_item_b().id,
+            mock_item_c().id,
+            mock_item_e().id,
+            mock_item_f().id,
+            // g: never in a stocktake -> included
+            mock_item_g().id,
+        ];
+        expected.sort();
+        assert_eq!(ids, expected);
     }
 
     #[actix_rt::test]

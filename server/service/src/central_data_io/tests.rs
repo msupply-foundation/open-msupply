@@ -178,7 +178,7 @@ async fn heading_errors_are_listed_before_row_errors() {
     assert_eq!(summary.error_count as usize, MAX_ROWS_LISTED + 51);
     assert_eq!(
         (summary.errors[0].row, summary.errors[0].column.as_deref()),
-        (1, Some("nmae"))
+        (Some(1), Some("nmae"))
     );
 }
 
@@ -421,7 +421,7 @@ async fn one_bad_row_means_nothing_is_applied() {
         .collect();
     assert_eq!(
         errors,
-        vec![(4, Some("index"), "\"abc\" must be a whole number")]
+        vec![(Some(4), Some("index"), "\"abc\" must be a whole number")]
     );
 
     let repo = UnitRowRepository::new(&connection);
@@ -506,9 +506,9 @@ async fn misspelt_columns_unknown_sheets_and_repeated_records_are_errors() {
     assert_eq!(
         errors,
         vec![
-            ("units", 1, None),
-            ("unit", 1, Some("nmae")),
-            ("unit", 3, None),
+            ("units", None, None),
+            ("unit", Some(1), Some("nmae")),
+            ("unit", Some(3), None),
         ]
     );
     assert_eq!(
@@ -557,8 +557,8 @@ async fn a_repeated_heading_and_values_without_a_heading_are_errors() {
     assert_eq!(
         errors,
         vec![
-            (1, Some("name"), "This column appears twice"),
-            (1, None, "Column E has values but no heading"),
+            (Some(1), Some("name"), "This column appears twice"),
+            (Some(1), None, "Column E has values but no heading"),
         ]
     );
 }
@@ -682,6 +682,52 @@ async fn a_repeated_row_that_changes_nothing_is_not_an_error() {
     assert_eq!(summary.tables, unit_changes(0, 1, 3));
 }
 
+// covers: OMS-REG-CDIO-01.73
+
+#[actix_rt::test]
+async fn a_name_finds_a_unit_an_earlier_row_adds() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_unit_added_earlier_in_file",
+        MockDataInserts::none().units(),
+    )
+    .await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let row =
+        |id: Value, index: i32| vec![id, "Vial".to_string().into(), index.into(), true.into()];
+    let path = write_file(
+        dir.path(),
+        unit_sheet(
+            vec!["id", "name", "index", "is_active"],
+            vec![
+                row(Value::Empty, 1),
+                // Finds row 2's unit and repeats it.
+                row(Value::Empty, 1),
+                // Finds row 2's unit and changes it.
+                row(Value::Empty, 2),
+                // A second active Vial.
+                row("new_vial".to_string().into(), 1),
+            ],
+        ),
+    );
+
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|e| (e.row, e.message.as_str()))
+        .collect();
+    assert_eq!(errors[0], (Some(4), "Row 2 already changes this record"));
+    assert_eq!(errors[1].0, Some(5));
+    assert!(errors[1].1.ends_with(
+        "is already named Vial. Give this unit another name, or make one of them inactive"
+    ));
+    assert_eq!(errors.len(), 2);
+    assert_eq!(units_named(&connection, "Vial"), vec![]);
+}
+
 // covers: OMS-REG-CDIO-01.41
 
 #[actix_rt::test]
@@ -711,7 +757,10 @@ async fn a_unit_row_cannot_give_an_active_unit_another_active_units_name() {
 
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     let error = &summary.errors[0];
-    assert_eq!((error.row, error.column.as_deref()), (2, Some("name")));
+    assert_eq!(
+        (error.row, error.column.as_deref()),
+        (Some(2), Some("name"))
+    );
     assert_eq!(
         error.message,
         format!(
@@ -892,7 +941,7 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
     assert_eq!(
         errors,
         vec![(
-            2,
+            Some(2),
             Some("name"),
             "ambiguous reference, please provide id instead"
         )]
@@ -963,7 +1012,7 @@ async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
         .iter()
         .map(|e| (e.row, e.column.as_deref()))
         .collect();
-    assert_eq!(errors, vec![(2, Some("name"))]);
+    assert_eq!(errors, vec![(Some(2), Some("name"))]);
     assert_eq!(repo.find_one_by_id("new_unit").unwrap(), None);
 
     let path = write_file(dir.path(), unit_sheet(headers, vec![new_unit("Bottle")]));
@@ -1030,7 +1079,7 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
         .collect();
     assert_eq!(
         errors,
-        vec![(4, Some("index"), "index is required for a new unit")]
+        vec![(Some(4), Some("index"), "index is required for a new unit")]
     );
     assert_eq!(
         summary.tables,
@@ -1100,7 +1149,7 @@ async fn errors_past_the_listed_rows_are_counted_not_listed() {
     assert_eq!(summary.errors.len(), MAX_ROWS_LISTED);
     assert_eq!(summary.error_count, bad_rows as u32);
     assert_eq!(summary.tables[0].error_count, bad_rows as u32);
-    assert_eq!(summary.errors[0].row, 2);
+    assert_eq!(summary.errors[0].row, Some(2));
 }
 
 // Location types
@@ -1243,7 +1292,7 @@ async fn a_location_type_export_searches_name_and_code() {
     assert_eq!(counts[0].count.matching, 2);
 }
 
-// covers: OMS-REG-CDIO-01.12, .35, .63, .73, .75
+// covers: OMS-REG-CDIO-01.12, .35, .63, .75, .77
 
 #[actix_rt::test]
 async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
@@ -1423,7 +1472,7 @@ async fn a_code_two_location_types_share_asks_for_the_id() {
     assert_eq!(summary.tables[0].updated, 1);
 }
 
-// covers: OMS-REG-CDIO-01.25, .26, .36, .55, .74
+// covers: OMS-REG-CDIO-01.25, .26, .36, .55, .78
 
 #[actix_rt::test]
 async fn a_delete_row_removes_an_unused_location_type_only() {
@@ -1500,7 +1549,7 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
     assert_eq!(repo.find_one_by_id("unused_type").unwrap(), None);
 }
 
-// covers: OMS-REG-CDIO-01.74
+// covers: OMS-REG-CDIO-01.78
 
 #[actix_rt::test]
 async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_variant() {

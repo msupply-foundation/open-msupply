@@ -332,8 +332,8 @@ pub struct CentralDataTableChangesNode {
 #[derive(SimpleObject)]
 pub struct CentralDataRowErrorNode {
     pub sheet: String,
-    /// As Excel shows it.
-    pub row: u32,
+    /// As Excel shows it. Null on a sheet name, which has no row.
+    pub row: Option<u32>,
     pub column: Option<String>,
     pub message: String,
 }

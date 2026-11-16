@@ -242,6 +242,8 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
 
+    // covers: OMS-REG-CDIO-01.7, .72
+
     #[test]
     fn too_many_rows_is_refused_with_the_count_and_blank_rows_do_not_count() {
         let dir = TempDir::new().unwrap();

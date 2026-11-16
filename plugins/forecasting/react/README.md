@@ -2,9 +2,9 @@
 
 > **Imported from [msupply-foundation/open-msupply-forecasting-plugins](https://github.com/msupply-foundation/open-msupply-forecasting-plugins)** (Oct 2026, `main` with history — each commit's `Source:` trailer links its original). File issues in this repo now, not there. Built bundles were stripped from history; they live on the bundle server.
 >
-> This is the plugin for the **React UI**. There is no SolidJS port yet. `pnpm build:plugins --react` in `frontend/` would build it into the plugin's bundle, but it fails (below), so the run reports it and publishes no bundle for it until it is fixed. Steps further down that name `client/packages/plugins/<name>/` predate the import — the paths here now point into `client/` from where they sit.
+> This is the plugin for the **React UI**. There is no SolidJS port yet. **Archived** ([`../ARCHIVED.md`](../ARCHIVED.md)): `pnpm build:plugins` skips it, and it does not build against today's `client/`. Steps further down that name `client/packages/plugins/<name>/` predate the import — the paths here now point into `client/` from where they sit.
 >
-> **It does not build against today's `client/` yet:** the backend's requisition-line transform no longer matches `TransformRequestRequisitionLineOutput`, and both frontends pass props `ValueInfoRow` no longer takes — drift since its last commit, not the import.
+> **Superseded on open-mSupply 3.04 and later; don't install it there.** Core forecasts internal-order lines itself: each line has a forecast method (AMC, Population, Ancillary ratio), and the Population method replaces this plugin's calculation. This plugin's transform would overwrite core's suggested quantity on every line with vaccine courses, with a figure that ignores the order's target months and reorder threshold, and its column would contradict the line's own forecast. Kept for its history and for sites still on 2.x.
 
 ## Translation Note
 Since we can't currently translate the column names in plugins, this plugin will install with French, we'll need to either solve the core problem or fork this repo if a french version is needed in future.

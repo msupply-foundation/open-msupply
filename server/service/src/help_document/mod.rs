@@ -2,7 +2,9 @@ mod delete;
 mod query;
 mod upsert;
 
-pub use delete::{DeleteHelpDocument, DeleteHelpDocumentError, delete_help_document};
+pub use delete::{
+    DeleteHelpDocument, DeleteHelpDocumentError, HELP_DOCUMENT_TABLE, delete_help_document,
+};
 pub use query::{get_help_document, get_help_documents};
 pub use upsert::{InsertHelpDocument, InsertHelpDocumentError, insert_help_document};
 
