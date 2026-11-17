@@ -1,0 +1,199 @@
+{
+  "description": "Old (React front end) table layouts by old table id -> new (Solid front end) table configs by new table id, through `map`. Run by the server migration fragment's tests (convert.rs, convert_tables) and the Solid front end's legacy table import tests, so both sides convert the same way. `map` is a small map for these cases, not the real one.",
+  "map": {
+    "version": 1,
+    "columnPrefixes": { "prop-": "cf-", "prop-x-": "x-" },
+    "tables": [
+      {
+        "from": "old-list",
+        "to": "new-list",
+        "columns": {
+          "code": "itemCode",
+          "item.name": "itemName",
+          "status": "status",
+          "mrt-row-select": null,
+          "notes": null,
+          "prop-explicit": "explicitly-mapped"
+        }
+      },
+      { "from": "old-detail", "to": "new-detail", "columns": { "batch": "batch" }, "groupRows": true },
+      { "from": "old-flat", "to": "new-flat", "columns": { "batch": "batch" } },
+      { "from": "shared-old", "to": "screen-a", "columns": { "code": "code" } },
+      { "from": "shared-old", "to": "screen-b", "columns": { "code": "code" } },
+      { "from": "first-tab", "to": "merged", "columns": { "batch": "batch" } },
+      { "from": "second-tab", "to": "merged", "columns": { "batch": "batch", "price": "price" } },
+      {
+        "from": "header-ids",
+        "to": "header-table",
+        "columns": { "SOH": "soh", "Stock total": "soh", "code": "code" }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "renames columns in every column setting",
+      "old": {
+        "old-list": {
+          "columnOrder": ["mrt-row-select", "code", "item.name", "status"],
+          "columnSizing": { "code": 120, "item.name": 250 },
+          "columnPinning": { "left": ["mrt-row-select", "code"], "right": [] },
+          "columnVisibility": { "status": false, "code": true }
+        }
+      },
+      "expected": {
+        "new-list": {
+          "columnOrder": ["itemCode", "itemName", "status"],
+          "columnSizing": { "itemCode": 7.5, "itemName": 15.63 },
+          "columnPinning": { "left": ["itemCode"] },
+          "columnVisibility": { "status": false, "itemCode": true }
+        }
+      }
+    },
+    {
+      "name": "drops unmapped columns and columns mapped to null from every setting",
+      "old": {
+        "old-list": {
+          "columnOrder": ["notes", "unknown", "code"],
+          "columnSizing": { "notes": 100, "unknown": 100, "code": 160 },
+          "columnVisibility": { "notes": false, "unknown": false }
+        }
+      },
+      "expected": {
+        "new-list": { "columnOrder": ["itemCode"], "columnSizing": { "itemCode": 10 } }
+      }
+    },
+    {
+      "name": "rewrites column prefixes; the entry's own columns win, then the longest prefix",
+      "old": {
+        "old-list": { "columnOrder": ["prop-population", "prop-explicit", "prop-x-colour", "code"] }
+      },
+      "expected": {
+        "new-list": { "columnOrder": ["cf-population", "explicitly-mapped", "x-colour", "itemCode"] }
+      }
+    },
+    {
+      "name": "converts widths from px to rem at 16px, rounded to 2 decimal places, dropping widths that aren't positive numbers",
+      "old": {
+        "old-list": { "columnSizing": { "code": 100, "status": 33, "item.name": "wide", "prop-explicit": 0 } }
+      },
+      "expected": {
+        "new-list": { "columnSizing": { "itemCode": 6.25, "status": 2.06 } }
+      }
+    },
+    {
+      "name": "maps density and view mode, dropping values the new UI doesn't have",
+      "old": {
+        "old-list": { "density": "compact", "viewMode": "card" },
+        "old-flat": { "density": "tiny", "viewMode": "grid" }
+      },
+      "expected": {
+        "new-list": { "viewDensity": "compact", "viewMode": "card" }
+      }
+    },
+    {
+      "name": "turns grouping into groupRows only where the new table groups rows",
+      "old": {
+        "old-detail": { "grouping": ["item.code"] },
+        "old-flat": { "grouping": ["item.code"] }
+      },
+      "expected": {
+        "new-detail": { "groupRows": true }
+      }
+    },
+    {
+      "name": "an empty grouping is the new UI's default, so nothing is written",
+      "old": {
+        "old-detail": { "grouping": [] }
+      },
+      "expected": {}
+    },
+    {
+      "name": "drops pinning that only holds the old UI's built-in columns",
+      "old": {
+        "old-list": { "columnPinning": { "left": ["mrt-row-select"], "right": ["mrt-row-actions"] } }
+      },
+      "expected": {}
+    },
+    {
+      "name": "keeps pinning on both sides",
+      "old": {
+        "old-list": { "columnPinning": { "left": ["code"], "right": ["status"] } }
+      },
+      "expected": {
+        "new-list": { "columnPinning": { "left": ["itemCode"], "right": ["status"] } }
+      }
+    },
+    {
+      "name": "skips old tables the map doesn't list",
+      "old": {
+        "not-in-map": { "columnOrder": ["code"] }
+      },
+      "expected": {}
+    },
+    {
+      "name": "copies one old table to each new table it maps to",
+      "old": {
+        "shared-old": { "columnOrder": ["code"] }
+      },
+      "expected": {
+        "screen-a": { "columnOrder": ["code"] },
+        "screen-b": { "columnOrder": ["code"] }
+      }
+    },
+    {
+      "name": "the earlier entry wins when two old tables map to one new table",
+      "old": {
+        "first-tab": { "columnOrder": ["batch"] },
+        "second-tab": { "columnOrder": ["price", "batch"] }
+      },
+      "expected": {
+        "merged": { "columnOrder": ["batch"] }
+      }
+    },
+    {
+      "name": "a later entry is used when the earlier one has nothing to carry over",
+      "old": {
+        "first-tab": { "columnOrder": ["price"] },
+        "second-tab": { "columnOrder": ["price", "batch"] }
+      },
+      "expected": {
+        "merged": { "columnOrder": ["price", "batch"] }
+      }
+    },
+    {
+      "name": "a later entry is used when the earlier old table has no layout",
+      "old": {
+        "second-tab": { "columnSizing": { "price": 96 } }
+      },
+      "expected": {
+        "merged": { "columnSizing": { "price": 6 } }
+      }
+    },
+    {
+      "name": "of several old columns that map to one new column, keeps the first in a list and the lowest old id in an object",
+      "old": {
+        "header-ids": {
+          "columnOrder": ["Stock total", "code", "SOH"],
+          "columnSizing": { "Stock total": 160, "SOH": 80 },
+          "columnVisibility": { "Stock total": false, "SOH": true }
+        }
+      },
+      "expected": {
+        "header-table": {
+          "columnOrder": ["soh", "code"],
+          "columnSizing": { "soh": 5 },
+          "columnVisibility": { "soh": true }
+        }
+      }
+    },
+    {
+      "name": "ignores settings the new UI doesn't have, and layouts that aren't objects",
+      "old": {
+        "old-list": { "columnFilters": [{ "id": "code", "value": "x" }], "sorting": [] },
+        "old-flat": "not an object",
+        "old-detail": null
+      },
+      "expected": {}
+    }
+  ]
+}

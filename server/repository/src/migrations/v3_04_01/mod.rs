@@ -2,6 +2,7 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod drop_changelog_dedup_index;
+mod migrate_global_table_configs_to_default_configs;
 mod requeue_failed_v7_deletes;
 
 pub(crate) struct V3_04_01;
@@ -19,6 +20,7 @@ impl Migration for V3_04_01 {
         vec![
             Box::new(requeue_failed_v7_deletes::Migrate),
             Box::new(drop_changelog_dedup_index::Migrate),
+            Box::new(migrate_global_table_configs_to_default_configs::Migrate),
         ]
     }
 }
