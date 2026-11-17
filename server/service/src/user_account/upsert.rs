@@ -1,4 +1,9 @@
-use repository::{RepositoryError, StorageConnection, UserAccountRow, UserAccountRowRepository};
+use chrono::Utc;
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, UserAccountRow,
+    UserAccountRowRepository,
+};
+use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUserError {
@@ -9,6 +14,10 @@ pub enum UpsertUserError {
     DuplicateUsername {
         other_id: String,
     },
+    /// See `protected_user_ids`.
+    Protected,
+    /// The user saving made themselves inactive or deleted, so they couldn't log in again.
+    LocksOutSelf,
     DatabaseError(RepositoryError),
 }
 
@@ -18,33 +27,121 @@ impl From<RepositoryError> for UpsertUserError {
     }
 }
 
-/// Saves `row` as given, `hashed_password` included. Joins the caller's transaction when there
-/// is one, so an import's earlier rows count.
+#[derive(Debug, PartialEq)]
+pub enum DeleteUserError {
+    /// See `protected_user_ids`.
+    Protected,
+    /// The user deleting is the one deleted, so they couldn't log in again.
+    DeletingSelf,
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for DeleteUserError {
+    fn from(error: RepositoryError) -> Self {
+        DeleteUserError::DatabaseError(error)
+    }
+}
+
+/// Users the server records its own work as, and the admin a standalone central server made at
+/// setup. The server needs them, so they can't be changed or deleted.
+pub fn protected_user_ids(connection: &StorageConnection) -> Result<Vec<String>, RepositoryError> {
+    let admin = KeyValueStoreRepository::new(connection)
+        .get_string(KeyType::StandaloneCentralAdminUserId)?;
+    Ok([SYSTEM_USER_ID, PLUGIN_USER_ID]
+        .into_iter()
+        .map(str::to_string)
+        .chain(admin)
+        .collect())
+}
+
+/// Whether saving `user` over `saved` must end the user's open sessions: they were made inactive
+/// or deleted, or given a new password.
+pub fn ends_sessions(saved: Option<&UserAccountRow>, user: &UserAccountRow) -> bool {
+    saved.is_some_and(|saved| {
+        locks_out(user) && !locks_out(saved) || saved.hashed_password != user.hashed_password
+    })
+}
+
+/// Saves `row` as given, `hashed_password` included, as `by`, the user saving. Joins the caller's
+/// transaction when there is one, so an import's earlier rows count.
 pub fn upsert_user(
     connection: &StorageConnection,
+    by: &str,
     row: &UserAccountRow,
 ) -> Result<(), UpsertUserError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertUserError> {
-            validate(connection, row)?;
-            UserAccountRowRepository::new(connection).upsert_one(row)?;
+            let repo = UserAccountRowRepository::new(connection);
+            let saved = repo.find_one_by_id(&row.id)?;
+            if saved.is_some() && protected_user_ids(connection)?.contains(&row.id) {
+                return Err(UpsertUserError::Protected);
+            }
+            // Only a save that brings it in, as a user can't be logged in to lock themselves out.
+            if row.id == by
+                && locks_out(row)
+                && saved.as_ref().is_some_and(|saved| !locks_out(saved))
+            {
+                return Err(UpsertUserError::LocksOutSelf);
+            }
+            validate(connection, saved.as_ref(), row)?;
+            repo.upsert_one(row)?;
             Ok(())
         })
         .map_err(|error| error.to_inner_error())
 }
 
-/// Shared with `create_user`, so the app and import refuse the same usernames.
+/// Marks the user deleted, as `by`, the user deleting. A deleted user stays on what refers to
+/// them, can't log in, and is restored by saving them again. Nothing to do for a user already
+/// deleted or never saved. Joins the caller's transaction when there is one.
+pub fn delete_user(
+    connection: &StorageConnection,
+    by: &str,
+    id: &str,
+) -> Result<(), DeleteUserError> {
+    connection
+        .transaction_sync(|connection| -> Result<(), DeleteUserError> {
+            if id == by {
+                return Err(DeleteUserError::DeletingSelf);
+            }
+            if protected_user_ids(connection)?
+                .iter()
+                .any(|protected| protected == id)
+            {
+                return Err(DeleteUserError::Protected);
+            }
+            let repo = UserAccountRowRepository::new(connection);
+            let Some(saved) = repo
+                .find_one_by_id(id)?
+                .filter(|saved| saved.deleted_datetime.is_none())
+            else {
+                return Ok(());
+            };
+            repo.upsert_one(&UserAccountRow {
+                deleted_datetime: Some(Utc::now().naive_utc()),
+                ..saved
+            })?;
+            Ok(())
+        })
+        .map_err(|error| error.to_inner_error())
+}
+
+fn locks_out(user: &UserAccountRow) -> bool {
+    !user.is_active || user.deleted_datetime.is_some()
+}
+
+/// Shared with `create_user`, so the app and import refuse the same usernames. `saved` is the
+/// user as saved, if they are.
 pub(super) fn validate(
     connection: &StorageConnection,
+    saved: Option<&UserAccountRow>,
     row: &UserAccountRow,
 ) -> Result<(), UpsertUserError> {
     if row.username.trim().is_empty() {
         return Err(UpsertUserError::UsernameRequired);
     }
-    let repo = UserAccountRowRepository::new(connection);
-    let saved_username = repo.find_one_by_id(&row.id)?.map(|saved| saved.username);
+    let saved_username = saved.map(|saved| &saved.username);
     // Only a username the save brings in, so a padded one legacy sync saved stays editable.
-    if row.username.trim() != row.username && saved_username.as_ref() != Some(&row.username) {
+    if row.username.trim() != row.username && saved_username != Some(&row.username) {
         return Err(UpsertUserError::UsernamePadded);
     }
 
@@ -54,7 +151,7 @@ pub(super) fn validate(
     if !brings_in_clash {
         return Ok(());
     }
-    match repo
+    match UserAccountRowRepository::new(connection)
         .find_by_trimmed_username_any_case(&row.username)?
         .into_iter()
         .find(|other| other.id != row.id)
@@ -78,7 +175,7 @@ mod tests {
     }
 
     fn upsert(connection: &StorageConnection, row: &UserAccountRow) -> Result<(), UpsertUserError> {
-        upsert_user(connection, row)
+        upsert_user(connection, "", row)
     }
 
     #[actix_rt::test]
@@ -138,5 +235,131 @@ mod tests {
         };
         upsert(&connection, &edited).unwrap();
         assert_eq!(repo.find_one_by_id("b").unwrap(), Some(edited));
+    }
+
+    // covers: OMS-REG-CDIO-01.90
+
+    #[actix_rt::test]
+    async fn a_protected_user_cannot_be_changed_or_deleted() {
+        let (_, connection, _, _) =
+            setup_all("upsert_user_protected", MockDataInserts::none()).await;
+        let repo = UserAccountRowRepository::new(&connection);
+        for row in [user(SYSTEM_USER_ID, "system"), user("admin", "admin")] {
+            repo.upsert_one(&row).unwrap();
+        }
+        KeyValueStoreRepository::new(&connection)
+            .set_string(
+                KeyType::StandaloneCentralAdminUserId,
+                Some("admin".to_string()),
+            )
+            .unwrap();
+
+        for id in [SYSTEM_USER_ID, "admin"] {
+            let edited = UserAccountRow {
+                job_title: Some("Pharmacist".to_string()),
+                ..repo.find_one_by_id(id).unwrap().unwrap()
+            };
+            assert_eq!(
+                upsert(&connection, &edited),
+                Err(UpsertUserError::Protected),
+                "{id}"
+            );
+            assert_eq!(
+                delete_user(&connection, "", id),
+                Err(DeleteUserError::Protected),
+                "{id}"
+            );
+        }
+        assert_eq!(
+            repo.find_one_by_id("admin").unwrap(),
+            Some(user("admin", "admin"))
+        );
+    }
+
+    // covers: OMS-REG-CDIO-01.91
+
+    #[actix_rt::test]
+    async fn a_user_cannot_lock_themselves_out() {
+        let (_, connection, _, _) =
+            setup_all("upsert_user_locks_out_self", MockDataInserts::none()).await;
+        let anna = UserAccountRow {
+            is_active: true,
+            ..user("anna", "anna")
+        };
+        upsert(&connection, &anna).unwrap();
+        let inactive = UserAccountRow {
+            is_active: false,
+            ..anna.clone()
+        };
+        let deleted = UserAccountRow {
+            deleted_datetime: Some(Utc::now().naive_utc()),
+            ..anna.clone()
+        };
+
+        for row in [&inactive, &deleted] {
+            assert_eq!(
+                upsert_user(&connection, "anna", row),
+                Err(UpsertUserError::LocksOutSelf)
+            );
+        }
+        assert_eq!(
+            delete_user(&connection, "anna", "anna"),
+            Err(DeleteUserError::DeletingSelf)
+        );
+        // Someone else may.
+        upsert_user(&connection, "ben", &inactive).unwrap();
+        // Already locked out, so saving them as they are locks out no one.
+        upsert_user(&connection, "anna", &inactive).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_deleted_user_is_kept_marked_deleted_and_restored_by_saving_them() {
+        let (_, connection, _, _) = setup_all("upsert_user_delete", MockDataInserts::none()).await;
+        let repo = UserAccountRowRepository::new(&connection);
+        upsert(&connection, &user("anna", "anna")).unwrap();
+
+        delete_user(&connection, "ben", "anna").unwrap();
+        let deleted = repo.find_one_by_id("anna").unwrap().unwrap();
+        assert!(deleted.deleted_datetime.is_some());
+        // Deleting again, or a user never saved, changes nothing.
+        delete_user(&connection, "ben", "anna").unwrap();
+        assert_eq!(repo.find_one_by_id("anna").unwrap(), Some(deleted));
+        delete_user(&connection, "ben", "nobody").unwrap();
+        assert_eq!(repo.find_one_by_id("nobody").unwrap(), None);
+
+        upsert(&connection, &user("anna", "anna")).unwrap();
+        assert_eq!(
+            repo.find_one_by_id("anna").unwrap(),
+            Some(user("anna", "anna"))
+        );
+    }
+
+    #[test]
+    fn sessions_end_when_a_user_is_locked_out_or_given_a_new_password() {
+        let anna = UserAccountRow {
+            is_active: true,
+            hashed_password: "hash".to_string(),
+            ..user("anna", "anna")
+        };
+        let ends = |user: UserAccountRow| ends_sessions(Some(&anna), &user);
+
+        assert!(ends(UserAccountRow {
+            is_active: false,
+            ..anna.clone()
+        }));
+        assert!(ends(UserAccountRow {
+            deleted_datetime: Some(Utc::now().naive_utc()),
+            ..anna.clone()
+        }));
+        assert!(ends(UserAccountRow {
+            hashed_password: "new hash".to_string(),
+            ..anna.clone()
+        }));
+        assert!(!ends(UserAccountRow {
+            job_title: Some("Pharmacist".to_string()),
+            ..anna.clone()
+        }));
+        // A new user has no sessions yet.
+        assert!(!ends_sessions(None, &anna));
     }
 }

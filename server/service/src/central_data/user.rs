@@ -9,18 +9,16 @@ use super::{
 };
 use crate::user_account::{
     UserAccountService,
-    upsert::{UpsertUserError, upsert_user},
+    upsert::{
+        DeleteUserError, UpsertUserError, delete_user, ends_sessions, protected_user_ids,
+        upsert_user,
+    },
 };
-use chrono::Utc;
 use repository::{
-    KeyType, KeyValueStoreRepository, LanguageType, RepositoryError, StorageConnection,
-    UserAccountRow, UserAccountRowRepository,
+    LanguageType, RepositoryError, StorageConnection, UserAccountRow, UserAccountRowRepository,
 };
 use std::{any::Any, collections::HashMap};
-use util::{
-    constants::{PLUGIN_USER_ID, SYSTEM_USER_ID},
-    uuid::uuid,
-};
+use util::uuid::uuid;
 
 const ID: &str = "id";
 const USERNAME: &str = "username";
@@ -71,10 +69,6 @@ struct Hashed {
 
 /// By row number.
 type Passwords = HashMap<u32, Hashed>;
-
-/// Users the server records its own work as. With the admin made at setup, never exported or
-/// imported.
-const BUILT_IN: &[&str] = &[SYSTEM_USER_ID, PLUGIN_USER_ID];
 
 /// Matched by `id`, else `username`. On an update a blank cell keeps the value, except in the
 /// optional text columns, where it clears it. `password` is never exported, so a blank one keeps
@@ -196,7 +190,7 @@ impl ImportTable for UserTable {
         start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(UserSheet {
-            protected: protected(connection)?,
+            protected: protected_user_ids(connection)?,
             importer: start.user_id.to_string(),
             commit: start.commit,
             sessions_to_end: Vec::new(),
@@ -210,7 +204,7 @@ impl ImportTable for UserTable {
 
 struct UserSheet {
     protected: Vec<String>,
-    /// The user running the import, who can't make themselves inactive.
+    /// The user running the import, who saves each row.
     importer: String,
     commit: bool,
     passwords: Passwords,
@@ -250,14 +244,7 @@ impl SheetImport for UserSheet {
         if let Some(saved) = saved
             && self.protected.contains(&saved.id)
         {
-            let column = if id.is_some() { ID } else { USERNAME };
-            errors.push(row.error(
-                column,
-                format!(
-                    "{} is protected, as the server needs it, so import can't change it",
-                    saved.username
-                ),
-            ));
+            errors.push(protected_error(row, saved));
             return Err(RowFailure::Invalid(errors));
         }
         if delete {
@@ -273,12 +260,6 @@ impl SheetImport for UserSheet {
         let is_active = is_active
             .or(saved.map(|user| user.is_active))
             .unwrap_or(true);
-        if !is_active && saved.is_some_and(|user| user.is_active && user.id == self.importer) {
-            errors.push(row.error(
-                IS_ACTIVE,
-                "This is you. You can't make yourself inactive, or you couldn't log in again",
-            ));
-        }
         row.require_for_new(
             &mut errors,
             "user",
@@ -329,12 +310,9 @@ impl SheetImport for UserSheet {
         // Restoring a deleted user is an update.
         let change = Change::between_upserts(saved, &user);
         if change != Change::Unchanged {
-            upsert_user(connection, &user)
+            upsert_user(connection, &self.importer, &user)
                 .map_err(|error| upsert_failure(connection, row, error))?;
-            if saved.is_some_and(|saved| {
-                (saved.is_active && !user.is_active)
-                    || saved.hashed_password != user.hashed_password
-            }) {
+            if ends_sessions(saved, &user) {
                 self.sessions_to_end.push(user.id.clone());
             }
         }
@@ -378,12 +356,6 @@ impl UserSheet {
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, USERNAME, errors);
         };
-        if saved.id == self.importer {
-            errors.push(row.error(
-                DELETE_COLUMN,
-                "This is you. You can't delete yourself, or you couldn't log in again",
-            ));
-        }
         let saved_cells: Vec<_> = COLUMNS
             .iter()
             .copied()
@@ -397,15 +369,21 @@ impl UserSheet {
             return Err(RowFailure::Invalid(errors));
         }
 
-        let user = UserAccountRow {
-            deleted_datetime: Some(Utc::now().naive_utc()),
-            ..saved
-        };
-        upsert_user(connection, &user).map_err(|error| upsert_failure(connection, row, error))?;
-        self.sessions_to_end.push(user.id.clone());
+        delete_user(connection, &self.importer, &saved.id).map_err(|error| match error {
+            DeleteUserError::DeletingSelf => row
+                .error(
+                    DELETE_COLUMN,
+                    "This is you. You can't delete yourself, or you couldn't log in again",
+                )
+                .into(),
+            // Unreachable here: `import_row` refuses a protected user first.
+            DeleteUserError::Protected => protected_error(row, &saved).into(),
+            DeleteUserError::DatabaseError(error) => RowFailure::Database(error),
+        })?;
+        self.sessions_to_end.push(saved.id.clone());
         Ok(RowOutcome {
-            record: user.username,
-            record_id: user.id,
+            record: saved.username,
+            record_id: saved.id,
             change: Change::Deleted,
             fields: Vec::new(),
         })
@@ -455,8 +433,30 @@ fn upsert_failure(connection: &StorageConnection, row: &Row, error: UpsertUserEr
             )
             .into()
         }
+        // Unreachable here: `import_row` refuses a protected user first.
+        UpsertUserError::Protected => row
+            .error(USERNAME, "this user is protected, as the server needs it")
+            .into(),
+        UpsertUserError::LocksOutSelf => row
+            .error(
+                IS_ACTIVE,
+                "This is you. You can't make yourself inactive, or you couldn't log in again",
+            )
+            .into(),
         UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
     }
+}
+
+/// On the column the row found the user by.
+fn protected_error(row: &Row, saved: &UserAccountRow) -> RowError {
+    let column = if row.text(ID).is_some() { ID } else { USERNAME };
+    row.error(
+        column,
+        format!(
+            "{} is protected, as the server needs it, so import can't change it",
+            saved.username
+        ),
+    )
 }
 
 /// A failed check, such as a hash bcrypt can't read, counts as a different password.
@@ -487,19 +487,8 @@ fn in_parallel<J: Send, T: Send>(jobs: Vec<J>, work: impl Fn(J) -> Option<T> + S
     })
 }
 
-/// The built-in users and the admin a standalone central server made at setup.
-fn protected(connection: &StorageConnection) -> Result<Vec<String>, RepositoryError> {
-    let admin = KeyValueStoreRepository::new(connection)
-        .get_string(KeyType::StandaloneCentralAdminUserId)?;
-    Ok(BUILT_IN
-        .iter()
-        .map(|id| id.to_string())
-        .chain(admin)
-        .collect())
-}
-
 fn exportable(connection: &StorageConnection) -> Result<Vec<UserAccountRow>, RepositoryError> {
-    let protected = protected(connection)?;
+    let protected = protected_user_ids(connection)?;
     let mut users = UserAccountRowRepository::new(connection).find_all()?;
     users.retain(|user| !protected.contains(&user.id) && user.deleted_datetime.is_none());
     Ok(users)

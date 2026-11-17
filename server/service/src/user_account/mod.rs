@@ -45,6 +45,10 @@ impl From<upsert::UpsertUserError> for CreateUserAccountError {
             upsert::UpsertUserError::DuplicateUsername { .. } => {
                 CreateUserAccountError::UserNameExist
             }
+            // `create_user` runs only `validate`, which checks usernames.
+            upsert::UpsertUserError::Protected | upsert::UpsertUserError::LocksOutSelf => {
+                unreachable!("not a username error")
+            }
             upsert::UpsertUserError::DatabaseError(error) => error.into(),
         }
     }
@@ -231,7 +235,7 @@ impl<'a> UserAccountService<'a> {
                     ..UserAccountRow::default()
                 };
                 // Before hashing, which is slow.
-                upsert::validate(con, &row)?;
+                upsert::validate(con, None, &row)?;
 
                 row.hashed_password = UserAccountService::hash_password(&user.password)
                     .map_err(CreateUserAccountError::PasswordHashError)?;
