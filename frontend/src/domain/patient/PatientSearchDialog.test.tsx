@@ -171,12 +171,19 @@ vi.mock('./patientResource', () => ({
 }));
 
 const findPatients = vi.fn();
-const findCentralPatients = vi.fn();
+const findOtherFacilityPatients = vi.fn();
+// Searches of other facilities that asked central: in the minute's pause
+// after it was out of reach, only this site's own are asked for.
+const centralAsks = () =>
+  findOtherFacilityPatients.mock.calls.filter(
+    call => (call[2] as { skipCentral?: boolean })?.skipCentral !== true
+  ).length;
 const recentPatients = vi.fn();
 vi.mock('./patientFind', async importOriginal => ({
   ...(await importOriginal<typeof import('./patientFind')>()),
   findPatients: (...args: unknown[]) => findPatients(...args),
-  findCentralPatients: (...args: unknown[]) => findCentralPatients(...args),
+  findOtherFacilityPatients: (...args: unknown[]) =>
+    findOtherFacilityPatients(...args),
   recentPatients: (...args: unknown[]) => recentPatients(...args),
 }));
 
@@ -188,6 +195,7 @@ import type {
   CentralFind,
   FindResult,
   FindTerms,
+  OtherFacilityOptions,
   PatientFindRow,
 } from './patientFind';
 
@@ -210,7 +218,7 @@ afterEach(() => {
   central = false;
   nodes.clear();
   findPatients.mockReset();
-  findCentralPatients.mockReset();
+  findOtherFacilityPatients.mockReset();
   recentPatients.mockReset();
   linkPatientToStore.mockReset();
 });
@@ -321,6 +329,7 @@ const localRows = () =>
   (localTable()?.props.rows as PatientFindRow[] | undefined)?.map(r => r.id);
 const centralRows = () =>
   (centralTable()?.props.rows as PatientFindRow[] | undefined)?.map(r => r.id);
+const centralLoading = () => centralTable()?.props.loading === true;
 const otherFacilitiesShown = () =>
   [...rendered.stacks].some(
     p => p['data-testid'] === 'other-facilities-results'
@@ -459,12 +468,12 @@ describe('OMS-REG-DIS-01.73 — Enter on an exact patient ID chooses that patien
 describe('OMS-REG-DIS-01.57 — when other facilities are searched', () => {
   it('searches them automatically when nothing matches here', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('c1')]));
     mount();
     type('lastName', 'Smith');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledOnce();
-    expect(findCentralPatients.mock.calls[0][1]).toMatchObject({
+    expect(findOtherFacilityPatients).toHaveBeenCalledOnce();
+    expect(findOtherFacilityPatients.mock.calls[0][1]).toMatchObject({
       lastName: 'Smith',
     });
     expect(otherFacilitiesShown()).toBe(true);
@@ -473,17 +482,17 @@ describe('OMS-REG-DIS-01.57 — when other facilities are searched', () => {
 
   it('offers them, rather than searching, when there are matches here', async () => {
     findPatients.mockResolvedValue(here([row('a')]));
-    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('c1')]));
     mount();
     type('lastName', 'Smith');
     await pause();
-    expect(findCentralPatients).not.toHaveBeenCalled();
+    expect(findOtherFacilityPatients).not.toHaveBeenCalled();
     expect(otherFacilitiesShown()).toBe(false);
     const offer = button('search-other-facilities-button');
     expect(offer).toBeDefined();
     offer?.onClick();
     await settle();
-    expect(findCentralPatients).toHaveBeenCalledOnce();
+    expect(findOtherFacilityPatients).toHaveBeenCalledOnce();
     expect(otherFacilitiesShown()).toBe(true);
     // The offer goes once they have been asked.
     expect(button('search-other-facilities-button')).toBeUndefined();
@@ -491,7 +500,7 @@ describe('OMS-REG-DIS-01.57 — when other facilities are searched', () => {
 
   it('lists a patient from another facility only once, under this store', async () => {
     findPatients.mockResolvedValue(here([row('a')]));
-    findCentralPatients.mockResolvedValue(ok([row('a'), row('c1')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('a'), row('c1')]));
     mount();
     type('lastName', 'Smith');
     await pause();
@@ -500,27 +509,29 @@ describe('OMS-REG-DIS-01.57 — when other facilities are searched', () => {
     expect(centralRows()).toEqual(['c1']);
   });
 
-  it('neither searches nor offers them on the central server', async () => {
+  // OMS-REG-DIS-01.84: the central server's other patients, as elsewhere
+  it('searches and offers them on the central server too', async () => {
     central = true;
     findPatients.mockResolvedValueOnce(here([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('c1')]));
     mount();
     type('lastName', 'Nobody');
     await pause();
-    expect(findCentralPatients).not.toHaveBeenCalled();
-    expect(otherFacilitiesShown()).toBe(false);
+    expect(findOtherFacilityPatients).toHaveBeenCalledOnce();
+    expect(centralRows()).toEqual(['c1']);
 
     findPatients.mockResolvedValueOnce(here([row('a')]));
     type('lastName', 'Smith');
     await pause();
     expect(localRows()).toEqual(['a']);
-    expect(button('search-other-facilities-button')).toBeUndefined();
+    expect(button('search-other-facilities-button')).toBeDefined();
   });
 });
 
 describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
   it('warns with Retry, and keeps this store’s results usable', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({ kind: 'unreachable' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'unreachable' });
     mount();
     type('lastName', 'Smith');
     await pause();
@@ -528,17 +539,17 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
     expect(texts()).toContain('messages.failed-to-reach-central');
     const retry = buttonLabelled('button.retry');
     expect(retry).toBeDefined();
-    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('c1')]));
     retry?.onClick();
     await settle();
-    expect(findCentralPatients).toHaveBeenCalledTimes(2);
+    expect(findOtherFacilityPatients).toHaveBeenCalledTimes(2);
     expect(centralWarning()).toBe(false);
     expect(centralRows()).toEqual(['c1']);
   });
 
   it('says when central was reached but too slow to answer, and pauses it the same', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({ kind: 'slow' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'slow' });
     mount();
     type('lastName', 'Smith');
     await pause();
@@ -550,52 +561,100 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
     await vi.advanceTimersByTimeAsync(30_000);
     type('lastName', 'Smyth');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledOnce();
+    expect(centralAsks()).toBe(1);
     expect(texts()).toContain('messages.other-facilities-skipped-slow');
   });
 
   it('skips asking again within a minute, saying so with a Search other facilities button (.70)', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({ kind: 'unreachable' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'unreachable' });
     mount();
     type('lastName', 'Smith');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledOnce();
+    expect(findOtherFacilityPatients).toHaveBeenCalledOnce();
 
     await vi.advanceTimersByTimeAsync(30_000);
     type('lastName', 'Smyth');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledOnce();
+    expect(centralAsks()).toBe(1);
     expect(centralWarning()).toBe(true);
     expect(texts()).toContain('messages.other-facilities-skipped');
     const ask = buttonLabelled('button.search-other-facilities');
     expect(ask).toBeDefined();
 
     // The button still asks.
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     ask?.onClick();
     await settle();
-    expect(findCentralPatients).toHaveBeenCalledTimes(2);
-    expect((findCentralPatients.mock.calls[1][1] as FindTerms).lastName).toBe(
-      'Smyth'
+    expect(centralAsks()).toBe(2);
+    expect(
+      (findOtherFacilityPatients.mock.calls.at(-1)?.[1] as FindTerms).lastName
+    ).toBe('Smyth');
+  });
+
+  // OMS-REG-DIS-01.85
+  it("shows this site's patients at other stores while central is still asked", async () => {
+    findPatients.mockResolvedValue(here([]));
+    let answer: (value: unknown) => void = () => {};
+    findOtherFacilityPatients.mockImplementation(
+      (_store: string, _terms: FindTerms, options: OtherFacilityOptions) => {
+        options.onSite?.({ rows: [row('s1')], more: false });
+        return new Promise(resolve => (answer = resolve));
+      }
     );
+    mount();
+    type('lastName', 'Smith');
+    await pause();
+    expect(centralRows()).toEqual(['s1']);
+    expect(centralLoading()).toBe(true);
+
+    answer(ok([row('c1'), row('s1')]));
+    await settle();
+    expect(centralRows()).toEqual(['c1', 's1']);
+    expect(centralLoading()).toBe(false);
+  });
+
+  // OMS-REG-DIS-01.85: this site's own patients at other stores don't need
+  // central
+  it("still lists this site's patients at other stores, under the warning", async () => {
+    findPatients.mockResolvedValue(here([]));
+    findOtherFacilityPatients.mockResolvedValue({
+      kind: 'unreachable',
+      site: { rows: [row('s1')], more: false },
+    });
+    mount();
+    type('lastName', 'Smith');
+    await pause();
+    expect(centralWarning()).toBe(true);
+    expect(centralRows()).toEqual(['s1']);
+
+    // In the minute's pause too, without asking central
+    await vi.advanceTimersByTimeAsync(30_000);
+    type('lastName', 'Smyth');
+    await pause();
+    expect(centralAsks()).toBe(1);
+    expect(findOtherFacilityPatients.mock.calls.at(-1)?.[2]).toMatchObject({
+      skipCentral: true,
+    });
+    expect(centralRows()).toEqual(['s1']);
+    expect(texts()).toContain('messages.other-facilities-skipped');
   });
 
   it('asks by itself again once the minute is up (.70)', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({ kind: 'unreachable' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'unreachable' });
     mount();
     type('lastName', 'Smith');
     await pause();
     await vi.advanceTimersByTimeAsync(60_000);
     type('lastName', 'Smyth');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledTimes(2);
+    expect(findOtherFacilityPatients).toHaveBeenCalledTimes(2);
   });
 
   it('forgets an earlier outage when the dialog is opened again (.70)', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({ kind: 'unreachable' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'unreachable' });
     const { setOpen } = mount();
     type('lastName', 'Smith');
     await pause();
@@ -603,14 +662,14 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
     setOpen(true);
     type('lastName', 'Smyth');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledTimes(2);
+    expect(findOtherFacilityPatients).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('OMS-REG-DIS-01.69 — the other-facilities results across a new search', () => {
   const searchNoMatchThenType = async () => {
     findPatients.mockResolvedValueOnce(here([]));
-    findCentralPatients.mockResolvedValueOnce(ok([row('c1')]));
+    findOtherFacilityPatients.mockResolvedValueOnce(ok([row('c1')]));
     const mounted = mount();
     type('lastName', 'Smith');
     await pause();
@@ -634,17 +693,17 @@ describe('OMS-REG-DIS-01.69 — the other-facilities results across a new search
   it('is searched again when the new search has no matches here either', async () => {
     await searchNoMatchThenType();
     findPatients.mockResolvedValueOnce(here([]));
-    findCentralPatients.mockResolvedValueOnce(ok([row('c2')]));
+    findOtherFacilityPatients.mockResolvedValueOnce(ok([row('c2')]));
     type('firstName', 'Jo');
     await pause();
-    expect(findCentralPatients).toHaveBeenCalledTimes(2);
+    expect(findOtherFacilityPatients).toHaveBeenCalledTimes(2);
     expect(centralRows()).toEqual(['c2']);
   });
 
   it('drops a reply for the old terms that arrives after a new search began', async () => {
     findPatients.mockResolvedValueOnce(here([]));
     const late = deferred<CentralFind>();
-    findCentralPatients.mockReturnValueOnce(late.promise);
+    findOtherFacilityPatients.mockReturnValueOnce(late.promise);
     mount();
     type('lastName', 'Smith');
     await pause();
@@ -731,7 +790,7 @@ describe('the search — each opening starts blank', () => {
 describe('Cancel while a patient is being chosen', () => {
   const findAtOtherFacilities = async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('c1')]));
     const mounted = mount();
     type('lastName', 'Smith');
     await pause();
@@ -848,7 +907,7 @@ describe('Cancel while a patient is being chosen', () => {
 
   it('clears a failed link, and shows the table loading, when someone here is chosen instead', async () => {
     findPatients.mockResolvedValue(here([row('a')]));
-    findCentralPatients.mockResolvedValue(ok([row('c1')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('c1')]));
     const { onChoose } = mount();
     type('lastName', 'Smith');
     await pause();

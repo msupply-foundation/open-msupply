@@ -25,9 +25,10 @@ use crate::{
         api::{InteractiveError, SyncApiV7, patient_search},
         patient_lookup::pull_and_integrate_patient_data,
     },
+    validate::check_patient_exists,
 };
 
-use super::PatientSearch;
+use super::{PatientSearch, patient_updated::activate_patient_name_store_join};
 
 /// Searching other facilities' patients on the central server.
 #[derive(Default)]
@@ -240,6 +241,19 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    // On the central server a patient of another store is already here: add
+    // them to the store directly, as central does when a remote asks for one
+    if CentralServerConfig::is_central_server()
+        && check_patient_exists(&context.connection, name_id)?.is_some()
+    {
+        let id = activate_patient_name_store_join(&context.connection, store_id, name_id, None)?;
+        return Ok(NameStoreJoin {
+            id,
+            name_id: name_id.to_string(),
+            store_id: store_id.to_string(),
+        });
+    }
+
     if is_v7_remote(context)? {
         return link_patient_to_store_v7(service_provider, store_id, name_id).await;
     }
@@ -484,5 +498,77 @@ mod test {
             date_of_birth: Some(date(1984, 3, 14)),
             ..Default::default()
         }));
+    }
+
+    // OMS-REG-DIS-01.84: on central, choosing another store's patient adds
+    // them to this store there and then, without asking legacy mSupply
+    #[actix_rt::test]
+    async fn central_links_a_patient_it_holds_to_the_store_locally() {
+        use repository::{
+            EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
+            NameStoreJoinRepository, NameStoreJoinRow, PatientRepository,
+            mock::{MockDataInserts, mock_store_a},
+            test_db::setup_all,
+        };
+
+        use super::link_patient_to_store;
+        use crate::{service_provider::ServiceProvider, sync::test_util_set_is_central_server};
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "central_links_a_patient_it_holds_to_the_store_locally",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        for id in ["new_here", "hidden_here"] {
+            NameRowRepository::new(&connection)
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    name: id.to_string(),
+                    r#type: NameRowType::Patient,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        let store_id = mock_store_a().id;
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one(&NameStoreJoinRow {
+                id: "hidden_join".to_string(),
+                name_id: "hidden_here".to_string(),
+                store_id: store_id.clone(),
+                visible: false,
+                ..Default::default()
+            })
+            .unwrap();
+
+        test_util_set_is_central_server(true);
+        // No sync settings, so asking legacy mSupply would fail
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+
+        let added = link_patient_to_store(&service_provider, &ctx, &store_id, "new_here")
+            .await
+            .unwrap();
+        assert_eq!(added.name_id, "new_here");
+        // A hidden join is shown again, not duplicated
+        let shown = link_patient_to_store(&service_provider, &ctx, &store_id, "hidden_here")
+            .await
+            .unwrap();
+        assert_eq!(shown.id, "hidden_join");
+        let joins = NameStoreJoinRepository::new(&connection)
+            .query_by_filter(
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to("hidden_here".to_string())),
+            )
+            .unwrap();
+        assert_eq!(joins.len(), 1);
+
+        let mut visible_here: Vec<String> = PatientRepository::new(&connection)
+            .query_by_filter(PatientFilter::new().visible_in_store(&store_id, true), None)
+            .unwrap()
+            .into_iter()
+            .map(|patient| patient.id)
+            .collect();
+        visible_here.sort();
+        assert_eq!(visible_here, ["hidden_here", "new_here"]);
     }
 }

@@ -2,6 +2,7 @@ use super::{
     DBType, NameRow, StorageConnection,
     name_row::name,
     name_search::{NameColumn, words_start_with},
+    name_store_join::name_store_join,
 };
 
 use crate::{
@@ -56,6 +57,17 @@ pub struct PatientFilter {
     /// ANDs with the other filters. Keys must be validated against the "patient"
     /// table scope's allowed property keys in the service layer.
     pub dynamic_filter: Option<NameCondition::Inner>,
+
+    /// The patient is (or isn't) visible in a store: the store has a visible
+    /// name_store_join for them. Unset, patients are returned whichever store
+    /// they belong to, as a lookup by id needs.
+    pub visible_in_store: Option<VisibleInStore>,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct VisibleInStore {
+    pub store_id: String,
+    pub is_visible: bool,
 }
 
 #[derive(PartialEq, Debug)]
@@ -232,9 +244,8 @@ impl<'a> PatientRepository<'a> {
         Ok(result)
     }
 
-    /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
-    /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
-    /// but it's considered invisible in subseqent filters.
+    /// Returns patients from the name table, whichever store they belong to
+    /// unless the filter's `visible_in_store` narrows them to one store's
     pub fn create_filtered_query(
         filter: Option<PatientFilter>,
         allowed_ctx: Option<&[String]>,
@@ -263,6 +274,7 @@ impl<'a> PatientRepository<'a> {
                 program_enrolment_name,
                 next_of_kin_name,
                 dynamic_filter,
+                visible_in_store,
             } = f;
 
             // or filters need to be applied first
@@ -391,6 +403,24 @@ impl<'a> PatientRepository<'a> {
             // (compiled against name::table) applies directly
             if let Some(condition) = dynamic_filter {
                 query = query.filter(condition.to_boxed());
+            }
+
+            // A subquery rather than a join, so the search conditions above
+            // (and their indexes) still apply to the bare name table
+            if let Some(VisibleInStore {
+                store_id,
+                is_visible,
+            }) = visible_in_store
+            {
+                let visible_here = name_store_join::table
+                    .filter(name_store_join::store_id.eq(store_id))
+                    .filter(name_store_join::visible.eq(true))
+                    .select(name_store_join::name_id);
+                query = if is_visible {
+                    query.filter(name::id.eq_any(visible_here))
+                } else {
+                    query.filter(name::id.ne_all(visible_here))
+                };
             }
         };
 
@@ -534,6 +564,14 @@ impl PatientFilter {
 
     pub fn dynamic_filter(mut self, condition: NameCondition::Inner) -> Self {
         self.dynamic_filter = Some(condition);
+        self
+    }
+
+    pub fn visible_in_store(mut self, store_id: &str, is_visible: bool) -> Self {
+        self.visible_in_store = Some(VisibleInStore {
+            store_id: store_id.to_string(),
+            is_visible,
+        });
         self
     }
 }
@@ -1141,5 +1179,81 @@ mod tests {
         sorted.sort();
         assert_eq!(capped, sorted);
         assert!(page(4, 3).is_empty());
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_visible_in_store() {
+        use crate::{NameStoreJoinRepository, NameStoreJoinRow};
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_patient_visible_in_store",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let names = NameRowRepository::new(&connection);
+        for id in ["joined", "hidden", "elsewhere", "unjoined"] {
+            names
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    name: id.to_string(),
+                    last_name: Some("Visible".to_string()),
+                    r#type: NameRowType::Patient,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        let joins = NameStoreJoinRepository::new(&connection);
+        for (name_id, store_id, visible) in [
+            ("joined", "store_a", true),
+            ("hidden", "store_a", false),
+            ("elsewhere", "store_b", true),
+        ] {
+            joins
+                .upsert_one(&NameStoreJoinRow {
+                    id: format!("{name_id}_{store_id}"),
+                    name_id: name_id.to_string(),
+                    store_id: store_id.to_string(),
+                    visible,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let repo = PatientRepository::new(&connection);
+        let ids = |filter: PatientFilter| -> Vec<String> {
+            let mut ids: Vec<String> = repo
+                .query_by_filter(filter, None)
+                .unwrap()
+                .into_iter()
+                .map(|patient| patient.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+        let visible = |store_id: &str, is_visible: bool| {
+            PatientFilter::new()
+                .last_name(StringFilter::starts_with("visible"))
+                .visible_in_store(store_id, is_visible)
+        };
+
+        // OMS-REG-DIS-01.83: only a visible join to this store makes a patient visible here
+        assert_eq!(ids(visible("store_a", true)), ["joined"]);
+        assert_eq!(ids(visible("store_b", true)), ["elsewhere"]);
+        // The rest are this store's other facilities' patients
+        assert_eq!(
+            ids(visible("store_a", false)),
+            ["elsewhere", "hidden", "unjoined"]
+        );
+        assert_eq!(
+            repo.count_up_to(Some(visible("store_a", true)), None, 10)
+                .unwrap(),
+            1
+        );
+        // Unset, every patient is returned, as a lookup by id needs
+        assert_eq!(
+            ids(PatientFilter::new().last_name(StringFilter::starts_with("visible"))),
+            ["elsewhere", "hidden", "joined", "unjoined"]
+        );
     }
 }

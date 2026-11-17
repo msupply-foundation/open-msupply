@@ -53,6 +53,12 @@ pub struct PatientFilterInput {
     /// on keys visible for the "patient" table scope, e.g.
     /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
     pub dynamic_filter: Option<serde_json::Value>,
+
+    /// Only patients visible in the queried store (it has a visible
+    /// name_store_join for them), or with false only those that aren't.
+    /// Unset, patients are returned whichever store they belong to. Read by
+    /// the `patients` query only.
+    pub is_visible: Option<bool>,
 }
 
 impl From<PatientFilterInput> for PatientFilter {
@@ -80,6 +86,8 @@ impl From<PatientFilterInput> for PatientFilter {
             // serde error there must surface as BadUserInput, so the infallible
             // From can't do it)
             dynamic_filter: None,
+            // Needs the query's store id, so the resolver sets it
+            visible_in_store: None,
         }
     }
 }
