@@ -233,6 +233,9 @@ const SimpleDispensingPage: Component = () => {
     setSearchedIds(now => now.filter(id => !unread.includes(id)));
     const open = asking();
     if (open !== undefined && unread.includes(open)) closeAmount();
+    // A card's box may have opened while the read was out: the search still
+    // shows the medicine that failed.
+    if (unread.includes(searchValue())) setSearchValue('');
     setNotice({ severity: 'error', text: t('error.medicine-not-loaded') });
   };
 
