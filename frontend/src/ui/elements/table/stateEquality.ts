@@ -1,4 +1,5 @@
 import type { ColumnPinningState } from '@tanstack/solid-table';
+import { shallowEqual } from '../../../typeHelpers';
 
 // Content equality for the table state DataTable hands TanStack — column
 // order, grouping, pinning, visibility and saved sizes (#1890). The page's
@@ -8,18 +9,8 @@ import type { ColumnPinningState } from '@tanstack/solid-table';
 // and the table remounts every body cell. DataTable's config-derived memos use
 // these as their `equals`, so they keep the old value while nothing in it
 // changed. Split out so the rules are unit-tested — get one wrong and the
-// remount quietly comes back.
-
-/** Same items in the same order. `undefined` equals only `undefined`. */
-export const sameList = (
-  a: readonly string[] | undefined,
-  b: readonly string[] | undefined
-): boolean =>
-  a === b ||
-  (a !== undefined &&
-    b !== undefined &&
-    a.length === b.length &&
-    a.every((v, i) => v === b[i]));
+// remount quietly comes back. A list (column order, grouping) compares with
+// shallowEqual from typeHelpers.
 
 /**
  * Same keys with the same values, in any order. A key missing on one side
@@ -41,4 +32,4 @@ export const sameRecord = <V>(
 export const samePinning = (
   a: ColumnPinningState,
   b: ColumnPinningState
-): boolean => sameList(a.left, b.left) && sameList(a.right, b.right);
+): boolean => shallowEqual(a.left, b.left) && shallowEqual(a.right, b.right);

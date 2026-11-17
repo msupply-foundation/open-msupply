@@ -1,35 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import {
-  sameList,
-  samePinning,
-  sameRecord,
-} from '@/ui/elements/table/stateEquality';
+import { shallowEqual } from '@/typeHelpers';
+import { samePinning, sameRecord } from '@/ui/elements/table/stateEquality';
 
 // These decide whether DataTable hands TanStack its old state or a new one
 // (#1890). Calling equal state "different" makes TanStack rebuild every cell,
 // and the table remounts every body cell; calling different state "equal"
 // would hide a real change (a reorder, a hidden column) from the table.
 
-describe('sameList', () => {
+describe('shallowEqual on a column list', () => {
   it('treats the same array, or two undefined, as equal', () => {
     const order = ['code', 'name'];
-    expect(sameList(order, order)).toBe(true);
-    expect(sameList(undefined, undefined)).toBe(true);
+    expect(shallowEqual(order, order)).toBe(true);
+    expect(shallowEqual(undefined, undefined)).toBe(true);
   });
 
   it('treats a fresh array with the same items as equal', () => {
-    expect(sameList([], [])).toBe(true);
-    expect(sameList(['code', 'name'], ['code', 'name'])).toBe(true);
+    expect(shallowEqual([], [])).toBe(true);
+    expect(shallowEqual(['code', 'name'], ['code', 'name'])).toBe(true);
   });
 
   it('tells undefined apart from an empty array', () => {
-    expect(sameList(undefined, [])).toBe(false);
-    expect(sameList([], undefined)).toBe(false);
+    expect(shallowEqual(undefined, [])).toBe(false);
+    expect(shallowEqual([], undefined)).toBe(false);
   });
 
   it('treats a different order or length as a change', () => {
-    expect(sameList(['code', 'name'], ['name', 'code'])).toBe(false);
-    expect(sameList(['code'], ['code', 'name'])).toBe(false);
+    expect(shallowEqual(['code', 'name'], ['name', 'code'])).toBe(false);
+    expect(shallowEqual(['code'], ['code', 'name'])).toBe(false);
   });
 });
 

@@ -96,8 +96,9 @@ import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
 import { scrollTableToTop } from './scrollTableToTop';
 import { isRtl, t, tPlural } from '../../../intl';
+import { shallowEqual } from '../../../typeHelpers';
 import styles from './DataTable.module.css';
-import { sameList, samePinning, sameRecord } from './stateEquality';
+import { samePinning, sameRecord } from './stateEquality';
 import {
   dragStart,
   fillColumnId,
@@ -613,7 +614,7 @@ export function DataTable<T, K extends string, G extends string = never>(
   const columnOrder = createMemo(
     (): ColumnOrderState => props.config?.columnOrder ?? [],
     undefined,
-    { equals: sameList }
+    { equals: shallowEqual }
   );
   const columnPinning = createMemo(
     (): ColumnPinningState => props.config?.columnPinning ?? {},
@@ -647,7 +648,7 @@ export function DataTable<T, K extends string, G extends string = never>(
   const grouping = createMemo(
     (): GroupingState => (grouped() ? [props.rowGroup!.columnId] : []),
     undefined,
-    { equals: sameList }
+    { equals: shallowEqual }
   );
   const [expanded, setExpanded] = createSignal<ExpandedState>({});
 
