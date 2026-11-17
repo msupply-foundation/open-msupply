@@ -1,4 +1,7 @@
-use repository::{ItemRow, ItemRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
+    UnitRowRepository,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertItemError {
@@ -11,6 +14,10 @@ pub enum UpsertItemError {
     DefaultPackSizeNotPositive,
     NegativeVaccineDoses,
     NegativeVolumePerPack,
+    /// `unit_id` names no unit.
+    UnitNotFound,
+    /// `restricted_location_type_id` names no location type.
+    LocationTypeNotFound,
     DatabaseError(RepositoryError),
 }
 
@@ -27,7 +34,7 @@ pub fn upsert_item(connection: &StorageConnection, row: &ItemRow) -> Result<(), 
         .transaction_sync(|connection| -> Result<(), UpsertItemError> {
             let repo = ItemRowRepository::new(connection);
             let saved = repo.find_one_by_id_without_legacy_record(&row.id)?;
-            validate(&repo, saved.as_ref(), row)?;
+            validate(connection, saved.as_ref(), row)?;
             match saved {
                 Some(_) => repo.update_keeping_legacy_record(row)?,
                 None => repo.upsert_one(row)?,
@@ -38,7 +45,7 @@ pub fn upsert_item(connection: &StorageConnection, row: &ItemRow) -> Result<(), 
 }
 
 fn validate(
-    repo: &ItemRowRepository,
+    connection: &StorageConnection,
     saved: Option<&ItemRow>,
     row: &ItemRow,
 ) -> Result<(), UpsertItemError> {
@@ -59,12 +66,32 @@ fn validate(
     if row.volume_per_pack < 0.0 && changes(|item| item.volume_per_pack) {
         return Err(UpsertItemError::NegativeVolumePerPack);
     }
+    // Foreign keys hold a saved reference to an existing record, so only a changed one is checked.
+    // The database would refuse a missing one too, but only as a general error.
+    let new_reference = |field: fn(&ItemRow) -> Option<&str>| {
+        field(row).filter(|_| saved.is_none_or(|saved| field(saved) != field(row)))
+    };
+    if let Some(unit_id) = new_reference(|item| item.unit_id.as_deref())
+        && UnitRowRepository::new(connection)
+            .find_one_by_id(unit_id)?
+            .is_none()
+    {
+        return Err(UpsertItemError::UnitNotFound);
+    }
+    if let Some(location_type_id) =
+        new_reference(|item| item.restricted_location_type_id.as_deref())
+        && LocationTypeRowRepository::new(connection)
+            .find_one_by_id(location_type_id)?
+            .is_none()
+    {
+        return Err(UpsertItemError::LocationTypeNotFound);
+    }
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
     let brings_in_clash = saved.is_none_or(|saved| saved.code.trim() != row.code.trim());
     if !brings_in_clash {
         return Ok(());
     }
-    match repo
+    match ItemRowRepository::new(connection)
         .find_by_trimmed_code_without_legacy_record(&row.code)?
         .into_iter()
         .find(|other| other.id != row.id)
@@ -77,7 +104,11 @@ fn validate(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        UnitRow, UnitRowRepository,
+        mock::{MockDataInserts, mock_location_type_a},
+        test_db::setup_all,
+    };
 
     fn item(id: &str, code: &str) -> ItemRow {
         ItemRow {
@@ -185,6 +216,39 @@ mod tests {
             assert_eq!(upsert(&connection, &row), Err(error));
         }
         upsert(&connection, &item("a", "PARA")).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn its_unit_and_location_type_must_exist() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_item_references",
+            MockDataInserts::none().location_types(),
+        )
+        .await;
+        UnitRowRepository::new(&connection)
+            .upsert_one(&UnitRow {
+                id: "tab".to_string(),
+                name: "Tab".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        let with = |unit_id: &str, location_type_id: &str| ItemRow {
+            unit_id: Some(unit_id.to_string()),
+            restricted_location_type_id: Some(location_type_id.to_string()),
+            ..item("a", "PARA")
+        };
+        let unit = "tab".to_string();
+        let location_type = mock_location_type_a().id;
+
+        assert_eq!(
+            upsert(&connection, &with("no_such_unit", &location_type)),
+            Err(UpsertItemError::UnitNotFound)
+        );
+        assert_eq!(
+            upsert(&connection, &with(&unit, "no_such_location_type")),
+            Err(UpsertItemError::LocationTypeNotFound)
+        );
+        upsert(&connection, &with(&unit, &location_type)).unwrap();
     }
 
     #[actix_rt::test]
