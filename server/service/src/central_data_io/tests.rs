@@ -4,16 +4,21 @@ use super::{
     MAX_ROWS_LISTED, RecordCount, RowChange, TableChanges,
     sheet::{self, SheetData, Value},
 };
-use crate::service_provider::ServiceProvider;
+use crate::{service_provider::ServiceProvider, user_account::UserAccountService};
 use repository::{
-    ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository,
-    LocationTypeRow, LocationTypeRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
-    StorageConnection, UnitRow, UnitRowRepository, VENCategory,
-    mock::{MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1},
+    ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
+    KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, UnitRow,
+    UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository, VENCategory,
+    mock::{
+        MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1, mock_store_a,
+    },
     test_db::setup_all,
 };
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
+use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
 
 fn mock_unit(connection: &StorageConnection) -> UnitRow {
     UnitRowRepository::new(connection)
@@ -2431,5 +2436,643 @@ async fn a_saved_item_with_a_pack_size_of_0_can_be_renamed_but_not_given_one() {
             Some("default_pack_size"),
             "default_pack_size must be above 0"
         )]
+    );
+}
+
+// Users
+
+const USER_HEADERS: [&str; 11] = [
+    "id",
+    "username",
+    "password",
+    "email",
+    "language",
+    "first_name",
+    "last_name",
+    "phone_number",
+    "job_title",
+    "is_active",
+    "delete",
+];
+
+fn user_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("user", &USER_HEADERS, rows)]).unwrap()
+}
+
+/// A row of `USER_HEADERS` naming the user, with the given cells filled in by position.
+fn user_row(id: &str, username: &str, cells: &[(usize, &str)]) -> Vec<Value> {
+    let mut row = [""; 11];
+    row[0] = id;
+    row[1] = username;
+    for (position, value) in cells {
+        row[*position] = value;
+    }
+    row.into_iter()
+        .map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        })
+        .collect()
+}
+
+fn anna(hashed_password: &str) -> UserAccountRow {
+    UserAccountRow {
+        id: "anna".to_string(),
+        username: "anna".to_string(),
+        hashed_password: hashed_password.to_string(),
+        email: Some("anna@example.org".to_string()),
+        language: LanguageType::French,
+        first_name: Some("Anna".to_string()),
+        last_name: Some("Moreau".to_string()),
+        phone_number: Some("007 123".to_string()),
+        // Padded, as legacy sync can send it.
+        job_title: Some(" Nurse".to_string()),
+        last_successful_sync: Some(
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 2)
+                .unwrap()
+                .and_hms_opt(3, 4, 5)
+                .unwrap(),
+        ),
+        is_active: true,
+        deleted_datetime: None,
+    }
+}
+
+fn ben() -> UserAccountRow {
+    UserAccountRow {
+        id: "ben".to_string(),
+        username: "ben".to_string(),
+        hashed_password: String::new(),
+        is_active: false,
+        ..Default::default()
+    }
+}
+
+fn find_user(connection: &StorageConnection, id: &str) -> Option<UserAccountRow> {
+    UserAccountRowRepository::new(connection)
+        .find_one_by_id(id)
+        .unwrap()
+}
+
+/// Anna, with password `secret` and access to store a, and Ben, inactive with no password, beside
+/// the built-in users.
+async fn user_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir, String) {
+    let (_, connection, connection_manager, _) =
+        setup_all(name, MockDataInserts::none().names().stores()).await;
+    let hash = UserAccountService::hash_password("secret").unwrap();
+    let repo = UserAccountRowRepository::new(&connection);
+    repo.upsert_one(&anna(&hash)).unwrap();
+    repo.upsert_one(&ben()).unwrap();
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "anna_store_a".to_string(),
+            user_id: "anna".to_string(),
+            store_id: mock_store_a().id,
+            is_default: true,
+        })
+        .unwrap();
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+        hash,
+    )
+}
+
+fn all_users() -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::User,
+        filter: ExportFilter::default(),
+    }
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .65, .90, .93
+
+#[actix_rt::test]
+async fn users_export_without_passwords_then_import_makes_no_changes() {
+    let (connection, service_provider, dir, _) = user_setup("central_data_user_round_trip").await;
+    let before = UserAccountRowRepository::new(&connection)
+        .find_all()
+        .unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let bytes = CentralDataService.export(&ctx, &[all_users()]).unwrap();
+    let path = write_file(dir.path(), bytes);
+    let exported = sheet::read(&path, MAX_IMPORT_ROWS)
+        .ok()
+        .unwrap()
+        .pop()
+        .unwrap();
+    assert_eq!(
+        exported.headers,
+        [USER_HEADERS.as_slice(), &["last_successful_sync"]].concat()
+    );
+    // Built-in users left out, and no password or hash.
+    let cells: Vec<(&str, &str, &str)> = exported
+        .rows
+        .iter()
+        .map(|row| {
+            (
+                row.cells[1].as_str(),
+                row.cells[2].as_str(),
+                row.cells[11].as_str(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        cells,
+        [("anna", "", "2026-01-02 03:04:05"), ("ben", "", "")]
+    );
+
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 2);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        UserAccountRowRepository::new(&connection)
+            .find_all()
+            .unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46, .47, .90
+
+#[actix_rt::test]
+async fn a_user_export_searches_usernames_and_filters_by_status() {
+    let (_, service_provider, _, _) = user_setup("central_data_user_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let counts = |contains: Option<&str>, is_active: Option<bool>| {
+        let table = ExportTable {
+            table: CentralDataTable::User,
+            filter: ExportFilter {
+                contains: contains.map(str::to_string),
+                is_active,
+            },
+        };
+        CentralDataService.export_counts(&ctx, &[table]).unwrap()[0].count
+    };
+
+    // The built-in users aren't counted.
+    assert_eq!(
+        counts(None, None),
+        RecordCount {
+            matching: 2,
+            total: 2
+        }
+    );
+    assert_eq!(counts(Some(" ANN "), None).matching, 1);
+    assert_eq!(counts(Some("omsupply"), None).matching, 0);
+    assert_eq!(counts(None, Some(false)).matching, 1);
+}
+
+// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97
+
+#[actix_rt::test]
+async fn user_rows_add_and_update_by_username_and_hash_passwords() {
+    let (connection, service_provider, dir, hash) = user_setup("central_data_user_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            user_row("", "dan", &[(3, "dan@example.org")]),
+            user_row("", "", &[(2, "pw")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("password"), "password is required for a new user"),
+            (2, Some("language"), "language is required for a new user"),
+            (3, Some("username"), "username is required for a new user"),
+            (3, Some("language"), "language is required for a new user"),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            // Any letter case for a choice; a blank is_active makes an active user.
+            user_row("", "cara", &[(2, "pw1"), (4, "spanish")]),
+            // A blank password and language keep them; making a user inactive is an update.
+            user_row("", "anna", &[(8, "Pharmacist"), (9, "FALSE")]),
+            // Ben had no password.
+            user_row("ben", "ben", &[(2, "pw2")]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    // Anna made inactive and Ben given a password; Cara is new, with no session yet.
+    assert_eq!(summary.sessions_to_end, ["anna", "ben"]);
+    let changes: Vec<_> = summary
+        .changes
+        .iter()
+        .map(|change| (change.record.as_str(), change.change))
+        .collect();
+    assert_eq!(
+        changes,
+        [
+            ("cara", Change::Inserted),
+            ("anna", Change::Updated),
+            ("ben", Change::Updated),
+        ]
+    );
+    let field = |column, from: &str, to: &str| FieldChange {
+        column,
+        from: from.to_string(),
+        to: to.to_string(),
+    };
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![
+            // The optional columns were blank, so they're cleared.
+            field("email", "anna@example.org", ""),
+            field("first_name", "Anna", ""),
+            field("last_name", "Moreau", ""),
+            field("phone_number", "007 123", ""),
+            field("job_title", " Nurse", "Pharmacist"),
+            field("is_active", "TRUE", "FALSE"),
+        ]
+    );
+    assert_eq!(
+        summary.changes[2].fields,
+        vec![field("password", "", "changed")]
+    );
+
+    let cara = UserAccountRowRepository::new(&connection)
+        .find_one_by_user_name("cara")
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        (cara.language, cara.is_active),
+        (LanguageType::Spanish, true)
+    );
+    assert!(bcrypt::verify("pw1", &cara.hashed_password).unwrap());
+    let users = UserAccountService::new(&connection);
+    assert!(users.verify_password("cara", "pw1").is_ok());
+    assert!(
+        users.verify_password("ben", "pw2").is_err(),
+        "ben is inactive"
+    );
+    assert!(
+        users.verify_password("anna", "secret").is_err(),
+        "anna is now inactive"
+    );
+    assert_eq!(
+        find_user(&connection, "anna"),
+        Some(UserAccountRow {
+            email: None,
+            first_name: None,
+            last_name: None,
+            phone_number: None,
+            job_title: Some("Pharmacist".to_string()),
+            is_active: false,
+            ..anna(&hash)
+        })
+    );
+
+    // A preview doesn't check passwords, so it counts the saved one as a change; the import
+    // checks it, and it changes nothing. Another one replaces it.
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![user_row("", "cara", &[(2, "pw1")])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        summary.changes[0].fields,
+        vec![field("password", "******", "changed")]
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.tables[0].unchanged, 1);
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![user_row("", "cara", &[(2, "pw3")])]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(
+        summary.changes[0].fields,
+        vec![field("password", "******", "changed")]
+    );
+    assert!(users.verify_password("cara", "pw3").is_ok());
+}
+
+// covers: OMS-REG-CDIO-01.93
+
+#[actix_rt::test]
+async fn users_sharing_a_password_get_their_own_hash() {
+    let (connection, service_provider, dir, _) = user_setup("central_data_user_salts").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let new = |username, password| user_row("", username, &[(2, password), (4, "ENGLISH")]);
+
+    // Eve's surrounding spaces are dropped, as every cell's are.
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![new("dan", "changeme"), new("eve", " changeme ")]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.tables[0].inserted, 2);
+
+    let repo = UserAccountRowRepository::new(&connection);
+    let hash = |username| {
+        repo.find_one_by_user_name(username)
+            .unwrap()
+            .unwrap()
+            .hashed_password
+    };
+    assert_ne!(hash("dan"), hash("eve"));
+    let users = UserAccountService::new(&connection);
+    assert!(users.verify_password("dan", "changeme").is_ok());
+    assert!(users.verify_password("eve", "changeme").is_ok());
+}
+
+// covers: OMS-REG-CDIO-01.39, .51, .73, .95
+
+#[actix_rt::test]
+async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
+    let (connection, service_provider, dir, _) = user_setup("central_data_user_username").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let new = [(2, "pw"), (4, "ENGLISH")];
+
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            user_row("anna", "annie", &[]),
+            user_row("new_id", "ANNA", &new),
+            // A new id beside a username row 4 adds, in another letter case.
+            user_row("dan_1", "Dan", &new),
+            user_row("dan_2", "DAN", &new),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("username"),
+                "username and id conflict: anna has username anna and id anna, but this row has username annie and id anna"
+            ),
+            (
+                3,
+                Some("username"),
+                "username and id conflict: anna has username anna and id anna, but this row has username ANNA and id new_id"
+            ),
+            (
+                5,
+                Some("username"),
+                "username and id conflict: Dan has username Dan and id dan_1, but this row has username DAN and id dan_2"
+            ),
+        ]
+    );
+
+    // As login does; the saved username keeps its letter case.
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            user_row("", "ANNA", &[(8, "Pharmacist")]),
+            user_row("", "Cara", &new),
+            // Finds Cara, added above, and changes nothing.
+            user_row("", "cara", &new),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let changes: Vec<_> = summary
+        .changes
+        .iter()
+        .map(|change| (change.record.as_str(), change.change))
+        .collect();
+    assert_eq!(
+        changes,
+        [("anna", Change::Updated), ("Cara", Change::Inserted)]
+    );
+    assert_eq!(summary.tables[0].unchanged, 1);
+    let anna = find_user(&connection, "anna").unwrap();
+    assert_eq!(
+        (anna.username.as_str(), anna.job_title.as_deref()),
+        ("anna", Some("Pharmacist"))
+    );
+}
+
+// covers: OMS-REG-CDIO-01.88, .89
+
+#[actix_rt::test]
+async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
+    let (connection, service_provider, dir, hash) = user_setup("central_data_user_delete").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // As exported, so the saved values are no change.
+    let delete_anna = || {
+        user_row(
+            "anna",
+            "anna",
+            &[(4, "FRENCH"), (8, "Nurse"), (9, "TRUE"), (10, "DELETE")],
+        )
+    };
+
+    let path = write_file(dir.path(), user_sheet(vec![delete_anna()]));
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(summary.changes[0].change, Change::Deleted);
+    assert_eq!(summary.sessions_to_end, ["anna"]);
+
+    // Kept, with their store access, but can't log in.
+    let anna_now = find_user(&connection, "anna").unwrap();
+    assert!(anna_now.deleted_datetime.is_some());
+    assert_eq!(
+        anna_now,
+        UserAccountRow {
+            deleted_datetime: anna_now.deleted_datetime,
+            ..anna(&hash)
+        }
+    );
+    assert_eq!(
+        UserStoreJoinRowRepository::new(&connection)
+            .find_many_by_user_id("anna")
+            .unwrap()
+            .len(),
+        1
+    );
+    assert!(
+        UserAccountService::new(&connection)
+            .verify_password("anna", "secret")
+            .is_err()
+    );
+
+    // Left out of an export, and deleting them again changes nothing.
+    let exported = CentralDataService
+        .export_counts(&ctx, &[all_users()])
+        .unwrap();
+    assert_eq!(exported[0].count.total, 1, "only ben");
+    let path = write_file(dir.path(), user_sheet(vec![delete_anna()]));
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 0);
+    assert_eq!(summary.tables[0].unchanged, 1);
+    assert_eq!(find_user(&connection, "anna"), Some(anna_now));
+}
+
+// covers: OMS-REG-CDIO-01.96
+
+#[actix_rt::test]
+async fn a_row_without_delete_restores_a_deleted_user() {
+    let (connection, service_provider, dir, hash) = user_setup("central_data_user_restore").await;
+    let ctx = service_provider.basic_context().unwrap();
+    UserAccountRowRepository::new(&connection)
+        .upsert_one(&UserAccountRow {
+            deleted_datetime: Some(chrono::Utc::now().naive_utc()),
+            ..anna(&hash)
+        })
+        .unwrap();
+
+    // By username in another case, with a change of job title.
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![user_row(
+            "",
+            "ANNA",
+            &[
+                (3, "anna@example.org"),
+                (5, "Anna"),
+                (6, "Moreau"),
+                (7, "007 123"),
+                (8, "Pharmacist"),
+            ],
+        )]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].updated, 1);
+    assert_eq!(
+        summary.changes[0]
+            .fields
+            .iter()
+            .map(|field| (field.column, field.from.as_str(), field.to.as_str()))
+            .collect::<Vec<_>>(),
+        [
+            ("job_title", " Nurse", "Pharmacist"),
+            ("delete", "DELETE", "")
+        ]
+    );
+    assert_eq!(
+        find_user(&connection, "anna"),
+        Some(UserAccountRow {
+            job_title: Some("Pharmacist".to_string()),
+            ..anna(&hash)
+        })
+    );
+    assert!(
+        UserAccountService::new(&connection)
+            .verify_password("anna", "secret")
+            .is_ok()
+    );
+}
+
+// covers: OMS-REG-CDIO-01.90
+
+#[actix_rt::test]
+async fn a_row_cannot_change_or_take_a_protected_user() {
+    let (connection, service_provider, dir, _) = user_setup("central_data_user_protected").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Ben is the admin this server made at setup.
+    KeyValueStoreRepository::new(&connection)
+        .set_string(
+            KeyType::StandaloneCentralAdminUserId,
+            Some("ben".to_string()),
+        )
+        .unwrap();
+    let before = UserAccountRowRepository::new(&connection)
+        .find_all()
+        .unwrap();
+
+    let exported = CentralDataService
+        .export_counts(&ctx, &[all_users()])
+        .unwrap();
+    assert_eq!(exported[0].count.total, 1, "only anna");
+
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            user_row("", SYSTEM_USER_ID, &[(2, "pw")]),
+            user_row(PLUGIN_USER_ID, "", &[(9, "FALSE")]),
+            user_row("", "OMSUPPLY_SYSTEM", &[(2, "pw"), (4, "ENGLISH")]),
+            user_row("", "ben", &[(2, "pw")]),
+            user_row("", "ben", &[(10, "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    let protected = |username: &str| {
+        format!("{username} is protected, as the server needs it, so import can't change it")
+    };
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("username"), protected("omsupply_system").as_str()),
+            (3, Some("id"), protected("omsupply_plugin").as_str()),
+            (4, Some("username"), protected("omsupply_system").as_str()),
+            (5, Some("username"), protected("ben").as_str()),
+            (6, Some("username"), protected("ben").as_str()),
+        ]
+    );
+    assert_eq!(
+        UserAccountRowRepository::new(&connection)
+            .find_all()
+            .unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.91
+
+#[actix_rt::test]
+async fn the_importing_user_cannot_delete_themselves_or_make_themselves_inactive() {
+    let (connection, service_provider, dir, hash) = user_setup("central_data_user_importer").await;
+    // Anna runs the import.
+    let ctx = service_provider
+        .context(String::new(), "anna".to_string())
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            user_row("", "anna", &[(9, "FALSE")]),
+            user_row("", "anna", &[(10, "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_active"),
+                "This is you. You can't make yourself inactive, or you couldn't log in again"
+            ),
+            (
+                3,
+                Some("delete"),
+                "This is you. You can't delete yourself, or you couldn't log in again"
+            ),
+        ]
+    );
+
+    // Their own password they may change.
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![user_row("", "anna", &[(2, "new secret")])]),
+    );
+    let summary = CentralDataService.import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].updated, 1);
+    assert_ne!(
+        find_user(&connection, "anna").unwrap().hashed_password,
+        hash
+    );
+    assert!(
+        UserAccountService::new(&connection)
+            .verify_password("anna", "new secret")
+            .is_ok()
     );
 }

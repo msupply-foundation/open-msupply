@@ -1,6 +1,6 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
-    RowOutcome, SheetImport,
+    RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
     lookup::{LookupError, resolve},
@@ -59,6 +59,7 @@ impl ImportTable for UnitTable {
     fn start_sheet(
         &self,
         connection: &StorageConnection,
+        _start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         // Units are few.
         Ok(Box::new(UnitSheet {

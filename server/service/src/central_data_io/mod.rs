@@ -1,7 +1,7 @@
 use crate::service_provider::ServiceContext;
 use cells::{Row, RowError};
 use repository::{RepositoryError, StorageConnection};
-use std::{collections::HashMap, path::Path};
+use std::{any::Any, collections::HashMap, path::Path};
 use umya_spreadsheet::helper::coordinate::string_from_column_index;
 
 pub mod cells;
@@ -11,6 +11,7 @@ mod location_type;
 pub mod lookup;
 pub mod sheet;
 mod unit;
+mod user;
 
 #[cfg(test)]
 mod tests;
@@ -25,10 +26,11 @@ pub const MAX_ROWS_LISTED: usize = 100;
 pub const ERROR_COLUMN: &str = "error";
 
 /// One variant per table, added with the table.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CentralDataTable {
     Unit,
     LocationType,
+    User,
     Item,
 }
 
@@ -95,6 +97,7 @@ impl CentralDataTable {
         match self {
             CentralDataTable::Unit => "unit",
             CentralDataTable::LocationType => "location_type",
+            CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
         }
     }
@@ -104,6 +107,7 @@ impl CentralDataTable {
 static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &unit::UnitTable,
     &location_type::LocationTypeTable,
+    &user::UserTable,
     &item::ItemTable,
 ];
 
@@ -131,11 +135,30 @@ pub(crate) trait ImportTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<RecordCount, RepositoryError>;
+    /// Slow work done before the import's transaction, so the transaction stays short, such as
+    /// hashing passwords. Run only by an import that commits; its result reaches `start_sheet`.
+    fn prepare(
+        &self,
+        _connection: &StorageConnection,
+        _sheet: &sheet::Sheet,
+    ) -> Result<Option<Box<dyn Any>>, RepositoryError> {
+        Ok(None)
+    }
     /// Loads the sheet's lookups once, so rows don't each query them.
     fn start_sheet(
         &self,
         connection: &StorageConnection,
+        start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError>;
+}
+
+pub(crate) struct SheetStart<'a> {
+    /// The user running the import.
+    pub user_id: &'a str,
+    /// False for a preview or an errors file, which roll back.
+    pub commit: bool,
+    /// What `ImportTable::prepare` returned.
+    pub prepared: Option<Box<dyn Any>>,
 }
 
 /// Each row sees the writes of the rows before it.
@@ -146,6 +169,11 @@ pub(crate) trait SheetImport {
         connection: &StorageConnection,
         row: &Row,
     ) -> Result<RowOutcome, RowFailure>;
+
+    /// Users whose open sessions must end once the import is applied.
+    fn sessions_to_end(&mut self) -> Vec<String> {
+        Vec::new()
+    }
 }
 
 pub(crate) struct RowOutcome {
@@ -260,6 +288,9 @@ pub struct ImportSummary {
     pub errors: Vec<RowError>,
     /// Every row error. With any, nothing was applied.
     pub error_count: u32,
+    /// Users made inactive or given a new password, whose open sessions the caller ends once
+    /// the import is applied, as they hold no session store of their own.
+    pub sessions_to_end: Vec<String>,
     errors_listed: usize,
 }
 
@@ -270,6 +301,7 @@ impl ImportSummary {
             changes: Vec::new(),
             errors: Vec::new(),
             error_count: 0,
+            sessions_to_end: Vec::new(),
             errors_listed,
         }
     }
@@ -328,11 +360,11 @@ pub trait CentralDataServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         path: &Path,
     ) -> Result<ImportSummary, ImportError> {
-        run_import(&ctx.connection, path, false)
+        run_import(ctx, path, false)
     }
 
     fn import(&self, ctx: &ServiceContext, path: &Path) -> Result<ImportSummary, ImportError> {
-        run_import(&ctx.connection, path, true)
+        run_import(ctx, path, true)
     }
 
     /// The upload with each row's errors in an `error` column. Writes nothing.
@@ -341,7 +373,7 @@ pub trait CentralDataServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         path: &Path,
     ) -> Result<Vec<u8>, ImportError> {
-        errors_file(&ctx.connection, path)
+        errors_file(ctx, path)
     }
 }
 
@@ -421,12 +453,12 @@ impl From<RepositoryError> for Outcome {
 }
 
 fn run_import(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     path: &Path,
     commit: bool,
 ) -> Result<ImportSummary, ImportError> {
     let sheets = read_file(path)?;
-    run_sheets(connection, &sheets, commit, MAX_ROWS_LISTED)
+    run_sheets(ctx, &sheets, commit, MAX_ROWS_LISTED)
 }
 
 fn read_file(path: &Path) -> Result<Vec<sheet::Sheet>, ImportError> {
@@ -438,19 +470,38 @@ fn read_file(path: &Path) -> Result<Vec<sheet::Sheet>, ImportError> {
 }
 
 fn run_sheets(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     sheets: &[sheet::Sheet],
     commit: bool,
     errors_listed: usize,
 ) -> Result<ImportSummary, ImportError> {
+    let mut prepared = HashMap::new();
+    if commit {
+        for table in TABLES {
+            if let Some(sheet) = sheet_for(*table, sheets)
+                && let Some(work) = table
+                    .prepare(&ctx.connection, sheet)
+                    .map_err(ImportError::DatabaseError)?
+            {
+                prepared.insert(table.table(), work);
+            }
+        }
+    }
+
     // Never an outer transaction, so a preview always rolls back.
     // shortcut: on SQLite this holds the only write lock for the whole file, preview and errors
     // file included, so other writes (sync, app edits) fail as locked once it passes
     // SQLITE_LOCKWAIT_MS (30s). Fine on Postgres; batch the rows if a SQLite central needs more.
-    let result = connection
+    let result = ctx
+        .connection
         .transaction_sync_etc(
             |connection| {
-                let summary = import_sheets(connection, sheets, errors_listed)?;
+                let start = |table: CentralDataTable| SheetStart {
+                    user_id: &ctx.user_id,
+                    commit,
+                    prepared: prepared.remove(&table),
+                };
+                let summary = import_sheets(connection, start, sheets, errors_listed)?;
                 if commit && summary.error_count == 0 {
                     Ok(summary)
                 } else {
@@ -474,8 +525,19 @@ fn find_table(sheet: &sheet::Sheet) -> Option<&'static (dyn ImportTable + Sync)>
         .copied()
 }
 
-fn import_sheets(
+/// The first sheet named after `table`.
+fn sheet_for<'a>(
+    table: &(dyn ImportTable + Sync),
+    sheets: &'a [sheet::Sheet],
+) -> Option<&'a sheet::Sheet> {
+    sheets
+        .iter()
+        .find(|sheet| find_table(sheet).is_some_and(|found| found.table() == table.table()))
+}
+
+fn import_sheets<'a>(
     connection: &StorageConnection,
+    mut start: impl FnMut(CentralDataTable) -> SheetStart<'a>,
     sheets: &[sheet::Sheet],
     errors_listed: usize,
 ) -> Result<ImportSummary, RepositoryError> {
@@ -499,10 +561,7 @@ fn import_sheets(
     // Heading errors first: the errors file has no row for them, so the preview must list them.
     let mut table_sheets = Vec::new();
     for table in TABLES {
-        let Some(sheet) = sheets
-            .iter()
-            .find(|sheet| find_table(sheet).is_some_and(|found| found.table() == table.table()))
-        else {
+        let Some(sheet) = sheet_for(*table, sheets) else {
             continue;
         };
         let errors_before = summary.error_count;
@@ -521,16 +580,11 @@ fn import_sheets(
             unchanged: 0,
             error_count: 0,
         };
-        let mut rows = table.start_sheet(connection)?;
+        let mut rows = table.start_sheet(connection, start(table.table()))?;
         // Record id → first row that changes it.
         let mut seen: HashMap<String, u32> = HashMap::new();
         for sheet_row in &sheet.rows {
-            let row = Row {
-                sheet: &sheet.name,
-                number: sheet_row.number,
-                headers: &sheet.headers,
-                cells: &sheet_row.cells,
-            };
+            let row = Row::new(sheet, sheet_row);
             let outcome = match rows.import_row(connection, &row) {
                 Ok(outcome) => outcome,
                 Err(RowFailure::Invalid(errors)) => {
@@ -570,6 +624,7 @@ fn import_sheets(
                 });
             }
         }
+        summary.sessions_to_end.extend(rows.sessions_to_end());
         changes.error_count = heading_errors + (summary.error_count - row_errors_before);
         summary.tables.push(changes);
     }
@@ -622,9 +677,9 @@ fn check_headers(table: &dyn ImportTable, sheet: &sheet::Sheet) -> Vec<RowError>
     errors
 }
 
-fn errors_file(connection: &StorageConnection, path: &Path) -> Result<Vec<u8>, ImportError> {
+fn errors_file(ctx: &ServiceContext, path: &Path) -> Result<Vec<u8>, ImportError> {
     let sheets = read_file(path)?;
-    let summary = run_sheets(connection, &sheets, false, usize::MAX)?;
+    let summary = run_sheets(ctx, &sheets, false, usize::MAX)?;
     sheet::write(errors_file_sheets(&sheets, &summary.errors)).map_err(ImportError::CannotWriteFile)
 }
 
@@ -767,6 +822,7 @@ mod no_table_tests {
         fn start_sheet(
             &self,
             _: &StorageConnection,
+            _: SheetStart,
         ) -> Result<Box<dyn SheetImport>, RepositoryError> {
             unreachable!()
         }
@@ -835,7 +891,8 @@ mod no_table_tests {
         )
         .await;
         let notes = sheet(&["note"], &[(3, &["a"])]);
-        let summary = import_sheets(&connection, &[notes], usize::MAX).unwrap();
+        // An unknown sheet starts no table.
+        let summary = import_sheets(&connection, |_| unreachable!(), &[notes], usize::MAX).unwrap();
 
         let errors: Vec<_> = summary
             .errors

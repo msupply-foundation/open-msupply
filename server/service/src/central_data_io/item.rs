@@ -1,6 +1,6 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport,
+    SheetImport, SheetStart,
     cells::{Row, choice_cell, collect, keep_or_saved},
     field_changes,
     lookup::{find_record, find_reference},
@@ -148,6 +148,7 @@ impl ImportTable for ItemTable {
     fn start_sheet(
         &self,
         connection: &StorageConnection,
+        _start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(ItemSheet {
             items: ItemLookup::load_all(connection)?,

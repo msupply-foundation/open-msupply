@@ -1,9 +1,11 @@
 use super::{
+    Change, RowFailure, RowOutcome,
     cells::{Row, RowError},
     sheet::Value,
 };
 
 pub const DELETE_COLUMN: &str = "delete";
+const ID: &str = "id";
 
 /// Anything but blank or `DELETE` is an error, so a typo can't pass as a delete.
 pub fn is_delete(row: &Row) -> Result<bool, RowError> {
@@ -15,6 +17,26 @@ pub fn is_delete(row: &Row) -> Result<bool, RowError> {
             format!("\"{other}\" is not valid. Type DELETE to delete this row, or leave it blank"),
         )),
     }
+}
+
+/// A `DELETE` row that finds no record: already gone, so it changes nothing, and a file can be
+/// imported again after its deletes are applied. `errors` are the row's others; `key_column` holds
+/// the table's lookup key.
+pub(crate) fn already_deleted(
+    row: &Row,
+    key_column: &str,
+    errors: Vec<RowError>,
+) -> Result<RowOutcome, RowFailure> {
+    if !errors.is_empty() {
+        return Err(RowFailure::Invalid(errors));
+    }
+    let key = row.text(key_column).or(row.text(ID)).unwrap_or_default();
+    Ok(RowOutcome {
+        record_id: row.text(ID).unwrap_or_else(|| key.clone()),
+        record: key,
+        change: Change::Unchanged,
+        fields: Vec::new(),
+    })
 }
 
 /// A `DELETE` row may repeat `saved` (as exported) but not change it. Columns not in `saved` and

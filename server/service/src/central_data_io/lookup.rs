@@ -8,7 +8,7 @@ pub enum LookupError {
     Conflict { resolved: String, provided: String },
 }
 
-pub const NOT_FOUND: &str = "referenced record not found";
+const NOT_FOUND: &str = "referenced record not found";
 
 impl LookupError {
     pub fn message(&self, code: &str) -> String {
@@ -58,7 +58,9 @@ pub fn find_record<R: Keyed + Clone>(
     let by_key = lookup.by_key(key);
     match id {
         Some(id) => match lookup.by_id(id) {
-            Some(saved) if saved.key().trim() != key => Err(conflict(saved, id, key)),
+            Some(saved) if R::normalise(saved.key()) != R::normalise(key) => {
+                Err(conflict(saved, id, key))
+            }
             Some(saved) => Ok(Some(saved.clone())),
             // A new id beside a saved key is a copied row with one column edited.
             None => match by_key.first() {

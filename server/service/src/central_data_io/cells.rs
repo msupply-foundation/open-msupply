@@ -1,4 +1,4 @@
-use super::sheet::Value;
+use super::sheet::{Sheet, SheetRow, Value};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RowError {
@@ -45,7 +45,16 @@ pub struct Row<'a> {
     pub cells: &'a [String],
 }
 
-impl Row<'_> {
+impl<'a> Row<'a> {
+    pub fn new(sheet: &'a Sheet, row: &'a SheetRow) -> Self {
+        Row {
+            sheet: &sheet.name,
+            number: row.number,
+            headers: &sheet.headers,
+            cells: &row.cells,
+        }
+    }
+
     /// `None` when the sheet has no such column. A blank cell is `Some("")`.
     pub fn cell(&self, column: &str) -> Option<&str> {
         let position = self.headers.iter().position(|header| header == column)?;

@@ -1,8 +1,8 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
-    RowOutcome, SheetImport,
+    RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
-    delete::{DELETE_COLUMN, check_unchanged, is_delete},
+    delete::{DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
     field_changes,
     lookup::find_record,
     name_with_code,
@@ -76,6 +76,7 @@ impl ImportTable for LocationTypeTable {
     fn start_sheet(
         &self,
         connection: &StorageConnection,
+        _start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         // Location types are few.
         Ok(Box::new(LocationTypeSheet {
@@ -182,15 +183,7 @@ impl LocationTypeSheet {
     ) -> Result<RowOutcome, RowFailure> {
         // Already gone: nothing to delete, so the row changes nothing.
         let Some(saved) = existing else {
-            if !errors.is_empty() {
-                return Err(RowFailure::Invalid(errors));
-            }
-            return Ok(RowOutcome {
-                record: row.text(CODE).or(row.text(ID)).unwrap_or_default(),
-                record_id: String::new(),
-                change: Change::Unchanged,
-                fields: Vec::new(),
-            });
+            return already_deleted(row, CODE, errors);
         };
         let saved_cells: Vec<_> = COLUMNS
             .iter()

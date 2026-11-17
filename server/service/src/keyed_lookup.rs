@@ -5,6 +5,11 @@ pub trait Keyed {
     fn id(&self) -> &str;
     /// What the row is looked up by besides its id, such as a code or name.
     fn key(&self) -> &str;
+    /// Keys that normalise alike are the same key. Surrounding spaces, which legacy data can
+    /// have, never count; letter case does, as in the database, unless a row says otherwise.
+    fn normalise(key: &str) -> String {
+        key.trim().to_string()
+    }
 }
 
 /// Saved rows in memory, so a run of writes reads the table once. The writes keep it current.
@@ -29,11 +34,10 @@ impl<R: Keyed> KeyedLookup<R> {
         self.by_id.get(id)
     }
 
-    /// Letter case counts, as in the database; surrounding spaces, which legacy data can have,
-    /// don't.
+    /// As `R::normalise` matches keys.
     pub fn by_key(&self, key: &str) -> Vec<&R> {
         self.ids_by_key
-            .get(key.trim())
+            .get(&R::normalise(key))
             .into_iter()
             .flatten()
             .filter_map(|id| self.by_id.get(id))
@@ -45,7 +49,7 @@ impl<R: Keyed> KeyedLookup<R> {
     pub fn taken_by(&self, row: &R) -> Option<&R> {
         let brings_in_clash = self
             .by_id(row.id())
-            .is_none_or(|saved| saved.key().trim() != row.key().trim());
+            .is_none_or(|saved| R::normalise(saved.key()) != R::normalise(row.key()));
         if !brings_in_clash {
             return None;
         }
@@ -57,7 +61,7 @@ impl<R: Keyed> KeyedLookup<R> {
     pub fn put(&mut self, row: R) {
         self.remove(row.id());
         self.ids_by_key
-            .entry(row.key().trim().to_string())
+            .entry(R::normalise(row.key()))
             .or_default()
             .push(row.id().to_string());
         self.by_id.insert(row.id().to_string(), row);
@@ -67,11 +71,11 @@ impl<R: Keyed> KeyedLookup<R> {
         let Some(old) = self.by_id.remove(id) else {
             return;
         };
-        let key = old.key().trim();
-        if let Some(ids) = self.ids_by_key.get_mut(key) {
+        let key = R::normalise(old.key());
+        if let Some(ids) = self.ids_by_key.get_mut(&key) {
             ids.retain(|other| other != id);
             if ids.is_empty() {
-                self.ids_by_key.remove(key);
+                self.ids_by_key.remove(&key);
             }
         }
     }
@@ -117,6 +121,37 @@ mod tests {
         assert_eq!(ids(&lookup, "Tab"), vec!["a"]);
         // Letter case counts.
         assert!(ids(&lookup, "TAB").is_empty());
+    }
+
+    struct AnyCase(&'static str, &'static str);
+
+    impl Keyed for AnyCase {
+        fn id(&self) -> &str {
+            self.0
+        }
+        fn key(&self) -> &str {
+            self.1
+        }
+        fn normalise(key: &str) -> String {
+            key.trim().to_lowercase()
+        }
+    }
+
+    #[test]
+    fn a_row_can_match_keys_in_any_case() {
+        let lookup = KeyedLookup::from_rows(vec![AnyCase("a", "Anna")]);
+        let found: Vec<_> = lookup
+            .by_key(" ANNA ")
+            .into_iter()
+            .map(|row| row.0)
+            .collect();
+        assert_eq!(found, vec!["a"]);
+        // Its own key in another case is no clash; another row's is.
+        assert!(lookup.taken_by(&AnyCase("a", "anna")).is_none());
+        assert_eq!(
+            lookup.taken_by(&AnyCase("b", "anna")).map(|row| row.0),
+            Some("a")
+        );
     }
 
     #[test]
