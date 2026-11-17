@@ -6137,6 +6137,11 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
+  /**
+   * Items with no counted line in a finalised stocktake of this store since the given
+   * datetime, including items never counted in this store
+   */
+  notCountedSince?: InputMaybe<Scalars['DateTime']['input']>;
   /** Excludes items already present as a line on the given record */
   notInRecord?: InputMaybe<ItemNotInRecordFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6218,6 +6223,13 @@ export type ItemNode = {
   customFields?: Maybe<Scalars['JSON']['output']>;
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
+  /**
+   * The item's price per unit on the default price list, null when it is on none.
+   * The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+   * charges a patient for each unit of a stock-out line. Not store-specific: the
+   * default price list is the same in every store.
+   */
+  defaultPricePerUnit?: Maybe<Scalars['Float']['output']>;
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];

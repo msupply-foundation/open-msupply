@@ -32,12 +32,6 @@ export interface FillableBatch {
   sellPricePerPack: number;
 }
 
-/**
- * Each item's default price list price per unit, by item id: null for an
- * item on none (spec/prescriptions contract › the Simple screen).
- */
-export type DefaultPrices = Readonly<Record<string, number | null>>;
-
 /** One card on the Simple screen. */
 export interface MedicineCard {
   medicine: CommonMedicine;
@@ -138,7 +132,6 @@ export const stockLine = (
 export const buildCards = (
   medicines: CommonMedicine[],
   items: CardItem[],
-  prices: DefaultPrices,
   prefs: AllocationPreferences,
   today: Date = new Date()
 ): MedicineCard[] => {
@@ -151,7 +144,7 @@ export const buildCards = (
       {
         medicine,
         item,
-        defaultPricePerUnit: prices[item.id] ?? null,
+        defaultPricePerUnit: item.defaultPricePerUnit ?? null,
         batches,
         stock: unitsIn(batches),
       },

@@ -5473,6 +5473,11 @@ input ItemFilterInput {
 	"""
 	notInRecord: ItemNotInRecordFilterInput
 	"""
+	Items with no counted line in a finalised stocktake of this store since the given
+	datetime, including items never counted in this store
+	"""
+	notCountedSince: DateTime
+	"""
 	Dynamic filter condition AST, currently supporting property conditions
 	on keys visible for the "item" table scope, e.g.
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
@@ -5581,6 +5586,13 @@ type ItemNode {
 	those links (`ancillaryFor`), so an item no link orders has none.
 	"""
 	supplyWastageRate: Float!
+	"""
+	The item's price per unit on the default price list, null when it is on none.
+	The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+	charges a patient for each unit of a stock-out line. Not store-specific: the
+	default price list is the same in every store.
+	"""
+	defaultPricePerUnit: Float
 	itemDirections: [ItemDirectionNode!]!
 	warnings: [WarningNode!]!
 	categories: [ItemCategoryNode!]!

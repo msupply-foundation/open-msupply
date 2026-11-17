@@ -81,11 +81,13 @@ pub(crate) fn get_linked_original_shipment(
         }
         // It's possible that shipments have been linked, but the linked_invoice_id hasn't propagated back
         // to our original shipment yet. So we check if there is any shipment that has a linked_invoice_id
-        // which matches our original shipment
+        // which matches our original shipment. A legacy mSupply cancellation keeps the link of the
+        // invoice it cancels, and is never the other half of a transfer
         None => repo
-            .query_one(InvoiceFilter::new_match_linked_invoice_id(
-                &original_shipment.invoice_row.id,
-            ))
+            .query_one(
+                InvoiceFilter::new_match_linked_invoice_id(&original_shipment.invoice_row.id)
+                    .is_cancellation(false),
+            )
             .map_err(Error::DatabaseError)?,
     };
 

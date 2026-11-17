@@ -131,10 +131,12 @@
    the connectors, and the two fronts meet at the outgoing connector at 100%.
    Painted as two half-arc conics (top clockwise, bottom its mirror) over the
    pale full-ring track, all under a padding-box cover — the real border only
-   reserves the ring's thickness. At the default 0 the ring is the plain pale
-   border. */
+   reserves the ring's thickness. A step that can't be measured (no
+   --ring-progress set inline: a wizard's current step, a sync step without a
+   count) takes the default 1, a full ring in the strong tone, which is how the
+   reference app marks the current step; a measured step starts pale at 0. */
 .step[data-state='active'] .circle {
-  --ring-progress: 0;
+  --ring-progress: 1;
 
   color: var(--tone-dark);
   animation: progress-pulse var(--motion-pulse) infinite;
