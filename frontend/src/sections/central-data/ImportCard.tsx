@@ -1,9 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { MAX_UPLOAD_BYTES, uploadFile } from '@/api/postFiles';
-import { fileUrl } from '@/config';
 import { formatNumber, t } from '@/intl';
-import { saveDocument } from '@/platform/openDocument';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -32,6 +30,7 @@ import {
   type Refusal,
 } from './centralDataLogic';
 import { ImportPreviewCard, type Preview } from './ImportPreviewCard';
+import { saveStoredFile } from './saveStoredFile';
 
 // S1's Import tab (spec/central-data/ui-surface.md § import card, preview
 // card, after an import).
@@ -115,16 +114,11 @@ export const createImport = () => {
         data => data.centralServer.centralData.errorsFile
       )
     );
-    if (outcome.kind === 'file') {
-      const saved = await saveDocument(
-        fileUrl(outcome.fileId),
-        errorsFileName(current.fileName)
+    if (outcome.kind === 'file')
+      setImportError(
+        await saveStoredFile(outcome.fileId, errorsFileName(current.fileName))
       );
-      if (!saved.ok)
-        setImportError(
-          t('error.unable-to-download-file', { reason: saved.message })
-        );
-    } else if (outcome.kind !== 'failed') refuse(outcome);
+    else if (outcome.kind !== 'failed') refuse(outcome);
     setDownloadingErrors(false);
   };
 

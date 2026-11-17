@@ -1,9 +1,7 @@
 import { createResource, createSignal, For, Show, untrack } from 'solid-js';
 import type { SetStoreFunction } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
-import { fileUrl } from '@/config';
 import { formatNumber, t, tPlural } from '@/intl';
-import { saveDocument } from '@/platform/openDocument';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -28,6 +26,7 @@ import {
   type Status,
   type TableFilter,
 } from './centralDataLogic';
+import { saveStoredFile } from './saveStoredFile';
 
 // S1's export card (spec/central-data/ui-surface.md § export card): one row
 // per table with its filters and how many records they match, then Download.
@@ -141,16 +140,8 @@ export const ExportCard = (props: {
     // A failed call is reported by the global error modal.
     if (outcome.kind === 'tooManyRows')
       setExportError(tooManyRows(outcome.rowCount, outcome.maxRows));
-    if (outcome.kind === 'file') {
-      const saved = await saveDocument(
-        fileUrl(outcome.fileId),
-        'central_data.xlsx'
-      );
-      if (!saved.ok)
-        setExportError(
-          t('error.unable-to-download-file', { reason: saved.message })
-        );
-    }
+    if (outcome.kind === 'file')
+      setExportError(await saveStoredFile(outcome.fileId, 'central_data.xlsx'));
     setDownloading(false);
   };
 
