@@ -57,8 +57,8 @@ import styles from './StorePreferencesPanel.module.css';
  * S5 › the Preferences panel (spec/settings/ui-surface.md § S5): a text filter,
  * then one labelled row per ungrouped store preference in the SERVED order —
  * the server's catalogue order is the display order (contract § The store
- * editor) — then the Procurement group: the purchase-order preferences
- * together in one accordion, closed on arrival (SET-05.61). Each row is label
+ * editor) — then the Procurement and Dispensing groups, each an accordion
+ * closed on arrival (SET-05.61, SET-05.78). Each row is label
  * inline-start, control inline-end, on the hairline row rhythm (the module
  * CSS); the two composites — the recent-stocktake group and the
  * invoice-status choice — take a full-width block each. Every control is
@@ -475,8 +475,8 @@ export const StorePreferencesPanel = (props: {
             {preference => <PreferenceRow preference={preference} />}
           </For>
         </div>
-        {/* The Procurement group — the purchase-order preferences together,
-            closed on arrival; members keep catalogue order (SET-05.61). Held
+        {/* The Procurement and Dispensing groups, closed on arrival; members
+            keep catalogue order (SET-05.61, SET-05.78). Held
             open while a filter is active; nothing renders when the filter
             leaves no group. */}
         <Show when={catalogue().groups.length > 0}>
