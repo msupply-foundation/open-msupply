@@ -45,6 +45,7 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { RowStatusBadges, uncapped } from './RowStatusBadges';
 import {
   AlertCircleIcon,
@@ -1079,24 +1080,12 @@ const OutboundDetailView: Component = () => {
         when={node()}
         fallback={
           <Show when={notFound(data)} fallback={<Spinner center />}>
-            <Dialog
-              open
-              dismissable={false}
+            <NotFoundNotice
+              testId="shipment-not-found-notice"
+              title={t('error.shipment-not-found')}
+              description={t('messages.click-to-return-to-shipments')}
               onClose={() =>
                 navigate(`/${params.storeId}/distribution/outbound-shipment`)
-              }
-              icon={<InfoIcon />}
-              title={t('heading.not-found')}
-              description={t('error.shipment-not-found')}
-              actions={
-                <OkButton
-                  data-testid="dialog-button-ok"
-                  onClick={() =>
-                    navigate(
-                      `/${params.storeId}/distribution/outbound-shipment`
-                    )
-                  }
-                />
               }
             />
           </Show>
