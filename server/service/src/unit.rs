@@ -1,5 +1,4 @@
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUnitError {
@@ -17,94 +16,34 @@ impl From<RepositoryError> for UpsertUnitError {
     }
 }
 
-/// Saved units in memory, so a run of writes reads the table once. `upsert_unit_in` keeps it
-/// current.
-#[derive(Default)]
-pub struct UnitLookup {
-    by_id: HashMap<String, UnitRow>,
-    ids_by_name: HashMap<String, Vec<String>>,
-}
-
-impl UnitLookup {
-    pub fn load_all(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        Ok(Self::from_rows(
-            UnitRowRepository::new(connection).find_all()?,
-        ))
-    }
-
-    fn from_rows(rows: Vec<UnitRow>) -> Self {
-        let mut lookup = Self::default();
-        for row in rows {
-            lookup.put(row);
-        }
-        lookup
-    }
-
-    pub fn by_id(&self, id: &str) -> Option<&UnitRow> {
-        self.by_id.get(id)
-    }
-
-    /// Letter case counts, as in the database; surrounding spaces, which legacy sync can save, don't.
-    pub fn by_name(&self, name: &str) -> Vec<&UnitRow> {
-        self.ids_by_name
-            .get(name.trim())
-            .into_iter()
-            .flatten()
-            .filter_map(|id| self.by_id.get(id))
-            .collect()
-    }
-
-    fn put(&mut self, unit: UnitRow) {
-        let key = unit.name.trim();
-        let old_key = self
-            .by_id
-            .get(&unit.id)
-            .map(|old| old.name.trim().to_string());
-        if old_key.as_deref() != Some(key) {
-            if let Some(ids) = old_key.and_then(|old_key| self.ids_by_name.get_mut(&old_key)) {
-                ids.retain(|id| *id != unit.id);
-            }
-            self.ids_by_name
-                .entry(key.to_string())
-                .or_default()
-                .push(unit.id.clone());
-        }
-        self.by_id.insert(unit.id.clone(), unit);
-    }
-}
-
-/// Joins the caller's transaction when there is one.
-pub fn upsert_unit_in(
-    connection: &StorageConnection,
-    lookup: &mut UnitLookup,
-    unit: &UnitRow,
-) -> Result<(), UpsertUnitError> {
+/// Adds or updates one unit. Joins the caller's transaction when there is one, so an import's
+/// earlier rows count.
+pub fn upsert_unit(connection: &StorageConnection, unit: &UnitRow) -> Result<(), UpsertUnitError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertUnitError> {
-            validate(lookup, unit)?;
+            validate(connection, unit)?;
             UnitRowRepository::new(connection).upsert_one(unit)?;
             Ok(())
         })
-        .map_err(|error| error.to_inner_error())?;
-    lookup.put(unit.clone());
-    Ok(())
+        .map_err(|error| error.to_inner_error())
 }
 
-fn validate(lookup: &UnitLookup, unit: &UnitRow) -> Result<(), UpsertUnitError> {
+fn validate(connection: &StorageConnection, unit: &UnitRow) -> Result<(), UpsertUnitError> {
     if unit.name.trim().is_empty() {
         return Err(UpsertUnitError::NameRequired);
     }
 
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
+    let repo = UnitRowRepository::new(connection);
     let brings_in_clash = unit.is_active
-        && lookup
-            .by_id(&unit.id)
+        && repo
+            .find_one_by_id(&unit.id)?
             .is_none_or(|saved| !saved.is_active || saved.name.trim() != unit.name.trim());
     if !brings_in_clash {
         return Ok(());
     }
-    match lookup
-        .by_name(&unit.name)
+    match repo
+        .find_by_trimmed_name(&unit.name)?
         .into_iter()
         .find(|other| other.is_active && other.id != unit.id)
     {
@@ -130,29 +69,29 @@ mod tests {
         }
     }
 
-    /// Saves as the import does, from a fresh lookup.
-    fn upsert_unit(connection: &StorageConnection, unit: &UnitRow) -> Result<(), UpsertUnitError> {
-        upsert_unit_in(connection, &mut UnitLookup::load_all(connection)?, unit)
+    fn ids_named(connection: &StorageConnection, name: &str) -> Vec<String> {
+        UnitRowRepository::new(connection)
+            .find_by_trimmed_name(name)
+            .unwrap()
+            .into_iter()
+            .map(|unit| unit.id)
+            .collect()
     }
 
-    #[test]
-    fn lookup_follows_a_rename() {
-        let mut lookup =
-            UnitLookup::from_rows(vec![unit("a", "Tab", true), unit("b", "Tab", true)]);
-        lookup.put(unit("a", "Tablet", true));
-        let ids = |lookup: &UnitLookup, name| {
-            lookup
-                .by_name(name)
-                .into_iter()
-                .map(|unit| unit.id.clone())
-                .collect::<Vec<_>>()
-        };
-        assert_eq!(ids(&lookup, "Tab"), vec!["b"]);
-        assert_eq!(ids(&lookup, "Tablet"), vec!["a"]);
-        assert_eq!(lookup.by_id("a").unwrap().name, "Tablet");
-        // Saving it unchanged doesn't list it twice.
-        lookup.put(unit("a", "Tablet", false));
-        assert_eq!(ids(&lookup, "Tablet"), vec!["a"]);
+    #[actix_rt::test]
+    async fn a_renamed_unit_is_found_by_its_new_name() {
+        let (_, connection, _, _) =
+            setup_all("upsert_unit_rename_lookup", MockDataInserts::none()).await;
+        let repo = UnitRowRepository::new(&connection);
+        repo.upsert_one(&unit("a", "Tab", true)).unwrap();
+        repo.upsert_one(&unit("b", "Tab", true)).unwrap();
+
+        upsert_unit(&connection, &unit("a", "Tablet", true)).unwrap();
+        assert_eq!(ids_named(&connection, "Tab"), vec!["b"]);
+        assert_eq!(ids_named(&connection, "Tablet"), vec!["a"]);
+        // Inactive units are found too.
+        upsert_unit(&connection, &unit("a", "Tablet", false)).unwrap();
+        assert_eq!(ids_named(&connection, "Tablet"), vec!["a"]);
     }
 
     #[actix_rt::test]
@@ -201,14 +140,17 @@ mod tests {
         upsert_unit(&connection, &unit("new", "TAB", true)).unwrap();
     }
 
-    #[test]
-    fn lookup_ignores_spaces_around_a_name() {
-        let mut lookup = UnitLookup::from_rows(vec![unit("a", "Tab ", true)]);
-        assert_eq!(lookup.by_name("Tab").len(), 1);
-        assert_eq!(lookup.by_name(" Tab").len(), 1);
-        // Trimming the saved name doesn't list it twice.
-        lookup.put(unit("a", "Tab", true));
-        assert_eq!(lookup.by_name("Tab").len(), 1);
+    #[actix_rt::test]
+    async fn a_name_is_found_whatever_spaces_surround_it() {
+        let (_, connection, _, _) =
+            setup_all("upsert_unit_padded_lookup", MockDataInserts::none()).await;
+        UnitRowRepository::new(&connection)
+            .upsert_one(&unit("a", "Tab ", true))
+            .unwrap();
+        assert_eq!(ids_named(&connection, "Tab"), vec!["a"]);
+        assert_eq!(ids_named(&connection, " Tab"), vec!["a"]);
+        // Letter case counts.
+        assert!(ids_named(&connection, "tab").is_empty());
     }
 
     #[actix_rt::test]
