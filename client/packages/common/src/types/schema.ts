@@ -8490,6 +8490,7 @@ export enum PreferenceKey {
   GenderOptions = 'genderOptions',
   GlobalLogo = 'globalLogo',
   GlobalTableConfigs = 'globalTableConfigs',
+  GlobalTableDefaultConfigs = 'globalTableDefaultConfigs',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   InvoiceStatusOptions = 'invoiceStatusOptions',
   IsGaps = 'isGaps',
@@ -8574,6 +8575,7 @@ export type PreferencesNode = {
    */
   globalLogo: Scalars['String']['output'];
   globalTableConfigs: Scalars['JSON']['output'];
+  globalTableDefaultConfigs: Scalars['JSON']['output'];
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   invoiceStatusOptions: Array<InvoiceNodeStatus>;
   isGaps: Scalars['Boolean']['output'];
@@ -13999,6 +14001,7 @@ export type UpsertPreferencesInput = {
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   globalLogo?: InputMaybe<Scalars['String']['input']>;
   globalTableConfigs?: InputMaybe<Scalars['JSON']['input']>;
+  globalTableDefaultConfigs?: InputMaybe<Scalars['JSON']['input']>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
   isGaps?: InputMaybe<Scalars['Boolean']['input']>;
