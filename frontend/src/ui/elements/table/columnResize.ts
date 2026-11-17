@@ -39,12 +39,12 @@ export const fillColumnId = (
  * The width (px) a drag should start from, or `undefined` to start from the
  * column's size as it is.
  *
- * A column's size is only its min-width floor, and its content or the table's
- * spare space usually draws it wider — but TanStack starts a drag from the
- * size. So the first stretch of every drag only raised the hidden floor to the
- * visible edge and nothing moved. Starting from the drawn width (rounded to a
+ * TanStack starts a drag from the size, but a column on its default size has
+ * that size only as a min-width floor, and its content or the table's spare
+ * space usually draws it wider. Starting from the drawn width (rounded to a
  * whole pixel, as TanStack sizes are) makes the edge follow the pointer from
- * the first pixel.
+ * the first pixel, rather than sitting still until the pointer passes the
+ * floor.
  *
  * @param renderedPx the header cell's drawn width
  * @param currentPx the column's size (`column.getSize()`)
@@ -81,7 +81,7 @@ export const dragStart = (
  * Whether a finished drag changed the dragged column's width — only then is
  * it saved, so a press that never moves saves nothing (the drag's start width
  * included, which would otherwise turn a column's default into a saved one).
- * With no recorded start, the drag is treated as a change, as before.
+ * With no recorded start, the drag counts as a change and is saved.
  *
  * @param start the dragged column and its width at the start
  * @param pending the sizing the drag ended on

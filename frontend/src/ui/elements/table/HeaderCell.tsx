@@ -105,13 +105,13 @@ export function HeaderCell<T>(props: {
       // Auto table layout (columns flex to fill). A column's default `size` is
       // its min-width FLOOR, which content or the table's spare room stretches
       // it past. A width the user set (a resize drag or a double-click) is also
-      // its `width`, which makes it exact: the spare room goes to the columns
-      // still on their defaults (#1890). As a floor alone, the table handed the
-      // column a share of the spare room in proportion to its size, so in a
-      // table with room to spare it never drew at the width dragged to, and
-      // the press that starts a drag (which raises the size to the drawn
-      // width) made it jump wider. maxSize is the growth cap, applied as
-      // max-width (docs/CELL_TYPES.md). A pinned column additionally gets
+      // its `width`, which makes it exact: it takes no share of the spare
+      // room, which goes to the columns still on their defaults (#1890). So it
+      // draws at the width it was dragged to, and the press that starts a drag
+      // (which sets the size to the drawn width) leaves it where it is. The
+      // one column that stays a floor is the one filling the row once every
+      // column has a width (DataTable.columnWidth). maxSize is the growth cap,
+      // applied as max-width (docs/CELL_TYPES.md). A pinned column additionally gets
       // sticky position + its edge offset.
       style={{
         'min-width': `${width().px}px`,

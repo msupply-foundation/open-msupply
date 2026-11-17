@@ -174,10 +174,10 @@
   /* Default growth cap for a single-line body cell (issue #432): a column
      auto-sizes to its content up to this, then the cell ellipsises instead of
      growing unbounded and pushing its neighbours off-screen. It's only a
-     ceiling on CONTENT-driven growth — an explicit width (a resize drag, which
-     sets the header cell's min-width floor) or a per-column `maxSize` both
-     override it, so columns stay freely draggable wider and a column that opts
-     into a tighter cap (the Comment icon) still wins. */
+     ceiling on CONTENT-driven growth. A width the user set (a resize drag or a
+     double-click, drawn as the header cell's exact width) and a per-column
+     `maxSize` both override it, so a column can be dragged past it and a
+     column with a tighter cap (the Comment icon) keeps that cap. */
   --table-cell-max-grow: 36rem;
 }
 
@@ -356,9 +356,10 @@
   white-space: nowrap;
   /* Single-line cells clip with an ellipsis rather than spilling into their
      neighbours — the counterpart to nowrap. max-width caps content-driven
-     growth (issue #432); the column's width floor (getSize, incl. a resize
-     drag — set on the header cell, which the body cell fills regardless) and
-     any per-column max-width (maxSize) override it. Wrapping columns
+     growth (issue #432). The column's width is set on the header cell (its
+     size as a min-width, and as an exact width once the user has set one) and
+     the body cell fills it regardless; a per-column max-width (maxSize)
+     overrides the cap. Wrapping columns
      (.td[data-wrap]) opt back out below. */
   max-width: var(--table-cell-max-grow);
   overflow: hidden;

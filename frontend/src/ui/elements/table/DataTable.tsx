@@ -963,13 +963,12 @@ export function DataTable<T, K extends string, G extends string = never>(
     }
   };
 
-  // A column's width for its header cell — one memo per column (#1890). Read
-  // straight off column.getSize(), every cell that showed it depended on the
-  // WHOLE sizing state, so each tick of a resize drag re-ran the render effect
-  // of every one of them — and that effect recomputes all of the cell's
-  // attributes, pinned-column lookups included, only to write the same values
-  // back. A memo stops at an unchanged value, so a tick now reaches the dragged
-  // column's header alone (body cells carry no width at all — see TableRow).
+  // A column's width for its header cell — one memo per column (#1890). A cell
+  // reading column.getSize() itself would depend on the WHOLE sizing state, so
+  // each tick of a resize drag would re-run the render effect of every cell —
+  // and that effect recomputes all of the cell's attributes, pinned-column
+  // lookups included, only to write the same values back. A memo stops at an
+  // unchanged value, so a tick reaches the dragged column's header alone (body cells carry no width at all — see TableRow).
   // Keyed by id and resolved through the table on each run, so a column rebuilt
   // from a new `columns` prop still reads its own def. Created under the
   // table's owner, so they're disposed with it.
@@ -1261,21 +1260,23 @@ export function DataTable<T, K extends string, G extends string = never>(
 
   // --- Auto-fit a column to its widest content (issue #651) ---
   // The Excel gesture: double-clicking a header's resize divider snaps that
-  // column to the width its content actually needs (HeaderCell's onDblClick).
-  // What it writes is exactly what a DRAG writes — the column's `size`, i.e.
-  // its min-width floor — so the fitted width persists, layers, and clears with
-  // "Reset table to default" like any other user width.
+  // column to the width its content actually needs (HeaderCell's second
+  // mousedown). What it writes is exactly what a DRAG writes — the column's
+  // `size`, which HeaderCell draws as the column's exact width once the user
+  // has set it — so the fitted width persists, layers, and clears with "Reset
+  // table to default" like any other user width.
   //
   // Measured, not computed: only the DOM knows what the cells rendered (a
   // formatted number, a localised date, a status chip, this locale's glyph
   // widths at this density). Scope is one column of the CURRENT page — the only
   // "widest content" available without fetching every row.
   //
-  // Same flex-sink caveat as a drag (docs/TABLE_PLAN.md Phase 3): under the
-  // min-width-floor + auto-layout model, the column that absorbs the table's
-  // slack re-absorbs anything auto-fit gives back, so fitting the WIDEST column
-  // narrower can leave it where it was. Fitting a clipped column WIDER — the
-  // gesture people actually reach for — works.
+  // It fits both ways. An exact width takes no share of the table's spare
+  // room, so a column fitted narrower draws narrower and the room goes to the
+  // columns still on their defaults. The one exception is the column that
+  // fills the row once every drawn column has a width the user set
+  // (fillColumnId, columnResize.ts): its fitted width stays a floor, and it
+  // still takes whatever room is left.
 
   // A cell's own inline padding, added back to its content width: a column
   // sized to bare text would clip against its own padding.
