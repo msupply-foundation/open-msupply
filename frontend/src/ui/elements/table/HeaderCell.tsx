@@ -168,7 +168,7 @@ export function HeaderCell<T>(props: {
           aria-hidden="true"
           // e2e/TESTIDS.md: the divider is pointer-only and hidden from
           // assistive tech, so a test reaches it by this id.
-          data-testid={`header-resize-${column().id}`}
+          data-testid={`column-resize-${column().id}`}
         />
       </Show>
     </th>
