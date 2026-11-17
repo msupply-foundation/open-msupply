@@ -457,6 +457,7 @@
   "error.cant-reach-server-body": "You're offline or the connection dropped.",
   "error.cant-save": "There was a problem saving.",
   "error.cce-asset-number-already-used": "CCE asset number already in use, please use another number",
+  "error.central-data-export-counts-failed": "Couldn't count the rows. You can still download: a file over the import limit is refused when you do.",
   "error.central-data-export-too-many-rows": "These tables come to {{rowCount}} rows. An import can have up to {{maxRows}}, so narrow the filters.",
   "error.central-data-import-unconfirmed": "Couldn't tell whether the import finished. Choose the file again to see what it would still change.",
   "error.central-data-row-errors_one": "{{count}} problem · nothing will be imported",

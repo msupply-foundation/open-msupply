@@ -57,13 +57,25 @@ export const ExportCard = (props: {
       graphqlFetch(CentralDataExportCounts, { tables }, { background: true })
   );
   // First fetched on a tick, under an open screen: read without suspending.
-  const counts = () => {
+  const countsReply = () => {
     const state = countsResult.state;
-    if (state !== 'ready' && state !== 'refreshing') return undefined;
-    const result = countsResult.latest;
-    return result.kind === 'success'
+    return state === 'ready' || state === 'refreshing'
+      ? countsResult.latest
+      : undefined;
+  };
+  const counts = () => {
+    const result = countsReply();
+    return result?.kind === 'success'
       ? result.data.centralServer.centralData.exportCounts
       : undefined;
+  };
+  // A background call, so a failure reaches no global modal: the card says so.
+  // With nothing ticked nothing is counted, so an old failure no longer applies.
+  const countsFailed = () => {
+    const result = countsReply();
+    return (
+      tickedCount() > 0 && result !== undefined && result.kind !== 'success'
+    );
   };
   const countFor = (index: number) => {
     const filter = props.filters[index];
@@ -223,6 +235,12 @@ export const ExportCard = (props: {
             </For>
           </tbody>
         </Table>
+
+        <Show when={countsFailed()}>
+          <Alert severity="warning" testId="central-data-export-counts-failed">
+            {t('error.central-data-export-counts-failed')}
+          </Alert>
+        </Show>
 
         <Show when={overCap()}>
           <Alert severity="warning" testId="central-data-export-too-many">

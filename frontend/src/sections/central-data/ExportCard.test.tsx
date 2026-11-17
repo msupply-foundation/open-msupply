@@ -350,6 +350,37 @@ describe('ExportCard', () => {
     expect(download().disabled).toBe(false);
   });
 
+  it("warns when the rows can't be counted, leaving Download to the server's own check (OMS-REG-CDIO-01.104)", async () => {
+    graphqlFetch.mockImplementation(async () => ({ kind: 'unexpectedError' }));
+    open();
+    await tickUnits();
+
+    expect(alerts()).toEqual([
+      [
+        'central-data-export-counts-failed',
+        'error.central-data-export-counts-failed',
+      ],
+    ]);
+    expect(cellTexts()).toContain('—');
+    expect(download().disabled).toBe(false);
+
+    // Counted on the next try, the warning goes.
+    graphqlFetch.mockImplementation(async () => counts(10, 10));
+    shown.selects['central-data-export-unit-status']!.onValueChange('ACTIVE');
+    await settle();
+    expect(alerts()).toEqual([]);
+    expect(cellTexts()).toContain('10');
+
+    // Nothing ticked is nothing counted, so no warning either.
+    graphqlFetch.mockImplementation(async () => ({ kind: 'unexpectedError' }));
+    shown.selects['central-data-export-unit-status']!.onValueChange('ALL');
+    await settle();
+    expect(alerts()).toHaveLength(1);
+    shown.checkboxes['central-data-export-unit']!.onChange(false);
+    await settle();
+    expect(alerts()).toEqual([]);
+  });
+
   it('empties every Search and Status on Clear filters, keeping the ticked tables (OMS-REG-CDIO-01.49)', async () => {
     open();
     await tickUnits();
