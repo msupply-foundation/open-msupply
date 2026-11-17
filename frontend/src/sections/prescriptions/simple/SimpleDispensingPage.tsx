@@ -1,4 +1,13 @@
-import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  For,
+  Match,
+  onMount,
+  Show,
+  Switch,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, produce, reconcile } from 'solid-js/store';
 import { useParams } from '@solidjs/router';
@@ -59,8 +68,9 @@ import styles from './SimpleDispensing.module.css';
 /*
  * The Simple screen (spec/prescriptions ui-surface S9): the store's common
  * medicines as cards, each carrying its usual amounts, and the list for the
- * person at the counter beside them. A second way into the same dispensing
- * records as the Standard list, one press away from it and back.
+ * person at the counter beside them. Dispensing opens on it in a store whose
+ * dispensing screen is Simple; staff can't switch to the list's screen, and
+ * reach past records through Dispensing records.
  */
 const SimpleDispensingPage: Component = () => {
   const params = useParams<{ storeId: string }>();
@@ -93,7 +103,12 @@ const SimpleDispensingPage: Component = () => {
 
   // Read again once a visit is dispensed (rules › dispensing the visit): in
   // the background, and a read that fails keeps the cards as they were, so
-  // the screen never drops back to loading with a visit on it.
+  // the screen never drops back to loading with a visit on it. Only the read
+  // as the screen opens may raise the app's error dialog: a first read after
+  // that, for common medicines set up while the screen is open, may have a
+  // visit on the screen, which the dialog's reload would lose.
+  let opening = true;
+  onMount(() => (opening = false));
   const [items, { refetch: refetchItems }] = createResource<
     CardItem[] | undefined,
     { storeId: string; ids: string[] }
@@ -104,7 +119,7 @@ const SimpleDispensingPage: Component = () => {
       return { storeId: params.storeId, ids: list.map(m => m.itemId) };
     },
     async ({ storeId, ids }, { value }) =>
-      (await fetchItems(storeId, ids, value !== undefined)) ?? value
+      (await fetchItems(storeId, ids, !opening || value !== undefined)) ?? value
   );
 
   // Rebuilt per load, so compared by value: a refresh that returns the same
@@ -450,66 +465,64 @@ const SimpleDispensingPage: Component = () => {
         </Header>
       }
     >
-      {/* Loaded once the store has no common medicines, or their cards are
-          in. Without cards the screen is otherwise as usual, so the search
-          can still add a medicine (rules › the Simple screen). */}
-      <Show
-        when={medicines()?.length === 0 || cards() !== undefined}
-        fallback={<EmptyState graphic={false} message={t('loading')} />}
-      >
-        <div class={styles.columns}>
-          <div class={styles.cardsColumn}>
-            <StepHeading
-              n={2}
-              heading
-              label={t('heading.choose-medicines')}
-              hint={
-                patient() === null
-                  ? t('messages.choose-who-first')
-                  : t('messages.press-an-amount')
-              }
-              testId="choose-medicines-hint"
+      <div class={styles.columns}>
+        <div class={styles.cardsColumn}>
+          <StepHeading
+            n={2}
+            heading
+            label={t('heading.choose-medicines')}
+            hint={
+              patient() === null
+                ? t('messages.choose-who-first')
+                : t('messages.press-an-amount')
+            }
+            testId="choose-medicines-hint"
+          />
+          <div class={styles.search}>
+            <ItemSearch
+              label={t('label.search-all-medicines')}
+              hideLabel
+              placeholder={t('label.search-all-medicines')}
+              storeId={params.storeId}
+              // The same medicines as the line editor's search.
+              includeHiddenWithStock
+              width="full"
+              clearable={false}
+              disabled={patient() === null || locked()}
+              value={searchValue()}
+              onSelect={item => {
+                if (!item) return;
+                setSearchValue(item.id);
+                askAmount(item.id);
+              }}
             />
-            <div class={styles.search}>
-              <ItemSearch
-                label={t('label.search-all-medicines')}
-                hideLabel
-                placeholder={t('label.search-all-medicines')}
-                storeId={params.storeId}
-                // The same medicines as the line editor's search.
-                includeHiddenWithStock
-                width="full"
-                clearable={false}
-                disabled={patient() === null || locked()}
-                value={searchValue()}
-                onSelect={item => {
-                  if (!item) return;
-                  setSearchValue(item.id);
-                  askAmount(item.id);
-                }}
+          </div>
+          {/* At most three columns, never narrower than three amount
+              buttons and the another-amount button need. */}
+          {/* Until someone is chosen the cards' buttons are disabled,
+              so they dim as every disabled control does. The names and
+              stock stay full strength: staff read them while choosing. */}
+          {/* Only the cards wait for their read. The search and the list
+              are there from the start and stay, so staff can still add a
+              medicine without cards, and common medicines set up while a
+              visit is on the screen never hide it (rules › the Simple
+              screen). */}
+          <Switch
+            fallback={
+              <EmptyState
+                graphic={false}
+                // Set up but none of them dispensable here any more is
+                // a different fix from none set up, so it says which.
+                message={t(
+                  medicines()?.length === 0
+                    ? 'messages.no-common-medicines'
+                    : 'messages.no-common-medicines-dispensable'
+                )}
+                data-testid="nothing-here"
               />
-            </div>
-            {/* At most three columns, never narrower than three amount
-                buttons and the another-amount button need. */}
-            {/* Until someone is chosen the cards' buttons are disabled,
-                so they dim as every disabled control does. The names and
-                stock stay full strength: staff read them while choosing. */}
-            <Show
-              when={(cards() ?? []).length > 0}
-              fallback={
-                <EmptyState
-                  graphic={false}
-                  // Set up but none of them dispensable here any more is
-                  // a different fix from none set up, so it says which.
-                  message={t(
-                    medicines()?.length === 0
-                      ? 'messages.no-common-medicines'
-                      : 'messages.no-common-medicines-dispensable'
-                  )}
-                  data-testid="nothing-here"
-                />
-              }
-            >
+            }
+          >
+            <Match when={(cards() ?? []).length > 0}>
               <CardGrid
                 equalHeight
                 minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
@@ -528,31 +541,38 @@ const SimpleDispensingPage: Component = () => {
                   )}
                 </For>
               </CardGrid>
-            </Show>
-          </div>
-          {/* Docked at the columns' inline end, or a bar at the bottom
-              of the screen on a phone (its own CSS). One instance at
-              every width: crossing the line restyles it, never rebuilds
-              its lines. */}
-          <DispensingList
-            isPhone={isPhone()}
-            forName={patient()?.name}
-            lines={lines}
-            cardOf={cardOf}
-            onAmount={(itemId, units) =>
-              update(setAmount(lines, itemId, units, stockOf(itemId)))
-            }
-            onRemove={itemId => update(removeLine(lines, itemId))}
-            onClear={() => void clear()}
-            onDispense={() => void dispense()}
-            canDispense={patient() !== null}
-            dispensing={dispensing()}
-            looking={looking()}
-            locked={locked()}
-            notice={shownNotice()}
-          />
+            </Match>
+            <Match when={cards() === undefined && medicines()?.length !== 0}>
+              <EmptyState
+                graphic={false}
+                message={t('loading')}
+                data-testid="cards-loading"
+              />
+            </Match>
+          </Switch>
         </div>
-      </Show>
+        {/* Docked at the columns' inline end, or a bar at the bottom
+            of the screen on a phone (its own CSS). One instance at
+            every width: crossing the line restyles it, never rebuilds
+            its lines. */}
+        <DispensingList
+          isPhone={isPhone()}
+          forName={patient()?.name}
+          lines={lines}
+          cardOf={cardOf}
+          onAmount={(itemId, units) =>
+            update(setAmount(lines, itemId, units, stockOf(itemId)))
+          }
+          onRemove={itemId => update(removeLine(lines, itemId))}
+          onClear={() => void clear()}
+          onDispense={() => void dispense()}
+          canDispense={patient() !== null}
+          dispensing={dispensing()}
+          looking={looking()}
+          locked={locked()}
+          notice={shownNotice()}
+        />
+      </div>
       {/* Opens once its medicine's batches are in: at once from a card, a
           moment after the search for a medicine with no card. */}
       <Show when={asking() ? cardOf(asking()!) : undefined}>

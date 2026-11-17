@@ -73,7 +73,7 @@ mod tests {
                 .unwrap()
         };
 
-        // OMS-REG-DIS-12.115 / spec rules › dispensing preferences: Standard
+        // OMS-REG-DIS-12.186 / spec rules › dispensing preferences: Standard
         // unless an administrator says otherwise.
         assert_eq!(load(None), DispensingScreenOption::Standard);
         assert_eq!(load(Some(&store_a)), DispensingScreenOption::Standard);
@@ -131,7 +131,7 @@ mod tests {
                 .unwrap();
         };
 
-        // OMS-REG-DIS-12.180: a screen a later version added, globally and
+        // OMS-REG-DIS-12.181: a screen a later version added, globally and
         // for the store, and a value that isn't JSON at all. The store still
         // opens, on the default screen.
         for value in [r#""TODAY""#, "not json"] {
