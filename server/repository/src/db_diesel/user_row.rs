@@ -22,13 +22,23 @@ table! {
         job_title -> Nullable<Text>,
         last_successful_sync -> Nullable<Timestamp>,
         is_active -> Bool,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
+// EnumIter outside tests too, so central data import can check it names every language.
 #[derive(
-    DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize,
+    DbEnum,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    strum::EnumIter,
 )]
-#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum LanguageType {
     #[default]
@@ -54,6 +64,7 @@ pub enum LanguageType {
     serde::Deserialize,
 )]
 #[diesel(table_name = user_account)]
+#[diesel(treat_none_as_null = true)]
 pub struct UserAccountRow {
     pub id: String,
     pub username: String,
@@ -66,6 +77,9 @@ pub struct UserAccountRow {
     pub job_title: Option<String>,
     pub last_successful_sync: Option<NaiveDateTime>,
     pub is_active: bool,
+    /// Set by central data import, which can't use `is_active`: that is mSupply's `active`.
+    /// A deleted user can't log in.
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 impl Default for UserAccountRow {
@@ -82,6 +96,7 @@ impl Default for UserAccountRow {
             job_title: Default::default(),
             last_successful_sync: Default::default(),
             is_active: true,
+            deleted_datetime: Default::default(),
         }
     }
 }
@@ -146,6 +161,7 @@ impl<'a> UserAccountRowRepository<'a> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account::table
             .filter(lower(user_account::username).eq(lower(username)))
             .filter(user_account::is_active.eq(true))
+            .filter(user_account::deleted_datetime.is_null())
             .filter(user_account::hashed_password.ne(""))
             .first(self.connection.lock().connection());
 
@@ -156,6 +172,10 @@ impl<'a> UserAccountRowRepository<'a> {
                 _ => Err(RepositoryError::from(err)),
             },
         }
+    }
+
+    pub fn find_all(&self) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        Ok(user_account::table.load(self.connection.lock().connection())?)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {

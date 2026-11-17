@@ -3,6 +3,9 @@ use crate::StorageConnection;
 
 mod add_consumption_estimate_table;
 mod add_location_type_fk_indexes;
+mod add_standalone_central_admin_key_pg_enum;
+mod add_user_deleted_datetime;
+mod record_standalone_central_admin;
 
 pub(crate) struct V3_05_00;
 
@@ -19,6 +22,9 @@ impl Migration for V3_05_00 {
         vec![
             Box::new(add_consumption_estimate_table::Migrate),
             Box::new(add_location_type_fk_indexes::Migrate),
+            Box::new(add_standalone_central_admin_key_pg_enum::Migrate),
+            Box::new(record_standalone_central_admin::Migrate),
+            Box::new(add_user_deleted_datetime::Migrate),
         ]
     }
 }
