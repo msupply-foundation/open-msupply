@@ -4,6 +4,8 @@ pub(crate) mod update_request_requisition_approved_quantities;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
+mod stale_record_test;
+#[cfg(test)]
 pub(crate) mod test;
 
 use repository::{
@@ -204,6 +206,12 @@ trait RequisitionTransferProcessor {
     }
 
     /// Caller MUST guarantee that record.requisition.name_id is a store active on this site
+    ///
+    /// The record's requisitions were read before this step's transaction, and before the steps
+    /// that ran ahead of it on the same record, so the API or an earlier step may have changed
+    /// them since. A step that writes a requisition re-reads it here, checks its conditions
+    /// against that row and changes only the fields it owns. Writing back the record's copy would
+    /// undo the newer change, e.g. finalising would drop the link and approval written just before.
     fn try_process_record(
         &self,
         connection: &StorageConnection,

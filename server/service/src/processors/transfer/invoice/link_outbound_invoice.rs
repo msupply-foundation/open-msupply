@@ -52,8 +52,14 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
             Some(linked_invoice) => linked_invoice,
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
+        // The record's copy of the outbound can be out of date, see `try_process_record`
+        let repo = InvoiceRowRepository::new(&ctx.connection);
+        let Some(outbound_invoice_row) = repo.find_one_by_id(&outbound_invoice.invoice_row.id)?
+        else {
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
+        };
         // 4.
-        if outbound_invoice.invoice_row.linked_invoice_id.is_some() {
+        if outbound_invoice_row.linked_invoice_id.is_some() {
             return Ok(InvoiceTransferOutput::AlreadyLinked);
         }
 
@@ -61,10 +67,10 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
         let updated_outbound_invoice = InvoiceRow {
             // 5.
             linked_invoice_id: Some(inbound_invoice.invoice_row.id.clone()),
-            ..outbound_invoice.invoice_row.clone()
+            ..outbound_invoice_row
         };
 
-        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_outbound_invoice)?;
+        repo.upsert_one(&updated_outbound_invoice)?;
 
         let result = format!(
             "invoice ({}) source invoice ({})",

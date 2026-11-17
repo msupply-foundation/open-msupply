@@ -59,15 +59,20 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
                 inbound_invoice.invoice_row.r#type.to_owned(),
             ));
         }
+        // The record's copy of the inbound can be out of date, see `try_process_record`
+        let repo = InvoiceRowRepository::new(&ctx.connection);
+        let Some(deleted_inbound_invoice) = repo.find_one_by_id(&inbound_invoice.invoice_row.id)?
+        else {
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
+        };
         // 5.
-        if inbound_invoice.invoice_row.status != InvoiceStatus::Picked {
+        if deleted_inbound_invoice.status != InvoiceStatus::Picked {
             return Ok(InvoiceTransferOutput::WrongInboundStatus(
-                inbound_invoice.invoice_row.status.to_owned(),
+                deleted_inbound_invoice.status,
             ));
         }
 
         // Execute
-        let deleted_inbound_invoice = inbound_invoice.invoice_row.clone();
         let deleted_inbound_lines =
             get_lines_for_invoice(&ctx.connection, &deleted_inbound_invoice.id)?;
 
@@ -77,7 +82,7 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
             invoice_line_repository.delete(&line.invoice_line_row.id)?;
         }
         // 6.
-        InvoiceRowRepository::new(&ctx.connection).delete(&deleted_inbound_invoice.id)?;
+        repo.delete(&deleted_inbound_invoice.id)?;
 
         system_activity_log_entry(
             &ctx.connection,

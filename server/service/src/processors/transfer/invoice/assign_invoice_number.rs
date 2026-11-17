@@ -69,8 +69,14 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
             Some(linked_invoice) => linked_invoice,
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
+        // The record's copy of the inbound can be out of date, see `try_process_record`
+        let repo = InvoiceRowRepository::new(&ctx.connection);
+        let Some(inbound_invoice_row) = repo.find_one_by_id(&inbound_invoice.invoice_row.id)?
+        else {
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
+        };
         // 5.
-        if inbound_invoice.invoice_row.invoice_number != -1 {
+        if inbound_invoice_row.invoice_number != -1 {
             return Ok(InvoiceTransferOutput::InvoiceNumberAlreadyAllocated);
         }
 
@@ -81,10 +87,10 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
                 &NumberRowType::InboundShipment,
                 &inbound_invoice.store_row.id,
             )?,
-            ..inbound_invoice.invoice_row.clone()
+            ..inbound_invoice_row
         };
 
-        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_invoice_row)?;
+        repo.upsert_one(&updated_invoice_row)?;
         system_activity_log_entry(
             &ctx.connection,
             ActivityLogType::InvoiceNumberAllocated,

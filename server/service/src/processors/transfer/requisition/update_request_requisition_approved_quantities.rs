@@ -50,8 +50,15 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             Some(linked_requisition) => linked_requisition,
             None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
+        // The record's copy of the request can be out of date, see `try_process_record`
+        let repo = RequisitionRowRepository::new(connection);
+        let Some(request_requisition_row) =
+            repo.find_one_by_id(&request_requisition.requisition_row.id)?
+        else {
+            return Ok(RequisitionTransferOutput::NoLinkedRequisition);
+        };
         // 4.
-        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone()
+        if let Some(approval_status) = &request_requisition_row.approval_status
             && approval_status.is_approved()
         {
             return Ok(RequisitionTransferOutput::RequestAlreadyApproved);
@@ -88,10 +95,10 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
         let updated_request_requisition = RequisitionRow {
             // 6.
             approval_status: response_requisition.requisition_row.approval_status.clone(),
-            ..request_requisition.requisition_row.clone()
+            ..request_requisition_row
         };
 
-        RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;
+        repo.upsert_one(&updated_request_requisition)?;
 
         let result = format!(
             "Internal order ({}) updated to approved, per requisition ({})",

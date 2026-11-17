@@ -52,6 +52,12 @@ Same exact process is used, except the processors are triggered in services, see
 - Processor sees new requisition in change log and executes `CreateResponseRequisitionProcessor` which creates Response Requisition (id: B) and links it to Request Requisition (requisition_id: A)
 - Processor tries to process any other changelogs (it re-queries changelogs until result is empty), and sees the newly created Response Requisition, and will executed `LikRequestRequisitionProcessor` and sets (requisition_id: B) for Request Requisition (id: A)
 
+## Writing the other half of a transfer
+
+A processor reads the changed record and its linked record once, when it picks up the changelog entry, then runs every step on that copy in turn. By the time a step writes the linked record, the copy can be out of date: the API may have committed a change to it, or an earlier step on the same entry may have written it.
+
+So a step that writes the linked record reads it again inside its own transaction, checks its conditions against that row, and changes only the fields it owns. Writing the whole copy back would undo the newer change. For example, an outbound shipment shipped moments after it was picked went back to Picked when the inbound shipment's record linked it.
+
 ## Potential for Circular/Infinite processing
 
 Any event driven system has a potential for infinite looping. Processor conditions are carefully crafted to avoid these scenarios, but there is a possibility of an edge case that hasn't been considered. Care should be taken when adding changes and review transfer processor code.

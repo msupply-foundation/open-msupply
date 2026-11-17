@@ -37,6 +37,8 @@ pub(crate) mod update_outbound_invoice_status;
 pub(crate) mod update_outbound_received_quantity;
 
 #[cfg(test)]
+mod stale_record_test;
+#[cfg(test)]
 pub(crate) mod test;
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
@@ -354,6 +356,12 @@ trait InvoiceTransferProcessor {
     }
 
     /// Caller MUST guarantee that source invoice.name_id is a store active on this site
+    ///
+    /// The record's invoices were read before this step's transaction, and before the steps that
+    /// ran ahead of it on the same record, so the API or an earlier step may have changed them
+    /// since. A step that writes an invoice re-reads it here, checks its conditions against that
+    /// row and changes only the fields it owns. Writing back the record's copy would undo the
+    /// newer change, e.g. put a shipped outbound back to Picked.
     fn try_process_record(
         &self,
         ctx: &ServiceContext,

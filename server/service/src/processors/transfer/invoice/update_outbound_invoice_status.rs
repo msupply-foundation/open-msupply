@@ -59,12 +59,18 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             Some(linked_invoice) => linked_invoice,
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
+        // The record's copy of the outbound can be out of date, see `try_process_record`
+        let repo = InvoiceRowRepository::new(&ctx.connection);
+        let Some(outbound_invoice_row) = repo.find_one_by_id(&outbound_invoice.invoice_row.id)?
+        else {
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
+        };
         // 4.
-        if outbound_invoice.invoice_row.status == InvoiceStatus::Verified {
+        if outbound_invoice_row.status == InvoiceStatus::Verified {
             return Ok(InvoiceTransferOutput::AlreadyVerified);
         }
         // 5.
-        if outbound_invoice.invoice_row.status == inbound_invoice.invoice_row.status {
+        if outbound_invoice_row.status == inbound_invoice.invoice_row.status {
             return Ok(InvoiceTransferOutput::StatusesAlreadyMatch);
         }
         // 6.
@@ -95,10 +101,10 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             delivered_datetime: inbound_invoice.invoice_row.delivered_datetime,
             received_datetime: inbound_invoice.invoice_row.received_datetime,
             verified_datetime: inbound_invoice.invoice_row.verified_datetime,
-            ..outbound_invoice.invoice_row.clone()
+            ..outbound_invoice_row
         };
 
-        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_outbound_invoice)?;
+        repo.upsert_one(&updated_outbound_invoice)?;
 
         system_activity_log_entry(
             &ctx.connection,
