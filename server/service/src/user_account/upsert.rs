@@ -1,4 +1,3 @@
-use crate::keyed_lookup::{Keyed, KeyedLookup};
 use repository::{RepositoryError, StorageConnection, UserAccountRow, UserAccountRowRepository};
 
 #[derive(Debug, PartialEq)]
@@ -19,61 +18,48 @@ impl From<RepositoryError> for UpsertUserError {
     }
 }
 
-pub type UserLookup = KeyedLookup<UserAccountRow>;
-
-/// Looked up by username, in any letter case, as login matches it.
-impl Keyed for UserAccountRow {
-    fn id(&self) -> &str {
-        &self.id
-    }
-    fn key(&self) -> &str {
-        &self.username
-    }
-    fn normalise(key: &str) -> String {
-        key.trim().to_lowercase()
-    }
-}
-
-impl UserLookup {
-    pub fn load_all(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        Ok(Self::from_rows(
-            UserAccountRowRepository::new(connection).find_all()?,
-        ))
-    }
-}
-
 /// Saves `row` as given, `hashed_password` included. Joins the caller's transaction when there
-/// is one.
-pub fn upsert_user_in(
+/// is one, so an import's earlier rows count.
+pub fn upsert_user(
     connection: &StorageConnection,
-    lookup: &mut UserLookup,
     row: &UserAccountRow,
 ) -> Result<(), UpsertUserError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertUserError> {
-            validate(lookup, row)?;
+            validate(connection, row)?;
             UserAccountRowRepository::new(connection).upsert_one(row)?;
             Ok(())
         })
-        .map_err(|error| error.to_inner_error())?;
-    lookup.put(row.clone());
-    Ok(())
+        .map_err(|error| error.to_inner_error())
 }
 
 /// Shared with `create_user`, so the app and import refuse the same usernames.
-pub(super) fn validate(lookup: &UserLookup, row: &UserAccountRow) -> Result<(), UpsertUserError> {
+pub(super) fn validate(
+    connection: &StorageConnection,
+    row: &UserAccountRow,
+) -> Result<(), UpsertUserError> {
     if row.username.trim().is_empty() {
         return Err(UpsertUserError::UsernameRequired);
     }
+    let repo = UserAccountRowRepository::new(connection);
+    let saved_username = repo.find_one_by_id(&row.id)?.map(|saved| saved.username);
     // Only a username the save brings in, so a padded one legacy sync saved stays editable.
-    let saved_username = lookup.by_id(&row.id).map(|saved| saved.username.as_str());
-    if row.username.trim() != row.username && saved_username != Some(&row.username) {
+    if row.username.trim() != row.username && saved_username.as_ref() != Some(&row.username) {
         return Err(UpsertUserError::UsernamePadded);
     }
-    match lookup.taken_by(row) {
-        Some(other) => Err(UpsertUserError::DuplicateUsername {
-            other_id: other.id.clone(),
-        }),
+
+    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
+    let brings_in_clash = saved_username
+        .is_none_or(|saved| saved.trim().to_lowercase() != row.username.trim().to_lowercase());
+    if !brings_in_clash {
+        return Ok(());
+    }
+    match repo
+        .find_by_trimmed_username_any_case(&row.username)?
+        .into_iter()
+        .find(|other| other.id != row.id)
+    {
+        Some(other) => Err(UpsertUserError::DuplicateUsername { other_id: other.id }),
         None => Ok(()),
     }
 }
@@ -91,9 +77,8 @@ mod tests {
         }
     }
 
-    /// Saves as the import does, from a fresh lookup.
     fn upsert(connection: &StorageConnection, row: &UserAccountRow) -> Result<(), UpsertUserError> {
-        upsert_user_in(connection, &mut UserLookup::load_all(connection)?, row)
+        upsert_user(connection, row)
     }
 
     #[actix_rt::test]

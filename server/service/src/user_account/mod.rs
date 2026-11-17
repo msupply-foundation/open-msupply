@@ -231,7 +231,7 @@ impl<'a> UserAccountService<'a> {
                     ..UserAccountRow::default()
                 };
                 // Before hashing, which is slow.
-                upsert::validate(&upsert::UserLookup::load_all(con)?, &row)?;
+                upsert::validate(con, &row)?;
 
                 row.hashed_password = UserAccountService::hash_password(&user.password)
                     .map_err(CreateUserAccountError::PasswordHashError)?;

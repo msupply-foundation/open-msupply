@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert, lower,
-    repository_error::RepositoryError,
+    repository_error::RepositoryError, trim,
 };
 
 use chrono::NaiveDateTime;
@@ -176,6 +176,18 @@ impl<'a> UserAccountRowRepository<'a> {
 
     pub fn find_all(&self) -> Result<Vec<UserAccountRow>, RepositoryError> {
         Ok(user_account::table.load(self.connection.lock().connection())?)
+    }
+
+    /// In any letter case, as login matches a username, and deleted users included.
+    pub fn find_by_trimmed_username_any_case(
+        &self,
+        username: &str,
+    ) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        let result = user_account::table
+            .filter(lower(trim(user_account::username)).eq(lower(username.trim())))
+            .order(user_account::id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {

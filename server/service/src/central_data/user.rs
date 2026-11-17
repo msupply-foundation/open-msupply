@@ -9,7 +9,7 @@ use super::{
 };
 use crate::user_account::{
     UserAccountService,
-    upsert::{UpsertUserError, UserLookup, upsert_user_in},
+    upsert::{UpsertUserError, upsert_user},
 };
 use chrono::Utc;
 use repository::{
@@ -149,28 +149,27 @@ impl ImportTable for UserTable {
         connection: &StorageConnection,
         sheet: &Sheet,
     ) -> Result<Option<Box<dyn Any>>, RepositoryError> {
-        let users = UserLookup::load_all(connection)?;
-        let jobs: Vec<(u32, String, Option<String>)> = sheet
-            .rows
-            .iter()
-            .filter_map(|sheet_row| {
-                let row = Row::new(sheet, sheet_row);
-                let password = row.text(PASSWORD)?;
-                // A row in error finds none here and fails on import anyway. A row whose user
-                // differs by the time it's imported is hashed again then.
-                let saved = find_record(
-                    &users,
-                    &row,
-                    USERNAME,
-                    row.text(ID).as_deref(),
-                    row.text(USERNAME).as_deref(),
-                    |user| &user.username,
-                )
-                .ok()
-                .flatten();
-                Some((row.number, password, saved.map(|user| user.hashed_password)))
-            })
-            .collect();
+        let users = UserAccountRowRepository::new(connection);
+        let mut jobs: Vec<(u32, String, Option<String>)> = Vec::new();
+        for sheet_row in &sheet.rows {
+            let row = Row::new(sheet, sheet_row);
+            let Some(password) = row.text(PASSWORD) else {
+                continue;
+            };
+            // A row in error finds none here and fails on import anyway. A row whose user
+            // differs by the time it's imported is hashed again then.
+            let saved = find_record(
+                &users,
+                &row,
+                USERNAME,
+                row.text(ID).as_deref(),
+                row.text(USERNAME).as_deref(),
+                |user| &user.username,
+            )?
+            .ok()
+            .flatten();
+            jobs.push((row.number, password, saved.map(|user| user.hashed_password)));
+        }
 
         let passwords: Passwords = in_parallel(jobs, |(number, password, saved)| {
             let hash = match &saved {
@@ -196,9 +195,7 @@ impl ImportTable for UserTable {
         connection: &StorageConnection,
         start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        // Users are few.
         Ok(Box::new(UserSheet {
-            users: UserLookup::load_all(connection)?,
             protected: protected(connection)?,
             importer: start.user_id.to_string(),
             commit: start.commit,
@@ -212,7 +209,6 @@ impl ImportTable for UserTable {
 }
 
 struct UserSheet {
-    users: UserLookup,
     protected: Vec<String>,
     /// The user running the import, who can't make themselves inactive.
     importer: String,
@@ -237,13 +233,13 @@ impl SheetImport for UserSheet {
 
         // Without its record, the row's other checks would treat it as a new user.
         let existing = match find_record(
-            &self.users,
+            &UserAccountRowRepository::new(connection),
             row,
             USERNAME,
             id.as_deref(),
             username.as_deref(),
             |saved| &saved.username,
-        ) {
+        )? {
             Ok(existing) => existing,
             Err(e) => {
                 errors.push(e);
@@ -333,8 +329,8 @@ impl SheetImport for UserSheet {
         // Restoring a deleted user is an update.
         let change = Change::between_upserts(saved, &user);
         if change != Change::Unchanged {
-            upsert_user_in(connection, &mut self.users, &user)
-                .map_err(|error| self.upsert_failure(row, error))?;
+            upsert_user(connection, &user)
+                .map_err(|error| upsert_failure(connection, row, error))?;
             if saved.is_some_and(|saved| {
                 (saved.is_active && !user.is_active)
                     || saved.hashed_password != user.hashed_password
@@ -405,8 +401,7 @@ impl UserSheet {
             deleted_datetime: Some(Utc::now().naive_utc()),
             ..saved
         };
-        upsert_user_in(connection, &mut self.users, &user)
-            .map_err(|error| self.upsert_failure(row, error))?;
+        upsert_user(connection, &user).map_err(|error| upsert_failure(connection, row, error))?;
         self.sessions_to_end.push(user.id.clone());
         Ok(RowOutcome {
             record: user.username,
@@ -437,30 +432,30 @@ impl UserSheet {
                 .map_err(|error| row.error(PASSWORD, error.to_string())),
         }
     }
+}
 
-    fn upsert_failure(&self, row: &Row, error: UpsertUserError) -> RowFailure {
-        match error {
-            UpsertUserError::UsernameRequired => row.error(USERNAME, "username is required").into(),
-            // Unreachable here: cells are read trimmed.
-            UpsertUserError::UsernamePadded => row
-                .error(USERNAME, "username can't start or end with a space")
-                .into(),
-            // Unreachable here: `find_record` turns a saved username into a match or a conflict.
-            UpsertUserError::DuplicateUsername { other_id } => {
-                let other = self
-                    .users
-                    .by_id(&other_id)
-                    .map_or(other_id.as_str(), |other| other.username.as_str());
-                row.error(
-                    USERNAME,
-                    format!(
-                        "User {other} (id {other_id}) already has this username. Usernames match in any letter case"
-                    ),
-                )
-                .into()
-            }
-            UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
+fn upsert_failure(connection: &StorageConnection, row: &Row, error: UpsertUserError) -> RowFailure {
+    match error {
+        UpsertUserError::UsernameRequired => row.error(USERNAME, "username is required").into(),
+        // Unreachable here: cells are read trimmed.
+        UpsertUserError::UsernamePadded => row
+            .error(USERNAME, "username can't start or end with a space")
+            .into(),
+        // Unreachable here: `find_record` turns a saved username into a match or a conflict.
+        UpsertUserError::DuplicateUsername { other_id } => {
+            let other = match UserAccountRowRepository::new(connection).find_one_by_id(&other_id) {
+                Ok(other) => other.map_or(other_id.clone(), |other| other.username),
+                Err(error) => return RowFailure::Database(error),
+            };
+            row.error(
+                USERNAME,
+                format!(
+                    "User {other} (id {other_id}) already has this username. Usernames match in any letter case"
+                ),
+            )
+            .into()
         }
+        UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

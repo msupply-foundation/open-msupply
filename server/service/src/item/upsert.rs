@@ -1,5 +1,7 @@
-use crate::keyed_lookup::{Keyed, KeyedLookup};
-use repository::{ItemRow, ItemRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
+    UnitRowRepository,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertItemError {
@@ -12,6 +14,10 @@ pub enum UpsertItemError {
     DefaultPackSizeNotPositive,
     NegativeVaccineDoses,
     NegativeVolumePerPack,
+    /// `unit_id` names no unit.
+    UnitNotFound,
+    /// `restricted_location_type_id` names no location type.
+    LocationTypeNotFound,
     DatabaseError(RepositoryError),
 }
 
@@ -21,55 +27,28 @@ impl From<RepositoryError> for UpsertItemError {
     }
 }
 
-pub type ItemLookup = KeyedLookup<ItemRow>;
-
-/// Looked up by code.
-impl Keyed for ItemRow {
-    fn id(&self) -> &str {
-        &self.id
-    }
-    fn key(&self) -> &str {
-        &self.code
-    }
-}
-
-impl ItemLookup {
-    /// Holds each item with an empty `legacy_record`, as it's most of an item's size and
-    /// `upsert_item_in` never changes it.
-    pub fn load_all(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        Ok(Self::from_rows(
-            ItemRowRepository::new(connection).find_all_without_legacy_record()?,
-        ))
-    }
-}
-
-/// Keeps a saved item's `legacy_record`; `row`'s is written only for a new item. `lookup` must
-/// hold every saved item, as it tells a saved item from a new one. Joins the caller's
-/// transaction when there is one.
-pub fn upsert_item_in(
-    connection: &StorageConnection,
-    lookup: &mut ItemLookup,
-    row: &ItemRow,
-) -> Result<(), UpsertItemError> {
+/// Adds or updates one item. Keeps a saved item's `legacy_record`; `row`'s is written only for a
+/// new item. Joins the caller's transaction when there is one, so an import's earlier rows count.
+pub fn upsert_item(connection: &StorageConnection, row: &ItemRow) -> Result<(), UpsertItemError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertItemError> {
-            validate(lookup, row)?;
             let repo = ItemRowRepository::new(connection);
-            match lookup.by_id(&row.id) {
+            let saved = repo.find_one_by_id_without_legacy_record(&row.id)?;
+            validate(connection, saved.as_ref(), row)?;
+            match saved {
                 Some(_) => repo.update_keeping_legacy_record(row)?,
                 None => repo.upsert_one(row)?,
             }
             Ok(())
         })
-        .map_err(|error| error.to_inner_error())?;
-    lookup.put(ItemRow {
-        legacy_record: String::new(),
-        ..row.clone()
-    });
-    Ok(())
+        .map_err(|error| error.to_inner_error())
 }
 
-fn validate(lookup: &ItemLookup, row: &ItemRow) -> Result<(), UpsertItemError> {
+fn validate(
+    connection: &StorageConnection,
+    saved: Option<&ItemRow>,
+    row: &ItemRow,
+) -> Result<(), UpsertItemError> {
     if row.code.trim().is_empty() {
         return Err(UpsertItemError::CodeRequired);
     }
@@ -77,7 +56,6 @@ fn validate(lookup: &ItemLookup, row: &ItemRow) -> Result<(), UpsertItemError> {
         return Err(UpsertItemError::NameRequired);
     }
     // Only a value the row changes is checked, so saved items with bad numbers stay editable.
-    let saved = lookup.by_id(&row.id);
     let changes = |field: fn(&ItemRow) -> f64| saved.is_none_or(|saved| field(saved) != field(row));
     if row.default_pack_size <= 0.0 && changes(|item| item.default_pack_size) {
         return Err(UpsertItemError::DefaultPackSizeNotPositive);
@@ -88,10 +66,37 @@ fn validate(lookup: &ItemLookup, row: &ItemRow) -> Result<(), UpsertItemError> {
     if row.volume_per_pack < 0.0 && changes(|item| item.volume_per_pack) {
         return Err(UpsertItemError::NegativeVolumePerPack);
     }
-    match lookup.taken_by(row) {
-        Some(other) => Err(UpsertItemError::DuplicateCode {
-            other_id: other.id.clone(),
-        }),
+    // Foreign keys hold a saved reference to an existing record, so only a changed one is checked.
+    // The database would refuse a missing one too, but only as a general error.
+    let new_reference = |field: fn(&ItemRow) -> Option<&str>| {
+        field(row).filter(|_| saved.is_none_or(|saved| field(saved) != field(row)))
+    };
+    if let Some(unit_id) = new_reference(|item| item.unit_id.as_deref())
+        && UnitRowRepository::new(connection)
+            .find_one_by_id(unit_id)?
+            .is_none()
+    {
+        return Err(UpsertItemError::UnitNotFound);
+    }
+    if let Some(location_type_id) =
+        new_reference(|item| item.restricted_location_type_id.as_deref())
+        && LocationTypeRowRepository::new(connection)
+            .find_one_by_id(location_type_id)?
+            .is_none()
+    {
+        return Err(UpsertItemError::LocationTypeNotFound);
+    }
+    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
+    let brings_in_clash = saved.is_none_or(|saved| saved.code.trim() != row.code.trim());
+    if !brings_in_clash {
+        return Ok(());
+    }
+    match ItemRowRepository::new(connection)
+        .find_by_trimmed_code_without_legacy_record(&row.code)?
+        .into_iter()
+        .find(|other| other.id != row.id)
+    {
+        Some(other) => Err(UpsertItemError::DuplicateCode { other_id: other.id }),
         None => Ok(()),
     }
 }
@@ -99,7 +104,11 @@ fn validate(lookup: &ItemLookup, row: &ItemRow) -> Result<(), UpsertItemError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        UnitRow, UnitRowRepository,
+        mock::{MockDataInserts, mock_location_type_a},
+        test_db::setup_all,
+    };
 
     fn item(id: &str, code: &str) -> ItemRow {
         ItemRow {
@@ -111,9 +120,61 @@ mod tests {
         }
     }
 
-    /// Saves as the import does, from a fresh lookup.
     fn upsert(connection: &StorageConnection, row: &ItemRow) -> Result<(), UpsertItemError> {
-        upsert_item_in(connection, &mut ItemLookup::load_all(connection)?, row)
+        upsert_item(connection, row)
+    }
+
+    fn ids_coded(connection: &StorageConnection, code: &str) -> Vec<String> {
+        ItemRowRepository::new(connection)
+            .find_by_trimmed_code_without_legacy_record(code)
+            .unwrap()
+            .into_iter()
+            .map(|row| row.id)
+            .collect()
+    }
+
+    #[actix_rt::test]
+    async fn a_recoded_item_is_found_by_its_new_code() {
+        let (_, connection, _, _) =
+            setup_all("upsert_item_recode_lookup", MockDataInserts::none()).await;
+        let repo = ItemRowRepository::new(&connection);
+        repo.upsert_one(&item("a", "PARA")).unwrap();
+        repo.upsert_one(&item("b", "PARA")).unwrap();
+
+        upsert(&connection, &item("a", "PARA500")).unwrap();
+        assert_eq!(ids_coded(&connection, "PARA"), vec!["b"]);
+        assert_eq!(ids_coded(&connection, " PARA500 "), vec!["a"]);
+        // Letter case counts.
+        assert!(ids_coded(&connection, "para").is_empty());
+    }
+
+    #[actix_rt::test]
+    async fn a_saved_items_legacy_record_is_kept_but_not_read() {
+        let (_, connection, _, _) =
+            setup_all("upsert_item_keeps_legacy_record", MockDataInserts::none()).await;
+        let repo = ItemRowRepository::new(&connection);
+        let legacy = ItemRow {
+            legacy_record: "{\"from\": \"legacy\"}".to_string(),
+            ..item("a", "PARA")
+        };
+        repo.upsert_one(&legacy).unwrap();
+        let found = repo
+            .find_one_by_id_without_legacy_record("a")
+            .unwrap()
+            .unwrap();
+        assert_eq!(found.legacy_record, "");
+
+        upsert(
+            &connection,
+            &ItemRow {
+                name: "Paracetamol 500mg".to_string(),
+                ..found
+            },
+        )
+        .unwrap();
+        let saved = repo.find_one_by_id("a").unwrap().unwrap();
+        assert_eq!(saved.name, "Paracetamol 500mg");
+        assert_eq!(saved.legacy_record, legacy.legacy_record);
     }
 
     #[actix_rt::test]
@@ -155,6 +216,39 @@ mod tests {
             assert_eq!(upsert(&connection, &row), Err(error));
         }
         upsert(&connection, &item("a", "PARA")).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn its_unit_and_location_type_must_exist() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_item_references",
+            MockDataInserts::none().location_types(),
+        )
+        .await;
+        UnitRowRepository::new(&connection)
+            .upsert_one(&UnitRow {
+                id: "tab".to_string(),
+                name: "Tab".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        let with = |unit_id: &str, location_type_id: &str| ItemRow {
+            unit_id: Some(unit_id.to_string()),
+            restricted_location_type_id: Some(location_type_id.to_string()),
+            ..item("a", "PARA")
+        };
+        let unit = "tab".to_string();
+        let location_type = mock_location_type_a().id;
+
+        assert_eq!(
+            upsert(&connection, &with("no_such_unit", &location_type)),
+            Err(UpsertItemError::UnitNotFound)
+        );
+        assert_eq!(
+            upsert(&connection, &with(&unit, "no_such_location_type")),
+            Err(UpsertItemError::LocationTypeNotFound)
+        );
+        upsert(&connection, &with(&unit, &location_type)).unwrap();
     }
 
     #[actix_rt::test]

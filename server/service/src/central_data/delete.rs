@@ -1,6 +1,6 @@
 use super::{
     Change, RowFailure, RowOutcome,
-    cells::{Row, RowError},
+    cells::{Row, RowError, parse_bool},
     sheet::Value,
 };
 
@@ -53,7 +53,7 @@ pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowErro
                 Value::Text(text) => cell != text.trim(),
                 // Excel numbers are floats: 3 can read as "3.0".
                 Value::Number(number) => cell.parse::<f64>().ok() != Some(*number),
-                Value::Bool(flag) => !cell.eq_ignore_ascii_case(&flag.to_string()),
+                Value::Bool(flag) => parse_bool(cell) != Some(*flag),
                 Value::Empty => true,
             }
         })
@@ -183,6 +183,9 @@ mod tests {
             check_unchanged(&row, &saved).map_err(|error| error.message)
         };
         assert_eq!(check(["3.0", "true", ""]), Ok(()));
+        // A flag typed as 1 or 0 is the same value.
+        assert_eq!(check(["3", "1", ""]), Ok(()));
+        assert!(check(["3", "0", ""]).unwrap_err().contains("is_active"));
         assert!(check(["4", "TRUE", ""]).unwrap_err().contains("index"));
         assert!(check(["3", "FALSE", ""]).unwrap_err().contains("is_active"));
         assert!(

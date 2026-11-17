@@ -2709,6 +2709,7 @@
   "messages.click-to-return-to-returns": "د دې ID سره بیرته راستنیدو توان نلري. د بیرته راستنیدو لیست ته د بیرته راستنیدو لپاره OK کلیک وکړئ",
   "messages.click-to-return-to-rnr-list": "د R&R فورمو لیست ته د راستنیدو لپاره دلته کلیک وکړئ",
   "messages.click-to-return-to-shipments": "د دې ID سره د بار وړلو موندلو توان نلري. د بار وړلو لیست ته د بیرته راستنیدو لپاره OK کلیک وکړئ",
+  "messages.click-to-return-to-stock": "د دې ID سره د سټاک کرښه موندلو توان نلري. د سټاک لیست ته د بیرته راستنیدو لپاره OK کلیک وکړئ",
   "messages.click-to-return-to-stock-movements": "د دې ID سره د سټاک حرکت موندلو توان نلري. د سټاک حرکتونو لیست ته د بیرته راستنیدو لپاره OK کلیک وکړئ",
   "messages.click-to-return-to-suppliers": "د دې ID سره د عرضه کونکي موندلو توان نلري. د عرضه کونکي لیست ته د بیرته راستنیدو لپاره سم کلیک وکړئ",
   "messages.click-to-view": "د {{firstName}} {{lastName}} لپاره د ناروغ ریکارډ لیدو لپاره کلیک وکړئ",

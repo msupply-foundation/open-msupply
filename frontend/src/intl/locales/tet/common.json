@@ -467,6 +467,7 @@
   "messages.click-to-return-to-master-lists": "La bele hetan Master List ho ID ida ne'e. Klik OK atu fila fali ba Master List",
   "messages.click-to-return-to-requisitions": "Labele atu hetan requizisaun ho ID. Klik OK atu fila fali ba lista requizisaun",
   "messages.click-to-return-to-shipments": "Labele atu identifika remessa ho ID ida ne'e. Klik OK atu fila fali ba lista remessa",
+  "messages.click-to-return-to-stock": "La bele hetan lina Stock ho ID ida ne'e. Klik OK atu fila fali ba lista Stock",
   "messages.confirm-add-from-master-list": "Ita hakarak atu aumenta Item hotu husi Master List ida ne'e?",
   "messages.confirm-cancel-generic": "Ita sei lakon mudansa sira ne'ebe ita halo ona ba iha formulario ida ne'e",
   "messages.confirm-changing-from-new": "Notas: Muda husi 'foun' sei hamos lina ne'ebe ho kuantidade Zero.",

@@ -8776,6 +8776,7 @@ dependencies = [
  "futures-util",
  "glob",
  "heck 0.5.0",
+ "libc",
  "libsqlite3-sys",
  "log",
  "pretty_assertions",

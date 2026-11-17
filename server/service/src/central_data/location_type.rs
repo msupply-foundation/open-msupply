@@ -9,8 +9,7 @@ use super::{
     sheet::Value,
 };
 use crate::location_type::{
-    DeleteLocationTypeError, LocationTypeLookup, UpsertLocationTypeError, delete_location_type_in,
-    upsert_location_type_in,
+    DeleteLocationTypeError, UpsertLocationTypeError, delete_location_type, upsert_location_type,
 };
 use repository::{
     LocationTypeRow, LocationTypeRowRepository, LocationTypeUser, RepositoryError,
@@ -75,19 +74,14 @@ impl ImportTable for LocationTypeTable {
 
     fn start_sheet(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         _start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        // Location types are few.
-        Ok(Box::new(LocationTypeSheet {
-            location_types: LocationTypeLookup::load_all(connection)?,
-        }))
+        Ok(Box::new(LocationTypeSheet))
     }
 }
 
-struct LocationTypeSheet {
-    location_types: LocationTypeLookup,
-}
+struct LocationTypeSheet;
 
 impl SheetImport for LocationTypeSheet {
     fn import_row(
@@ -104,13 +98,13 @@ impl SheetImport for LocationTypeSheet {
 
         // Without its record, the row's other checks would treat it as a new location type.
         let existing = match find_record(
-            &self.location_types,
+            &LocationTypeRowRepository::new(connection),
             row,
             CODE,
             id.as_deref(),
             code.as_deref(),
             |saved| &saved.name,
-        ) {
+        )? {
             Ok(existing) => existing,
             Err(e) => {
                 errors.push(e);
@@ -119,7 +113,7 @@ impl SheetImport for LocationTypeSheet {
         };
 
         if delete {
-            return self.delete(connection, row, existing, errors);
+            return delete_row(connection, row, existing, errors);
         }
 
         let code = keep_or_saved(code, existing.as_ref().map(|saved| saved.code.as_str()));
@@ -159,7 +153,7 @@ impl SheetImport for LocationTypeSheet {
 
         let change = Change::between_upserts(existing.as_ref(), &location_type);
         if change != Change::Unchanged {
-            upsert_location_type_in(connection, &mut self.location_types, &location_type)
+            upsert_location_type(connection, &location_type)
                 .map_err(|error| upsert_failure(row, &location_type, error))?;
         }
         Ok(RowOutcome {
@@ -173,58 +167,53 @@ impl SheetImport for LocationTypeSheet {
     }
 }
 
-impl LocationTypeSheet {
-    fn delete(
-        &mut self,
-        connection: &StorageConnection,
-        row: &Row,
-        existing: Option<LocationTypeRow>,
-        mut errors: Vec<RowError>,
-    ) -> Result<RowOutcome, RowFailure> {
-        // Already gone: nothing to delete, so the row changes nothing.
-        let Some(saved) = existing else {
-            return already_deleted(row, CODE, errors);
-        };
-        let saved_cells: Vec<_> = COLUMNS
-            .iter()
-            .copied()
-            .zip(cells(&saved))
-            .filter(|(column, _)| *column != DELETE_COLUMN)
-            .collect();
-        if let Err(e) = check_unchanged(row, &saved_cells) {
-            errors.push(e);
-        }
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
-
-        delete_location_type_in(connection, &mut self.location_types, &saved.id).map_err(
-            |error| match error {
-                DeleteLocationTypeError::InUse(user) => row
-                    .error(
-                        DELETE_COLUMN,
-                        format!(
-                            "{} is used by {}, so it can't be deleted",
-                            name_with_code(&saved.name, &saved.code),
-                            match user {
-                                LocationTypeUser::Location => "a location",
-                                LocationTypeUser::Item => "an item",
-                                LocationTypeUser::ItemVariant => "an item variant",
-                                LocationTypeUser::RequisitionLine => "a requisition line",
-                            }
-                        ),
-                    )
-                    .into(),
-                DeleteLocationTypeError::DatabaseError(error) => RowFailure::Database(error),
-            },
-        )?;
-        Ok(RowOutcome {
-            record: name_with_code(&saved.name, &saved.code),
-            record_id: saved.id,
-            change: Change::Deleted,
-            fields: Vec::new(),
-        })
+fn delete_row(
+    connection: &StorageConnection,
+    row: &Row,
+    existing: Option<LocationTypeRow>,
+    mut errors: Vec<RowError>,
+) -> Result<RowOutcome, RowFailure> {
+    // Already gone: nothing to delete, so the row changes nothing.
+    let Some(saved) = existing else {
+        return already_deleted(row, CODE, errors);
+    };
+    let saved_cells: Vec<_> = COLUMNS
+        .iter()
+        .copied()
+        .zip(cells(&saved))
+        .filter(|(column, _)| *column != DELETE_COLUMN)
+        .collect();
+    if let Err(e) = check_unchanged(row, &saved_cells) {
+        errors.push(e);
     }
+    if !errors.is_empty() {
+        return Err(RowFailure::Invalid(errors));
+    }
+
+    delete_location_type(connection, &saved.id).map_err(|error| match error {
+        DeleteLocationTypeError::InUse(user) => row
+            .error(
+                DELETE_COLUMN,
+                format!(
+                    "{} is used by {}, so it can't be deleted",
+                    name_with_code(&saved.name, &saved.code),
+                    match user {
+                        LocationTypeUser::Location => "a location",
+                        LocationTypeUser::Item => "an item",
+                        LocationTypeUser::ItemVariant => "an item variant",
+                        LocationTypeUser::RequisitionLine => "a requisition line",
+                    }
+                ),
+            )
+            .into(),
+        DeleteLocationTypeError::DatabaseError(error) => RowFailure::Database(error),
+    })?;
+    Ok(RowOutcome {
+        record: name_with_code(&saved.name, &saved.code),
+        record_id: saved.id,
+        change: Change::Deleted,
+        fields: Vec::new(),
+    })
 }
 
 fn upsert_failure(

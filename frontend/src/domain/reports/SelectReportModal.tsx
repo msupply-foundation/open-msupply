@@ -7,6 +7,7 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
 import { Stack } from '../../ui/layout/Stack/Stack';
 import { Button } from '../../ui/elements/buttons/Button';
+import { SplitButton } from '../../ui/elements/buttons/SplitButton';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DownloadIcon, PrinterIcon, XCircleIcon } from '../../ui/icons';
@@ -29,9 +30,9 @@ import { reportLabel } from './reportLabel';
 // trigger and pass their context + record id + current sort (spec: "their
 // surfaces name the trigger, this vertical owns the dialog").
 //
-// Flow: list the context's reports → the user picks one and a format (Export to
-// Excel / Print / Download PDF, all disabled until a report is selected;
-// Download PDF is not offered on Android) → if the report declares an argument
+// Flow: list the context's reports → the user picks one and a format (Print,
+// or the Download split button's PDF / Excel, all disabled until a report is
+// selected; PDF is not offered on Android) → if the report declares an argument
 // schema, S3 (ArgumentsModal) collects filters first → generate → fetch the
 // file handle → print (HTML, hidden-iframe window.print, desktop) or download
 // (Excel/PDF). Errors show INLINE in the dialog body (spec/reports S5 — never
@@ -231,15 +232,6 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             </Button>
             <Button
               variant="secondary"
-              icon={<DownloadIcon />}
-              disabled={disabled()}
-              data-testid="report-format-EXCEL"
-              onClick={() => onFormat('EXCEL')}
-            >
-              {t('button.export-to-excel')}
-            </Button>
-            <Button
-              variant="secondary"
               icon={<PrinterIcon />}
               disabled={disabled()}
               data-testid="report-format-HTML"
@@ -247,20 +239,43 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             >
               {t('button.print')}
             </Button>
-            {/* Download PDF is not offered on Android (spec/reports S4): the
-                server renders PDFs by driving headless Chrome, and a tablet
-                server has no Chrome executable to launch, so the format can
-                only ever fail there. */}
-            <Show when={!isAndroid()}>
-              <Button
-                variant="secondary"
+            {/* One Download control for the two file formats (spec/reports
+                S4), the dialog's one filled action and last in the row
+                (ui-standards › footer button identity). A split button: the
+                main half downloads a PDF and the menu offers PDF or Excel,
+                so the dialog never shows two Download buttons. Download PDF
+                is not offered on Android: the server renders PDFs by driving
+                headless Chrome, and a tablet server has no Chrome executable
+                to launch, so the format can only ever fail there. That
+                leaves Excel alone, as a plain button. */}
+            <Show
+              when={!isAndroid()}
+              fallback={
+                <Button
+                  variant="primary"
+                  icon={<DownloadIcon />}
+                  disabled={disabled()}
+                  data-testid="report-download-main"
+                  onClick={() => onFormat('EXCEL')}
+                >
+                  {t('button.download-excel')}
+                </Button>
+              }
+            >
+              <SplitButton
+                variant="primary"
                 icon={<DownloadIcon />}
+                options={[
+                  { value: 'PDF', label: t('button.download-pdf') },
+                  { value: 'EXCEL', label: t('button.download-excel') },
+                ]}
                 disabled={disabled()}
-                data-testid="report-format-PDF"
-                onClick={() => onFormat('PDF')}
-              >
-                {t('button.download-pdf')}
-              </Button>
+                menuLabel={t('button.download')}
+                testId="report-download"
+                onAction={value =>
+                  onFormat(value === 'EXCEL' ? 'EXCEL' : 'PDF')
+                }
+              />
             </Show>
           </>
         }

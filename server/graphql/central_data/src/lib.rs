@@ -7,7 +7,7 @@ use graphql_core::{
 use service::{
     UploadedFile, UploadedFileConversionError,
     auth::{Resource, ResourceAccessRequest},
-    central_data_io::{
+    central_data::{
         ExportCount, ExportError, ExportFilter, ExportTable, FieldChange, ImportError,
         ImportSummary, MAX_IMPORT_ROWS, RowChange, TableChanges, cells::RowError, sheet::MAX_CELLS,
     },
@@ -291,7 +291,7 @@ fn store_temporary(base_dir: &str, name: &str, bytes: &[u8]) -> Result<String> {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "service::central_data_io::CentralDataTable")]
+#[graphql(remote = "service::central_data::CentralDataTable")]
 pub enum CentralDataTableNode {
     Unit,
     LocationType,
@@ -341,7 +341,7 @@ pub struct CentralDataExportCountNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "service::central_data_io::Change")]
+#[graphql(remote = "service::central_data::Change")]
 pub enum CentralDataChangeNode {
     Inserted,
     Updated,
