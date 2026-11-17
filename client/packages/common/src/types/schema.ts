@@ -5896,6 +5896,12 @@ export type InvoiceNode = {
   insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
+  /**
+   * Whether the invoice is for a store's unnamed patient, so a list can show
+   * its translated label without loading each row's patient
+   * (spec/prescriptions rules › the unnamed patient)
+   */
+  isForUnnamedPatient: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;

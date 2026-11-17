@@ -14,6 +14,7 @@ import { CustomFieldsToolbar } from '../../../domain/customFields';
 import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import { todayCalendarDate } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
+import { shownPatientName } from '../patientName';
 import {
   prescriptionDateInstant,
   type UpdateInput,
@@ -111,7 +112,12 @@ export const PrescriptionToolbar: Component<
   // downstream that keys off it — including the combobox's own selection sync.
   const patientOption = createMemo((): PatientOption | undefined => {
     const patient = props.node.patient;
-    return patient ? minimalPatientOption(patient.id, patient.name) : undefined;
+    return patient
+      ? minimalPatientOption(
+          patient.id,
+          shownPatientName(patient.name, patient.isUnnamed)
+        )
+      : undefined;
   });
 
   // The shown day: a pending pick while one awaits confirmation, else the
@@ -156,7 +162,11 @@ export const PrescriptionToolbar: Component<
           // the patient, not the prescription (ui-surface S3 § header fields).
           // Opens the S4 edit modal in place over this screen (#1038), owned by
           // the detail view alongside its other modals.
-          onEditPatient={props.onEditPatient}
+          // Not for the unnamed patient: it has no details to edit, and every
+          // walk-in shares it (rules › the unnamed patient).
+          onEditPatient={
+            props.node.patient?.isUnnamed ? undefined : props.onEditPatient
+          }
           // A prescription always has a patient: the picker never clears
           // (null selections are ignored), it only swaps (OMS-REG-DIS-03.33).
           onSelect={patient =>
