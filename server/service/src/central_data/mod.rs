@@ -148,7 +148,8 @@ pub(crate) trait ImportTable {
     ) -> Result<Option<Box<dyn Any>>, RepositoryError> {
         Ok(None)
     }
-    /// Loads the sheet's lookups once, so rows don't each query them.
+    /// Starts the sheet, inside the import's transaction. A table its rows refer to but can't
+    /// change, such as the item sheet's units, is read here once, so rows don't each query it.
     fn start_sheet(
         &self,
         connection: &StorageConnection,

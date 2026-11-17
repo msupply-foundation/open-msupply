@@ -1,8 +1,9 @@
 use super::cells::{Row, RowError};
 use repository::{
     ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, RepositoryError,
-    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository,
+    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, trim_spaces,
 };
+use std::collections::HashMap;
 
 /// A table a row finds records in, by id or by a lookup key such as a code or name.
 pub trait KeyedTable {
@@ -84,6 +85,81 @@ impl KeyedTable for UserAccountRowRepository<'_> {
     }
 }
 
+/// A small table read once, for a sheet that refers to it but can't change it, so its rows don't
+/// each query it. Found as its repository finds them: spaces around a key don't count, letter
+/// case does, and a key's records come in id order.
+pub struct InMemory<R> {
+    by_id: HashMap<String, R>,
+    /// Trimmed key → ids.
+    by_key: HashMap<String, Vec<String>>,
+}
+
+impl<R: Clone> InMemory<R>
+where
+    Self: KeyedTable<Record = R>,
+{
+    pub fn new(records: Vec<R>) -> Self {
+        let mut by_key: HashMap<String, Vec<String>> = HashMap::new();
+        for record in &records {
+            by_key
+                .entry(trim_spaces(Self::key(record)).to_string())
+                .or_default()
+                .push(Self::id(record).to_string());
+        }
+        by_key.values_mut().for_each(|ids| ids.sort());
+        let by_id = records
+            .into_iter()
+            .map(|record| (Self::id(&record).to_string(), record))
+            .collect();
+        InMemory { by_id, by_key }
+    }
+
+    pub fn get(&self, id: &str) -> Option<&R> {
+        self.by_id.get(id)
+    }
+
+    fn with_key(&self, key: &str) -> Vec<R> {
+        self.by_key
+            .get(trim_spaces(key))
+            .into_iter()
+            .flatten()
+            .filter_map(|id| self.by_id.get(id).cloned())
+            .collect()
+    }
+}
+
+impl KeyedTable for InMemory<UnitRow> {
+    type Record = UnitRow;
+    fn id(unit: &UnitRow) -> &str {
+        UnitRowRepository::id(unit)
+    }
+    fn key(unit: &UnitRow) -> &str {
+        UnitRowRepository::key(unit)
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, name: &str) -> Result<Vec<UnitRow>, RepositoryError> {
+        Ok(self.with_key(name))
+    }
+}
+
+impl KeyedTable for InMemory<LocationTypeRow> {
+    type Record = LocationTypeRow;
+    fn id(location_type: &LocationTypeRow) -> &str {
+        LocationTypeRowRepository::id(location_type)
+    }
+    fn key(location_type: &LocationTypeRow) -> &str {
+        LocationTypeRowRepository::key(location_type)
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<LocationTypeRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        Ok(self.with_key(code))
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum LookupError {
     NotFound,
@@ -141,18 +217,19 @@ pub fn find_record<T: KeyedTable>(
             None => None,
         }));
     };
-    let by_key = table.find_by_key(key)?;
+    let mut by_key = table.find_by_key(key)?;
     Ok(match id {
-        Some(id) => match table.find_by_id(id)? {
-            // The key must find the saved record, so keys compare as the table compares them.
-            Some(saved) if !by_key.iter().any(|other| T::id(other) == id) => {
-                Err(conflict(&saved, id, key))
-            }
-            Some(saved) => Ok(Some(saved)),
-            // A new id beside a saved key is a copied row with one column edited.
-            None => match by_key.first() {
-                Some(saved) => Err(conflict(saved, id, key)),
-                None => Ok(None),
+        // The key must find the saved record, so keys compare as the table compares them. Found
+        // by its key, it needn't be read again by id.
+        Some(id) => match by_key.iter().position(|other| T::id(other) == id) {
+            Some(position) => Ok(Some(by_key.swap_remove(position))),
+            None => match table.find_by_id(id)? {
+                Some(saved) => Err(conflict(&saved, id, key)),
+                // A new id beside a saved key is a copied row with one column edited.
+                None => match by_key.first() {
+                    Some(saved) => Err(conflict(saved, id, key)),
+                    None => Ok(None),
+                },
             },
         },
         None if by_key.len() > 1 => Err(row.error(column, LookupError::Ambiguous.message(key))),
@@ -235,6 +312,39 @@ pub fn resolve(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn unit(id: &str, name: &str) -> UnitRow {
+        UnitRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn an_in_memory_table_finds_keys_as_its_repository_does() {
+        let units = InMemory::new(vec![
+            unit("b", "Tab"),
+            unit("a", " Tab"),
+            unit("c", "Tab\t"),
+            unit("d", "tab"),
+        ]);
+        let ids = |name: &str| -> Vec<String> {
+            units
+                .find_by_key(name)
+                .unwrap()
+                .into_iter()
+                .map(|unit| unit.id)
+                .collect()
+        };
+        // Only spaces are trimmed, as SQL trims; letter case counts; ids come in order.
+        assert_eq!(ids("Tab "), ["a", "b"]);
+        assert_eq!(ids("Tab\t"), ["c"]);
+        assert_eq!(ids("tab"), ["d"]);
+        assert!(ids("Vial").is_empty());
+        assert_eq!(units.find_by_id("c").unwrap(), Some(unit("c", "Tab\t")));
+        assert_eq!(units.find_by_id("e").unwrap(), None);
+    }
 
     fn ids(ids: &[&str]) -> Vec<String> {
         ids.iter().map(|id| id.to_string()).collect()

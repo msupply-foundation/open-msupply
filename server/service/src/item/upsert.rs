@@ -32,23 +32,56 @@ impl From<RepositoryError> for UpsertItemError {
 pub fn upsert_item(connection: &StorageConnection, row: &ItemRow) -> Result<(), UpsertItemError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertItemError> {
-            let repo = ItemRowRepository::new(connection);
-            let saved = repo.find_one_by_id_without_legacy_record(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
-            match saved {
-                Some(_) => repo.update_keeping_legacy_record(row)?,
-                None => repo.upsert_one(row)?,
-            }
-            Ok(())
+            let saved =
+                ItemRowRepository::new(connection).find_one_by_id_without_legacy_record(&row.id)?;
+            validate(saved.as_ref(), row)?;
+            check_references(connection, saved.as_ref(), row)?;
+            save(connection, saved.as_ref(), row)
         })
         .map_err(|error| error.to_inner_error())
 }
 
-fn validate(
+/// As `upsert_item`, for a caller that has read `saved` by `row.id`, without its legacy record,
+/// and found the row's unit and location type, as an import does from the tables it holds.
+pub fn upsert_resolved_item(
     connection: &StorageConnection,
     saved: Option<&ItemRow>,
     row: &ItemRow,
 ) -> Result<(), UpsertItemError> {
+    connection
+        .transaction_sync(|connection| -> Result<(), UpsertItemError> {
+            validate(saved, row)?;
+            save(connection, saved, row)
+        })
+        .map_err(|error| error.to_inner_error())
+}
+
+/// Refuses a code another item has, then writes.
+fn save(
+    connection: &StorageConnection,
+    saved: Option<&ItemRow>,
+    row: &ItemRow,
+) -> Result<(), UpsertItemError> {
+    let repo = ItemRowRepository::new(connection);
+    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
+    let brings_in_clash =
+        saved.is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
+    if brings_in_clash
+        && let Some(other) = repo
+            .find_by_trimmed_code_without_legacy_record(&row.code)?
+            .into_iter()
+            .find(|other| other.id != row.id)
+    {
+        return Err(UpsertItemError::DuplicateCode { other_id: other.id });
+    }
+    match saved {
+        Some(_) => repo.update_keeping_legacy_record(row)?,
+        None => repo.upsert_one(row)?,
+    }
+    Ok(())
+}
+
+fn validate(saved: Option<&ItemRow>, row: &ItemRow) -> Result<(), UpsertItemError> {
     if row.code.trim().is_empty() {
         return Err(UpsertItemError::CodeRequired);
     }
@@ -66,6 +99,14 @@ fn validate(
     if row.volume_per_pack < 0.0 && changes(|item| item.volume_per_pack) {
         return Err(UpsertItemError::NegativeVolumePerPack);
     }
+    Ok(())
+}
+
+fn check_references(
+    connection: &StorageConnection,
+    saved: Option<&ItemRow>,
+    row: &ItemRow,
+) -> Result<(), UpsertItemError> {
     // Foreign keys hold a saved reference to an existing record, so only a changed one is checked.
     // The database would refuse a missing one too, but only as a general error.
     let new_reference = |field: fn(&ItemRow) -> Option<&str>| {
@@ -86,20 +127,7 @@ fn validate(
     {
         return Err(UpsertItemError::LocationTypeNotFound);
     }
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
-    let brings_in_clash =
-        saved.is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
-    if !brings_in_clash {
-        return Ok(());
-    }
-    match ItemRowRepository::new(connection)
-        .find_by_trimmed_code_without_legacy_record(&row.code)?
-        .into_iter()
-        .find(|other| other.id != row.id)
-    {
-        Some(other) => Err(UpsertItemError::DuplicateCode { other_id: other.id }),
-        None => Ok(()),
-    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -265,6 +293,38 @@ mod tests {
         assert_eq!(upsert(&connection, &item("b", " PARA ")), duplicate);
         // Letter case counts, as it does in lookups.
         upsert(&connection, &item("b", "para")).unwrap();
+    }
+
+    /// The import finds the saved item and its references itself; the other rules still hold.
+    #[actix_rt::test]
+    async fn a_resolved_item_still_needs_good_numbers_and_its_own_code() {
+        let (_, connection, _, _) =
+            setup_all("upsert_resolved_item", MockDataInserts::none()).await;
+        upsert(&connection, &item("a", "PARA")).unwrap();
+
+        assert_eq!(
+            upsert_resolved_item(&connection, None, &item("b", " PARA ")),
+            Err(UpsertItemError::DuplicateCode {
+                other_id: "a".to_string()
+            })
+        );
+        let no_pack_size = ItemRow {
+            default_pack_size: 0.0,
+            ..item("b", "AMOX")
+        };
+        assert_eq!(
+            upsert_resolved_item(&connection, None, &no_pack_size),
+            Err(UpsertItemError::DefaultPackSizeNotPositive)
+        );
+
+        let repo = ItemRowRepository::new(&connection);
+        let saved = repo.find_one_by_id_without_legacy_record("a").unwrap();
+        let renamed = ItemRow {
+            name: "Paracetamol 500mg".to_string(),
+            ..item("a", "PARA")
+        };
+        upsert_resolved_item(&connection, saved.as_ref(), &renamed).unwrap();
+        assert_eq!(repo.find_one_by_id("a").unwrap(), Some(renamed));
     }
 
     #[actix_rt::test]

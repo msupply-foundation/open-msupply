@@ -3,21 +3,20 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, choice_cell, collect, keep_or_saved},
     field_changes,
-    lookup::{NOT_FOUND, find_record, find_reference},
+    lookup::{InMemory, NOT_FOUND, find_record, find_reference},
     name_with_code,
     sheet::Value,
 };
 use crate::{
     i64_to_u32,
-    item::upsert::{UpsertItemError, upsert_item},
+    item::upsert::{UpsertItemError, upsert_resolved_item},
     unit::active_first,
 };
 use repository::{
     ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemSortField, ItemType,
-    LocationTypeRowRepository, Pagination, RepositoryError, Sort, StorageConnection, StringFilter,
-    UnitRowRepository, VENCategory,
+    LocationTypeRow, LocationTypeRowRepository, Pagination, RepositoryError, Sort,
+    StorageConnection, StringFilter, UnitRow, UnitRowRepository, VENCategory,
 };
-use std::collections::HashMap;
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -104,7 +103,7 @@ impl ImportTable for ItemTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        let names = ReferenceNames::load(connection)?;
+        let references = References::load(connection)?;
         let repo = ItemRepository::new(connection);
         let filter = item_filter(filter);
         let mut rows = Vec::new();
@@ -123,7 +122,10 @@ impl ImportTable for ItemTable {
                 None,
             )?;
             let done = page.len() < EXPORT_PAGE as usize;
-            rows.extend(page.into_iter().map(|item| cells(&item.item_row, &names)));
+            rows.extend(
+                page.into_iter()
+                    .map(|item| cells(&item.item_row, &references)),
+            );
             if done {
                 return Ok(rows);
             }
@@ -148,35 +150,28 @@ impl ImportTable for ItemTable {
         _start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(ItemSheet {
-            names: ReferenceNames::load(connection)?,
+            references: References::load(connection)?,
         }))
     }
 }
 
 struct ItemSheet {
-    names: ReferenceNames,
+    references: References,
 }
 
-/// Unit names and location type codes by id, for the cells that show them. Both tables are
-/// small, and their sheets come before the item sheet, so they don't change while it runs.
-struct ReferenceNames {
-    units: HashMap<String, String>,
-    location_types: HashMap<String, String>,
+/// The tables an item refers to, for rows to find their unit and location type in and the cells
+/// that show their names. Both are small, and their sheets come before the item sheet, so they
+/// don't change while it runs.
+struct References {
+    units: InMemory<UnitRow>,
+    location_types: InMemory<LocationTypeRow>,
 }
 
-impl ReferenceNames {
+impl References {
     fn load(connection: &StorageConnection) -> Result<Self, RepositoryError> {
         Ok(Self {
-            units: UnitRowRepository::new(connection)
-                .find_all()?
-                .into_iter()
-                .map(|unit| (unit.id, unit.name))
-                .collect(),
-            location_types: LocationTypeRowRepository::new(connection)
-                .find_all()?
-                .into_iter()
-                .map(|location_type| (location_type.id, location_type.code))
-                .collect(),
+            units: InMemory::new(UnitRowRepository::new(connection).find_all()?),
+            location_types: InMemory::new(LocationTypeRowRepository::new(connection).find_all()?),
         })
     }
 }
@@ -198,7 +193,7 @@ impl SheetImport for ItemSheet {
         let unit_id = collect(
             &mut errors,
             find_reference(
-                &UnitRowRepository::new(connection),
+                &self.references.units,
                 row,
                 UNIT_NAME,
                 UNIT_ID,
@@ -208,7 +203,7 @@ impl SheetImport for ItemSheet {
         let location_type_id = collect(
             &mut errors,
             find_reference(
-                &LocationTypeRowRepository::new(connection),
+                &self.references.location_types,
                 row,
                 LOCATION_TYPE_CODE,
                 LOCATION_TYPE_ID,
@@ -304,22 +299,23 @@ impl SheetImport for ItemSheet {
                 UNIVERSAL_CODE,
                 saved.and_then(|item| item.universal_code.as_deref()),
             ),
-            // No column: `upsert_item` keeps the saved one.
+            // No column: `upsert_resolved_item` keeps the saved one.
             legacy_record: String::new(),
             custom_fields: saved.and_then(|item| item.custom_fields.clone()),
         };
 
         let change = Change::between(existing.as_ref(), &item, |item| item.is_active);
         if change != Change::Unchanged {
-            upsert_item(connection, &item).map_err(|error| upsert_failure(row, error))?;
+            upsert_resolved_item(connection, saved, &item)
+                .map_err(|error| upsert_failure(row, error))?;
         }
         Ok(RowOutcome {
             fields: existing
                 .map(|saved| {
                     field_changes(
                         COLUMNS,
-                        cells(&saved, &self.names),
-                        cells(&item, &self.names),
+                        cells(&saved, &self.references),
+                        cells(&item, &self.references),
                     )
                 })
                 .unwrap_or_default(),
@@ -331,17 +327,17 @@ impl SheetImport for ItemSheet {
 }
 
 /// One per column, as the export writes them and the preview shows them.
-fn cells(item: &ItemRow, names: &ReferenceNames) -> Vec<Value> {
+fn cells(item: &ItemRow, references: &References) -> Vec<Value> {
     let unit_name = item
         .unit_id
         .as_deref()
-        .and_then(|id| names.units.get(id))
-        .cloned();
+        .and_then(|id| references.units.get(id))
+        .map(|unit| unit.name.clone());
     let location_type_code = item
         .restricted_location_type_id
         .as_deref()
-        .and_then(|id| names.location_types.get(id))
-        .cloned();
+        .and_then(|id| references.location_types.get(id))
+        .map(|location_type| location_type.code.clone());
     vec![
         item.id.clone().into(),
         item.code.clone().into(),
@@ -379,7 +375,7 @@ fn upsert_failure(row: &Row, error: UpsertItemError) -> RowFailure {
         UpsertItemError::NegativeVolumePerPack => row
             .error(VOLUME_PER_PACK, "volume_per_pack can't be negative")
             .into(),
-        // Unreachable here too: `find_reference` refuses a missing record first.
+        // Not checked here: `find_reference` finds them among the saved records.
         UpsertItemError::UnitNotFound => row.error(UNIT_ID, NOT_FOUND).into(),
         UpsertItemError::LocationTypeNotFound => row.error(LOCATION_TYPE_ID, NOT_FOUND).into(),
         UpsertItemError::DatabaseError(error) => RowFailure::Database(error),
