@@ -2565,7 +2565,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
         .unwrap();
     assert_eq!(
         exported.headers,
-        [USER_HEADERS.as_slice(), &["last_successful_sync"]].concat()
+        [USER_HEADERS.as_slice(), &["last_successful_sync_utc"]].concat()
     );
     // Built-in users left out, and no password or hash.
     let cells: Vec<(&str, &str, &str)> = exported

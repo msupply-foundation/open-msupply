@@ -30,7 +30,7 @@ const LAST_NAME: &str = "last_name";
 const PHONE_NUMBER: &str = "phone_number";
 const JOB_TITLE: &str = "job_title";
 const IS_ACTIVE: &str = "is_active";
-const LAST_SUCCESSFUL_SYNC: &str = "last_successful_sync";
+const LAST_SUCCESSFUL_SYNC: &str = "last_successful_sync_utc";
 const COLUMNS: &[&str] = &[
     ID,
     USERNAME,
