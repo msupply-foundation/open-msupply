@@ -137,15 +137,15 @@ describe('medicinesFor', () => {
 });
 
 describe('unreadIds', () => {
-  it('OMS-REG-DIS-12.187, .189: a failed read leaves unread only the medicines the last read did not return', () => {
+  it('OMS-REG-DIS-12.192, .194: a failed read leaves unread only the medicines the last read did not return', () => {
     expect(unreadIds(['added', 'chosen'], [item('added')])).toEqual(['chosen']);
   });
 
-  it('OMS-REG-DIS-12.185: with no read gone through yet, the medicine chosen is unread', () => {
+  it('OMS-REG-DIS-12.190: with no read gone through yet, the medicine chosen is unread', () => {
     expect(unreadIds(['chosen'], undefined)).toEqual(['chosen']);
   });
 
-  it('OMS-REG-DIS-12.188: a failed read again of medicines already read leaves none unread', () => {
+  it('OMS-REG-DIS-12.193: a failed read again of medicines already read leaves none unread', () => {
     expect(unreadIds(['added'], [item('added'), item('older')])).toEqual([]);
   });
 });
