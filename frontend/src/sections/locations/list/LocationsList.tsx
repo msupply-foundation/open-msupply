@@ -175,6 +175,8 @@ const LocationsList: Component = () => {
   const added = createFlash<string>();
   // From the save until the chip has sunk back out (the slot's onGone).
   const [confirming, setConfirming] = createSignal(false);
+  // From the save until the chip lands: the bar is mounted but not shown.
+  const [awaiting, setAwaiting] = createSignal(false);
   let addHandle: ReturnType<typeof setTimeout> | undefined;
   onCleanup(() => clearTimeout(addHandle));
   const onSaved = (outcome: 'created' | 'updated') => {
@@ -182,8 +184,10 @@ const LocationsList: Component = () => {
     if (outcome !== 'created') return;
     clearTimeout(addHandle);
     setConfirming(true);
+    setAwaiting(true);
     addHandle = setTimeout(() => {
       addHandle = undefined;
+      setAwaiting(false);
       added.show(t('messages.location-added'));
     }, ARRIVAL_DELAY_MS);
   };
@@ -198,6 +202,10 @@ const LocationsList: Component = () => {
   // mounted when the chip lands) is in the page first, until the chip has
   // sunk back out, so the exit plays instead of the bar vanishing under it.
   const footerShown = () => selectedIds().length > 0 || confirming();
+  // Before the chip lands, a bar with nothing selected would be an empty
+  // strip, so it stays out of view (still followed by a screen reader).
+  const footerHidden = () =>
+    selectedIds().length === 0 && awaiting() && added.value() === undefined;
 
   // Row click opens the edit modal — locations has no detail screen
   // (ui-surface S1 § layout).
@@ -299,6 +307,7 @@ const LocationsList: Component = () => {
         <Show when={footerShown()}>
           <ContentFooter
             testId={selectedIds().length > 0 ? 'actions-footer' : undefined}
+            visuallyHidden={footerHidden()}
           >
             <Show when={selectedIds().length > 0}>
               <strong data-testid="selected-rows-count">
