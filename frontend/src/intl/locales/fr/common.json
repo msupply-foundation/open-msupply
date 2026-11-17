@@ -2801,6 +2801,7 @@
   "messages.central-data-export-help": "Une feuille par table, dans l'ordre d'importation. Les filtres restreignent une table ; sans filtre, tous ses enregistrements sont exportés.",
   "messages.central-data-fix-and-retry": "Veuillez télécharger le fichier avec ses erreurs, les corriger dans Excel, puis le choisir à nouveau.",
   "messages.central-data-import-limits": "Jusqu'à 100 000 lignes et 50 Mo par fichier. Aucune modification n'est appliquée avant votre confirmation.",
+  "messages.central-data-import-start-from-export": "Vous ne savez pas à quoi ressemble le fichier ? Téléchargez vos tables depuis l'onglet Exporter, puis modifiez ce fichier.",
   "messages.central-data-imported": "Importation terminée. Nouveaux : {{new}}, mis à jour : {{updated}}, supprimés : {{deleted}}.",
   "messages.change-server": "Changer de serveur",
   "messages.changed-campaign-or-program_many": "Campagne ou programme modifié pour {{ count }} lignes",

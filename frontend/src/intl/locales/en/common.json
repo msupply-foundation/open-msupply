@@ -2750,6 +2750,7 @@
   "messages.central-data-export-help": "One sheet per table, in the order they import. Filters narrow a table; left blank, it exports every record.",
   "messages.central-data-fix-and-retry": "Download the file with its errors, fix them in Excel, then choose it again.",
   "messages.central-data-import-limits": "Up to 100,000 rows and 50 MB per file. Nothing changes until you confirm.",
+  "messages.central-data-import-start-from-export": "Not sure what the file looks like? Download your tables from the Export tab and edit that file.",
   "messages.central-data-imported": "Imported. {{new}} new, {{updated}} updated, {{deleted}} deleted.",
   "messages.change-server": "Change server",
   "messages.changed-campaign-or-program_one": "Campaign or program changed for 1 line",

@@ -239,7 +239,7 @@ async fn an_errors_file_keeps_every_row_in_place_and_imports_once_fixed() {
                     "Jar",
                     "2",
                     "yes",
-                    "is_active: \"yes\" must be TRUE or FALSE"
+                    "is_active: \"yes\" must be TRUE, FALSE, 1 or 0"
                 ]
             ),
         ]
