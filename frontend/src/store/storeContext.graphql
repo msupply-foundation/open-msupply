@@ -104,6 +104,13 @@ query storeContext($storeId: String!) {
       maxAge
       minItems
     }
+    # The Simple dispensing screen's cards (spec/prescriptions › the Simple
+    # screen): the store's common medicines, in order, with their usual
+    # amounts.
+    commonMedicines {
+      itemId
+      amounts
+    }
   }
   me {
     ... on UserNode {

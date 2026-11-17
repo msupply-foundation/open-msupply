@@ -30,6 +30,7 @@ http2 = { workspace = true }
 [dev-dependencies]
 actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
+base64 = { workspace = true }
 
 [features]
 default = ["sqlite"]

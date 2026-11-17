@@ -218,6 +218,10 @@ const prescriptionPreferences = () => {
     // affordance the user expects; an explicit `false` hides it
     // (spec/prescriptions § store-preference gates).
     editPrescribedQuantity: store?.editPrescribedQuantityOnPrescription ?? true,
+    // The Simple screen's cards (spec/prescriptions › the Simple screen).
+    // Undefined while the store context is unresolved, so the screen can tell
+    // "still loading" from "none set up".
+    commonMedicines: prefs?.commonMedicines,
   };
 };
 

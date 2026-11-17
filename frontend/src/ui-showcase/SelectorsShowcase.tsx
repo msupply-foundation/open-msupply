@@ -1,5 +1,6 @@
 import { createSignal, For } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
+import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { Combobox } from '../ui/elements/selectors/Combobox';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
@@ -9,7 +10,7 @@ import {
   ColourTagPicker,
   TAG_COLOURS,
 } from '../ui/elements/selectors/ColourTag';
-import { t } from '../intl';
+import { formatNumber, t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { Button } from '../ui/elements/buttons/Button';
@@ -56,7 +57,7 @@ const renderItem = (item: DemoItem) => (
       {item.code}
       {' · '}
       {item.availableStock > 0 ? (
-        `${item.availableStock.toLocaleString()} in stock`
+        `${formatNumber(item.availableStock)} in stock`
       ) : (
         <span class={styles.outOfStock}>Out of stock</span>
       )}
@@ -506,7 +507,10 @@ export const SelectorsShowcase = () => {
           </Note>
         </DashboardCard>
 
-        <DashboardCard id="selectors-select-error" title="Select — error">
+        <DashboardCard
+          id="selectors-select-error"
+          title="Select — required and error"
+        >
           <Lead>
             <code>error</code> switches the control to the error state, as
             TextField's and Combobox's do: a red border,{' '}
@@ -523,6 +527,24 @@ export const SelectorsShowcase = () => {
             helperText="Not shown while there is an error"
             error="Choose a direction"
           />
+          <FieldRow label="Reason" required>
+            <Select
+              label="Reason"
+              hideLabel
+              required
+              options={[
+                { value: 'expired', label: 'Expired' },
+                { value: 'damaged', label: 'Damaged' },
+              ]}
+            />
+          </FieldRow>
+          <Note>
+            <code>required</code> is read out as well as shown: the asterisk is{' '}
+            <code>aria-hidden</code>, so the label carries a visually hidden
+            "Required" (the trigger reads "Direction, Required"). Under{' '}
+            <code>hideLabel</code>, as in a <code>FieldRow</code>, the trigger's{' '}
+            <code>aria-label</code> carries it.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

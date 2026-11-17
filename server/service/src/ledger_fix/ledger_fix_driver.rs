@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::activity_log::system_log;
 use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
-use crate::sync::maintenance_mode::is_maintenance_mode;
+use crate::sync::{is_initialised_or_log, maintenance_mode::is_maintenance_mode};
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
 use chrono::{NaiveDateTime, TimeDelta, Utc};
@@ -140,6 +140,15 @@ impl LedgerFixTrigger {
 async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bool {
     tokio::time::sleep(duration).await;
 
+    // An initialising site integrates in batches (#845), so its ledgers are partial and every one
+    // would be logged as a discrepancy. Only the timed check waits for initialisation: the trigger
+    // fired after the initial integration (`run_post_sync_triggers`) can arrive before the sync
+    // log marks the site initialised, and must still run.
+    if !is_initialised_or_log(&service_provider) {
+        log::info!("Ledger fix: skipping run, site is not initialised");
+        return false;
+    }
+
     let last_ledger_fix_run = match get_last_ledger_fix_run(&service_provider) {
         Ok(value) => value,
         Err(error) => {
@@ -203,5 +212,31 @@ fn set_last_ledger_fix_run(service_provider: &ServiceProvider) {
 
     if let Err(error) = key_value_store.set_string(KeyType::LastLedgerFixRun, Some(now_string)) {
         log::error!("Ledger fix: failed to persist last run datetime: {error:?}");
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::mock::MockDataInserts;
+    use tokio::time::Duration;
+
+    use super::delay;
+    use crate::{sync::test_util_set_is_initialised, test_helpers::setup_all_and_service_provider};
+
+    // An initialising site integrates in batches (#845), so the timed check must not run ledger
+    // fix over its partial ledgers. Once initialised, a site that has never run it does.
+    #[actix_rt::test]
+    async fn timed_ledger_fix_waits_for_initialisation() {
+        let test = setup_all_and_service_provider(
+            "timed_ledger_fix_waits_for_initialisation",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // No sync log yet, so not initialised.
+        assert!(!delay(test.service_provider.clone(), Duration::ZERO).await);
+
+        test_util_set_is_initialised(true);
+        assert!(delay(test.service_provider.clone(), Duration::ZERO).await);
     }
 }

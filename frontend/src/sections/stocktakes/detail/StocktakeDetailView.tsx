@@ -390,6 +390,21 @@ const StocktakeDetailView: Component = () => {
       );
   };
 
+  // Whether every selected line is a vaccine — Reduce to 0 then offers vial-
+  // wastage reasons, as the React front end's allSelectedItemsAreVaccines did
+  // (issue #456). Read off the loaded page like selectedVolume: a selected id
+  // not on it counts as not-a-vaccine, which leaves the plain negative
+  // reasons — valid for any reduction, so never a reason the server rejects.
+  const selectedAllVaccines = (): boolean => {
+    const ids = new Set(selectedIds());
+    const selected = rows().filter(r => ids.has(r.id));
+    return (
+      selected.length > 0 &&
+      selected.length === ids.size &&
+      selected.every(r => r.item.isVaccine)
+    );
+  };
+
   // Locations WITH capacity for this store, fetched ONCE HERE (not from a
   // global cache) and passed down to the line editor + change-location picker,
   // so their % used / fullness filter reflect current stock. `volumeUsed` is
@@ -648,6 +663,8 @@ const StocktakeDetailView: Component = () => {
             doses: line.item.doses,
             unitName: line.item.unitName,
             defaultPackSize: line.item.defaultPackSize,
+            defaultSellPricePerPack:
+              line.item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
           }
         );
       },
@@ -1174,6 +1191,7 @@ const StocktakeDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
                       hideReason={hideReason()}
+                      allVaccines={selectedAllVaccines()}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}
@@ -1201,6 +1219,9 @@ const StocktakeDetailView: Component = () => {
                   cardGroups={CARD_GROUPS}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // Filters live in the table's own toolbar (ui-standards §
                   // tables → filtering), never the page header.
                   filters={

@@ -184,9 +184,10 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         ActivityLogType, EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceLineType, NameRow, PreferenceRow, StockLineRow, StockLineRowRepository,
-        StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
-        StocktakeLineRowRepository, StocktakeRepository, StocktakeRow, StocktakeStatus,
+        InvoiceLineType, ItemRow, ItemStoreJoinRow, NameRow, PreferenceRow, StockLineRow,
+        StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+        StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
+        StocktakeStatus,
         activity_log::{ActivityLogFilter, ActivityLogRepository},
         mock::{
             MockData, MockDataInserts, mock_campaign_a, mock_donor_b, mock_item_a,
@@ -1223,5 +1224,118 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(adjusted_stock_line.total_number_of_packs, 10.0);
+    }
+
+    #[actix_rt::test]
+    async fn finalise_stocktake_new_stock_takes_default_sell_price() {
+        // The store's default sell price is 50.00 for a pack of 10
+        let item = ItemRow {
+            id: "stocktake_default_price_item".to_string(),
+            name: "Stocktake default price item".to_string(),
+            code: "stocktake_default_price_item".to_string(),
+            default_pack_size: 10.0,
+            ..Default::default()
+        };
+        let item_store_join = ItemStoreJoinRow {
+            id: "stocktake_default_price_item_store_a".to_string(),
+            item_id: item.id.clone(),
+            store_id: mock_store_a().id,
+            default_sell_price_per_pack: 50.0,
+            ..Default::default()
+        };
+
+        let stocktake = StocktakeRow {
+            id: "stocktake_default_sell_price".to_string(),
+            store_id: mock_store_a().id,
+            stocktake_number: 102,
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            status: StocktakeStatus::New,
+            ..Default::default()
+        };
+        // No sell price given, as for a line from a master list
+        let no_price_line = StocktakeLineRow {
+            id: "stocktake_line_no_sell_price".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            item_id: item.id.clone(),
+            pack_size: Some(5.0),
+            counted_number_of_packs: Some(2.0),
+            sell_price_per_pack: None,
+            ..Default::default()
+        };
+        // A price that was entered is kept, 0 included
+        let zero_price_line = StocktakeLineRow {
+            id: "stocktake_line_zero_sell_price".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            item_id: item.id.clone(),
+            pack_size: Some(10.0),
+            counted_number_of_packs: Some(1.0),
+            sell_price_per_pack: Some(0.0),
+            ..Default::default()
+        };
+        let typed_price_line = StocktakeLineRow {
+            id: "stocktake_line_typed_sell_price".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            item_id: item.id.clone(),
+            pack_size: Some(10.0),
+            counted_number_of_packs: Some(1.0),
+            sell_price_per_pack: Some(12.0),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "finalise_stocktake_new_stock_takes_default_sell_price",
+            MockDataInserts::all(),
+            MockData {
+                items: vec![item.clone()],
+                item_store_joins: vec![item_store_join],
+                stocktakes: vec![stocktake.clone()],
+                stocktake_lines: vec![
+                    no_price_line.clone(),
+                    zero_price_line.clone(),
+                    typed_price_line.clone(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        service_provider
+            .stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: stocktake.id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let sell_price_of = |stocktake_line_id: &str| {
+            let stock_line_id = StocktakeLineRowRepository::new(&connection)
+                .find_one_by_id(stocktake_line_id)
+                .unwrap()
+                .unwrap()
+                .stock_line_id
+                .unwrap();
+            StockLineRowRepository::new(&connection)
+                .find_one_by_id(&stock_line_id)
+                .unwrap()
+                .unwrap()
+                .sell_price_per_pack
+        };
+
+        // 50.00 for a pack of 10 is 25.00 for a pack of 5
+        assert_eq!(sell_price_of(&no_price_line.id), 25.0);
+        assert_eq!(sell_price_of(&zero_price_line.id), 0.0);
+        assert_eq!(sell_price_of(&typed_price_line.id), 12.0);
     }
 }
