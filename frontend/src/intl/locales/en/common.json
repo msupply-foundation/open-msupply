@@ -773,7 +773,7 @@
   "error.startup-failed": "Open mSupply could not start.",
   "error.stock-line-already-exists": "A stock line with these details already exists.",
   "error.stock-movement-not-found": "Stock movement not found",
-  "error.stock-not-found": "Stock line not found.",
+  "error.stock-not-found": "Stock line not found",
   "error.stock-reduced-below-zero": "This reduction is greater than the number of available packs.",
   "error.stocktake-has-stock-reduced-below-zero": "Stocktake cannot be finalised because stock has been reserved in new outbound shipments or dispensing. The quantity cannot be reduced below zero.",
   "error.stocktake-not-found": "Stocktake not found",
