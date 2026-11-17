@@ -6,8 +6,8 @@ use std::{
 use chrono::Utc;
 use repository::{
     ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
-    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
-    StorageConnection, SyncBufferRepository, SyncVersion,
+    PatientFilter, RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository,
+    SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion, is_unnamed_patient_id,
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
 };
@@ -485,10 +485,17 @@ pub async fn patient_search(
     tokio::task::spawn_blocking(move || {
         let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
+        // Whatever the remote sent, central's search never returns a store's
+        // unnamed patient (spec/prescriptions rules › the unnamed patient):
+        // an older remote doesn't know to ask.
+        let filter = PatientFilter {
+            exclude_unnamed: true,
+            ..input
+        };
         let results =
             service_provider
                 .patient_service
-                .get_patients(&ctx, None, Some(input), None, None)?;
+                .get_patients(&ctx, None, Some(filter), None, None)?;
 
         Ok(results
             .rows
@@ -530,6 +537,15 @@ pub async fn patient_data_for_site(
             store_id,
             name_store_join_id,
         } = input;
+
+        // A store's unnamed patient is never linked to another store
+        // (spec/prescriptions rules › the unnamed patient), whatever the
+        // remote's version
+        if is_unnamed_patient_id(&patient_id) {
+            return Err(SyncError::Other(
+                "The unnamed patient can't be linked to a store".to_string(),
+            ));
+        }
 
         let nsj_id = ctx
             .connection

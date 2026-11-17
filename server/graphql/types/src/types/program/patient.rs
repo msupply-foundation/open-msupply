@@ -9,7 +9,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::{
     DateFilter, EqualFilter, GenderType as GenderRepo, Pagination, PaginationOption, Patient,
-    PatientFilter, ProgramEnrolmentFilter, StringFilter,
+    PatientFilter, ProgramEnrolmentFilter, StringFilter, is_unnamed_patient_id,
 };
 use serde::Serialize;
 use service::programs::patient::main_patient_doc_name;
@@ -55,6 +55,10 @@ pub struct PatientFilterInput {
 
 impl From<PatientFilterInput> for PatientFilter {
     fn from(f: PatientFilterInput) -> Self {
+        // The patient list and pickers never show a store's unnamed patient
+        // (spec/prescriptions rules › the unnamed patient); a lookup by id
+        // still finds it.
+        let exclude_unnamed = f.id.is_none();
         PatientFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
@@ -77,6 +81,7 @@ impl From<PatientFilterInput> for PatientFilter {
             // serde error there must surface as BadUserInput, so the infallible
             // From can't do it)
             dynamic_filter: None,
+            exclude_unnamed,
         }
     }
 }
@@ -123,6 +128,12 @@ impl PatientNode {
 
     pub async fn code(&self) -> &str {
         &self.patient.code
+    }
+
+    /// Whether this is a store's unnamed patient, the one record its walk-in
+    /// visits are dispensed to. Search never returns it.
+    pub async fn is_unnamed(&self) -> bool {
+        is_unnamed_patient_id(&self.patient.id)
     }
 
     pub async fn code_2(&self) -> &Option<String> {

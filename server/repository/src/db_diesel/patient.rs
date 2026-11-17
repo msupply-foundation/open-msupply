@@ -17,6 +17,22 @@ use serde::{Deserialize, Serialize};
 
 pub type Patient = NameRow;
 
+/// The start of every store's unnamed patient id: walk-ins are dispensed to
+/// one patient record per store, `unnamed_patient_<storeId>`
+/// (spec/prescriptions rules › the unnamed patient, kdd/unnamed-patient).
+/// The id is the contract: changing it orphans every one already created.
+pub const UNNAMED_PATIENT_ID_PREFIX: &str = "unnamed_patient_";
+
+/// The id of a store's unnamed patient.
+pub fn unnamed_patient_id(store_id: &str) -> String {
+    format!("{UNNAMED_PATIENT_ID_PREFIX}{store_id}")
+}
+
+/// Whether a patient id is a store's unnamed patient.
+pub fn is_unnamed_patient_id(id: &str) -> bool {
+    id.starts_with(UNNAMED_PATIENT_ID_PREFIX)
+}
+
 #[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
@@ -48,6 +64,12 @@ pub struct PatientFilter {
     /// ANDs with the other filters. Keys must be validated against the "patient"
     /// table scope's allowed property keys in the service layer.
     pub dynamic_filter: Option<NameCondition::Inner>,
+
+    /// Leave out every store's unnamed patient. Set by the search paths only
+    /// (patient search, the patient list, central search), never by a lookup
+    /// by id, so a dispensing record's patient is still found.
+    #[serde(default)]
+    pub exclude_unnamed: bool,
 }
 
 #[derive(PartialEq, Debug)]
@@ -197,6 +219,7 @@ impl<'a> PatientRepository<'a> {
                 program_enrolment_name,
                 next_of_kin_name,
                 dynamic_filter,
+                exclude_unnamed,
             } = f;
 
             // or filters need to be applied first
@@ -275,6 +298,18 @@ impl<'a> PatientRepository<'a> {
             if let Some(condition) = dynamic_filter {
                 query = query.filter(condition.to_boxed());
             }
+
+            // ANDed with everything above, the OR filters included
+            if exclude_unnamed {
+                query = query.filter(
+                    name::id
+                        .not_like(format!(
+                            "{}%",
+                            UNNAMED_PATIENT_ID_PREFIX.replace('_', "\\_")
+                        ))
+                        .escape('\\'),
+                );
+            }
         };
 
         // Only return active (not deleted) patients
@@ -297,6 +332,11 @@ impl PatientFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn exclude_unnamed(mut self) -> Self {
+        self.exclude_unnamed = true;
         self
     }
 
@@ -391,8 +431,9 @@ mod tests {
     use crate::{
         DateFilter, EqualFilter, NameRow, NameRowRepository, NameRowType, PatientFilter,
         PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
+        is_unnamed_patient_id,
         mock::{MockDataInserts, mock_program_a},
-        test_db,
+        test_db, unnamed_patient_id,
     };
 
     #[actix_rt::test]
@@ -430,6 +471,80 @@ mod tests {
             )
             .unwrap();
         result.first().unwrap();
+    }
+
+    // spec/prescriptions rules › the unnamed patient: hidden from search,
+    // found by id (OMS-REG-DIS-12.190)
+    #[actix_rt::test]
+    async fn exclude_unnamed_hides_only_unnamed_patients_and_holds_with_or_filters() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_exclude_unnamed",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+
+        let patient = |id: &str, name: &str| NameRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            code: format!("code_{id}"),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&patient(&unnamed_patient_id("store_a"), "Unnamed patient"))
+            .unwrap();
+        repo.upsert_one(&patient("registered", "Unnamed Smith"))
+            .unwrap();
+        // `_` is a LIKE wildcard: an id that only matches the prefix through
+        // wildcards is a registered patient and stays
+        repo.upsert_one(&patient("unnamedXpatientXlookalike", "Lookalike"))
+            .unwrap();
+
+        let ids = |filter: PatientFilter| {
+            let mut ids: Vec<String> = PatientRepository::new(&connection)
+                .query_by_filter(filter, None)
+                .unwrap()
+                .into_iter()
+                .map(|p| p.id)
+                // The mock data has patients of its own
+                .filter(|id| {
+                    [
+                        unnamed_patient_id("store_a").as_str(),
+                        "registered",
+                        "unnamedXpatientXlookalike",
+                    ]
+                    .contains(&id.as_str())
+                })
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        assert_eq!(
+            ids(PatientFilter::new().exclude_unnamed()),
+            vec!["registered", "unnamedXpatientXlookalike"]
+        );
+        // The identifier search ORs code, name and health number: the
+        // exclusion must hold across the whole OR, not just its last leg
+        assert_eq!(
+            ids(PatientFilter::new()
+                .identifier(StringFilter::like("Unnamed Smith"))
+                .exclude_unnamed()),
+            vec!["registered"]
+        );
+        assert_eq!(
+            ids(PatientFilter::new()
+                .identifier(StringFilter::like("Unnamed patient"))
+                .exclude_unnamed()),
+            Vec::<String>::new()
+        );
+        // Without the flag (a lookup), it is found
+        assert_eq!(
+            ids(PatientFilter::new().id(EqualFilter::equal_to(unnamed_patient_id("store_a")))),
+            vec![unnamed_patient_id("store_a")]
+        );
+        assert!(is_unnamed_patient_id(&unnamed_patient_id("store_a")));
+        assert!(!is_unnamed_patient_id("registered"));
     }
 
     #[actix_rt::test]

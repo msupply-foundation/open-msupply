@@ -1,4 +1,5 @@
 use log::{debug, error, info};
+use repository::is_unnamed_patient_id;
 use serde::{Deserialize, Serialize};
 use tokio::time::{Duration, sleep};
 
@@ -41,6 +42,15 @@ pub async fn add_patient_name_store_join(
 
     let ctx = service_provider.basic_context()?;
     validate_site_auth(&ctx, &sync_v5_settings).await?;
+
+    // A store's unnamed patient is never linked to another store
+    // (spec/prescriptions rules › the unnamed patient), whatever the
+    // remote's version
+    if is_unnamed_patient_id(&name_id) {
+        return Err(CentralApiError::InternalError(
+            "The unnamed patient can't be linked to a store".to_string(),
+        ));
+    }
 
     // Check patient exists (see README in service/programs/patient)
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {

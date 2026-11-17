@@ -42,7 +42,9 @@ pub fn patient_search_to_filter(input: PatientSearch) -> PatientFilter {
         identifier,
     } = input;
 
-    let mut filter = PatientFilter::new();
+    // A search never finds a store's unnamed patient (spec/prescriptions
+    // rules › the unnamed patient). Also what a remote sends central's search.
+    let mut filter = PatientFilter::new().exclude_unnamed();
     if let Some(code) = code {
         filter = filter.code(StringFilter::equal_to(&code));
     }

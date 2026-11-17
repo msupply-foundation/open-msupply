@@ -1,5 +1,5 @@
 use log::{error, info};
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError, is_unnamed_patient_id};
 use thiserror::Error;
 use url::Url;
 use util::format_error;
@@ -109,7 +109,16 @@ async fn patient_search_central_v4(
         })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{err:?}")))?;
-    Ok(patients)
+    // The legacy central server can't be asked to leave out a store's unnamed
+    // patient, so drop it here (spec/prescriptions rules › the unnamed patient)
+    Ok(without_unnamed_patients(patients))
+}
+
+fn without_unnamed_patients(patients: Vec<PatientV4>) -> Vec<PatientV4> {
+    patients
+        .into_iter()
+        .filter(|patient| !is_unnamed_patient_id(&patient.id))
+        .collect()
 }
 
 async fn patient_search_central_v7(
@@ -138,6 +147,15 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    // A store's unnamed patient is never linked to another store
+    // (spec/prescriptions rules › the unnamed patient). Search never offers
+    // it, so this only guards a call made by hand.
+    if is_unnamed_patient_id(name_id) {
+        return Err(CentralPatientRequestError::InternalError(
+            "The unnamed patient can't be linked to a store".to_string(),
+        ));
+    }
+
     if is_v7_remote(context)? {
         return link_patient_to_store_v7(service_provider, store_id, name_id).await;
     }
