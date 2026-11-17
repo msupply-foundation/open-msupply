@@ -969,10 +969,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // each tick of a resize drag would re-run the render effect of every cell —
   // and that effect recomputes all of the cell's attributes, pinned-column
   // lookups included, only to write the same values back. A memo stops at an
-  // unchanged value, so a tick reaches the dragged column's header alone (body cells carry no width at all — see TableRow).
-  // Keyed by id and resolved through the table on each run, so a column rebuilt
-  // from a new `columns` prop still reads its own def. Created under the
-  // table's owner, so they're disposed with it.
+  // unchanged value, so a tick reaches the dragged column's header alone
+  // (body cells carry no width at all — see TableRow). Keyed by id and
+  // resolved through the table on each run, so a column rebuilt from a new
+  // `columns` prop still reads its own def. Created under the table's owner,
+  // so they're disposed with it.
   //
   // A width the user set is exact (HeaderCell) — except on the column that
   // fills the row once every column has one (the rule: columnResize.ts). Drawn

@@ -111,8 +111,8 @@ export function HeaderCell<T>(props: {
       // (which sets the size to the drawn width) leaves it where it is. The
       // one column that stays a floor is the one filling the row once every
       // column has a width (DataTable.columnWidth). maxSize is the growth cap,
-      // applied as max-width (docs/CELL_TYPES.md). A pinned column additionally gets
-      // sticky position + its edge offset.
+      // applied as max-width (docs/CELL_TYPES.md). A pinned column
+      // additionally gets sticky position + its edge offset.
       style={{
         'min-width': `${width().px}px`,
         ...(width().exact ? { width: `${width().px}px` } : {}),
