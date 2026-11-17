@@ -109,6 +109,13 @@ impl SessionStore {
         self.sessions.retain(|_, entry| entry.user_id != user_id);
     }
 
+    /// As `revoke_all_for_user`, but keeps the session `keep`, such as the request's own when a
+    /// user changes their own password.
+    pub fn revoke_all_for_user_except(&mut self, user_id: &str, keep: Option<&str>) {
+        self.sessions
+            .retain(|token, entry| entry.user_id != user_id || Some(token.as_str()) == keep);
+    }
+
     /// Remove every session whose user `keep` rejects. Returns how many were removed.
     ///
     /// Maintenance mode (#840) calls this with "is a server admin" as it turns on, so users
@@ -373,6 +380,23 @@ mod tests {
             store.validate_and_slide(&other).is_some(),
             "unrelated user's session preserved"
         );
+    }
+
+    #[test]
+    fn revoking_a_users_sessions_can_keep_one() {
+        let mut store = SessionStore::new();
+        let kept = store.create("u");
+        let other = store.create("u");
+        let someone_else = store.create("v");
+
+        store.revoke_all_for_user_except("u", Some(&kept));
+        assert!(store.validate_and_slide(&kept).is_some());
+        assert!(store.validate_and_slide(&other).is_none());
+        assert!(store.validate_and_slide(&someone_else).is_some());
+
+        // Another user's token keeps none of this user's.
+        store.revoke_all_for_user_except("u", Some(&someone_else));
+        assert!(store.validate_and_slide(&kept).is_none());
     }
 
     #[test]
