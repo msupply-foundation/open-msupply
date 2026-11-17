@@ -6919,6 +6919,7 @@ enum PreferenceKey {
 	isGaps
 	displayPopulationBasedForecasting
 	globalTableConfigs
+	globalTableDefaultConfigs
 	backdating
 	receivePaymentsFromPrescriptions
 	globalLogo
@@ -6994,6 +6995,7 @@ type PreferencesNode {
 	isGaps: Boolean!
 	displayPopulationBasedForecasting: Boolean!
 	globalTableConfigs: JSON!
+	globalTableDefaultConfigs: JSON!
 	backdating: BackdatingNode!
 	receivePaymentsFromPrescriptions: Boolean!
 	"""
@@ -11853,6 +11855,7 @@ input UpsertPreferencesInput {
 	isGaps: Boolean
 	displayPopulationBasedForecasting: Boolean
 	globalTableConfigs: JSON
+	globalTableDefaultConfigs: JSON
 	backdating: BackdatingInput
 	receivePaymentsFromPrescriptions: Boolean
 	globalLogo: String

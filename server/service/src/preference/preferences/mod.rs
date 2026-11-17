@@ -74,6 +74,8 @@ pub mod display_population_based_forecasting;
 pub use display_population_based_forecasting::*;
 pub mod global_table_configs;
 pub use global_table_configs::*;
+pub mod global_table_default_configs;
+pub use global_table_default_configs::*;
 pub mod backdating;
 pub use backdating::*;
 pub mod receive_payments_from_prescriptions;
@@ -110,6 +112,7 @@ pub struct PreferenceProvider {
     pub is_gaps: IsGaps,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
+    pub global_table_default_configs: GlobalTableDefaultConfigs,
     pub backdating: Backdating,
     pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
     pub global_logo: GlobalLogo,
@@ -168,6 +171,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         is_gaps: IsGaps,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
+        global_table_default_configs: GlobalTableDefaultConfigs,
         backdating: Backdating,
         receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
         global_logo: GlobalLogo,

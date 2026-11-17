@@ -46,6 +46,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             is_gaps,
             display_population_based_forecasting,
             global_table_configs: _, // Not included in preference descriptions UI
+            global_table_default_configs: _, // Not included in preference descriptions UI
             backdating,
             // Hidden from the preferences edit UI until prescription payment
             // functionality is implemented (#6179)

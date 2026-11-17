@@ -110,6 +110,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.global_table_configs)
     }
 
+    pub async fn global_table_default_configs(&self) -> Result<serde_json::Value> {
+        self.load_preference(&self.preferences.global_table_default_configs)
+    }
+
     pub async fn backdating(&self) -> Result<BackdatingNode> {
         Ok(BackdatingNode::from_domain(
             self.load_preference(&self.preferences.backdating)?,
@@ -385,6 +389,7 @@ pub enum PreferenceKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
+    GlobalTableDefaultConfigs,
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,

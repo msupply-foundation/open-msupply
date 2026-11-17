@@ -45,6 +45,7 @@ pub struct UpsertPreferences {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
+    pub global_table_default_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingData>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
@@ -105,6 +106,7 @@ pub fn upsert_preferences(
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
+        global_table_default_configs: global_table_default_configs_input,
         backdating: backdating_input,
         receive_payments_from_prescriptions: receive_payments_from_prescriptions_input,
         global_logo: global_logo_input,
@@ -164,6 +166,7 @@ pub fn upsert_preferences(
         is_gaps,
         display_population_based_forecasting,
         global_table_configs,
+        global_table_default_configs,
         backdating,
         receive_payments_from_prescriptions,
         global_logo,
@@ -276,6 +279,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = global_table_configs_input {
                 global_table_configs.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = global_table_default_configs_input {
+                global_table_default_configs.upsert(connection, input, None)?;
             }
 
             if let Some(input) = backdating_input {
@@ -460,9 +467,12 @@ fn upsert_store_override_input<P: Preference>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::preference::{CustomTranslations, CustomTranslationsV2};
+    use crate::preference::{
+        CustomTranslations, CustomTranslationsV2, GlobalTableConfigs, GlobalTableDefaultConfigs,
+    };
     use crate::service_provider::ServiceProvider;
     use crate::sync::test_util_set_is_central_server;
+    use repository::PreferenceRowRepository;
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
 
@@ -531,6 +541,160 @@ mod tests {
                 .load(&ctx.connection, None)
                 .unwrap()
                 .is_empty()
+        );
+    }
+
+    // The React front end saves its shared table layouts to global_table_configs
+    // and the Solid front end to global_table_default_configs. The shapes differ,
+    // so a save from one front end must never change the other's layouts.
+    #[actix_rt::test]
+    async fn upsert_table_default_configs_does_not_touch_table_configs() {
+        let (_, _, connection_manager, _) = setup_all(
+            "upsert_table_default_configs_does_not_touch_table_configs",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+
+        let react_layouts = serde_json::json!({
+            "stock-list": { "columnPinning": { "left": ["itemCode"] } }
+        });
+        GlobalTableConfigs
+            .upsert(&ctx.connection, react_layouts.clone(), None)
+            .unwrap();
+
+        let solid_layouts = serde_json::json!({
+            "stock-list": { "base": { "columnPinning": { "left": ["item-code"] } } }
+        });
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                global_table_default_configs: Some(solid_layouts.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            GlobalTableDefaultConfigs
+                .load(&ctx.connection, None)
+                .unwrap(),
+            solid_layouts
+        );
+        assert_eq!(
+            GlobalTableConfigs.load(&ctx.connection, None).unwrap(),
+            react_layouts
+        );
+    }
+
+    #[actix_rt::test]
+    async fn upsert_table_configs_does_not_touch_table_default_configs() {
+        let (_, _, connection_manager, _) = setup_all(
+            "upsert_table_configs_does_not_touch_table_default_configs",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+
+        let solid_layouts = serde_json::json!({
+            "stock-list": { "base": { "columnPinning": { "left": ["item-code"] } } }
+        });
+        GlobalTableDefaultConfigs
+            .upsert(&ctx.connection, solid_layouts.clone(), None)
+            .unwrap();
+
+        let react_layouts = serde_json::json!({
+            "stock-list": { "columnPinning": { "left": ["itemCode"] } }
+        });
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                global_table_configs: Some(react_layouts.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            GlobalTableConfigs.load(&ctx.connection, None).unwrap(),
+            react_layouts
+        );
+        assert_eq!(
+            GlobalTableDefaultConfigs
+                .load(&ctx.connection, None)
+                .unwrap(),
+            solid_layouts
+        );
+    }
+
+    // The migration fragment that converts global_table_configs writes this
+    // row id directly, so it must match what the preference saves to.
+    #[actix_rt::test]
+    async fn upsert_table_default_configs_writes_global_row() {
+        let (_, _, connection_manager, _) = setup_all(
+            "upsert_table_default_configs_writes_global_row",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+
+        let layouts = serde_json::json!({ "stock-list": { "base": {} } });
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                global_table_default_configs: Some(layouts.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let row = PreferenceRowRepository::new(&ctx.connection)
+            .find_one_by_id("global_table_default_configs_global")
+            .unwrap()
+            .expect("global_table_default_configs_global row");
+        assert_eq!(row.key, "global_table_default_configs");
+        assert_eq!(row.store_id, None);
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&row.value).unwrap(),
+            layouts
+        );
+    }
+
+    #[actix_rt::test]
+    async fn upsert_table_default_configs_requires_central_server() {
+        let (_, _, connection_manager, _) = setup_all(
+            "upsert_table_default_configs_requires_central_server",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(false);
+
+        let result = upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                global_table_default_configs: Some(serde_json::json!({})),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(result, Err(UpsertPreferenceError::NotACentralServer));
+        assert_eq!(
+            PreferenceRowRepository::new(&ctx.connection)
+                .find_one_by_id("global_table_default_configs_global")
+                .unwrap(),
+            None
         );
     }
 }

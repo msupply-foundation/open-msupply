@@ -33,6 +33,7 @@ pub enum PrefKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
+    GlobalTableDefaultConfigs,
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,

@@ -98,6 +98,7 @@ pub struct UpsertPreferencesInput {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
+    pub global_table_default_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingInput>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
@@ -186,6 +187,7 @@ impl UpsertPreferencesInput {
             is_gaps,
             display_population_based_forecasting,
             global_table_configs,
+            global_table_default_configs,
             backdating,
             receive_payments_from_prescriptions,
             global_logo,
@@ -247,6 +249,7 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting: *display_population_based_forecasting,
 
             global_table_configs: global_table_configs.clone(),
+            global_table_default_configs: global_table_default_configs.clone(),
             backdating: backdating.as_ref().map(|b| BackdatingData {
                 shipments_enabled: b.shipments_enabled,
                 inventory_adjustments_enabled: b.inventory_adjustments_enabled,

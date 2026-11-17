@@ -41,6 +41,7 @@ export type SaveGlobalTableConfigsVariables = {
     isGaps?: boolean | null;
     displayPopulationBasedForecasting?: boolean | null;
     globalTableConfigs?: unknown | null;
+    globalTableDefaultConfigs?: unknown | null;
     backdating?: {
     shipmentsEnabled: boolean;
     inventoryAdjustmentsEnabled: boolean;

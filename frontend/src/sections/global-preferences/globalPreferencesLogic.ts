@@ -208,11 +208,12 @@ const NUMBER_PREFERENCE_KEYS = [
  * then renders it a live control — so a key missing here would mean the
  * auto-save silently drops that edit. This alias fails to compile until the
  * new key joins a list above or gets an explicit branch in
- * buildAutoSaveInput. The three `unknown`-typed JSON fields are accounted
+ * buildAutoSaveInput. The four `unknown`-typed JSON fields are accounted
  * explicitly: customTranslationsV2 saves through the editor's own path;
  * customTranslations (legacy) only ever rides along with it;
- * globalTableConfigs is the table-configuration feature's
- * (src/api/tableConfig.graphql), never this page's.
+ * globalTableDefaultConfigs is the table-configuration feature's
+ * (src/api/tableConfig.graphql), never this page's; globalTableConfigs holds
+ * the React front end's table layouts and is never edited here.
  */
 export type EveryGlobalPreferenceHandled<
   Unhandled extends never = Exclude<
