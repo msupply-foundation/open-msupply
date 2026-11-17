@@ -1,7 +1,7 @@
 use super::{StorageConnection, unit_row::unit::dsl::*};
 use crate::{
     ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
-    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
+    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError, trim,
 };
 use diesel::prelude::*;
 
@@ -97,6 +97,16 @@ impl<'a> UnitRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
+    }
+
+    /// Active and inactive. Letter case counts; spaces around either name, which legacy sync can
+    /// save, don't.
+    pub fn find_by_trimmed_name(&self, unit_name: &str) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(trim(name).eq(unit_name.trim()))
+            .order(id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {

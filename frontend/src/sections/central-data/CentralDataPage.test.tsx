@@ -52,9 +52,10 @@ const shown: {
   zone?: UploadZoneProps;
   alerts: AlertProps[];
   buttons: Record<string, ButtonProps>;
+  texts: unknown[];
   previewCard?: PreviewCardProps;
   footer?: PreviewFooterProps;
-} = { alerts: [], buttons: {} };
+} = { alerts: [], buttons: {}, texts: [] };
 
 // Reads a JSX child the stand-ins returned, so conditional content renders.
 const resolve = (value: unknown): unknown =>
@@ -114,7 +115,10 @@ vi.mock('@/ui/elements/buttons/Button', () => ({
   },
 }));
 vi.mock('@/ui/elements/typography/Text', () => ({
-  Text: (p: { children: unknown }) => p.children,
+  Text: (p: { children: unknown }) => {
+    shown.texts.push(p.children);
+    return p.children;
+  },
 }));
 vi.mock('@/ui/elements/inputs/UploadZone', () => ({
   UploadZone: (p: UploadZoneProps) => {
@@ -188,6 +192,7 @@ afterEach(() => {
 const render = () => {
   shown.alerts = [];
   shown.buttons = {};
+  shown.texts = [];
   delete shown.zone;
   delete shown.previewCard;
   delete shown.footer;
@@ -339,6 +344,24 @@ describe('CentralDataPage import', () => {
     // The pinned footer acts on the same upload.
     expect(shown.footer!.preview).toBe(shown.previewCard!.preview);
     expect(alerts()).toEqual([]);
+  });
+
+  it('suggests starting from an export until a file is chosen (OMS-REG-CDIO-01.75)', async () => {
+    uploadFile.mockResolvedValue({ kind: 'uploaded', fileId: 'f1' });
+    graphqlFetch.mockResolvedValueOnce(answer('importPreview', summary()));
+    open();
+    expect(shown.texts).toEqual([
+      'messages.central-data-import-limits',
+      'messages.central-data-import-start-from-export',
+    ]);
+
+    shown.zone!.onPick([xlsx()], []);
+    await settle();
+    render();
+    expect(shown.previewCard).toBeDefined();
+    expect(shown.texts).not.toContain(
+      'messages.central-data-import-start-from-export'
+    );
   });
 
   it('swaps the drop zone for the file and Choose another file while a preview is open (OMS-REG-CDIO-01.66)', async () => {

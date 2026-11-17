@@ -243,7 +243,7 @@ async fn an_errors_file_keeps_every_row_in_place_and_imports_once_fixed() {
                     "Jar",
                     "2",
                     "yes",
-                    "is_active: \"yes\" must be TRUE or FALSE"
+                    "is_active: \"yes\" must be TRUE, FALSE, 1 or 0"
                 ]
             ),
         ]
@@ -1333,7 +1333,7 @@ async fn a_code_finds_a_location_type_an_earlier_row_adds() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.12, .35, .63, .75, .77
+// covers: OMS-REG-CDIO-01.12, .35, .63, .77, .79
 
 #[actix_rt::test]
 async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {

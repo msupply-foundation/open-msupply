@@ -2108,6 +2108,7 @@
   "messages.click-to-return-to-returns": "Não foi possível encontrar uma Devolução com essa ID. Clique em OK para voltar para a lista de Devoluções",
   "messages.click-to-return-to-rnr-list": "Clique aqui para retornar para a lista de formulários R&R",
   "messages.click-to-return-to-shipments": "Não foi possível encontrar um envio com essa ID. Clique em OK para retornar para a lista de Envios",
+  "messages.click-to-return-to-stock": "Não foi possível encontrar uma linha de estoque com essa ID. Clique em OK para retornar para a lista de estoque",
   "messages.click-to-view": "Clique para ver o registro do paciente {{firstName}} {{lastName}}",
   "messages.clinician-code-already-exists": "Um clínico com este código já existe. Tem certeza de que deseja continuar?",
   "messages.closed-purchase-order-lines_many": "Foram encerradas {{count}} linhas desta ordem de compra",

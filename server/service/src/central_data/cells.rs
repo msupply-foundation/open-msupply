@@ -56,9 +56,9 @@ impl Row<'_> {
     pub fn bool(&self, column: &str) -> Result<Option<bool>, RowError> {
         match self.text(column) {
             None => Ok(None),
-            Some(text) if text.eq_ignore_ascii_case("true") => Ok(Some(true)),
-            Some(text) if text.eq_ignore_ascii_case("false") => Ok(Some(false)),
-            Some(text) => Err(self.error(column, format!("\"{text}\" must be TRUE or FALSE"))),
+            Some(text) => parse_bool(&text).map(Some).ok_or_else(|| {
+                self.error(column, format!("\"{text}\" must be TRUE, FALSE, 1 or 0"))
+            }),
         }
     }
 
@@ -113,6 +113,17 @@ impl Row<'_> {
     }
 }
 
+/// `TRUE` or `FALSE` in any letter case, or `1` or `0`.
+pub fn parse_bool(text: &str) -> Option<bool> {
+    match text {
+        "1" => Some(true),
+        "0" => Some(false),
+        _ if text.eq_ignore_ascii_case("true") => Some(true),
+        _ if text.eq_ignore_ascii_case("false") => Some(false),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -143,20 +154,31 @@ mod tests {
     // covers: OMS-REG-CDIO-01.27
 
     #[test]
-    fn bool_accepts_true_and_false_in_any_case() {
-        for (cell, expected) in [("TRUE", Some(true)), ("false", Some(false)), ("", None)] {
+    fn bool_accepts_true_and_false_in_any_case_or_1_and_0() {
+        for (cell, expected) in [
+            ("TRUE", Some(true)),
+            ("false", Some(false)),
+            ("1", Some(true)),
+            ("0", Some(false)),
+            ("", None),
+        ] {
             with_row(&["", cell], |row| {
                 assert_eq!(row.bool("flag"), Ok(expected))
             });
         }
-        with_row(&["", "yes"], |row| {
-            let error = row.bool("flag").unwrap_err();
-            assert_eq!(
-                (error.row, error.column.as_deref()),
-                (Some(7), Some("flag"))
-            );
-            assert_eq!(error.message, "\"yes\" must be TRUE or FALSE");
-        });
+        for typo in ["yes", "2", "-1"] {
+            with_row(&["", typo], |row| {
+                let error = row.bool("flag").unwrap_err();
+                assert_eq!(
+                    (error.row, error.column.as_deref()),
+                    (Some(7), Some("flag"))
+                );
+                assert_eq!(
+                    error.message,
+                    format!("\"{typo}\" must be TRUE, FALSE, 1 or 0")
+                );
+            });
+        }
     }
 
     // covers: OMS-REG-CDIO-01.28

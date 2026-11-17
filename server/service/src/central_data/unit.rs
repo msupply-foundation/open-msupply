@@ -6,7 +6,7 @@ use super::{
     lookup::{LookupError, resolve},
     sheet::Value,
 };
-use crate::unit::{UnitLookup, UpsertUnitError, upsert_unit_in};
+use crate::unit::{UpsertUnitError, upsert_unit};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 use util::uuid::uuid;
 
@@ -65,18 +65,13 @@ impl ImportTable for UnitTable {
 
     fn start_sheet(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        // Units are few.
-        Ok(Box::new(UnitSheet {
-            units: UnitLookup::load_all(connection)?,
-        }))
+        Ok(Box::new(UnitSheet))
     }
 }
 
-struct UnitSheet {
-    units: UnitLookup,
-}
+struct UnitSheet;
 
 impl SheetImport for UnitSheet {
     fn import_row(
@@ -90,12 +85,15 @@ impl SheetImport for UnitSheet {
         let id = row.text(ID);
         let name = row.text(NAME);
 
+        let repo = UnitRowRepository::new(connection);
         let existing = match (&id, &name) {
-            (Some(id), _) => self.units.by_id(id).cloned(),
-            (None, Some(name)) => pick_by_name(self.units.by_key(name)).unwrap_or_else(|e| {
-                errors.push(row.error(NAME, e.message(name)));
-                None
-            }),
+            (Some(id), _) => repo.find_one_by_id(id)?,
+            (None, Some(name)) => {
+                pick_by_name(repo.find_by_trimmed_name(name)?).unwrap_or_else(|e| {
+                    errors.push(row.error(NAME, e.message(name)));
+                    None
+                })
+            }
             (None, None) => None,
         };
 
@@ -143,7 +141,7 @@ impl SheetImport for UnitSheet {
             None => Change::Inserted,
         };
         if change != Change::Unchanged {
-            upsert_unit_in(connection, &mut self.units, &unit).map_err(|error| match error {
+            upsert_unit(connection, &unit).map_err(|error| match error {
                 UpsertUnitError::NameRequired => row.error(NAME, "name is required").into(),
                 UpsertUnitError::DuplicateName { other_id } => row
                     .error(
@@ -187,15 +185,14 @@ fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
 }
 
 /// Active units first, so an old inactive namesake doesn't make the name ambiguous.
-fn pick_by_name(units: Vec<&UnitRow>) -> Result<Option<UnitRow>, LookupError> {
+fn pick_by_name(units: Vec<UnitRow>) -> Result<Option<UnitRow>, LookupError> {
     let (active, inactive): (Vec<_>, Vec<_>) = units.into_iter().partition(|unit| unit.is_active);
     let candidates = if active.is_empty() { inactive } else { active };
     let ids: Vec<String> = candidates.iter().map(|unit| unit.id.clone()).collect();
     match resolve(None, false, Some(&ids)) {
         Ok(id) => Ok(candidates
             .into_iter()
-            .find(|unit| Some(&unit.id) == id.as_ref())
-            .cloned()),
+            .find(|unit| Some(&unit.id) == id.as_ref())),
         Err(LookupError::NotFound) => Ok(None),
         Err(e) => Err(e),
     }

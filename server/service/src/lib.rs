@@ -33,7 +33,7 @@ pub mod auth_data;
 pub mod backend_plugin;
 pub mod barcode;
 pub mod catalogue;
-pub mod central_data_io;
+pub mod central_data;
 pub mod clinician;
 pub mod cold_chain;
 mod common;

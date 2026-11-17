@@ -35,10 +35,7 @@ import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
 import { newRecordHref } from '../newRecordLink';
-import {
-  SimpleDispensingItemPrice,
-  SimpleDispensingItems,
-} from './simpleDispensing.generated';
+import { SimpleDispensingItems } from './simpleDispensing.generated';
 import {
   SimpleDispense,
   SimpleDispensedVisit,
@@ -54,9 +51,9 @@ import {
   setAmount,
   shortLines,
   unitsListed,
+  unreadIds,
   visitWasSaved,
   type CardItem,
-  type DefaultPrices,
   type ListLine,
   type MedicineCard,
   type DispenseInput,
@@ -83,46 +80,32 @@ const SimpleDispensingPage: Component = () => {
   // as "none set up".
   const medicines = () => prescriptionPreferences().commonMedicines;
 
-  // The cards' items and their default prices: on load, and again when
-  // Dispense checks the stock. A price that couldn't be read fails the whole
-  // read, so a line never shows a price the save won't charge (contract › the
-  // Simple screen). `background` keeps a failure from the app's error dialog,
-  // whose reload would lose the visit: the caller says what a failure means.
+  // The cards' items with their default prices, in one request: on load, and
+  // again when Dispense checks the stock. A price that couldn't be read fails
+  // the whole read, so a line never shows a price the save won't charge
+  // (contract › the Simple screen). `background` keeps a failure from the
+  // app's error dialog, whose reload would lose the visit: the caller says
+  // what a failure means.
   const fetchItems = async (
     storeId: string,
     ids: string[],
     background = false
-  ): Promise<{ nodes: CardItem[]; prices: DefaultPrices } | undefined> => {
-    const [result, ...priced] = await Promise.all([
-      graphqlFetch(
-        SimpleDispensingItems,
-        { storeId, ids, page: { first: ids.length } },
-        { background }
-      ),
-      ...ids.map(itemId =>
-        graphqlFetch(
-          SimpleDispensingItemPrice,
-          { storeId, itemId },
-          { background }
-        )
-      ),
-    ]);
+  ): Promise<CardItem[] | undefined> => {
+    const result = await graphqlFetch(
+      SimpleDispensingItems,
+      { storeId, ids, page: { first: ids.length } },
+      { background }
+    );
     if (result.kind !== 'success') return undefined;
     if (result.data.items.__typename !== 'ItemConnector') return undefined;
-    const prices: Record<string, number | null> = {};
-    for (const [i, itemId] of ids.entries()) {
-      const price = priced[i];
-      if (price?.kind !== 'success') return undefined;
-      prices[itemId] = price.data.itemPrice.defaultPricePerUnit;
-    }
-    return { nodes: result.data.items.nodes, prices };
+    return result.data.items.nodes;
   };
 
   // Read again once a visit is dispensed (rules › dispensing the visit): in
   // the background, and a read that fails keeps the cards as they were, so
   // the screen never drops back to loading with a visit on it.
   const [items, { refetch: refetchItems }] = createResource<
-    { nodes: CardItem[]; prices: DefaultPrices } | undefined,
+    CardItem[] | undefined,
     { storeId: string; ids: string[] }
   >(
     () => {
@@ -141,12 +124,7 @@ const SimpleDispensingPage: Component = () => {
       const list = medicines();
       const fetched = gated(items);
       if (!list || fetched === undefined) return undefined;
-      return buildCards(
-        list,
-        fetched.nodes,
-        fetched.prices,
-        prescriptionPreferences()
-      );
+      return buildCards(list, fetched, prescriptionPreferences());
     },
     undefined,
     { equals: sameFetchedValue }
@@ -156,21 +134,33 @@ const SimpleDispensingPage: Component = () => {
   // amount, and other medicines): fetched like the cards, so a line for one is
   // priced, checked and saved the same way. Their own resource, so choosing
   // one never refetches the cards. Kept until the visit is dispensed.
+  // Choosing one reads them all again, so a read that fails keeps what the
+  // last one returned: the lines already on the list keep their name, unit,
+  // price and stock. In the background: the screen says what a failure means
+  // (searchFailed), and the app's error dialog would offer a reload that
+  // loses the visit.
   const [searchedIds, setSearchedIds] = createSignal<string[]>([]);
-  const [searchedItems] = createResource(
+  const [searchedItems, { mutate: setSearchedItems }] = createResource<
+    CardItem[] | undefined,
+    { storeId: string; ids: string[] }
+  >(
     () => {
       const ids = searchedIds();
       return ids.length > 0 ? { storeId: params.storeId, ids } : false;
     },
-    ({ storeId, ids }) => fetchItems(storeId, ids)
+    async ({ storeId, ids }, { value }) => {
+      const fetched = await fetchItems(storeId, ids, true);
+      if (fetched) return fetched;
+      searchFailed(ids, unreadIds(ids, value));
+      return value;
+    }
   );
   const searched = createMemo<MedicineCard[]>(
     () => {
       const fetched = gated(searchedItems);
       return buildCards(
         medicinesFor(searchedIds(), []),
-        fetched?.nodes ?? [],
-        fetched?.prices ?? {},
+        fetched ?? [],
         prescriptionPreferences()
       );
     },
@@ -233,6 +223,23 @@ const SimpleDispensingPage: Component = () => {
     setAsking(undefined);
     setSearchValue('');
   };
+  // A medicine chosen from the search that couldn't be read (rules › another
+  // amount, and other medicines): no box opens for it, so the search is empty
+  // again and the list's notice says why. Dropped, so choosing it again reads
+  // it again. Dropping it reads the medicines still searched once more: if
+  // that read fails too, none of them is unread, so it changes nothing and
+  // reads nothing again. Nothing to do once a read for a later choice has
+  // taken over: its outcome is the one to report.
+  const searchFailed = (ids: string[], unread: string[]) => {
+    if (searchedIds() !== ids || unread.length === 0) return;
+    setSearchedIds(now => now.filter(id => !unread.includes(id)));
+    const open = asking();
+    if (open !== undefined && unread.includes(open)) closeAmount();
+    // A card's box may have opened while the read was out: the search still
+    // shows the medicine that failed.
+    if (unread.includes(searchValue())) setSearchValue('');
+    setNotice({ severity: 'error', text: t('error.medicine-not-loaded') });
+  };
 
   // A phone (spec ui-surface S9 › layout): one-row cards, and the list as a
   // bar at the bottom of the screen. Which layout renders, not spacing.
@@ -272,8 +279,7 @@ const SimpleDispensingPage: Component = () => {
     if (!fetched) return undefined;
     return buildCards(
       medicinesFor(ids, medicines() ?? []),
-      fetched.nodes,
-      fetched.prices,
+      fetched,
       prescriptionPreferences()
     );
   };
@@ -291,6 +297,9 @@ const SimpleDispensingPage: Component = () => {
     update([]);
     setPatient(null);
     setSearchedIds([]);
+    // The next visit reads its medicines afresh: none of this one's stock
+    // stands in for them while that read is out, or after it fails.
+    setSearchedItems(undefined);
     setNotice({
       severity: 'success',
       text: t('messages.dispensed-to', { name: who.name }),
@@ -407,6 +416,11 @@ const SimpleDispensingPage: Component = () => {
     );
 
   const dispense = async () => {
+    // Clear may be about to empty the list, or finish the visit its look
+    // finds saved: a save now would be of a list that is gone, with a new id
+    // (rules › dispensing the visit). Dispense is disabled then, so this is a
+    // backstop.
+    if (looking()) return;
     setNotice(undefined);
     markRepriced([]);
     setDispensing(true);
@@ -581,6 +595,7 @@ const SimpleDispensingPage: Component = () => {
                 onDispense={() => void dispense()}
                 canDispense={patient() !== null}
                 dispensing={dispensing()}
+                looking={looking()}
                 locked={locked()}
                 notice={shownNotice()}
               />
