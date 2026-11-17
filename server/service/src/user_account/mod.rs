@@ -37,19 +37,13 @@ impl From<RepositoryError> for CreateUserAccountError {
     }
 }
 
-impl From<upsert::UpsertUserError> for CreateUserAccountError {
-    fn from(error: upsert::UpsertUserError) -> Self {
+impl From<upsert::UsernameError> for CreateUserAccountError {
+    fn from(error: upsert::UsernameError) -> Self {
         match error {
-            upsert::UpsertUserError::UsernameRequired => CreateUserAccountError::UsernameRequired,
-            upsert::UpsertUserError::UsernamePadded => CreateUserAccountError::UsernamePadded,
-            upsert::UpsertUserError::DuplicateUsername { .. } => {
-                CreateUserAccountError::UserNameExist
-            }
-            // `create_user` runs only `validate`, which checks usernames.
-            upsert::UpsertUserError::Protected | upsert::UpsertUserError::LocksOutSelf => {
-                unreachable!("not a username error")
-            }
-            upsert::UpsertUserError::DatabaseError(error) => error.into(),
+            upsert::UsernameError::Required => CreateUserAccountError::UsernameRequired,
+            upsert::UsernameError::Padded => CreateUserAccountError::UsernamePadded,
+            upsert::UsernameError::Duplicate { .. } => CreateUserAccountError::UserNameExist,
+            upsert::UsernameError::DatabaseError(error) => error.into(),
         }
     }
 }

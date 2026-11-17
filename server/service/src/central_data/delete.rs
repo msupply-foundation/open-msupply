@@ -5,16 +5,20 @@ use super::{
 };
 
 pub const DELETE_COLUMN: &str = "delete";
+/// The `delete` cell that deletes the row's record.
+pub const DELETE: &str = "DELETE";
 const ID: &str = "id";
 
 /// Anything but blank or `DELETE` is an error, so a typo can't pass as a delete.
 pub fn is_delete(row: &Row) -> Result<bool, RowError> {
     match row.cell(DELETE_COLUMN).unwrap_or("") {
         "" => Ok(false),
-        "DELETE" => Ok(true),
+        DELETE => Ok(true),
         other => Err(row.error(
             DELETE_COLUMN,
-            format!("\"{other}\" is not valid. Type DELETE to delete this row, or leave it blank"),
+            format!(
+                "\"{other}\" is not valid. Type {DELETE} to delete this row, or leave it blank"
+            ),
         )),
     }
 }

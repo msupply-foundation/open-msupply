@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
-    delete::{DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
+    delete::{DELETE, DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
     field_changes,
     lookup::find_record,
     sheet::{Sheet, Value},
@@ -152,6 +152,8 @@ impl ImportTable for UserTable {
             };
             // A row in error finds none here and fails on import anyway. A row whose user
             // differs by the time it's imported is hashed again then.
+            // shortcut: one or two queries per password row, fine for a site's users. A table
+            // with many more rows would load its records in one query first.
             let saved = find_record(
                 &users,
                 &row,
@@ -311,7 +313,7 @@ impl SheetImport for UserSheet {
         let change = Change::between_upserts(saved, &user);
         if change != Change::Unchanged {
             upsert_user(connection, &self.importer, &user)
-                .map_err(|error| upsert_failure(connection, row, error))?;
+                .map_err(|error| upsert_failure(row, error))?;
             if ends_sessions(saved, &user) {
                 self.sessions_to_end.push(user.id.clone());
             }
@@ -412,31 +414,9 @@ impl UserSheet {
     }
 }
 
-fn upsert_failure(connection: &StorageConnection, row: &Row, error: UpsertUserError) -> RowFailure {
+fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
     match error {
         UpsertUserError::UsernameRequired => row.error(USERNAME, "username is required").into(),
-        // Unreachable here: cells are read trimmed.
-        UpsertUserError::UsernamePadded => row
-            .error(USERNAME, "username can't start or end with a space")
-            .into(),
-        // Unreachable here: `find_record` turns a saved username into a match or a conflict.
-        UpsertUserError::DuplicateUsername { other_id } => {
-            let other = match UserAccountRowRepository::new(connection).find_one_by_id(&other_id) {
-                Ok(other) => other.map_or(other_id.clone(), |other| other.username),
-                Err(error) => return RowFailure::Database(error),
-            };
-            row.error(
-                USERNAME,
-                format!(
-                    "User {other} (id {other_id}) already has this username. Usernames match in any letter case"
-                ),
-            )
-            .into()
-        }
-        // Unreachable here: `import_row` refuses a protected user first.
-        UpsertUserError::Protected => row
-            .error(USERNAME, "this user is protected, as the server needs it")
-            .into(),
         UpsertUserError::LocksOutSelf => row
             .error(
                 IS_ACTIVE,
@@ -444,6 +424,17 @@ fn upsert_failure(connection: &StorageConnection, row: &Row, error: UpsertUserEr
             )
             .into(),
         UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
+        // Unreachable here: cells are read trimmed, `find_record` turns a saved username into a
+        // match or a conflict, and `import_row` refuses a protected user first.
+        error @ (UpsertUserError::UsernamePadded
+        | UpsertUserError::DuplicateUsername { .. }
+        | UpsertUserError::Protected) => RowError {
+            sheet: row.sheet.to_string(),
+            row: Some(row.number),
+            column: None,
+            message: format!("This user can't be saved: {error:?}"),
+        }
+        .into(),
     }
 }
 
@@ -515,7 +506,7 @@ fn cells(user: &UserAccountRow, password: Value) -> Vec<Value> {
         user.is_active.into(),
         // Shown when a row restores a deleted user; deleted users aren't exported.
         match user.deleted_datetime {
-            Some(_) => Value::Text("DELETE".to_string()),
+            Some(_) => Value::Text(DELETE.to_string()),
             None => Value::Empty,
         },
     ]

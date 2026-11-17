@@ -27,6 +27,35 @@ impl From<RepositoryError> for UpsertUserError {
     }
 }
 
+/// What `validate` refuses: only username errors, so `create_user`, which runs just `validate`,
+/// has no protected or lock-out case to handle.
+#[derive(Debug, PartialEq)]
+pub enum UsernameError {
+    Required,
+    Padded,
+    Duplicate { other_id: String },
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for UsernameError {
+    fn from(error: RepositoryError) -> Self {
+        UsernameError::DatabaseError(error)
+    }
+}
+
+impl From<UsernameError> for UpsertUserError {
+    fn from(error: UsernameError) -> Self {
+        match error {
+            UsernameError::Required => UpsertUserError::UsernameRequired,
+            UsernameError::Padded => UpsertUserError::UsernamePadded,
+            UsernameError::Duplicate { other_id } => {
+                UpsertUserError::DuplicateUsername { other_id }
+            }
+            UsernameError::DatabaseError(error) => UpsertUserError::DatabaseError(error),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum DeleteUserError {
     /// See `protected_user_ids`.
@@ -135,14 +164,14 @@ pub(super) fn validate(
     connection: &StorageConnection,
     saved: Option<&UserAccountRow>,
     row: &UserAccountRow,
-) -> Result<(), UpsertUserError> {
+) -> Result<(), UsernameError> {
     if row.username.trim().is_empty() {
-        return Err(UpsertUserError::UsernameRequired);
+        return Err(UsernameError::Required);
     }
     let saved_username = saved.map(|saved| &saved.username);
     // Only a username the save brings in, so a padded one legacy sync saved stays editable.
     if row.username.trim() != row.username && saved_username != Some(&row.username) {
-        return Err(UpsertUserError::UsernamePadded);
+        return Err(UsernameError::Padded);
     }
 
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
@@ -156,7 +185,7 @@ pub(super) fn validate(
         .into_iter()
         .find(|other| other.id != row.id)
     {
-        Some(other) => Err(UpsertUserError::DuplicateUsername { other_id: other.id }),
+        Some(other) => Err(UsernameError::Duplicate { other_id: other.id }),
         None => Ok(()),
     }
 }
