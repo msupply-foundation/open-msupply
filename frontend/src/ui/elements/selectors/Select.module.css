@@ -62,6 +62,18 @@
   color: var(--error-main);
 }
 
+/* The required cue for assistive tech: the asterisk is aria-hidden, and the
+   trigger can't carry aria-required, so the label spells it out. Clipped, not
+   display:none, so it stays in the accessible name. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Positioning context for the clear affordance — the trigger is a real
    <button>, so the ✕ can't nest inside it; it overlays the slot the
    .clearSlot spacer reserves in the trigger's flex row. */

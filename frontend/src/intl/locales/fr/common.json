@@ -2768,6 +2768,7 @@
   "messages.click-to-return-to-returns": "Impossible de trouver un retour avec ce numéro. Cliquer sur OK pour retourner à la liste des retours",
   "messages.click-to-return-to-rnr-list": "Cliquez ici pour retourner à la liste des formulaires R&R",
   "messages.click-to-return-to-shipments": "La livraison entrante recherchée est introuvable. Cliquez sur OK pour retourner à la liste des livraisons",
+  "messages.click-to-return-to-stock": "Impossible de trouver une ligne de stock avec cet identifiant. Cliquez sur OK pour revenir à la liste des stocks",
   "messages.click-to-return-to-stock-movements": "Impossible de trouver un mouvement de stock avec cet ID. Cliquez sur OK pour revenir à la liste des mouvements de stock",
   "messages.click-to-return-to-suppliers": "Impossible de trouver un fournisseur avec cet identifiant. Cliquez sur OK pour revenir à la liste des fournisseurs",
   "messages.click-to-view": "Cliquez pour voir le dossier patient de {{firstName}} {{lastName}}",

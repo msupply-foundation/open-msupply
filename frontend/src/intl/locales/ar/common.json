@@ -1328,6 +1328,7 @@
   "messages.click-to-return-to-returns": "تعذر العثور على عائد بهذا المعرف. انقر فوق موافق للعودة إلى قائمة المرتجعات",
   "messages.click-to-return-to-rnr-list": "انقر هنا للرجوع إلى قائمة استمارات الإقرار والطلبات",
   "messages.click-to-return-to-shipments": "تعذر العثور على تسليم بهذا المعرف. انقر على موافق للعودة إلى قائمة التسليمات",
+  "messages.click-to-return-to-stock": "تعذر العثور على خط مخزون بهذا المعرف. انقر على موافق للعودة إلى قائمة المخزون",
   "messages.click-to-view": "انقر للاطلاع على سجل المريض{{firstName}} {{lastName}}",
   "messages.confirm-add-from-master-list": "هل تريد إضافة جميع العناصر من هذه القائمة الرئيسية؟",
   "messages.confirm-cancel-generic": "ستفقد أي تغييرات قمت بها على هذه الاستمارة",

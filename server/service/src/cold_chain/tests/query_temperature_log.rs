@@ -13,7 +13,7 @@ mod query {
     #[actix_rt::test]
     async fn cold_chain_service_pagination() {
         let (_, connection, connection_manager, _) =
-            setup_all("test_cold_chain_service_pagination", MockDataInserts::all()).await;
+            setup_all("test_cold_chain_service_log_pagination", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let service = service_provider.cold_chain_service;

@@ -24,6 +24,11 @@ export interface ReduceToZeroActionProps {
    */
   hideReason: boolean;
   /**
+   * Every selected line is a vaccine — the reason picker then offers vial-
+   * wastage reasons instead of the plain negative ones (issue #456).
+   */
+  allVaccines: boolean;
+  /**
    * Apply what committed in place (no refetch). `keepSelection` holds the
    * selection open on a partial outcome: this dialog lives INSIDE the
    * selection footer, so clearing the selection unmounts it mid-report
@@ -161,6 +166,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 <FieldRow label={t('label.reason')}>
                   <ReasonSelect
                     kind="negative"
+                    isVaccine={props.allVaccines}
                     label={t('label.reason')}
                     hideLabel
                     focusTarget={reasonPicker}
