@@ -5479,6 +5479,11 @@ input ItemFilterInput {
 	"""
 	notInRecord: ItemNotInRecordFilterInput
 	"""
+	Items with no counted line in a finalised stocktake of this store since the given
+	datetime, including items never counted in this store
+	"""
+	notCountedSince: DateTime
+	"""
 	Dynamic filter condition AST, currently supporting property conditions
 	on keys visible for the "item" table scope, e.g.
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
@@ -5587,6 +5592,13 @@ type ItemNode {
 	those links (`ancillaryFor`), so an item no link orders has none.
 	"""
 	supplyWastageRate: Float!
+	"""
+	The item's price per unit on the default price list, null when it is on none.
+	The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+	charges a patient for each unit of a stock-out line. Not store-specific: the
+	default price list is the same in every store.
+	"""
+	defaultPricePerUnit: Float
 	itemDirections: [ItemDirectionNode!]!
 	warnings: [WarningNode!]!
 	categories: [ItemCategoryNode!]!
@@ -7245,9 +7257,24 @@ type PreferencesNode {
 	The medicines shown as cards on the Simple dispensing screen, in order.
 	"""
 	commonMedicines: [CommonMedicineNode!]!
+	"""
+	Which screen dispensing opens on: the store's own value where it has
+	one, else the global value.
+	"""
 	dispensingScreen: DispensingScreenNode!
+	"""
+	Whether the store can dispense to its unnamed patient.
+	"""
 	useUnnamedPatient: Boolean!
+	"""
+	Whether each new visit on the Simple screen starts with the unnamed
+	patient chosen.
+	"""
 	startWithUnnamedPatient: Boolean!
+	"""
+	Whether the Simple screen asks if the patient is an outpatient or an
+	inpatient.
+	"""
 	askForPatientType: Boolean!
 }
 

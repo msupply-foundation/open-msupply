@@ -474,7 +474,7 @@ mod tests {
     }
 
     // spec/prescriptions rules › the unnamed patient: hidden from search,
-    // found by id (OMS-REG-DIS-12.190)
+    // found by id (OMS-REG-DIS-12.207)
     #[actix_rt::test]
     async fn exclude_unnamed_hides_only_unnamed_patients_and_holds_with_or_filters() {
         let (_, connection, _, _) = test_db::setup_all(

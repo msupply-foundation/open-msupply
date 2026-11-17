@@ -77,7 +77,7 @@ const AUTO_SAVE_DEBOUNCE_MS = 350;
 /*
  * S1 — the Global preferences page (spec/global-preferences/ui-surface.md
  * § S1): a centred column — filter, the ungrouped rows in SERVED order,
- * then the four group accordions (closed on arrival) — where every control
+ * then the group accordions (closed on arrival) — where every control
  * saves its own change immediately (no Save button, OMS-REG-GPREF-01.8).
  * Controls are written out per kind rather than resolved from a config map
  * (kdd/explicit-composition).
@@ -529,7 +529,7 @@ const GlobalPreferencesPage: Component = () => {
                   {preference => <PreferenceRow preference={preference} />}
                 </For>
               </div>
-              {/* The four groups, closed on arrival (OMS-REG-GPREF-01.3),
+              {/* The groups, closed on arrival (OMS-REG-GPREF-01.3),
                   ordered by first member's catalogue position; held open
                   while a filter is active. Nothing renders when the filter
                   leaves no group. */}

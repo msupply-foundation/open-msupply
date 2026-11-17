@@ -121,7 +121,7 @@ mod test {
             .unwrap();
     }
 
-    // OMS-REG-DIS-12.185, .187, .192
+    // OMS-REG-DIS-12.202, .204, .209
     #[actix_rt::test]
     async fn unnamed_patient_is_created_once_per_store_and_only_where_used() {
         let (_, connection, connection_manager, _) = setup_all(
@@ -172,7 +172,7 @@ mod test {
         let other = get_or_create_unnamed_patient(&ctx, &store_b).unwrap();
         assert_eq!(other.id, unnamed_patient_id(&store_b));
 
-        // Found by id, never by search (OMS-REG-DIS-12.190)
+        // Found by id, never by search (OMS-REG-DIS-12.207)
         assert_eq!(
             PatientRepository::new(&connection)
                 .query_by_filter(

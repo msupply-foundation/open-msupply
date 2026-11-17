@@ -16,10 +16,19 @@ export interface HeaderProps {
   children: JSX.Element;
 }
 
-/** Whether the labelled actions fit — see `fit` in Header. */
+/**
+ * Whether the labelled actions fit — see `fit` in Header. An open <dialog>
+ * mounted beside its trigger (Export/Print's "Select a form") renders inside
+ * the cluster but floats over the page, so it and its buttons are not
+ * measured: counted, it sat off the buttons' row and collapsed the header at
+ * any width (#1449).
+ */
 const fits = (header: HTMLElement, actions: HTMLElement): boolean => {
   const controls = [...actions.children].filter(
-    (c): c is HTMLElement => c instanceof HTMLElement && c.offsetWidth > 0
+    (c): c is HTMLElement =>
+      c instanceof HTMLElement &&
+      !(c instanceof HTMLDialogElement) &&
+      c.offsetWidth > 0
   );
   const top = controls[0]?.getBoundingClientRect().top;
   // The cluster wrapped inside itself.
@@ -36,7 +45,7 @@ const fits = (header: HTMLElement, actions: HTMLElement): boolean => {
   const clipped = (e: Element) => e.scrollWidth > e.clientWidth + 1;
   return ![
     ...header.querySelectorAll(':scope > nav h1, :scope > nav a'),
-    ...actions.querySelectorAll('[data-variant]'),
+    ...actions.querySelectorAll('[data-variant]:not(dialog *)'),
   ].some(clipped);
 };
 
@@ -97,8 +106,20 @@ export const Header = (props: HeaderProps) => {
     if (header.parentElement) resize.observe(header.parentElement);
     // Content changes move the line too: an action appearing, a status
     // relabelling one, the record's name loading into the trail. Attributes
-    // aren't observed, so fit's own flag never re-triggers it.
-    const content = new MutationObserver(fit);
+    // aren't observed, so fit's own flag never re-triggers it. Changes inside
+    // a dialog opened from the header (typing in it, a menu or spinner
+    // mounting in it) are skipped: fits() ignores the dialog, so they can't
+    // change the result. A characterData target is a Text node, so check
+    // its parent element. Opening or closing the dialog changes the button
+    // group itself, so that still runs fit.
+    const outsideDialog = (record: MutationRecord) => {
+      const { target } = record;
+      const element = target instanceof Element ? target : target.parentElement;
+      return !element?.closest('dialog');
+    };
+    const content = new MutationObserver(records => {
+      if (records.some(outsideDialog)) fit();
+    });
     content.observe(header, {
       childList: true,
       subtree: true,

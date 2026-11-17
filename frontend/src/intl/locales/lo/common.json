@@ -2636,6 +2636,7 @@
   "messages.click-to-return-to-returns": "ບໍ່ພົບການສົ່ງຄືນທີ່ມີ ID ນັ້ນ. ກົດ ຕົກລົງ ເພື່ອກັບໄປລາຍການການສົ່ງຄືນ",
   "messages.click-to-return-to-rnr-list": "ກົດທີ່ນີ້ເພື່ອກັບໄປລາຍການແບບຟອມ R&R",
   "messages.click-to-return-to-shipments": "ບໍ່ພົບໃບສົ່ງສິນຄ້າທີ່ມີ ID ນັ້ນ. ກົດ ຕົກລົງ ເພື່ອກັບໄປລາຍການໃບສົ່ງສິນຄ້າ",
+  "messages.click-to-return-to-stock": "ບໍ່ພົບແຖວສະຕ໋ອກທີ່ມີ ID ນັ້ນ. ກົດ ຕົກລົງ ເພື່ອກັບຄືນໄປບັນຊີສະຕ໋ອກ",
   "messages.click-to-return-to-stock-movements": "ບໍ່ພົບການເຄື່ອນໄຫວສະຕ໋ອກທີ່ມີ ID ນັ້ນ. ກົດ ຕົກລົງ ເພື່ອກັບຄືນໄປບັນຊີການເຄື່ອນໄຫວສະຕ໋ອກ",
   "messages.click-to-return-to-suppliers": "ບໍ່ພົບຜູ້ສະໜອງທີ່ມີ ID ນັ້ນ. ກົດ ຕົກລົງ ເພື່ອກັບຄືນໄປບັນຊີຜູ້ສະໜອງ",
   "messages.click-to-view": "ກົດເພື່ອເບິ່ງຂໍ້ມູນຄົນເຈັບຂອງ {{firstName}} {{lastName}}",

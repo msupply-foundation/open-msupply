@@ -411,6 +411,30 @@ describe('stagePreference — an edit back to the stored state stages nothing (S
     expect(stagePreference(pinned, following, null)).toEqual({});
   });
 
+  it('the dispensing screen stages the same way: back to what the store records stages nothing (SET-05.79)', () => {
+    const screen = (
+      value: string,
+      isOverridden: boolean,
+      globalValue: string
+    ): StorePreference => ({
+      key: 'dispensingScreen',
+      valueType: 'DISPENSING_SCREEN',
+      value,
+      storeOverride: { isOverridden, globalValue },
+    });
+    // Following global (Simple): pinning Simple is a change, and Global
+    // again stages nothing, so the store never gets a row equal to global.
+    const following = screen('SIMPLE', false, 'SIMPLE');
+    const pinned = stagePreference({}, following, 'SIMPLE');
+    expect(pinned).toEqual({ dispensingScreen: 'SIMPLE' });
+    expect(stagePreference(pinned, following, null)).toEqual({});
+    // Pinned to Standard: choosing Standard again stages nothing; Global
+    // stages the clear.
+    const own = screen('STANDARD', true, 'SIMPLE');
+    expect(stagePreference({}, own, 'STANDARD')).toEqual({});
+    expect(stagePreference({}, own, null)).toEqual({ dispensingScreen: null });
+  });
+
   it('choosing "use global" on an overridden store IS a change, and stages the clear', () => {
     const overridden = overridable(false, true, true);
     expect(stagePreference({}, overridden, null)).toEqual({

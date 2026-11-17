@@ -32,12 +32,6 @@ export interface FillableBatch {
   sellPricePerPack: number;
 }
 
-/**
- * Each item's default price list price per unit, by item id: null for an
- * item on none (spec/prescriptions contract › the Simple screen).
- */
-export type DefaultPrices = Readonly<Record<string, number | null>>;
-
 /** One card on the Simple screen. */
 export interface MedicineCard {
   medicine: CommonMedicine;
@@ -138,7 +132,6 @@ export const stockLine = (
 export const buildCards = (
   medicines: CommonMedicine[],
   items: CardItem[],
-  prices: DefaultPrices,
   prefs: AllocationPreferences,
   today: Date = new Date()
 ): MedicineCard[] => {
@@ -151,7 +144,7 @@ export const buildCards = (
       {
         medicine,
         item,
-        defaultPricePerUnit: prices[item.id] ?? null,
+        defaultPricePerUnit: item.defaultPricePerUnit ?? null,
         batches,
         stock: unitsIn(batches),
       },
@@ -176,6 +169,20 @@ export const medicinesFor = (
         amounts: [],
       }
   );
+
+/**
+ * The medicines from the search that a failed read leaves unread: those the
+ * last read that went through didn't return (rules › another amount, and
+ * other medicines). They are dropped, so choosing one again reads it again;
+ * the others keep what that read returned, so their lines don't change.
+ */
+export const unreadIds = (
+  itemIds: readonly string[],
+  lastRead: readonly { id: string }[] | undefined
+): string[] => {
+  const read = new Set(lastRead?.map(item => item.id));
+  return itemIds.filter(itemId => !read.has(itemId));
+};
 
 /**
  * Packs per batch for a number of units, taken the way dispensing takes them:

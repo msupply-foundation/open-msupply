@@ -686,6 +686,7 @@ export {
   onBeforeLeave,
   usePageTrail,
   usePageActions,
+  usePageToolbar,
   usePageFooter,
 } from './navigation';
 export type { NavigateOptions, BeforeLeaveEvent } from './navigation';
@@ -787,6 +788,11 @@ export { generateUUID } from '../uuid';
  * hand-roll it).
  */
 export { saveFile } from './files';
+// Printing a document the plugin builds (the Laos DHIS2 stock report, #2231):
+// the host's report Print path, lazy like saveFile, for the same Android
+// reason.
+export { printHtml } from './files';
+export type { PrintResult } from './files';
 // Files into the app, as CSV: the host's own reader, so a plugin's import reads
 // a spreadsheet's CSV exactly as the host import screens do — a file saved in
 // a legacy Windows code page decodes, and the separator Excel used for the

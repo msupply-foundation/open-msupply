@@ -135,6 +135,7 @@ export const localisedDateTime = (value: Date | string | number): string =>
  * because the point of the value is to be the same for every reader.
  */
 export const utcDateTime = (value: Date | string | number): string =>
+  // eslint-disable-next-line no-restricted-syntax -- UTC on purpose, as above
   calendarDateOrInstantToDate(value)
     .toISOString()
     .slice(0, 16)

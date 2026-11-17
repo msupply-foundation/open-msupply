@@ -587,7 +587,7 @@ mod test {
         }
 
         let (_, connection, _, _) = test_db::setup_all_with_data(
-            "test_stock_line_sort",
+            "test_repository_stock_line_sort",
             MockDataInserts::none().stores().items().names().units(),
             MockData {
                 // make sure to insert in wrong order

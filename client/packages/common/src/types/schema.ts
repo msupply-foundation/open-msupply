@@ -6143,6 +6143,11 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
+  /**
+   * Items with no counted line in a finalised stocktake of this store since the given
+   * datetime, including items never counted in this store
+   */
+  notCountedSince?: InputMaybe<Scalars['DateTime']['input']>;
   /** Excludes items already present as a line on the given record */
   notInRecord?: InputMaybe<ItemNotInRecordFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6224,6 +6229,13 @@ export type ItemNode = {
   customFields?: Maybe<Scalars['JSON']['output']>;
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
+  /**
+   * The item's price per unit on the default price list, null when it is on none.
+   * The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+   * charges a patient for each unit of a stock-out line. Not store-specific: the
+   * default price list is the same in every store.
+   */
+  defaultPricePerUnit?: Maybe<Scalars['Float']['output']>;
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
@@ -8750,6 +8762,10 @@ export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  /**
+   * Whether the Simple screen asks if the patient is an outpatient or an
+   * inpatient.
+   */
   askForPatientType: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
@@ -8763,6 +8779,10 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  /**
+   * Which screen dispensing opens on: the store's own value where it has
+   * one, else the global value.
+   */
   dispensingScreen: DispensingScreenNode;
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -8796,11 +8816,16 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  /**
+   * Whether each new visit on the Simple screen starts with the unnamed
+   * patient chosen.
+   */
   startWithUnnamedPatient: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  /** Whether the store can dispense to its unnamed patient. */
   useUnnamedPatient: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];

@@ -23,6 +23,7 @@ import {
   stockState,
   unitsIn,
   unnamedAfterDispense,
+  unreadIds,
   visitWasSaved,
   type CardItem,
   type DispenseCalls,
@@ -55,11 +56,16 @@ const batch = (id: string, over: Partial<Batch> = {}): Batch => ({
   ...over,
 });
 
-const item = (id: string, batches: Batch[] = []): CardItem => ({
+const item = (
+  id: string,
+  batches: Batch[] = [],
+  defaultPricePerUnit: number | null = null
+): CardItem => ({
   id,
   code: id.toUpperCase(),
   name: `Item ${id}`,
   unitName: 'Tablet',
+  defaultPricePerUnit,
   availableBatches: { __typename: 'StockLineConnector', nodes: batches },
 });
 
@@ -72,7 +78,6 @@ describe('buildCards', () => {
       ],
       // The query returns items in its own order, not the store's.
       [item('a'), item('b')],
-      {},
       PREFS,
       TODAY
     );
@@ -86,7 +91,6 @@ describe('buildCards', () => {
         { itemId: 'a', amounts: [5] },
       ],
       [item('a')],
-      {},
       PREFS,
       TODAY
     );
@@ -103,7 +107,6 @@ describe('buildCards', () => {
           batch('held', { onHold: true }),
         ]),
       ],
-      {},
       PREFS,
       TODAY
     );
@@ -116,8 +119,7 @@ describe('buildCards', () => {
         { itemId: 'listed', amounts: [] },
         { itemId: 'plain', amounts: [] },
       ],
-      [item('listed'), item('plain')],
-      { listed: 2.5, plain: null },
+      [item('listed', [], 2.5), item('plain')],
       PREFS,
       TODAY
     );
@@ -133,6 +135,20 @@ describe('medicinesFor', () => {
       { itemId: 'searched', amounts: [] },
       { itemId: 'common', amounts: [5] },
     ]);
+  });
+});
+
+describe('unreadIds', () => {
+  it('OMS-REG-DIS-12.192, .194: a failed read leaves unread only the medicines the last read did not return', () => {
+    expect(unreadIds(['added', 'chosen'], [item('added')])).toEqual(['chosen']);
+  });
+
+  it('OMS-REG-DIS-12.190: with no read gone through yet, the medicine chosen is unread', () => {
+    expect(unreadIds(['chosen'], undefined)).toEqual(['chosen']);
+  });
+
+  it('OMS-REG-DIS-12.193: a failed read again of medicines already read leaves none unread', () => {
+    expect(unreadIds(['added'], [item('added'), item('older')])).toEqual([]);
   });
 });
 
@@ -370,22 +386,25 @@ describe('priceOf', () => {
     const [card] = buildCards(
       [{ itemId: 'a', amounts: [] }],
       [
-        item('a', [
-          batch('fours', {
-            availableNumberOfPacks: 1,
-            packSize: 4,
-            sellPricePerPack: 3,
-            expiryDate: '2027-01-01',
-          }),
-          batch('tens', {
-            availableNumberOfPacks: 2,
-            packSize: 10,
-            sellPricePerPack: 7,
-            expiryDate: '2028-01-01',
-          }),
-        ]),
+        item(
+          'a',
+          [
+            batch('fours', {
+              availableNumberOfPacks: 1,
+              packSize: 4,
+              sellPricePerPack: 3,
+              expiryDate: '2027-01-01',
+            }),
+            batch('tens', {
+              availableNumberOfPacks: 2,
+              packSize: 10,
+              sellPricePerPack: 7,
+              expiryDate: '2028-01-01',
+            }),
+          ],
+          0.35
+        ),
       ],
-      { a: 0.35 },
       PREFS,
       TODAY
     );
@@ -618,7 +637,6 @@ describe('dispensing the visit', () => {
     buildCards(
       items.map(i => ({ itemId: i.id, amounts: [] })),
       items,
-      {},
       PREFS,
       TODAY
     );
@@ -821,7 +839,6 @@ describe('dispenseVisit', () => {
           batch('a1', { availableNumberOfPacks: units, packSize: 1 }),
         ]),
       ],
-      {},
       PREFS,
       TODAY
     );
@@ -1111,8 +1128,7 @@ describe('the price check', () => {
   const cardsFor = (items: CardItem[], prices: Record<string, number> = {}) =>
     buildCards(
       items.map(i => ({ itemId: i.id, amounts: [] })),
-      items,
-      prices,
+      items.map(i => ({ ...i, defaultPricePerUnit: prices[i.id] ?? null })),
       PREFS,
       TODAY
     );
@@ -1336,7 +1352,7 @@ describe('who a visit starts with', () => {
     startWithUnnamedPatient,
   });
 
-  it('starts with the unnamed patient only where both preferences are on (OMS-REG-DIS-12.182, .188)', () => {
+  it('starts with the unnamed patient only where both preferences are on (OMS-REG-DIS-12.199, .205)', () => {
     expect(startsWithUnnamed(prefs(true, true))).toBe(true);
     expect(startsWithUnnamed(prefs(true, false))).toBe(false);
     // "Start with" does nothing while "Use" is off
@@ -1351,12 +1367,12 @@ describe('who a visit starts with', () => {
   };
   const registered = { id: 'p1', name: 'Smith, Jo' };
 
-  it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.186)', () => {
+  it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.203)', () => {
     expect(unnamedAfterDispense(unnamed, prefs(true, false))).toBe(true);
     expect(unnamedAfterDispense(unnamed, prefs(true, true))).toBe(true);
   });
 
-  it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.189)', () => {
+  it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.206)', () => {
     expect(unnamedAfterDispense(registered, prefs(true, true))).toBe(true);
     expect(unnamedAfterDispense(registered, prefs(true, false))).toBe(false);
   });
