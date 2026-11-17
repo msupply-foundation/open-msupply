@@ -492,6 +492,17 @@ type StoreScopedKey = {
 /** The preference a `…StoreOverride` field overrides, by its served key. */
 type OverriddenKey<K> = K extends `${infer Key}StoreOverride` ? Key : never;
 
+/** The on/off preferences a store may override, by their served keys. */
+type BoolOverriddenKey = {
+  [K in StoreScopedKey]-?: NonNullable<
+    UpsertPreferencesInput[K]
+  > extends Array<{
+    value?: boolean | null;
+  }>
+    ? OverriddenKey<K>
+    : never;
+}[StoreScopedKey];
+
 /*
  * The uniform preferences, one key list per coercion — each key written once,
  * with `satisfies` refusing any key whose generated wire type isn't a
@@ -583,7 +594,7 @@ export const buildPreferencesInput = (
   // › Preferences): served under their own keys, written through the
   // override fields so the global values are left alone. A null value CLEARS
   // the store's row, handing the store back to the global value.
-  const boolOverride = (key: OverriddenKey<StoreScopedKey>) => [
+  const boolOverride = (key: BoolOverriddenKey) => [
     { storeId, value: draft[key] === null ? null : asBool(draft[key]) },
   ];
   if ('authorisePurchaseOrder' in draft)

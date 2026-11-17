@@ -4,7 +4,6 @@ import {
   createSignal,
   For,
   Match,
-  onMount,
   Show,
   Switch,
 } from 'solid-js';
@@ -29,6 +28,7 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
+import { Button } from '@/ui/elements/buttons/Button';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { ClockIcon } from '@/ui/icons';
@@ -101,14 +101,12 @@ const SimpleDispensingPage: Component = () => {
     return result.data.items.nodes;
   };
 
-  // Read again once a visit is dispensed (rules › dispensing the visit): in
-  // the background, and a read that fails keeps the cards as they were, so
-  // the screen never drops back to loading with a visit on it. Only the read
-  // as the screen opens may raise the app's error dialog: a first read after
-  // that, for common medicines set up while the screen is open, may have a
-  // visit on the screen, which the dialog's reload would lose.
-  let opening = true;
-  onMount(() => (opening = false));
+  // Read again once a visit is dispensed (rules › dispensing the visit).
+  // Always in the background: the search and the list work while the cards
+  // load, so a visit may be on the screen by the time any read fails, and the
+  // app's error dialog would offer a reload that loses it. A read that fails
+  // keeps the cards as they were; with none yet, the card area says so and
+  // offers to read them again.
   const [items, { refetch: refetchItems }] = createResource<
     CardItem[] | undefined,
     { storeId: string; ids: string[] }
@@ -119,8 +117,13 @@ const SimpleDispensingPage: Component = () => {
       return { storeId: params.storeId, ids: list.map(m => m.itemId) };
     },
     async ({ storeId, ids }, { value }) =>
-      (await fetchItems(storeId, ids, !opening || value !== undefined)) ?? value
+      (await fetchItems(storeId, ids, true)) ?? value
   );
+
+  // Read, and none came back: the first read failed (a later one keeps the
+  // cards it had). Not while it reads again, which shows as loading.
+  const cardsUnread = () =>
+    items.state === 'ready' && gated(items) === undefined;
 
   // Rebuilt per load, so compared by value: a refresh that returns the same
   // stock must not rebuild the cards.
@@ -541,6 +544,21 @@ const SimpleDispensingPage: Component = () => {
                   )}
                 </For>
               </CardGrid>
+            </Match>
+            <Match when={cardsUnread()}>
+              <EmptyState
+                graphic={false}
+                message={t('messages.common-medicines-not-read')}
+                data-testid="cards-not-read"
+              >
+                <Button
+                  variant="ghost"
+                  data-testid="cards-read-again-button"
+                  onClick={() => void refetchItems()}
+                >
+                  {t('button.try-again')}
+                </Button>
+              </EmptyState>
             </Match>
             <Match when={cards() === undefined && medicines()?.length !== 0}>
               <EmptyState

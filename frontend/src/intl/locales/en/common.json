@@ -2735,6 +2735,7 @@
   "messages.close-line-editor-to-scan": "Close the line editor to scan.",
   "messages.closed-purchase-order-lines_one": "Closed {{count}} line from this purchase order",
   "messages.closed-purchase-order-lines_other": "Closed {{count}} lines from this purchase order",
+  "messages.common-medicines-not-read": "The common medicines' stock couldn't be read.",
   "messages.confirm-add-from-master-list": "Do you want to add all of the items from this master list?",
   "messages.confirm-backdate-picked-date": "Changing the picked date to {{date}} will remove all existing lines from this outbound shipment. Are you sure you want to continue?",
   "messages.confirm-backdate-received-date": "Moving the received date to {{date}} cannot be undone. The date cannot be moved forward again. Are you sure you want to continue?",
