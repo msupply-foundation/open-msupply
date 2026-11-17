@@ -66,8 +66,14 @@ export interface SelectProps {
   disabled?: boolean;
   /**
    * Marks the field required: an asterisk on the label (TextField's marker, so
-   * a select and a text field read alike) plus `aria-required` on the trigger.
-   * Indication only — the gating stays with the form's own confirm rule.
+   * a select and a text field read alike). Indication only — the gating stays
+   * with the form's own confirm rule. No `aria-required`: the trigger is a
+   * `<button>` (Kobalte gives it `aria-haspopup`, not a combobox role), and
+   * ARIA does not allow the attribute there (axe `aria-allowed-attr`). The
+   * asterisk is `aria-hidden`, so the label also carries a visually hidden
+   * "Required"; the trigger takes its name from the label, so a screen reader
+   * hears "Reason, Required" (WCAG 1.3.1, 3.3.2). Under `hideLabel` the
+   * trigger's `aria-label` carries it instead.
    */
   required?: boolean;
   /**
@@ -190,6 +196,7 @@ export const Select = (props: SelectProps) => {
         <span class={styles.required} aria-hidden="true">
           *
         </span>
+        <span class={styles.srOnly}>, {t('messages.required-field')}</span>
       </Show>
     </KSelect.Label>
   );
@@ -267,8 +274,16 @@ export const Select = (props: SelectProps) => {
           }}
           class={styles.trigger}
           data-testid={props.testId}
-          aria-label={props.hideLabel ? props.label : undefined}
-          aria-required={props.required ? 'true' : undefined}
+          // Under hideLabel the label (and its hidden "Required") isn't
+          // rendered, and a FieldRow's asterisk is aria-hidden too, so the
+          // name carries the required cue itself.
+          aria-label={
+            props.hideLabel
+              ? props.required
+                ? `${props.label}, ${t('messages.required-field')}`
+                : props.label
+              : undefined
+          }
         >
           <KSelect.Value<SelectOption> class={styles.value}>
             {state => state.selectedOption().label}

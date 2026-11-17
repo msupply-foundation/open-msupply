@@ -2,7 +2,6 @@ import Calendar from '@corvu/calendar';
 import {
   createEffect,
   createSignal,
-  For,
   Index,
   on,
   Show,
@@ -11,6 +10,12 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
 import { dateToCalendarDate } from '../../../intl/calendarDate';
 import { locale } from '../../../intl';
+import {
+  MonthGrid,
+  YearGrid,
+  YEARS_PER_PAGE,
+  yearPageStart,
+} from './MonthYearGrids';
 import styles from './DatePickerPanel.module.css';
 
 export interface DateRange {
@@ -66,8 +71,6 @@ interface CalendarCtx {
   weekdays: Date[];
   weeks: Date[][];
 }
-
-const YEARS_PER_PAGE = 16;
 
 /*
  * The calendar grid inside a date picker's popover — corvu's headless Calendar
@@ -125,14 +128,6 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
     )
   );
 
-  // Month names are always Gregorian, the calendar the grid lays out: left
-  // to the browser, Dari and Pashto would name Solar Hijri months.
-  const monthShort = (i: number) =>
-    new Date(2000, i, 1).toLocaleDateString(locale(), {
-      month: 'short',
-      calendar: 'gregory',
-    });
-
   const disabled = (day: Date): boolean => {
     if (props.min && dateToCalendarDate(day) < dateToCalendarDate(props.min))
       return true;
@@ -154,13 +149,13 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       dateToCalendarDate(new Date(year, monthIndex, 1)) >
         dateToCalendarDate(props.max));
 
-  const monthSelected = (ctx: CalendarCtx, monthIndex: number): boolean => {
-    if (props.mode === 'range' || !props.monthOnly)
-      return ctx.month.getMonth() === monthIndex;
-    return (
-      props.value?.getFullYear() === ctx.month.getFullYear() &&
-      props.value.getMonth() === monthIndex
-    );
+  // The month grid's highlighted month: the month on show, or month-only, the
+  // field's value when it's in the year on show
+  const selectedMonth = (ctx: CalendarCtx): number | undefined => {
+    if (props.mode === 'range' || !props.monthOnly) return ctx.month.getMonth();
+    return props.value?.getFullYear() === ctx.month.getFullYear()
+      ? props.value.getMonth()
+      : undefined;
   };
 
   const navBtn = (label: string, onClick: () => void, icon: JSX.Element) => (
@@ -200,7 +195,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
               type="button"
               class={styles.headingBtn}
               onClick={() => {
-                setYearBase(y() - (y() % YEARS_PER_PAGE));
+                setYearBase(yearPageStart(y()));
                 setView('year');
               }}
             >
@@ -223,7 +218,7 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
             type="button"
             class={styles.headingBtn}
             onClick={() => {
-              setYearBase(y() - (y() % YEARS_PER_PAGE));
+              setYearBase(yearPageStart(y()));
               setView('year');
             }}
           >
@@ -307,60 +302,35 @@ export const DatePickerPanel = (props: DatePickerPanelProps) => {
       </Show>
 
       <Show when={view() === 'month'}>
-        <div class={styles.pickGrid}>
-          <Index each={Array.from({ length: 12 }, (_, i) => i)}>
-            {i => (
-              <button
-                type="button"
-                class={styles.pickCell}
-                data-selected={monthSelected(ctx, i()) ? '' : undefined}
-                // In monthOnly mode the grid holds the field's VALUE, not just
-                // navigation — the pick is announced as pressed, so the chosen
-                // month isn't signalled by colour alone (ui/CLAUDE.md 9).
-                aria-pressed={
-                  monthOnly() && monthSelected(ctx, i()) ? 'true' : undefined
-                }
-                disabled={
-                  monthOnly() && monthDisabled(ctx.month.getFullYear(), i())
-                }
-                onClick={() => {
-                  const picked = new Date(ctx.month.getFullYear(), i(), 1);
-                  ctx.setMonth(picked);
-                  if (props.mode !== 'range' && props.monthOnly)
-                    props.onSelect(picked);
-                  else setView('day');
-                }}
-              >
-                {monthShort(i())}
-              </button>
-            )}
-          </Index>
-        </div>
+        <MonthGrid
+          selected={selectedMonth(ctx)}
+          holdsValue={monthOnly()}
+          disabled={
+            monthOnly()
+              ? i => monthDisabled(ctx.month.getFullYear(), i)
+              : undefined
+          }
+          onPick={i => {
+            const picked = new Date(ctx.month.getFullYear(), i, 1);
+            ctx.setMonth(picked);
+            // Month-only: the grid holds the field's value, so a pick selects
+            // the month's 1st; otherwise it navigates to the month's days
+            if (props.mode !== 'range' && props.monthOnly)
+              props.onSelect(picked);
+            else setView('day');
+          }}
+        />
       </Show>
 
       <Show when={view() === 'year'}>
-        <div class={styles.pickGrid}>
-          <For
-            each={Array.from(
-              { length: YEARS_PER_PAGE },
-              (_, i) => yearBase() + i
-            )}
-          >
-            {yr => (
-              <button
-                type="button"
-                class={styles.pickCell}
-                data-selected={ctx.month.getFullYear() === yr ? '' : undefined}
-                onClick={() => {
-                  ctx.setMonth(new Date(yr, ctx.month.getMonth()));
-                  setView('month');
-                }}
-              >
-                {yr}
-              </button>
-            )}
-          </For>
-        </div>
+        <YearGrid
+          pageStart={yearBase()}
+          selected={ctx.month.getFullYear()}
+          onPick={yr => {
+            ctx.setMonth(new Date(yr, ctx.month.getMonth()));
+            setView('month');
+          }}
+        />
       </Show>
     </div>
   );

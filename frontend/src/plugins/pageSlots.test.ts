@@ -1,7 +1,7 @@
 /*
  * The page-contribution slots (sdk-contract § the page contribution ›
- * rendering): the three the SDK publishes, and the factory behind them. All
- * three are REACTIVE and all three hand the region back on dispose — but only
+ * rendering): the four the SDK publishes, and the factory behind them. All
+ * four are REACTIVE and all four hand the region back on dispose — but only
  * while they still hold it, which is what keeps a route transition that mounts
  * the next page first from blanking its region.
  */
@@ -11,11 +11,13 @@ import {
   createPageSlot,
   pageActions,
   pageFooter,
+  pageToolbar,
   pageTrail,
 } from './pageSlots';
 import {
   usePageActions,
   usePageFooter,
+  usePageToolbar,
   usePageTrail,
 } from '../plugin-sdk/navigation';
 
@@ -80,6 +82,17 @@ describe('the SDK’s page slots', () => {
     expect(pageActions.value()).toBe(render);
     dispose();
     expect(pageActions.value()).toBeUndefined();
+  });
+
+  it('hands the frame the field row’s render function, not its result', () => {
+    const render = () => 'Month';
+    const dispose = createRoot(dispose => {
+      usePageToolbar(render);
+      return dispose;
+    });
+    expect(pageToolbar.value()).toBe(render);
+    dispose();
+    expect(pageToolbar.value()).toBeUndefined();
   });
 
   it('hands the frame the footer’s render function, not its result', () => {
