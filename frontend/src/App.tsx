@@ -85,6 +85,7 @@ import { ManualScanInput } from './platform/ManualScanInput';
 import { CameraScanOverlay } from './platform/CameraScanOverlay';
 import { startStaleBundleWatch } from './staleBundle';
 import { PluginGate } from './plugins/PluginGate';
+import { LegacyTableImportGate } from './legacyTableImport/LegacyTableImportGate';
 import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
 
@@ -293,66 +294,72 @@ export const App: Component = () => {
                 waited for — it is a render-time input to each contribution's
                 visibility gate. */}
             <PluginGate>
-              {/* `routerBase` matches Vite's `base` config so the same build
+              {/* The one-time import of the React front end's table layouts
+                  (#2072) finishes before any table mounts, since a table
+                  reads its layout when it mounts. Inside the session, and
+                  tracking the user, because the re-login modal can sign a
+                  different user in without unmounting this. */}
+              <LegacyTableImportGate>
+                {/* `routerBase` matches Vite's `base` config so the same build
                 can be mounted at a non-root path — the deployed /rc/ track,
                 and every branch deploy, which build-and-deploy.sh mounts at
                 its own BASE_PATH ('/pr-123/'). It is shared with
                 storeRelativePath, which has to take the same prefix back OFF
                 the location — the router never does that itself (#1141). */}
-              <Router base={routerBase}>
-                {/* Store guard wraps the routed app shell; the shell mounts once and
+                <Router base={routerBase}>
+                  {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}
-                <Route path="/:storeId" component={StoreGuardLayout}>
-                  <Route path="/" component={ShellLayout}>
-                    {/* Home: the store root IS the landing screen
+                  <Route path="/:storeId" component={StoreGuardLayout}>
+                    <Route path="/" component={ShellLayout}>
+                      {/* Home: the store root IS the landing screen
                       (spec/dashboard S1, spec/navigation § the registry). One
                       screen, one URL — the nav entry, the brand mark and a
                       bare store link all resolve here. */}
-                    <Route path="/" component={DashboardPage} />
-                    {/* Bookmarks and links made before Home moved off its own
+                      <Route path="/" component={DashboardPage} />
+                      {/* Bookmarks and links made before Home moved off its own
                       segment. Without this the old address falls through to
                       the not-found catch-all below, which is a worse answer
                       than the screen the user asked for. */}
-                    <Route
-                      /* The shared constant, not a literal: validate.ts
+                      <Route
+                        /* The shared constant, not a literal: validate.ts
                          reserves this path against plugin pages through the
                          same export, so the redirect and the reservation
                          cannot drift apart. */
-                      path={`/${DASHBOARD_LEGACY_PATH}`}
-                      component={DashboardRedirect}
-                    />
-                    {/* Likewise for the dispensing vertical's old segment
+                        path={`/${DASHBOARD_LEGACY_PATH}`}
+                        component={DashboardRedirect}
+                      />
+                      {/* Likewise for the dispensing vertical's old segment
                       (issue #551) — both the list and any detail beneath it,
                       and likewise through the reserved constant. */}
-                    <Route
-                      path={`/${DISPENSING_LEGACY_PATH}/*rest`}
-                      component={DispensingRedirect}
-                    />
-                    <Route
-                      path={`/${DISPENSING_LEGACY_PATH}`}
-                      component={DispensingRedirect}
-                    />
-                    <For each={Object.entries(sectionRoutes)}>
-                      {([path, routes]) => (
-                        <Route path={`/${path}`}>{routes()}</Route>
-                      )}
-                    </For>
-                    <For
-                      each={navDestinations.filter(
-                        // Home's route is the `/` above, not a generated one:
-                        // its path is '' and would generate a second `/`.
-                        dest => dest.path !== '' && !sectionRoutes[dest.path]
-                      )}
-                    >
-                      {dest => (
-                        <Route
-                          path={`/${dest.path}`}
-                          component={() => <EntryPage dest={dest} />}
-                        />
-                      )}
-                    </For>
-                    {/* Plugin-contributed pages (spec/plugins/rules.md § pages
+                      <Route
+                        path={`/${DISPENSING_LEGACY_PATH}/*rest`}
+                        component={DispensingRedirect}
+                      />
+                      <Route
+                        path={`/${DISPENSING_LEGACY_PATH}`}
+                        component={DispensingRedirect}
+                      />
+                      <For each={Object.entries(sectionRoutes)}>
+                        {([path, routes]) => (
+                          <Route path={`/${path}`}>{routes()}</Route>
+                        )}
+                      </For>
+                      <For
+                        each={navDestinations.filter(
+                          // Home's route is the `/` above, not a generated one:
+                          // its path is '' and would generate a second `/`.
+                          dest => dest.path !== '' && !sectionRoutes[dest.path]
+                        )}
+                      >
+                        {dest => (
+                          <Route
+                            path={`/${dest.path}`}
+                            component={() => <EntryPage dest={dest} />}
+                          />
+                        )}
+                      </For>
+                      {/* Plugin-contributed pages (spec/plugins/rules.md § pages
                       & navigation): one route per page a loaded plugin
                       declares — the set is settled here, since PluginGate has
                       already opened. Each component is the host frame around
@@ -360,32 +367,33 @@ export const App: Component = () => {
                       reactive routeAccess verdict, exactly as for the routes
                       above. A plugin nav group has no path and no route: an
                       unclaimed prefix falls to the catch-all below. */}
-                    <For each={pluginPageRoutes()}>
-                      {route => (
-                        <Route
-                          /* Exact path AND everything below it: paths below a
+                      <For each={pluginPageRoutes()}>
+                        {route => (
+                          <Route
+                            /* Exact path AND everything below it: paths below a
                              page are the page's own to interpret (sdk-contract
                              § Paths) — a plugin's record screen at
                              `.../count/item-7` must mount the page, not fall
                              through to the not-found catch-all the highlight
                              and tab title already disown. */
-                          path={[`/${route.path}`, `/${route.path}/*`]}
-                          component={route.Component}
-                        />
-                      )}
-                    </For>
-                    {/* Catch-all inside the shell: an unknown in-store path is
+                            path={[`/${route.path}`, `/${route.path}/*`]}
+                            component={route.Component}
+                          />
+                        )}
+                      </For>
+                      {/* Catch-all inside the shell: an unknown in-store path is
                       the not-found page (no destination), which keeps the app
                       bar — and so the menu — reachable. */}
-                    <Route path="*" component={() => <EntryPage />} />
+                      <Route path="*" component={() => <EntryPage />} />
+                    </Route>
                   </Route>
-                </Route>
-                <Route
-                  path="*"
-                  component={() => <Navigate href={resolveStorePath} />}
-                />
-              </Router>
-              <ReLoginModal />
+                  <Route
+                    path="*"
+                    component={() => <Navigate href={resolveStorePath} />}
+                  />
+                </Router>
+                <ReLoginModal />
+              </LegacyTableImportGate>
             </PluginGate>
           </Show>
         </Match>

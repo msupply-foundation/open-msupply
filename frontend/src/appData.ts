@@ -1,4 +1,7 @@
-import type { LayeredConfig } from './ui/elements/table/tableConfig';
+import type {
+  LayeredConfig,
+  TableConfig,
+} from './ui/elements/table/tableConfig';
 
 // Spec (Store Login, Guard 2): the previously logged-in store, stored in app
 // data, type safe, keyed by user id. Trusted layer for the read cast: this
@@ -19,6 +22,11 @@ type AppData = {
   // the warehouse store, whoever's account is shared between them.
   alwaysOpenStoreIdByUserId?: Record<string, string>;
   tableConfigByUserId?: Record<string, Record<string, LayeredConfig>>;
+  // The one-time import of the React front end's table layouts on this device
+  // (src/legacyTableImport/, #2072) has run for this user. The value is the
+  // table id map's version it ran with, or 0 when there was nothing to import:
+  // for diagnosis only, since a set flag is never run again.
+  legacyTableImportByUserId?: Record<string, number>;
   // Label printer "print via USB" (spec/settings rules § Devices — label
   // printer): a DEVICE-local preference, deliberately not keyed by user and
   // never sent to the server (OMS-REG-SET-05.22) — it describes how this
@@ -153,6 +161,48 @@ export const setUserTableConfig = (
   writeAppData({
     ...data,
     tableConfigByUserId: { ...data.tableConfigByUserId, [userId]: forUser },
+  });
+};
+
+// Whether the user's one-time import of the React front end's table layouts
+// has run on this device (src/legacyTableImport/): the version of the map it
+// ran with, 0 when there was nothing to import, undefined when it hasn't run.
+export const getLegacyTableImport = (userId: string): number | undefined =>
+  readAppData().legacyTableImportByUserId?.[userId];
+
+export const setLegacyTableImport = (userId: string, version: number): void => {
+  const data = readAppData();
+  writeAppData({
+    ...data,
+    legacyTableImportByUserId: {
+      ...data.legacyTableImportByUserId,
+      [userId]: version,
+    },
+  });
+};
+
+// Store the user's imported table layouts and mark the import done, in one
+// write. Each layout goes under `base`, so phone-width screens keep their
+// built-in defaults, and a table the user has already set up in this UI, in
+// either band, is left as it is.
+export const importUserTableConfigs = (
+  userId: string,
+  configs: Readonly<Record<string, TableConfig>>,
+  version: number
+): void => {
+  const data = readAppData();
+  const forUser = { ...data.tableConfigByUserId?.[userId] };
+  for (const [tableId, config] of Object.entries(configs)) {
+    if (!isEmptyLayeredConfig(forUser[tableId] ?? {})) continue;
+    forUser[tableId] = { base: config };
+  }
+  writeAppData({
+    ...data,
+    tableConfigByUserId: { ...data.tableConfigByUserId, [userId]: forUser },
+    legacyTableImportByUserId: {
+      ...data.legacyTableImportByUserId,
+      [userId]: version,
+    },
   });
 };
 

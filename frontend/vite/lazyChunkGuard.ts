@@ -38,8 +38,11 @@ export const LAZY_ONLY_MODULES: readonly string[] = [
   '/node_modules/ajv/',
   '/node_modules/ajv-formats/',
   // The React front end's table id map, read only by the one-time import of
-  // old table layouts (vite/legacyTableConfigMap.ts).
+  // old table layouts (vite/legacyTableConfigMap.ts), and that import's
+  // conversion, loaded only for a user with old layouts to import.
   'virtual:legacy-table-config-map',
+  '/src/legacyTableImport/importLegacyTables.ts',
+  '/src/legacyTableImport/convertLegacyTableConfig.ts',
 ];
 
 /** The part of Rollup's output bundle the check reads. */
