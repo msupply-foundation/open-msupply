@@ -17,3 +17,4 @@ export {
   type Gender,
   type GenderOption,
 } from './gender';
+export { dateOfBirthWithAge } from './age';

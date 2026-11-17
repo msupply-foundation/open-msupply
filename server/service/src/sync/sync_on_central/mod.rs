@@ -246,11 +246,11 @@ static TRANSLATED_TABLES: LazyLock<HashSet<String>> = LazyLock::new(translated_t
 ///
 /// The set is derived from *this* server's translators, but the sites pushing into it
 /// may be running older code. Narrowing it — flipping a table's `SyncStyle.authoring`
-/// to `Central`, or taking a table out of the v6 push set — makes central start
-/// refusing a batch that a not-yet-upgraded site keeps retrying, which stops that
-/// site's sync outright with no way to drain its queue. Either change has to be paired
-/// with a bump to `MIN_VERSION` above (see ../README.md) so the version handshake
-/// refuses those sites first, with an error that says so.
+/// to `Central` or `CentralForStore`, or taking a table out of the v6 push set — makes
+/// central start refusing a batch that a not-yet-upgraded site keeps retrying, which
+/// stops that site's sync outright with no way to drain its queue. Either change has to
+/// be paired with a bump to `MIN_VERSION` above (see ../README.md) so the version
+/// handshake refuses those sites first, with an error that says so.
 fn validate_site_authored_tables(
     rows: &[SyncBufferRowInsert],
     site_id: i32,
@@ -295,8 +295,8 @@ fn validate_site_authored_tables(
 ///    travels over v5, `invoice` and `stock_line` among them, which central would then
 ///    buffer and integrate for a site that has no business writing them.
 /// 2. `SyncStyle.authoring` allows someone other than central to write it. A table
-///    listing only `Central` (or `LegacyOnly`, which covers tables this server doesn't
-///    know) is central's alone. V7 enforces the same declaration in
+///    listing only `Central` or `CentralForStore` (or `LegacyOnly`, which covers tables
+///    this server doesn't know) is central's alone. V7 enforces the same declaration in
 ///    `sync_v7::validate::validate_on_central`.
 ///
 /// The name taken is `table_name()`, not `table_names()`, because that is the one the
@@ -343,7 +343,12 @@ fn site_authored_tables() -> HashSet<String> {
                 .sync_style()
                 .authoring
                 .iter()
-                .any(|authoring| !matches!(authoring, Authoring::Central | Authoring::LegacyOnly));
+                .any(|authoring| {
+                    !matches!(
+                        authoring,
+                        Authoring::Central | Authoring::CentralForStore | Authoring::LegacyOnly
+                    )
+                });
             if !site_may_author {
                 return None;
             }

@@ -17,9 +17,6 @@ pub struct SyncSettings {
     pub interval_seconds: u64,
     // Number of records to pull or push in one API call
     pub batch_size: BatchSize,
-    /// Disable the outer transaction wrapping integration. Set to true if PostgreSQL runs out of
-    /// shared memory (max_locks_per_transaction) during large initial syncs.
-    pub disable_integration_transaction: bool,
     /// On a central server, relax the v7 hardware-id and token guards so a site can re-pair from a
     /// new machine without an admin reset: skips the hardware-id match and the "token already
     /// allocated" check. Site name, password and token are still verified. For recovery/migration.
@@ -41,8 +38,6 @@ struct SyncSettingsRaw {
     #[serde(default)]
     batch_size: BatchSize,
     #[serde(default)]
-    disable_integration_transaction: bool,
-    #[serde(default)]
     relax_hardware_id_token_checks: bool,
 }
 
@@ -56,7 +51,6 @@ impl TryFrom<SyncSettingsRaw> for SyncSettings {
             password_sha256,
             interval_seconds,
             batch_size,
-            disable_integration_transaction,
             relax_hardware_id_token_checks,
         } = raw;
 
@@ -82,7 +76,6 @@ impl TryFrom<SyncSettingsRaw> for SyncSettings {
             password_sha256,
             interval_seconds,
             batch_size,
-            disable_integration_transaction,
             relax_hardware_id_token_checks,
         })
     }

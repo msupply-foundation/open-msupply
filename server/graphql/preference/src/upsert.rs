@@ -5,13 +5,16 @@ use graphql_core::{
     ContextExt,
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
-use graphql_types::types::{InvoiceNodeStatus, patient::GenderTypeNode};
+use graphql_types::types::{
+    InvoiceNodeStatus, dispensing_screen::DispensingScreenNode, patient::GenderTypeNode,
+};
 use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StoreOverrideUpdate, StorePrefUpdate, UpsertPreferenceError,
-        UpsertPreferences, WarnWhenMissingRecentStocktakeData,
+        BackdatingData, CommonMedicine, DispensingScreenOption, StoreOverrideUpdate,
+        StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
+        WarnWhenMissingRecentStocktakeData,
     },
 };
 
@@ -28,6 +31,14 @@ pub struct BoolStorePrefInput {
 pub struct BoolStoreOverrideInput {
     pub store_id: String,
     pub value: Option<bool>,
+}
+
+/// One store's edit of the dispensing screen. A null `value` CLEARS the
+/// store's own value, returning the store to the global value.
+#[derive(InputObject)]
+pub struct DispensingScreenStoreOverrideInput {
+    pub store_id: String,
+    pub value: Option<DispensingScreenNode>,
 }
 
 #[derive(InputObject)]
@@ -66,6 +77,18 @@ pub struct WarnWhenMissingRecentStocktakeDataInput {
 pub struct WarnWhenMissingRecentStocktakeInput {
     pub store_id: String,
     pub value: WarnWhenMissingRecentStocktakeDataInput,
+}
+
+#[derive(InputObject)]
+pub struct CommonMedicineInput {
+    pub item_id: String,
+    pub amounts: Vec<f64>,
+}
+
+#[derive(InputObject)]
+pub struct CommonMedicinesInput {
+    pub store_id: String,
+    pub value: Vec<CommonMedicineInput>,
 }
 
 #[derive(InputObject)]
@@ -131,6 +154,16 @@ pub struct UpsertPreferencesInput {
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<BoolStorePrefInput>>,
+    pub common_medicines: Option<Vec<CommonMedicinesInput>>,
+    // Dispensing (#2188): the global value, and a store's own value
+    pub dispensing_screen: Option<DispensingScreenNode>,
+    pub dispensing_screen_store_override: Option<Vec<DispensingScreenStoreOverrideInput>>,
+    pub use_unnamed_patient: Option<bool>,
+    pub use_unnamed_patient_store_override: Option<Vec<BoolStoreOverrideInput>>,
+    pub start_with_unnamed_patient: Option<bool>,
+    pub start_with_unnamed_patient_store_override: Option<Vec<BoolStoreOverrideInput>>,
+    pub ask_for_patient_type: Option<bool>,
+    pub ask_for_patient_type_store_override: Option<Vec<BoolStoreOverrideInput>>,
 }
 
 pub fn upsert_preferences(
@@ -215,6 +248,15 @@ impl UpsertPreferencesInput {
             show_indicative_price_in_requisitions,
             do_not_print_placeholder_line_labels,
             prompt_for_batch_and_expiry_on_inbound_shipments,
+            common_medicines,
+            dispensing_screen,
+            dispensing_screen_store_override,
+            use_unnamed_patient,
+            use_unnamed_patient_store_override,
+            start_with_unnamed_patient,
+            start_with_unnamed_patient_store_override,
+            ask_for_patient_type,
+            ask_for_patient_type_store_override,
         } = self;
 
         UpsertPreferences {
@@ -335,6 +377,34 @@ impl UpsertPreferencesInput {
                 prompt_for_batch_and_expiry_on_inbound_shipments
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            common_medicines: common_medicines
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            dispensing_screen: dispensing_screen.map(DispensingScreenOption::from),
+            dispensing_screen_store_override: dispensing_screen_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            use_unnamed_patient: *use_unnamed_patient,
+            use_unnamed_patient_store_override: use_unnamed_patient_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            start_with_unnamed_patient: *start_with_unnamed_patient,
+            start_with_unnamed_patient_store_override: start_with_unnamed_patient_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            ask_for_patient_type: *ask_for_patient_type,
+            ask_for_patient_type_store_override: ask_for_patient_type_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+        }
+    }
+}
+
+impl DispensingScreenStoreOverrideInput {
+    pub fn to_domain(&self) -> StoreOverrideUpdate<DispensingScreenOption> {
+        StoreOverrideUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.map(DispensingScreenOption::from),
         }
     }
 }
@@ -408,6 +478,22 @@ impl InvoiceStatusOptionsInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.iter().map(|s| (*s).into()).collect(),
+        }
+    }
+}
+
+impl CommonMedicinesInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<Vec<CommonMedicine>> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self
+                .value
+                .iter()
+                .map(|medicine| CommonMedicine {
+                    item_id: medicine.item_id.clone(),
+                    amounts: medicine.amounts.clone(),
+                })
+                .collect(),
         }
     }
 }

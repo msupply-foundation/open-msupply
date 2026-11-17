@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
+import { prescriptionPreferences } from '../../../store/storeContext';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -108,6 +109,14 @@ const PrescriptionsList: Component = () => {
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
+  // A new visit is dispensed the store's way (spec/prescriptions rules › the
+  // Simple screen): where the store dispenses on the Simple screen, this list
+  // is its Dispensing records, and a new record starts there instead.
+  const newRecord = () => {
+    if (prescriptionPreferences().dispensingScreen === 'SIMPLE')
+      navigate(`/${params.storeId}/dispensary/dispensing/simple`);
+    else setCreateOpen(true);
+  };
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2,
   // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
@@ -116,7 +125,7 @@ const PrescriptionsList: Component = () => {
   // the action.
   createAddAction({
     name: 'button.new-dispensing-record',
-    run: () => setCreateOpen(true),
+    run: newRecord,
   });
 
   const tableConfig = createTableConfig({
@@ -302,7 +311,7 @@ const PrescriptionsList: Component = () => {
               icon={<PlusCircleIcon />}
               shortcut={ALT_N}
               data-testid="new-prescription-button"
-              onClick={() => setCreateOpen(true)}
+              onClick={newRecord}
             >
               {t('button.new-dispensing-record')}
             </Button>
@@ -371,7 +380,7 @@ const PrescriptionsList: Component = () => {
             variant="ghost"
             shortcut={ALT_N}
             data-testid="nothing-here-create-button"
-            onClick={() => setCreateOpen(true)}
+            onClick={newRecord}
           >
             {t('button.create-a-new-one')}
           </Button>

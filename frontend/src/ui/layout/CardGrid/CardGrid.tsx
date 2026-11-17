@@ -25,6 +25,12 @@ export interface CardGridProps extends JSX.HTMLAttributes<HTMLDivElement> {
    * every column it would otherwise have. Any CSS length; unset = no cap.
    */
   maxItemWidth?: string;
+  /**
+   * Stretch every card to the height of the tallest in its row, so cards
+   * whose content ends in a row of controls can line those controls up
+   * across the row. Off by default: cards keep their own height.
+   */
+  equalHeight?: boolean;
 }
 
 /*
@@ -39,12 +45,14 @@ export const CardGrid = (props: CardGridProps) => {
     'minColumnWidth',
     'maxColumnWidth',
     'maxItemWidth',
+    'equalHeight',
     'class',
     'children',
   ]);
   return (
     <div
       class={local.class ? `${styles.grid} ${local.class}` : styles.grid}
+      data-equal-height={local.equalHeight ? '' : undefined}
       style={{
         '--card-grid-min': local.minColumnWidth ?? '20rem',
         '--card-grid-max': local.maxColumnWidth ?? '1fr',

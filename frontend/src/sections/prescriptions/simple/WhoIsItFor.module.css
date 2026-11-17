@@ -1,0 +1,36 @@
+/*
+ * The chosen patient's facts (WhoIsItFor.tsx). Their size and tone come from
+ * the HeaderField's detail slot; this only runs them together as one line,
+ * wrapping between facts rather than inside one.
+ */
+
+.details {
+  --fact-gap: var(--space-4);
+
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--fact-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Clips the dot of a fact that starts a line (below). */
+  overflow: hidden;
+}
+
+.fact {
+  position: relative;
+  white-space: nowrap;
+}
+
+/* A dot between facts, drawn rather than said: the list already tells a
+   screen reader where one fact ends. Drawn in the gap BEFORE each fact but
+   the first, so a fact that wraps to the start of a line takes its dot
+   outside the list's edge, where it is clipped: no line ends or starts with
+   a dot. */
+.fact + .fact::before {
+  content: '·' / '';
+  position: absolute;
+  inset-inline-end: 100%;
+  inline-size: var(--fact-gap);
+  text-align: center;
+}

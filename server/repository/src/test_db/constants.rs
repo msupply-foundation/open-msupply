@@ -23,6 +23,24 @@ pub(crate) fn env_msupply_no_test_db_template() -> bool {
 }
 
 #[allow(dead_code)]
+pub(crate) const ENV_MSUPPLY_DROP_TEST_DBS: &str = "MSUPPLY_DROP_TEST_DBS";
+
+/// Drop each postgres test database when the test's process exits. Off by
+/// default, so a database is still there to look at after a failure; on in CI,
+/// where a full run otherwise leaves tens of GB of them.
+#[allow(dead_code)]
+pub(crate) fn env_msupply_drop_test_dbs() -> bool {
+    let Ok(var) = std::env::var(ENV_MSUPPLY_DROP_TEST_DBS) else {
+        return false;
+    };
+    match var.as_str() {
+        "true" | "1" => true,
+        "false" | "0" => false,
+        _ => panic!("Invalid MSUPPLY_DROP_TEST_DBS env value: {}", var),
+    }
+}
+
+#[allow(dead_code)]
 pub(crate) fn find_workspace_root() -> PathBuf {
     let mut path = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
     while let Some(current) = path.parent() {

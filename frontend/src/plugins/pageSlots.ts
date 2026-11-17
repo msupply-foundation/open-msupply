@@ -78,6 +78,15 @@ export const pageActions = createPageSlot<(() => JSX.Element) | undefined>(
 );
 
 /**
+ * The header's field row, below the breadcrumb and actions, where a host
+ * detail screen keeps its fields (HeaderToolbar): the record's facts as
+ * LabelledValues, or the inputs that scope the page.
+ */
+export const pageToolbar = createPageSlot<(() => JSX.Element) | undefined>(
+  undefined
+);
+
+/**
  * The action bar pinned below the scrolling body, where every host detail
  * screen's actions sit — so a page never fakes a footer with sticky
  * positioning inside its own body, which stops pinning once the body fits.

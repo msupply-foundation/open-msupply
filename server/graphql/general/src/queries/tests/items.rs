@@ -108,6 +108,58 @@ mod graphql {
         assert_graphql_query!(&settings, query, &Some(variables), &expected, None);
     }
 
+    // Items a and b are on the mock default price list (1.0 and 2.001 per unit);
+    // item c is on none. All three are priced in one items read, and each agrees
+    // with what itemPrice gives for it.
+    #[actix_rt::test]
+    async fn test_graphql_items_default_price_per_unit() {
+        let (_, _, _, settings) = setup_graphql_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_graphql_items_default_price_per_unit",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let query = r#"query {
+            items(
+                storeId: \"store_a\"
+                filter: { id: { equalAny: [\"item_a\", \"item_b\", \"item_c\"] } }
+            ) {
+                ... on ItemConnector {
+                    nodes {
+                        id
+                        defaultPricePerUnit
+                    }
+                }
+            }
+            a: itemPrice(storeId: \"store_a\", input: { itemId: \"item_a\" }) {
+                ... on ItemPriceNode { defaultPricePerUnit }
+            }
+            b: itemPrice(storeId: \"store_a\", input: { itemId: \"item_b\" }) {
+                ... on ItemPriceNode { defaultPricePerUnit }
+            }
+            c: itemPrice(storeId: \"store_a\", input: { itemId: \"item_c\" }) {
+                ... on ItemPriceNode { defaultPricePerUnit }
+            }
+        }"#;
+
+        let expected = json!({
+            "items": {
+                "nodes": [
+                    { "id": "item_a", "defaultPricePerUnit": 1.0 },
+                    { "id": "item_b", "defaultPricePerUnit": 2.001 },
+                    { "id": "item_c", "defaultPricePerUnit": null },
+                ]
+            },
+            "a": { "defaultPricePerUnit": 1.0 },
+            "b": { "defaultPricePerUnit": 2.001 },
+            "c": { "defaultPricePerUnit": null },
+        });
+
+        assert_graphql_query!(&settings, query, &None, &expected, None);
+    }
+
     // Adds a store_a row for item_query_test1, which has none, and leaves
     // item_query_test2 without one
     const TRANSFORM_ITEM_STORE_PROPERTIES_PLUGIN: &str = r#"

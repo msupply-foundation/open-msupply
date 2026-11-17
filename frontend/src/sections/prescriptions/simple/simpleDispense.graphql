@@ -1,0 +1,53 @@
+# Dispense on the Simple screen (spec/prescriptions › dispensing the visit):
+# the whole visit in one batchPrescription call — the record, a line per batch
+# taken, and the move to Picked — which the server runs as one transaction
+# (continueOnError false), so a refusal anywhere saves nothing.
+mutation simpleDispense($storeId: String!, $input: BatchPrescriptionInput!) {
+  batchPrescription(storeId: $storeId, input: $input) {
+    insertPrescriptions {
+      id
+      response {
+        __typename
+      }
+    }
+    insertPrescriptionLines {
+      id
+      response {
+        __typename
+        ... on InvoiceLineNode {
+          id
+        }
+        ... on InsertPrescriptionLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+    updatePrescriptions {
+      id
+      response {
+        __typename
+      }
+    }
+  }
+}
+
+# Whether a visit whose save couldn't be confirmed was saved after all
+# (rules › dispensing the visit): the save is one transaction that ends with
+# the move to Picked, so a record that exists past New was saved whole.
+query simpleDispensedVisit($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {
+    __typename
+    ... on InvoiceNode {
+      id
+      status
+    }
+    ... on NodeError {
+      error {
+        __typename
+      }
+    }
+  }
+}

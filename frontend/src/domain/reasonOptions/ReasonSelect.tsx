@@ -1,6 +1,7 @@
 import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
+import { isDispensary } from '../../store/storeContext';
 import {
   reasonOptionsResource,
   type ReasonOption,
@@ -14,11 +15,15 @@ import {
 // - 'positive' — a positive adjustment (counted MORE than snapshot; stock went
 //   up): positive-inventory-adjustment reasons only.
 // - 'negative' — a negative adjustment (counted FEWER than snapshot, incl.
-//   reduce-to-zero; stock went down): negative-inventory-adjustment reasons
-//   PLUS vaccine-wastage (open-/closed-vial). The server accepts wastage for
-//   ANY negative adjustment; offering them here is the documented client
-//   narrowing (rules §reason valid). A caller that only wants a reduction
-//   passes 'negative' too (reduce-to-zero is always a reduction).
+//   reduce-to-zero; stock went down). The server accepts a negative-
+//   inventory-adjustment OR a vaccine-wastage (open-/closed-vial) reason for
+//   ANY negative adjustment, so both are VALID here (reasonMatchesKind); what
+//   the picker OFFERS is narrowed by the item (reasonsOfKind, issue #456): a
+//   vaccine is offered closed-vial wastage, plus open-vial wastage in a
+//   dispensary store, falling back to the plain negative reasons when no
+//   wastage reason is configured; anything else is offered the plain negative
+//   reasons only. A caller that only wants a reduction passes 'negative' too
+//   (reduce-to-zero is always a reduction).
 // - 'return' — a customer-return line's optional "why it came back"
 //   (spec/customer-returns/rules.md § line rules): the active return reasons.
 // - 'requisition' — a requisition line's variance reason, required when a
@@ -38,12 +43,50 @@ const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
   requisition: new Set(['REQUISITION_LINE_VARIANCE']),
 };
 
+/** What the negative kind's narrowing reads about the line being adjusted. */
+export interface ReasonContext {
+  /** The adjusted item is a vaccine (offers vial-wastage reasons instead). */
+  isVaccine?: boolean;
+}
+
 /**
- * The reason options for a kind — exported for non-select needs (e.g.
- * resolving a label).
+ * The options a picker of this kind OFFERS, out of `reasons` — the pure core
+ * of reasonsOfKind. Only the negative kind narrows, mirroring the React front
+ * end's getReasonOptionTypes + ReasonOptionsSearchInput fallback (spec/
+ * stocktakes/rules.md § UI narrowing of the reason picker).
  */
-export const reasonsOfKind = (kind: ReasonKind): ReasonOption[] =>
-  reasonOptionsResource.noSuspense().filter(r => KIND_TYPES[kind].has(r.type));
+export const offeredReasons = (
+  reasons: readonly ReasonOption[],
+  kind: ReasonKind,
+  context: ReasonContext & { isDispensary: boolean }
+): ReasonOption[] => {
+  if (kind === 'negative' && context.isVaccine) {
+    const wastage = reasons.filter(
+      r =>
+        r.type === 'CLOSED_VIAL_WASTAGE' ||
+        (context.isDispensary && r.type === 'OPEN_VIAL_WASTAGE')
+    );
+    if (wastage.length > 0) return wastage;
+  }
+  return reasons.filter(r =>
+    kind === 'negative'
+      ? r.type === 'NEGATIVE_INVENTORY_ADJUSTMENT'
+      : KIND_TYPES[kind].has(r.type)
+  );
+};
+
+/**
+ * The reason options a picker of this kind offers for the given line —
+ * exported for non-select needs (e.g. resolving a label).
+ */
+export const reasonsOfKind = (
+  kind: ReasonKind,
+  context: ReasonContext = {}
+): ReasonOption[] =>
+  offeredReasons(reasonOptionsResource.noSuspense(), kind, {
+    ...context,
+    isDispensary: isDispensary(),
+  });
 
 /**
  * Whether the server will DEMAND a reason for a stocktake adjustment in this
@@ -78,6 +121,11 @@ export const reasonMatchesKind = (
 export interface ReasonSelectProps {
   /** Which reason types to offer (drives the filtering). */
   kind: ReasonKind;
+  /**
+   * The adjusted item is a vaccine — a negative picker then offers vial-
+   * wastage reasons instead of the plain ones (reasonsOfKind).
+   */
+  isVaccine?: boolean;
   /** Selected reason-option id (undefined = none). */
   value?: string;
   /**
@@ -129,7 +177,13 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
   <Combobox<ReasonOption>
     label={props.label}
     hideLabel={props.hideLabel}
-    items={reasonsOfKind(props.kind)}
+    items={reasonsOfKind(props.kind, { isVaccine: props.isVaccine })}
+    // A saved reason the narrowing no longer offers (e.g. a vaccine line saved
+    // with a plain negative reason before #456) still shows its label, rather
+    // than a blank field over a reason that's still stored.
+    selectedItem={reasonOptionsResource
+      .noSuspense()
+      .find(r => r.id === props.value)}
     loading={reasonOptionsResource.loading()}
     itemToString={r => r.reason}
     itemToValue={r => r.id}
