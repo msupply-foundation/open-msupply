@@ -289,6 +289,11 @@ RUN --mount=type=cache,id=yarn,target=/root/.yarn/berry/cache,sharing=locked \
 # it made every frontend/-only merge redo ~4 minutes of yarn install and
 # build:old-ui - the critical path of a deploy build.
 COPY frontend frontend
+# The table id map the new FE imports old table layouts with lives in the
+# server migration fragment that converts the shared layouts, outside frontend/
+# (vite/legacyTableConfigMap.ts). Copied to the same path relative to frontend/.
+COPY server/repository/src/migrations/v3_04_01/migrate_global_table_configs_to_default_configs/legacy_table_config_map.json \
+     server/repository/src/migrations/v3_04_01/migrate_global_table_configs_to_default_configs/
 # New FE, served at /
 # The displayed interface version (vite.config.ts § appVersion) comes from
 # RELEASE_VERSION or else `git describe` - and .git is not in the build

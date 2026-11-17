@@ -37,6 +37,9 @@ export const LAZY_ONLY_MODULES: readonly string[] = [
   '/src/plugin-sdk/programIcons/ProgramIconSvg.tsx',
   '/node_modules/ajv/',
   '/node_modules/ajv-formats/',
+  // The React front end's table id map, read only by the one-time import of
+  // old table layouts (vite/legacyTableConfigMap.ts).
+  'virtual:legacy-table-config-map',
 ];
 
 /** The part of Rollup's output bundle the check reads. */

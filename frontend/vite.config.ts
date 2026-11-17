@@ -4,6 +4,7 @@ import { defineConfig, loadEnv } from 'vite';
 import solid from 'vite-plugin-solid';
 import { devPluginsPlugin } from './vite/devPlugins.ts';
 import { lazyChunkGuardPlugin } from './vite/lazyChunkGuard.ts';
+import { legacyTableConfigMapPlugin } from './vite/legacyTableConfigMap.ts';
 import { sharedModulesPlugin } from './vite/sharedModules.ts';
 
 /*
@@ -101,12 +102,15 @@ export default defineConfig(({ mode }) => {
     // virtual module to an empty map, which is dead code the DEV branch in
     // src/plugins/loader.ts treeshakes away, so build output is unaffected.
     // lazyChunkGuardPlugin fails the build if the form library reaches the
-    // eager entry (vite/lazyChunkGuard.ts).
+    // eager entry (vite/lazyChunkGuard.ts). legacyTableConfigMapPlugin serves
+    // the server migration's table id map as virtual:legacy-table-config-map
+    // (vite/legacyTableConfigMap.ts).
     plugins: [
       solid(),
       sharedModulesPlugin(),
       devPluginsPlugin(),
       lazyChunkGuardPlugin(),
+      legacyTableConfigMapPlugin(),
     ],
     // "@/x" → src/x. Keep in sync with tsconfig.app.json "paths" and
     // vitest.config.ts (the showcase config inherits it via mergeConfig).

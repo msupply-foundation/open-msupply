@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { legacyTableConfigMapPlugin } from './vite/legacyTableConfigMap.ts';
 
 // Run west of UTC unless told otherwise. A date bug that reads a calendar day
 // as UTC midnight shows the day BEFORE west of Greenwich and nothing at all
@@ -14,6 +15,9 @@ process.env.TZ ||= 'America/Los_Angeles';
 // Unit tests (intl, codegen helpers) run in node. The deterministic e2e
 // suites that need the real backend live under e2e/ (Playwright, not vitest).
 export default defineConfig({
+  // Mirrors vite.config.ts, so tests import virtual:legacy-table-config-map as
+  // the app does.
+  plugins: [legacyTableConfigMapPlugin()],
   // Mirror vite.config.ts's APP_VERSION define so a test can import a module
   // that renders it without a ReferenceError. LANG_VERSION is deliberately NOT
   // defined here: dictionaryCache.test.ts stubs it per-test (vi.stubGlobal),
