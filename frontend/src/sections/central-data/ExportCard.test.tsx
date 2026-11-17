@@ -312,6 +312,24 @@ describe('ExportCard', () => {
     });
   });
 
+  it('counts once when Status changes while a search count is pending (OMS-REG-CDIO-01.47)', async () => {
+    open();
+    await tickUnits();
+    shown.fields['central-data-export-unit-search']!.onInput({
+      currentTarget: { value: 'tab' },
+    });
+    await vi.advanceTimersByTimeAsync(100);
+
+    shown.selects['central-data-export-unit-status']!.onValueChange('ACTIVE');
+    await settle();
+    // The Status count already carries the search, so the pending one is dropped.
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(countRequests()).toEqual([
+      { tables: [{ table: 'UNIT', contains: null, isActive: null }] },
+      { tables: [{ table: 'UNIT', contains: 'tab', isActive: true }] },
+    ]);
+  });
+
   it('shows the count the filters match in Rows, and the new one when they change (OMS-REG-CDIO-01.47)', async () => {
     open();
     // A dash until the table is ticked.

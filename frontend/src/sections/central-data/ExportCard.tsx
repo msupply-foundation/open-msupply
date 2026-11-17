@@ -48,7 +48,11 @@ export const ExportCard = (props: {
   const [counted, setCounted] = createSignal(
     untrack(() => exportInputs(props.filters))
   );
-  const countNow = () => setCounted(exportInputs(props.filters));
+  // Counting now drops a pending search count, which would only repeat it.
+  const countNow = () => {
+    countSoon.cancel();
+    setCounted(exportInputs(props.filters));
+  };
   const countSoon = createDebounced(countNow, COUNT_DELAY_MS);
   const [countsResult] = createResource(
     () => (counted().length > 0 ? counted() : false),
@@ -121,7 +125,6 @@ export const ExportCard = (props: {
     });
 
   const clearFilters = () => {
-    countSoon.cancel();
     props.setFilters({}, { contains: '', status: 'ALL' });
     countNow();
   };
