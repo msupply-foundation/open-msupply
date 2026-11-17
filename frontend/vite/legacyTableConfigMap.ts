@@ -46,13 +46,18 @@ const unexpectedKeys = (
 
 /**
  * Every way `map` differs from the shape the front end's type declares, as one
- * message per problem; empty when it matches. A `from` id listed twice is a
- * problem too, since only one entry could apply. Two entries with the same
- * `to` are allowed: the earlier one wins.
+ * message per problem; empty when it matches. One `from` may appear in several
+ * entries (an old table shown on screens that are now separate tables), and
+ * several entries may share a `to` (the earlier one wins), but the same
+ * `from` → `to` pair twice is a problem, since only one could apply.
  */
 export const legacyTableConfigMapProblems = (map: unknown): string[] => {
   if (!isRecord(map)) return ['the map is not an object'];
-  const problems = unexpectedKeys(map, ['version', 'tables'], 'map');
+  const problems = unexpectedKeys(
+    map,
+    ['version', 'columnPrefixes', 'tables'],
+    'map'
+  );
   if (
     typeof map.version !== 'number' ||
     !Number.isInteger(map.version) ||
@@ -60,11 +65,24 @@ export const legacyTableConfigMapProblems = (map: unknown): string[] => {
   ) {
     problems.push('version: must be a whole number of 1 or more');
   }
+  if ('columnPrefixes' in map) {
+    if (!isRecord(map.columnPrefixes)) {
+      problems.push('columnPrefixes: must be an object when present');
+    } else {
+      for (const [prefix, target] of Object.entries(map.columnPrefixes)) {
+        if (prefix === '' || typeof target !== 'string' || target === '') {
+          problems.push(
+            `columnPrefixes.${prefix}: must map a non-empty prefix to a non-empty string`
+          );
+        }
+      }
+    }
+  }
   if (!Array.isArray(map.tables)) {
     problems.push('tables: must be an array');
     return problems;
   }
-  const seenFrom = new Set<string>();
+  const seenPairs = new Set<string>();
   map.tables.forEach((table: unknown, index) => {
     const at = `tables[${index}]`;
     if (!isRecord(table)) {
@@ -79,11 +97,14 @@ export const legacyTableConfigMapProblems = (map: unknown): string[] => {
         problems.push(`${at}.${key}: must be a non-empty string`);
       }
     }
-    if (typeof table.from === 'string') {
-      if (seenFrom.has(table.from)) {
-        problems.push(`${at}.from: "${table.from}" is already mapped`);
+    if (typeof table.from === 'string' && typeof table.to === 'string') {
+      const pair = JSON.stringify([table.from, table.to]);
+      if (seenPairs.has(pair)) {
+        problems.push(
+          `${at}: "${table.from}" → "${table.to}" is already mapped`
+        );
       }
-      seenFrom.add(table.from);
+      seenPairs.add(pair);
     }
     if (!isRecord(table.columns)) {
       problems.push(`${at}.columns: must be an object`);

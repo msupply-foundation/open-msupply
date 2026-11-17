@@ -21,7 +21,8 @@ declare module 'virtual:legacy-table-config-map' {
     readonly to: string;
     /**
      * React front end column id → this UI's column id. A column mapped to
-     * null, or not listed, is dropped from every setting.
+     * null is dropped from every setting, and so is one that's not listed
+     * and matches none of the map's `columnPrefixes`.
      */
     readonly columns: Readonly<Record<string, string | null>>;
     /**
@@ -34,8 +35,15 @@ declare module 'virtual:legacy-table-config-map' {
   export interface LegacyTableConfigMap {
     readonly version: number;
     /**
+     * Old column id prefix → new prefix, for columns whose ids are built at
+     * runtime (custom fields: `prop-<key>` → `cf-<key>`). Applies to every
+     * table, to a column its entry's `columns` doesn't list.
+     */
+    readonly columnPrefixes?: Readonly<Record<string, string>>;
+    /**
      * In a fixed order: when two entries map to the same `to`, the earlier
-     * one wins.
+     * one wins. One `from` can appear in several entries, one per new table
+     * its settings go to.
      */
     readonly tables: readonly LegacyTableMapping[];
   }

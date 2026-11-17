@@ -32,6 +32,26 @@ describe('legacyTableConfigMapProblems', () => {
     );
   });
 
+  it('accepts column prefix rewrites', () => {
+    const map = {
+      version: 1,
+      columnPrefixes: { 'prop-': 'cf-' },
+      tables: [],
+    };
+    expect(legacyTableConfigMapProblems(map)).toEqual([]);
+  });
+
+  it('accepts one old table mapped to several new tables', () => {
+    const map = {
+      version: 1,
+      tables: [
+        { from: 'name-list', to: 'names-customers', columns: {} },
+        { from: 'name-list', to: 'names-suppliers', columns: {} },
+      ],
+    };
+    expect(legacyTableConfigMapProblems(map)).toEqual([]);
+  });
+
   it('accepts two entries mapping to the same new table', () => {
     const map = {
       version: 1,
@@ -49,6 +69,21 @@ describe('legacyTableConfigMapProblems', () => {
     ['a version of 0', { version: 0, tables: [] }, 'version: must be'],
     ['a fractional version', { version: 1.5, tables: [] }, 'version: must be'],
     ['tables as an object', { version: 1, tables: {} }, 'tables: must be'],
+    [
+      'columnPrefixes as an array',
+      { version: 1, columnPrefixes: [], tables: [] },
+      'columnPrefixes: must be an object',
+    ],
+    [
+      'an empty prefix',
+      { version: 1, columnPrefixes: { '': 'cf-' }, tables: [] },
+      'columnPrefixes.: must map',
+    ],
+    [
+      'a prefix mapped to null',
+      { version: 1, columnPrefixes: { 'prop-': null }, tables: [] },
+      'columnPrefixes.prop-: must map',
+    ],
     [
       'an unexpected top-level key',
       { version: 1, tables: [], extra: true },
@@ -90,16 +125,16 @@ describe('legacyTableConfigMapProblems', () => {
     expect(problems.join('\n')).toContain(message);
   });
 
-  it('rejects an old table id mapped twice', () => {
+  it('rejects the same old → new pair twice', () => {
     const map = {
       version: 1,
       tables: [
         { from: 'a', to: 'b', columns: {} },
-        { from: 'a', to: 'c', columns: {} },
+        { from: 'a', to: 'b', columns: { x: 'y' } },
       ],
     };
     expect(legacyTableConfigMapProblems(map)).toEqual([
-      'tables[1].from: "a" is already mapped',
+      'tables[1]: "a" → "b" is already mapped',
     ]);
   });
 });

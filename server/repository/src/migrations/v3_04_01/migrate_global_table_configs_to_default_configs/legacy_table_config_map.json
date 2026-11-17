@@ -1,4 +1,1266 @@
 {
   "version": 1,
-  "tables": []
+  "columnPrefixes": {
+    "prop-": "cf-"
+  },
+  "tables": [
+    {
+      "from": "inbound-shipment-list-view",
+      "to": "inbound-shipments",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "status": "status",
+        "invoiceNumber": "invoiceNumber",
+        "linkedOrderNumber": "linkedOrder",
+        "createdDatetime": "createdDatetime",
+        "deliveredDatetime": "deliveredDatetime",
+        "comment": "comment",
+        "theirReference": "theirReference",
+        "Coût total": "total",
+        "Total": "total",
+        "Итого": "total",
+        "الإجمالي": "total",
+        "مجموع": "total",
+        "ټول": "total",
+        "ຍອດລວມ": "total"
+      }
+    },
+    {
+      "from": "outbound-shipment-list",
+      "to": "outbound-shipments",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "status": "status",
+        "invoiceNumber": "invoiceNumber",
+        "createdDatetime": "createdDatetime",
+        "theirReference": "theirReference",
+        "comment": "comment",
+        "pricing.totalAfterTax": "totalAfterTax"
+      }
+    },
+    {
+      "from": "prescription-list",
+      "to": "prescriptions",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "status": "status",
+        "invoiceNumber": "invoiceNumber",
+        "prescriptionDatetime": "prescriptionDatetime",
+        "theirReference": "theirReference",
+        "comment": "comment"
+      }
+    },
+    {
+      "from": "customer-return-list",
+      "to": "customer-returns",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "status": "status",
+        "invoiceNumber": "invoiceNumber",
+        "createdDatetime": "createdDatetime",
+        "comment": "comment",
+        "theirReference": "theirReference"
+      }
+    },
+    {
+      "from": "supplier-return-list",
+      "to": "supplier-returns",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "status": "status",
+        "invoiceNumber": "invoiceNumber",
+        "createdDatetime": "createdDatetime",
+        "comment": "comment",
+        "theirReference": "theirReference"
+      }
+    },
+    {
+      "from": "inbound-shipment-detail-view",
+      "to": "inbound-shipment-detail",
+      "columns": {
+        "note": "comment",
+        "item.code": "itemCode",
+        "itemName": "itemName",
+        "purchaseOrderLine.lineNumber": "poLine",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "vvmStatus": "vvmStatus",
+        "locationCode": "location",
+        "itemUnit": "unitName",
+        "packSize": "packSize",
+        "itemDoses": "dosesPerUnit",
+        "numberOfPacks": "numberOfPacks",
+        "difference": "difference",
+        "unitQuantity": "unitsReceived",
+        "doseQuantity": "doses",
+        "status": "authStatus",
+        "costPricePerUnit": null,
+        "costPricePerPack": "costPricePerPack",
+        "total": "total",
+        "donorName": "donor",
+        "manufacturer": "manufacturer",
+        "manufactureDate": "manufactureDate",
+        "campaign": "activity"
+      }
+    },
+    {
+      "from": "inbound-shipment-detail-view-external",
+      "to": "inbound-shipment-detail",
+      "columns": {
+        "note": "comment",
+        "item.code": "itemCode",
+        "itemName": "itemName",
+        "purchaseOrderLine.lineNumber": "poLine",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "vvmStatus": "vvmStatus",
+        "locationCode": "location",
+        "itemUnit": "unitName",
+        "packSize": "packSize",
+        "itemDoses": "dosesPerUnit",
+        "numberOfPacks": "numberOfPacks",
+        "difference": "difference",
+        "unitQuantity": "unitsReceived",
+        "doseQuantity": "doses",
+        "status": "authStatus",
+        "costPricePerUnit": null,
+        "costPricePerPack": "costPricePerPack",
+        "total": "total",
+        "donorName": "donor",
+        "manufacturer": "manufacturer",
+        "manufactureDate": "manufactureDate",
+        "campaign": "activity"
+      }
+    },
+    {
+      "from": "inbound-shipment-delivery-tab-table",
+      "to": "inbound-shipment-delivery",
+      "columns": {
+        "itemCode": "code",
+        "itemName": "name",
+        "previousDeliveries": "previous",
+        "thisDelivery": "thisDelivery",
+        "inTransit": "inTransit",
+        "remainingToDeliver": "remaining",
+        "poQuantity": "poQuantity"
+      }
+    },
+    {
+      "from": "inbound-shipment-financial-tab-table",
+      "to": "inbound-shipment-financial",
+      "columns": {
+        "item.name": "itemName",
+        "purchaseOrderLine.lineNumber": "poLine",
+        "numberOfPacks": "numberOfPacks",
+        "packSize": "packSize",
+        "item.unitName": "unit",
+        "purchaseOrderLine.pricePerPackAfterDiscount": "poPrice",
+        "costPricePerPackLocal": "packCostPrice",
+        "sellPricePerPack": "sellPrice",
+        "foreignCurrencyLineTotal": "lineTotalPo",
+        "lineTotalLocal": "lineTotalLocal",
+        "adjustedLineTotal": null
+      }
+    },
+    {
+      "from": "outbound-shipment-detail-view",
+      "to": "outbound-detail",
+      "columns": {
+        "item.code": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "vvmStatus": "vvmStatus",
+        "locationCode": "locationCode",
+        "item.unitName": "unitName",
+        "packSize": "packSize",
+        "itemDoses": "dosesPerUnit",
+        "numberOfPacks": "numberOfPacks",
+        "receivedNumberOfPacks": "receivedNumberOfPacks",
+        "difference": "difference",
+        "unitQuantity": "unitQuantity",
+        "doseQuantity": "doses",
+        "unitSellPrice": "sellPricePerPack",
+        "total": "total",
+        "volume": "volume"
+      }
+    },
+    {
+      "from": "prescription-detail",
+      "to": "prescription-detail",
+      "columns": {
+        "note": "directions",
+        "item.code": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "locationCode": "locationName",
+        "itemUnit": "unitName",
+        "packSize": "packSize",
+        "itemDoses": "dosesPerUnit",
+        "unitQuantity": "unitQuantity",
+        "doseQuantity": "doses",
+        "prescribedQuantity": "prescribedQuantity",
+        "numberOfPacks": "numberOfPacks",
+        "sellPricePerUnit": "unitPrice",
+        "lineTotal": "totalAfterTax",
+        "totalCostPrice": "costPrice"
+      }
+    },
+    {
+      "from": "supplier-return-detail",
+      "to": "supplier-return-detail",
+      "columns": {
+        "itemCode": "item.code",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "item.unitName": "unitName",
+        "packSize": "packSize",
+        "numberOfPacks": "numberOfPacks",
+        "totalQuantity": "totalQuantity",
+        "costPricePerPack": "costPricePerPack",
+        "lineTotal": "lineTotal"
+      }
+    },
+    {
+      "from": "purchase-order-detail-view",
+      "to": "customer-return-detail",
+      "columns": {
+        "itemCode": "item.code",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "item.unitName": "unitName",
+        "packSize": "packSize",
+        "numberOfPacks": "numberOfPacks",
+        "totalQuantity": "totalQuantity",
+        "sellPricePerPack": "sellPricePerPack",
+        "lineTotal": "lineTotal"
+      }
+    },
+    {
+      "from": "customer-return-line-quantity",
+      "to": "customer-return-line-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "itemVariantId": null,
+        "expiryDate": "expiryDate",
+        "numberOfPacksIssued": "numberOfPacksIssued",
+        "packSize": "packSize",
+        "numberOfPacksReturned": "numberOfPacksReturned",
+        "volumePerPack": "volumePerPack"
+      }
+    },
+    {
+      "from": "customer-return-line-quantity",
+      "to": "customer-return-from-shipment-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "itemVariantId": null,
+        "expiryDate": "expiryDate",
+        "numberOfPacksIssued": "numberOfPacksIssued",
+        "packSize": "packSize",
+        "numberOfPacksReturned": "numberOfPacksReturned",
+        "volumePerPack": "volumePerPack"
+      }
+    },
+    {
+      "from": "supplier-return-line-quantity",
+      "to": "supplier-return-line-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "item.unitName": "unitName",
+        "packSize": "packSize",
+        "availableNumberOfPacks": "availableNumberOfPacks",
+        "onHold": "onHold",
+        "numberOfPacksToReturn": "numberOfPacksToReturn"
+      }
+    },
+    {
+      "from": "supplier-return-line-quantity",
+      "to": "supplier-return-from-shipment-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "item.unitName": "unitName",
+        "packSize": "packSize",
+        "availableNumberOfPacks": "availableNumberOfPacks",
+        "onHold": "onHold",
+        "numberOfPacksToReturn": "numberOfPacksToReturn"
+      }
+    },
+    {
+      "from": "return-line-reason",
+      "to": "customer-return-line-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "returnReason": "returnReasonInput",
+        "note": "note"
+      }
+    },
+    {
+      "from": "return-line-reason",
+      "to": "customer-return-from-shipment-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "returnReason": "returnReasonInput",
+        "note": "note"
+      }
+    },
+    {
+      "from": "return-line-reason",
+      "to": "supplier-return-line-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "returnReason": "returnReasonInput",
+        "note": "note"
+      }
+    },
+    {
+      "from": "return-line-reason",
+      "to": "supplier-return-from-shipment-edit",
+      "columns": {
+        "itemCode": "itemCode",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "returnReason": "returnReasonInput",
+        "note": "note"
+      }
+    },
+    {
+      "from": "inbound-line-edit",
+      "to": "inbound-line-edit",
+      "columns": {
+        "numberOfPacks": "numberOfPacks",
+        "packSize": "packSize",
+        "status": "authStatus",
+        "shippedNumberOfPacks": "shippedNumberOfPacks",
+        "difference": "difference",
+        "shippedPackSize": "shippedPackSize",
+        "receivedNumberOfUnits": "unitsReceived",
+        "doseQuantity": "dosesReceived",
+        "costPricePerPack": "costPricePerPack",
+        "foreignCurrencyCostPricePerPack": "foreignCostPricePerPack",
+        "sellPricePerPack": "sellPricePerPack",
+        "lineTotal": "lineTotal",
+        "foreignCurrencyLineTotal": "foreignLineTotal",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "location": "location",
+        "vvmStatus": "vvmStatus",
+        "note": "note",
+        "itemDoses": "dosesPerUnit",
+        "manufactureDate": "manufactureDate",
+        "donor": "donor",
+        "campaignOrProgram": "activity",
+        "manufacturer": "manufacturer",
+        "volumePerPack": "volumePerPack",
+        "duplicate": null,
+        "delete": null
+      }
+    },
+    {
+      "from": "outbound-line-edit",
+      "to": "outbound-line-edit",
+      "columns": {
+        "canAllocate": "canAllocate",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "vvmStatus": "vvmStatus",
+        "campaign": "activity",
+        "location": "location",
+        "donor": "donor",
+        "manufacturer": "manufacturer",
+        "sellPricePerPack": "sellPricePerPack",
+        "foreignCurrencySellPricePerPack": "foreignCurrencySellPricePerPack",
+        "packSize": "packSize",
+        "dosesPerUnit": "dosesPerUnit",
+        "inStore": "inStorePacks",
+        "available": "availablePacks",
+        "issued": "numberOfPacks",
+        "helperIssuedQuantity": "unitsIssued",
+        "receivedNumberOfPacks": "receivedNumberOfPacks",
+        "difference": "difference",
+        "volume": "volume",
+        "onHold": "onHold"
+      }
+    },
+    {
+      "from": "outbound-detail-service-line",
+      "to": "service-charges",
+      "columns": {
+        "serviceItemName": "itemId",
+        "note": "note",
+        "totalBeforeTax": "totalBeforeTax",
+        "taxPercentage": "taxPercentage",
+        "totalAfterTax": "totalAfterTax",
+        "delete": "actions"
+      }
+    },
+    {
+      "from": "inbound-detail-service-line",
+      "to": "service-charges",
+      "columns": {
+        "serviceItemName": "itemId",
+        "note": "note",
+        "totalBeforeTax": "totalBeforeTax",
+        "taxPercentage": "taxPercentage",
+        "totalAfterTax": "totalAfterTax",
+        "delete": "actions"
+      }
+    },
+    {
+      "from": "rnr-form-list",
+      "to": "rnr-forms",
+      "columns": {
+        "name": "period",
+        "createdDatetime": "createdDatetime",
+        "programName": "programName",
+        "supplierName": "supplierName",
+        "status": "status"
+      }
+    },
+    {
+      "from": "purchase-order-list-view",
+      "to": "purchase-orders",
+      "columns": {
+        "supplier": "supplier",
+        "number": "number",
+        "createdDatetime": "createdDatetime",
+        "confirmedDatetime": "confirmedDatetime",
+        "sentDatetime": "sentDatetime",
+        "requestedDeliveryDate": "requestedDeliveryDate",
+        "status": "status",
+        "targetMonths": "targetMonths",
+        "orderTotalAfterDiscount": "orderTotalAfterDiscount",
+        "currency": "currency",
+        "comment": "comment",
+        "Lignes": "lines",
+        "Lines": "lines",
+        "Linhas": "lines",
+        "Линии": "lines",
+        "خطوط": "lines",
+        "کرښې": "lines",
+        "ແຖວ": "lines"
+      }
+    },
+    {
+      "from": "outstanding-purchase-order-lines-list",
+      "to": "purchase-order-outstanding-lines",
+      "columns": {
+        "purchaseOrderNumber": "number",
+        "purchaseOrder.reference": "reference",
+        "createdBy": "createdBy",
+        "supplierCode": "supplierCode",
+        "supplierName": "supplierName",
+        "itemName": "itemName",
+        "purchaseOrder.confirmedDatetime": "confirmedDatetime",
+        "expectedDeliveryDate": "expectedDeliveryDate",
+        "requestedNumberOfUnits": "requestedNumberOfUnits",
+        "shippedNumberOfUnits": null,
+        "outstandingQuantity": "outstandingNumberOfUnits"
+      }
+    },
+    {
+      "from": "internal-order-detail",
+      "to": "internal-order-detail",
+      "columns": {
+        "comment": "comment",
+        "item.code": "code",
+        "itemName": "itemName",
+        "packUnit": "unitName",
+        "dosesPerUnit": "dosesPerUnit",
+        "item.defaultPackSize": "dps",
+        "itemStats.availableStockOnHand": "available",
+        "itemStats.averageMonthlyConsumption": "amc",
+        "itemStats.availableMonthsOfStockOnHand": "mos",
+        "targetStock": "targetStock",
+        "forecastQuantity": null,
+        "suggestedQuantity": "suggested",
+        "requestedQuantity": "requested",
+        "pricePerUnit": "pricePerUnit",
+        "initialStockOnHandUnits": "initialSoh",
+        "incomingUnits": "incoming",
+        "outgoingUnits": "outgoing",
+        "lossInUnits": "losses",
+        "additionInUnits": "additions",
+        "expiringUnits": "shortExpiry",
+        "daysOutOfStock": "daysOutOfStock",
+        "reason": "reason",
+        "approvedNumPacks": "approvedPacks",
+        "approvalComment": "approvalComment",
+        "Indicative price": "indicativePrice",
+        "Preço indicativo": "indicativePrice",
+        "Prix indicatif": "indicativePrice",
+        "اشاره قیمت": "indicativePrice",
+        "قیمت تقریبی": "indicativePrice",
+        "ລາຄາຊີ້ບອກ": "indicativePrice"
+      }
+    },
+    {
+      "from": "response-requisition-detail",
+      "to": "requisition-detail",
+      "columns": {
+        "comment": "comment",
+        "item.code": "code",
+        "itemName": "itemName",
+        "item.unitName": "unit",
+        "dosesPerUnit": "dosesPerUnit",
+        "itemStats.stockOnHand": "ourSoh",
+        "availableStockOnHand": "customerSoh",
+        "initialStockOnHandUnits": "initialSoh",
+        "incomingUnits": "incoming",
+        "outgoingUnits": "outgoing",
+        "lossInUnits": "losses",
+        "additionInUnits": "additions",
+        "availableUnits": "available",
+        "expiringUnits": "shortExpiry",
+        "daysOutOfStock": "daysOutOfStock",
+        "averageMonthlyConsumption": "amc",
+        "mos": "mos",
+        "suggestedQuantity": "suggested",
+        "requestedQuantity": "requested",
+        "approvedQuantity": "approvedQuantity",
+        "approvalComment": "approvalComment",
+        "supplyQuantity": "supplyQuantity",
+        "reason": "reason",
+        "alreadyIssued": "alreadyIssued",
+        "remainingQuantityToSupply": "remaining",
+        "pricePerUnit": "pricePerUnit",
+        "Indicative price": "indicativePrice",
+        "Preço indicativo": "indicativePrice",
+        "Prix indicatif": "indicativePrice",
+        "اشاره قیمت": "indicativePrice",
+        "قیمت تقریبی": "indicativePrice",
+        "ລາຄາຊີ້ບອກ": "indicativePrice"
+      }
+    },
+    {
+      "from": "purchase-order-detail-view",
+      "to": "purchase-order-detail-lines",
+      "columns": {
+        "lineNumber": "lineNumber",
+        "status": "status",
+        "item.code": "itemCode",
+        "item.name": "itemName",
+        "numberOfPacks": "numPacks",
+        "packSize": "requestedPackSize",
+        "item.unitName": "unitName",
+        "requestedNumberOfUnits": "requestedNumberOfUnits",
+        "shippedNumberOfUnits": "shippedNumberOfUnits",
+        "stockOnHand": "stockOnHand",
+        "unitsOrderedInOthers": "onOrder",
+        "totalCost": "lineCost",
+        "requestedDeliveryDate": "requestedDeliveryDate",
+        "expectedDeliveryDate": "expectedDeliveryDate"
+      }
+    },
+    {
+      "from": "inbound-shipments-list-in-purchase-order",
+      "to": "purchase-order-shipments",
+      "columns": {
+        "invoiceNumber": "invoiceNumber",
+        "otherPartyName": "supplier",
+        "status": "status",
+        "theirReference": "theirReference",
+        "createdDatetime": "createdDatetime",
+        "receivedDatetime": "receivedDatetime"
+      }
+    },
+    {
+      "from": "supplier-purchase-order",
+      "to": "names-supplier-purchase-orders",
+      "columns": {
+        "number": "number",
+        "createdDatetime": "createdDatetime",
+        "confirmedDatetime": "confirmedDatetime",
+        "status": "status",
+        "targetMonths": "targetMonths",
+        "lines.totalCount": "lines",
+        "comment": "comment"
+      }
+    },
+    {
+      "from": "supplier-contact",
+      "to": "names-contacts",
+      "columns": {
+        "firstName": "firstName",
+        "lastName": "lastName",
+        "position": "position",
+        "email": "email",
+        "phone": "phone",
+        "category1": "category1"
+      }
+    },
+    {
+      "from": "internal-order-list",
+      "to": "internal-orders",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "theirReference": "theirReference",
+        "status": "status",
+        "requisitionNumber": "requisitionNumber",
+        "createdDatetime": "createdDatetime",
+        "lines.totalCount": "countRows",
+        "programName": "program",
+        "orderType": "orderType",
+        "period": "period",
+        "comment": "comment",
+        "approvalStatus": "approvalStatus",
+        "numberOfShipments": null
+      }
+    },
+    {
+      "from": "internal-order-list",
+      "to": "requisitions",
+      "columns": {
+        "otherPartyName": "otherPartyName",
+        "status": "status",
+        "requisitionNumber": "requisitionNumber",
+        "createdDatetime": "createdDatetime",
+        "numberOfShipments": "shipments",
+        "comment": "comment",
+        "programName": "programName",
+        "orderType": "orderType",
+        "period": "period",
+        "approvalStatus": "approvalStatus",
+        "theirReference": null,
+        "lines.totalCount": null
+      }
+    },
+    {
+      "from": "name-list",
+      "to": "names-customers",
+      "columns": {
+        "code": "code",
+        "name": "name"
+      }
+    },
+    {
+      "from": "name-list",
+      "to": "names-suppliers",
+      "columns": {
+        "code": "code",
+        "name": "name"
+      }
+    },
+    {
+      "from": "stock-list",
+      "to": "stock-list",
+      "columns": {
+        "code": "itemCode",
+        "name": "itemName",
+        "masterList.name": "masterLists",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "manufactureDate": "manufactureDate",
+        "vvmStatus": "vvmStatus",
+        "location.code": "locationCode",
+        "location.name": "locationName",
+        "itemUnit": "unit",
+        "packSize": "packSize",
+        "totalNumberOfPacks": "numberOfPacks",
+        "SOH": "soh",
+        "Inventario Disponible (SOH)": "soh",
+        "المخزون المتوفر": "soh",
+        "Stock total (unités)": "soh",
+        "ສະຕ໋ອກຄົງເຫຼືອ": "soh",
+        "Estoque em Mão": "soh",
+        "Запасы в Наличии": "soh",
+        "availableStockOnHand": "availableStock",
+        "costPricePerPack": "costPricePerPack",
+        "sellPricePerPack": "sellPricePerPack",
+        "totalCost": "total",
+        "manufacturer": "manufacturer",
+        "campaign": "campaign",
+        "supplierName": "supplierName"
+      }
+    },
+    {
+      "from": "stock-movement-list",
+      "to": "stock-movements",
+      "columns": {
+        "stockMovementNumber": "stockMovementNumber",
+        "status": "status",
+        "lineCount": "lineCount",
+        "comment": "comment",
+        "createdDatetime": "createdDatetime",
+        "createdBy": "createdBy",
+        "finalisedDatetime": "finalisedDatetime"
+      }
+    },
+    {
+      "from": "stocktake-list",
+      "to": "stocktakes",
+      "columns": {
+        "stocktakeNumber": "stocktakeNumber",
+        "status": "status",
+        "description": "description",
+        "createdDatetime": "createdDatetime",
+        "comment": "comment"
+      }
+    },
+    {
+      "from": "item-list-view",
+      "to": "items",
+      "columns": {
+        "code": "code",
+        "name": "name",
+        "masterLists": "masterLists",
+        "unitName": "unit",
+        "stockOnHand": "stockOnHand",
+        "stats.averageMonthlyConsumption": "amc",
+        "stats.monthsOfStockOnHand": "monthsOfStock"
+      }
+    },
+    {
+      "from": "location-list",
+      "to": "locations",
+      "columns": {
+        "code": "code",
+        "name": "name",
+        "locationType": "locationType",
+        "volume": "volume",
+        "volumeUsed": "volumeUsed",
+        "onHold": "onHold"
+      }
+    },
+    {
+      "from": "master-list-view",
+      "to": "master-lists",
+      "columns": {
+        "name": "name",
+        "description": "description"
+      }
+    },
+    {
+      "from": "stock-movement-detail",
+      "to": "stock-movement-lines",
+      "columns": {
+        "stockLine.item.code": "itemCode",
+        "stockLine.item.name": "itemName",
+        "stockLine.batch": "batch",
+        "expiryDate": "expiryDate",
+        "stockLine.totalNumberOfPacks": "packsInStock",
+        "stockLine.packSize": "packSize",
+        "sourceLocation": "sourceLocation",
+        "destinationLocation": "destinationLocation",
+        "numberOfPacks": "numberOfPacks"
+      },
+      "groupRows": true
+    },
+    {
+      "from": "stocktake-detail",
+      "to": "stocktake-detail",
+      "columns": {
+        "item.code": "item.code",
+        "itemName": "itemName",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "manufactureDate": "manufactureDate",
+        "locationCode": "location",
+        "itemUnit": "itemUnit",
+        "packSize": "packSize",
+        "itemDoses": "dosesPerUnit",
+        "snapshotNumberOfPacks": "snapshotNumberOfPacks",
+        "countedNumberOfPacks": "countedNumberOfPacks",
+        "dosesCounted": "dosesCounted",
+        "difference": "difference",
+        "reason": "reason",
+        "donor": "donor",
+        "manufacturer": "manufacturer",
+        "campaign": "activity",
+        "comment": "comment"
+      }
+    },
+    {
+      "from": "item-detail-master-lists",
+      "to": "item-master-lists",
+      "columns": {
+        "code": "code",
+        "name": "name",
+        "description": "description"
+      }
+    },
+    {
+      "from": "item-ledger-table",
+      "to": "item-ledger",
+      "columns": {
+        "invoiceType": "type",
+        "invoiceNumber": "invoiceNumber",
+        "datetime": "date",
+        "time": "time",
+        "name": "name",
+        "invoiceStatus": "status",
+        "expiryDate": "expiry",
+        "batch": "batch",
+        "packSize": "packSize",
+        "numberOfPacks": "numberOfPacks",
+        "movementInUnits": "change",
+        "balance": "balance",
+        "costPricePerPack": "costPricePerPack",
+        "sellPricePerPack": "sellPricePerPack",
+        "totalBeforeTax": "totalBeforeTax",
+        "reason": "reason",
+        "user": "user"
+      }
+    },
+    {
+      "from": "ancillary-supplies",
+      "to": "item-ancillary-items",
+      "columns": {
+        "name": "name",
+        "code": "code",
+        "ratio": "ratio",
+        "delete": "delete"
+      }
+    },
+    {
+      "from": "stocktake-batches",
+      "to": "stocktake-line-edit",
+      "columns": {
+        "countThisLine": "countThisLine",
+        "batch": "batch",
+        "expiryDate": "expiryDate",
+        "manufactureDate": "manufactureDate",
+        "vvmStatus": "vvmStatus",
+        "packSize": "packSize",
+        "snapshotNumberOfPacks": "snapshotNumberOfPacks",
+        "countedNumberOfPacks": "countedNumberOfPacks",
+        "dosesCounted": "dosesCounted",
+        "volumePerPack": "volumePerPack",
+        "inventoryAdjustmentReasonInput": "inventoryAdjustmentReasonInput"
+      }
+    },
+    {
+      "from": "stocktake-pricing",
+      "to": "stocktake-line-edit",
+      "columns": {
+        "countThisLine": "countThisLine",
+        "batch": "batch",
+        "sellPricePerPack": "sellPricePerPack",
+        "costPricePerPack": "costPricePerPack"
+      }
+    },
+    {
+      "from": "stocktake-location",
+      "to": "stocktake-line-edit",
+      "columns": {
+        "countThisLine": "countThisLine",
+        "batch": "batch",
+        "location": "location",
+        "donor": "donor",
+        "campaignOrProgram": "activity",
+        "manufacturer": "manufacturer",
+        "comment": "comment"
+      }
+    },
+    {
+      "from": "patient-list",
+      "to": "patients",
+      "columns": {
+        "code": "code",
+        "code2": "code2",
+        "createdDatetime": "createdDatetime",
+        "firstName": "firstName",
+        "lastName": "lastName",
+        "gender": "gender",
+        "dateOfBirth": "dateOfBirth",
+        "nextOfKinName": "nextOfKinName",
+        "programEnrolmentName": "programEnrolments",
+        "isDeceased": "isDeceased"
+      }
+    },
+    {
+      "from": "encounter-list",
+      "to": "encounters",
+      "columns": {
+        "Type": "type",
+        "Program": "program",
+        "startDatetime": "startDatetime",
+        "patient.lastName": "patient",
+        "status": "status",
+        "events": "additionalInfo"
+      }
+    },
+    {
+      "from": "immunisation-list",
+      "to": "immunisation-programs",
+      "columns": {
+        "name": "name",
+        "vaccine-courses": "vaccineCourses"
+      }
+    },
+    {
+      "from": "clinician-list",
+      "to": "clinician-list",
+      "columns": {
+        "code": "code",
+        "firstName": "firstName",
+        "lastName": "lastName",
+        "initials": "initials",
+        "mobile": "mobile",
+        "gender": "gender"
+      }
+    },
+    {
+      "from": "campaign-list",
+      "to": "campaigns",
+      "columns": {
+        "name": "name",
+        "code": "code"
+      }
+    },
+    {
+      "from": "indicators-demographics-table",
+      "to": "demographics",
+      "columns": {
+        "name": "name",
+        "percentage": "percentage",
+        "population": "currentPopulation",
+        "year-1": "year1",
+        "year-2": "year2",
+        "year-3": "year3",
+        "year-4": "year4",
+        "year-5": "year5"
+      }
+    },
+    {
+      "from": "patient-insurance-list",
+      "to": "patient-insurance-list",
+      "columns": {
+        "policyNumber": "policyNumber",
+        "providerName": "providerName",
+        "policyType": "policyType",
+        "discountPercentage": "discountPercentage",
+        "expiryDate": "expiryDate",
+        "isActive": "status"
+      }
+    },
+    {
+      "from": "single-patient-encounter-list",
+      "to": "patient-encounter-list",
+      "columns": {
+        "Type": "type",
+        "Program": "program",
+        "startDatetime": "startDatetime",
+        "status": "status",
+        "events": "additionalInfo"
+      }
+    },
+    {
+      "from": "program-enrolment-list",
+      "to": "patient-program-enrolment-list",
+      "columns": {
+        "type": "program",
+        "programEnrolmentId": "programEnrolmentId",
+        "events": "additionalInfo",
+        "status": "status",
+        "enrolmentDatetime": "enrolmentDatetime"
+      }
+    },
+    {
+      "from": "vaccination-card-list",
+      "to": "patient-vaccination-card-list",
+      "columns": {
+        "type": "program",
+        "programEnrolmentId": "programEnrolmentId",
+        "status": "status",
+        "enrolmentDatetime": "enrolmentDatetime"
+      }
+    },
+    {
+      "from": "vaccine-course-list",
+      "to": "vaccine-courses",
+      "columns": {
+        "name": "name",
+        "demographic.name": "demographic",
+        "vaccineCourseDoses.length": "doses"
+      }
+    },
+    {
+      "from": "equipment-list",
+      "to": "equipment",
+      "columns": {
+        "store": "store",
+        "assetNumber": "assetNumber",
+        "categoryName": "category",
+        "type": "type",
+        "manufacturer": "manufacturer",
+        "model": "model",
+        "functionalStatus": "functionalStatus",
+        "serialNumber": "serialNumber",
+        "catalogueItem": "nonCatalogue",
+        "installationDate": "installationDate",
+        "replacementDate": "replacementDate",
+        "notes": "notes"
+      }
+    },
+    {
+      "from": "sensor-list",
+      "to": "sensors",
+      "columns": {
+        "name": "name",
+        "status": "status",
+        "cce": "cce",
+        "location.code": "location",
+        "serial": "serial",
+        "battery": "battery",
+        "lastReading": "lastReading",
+        "lastRecording": "lastRecording",
+        "type": "sensorType",
+        "breach": "breach"
+      }
+    },
+    {
+      "from": "temperature-breach-list",
+      "to": "temperature-breaches",
+      "columns": {
+        "icon": "status",
+        "unacknowledged": "statusLabel",
+        "sensor.name": "sensorName",
+        "location.code": "location",
+        "cce": null,
+        "datetime": "startDatetime",
+        "endDatetime": "endDatetime",
+        "duration": "duration",
+        "type": "type",
+        "temperature": "maxOrMinTemperature"
+      }
+    },
+    {
+      "from": "temperature-log-list",
+      "to": "temperature-logs",
+      "columns": {
+        "datetime": "datetime",
+        "sensor.name": "sensorName",
+        "location.code": "location",
+        "cce": null,
+        "temperature": "temperature",
+        "temperatureBreach.type": "breachType"
+      }
+    },
+    {
+      "from": "asset-list-view",
+      "to": "asset-catalogue",
+      "columns": {
+        "subCatalogue": "subCatalogue",
+        "code": "code",
+        "typeId": "typeId",
+        "manufacturer": "manufacturer",
+        "model": "model",
+        "classId": "classId",
+        "categoryId": "categoryId"
+      }
+    },
+    {
+      "from": "asset-log-reasons-list",
+      "to": "asset-log-reasons",
+      "columns": {
+        "assetLogStatus": "assetLogStatus",
+        "reason": "reason",
+        "commentsRequired": "commentsRequired"
+      }
+    },
+    {
+      "from": "stores-list",
+      "to": "facility-register",
+      "columns": {
+        "code": "code",
+        "name": "name",
+        "isSupplier": "isSupplier",
+        "isCustomer": "isCustomer",
+        "isDonor": "isDonor"
+      }
+    },
+    {
+      "from": "site-list",
+      "to": "sites",
+      "columns": {
+        "code": "code",
+        "name": "name",
+        "hardwareId": "hardwareId",
+        "syncVersion": "syncVersion",
+        "appVersion": "appVersion",
+        "lastConnectionDatetime": "lastConnectionDatetime",
+        "lastSyncDatetime": "lastSyncDatetime"
+      }
+    },
+    {
+      "from": "sync-message-list",
+      "to": "sync-messages",
+      "columns": {
+        "fromStore": "fromStore",
+        "toStore": "toStore",
+        "createdDatetime": "createdDatetime",
+        "status": "status",
+        "type": "type",
+        "errorMessage": "errorMessage"
+      }
+    },
+    {
+      "from": "reports-list",
+      "to": "manage-reports",
+      "columns": {
+        "name": "name",
+        "code": "code",
+        "version": "version",
+        "isActive": "isActive",
+        "isCustom": "isCustom"
+      }
+    },
+    {
+      "from": "plugins-list",
+      "to": "plugins",
+      "columns": {
+        "code": "code",
+        "version": "version",
+        "kind": "kind",
+        "hostRuntime": "runtime",
+        "types": "types",
+        "configure": "actions",
+        "actions": null
+      }
+    },
+    {
+      "from": "help-document-list",
+      "to": "help-documents",
+      "columns": {
+        "title": "title",
+        "fileName": "filename",
+        "createdDatetime": "createdDatetime"
+      }
+    },
+    {
+      "from": "activity-log-list",
+      "to": "activity-log",
+      "columns": {
+        "datetime": "datetime",
+        "time": "time",
+        "username": "user",
+        "type": "event",
+        "changeDetails": "details"
+      }
+    },
+    {
+      "from": "custom-field-config-item",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-customer",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-supplier",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-patient",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-inbound_shipment",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-outbound_shipment",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-prescription",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-prescription_request",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-supplier_return",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    },
+    {
+      "from": "custom-field-config-customer_return",
+      "to": "custom-field-config",
+      "columns": {
+        "name": "name",
+        "type": "type",
+        "visible": "visible",
+        "prominent": "prominent"
+      }
+    }
+  ]
 }
