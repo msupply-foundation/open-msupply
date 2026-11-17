@@ -4,7 +4,7 @@ import { useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { MAX_UPLOAD_BYTES, uploadFile } from '@/api/postFiles';
 import { fileUrl } from '@/config';
-import { formatFileSize, formatNumber, t } from '@/intl';
+import { formatNumber, t } from '@/intl';
 import { saveDocument } from '@/platform/openDocument';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -16,7 +16,7 @@ import { HStack } from '@/ui/layout/Stack/HStack';
 import { Text } from '@/ui/elements/typography/Text';
 import { Button } from '@/ui/elements/buttons/Button';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
-import { chooseOne } from '@/ui/elements/inputs/uploadFiles';
+import { chooseOne, tooLargeMessage } from '@/ui/elements/inputs/uploadFiles';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import {
@@ -233,10 +233,7 @@ const CentralDataPage: Component = () => {
                               const { file, reason } = pick.rejection;
                               setImportError(
                                 reason === 'size'
-                                  ? t('error.file-exceeds-size-limit', {
-                                      filename: file.name,
-                                      maxSize: formatFileSize(MAX_UPLOAD_BYTES),
-                                    })
+                                  ? tooLargeMessage(file.name, MAX_UPLOAD_BYTES)
                                   : t('error.central-data-xlsx-only')
                               );
                             }

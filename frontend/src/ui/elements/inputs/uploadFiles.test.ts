@@ -1,5 +1,17 @@
-import { describe, expect, it } from 'vitest';
-import { chooseOne, partitionFiles, type FileLike } from './uploadFiles';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  chooseOne,
+  partitionFiles,
+  tooLargeMessage,
+  type FileLike,
+} from './uploadFiles';
+
+// A message reads as its key and values, so a test pins which message.
+vi.mock('../../../intl', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../intl')>()),
+  t: (key: string, params?: Record<string, string>) =>
+    `${key} ${JSON.stringify(params)}`,
+}));
 
 const file = (name: string, type: string, size: number): FileLike => ({
   name,
@@ -84,5 +96,13 @@ describe('chooseOne', () => {
     expect(chooseOne([pdf], [{ file: exe, reason: 'type' }])).toEqual({
       kind: 'none',
     });
+  });
+});
+
+describe('tooLargeMessage', () => {
+  it('names the file and the limit, as a size', () => {
+    expect(tooLargeMessage('scan.pdf', 50 * 1024 * 1024)).toBe(
+      'error.file-exceeds-size-limit {"filename":"scan.pdf","maxSize":"50.0 MB"}'
+    );
   });
 });

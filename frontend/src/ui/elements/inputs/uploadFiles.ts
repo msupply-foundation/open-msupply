@@ -4,6 +4,8 @@
 // on, so a photo reported as image/jpeg with a .jfif name, or a CSV reported
 // with an Excel MIME type, is judged the same way in both apps.
 
+import { formatFileSize, t } from '../../../intl';
+
 /** The subset of `File` this logic reads (real `File`s satisfy it). */
 export interface FileLike {
   name: string;
@@ -89,3 +91,10 @@ export const chooseOne = <F extends FileLike>(
   const [rejection] = rejected;
   return rejection ? { kind: 'refused', rejection } : { kind: 'none' };
 };
+
+/** The refusal of a file over `maxBytes`, naming the file and the limit. */
+export const tooLargeMessage = (fileName: string, maxBytes: number) =>
+  t('error.file-exceeds-size-limit', {
+    filename: fileName,
+    maxSize: formatFileSize(maxBytes),
+  });

@@ -7,7 +7,7 @@ import {
   type GraphqlErrorItem,
 } from '@/api/graphql';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
-import { formatFileSize, t } from '@/intl';
+import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
@@ -20,6 +20,7 @@ import { Select } from '@/ui/elements/selectors/Select';
 import { Text } from '@/ui/elements/typography/Text';
 import {
   chooseOne,
+  tooLargeMessage,
   type FileRejection,
 } from '@/ui/elements/inputs/uploadFiles';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -290,10 +291,7 @@ export const UploadPluginDialog = (props: {
 
   const refusalText = (rejection: FileRejection<File>): string =>
     rejection.reason === 'size'
-      ? t('error.file-exceeds-size-limit', {
-          filename: rejection.file.name,
-          maxSize: formatFileSize(MAX_UPLOAD_BYTES),
-        })
+      ? tooLargeMessage(rejection.file.name, MAX_UPLOAD_BYTES)
       : t('error.plugin-invalid-file');
 
   // Install plugin waits for every choice the preview asks (rules › a bundle
