@@ -12,6 +12,7 @@ import {
  */
 
 interface UploadZoneProps {
+  loading?: boolean;
   onPick: (
     accepted: File[],
     rejected: { file: File; reason: 'type' | 'size' }[]
@@ -25,6 +26,7 @@ interface PreviewCardProps {
   preview: { fileId: string; fileName: string; summary: unknown };
 }
 interface PreviewFooterProps extends PreviewCardProps {
+  busy: boolean;
   onConfirm: () => void;
   onDownloadErrors: () => void;
 }
@@ -346,6 +348,24 @@ describe('CentralDataPage import', () => {
     expect(alerts()).toEqual([]);
   });
 
+  it('shows the zone working while the chosen file uploads and previews (OMS-REG-CDIO-01.101)', async () => {
+    let uploaded!: (result: unknown) => void;
+    uploadFile.mockReturnValueOnce(
+      new Promise(resolve => (uploaded = resolve))
+    );
+    open();
+    expect(shown.zone!.loading).toBe(false);
+
+    shown.zone!.onPick([xlsx()], []);
+    render();
+    expect(shown.zone!.loading).toBe(true);
+
+    uploaded({ kind: 'failed', message: 'offline' });
+    await settle();
+    render();
+    expect(shown.zone!.loading).toBe(false);
+  });
+
   it('suggests starting from an export until a file is chosen (OMS-REG-CDIO-01.75)', async () => {
     uploadFile.mockResolvedValue({ kind: 'uploaded', fileId: 'f1' });
     graphqlFetch.mockResolvedValueOnce(answer('importPreview', summary()));
@@ -503,19 +523,69 @@ describe('CentralDataPage import', () => {
     ]);
   });
 
-  // No anchor: a failed call is the global error modal's to report
-  // (centralDataLogic's `failed`), so this pins only that the page keeps the
-  // preview for a retry rather than dropping it.
-  it('keeps the preview when the import call fails', async () => {
+  // The failed call itself is the global error modal's to report
+  // (centralDataLogic's `failed`); the page must not offer Import again on
+  // counts the import may already have applied.
+  it('previews the file again when the import call fails, holding Import until it returns (OMS-REG-CDIO-01.102)', async () => {
     await previewed();
-    graphqlFetch.mockResolvedValueOnce({ kind: 'unexpectedError' });
+    // The import landed but its reply was lost: nothing is left to change.
+    const applied = {
+      ...summary(),
+      tables: [{ ...summary().tables[0], updated: 0, unchanged: 3 }],
+      changes: [],
+    };
+    let rechecked!: (result: unknown) => void;
+    graphqlFetch
+      .mockResolvedValueOnce({ kind: 'unexpectedError' })
+      .mockReturnValueOnce(new Promise(resolve => (rechecked = resolve)));
+
+    shown.footer!.onConfirm();
+    await settle();
+    render();
+    expect(graphqlFetch).toHaveBeenLastCalledWith(CentralDataImportPreview, {
+      fileId: 'f1',
+    });
+    // Import stays busy on the old counts until the fresh preview is in.
+    expect(shown.footer!.busy).toBe(true);
+
+    rechecked(answer('importPreview', applied));
+    await settle();
+    render();
+    expect(shown.footer!.busy).toBe(false);
+    expect(shown.previewCard!.preview).toEqual({
+      fileId: 'f1',
+      fileName: 'units.xlsx',
+      summary: applied,
+    });
+    expect(alerts()).toEqual([
+      [
+        'central-data-import-rechecked',
+        'messages.central-data-import-rechecked',
+      ],
+    ]);
+
+    // Choosing another file clears the banner with the preview.
+    shown.buttons['central-data-choose-another']!.onClick();
+    render();
+    expect(alerts()).toEqual([]);
+  });
+
+  it('closes the preview and asks for the file again when the check after a failed import fails too (OMS-REG-CDIO-01.103)', async () => {
+    await previewed();
+    graphqlFetch
+      .mockResolvedValueOnce({ kind: 'unexpectedError' })
+      .mockResolvedValueOnce({ kind: 'unexpectedError' });
 
     shown.footer!.onConfirm();
     await settle();
     render();
 
-    expect(shown.previewCard!.preview.fileId).toBe('f1');
-    expect(alerts()).toEqual([]);
+    expect(shown.previewCard).toBeUndefined();
+    expect(shown.footer).toBeUndefined();
+    expect(shown.zone!.loading).toBe(false);
+    expect(alerts()).toEqual([
+      ['central-data-import-error', 'error.central-data-import-unconfirmed'],
+    ]);
   });
 
   it('refuses a workbook over the row cap, naming its rows and the limit (OMS-REG-CDIO-01.7)', async () => {

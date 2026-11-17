@@ -49,6 +49,8 @@ import {
 const CentralDataPage: Component = () => {
   const [busy, setBusy] = createSignal(false);
   const [importError, setImportError] = createSignal<string>();
+  // After an Import whose reply was lost, that the preview was run again.
+  const [rechecked, setRechecked] = createSignal(false);
   const [preview, setPreview] = createSignal<Preview>();
   const [imported, setImported] = createSignal<ReturnType<typeof totals>>();
   const [downloadingErrors, setDownloadingErrors] = createSignal(false);
@@ -135,6 +137,7 @@ const CentralDataPage: Component = () => {
 
   const confirm = async (current: Preview) => {
     setBusy(true);
+    setRechecked(false);
     const outcome = importOutcome(
       unwrap(
         await graphqlFetch(CentralDataImport, { fileId: current.fileId }),
@@ -147,8 +150,30 @@ const CentralDataPage: Component = () => {
     } else if (outcome.kind === 'summary') {
       // The import's own check found errors; nothing was applied.
       setPreview({ ...current, summary: outcome.summary });
-    } else if (outcome.kind !== 'failed') refuse(outcome);
+    } else if (outcome.kind === 'failed') await recheck(current);
+    else refuse(outcome);
     setBusy(false);
+  };
+
+  /** A failed Import call may still have applied the import, so Import isn't
+   *  offered again until a fresh preview shows what the file still changes. */
+  const recheck = async (current: Preview) => {
+    const outcome = importOutcome(
+      unwrap(
+        await graphqlFetch(CentralDataImportPreview, {
+          fileId: current.fileId,
+        }),
+        data => data.centralServer.centralData.importPreview
+      )
+    );
+    if (outcome.kind === 'summary') {
+      setPreview({ ...current, summary: outcome.summary });
+      setRechecked(true);
+    } else if (outcome.kind === 'failed') {
+      // Still unknown: choosing the file again previews it afresh.
+      setPreview(undefined);
+      setImportError(t('error.central-data-import-unconfirmed'));
+    } else refuse(outcome);
   };
 
   return (
@@ -193,13 +218,14 @@ const CentralDataPage: Component = () => {
                           multiple={false}
                           accept={IMPORT_ACCEPT}
                           maxSize={MAX_UPLOAD_BYTES}
-                          disabled={busy()}
+                          loading={busy()}
                           inputTestId="central-data-import-input"
                           onPick={(accepted, rejected) => {
                             const pick = chooseOne(accepted, rejected);
                             if (pick.kind === 'none') return;
                             setPreview(undefined);
                             setImported(undefined);
+                            setRechecked(false);
                             if (pick.kind === 'chosen') {
                               setImportError(undefined);
                               void choose(pick.file);
@@ -229,6 +255,7 @@ const CentralDataPage: Component = () => {
                           onClick={() => {
                             setPreview(undefined);
                             setImportError(undefined);
+                            setRechecked(false);
                           }}
                         >
                           {t('button.choose-another-file')}
@@ -239,6 +266,14 @@ const CentralDataPage: Component = () => {
                   <Show when={importError()}>
                     <Alert severity="error" testId="central-data-import-error">
                       {importError()}
+                    </Alert>
+                  </Show>
+                  <Show when={rechecked()}>
+                    <Alert
+                      severity="warning"
+                      testId="central-data-import-rechecked"
+                    >
+                      {t('messages.central-data-import-rechecked')}
                     </Alert>
                   </Show>
                 </Stack>
