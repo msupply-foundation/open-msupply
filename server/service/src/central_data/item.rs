@@ -9,14 +9,15 @@ use super::{
 };
 use crate::{
     i64_to_u32,
-    item::upsert::{ItemLookup, UpsertItemError, upsert_item_in},
-    location_type::LocationTypeLookup,
-    unit::{UnitLookup, active_first},
+    item::upsert::{UpsertItemError, upsert_item},
+    unit::active_first,
 };
 use repository::{
-    ItemFilter, ItemRepository, ItemRow, ItemSortField, ItemType, Pagination, RepositoryError,
-    Sort, StorageConnection, StringFilter, VENCategory,
+    ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemSortField, ItemType,
+    LocationTypeRowRepository, Pagination, RepositoryError, Sort, StorageConnection, StringFilter,
+    UnitRowRepository, VENCategory,
 };
+use std::collections::HashMap;
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -103,8 +104,7 @@ impl ImportTable for ItemTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        let units = UnitLookup::load_all(connection)?;
-        let location_types = LocationTypeLookup::load_all(connection)?;
+        let names = ReferenceNames::load(connection)?;
         let repo = ItemRepository::new(connection);
         let filter = item_filter(filter);
         let mut rows = Vec::new();
@@ -123,10 +123,7 @@ impl ImportTable for ItemTable {
                 None,
             )?;
             let done = page.len() < EXPORT_PAGE as usize;
-            rows.extend(
-                page.into_iter()
-                    .map(|item| cells(&item.item_row, &units, &location_types)),
-            );
+            rows.extend(page.into_iter().map(|item| cells(&item.item_row, &names)));
             if done {
                 return Ok(rows);
             }
@@ -150,17 +147,37 @@ impl ImportTable for ItemTable {
         connection: &StorageConnection,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(ItemSheet {
-            items: ItemLookup::load_all(connection)?,
-            units: UnitLookup::load_all(connection)?,
-            location_types: LocationTypeLookup::load_all(connection)?,
+            names: ReferenceNames::load(connection)?,
         }))
     }
 }
 
 struct ItemSheet {
-    items: ItemLookup,
-    units: UnitLookup,
-    location_types: LocationTypeLookup,
+    names: ReferenceNames,
+}
+
+/// Unit names and location type codes by id, for the cells that show them. Both tables are
+/// small, and their sheets come before the item sheet, so they don't change while it runs.
+struct ReferenceNames {
+    units: HashMap<String, String>,
+    location_types: HashMap<String, String>,
+}
+
+impl ReferenceNames {
+    fn load(connection: &StorageConnection) -> Result<Self, RepositoryError> {
+        Ok(Self {
+            units: UnitRowRepository::new(connection)
+                .find_all()?
+                .into_iter()
+                .map(|unit| (unit.id, unit.name))
+                .collect(),
+            location_types: LocationTypeRowRepository::new(connection)
+                .find_all()?
+                .into_iter()
+                .map(|location_type| (location_type.id, location_type.code))
+                .collect(),
+        })
+    }
 }
 
 impl SheetImport for ItemSheet {
@@ -179,30 +196,36 @@ impl SheetImport for ItemSheet {
         let volume_per_pack = collect(&mut errors, row.number(VOLUME_PER_PACK));
         let unit_id = collect(
             &mut errors,
-            find_reference(&self.units, row, UNIT_NAME, UNIT_ID, active_first),
+            find_reference(
+                &UnitRowRepository::new(connection),
+                row,
+                UNIT_NAME,
+                UNIT_ID,
+                active_first,
+            )?,
         );
         let location_type_id = collect(
             &mut errors,
             find_reference(
-                &self.location_types,
+                &LocationTypeRowRepository::new(connection),
                 row,
                 LOCATION_TYPE_CODE,
                 LOCATION_TYPE_ID,
                 std::convert::identity,
-            ),
+            )?,
         );
         let id = row.text(ID);
         let code = row.text(CODE);
 
         // Without its record, the row's other checks would treat it as a new item.
         let existing = match find_record(
-            &self.items,
+            &ItemRowRepository::new(connection),
             row,
             CODE,
             id.as_deref(),
             code.as_deref(),
             |saved| &saved.name,
-        ) {
+        )? {
             Ok(existing) => existing,
             Err(e) => {
                 errors.push(e);
@@ -280,23 +303,22 @@ impl SheetImport for ItemSheet {
                 UNIVERSAL_CODE,
                 saved.and_then(|item| item.universal_code.as_deref()),
             ),
-            // No column: `upsert_item_in` keeps the saved one.
+            // No column: `upsert_item` keeps the saved one.
             legacy_record: String::new(),
             custom_fields: saved.and_then(|item| item.custom_fields.clone()),
         };
 
         let change = Change::between(existing.as_ref(), &item, |item| item.is_active);
         if change != Change::Unchanged {
-            upsert_item_in(connection, &mut self.items, &item)
-                .map_err(|error| upsert_failure(row, error))?;
+            upsert_item(connection, &item).map_err(|error| upsert_failure(row, error))?;
         }
         Ok(RowOutcome {
             fields: existing
                 .map(|saved| {
                     field_changes(
                         COLUMNS,
-                        cells(&saved, &self.units, &self.location_types),
-                        cells(&item, &self.units, &self.location_types),
+                        cells(&saved, &self.names),
+                        cells(&item, &self.names),
                     )
                 })
                 .unwrap_or_default(),
@@ -308,17 +330,17 @@ impl SheetImport for ItemSheet {
 }
 
 /// One per column, as the export writes them and the preview shows them.
-fn cells(item: &ItemRow, units: &UnitLookup, location_types: &LocationTypeLookup) -> Vec<Value> {
+fn cells(item: &ItemRow, names: &ReferenceNames) -> Vec<Value> {
     let unit_name = item
         .unit_id
         .as_deref()
-        .and_then(|id| units.by_id(id))
-        .map(|unit| unit.name.clone());
+        .and_then(|id| names.units.get(id))
+        .cloned();
     let location_type_code = item
         .restricted_location_type_id
         .as_deref()
-        .and_then(|id| location_types.by_id(id))
-        .map(|location_type| location_type.code.clone());
+        .and_then(|id| names.location_types.get(id))
+        .cloned();
     vec![
         item.id.clone().into(),
         item.code.clone().into(),

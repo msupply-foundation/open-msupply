@@ -11,7 +11,7 @@ import {
 import { createStore } from 'solid-js/store';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -70,7 +70,7 @@ import { runUpdateStockLine } from '../stockApi';
 import { totalVolume } from '../stockCalc';
 import { todayCalendarDate } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
-import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import {
   StockLineById,
   type StockLineDetailFragment,
@@ -163,12 +163,14 @@ const StockLineDetailView: Component = () => {
         storeId: v.storeId,
         id: { equalTo: v.stockLineId },
       });
+      // A failed read resolves undefined (the global error modal's case); an
+      // id that is no line of this store's resolves null — the not-found
+      // notice (api/gated.ts › notFound, #1746).
       if (result.kind !== 'success') return undefined;
-      const node = result.data.stockLines.nodes[0];
-      return node;
+      return result.data.stockLines.nodes[0] ?? null;
     }
   );
-  const line = (): Line | undefined => data.latest;
+  const line = (): Line | undefined => data.latest ?? undefined;
 
   // Seed the editable draft from a line: sets the draft and records the seeded
   // id. Called on load / line-id change (the effect below) and after a save
@@ -393,15 +395,19 @@ const StockLineDetailView: Component = () => {
           Suspense boundary won't fire on the initial load — the Show's own
           fallback shows the first-load spinner, or a not-found state once the
           fetch has resolved to nothing (a stale/other-store id —
-          OMS-REG-INV-02.49). */}
+          OMS-REG-INV-02.49). A failed read keeps the spinner, under the global
+          error modal (#1746). */}
       <Show
         when={line()}
         fallback={
-          data.loading ? (
-            <Spinner center />
-          ) : (
-            <EmptyState message={t('error.stock-not-found')} />
-          )
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="stock-line-not-found-notice"
+              title={t('error.stock-not-found')}
+              description={t('messages.click-to-return-to-stock')}
+              onClose={() => navigate(`/${params.storeId}/inventory/stock`)}
+            />
+          </Show>
         }
       >
         {l => (

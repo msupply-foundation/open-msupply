@@ -11,12 +11,13 @@ use graphql_core::{
     ContextExt,
     loader::{
         AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
-        AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
-        ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
-        ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
-        ItemsStockOnHandLoaderInput, LocationTypeLoader, MasterListByItemIdLoader,
-        MasterListByItemIdLoaderInput, ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput,
-        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput, WarningLoader,
+        AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDefaultPriceLoader,
+        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
+        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
+        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -286,6 +287,15 @@ impl ItemNode {
             .get(&self.row().id)
             .copied()
             .unwrap_or(0.0))
+    }
+
+    /// The item's price per unit on the default price list, null when it is on none.
+    /// The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+    /// charges a patient for each unit of a stock-out line. Not store-specific: the
+    /// default price list is the same in every store.
+    pub async fn default_price_per_unit(&self, ctx: &Context<'_>) -> Result<Option<f64>> {
+        let loader = ctx.get_loader::<DataLoader<ItemDefaultPriceLoader>>();
+        Ok(loader.load_one(self.row().id.clone()).await?)
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {

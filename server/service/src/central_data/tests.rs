@@ -243,7 +243,7 @@ async fn an_errors_file_keeps_every_row_in_place_and_imports_once_fixed() {
                     "Jar",
                     "2",
                     "yes",
-                    "is_active: \"yes\" must be TRUE or FALSE"
+                    "is_active: \"yes\" must be TRUE, FALSE, 1 or 0"
                 ]
             ),
         ]
@@ -1333,7 +1333,7 @@ async fn a_code_finds_a_location_type_an_earlier_row_adds() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.12, .35, .63, .75, .77
+// covers: OMS-REG-CDIO-01.12, .35, .63, .77, .79
 
 #[actix_rt::test]
 async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
@@ -1878,7 +1878,7 @@ async fn an_item_export_searches_code_and_name_and_filters_by_status() {
     assert_eq!(matching(Some(""), None), 2);
 }
 
-// covers: OMS-REG-CDIO-01.12, .35, .37, .58, .63, .79, .81, .84, .86
+// covers: OMS-REG-CDIO-01.12, .35, .37, .58, .63, .81, .84, .86, .87
 
 #[actix_rt::test]
 async fn item_rows_add_and_update_by_code() {
@@ -2381,7 +2381,7 @@ async fn blank_optional_item_cells_save_defaults() {
     assert!(!find_item(&connection, "PLAIN").is_vaccine);
 }
 
-// covers: OMS-REG-CDIO-01.79
+// covers: OMS-REG-CDIO-01.87
 
 #[actix_rt::test]
 async fn a_saved_item_with_a_pack_size_of_0_can_be_renamed_but_not_given_one() {

@@ -2,7 +2,10 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_consumption_estimate_table;
+mod add_item_trim_code_index;
 mod add_location_type_fk_indexes;
+mod add_location_type_trim_code_index;
+mod add_unit_trim_name_index;
 
 pub(crate) struct V3_05_00;
 
@@ -19,6 +22,9 @@ impl Migration for V3_05_00 {
         vec![
             Box::new(add_consumption_estimate_table::Migrate),
             Box::new(add_location_type_fk_indexes::Migrate),
+            Box::new(add_location_type_trim_code_index::Migrate),
+            Box::new(add_unit_trim_name_index::Migrate),
+            Box::new(add_item_trim_code_index::Migrate),
         ]
     }
 }

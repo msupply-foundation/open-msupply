@@ -1,5 +1,70 @@
 use super::cells::{Row, RowError};
-use crate::keyed_lookup::{Keyed, KeyedLookup};
+use repository::{
+    ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, RepositoryError,
+    UnitRow, UnitRowRepository,
+};
+
+/// A table a row finds records in, by id or by a lookup key such as a code or name.
+pub trait KeyedTable {
+    type Record;
+    fn id(record: &Self::Record) -> &str;
+    fn key(record: &Self::Record) -> &str;
+    fn find_by_id(&self, id: &str) -> Result<Option<Self::Record>, RepositoryError>;
+    /// Letter case counts; spaces around either key don't.
+    fn find_by_key(&self, key: &str) -> Result<Vec<Self::Record>, RepositoryError>;
+}
+
+/// Looked up by name.
+impl KeyedTable for UnitRowRepository<'_> {
+    type Record = UnitRow;
+    fn id(unit: &UnitRow) -> &str {
+        &unit.id
+    }
+    fn key(unit: &UnitRow) -> &str {
+        &unit.name
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, name: &str) -> Result<Vec<UnitRow>, RepositoryError> {
+        self.find_by_trimmed_name(name)
+    }
+}
+
+/// Looked up by code.
+impl KeyedTable for LocationTypeRowRepository<'_> {
+    type Record = LocationTypeRow;
+    fn id(location_type: &LocationTypeRow) -> &str {
+        &location_type.id
+    }
+    fn key(location_type: &LocationTypeRow) -> &str {
+        &location_type.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<LocationTypeRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        self.find_by_trimmed_code(code)
+    }
+}
+
+/// Looked up by code. Each item comes with an empty `legacy_record`, as it's most of an item's
+/// size and the import never changes it.
+impl KeyedTable for ItemRowRepository<'_> {
+    type Record = ItemRow;
+    fn id(item: &ItemRow) -> &str {
+        &item.id
+    }
+    fn key(item: &ItemRow) -> &str {
+        &item.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        self.find_one_by_id_without_legacy_record(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<ItemRow>, RepositoryError> {
+        self.find_by_trimmed_code_without_legacy_record(code)
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub enum LookupError {
@@ -36,73 +101,81 @@ pub fn record_conflict(
     )
 }
 
-/// The saved record a row changes, by id, else by its lookup key in `column`. `None` for a row
-/// that adds one. `name` names the saved record in a conflict.
-pub fn find_record<R: Keyed + Clone>(
-    lookup: &KeyedLookup<R>,
+/// The saved record a row changes, by id, else by its lookup key in `column`. `Ok(None)` for a
+/// row that adds one. `name` names the saved record in a conflict.
+pub fn find_record<T: KeyedTable>(
+    table: &T,
     row: &Row,
     column: &str,
     id: Option<&str>,
     key: Option<&str>,
-    name: impl Fn(&R) -> &str,
-) -> Result<Option<R>, RowError> {
-    let conflict = |saved: &R, id: &str, key: &str| {
+    name: impl Fn(&T::Record) -> &str,
+) -> Result<Result<Option<T::Record>, RowError>, RepositoryError> {
+    let conflict = |saved: &T::Record, id: &str, key: &str| {
         row.error(
             column,
-            record_conflict(column, name(saved), saved.key(), saved.id(), key, id),
+            record_conflict(column, name(saved), T::key(saved), T::id(saved), key, id),
         )
     };
     let Some(key) = key else {
-        return Ok(id.and_then(|id| lookup.by_id(id)).cloned());
+        return Ok(Ok(match id {
+            Some(id) => table.find_by_id(id)?,
+            None => None,
+        }));
     };
-    let by_key = lookup.by_key(key);
-    match id {
-        Some(id) => match lookup.by_id(id) {
-            Some(saved) if saved.key().trim() != key => Err(conflict(saved, id, key)),
-            Some(saved) => Ok(Some(saved.clone())),
+    let by_key = table.find_by_key(key)?;
+    Ok(match id {
+        Some(id) => match table.find_by_id(id)? {
+            Some(saved) if T::key(&saved).trim() != key => Err(conflict(&saved, id, key)),
+            Some(saved) => Ok(Some(saved)),
             // A new id beside a saved key is a copied row with one column edited.
             None => match by_key.first() {
                 Some(saved) => Err(conflict(saved, id, key)),
                 None => Ok(None),
             },
         },
-        None => match by_key.as_slice() {
-            [] => Ok(None),
-            [saved] => Ok(Some((*saved).clone())),
-            _ => Err(row.error(column, LookupError::Ambiguous.message(key))),
-        },
-    }
+        None if by_key.len() > 1 => Err(row.error(column, LookupError::Ambiguous.message(key))),
+        None => Ok(by_key.into_iter().next()),
+    })
 }
 
 /// A reference to another table's record, given by a code column, an id column or both. `None`
 /// when the sheet has neither column, so the saved reference is kept; `Some(None)` clears it.
 /// `narrow` picks among the records a code alone matches, as an id settles which one is meant.
-pub fn find_reference<'a, R: Keyed>(
-    lookup: &'a KeyedLookup<R>,
+pub fn find_reference<T: KeyedTable>(
+    table: &T,
     row: &Row,
     code_column: &str,
     id_column: &str,
-    narrow: impl Fn(Vec<&'a R>) -> Vec<&'a R>,
-) -> Result<Option<Option<String>>, RowError> {
+    narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
+) -> Result<Result<Option<Option<String>>, RowError>, RepositoryError> {
     if !row.has(code_column) && !row.has(id_column) {
-        return Ok(None);
+        return Ok(Ok(None));
     }
     let id = row.text(id_column);
     let code = row.text(code_column);
-    let id_exists = id.as_deref().is_some_and(|id| lookup.by_id(id).is_some());
-    let code_matches: Option<Vec<String>> = code.as_deref().map(|code| {
-        let matches = lookup.by_key(code);
-        let matches = if id.is_some() {
-            matches
-        } else {
-            narrow(matches)
-        };
-        matches
-            .into_iter()
-            .map(|record| record.id().to_string())
-            .collect()
-    });
-    resolve(id.as_deref(), id_exists, code_matches.as_deref())
+    let id_exists = match id.as_deref() {
+        Some(id) => table.find_by_id(id)?.is_some(),
+        None => false,
+    };
+    let code_matches: Option<Vec<String>> = match code.as_deref() {
+        Some(code) => {
+            let matches = table.find_by_key(code)?;
+            let matches = if id.is_some() {
+                matches
+            } else {
+                narrow(matches)
+            };
+            Some(
+                matches
+                    .iter()
+                    .map(|record| T::id(record).to_string())
+                    .collect(),
+            )
+        }
+        None => None,
+    };
+    Ok(resolve(id.as_deref(), id_exists, code_matches.as_deref())
         .map(Some)
         .map_err(|error| {
             let column = if id.is_some() && !id_exists {
@@ -111,7 +184,7 @@ pub fn find_reference<'a, R: Keyed>(
                 code_column
             };
             row.error(column, error.message(code.as_deref().unwrap_or_default()))
-        })
+        }))
 }
 
 /// `code_matches` holds the ids the code matched, `None` when no code was given. Given both, id

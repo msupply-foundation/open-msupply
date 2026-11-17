@@ -1,6 +1,6 @@
 use crate::{
-    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
-    db_diesel::changelog::ChangelogRepository,
+    ChangelogSyncType, ChangelogTableName, DBType, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, trim,
 };
 
 use super::{
@@ -184,9 +184,33 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result?)
     }
 
-    /// Every item with `legacy_record` empty, without reading the legacy JSON.
-    pub fn find_all_without_legacy_record(&self) -> Result<Vec<ItemRow>, RepositoryError> {
-        let result = item
+    pub fn find_one_by_id_without_legacy_record(
+        &self,
+        item_id: &str,
+    ) -> Result<Option<ItemRow>, RepositoryError> {
+        Ok(self
+            .without_legacy_record(item.filter(id.eq(item_id)).into_boxed())?
+            .pop())
+    }
+
+    /// Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code_without_legacy_record(
+        &self,
+        item_code: &str,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        self.without_legacy_record(
+            item.filter(trim(code).eq(item_code.trim()))
+                .order(id.asc())
+                .into_boxed(),
+        )
+    }
+
+    /// `query`'s items with `legacy_record` empty, without reading the legacy JSON.
+    fn without_legacy_record(
+        &self,
+        query: item::BoxedQuery<'_, DBType>,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = query
             .select((
                 id,
                 name,

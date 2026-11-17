@@ -1296,6 +1296,7 @@
   "messages.click-to-return-to-returns": "No se puede encontrar una devolución con ese ID. Haz clic en OK para volver a la lista de devoluciones",
   "messages.click-to-return-to-rnr-list": "Haz clic aquí para volver a la lista de formularios R&R",
   "messages.click-to-return-to-shipments": "No se puede encontrar un envío con ese ID. Haz clic en Aceptar para volver a la lista de envíos",
+  "messages.click-to-return-to-stock": "No se puede encontrar una línea de inventario con ese ID. Haz clic en Aceptar para volver a la lista de inventario",
   "messages.click-to-view": "Haz clic para ver el registro de paciente de {{firstName}} {{lastName}}",
   "messages.confirm-add-from-master-list": "¿Deseas agregar todos los elementos de esta lista maestra?",
   "messages.confirm-cancel-generic": "Perderás cualquier modificación que hayas realizado en este formulario",

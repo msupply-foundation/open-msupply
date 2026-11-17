@@ -186,6 +186,9 @@ const CentralDataPage: Component = () => {
                     fallback={
                       <>
                         <Text>{t('messages.central-data-import-limits')}</Text>
+                        <Text>
+                          {t('messages.central-data-import-start-from-export')}
+                        </Text>
                         <UploadZone
                           multiple={false}
                           accept={IMPORT_ACCEPT}

@@ -23,6 +23,7 @@ use std::str;
 mod tests;
 
 define_sql_function!(fn lower(x: Text) -> Text);
+define_sql_function!(fn trim(x: Text) -> Text);
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {

@@ -108,6 +108,7 @@ export const feedbackMetadata: PageMetadata = {
 
 export const FeedbackShowcase = () => {
   const [menuStatus, setMenuStatus] = createSignal('PENDING');
+  const menuChip = () => ENCOUNTER_STATUSES.find(s => s.value === menuStatus());
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
@@ -142,18 +143,14 @@ export const FeedbackShowcase = () => {
           </Lead>
           <Row gap="sm">
             <StatusMenu
-              label={
-                ENCOUNTER_STATUSES.find(s => s.value === menuStatus())?.label ??
-                ''
-              }
-              colour={
-                ENCOUNTER_STATUSES.find(s => s.value === menuStatus())
-                  ?.colour ?? 'var(--status-new)'
-              }
+              label={menuChip()?.label ?? ''}
+              colour={menuChip()?.colour ?? 'var(--status-new)'}
               options={ENCOUNTER_STATUSES}
               value={menuStatus()}
               onSelect={setMenuStatus}
-              triggerLabel="Status. Change status"
+              // The chip's text must be part of the name (WCAG 2.5.3), so the
+              // label follows the chip as it changes.
+              triggerLabel={`Status: ${menuChip()?.label ?? ''}. Change status`}
             />
             <StatusMenu
               label="Missed"
