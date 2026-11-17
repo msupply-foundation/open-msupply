@@ -12,10 +12,11 @@ use service::{
         ImportSummary, MAX_IMPORT_ROWS, RowChange, TableChanges, cells::RowError, sheet::MAX_CELLS,
     },
     service_provider::ServiceProvider,
+    session_store::SessionStore,
     settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},
 };
-use std::path::Path;
+use std::{path::Path, sync::RwLock};
 
 #[derive(Default, Clone)]
 pub struct CentralDataQueries;
@@ -119,8 +120,9 @@ impl CentralDataMutations {
     }
 }
 
-fn validate(ctx: &Context<'_>) -> Result<()> {
-    validate_auth(
+/// The user's id, for the import to know who runs it.
+fn validate(ctx: &Context<'_>) -> Result<String> {
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::ImportExportCentralData,
@@ -128,7 +130,7 @@ fn validate(ctx: &Context<'_>) -> Result<()> {
             require_central_standalone: true,
         },
     )?;
-    Ok(())
+    Ok(user.user_id)
 }
 
 async fn import(
@@ -136,13 +138,13 @@ async fn import(
     file_id: String,
     commit: bool,
 ) -> Result<CentralDataImportResponse> {
-    validate(ctx)?;
+    let user_id = validate(ctx)?;
     let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
     let settings = ctx.data_unchecked::<Data<Settings>>().clone();
 
     // Blocking pool, to free the worker; the transaction is as long either way.
     let result = tokio::task::spawn_blocking(move || -> Result<_> {
-        let context = service_provider.basic_context()?;
+        let context = service_provider.context(String::new(), user_id)?;
         let service = &service_provider.central_data_service;
         read_upload(&settings, file_id, |path| {
             if commit {
@@ -157,12 +159,44 @@ async fn import(
 
     let error = match result {
         None => upload_expired(),
-        Some(Ok(summary)) => return Ok(CentralDataImportResponse::Response(summary.into())),
+        Some(Ok(summary)) => {
+            if commit {
+                end_sessions(
+                    &ctx.get_auth_data().session_store,
+                    summary.error_count,
+                    &summary.sessions_to_end,
+                    ctx.get_auth_token().as_deref(),
+                )?;
+            }
+            return Ok(CentralDataImportResponse::Response(summary.into()));
+        }
         Some(Err(error)) => CentralDataImportError {
             error: import_error(error)?,
         },
     };
     Ok(CentralDataImportResponse::Error(error))
+}
+
+/// Ends the open sessions of users an applied import made inactive or gave a new password, so
+/// they don't last until they expire. Keeps the request's own, `current`, so changing your own
+/// password by import doesn't sign you out.
+fn end_sessions(
+    session_store: &RwLock<SessionStore>,
+    error_count: u32,
+    users: &[String],
+    current: Option<&str>,
+) -> Result<()> {
+    // With errors, nothing was applied.
+    if error_count > 0 || users.is_empty() {
+        return Ok(());
+    }
+    let mut sessions = session_store.write().map_err(|e| {
+        StandardGraphqlError::InternalError(format!("Session store lock poisoned: {e}")).extend()
+    })?;
+    for user_id in users {
+        sessions.revoke_all_for_user_except(user_id, current);
+    }
+    Ok(())
 }
 
 /// Runs `read` on the upload. `None` once the upload is deleted, an hour after it's made, even
@@ -211,12 +245,12 @@ fn internal_import_error(error: ImportError) -> Error {
 }
 
 async fn errors_file(ctx: &Context<'_>, file_id: String) -> Result<CentralDataErrorsFileResponse> {
-    validate(ctx)?;
+    let user_id = validate(ctx)?;
     let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
     let settings = ctx.data_unchecked::<Data<Settings>>().clone();
 
     let file_id = tokio::task::spawn_blocking(move || -> Result<_> {
-        let context = service_provider.basic_context()?;
+        let context = service_provider.context(String::new(), user_id)?;
         let Some(result) = read_upload(&settings, file_id, |path| {
             service_provider
                 .central_data_service
@@ -261,6 +295,7 @@ fn store_temporary(base_dir: &str, name: &str, bytes: &[u8]) -> Result<String> {
 pub enum CentralDataTableNode {
     Unit,
     LocationType,
+    User,
     Item,
 }
 
@@ -565,6 +600,33 @@ mod tests {
 
     fn unreadable(_: &Path) -> Result<(), ImportError> {
         Err(ImportError::CannotReadFile("no".to_string()))
+    }
+
+    #[test]
+    fn an_applied_import_ends_the_sessions_of_the_users_it_lists() {
+        let store = RwLock::new(SessionStore::new());
+        let (anna_here, anna_elsewhere, ben, cara) = {
+            let mut sessions = store.write().unwrap();
+            (
+                sessions.create("anna"),
+                sessions.create("anna"),
+                sessions.create("ben"),
+                sessions.create("cara"),
+            )
+        };
+        let live = |token: &str| store.write().unwrap().validate_and_slide(token).is_some();
+        let users = ["anna".to_string(), "ben".to_string()];
+
+        // With errors nothing was applied, so nothing ends.
+        end_sessions(&store, 1, &users, Some(&anna_here)).unwrap();
+        assert!(live(&ben));
+
+        // Anna runs the import: the session making it stays.
+        end_sessions(&store, 0, &users, Some(&anna_here)).unwrap();
+        assert!(live(&anna_here));
+        assert!(!live(&anna_elsewhere));
+        assert!(!live(&ben));
+        assert!(live(&cara));
     }
 
     mod graphql {

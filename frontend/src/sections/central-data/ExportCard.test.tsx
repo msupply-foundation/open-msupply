@@ -268,6 +268,21 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives users a username search and a Status filter (OMS-REG-CDIO-01.46)', async () => {
+    open();
+    expect(shown.fields['central-data-export-user-search']!.placeholder).toBe(
+      'label.username-contains'
+    );
+
+    shown.checkboxes['central-data-export-user']!.onChange(true);
+    await settle();
+    shown.selects['central-data-export-user-status']!.onValueChange('ACTIVE');
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'USER', contains: null, isActive: true }],
+    });
+  });
+
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {
     open();
     await tickUnits();

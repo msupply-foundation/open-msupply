@@ -1796,6 +1796,7 @@ export enum CentralDataTableNode {
   Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
   Unit = 'UNIT',
+  User = 'USER',
 }
 
 export type CentralDataTooManyCells = CentralDataImportErrorInterface & {
