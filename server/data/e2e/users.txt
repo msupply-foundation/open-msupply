@@ -8,3 +8,4 @@ StockViewer:pass
 assetclerk:pass
 poclerk:pass
 poviewer:pass
+demo:pass

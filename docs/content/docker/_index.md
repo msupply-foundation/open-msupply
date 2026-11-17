@@ -182,6 +182,8 @@ Previews run as a **central server**. They start seeded, so they cannot sync and
 
 Previews build the `debug` profile, unlike named deployments, which build `release`. A preview is the containerised equivalent of checking the branch out and running it, so that matches what a reviewer would get locally — it compiles faster, runs slower and is not stripped, which is reason enough never to benchmark a preview or quote its image size.
 
+A preview is seeded from `e2e` unless the repository's `DEPLOY_REFERENCE_FILE` variable names another dataset. Log in as `Admin` / `pass`, which opens the Gryffindor store with no stock or patients (the e2e suites create those as they run). For a demo, log in as `demo` / `pass` instead: its Demo Health Centre has stock, patients and common medicines, so the Simple dispensing screen is ready to show. `server/data/e2e/README.md` ("A store to demo from") lists what is there.
+
 **The database persists across pushes.** It is seeded once, on the first deploy, and left alone after that. Set a preview up how you need it, share the link, and pushing more commits will not wipe it — the server migrates the existing data instead, which incidentally means every push after the first tests that PR's migrations against data that already exists.
 
 Two situations need a clean database, and both are the same fix — run the workflow manually with `reseed`, or remove and re-add the label:

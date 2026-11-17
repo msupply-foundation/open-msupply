@@ -24,9 +24,35 @@ users, stores, periods, programs. Plus injected login wiring
 (`user_store_join` / `user_permission` — a v7 pull doesn't deliver those) for
 Admin on GRY + FEAT and the three auth-profile users above.
 
-Deliberately **no stock, no documents** — store-local state is created through
-the GraphQL API by `frontend/e2e/specs/data.setup.ts` at suite start
-("seed nouns, create verbs"). Don't add stock here; extend the arrange step.
+Deliberately **no stock, no documents** on the stores the suites use —
+store-local state is created through the GraphQL API by
+`frontend/e2e/specs/data.setup.ts` at suite start ("seed nouns, create verbs").
+Don't add stock here for a suite; extend the arrange step. The one store that
+does hold stock is `DEMO`, which no suite opens — see
+[A store to demo from](#a-store-to-demo-from).
+
+### A store to demo from
+
+A PR preview (the `deploy` label) and a fresh `pnpm e2e:local` stack restore
+this file and nothing else: `data.setup.ts` never runs on a preview, so GRY
+opens there with no stock and no patients. `DEMO` is set up so the Simple
+dispensing screen (#2188) can be shown straight away. Log in as **`demo` /
+`pass`**: DEMO is that user's only store, so the app opens in it, and Dispensary
+› Dispensing › Simple view shows the cards.
+
+| What                                                                                                                                                                                                                                                 | Why                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DEMO` "Demo Health Centre" (site 900), a dispensary, vaccine and program modules off, joined to the `Health Centre` and `District Store` master lists                                                                                                | a store of its own, so nothing here changes what a suite sees. No suite user can open it, Admin included                                                                                                                                                                                                                                                         |
+| `demo` / `pass`, Admin's GRY permissions (none context-scoped) at DEMO only, DEMO its default store                                                                                                                                                   | logs straight into DEMO. Admin is not given DEMO: its store list, and the Simple suite's "another store the user can open", stay as they were                                                                                                                                                                                                                       |
+| `common_medicines` on DEMO: Paracetamol 500mg tabs (10, 20, 30), Amoxicillin 250mg tabs (15, 21, 30), Amoxicillin suspension 125mg/5ml (1, 2 bottles), ORS sachets (2, 4, 6), Ibuprofen 200mg (10, 20), Salbutamol 2mg tabs (10, 30), Captopril 25mg tabs (no amounts, so its card asks) | the cards. The store preference can only be set through the API until its editor is built                                                                                                                                                                                                                                                                      |
+| One verified inventory addition (`Demo opening stock`, #1) at DEMO: a batch of each card's medicine, two for Paracetamol and Amoxicillin tabs (first expiry first), and Vitamin A caps, which has no card, for the screen's search. Expiries 5 to 21 months after the refreshed dates | stock with a ledger that agrees with it. Every timestamp is no later than the newest one already here (2026-10-01), so the restore's date refresh shifts everything by what it did before                                                                                                                                                                          |
+| Four patients, `DEMO-PAT-01`–`04` (Khamla Phommachanh, Bounmy Sisouphanh, Noy Vongsavath — a child, Somphone Keomany), joined to DEMO                                                                                                              | someone to dispense to. Patients are not store-scoped, so they are listed at GRY too; no suite filter or search term (`E2E…`, `First…`, `Last…`, `E2E-PAT-…`) matches them                                                                                                                                                                                    |
+
+**Prices come from the batches**, not the default price list. The default price
+list is global: a price on any of these items would change what every suite
+that sells or dispenses it at GRY charges. The Simple screen prices an item on
+no default price list from its batches' sell prices, so each card still shows
+one.
 
 ### Fixtures a suite cannot arrange for itself
 
