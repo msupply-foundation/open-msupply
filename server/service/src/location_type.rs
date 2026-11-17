@@ -1,7 +1,4 @@
-use crate::{
-    ListError, ListResult, get_pagination_or_default, i64_to_u32,
-    keyed_lookup::{Keyed, KeyedLookup},
-};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
     LocationTypeRowRepository, LocationTypeSort, LocationTypeUser, PaginationOption,
@@ -55,47 +52,24 @@ impl From<RepositoryError> for DeleteLocationTypeError {
     }
 }
 
-pub type LocationTypeLookup = KeyedLookup<LocationTypeRow>;
-
-/// Looked up by code.
-impl Keyed for LocationTypeRow {
-    fn id(&self) -> &str {
-        &self.id
-    }
-    fn key(&self) -> &str {
-        &self.code
-    }
-}
-
-impl LocationTypeLookup {
-    pub fn load_all(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        Ok(Self::from_rows(
-            LocationTypeRowRepository::new(connection).find_all()?,
-        ))
-    }
-}
-
-/// Joins the caller's transaction when there is one.
-pub fn upsert_location_type_in(
+/// Adds or updates one location type. Joins the caller's transaction when there is one, so an
+/// import's earlier rows count.
+pub fn upsert_location_type(
     connection: &StorageConnection,
-    lookup: &mut LocationTypeLookup,
     row: &LocationTypeRow,
 ) -> Result<(), UpsertLocationTypeError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertLocationTypeError> {
-            validate(lookup, row)?;
+            validate(connection, row)?;
             LocationTypeRowRepository::new(connection).upsert_one(row)?;
             Ok(())
         })
-        .map_err(|error| error.to_inner_error())?;
-    lookup.put(row.clone());
-    Ok(())
+        .map_err(|error| error.to_inner_error())
 }
 
 /// Refused while in use. Joins the caller's transaction when there is one.
-pub fn delete_location_type_in(
+pub fn delete_location_type(
     connection: &StorageConnection,
-    lookup: &mut LocationTypeLookup,
     id: &str,
 ) -> Result<(), DeleteLocationTypeError> {
     connection
@@ -107,13 +81,11 @@ pub fn delete_location_type_in(
             repo.delete(id)?;
             Ok(())
         })
-        .map_err(|error| error.to_inner_error())?;
-    lookup.remove(id);
-    Ok(())
+        .map_err(|error| error.to_inner_error())
 }
 
 fn validate(
-    lookup: &LocationTypeLookup,
+    connection: &StorageConnection,
     row: &LocationTypeRow,
 ) -> Result<(), UpsertLocationTypeError> {
     if row.code.trim().is_empty() {
@@ -127,14 +99,15 @@ fn validate(
     }
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
     // Trimmed on purpose; sync's `code_is_taken` is exact.
-    let brings_in_clash = lookup
-        .by_id(&row.id)
+    let repo = LocationTypeRowRepository::new(connection);
+    let brings_in_clash = repo
+        .find_one_by_id(&row.id)?
         .is_none_or(|saved| saved.code.trim() != row.code.trim());
     if !brings_in_clash {
         return Ok(());
     }
-    match lookup
-        .by_key(&row.code)
+    match repo
+        .find_by_trimmed_code(&row.code)?
         .into_iter()
         .find(|other| other.id != row.id)
     {
@@ -164,16 +137,52 @@ mod tests {
         }
     }
 
-    /// Saves as the import does, from a fresh lookup.
     fn upsert(
         connection: &StorageConnection,
         row: &LocationTypeRow,
     ) -> Result<(), UpsertLocationTypeError> {
-        upsert_location_type_in(
-            connection,
-            &mut LocationTypeLookup::load_all(connection)?,
-            row,
+        upsert_location_type(connection, row)
+    }
+
+    fn ids_coded(connection: &StorageConnection, code: &str) -> Vec<String> {
+        LocationTypeRowRepository::new(connection)
+            .find_by_trimmed_code(code)
+            .unwrap()
+            .into_iter()
+            .map(|row| row.id)
+            .collect()
+    }
+
+    #[actix_rt::test]
+    async fn a_recoded_location_type_is_found_by_its_new_code() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_location_type_recode_lookup",
+            MockDataInserts::none(),
         )
+        .await;
+        let repo = LocationTypeRowRepository::new(&connection);
+        repo.upsert_one(&location_type("a", "COLD")).unwrap();
+        repo.upsert_one(&location_type("b", "COLD")).unwrap();
+
+        upsert(&connection, &location_type("a", "FROZEN")).unwrap();
+        assert_eq!(ids_coded(&connection, "COLD"), vec!["b"]);
+        assert_eq!(ids_coded(&connection, "FROZEN"), vec!["a"]);
+    }
+
+    #[actix_rt::test]
+    async fn a_code_is_found_whatever_spaces_surround_it() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_location_type_padded_lookup",
+            MockDataInserts::none(),
+        )
+        .await;
+        LocationTypeRowRepository::new(&connection)
+            .upsert_one(&location_type("a", "COLD "))
+            .unwrap();
+        assert_eq!(ids_coded(&connection, "COLD"), vec!["a"]);
+        assert_eq!(ids_coded(&connection, " COLD"), vec!["a"]);
+        // Letter case counts.
+        assert!(ids_coded(&connection, "cold").is_empty());
     }
 
     #[actix_rt::test]
@@ -247,18 +256,16 @@ mod tests {
                 ..Default::default()
             })
             .unwrap();
-        let mut lookup = LocationTypeLookup::load_all(&connection).unwrap();
+        let repo = LocationTypeRowRepository::new(&connection);
 
         assert_eq!(
-            delete_location_type_in(&connection, &mut lookup, &in_use.id),
+            delete_location_type(&connection, &in_use.id),
             Err(DeleteLocationTypeError::InUse(LocationTypeUser::Item))
         );
-        assert!(lookup.by_id(&in_use.id).is_some());
+        assert!(repo.find_one_by_id(&in_use.id).unwrap().is_some());
 
         upsert(&connection, &location_type("unused", "UNUSED")).unwrap();
-        let mut lookup = LocationTypeLookup::load_all(&connection).unwrap();
-        delete_location_type_in(&connection, &mut lookup, "unused").unwrap();
-        assert!(lookup.by_id("unused").is_none());
+        delete_location_type(&connection, "unused").unwrap();
         assert_eq!(
             LocationTypeRowRepository::new(&connection)
                 .find_one_by_id("unused")
@@ -281,10 +288,9 @@ mod tests {
                 ..mock_draft_request_requisition_line()
             })
             .unwrap();
-        let mut lookup = LocationTypeLookup::load_all(&connection).unwrap();
 
         assert_eq!(
-            delete_location_type_in(&connection, &mut lookup, "requested"),
+            delete_location_type(&connection, "requested"),
             Err(DeleteLocationTypeError::InUse(
                 LocationTypeUser::RequisitionLine
             ))

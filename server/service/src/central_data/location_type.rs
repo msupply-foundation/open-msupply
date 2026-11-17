@@ -8,8 +8,7 @@ use super::{
     sheet::Value,
 };
 use crate::location_type::{
-    DeleteLocationTypeError, LocationTypeLookup, UpsertLocationTypeError, delete_location_type_in,
-    upsert_location_type_in,
+    DeleteLocationTypeError, UpsertLocationTypeError, delete_location_type, upsert_location_type,
 };
 use repository::{
     LocationTypeRow, LocationTypeRowRepository, LocationTypeUser, RepositoryError,
@@ -82,18 +81,13 @@ impl ImportTable for LocationTypeTable {
 
     fn start_sheet(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        // Location types are few.
-        Ok(Box::new(LocationTypeSheet {
-            location_types: LocationTypeLookup::load_all(connection)?,
-        }))
+        Ok(Box::new(LocationTypeSheet))
     }
 }
 
-struct LocationTypeSheet {
-    location_types: LocationTypeLookup,
-}
+struct LocationTypeSheet;
 
 impl SheetImport for LocationTypeSheet {
     fn import_row(
@@ -109,7 +103,7 @@ impl SheetImport for LocationTypeSheet {
         let code = row.text(CODE);
 
         // Without its record, the row's other checks would treat it as a new location type.
-        let existing = match self.find(row, id.as_deref(), code.as_deref()) {
+        let existing = match find(connection, row, id.as_deref(), code.as_deref())? {
             Ok(existing) => existing,
             Err(e) => {
                 errors.push(e);
@@ -118,7 +112,7 @@ impl SheetImport for LocationTypeSheet {
         };
 
         if delete {
-            return self.delete(connection, row, existing, errors);
+            return delete_row(connection, row, existing, errors);
         }
 
         let code = keep_or_saved(code, existing.as_ref().map(|saved| saved.code.as_str()));
@@ -162,7 +156,7 @@ impl SheetImport for LocationTypeSheet {
             None => Change::Inserted,
         };
         if change != Change::Unchanged {
-            upsert_location_type_in(connection, &mut self.location_types, &location_type)
+            upsert_location_type(connection, &location_type)
                 .map_err(|error| upsert_failure(row, &location_type, error))?;
         }
         Ok(RowOutcome {
@@ -176,102 +170,98 @@ impl SheetImport for LocationTypeSheet {
     }
 }
 
-impl LocationTypeSheet {
-    /// `None` for a row that adds a location type.
-    fn find(
-        &self,
-        row: &Row,
-        id: Option<&str>,
-        code: Option<&str>,
-    ) -> Result<Option<LocationTypeRow>, RowError> {
-        let conflict = |saved: &LocationTypeRow, id: &str, code: &str| {
-            row.error(
-                CODE,
-                record_conflict(CODE, &saved.name, &saved.code, &saved.id, code, id),
-            )
-        };
-        let Some(code) = code else {
-            return Ok(id.and_then(|id| self.location_types.by_id(id)).cloned());
-        };
-        let by_code = self.location_types.by_key(code);
-        match id {
-            Some(id) => match self.location_types.by_id(id) {
-                Some(saved) if saved.code.trim() != code => Err(conflict(saved, id, code)),
-                Some(saved) => Ok(Some(saved.clone())),
-                // A new id beside a saved code is a copied row with one column edited.
-                None => match by_code.first() {
-                    Some(saved) => Err(conflict(saved, id, code)),
-                    None => Ok(None),
-                },
+/// `Ok(None)` for a row that adds a location type.
+fn find(
+    connection: &StorageConnection,
+    row: &Row,
+    id: Option<&str>,
+    code: Option<&str>,
+) -> Result<Result<Option<LocationTypeRow>, RowError>, RepositoryError> {
+    let repo = LocationTypeRowRepository::new(connection);
+    let conflict = |saved: &LocationTypeRow, id: &str, code: &str| {
+        row.error(
+            CODE,
+            record_conflict(CODE, &saved.name, &saved.code, &saved.id, code, id),
+        )
+    };
+    let Some(code) = code else {
+        return Ok(Ok(match id {
+            Some(id) => repo.find_one_by_id(id)?,
+            None => None,
+        }));
+    };
+    let by_code = repo.find_by_trimmed_code(code)?;
+    Ok(match id {
+        Some(id) => match repo.find_one_by_id(id)? {
+            Some(saved) if saved.code.trim() != code => Err(conflict(&saved, id, code)),
+            Some(saved) => Ok(Some(saved)),
+            // A new id beside a saved code is a copied row with one column edited.
+            None => match by_code.first() {
+                Some(saved) => Err(conflict(saved, id, code)),
+                None => Ok(None),
             },
-            None => match by_code.as_slice() {
-                [] => Ok(None),
-                [saved] => Ok(Some((*saved).clone())),
-                _ => Err(row.error(CODE, LookupError::Ambiguous.message(code))),
-            },
-        }
-    }
+        },
+        None if by_code.len() > 1 => Err(row.error(CODE, LookupError::Ambiguous.message(code))),
+        None => Ok(by_code.into_iter().next()),
+    })
+}
 
-    fn delete(
-        &mut self,
-        connection: &StorageConnection,
-        row: &Row,
-        existing: Option<LocationTypeRow>,
-        mut errors: Vec<RowError>,
-    ) -> Result<RowOutcome, RowFailure> {
-        // Already gone: nothing to delete, so the row changes nothing.
-        let Some(saved) = existing else {
-            if !errors.is_empty() {
-                return Err(RowFailure::Invalid(errors));
-            }
-            return Ok(RowOutcome {
-                record: row.text(CODE).or(row.text(ID)).unwrap_or_default(),
-                record_id: String::new(),
-                change: Change::Unchanged,
-                fields: Vec::new(),
-            });
-        };
-        if let Err(e) = check_unchanged(
-            row,
-            &[
-                (NAME, Value::Text(saved.name.clone())),
-                (MIN_TEMPERATURE, Value::Number(saved.min_temperature)),
-                (MAX_TEMPERATURE, Value::Number(saved.max_temperature)),
-            ],
-        ) {
-            errors.push(e);
-        }
+fn delete_row(
+    connection: &StorageConnection,
+    row: &Row,
+    existing: Option<LocationTypeRow>,
+    mut errors: Vec<RowError>,
+) -> Result<RowOutcome, RowFailure> {
+    // Already gone: nothing to delete, so the row changes nothing.
+    let Some(saved) = existing else {
         if !errors.is_empty() {
             return Err(RowFailure::Invalid(errors));
         }
-
-        delete_location_type_in(connection, &mut self.location_types, &saved.id).map_err(
-            |error| match error {
-                DeleteLocationTypeError::InUse(user) => row
-                    .error(
-                        DELETE_COLUMN,
-                        format!(
-                            "{} is used by {}, so it can't be deleted",
-                            record_name(&saved),
-                            match user {
-                                LocationTypeUser::Location => "a location",
-                                LocationTypeUser::Item => "an item",
-                                LocationTypeUser::ItemVariant => "an item variant",
-                                LocationTypeUser::RequisitionLine => "a requisition line",
-                            }
-                        ),
-                    )
-                    .into(),
-                DeleteLocationTypeError::DatabaseError(error) => RowFailure::Database(error),
-            },
-        )?;
-        Ok(RowOutcome {
-            record: record_name(&saved),
-            record_id: saved.id,
-            change: Change::Deleted,
+        return Ok(RowOutcome {
+            record: row.text(CODE).or(row.text(ID)).unwrap_or_default(),
+            record_id: String::new(),
+            change: Change::Unchanged,
             fields: Vec::new(),
-        })
+        });
+    };
+    if let Err(e) = check_unchanged(
+        row,
+        &[
+            (NAME, Value::Text(saved.name.clone())),
+            (MIN_TEMPERATURE, Value::Number(saved.min_temperature)),
+            (MAX_TEMPERATURE, Value::Number(saved.max_temperature)),
+        ],
+    ) {
+        errors.push(e);
     }
+    if !errors.is_empty() {
+        return Err(RowFailure::Invalid(errors));
+    }
+
+    delete_location_type(connection, &saved.id).map_err(|error| match error {
+        DeleteLocationTypeError::InUse(user) => row
+            .error(
+                DELETE_COLUMN,
+                format!(
+                    "{} is used by {}, so it can't be deleted",
+                    record_name(&saved),
+                    match user {
+                        LocationTypeUser::Location => "a location",
+                        LocationTypeUser::Item => "an item",
+                        LocationTypeUser::ItemVariant => "an item variant",
+                        LocationTypeUser::RequisitionLine => "a requisition line",
+                    }
+                ),
+            )
+            .into(),
+        DeleteLocationTypeError::DatabaseError(error) => RowFailure::Database(error),
+    })?;
+    Ok(RowOutcome {
+        record: record_name(&saved),
+        record_id: saved.id,
+        change: Change::Deleted,
+        fields: Vec::new(),
+    })
 }
 
 fn upsert_failure(

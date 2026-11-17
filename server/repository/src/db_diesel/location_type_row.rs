@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
-    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
+    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError, trim,
 };
 
 use diesel::prelude::*;
@@ -113,6 +113,18 @@ impl<'a> LocationTypeRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
+    }
+
+    /// Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code(
+        &self,
+        code: &str,
+    ) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        let result = location_type::table
+            .filter(trim(location_type::code).eq(code.trim()))
+            .order(location_type::id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationTypeRow>, RepositoryError> {

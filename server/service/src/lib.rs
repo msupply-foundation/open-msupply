@@ -58,7 +58,6 @@ pub mod item;
 pub mod item_stats;
 pub mod item_warning_join;
 pub mod json_translate;
-pub mod keyed_lookup;
 pub mod label_printer_settings_service;
 pub mod ledger;
 pub mod localisations;
