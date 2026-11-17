@@ -226,8 +226,10 @@ const SimpleDispensingPage: Component = () => {
   // A medicine chosen from the search that couldn't be read (rules › another
   // amount, and other medicines): no box opens for it, so the search is empty
   // again and the list's notice says why. Dropped, so choosing it again reads
-  // it again. Nothing to do once a read for a later choice has taken over:
-  // its outcome is the one to report.
+  // it again. Dropping it reads the medicines still searched once more: if
+  // that read fails too, none of them is unread, so it changes nothing and
+  // reads nothing again. Nothing to do once a read for a later choice has
+  // taken over: its outcome is the one to report.
   const searchFailed = (ids: string[], unread: string[]) => {
     if (searchedIds() !== ids || unread.length === 0) return;
     setSearchedIds(now => now.filter(id => !unread.includes(id)));
