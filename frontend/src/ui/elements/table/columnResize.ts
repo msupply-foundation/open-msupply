@@ -58,6 +58,26 @@ export const resizeStartWidth = (
 };
 
 /**
+ * The dragged column and the width its drag starts from: the drawn width when
+ * it differs from the size (resizeStartWidth), else the size. That's also what
+ * a press that never moves leaves in the sizing, so resizeMoved compares like
+ * with like. It matters on a capped column drawn wider than its cap (the
+ * column that fills the row), whose size TanStack clamps to the cap.
+ *
+ * @param id the dragged column
+ * @param renderedPx the header cell's drawn width
+ * @param currentPx the column's size (`column.getSize()`)
+ */
+export const dragStart = (
+  id: string,
+  renderedPx: number,
+  currentPx: number
+): ResizeStart => ({
+  id,
+  px: resizeStartWidth(renderedPx, currentPx) ?? currentPx,
+});
+
+/**
  * Whether a finished drag changed the dragged column's width — only then is
  * it saved, so a press that never moves saves nothing (the drag's start width
  * included, which would otherwise turn a column's default into a saved one).

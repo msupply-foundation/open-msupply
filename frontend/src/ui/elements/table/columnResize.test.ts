@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  dragStart,
   fillColumnId,
   resizeMoved,
   resizeStartWidth,
@@ -45,6 +46,24 @@ describe('resizeMoved', () => {
 
   it('saves when the dragged column is missing from the result', () => {
     expect(resizeMoved(start, { name: 300 })).toBe(true);
+  });
+});
+
+describe('dragStart', () => {
+  it('starts from the drawn width when it differs from the size', () => {
+    expect(dragStart('code', 134, 80)).toEqual({ id: 'code', px: 134 });
+  });
+
+  it('starts from the size when the column is drawn at it', () => {
+    expect(dragStart('code', 127.6, 128)).toEqual({ id: 'code', px: 128 });
+  });
+
+  it('saves nothing for a press on a capped column drawn wider than its cap', () => {
+    // The column that fills the row: Status drawn at 181px against its 150px
+    // cap, so getSize() reads the clamped 150. The press parks the drawn 181
+    // in the sizing, and nothing moves it.
+    const start = dragStart('status', 181, 150);
+    expect(resizeMoved(start, { period: 300, status: 181 })).toBe(false);
   });
 });
 

@@ -99,9 +99,9 @@ import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 import { sameList, samePinning, sameRecord } from './stateEquality';
 import {
+  dragStart,
   fillColumnId,
   resizeMoved,
-  resizeStartWidth,
   type ColumnWidth,
   type ResizeStart,
 } from './columnResize';
@@ -944,21 +944,23 @@ export function DataTable<T, K extends string, G extends string = never>(
     })
   );
 
-  // Start a drag from the width the user SEES (#1890). A column's size is only
-  // its min-width floor, and its content or the table's spare space usually
-  // renders it wider — but TanStack starts a drag from getSize(), the floor. So
-  // the first stretch of every drag only raised the hidden floor up to the
-  // visible edge and nothing moved (by 54px on the items list's Code column),
-  // and a drag narrower than the visible width did nothing at all. HeaderCell
-  // calls this just before TanStack's handler, which reads the new size as the
-  // drag's start. Parked in the transient sizing, not config, so it only
-  // persists if the drag goes on to move (the rules: columnResize.ts).
+  // Start a drag from the width the user SEES (#1890). TanStack starts a drag
+  // from getSize(), but a column on its default size has that size only as a
+  // min-width floor, and its content or the table's spare space usually draws
+  // it wider (by 54px on the items list's Code column). From the floor, the
+  // edge would sit still until the pointer covered that gap, and a drag
+  // narrower than the drawn width would do nothing. HeaderCell calls this just
+  // before TanStack's handler, which reads the new size as the drag's start.
+  // Parked in the transient sizing, not config, so it only persists if the
+  // drag goes on to move. The recorded start is that same width, so a press
+  // that never moves saves nothing, a capped column drawn past its cap
+  // included (the rules: columnResize.ts).
   const startColumnResize = (column: TanColumn<T>, renderedPx: number) => {
-    const px = resizeStartWidth(renderedPx, column.getSize());
-    if (px !== undefined) {
-      setTransientSizing({ ...columnSizing(), [column.id]: px });
+    const size = column.getSize();
+    resizeStart = dragStart(column.id, renderedPx, size);
+    if (resizeStart.px !== size) {
+      setTransientSizing({ ...columnSizing(), [column.id]: resizeStart.px });
     }
-    resizeStart = { id: column.id, px: column.getSize() };
   };
 
   // A column's width for its header cell — one memo per column (#1890). Read
