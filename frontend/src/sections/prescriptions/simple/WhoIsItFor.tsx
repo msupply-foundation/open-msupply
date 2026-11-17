@@ -7,6 +7,8 @@ import {
   type PatientOption,
 } from '@/domain/patient';
 import { HeaderField } from '@/ui/layout/Header/HeaderField';
+import { Button } from '@/ui/elements/buttons/Button';
+import { UserIcon } from '@/ui/icons';
 import { StepHeading } from './StepHeading';
 import styles from './WhoIsItFor.module.css';
 
@@ -19,32 +21,93 @@ import styles from './WhoIsItFor.module.css';
 export const WhoIsItFor = (props: {
   storeId: string;
   patient: PatientOption | null;
+  /** The store uses the unnamed patient (rules › the unnamed patient). */
+  useUnnamed: boolean;
+  /** The visit is for the store's unnamed patient. */
+  unnamed: boolean;
   /** While the visit is being dispensed: who it is for can't change. */
   disabled?: boolean;
   onSelect: (patient: PatientOption | null) => void;
+  onUnnamed: () => void;
+  /** Chooses nobody, from the unnamed patient. */
+  onChange: () => void;
   onCreatePatient: () => void;
-}) => (
-  <HeaderField
-    label={<StepHeading n={1} label={t('label.who-is-it-for')} />}
-    detail={
-      // Not keyed: choosing someone else updates the facts in place.
-      <Show when={props.patient}>
-        {patient => <ChosenPatientDetails patient={patient()} />}
+}) => {
+  let change: HTMLButtonElement | undefined;
+  return (
+    <HeaderField
+      label={<StepHeading n={1} label={t('label.who-is-it-for')} />}
+      detail={
+        // Not keyed: choosing someone else updates the facts in place.
+        <Show when={!props.unnamed && props.patient}>
+          {patient => <ChosenPatientDetails patient={patient()} />}
+        </Show>
+      }
+    >
+      <Show
+        when={props.unnamed}
+        fallback={
+          <div class={styles.choose}>
+            {/* The commonest answer as one press, before the picker for
+                everyone else. */}
+            <Show when={props.useUnnamed}>
+              <Button
+                variant="secondary"
+                icon={<UserIcon />}
+                disabled={props.disabled}
+                onClick={() => {
+                  props.onUnnamed();
+                  // The button has gone: focus what took its place.
+                  change?.focus();
+                }}
+                data-testid="unnamed-patient-button"
+              >
+                {t('label.unnamed-patient')}
+              </Button>
+            </Show>
+            <PatientSearch
+              label={
+                props.useUnnamed
+                  ? t('label.choose-a-patient-or-unnamed')
+                  : t('label.who-is-it-for')
+              }
+              hideLabel
+              width="full"
+              class={styles.picker}
+              placeholder={
+                props.useUnnamed
+                  ? t('placeholder.or-choose-a-patient')
+                  : undefined
+              }
+              storeId={props.storeId}
+              selected={props.patient ?? undefined}
+              disabled={props.disabled}
+              onSelect={props.onSelect}
+              onCreatePatient={props.onCreatePatient}
+            />
+          </div>
+        }
+      >
+        {/* Tinted with a dashed edge, so it doesn't read as a registered
+            patient; no facts beside it, as it has none. */}
+        <div class={styles.choose}>
+          <strong class={styles.unnamed} data-testid="unnamed-patient-chosen">
+            {t('label.unnamed-patient')}
+          </strong>
+          <Button
+            ref={change}
+            variant="ghost"
+            disabled={props.disabled}
+            onClick={() => props.onChange()}
+            data-testid="unnamed-patient-change"
+          >
+            {t('label.change')}
+          </Button>
+        </div>
       </Show>
-    }
-  >
-    <PatientSearch
-      label={t('label.who-is-it-for')}
-      hideLabel
-      width="full"
-      storeId={props.storeId}
-      selected={props.patient ?? undefined}
-      disabled={props.disabled}
-      onSelect={props.onSelect}
-      onCreatePatient={props.onCreatePatient}
-    />
-  </HeaderField>
-);
+    </HeaderField>
+  );
+};
 
 /*
  * The facts the record carries, in the spec's order; one it doesn't carry is

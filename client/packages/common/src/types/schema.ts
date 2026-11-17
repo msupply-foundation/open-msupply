@@ -6906,6 +6906,12 @@ export type Mutations = {
   duplicateInboundShipment: DuplicateInboundShipmentResponse;
   duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  /**
+   * The store's unnamed patient, the one record its walk-in visits are
+   * dispensed to: created on the first call, the same record after.
+   * Refused where the store's "Use the unnamed patient" is off.
+   */
+  getOrCreateUnnamedPatient: PatientNode;
   initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -7309,6 +7315,10 @@ export type MutationsDuplicateOutboundShipmentArgs = {
 
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsGetOrCreateUnnamedPatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -8357,6 +8367,11 @@ export type PatientNode = {
   gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
+  /**
+   * Whether this is a store's unnamed patient, the one record its walk-in
+   * visits are dispensed to. Search never returns it.
+   */
+  isUnnamed: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   nextOfKin?: Maybe<PatientNode>;

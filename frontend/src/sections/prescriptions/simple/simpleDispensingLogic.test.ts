@@ -18,9 +18,11 @@ import {
   setAmount,
   stockLine,
   shortLines,
+  startsWithUnnamed,
   stockAtCheck,
   stockState,
   unitsIn,
+  unnamedAfterDispense,
   visitWasSaved,
   type CardItem,
   type DispenseCalls,
@@ -1321,5 +1323,46 @@ describe('the price check', () => {
       expect(end).toEqual({ kind: 'saved', patient: WHO });
       expect(saves).toEqual([]);
     });
+  });
+});
+
+// rules › the unnamed patient
+describe('who a visit starts with', () => {
+  const prefs = (
+    useUnnamedPatient: boolean,
+    startWithUnnamedPatient: boolean
+  ) => ({
+    useUnnamedPatient,
+    startWithUnnamedPatient,
+  });
+
+  it('starts with the unnamed patient only where both preferences are on (OMS-REG-DIS-12.182, .188)', () => {
+    expect(startsWithUnnamed(prefs(true, true))).toBe(true);
+    expect(startsWithUnnamed(prefs(true, false))).toBe(false);
+    // "Start with" does nothing while "Use" is off
+    expect(startsWithUnnamed(prefs(false, true))).toBe(false);
+    expect(startsWithUnnamed(prefs(false, false))).toBe(false);
+  });
+
+  const unnamed = {
+    id: 'unnamed_patient_s1',
+    name: 'Unnamed patient',
+    isUnnamed: true,
+  };
+  const registered = { id: 'p1', name: 'Smith, Jo' };
+
+  it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.186)', () => {
+    expect(unnamedAfterDispense(unnamed, prefs(true, false))).toBe(true);
+    expect(unnamedAfterDispense(unnamed, prefs(true, true))).toBe(true);
+  });
+
+  it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.189)', () => {
+    expect(unnamedAfterDispense(registered, prefs(true, true))).toBe(true);
+    expect(unnamedAfterDispense(registered, prefs(true, false))).toBe(false);
+  });
+
+  it('never chooses the unnamed patient once the store stops using it', () => {
+    expect(unnamedAfterDispense(unnamed, prefs(false, true))).toBe(false);
+    expect(unnamedAfterDispense(registered, prefs(false, true))).toBe(false);
   });
 });
