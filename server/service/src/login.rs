@@ -611,7 +611,6 @@ impl From<RepositoryError> for LoginError {
 mod test {
     use std::sync::{Arc, RwLock};
 
-    use chrono::Utc;
     use httpmock::{Method::POST, MockServer};
     use repository::{
         EqualFilter, KeyType, KeyValueStoreRepository, SyncVersion, UserAccountRow,
@@ -960,7 +959,9 @@ mod test {
 
         let repo = UserAccountRowRepository::new(&fixture.context.connection);
         let deleted = UserAccountRow {
-            deleted_datetime: Some(Utc::now().naive_utc()),
+            deleted_datetime: chrono::NaiveDate::from_ymd_opt(2026, 1, 2)
+                .unwrap()
+                .and_hms_opt(3, 4, 5),
             ..repo.find_one_by_id(&fixture.user_id).unwrap().unwrap()
         };
         repo.upsert_one(&deleted).unwrap();

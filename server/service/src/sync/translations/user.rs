@@ -184,7 +184,9 @@ mod tests {
 
         let repo = UserAccountRowRepository::new(&connection);
         let deleted = UserAccountRow {
-            deleted_datetime: Some(chrono::Utc::now().naive_utc()),
+            deleted_datetime: chrono::NaiveDate::from_ymd_opt(2026, 1, 2)
+                .unwrap()
+                .and_hms_opt(3, 4, 5),
             ..repo.find_one_by_id(&record.record_id).unwrap().unwrap()
         };
         repo.upsert_one(&deleted).unwrap();
