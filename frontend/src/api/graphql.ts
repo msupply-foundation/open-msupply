@@ -199,6 +199,7 @@ export const clearUnexpectedError = (): void => {
 // ("Failed to fetch") gives support nothing to look up.
 const mintReference = (): string => {
   const prefix = Math.random().toString(16).slice(2, 6).padEnd(4, '0');
+  // eslint-disable-next-line no-restricted-syntax -- a UTC time to the minute, marked Z, not a day
   return `${prefix}-${new Date().toISOString().slice(0, 16)}Z`;
 };
 

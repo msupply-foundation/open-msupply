@@ -89,6 +89,33 @@ const jsxDownloadRestriction = {
   message: downloadIdiomMessage,
 };
 
+/*
+ * Dates and numbers the user sees go through src/intl. The browser's own
+ * locale methods follow the device, not the app's language, and pick the
+ * Solar Hijri calendar for Dari and Pashto (#1326, #1838). Slicing an ISO
+ * string takes the UTC day, the day before for a local midnight east of
+ * Greenwich (#1898); calendarDate.ts converts a Date to a calendar date. The
+ * date fields, which build month and weekday names with the calendar pinned
+ * to Gregorian, have their own block below.
+ */
+const localeFormatMessage =
+  'Follows the device, not the app language (#1326, #1838). From src/intl: ' +
+  'localisedDate / localisedDateTime / localisedTime for a date, ' +
+  'displayNumber or roundedText for a figure, the currency helpers for money.';
+const localeFormatRestrictions = [
+  'toLocaleString',
+  'toLocaleDateString',
+  'toLocaleTimeString',
+].map(property => ({ property, message: localeFormatMessage }));
+const isoStringSliceRestriction = {
+  selector:
+    'CallExpression[callee.property.name=/^(slice|substring|substr|split)$/]' +
+    '[callee.object.callee.property.name="toISOString"]',
+  message:
+    'Takes the UTC day, the day before east of Greenwich (#1898). Use ' +
+    'dateToCalendarDate from src/intl/calendarDate.ts.',
+};
+
 const sharedRules = {
   '@typescript-eslint/no-unused-vars': [
     'error',
@@ -168,11 +195,30 @@ const config = tseslint.config(
         'error',
         cryptoRandomUuidRestriction,
         createObjectUrlRestriction,
+        ...localeFormatRestrictions,
       ],
       'no-restricted-syntax': [
         'error',
         anchorDownloadRestriction,
         jsxDownloadRestriction,
+        isoStringSliceRestriction,
+      ],
+    },
+  },
+
+  // The date fields build month and weekday names from the browser with the
+  // calendar pinned to Gregorian (dateTimeConvert.ts, DatePickerPanel.tsx),
+  // so only the locale-method ban lifts here.
+  {
+    files: [
+      'frontend/src/ui/elements/inputs/dateTimeConvert.ts',
+      'frontend/src/ui/elements/inputs/DatePickerPanel.tsx',
+    ],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        cryptoRandomUuidRestriction,
+        createObjectUrlRestriction,
       ],
     },
   },
@@ -180,12 +226,16 @@ const config = tseslint.config(
   // The platform layer OWNS the browser-download idiom banned above —
   // openDocument.ts (and its tests) is where object URLs and anchor clicks
   // legitimately implement the web halves of saveBlob/openBlob. Only the
-  // download restrictions lift here; the crypto one stands everywhere.
+  // download restrictions lift here; the crypto and date ones stand.
   {
     files: ['frontend/src/platform/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-properties': ['error', cryptoRandomUuidRestriction],
-      'no-restricted-syntax': 'off',
+      'no-restricted-properties': [
+        'error',
+        cryptoRandomUuidRestriction,
+        ...localeFormatRestrictions,
+      ],
+      'no-restricted-syntax': ['error', isoStringSliceRestriction],
     },
   },
 
@@ -223,11 +273,16 @@ const config = tseslint.config(
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
       // Same Android WebView, same dead click (#1169) — a plugin needing to
       // hand the user a file is an SDK gap, not a hand-rolled download.
-      'no-restricted-properties': ['error', createObjectUrlRestriction],
+      'no-restricted-properties': [
+        'error',
+        createObjectUrlRestriction,
+        ...localeFormatRestrictions,
+      ],
       'no-restricted-syntax': [
         'error',
         anchorDownloadRestriction,
         jsxDownloadRestriction,
+        isoStringSliceRestriction,
       ],
       // What a plugin may import, resolved against each file
       // (scripts/eslint/pluginImports.mjs).

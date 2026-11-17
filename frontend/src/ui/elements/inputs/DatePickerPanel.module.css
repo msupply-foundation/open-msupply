@@ -113,6 +113,7 @@
   font-weight: var(--weight-semibold);
 }
 
+/* Outside a month-only DateField's min/max. */
 .pickCell:disabled {
   color: var(--text-disabled);
   cursor: not-allowed;

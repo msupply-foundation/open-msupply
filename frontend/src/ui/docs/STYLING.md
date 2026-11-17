@@ -101,7 +101,7 @@ Plus two that are **not** decorative and so are excluded from the reduce block: 
 - **Colour literals.** Stylelint does not flag `#fff`, `rgb(…)`, `hsl(…)` in component CSS, but they're banned outside `tokens.css` (every colour derives from a token — `var(--token)` or a `color-mix()` tint of one). **Grep new CSS for `#`, `rgb(`, `hsl(` before calling it done**, especially when porting from the RnD prototype, which hard-codes whites and `rgba()` tints.
 - **px sizing.** The rem/em rule (px only for hairline borders, radii, shadow offsets) is convention, not lint.
 - **Looks wrong.** All of this is static analysis — anything with visual surface also needs a render check (dev server / screenshot).
-- **Accessibility.** Keyboard pass, screen-reader smoke test, and contrast checks are manual for now. Step 6 covers reduced motion in CSS only — motion driven from JS (a WAAPI animation, a smooth scroll) is on you to route through [`ui/utils/createMediaQuery`](../utils/createMediaQuery.ts).
+- **Accessibility.** axe-core scans the showcase on every PR and the app nightly ([`e2e/README.md` § Accessibility scans](../../../e2e/README.md#accessibility-scans)), but only what axe can see, in the light theme. A keyboard pass, a screen-reader smoke test and dark-theme contrast are still manual. Step 6 covers reduced motion in CSS only — motion driven from JS (a WAAPI animation, a smooth scroll) is on you to route through [`ui/utils/createMediaQuery`](../utils/createMediaQuery.ts).
 
 ## Day-to-day flow
 

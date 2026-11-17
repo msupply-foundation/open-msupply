@@ -2716,6 +2716,7 @@
   "report.received-date": "ວັນທີໄດ້ຮັບ",
   "report.received-from": "ໄດ້ຮັບຈາກ",
   "report.received-number-of-packs": "ແພັກທີ່ໄດ້ຮັບ",
+  "report.report-month": "ເດືອນຂອງບົດລາຍງານ",
   "report.requested-from": "ຮ້ອງຂໍຈາກ",
   "report.requested-qty": "ຈຳນວນທີ່ຮ້ອງຂໍ",
   "report.requisition-category-message": "ໝວດໃບສະເໜີຂໍ: ຄ່າຂອງໝວດ",

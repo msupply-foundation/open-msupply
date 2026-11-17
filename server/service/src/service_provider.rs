@@ -6,7 +6,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     campaign::{CampaignService, CampaignServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
-    central_data_io::{CentralDataService, CentralDataServiceTrait},
+    central_data::{CentralDataService, CentralDataServiceTrait},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
     contact::{ContactService, ContactServiceTrait},

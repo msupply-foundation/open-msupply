@@ -105,6 +105,8 @@ pub async fn setup_test(
     let db_settings = get_test_db_settings(db_name);
     let (connection_manager, core_data) =
         setup_with_version(&db_settings, version.clone(), inserts).await;
+    #[cfg(feature = "postgres")]
+    drop_at_exit(&db_settings);
     let connection = connection_manager.connection().unwrap();
 
     insert_extra_mock_data(&connection, extra_mock_data);
