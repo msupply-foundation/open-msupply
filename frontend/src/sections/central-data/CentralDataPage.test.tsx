@@ -7,8 +7,9 @@ import {
 
 /*
  * The page's wiring (spec/central-data/ui-surface.md § S1). No e2e suite
- * reaches it: the e2e stack isn't a standalone central. Components are
- * stand-ins that record their props; centralDataLogic is real.
+ * reaches it: the e2e stack isn't a standalone central. Library components
+ * are stand-ins that record their props; ImportCard, its createImport and
+ * centralDataLogic are real, so the import is driven through the page.
  */
 
 interface UploadZoneProps {

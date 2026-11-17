@@ -1,5 +1,10 @@
 import type { GraphqlResult } from '@/api/graphql';
 import { formatNumber, t, type LocaleKey } from '@/intl';
+import {
+  tooLargeMessage,
+  type FileLike,
+  type FileRejection,
+} from '@/ui/elements/inputs/uploadFiles';
 import type {
   CentralDataErrorsFileResult,
   CentralDataExportResult,
@@ -160,6 +165,15 @@ export const refusalMessage = (refusal: Refusal): string => {
       return t('error.central-data-upload-expired');
   }
 };
+
+/** The import card's banner for a file the zone refused, before any upload. */
+export const pickRefusalMessage = (
+  rejection: FileRejection<FileLike>,
+  maxBytes: number
+): string =>
+  rejection.reason === 'size'
+    ? tooLargeMessage(rejection.file.name, maxBytes)
+    : t('error.central-data-xlsx-only');
 
 type Problem = Extract<
   CentralDataImportResultFragment,

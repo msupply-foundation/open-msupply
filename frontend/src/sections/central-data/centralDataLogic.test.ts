@@ -14,6 +14,7 @@ import {
   exportOutcome,
   hasFilters,
   importOutcome,
+  pickRefusalMessage,
   refusalMessage,
   totals,
   unwrap,
@@ -26,6 +27,7 @@ vi.mock('@/intl', () => ({
   t: (key: string, params?: Record<string, string>) =>
     params ? `${key} ${JSON.stringify(params)}` : key,
   formatNumber: (n: number) => `#${n}`,
+  formatFileSize: (bytes: number) => `${bytes} bytes`,
 }));
 
 const file = (name: string, size = 10) =>
@@ -76,6 +78,14 @@ describe('OMS-REG-CDIO-01.6 — a file over 50 MB is refused before upload', () 
     Object.defineProperty(edge, 'size', { value: MAX_UPLOAD_BYTES });
     expect(pick([edge]).kind).toBe('chosen');
   });
+
+  it('names the file and the limit in the refusal', () => {
+    expect(
+      pickRefusalMessage({ file: file('big.xlsx'), reason: 'size' }, 100)
+    ).toBe(
+      'error.file-exceeds-size-limit {"filename":"big.xlsx","maxSize":"100 bytes"}'
+    );
+  });
 });
 
 describe('choosing a file', () => {
@@ -85,6 +95,9 @@ describe('choosing a file', () => {
       kind: 'refused',
       rejection: { file: csv, reason: 'type' },
     });
+    expect(pickRefusalMessage({ file: csv, reason: 'type' }, 100)).toBe(
+      'error.central-data-xlsx-only'
+    );
   });
 
   it('takes one .xlsx file, in any letter case', () => {
