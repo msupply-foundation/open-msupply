@@ -1,6 +1,6 @@
 use crate::{
     ChangelogSyncType, ChangelogTableName, DBType, Delete, RowActionType, SourceSiteId, Upsert,
-    db_diesel::changelog::ChangelogRepository, trim,
+    db_diesel::changelog::ChangelogRepository, trim, trim_spaces,
 };
 
 use super::{
@@ -199,7 +199,7 @@ impl<'a> ItemRowRepository<'a> {
         item_code: &str,
     ) -> Result<Vec<ItemRow>, RepositoryError> {
         self.without_legacy_record(
-            item.filter(trim(code).eq(item_code.trim()))
+            item.filter(trim(code).eq(trim_spaces(item_code)))
                 .order(id.asc())
                 .into_boxed(),
         )

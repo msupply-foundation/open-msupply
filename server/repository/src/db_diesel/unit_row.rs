@@ -2,6 +2,7 @@ use super::{StorageConnection, unit_row::unit::dsl::*};
 use crate::{
     ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
     db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError, trim,
+    trim_spaces,
 };
 use diesel::prelude::*;
 
@@ -103,7 +104,7 @@ impl<'a> UnitRowRepository<'a> {
     /// save, don't.
     pub fn find_by_trimmed_name(&self, unit_name: &str) -> Result<Vec<UnitRow>, RepositoryError> {
         let result = unit
-            .filter(trim(name).eq(unit_name.trim()))
+            .filter(trim(name).eq(trim_spaces(unit_name)))
             .order(id.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)

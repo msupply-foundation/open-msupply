@@ -424,17 +424,24 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
             )
             .into(),
         UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
-        // Unreachable here: cells are read trimmed, `find_record` turns a saved username into a
-        // match or a conflict, and `import_row` refuses a protected user first.
-        error @ (UpsertUserError::UsernamePadded
-        | UpsertUserError::DuplicateUsername { .. }
-        | UpsertUserError::Protected) => RowError {
-            sheet: row.sheet.to_string(),
-            row: Some(row.number),
-            column: None,
-            message: format!("This user can't be saved: {error:?}"),
+        // Cells lose their spaces but keep a tab or line break.
+        UpsertUserError::UsernamePadded => row
+            .error(
+                USERNAME,
+                "username can't start or end with a tab or line break",
+            )
+            .into(),
+        // Unreachable here: `find_record` turns a saved username into a match or a conflict, and
+        // `import_row` refuses a protected user first.
+        error @ (UpsertUserError::DuplicateUsername { .. } | UpsertUserError::Protected) => {
+            RowError {
+                sheet: row.sheet.to_string(),
+                row: Some(row.number),
+                column: None,
+                message: format!("This user can't be saved: {error:?}"),
+            }
+            .into()
         }
-        .into(),
     }
 }
 

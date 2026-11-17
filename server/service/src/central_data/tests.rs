@@ -1852,6 +1852,53 @@ async fn items_export_then_import_makes_no_changes() {
     );
 }
 
+// covers: OMS-REG-CDIO-01.100
+
+#[actix_rt::test]
+async fn a_saved_code_with_a_tab_around_it_is_found() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_tab_code").await;
+    // SQL trims only spaces, so the tab has to survive the read for the code to find the item.
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "zinc".to_string(),
+            code: "ZN\t".to_string(),
+            name: "Zinc".to_string(),
+            default_pack_size: 1.0,
+            ..Default::default()
+        })
+        .unwrap();
+    let before = ItemRowRepository::new(&connection).find_all().unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    // With the id column, id and code must find the same item.
+    let bytes = CentralDataService.export(&ctx, &[all_items()]).unwrap();
+    let summary = CentralDataService
+        .import(&ctx, &write_file(dir.path(), bytes))
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 2);
+
+    // Without it, the code alone must find the item, not add a second.
+    let bytes = sheet::write(vec![sheet_data(
+        "item",
+        &["code", "name"],
+        vec![vec!["ZN\t".to_string().into(), "Zinc".to_string().into()]],
+    )])
+    .unwrap();
+    let summary = CentralDataService
+        .import(&ctx, &write_file(dir.path(), bytes))
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].unchanged),
+        (0, 1)
+    );
+    assert_eq!(
+        ItemRowRepository::new(&connection).find_all().unwrap(),
+        before
+    );
+}
+
 // covers: OMS-REG-CDIO-01.46, .47
 
 #[actix_rt::test]

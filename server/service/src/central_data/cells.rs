@@ -1,4 +1,5 @@
 use super::sheet::{Sheet, SheetRow, Value};
+use repository::trim_spaces;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RowError {
@@ -12,7 +13,9 @@ pub struct RowError {
 /// Cells are read trimmed: keep a saved value whose cell differs only by its spaces.
 pub fn keep_padded(cell: Option<String>, saved: Option<&str>) -> Option<String> {
     match saved {
-        Some(saved) if saved.trim() == cell.as_deref().unwrap_or("") => Some(saved.to_string()),
+        Some(saved) if trim_spaces(saved) == cell.as_deref().unwrap_or("") => {
+            Some(saved.to_string())
+        }
         _ => cell,
     }
 }

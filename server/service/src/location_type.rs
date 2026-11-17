@@ -2,7 +2,7 @@ use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
     LocationTypeRowRepository, LocationTypeSort, LocationTypeUser, PaginationOption,
-    RepositoryError, StorageConnection, StorageConnectionManager,
+    RepositoryError, StorageConnection, StorageConnectionManager, trim_spaces,
 };
 
 pub fn get_location_types(
@@ -102,7 +102,7 @@ fn validate(
     let repo = LocationTypeRowRepository::new(connection);
     let brings_in_clash = repo
         .find_one_by_id(&row.id)?
-        .is_none_or(|saved| saved.code.trim() != row.code.trim());
+        .is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
     if !brings_in_clash {
         return Ok(());
     }

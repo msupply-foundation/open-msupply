@@ -1,4 +1,4 @@
-use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
+use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository, trim_spaces};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUnitError {
@@ -43,9 +43,9 @@ fn validate(connection: &StorageConnection, unit: &UnitRow) -> Result<(), Upsert
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
     let repo = UnitRowRepository::new(connection);
     let brings_in_clash = unit.is_active
-        && repo
-            .find_one_by_id(&unit.id)?
-            .is_none_or(|saved| !saved.is_active || saved.name.trim() != unit.name.trim());
+        && repo.find_one_by_id(&unit.id)?.is_none_or(|saved| {
+            !saved.is_active || trim_spaces(&saved.name) != trim_spaces(&unit.name)
+        });
     if !brings_in_clash {
         return Ok(());
     }

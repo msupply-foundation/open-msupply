@@ -3,6 +3,7 @@ use super::{
     cells::{Row, RowError, parse_bool},
     sheet::Value,
 };
+use repository::trim_spaces;
 
 pub const DELETE_COLUMN: &str = "delete";
 /// The `delete` cell that deletes the row's record.
@@ -54,7 +55,7 @@ pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowErro
             };
             match value {
                 // Cells are read trimmed, so a padded saved value reads back without its spaces.
-                Value::Text(text) => cell != text.trim(),
+                Value::Text(text) => cell != trim_spaces(text),
                 // Excel numbers are floats: 3 can read as "3.0".
                 Value::Number(number) => cell.parse::<f64>().ok() != Some(*number),
                 Value::Bool(flag) => parse_bool(cell) != Some(*flag),

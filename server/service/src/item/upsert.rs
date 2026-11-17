@@ -1,6 +1,6 @@
 use repository::{
     ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
-    UnitRowRepository,
+    UnitRowRepository, trim_spaces,
 };
 
 #[derive(Debug, PartialEq)]
@@ -87,7 +87,8 @@ fn validate(
         return Err(UpsertItemError::LocationTypeNotFound);
     }
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
-    let brings_in_clash = saved.is_none_or(|saved| saved.code.trim() != row.code.trim());
+    let brings_in_clash =
+        saved.is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
     if !brings_in_clash {
         return Ok(());
     }

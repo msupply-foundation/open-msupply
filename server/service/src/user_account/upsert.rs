@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, UserAccountRow,
-    UserAccountRowRepository,
+    UserAccountRowRepository, trim_spaces,
 };
 use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
 
@@ -175,8 +175,9 @@ pub(super) fn validate(
     }
 
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
-    let brings_in_clash = saved_username
-        .is_none_or(|saved| saved.trim().to_lowercase() != row.username.trim().to_lowercase());
+    let brings_in_clash = saved_username.is_none_or(|saved| {
+        trim_spaces(saved).to_lowercase() != trim_spaces(&row.username).to_lowercase()
+    });
     if !brings_in_clash {
         return Ok(());
     }

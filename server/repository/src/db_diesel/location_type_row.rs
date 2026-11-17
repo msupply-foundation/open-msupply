@@ -3,6 +3,7 @@ use super::StorageConnection;
 use crate::{
     ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
     db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError, trim,
+    trim_spaces,
 };
 
 use diesel::prelude::*;
@@ -121,7 +122,7 @@ impl<'a> LocationTypeRowRepository<'a> {
         code: &str,
     ) -> Result<Vec<LocationTypeRow>, RepositoryError> {
         let result = location_type::table
-            .filter(trim(location_type::code).eq(code.trim()))
+            .filter(trim(location_type::code).eq(trim_spaces(code)))
             .order(location_type::id.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)

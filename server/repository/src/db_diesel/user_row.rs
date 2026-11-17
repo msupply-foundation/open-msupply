@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert, lower,
-    repository_error::RepositoryError, trim,
+    repository_error::RepositoryError, trim, trim_spaces,
 };
 
 use chrono::NaiveDateTime;
@@ -184,7 +184,7 @@ impl<'a> UserAccountRowRepository<'a> {
         username: &str,
     ) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account::table
-            .filter(lower(trim(user_account::username)).eq(lower(username.trim())))
+            .filter(lower(trim(user_account::username)).eq(lower(trim_spaces(username))))
             .order(user_account::id.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)

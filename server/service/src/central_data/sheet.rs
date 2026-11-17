@@ -1,4 +1,5 @@
 use calamine::{DataRef, Reader, Xlsx, XlsxError, open_workbook};
+use repository::trim_spaces;
 use std::{
     fs::File,
     io::{BufReader, Cursor},
@@ -59,10 +60,12 @@ pub fn read(path: &Path, max_rows: usize) -> Result<Vec<Sheet>, ReadError> {
             let (header_row, first_column) = range
                 .start()
                 .map_or((1, 1), |(row, column)| (row + 1, column + 1));
+            // Only spaces are trimmed, as SQL trims a saved key: a code saved as "PARA\t" must
+            // read back as itself to be found.
             let mut rows = range.rows().map(|cells| {
                 cells
                     .iter()
-                    .map(|cell| cell.to_string().trim().to_string())
+                    .map(|cell| trim_spaces(&cell.to_string()).to_string())
                     .collect::<Vec<_>>()
             });
             let headers = rows
@@ -106,8 +109,8 @@ fn measure(workbook: &mut Xlsx<BufReader<File>>) -> Result<Size, XlsxError> {
             let (row, column) = cell.get_position();
             let blank = match cell.get_value() {
                 DataRef::Empty => continue,
-                DataRef::String(text) => text.trim().is_empty(),
-                DataRef::SharedString(text) => text.trim().is_empty(),
+                DataRef::String(text) => trim_spaces(text).is_empty(),
+                DataRef::SharedString(text) => trim_spaces(text).is_empty(),
                 _ => false,
             };
             let header = *header_row.get_or_insert(row);
