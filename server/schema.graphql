@@ -2662,6 +2662,29 @@ type DiagnosisNode {
 	description: String!
 }
 
+"""
+Which screen dispensing opens on (the `dispensingScreen` preference).
+"""
+enum DispensingScreenNode {
+	"""
+	The dispensing list
+	"""
+	STANDARD
+	"""
+	The Simple dispensing screen
+	"""
+	SIMPLE
+}
+
+"""
+One store's edit of the dispensing screen. A null `value` CLEARS the
+store's own value, returning the store to the global value.
+"""
+input DispensingScreenStoreOverrideInput {
+	storeId: String!
+	value: DispensingScreenNode
+}
+
 type DisplaySettingNode {
 	value: String!
 	hash: String!
@@ -7120,6 +7143,10 @@ enum PreferenceKey {
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
 	commonMedicines
+	dispensingScreen
+	useUnnamedPatient
+	startWithUnnamedPatient
+	askForPatientType
 }
 
 type PreferenceMutations {
@@ -7155,6 +7182,7 @@ enum PreferenceValueNodeType {
 	COLOUR
 	IMAGE
 	COMMON_MEDICINES
+	DISPENSING_SCREEN
 }
 
 type PreferencesNode {
@@ -7212,6 +7240,25 @@ type PreferencesNode {
 	The medicines shown as cards on the Simple dispensing screen, in order.
 	"""
 	commonMedicines: [CommonMedicineNode!]!
+	"""
+	Which screen dispensing opens on: the store's own value where it has
+	one, else the global value.
+	"""
+	dispensingScreen: DispensingScreenNode!
+	"""
+	Whether the store can dispense to its unnamed patient.
+	"""
+	useUnnamedPatient: Boolean!
+	"""
+	Whether each new visit on the Simple screen starts with the unnamed
+	patient chosen.
+	"""
+	startWithUnnamedPatient: Boolean!
+	"""
+	Whether the Simple screen asks if the patient is an outpatient or an
+	inpatient.
+	"""
+	askForPatientType: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -12186,6 +12233,14 @@ input UpsertPreferencesInput {
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 	commonMedicines: [CommonMedicinesInput!]
+	dispensingScreen: DispensingScreenNode
+	dispensingScreenStoreOverride: [DispensingScreenStoreOverrideInput!]
+	useUnnamedPatient: Boolean
+	useUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	startWithUnnamedPatient: Boolean
+	startWithUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	askForPatientType: Boolean
+	askForPatientTypeStoreOverride: [BoolStoreOverrideInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

@@ -3198,6 +3198,23 @@ export type DiagnosisNode = {
   id: Scalars['String']['output'];
 };
 
+/** Which screen dispensing opens on (the `dispensingScreen` preference). */
+export enum DispensingScreenNode {
+  /** The Simple dispensing screen */
+  Simple = 'SIMPLE',
+  /** The dispensing list */
+  Standard = 'STANDARD',
+}
+
+/**
+ * One store's edit of the dispensing screen. A null `value` CLEARS the
+ * store's own value, returning the store to the global value.
+ */
+export type DispensingScreenStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<DispensingScreenNode>;
+};
+
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
   hash: Scalars['String']['output'];
@@ -8618,6 +8635,7 @@ export type PreferenceDescriptionNode = {
 export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  AskForPatientType = 'askForPatientType',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
   BlindStocktake = 'blindStocktake',
@@ -8629,6 +8647,7 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
+  DispensingScreen = 'dispensingScreen',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
@@ -8658,10 +8677,12 @@ export enum PreferenceKey {
   ShowIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
   SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  StartWithUnnamedPatient = 'startWithUnnamedPatient',
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  UseUnnamedPatient = 'useUnnamedPatient',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
@@ -8707,6 +8728,7 @@ export enum PreferenceValueNodeType {
   CommonMedicines = 'COMMON_MEDICINES',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
+  DispensingScreen = 'DISPENSING_SCREEN',
   Float = 'FLOAT',
   Image = 'IMAGE',
   Integer = 'INTEGER',
@@ -8719,6 +8741,11 @@ export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  /**
+   * Whether the Simple screen asks if the patient is an outpatient or an
+   * inpatient.
+   */
+  askForPatientType: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
   blindStocktake: Scalars['Boolean']['output'];
@@ -8731,6 +8758,11 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  /**
+   * Which screen dispensing opens on: the store's own value where it has
+   * one, else the global value.
+   */
+  dispensingScreen: DispensingScreenNode;
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
@@ -8763,10 +8795,17 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  /**
+   * Whether each new visit on the Simple screen starts with the unnamed
+   * patient chosen.
+   */
+  startWithUnnamedPatient: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  /** Whether the store can dispense to its unnamed patient. */
+  useUnnamedPatient: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
@@ -14252,6 +14291,8 @@ export type UpsertPackVariantResponse =
 export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  askForPatientType?: InputMaybe<Scalars['Boolean']['input']>;
+  askForPatientTypeStoreOverride?: InputMaybe<Array<BoolStoreOverrideInput>>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrderStoreOverride?: InputMaybe<
     Array<BoolStoreOverrideInput>
@@ -14272,6 +14313,10 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  dispensingScreen?: InputMaybe<DispensingScreenNode>;
+  dispensingScreenStoreOverride?: InputMaybe<
+    Array<DispensingScreenStoreOverrideInput>
+  >;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
@@ -14314,12 +14359,18 @@ export type UpsertPreferencesInput = {
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   showIndicativePriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  startWithUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
+  startWithUnnamedPatientStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   transferStockToInternalCustomersAtCostPrice?: InputMaybe<
     Scalars['Boolean']['input']
   >;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  useUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
+  useUnnamedPatientStoreOverride?: InputMaybe<Array<BoolStoreOverrideInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<
     Array<WarnWhenMissingRecentStocktakeInput>
   >;

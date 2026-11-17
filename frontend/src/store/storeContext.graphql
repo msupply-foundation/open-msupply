@@ -111,6 +111,13 @@ query storeContext($storeId: String!) {
       itemId
       amounts
     }
+    # Which screen dispensing opens on, and the Simple screen's patient
+    # options (spec/prescriptions › dispensing preferences): the store's own
+    # value where it has one, else the global one.
+    dispensingScreen
+    useUnnamedPatient
+    startWithUnnamedPatient
+    askForPatientType
   }
   me {
     ... on UserNode {

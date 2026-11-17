@@ -20,7 +20,11 @@ export interface HeaderButtonsProps {
 export const HeaderButtons = (props: HeaderButtonsProps) => (
   // data-header-buttons: the hook Button/SplitButton CSS uses to shed labels
   // to icons at phone widths, without every page opting each one in.
-  <div class={styles.buttons} data-header-buttons="">
+  <div
+    class={styles.buttons}
+    data-header-buttons=""
+    data-testid="header-buttons"
+  >
     {props.children}
   </div>
 );

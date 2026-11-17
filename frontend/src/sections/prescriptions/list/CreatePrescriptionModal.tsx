@@ -1,5 +1,5 @@
 import { generateUUID } from '../../../uuid';
-import { createEffect, createSignal, on, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { graphqlFetch } from '../../../api/graphql';
@@ -29,11 +29,6 @@ import { InsertPrescription } from './createPrescription.generated';
 export interface CreatePrescriptionModalProps {
   open: boolean;
   onClose: () => void;
-  /**
-   * The patient already in the Patient field as the dialog opens: the one
-   * chosen on the Simple screen, when its Standard view opened this (S2).
-   */
-  patient?: PatientOption | null;
 }
 
 export const CreatePrescriptionModal: Component<
@@ -53,17 +48,6 @@ export const CreatePrescriptionModal: Component<
   // patients vertical's create modal over this dialog; on success the new
   // patient is selected here (modal-in-place — D54).
   const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
-
-  // Filled in as the dialog opens, and only then: the field is the user's
-  // from there on. Closing resets it, as below.
-  createEffect(
-    on(
-      () => props.open,
-      open => {
-        if (open && props.patient) setPatient(props.patient);
-      }
-    )
-  );
 
   const reset = () => {
     setPatient(null);
