@@ -2705,6 +2705,7 @@
   "messages.click-to-return-to-returns": "برگشتی با آن ID پیدا نشد. برای بازگشت به فهرست برگشتی‌ها OK را کلیک کنید",
   "messages.click-to-return-to-rnr-list": "برای بازگشت به فهرست فرم‌های R&R اینجا کلیک کنید",
   "messages.click-to-return-to-shipments": "محموله با آن ID پیدا نشد. برای بازگشت به فهرست محموله‌ها OK را کلیک کنید",
+  "messages.click-to-return-to-stock": "سطر موجودی با این شناسه یافت نشد. برای بازگشت به فهرست موجودی روی تأیید کلیک کنید",
   "messages.click-to-return-to-stock-movements": "انتقال موجودی با این شناسه یافت نشد. برای بازگشت به فهرست انتقال‌های موجودی روی تأیید کلیک کنید",
   "messages.click-to-return-to-suppliers": "تمویل‌کننده‌ای با این شناسه یافت نشد. برای بازگشت به فهرست تمویل‌کنندگان روی تأیید کلیک کنید",
   "messages.click-to-view": "برای مشاهده پرونده مراجعه کننده {{firstName}} {{lastName}} کلیک کنید",
