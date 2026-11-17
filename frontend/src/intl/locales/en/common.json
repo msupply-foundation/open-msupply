@@ -1292,6 +1292,8 @@
   "label.category-2": "Category 2",
   "label.category-3": "Category 3",
   "label.cce": "CCE",
+  "label.central-data-field-change": "{{column}}: {{from}} → {{to}}",
+  "label.central-data-field-change-separator": "; ",
   "label.central-server": "Central server",
   "label.change": "Change",
   "label.change-currency": "Change currency",

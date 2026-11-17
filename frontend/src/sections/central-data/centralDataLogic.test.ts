@@ -214,13 +214,21 @@ describe('the preview card counts', () => {
 });
 
 describe('OMS-REG-CDIO-01.35 — the changed rows list', () => {
-  it('shows each changed column from old to new, a blank cell as a dash', () => {
+  it('shows each changed column from old to new, a blank cell as a dash, worded by the catalog', () => {
     expect(
       describeFields([
         { column: 'name', from: 'ml', to: 'mL' },
         { column: 'description', from: '', to: 'Liquid' },
       ])
-    ).toBe('name: ml → mL; description: — → Liquid');
+    ).toBe(
+      'label.central-data-field-change {"column":"⁨name⁩","from":"⁨ml⁩","to":"⁨mL⁩"}' +
+        'label.central-data-field-change-separator' +
+        'label.central-data-field-change {"column":"⁨description⁩","from":"⁨—⁩","to":"⁨Liquid⁩"}'
+    );
+    // Each value is isolated, so a right-to-left line can't reorder it.
+    expect(
+      describeFields([{ column: 'code', from: 'A1', to: 'B2' }])
+    ).toContain('"from":"\u2068A1\u2069"');
   });
 });
 

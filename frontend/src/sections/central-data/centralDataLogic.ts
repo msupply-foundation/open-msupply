@@ -239,9 +239,20 @@ export const changeCount = (summary: Summary) => {
   return inserted + updated + deleted;
 };
 
+/** Isolates a value's direction (FSI…PDI), so a Latin code in a
+ *  right-to-left line keeps its place around the arrow. */
+const isolate = (value: string) => `\u2068${value}\u2069`;
+
 /** An update's changed columns as one line, the cells as the sheet shows
- *  them; a blank cell reads as a dash. */
+ *  them; a blank cell reads as a dash. The catalog sets the arrow and the
+ *  separator, so a right-to-left language can turn them round. */
 export const describeFields = (fields: Summary['changes'][number]['fields']) =>
   fields
-    .map(({ column, from, to }) => `${column}: ${from || '—'} → ${to || '—'}`)
-    .join('; ');
+    .map(({ column, from, to }) =>
+      t('label.central-data-field-change', {
+        column: isolate(column),
+        from: isolate(from || '—'),
+        to: isolate(to || '—'),
+      })
+    )
+    .join(t('label.central-data-field-change-separator'));
