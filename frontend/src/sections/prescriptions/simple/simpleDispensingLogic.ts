@@ -171,6 +171,20 @@ export const medicinesFor = (
   );
 
 /**
+ * The medicines from the search that a failed read leaves unread: those the
+ * last read that went through didn't return (rules › another amount, and
+ * other medicines). They are dropped, so choosing one again reads it again;
+ * the others keep what that read returned, so their lines don't change.
+ */
+export const unreadIds = (
+  itemIds: readonly string[],
+  lastRead: readonly { id: string }[] | undefined
+): string[] => {
+  const read = new Set(lastRead?.map(item => item.id));
+  return itemIds.filter(itemId => !read.has(itemId));
+};
+
+/**
  * Packs per batch for a number of units, taken the way dispensing takes them:
  * in fill order, splitting packs (dispensing works in units — the
  * prescriptions variant of the shared distribution).

@@ -602,6 +602,7 @@
   "error.master-list-not-found": "Master list not found",
   "error.master-list-not-found-for-this-store": "Master list not found for this store",
   "error.max-orders-reached-for-period": "Maximum requisitions for this period already created",
+  "error.medicine-not-loaded": "The medicine couldn't be loaded. Check the connection, then choose it again from the search.",
   "error.missing-central-sync": "Could not reach mSupply central server",
   "error.missing-inputs": "{{count}}",
   "error.missing-required-field": "Missing required field: {{fieldName}}",
