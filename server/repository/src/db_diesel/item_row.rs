@@ -233,28 +233,48 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    /// Updates a saved item, leaving its `legacy_record` as it is.
+    /// Updates a saved item, leaving its `legacy_record` as it is. Every field is named, so a new
+    /// one doesn't compile until it's written here or left out on purpose. Bound under other names,
+    /// as the columns' names are taken.
     pub fn update_keeping_legacy_record(&self, row: &ItemRow) -> Result<(), RepositoryError> {
-        diesel::update(item.find(&row.id))
+        let ItemRow {
+            id: row_id,
+            name: row_name,
+            code: row_code,
+            unit_id: row_unit_id,
+            strength: row_strength,
+            ven_category: row_ven_category,
+            default_pack_size: row_default_pack_size,
+            r#type: row_type,
+            legacy_record: _,
+            is_active: row_is_active,
+            is_vaccine: row_is_vaccine,
+            vaccine_doses: row_vaccine_doses,
+            restricted_location_type_id: row_restricted_location_type_id,
+            volume_per_pack: row_volume_per_pack,
+            universal_code: row_universal_code,
+            custom_fields: row_custom_fields,
+        } = row;
+        diesel::update(item.find(row_id))
             .set((
-                name.eq(&row.name),
-                code.eq(&row.code),
-                unit_id.eq(&row.unit_id),
-                strength.eq(&row.strength),
-                ven_category.eq(&row.ven_category),
-                default_pack_size.eq(row.default_pack_size),
-                type_.eq(&row.r#type),
-                is_active.eq(row.is_active),
-                is_vaccine.eq(row.is_vaccine),
-                vaccine_doses.eq(row.vaccine_doses),
-                restricted_location_type_id.eq(&row.restricted_location_type_id),
-                volume_per_pack.eq(row.volume_per_pack),
-                universal_code.eq(&row.universal_code),
-                custom_fields.eq(&row.custom_fields),
+                name.eq(row_name),
+                code.eq(row_code),
+                unit_id.eq(row_unit_id),
+                strength.eq(row_strength),
+                ven_category.eq(row_ven_category),
+                default_pack_size.eq(row_default_pack_size),
+                type_.eq(row_type),
+                is_active.eq(row_is_active),
+                is_vaccine.eq(row_is_vaccine),
+                vaccine_doses.eq(row_vaccine_doses),
+                restricted_location_type_id.eq(row_restricted_location_type_id),
+                volume_per_pack.eq(row_volume_per_pack),
+                universal_code.eq(row_universal_code),
+                custom_fields.eq(row_custom_fields),
             ))
             .execute(self.connection.lock().connection())?;
         let changelog = ItemRow::generate_changelog(
-            row.id.clone(),
+            row_id.clone(),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
