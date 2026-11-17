@@ -21,8 +21,8 @@ import { isCentralServer } from './serverInfo';
 import { createStoreScopedResource } from './storeScopedResource';
 import { graphqlFetch } from './graphql';
 import {
-  GlobalTableConfigs,
-  SaveGlobalTableConfigs,
+  GlobalTableDefaultConfigs,
+  SaveGlobalTableDefaultConfigs,
 } from './tableConfig.generated';
 
 // App-glue that turns the three config layers (default → global → user) plus
@@ -33,12 +33,12 @@ import {
 // (kdd/table-state: the library table stays dumb; the page owns state).
 // DataTable never sees the layers, only the resolved value.
 //
-// - Global layer: the store-scoped globalTableConfigs blob, fetched lazily and
-// refetched on store change via createStoreScopedResource, then parsed for this
-// tableId. Read via noSuspense() so a pending first load never trips an
-// ancestor <Suspense> (no remount). - User layer: appData/localStorage, keyed
-// by user + tableId; the ONLY writable layer. - Band: the compact media query
-// (base | compact). Breakpoints do not share.
+// - Global layer: the store-scoped globalTableDefaultConfigs blob, fetched
+// lazily and refetched on store change via createStoreScopedResource, then
+// parsed for this tableId. Read via noSuspense() so a pending first load never
+// trips an ancestor <Suspense> (no remount). - User layer:
+// appData/localStorage, keyed by user + tableId; the ONLY writable layer. -
+// Band: the compact media query (base | compact). Breakpoints do not share.
 
 export type TableConfigController = {
   /**
@@ -84,9 +84,9 @@ export type TableConfigController = {
 };
 
 // The global layer is ONE store-scoped query for the whole app: the
-// globalTableConfigs blob holds EVERY table's config, and each table just
-// narrows to its own tableId. So the resource is created ONCE at module scope
-// (not per createTableConfig call) — that's what makes
+// globalTableDefaultConfigs blob holds EVERY table's config, and each table
+// just narrows to its own tableId. So the resource is created ONCE at module
+// scope (not per createTableConfig call) — that's what makes
 // createStoreScopedResource's singleton/dedup real: N tables share one lazy
 // fetch, refetched on store change. (Creating it inside createTableConfig would
 // build a new singleton per table and defeat the dedup.) The fetcher returns
@@ -95,10 +95,12 @@ export type TableConfigController = {
 const globalConfigsResource = createStoreScopedResource<GlobalTableConfigsMap>(
   currentStoreId,
   async storeId => {
-    const result = await graphqlFetch(GlobalTableConfigs, { storeId });
+    const result = await graphqlFetch(GlobalTableDefaultConfigs, { storeId });
     if (result.kind !== 'success') return undefined;
     return [
-      parseGlobalTableConfigs(result.data.preferences.globalTableConfigs),
+      parseGlobalTableConfigs(
+        result.data.preferences.globalTableDefaultConfigs
+      ),
     ];
   }
 );
@@ -187,8 +189,9 @@ export function createTableConfig(options: {
   // whole current global blob, splice in this table's user-layer config (or
   // drop the key when the user has cleared it back to defaults, so the stored
   // blob never accumulates empty objects), and send the FULL blob —
-  // upsertPreferences replaces globalTableConfigs wholesale. On success refetch
-  // the shared resource so the new global layer is live without a reload.
+  // upsertPreferences replaces globalTableDefaultConfigs wholesale. On success
+  // refetch the shared resource so the new global layer is live without a
+  // reload.
   const saveGlobalTableConfig = async (): Promise<boolean> => {
     const storeId = currentStoreId();
     const userId = currentUserId();
@@ -201,11 +204,11 @@ export function createTableConfig(options: {
       ? rest
       : { ...rest, [tableId]: userConfig };
 
-    const result = await graphqlFetch(SaveGlobalTableConfigs, {
+    const result = await graphqlFetch(SaveGlobalTableDefaultConfigs, {
       storeId,
-      // globalTableConfigs is the JSON scalar (typed `unknown`) — the server
-      // stores/returns a real object, so send the map object directly.
-      input: { globalTableConfigs: nextConfigs },
+      // globalTableDefaultConfigs is the JSON scalar (typed `unknown`) — the
+      // server stores/returns a real object, so send the map object directly.
+      input: { globalTableDefaultConfigs: nextConfigs },
     });
     if (
       result.kind !== 'success' ||

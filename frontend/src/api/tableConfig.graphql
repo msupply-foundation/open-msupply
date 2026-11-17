@@ -1,5 +1,8 @@
-# Global table-config defaults, keyed by tableId, stored as a JSON blob in store
-# preferences (a Record<tableId, TableConfig>). Cross-cutting — every list table
+# Global table-config defaults, keyed by tableId, stored as a JSON blob in the
+# global preference global_table_default_configs (a Record<tableId,
+# LayeredConfig>). The React front end (client/) keeps its own layouts, in a
+# different shape and with different table ids, in global_table_configs; this
+# UI never reads or writes that one. Cross-cutting — every list table
 # reads it and narrows to its own tableId (see ui/elements/table/tableConfig.ts),
 # so it lives in the shared api layer, not in any one vertical.
 #
@@ -8,13 +11,13 @@
 # top of; it is writable only through the central-server mutation below, which
 # the server gates on EDIT_CENTRAL_DATA and rejects off a central server — so an
 # admin on central can promote their current layout to the install-wide default.
-query globalTableConfigs($storeId: String!) {
+query globalTableDefaultConfigs($storeId: String!) {
   preferences(storeId: $storeId) {
-    globalTableConfigs
+    globalTableDefaultConfigs
   }
 }
 
-# Save the whole globalTableConfigs blob as the store's (and, via sync, the
+# Save the whole globalTableDefaultConfigs blob as the store's (and, via sync, the
 # install's) shared table-config default. Central-server + EDIT_CENTRAL_DATA
 # only — the server enforces both (Resource::MutatePreferences =
 # HasPermission(EditCentralData); off-central it errors), and the UI mirrors the
@@ -22,7 +25,7 @@ query globalTableConfigs($storeId: String!) {
 # (every tableId), not just the one table, because upsertPreferences replaces the
 # value wholesale — createTableConfig merges the edited table into the current
 # blob before sending.
-mutation saveGlobalTableConfigs(
+mutation saveGlobalTableDefaultConfigs(
   $storeId: String!
   $input: UpsertPreferencesInput!
 ) {

@@ -97,13 +97,14 @@ export const resolveTableConfig = (
   };
 };
 
-// The API's globalTableConfigs blob, parsed: a per-tableId map of layered
-// config. This is ONE value for the whole store (every table narrows to its own
-// tableId), so it's fetched once and shared — see createTableConfig's
-// module-level store-scoped resource.
+// The API's globalTableDefaultConfigs blob, parsed: a per-tableId map of
+// layered config. This is ONE value for the whole store (every table narrows
+// to its own tableId), so it's fetched once and shared — see
+// createTableConfig's module-level store-scoped resource.
 export type GlobalTableConfigs = Record<string, LayeredConfig>;
 
-// Parse the API's globalTableConfigs JSON blob into the whole per-tableId map.
+// Parse the API's globalTableDefaultConfigs JSON blob into the whole
+// per-tableId map.
 // The blob is free-form JSON from the server; on anything unexpected we fall
 // back to an empty map rather than throwing — each table then uses
 // user/default/TanStack fallback. Trusted-layer cast: the blob's shape is the
