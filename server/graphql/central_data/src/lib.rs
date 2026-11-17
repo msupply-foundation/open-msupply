@@ -37,14 +37,14 @@ impl CentralDataQueries {
         ctx: &Context<'_>,
         tables: Vec<CentralDataExportTableInput>,
     ) -> Result<CentralDataExportCountsNode> {
-        validate(ctx)?;
+        let user_id = validate(ctx)?;
         let service_provider = ctx.service_provider();
-        let context = service_provider.basic_context()?;
+        let context = service_provider.context(String::new(), user_id)?;
         let tables: Vec<ExportTable> = tables.into_iter().map(Into::into).collect();
         let counts = service_provider
             .central_data_service
             .export_counts(&context, &tables)
-            .map_err(StandardGraphqlError::from_repository_error)?;
+            .map_err(export_error)?;
         Ok(CentralDataExportCountsNode {
             tables: counts
                 .into_iter()
@@ -70,23 +70,21 @@ impl CentralDataMutations {
         ctx: &Context<'_>,
         tables: Vec<CentralDataExportTableInput>,
     ) -> Result<CentralDataExportResponse> {
-        validate(ctx)?;
+        let user_id = validate(ctx)?;
         let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
         let base_dir = ctx.get_settings().server.base_dir.clone();
         let tables: Vec<ExportTable> = tables.into_iter().map(Into::into).collect();
 
         // Blocking pool: under HTTP/2 a client's requests share one actix worker.
         let file_id = tokio::task::spawn_blocking(move || -> Result<Result<String, usize>> {
-            let context = service_provider.basic_context()?;
+            let context = service_provider.context(String::new(), user_id)?;
             let bytes = match service_provider
                 .central_data_service
                 .export(&context, &tables)
             {
                 Ok(bytes) => bytes,
                 Err(ExportError::TooManyRows { row_count }) => return Ok(Err(row_count)),
-                Err(error) => {
-                    return Err(StandardGraphqlError::InternalError(format!("{error:?}")).extend());
-                }
+                Err(error) => return Err(export_error(error)),
             };
             Ok(Ok(store_temporary(&base_dir, "central_data.xlsx", &bytes)?))
         })
@@ -120,7 +118,18 @@ impl CentralDataMutations {
     }
 }
 
-/// The user's id, for the import to know who runs it.
+fn export_error(error: ExportError) -> Error {
+    match error {
+        ExportError::ServerAdminOnly => {
+            StandardGraphqlError::Forbidden("Only a server admin can export this table".to_string())
+                .extend()
+        }
+        ExportError::DatabaseError(error) => StandardGraphqlError::from_repository_error(error),
+        error => StandardGraphqlError::InternalError(format!("{error:?}")).extend(),
+    }
+}
+
+/// The user's id, for the import and export to know who runs them.
 fn validate(ctx: &Context<'_>) -> Result<String> {
     let user = validate_auth(
         ctx,

@@ -4,7 +4,10 @@ use super::{
     MAX_ROWS_LISTED, RecordCount, RowChange, TableChanges,
     sheet::{self, SheetData, Value},
 };
-use crate::{service_provider::ServiceProvider, user_account::UserAccountService};
+use crate::{
+    service_provider::{ServiceContext, ServiceProvider},
+    user_account::UserAccountService,
+};
 use repository::{
     ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
@@ -16,6 +19,7 @@ use repository::{
     },
     test_db::setup_all,
 };
+use repository::{PermissionType, UserPermissionRow, UserPermissionRowRepository};
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
@@ -2531,12 +2535,35 @@ async fn user_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir,
             is_default: true,
         })
         .unwrap();
+    grant_server_admin(&connection, IMPORTER);
     (
         connection,
         ServiceProvider::new(connection_manager),
         TempDir::new().unwrap(),
         hash,
     )
+}
+
+/// Runs the user tests' imports and exports, as only a server admin may. Has no user row, so no
+/// export lists them.
+const IMPORTER: &str = "importer";
+
+fn grant_server_admin(connection: &StorageConnection, user_id: &str) {
+    UserPermissionRowRepository::new(connection)
+        .upsert_one(&UserPermissionRow {
+            id: format!("{user_id}_server_admin"),
+            user_id: user_id.to_string(),
+            store_id: Some(mock_store_a().id),
+            permission: PermissionType::ServerAdmin,
+            context_id: None,
+        })
+        .unwrap();
+}
+
+fn as_user(service_provider: &ServiceProvider, user_id: &str) -> ServiceContext {
+    service_provider
+        .context(String::new(), user_id.to_string())
+        .unwrap()
 }
 
 fn all_users() -> ExportTable {
@@ -2554,7 +2581,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
     let before = UserAccountRowRepository::new(&connection)
         .find_all()
         .unwrap();
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
 
     let bytes = CentralDataService.export(&ctx, &[all_users()]).unwrap();
     let path = write_file(dir.path(), bytes);
@@ -2601,7 +2628,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
 #[actix_rt::test]
 async fn a_user_export_searches_usernames_and_filters_by_status() {
     let (_, service_provider, _, _) = user_setup("central_data_user_filter").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
     let counts = |contains: Option<&str>, is_active: Option<bool>| {
         let table = ExportTable {
             table: CentralDataTable::User,
@@ -2631,7 +2658,7 @@ async fn a_user_export_searches_usernames_and_filters_by_status() {
 #[actix_rt::test]
 async fn user_rows_add_and_update_by_username_and_hash_passwords() {
     let (connection, service_provider, dir, hash) = user_setup("central_data_user_upsert").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
 
     let path = write_file(
         dir.path(),
@@ -2763,7 +2790,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
 #[actix_rt::test]
 async fn users_sharing_a_password_get_their_own_hash() {
     let (connection, service_provider, dir, _) = user_setup("central_data_user_salts").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
     let new = |username, password| user_row("", username, &[(2, password), (4, "ENGLISH")]);
 
     // Eve's surrounding spaces are dropped, as every cell's are.
@@ -2792,7 +2819,7 @@ async fn users_sharing_a_password_get_their_own_hash() {
 #[actix_rt::test]
 async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
     let (connection, service_provider, dir, _) = user_setup("central_data_user_username").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
     let new = [(2, "pw"), (4, "ENGLISH")];
 
     let path = write_file(
@@ -2861,7 +2888,7 @@ async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
 #[actix_rt::test]
 async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
     let (connection, service_provider, dir, hash) = user_setup("central_data_user_delete").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
     // As exported, so the saved values are no change.
     let delete_anna = || {
         user_row(
@@ -2919,7 +2946,7 @@ async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
 #[actix_rt::test]
 async fn a_row_without_delete_restores_a_deleted_user() {
     let (connection, service_provider, dir, hash) = user_setup("central_data_user_restore").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
     UserAccountRowRepository::new(&connection)
         .upsert_one(&UserAccountRow {
             deleted_datetime: Some(chrono::Utc::now().naive_utc()),
@@ -2975,7 +3002,7 @@ async fn a_row_without_delete_restores_a_deleted_user() {
 #[actix_rt::test]
 async fn a_row_cannot_change_or_take_a_protected_user() {
     let (connection, service_provider, dir, _) = user_setup("central_data_user_protected").await;
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
     // Ben is the admin this server made at setup.
     KeyValueStoreRepository::new(&connection)
         .set_string(
@@ -3029,10 +3056,9 @@ async fn a_row_cannot_change_or_take_a_protected_user() {
 #[actix_rt::test]
 async fn the_importing_user_cannot_delete_themselves_or_make_themselves_inactive() {
     let (connection, service_provider, dir, hash) = user_setup("central_data_user_importer").await;
-    // Anna runs the import.
-    let ctx = service_provider
-        .context(String::new(), "anna".to_string())
-        .unwrap();
+    // Anna, a server admin, runs the import.
+    grant_server_admin(&connection, "anna");
+    let ctx = as_user(&service_provider, "anna");
 
     let path = write_file(
         dir.path(),
@@ -3075,4 +3101,75 @@ async fn the_importing_user_cannot_delete_themselves_or_make_themselves_inactive
             .verify_password("anna", "new secret")
             .is_ok()
     );
+}
+
+// covers: OMS-REG-CDIO-01.99
+
+#[actix_rt::test]
+async fn only_a_server_admin_can_import_or_export_users() {
+    let (connection, service_provider, dir, _) = user_setup("central_data_user_admin_only").await;
+    // Anna can import and export central data, but isn't a server admin.
+    let ctx = as_user(&service_provider, "anna");
+    let before = UserAccountRowRepository::new(&connection)
+        .find_all()
+        .unwrap();
+
+    assert!(matches!(
+        CentralDataService.export(&ctx, &[all_users()]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+    assert!(matches!(
+        CentralDataService.export_counts(&ctx, &[all_units(), all_users()]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+    // Other tables she still can.
+    assert!(CentralDataService.export(&ctx, &[all_units()]).is_ok());
+
+    // A new password for Ben, and a row that would otherwise be a conflict naming Anna's id.
+    let users = sheet_data(
+        "user",
+        &USER_HEADERS,
+        vec![
+            user_row("", "ben", &[(2, "taken over")]),
+            user_row("new_id", "anna", &[]),
+        ],
+    );
+    let units = sheet_data(
+        "unit",
+        &["name", "index", "is_active"],
+        vec![vec![Value::Text("Vial".to_string()), 9.into(), true.into()]],
+    );
+    let path = write_file(dir.path(), sheet::write(vec![units, users]).unwrap());
+    for summary in [
+        CentralDataService.preview_import(&ctx, &path).unwrap(),
+        CentralDataService.import(&ctx, &path).unwrap(),
+    ] {
+        let errors: Vec<_> = summary
+            .errors
+            .iter()
+            .map(|error| (error.sheet.as_str(), error.row, error.message.as_str()))
+            .collect();
+        assert_eq!(
+            errors,
+            [("user", None, "Only a server admin can import this sheet")]
+        );
+        // Its rows don't run.
+        let tables: Vec<_> = summary.tables.iter().map(|changes| changes.table).collect();
+        assert_eq!(tables, [CentralDataTable::Unit]);
+    }
+    // With an error nothing is applied, the unit included.
+    assert_eq!(
+        UserAccountRowRepository::new(&connection)
+            .find_all()
+            .unwrap(),
+        before
+    );
+    assert!(units_named(&connection, "Vial").is_empty());
+
+    // As a server admin, the rows run.
+    grant_server_admin(&connection, "anna");
+    assert!(CentralDataService.export(&ctx, &[all_users()]).is_ok());
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let rows: Vec<_> = summary.errors.iter().map(|error| error.row).collect();
+    assert_eq!(rows, [Some(3)], "only the conflict");
 }

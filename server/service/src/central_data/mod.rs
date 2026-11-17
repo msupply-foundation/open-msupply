@@ -1,4 +1,4 @@
-use crate::service_provider::ServiceContext;
+use crate::{service_provider::ServiceContext, sync::maintenance_mode::is_server_admin};
 use cells::{Row, RowError};
 use repository::{RepositoryError, StorageConnection};
 use std::{any::Any, collections::HashMap, path::Path};
@@ -93,6 +93,10 @@ pub struct ExportCount {
 }
 
 impl CentralDataTable {
+    pub fn server_admin_only(self) -> bool {
+        matches!(self, CentralDataTable::User)
+    }
+
     pub fn sheet_name(&self) -> &'static str {
         match self {
             CentralDataTable::Unit => "unit",
@@ -336,6 +340,7 @@ pub enum ExportError {
     TooManyRows {
         row_count: usize,
     },
+    ServerAdminOnly,
     CannotWriteFile(String),
     DatabaseError(RepositoryError),
 }
@@ -343,6 +348,7 @@ pub enum ExportError {
 pub trait CentralDataServiceTrait: Sync + Send {
     /// Refused over the import cap.
     fn export(&self, ctx: &ServiceContext, tables: &[ExportTable]) -> Result<Vec<u8>, ExportError> {
+        check_server_admin_only(ctx, tables)?;
         export(&ctx.connection, tables, MAX_IMPORT_ROWS)
     }
 
@@ -351,8 +357,9 @@ pub trait CentralDataServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         tables: &[ExportTable],
-    ) -> Result<Vec<ExportCount>, RepositoryError> {
-        export_counts(&ctx.connection, tables)
+    ) -> Result<Vec<ExportCount>, ExportError> {
+        check_server_admin_only(ctx, tables)?;
+        export_counts(&ctx.connection, tables).map_err(ExportError::DatabaseError)
     }
 
     fn preview_import(
@@ -390,6 +397,18 @@ fn requested(
             .find(|requested| requested.table == table.table())
             .map(|requested| (*table, &requested.filter))
     })
+}
+
+fn check_server_admin_only(
+    ctx: &ServiceContext,
+    tables: &[ExportTable],
+) -> Result<(), ExportError> {
+    if tables.iter().any(|table| table.table.server_admin_only())
+        && !is_server_admin(&ctx.connection, &ctx.user_id).map_err(ExportError::DatabaseError)?
+    {
+        return Err(ExportError::ServerAdminOnly);
+    }
+    Ok(())
 }
 
 fn export_counts(
@@ -475,10 +494,12 @@ fn run_sheets(
     commit: bool,
     errors_listed: usize,
 ) -> Result<ImportSummary, ImportError> {
+    let refused = refused_tables(ctx, sheets).map_err(ImportError::DatabaseError)?;
     let mut prepared = HashMap::new();
     if commit {
         for table in TABLES {
             if let Some(sheet) = sheet_for(*table, sheets)
+                && !refused.contains(&table.table())
                 && let Some(work) = table
                     .prepare(&ctx.connection, sheet)
                     .map_err(ImportError::DatabaseError)?
@@ -501,7 +522,7 @@ fn run_sheets(
                     commit,
                     prepared: prepared.remove(&table),
                 };
-                let summary = import_sheets(connection, start, sheets, errors_listed)?;
+                let summary = import_sheets(connection, start, sheets, &refused, errors_listed)?;
                 if commit && summary.error_count == 0 {
                     Ok(summary)
                 } else {
@@ -516,6 +537,22 @@ fn run_sheets(
         Ok(summary) | Err(Outcome::RolledBack(summary)) => Ok(summary),
         Err(Outcome::Database(error)) => Err(ImportError::DatabaseError(error)),
     }
+}
+
+/// The file's tables only a server admin may import, when the user importing isn't one.
+fn refused_tables(
+    ctx: &ServiceContext,
+    sheets: &[sheet::Sheet],
+) -> Result<Vec<CentralDataTable>, RepositoryError> {
+    let admin_only: Vec<CentralDataTable> = TABLES
+        .iter()
+        .filter(|table| table.table().server_admin_only() && sheet_for(**table, sheets).is_some())
+        .map(|table| table.table())
+        .collect();
+    if admin_only.is_empty() || is_server_admin(&ctx.connection, &ctx.user_id)? {
+        return Ok(Vec::new());
+    }
+    Ok(admin_only)
 }
 
 fn find_table(sheet: &sheet::Sheet) -> Option<&'static (dyn ImportTable + Sync)> {
@@ -539,6 +576,7 @@ fn import_sheets<'a>(
     connection: &StorageConnection,
     mut start: impl FnMut(CentralDataTable) -> SheetStart<'a>,
     sheets: &[sheet::Sheet],
+    refused: &[CentralDataTable],
     errors_listed: usize,
 ) -> Result<ImportSummary, RepositoryError> {
     let mut summary = ImportSummary::new(errors_listed);
@@ -564,6 +602,16 @@ fn import_sheets<'a>(
         let Some(sheet) = sheet_for(*table, sheets) else {
             continue;
         };
+        // None of its rows run, so their errors can't tell the user about records they can't see.
+        if refused.contains(&table.table()) {
+            summary.add_errors([RowError {
+                sheet: sheet.name.clone(),
+                row: None,
+                column: None,
+                message: "Only a server admin can import this sheet".to_string(),
+            }]);
+            continue;
+        }
         let errors_before = summary.error_count;
         summary.add_errors(check_headers(*table, sheet));
         table_sheets.push((*table, sheet, summary.error_count - errors_before));
@@ -892,7 +940,8 @@ mod no_table_tests {
         .await;
         let notes = sheet(&["note"], &[(3, &["a"])]);
         // An unknown sheet starts no table.
-        let summary = import_sheets(&connection, |_| unreachable!(), &[notes], usize::MAX).unwrap();
+        let summary =
+            import_sheets(&connection, |_| unreachable!(), &[notes], &[], usize::MAX).unwrap();
 
         let errors: Vec<_> = summary
             .errors
