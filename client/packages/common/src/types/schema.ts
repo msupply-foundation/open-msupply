@@ -8741,6 +8741,10 @@ export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  /**
+   * Whether the Simple screen asks if the patient is an outpatient or an
+   * inpatient.
+   */
   askForPatientType: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
@@ -8754,6 +8758,10 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  /**
+   * Which screen dispensing opens on: the store's own value where it has
+   * one, else the global value.
+   */
   dispensingScreen: DispensingScreenNode;
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -8787,11 +8795,16 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  /**
+   * Whether each new visit on the Simple screen starts with the unnamed
+   * patient chosen.
+   */
   startWithUnnamedPatient: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  /** Whether the store can dispense to its unnamed patient. */
   useUnnamedPatient: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];

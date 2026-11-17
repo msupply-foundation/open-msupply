@@ -7240,9 +7240,24 @@ type PreferencesNode {
 	The medicines shown as cards on the Simple dispensing screen, in order.
 	"""
 	commonMedicines: [CommonMedicineNode!]!
+	"""
+	Which screen dispensing opens on: the store's own value where it has
+	one, else the global value.
+	"""
 	dispensingScreen: DispensingScreenNode!
+	"""
+	Whether the store can dispense to its unnamed patient.
+	"""
 	useUnnamedPatient: Boolean!
+	"""
+	Whether each new visit on the Simple screen starts with the unnamed
+	patient chosen.
+	"""
 	startWithUnnamedPatient: Boolean!
+	"""
+	Whether the Simple screen asks if the patient is an outpatient or an
+	inpatient.
+	"""
 	askForPatientType: Boolean!
 }
 
