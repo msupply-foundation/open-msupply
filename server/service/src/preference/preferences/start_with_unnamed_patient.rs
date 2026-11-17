@@ -1,6 +1,7 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-/// Whether each new visit on the Simple screen starts with the unnamed patient chosen (spec/prescriptions rules › dispensing preferences). Set for every
+/// Whether each new visit on the Simple screen starts with the unnamed patient
+/// chosen (spec/prescriptions rules › dispensing preferences). Set for every
 /// store on the central server; a store may have its own value.
 pub struct StartWithUnnamedPatient;
 

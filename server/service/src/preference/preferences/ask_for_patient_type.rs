@@ -1,6 +1,7 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-/// Whether the Simple screen asks if the patient is an outpatient or an inpatient (spec/prescriptions rules › dispensing preferences). Set for every
+/// Whether the Simple screen asks if the patient is an outpatient or an
+/// inpatient (spec/prescriptions rules › dispensing preferences). Set for every
 /// store on the central server; a store may have its own value.
 pub struct AskForPatientType;
 
