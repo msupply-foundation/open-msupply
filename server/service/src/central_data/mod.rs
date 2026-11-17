@@ -1,7 +1,15 @@
-use crate::{service_provider::ServiceContext, sync::maintenance_mode::is_server_admin};
+use crate::{
+    service_provider::ServiceContext, session_store::SessionStore,
+    sync::maintenance_mode::is_server_admin,
+};
 use cells::{Row, RowError};
 use repository::{RepositoryError, StorageConnection};
-use std::{any::Any, collections::HashMap, path::Path};
+use std::{
+    any::Any,
+    collections::HashMap,
+    path::Path,
+    sync::{Arc, PoisonError, RwLock},
+};
 use umya_spreadsheet::helper::coordinate::string_from_column_index;
 
 pub mod cells;
@@ -284,6 +292,13 @@ pub struct RowChange {
     pub fields: Vec<FieldChange>,
 }
 
+/// The server's open sessions, for an applied import to end some. `keep` is the session running
+/// the import, so changing your own password by import doesn't sign you out.
+pub struct OpenSessions {
+    pub store: Arc<RwLock<SessionStore>>,
+    pub keep: Option<String>,
+}
+
 #[derive(Debug)]
 pub struct ImportSummary {
     pub tables: Vec<TableChanges>,
@@ -293,9 +308,8 @@ pub struct ImportSummary {
     pub errors: Vec<RowError>,
     /// Every row error. With any, nothing was applied.
     pub error_count: u32,
-    /// Users made inactive or given a new password, whose open sessions the caller ends once
-    /// the import is applied, as they hold no session store of their own.
-    pub sessions_to_end: Vec<String>,
+    /// Users made inactive, deleted or given a new password, whose open sessions `import` ends.
+    sessions_to_end: Vec<String>,
     errors_listed: usize,
 }
 
@@ -371,8 +385,27 @@ pub trait CentralDataServiceTrait: Sync + Send {
         run_import(ctx, path, false)
     }
 
-    fn import(&self, ctx: &ServiceContext, path: &Path) -> Result<ImportSummary, ImportError> {
-        run_import(ctx, path, true)
+    /// Once applied, ends the open sessions of the users it made inactive, deleted or gave a new
+    /// password, so they don't last until they expire.
+    fn import(
+        &self,
+        ctx: &ServiceContext,
+        path: &Path,
+        sessions: &OpenSessions,
+    ) -> Result<ImportSummary, ImportError> {
+        let summary = run_import(ctx, path, true)?;
+        // With errors, nothing was applied.
+        if summary.error_count == 0 && !summary.sessions_to_end.is_empty() {
+            // Applied by now, so a poisoned lock still ends them rather than fail the import.
+            let mut store = sessions
+                .store
+                .write()
+                .unwrap_or_else(PoisonError::into_inner);
+            for user_id in &summary.sessions_to_end {
+                store.revoke_all_for_user_except(user_id, sessions.keep.as_deref());
+            }
+        }
+        Ok(summary)
     }
 
     /// The upload with each row's errors in an `error` column. Writes nothing.
