@@ -1,7 +1,7 @@
 import { Show, type Component } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { useSearchParams } from '@solidjs/router';
 import { t } from '@/intl';
+import { useUrlTab } from '@/list/urlTab';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -18,10 +18,10 @@ import { ImportPreviewFooter } from './ImportPreviewCard';
 // elsewhere and its route redirects (spec/navigation § central administration).
 const CentralDataPage: Component = () => {
   // Import is the default, so only Export shows in the address.
-  const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-  const activeTab = () => (searchParams.tab === 'export' ? 'export' : 'import');
-  const setActiveTab = (value: string) =>
-    setSearchParams({ tab: value === 'export' ? value : undefined });
+  const { tab: activeTab, setTab: setActiveTab } = useUrlTab([
+    'import',
+    'export',
+  ]);
   const tabs = (): TabDef[] => [
     {
       value: 'import',
