@@ -47,8 +47,8 @@ async fn upload(
     };
 
     // `/files` serves what's uploaded here inline on the app's own origin, so a file a
-    // browser would run script from must not get in (#1640). Plugin and report bundles,
-    // the only things uploaded here, are JSON.
+    // browser would run script from must not get in (#1640). What's uploaded here, plugin
+    // and report bundles (JSON) and central data workbooks (.xlsx), never needs to.
     if let Err(error) = refuse_files_that_run_script(slice::from_ref(&file)) {
         return error.error_response();
     }

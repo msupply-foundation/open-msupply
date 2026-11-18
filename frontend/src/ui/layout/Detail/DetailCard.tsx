@@ -50,8 +50,9 @@ export interface DetailCardProps {
 }
 
 /*
- * DetailCard — a titled card with header actions, for when several records of
- * the same kind are stacked as cards rather than one page being the whole
+ * DetailCard — a card with header actions, titled unless a page-level tab
+ * already names it, for when several records of the same kind are stacked as
+ * cards rather than one page being the whole
  * detail view (spec/ui-standards/components.md § Detail views). Extends the
  * DetailContainer/DetailSection/DetailRow/RecordNameHeader family with the one
  * shape it doesn't cover: a miniature detail view per record, each with its

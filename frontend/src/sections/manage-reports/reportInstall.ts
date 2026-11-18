@@ -8,8 +8,8 @@ import type { InstallUploadedReportsResult } from './manageReports.generated';
 // identified file is installed over GraphQL. A transferred-but-not-installed
 // file changes nothing (OMS-REG-MNG-06.23).
 //
-// Pure except for the fetch itself, so the outcome mapping is unit-testable
-// without a server.
+// Pure: the dialog makes both calls, the upload through api/postFiles.ts's
+// `uploadFile`, so the outcome mapping is unit-testable without a server.
 
 /** What one pick in the upload dialog does to the chosen files. */
 export type PickOutcome<T> =
