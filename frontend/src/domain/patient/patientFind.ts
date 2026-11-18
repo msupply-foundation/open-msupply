@@ -167,7 +167,8 @@ export const findOtherFacilityPatients = async (
     return result ? { kind: 'ok', ...result } : { kind: 'failed' };
   }
   // This site's own patients at other stores, in name order: few on a remote
-  // site, so read at once, each page taking those that fall within it
+  // site, so read whole for every page (and retry), each page taking those
+  // that fall within it
   const siteRequest = fetchRows(
     storeId,
     patientFilter(terms, false),

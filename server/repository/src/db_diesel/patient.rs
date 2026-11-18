@@ -412,14 +412,17 @@ impl<'a> PatientRepository<'a> {
                 is_visible,
             }) = visible_in_store
             {
-                let visible_here = name_store_join::table
-                    .filter(name_store_join::store_id.eq(store_id))
-                    .filter(name_store_join::visible.eq(true))
-                    .select(name_store_join::name_id);
                 query = if is_visible {
-                    query.filter(name::id.eq_any(visible_here))
+                    query.filter(
+                        name::id.eq_any(
+                            name_store_join::table
+                                .filter(name_store_join::store_id.eq(store_id))
+                                .filter(name_store_join::visible.eq(true))
+                                .select(name_store_join::name_id),
+                        ),
+                    )
                 } else {
-                    query.filter(name::id.ne_all(visible_here))
+                    not_visible_in_store(query, store_id)
                 };
             }
         };
@@ -436,6 +439,36 @@ impl<'a> PatientRepository<'a> {
 }
 
 type BoxedNameQuery = IntoBoxed<'static, name::table, DBType>;
+
+/// Patients with no visible join to the store. Each backend gets the form its
+/// planner handles well, measured at 1M patients from a store joined to 900k
+/// (#659). Postgres scans a NOT IN list too big for work_mem once per
+/// candidate (4s for 51 rows), but plans a correlated NOT EXISTS as an
+/// anti-join on the name index (30ms).
+#[cfg(feature = "postgres")]
+fn not_visible_in_store(query: BoxedNameQuery, store_id: String) -> BoxedNameQuery {
+    query.filter(diesel::dsl::not(diesel::dsl::exists(
+        name_store_join::table
+            .filter(name_store_join::name_id.eq(name::id))
+            .filter(name_store_join::store_id.eq(store_id))
+            .filter(name_store_join::visible.eq(true)),
+    )))
+}
+
+/// SQLite builds a NOT IN list once and probes it (0.5s). A correlated NOT
+/// EXISTS only uses the name index once ANALYZE has run, which the server
+/// never does: without it each candidate scans all the store's joins (16s).
+#[cfg(not(feature = "postgres"))]
+fn not_visible_in_store(query: BoxedNameQuery, store_id: String) -> BoxedNameQuery {
+    query.filter(
+        name::id.ne_all(
+            name_store_join::table
+                .filter(name_store_join::store_id.eq(store_id))
+                .filter(name_store_join::visible.eq(true))
+                .select(name_store_join::name_id),
+        ),
+    )
+}
 
 /// The ids of names whose `column` starts with `text`, ignoring case: a range
 /// on the column's lowercase form, so the index on that form applies (an
