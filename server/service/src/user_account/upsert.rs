@@ -87,7 +87,7 @@ pub fn ends_sessions(saved: Option<&UserAccountRow>, user: &UserAccountRow) -> b
 
 /// Saves `row` as given, `hashed_password` included, as `by`, the user saving. Joins the caller's
 /// transaction when there is one, so an import's earlier rows count.
-pub fn upsert_user(
+pub fn save_user(
     connection: &StorageConnection,
     by: &str,
     row: &UserAccountRow,
@@ -199,13 +199,13 @@ mod tests {
     }
 
     fn upsert(connection: &StorageConnection, row: &UserAccountRow) -> Result<(), UpsertUserError> {
-        upsert_user(connection, "", row)
+        save_user(connection, "", row)
     }
 
     #[actix_rt::test]
     async fn a_user_needs_a_username_no_other_user_has_in_any_case() {
         let (_, connection, _, _) =
-            setup_all("upsert_user_duplicate_username", MockDataInserts::none()).await;
+            setup_all("save_user_duplicate_username", MockDataInserts::none()).await;
         assert_eq!(
             upsert(&connection, &user("a", " ")),
             Err(UpsertUserError::Username(UsernameError::Required))
@@ -232,7 +232,7 @@ mod tests {
     #[actix_rt::test]
     async fn a_saved_padded_username_can_still_be_edited() {
         let (_, connection, _, _) =
-            setup_all("upsert_user_saved_padded", MockDataInserts::none()).await;
+            setup_all("save_user_saved_padded", MockDataInserts::none()).await;
         let repo = UserAccountRowRepository::new(&connection);
         // Legacy sync can save one.
         repo.upsert_one(&user("a", "Anna ")).unwrap();
@@ -248,7 +248,7 @@ mod tests {
     #[actix_rt::test]
     async fn users_that_already_share_a_username_can_still_be_edited() {
         let (_, connection, _, _) =
-            setup_all("upsert_user_existing_duplicates", MockDataInserts::none()).await;
+            setup_all("save_user_existing_duplicates", MockDataInserts::none()).await;
         let repo = UserAccountRowRepository::new(&connection);
         repo.upsert_one(&user("a", "anna")).unwrap();
         repo.upsert_one(&user("b", "Anna")).unwrap();
@@ -265,8 +265,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn a_protected_user_cannot_be_changed_or_deleted() {
-        let (_, connection, _, _) =
-            setup_all("upsert_user_protected", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all("save_user_protected", MockDataInserts::none()).await;
         let repo = UserAccountRowRepository::new(&connection);
         for row in [user(SYSTEM_USER_ID, "system"), user("admin", "admin")] {
             repo.upsert_one(&row).unwrap();
@@ -305,7 +304,7 @@ mod tests {
     #[actix_rt::test]
     async fn a_user_cannot_lock_themselves_out() {
         let (_, connection, _, _) =
-            setup_all("upsert_user_locks_out_self", MockDataInserts::none()).await;
+            setup_all("save_user_locks_out_self", MockDataInserts::none()).await;
         let anna = UserAccountRow {
             is_active: true,
             ..user("anna", "anna")
@@ -322,7 +321,7 @@ mod tests {
 
         for row in [&inactive, &deleted] {
             assert_eq!(
-                upsert_user(&connection, "anna", row),
+                save_user(&connection, "anna", row),
                 Err(UpsertUserError::LocksOutSelf)
             );
         }
@@ -331,14 +330,14 @@ mod tests {
             Err(DeleteUserError::DeletingSelf)
         );
         // Someone else may.
-        upsert_user(&connection, "ben", &inactive).unwrap();
+        save_user(&connection, "ben", &inactive).unwrap();
         // Already locked out, so saving them as they are locks out no one.
-        upsert_user(&connection, "anna", &inactive).unwrap();
+        save_user(&connection, "anna", &inactive).unwrap();
     }
 
     #[actix_rt::test]
     async fn a_deleted_user_is_kept_marked_deleted_and_restored_by_saving_them() {
-        let (_, connection, _, _) = setup_all("upsert_user_delete", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all("save_user_delete", MockDataInserts::none()).await;
         let repo = UserAccountRowRepository::new(&connection);
         upsert(&connection, &user("anna", "anna")).unwrap();
 

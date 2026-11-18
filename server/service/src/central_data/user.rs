@@ -11,7 +11,7 @@ use crate::user_account::{
     UserAccountService,
     upsert::{
         DeleteUserError, UpsertUserError, UsernameError, delete_user, ends_sessions,
-        protected_user_ids, upsert_user,
+        protected_user_ids, save_user,
     },
 };
 use repository::{
@@ -300,7 +300,7 @@ impl SheetImport for UserSheet {
         // Restoring a deleted user is an update.
         let change = Change::between_upserts(saved, &user);
         if change != Change::Unchanged {
-            upsert_user(connection, &self.importer, &user)
+            save_user(connection, &self.importer, &user)
                 .map_err(|error| upsert_failure(row, error))?;
             if ends_sessions(saved, &user) {
                 self.sessions_to_end.push(user.id.clone());
