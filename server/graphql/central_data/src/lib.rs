@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 use graphql_core::{
     ContextExt,
     standard_graphql_error::{StandardGraphqlError, validate_auth},
@@ -119,9 +119,13 @@ impl CentralDataMutations {
         &self,
         ctx: &Context<'_>,
         file_id: String,
-        #[graphql(desc = "The user's date in their own time zone, for dates the server sets")]
-        today: NaiveDate,
+        #[graphql(
+            desc = "The user's date in their own time zone, for dates the server sets. Without it, the server's local date"
+        )]
+        today: Option<NaiveDate>,
     ) -> Result<CentralDataImportResponse> {
+        // Optional, as `timezoneOffset` is elsewhere, so existing callers still work.
+        let today = today.unwrap_or_else(|| Local::now().date_naive());
         import(ctx, file_id, Some(today)).await
     }
 }

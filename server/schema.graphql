@@ -1411,9 +1411,9 @@ type CentralDataMutations {
 	"""
 	import(		fileId: String!,
 		"""
-		The user's date in their own time zone, for dates the server sets
+		The user's date in their own time zone, for dates the server sets. Without it, the server's local date
 		"""
-		today: NaiveDate!
+		today: NaiveDate
 	): CentralDataImportResponse!
 }
 
