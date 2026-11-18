@@ -9,6 +9,7 @@ import {
   expiringSoonStockPath,
   inboundShipmentListPath,
   internalOrderListPath,
+  itemStockPath,
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
@@ -71,6 +72,22 @@ describe('task-list targets', () => {
 describe('stock paths', () => {
   it('the full stock list is the bare registry path', () => {
     expect(stockListPath()).toBe('inventory/stock');
+  });
+
+  // spec/items rules — the item page's stock on hand links to the register
+  // filtered to this item; searched by code, as the old UI did (#1790). The
+  // link's own filter replaces the list's default, so expired lines (which
+  // the figure counts) show too.
+  it("one item's stock searches the register by the item's code", () => {
+    expect(filterOf(itemStockPath('PARA500'))).toEqual({
+      search: { like: 'PARA500' },
+    });
+  });
+
+  it("encodes a code's URL-special characters", () => {
+    expect(filterOf(itemStockPath('A&B #1'))).toEqual({
+      search: { like: 'A&B #1' },
+    });
   });
 
   // OMS-REG-DB-01.41 — expired: expiry before today (#1786).
