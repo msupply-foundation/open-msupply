@@ -8305,6 +8305,13 @@ export type PatientFilterInput = {
   gender?: InputMaybe<EqualFilterGenderType>;
   id?: InputMaybe<EqualFilterStringInput>;
   identifier?: InputMaybe<StringFilterInput>;
+  /**
+   * Only patients visible in the queried store (it has a visible
+   * name_store_join for them), or with false only those that aren't.
+   * Unset, patients are returned whichever store they belong to. Read by
+   * the `patients` query only.
+   */
+  isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
   nextOfKinName?: InputMaybe<StringFilterInput>;
