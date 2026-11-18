@@ -58,6 +58,8 @@ A processor reads the changed record and its linked record once, when it picks u
 
 So a step that writes the linked record reads it again inside its own transaction, checks its conditions against that row, and changes only the fields it owns. Writing the whole copy back would undo the newer change. For example, an outbound shipment shipped moments after it was picked went back to Picked when the inbound shipment's record linked it.
 
+The re-read is `find_one_by_id_for_update` on the row's repository, called through `lock_invoice_row` / `lock_requisition_row` in the processor module. On Postgres it takes a row lock (`SELECT … FOR UPDATE`) that lasts until the step's transaction ends, so nothing else can commit a change to the row between the step's read and its write. On SQLite the transaction is already `BEGIN IMMEDIATE`, which lets only one writer in at a time.
+
 ## Potential for Circular/Infinite processing
 
 Any event driven system has a potential for infinite looping. Processor conditions are carefully crafted to avoid these scenarios, but there is a possibility of an edge case that hasn't been considered. Care should be taken when adding changes and review transfer processor code.

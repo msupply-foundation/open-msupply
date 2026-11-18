@@ -17,6 +17,7 @@ use super::{
     InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
     common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
     create_inbound_invoice::InboundInvoiceType,
+    lock_invoice_row,
 };
 
 const DESCRIPTION: &str = "Update inbound invoice from outbound invoice";
@@ -64,9 +65,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // The record's copy of the inbound can be out of date, see `try_process_record`
-        let repo = InvoiceRowRepository::new(&ctx.connection);
-        let Some(inbound_invoice_row) = repo.find_one_by_id(&inbound_invoice.invoice_row.id)?
-        else {
+        let Some(inbound_invoice_row) = lock_invoice_row(&ctx.connection, inbound_invoice)? else {
             return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         };
         // 4.
@@ -152,7 +151,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             ..inbound_invoice_row
         };
 
-        repo.upsert_one(&updated_inbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_inbound_invoice)?;
 
         system_activity_log_entry(
             &ctx.connection,

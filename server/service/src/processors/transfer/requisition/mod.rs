@@ -10,7 +10,8 @@ pub(crate) mod test;
 
 use repository::{
     ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
-    FilterBuilder, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
+    FilterBuilder, KeyType, RepositoryError, Requisition, RequisitionRow, RequisitionRowRepository,
+    RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -209,12 +210,25 @@ trait RequisitionTransferProcessor {
     ///
     /// The record's requisitions were read before this step's transaction, and before the steps
     /// that ran ahead of it on the same record, so the API or an earlier step may have changed
-    /// them since. A step that writes a requisition re-reads it here, checks its conditions
-    /// against that row and changes only the fields it owns. Writing back the record's copy would
-    /// undo the newer change, e.g. finalising would drop the link and approval written just before.
+    /// them since. A step that writes a requisition re-reads and locks it here with
+    /// `lock_requisition_row`, checks its conditions against that row and changes only the fields
+    /// it owns. Writing back the record's copy would undo the newer change, e.g. finalising would
+    /// drop the link and approval written just before.
     fn try_process_record(
         &self,
         connection: &StorageConnection,
         record: &RequisitionTransferProcessorRecord,
     ) -> Result<RequisitionTransferOutput, RepositoryError>;
+}
+
+/// The requisition as it is now, for a step about to write it. The record's copy can be out of
+/// date, see `try_process_record`. On Postgres the row stays locked until the step's transaction
+/// ends, so nothing can change it between this read and the step's write. None if the
+/// requisition has been deleted since the record was read.
+fn lock_requisition_row(
+    connection: &StorageConnection,
+    requisition: &Requisition,
+) -> Result<Option<RequisitionRow>, RepositoryError> {
+    RequisitionRowRepository::new(connection)
+        .find_one_by_id_for_update(&requisition.requisition_row.id)
 }

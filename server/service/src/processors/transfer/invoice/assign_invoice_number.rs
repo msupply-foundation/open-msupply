@@ -8,7 +8,9 @@ use crate::{
     processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceContext,
 };
 
-use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
+use super::{
+    InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation, lock_invoice_row,
+};
 
 const DESCRIPTION: &str =
     "Allocate an invoice_number to an inbound invoices if they have an invoice_number of -1";
@@ -70,9 +72,7 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // The record's copy of the inbound can be out of date, see `try_process_record`
-        let repo = InvoiceRowRepository::new(&ctx.connection);
-        let Some(inbound_invoice_row) = repo.find_one_by_id(&inbound_invoice.invoice_row.id)?
-        else {
+        let Some(inbound_invoice_row) = lock_invoice_row(&ctx.connection, inbound_invoice)? else {
             return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         };
         // 5.
@@ -90,7 +90,7 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
             ..inbound_invoice_row
         };
 
-        repo.upsert_one(&updated_invoice_row)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_invoice_row)?;
         system_activity_log_entry(
             &ctx.connection,
             ActivityLogType::InvoiceNumberAllocated,

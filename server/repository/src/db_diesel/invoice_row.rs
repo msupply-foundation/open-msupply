@@ -233,6 +233,43 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 
+    /// Like `find_one_by_id`, but takes a row-level lock (`SELECT ... FOR UPDATE`) on the
+    /// invoice row for the rest of the current transaction, so nothing else can change the row
+    /// between this read and a write based on it.
+    ///
+    /// The lock is taken on the `invoice` table (`invoice_with_links`), not on `invoice_view`,
+    /// which joins `name_link` and would lock that row too. The row is then read through the
+    /// view as usual: under READ COMMITTED that read sees whatever a writer the lock waited for
+    /// committed.
+    // feature postgres
+    #[cfg(feature = "postgres")]
+    pub fn find_one_by_id_for_update(
+        &self,
+        invoice_id: &str,
+    ) -> Result<Option<InvoiceRow>, RepositoryError> {
+        let locked_id: Option<String> = invoice_with_links::table
+            .filter(invoice_with_links::id.eq(invoice_id))
+            .select(invoice_with_links::id)
+            .for_update()
+            .first(self.connection.lock().connection())
+            .optional()?;
+        match locked_id {
+            Some(_) => self.find_one_by_id(invoice_id),
+            None => Ok(None),
+        }
+    }
+
+    // feature sqlite
+    // SQLite allows only a single write transaction at a time (transactions are opened with
+    // `BEGIN IMMEDIATE`), so writers are already serialised and no row-level lock is needed.
+    #[cfg(not(feature = "postgres"))]
+    pub fn find_one_by_id_for_update(
+        &self,
+        invoice_id: &str,
+    ) -> Result<Option<InvoiceRow>, RepositoryError> {
+        self.find_one_by_id(invoice_id)
+    }
+
     pub fn check_exists_by_id(&self, invoice_id: &str) -> Result<bool, RepositoryError> {
         let exists: bool = diesel::select(diesel::dsl::exists(
             invoice::table.filter(invoice::id.eq(invoice_id)),
@@ -336,5 +373,104 @@ impl Upsert for InvoiceRow {
 
     fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
         Some(self)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{
+        sync::mpsc,
+        thread,
+        time::{Duration, Instant},
+    };
+
+    use crate::{
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+        mock::{MockData, MockDataInserts, mock_name_store_a, mock_name_store_b, mock_store_a},
+        test_db::setup_all_with_data,
+    };
+
+    /// A transfer processor step reads an invoice with `find_one_by_id_for_update`, then writes
+    /// it. A second writer that locks the row in the meantime waits until the step commits, then
+    /// reads the step's write rather than the row as it was. On Postgres that's the row lock; on
+    /// SQLite, `BEGIN IMMEDIATE` lets only one write transaction in at a time.
+    #[actix_rt::test]
+    async fn find_one_by_id_for_update_holds_the_next_writer_until_commit() {
+        let outbound = InvoiceRow {
+            id: "for_update_outbound".to_string(),
+            name_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+        let inbound = InvoiceRow {
+            id: "for_update_inbound".to_string(),
+            name_id: mock_name_store_a().id,
+            store_id: mock_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "find_one_by_id_for_update_holds_the_next_writer_until_commit",
+            MockDataInserts::none().names().stores(),
+            MockData {
+                invoices: vec![outbound.clone(), inbound.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // The step: lock and read the outbound, take a while, then link it from its copy
+        let (locked_sender, locked) = mpsc::channel();
+        let step = {
+            let connection_manager = connection_manager.clone();
+            let outbound_id = outbound.id.clone();
+            let inbound_id = inbound.id.clone();
+            thread::spawn(move || {
+                let connection = connection_manager.connection().unwrap();
+                connection
+                    .transaction_sync(|connection| {
+                        let repo = InvoiceRowRepository::new(connection);
+                        let row = repo.find_one_by_id_for_update(&outbound_id)?.unwrap();
+                        locked_sender.send(()).unwrap();
+                        thread::sleep(Duration::from_millis(500));
+                        repo.upsert_one(&InvoiceRow {
+                            linked_invoice_id: Some(inbound_id),
+                            ..row
+                        })
+                    })
+                    .unwrap();
+            })
+        };
+
+        // The second writer: ship the outbound while the step holds it
+        locked.recv().unwrap();
+        let started = Instant::now();
+        let connection = connection_manager.connection().unwrap();
+        connection
+            .transaction_sync(|connection| {
+                let repo = InvoiceRowRepository::new(connection);
+                let row = repo.find_one_by_id_for_update(&outbound.id)?.unwrap();
+                repo.upsert_one(&InvoiceRow {
+                    status: InvoiceStatus::Shipped,
+                    ..row
+                })
+            })
+            .unwrap();
+        let waited = started.elapsed();
+        step.join().unwrap();
+
+        assert!(
+            waited >= Duration::from_millis(400),
+            "the second writer should wait for the step to commit, waited {waited:?}"
+        );
+        let outbound_after = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&outbound.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(outbound_after.linked_invoice_id, Some(inbound.id.clone()));
+        assert_eq!(outbound_after.status, InvoiceStatus::Shipped);
     }
 }

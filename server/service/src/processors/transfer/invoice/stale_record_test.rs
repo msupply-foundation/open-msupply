@@ -6,7 +6,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, Invoice, InvoiceFilter, InvoiceLineRow, InvoiceLineType, InvoiceRepository,
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, StorageConnection,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyType, KeyValueStoreRow,
+    StorageConnection,
     mock::{
         MockData, MockDataInserts, mock_item_a, mock_name_store_a, mock_name_store_b, mock_store_a,
         mock_store_b,
@@ -20,7 +21,7 @@ use super::{
     InvoiceTransferOutput, InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
     assign_invoice_number::AssignInvoiceNumberProcessor,
     delete_inbound_invoice::DeleteInboundInvoiceProcessor,
-    link_outbound_invoice::LinkOutboundInvoiceProcessor,
+    link_outbound_invoice::LinkOutboundInvoiceProcessor, process_invoice_transfers,
     update_inbound_invoice::UpdateInboundInvoiceProcessor,
     update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
 };
@@ -176,14 +177,20 @@ async fn link_keeps_outbound_changes_made_after_record_read() {
     assert_eq!(outbound_after.shipped_datetime, Some(datetime(2)));
 }
 
-/// "Already linked" is checked against the outbound as it is now, not as the record read it
+/// "Already linked" is checked against the outbound as it is now, not as the record read it. An
+/// outbound linked since to another inbound keeps that link
 #[actix_rt::test]
 async fn link_skips_outbound_linked_after_record_read() {
     let outbound = outbound_row("link_guard_outbound", InvoiceStatus::Picked);
     let inbound = inbound_row("link_guard_inbound", &outbound.id, InvoiceStatus::Picked);
+    let other_inbound = inbound_row(
+        "link_guard_other_inbound",
+        &outbound.id,
+        InvoiceStatus::Picked,
+    );
     let ctx = setup(
         "link_skips_outbound_linked_after_record_read",
-        vec![outbound.clone(), inbound.clone()],
+        vec![outbound.clone(), inbound.clone(), other_inbound.clone()],
         vec![],
     )
     .await;
@@ -193,7 +200,7 @@ async fn link_skips_outbound_linked_after_record_read() {
     update_row(
         &ctx.connection,
         InvoiceRow {
-            linked_invoice_id: Some(inbound.id.clone()),
+            linked_invoice_id: Some(other_inbound.id.clone()),
             ..outbound.clone()
         },
     );
@@ -204,6 +211,11 @@ async fn link_skips_outbound_linked_after_record_read() {
     assert!(
         matches!(result, InvoiceTransferOutput::AlreadyLinked),
         "expected AlreadyLinked, got {result:?}"
+    );
+    assert_eq!(
+        invoice_row(&ctx.connection, &outbound.id).linked_invoice_id,
+        Some(other_inbound.id.clone()),
+        "the link written after the record was read must be kept"
     );
 }
 
@@ -423,4 +435,53 @@ async fn delete_skips_inbound_shipped_after_record_read() {
         invoice_row(&ctx.connection, &inbound.id).status,
         InvoiceStatus::Shipped
     );
+}
+
+/// The same as `update_inbound_then_assign_number_on_one_record_keeps_both`, but through the
+/// processor itself: the outbound's changelog row is picked up and every step runs in the order
+/// the processor runs them, so a change to that order is tested too
+#[actix_rt::test]
+async fn processor_run_updates_and_numbers_inbound_from_one_record() {
+    let outbound = InvoiceRow {
+        // The changelog row's transfer store, which the processor filters on
+        name_store_id: Some(mock_store_a().id),
+        linked_invoice_id: Some("processor_run_inbound".to_string()),
+        shipped_datetime: Some(datetime(2)),
+        ..outbound_row("processor_run_outbound", InvoiceStatus::Shipped)
+    };
+    let inbound = InvoiceRow {
+        name_store_id: Some(mock_store_b().id),
+        invoice_number: -1,
+        ..inbound_row("processor_run_inbound", &outbound.id, InvoiceStatus::Picked)
+    };
+    let (_, connection, connection_manager, _) = setup_all_with_data(
+        "processor_run_updates_and_numbers_inbound_from_one_record",
+        MockDataInserts::none().names().stores().units().items(),
+        MockData {
+            invoices: vec![outbound.clone(), inbound.clone()],
+            invoice_lines: vec![outbound_line(&outbound.id)],
+            // This site holds the inbound's store, so it processes the outbound's changes
+            key_value_store_rows: vec![KeyValueStoreRow {
+                id: KeyType::SettingsSyncSiteId,
+                value_int: Some(mock_store_a().site_id),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    process_invoice_transfers(&ServiceProvider::new(connection_manager)).unwrap();
+
+    let inbound_after = invoice_row(&connection, &inbound.id);
+    assert_ne!(
+        inbound_after.invoice_number, -1,
+        "expected a number to be assigned"
+    );
+    assert_eq!(
+        inbound_after.status,
+        InvoiceStatus::Shipped,
+        "numbering must not put a shipped inbound back to Picked"
+    );
+    assert_eq!(inbound_after.shipped_datetime, Some(datetime(2)));
 }

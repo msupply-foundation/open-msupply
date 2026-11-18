@@ -8,7 +8,9 @@ use crate::{
     processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceContext,
 };
 
-use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
+use super::{
+    InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation, lock_invoice_row,
+};
 
 const DESCRIPTION: &str = "Delete inbound invoice when source outbound invoice is deleted";
 
@@ -60,21 +62,19 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
             ));
         }
         // The record's copy of the inbound can be out of date, see `try_process_record`
-        let repo = InvoiceRowRepository::new(&ctx.connection);
-        let Some(deleted_inbound_invoice) = repo.find_one_by_id(&inbound_invoice.invoice_row.id)?
-        else {
+        let Some(inbound_invoice_row) = lock_invoice_row(&ctx.connection, inbound_invoice)? else {
             return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         };
         // 5.
-        if deleted_inbound_invoice.status != InvoiceStatus::Picked {
+        if inbound_invoice_row.status != InvoiceStatus::Picked {
             return Ok(InvoiceTransferOutput::WrongInboundStatus(
-                deleted_inbound_invoice.status,
+                inbound_invoice_row.status,
             ));
         }
 
         // Execute
         let deleted_inbound_lines =
-            get_lines_for_invoice(&ctx.connection, &deleted_inbound_invoice.id)?;
+            get_lines_for_invoice(&ctx.connection, &inbound_invoice_row.id)?;
 
         let invoice_line_repository = InvoiceLineRowRepository::new(&ctx.connection);
 
@@ -82,18 +82,18 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
             invoice_line_repository.delete(&line.invoice_line_row.id)?;
         }
         // 6.
-        repo.delete(&deleted_inbound_invoice.id)?;
+        InvoiceRowRepository::new(&ctx.connection).delete(&inbound_invoice_row.id)?;
 
         system_activity_log_entry(
             &ctx.connection,
             ActivityLogType::InvoiceDeleted,
-            &deleted_inbound_invoice.store_id,
-            &deleted_inbound_invoice.id,
+            &inbound_invoice_row.store_id,
+            &inbound_invoice_row.id,
         )?;
 
         let result = format!(
             "invoice ({}) lines ({:?})",
-            deleted_inbound_invoice.id,
+            inbound_invoice_row.id,
             deleted_inbound_lines
                 .into_iter()
                 .map(|r| r.invoice_line_row.id),

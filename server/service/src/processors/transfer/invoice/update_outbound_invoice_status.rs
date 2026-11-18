@@ -6,7 +6,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 
-use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord};
+use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, lock_invoice_row};
 
 const DESCRIPTION: &str = "Update outbound invoice status from inbound invoice";
 
@@ -60,8 +60,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // The record's copy of the outbound can be out of date, see `try_process_record`
-        let repo = InvoiceRowRepository::new(&ctx.connection);
-        let Some(outbound_invoice_row) = repo.find_one_by_id(&outbound_invoice.invoice_row.id)?
+        let Some(outbound_invoice_row) = lock_invoice_row(&ctx.connection, outbound_invoice)?
         else {
             return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         };
@@ -104,7 +103,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             ..outbound_invoice_row
         };
 
-        repo.upsert_one(&updated_outbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_outbound_invoice)?;
 
         system_activity_log_entry(
             &ctx.connection,

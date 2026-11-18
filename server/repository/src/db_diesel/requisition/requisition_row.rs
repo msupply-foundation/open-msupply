@@ -174,6 +174,43 @@ impl<'a> RequisitionRowRepository<'a> {
         Ok(result)
     }
 
+    /// Like `find_one_by_id`, but takes a row-level lock (`SELECT ... FOR UPDATE`) on the
+    /// requisition row for the rest of the current transaction, so nothing else can change the
+    /// row between this read and a write based on it.
+    ///
+    /// The lock is taken on the `requisition` table (`requisition_with_links`), not on
+    /// `requisition_view`, which joins `name_link` and would lock that row too. The row is then
+    /// read through the view as usual: under READ COMMITTED that read sees whatever a writer the
+    /// lock waited for committed.
+    // feature postgres
+    #[cfg(feature = "postgres")]
+    pub fn find_one_by_id_for_update(
+        &self,
+        id: &str,
+    ) -> Result<Option<RequisitionRow>, RepositoryError> {
+        let locked_id: Option<String> = requisition_with_links::table
+            .filter(requisition_with_links::id.eq(id))
+            .select(requisition_with_links::id)
+            .for_update()
+            .first(self.connection.lock().connection())
+            .optional()?;
+        match locked_id {
+            Some(_) => self.find_one_by_id(id),
+            None => Ok(None),
+        }
+    }
+
+    // feature sqlite
+    // SQLite allows only a single write transaction at a time (transactions are opened with
+    // `BEGIN IMMEDIATE`), so writers are already serialised and no row-level lock is needed.
+    #[cfg(not(feature = "postgres"))]
+    pub fn find_one_by_id_for_update(
+        &self,
+        id: &str,
+    ) -> Result<Option<RequisitionRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+
     pub fn find_max_requisition_number(
         &self,
         r#type: RequisitionType,
@@ -291,12 +328,111 @@ impl ApprovalStatusType {
 
 #[cfg(test)]
 mod test {
+    use std::{
+        sync::mpsc,
+        thread,
+        time::{Duration, Instant},
+    };
+
     use crate::{
-        ApprovalStatusType, RequisitionRow, RequisitionRowRepository,
-        mock::{MockDataInserts, mock_request_draft_requisition_all_fields},
-        test_db::setup_all,
+        ApprovalStatusType, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
+        RequisitionType,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_a, mock_name_store_b,
+            mock_request_draft_requisition_all_fields, mock_store_a, mock_store_b,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
     use strum::IntoEnumIterator;
+
+    /// A transfer processor step reads a requisition with `find_one_by_id_for_update`, then
+    /// writes it. A second writer that locks the row in the meantime waits until the step
+    /// commits, then reads the step's write rather than the row as it was. On Postgres that's the
+    /// row lock; on SQLite, `BEGIN IMMEDIATE` lets only one write transaction in at a time.
+    #[actix_rt::test]
+    async fn find_one_by_id_for_update_holds_the_next_writer_until_commit() {
+        let request = RequisitionRow {
+            id: "for_update_request".to_string(),
+            requisition_number: 1,
+            name_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Sent,
+            ..Default::default()
+        };
+        let response = RequisitionRow {
+            id: "for_update_response".to_string(),
+            requisition_number: 2,
+            name_id: mock_name_store_a().id,
+            store_id: mock_store_b().id,
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::Finalised,
+            ..Default::default()
+        };
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "requisition_find_one_by_id_for_update_holds_the_next_writer_until_commit",
+            MockDataInserts::none().names().stores(),
+            MockData {
+                requisitions: vec![request.clone(), response.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // The step: lock and read the request, take a while, then link it from its copy
+        let (locked_sender, locked) = mpsc::channel();
+        let step = {
+            let connection_manager = connection_manager.clone();
+            let request_id = request.id.clone();
+            let response_id = response.id.clone();
+            thread::spawn(move || {
+                let connection = connection_manager.connection().unwrap();
+                connection
+                    .transaction_sync(|connection| {
+                        let repo = RequisitionRowRepository::new(connection);
+                        let row = repo.find_one_by_id_for_update(&request_id)?.unwrap();
+                        locked_sender.send(()).unwrap();
+                        thread::sleep(Duration::from_millis(500));
+                        repo.upsert_one(&RequisitionRow {
+                            linked_requisition_id: Some(response_id),
+                            ..row
+                        })
+                    })
+                    .unwrap();
+            })
+        };
+
+        // The second writer: finalise the request while the step holds it
+        locked.recv().unwrap();
+        let started = Instant::now();
+        let connection = connection_manager.connection().unwrap();
+        connection
+            .transaction_sync(|connection| {
+                let repo = RequisitionRowRepository::new(connection);
+                let row = repo.find_one_by_id_for_update(&request.id)?.unwrap();
+                repo.upsert_one(&RequisitionRow {
+                    status: RequisitionStatus::Finalised,
+                    ..row
+                })
+            })
+            .unwrap();
+        let waited = started.elapsed();
+        step.join().unwrap();
+
+        assert!(
+            waited >= Duration::from_millis(400),
+            "the second writer should wait for the step to commit, waited {waited:?}"
+        );
+        let request_after = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&request.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            request_after.linked_requisition_id,
+            Some(response.id.clone())
+        );
+        assert_eq!(request_after.status, RequisitionStatus::Finalised);
+    }
 
     #[actix_rt::test]
     async fn approval_status_enum() {

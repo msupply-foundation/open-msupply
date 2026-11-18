@@ -4,7 +4,9 @@ use crate::{
     processors::transfer::invoice::InvoiceTransferOutput, service_provider::ServiceContext,
 };
 
-use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
+use super::{
+    InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation, lock_invoice_row,
+};
 
 const DESCRIPTION: &str = "Link outbound invoice to inbound invoice";
 
@@ -53,8 +55,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // The record's copy of the outbound can be out of date, see `try_process_record`
-        let repo = InvoiceRowRepository::new(&ctx.connection);
-        let Some(outbound_invoice_row) = repo.find_one_by_id(&outbound_invoice.invoice_row.id)?
+        let Some(outbound_invoice_row) = lock_invoice_row(&ctx.connection, outbound_invoice)?
         else {
             return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         };
@@ -70,7 +71,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
             ..outbound_invoice_row
         };
 
-        repo.upsert_one(&updated_outbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_outbound_invoice)?;
 
         let result = format!(
             "invoice ({}) source invoice ({})",
