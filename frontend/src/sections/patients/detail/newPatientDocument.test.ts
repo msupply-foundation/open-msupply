@@ -2,7 +2,7 @@ import { createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
- * The create wizard's last step on the document path (spec/patients › effects
+ * The create form on the document path (spec/patients › effects
  * of creation, OMS-REG-DIS-01.31/.33): a new patient's first document, seeded
  * from the first step, validated against the installed schema and written by
  * insert, pinned to the registry entry's schema. The GraphQL edge and the
@@ -133,7 +133,7 @@ const inserts = () =>
   graphqlFetch.mock.calls.filter(([query]) => query === InsertFormPatient);
 
 describe('a new patient on the document path', () => {
-  it('waits for the wizard to reach it, then writes its first document by insert', async () => {
+  it('waits for the create form to open, then writes its first document by insert', async () => {
     mockServer();
     searchLocalPatients.mockResolvedValue([]);
     const { editor, setSeed } = await open();

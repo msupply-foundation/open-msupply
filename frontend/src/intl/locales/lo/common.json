@@ -3239,7 +3239,6 @@
   "messages.total-breaches": "ຍັງບໍ່ໄດ້ຮັບຮູ້ທັງໝົດ: {{count}}",
   "messages.total-excursions": "ອຸນຫະພູມທີ່ຜິດປົກກະຕິທັງໝົດ: {{count}}",
   "messages.translations-loaded": "ໂຫຼດການແປພາສາແລ້ວ — ກົດ ບັນທຶກ ເພື່ອນຳໃຊ້",
-  "messages.type-to-search": "ເລີ່ມພິມເພື່ອຄົ້ນຫາ",
   "messages.unassign-min-mos": "ນີ້ຈະເອົາຂີດຈຳກັດການສັ່ງຊື້ຄືນສະຕ໋ອກອອກ. ຂີດຈຳກັດການສັ່ງຊື້ຄືນຈະກັບເປັນຄ່າເລີ່ມຕົ້ນເທົ່າກັບຈຳນວນເດືອນຂອງສະຕ໋ອກເປົ້າໝາຍ.",
   "messages.under-allocated": "ຍ້ອນຂະໜາດແພັກຂອງຊຸດນີ້, ຈຳນວນຫົວໜ່ວຍຖືກອັບເດດຈາກ {{receivedQuantity}} ເປັນ {{quantity}}",
   "messages.unknown-error": "ຂໍ້ຜິດພາດທີ່ບໍ່ຮູ້ສາເຫດ",

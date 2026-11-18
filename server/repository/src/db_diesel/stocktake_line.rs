@@ -27,6 +27,7 @@ pub struct StocktakeLineFilter {
     pub donor_id: Option<EqualFilter<String>>,
     pub campaign_id: Option<EqualFilter<String>>,
     pub batch: Option<StringFilter>,
+    pub expiry_date: Option<DateFilter>,
     pub manufacture_date: Option<DateFilter>,
     pub campaign_name: Option<StringFilter>,
 }
@@ -73,6 +74,11 @@ impl StocktakeLineFilter {
 
     pub fn batch(mut self, filter: StringFilter) -> Self {
         self.batch = Some(filter);
+        self
+    }
+
+    pub fn expiry_date(mut self, filter: DateFilter) -> Self {
+        self.expiry_date = Some(filter);
         self
     }
 
@@ -230,6 +236,7 @@ impl<'a> StocktakeLineRepository<'a> {
             apply_equal_filter!(query, f.donor_id, stocktake_line::donor_id);
             apply_equal_filter!(query, f.campaign_id, stocktake_line::campaign_id);
             apply_string_filter!(query, f.batch, stocktake_line::batch);
+            apply_date_filter!(query, f.expiry_date, stocktake_line::expiry_date);
             apply_date_filter!(query, f.manufacture_date, stocktake_line::manufacture_date);
             apply_string_filter!(query, f.campaign_name, campaign::name);
         }
@@ -289,9 +296,12 @@ fn apply_item_filter(
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
+
     use crate::{
-        CampaignRow, EqualFilter, Pagination, StocktakeLineFilter, StocktakeLineRepository,
-        StocktakeLineRow, StocktakeLineSort, StocktakeLineSortField, StringFilter,
+        CampaignRow, DateFilter, EqualFilter, Pagination, StocktakeLineFilter,
+        StocktakeLineRepository, StocktakeLineRow, StocktakeLineSort, StocktakeLineSortField,
+        StringFilter,
         mock::{MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_stocktake_a},
         test_db,
     };
@@ -394,6 +404,62 @@ mod test {
         assert_eq!(
             sorted.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
             vec!["line_campaign_b", "line_campaign_a"]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_expiry_date_filter() {
+        let line = |id: &str, expiry_date: Option<NaiveDate>| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            expiry_date,
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_expiry_date_filter",
+            MockDataInserts::all(),
+            MockData {
+                stocktake_lines: vec![
+                    line("line_expires_jan", NaiveDate::from_ymd_opt(2026, 1, 15)),
+                    line("line_expires_jun", NaiveDate::from_ymd_opt(2026, 6, 15)),
+                    line("line_no_expiry", None),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+        let repo = StocktakeLineRepository::new(&connection);
+        let ids = |filter: DateFilter| {
+            let mut ids = repo
+                .query_by_filter(
+                    StocktakeLineFilter::new()
+                        .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                        .expiry_date(filter),
+                    None,
+                )
+                .unwrap()
+                .into_iter()
+                .map(|l| l.line.id)
+                .collect::<Vec<_>>();
+            ids.sort();
+            ids
+        };
+
+        // Expiring on or before a date: a line with no expiry is never included
+        assert_eq!(
+            ids(DateFilter::before_or_equal_to(
+                NaiveDate::from_ymd_opt(2026, 3, 1).unwrap()
+            )),
+            vec!["line_expires_jan"]
+        );
+        assert_eq!(
+            ids(DateFilter::date_range(
+                &NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+                &NaiveDate::from_ymd_opt(2026, 12, 31).unwrap(),
+            )),
+            vec!["line_expires_jan", "line_expires_jun"]
         );
     }
 }

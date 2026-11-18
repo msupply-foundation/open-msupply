@@ -1,11 +1,11 @@
 import { Show } from 'solid-js';
 import { t } from '@/intl';
 import {
-  PatientSearch,
   dateOfBirthWithAge,
   genderLabel,
   type PatientOption,
 } from '@/domain/patient';
+import { PatientField } from '../../patients';
 import { HeaderField } from '@/ui/layout/Header/HeaderField';
 import { StepHeading } from './StepHeading';
 import styles from './WhoIsItFor.module.css';
@@ -21,8 +21,9 @@ export const WhoIsItFor = (props: {
   patient: PatientOption | null;
   /** While the visit is being dispensed: who it is for can't change. */
   disabled?: boolean;
-  onSelect: (patient: PatientOption | null) => void;
-  onCreatePatient: () => void;
+  /** Someone was chosen in the patient search, or created there. */
+  onSelect: (patient: { id: string; name: string }) => void;
+  onClear: () => void;
 }) => (
   <HeaderField
     label={<StepHeading n={1} label={t('label.who-is-it-for')} />}
@@ -33,24 +34,27 @@ export const WhoIsItFor = (props: {
       </Show>
     }
   >
-    <PatientSearch
+    {/* Picked in the patient search (patients S4), which also creates a
+        patient. Unlike a record's patient it can be cleared: nothing is saved
+        until Dispense. */}
+    <PatientField
       label={t('label.who-is-it-for')}
       hideLabel
-      width="full"
+      testId="who-is-it-for"
       storeId={props.storeId}
-      selected={props.patient ?? undefined}
+      patient={props.patient ?? undefined}
       disabled={props.disabled}
-      onSelect={props.onSelect}
-      onCreatePatient={props.onCreatePatient}
+      onChange={props.onSelect}
+      onClear={props.onClear}
     />
   </HeaderField>
 );
 
 /*
  * The facts the record carries, in the spec's order; one it doesn't carry is
- * left out rather than shown as a dash. A patient just created from the
- * picker comes back with its id and name only; the page reads its record and
- * hands it back, so its facts show a moment later.
+ * left out rather than shown as a dash. The patient search hands back a
+ * patient's id and name only; the page reads their record and hands it back,
+ * so the facts show a moment later.
  */
 const ChosenPatientDetails = (props: { patient: PatientOption }) => (
   <Show

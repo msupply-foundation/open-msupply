@@ -1648,7 +1648,6 @@
   "messages.template-download-text": "¿No estás seguro de cómo empezar? ",
   "messages.total-breaches": "Total no confirmado: {{count}}",
   "messages.total-excursions": "Total de excursiones: {{count}}",
-  "messages.type-to-search": "Comienza a escribir para buscar",
   "messages.unassign-min-mos": "Esto eliminará el punto de reorden del stock. El punto de reorden ahora se establecerá por defecto para ser el mismo que los meses objetivo de stock.",
   "messages.unknown-error": "Error desconocido",
   "messages.updated-new-vaccine-course": "Esquema de vacunación actualizado con éxito",

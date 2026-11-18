@@ -143,6 +143,7 @@ export type StocktakeLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     itemId?: {
     equalTo?: string | null;
@@ -175,6 +176,12 @@ export type StocktakeLinesVariables = {
     batch?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    expiryDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
   } | null;
     manufactureDate?: {
     equalTo?: string | null;
@@ -184,6 +191,7 @@ export type StocktakeLinesVariables = {
     campaignName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{

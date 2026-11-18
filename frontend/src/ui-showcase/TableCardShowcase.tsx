@@ -1638,6 +1638,61 @@ const ConditionalPaginationDemo = () => {
   );
 };
 
+// The pager with no total: a search over a large register can't afford to
+// count every match, so it fetches one row past the page and passes `more`.
+// The face is Previous · the pages so far · Next; Next is live while `more`
+// holds. Here the "server" has 4 pages.
+const NoTotalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  const pageSize = 20;
+  return (
+    <Pagination
+      offset={offset()}
+      pageSize={pageSize}
+      more={offset() < pageSize * 3}
+      onOffsetChange={setOffset}
+    />
+  );
+};
+
+// An empty table two ways: the full empty state (illustration + "Nothing
+// here"), which suits a screen's own list, and `emptyGraphic={false}` — the
+// message alone, at a line's height, for a table among other content such as
+// a dialog's search results.
+const EmptyTablesDemo = () => {
+  const columns: Column<StockLine, SortKey>[] = [
+    { c: { key: 'code' }, header: () => 'Code' },
+    { c: { key: 'name' }, header: () => 'Name' },
+    { c: { key: 'quantity' }, header: () => 'Quantity' },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">The full empty state</Text>
+        <DataTable
+          columns={columns}
+          rows={[]}
+          rowKey={r => r.id}
+          showFullScreen={false}
+          emptyMessage="No items"
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">emptyGraphic=&#123;false&#125;</Text>
+        <DataTable
+          columns={columns}
+          rows={[]}
+          rowKey={r => r.id}
+          showFullScreen={false}
+          emptyGraphic={false}
+          emptyMessage="No matching items"
+          empty={<Button variant="ghost">Create a new one</Button>}
+        />
+      </div>
+    </Stack>
+  );
+};
+
 // Mask the shell's full-screen context for this teaching page so every demo
 // table's full-screen button falls back to DataTable's standalone path — a
 // fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
@@ -1681,6 +1736,11 @@ export const tableCardMetadata: PageMetadata = {
       id: 'table-card-pagination',
       title: 'Pagination',
       searchTerms: ['pager', 'page', 'rows per page', 'offset', 'footer'],
+    },
+    {
+      id: 'table-card-empty',
+      title: 'Empty tables',
+      searchTerms: ['empty state', 'nothing here', 'no results', 'no rows'],
     },
     {
       id: 'table-card-model',
@@ -1882,6 +1942,30 @@ export const TableCardShowcase = () => (
             width so a crowded bar wraps it whole.
           </Lead>
           <ConditionalPaginationDemo />
+          <Lead>
+            A list too costly to count passes <code>more</code> instead of{' '}
+            <code>total</code>: it fetches one row past the page, and that row
+            says whether there's another. The pager is then Previous · the pages
+            so far · Next, with no last page or jump box, since there's no end
+            to jump to; a DataTable given such a pager shows no row count in its
+            toolbar either.
+          </Lead>
+          <NoTotalPaginationDemo />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-empty"
+          title="Table basics · Empty tables"
+        >
+          <Lead>
+            With no rows the table keeps its headers and frame, with the empty
+            state inside. A screen's own list gets the full one, illustration
+            and all; a table among other content — a dialog's search results —
+            passes <code>emptyGraphic=&#123;false&#125;</code> for the message
+            alone at a line's height. <code>empty</code> adds an action after
+            the message in either: a ghost button, no icon, that reads inline.
+          </Lead>
+          <EmptyTablesDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>

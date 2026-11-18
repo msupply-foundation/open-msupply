@@ -16,3 +16,9 @@ export {
   type CatalogueView,
   type CatalogueViewOptions,
 } from './createCatalogueView';
+export {
+  asDispensingScreen,
+  dispensingScreenLabelKey,
+  DISPENSING_SCREENS,
+  type DispensingScreen,
+} from './dispensingScreen';

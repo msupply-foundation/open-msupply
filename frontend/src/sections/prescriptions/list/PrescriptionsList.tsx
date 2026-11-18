@@ -1,15 +1,9 @@
-import {
-  createMemo,
-  createResource,
-  createSignal,
-  onCleanup,
-  onMount,
-  Show,
-} from 'solid-js';
+import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
+import { prescriptionPreferences } from '../../../store/storeContext';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -38,8 +32,7 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { CardViewIcon, CloseIcon, PlusCircleIcon } from '../../../ui/icons';
-import { LinkButton } from '../../../ui/elements/buttons/LinkButton';
+import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
   DEFAULT_PAGE_SIZE,
@@ -70,16 +63,6 @@ import {
 } from '../../../domain/customFields';
 import { filterFields, type PrescriptionFilter } from './listFilters';
 import { CreatePrescriptionModal } from './CreatePrescriptionModal';
-import {
-  fetchPatientOptionById,
-  type PatientOption,
-} from '../../../domain/patient';
-import {
-  NEW_RECORD_PARAM,
-  NEW_RECORD_PATIENT_PARAM,
-  newRecordRequest,
-  type NewRecordParams,
-} from '../newRecordLink';
 import {
   DeletePrescriptionsAction,
   ExportPrescriptionsAction,
@@ -126,40 +109,14 @@ const PrescriptionsList: Component = () => {
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
-  // The patient the create dialog opens with: the Simple screen's chosen
-  // patient, handed over by its Standard view (S2).
-  const [createFor, setCreateFor] = createSignal<PatientOption | null>(null);
-  const closeCreate = () => {
-    setCreateOpen(false);
-    setCreateFor(null);
+  // A new visit is dispensed the store's way (spec/prescriptions rules › the
+  // Simple screen): where the store dispenses on the Simple screen, this list
+  // is its Dispensing records, and a new record starts there instead.
+  const newRecord = () => {
+    if (prescriptionPreferences().dispensingScreen === 'SIMPLE')
+      navigate(`/${params.storeId}/dispensary/dispensing/simple`);
+    else setCreateOpen(true);
   };
-
-  /*
-   * The Simple screen's Standard view (rules › the Simple screen): open the
-   * create dialog, for its patient if it named one. Read once, as the list
-   * opens, and cleared from the address straight away, so a reload or coming
-   * back to the list shows the list alone. The patient's record is read first,
-   * so the dialog opens with them in it; one that can't be read opens it
-   * empty.
-   */
-  const [searchParams, setSearchParams] = useSearchParams<NewRecordParams>();
-  let live = true;
-  onCleanup(() => (live = false));
-  onMount(() => {
-    const asked = newRecordRequest(searchParams);
-    if (!asked) return;
-    setSearchParams(
-      { [NEW_RECORD_PARAM]: undefined, [NEW_RECORD_PATIENT_PARAM]: undefined },
-      { replace: true }
-    );
-    if (!asked.patientId) return setCreateOpen(true);
-    void fetchPatientOptionById(params.storeId, asked.patientId).then(found => {
-      // Left the list meanwhile: nothing to open.
-      if (!live) return;
-      setCreateFor(found ?? null);
-      setCreateOpen(true);
-    });
-  });
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2,
   // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
@@ -168,7 +125,7 @@ const PrescriptionsList: Component = () => {
   // the action.
   createAddAction({
     name: 'button.new-dispensing-record',
-    run: () => setCreateOpen(true),
+    run: newRecord,
   });
 
   const tableConfig = createTableConfig({
@@ -354,7 +311,7 @@ const PrescriptionsList: Component = () => {
               icon={<PlusCircleIcon />}
               shortcut={ALT_N}
               data-testid="new-prescription-button"
-              onClick={() => setCreateOpen(true)}
+              onClick={newRecord}
             >
               {t('button.new-dispensing-record')}
             </Button>
@@ -364,16 +321,6 @@ const PrescriptionsList: Component = () => {
               customFieldFilter={() => query().cf}
               customFields={cfDefs}
             />
-            {/* Last in the cluster: the Simple screen's Standard view takes
-                the same slot, so the switch stays under the pointer. */}
-            <LinkButton
-              href={`/${params.storeId}/dispensary/dispensing/simple`}
-              variant="secondary"
-              icon={<CardViewIcon />}
-              data-testid="simple-view-button"
-            >
-              {t('button.simple-view')}
-            </LinkButton>
           </HeaderButtons>
         </Header>
       }
@@ -433,7 +380,7 @@ const PrescriptionsList: Component = () => {
             variant="ghost"
             shortcut={ALT_N}
             data-testid="nothing-here-create-button"
-            onClick={() => setCreateOpen(true)}
+            onClick={newRecord}
           >
             {t('button.create-a-new-one')}
           </Button>
@@ -461,8 +408,7 @@ const PrescriptionsList: Component = () => {
       />
       <CreatePrescriptionModal
         open={createOpen()}
-        onClose={closeCreate}
-        patient={createFor()}
+        onClose={() => setCreateOpen(false)}
       />
     </Page>
   );

@@ -3406,7 +3406,6 @@
   "messages.total-breaches": "کل تأیید‌نشده: {{count}}",
   "messages.total-excursions": "کل انحرافات: {{count}}",
   "messages.translations-loaded": "ترجمه‌ها بارگذاری شدند — برای اعمال روی ذخیره کلیک کنید",
-  "messages.type-to-search": "برای جستجو تایپ کنید",
   "messages.unassign-min-mos": "این آستانه سفارش مجدد موجودی را حذف می‌کند. آستانه سفارش مجدد اکنون به‌طور پیش‌فرض همان ماه‌های هدف موجودی خواهد بود.",
   "messages.under-allocated": "به دلیل اندازه بسته این دسته، مقدار واحد از {{receivedQuantity}} به {{quantity}} بروزرسانی شد",
   "messages.unknown-error": "خطای ناشناخته",
