@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
-    lookup::{LookupError, resolve},
+    lookup::LookupError,
     sheet::Value,
 };
 use crate::unit::{UpsertUnitError, active_first, upsert_unit};
@@ -177,13 +177,10 @@ fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
 }
 
 fn pick_by_name(units: Vec<UnitRow>) -> Result<Option<UnitRow>, LookupError> {
-    let candidates = active_first(units);
-    let ids: Vec<String> = candidates.iter().map(|unit| unit.id.clone()).collect();
-    match resolve(None, false, Some(&ids)) {
-        Ok(id) => Ok(candidates
-            .into_iter()
-            .find(|unit| Some(&unit.id) == id.as_ref())),
-        Err(LookupError::NotFound) => Ok(None),
-        Err(e) => Err(e),
+    let mut candidates = active_first(units);
+    match candidates.len() {
+        0 => Ok(None),
+        1 => Ok(candidates.pop()),
+        _ => Err(LookupError::Ambiguous),
     }
 }
