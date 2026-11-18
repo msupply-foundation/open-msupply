@@ -113,17 +113,13 @@ fn check_references(
         field(row).filter(|_| saved.is_none_or(|saved| field(saved) != field(row)))
     };
     if let Some(unit_id) = new_reference(|item| item.unit_id.as_deref())
-        && UnitRowRepository::new(connection)
-            .find_one_by_id(unit_id)?
-            .is_none()
+        && !UnitRowRepository::new(connection).check_exists_by_id(unit_id)?
     {
         return Err(UpsertItemError::UnitNotFound);
     }
     if let Some(location_type_id) =
         new_reference(|item| item.restricted_location_type_id.as_deref())
-        && LocationTypeRowRepository::new(connection)
-            .find_one_by_id(location_type_id)?
-            .is_none()
+        && !LocationTypeRowRepository::new(connection).check_exists_by_id(location_type_id)?
     {
         return Err(UpsertItemError::LocationTypeNotFound);
     }
