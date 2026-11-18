@@ -31,6 +31,7 @@ table! {
     serde::Deserialize,
 )]
 #[diesel(table_name = master_list)]
+#[diesel(treat_none_as_null = true)]
 pub struct MasterListRow {
     pub id: String,
     pub name: String,
