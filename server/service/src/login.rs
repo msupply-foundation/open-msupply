@@ -522,7 +522,9 @@ impl LoginService {
             .map_err(UpdateUserError::DatabaseError)?;
         let hashed_password = existing
             .as_ref()
-            .filter(|existing| bcrypt::verify(password, &existing.hashed_password).unwrap_or(false))
+            .filter(|existing| {
+                UserAccountService::password_matches(password, &existing.hashed_password)
+            })
             .map(|existing| existing.hashed_password.clone());
         let hashed_password = match hashed_password {
             Some(existing_hash) => existing_hash,

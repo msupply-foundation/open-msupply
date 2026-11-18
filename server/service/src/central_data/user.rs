@@ -155,7 +155,9 @@ impl ImportTable for UserTable {
 
         let passwords: Passwords = in_parallel(jobs, |(number, password, saved)| {
             let hash = match &saved {
-                Some(saved) if is_saved_password(&password, saved) => saved.clone(),
+                Some(saved) if UserAccountService::password_matches(&password, saved) => {
+                    saved.clone()
+                }
                 // A failure is left for the row to report.
                 _ => UserAccountService::hash_password(&password).ok()?,
             };
@@ -391,7 +393,9 @@ impl UserSheet {
             return Ok(hashed.hash.clone());
         }
         match saved {
-            Some(saved) if is_saved_password(password, &saved.hashed_password) => {
+            Some(saved)
+                if UserAccountService::password_matches(password, &saved.hashed_password) =>
+            {
                 Ok(saved.hashed_password.clone())
             }
             _ => UserAccountService::hash_password(password)
@@ -441,11 +445,6 @@ fn protected_error(row: &Row, saved: &UserAccountRow) -> RowError {
             saved.username
         ),
     )
-}
-
-/// A failed check, such as a hash bcrypt can't read, counts as a different password.
-fn is_saved_password(password: &str, saved_hash: &str) -> bool {
-    !saved_hash.is_empty() && bcrypt::verify(password, saved_hash).unwrap_or(false)
 }
 
 /// `work` on every job, split across the machine's cores.

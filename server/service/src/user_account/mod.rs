@@ -216,6 +216,12 @@ impl<'a> UserAccountService<'a> {
         hashed_password
     }
 
+    /// Whether `password` is the one `hashed_password` was made from. A failed check, such as a
+    /// hash bcrypt can't read, counts as a different password.
+    pub fn password_matches(password: &str, hashed_password: &str) -> bool {
+        !hashed_password.is_empty() && verify(password, hashed_password).unwrap_or(false)
+    }
+
     pub fn create_user(
         &self,
         user: CreateUserAccount,
