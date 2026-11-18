@@ -23,6 +23,12 @@ use std::str;
 mod tests;
 
 define_sql_function!(fn lower(x: Text) -> Text);
+define_sql_function!(fn trim(x: Text) -> Text);
+
+/// Trims as SQL `trim` does: spaces only, where `str::trim` takes tabs and line breaks too.
+pub fn trim_spaces(text: &str) -> &str {
+    text.trim_matches(' ')
+}
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {

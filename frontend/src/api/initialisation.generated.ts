@@ -144,6 +144,16 @@ export const IsCentralServer = {
   query: "query isCentralServer {\n  isCentralServer\n}",
 } as TypedDocument<IsCentralServerResult, IsCentralServerVariables>;
 
+export type IsCentralStandaloneVariables = Record<string, never>;
+
+export type IsCentralStandaloneResult = {
+  isCentralStandalone: boolean;
+};
+
+export const IsCentralStandalone = {
+  query: "query isCentralStandalone {\n  isCentralStandalone\n}",
+} as TypedDocument<IsCentralStandaloneResult, IsCentralStandaloneVariables>;
+
 export type ServerVersionVariables = Record<string, never>;
 
 export type ServerVersionResult = {

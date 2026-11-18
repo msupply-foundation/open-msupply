@@ -1308,6 +1308,180 @@ type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundS
 	description: String!
 }
 
+type CentralDataCannotReadFile implements CentralDataImportErrorInterface {
+	description: String!
+}
+
+enum CentralDataChangeNode {
+	INSERTED
+	UPDATED
+	"""
+	Counted as updated.
+	"""
+	RESTORED
+	DELETED
+	UNCHANGED
+}
+
+union CentralDataErrorsFileResponse = CentralDataImportError | CentralDataExportNode
+
+type CentralDataExportCountNode {
+	table: CentralDataTableNode!
+	matching: Int!
+	total: Int!
+}
+
+type CentralDataExportCountsNode {
+	tables: [CentralDataExportCountNode!]!
+	"""
+	Across all tables, as for an import.
+	"""
+	maxRows: Int!
+}
+
+type CentralDataExportError {
+	error: CentralDataExportErrorInterface!
+}
+
+interface CentralDataExportErrorInterface {
+	description: String!
+}
+
+type CentralDataExportNode {
+	fileId: String!
+}
+
+union CentralDataExportResponse = CentralDataExportError | CentralDataExportNode
+
+input CentralDataExportTableInput {
+	table: CentralDataTableNode!
+	"""
+	Any letter case.
+	"""
+	contains: String
+	"""
+	Ignored by a table with no active flag.
+	"""
+	isActive: Boolean
+}
+
+type CentralDataFieldChangeNode {
+	column: String!
+	from: String!
+	to: String!
+}
+
+type CentralDataImportError {
+	error: CentralDataImportErrorInterface!
+}
+
+interface CentralDataImportErrorInterface {
+	description: String!
+}
+
+type CentralDataImportNode {
+	tables: [CentralDataTableChangesNode!]!
+	"""
+	The first 100; `tables` counts them all.
+	"""
+	changes: [CentralDataRowChangeNode!]!
+	"""
+	The first 100.
+	"""
+	errors: [CentralDataRowErrorNode!]!
+	"""
+	With any, nothing was applied.
+	"""
+	errorCount: Int!
+}
+
+union CentralDataImportResponse = CentralDataImportError | CentralDataImportNode
+
+type CentralDataMutations {
+	"""
+	Returns a file id for /files. Refused over the import cap.
+	"""
+	export(tables: [CentralDataExportTableInput!]!): CentralDataExportResponse!
+	"""
+	The upload with each row's errors in an `error` column, as a file id for /files.
+	"""
+	errorsFile(fileId: String!): CentralDataErrorsFileResponse!
+	"""
+	Applies nothing if any row has an error.
+	"""
+	import(fileId: String!): CentralDataImportResponse!
+}
+
+type CentralDataQueries {
+	"""
+	Writes nothing.
+	"""
+	importPreview(fileId: String!): CentralDataImportResponse!
+	exportCounts(tables: [CentralDataExportTableInput!]!): CentralDataExportCountsNode!
+}
+
+type CentralDataRowChangeNode {
+	sheet: String!
+	"""
+	As Excel shows it.
+	"""
+	row: Int!
+	"""
+	E.g. the unit's name.
+	"""
+	record: String!
+	change: CentralDataChangeNode!
+	"""
+	For an update, the columns that change.
+	"""
+	fields: [CentralDataFieldChangeNode!]!
+}
+
+type CentralDataRowErrorNode {
+	sheet: String!
+	"""
+	As Excel shows it. Null on a sheet name, which has no row.
+	"""
+	row: Int
+	column: String
+	message: String!
+}
+
+type CentralDataTableChangesNode {
+	table: CentralDataTableNode!
+	inserted: Int!
+	updated: Int!
+	deleted: Int!
+	unchanged: Int!
+	"""
+	Heading errors included.
+	"""
+	errorCount: Int!
+}
+
+enum CentralDataTableNode {
+	UNIT
+	LOCATION_TYPE
+	USER
+	ITEM
+}
+
+type CentralDataTooManyCells implements CentralDataImportErrorInterface {
+	description: String!
+	cellCount: Int!
+	maxCells: Int!
+}
+
+type CentralDataTooManyRows implements CentralDataImportErrorInterface & CentralDataExportErrorInterface {
+	description: String!
+	rowCount: Int!
+	maxRows: Int!
+}
+
+type CentralDataUploadExpired implements CentralDataImportErrorInterface {
+	description: String!
+}
+
 type CentralGeneralMutations {
 	configureNameProperties(input: [ConfigureNamePropertyInput!]!): ConfigureNamePropertiesResponse!
 	"""
@@ -1435,6 +1609,7 @@ type CentralServerMutationNode {
 	customField: CustomFieldMutations!
 	reports: CentralReportMutations!
 	site: CentralSiteMutations!
+	centralData: CentralDataMutations!
 }
 
 type CentralServerNoAnswer implements CentralPatientSearchErrorInterface {
@@ -1445,6 +1620,7 @@ type CentralServerQueryNode {
 	plugin: CentralPluginQueries!
 	syncMessage: SyncMessageQueries!
 	site: CentralSiteQueries!
+	centralData: CentralDataQueries!
 	customField: CustomFieldConfigQueries!
 }
 

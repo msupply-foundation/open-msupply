@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
+import { isCentralStandalone } from '@/api/serverInfo';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -103,9 +104,9 @@ const SitesList: Component = () => {
     setOffset: offset => setQuery({ ...query(), offset }),
   });
 
-  // The deployment reads: the standalone gate, the multi-device feature flag
-  // and the two site ids the editor needs. One fetch per visit, keyed on
-  // nothing. Read NON-suspending: this
+  // The deployment reads: the multi-device feature flag and the two site ids
+  // the editor needs. One fetch per visit, keyed on nothing. Read
+  // NON-suspending: this
   // resolves while the screen is already open, and a suspending read would
   // remount the section — and any dialog inside it — the moment it settled.
   const [deploymentData] = createResource(async () => {
@@ -116,14 +117,14 @@ const SitesList: Component = () => {
   const deployment = () => gated(deploymentData);
 
   // OMS-FUN-SYC-002.12/.15 — every editable affordance on this screen and in
-  // the editor is gated on the standalone read. False until known, which is the
-  // safe direction. The gate TABLE itself lives in siteGates.ts, transcribed
-  // from the spec's own table; the register only needs its two list-level
-  // answers (the pairing column of that table belongs to the editor).
-  const isStandalone = () => deployment()?.isCentralStandalone ?? false;
+  // the editor is gated on the startup-wide standalone read. False until known,
+  // which is the safe direction. The gate TABLE itself lives in siteGates.ts,
+  // transcribed from the spec's own table; the register only needs its two
+  // list-level answers (the pairing column of that table belongs to the
+  // editor).
   const gates = () =>
     siteAffordances({
-      isStandalone: isStandalone(),
+      isStandalone: isCentralStandalone(),
       isExistingSite: false,
       pairingAvailable: false,
     });
@@ -260,7 +261,7 @@ const SitesList: Component = () => {
           <SiteEditModal
             editor={state()}
             loadedSites={rows}
-            isStandalone={isStandalone()}
+            isStandalone={isCentralStandalone()}
             ownSiteId={ownSiteId()}
             centralSiteId={centralSiteId()}
             featureFlags={featureFlags()}

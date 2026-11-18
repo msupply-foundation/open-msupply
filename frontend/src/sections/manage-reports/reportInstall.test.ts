@@ -7,9 +7,8 @@ import {
   emptyBatch,
   installOutcome,
   judgePick,
-  readFileId,
-  MAX_BUNDLE_BYTES,
 } from './reportInstall';
+import { MAX_UPLOAD_BYTES, readFileId } from '@/api/postFiles';
 import { partitionFiles } from '@/ui/elements/inputs/uploadFiles';
 import type { GraphqlResult } from '@/api/graphql';
 import type { InstallUploadedReportsResult } from './manageReports.generated';
@@ -187,16 +186,16 @@ describe('OMS-REG-MNG-06.27 — an oversized file is refused before sending', ()
     // actix's default multipart total, which `/upload` never overrides. A
     // mismatch here means the dialog either refuses files the server would
     // have taken, or sends ones it refuses with a bare 400.
-    expect(MAX_BUNDLE_BYTES).toBe(50 * 1024 * 1024);
+    expect(MAX_UPLOAD_BYTES).toBe(50 * 1024 * 1024);
   });
 
   it('partitions a file by that ceiling, naming size as the reason', () => {
-    // The shared upload zone is handed MAX_BUNDLE_BYTES as its maxSize, so
+    // The shared upload zone is handed MAX_UPLOAD_BYTES as its maxSize, so
     // this is the split the dialog's onPick receives.
-    const under = { name: 'bundle.json', type: '', size: MAX_BUNDLE_BYTES };
-    const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    const under = { name: 'bundle.json', type: '', size: MAX_UPLOAD_BYTES };
+    const over = { name: 'big.json', type: '', size: MAX_UPLOAD_BYTES + 1 };
     const { accepted, rejected } = partitionFiles([under, over], {
-      maxSize: MAX_BUNDLE_BYTES,
+      maxSize: MAX_UPLOAD_BYTES,
     });
     expect(accepted).toEqual([under]);
     expect(rejected).toEqual([{ file: over, reason: 'size' }]);
@@ -205,7 +204,7 @@ describe('OMS-REG-MNG-06.27 — an oversized file is refused before sending', ()
   it('refuses an oversized file on its own, naming it', () => {
     // Nothing else in the pick, so nothing is taken and the files already
     // chosen stay.
-    const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    const over = { name: 'big.json', type: '', size: MAX_UPLOAD_BYTES + 1 };
     expect(judgePick([], [{ file: over, reason: 'size' }])).toEqual({
       kind: 'tooLarge',
       fileName: 'big.json',
@@ -216,7 +215,7 @@ describe('OMS-REG-MNG-06.27 — an oversized file is refused before sending', ()
 describe('OMS-REG-MNG-06.34 — the rest of a pick with an oversized file is still taken', () => {
   it('takes the files under the limit and names the one refused', () => {
     const under = { name: 'bundle.json', type: '', size: 10 };
-    const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    const over = { name: 'big.json', type: '', size: MAX_UPLOAD_BYTES + 1 };
     expect(judgePick([under], [{ file: over, reason: 'size' }])).toEqual({
       kind: 'accepted',
       files: [under],
@@ -235,7 +234,7 @@ describe('OMS-REG-MNG-06.29 — a pick with a name not ending in "json" is refus
   });
 
   it('refuses on the name even when that file was also oversized', () => {
-    const over = { name: 'big.txt', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    const over = { name: 'big.txt', type: '', size: MAX_UPLOAD_BYTES + 1 };
     expect(judgePick([], [{ file: over, reason: 'size' }])).toEqual({
       kind: 'invalidName',
     });
