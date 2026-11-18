@@ -1,5 +1,5 @@
 use super::StorageConnection;
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, trim, trim_spaces};
 
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
@@ -86,6 +86,22 @@ impl<'a> CurrencyRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
+    }
+
+    /// Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code(&self, code: &str) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .filter(trim(currency::code).eq(trim_spaces(code)))
+            .order(currency::id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .order((currency::code.asc(), currency::id.asc()))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CurrencyRow>, RepositoryError> {
