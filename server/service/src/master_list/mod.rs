@@ -1,15 +1,17 @@
 use self::query::get_master_lists;
 use self::query_lines::{get_master_list_lines, get_master_list_lines_count};
+use self::upsert::{UpsertMasterListError, upsert_master_list};
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use repository::{
     MasterList, MasterListFilter, MasterListLine, MasterListLineFilter, MasterListLineSort,
-    MasterListSort, PaginationOption, RepositoryError, StorageConnection,
+    MasterListRow, MasterListSort, PaginationOption, RepositoryError, StorageConnection,
 };
 
 pub mod query;
 pub mod query_lines;
+pub mod upsert;
 pub mod validate;
 
 pub trait MasterListServiceTrait: Sync + Send {
@@ -40,6 +42,14 @@ pub trait MasterListServiceTrait: Sync + Send {
         master_list_id: &str,
     ) -> Result<u32, RepositoryError> {
         get_master_list_lines_count(connection, master_list_id)
+    }
+
+    fn upsert_master_list(
+        &self,
+        ctx: &ServiceContext,
+        row: &MasterListRow,
+    ) -> Result<(), UpsertMasterListError> {
+        upsert_master_list(&ctx.connection, row)
     }
 }
 
