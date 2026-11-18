@@ -104,7 +104,7 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     expect(line).not.toContain('Unnamed patient');
   });
 
-  // OMS-REG-DIS-12.219
+  // OMS-REG-DIS-12.220
   it('carries Time and Medicines after the date in a store on the Simple screen', () => {
     const csv = prescriptionsToCsv(
       [
@@ -145,7 +145,7 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     expect(line).toContain('"Paracetamol 500mg (20), ORS sachet (2)"');
   });
 
-  // OMS-REG-DIS-12.220
+  // OMS-REG-DIS-12.221
   it('has no Time or Medicines column in a store on the list', () => {
     const csv = prescriptionsToCsv([row]);
     expect(csv).not.toContain('label.time');

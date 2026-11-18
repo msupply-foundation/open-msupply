@@ -24,7 +24,7 @@ afterEach(() => {
 
 // spec/prescriptions rules › Dispensing records
 describe('the Simple screen’s kept visit', () => {
-  // OMS-REG-DIS-12.221, .222
+  // OMS-REG-DIS-12.222, .223
   it('is the same visit when the screen opens again, with its list and person', () => {
     const first = visitFor('store-a', off);
     first.setLines([line]);
@@ -37,7 +37,7 @@ describe('the Simple screen’s kept visit', () => {
     expect(again.patient()?.id).toBe('p1');
   });
 
-  // OMS-REG-DIS-12.222: the unnamed patient with a list is kept too
+  // OMS-REG-DIS-12.223: the unnamed patient with a list is kept too
   it('keeps the unnamed patient with its list', () => {
     const first = visitFor('store-a', off);
     first.setUnnamed(true);
@@ -46,7 +46,7 @@ describe('the Simple screen’s kept visit', () => {
     expect(visitFor('store-a', off).unnamed()).toBe(true);
   });
 
-  // OMS-REG-DIS-12.227
+  // OMS-REG-DIS-12.228
   it('keeps nothing when left with an empty list and no registered patient', () => {
     const first = visitFor('store-a', off);
     first.setUnnamed(true);
@@ -64,7 +64,7 @@ describe('the Simple screen’s kept visit', () => {
     expect(visitFor('store-a', off)).toBe(first);
   });
 
-  // OMS-REG-DIS-12.224: a save still out is the visit's, not the screen's
+  // OMS-REG-DIS-12.225: a save still out is the visit's, not the screen's
   it('keeps a visit whose save is still out, and the save finishes into it', () => {
     const first = visitFor('store-a', off);
     first.setLines([line]);
@@ -97,7 +97,7 @@ describe('the Simple screen’s kept visit', () => {
     expect(visitFor('store-a', () => true).unnamed()).toBe(true);
   });
 
-  // OMS-REG-DIS-12.225
+  // OMS-REG-DIS-12.226
   it('keeps one visit per store', () => {
     const a = visitFor('store-a', off);
     a.setLines([line]);
@@ -113,7 +113,7 @@ describe('the Simple screen’s kept visit', () => {
     expect(visitFor('store-a', off).lines).toHaveLength(0);
   });
 
-  // OMS-REG-DIS-12.226
+  // OMS-REG-DIS-12.227
   it('drops every kept visit on sign-out', async () => {
     const first = visitFor('store-a', off);
     first.setLines([line]);

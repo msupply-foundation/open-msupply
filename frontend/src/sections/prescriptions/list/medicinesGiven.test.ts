@@ -9,14 +9,14 @@ const line = (
 ): GivenLine => ({ type, itemName, numberOfPacks, packSize });
 
 describe('medicinesGiven (spec/prescriptions rules › Dispensing records)', () => {
-  // OMS-REG-DIS-12.215
+  // OMS-REG-DIS-12.216
   it('names each medicine with the amount given in its unit, in the order listed', () => {
     expect(
       medicinesGiven([line('Paracetamol 500mg', 2, 10), line('ORS sachet', 2)])
     ).toBe('Paracetamol 500mg (20), ORS sachet (2)');
   });
 
-  // OMS-REG-DIS-12.216
+  // OMS-REG-DIS-12.217
   it('shows a medicine given from two batches once, with both amounts added', () => {
     expect(
       medicinesGiven([
@@ -27,7 +27,7 @@ describe('medicinesGiven (spec/prescriptions rules › Dispensing records)', () 
     ).toBe('Amoxicillin 250mg (15), ORS sachet (1)');
   });
 
-  // OMS-REG-DIS-12.217
+  // OMS-REG-DIS-12.218
   it('leaves out a placeholder that gives nothing, and services', () => {
     expect(
       medicinesGiven([
